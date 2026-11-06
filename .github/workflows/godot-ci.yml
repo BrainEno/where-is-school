@@ -29,19 +29,54 @@ jobs:
         run: godot --headless --editor --path . --quit
 
       - name: Smoke — main scene instantiates and composes the classroom
-        run: godot --headless --path . --script res://tests/smoke_main.gd
+        run: |
+          set +e
+          godot --headless --path . --script res://tests/smoke_main.gd > smoke_main.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::error::smoke_main.gd exited $code"
+            tail -n 12 smoke_main.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -n 3 smoke_main.log || true
 
       - name: Smoke — player, camera and interactables
-        run: godot --headless --path . --script res://tests/smoke_player.gd
+        run: |
+          set +e
+          godot --headless --path . --script res://tests/smoke_player.gd > smoke_player.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::error::smoke_player.gd exited $code"
+            tail -n 12 smoke_player.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -n 3 smoke_player.log || true
 
       - name: Smoke — UI group and lesson director
-        run: godot --headless --path . --script res://tests/smoke_ui.gd
+        run: |
+          set +e
+          godot --headless --path . --script res://tests/smoke_ui.gd > smoke_ui.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::error::smoke_ui.gd exited $code"
+            tail -n 12 smoke_ui.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -n 3 smoke_ui.log || true
 
       - name: Run unit tests
         run: |
-          set -e
-          godot --headless --path . --script res://tests/game_state_test.gd
-          godot --headless --path . --script res://tests/settings_test.gd
-          godot --headless --path . --script res://tests/dialogue_runner_test.gd
-          godot --headless --path . --script res://tests/dialogue_content_test.gd
-          godot --headless --path . --script res://tests/scene_composition_test.gd
+          set +e
+          fail=0
+          for t in game_state_test settings_test dialogue_runner_test dialogue_content_test scene_composition_test; do
+            godot --headless --path . --script "res://tests/${t}.gd" > "test_${t}.log" 2>&1
+            code=$?
+            echo "== ${t}: exit ${code}"
+            tail -n 2 "test_${t}.log" || true
+            if [ $code -ne 0 ]; then
+              echo "::error::${t}.gd exited $code"
+              tail -n 10 "test_${t}.log" | sed 's/^/::error::/'
+              fail=1
+            fi
+          done
+          exit $fail
