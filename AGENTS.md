@@ -4,7 +4,9 @@ You are contributing to a narrative game in pre-production. Read this file and t
 
 ## Product intent
 
-where-is-school is a painterly 2.5D surreal narrative RPG. The protagonist is an adult repeatedly returned to school, searching for classrooms and an exit through an unstable geography of apartment blocks, institutional corridors, stairwells, classrooms, container yards, and examination halls.
+where-is-school is a painterly 2.5D surreal narrative RPG. The adult protagonist wakes at a school desk as a student again, with unstable memory and no reliable explanation for their return. The opening chapter is Biology Class: a talkative classmate Q describes the absent biology teacher B, the protagonist imagines an increasingly elaborate confrontation, and an inexperienced substitute N arrives instead. The protagonist then leaves the classroom and school grounds into ordinary spaces that become difficult to classify.
+
+The wider game explores multiple contradictory versions of the school, unstable routes through ordinary architecture, and the later-discovered elliptical building that connects school versions. The reason for the protagonist's return and the cause of spatial anomalies remain unknown.
 
 The primary experience is exploration, environmental observation, and literary dialogue. Combat is not part of the current design. Do not add enemies, weapons, loot economies, crafting, survival meters, procedural open-world systems, or conventional horror chase loops without explicit approval.
 
@@ -13,12 +15,28 @@ The primary experience is exploration, environmental observation, and literary d
 - Product and scope: docs/PRODUCT_BRIEF.md
 - Runtime boundaries: docs/ARCHITECTURE.md
 - Technical decisions: docs/TECHNICAL_ROADMAP.md
-- Narrative rules: docs/NARRATIVE_BIBLE.md
+- Narrative rules, Biology Class source adaptation, characters, and scene sequence: docs/NARRATIVE_BIBLE.md
 - Visual direction: docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md
 - First vertical-slice acceptance: docs/PROTOTYPE_BRIEF.md
 - Agent comparison protocol: docs/AGENT_EVALUATION.md
 
 If documents conflict, report the conflict instead of silently inventing a new direction. Keep this file and the design documents synchronized when an approved decision changes.
+
+## Narrative fidelity and uncertainty
+
+- Treat the owner's supplied "Biology Class" prose as primary source material for its events, imagery, character behavior, and narrative texture.
+- Preserve the difference between what Q says, what the protagonist remembers, what the protagonist imagines, and what is actually observed.
+- Do not turn the protagonist's imagined confrontation with B into an objective event.
+- B is absent from the opening lesson; N substitutes for her. Do not bring B onstage early merely to deliver exposition.
+- Q is an ordinary, talkative, overweight, overfamiliar classmate, not a supernatural guide, deliberate liar, or quest terminal.
+- B is a woman whose authority combines a performed teacher role with ordinary pettiness and human self-interest. Do not flatten her into a monster, secret mastermind, harmless comic figure, or simple fraud.
+- N is an inexperienced substitute, not automatically the truthful or morally superior counterpart to B.
+- The wooden set square is a recurring material motif associated with B: borrowed from mathematics, damaged, taped, geometrically precise yet unstable in use, and capable of signifying classroom authority and physical threat.
+- The green animal sequence concerns observation and uncertain classification. Do not invent a definitive species or outcome beyond the supplied source.
+- A/B/C memory directions remain undecided in their specific content. D means deferring active recollection and following immediate events; it is not a permanently exclusive fourth campaign.
+- Do not diagnose the protagonist or explain the school's anomalies as a confirmed psychological condition.
+- Keep the elliptical building out of the opening. It is a later spatial structure connecting versions of the school, not a generic portal to unrelated locations.
+- Distinguish confirmed owner decisions from provisional implementation proposals. When in doubt, mark a detail as undecided rather than filling the gap.
 
 ## Technical constraints
 
@@ -85,7 +103,7 @@ Implement in this order:
 2. One compact classroom environment with collision and readable navigation.
 3. Interactable objects and one NPC.
 4. Dialogue presentation with name, portrait, body, choices, and story flags.
-5. One transition through a staircase/door into a second spatially surprising room.
+5. One transition from the classroom toward the school grounds or another authored space.
 6. Basic save/load and usability settings after the core loop is stable.
 
 Do not build all chapters, a quest database, complex skill trees, voice acting, cinematic facial animation, or final production art during the first prototype.
