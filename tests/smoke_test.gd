@@ -21,7 +21,7 @@ func _run() -> void:
 		_failures.append("GameState autoload could not be created.")
 	if autoloads["narrative_state"] == null:
 		_failures.append("NarrativeState autoload could not be created.")
-	Harness.reset_state(self)
+	Harness.clear_session_state(self)
 
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	if packed == null:

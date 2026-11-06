@@ -135,7 +135,7 @@ func _test_opening_conversation(
 			"Find your biology textbook. Check your bag.":
 		_failures.append("The conversation did not set the bag objective.")
 
-	var exam_claim := narrative.get_entry(&"q_claims_blank_exam")
+	var exam_claim: NarrativeEntry = narrative.get_entry(&"q_claims_blank_exam")
 	if exam_claim == null:
 		_failures.append("Q's exam claim was not recorded.")
 	elif exam_claim.source != NarrativeEntry.Source.REPORTED:

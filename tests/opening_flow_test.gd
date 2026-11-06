@@ -40,7 +40,7 @@ func _run() -> void:
 	if _game_state == null or _narrative == null:
 		Harness.finish(self, ["State autoloads are unavailable."], "")
 		return
-	Harness.reset_state(self)
+	Harness.clear_session_state(self)
 
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	if packed == null:

@@ -49,7 +49,7 @@ static func arm_watchdog(tree: SceneTree, seconds: float, label: String) -> void
 	)
 
 
-static func reset_state(tree: SceneTree) -> void:
+static func clear_session_state(tree: SceneTree) -> void:
 	var game_state := tree.root.get_node_or_null(^"GameState")
 	if game_state != null:
 		game_state.clear()
