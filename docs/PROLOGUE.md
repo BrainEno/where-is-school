@@ -30,12 +30,12 @@ mouse or arrow keys + Space · Tab backlog · Esc settings (text speed, text siz
 ## Interaction architecture
 
 `Interactable` (Area3D, `scripts/interaction/interactable.gd`) is the contract:
-prompt text, stable `interaction_id`, `enabled`, `priority`. Interactables live
+prompt text, stable `interaction_id`, `enabled`, `interact_priority`. Interactables live
 in the `interactables` group and only emit `interacted`; they never draw UI.
 
 `InteractionSensor` (child of the player) picks the focused target each physics
 frame: nearest enabled interactable within reach, preferring one the player is
-facing, with `priority` breaking ties (the loose set square wins over the
+facing, with `interact_priority` breaking ties (the loose set square wins over the
 teacher's desk underneath it).
 
 The player controller owns locomotion and forwards `E`. The HUD polls the sensor

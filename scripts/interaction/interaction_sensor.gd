@@ -55,7 +55,7 @@ func _find_focused() -> Interactable:
 		# Very close targets can be used even when not faced; distant ones must be faced.
 		if flat_distance > range and dot < facing_dot_min:
 			continue
-		var score: float = flat_distance - dot * 0.6 - interactable.priority * 0.75
+		var score: float = flat_distance - dot * 0.6 - interactable.interact_priority * 0.75
 		if score < best_score:
 			best_score = score
 			best = interactable

@@ -13,7 +13,7 @@ signal interacted(player: Node)
 ## Disabled interactables stay in the world but cannot be focused or used.
 @export var enabled: bool = true
 ## Higher priority wins when two focusable targets overlap (e.g. a small prop on a big desk).
-@export var priority: int = 0
+@export var interact_priority: int = 0
 
 
 func _ready() -> void:
