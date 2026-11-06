@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_k1"]
+id = &"k1"
+speaker_id = &"narrator"
+text = "The final-term timetable, chalked in perfect slant. Wednesday: assembly. Period two: BIOLOGY. The exam date underneath: last week."
+next_id = &"k2"
+
+[sub_resource type="DialogueEntry" id="Entry_k2"]
+id = &"k2"
+speaker_id = &"narrator"
+text = "Today's slot is chalked the same way. Nobody has wiped the board. Nobody has decided whether today actually counts."
+
+[resource]
+id = &"blackboard"
+start_id = &"k1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_k1"), SubResource("Entry_k2")])

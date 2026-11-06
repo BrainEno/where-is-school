@@ -1,0 +1,8 @@
+[gd_resource type="CharacterDef" format=3]
+
+[resource]
+id = &"imagination"
+display_name = "B (imagined)"
+description = "An imagined confrontation. Not a record of events."
+kind = "imagination"
+portrait_color = Color(0.53, 0.3, 0.27, 1)

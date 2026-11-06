@@ -1,0 +1,12 @@
+[gd_resource type="DialogueConversation" load_steps=2 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_c1"]
+id = &"c1"
+speaker_id = &"narrator"
+text = "8:07. The second hand clunks. Nobody reacts."
+
+[resource]
+id = &"clock_again"
+start_id = &"c1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_c1")])

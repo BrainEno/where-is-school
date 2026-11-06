@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_q1"]
+id = &"q1"
+speaker_id = &"q"
+text = "Your face is doing the thing. Textbook? Please tell me it's not the textbook."
+next_id = &"q2"
+
+[sub_resource type="DialogueEntry" id="Entry_q2"]
+id = &"q2"
+speaker_id = &"q"
+text = "Well. Good luck. B's got a system for that, apparently. Can't help you. Wasn't here for it. Probably."
+
+[resource]
+id = &"q_bag"
+start_id = &"q1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_q1"), SubResource("Entry_q2")])

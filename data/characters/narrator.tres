@@ -1,0 +1,8 @@
+[gd_resource type="CharacterDef" format=3]
+
+[resource]
+id = &"narrator"
+display_name = ""
+description = "Neutral narration. No speaker shown."
+kind = "narration"
+portrait_color = Color(0.3, 0.31, 0.32, 1)

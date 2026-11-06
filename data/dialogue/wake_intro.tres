@@ -1,0 +1,30 @@
+[gd_resource type="DialogueConversation" load_steps=5 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_w1"]
+id = &"w1"
+speaker_id = &"narrator"
+text = "Chalk dust. Old mop water. A ceiling pipe ticking like a slow clock."
+next_id = &"w2"
+
+[sub_resource type="DialogueEntry" id="Entry_w2"]
+id = &"w2"
+speaker_id = &"inner"
+text = "Your head is ringing. The chair is too small and the desk is too close, and neither was chosen by you."
+next_id = &"w3"
+
+[sub_resource type="DialogueEntry" id="Entry_w3"]
+id = &"w3"
+speaker_id = &"inner"
+text = "You don't remember sitting down. You don't remember this room. There is a gap where the last few weeks should be."
+next_id = &"w4"
+
+[sub_resource type="DialogueEntry" id="Entry_w4"]
+id = &"w4"
+speaker_id = &"narrator"
+text = "Sunlight through dust. Somewhere behind you, plastic chair legs drag."
+
+[resource]
+id = &"wake_intro"
+start_id = &"w1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_w1"), SubResource("Entry_w2"), SubResource("Entry_w3"), SubResource("Entry_w4")])

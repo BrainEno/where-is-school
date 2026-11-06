@@ -1,0 +1,92 @@
+[gd_resource type="DialogueConversation" load_steps=14 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_n1"]
+id = &"n1"
+speaker_id = &"n"
+text = "Hi. Um. The class — B is not coming today. I'm covering. Name's N. It's my second time doing this."
+next_id = &"n2"
+set_flag = &"observed.n_substitute"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_n2"]
+id = &"n2"
+speaker_id = &"n"
+text = "I know it's final term. I was told the exam happened. I haven't checked anything yet."
+next_id = &"n3"
+set_flag = &"claim.n.b_absent"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_n3"]
+id = &"n3"
+speaker_id = &"n"
+text = "I'm not going to stand here and pretend I know how this room works. Roll call first. Then we'll see."
+next_id = &"n4"
+
+[sub_resource type="DialogueChoice" id="Choice_n4_0"]
+text = "Even B isn't here?"
+next_id = &"na1"
+set_flag = &"choice.asked_about_b"
+set_value = true
+
+[sub_resource type="DialogueChoice" id="Choice_n4_1"]
+text = "Great. Free period, then."
+next_id = &"nb1"
+set_flag = &"choice.defied_n"
+set_value = true
+
+[sub_resource type="DialogueChoice" id="Choice_n4_2"]
+text = "Say nothing."
+next_id = &"nc1"
+set_flag = &"choice.silent_to_n"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_n4"]
+id = &"n4"
+speaker_id = &"n"
+text = "So. Questions? Or — please just sit down."
+choices = Array[DialogueChoice]([SubResource("Choice_n4_0"), SubResource("Choice_n4_1"), SubResource("Choice_n4_2")])
+
+[sub_resource type="DialogueEntry" id="Entry_na1"]
+id = &"na1"
+speaker_id = &"n"
+text = "So I've been told. Just — that's all I've been told. I'm sorry. That's the honest answer."
+next_id = &"r2"
+
+[sub_resource type="DialogueEntry" id="Entry_nb1"]
+id = &"nb1"
+speaker_id = &"n"
+text = "That's not — that's not how this works. Please, sit down."
+next_id = &"r2"
+
+[sub_resource type="DialogueEntry" id="Entry_nc1"]
+id = &"nc1"
+speaker_id = &"n"
+text = "...Right. Roll call, then. Names in order. Please react if you're called."
+next_id = &"r2"
+
+[sub_resource type="DialogueEntry" id="Entry_r2"]
+id = &"r2"
+speaker_id = &"n"
+text = "Heard. Note, everyone — reactions to names will be appreciated. Attendance is... closer to done than not done."
+next_id = &"r3"
+
+[sub_resource type="DialogueEntry" id="Entry_r3"]
+id = &"r3"
+speaker_id = &"n"
+text = "Fine — the last bit of the period is yours. Library, yard, corridor — but stay on this side of the gate line."
+next_id = &"r4"
+set_flag = &"observed.b_absent"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_r4"]
+id = &"r4"
+speaker_id = &"n"
+text = "If anyone asks, this was a perfectly normal lesson."
+set_flag = &"flow.class_dismissed"
+set_value = true
+
+[resource]
+id = &"n_arrival"
+start_id = &"n1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_n1"), SubResource("Entry_n2"), SubResource("Entry_n3"), SubResource("Entry_n4"), SubResource("Entry_na1"), SubResource("Entry_nb1"), SubResource("Entry_nc1"), SubResource("Entry_r2"), SubResource("Entry_r3"), SubResource("Entry_r4")])

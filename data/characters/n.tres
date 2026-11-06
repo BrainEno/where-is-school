@@ -1,0 +1,8 @@
+[gd_resource type="CharacterDef" format=3]
+
+[resource]
+id = &"n"
+display_name = "N"
+description = "Inexperienced substitute teacher. Placeholder role marker."
+kind = "character"
+portrait_color = Color(0.42, 0.53, 0.61, 1)

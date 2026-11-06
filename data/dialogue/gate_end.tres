@@ -1,0 +1,26 @@
+[gd_resource type="DialogueConversation" load_steps=4 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_g1"]
+id = &"g1"
+speaker_id = &"narrator"
+text = "The gate pushes open easier than it should. It groans anyway."
+next_id = &"g2"
+
+[sub_resource type="DialogueEntry" id="Entry_g2"]
+id = &"g2"
+speaker_id = &"inner"
+text = "Fresh air. Street. Somewhere ahead of you is the place you go home. Probably."
+next_id = &"g3"
+set_flag = &"observed.reached_gate"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_g3"]
+id = &"g3"
+speaker_id = &"narrator"
+text = "You walk. Behind you the school settles into its bricks. You don't look back at the windows."
+
+[resource]
+id = &"gate_end"
+start_id = &"g1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_g1"), SubResource("Entry_g2"), SubResource("Entry_g3")])

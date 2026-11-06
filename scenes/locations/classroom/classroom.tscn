@@ -1,0 +1,635 @@
+[gd_scene load_steps=60 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/student_desk.tscn" id="1_desk"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/world/lesson_director.gd" id="4_director"]
+[ext_resource type="Script" path="res://scripts/world/inspectable.gd" id="5_inspectable"]
+[ext_resource type="Script" path="res://scripts/world/q_talk.gd" id="6_qtalk"]
+[ext_resource type="Script" path="res://scripts/world/exit_door.gd" id="7_exitdoor"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/wake_intro.tres" id="8_wake"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/q_intro.tres" id="9_qintro"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/q_bag.tres" id="10_qbag"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/bell_gap.tres" id="11_bellgap"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/n_arrival.tres" id="12_narrow"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/imagination_b.tres" id="13_imagine"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/bag_search.tres" id="14_bag"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/bag_search_again.tres" id="15_bagagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/set_square.tres" id="16_square"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/set_square_again.tres" id="17_squareagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/blackboard.tres" id="18_board"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/blackboard_again.tres" id="19_boardagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/noticeboard.tres" id="20_notice"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/noticeboard_again.tres" id="21_noticeagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/teacher_desk.tres" id="22_tdesk"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/teacher_desk_again.tres" id="23_tdeskagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/window.tres" id="24_window"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/window_again.tres" id="25_windowagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/clock.tres" id="26_clock"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/clock_again.tres" id="27_clockagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/name_card.tres" id="28_card"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/name_card_again.tres" id="29_cardagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/q_free_talk.tres" id="30_qtalk"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/door_locked.tres" id="31_doorlocked"]
+
+[sub_resource type="Environment" id="env_class"]
+background_mode = 1
+background_color = Color(0.07, 0.075, 0.08, 1)
+ambient_light_color = Color(0.32, 0.34, 0.33, 1)
+ambient_light_energy = 0.9
+fog_enabled = true
+fog_light_color = Color(0.35, 0.38, 0.38, 1)
+fog_density = 0.02
+
+[sub_resource type="StandardMaterial3D" id="mat_floor"]
+albedo_color = Color(0.4, 0.4, 0.38, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.44, 0.46, 0.42, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_pony"]
+albedo_color = Color(0.4, 0.42, 0.39, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_board"]
+albedo_color = Color(0.12, 0.16, 0.135, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="mat_wood_dark"]
+albedo_color = Color(0.34, 0.26, 0.17, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="mat_wood_top"]
+albedo_color = Color(0.44, 0.34, 0.23, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="mat_paper"]
+albedo_color = Color(0.72, 0.69, 0.58, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_paper_red"]
+albedo_color = Color(0.55, 0.3, 0.25, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_metal"]
+albedo_color = Color(0.27, 0.3, 0.33, 1)
+roughness = 0.4
+metallic = 0.6
+
+[sub_resource type="StandardMaterial3D" id="mat_window_glow"]
+albedo_color = Color(0.85, 0.55, 0.32, 1)
+emission_enabled = true
+emission = Color(0.95, 0.62, 0.36, 1)
+emission_energy_multiplier = 1.5
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="mat_bag"]
+albedo_color = Color(0.3, 0.36, 0.43, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="mat_square"]
+albedo_color = Color(0.62, 0.58, 0.47, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="mat_clock"]
+albedo_color = Color(0.78, 0.77, 0.7, 1)
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="mat_q"]
+albedo_color = Color(0.46, 0.33, 0.22, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_n"]
+albedo_color = Color(0.35, 0.43, 0.5, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_skin"]
+albedo_color = Color(0.6, 0.51, 0.43, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="mat_noticeboard"]
+albedo_color = Color(0.33, 0.24, 0.16, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="mesh_floor"]
+size = Vector3(14, 0.2, 9)
+[sub_resource type="BoxMesh" id="mesh_north"]
+size = Vector3(14, 3.4, 0.4)
+[sub_resource type="BoxMesh" id="mesh_west"]
+size = Vector3(0.4, 3.4, 9.8)
+[sub_resource type="BoxMesh" id="mesh_south_west"]
+size = Vector3(9.3, 1.0, 0.3)
+[sub_resource type="BoxMesh" id="mesh_south_east"]
+size = Vector3(2.9, 1.0, 0.3)
+[sub_resource type="BoxMesh" id="mesh_east_pony"]
+size = Vector3(0.4, 1.0, 9.8)
+[sub_resource type="BoxMesh" id="mesh_board"]
+size = Vector3(6.2, 1.7, 0.09)
+[sub_resource type="BoxMesh" id="mesh_tray"]
+size = Vector3(6.2, 0.06, 0.2)
+[sub_resource type="BoxMesh" id="mesh_tdesk_body"]
+size = Vector3(1.9, 0.72, 0.85)
+[sub_resource type="BoxMesh" id="mesh_tdesk_top"]
+size = Vector3(2.0, 0.06, 0.95)
+[sub_resource type="PrismMesh" id="mesh_square"]
+size = Vector3(0.42, 0.06, 0.42)
+[sub_resource type="BoxMesh" id="mesh_card"]
+size = Vector3(0.34, 0.16, 0.04)
+[sub_resource type="BoxMesh" id="mesh_noticeboard"]
+size = Vector3(0.07, 1.5, 2.5)
+[sub_resource type="BoxMesh" id="mesh_paper"]
+size = Vector3(0.012, 0.36, 0.28)
+[sub_resource type="BoxMesh" id="mesh_window"]
+size = Vector3(0.05, 1.5, 3.2)
+[sub_resource type="BoxMesh" id="mesh_window_frame_h"]
+size = Vector3(0.07, 0.1, 3.35)
+[sub_resource type="CylinderMesh" id="mesh_clock"]
+radius = 0.3
+height = 0.05
+[sub_resource type="BoxMesh" id="mesh_hand_h"]
+size = Vector3(0.035, 0.14, 0.012)
+[sub_resource type="BoxMesh" id="mesh_hand_m"]
+size = Vector3(0.028, 0.21, 0.012)
+[sub_resource type="BoxMesh" id="mesh_bag_body"]
+size = Vector3(0.56, 0.3, 0.34)
+[sub_resource type="BoxMesh" id="mesh_bag_pocket"]
+size = Vector3(0.3, 0.18, 0.04)
+[sub_resource type="BoxMesh" id="mesh_bag_handle"]
+size = Vector3(0.2, 0.05, 0.05)
+[sub_resource type="CapsuleMesh" id="mesh_capsule_q"]
+radius = 0.4
+height = 1.15
+[sub_resource type="CapsuleMesh" id="mesh_capsule_n"]
+radius = 0.31
+height = 1.3
+[sub_resource type="SphereMesh" id="mesh_head_q"]
+radius = 0.26
+[sub_resource type="SphereMesh" id="mesh_head_n"]
+radius = 0.22
+[sub_resource type="BoxMesh" id="mesh_doorframe_post"]
+size = Vector3(0.22, 2.3, 0.22)
+[sub_resource type="BoxMesh" id="mesh_doorframe_lintel"]
+size = Vector3(1.9, 0.22, 0.22)
+[sub_resource type="BoxShape3D" id="shape_floor"]
+size = Vector3(14, 0.2, 9)
+[sub_resource type="BoxShape3D" id="shape_north"]
+size = Vector3(14, 3.4, 0.4)
+[sub_resource type="BoxShape3D" id="shape_west"]
+size = Vector3(0.4, 3.4, 9.8)
+[sub_resource type="BoxShape3D" id="shape_sw"]
+size = Vector3(9.3, 1.0, 0.3)
+[sub_resource type="BoxShape3D" id="shape_se"]
+size = Vector3(2.9, 1.0, 0.3)
+[sub_resource type="BoxShape3D" id="shape_eastpony"]
+size = Vector3(0.4, 1.0, 9.8)
+[sub_resource type="BoxShape3D" id="shape_tdesk"]
+size = Vector3(1.9, 0.78, 0.85)
+[sub_resource type="BoxShape3D" id="shape_inspect_wide"]
+size = Vector3(6.4, 2.6, 1.0)
+[sub_resource type="BoxShape3D" id="shape_inspect_noticeboard"]
+size = Vector3(1.0, 2.1, 3.0)
+[sub_resource type="BoxShape3D" id="shape_inspect_window"]
+size = Vector3(1.0, 2.4, 3.8)
+[sub_resource type="BoxShape3D" id="shape_inspect_clock"]
+size = Vector3(0.9, 0.9, 0.5)
+[sub_resource type="BoxShape3D" id="shape_inspect_square"]
+size = Vector3(0.6, 0.45, 0.6)
+[sub_resource type="BoxShape3D" id="shape_inspect_card"]
+size = Vector3(0.5, 0.4, 0.45)
+[sub_resource type="BoxShape3D" id="shape_inspect_tdesk"]
+size = Vector3(2.3, 1.5, 1.3)
+[sub_resource type="BoxShape3D" id="shape_inspect_bag"]
+size = Vector3(0.8, 0.6, 0.65)
+[sub_resource type="BoxShape3D" id="shape_inspect_q"]
+size = Vector3(1.4, 2.0, 1.4)
+[sub_resource type="BoxShape3D" id="shape_exit_door"]
+size = Vector3(1.7, 2.3, 0.9)
+[node name="Classroom" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env_class")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-41, -148, 0)
+light_color = Color(0.98, 0.83, 0.62, 1)
+light_energy = 1.25
+shadow_enabled = true
+directional_shadow_max_distance = 28.0
+
+[node name="CeilingLightA" type="OmniLight3D" parent="."]
+position = Vector3(-2.6, 3.05, -1.2)
+light_color = Color(0.72, 0.78, 0.84, 1)
+light_energy = 0.55
+omni_range = 7.5
+
+[node name="CeilingLightB" type="OmniLight3D" parent="."]
+position = Vector3(2.6, 3.05, 1.4)
+light_color = Color(0.72, 0.78, 0.84, 1)
+light_energy = 0.55
+omni_range = 7.5
+
+[node name="Geometry" type="StaticBody3D" parent="."]
+
+[node name="FloorCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("shape_floor")
+
+[node name="NorthWallCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(0, 1.7, -4.7)
+shape = SubResource("shape_north")
+
+[node name="WestWallCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(-7.2, 1.7, 0)
+shape = SubResource("shape_west")
+
+[node name="SouthWallWestCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(-2.35, 0.5, 4.7)
+shape = SubResource("shape_sw")
+
+[node name="SouthWallEastCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(5.55, 0.5, 4.7)
+shape = SubResource("shape_se")
+
+[node name="EastPonyCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(7.2, 0.5, 0)
+shape = SubResource("shape_eastpony")
+
+[node name="FloorMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("mesh_floor")
+material_override = SubResource("mat_floor")
+
+[node name="NorthWallMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(0, 1.7, -4.7)
+mesh = SubResource("mesh_north")
+material_override = SubResource("mat_wall")
+
+[node name="WestWallMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(-7.2, 1.7, 0)
+mesh = SubResource("mesh_west")
+material_override = SubResource("mat_wall")
+
+[node name="SouthWallWestMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(-2.35, 0.5, 4.7)
+mesh = SubResource("mesh_south_west")
+material_override = SubResource("mat_pony")
+
+[node name="SouthWallEastMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(5.55, 0.5, 4.7)
+mesh = SubResource("mesh_south_east")
+material_override = SubResource("mat_pony")
+
+[node name="EastPonyMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(7.2, 0.5, 0)
+mesh = SubResource("mesh_east_pony")
+material_override = SubResource("mat_pony")
+[node name="Blackboard" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.6, -4.46)
+mesh = SubResource("mesh_board")
+material_override = SubResource("mat_board")
+
+[node name="ChalkTray" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.72, -4.38)
+mesh = SubResource("mesh_tray")
+material_override = SubResource("mat_metal")
+
+[node name="BlackboardInspect" type="Area3D" parent="."]
+position = Vector3(0, 1.6, -4.15)
+script = ExtResource("5_inspectable")
+prompt = "Read the timetable on the board"
+interaction_id = &"blackboard"
+conversation = ExtResource("18_board")
+repeat_conversation = ExtResource("19_boardagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BlackboardInspect"]
+shape = SubResource("shape_inspect_wide")
+
+[node name="ClockFace" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.75, -4.46)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("mesh_clock")
+material_override = SubResource("mat_clock")
+
+[node name="HourHand" type="MeshInstance3D" parent="."]
+position = Vector3(-0.055, 2.72, -4.42)
+rotation_degrees = Vector3(0, 0, -118)
+mesh = SubResource("mesh_hand_h")
+material_override = SubResource("mat_noticeboard")
+
+[node name="MinuteHand" type="MeshInstance3D" parent="."]
+position = Vector3(0.06, 2.81, -4.42)
+rotation_degrees = Vector3(0, 0, -42)
+mesh = SubResource("mesh_hand_m")
+material_override = SubResource("mat_noticeboard")
+
+[node name="ClockInspect" type="Area3D" parent="."]
+position = Vector3(0, 2.75, -4.2)
+script = ExtResource("5_inspectable")
+prompt = "Check the clock"
+interaction_id = &"clock"
+conversation = ExtResource("26_clock")
+repeat_conversation = ExtResource("27_clockagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ClockInspect"]
+shape = SubResource("shape_inspect_clock")
+
+[node name="TeacherDesk" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TeacherDesk"]
+position = Vector3(0, 0.39, -3.4)
+shape = SubResource("shape_tdesk")
+
+[node name="DeskBody" type="MeshInstance3D" parent="TeacherDesk"]
+position = Vector3(0, 0.38, -3.4)
+mesh = SubResource("mesh_tdesk_body")
+material_override = SubResource("mat_wood_dark")
+
+[node name="DeskTop" type="MeshInstance3D" parent="TeacherDesk"]
+position = Vector3(0, 0.79, -3.4)
+mesh = SubResource("mesh_tdesk_top")
+material_override = SubResource("mat_wood_top")
+
+[node name="SetSquare" type="MeshInstance3D" parent="TeacherDesk"]
+position = Vector3(0.55, 0.86, -3.45)
+rotation_degrees = Vector3(0, 18, 0)
+mesh = SubResource("mesh_square")
+material_override = SubResource("mat_square")
+
+[node name="NameCard" type="MeshInstance3D" parent="TeacherDesk"]
+position = Vector3(-0.5, 0.9, -3.5)
+rotation_degrees = Vector3(-12, 8, 0)
+mesh = SubResource("mesh_card")
+material_override = SubResource("mat_paper")
+
+[node name="TeacherDeskInspect" type="Area3D" parent="."]
+position = Vector3(0, 0.75, -3.4)
+script = ExtResource("5_inspectable")
+prompt = "Look at the teacher's desk"
+interaction_id = &"teacher_desk"
+conversation = ExtResource("22_tdesk")
+repeat_conversation = ExtResource("23_tdeskagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TeacherDeskInspect"]
+shape = SubResource("shape_inspect_tdesk")
+
+[node name="SetSquareInspect" type="Area3D" parent="."]
+position = Vector3(0.55, 0.95, -3.45)
+script = ExtResource("5_inspectable")
+prompt = "Examine the wooden set square"
+interaction_id = &"set_square"
+priority = 2
+conversation = ExtResource("16_square")
+repeat_conversation = ExtResource("17_squareagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SetSquareInspect"]
+shape = SubResource("shape_inspect_square")
+
+[node name="NameCardInspect" type="Area3D" parent="."]
+position = Vector3(-0.5, 0.98, -3.5)
+script = ExtResource("5_inspectable")
+prompt = "Read the name card"
+interaction_id = &"name_card"
+priority = 1
+conversation = ExtResource("28_card")
+repeat_conversation = ExtResource("29_cardagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NameCardInspect"]
+shape = SubResource("shape_inspect_card")
+
+[node name="Noticeboard" type="MeshInstance3D" parent="."]
+position = Vector3(-6.96, 1.65, 0.6)
+mesh = SubResource("mesh_noticeboard")
+material_override = SubResource("mat_noticeboard")
+
+[node name="Paper0" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.85, 0.05)
+mesh = SubResource("mesh_paper")
+material_override = SubResource("mat_paper")
+
+[node name="Paper1" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.45, 0.4)
+mesh = SubResource("mesh_paper")
+material_override = SubResource("mat_paper")
+
+[node name="Paper2" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.9, 0.75)
+mesh = SubResource("mesh_paper")
+material_override = SubResource("mat_paper_red")
+
+[node name="Paper3" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.5, 1.05)
+mesh = SubResource("mesh_paper")
+material_override = SubResource("mat_paper")
+
+[node name="Paper4" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.2, 0.7)
+mesh = SubResource("mesh_paper")
+material_override = SubResource("mat_paper")
+
+[node name="NoticeboardInspect" type="Area3D" parent="."]
+position = Vector3(-6.65, 1.5, 0.6)
+script = ExtResource("5_inspectable")
+prompt = "Check the noticeboard"
+interaction_id = &"noticeboard"
+conversation = ExtResource("20_notice")
+repeat_conversation = ExtResource("21_noticeagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NoticeboardInspect"]
+shape = SubResource("shape_inspect_noticeboard")
+
+[node name="WindowGlow" type="MeshInstance3D" parent="."]
+position = Vector3(-6.99, 2.0, -2.3)
+mesh = SubResource("mesh_window")
+material_override = SubResource("mat_window_glow")
+
+[node name="WindowFrameTop" type="MeshInstance3D" parent="."]
+position = Vector3(-6.96, 2.78, -2.3)
+mesh = SubResource("mesh_window_frame_h")
+material_override = SubResource("mat_metal")
+
+[node name="WindowFrameBottom" type="MeshInstance3D" parent="."]
+position = Vector3(-6.96, 1.22, -2.3)
+mesh = SubResource("mesh_window_frame_h")
+material_override = SubResource("mat_metal")
+
+[node name="WindowInspect" type="Area3D" parent="."]
+position = Vector3(-6.6, 1.6, -2.3)
+script = ExtResource("5_inspectable")
+prompt = "Look out the window"
+interaction_id = &"window"
+conversation = ExtResource("24_window")
+repeat_conversation = ExtResource("25_windowagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WindowInspect"]
+shape = SubResource("shape_inspect_window")
+
+[node name="StudentDesk0" parent="." instance=ExtResource("1_desk")]
+position = Vector3(-2.6, 0, 0.0)
+
+[node name="StudentDesk1" parent="." instance=ExtResource("1_desk")]
+position = Vector3(0.2, 0, 0.0)
+
+[node name="StudentDesk2" parent="." instance=ExtResource("1_desk")]
+position = Vector3(3.0, 0, 0.0)
+
+[node name="StudentDesk3" parent="." instance=ExtResource("1_desk")]
+position = Vector3(-2.6, 0, 1.6)
+
+[node name="StudentDesk4" parent="." instance=ExtResource("1_desk")]
+position = Vector3(0.2, 0, 1.6)
+
+[node name="StudentDesk5" parent="." instance=ExtResource("1_desk")]
+position = Vector3(3.0, 0, 1.6)
+
+[node name="StudentDesk6" parent="." instance=ExtResource("1_desk")]
+position = Vector3(-2.6, 0, -1.6)
+
+[node name="StudentDesk7" parent="." instance=ExtResource("1_desk")]
+position = Vector3(0.2, 0, -1.6)
+
+[node name="StudentDesk8" parent="." instance=ExtResource("1_desk")]
+position = Vector3(3.0, 0, -1.6)
+
+[node name="ProtagonistBag" type="MeshInstance3D" parent="."]
+position = Vector3(0.05, 0.95, 1.52)
+rotation_degrees = Vector3(0, 12, 0)
+mesh = SubResource("mesh_bag_body")
+material_override = SubResource("mat_bag")
+
+[node name="BagPocket" type="MeshInstance3D" parent="."]
+position = Vector3(0.05, 0.93, 1.34)
+rotation_degrees = Vector3(0, 12, 0)
+mesh = SubResource("mesh_bag_pocket")
+material_override = SubResource("mat_bag")
+
+[node name="BagHandle" type="MeshInstance3D" parent="."]
+position = Vector3(0.05, 1.13, 1.52)
+mesh = SubResource("mesh_bag_handle")
+material_override = SubResource("mat_metal")
+
+[node name="BagInspect" type="Area3D" parent="."]
+position = Vector3(0.05, 1.02, 1.5)
+script = ExtResource("5_inspectable")
+prompt = "Search the schoolbag"
+interaction_id = &"schoolbag"
+counts_for_progress = false
+conversation = ExtResource("14_bag")
+repeat_conversation = ExtResource("15_bagagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BagInspect"]
+shape = SubResource("shape_inspect_bag")
+[node name="Q_NPC" type="Node3D" parent="."]
+position = Vector3(-2.6, 0, 2.28)
+
+[node name="QBody" type="MeshInstance3D" parent="Q_NPC"]
+position = Vector3(0, 0.95, 0)
+mesh = SubResource("mesh_capsule_q")
+material_override = SubResource("mat_q")
+
+[node name="QHead" type="MeshInstance3D" parent="Q_NPC"]
+position = Vector3(0, 1.72, 0)
+mesh = SubResource("mesh_head_q")
+material_override = SubResource("mat_skin")
+
+[node name="QTalk" type="Area3D" parent="Q_NPC"]
+position = Vector3(0, 1.1, 0)
+script = ExtResource("6_qtalk")
+prompt = "Talk to Q"
+interaction_id = &"q_npc"
+conversation = ExtResource("30_qtalk")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Q_NPC/QTalk"]
+shape = SubResource("shape_inspect_q")
+
+[node name="N_NPC" type="Node3D" parent="."]
+position = Vector3(3.2, 0, 5.8)
+visible = false
+
+[node name="NBody" type="MeshInstance3D" parent="N_NPC"]
+position = Vector3(0, 1.02, 0)
+mesh = SubResource("mesh_capsule_n")
+material_override = SubResource("mat_n")
+
+[node name="NHead" type="MeshInstance3D" parent="N_NPC"]
+position = Vector3(0, 1.85, 0)
+mesh = SubResource("mesh_head_n")
+material_override = SubResource("mat_skin")
+
+[node name="NEntryPoint" type="Marker3D" parent="."]
+position = Vector3(3.2, 0, 5.6)
+
+[node name="NDeskPoint" type="Marker3D" parent="."]
+position = Vector3(0, 0, -2.35)
+
+[node name="DoorPostLeft" type="MeshInstance3D" parent="."]
+position = Vector3(2.3, 1.15, 4.7)
+mesh = SubResource("mesh_doorframe_post")
+material_override = SubResource("mat_metal")
+
+[node name="DoorPostRight" type="MeshInstance3D" parent="."]
+position = Vector3(4.1, 1.15, 4.7)
+mesh = SubResource("mesh_doorframe_post")
+material_override = SubResource("mat_metal")
+
+[node name="DoorLintel" type="MeshInstance3D" parent="."]
+position = Vector3(3.2, 2.4, 4.7)
+mesh = SubResource("mesh_doorframe_lintel")
+material_override = SubResource("mat_metal")
+
+[node name="ExitDoor" type="Area3D" parent="."]
+position = Vector3(3.2, 1.1, 4.7)
+script = ExtResource("7_exitdoor")
+prompt = "Leave the classroom"
+interaction_id = &"exit_door"
+target_scene = "res://scenes/locations/corridor/corridor.tscn"
+spawn_id = &"from_classroom"
+conversation = ExtResource("31_doorlocked")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExitDoor"]
+shape = SubResource("shape_exit_door")
+
+[node name="SpawnPlayer" type="Marker3D" parent="."]
+position = Vector3(0.2, 0, 0.9)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0.2, 0, 0.9)
+
+[node name="LessonDirector" type="Node" parent="."]
+script = ExtResource("4_director")
+wake_conversation = ExtResource("8_wake")
+q_intro_conversation = ExtResource("9_qintro")
+q_bag_conversation = ExtResource("10_qbag")
+bell_gap_conversation = ExtResource("11_bellgap")
+n_arrival_conversation = ExtResource("12_narrow")
+imagination_conversation = ExtResource("13_imagine")
+n_npc = NodePath("../N_NPC")
+n_entry_point = NodePath("../NEntryPoint")
+n_desk_point = NodePath("../NDeskPoint")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+[sub_resource type="BoxShape3D" id="shape_doorblock"]
+size = Vector3(1.75, 2.5, 0.3)
+
+[sub_resource type="BoxMesh" id="mesh_hallway"]
+size = Vector3(2.1, 2.6, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="mat_hallway"]
+albedo_color = Color(0.06, 0.06, 0.065, 1)
+roughness = 1.0
+
+[node name="DoorBlockCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(3.2, 1.25, 4.72)
+shape = SubResource("shape_doorblock")
+
+[node name="HallwayBackdrop" type="MeshInstance3D" parent="."]
+position = Vector3(3.2, 1.25, 6.15)
+mesh = SubResource("mesh_hallway")
+material_override = SubResource("mat_hallway")
+
+[node name="HallwayGlow" type="OmniLight3D" parent="."]
+position = Vector3(3.2, 1.7, 5.5)
+light_color = Color(0.85, 0.68, 0.4, 1)
+light_energy = 0.5
+omni_range = 2.6

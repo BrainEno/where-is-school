@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, concise game-production documents, and a headless CI smoke test. The full game and vertical slice are not yet implemented.
+**Milestone 1: the Biology Class prologue is implemented.** A clean checkout opens into a playable classroom slice: wake at a desk, Q opens the conversation, the missing-textbook search, inspectable props (schoolbag, wooden set square, blackboard, noticeboard, teacher's desk, window, clock, name card), a clearly-marked subjective-imagination beat, B's absence, substitute N, dismissal, a corridor route, and the school-gate threshold. See [docs/PROLOGUE.md](docs/PROLOGUE.md) for the implementation map and validation commands. The full game and later prologue segments (street route, green animal) are not yet implemented.
 
 ## Technical baseline
 
@@ -19,7 +19,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 ## Repository map
 
 - AGENTS.md — authoritative coding-agent instructions.
-- project.godot, scenes/, scripts/ — Godot project and starter runtime.
+- project.godot, scenes/, scripts/, data/ — Godot project and runtime (classroom prologue, dialogue graph, interaction, story state).
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
 

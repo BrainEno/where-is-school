@@ -1,0 +1,8 @@
+[gd_resource type="CharacterDef" format=3]
+
+[resource]
+id = &"inner"
+display_name = "Inner Voice"
+description = "The protagonist's interior uncertainty."
+kind = "inner"
+portrait_color = Color(0.55, 0.55, 0.58, 1)

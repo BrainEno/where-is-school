@@ -4,7 +4,8 @@ No production assets are approved by this foundation commit. Populate this ledge
 
 | Asset/path | Type | Creator/source | Source URL | License / terms | Attribution required | Modifications | Commercial-use checked | Approved by |
 |---|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — | — |
+| scenes/ locations graybox | 3D placeholder geometry | Project contributors (in-engine primitives) | This repository | Proprietary to project; not for redistribution | No | Hand-built from Godot primitive meshes/materials | Yes | n/a — graybox placeholders, no approval required (art bible) |
+| Runtime sound effects (scripts/audio/sfx_bank.gd) | Synthesized audio | Generated procedurally at runtime | This repository | Proprietary to project | No | Authored in code; no recordings | Yes | n/a — synthesized placeholders |
 
 ## Rules
 

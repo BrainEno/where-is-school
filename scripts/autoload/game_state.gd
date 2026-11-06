@@ -16,6 +16,14 @@ func get_flag(flag: StringName, default_value: Variant = null) -> Variant:
 	return _story_flags.get(flag, default_value)
 
 
+func count_flags_with_prefix(prefix: String) -> int:
+	var count: int = 0
+	for key in _story_flags:
+		if String(key).begins_with(prefix):
+			count += 1
+	return count
+
+
 func set_flag(flag: StringName, value: Variant) -> void:
 	if String(flag).is_empty():
 		push_error("GameState.set_flag received an empty flag identifier.")

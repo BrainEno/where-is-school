@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_t1"]
+id = &"t1"
+speaker_id = &"narrator"
+text = "Face-down quizzes. An ink stain in the exact shape of panic. A drawer that won't quite close."
+next_id = &"t2"
+
+[sub_resource type="DialogueEntry" id="Entry_t2"]
+id = &"t2"
+speaker_id = &"narrator"
+text = "The chair behind the desk is pushed in with parade-ground precision. Students don't sit there. Nobody decides to. Nobody has to."
+
+[resource]
+id = &"teacher_desk"
+start_id = &"t1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_t1"), SubResource("Entry_t2")])

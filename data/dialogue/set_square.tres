@@ -1,0 +1,26 @@
+[gd_resource type="DialogueConversation" load_steps=4 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_s1"]
+id = &"s1"
+speaker_id = &"narrator"
+text = "A wooden set square on the teacher's desk. Big enough to rule a border on an essay. One corner has gone round with wear. One edge is chipped."
+next_id = &"s2"
+
+[sub_resource type="DialogueEntry" id="Entry_s2"]
+id = &"s2"
+speaker_id = &"narrator"
+text = "It sits where a hand would fall naturally, between the stack of quizzes and the edge of the desk. Deliberately in reach."
+next_id = &"s3"
+
+[sub_resource type="DialogueEntry" id="Entry_s3"]
+id = &"s3"
+speaker_id = &"inner"
+text = "You know this shape. You can't say how. Your hand closes slowly around nothing."
+set_flag = &"recollection.set_square"
+set_value = true
+
+[resource]
+id = &"set_square"
+start_id = &"s1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_s1"), SubResource("Entry_s2"), SubResource("Entry_s3")])

@@ -1,0 +1,60 @@
+[gd_resource type="DialogueConversation" load_steps=10 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_ft_start"]
+id = &"ft_start"
+speaker_id = &"q"
+text = "Back again? Fire away."
+next_id = &"ft_choice"
+
+[sub_resource type="DialogueEntry" id="Entry_ft_start_pretend"]
+id = &"ft_start_pretend"
+speaker_id = &"q"
+text = "Look at you, memory already jogging. Go on."
+next_id = &"ft_choice"
+
+[sub_resource type="DialogueChoice" id="Choice_ft_choice_0"]
+text = "Tell me about B."
+next_id = &"ft_b"
+
+[sub_resource type="DialogueChoice" id="Choice_ft_choice_1"]
+text = "What if B walks in right now?"
+next_id = &"ft_imagine_hint"
+condition_flag = &"observed.textbook_missing"
+condition_equals = true
+set_flag = &"flow.want_imagination"
+set_value = true
+
+[sub_resource type="DialogueChoice" id="Choice_ft_choice_2"]
+text = "Nothing. Forget it."
+next_id = &"ft_bye"
+
+[sub_resource type="DialogueEntry" id="Entry_ft_choice"]
+id = &"ft_choice"
+speaker_id = &"q"
+text = "So what is it?"
+choices = Array[DialogueChoice]([SubResource("Choice_ft_choice_0"), SubResource("Choice_ft_choice_1"), SubResource("Choice_ft_choice_2")])
+
+[sub_resource type="DialogueEntry" id="Entry_ft_b"]
+id = &"ft_b"
+speaker_id = &"q"
+text = "B? Everything has a procedure. Quizzes returned with red in the margins, always. Stand when you answer. Ask before your seat. That's B."
+next_id = &"ft_choice"
+set_flag = &"claim.q.b_strict"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_ft_imagine_hint"]
+id = &"ft_imagine_hint"
+speaker_id = &"q"
+text = "Then I'd trade seats with you. Seriously. It's the least I can do."
+next_id = &"ft_choice"
+
+[sub_resource type="DialogueEntry" id="Entry_ft_bye"]
+id = &"ft_bye"
+speaker_id = &"q"
+text = "Heh. Yeah. I'll be here."
+
+[resource]
+id = &"q_free_talk"
+start_id = &"ft_start"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_ft_start"), SubResource("Entry_ft_start_pretend"), SubResource("Entry_ft_choice"), SubResource("Entry_ft_b"), SubResource("Entry_ft_imagine_hint"), SubResource("Entry_ft_bye")])

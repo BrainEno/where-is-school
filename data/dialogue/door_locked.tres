@@ -1,0 +1,20 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_d1"]
+id = &"d1"
+speaker_id = &"narrator"
+text = "Your hand is on the handle before you've decided to do anything."
+next_id = &"d2"
+
+[sub_resource type="DialogueEntry" id="Entry_d2"]
+id = &"d2"
+speaker_id = &"narrator"
+text = "Stop. The lesson hasn't started. Everyone would see. Everyone would remember. You let go of the handle."
+set_flag = &"flow.thought_about_leaving"
+set_value = true
+
+[resource]
+id = &"door_locked"
+start_id = &"d1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_d1"), SubResource("Entry_d2")])

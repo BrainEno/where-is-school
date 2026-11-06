@@ -1,0 +1,34 @@
+[gd_resource type="DialogueConversation" load_steps=5 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_b1"]
+id = &"b1"
+speaker_id = &"narrator"
+text = "Zip teeth protest. Notebook. Three pens, none capped. A gum wrapper older than it should be."
+next_id = &"b2"
+
+[sub_resource type="DialogueEntry" id="Entry_b2"]
+id = &"b2"
+speaker_id = &"narrator"
+text = "The long sleeve at the bottom, the one shaped like a textbook. It's empty."
+next_id = &"b3"
+set_flag = &"observed.textbook_missing"
+set_value = true
+
+[sub_resource type="DialogueEntry" id="Entry_b3"]
+id = &"b3"
+speaker_id = &"inner"
+text = "You pat the whole bag again anyway. Corners. Side pocket. Pencil case. Nothing."
+next_id = &"b4"
+
+[sub_resource type="DialogueEntry" id="Entry_b4"]
+id = &"b4"
+speaker_id = &"narrator"
+text = "Under the notebook: a folded cover page from a past exam. The answers section is blank, and the fold is worn soft, like it's been opened many times."
+set_flag = &"recollection.exam_paper_blank"
+set_value = true
+
+[resource]
+id = &"bag_search"
+start_id = &"b1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_b1"), SubResource("Entry_b2"), SubResource("Entry_b3"), SubResource("Entry_b4")])

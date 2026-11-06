@@ -1,0 +1,32 @@
+[gd_resource type="DialogueConversation" load_steps=5 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_i1"]
+id = &"i1"
+speaker_id = &"inner"
+text = "The door doesn't move. Fine. So it doesn't move. You run the tape anyway — the way you've run it all morning."
+next_id = &"i2"
+
+[sub_resource type="DialogueEntry" id="Entry_i2"]
+id = &"i2"
+speaker_id = &"imagination"
+text = "'No textbook. I see. We'll revisit this after class.'"
+next_id = &"i3"
+
+[sub_resource type="DialogueEntry" id="Entry_i3"]
+id = &"i3"
+speaker_id = &"inner"
+text = "Your hands are flat on the desk, palms down, exactly where they have been all along."
+next_id = &"i4"
+
+[sub_resource type="DialogueEntry" id="Entry_i4"]
+id = &"i4"
+speaker_id = &"narrator"
+text = "The fantasy loses interest in itself and thins. The classroom is only the classroom. The door is still shut."
+set_flag = &"imagination.b_confrontation_seen"
+set_value = true
+
+[resource]
+id = &"imagination_b"
+start_id = &"i1"
+presentation = "imagination"
+entries = Array[DialogueEntry]([SubResource("Entry_i1"), SubResource("Entry_i2"), SubResource("Entry_i3"), SubResource("Entry_i4")])

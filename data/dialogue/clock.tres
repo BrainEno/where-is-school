@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_c1"]
+id = &"c1"
+speaker_id = &"narrator"
+text = "A school clock, the kind that clunks when the minute jumps. It says 8:07. The second hand seems to be thinking about it."
+next_id = &"c2"
+
+[sub_resource type="DialogueEntry" id="Entry_c2"]
+id = &"c2"
+speaker_id = &"narrator"
+text = "Eventually it clunks. Behind you, nobody reacts. That is somehow the loudest part."
+
+[resource]
+id = &"clock"
+start_id = &"c1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_c1"), SubResource("Entry_c2")])

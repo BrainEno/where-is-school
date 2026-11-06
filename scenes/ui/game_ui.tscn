@@ -1,0 +1,315 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/game_ui.gd" id="1_game_ui"]
+[ext_resource type="Script" path="res://scripts/ui/dialogue_box.gd" id="2_dialogue_box"]
+
+[sub_resource type="StyleBoxFlat" id="panel_style"]
+bg_color = Color(0.075, 0.08, 0.082, 0.88)
+border_width_left = 1
+border_width_right = 1
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color(0.32, 0.33, 0.31, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="panel_style_light"]
+bg_color = Color(0.14, 0.14, 0.135, 0.92)
+border_width_left = 1
+border_width_right = 1
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.46, 0.42, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 8.0
+content_margin_bottom = 8.0
+
+[node name="GameUI" type="CanvasLayer"]
+script = ExtResource("1_game_ui")
+
+[node name="HUD" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="ObjectivePanel" type="PanelContainer" parent="HUD"]
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 480.0
+offset_bottom = 130.0
+theme_override_styles/panel = SubResource("panel_style")
+
+[node name="VBox" type="VBoxContainer" parent="HUD/ObjectivePanel"]
+
+[node name="ObjectiveTitle" type="Label" parent="HUD/ObjectivePanel/VBox"]
+text = "OBJECTIVE"
+theme_override_colors/font_color = Color(0.55, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="ObjectiveText" type="Label" parent="HUD/ObjectivePanel/VBox"]
+custom_minimum_size = Vector2(400, 26)
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.89, 0.84, 1)
+theme_override_font_sizes/font_size = 19
+
+[node name="ControlsHint" type="Label" parent="HUD/ObjectivePanel/VBox"]
+text = "WASD / arrows — move    E — interact    Space — continue    Tab — backlog    Esc — settings"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.51, 0.48, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="PromptPanel" type="PanelContainer" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_right = 260.0
+offset_top = -78.0
+offset_bottom = -30.0
+theme_override_styles/panel = SubResource("panel_style_light")
+visible = false
+
+[node name="PromptText" type="Label" parent="HUD/PromptPanel"]
+text = ""
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.92, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="BacklogHint" type="Label" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -330.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = 42.0
+text = "Tab — backlog · Esc — settings"
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.5, 0.51, 0.48, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="DialogueBox" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2_dialogue_box")
+
+[node name="ImaginationTint" type="ColorRect" parent="DialogueBox"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.15, 0.16, 0.21, 0.45)
+mouse_filter = 2
+visible = false
+
+[node name="ImaginationBanner" type="Label" parent="DialogueBox"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -360.0
+offset_top = 22.0
+offset_right = 360.0
+offset_bottom = 62.0
+text = "S U B J E C T I V E   I M A G I N A T I O N   —   N O T   A   R E C O R D   O F   E V E N T S"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.78, 0.55, 0.33, 1)
+theme_override_font_sizes/font_size = 16
+visible = false
+
+[node name="Panel" type="PanelContainer" parent="DialogueBox"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+anchor_right = 1.0
+offset_left = 120.0
+offset_right = -120.0
+offset_top = -252.0
+offset_bottom = -26.0
+theme_override_styles/panel = SubResource("panel_style")
+visible = false
+
+[node name="MarginContainer" type="MarginContainer" parent="DialogueBox/Panel"]
+
+[node name="HBox" type="HBoxContainer" parent="DialogueBox/Panel/MarginContainer"]
+theme_override_constants/separation = 18
+
+[node name="PortraitBox" type="PanelContainer" parent="DialogueBox/Panel/MarginContainer/HBox"]
+custom_minimum_size = Vector2(104, 112)
+theme_override_styles/panel = SubResource("panel_style_light")
+
+[node name="PortraitInitial" type="Label" parent="DialogueBox/Panel/MarginContainer/HBox/PortraitBox"]
+text = "?"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.94, 0.9, 1)
+theme_override_font_sizes/font_size = 60
+
+[node name="VBox" type="VBoxContainer" parent="DialogueBox/Panel/MarginContainer/HBox"]
+size_flags_horizontal = 3
+
+[node name="SpeakerLabel" type="Label" parent="DialogueBox/Panel/MarginContainer/HBox/VBox"]
+text = ""
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.78, 0.74, 0.66, 1)
+
+[node name="BodyText" type="RichTextLabel" parent="DialogueBox/Panel/MarginContainer/HBox/VBox"]
+custom_minimum_size = Vector2(0, 96)
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 2
+scroll_active = false
+theme_override_colors/default_color = Color(0.92, 0.91, 0.87, 1)
+theme_override_font_sizes/normal_font_size = 23
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="DialogueBox/Panel/MarginContainer/HBox/VBox"]
+theme_override_constants/separation = 6
+
+[node name="AdvanceHint" type="Label" parent="DialogueBox/Panel/MarginContainer/HBox/VBox"]
+text = "Space / Click ▸"
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.48, 0.49, 0.46, 1)
+theme_override_font_sizes/font_size = 13
+visible = false
+
+[node name="BacklogPanel" type="Control" parent="DialogueBox"]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_right = -14.0
+offset_top = 64.0
+offset_bottom = -24.0
+visible = false
+mouse_filter = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="DialogueBox/BacklogPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("panel_style")
+
+[node name="VBox" type="VBoxContainer" parent="DialogueBox/BacklogPanel/PanelContainer"]
+
+[node name="BacklogTitle" type="Label" parent="DialogueBox/BacklogPanel/PanelContainer/VBox"]
+text = "B A C K L O G"
+theme_override_colors/font_color = Color(0.55, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ScrollContainer" type="ScrollContainer" parent="DialogueBox/BacklogPanel/PanelContainer/VBox"]
+size_flags_vertical = 3
+
+[node name="BacklogText" type="RichTextLabel" parent="DialogueBox/BacklogPanel/PanelContainer/VBox/ScrollContainer"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(380, 0)
+text = ""
+autowrap_mode = 2
+scroll_active = false
+theme_override_colors/default_color = Color(0.86, 0.85, 0.8, 1)
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="DialogueBox"]
+
+[node name="SettingsPanel" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+visible = false
+
+[node name="PanelContainer" type="PanelContainer" parent="SettingsPanel"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_right = 220.0
+offset_top = -150.0
+offset_bottom = 150.0
+theme_override_styles/panel = SubResource("panel_style")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPanel/PanelContainer"]
+theme_override_constants/separation = 12
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel/PanelContainer/VBox"]
+text = "S E T T I N G S"
+theme_override_colors/font_color = Color(0.6, 0.61, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="SpeedButton" type="Button" parent="SettingsPanel/PanelContainer/VBox"]
+text = "Text speed:  Normal"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="SizeButton" type="Button" parent="SettingsPanel/PanelContainer/VBox"]
+text = "Text size:  Normal"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="SettingsNote" type="Label" parent="SettingsPanel/PanelContainer/VBox"]
+text = "Applies to dialogue, choices and backlog text."
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.51, 0.48, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="CloseButton" type="Button" parent="SettingsPanel/PanelContainer/VBox"]
+text = "Close"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="EndCard" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+visible = false
+
+[node name="Dim" type="ColorRect" parent="EndCard"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.025, 0.028, 0.78)
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="EndCard"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -340.0
+offset_right = 340.0
+offset_top = -210.0
+offset_bottom = 210.0
+theme_override_styles/panel = SubResource("panel_style")
+
+[node name="VBox" type="VBoxContainer" parent="EndCard/Panel"]
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="EndCard/Panel/VBox"]
+text = "END OF THE BIOLOGY CLASS"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.85, 0.76, 1)
+theme_override_font_sizes/font_size = 34
+
+[node name="Summary" type="Label" parent="EndCard/Panel/VBox"]
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.74, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="Separator" type="HSeparator" parent="EndCard/Panel/VBox"]
+
+[node name="Note" type="Label" parent="EndCard/Panel/VBox"]
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.53, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="RestartButton" type="Button" parent="EndCard/Panel/VBox"]
+text = "Return to the beginning"
+custom_minimum_size = Vector2(0, 44)

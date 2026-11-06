@@ -24,13 +24,19 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - GameState autoload for named runtime story flags.
 - Headless scene-instantiation smoke test and GitHub Actions validation.
 
+### Implemented in milestone 1 (the Biology Class prologue)
+- Interaction targeting and inspectable-object contract (Interactable/InteractionSensor).
+- Custom, testable dialogue runtime (DialogueConversation/DialogueRunner; no addon dependency).
+- Portrait placeholders, choices with condition gating, backlog, typewriter effect.
+- Scene transition orchestration (SceneFlow autoload) and graybox classroom/corridor.
+- Text speed and text size settings (Settings autoload, persisted to user://settings.cfg).
+- Runtime-synthesized sound effects (no recorded audio assets).
+
 ### Planned, but deliberately not implemented yet
-- Interaction targeting and inspectable-object contract.
-- Dialogue runtime / Dialogic adapter and portrait presentation.
+- Dialogic/addon adoption review (the custom runtime may remain; no dependency was added).
 - Journal and unreliable route notebook.
-- Scene transition orchestration and world-state-driven environment changes.
-- Versioned save/load, slot management, and schema migration.
-- Accessibility settings, localization-ready text flow, audio, and input rebinding.
+- Save/load with versioned schema and migration.
+- Localization flow, rebindable input, broader accessibility settings.
 
 Do not implement every planned item in one large foundation PR. Add each when a concrete slice requires it.
 

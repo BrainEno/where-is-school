@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_w1"]
+id = &"w1"
+speaker_id = &"narrator"
+text = "The yard below. Grey sky doing its grey best. The fence with an excellent view of nothing."
+next_id = &"w2"
+
+[sub_resource type="DialogueEntry" id="Entry_w2"]
+id = &"w2"
+speaker_id = &"narrator"
+text = "The yard is ordinary. The sky is not interested. You check the distance to the gate anyway, out of a habit you can't name."
+
+[resource]
+id = &"window"
+start_id = &"w1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_w1"), SubResource("Entry_w2")])

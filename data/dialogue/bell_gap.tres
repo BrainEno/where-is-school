@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_g1"]
+id = &"g1"
+speaker_id = &"narrator"
+text = "The bell comes down the corridor and through the walls. Somewhere, a chair squeaks. Nobody stands up."
+next_id = &"g2"
+
+[sub_resource type="DialogueEntry" id="Entry_g2"]
+id = &"g2"
+speaker_id = &"narrator"
+text = "The door stays shut. Nobody comes in. Somehow the whole room knows it before anyone says so."
+
+[resource]
+id = &"bell_gap"
+start_id = &"g1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_g1"), SubResource("Entry_g2")])

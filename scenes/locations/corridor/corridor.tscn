@@ -1,0 +1,295 @@
+[gd_scene load_steps=40 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="2_ui"]
+[ext_resource type="Script" path="res://scripts/world/inspectable.gd" id="3_inspectable"]
+[ext_resource type="Script" path="res://scripts/world/gate_exit.gd" id="4_gateexit"]
+[ext_resource type="Script" path="res://scripts/world/corridor_director.gd" id="5_corridor"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/gate_end.tres" id="6_gate"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/trophy_case.tres" id="7_trophy"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/trophy_case_again.tres" id="8_trophyagain"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/corridor_notice.tres" id="9_notice"]
+[ext_resource type="DialogueConversation" path="res://data/dialogue/corridor_notice_again.tres" id="10_noticeagain"]
+
+[sub_resource type="Environment" id="env_corridor"]
+background_mode = 1
+background_color = Color(0.055, 0.058, 0.062, 1)
+ambient_light_color = Color(0.27, 0.285, 0.275, 1)
+ambient_light_energy = 0.85
+fog_enabled = true
+fog_light_color = Color(0.3, 0.32, 0.31, 1)
+fog_density = 0.025
+
+[sub_resource type="StandardMaterial3D" id="mat_floor"]
+albedo_color = Color(0.36, 0.36, 0.34, 1)
+roughness = 0.95
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.42, 0.44, 0.4, 1)
+roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="mat_pony"]
+albedo_color = Color(0.38, 0.4, 0.37, 1)
+roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="mat_wood_dark"]
+albedo_color = Color(0.3, 0.23, 0.15, 1)
+roughness = 0.8
+[sub_resource type="StandardMaterial3D" id="mat_paper"]
+albedo_color = Color(0.72, 0.69, 0.58, 1)
+roughness = 0.95
+[sub_resource type="StandardMaterial3D" id="mat_red"]
+albedo_color = Color(0.55, 0.3, 0.25, 1)
+roughness = 0.95
+[sub_resource type="StandardMaterial3D" id="mat_gold"]
+albedo_color = Color(0.6, 0.5, 0.28, 1)
+roughness = 0.3
+metallic = 0.7
+[sub_resource type="StandardMaterial3D" id="mat_metal"]
+albedo_color = Color(0.24, 0.27, 0.3, 1)
+roughness = 0.4
+metallic = 0.6
+[sub_resource type="StandardMaterial3D" id="mat_gate_glow"]
+albedo_color = Color(0.9, 0.58, 0.32, 1)
+emission_enabled = true
+emission = Color(1.0, 0.64, 0.34, 1)
+emission_energy_multiplier = 1.7
+roughness = 1.0
+[sub_resource type="StandardMaterial3D" id="mat_door_dark"]
+albedo_color = Color(0.09, 0.1, 0.11, 1)
+roughness = 1.0
+[sub_resource type="BoxMesh" id="mesh_floor"]
+size = Vector3(21, 0.2, 4.6)
+[sub_resource type="BoxMesh" id="mesh_north"]
+size = Vector3(21, 3.4, 0.4)
+[sub_resource type="BoxMesh" id="mesh_pony"]
+size = Vector3(21, 1.0, 0.3)
+[sub_resource type="BoxMesh" id="mesh_end"]
+size = Vector3(0.4, 3.4, 4.6)
+[sub_resource type="BoxMesh" id="mesh_bench_top"]
+size = Vector3(2.2, 0.09, 0.5)
+[sub_resource type="BoxMesh" id="mesh_bench_base"]
+size = Vector3(1.9, 0.42, 0.45)
+[sub_resource type="BoxMesh" id="mesh_trophy"]
+size = Vector3(1.7, 1.35, 0.45)
+[sub_resource type="CylinderMesh" id="mesh_cup"]
+radius = 0.07
+height = 0.2
+[sub_resource type="BoxMesh" id="mesh_poster"]
+size = Vector3(1.0, 1.3, 0.03)
+[sub_resource type="BoxMesh" id="mesh_redline"]
+size = Vector3(1.0, 0.16, 0.032)
+[sub_resource type="BoxMesh" id="mesh_gate_glow"]
+size = Vector3(0.1, 2.5, 2.6)
+[sub_resource type="BoxMesh" id="mesh_post"]
+size = Vector3(0.28, 3.0, 0.28)
+[sub_resource type="BoxMesh" id="mesh_lintel"]
+size = Vector3(0.35, 0.32, 3.2)
+[sub_resource type="BoxMesh" id="mesh_classroom_door"]
+size = Vector3(0.1, 2.3, 1.7)
+[sub_resource type="BoxMesh" id="mesh_lintel_west"]
+size = Vector3(0.25, 0.3, 2.1)
+[sub_resource type="BoxShape3D" id="shape_floor"]
+size = Vector3(21, 0.2, 4.6)
+[sub_resource type="BoxShape3D" id="shape_north"]
+size = Vector3(21, 3.4, 0.4)
+[sub_resource type="BoxShape3D" id="shape_pony"]
+size = Vector3(21, 1.0, 0.3)
+[sub_resource type="BoxShape3D" id="shape_end_west"]
+size = Vector3(0.4, 3.4, 4.6)
+[sub_resource type="BoxShape3D" id="shape_end_east"]
+size = Vector3(0.4, 3.4, 4.6)
+[sub_resource type="BoxShape3D" id="shape_trophy"]
+size = Vector3(2.0, 1.9, 1.0)
+[sub_resource type="BoxShape3D" id="shape_poster"]
+size = Vector3(1.4, 1.8, 0.5)
+[sub_resource type="BoxShape3D" id="shape_gate"]
+size = Vector3(1.6, 2.9, 2.8)
+
+[node name="Corridor" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env_corridor")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -40, 0)
+light_color = Color(0.82, 0.75, 0.62, 1)
+light_energy = 0.65
+
+[node name="CeilingLightA" type="OmniLight3D" parent="."]
+position = Vector3(-4.0, 3.0, 0)
+light_color = Color(0.7, 0.76, 0.82, 1)
+light_energy = 0.5
+omni_range = 7.0
+
+[node name="CeilingLightB" type="OmniLight3D" parent="."]
+position = Vector3(5.0, 3.0, 0)
+light_color = Color(0.7, 0.76, 0.82, 1)
+light_energy = 0.5
+omni_range = 7.0
+
+[node name="GateGlowLight" type="OmniLight3D" parent="."]
+position = Vector3(10.6, 2.2, 0)
+light_color = Color(0.95, 0.66, 0.38, 1)
+light_energy = 0.9
+omni_range = 5.5
+
+[node name="Geometry" type="StaticBody3D" parent="."]
+
+[node name="FloorCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(2, -0.1, 0)
+shape = SubResource("shape_floor")
+
+[node name="NorthCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(2, 1.7, -2.5)
+shape = SubResource("shape_north")
+
+[node name="PonyCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(2, 0.5, 2.4)
+shape = SubResource("shape_pony")
+
+[node name="EndWestCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(-8.2, 1.7, 0)
+shape = SubResource("shape_end_west")
+
+[node name="EndEastCollision" type="CollisionShape3D" parent="Geometry"]
+position = Vector3(12.2, 1.7, 0)
+shape = SubResource("shape_end_east")
+
+[node name="FloorMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(2, -0.1, 0)
+mesh = SubResource("mesh_floor")
+material_override = SubResource("mat_floor")
+
+[node name="NorthMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(2, 1.7, -2.5)
+mesh = SubResource("mesh_north")
+material_override = SubResource("mat_wall")
+
+[node name="PonyMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(2, 0.5, 2.4)
+mesh = SubResource("mesh_pony")
+material_override = SubResource("mat_pony")
+
+[node name="EndWestMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(-8.2, 1.7, 0)
+mesh = SubResource("mesh_end")
+material_override = SubResource("mat_wall")
+
+[node name="EndEastMesh" type="MeshInstance3D" parent="Geometry"]
+position = Vector3(12.2, 1.7, 0)
+mesh = SubResource("mesh_end")
+material_override = SubResource("mat_wall")
+
+[node name="BenchTop" type="MeshInstance3D" parent="."]
+position = Vector3(4.5, 0.46, 1.8)
+mesh = SubResource("mesh_bench_top")
+material_override = SubResource("mat_wood_dark")
+
+[node name="BenchBase" type="MeshInstance3D" parent="."]
+position = Vector3(4.5, 0.21, 1.8)
+mesh = SubResource("mesh_bench_base")
+material_override = SubResource("mat_wood_dark")
+
+[node name="TrophyCase" type="MeshInstance3D" parent="."]
+position = Vector3(0.0, 1.35, -2.25)
+mesh = SubResource("mesh_trophy")
+material_override = SubResource("mat_wood_dark")
+
+[node name="Cup0" type="MeshInstance3D" parent="."]
+position = Vector3(-0.45, 1.28, -2.0)
+mesh = SubResource("mesh_cup")
+material_override = SubResource("mat_gold")
+
+[node name="Cup1" type="MeshInstance3D" parent="."]
+position = Vector3(0.0, 1.28, -2.0)
+mesh = SubResource("mesh_cup")
+material_override = SubResource("mat_gold")
+
+[node name="Cup2" type="MeshInstance3D" parent="."]
+position = Vector3(0.45, 1.28, -2.0)
+mesh = SubResource("mesh_cup")
+material_override = SubResource("mat_gold")
+
+[node name="Poster" type="MeshInstance3D" parent="."]
+position = Vector3(6.0, 1.85, -2.27)
+mesh = SubResource("mesh_poster")
+material_override = SubResource("mat_paper")
+
+[node name="PosterRedLine" type="MeshInstance3D" parent="."]
+position = Vector3(6.0, 1.35, -2.265)
+mesh = SubResource("mesh_redline")
+material_override = SubResource("mat_red")
+
+[node name="ClassroomDoor" type="MeshInstance3D" parent="."]
+position = Vector3(-7.95, 1.15, 0)
+mesh = SubResource("mesh_classroom_door")
+material_override = SubResource("mat_door_dark")
+
+[node name="ClassroomLintel" type="MeshInstance3D" parent="."]
+position = Vector3(-7.9, 2.45, 0)
+mesh = SubResource("mesh_lintel_west")
+material_override = SubResource("mat_metal")
+
+[node name="GateGlow" type="MeshInstance3D" parent="."]
+position = Vector3(11.9, 1.25, 0)
+mesh = SubResource("mesh_gate_glow")
+material_override = SubResource("mat_gate_glow")
+
+[node name="GatePostLeft" type="MeshInstance3D" parent="."]
+position = Vector3(12.1, 1.5, 1.35)
+mesh = SubResource("mesh_post")
+material_override = SubResource("mat_metal")
+
+[node name="GatePostRight" type="MeshInstance3D" parent="."]
+position = Vector3(12.1, 1.5, -1.35)
+mesh = SubResource("mesh_post")
+material_override = SubResource("mat_metal")
+
+[node name="GateLintel" type="MeshInstance3D" parent="."]
+position = Vector3(12.1, 2.9, 0)
+mesh = SubResource("mesh_lintel")
+material_override = SubResource("mat_metal")
+
+[node name="TrophyCaseInspect" type="Area3D" parent="."]
+position = Vector3(0.0, 1.3, -2.0)
+script = ExtResource("3_inspectable")
+prompt = "Look at the trophy case"
+interaction_id = &"trophy_case"
+conversation = ExtResource("7_trophy")
+repeat_conversation = ExtResource("8_trophyagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TrophyCaseInspect"]
+shape = SubResource("shape_trophy")
+
+[node name="PosterInspect" type="Area3D" parent="."]
+position = Vector3(6.0, 1.8, -2.2)
+script = ExtResource("3_inspectable")
+prompt = "Read the notice"
+interaction_id = &"corridor_notice"
+conversation = ExtResource("9_notice")
+repeat_conversation = ExtResource("10_noticeagain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PosterInspect"]
+shape = SubResource("shape_poster")
+
+[node name="GateExit" type="Area3D" parent="."]
+position = Vector3(11.6, 1.4, 0)
+script = ExtResource("4_gateexit")
+prompt = "Push open the gate"
+interaction_id = &"school_gate"
+closing_conversation = ExtResource("6_gate")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GateExit"]
+shape = SubResource("shape_gate")
+
+[node name="SpawnFromClassroom" type="Marker3D" parent="."]
+position = Vector3(-6.8, 0, 0)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(-6.8, 0, 0)
+
+[node name="CorridorDirector" type="Node" parent="."]
+script = ExtResource("5_corridor")
+player = NodePath("../Player")
+spawn_from_classroom = NodePath("../SpawnFromClassroom")
+
+[node name="GameUI" parent="." instance=ExtResource("2_ui")]

@@ -1,0 +1,18 @@
+[gd_resource type="DialogueConversation" load_steps=3 format=3]
+
+[sub_resource type="DialogueEntry" id="Entry_n1"]
+id = &"n1"
+speaker_id = &"narrator"
+text = "Club sign-ups curling at the corners. A fire-drill notice from two terms ago. A band flyer crossed out so hard the pen tore the paper."
+next_id = &"n2"
+
+[sub_resource type="DialogueEntry" id="Entry_n2"]
+id = &"n2"
+speaker_id = &"narrator"
+text = "Along the bottom, in a squared-off red hand: LATECOMERS WILL BE MARKED."
+
+[resource]
+id = &"noticeboard"
+start_id = &"n1"
+presentation = "standard"
+entries = Array[DialogueEntry]([SubResource("Entry_n1"), SubResource("Entry_n2")])

@@ -1,0 +1,8 @@
+[gd_resource type="CharacterDef" format=3]
+
+[resource]
+id = &"q"
+display_name = "Q"
+description = "Overfamiliar classmate. Placeholder role marker; no likeness approved."
+kind = "character"
+portrait_color = Color(0.6, 0.44, 0.3, 1)
