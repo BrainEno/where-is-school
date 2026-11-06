@@ -116,6 +116,8 @@ radial_segments = 10
 [sub_resource type="PrismMesh" id="mesh_roof"]
 size = Vector3(1, 1, 1)
 
+[node name="Street" type="Node3D"]
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env_street")
 
