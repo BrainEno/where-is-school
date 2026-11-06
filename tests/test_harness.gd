@@ -38,15 +38,25 @@ static func ensure_state_autoloads(tree: SceneTree) -> Dictionary:
 
 
 ## Hard watchdog: a test that stalls must still terminate with a failure instead
-## of eating the CI job's whole time budget. The timer ignores Engine.time_scale.
+## of eating the CI job's whole time budget. A Timer node is used (rather than a
+## SceneTreeTimer) so the instance is owned by the tree and freed at exit.
 static func arm_watchdog(tree: SceneTree, seconds: float, label: String) -> void:
-	var timer := tree.create_timer(seconds, true, false, true)
+	if tree == null or tree.root == null:
+		push_error("TestHarness: cannot arm a watchdog without a scene tree.")
+		return
+	var timer := Timer.new()
+	timer.name = "TestWatchdog"
+	timer.wait_time = seconds
+	timer.one_shot = true
+	timer.ignore_time_scale = true
 	timer.timeout.connect(
 		func() -> void:
 			push_error("TEST WATCHDOG: %s exceeded %.0f seconds and was aborted." % [label, seconds])
 			print("FAIL: %s timed out after %.0f seconds." % [label, seconds])
 			tree.quit(2)
 	)
+	tree.root.add_child(timer)
+	timer.start()
 
 
 static func clear_session_state(tree: SceneTree) -> void:

@@ -6,6 +6,10 @@ extends Node3D
 ## location instead of hard-coding node paths from outside: spawn points,
 ## waypoint paths, actors, and interactables are looked up here.
 
+## Stable identifier matching the key used by narrative flags and inspection
+## data ("classroom", "corridor"). Set by each location scene.
+@export var location_id: StringName = &""
+
 func get_spawn(spawn_id: StringName) -> Node3D:
 	var spawns := find_children("*", "Marker3D", true, false)
 	for node in spawns:
