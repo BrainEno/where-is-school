@@ -24,8 +24,22 @@ func _ready() -> void:
 	var ui := get_tree().get_first_node_in_group("game_ui")
 	if ui != null and ui.has_method("set_objective"):
 		ui.set_objective("Follow the road.")
-	if ui != null and ui.has_signal("conversation_finished") and not ui.is_connected("conversation_finished", _on_conversation_finished):
-		ui.connect("conversation_finished", _on_conversation_finished)
+	if not _connect_ui():
+		# The UI may not be ready yet when this director enters the tree (sibling
+		# order); retry once the tree settles.
+		call_deferred("_connect_ui")
+
+
+func _connect_ui() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	var ui := tree.get_first_node_in_group("game_ui")
+	if ui != null and ui.has_signal("conversation_finished"):
+		if not ui.is_connected("conversation_finished", _on_conversation_finished):
+			ui.connect("conversation_finished", _on_conversation_finished)
+		return true
+	return false
 
 
 func _on_conversation_finished(conversation_id: StringName) -> void:

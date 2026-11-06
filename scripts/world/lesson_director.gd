@@ -33,11 +33,10 @@ func _ready() -> void:
 	add_child(_audio)
 	if n_npc != null:
 		n_npc.visible = false
-	var ui := _ui()
-	if ui != null and ui.has_signal("conversation_finished"):
-		ui.connect("conversation_finished", _on_conversation_finished)
-	else:
-		push_error("LessonDirector: no node in group 'game_ui' with conversation_finished signal")
+	if not _connect_ui():
+		# The UI may not be ready yet when this director enters the tree (sibling
+		# order); retry once the tree settles.
+		call_deferred("_connect_ui")
 	var state := _state()
 	if state != null and state.has_signal("story_flag_changed"):
 		state.connect("story_flag_changed", _on_story_flag_changed)
@@ -186,8 +185,20 @@ func _start_substitute_entrance() -> void:
 		ui.start_conversation(n_arrival_conversation)
 
 
+func _connect_ui() -> bool:
+	var ui := _ui()
+	if ui != null and ui.has_signal("conversation_finished"):
+		if not ui.is_connected("conversation_finished", _on_conversation_finished):
+			ui.connect("conversation_finished", _on_conversation_finished)
+		return true
+	return false
+
+
 func _ui() -> Node:
-	return get_tree().get_first_node_in_group("game_ui")
+	var tree := get_tree()
+	if tree == null:
+		return null
+	return tree.get_first_node_in_group("game_ui")
 
 
 func _state() -> Node:
