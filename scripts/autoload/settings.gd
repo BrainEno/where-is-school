@@ -58,10 +58,10 @@ func load_settings() -> void:
 		return
 	var speed: Variant = config.get_value("accessibility", "text_speed", "normal")
 	var scale: Variant = config.get_value("accessibility", "text_scale", "normal")
-	if speed is String and TEXT_SPEEDS.has(speed):
-		text_speed = speed
-	if scale is String and TEXT_SCALES.has(scale):
-		text_scale = scale
+	# Any missing or unknown value falls back to its default — corrupt
+	# configs must never stick, no matter what the in-memory value was.
+	text_speed = speed if (speed is String and TEXT_SPEEDS.has(speed)) else "normal"
+	text_scale = scale if (scale is String and TEXT_SCALES.has(scale)) else "normal"
 
 
 func save_settings() -> void:
