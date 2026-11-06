@@ -1,0 +1,113 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/locations/corridor/corridor_shell.tscn" id="shell"]
+[ext_resource type="Script" path="res://scripts/locations/corridor_location.gd" id="locscript"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/door_leaf.tscn" id="doorleaf"]
+[ext_resource type="PackedScene" path="res://scenes/environment/interaction/interactable_zone.tscn" id="zone"]
+[ext_resource type="PackedScene" path="res://scenes/environment/interaction/trigger_zone.tscn" id="trigger"]
+[ext_resource type="Material" path="res://assets/materials/fabric_bag.tres" id="mat_bag"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="mat_paper"]
+[ext_resource type="Material" path="res://assets/materials/metal_door.tres" id="mat_metal"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_locker"]
+size = Vector3(0.42, 1.5, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hookrail"]
+size = Vector3(0.06, 0.06, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hungbag"]
+size = Vector3(0.22, 0.36, 0.16)
+
+[sub_resource type="CylinderMesh" id="Cyl_bucket"]
+top_radius = 0.22
+bottom_radius = 0.18
+height = 0.34
+radial_segments = 14
+
+[sub_resource type="BoxMesh" id="BoxMesh_notice"]
+size = Vector3(0.62, 0.86, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape_guardR"]
+size = Vector3(0.2, 3.0, 13.0)
+
+[node name="Corridor" type="Node3D"]
+script = ExtResource("locscript")
+
+[node name="Shell" parent="." instance=ExtResource("shell")]
+
+[node name="Lockers" type="MeshInstance3D" parent="."]
+position = Vector3(-1.55, 0.78, 1.4)
+mesh = SubResource("BoxMesh_locker")
+material_override = ExtResource("mat_metal")
+
+[node name="HookRail" type="MeshInstance3D" parent="."]
+position = Vector3(-1.62, 1.55, -2.6)
+mesh = SubResource("BoxMesh_hookrail")
+material_override = ExtResource("mat_metal")
+
+[node name="HungBag0" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 1.22, -4.2)
+mesh = SubResource("BoxMesh_hungbag")
+material_override = ExtResource("mat_bag")
+
+[node name="HungBag1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 1.22, -2.4)
+mesh = SubResource("BoxMesh_hungbag")
+material_override = ExtResource("mat_bag")
+
+[node name="HungBag2" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 1.22, -0.6)
+mesh = SubResource("BoxMesh_hungbag")
+material_override = ExtResource("mat_bag")
+
+[node name="Bucket" type="MeshInstance3D" parent="."]
+position = Vector3(1.35, 0.17, -5.2)
+mesh = SubResource("Cyl_bucket")
+material_override = ExtResource("mat_metal")
+
+[node name="NoticeBoard" type="MeshInstance3D" parent="."]
+position = Vector3(-1.72, 1.62, -6.4)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("BoxMesh_notice")
+material_override = ExtResource("mat_paper")
+
+[node name="ClassroomDoorLeaf" parent="." instance=ExtResource("doorleaf")]
+position = Vector3(0.0, 1.02, 6.35)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="YardDoorLeaf" parent="." instance=ExtResource("doorleaf")]
+position = Vector3(0.0, 1.02, -6.32)
+
+[node name="YardExit" type="Area3D" parent="." instance=ExtResource("trigger") groups=["threshold"]]
+position = Vector3(0.0, 1.1, -5.9)
+
+[node name="GuardRight" type="StaticBody3D" parent="."]
+
+[node name="GuardShapeR" type="CollisionShape3D" parent="GuardRight"]
+position = Vector3(1.9, 1.5, 0.0)
+shape = SubResource("BoxShape_guardR")
+
+[node name="CorridorLight0" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(0, 2.6, -3.2)
+light_color = Color(0.94, 0.9, 0.82, 1)
+light_energy = 0.85
+omni_range = 6.5
+shadow_enabled = false
+
+[node name="CorridorLight1" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(0, 2.6, 0.4)
+light_color = Color(0.94, 0.9, 0.82, 1)
+light_energy = 0.85
+omni_range = 6.5
+shadow_enabled = false
+
+[node name="CorridorLight2" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(0, 2.6, 4.0)
+light_color = Color(0.94, 0.9, 0.82, 1)
+light_energy = 0.85
+omni_range = 6.5
+shadow_enabled = false
+
+[node name="SpawnFromClassroom" type="Marker3D" parent="."]
+position = Vector3(0, 0, 5.6)
+rotation_degrees = Vector3(0, 180, 0)

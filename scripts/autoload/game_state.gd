@@ -16,6 +16,10 @@ func get_flag(flag: StringName, default_value: Variant = null) -> Variant:
 	return _story_flags.get(flag, default_value)
 
 
+func get_bool(flag: StringName) -> bool:
+	return bool(_story_flags.get(flag, false))
+
+
 func set_flag(flag: StringName, value: Variant) -> void:
 	if String(flag).is_empty():
 		push_error("GameState.set_flag received an empty flag identifier.")

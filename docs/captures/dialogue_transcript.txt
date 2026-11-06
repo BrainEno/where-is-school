@@ -1,0 +1,135 @@
+
+========================================================================
+BEAT A — WAKE
+========================================================================
+(screen fades from black; the protagonist is slumped at a desk)
+
+
+========================================================================
+BEAT B — Q IS ALREADY TALKING
+========================================================================
+    Someone is already halfway through a sentence when the room comes back.
+Q: —and then the whole second row moved up, which is why your desk is where it is. So it's not your fault. Legally.
+Q: Oh, you're up. Good. I've been talking to the back of your head for ten minutes.
+Q: Third period. First week. Biology.
+Q: You have that face on. The one that means you're deciding whether to be normal today.
+    [choices]
+      1. “Third period. Right. Morning.”
+      2. “Remind me who you are.”
+      3. （Say nothing, just look at him.)
+    > you choose: “Third period. Right. Morning.”
+You: Third period. Right. Morning.
+Q: Ha. You're doing the voice.
+Q: Anyway. About last term's exam.
+Q: The last biology exam. Did you ever see your paper again?
+Q: Because I heard she keeps the ones she can't mark. Like, keeps them. In the cupboard.
+    [choices]
+      1. “I left most of it empty.”
+      2. “That was two years ago.”
+      3. “Whose paper was it?”
+    > you choose: “That was two years ago.”
+Q: Two years ago? It was June. There were cicadas.
+Q: You're doing the thing where you move the date until it stops being your problem.
+Q: I do it too. It doesn't work on her.
+Q: She's got third period on the timetable, so. She'll be in at the bell.
+Q: She remembers faces. She remembers reasons, too, which is worse.
+Q: If you don't have the textbook, don't do the thing where you say you forgot it.
+    [choices]
+      1. “What does she actually do?”
+      2. “She still uses that set square?”
+      3. “I'd rather find out by myself.”
+    > you choose: “What does she actually do?”
+Q: Nothing dramatic. She stands at your desk and waits until the room notices.
+Q: Then she asks a question she already knows the answer to. That's the whole trick.
+Q: Anyway. Bag's under your chair. Check it before the bell, not after.
+    Q turns to the row behind and starts talking to the desks as if they had been listening all along.
+
+
+========================================================================
+BEAT D — INSPECTIONS (content as shown in the result card)
+========================================================================
+[schoolbag] Schoolbag
+    Under the chair, strap first, the way you leave it when you are already late. Inside: a pencil case, a folded handout, a bus card with the corner chewed. Everything you would have brought. Everything except the biology textbook.
+
+[own_desk] Your desk
+    Varnish worn to the wood in a hand-shaped patch. A previous occupant has scratched a date into the corner and then scratched it out. Your handwriting would fit the same size of space.
+
+[set_square] Wooden set square
+    A wooden right angle, older than the desks, with a split running up the short leg. Someone has sanded the split instead of throwing the thing away, and sanded it badly. It sits on the teacher's desk at an angle that could only be deliberate.
+
+[teacher_desk] The teacher's desk
+    Two meters of dark wood, set square and square to the room. One drift of chalk dust that nobody has wiped. The exercise books are stacked on the far corner, all facing out, spines aligned. Nothing on this desk is for the person who sits behind it.
+
+[chalkboard] Chalkboard
+    BIOLOGY, THIRD PERIOD — written in a square, unhurried hand. Under it, in a different colour, TERM BEGINS. Both look written on the same day. Somebody has erased the middle of the board and given up.
+
+[timetable] Timetable
+    One sheet in a plastic sleeve by the door: this class, this term. Biology is third period most days. Thursday has been crossed out in pen and written back in with a different pen. Nobody has initialled it.
+
+[window] Window
+    The glass has a grey bloom on the inside you can rub off with a thumb. Below: a strip of wet asphalt, the side of a skip, the tops of two heads going nowhere. Beyond the boundary wall the roofs are ordinary and close together.
+
+
+========================================================================
+BEAT E — REHEARSAL (imagined; nothing here is in the room)
+========================================================================
+    The room goes a little flatter, the way it does when you stop listening to it.
+    You try the morning once, in your head, with the volume down.
+    The door opens and stays open. Everyone who was talking is suddenly very interested in their own desk.
+B (imagined): Third period. Back row. I see the arrangement has changed.
+B (imagined): Your desk was empty last Thursday. Was it not.
+    [choices]
+      1. （In your head: “I don't remember Thursday.”)
+      2. （In your head: “I was here. I think I was here.”)
+      3. （In your head: nothing at all. Just the desk.)
+    > you choose: （In your head: “I don't remember Thursday.”)
+B (imagined): Then we'll do this the long way. Textbook out.
+    In the rehearsal you have no bag. You have not had one the whole time.
+    Then, in the rehearsal, the bell goes early. Which is not how bells work.
+    You stop. You can hear the yard again — someone moving a bucket along concrete.
+
+
+========================================================================
+BEAT F — THE BELL, THEN THE SUBSTITUTE
+========================================================================
+(the bell rings twice; the chair at the teacher's desk stays empty)
+    The door opens at a slightly wrong moment — too early for a teacher, too late for a student.
+N: Sorry. Sorry. Third period? Biology, third period?
+N: I'm not — she's not in today. I'm covering. There should be a sheet.
+    The sheet is not where she left it. N looks at the desk the way you look at a drawer you did not open.
+N: It's usually. Under the. Okay. We can start without it.
+    [choices]
+      1. “Is she coming in later?”
+      2. “Do we need the textbook for this?”
+      3. （Wait for her to find the sheet.)
+    > you choose: “Do we need the textbook for this?”
+N: Um. Yes. Probably. Page forty-something.
+N: I don't have a copy. Which is. Not ideal. I know.
+    She finds the sheet halfway through the folder, under something else.
+N: This is — sorry, this is a seating plan. There's two names crossed out.
+N: I'm not going to sort out the seating plan on my first day. Let's just.
+N: Look. If the rest of you are going to do something that isn't this, then do it quietly. I have to log the period either way.
+N: You can be out in the corridor, or in the yard. Not off the site. Not yet.
+N: Actually — I'd better come with you for the corridor. Later. In a minute.
+    The door stays open. Nobody gets up immediately. Then somebody does, and then it's a room that is allowed to leave.
+    N sits down at the teacher's desk, then stands up again, then sits down.
+
+
+========================================================================
+BEAT G — THE CORRIDOR, THEN THE GATE
+========================================================================
+(the door opens onto a corridor; the gate is open a hand's width)
+
+========================================================================
+LEDGER AFTER THIS PATH
+========================================================================
+[Uncertain memory  ] You moved the date on purpose
+[Heard             ] Q on what the teacher is like
+[Heard             ] Q on how the teacher handles a desk
+[Heard             ] Q's advice on rehearsing an apology
+[Imagined — did not happen] Rehearsal: my answer
+[Imagined — did not happen] Rehearsal: the empty-desk question
+[Heard             ] The substitute's introduction
+[Observed          ] The lesson started without the expected teacher
+[Observed          ] Biology textbook missing
+[Heard             ] The substitute's permission

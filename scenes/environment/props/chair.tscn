@@ -1,0 +1,59 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/desk_laminate.tres" id="m_desk_laminate"]
+[ext_resource type="Material" path="res://assets/materials/desk_frame.tres" id="m_desk_frame"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(0.42, 0.04, 0.4)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(0.42, 0.34, 0.035)
+
+[sub_resource type="CylinderMesh" id="mesh3"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.44
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(0.36, 0.018, 0.018)
+
+
+[node name="Chair" type="Node3D"]
+
+[node name="Seat" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_desk_laminate")
+position = Vector3(0, 0.44, 0)
+
+[node name="Back" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_desk_laminate")
+position = Vector3(0, 0.66, -0.19)
+rotation_degrees = Vector3(-6, 0, 0)
+
+[node name="Leg0" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-0.17, 0.22, 0.16)
+
+[node name="Leg1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0.17, 0.22, 0.16)
+
+[node name="Leg2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-0.17, 0.22, -0.16)
+
+[node name="Leg3" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0.17, 0.22, -0.16)
+
+[node name="Stretcher" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.14, 0.16)
+

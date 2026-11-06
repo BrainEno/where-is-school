@@ -1,0 +1,177 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/dialogue_panel.gd" id="1_panel"]
+[ext_resource type="Theme" path="res://assets/themes/prologue_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" path="res://assets/characters/q_portrait.svg" id="3_q_portrait"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_backlog"]
+bg_color = Color(0.05, 0.06, 0.06, 0.96)
+
+[node name="DialoguePanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_panel")
+
+[node name="Bottom" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = -344.0
+offset_right = -64.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Column" type="VBoxContainer" parent="Bottom"]
+layout_mode = 2
+theme_override_constants/separation = 8
+mouse_filter = 2
+
+[node name="RehearsalBanner" type="PanelContainer" parent="Bottom/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PromptPanel"
+mouse_filter = 2
+
+[node name="RehearsalCaption" type="Label" parent="Bottom/Column/RehearsalBanner"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.8, 0.86, 1)
+theme_override_font_sizes/font_size = 16
+text = "Rehearsal — nothing here is happening in the room"
+horizontal_alignment = 1
+
+[node name="Frame" type="PanelContainer" parent="Bottom/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Bottom/Column/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="Bottom/Column/Frame/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Portrait" type="TextureRect" parent="Bottom/Column/Frame/Rows/TopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 140)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("3_q_portrait")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextColumn" type="VBoxContainer" parent="Bottom/Column/Frame/Rows/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SpeakerRow" type="HBoxContainer" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SpeakerLabel" type="Label" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn/SpeakerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "Q"
+
+[node name="SpeakerRole" type="Label" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn/SpeakerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"SmallLabel"
+text = "the boy at the next desk"
+
+[node name="ImagineNote" type="Label" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.66, 0.74, 0.8, 1)
+text = "you are picturing this"
+
+[node name="BodyScroll" type="ScrollContainer" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="BodyLabel" type="RichTextLabel" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn/BodyScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+bbcode_enabled = true
+text = "—and then the whole second row moved up."
+scroll_active = true
+scroll_following = true
+
+[node name="Continuation" type="Label" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+text = "▸   Space / E to continue          Tab  backlog"
+horizontal_alignment = 2
+
+[node name="ChoiceList" type="VBoxContainer" parent="Bottom/Column/Frame/Rows/TopRow/TextColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BacklogLayer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_backlog")
+
+[node name="Margin" type="MarginContainer" parent="BacklogLayer"]
+layout_mode = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 56
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 48
+
+[node name="Rows" type="VBoxContainer" parent="BacklogLayer/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="BacklogLayer/Margin/Rows"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="BacklogLayer/Margin/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HeadingLabel"
+text = "Backlog — this conversation"
+
+[node name="Hint" type="Label" parent="BacklogLayer/Margin/Rows/Header"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"SmallLabel"
+text = "Tab to close"
+
+[node name="Scroll" type="ScrollContainer" parent="BacklogLayer/Margin/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Log" type="VBoxContainer" parent="BacklogLayer/Margin/Rows/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10

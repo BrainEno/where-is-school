@@ -1,0 +1,62 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/note_book.gd" id="1_book"]
+[ext_resource type="Theme" path="res://assets/themes/prologue_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_book"]
+content_margin_left = 56.0
+content_margin_top = 40.0
+content_margin_right = 56.0
+content_margin_bottom = 32.0
+bg_color = Color(0.05, 0.06, 0.06, 0.95)
+
+[node name="NoteBook" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_book")
+
+[node name="Background" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_book")
+
+[node name="Rows" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="Label" parent="Background/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "Notes"
+
+[node name="Rule" type="HSeparator" parent="Background/Rows"]
+layout_mode = 2
+
+[node name="EmptyLabel" type="Label" parent="Background/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+text = "Nothing recorded yet."
+
+[node name="Columns" type="HBoxContainer" parent="Background/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 26
+
+[node name="Footer" type="Label" parent="Background/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+text = "N or Esc to close"
+horizontal_alignment = 2

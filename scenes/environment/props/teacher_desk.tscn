@@ -1,0 +1,100 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="m_wood_dark"]
+[ext_resource type="Material" path="res://assets/materials/desk_frame.tres" id="m_desk_frame"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="m_paper"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(1.9, 0.06, 0.8)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(1.86, 0.5, 0.05)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.05, 0.72, 0.76)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(1.7, 0.03, 0.6)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(1.6, 0.17, 0.04)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(0.22, 0.025, 0.02)
+
+[sub_resource type="SphereMesh" id="mesh7"]
+radius = 0.22
+height = 0.44
+radial_segments = 10
+rings = 8
+
+[sub_resource type="BoxMesh" id="mesh8"]
+size = Vector3(0.32, 0.03, 0.24)
+
+[sub_resource type="BoxMesh" id="mesh9"]
+size = Vector3(0.32, 0.028, 0.24)
+
+[sub_resource type="BoxMesh" id="mesh10"]
+size = Vector3(0.31, 0.026, 0.23)
+
+
+[node name="TeacherDesk" type="Node3D"]
+
+[node name="Top" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, 0.79, 0)
+
+[node name="Apron" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, 0.52, 0.38)
+
+[node name="PanelL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(-0.92, 0.4, 0)
+
+[node name="PanelR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0.92, 0.4, 0)
+
+[node name="Shelf" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, 0.34, -0.02)
+
+[node name="DrawerFront" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, 0.62, 0.37)
+
+[node name="DrawerHandle" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.62, 0.4)
+
+[node name="Dust" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_paper")
+position = Vector3(0.35, 0.825, 0.02)
+scale = Vector3(1.0, 0.06, 1.0)
+
+[node name="Stack1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh8")
+material_override = ExtResource("m_paper")
+position = Vector3(-0.45, 0.84, -0.06)
+
+[node name="Stack2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh9")
+material_override = ExtResource("m_paper")
+position = Vector3(-0.44, 0.868, -0.05)
+rotation_degrees = Vector3(0, 7, 0)
+
+[node name="Stack3" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh10")
+material_override = ExtResource("m_paper")
+position = Vector3(-0.45, 0.895, -0.07)
+rotation_degrees = Vector3(0, -4, 0)
+

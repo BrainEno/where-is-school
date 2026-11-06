@@ -1,0 +1,83 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/chalkboard.tres" id="m_chalkboard"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="m_wood_dark"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="m_paper"]
+[ext_resource type="Material" path="res://assets/materials/fabric_bag.tres" id="m_fabric_bag"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(3.6, 1.25, 0.05)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(3.7, 0.06, 0.09)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.06, 1.4, 0.09)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(3.4, 0.03, 0.16)
+
+[sub_resource type="CylinderMesh" id="mesh5"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.09
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="mesh6"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.06
+radial_segments = 6
+
+[sub_resource type="BoxMesh" id="mesh7"]
+size = Vector3(0.16, 0.05, 0.07)
+
+
+[node name="Chalkboard" type="Node3D"]
+
+[node name="Board" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_chalkboard")
+
+[node name="FrameTop" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, 0.66, 0.01)
+
+[node name="FrameBottom" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, -0.66, 0.01)
+
+[node name="FrameL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(-1.82, 0, 0.01)
+
+[node name="FrameR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(1.82, 0, 0.01)
+
+[node name="Tray" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(0, -0.71, 0.09)
+
+[node name="Chalk1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_paper")
+position = Vector3(-0.4, -0.695, 0.1)
+rotation_degrees = Vector3(0, 0, 90)
+
+[node name="Chalk2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_paper")
+position = Vector3(0.9, -0.695, 0.12)
+rotation_degrees = Vector3(0, 20, 90)
+
+[node name="Eraser" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(1.3, -0.68, 0.1)
+

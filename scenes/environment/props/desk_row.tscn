@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/props/student_desk.tscn" id="1_desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/chair.tscn" id="2_chair"]
+
+[node name="DeskRow" type="Node3D"]
+
+[node name="Desk" parent="." instance=ExtResource("1_desk")]
+
+[node name="Chair" parent="." instance=ExtResource("2_chair")]
+position = Vector3(0, 0, 0.82)

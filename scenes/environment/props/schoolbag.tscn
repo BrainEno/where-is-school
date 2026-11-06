@@ -1,0 +1,85 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/fabric_bag.tres" id="m_fabric_bag"]
+[ext_resource type="Material" path="res://assets/materials/desk_frame.tres" id="m_desk_frame"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="m_paper"]
+[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="m_wood_light"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(0.36, 0.42, 0.18)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(0.36, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.05, 0.03, 0.02)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(0.05, 0.34, 0.02)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(0.2, 0.16, 0.04)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(0.18, 0.012, 0.014)
+
+[sub_resource type="BoxMesh" id="mesh7"]
+size = Vector3(0.16, 0.005, 0.2)
+
+[sub_resource type="CylinderMesh" id="mesh8"]
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.16
+radial_segments = 6
+
+
+[node name="Schoolbag" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(0, 0.21, 0)
+
+[node name="Flap" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(0, 0.34, -0.1)
+rotation_degrees = Vector3(12, 0, 0)
+
+[node name="Buckle" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.245, -0.095)
+
+[node name="StrapL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(-0.1, 0.24, 0.095)
+
+[node name="StrapR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(0.1, 0.24, 0.095)
+
+[node name="Pocket" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_fabric_bag")
+position = Vector3(0.0, 0.13, 0.1)
+
+[node name="Zip" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.205, 0.125)
+
+[node name="Paper" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_paper")
+position = Vector3(0.01, 0.425, 0.0)
+rotation_degrees = Vector3(0, 8, 0)
+
+[node name="Pencil" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh8")
+material_override = ExtResource("m_wood_light")
+position = Vector3(0.09, 0.45, 0.01)
+rotation_degrees = Vector3(0, 0, 12)
+

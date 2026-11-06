@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/locations/yard/yard_shell.tscn" id="shell"]
+[ext_resource type="Script" path="res://scripts/locations/yard_location.gd" id="locscript"]
+[ext_resource type="PackedScene" path="res://scenes/environment/interaction/interactable_zone.tscn" id="zone"]
+[ext_resource type="PackedScene" path="res://scenes/environment/interaction/trigger_zone.tscn" id="trigger"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_back"]
+size = Vector3(20.0, 3.0, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape_side0"]
+size = Vector3(0.4, 3.0, 18.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_side1"]
+size = Vector3(0.4, 3.0, 18.0)
+
+[node name="Yard" type="Node3D"]
+script = ExtResource("locscript")
+
+[node name="Shell" parent="." instance=ExtResource("shell")]
+
+[node name="YardGateThreshold" type="Area3D" parent="." instance=ExtResource("trigger") groups=["threshold"]]
+position = Vector3(0.0, 1.1, -10.4)
+scale = Vector3(2.6, 1.0, 1.1)
+
+[node name="BackGuard" type="StaticBody3D" parent="."]
+
+[node name="BackShape" type="CollisionShape3D" parent="BackGuard"]
+position = Vector3(0, 1.5, 7.0)
+shape = SubResource("BoxShape_back")
+
+[node name="SideGuard0" type="StaticBody3D" parent="."]
+
+[node name="SideShape0" type="CollisionShape3D" parent="SideGuard0"]
+position = Vector3(-10.450000000000001, 1.5, 0.0)
+shape = SubResource("BoxShape_side0")
+
+[node name="SideGuard1" type="StaticBody3D" parent="."]
+
+[node name="SideShape1" type="CollisionShape3D" parent="SideGuard1"]
+position = Vector3(10.450000000000001, 1.5, 0.0)
+shape = SubResource("BoxShape_side1")
+
+[node name="YardLight0" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(-3.0, 3.4, -3.0)
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 0.6
+omni_range = 12.0
+shadow_enabled = false
+
+[node name="YardLight1" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(3.2, 3.4, 1.0)
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 0.6
+omni_range = 12.0
+shadow_enabled = false
+
+[node name="SpawnFromCorridor" type="Marker3D" parent="."]
+position = Vector3(0, 0, -6.0)
+
+[node name="GateFocus" type="Marker3D" parent="."]
+position = Vector3(0, 1.2, -11.0)

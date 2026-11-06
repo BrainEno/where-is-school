@@ -1,0 +1,362 @@
+[gd_scene load_steps=23 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/locations/classroom/classroom_shell.tscn" id="shell"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/student_desk.tscn" id="desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/chair.tscn" id="chair"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_desk.tscn" id="tdesk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/chalkboard.tscn" id="board"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/window_frame.tscn" id="window"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/schoolbag.tscn" id="bag"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/set_square.tscn" id="setsq"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/door_leaf.tscn" id="doorleaf"]
+[ext_resource type="PackedScene" path="res://scenes/environment/interaction/interactable_zone.tscn" id="zone"]
+[ext_resource type="Script" path="res://scripts/locations/classroom_location.gd" id="locscript"]
+[ext_resource type="PackedScene" path="res://scenes/actors/npcs/npc_actor.tscn" id="npc"]
+[ext_resource type="Material" path="res://assets/materials/shirt_q.tres" id="mat_q"]
+[ext_resource type="Material" path="res://assets/materials/shirt_n.tres" id="mat_n"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform"]
+size = Vector3(5.8, 0.09, 1.9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_platform"]
+albedo_color = Color(0.4, 0.41, 0.38, 1)
+roughness = 1.0
+
+[sub_resource type="BoxShape3D" id="BoxShape_platform"]
+size = Vector3(5.8, 0.09, 1.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_guard0"]
+size = Vector3(8.6, 3.0, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_guard1"]
+size = Vector3(1.4, 3.0, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_guard2"]
+size = Vector3(0.2, 3.0, 8.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_doorjamb_top"]
+size = Vector3(1.16, 0.1, 0.26)
+
+[sub_resource type="StandardMaterial3D" id="Mat_jamb"]
+albedo_color = Color(0.3, 0.31, 0.3, 1)
+roughness = 0.8
+
+[node name="Classroom" type="Node3D"]
+script = ExtResource("locscript")
+
+[node name="Shell" type="Node3D" parent="." instance=ExtResource("shell")]
+
+[node name="TeacherPlatformMesh" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.045, -3.15)
+mesh = SubResource("BoxMesh_platform")
+material_override = SubResource("Mat_platform")
+
+[node name="TeacherPlatformBody" type="StaticBody3D" parent="."]
+
+[node name="PlatformCollision" type="CollisionShape3D" parent="TeacherPlatformBody"]
+position = Vector3(0, 0.045, -3.15)
+shape = SubResource("BoxShape_platform")
+
+[node name="DeskColumnA1" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-3.7, 0, -0.7)
+
+[node name="ChairColumnA1" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-3.7, 0, 0.12)
+
+[node name="DeskColumnB1" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-1.25, 0, -0.7)
+
+[node name="ChairColumnB1" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-1.25, 0, 0.12)
+
+[node name="DeskColumnC1" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(1.25, 0, -0.7)
+
+[node name="ChairColumnC1" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(1.25, 0, 0.12)
+
+[node name="DeskColumnD1" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(3.7, 0, -0.7)
+
+[node name="ChairColumnD1" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(3.7, 0, 0.12)
+
+[node name="DeskColumnA2" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-3.7, 0, 1.7)
+
+[node name="ChairColumnA2" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-3.7, 0, 2.52)
+
+[node name="DeskColumnB2" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-1.25, 0, 1.7)
+
+[node name="ChairColumnB2" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-1.25, 0, 2.52)
+
+[node name="DeskColumnC2" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(1.25, 0, 1.7)
+
+[node name="ChairColumnC2" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(1.25, 0, 2.52)
+
+[node name="DeskColumnD2" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(3.7, 0, 1.7)
+
+[node name="ChairColumnD2" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(3.7, 0, 2.52)
+
+[node name="DeskColumnA3" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-3.7, 0, 4.1)
+
+[node name="ChairColumnA3" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-3.7, 0, 4.92)
+
+[node name="DeskColumnB3" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(-1.25, 0, 4.1)
+
+[node name="ChairColumnB3" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(-1.25, 0, 4.92)
+
+[node name="DeskColumnC3" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(1.25, 0, 4.1)
+
+[node name="ChairColumnC3" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(1.25, 0, 4.92)
+
+[node name="DeskColumnD3" type="Node3D" parent="." instance=ExtResource("desk")]
+position = Vector3(3.7, 0, 4.1)
+
+[node name="ChairColumnD3" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(3.7, 0, 4.92)
+
+[node name="TeacherDesk" type="Node3D" parent="." instance=ExtResource("tdesk")]
+position = Vector3(0, 0.09, -3.5)
+
+[node name="TeacherChair" type="Node3D" parent="." instance=ExtResource("chair")]
+position = Vector3(0, 0.09, -2.62)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="ChalkboardVisual" type="Node3D" parent="." instance=ExtResource("board")]
+position = Vector3(0, 1.66, -4.22)
+
+[node name="Window0" type="Node3D" parent="." instance=ExtResource("window")]
+position = Vector3(-5.38, 1.75, -2.6)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Window1" type="Node3D" parent="." instance=ExtResource("window")]
+position = Vector3(-5.38, 1.75, -0.2)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Window2" type="Node3D" parent="." instance=ExtResource("window")]
+position = Vector3(-5.38, 1.75, 2.2)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="CameraGuard0" type="StaticBody3D" parent="."]
+
+[node name="GuardShape0" type="CollisionShape3D" parent="CameraGuard0"]
+position = Vector3(-1.3, 1.5, 4.3)
+shape = SubResource("BoxShape_guard0")
+
+[node name="CameraGuard1" type="StaticBody3D" parent="."]
+
+[node name="GuardShape1" type="CollisionShape3D" parent="CameraGuard1"]
+position = Vector3(4.9, 1.5, 4.3)
+shape = SubResource("BoxShape_guard1")
+
+[node name="CameraGuard2" type="StaticBody3D" parent="."]
+
+[node name="GuardShape2" type="CollisionShape3D" parent="CameraGuard2"]
+position = Vector3(5.6, 1.5, 0.0)
+shape = SubResource("BoxShape_guard2")
+
+[node name="DoorFrame" type="Node3D" parent="."]
+
+[node name="JambTop" type="MeshInstance3D" parent="DoorFrame"]
+position = Vector3(3.6, 2.12, 4.2)
+mesh = SubResource("BoxMesh_doorjamb_top")
+material_override = SubResource("Mat_jamb")
+
+[node name="DoorLeaf" type="Node3D" parent="." instance=ExtResource("doorleaf")]
+position = Vector3(3.6, 1.02, 4.28)
+
+[node name="SchoolbagZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(1.35, 0.35, 2.32)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"schoolbag"
+prompt_text = "Check the schoolbag"
+short_label = "schoolbag"
+focus_priority = 3
+
+[node name="OwnDeskZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(1.25, 0.5, 1.8)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"own_desk"
+prompt_text = "Look at your desk"
+short_label = "your desk"
+focus_priority = 2
+
+[node name="SetSquareZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(0.62, 1.02, -3.36)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"set_square"
+prompt_text = "Look at the set square"
+short_label = "set square"
+focus_priority = 5
+
+[node name="TeacherDeskZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(-0.9, 1.0, -3.3)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"teacher_desk"
+prompt_text = "Look at the teacher's desk"
+short_label = "teacher's desk"
+focus_priority = 2
+
+[node name="ChalkboardZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(0.0, 1.45, -3.95)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"chalkboard"
+prompt_text = "Read the board"
+short_label = "chalkboard"
+focus_priority = 2
+
+[node name="TimetableZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(2.55, 1.6, 4.16)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"timetable"
+prompt_text = "Read the timetable"
+short_label = "timetable"
+focus_priority = 2
+
+[node name="WindowZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(-5.1, 1.5, 2.2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"window"
+prompt_text = "Look out of the window"
+short_label = "window"
+focus_priority = 2
+
+[node name="DoorZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(3.6, 0.9, 4.0)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"door"
+prompt_text = "Leave the classroom"
+short_label = "the door"
+focus_priority = 4
+start_enabled = false
+
+[node name="QZone" type="Area3D" parent="." instance=ExtResource("zone") groups=["interactable"]]
+position = Vector3(3.7, 1.0, 0.12)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+monitorable = true
+interact_id = &"q"
+prompt_text = "Talk to Q"
+short_label = "Q"
+focus_priority = 6
+
+[node name="BagVisual" type="Node3D" parent="." instance=ExtResource("bag")]
+position = Vector3(1.37, 0, 2.36)
+rotation_degrees = Vector3(0, 14, 0)
+
+[node name="SetSquareVisual" type="Node3D" parent="." instance=ExtResource("setsq")]
+position = Vector3(0.62, 0.99, -3.36)
+rotation_degrees = Vector3(0, -24, 0)
+
+[node name="RoomLight0" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(-2.8, 2.72, -1.6)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.0
+omni_range = 7.5
+omni_attenuation = 1.6
+shadow_enabled = false
+
+[node name="RoomLight1" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(2.8, 2.72, -1.6)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.0
+omni_range = 7.5
+omni_attenuation = 1.6
+shadow_enabled = false
+
+[node name="RoomLight2" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(-2.8, 2.72, 2.6)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.0
+omni_range = 7.5
+omni_attenuation = 1.6
+shadow_enabled = false
+
+[node name="RoomLight3" type="OmniLight3D" parent="." groups=["room_light"]]
+position = Vector3(2.8, 2.72, 2.6)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.0
+omni_range = 7.5
+omni_attenuation = 1.6
+shadow_enabled = false
+
+[node name="SpawnSeated" type="Marker3D" parent="."]
+position = Vector3(1.25, 0.0, 2.6)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="SpawnStanding" type="Marker3D" parent="."]
+position = Vector3(2.48, 0.0, 3.7)
+rotation_degrees = Vector3(0, 200, 0)
+
+[node name="CameraFocusFront" type="Marker3D" parent="."]
+position = Vector3(0.0, 0.4, -3.3)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="CameraFocusHall" type="Marker3D" parent="."]
+position = Vector3(2.4, 1.0, 4.2)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="ExitPoint" type="Marker3D" parent="."]
+position = Vector3(3.6, 0.0, 4.9)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="NpcQ" type="Node3D" parent="." instance=ExtResource("npc") groups=["npc_q"]]
+position = Vector3(3.7, -0.42, 0.12)
+rotation_degrees = Vector3(0, 200, 0)
+display_name = "Q"
+pose = 1
+shirt_material = ExtResource("mat_q")
+
+[node name="NpcN" type="Node3D" parent="." instance=ExtResource("npc") groups=["npc_n"]]
+visible = false
+position = Vector3(0.0, 0.09, -2.6)
+display_name = "N"
+pose = 0
+shirt_material = ExtResource("mat_n")
+
+[node name="NpcAnchorQ" type="Marker3D" parent="."]
+position = Vector3(3.7, 0.0, -0.6)
+rotation_degrees = Vector3(0, 150, 0)
+
+[node name="TeacherAnchorN" type="Marker3D" parent="."]
+position = Vector3(0.0, 0.09, -2.5)
+rotation_degrees = Vector3(0, 0, 0)

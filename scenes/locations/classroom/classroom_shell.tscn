@@ -1,0 +1,246 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/concrete_floor.tres" id="m_concrete_floor"]
+[ext_resource type="Material" path="res://assets/materials/concrete_wall.tres" id="m_concrete_wall"]
+[ext_resource type="Material" path="res://assets/materials/desk_frame.tres" id="m_desk_frame"]
+[ext_resource type="Material" path="res://assets/materials/institutional_green.tres" id="m_institutional_green"]
+[ext_resource type="Material" path="res://assets/materials/lamp_panel.tres" id="m_lamp_panel"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="m_paper"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(11.0, 0.2, 8.4)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(11.0, 3.0, 0.2)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.2, 3.0, 8.4)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(11.0, 0.5, 0.2)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(0.2, 0.5, 8.4)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(11.0, 0.06, 0.3)
+
+[sub_resource type="BoxMesh" id="mesh7"]
+size = Vector3(0.3, 0.06, 8.4)
+
+[sub_resource type="BoxMesh" id="mesh8"]
+size = Vector3(10.98, 1.15, 0.04)
+
+[sub_resource type="BoxMesh" id="mesh9"]
+size = Vector3(0.04, 1.15, 8.38)
+
+[sub_resource type="BoxMesh" id="mesh10"]
+size = Vector3(10.98, 0.44, 0.04)
+
+[sub_resource type="BoxMesh" id="mesh11"]
+size = Vector3(11.0, 0.14, 0.05)
+
+[sub_resource type="BoxMesh" id="mesh12"]
+size = Vector3(0.05, 0.14, 8.4)
+
+[sub_resource type="BoxMesh" id="mesh13"]
+size = Vector3(1.5, 0.07, 0.34)
+
+[sub_resource type="BoxMesh" id="mesh14"]
+size = Vector3(0.02, 0.22, 0.02)
+
+[sub_resource type="BoxMesh" id="mesh15"]
+size = Vector3(0.05, 0.05, 7.4)
+
+[sub_resource type="BoxMesh" id="mesh16"]
+size = Vector3(0.1, 0.14, 0.03)
+
+[sub_resource type="BoxShape3D" id="Collide_floor"]
+size = Vector3(11.0, 0.4, 8.4)
+
+[sub_resource type="BoxShape3D" id="Collide_front"]
+size = Vector3(11.0, 3.0, 0.2)
+
+[sub_resource type="BoxShape3D" id="Collide_left"]
+size = Vector3(0.2, 3.0, 8.4)
+
+[node name="ClassroomShell" type="Node3D"]
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_concrete_floor")
+position = Vector3(0, -0.1, 0)
+
+[node name="WallFront" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0, 1.5, -4.3)
+
+[node name="WallLeft" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(-5.6, 1.5, 0)
+
+[node name="ParapetBack" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0, 0.25, 4.3)
+
+[node name="ParapetRight" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(5.6, 0.25, 0)
+
+[node name="CapBack" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.53, 4.3)
+
+[node name="CapRight" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(5.6, 0.53, 0)
+
+[node name="PaintFront" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh8")
+material_override = ExtResource("m_institutional_green")
+position = Vector3(0, 0.58, -4.180000000000001)
+
+[node name="PaintLeft" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh9")
+material_override = ExtResource("m_institutional_green")
+position = Vector3(-5.48, 0.58, 0)
+
+[node name="PaintBackInner" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh10")
+material_override = ExtResource("m_institutional_green")
+position = Vector3(0, 0.22, 4.180000000000001)
+
+[node name="SkirtFront" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.07, -4.17)
+
+[node name="SkirtLeft" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh12")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-5.47, 0.07, 0)
+
+[node name="SkirtBack" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, 0.07, 4.17)
+
+[node name="Fitting00" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(-3.3, 2.95, -2.0)
+
+[node name="FittingRod00" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-3.8, 3.06, -2.0)
+
+[node name="FittingRodB00" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-2.8, 3.06, -2.0)
+
+[node name="Fitting01" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(-3.3, 2.95, 1.6)
+
+[node name="FittingRod01" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-3.8, 3.06, 1.6)
+
+[node name="FittingRodB01" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-2.8, 3.06, 1.6)
+
+[node name="Fitting10" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(0.0, 2.95, -2.0)
+
+[node name="FittingRod10" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-0.5, 3.06, -2.0)
+
+[node name="FittingRodB10" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0.5, 3.06, -2.0)
+
+[node name="Fitting11" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(0.0, 2.95, 1.6)
+
+[node name="FittingRod11" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(-0.5, 3.06, 1.6)
+
+[node name="FittingRodB11" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0.5, 3.06, 1.6)
+
+[node name="Fitting20" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(3.3, 2.95, -2.0)
+
+[node name="FittingRod20" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(2.8, 3.06, -2.0)
+
+[node name="FittingRodB20" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(3.8, 3.06, -2.0)
+
+[node name="Fitting21" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_lamp_panel")
+position = Vector3(3.3, 2.95, 1.6)
+
+[node name="FittingRod21" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(2.8, 3.06, 1.6)
+
+[node name="FittingRodB21" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(3.8, 3.06, 1.6)
+
+[node name="Conduit" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh15")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(5.36, 2.62, 0.2)
+
+[node name="Socket" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh16")
+material_override = ExtResource("m_paper")
+position = Vector3(-2.4, 0.42, -4.16)
+
+[node name="ShellCollision" type="StaticBody3D" parent="."]
+
+[node name="FloorShape" type="CollisionShape3D" parent="ShellCollision"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("Collide_floor")
+
+[node name="FrontShape" type="CollisionShape3D" parent="ShellCollision"]
+position = Vector3(0, 1.5, -4.3)
+shape = SubResource("Collide_front")
+
+[node name="LeftShape" type="CollisionShape3D" parent="ShellCollision"]
+position = Vector3(-5.6, 1.5, 0)
+shape = SubResource("Collide_left")

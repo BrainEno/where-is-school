@@ -1,0 +1,61 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/glass_window.tres" id="m_glass_window"]
+[ext_resource type="Material" path="res://assets/materials/metal_door.tres" id="m_metal_door"]
+[ext_resource type="Material" path="res://assets/materials/concrete_wall.tres" id="m_concrete_wall"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(1.5, 1.05, 0.02)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(0.04, 1.05, 0.06)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(1.5, 0.04, 0.06)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(0.07, 1.24, 0.1)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(1.6, 0.08, 0.1)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(1.6, 0.06, 0.22)
+
+
+[node name="WindowFrame" type="Node3D"]
+
+[node name="Glass" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_glass_window")
+
+[node name="MullionV" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_metal_door")
+position = Vector3(0, 0, 0.01)
+
+[node name="MullionH" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_metal_door")
+position = Vector3(0, 0.1, 0.01)
+
+[node name="FrameL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(-0.75, 0, 0)
+
+[node name="FrameR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0.75, 0, 0)
+
+[node name="FrameT" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0, 0.58, 0)
+
+[node name="Sill" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0, -0.6, 0.06)
+

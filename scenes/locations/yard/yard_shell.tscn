@@ -1,0 +1,214 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/outdoor_asphalt.tres" id="m_outdoor_asphalt"]
+[ext_resource type="Material" path="res://assets/materials/outdoor_concrete.tres" id="m_outdoor_concrete"]
+[ext_resource type="Material" path="res://assets/materials/concrete_wall.tres" id="m_concrete_wall"]
+[ext_resource type="Material" path="res://assets/materials/institutional_green.tres" id="m_institutional_green"]
+[ext_resource type="Material" path="res://assets/materials/glass_window.tres" id="m_glass_window"]
+[ext_resource type="Material" path="res://assets/materials/iron_gate.tres" id="m_iron_gate"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="m_wood_dark"]
+[ext_resource type="Material" path="res://assets/materials/foliage.tres" id="m_foliage"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(26.0, 0.2, 22.0)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(4.2, 0.06, 16.0)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.16, 0.14, 16.0)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(14.0, 4.2, 0.4)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(13.9, 1.3, 0.06)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(1.3, 1.0, 0.06)
+
+[sub_resource type="BoxMesh" id="mesh7"]
+size = Vector3(9.4, 1.9, 0.3)
+
+[sub_resource type="BoxMesh" id="mesh8"]
+size = Vector3(0.5, 2.3, 0.5)
+
+[sub_resource type="BoxMesh" id="mesh9"]
+size = Vector3(1.88, 1.7, 0.06)
+
+[sub_resource type="BoxMesh" id="mesh10"]
+size = Vector3(0.14, 0.14, 0.28)
+
+[sub_resource type="SphereMesh" id="mesh11"]
+radius = 0.36
+height = 0.72
+radial_segments = 8
+rings = 8
+
+[sub_resource type="BoxMesh" id="mesh12"]
+size = Vector3(6.0, 2.2, 3.4)
+
+[sub_resource type="BoxMesh" id="mesh13"]
+size = Vector3(5.0, 1.7, 3.0)
+
+[sub_resource type="BoxMesh" id="mesh14"]
+size = Vector3(4.0, 2.6, 2.6)
+
+[sub_resource type="BoxMesh" id="mesh15"]
+size = Vector3(0.18, 6.4, 0.18)
+
+[sub_resource type="BoxMesh" id="mesh16"]
+size = Vector3(1.4, 0.1, 0.1)
+
+[sub_resource type="BoxShape3D" id="Collide_ground"]
+size = Vector3(26.0, 0.4, 22.0)
+
+[node name="YardShell" type="Node3D"]
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_outdoor_asphalt")
+position = Vector3(0, -0.1, 0)
+
+[node name="Path" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(0, 0.02, -3.0)
+
+[node name="KerbL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(-2.2, 0.07, -3.0)
+
+[node name="KerbR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(2.2, 0.07, -3.0)
+
+[node name="BuildingFace" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(0, 2.1, 6.6)
+
+[node name="BuildingPaint" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_institutional_green")
+position = Vector3(0, 0.7, 6.4)
+
+[node name="BuildingWindow0" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_glass_window")
+position = Vector3(-5.2, 2.3, 6.38)
+
+[node name="BuildingWindow1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_glass_window")
+position = Vector3(-3.0, 2.3, 6.38)
+
+[node name="BuildingWindow2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_glass_window")
+position = Vector3(3.0, 2.3, 6.38)
+
+[node name="BuildingWindow3" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_glass_window")
+position = Vector3(5.2, 2.3, 6.38)
+
+[node name="WallL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(-6.9, 0.95, -11.0)
+
+[node name="WallR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh7")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(6.9, 0.95, -11.0)
+
+[node name="PillarL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh8")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(-2.3, 1.15, -11.0)
+
+[node name="PillarR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh8")
+material_override = ExtResource("m_concrete_wall")
+position = Vector3(2.3, 1.15, -11.0)
+
+[node name="GateLeafL" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh9")
+material_override = ExtResource("m_iron_gate")
+position = Vector3(-1.04, 0.95, -11.0)
+rotation_degrees = Vector3(0, -62, 0)
+
+[node name="GateLeafR" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh9")
+material_override = ExtResource("m_iron_gate")
+position = Vector3(1.04, 0.95, -11.0)
+rotation_degrees = Vector3(0, 62, 0)
+
+[node name="GateBlock" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh10")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(1.5, 0.12, -10.9)
+
+[node name="Weed0" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_foliage")
+position = Vector3(-3.0, 0.14, -7.5)
+scale = Vector3(1.4, 0.6, 1.1)
+
+[node name="Weed1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_foliage")
+position = Vector3(3.4, 0.14, -6.4)
+scale = Vector3(1.4, 0.6, 1.1)
+
+[node name="Weed2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_foliage")
+position = Vector3(-3.6, 0.14, 2.6)
+scale = Vector3(1.4, 0.6, 1.1)
+
+[node name="Weed3" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_foliage")
+position = Vector3(3.8, 0.14, 3.6)
+scale = Vector3(1.4, 0.6, 1.1)
+
+[node name="Weed4" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh11")
+material_override = ExtResource("m_foliage")
+position = Vector3(-4.4, 0.14, -9.8)
+scale = Vector3(1.4, 0.6, 1.1)
+
+[node name="RoofA" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh12")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(-7.0, 1.1, -17.0)
+
+[node name="RoofB" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh13")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(7.5, 0.85, -16.0)
+
+[node name="RoofC" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh14")
+material_override = ExtResource("m_outdoor_concrete")
+position = Vector3(0.4, 1.3, -20.0)
+
+[node name="UtilityPole" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh15")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(8.6, 3.2, -9.0)
+
+[node name="UtilityArm" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh16")
+material_override = ExtResource("m_wood_dark")
+position = Vector3(8.6, 5.6, -9.0)
+
+[node name="ShellCollision" type="StaticBody3D" parent="."]
+
+[node name="GroundShape" type="CollisionShape3D" parent="ShellCollision"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("Collide_ground")

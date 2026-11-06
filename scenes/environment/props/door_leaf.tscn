@@ -1,0 +1,66 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/metal_door.tres" id="m_metal_door"]
+[ext_resource type="Material" path="res://assets/materials/glass_window.tres" id="m_glass_window"]
+[ext_resource type="Material" path="res://assets/materials/desk_frame.tres" id="m_desk_frame"]
+[ext_resource type="Material" path="res://assets/materials/paper.tres" id="m_paper"]
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(0.92, 2.05, 0.05)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(0.62, 0.7, 0.01)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.26, 0.34, 0.01)
+
+[sub_resource type="CylinderMesh" id="mesh4"]
+top_radius = 0.02
+bottom_radius = 0.02
+height = 0.16
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(0.88, 0.22, 0.02)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(0.2, 0.1, 0.01)
+
+
+[node name="DoorLeaf" type="Node3D"]
+
+[node name="Leaf" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh1")
+material_override = ExtResource("m_metal_door")
+
+[node name="Flush1" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_metal_door")
+position = Vector3(0, 0.45, 0.03)
+
+[node name="Flush2" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh2")
+material_override = ExtResource("m_metal_door")
+position = Vector3(0, -0.35, 0.03)
+
+[node name="VisionPanel" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh3")
+material_override = ExtResource("m_glass_window")
+position = Vector3(0, 0.42, 0.033)
+
+[node name="Handle" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh4")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0.36, -0.05, 0.08)
+rotation_degrees = Vector3(0, 0, 90)
+
+[node name="KickPlate" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh5")
+material_override = ExtResource("m_desk_frame")
+position = Vector3(0, -0.9, 0.031)
+
+[node name="LabelHolder" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh6")
+material_override = ExtResource("m_paper")
+position = Vector3(0, 0.72, 0.033)
+

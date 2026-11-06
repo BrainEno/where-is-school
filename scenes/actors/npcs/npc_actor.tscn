@@ -1,0 +1,72 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/npcs/npc_actor.gd" id="1_npc"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_npc"]
+radius = 0.29
+height = 1.46
+
+[sub_resource type="BoxMesh" id="BoxMesh_shoulders"]
+size = Vector3(0.56, 0.2, 0.3)
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.19
+height = 0.38
+
+[sub_resource type="SphereMesh" id="SphereMesh_hair"]
+radius = 0.196
+height = 0.2
+
+[sub_resource type="StandardMaterial3D" id="Mat_shirt_default"]
+albedo_color = Color(0.42, 0.36, 0.3, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="Mat_skin_default"]
+albedo_color = Color(0.66, 0.54, 0.44, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Mat_hair_default"]
+albedo_color = Color(0.16, 0.14, 0.13, 1)
+roughness = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_shadow"]
+radius = 0.34
+height = 0.02
+
+[sub_resource type="StandardMaterial3D" id="Mat_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.05, 0.05, 0.05, 0.3)
+
+[node name="NpcActor" type="Node3D"]
+script = ExtResource("1_npc")
+shirt_material = SubResource("Mat_shirt_default")
+skin_material = SubResource("Mat_skin_default")
+hair_material = SubResource("Mat_hair_default")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.8, 0)
+mesh = SubResource("CapsuleMesh_npc")
+material_override = SubResource("Mat_shirt_default")
+
+[node name="Shoulders" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.3, 0)
+mesh = SubResource("BoxMesh_shoulders")
+material_override = SubResource("Mat_shirt_default")
+
+[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.56, 0)
+mesh = SubResource("SphereMesh_head")
+material_override = SubResource("Mat_skin_default")
+
+[node name="Hair" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.64, -0.02)
+mesh = SubResource("SphereMesh_hair")
+material_override = SubResource("Mat_hair_default")
+
+[node name="ContactShadow" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.02, 0)
+mesh = SubResource("SphereMesh_shadow")
+material_override = SubResource("Mat_shadow")
