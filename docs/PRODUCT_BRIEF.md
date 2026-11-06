@@ -4,86 +4,67 @@
 
 **where-is-school**
 
-The title is intentionally lowercase and slightly awkward. Preserve this spelling in repository metadata and public-facing materials unless the owner approves a change.
+Preserve the lowercase spelling in repository metadata and public-facing materials unless the owner approves a change.
 
-## One-sentence pitch
+## Pitch
 
-An adult who keeps being sent back to school must find a classroom—and eventually an exit—in a dreamlike world where school buildings have no stable address, people contradict their own memories, and the next examination is always imminent.
+A surreal 2.5D narrative exploration game in which an adult wakes at a school desk as a student again and tries to navigate an institution whose spaces and memories do not reliably agree.
 
 ## Genre and format
 
-- Painterly 2.5D narrative RPG / exploration adventure.
-- Single-player, story-led, offline-first.
+- Single-player narrative RPG / exploration adventure.
+- Offline-first.
 - Windows PC first; Steam distribution is a long-term target.
-- Exploration and dialogue are the primary verbs.
+- Exploration, environmental observation, and literary dialogue are the primary verbs.
 - No combat in the current scope.
 
-## Player fantasy
+## Player experience
 
-The player is not a hero saving a world. They are an exhausted adult trying to accomplish an embarrassingly ordinary task—find the classroom, locate a friend, get out of school—while the physical and social rules of the place keep shifting.
+The player begins in an ordinary classroom with an immediate, concrete situation: a lesson is about to start, a required textbook is missing, and the expected teacher may arrive. Conversation and small interactions establish the social environment. The player then leaves the classroom and explores nearby school and residential spaces.
 
-The world is strange, but the protagonist's practical concerns remain recognizable: being late, being judged, forgetting directions, misunderstanding an instruction, and feeling too old or too unprepared to be among the other students.
+The wider experience gradually introduces contradictory routes, unstable versions of familiar places, and encounters that resist easy classification. The protagonist's adult identity and student role remain in tension without a single required explanation.
 
 ## Design pillars
 
-### 1. Unstable but legible spaces
-
-School is not a building with a fixed address; it is a condition that can attach itself to apartment blocks, offices, parking lots, ports, and rooms. The player should be disoriented in fiction but never confused about basic controls or immediate objectives.
-
-### 2. Conversation as action
-
-Long conversations are not decorative lore dumps. Dialogue choices, observations, contradictions, and interior voices reveal information, change relationships, open paths, or reframe locations.
-
-### 3. Everyday objects carry the surrealism
-
-Mops, wet floors, iron doors, laundry lines, tires, desks, exam sheets, fluorescent lights, and phone maps recur across chapters. Their recurrence builds meaning.
-
-### 4. Adult identity inside a student role
-
-The protagonist is an adult body repeatedly returned to a student position. The emotional center is shame, repetition, self-evaluation, and the suspicion that a previous life can be invalidated.
-
-### 5. Restrained visual authorship
-
-The game should feel authored and materially coherent. A small number of excellent spaces is preferable to a large number of generic environments.
+1. **Unstable but legible spaces:** geography may contradict itself, but controls and immediate objectives remain clear.
+2. **Conversation as action:** dialogue, omissions, rumors, and differing recollections affect interpretation.
+3. **Material surrealism:** ordinary objects and recognizable architecture carry the atmosphere.
+4. **Conflicted identity:** the protagonist occupies a student role without understanding why.
+5. **Observation without certainty:** inspection does not guarantee classification or explanation.
+6. **Restrained visual authorship:** a small number of coherent spaces is preferable to generic scale.
 
 ## Core gameplay loop
 
-1. Receive a concrete short-term objective (find a room, person, stairway, gate, or clue).
-2. Traverse an unstable but navigable space.
+1. Receive or infer a short-term objective.
+2. Traverse a readable but potentially unstable space.
 3. Inspect objects and environmental details.
-4. Talk to people and hear competing interior voices.
-5. Discover a contradiction or new route condition.
+4. Talk to people and compare accounts.
+5. Discover a contradiction, memory fragment, or route condition.
 6. Change the world state or reinterpret a previous place.
-7. Enter the next space with a new question.
+7. Continue with a new question.
 
-## Core systems (eventual scope)
+## Opening production target
+
+The first narrative slice is a classroom sequence: wake-up, one conversation with Q, a schoolbag/textbook interaction, several inspectable props, the absence of B, the arrival of substitute N, and an exit beat. The later street and animal-observation sequence may be developed separately.
+
+Keep the opening's distinction between dialogue, recollection, subjective imagination, and observed events explicit in implementation.
+
+## Eventual systems
 
 - Character movement and a readable 2.5D camera.
 - Contextual interaction and inspectable objects.
-- Dialogue with long-form text, choices, portraits, and story flags.
-- Five provisional inner voices: 路感, 学籍, 羞耻, 旁听, and 倦怠.
-- Lightweight skill/check system where failure can reveal alternate information rather than simply blocking progress.
-- Journal / route notebook whose records can become unreliable.
+- Dialogue with speaker identity, choices, and story flags.
+- A lightweight inner-voice or skill-check system, subject to prototype validation.
+- Journal or route notebook.
 - Scene transitions and stateful environmental changes.
 - Versioned save/load, accessibility, and input settings.
 
 ## Scope guardrails
 
-**First vertical slice:** one compact residential-school approach, one staircase/corridor, one damp classroom, one NPC, three inspectable objects, one meaningful conversation, one spatial transition, and a short ending beat.
+**First slice:** one compact classroom, Q as the first conversational NPC, a missing-textbook interaction, a few inspectable props, one meaningful dialogue sequence, the substitute-teacher beat, and a clear exit.
 
-**Not in the first slice:** all chapters, combat, inventory-heavy RPG systems, procedural generation, open world, voice acting, cinematic facial animation, online features, localization pipeline, or final production art for every character.
+**Not in the first slice:** all memory branches, B's full onstage appearance, the complete animal encounter, the elliptical building, combat, procedural generation, an open world, voice acting, cinematic facial animation, online features, or final production art for every asset.
 
-## Audience and positioning
+## Success criteria
 
-For players who enjoy literary narrative games, atmospheric exploration, surreal architecture, and dialogue-driven experiences. The game should be understandable without knowing any literary or game references.
-
-## First-slice success criteria
-
-A first-time player can:
-- understand movement and interaction without a tutorial wall;
-- recognize the classroom and its objects as a coherent place;
-- complete one conversation with meaningful options;
-- experience one surprising but understandable spatial change;
-- finish with a clear reason to continue.
-
-The slice should take roughly 10–20 minutes. This is a design target, not a marketing promise.
+A first-time player can understand movement and interaction, recognize the classroom as a coherent place, understand Q's conversational role, make meaningful dialogue choices, distinguish subjective imagination from observed events, and leave the classroom with a clear next action.

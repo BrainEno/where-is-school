@@ -1,101 +1,96 @@
-# Narrative Bible
+# Narrative Bible — Game-facing Reference
+
+> This document is a production reference, not a literary manuscript. It intentionally records only the information needed to design scenes, dialogue systems, and interactions. Private prose, extended descriptions, and unpublished endings belong outside this repository.
 
 ## Core premise
 
-The protagonist is an adult who finds themself returning to school to repeat an examination that never seems to arrive. The result of a past examination was questioned and invalidated after people close to the protagonist challenged the account of what happened. The exact facts remain unstable: the school, the family, colleagues, and the protagonist each preserve different versions.
+An adult protagonist wakes in a classroom occupying the position of a student again. Their return has no confirmed explanation. The school and its surrounding spaces do not maintain a stable geography, and accounts of past events may contradict one another.
 
-The protagonist searches for today's classroom. Every attempt to find the school reveals a place that is recognizably ordinary and geographically impossible.
+The game should preserve uncertainty. Do not confirm that the world is a dream, a diagnosis, a simulation, a conventional parallel universe, or the product of a single hidden cause.
 
-## Central question
+## Narrative principles
 
-**Where is the school—and what would count as leaving it?**
+- Separate what a character says, what the protagonist remembers, what the protagonist imagines, and what the player directly observes.
+- Do not treat a vivid memory as objective proof.
+- Let ordinary dialogue and environmental details carry information without turning every character into an exposition device.
+- Keep immediate player goals understandable even when the larger situation is not.
+- Do not explain every object as a symbol or resolve every anomaly.
+- Do not add material from private manuscripts to this document. Record only scene requirements and implementation-facing facts.
 
-The game should not reduce this question to a single hidden explanation. Its emotional truth matters more than a final metaphysical answer.
+## Opening sequence: Biology Class
 
-## Themes
+The opening takes place in a classroom at the beginning of a final school term. The protagonist wakes at a desk with a headache and incomplete memory. The scene should not immediately identify itself as a flashback or explain why the protagonist is a student again.
 
-- Memory as an unreliable reconstruction rather than a complete recording.
-- Institutional systems that continue after their purpose has become unclear.
-- Adulthood interrupted by a return to a student identity.
-- Shame, evaluation, repetition, and the fear that a life can be retrospectively invalidated.
-- The difference between finding a route and having permission to leave.
-- Places that contain traces of people but do not remember them.
+### Scene beats
 
-## Rules of the world
+1. **Wake and conversation:** Q, a familiar-but-unremembered classmate, starts talking. The exchange establishes the term, a previous failed/blank biology exam, and the expected arrival of teacher B.
+2. **Missing textbook:** the protagonist checks their schoolbag. The biology textbook is absent. This is a simple playable interaction that builds anticipation.
+3. **Expected confrontation:** Q describes B as strict and punitive. The protagonist can form subjective expectations or imagined responses. These must not be presented as events that actually happened.
+4. **Teacher absent:** the bell rings, but B does not arrive. N, an inexperienced substitute, takes the class and eventually permits free activity.
+5. **Exit:** the protagonist leaves the classroom and moves through the school grounds. The immediate tone is release mixed with uncertainty.
+6. **Beyond the gate:** the route passes through ordinary streets and a residential area. The environment should remain recognizable before becoming subtly strange.
+7. **Animal observation:** a green, visibly unusual animal attracts the protagonist's attention. The player can inspect it, but its exact species and eventual fate are not established.
 
-1. **Geography is conditional.** The same staircase, door, classroom, or yard can connect to different places at different moments.
-2. **Time is administrative rather than chronological.** The examination is always pending, delayed, resumed, or already over according to whoever is speaking.
-3. **Identity is contextual.** The protagonist is treated as an adult by some people and as a student by others. Neither status is fully stable.
-4. **The school has no reliable memory.** Records contradict one another; rooms reset; familiar people may deny having met the protagonist.
-5. **The protagonist's memory contains gaps and excess.** Some details are precise beyond reason; important routes and dates cannot be recalled.
-6. **The world does not explain its own symbolism.** Avoid an omniscient character who translates every strange event into a definitive allegory.
+The first playable slice may end at the school exit. The street route and animal encounter can be a later slice if required by scope.
 
-## Protagonist
+## Character functions
 
-An adult caught in the role of a repeat student. They are observant, sometimes defensive, and often unsure whether a remembered detail is evidence or invention. The player should be able to shape their tone—compliant, skeptical, evasive, curious, tired—without turning them into a blank avatar.
+### Protagonist
 
-Do not diagnose the protagonist or present an inferred medical condition as the explanation for the world. Keep the disputed examination history as an unresolved narrative pressure, not a clinical reveal.
+An adult occupying a student role. The player should be able to express avoidance, curiosity, irritation, compliance, and defiance. Do not assign a diagnosis or a definitive explanation for the return.
 
-## The five inner voices
+### Q — classmate
 
-These are provisional narrative faculties, not good/evil alignments or conventional character classes.
+- Talkative, overweight, overfamiliar, and socially casual.
+- Acts as though he knows the protagonist well; the protagonist does not remember him.
+- Shares useful context through ordinary chatter, not formal exposition.
+- Not a supernatural guide, deliberate liar, or quest terminal.
 
-| Voice | Function | Typical distortion |
-|---|---|---|
-| 路感 | Reads spatial cues and proposes routes | Confidently mistakes repetition for direction |
-| 学籍 | Recalls rules, records, timetables, and examinations | Treats administrative language as objective truth |
-| 羞耻 | Anticipates judgment and remembers humiliation | Interprets neutral behavior as condemnation |
-| 旁听 | Notices what people reveal unintentionally | Turns fragments into overconfident theories |
-| 倦怠 | Resists effort and questions the value of continuing | Can sound nihilistic while occasionally seeing clearly |
+### B — biology teacher
 
-The player should not need to activate all five voices in every conversation. Let them interrupt selectively and develop through choices and repeated use. A failed check must not become a dead end; it should reveal another angle, a cost, or an alternate route.
+- A woman whose authority is associated with the institutional teacher role.
+- Absent during the opening lesson; her presence is conveyed through Q's account, classroom expectations, and a recurring prop.
+- Her eventual characterization should combine authority with ordinary human pettiness.
+- Do not decide whether her role-playing is fully conscious.
+- Do not make her a supernatural mastermind, a simple monster, a harmless joke, or a fraud whose authority instantly collapses.
 
-## Scene sequence (initial outline)
+### N — substitute teacher
 
-### 1. The school inside the residential block
-An ordinary apartment complex contains exercise equipment, parked vehicles, laundry, service corridors, and a passage that may or may not belong to the school. The player is trying to locate the entrance.
+- Young and inexperienced relative to the expected authority of B.
+- Struggles to command the room and eventually allows students to leave for free activity.
+- Not automatically more truthful, kind, or morally correct than B.
 
-**Function:** establish unstable orientation and the social embarrassment of asking for directions.
+## Props and interaction references
 
-### 2. The classroom with the missing windows
-A concrete-floored room contains desks, a blackboard, damp cleaning marks, and an opening that seems too large or too empty to be a window. Outside is not a stable exterior.
+| Item | Game-facing use |
+|---|---|
+| Biology textbook | Missing-item search; gives the player a concrete opening objective. |
+| Wooden set square | Inspectable classroom prop associated with B; communicates authority and possible physical punishment. |
+| Schoolbag and stationery | Small environmental interactions that establish the protagonist's immediate situation. |
+| Classroom desk and teacher's desk | Establish the spatial and social division between student and teacher. |
+| Green animal | Optional later inspection scene focused on observation without certain classification. |
 
-**Function:** introduce conflicting memories and the possibility that a room has changed while the protagonist was looking away.
+Descriptions should be newly written for the game. Do not transplant manuscript phrasing into item text.
 
-### 3. The staircase that changes its mind
-Landings disappear, steps vary in height, and the route is obstructed by tires, rugs, discarded items, water, or a plant that should not fit in the stairwell. A slope may become a basement carpet.
+## Memory choices
 
-**Function:** make spatial problem-solving carry emotional meaning; effort does not guarantee progress.
+A/B/C are intended as active directions for recollection, but their subjects are undecided. D means postponing active recollection and continuing with immediate events. D is not a permanently exclusive fourth campaign.
 
-### 4. The container yard
-Red and blue containers, truck tires, temporary planks, freight vehicles, and the sea form an unstable route. The player cannot tell whether the yard is a way out or another school boundary.
+An initial choice may influence scene order and which evidence appears first. It should not automatically lock the player out of all other memories. Keep remembered claims distinct from independently observable evidence.
 
-**Function:** turn the fantasy of escape into another navigation problem.
+## World and later spaces
 
-### 5. The examination that is always postponed
-A large examination space gathers people whose ages and memories do not agree. The deadline is near, indefinite, or already passed.
+- The same school may have multiple contradictory versions.
+- Corridors, staircases, classrooms, yards, and nearby residential spaces can connect in unstable ways.
+- The cause of these changes remains unknown.
+- The elliptical building is a later-discovered structure connecting versions of the school. Do not place it in the opening sequence.
+- Other candidate spaces include laboratories, toilets, gyms, unfinished stairwells, container yards, and port-like areas. Their order is not fixed.
 
-**Function:** confront the protagonist with competing accounts without resolving every contradiction.
+## Dialogue and implementation guidance
 
-Potential later locations include an archive room with incompatible enrollment records, a cafeteria where people remember the same meal differently, a gymnasium where class never ends, and a rooftop from which visible roads cannot be reached.
-
-## Opening sequence: beats
-
-1. Darkness, a distant school bell, and the sound of a mop moving over a hard floor.
-2. An ordinary classroom. A teacher says the protagonist is late but cannot agree on which lesson has just begun.
-3. A corridor with signs that lead back to itself. Outside glimpses of residential balconies and laundry lines appear where a school wall should be.
-4. A phone map shows land and sea but no school marker. Its navigation voice confidently gives directions that cannot be followed.
-5. A container yard opens toward the sea. A friend suggests leaving, but the available route looks like a freight loading path.
-6. Inside a container is another classroom. The board says the term has not ended. The examination has no confirmed date.
-7. The title appears; control returns with the practical objective: **Find today's classroom.**
-
-The opening should be made with in-engine scenes, camera staging, sound, and text—not a pre-rendered video—so it can be skipped and maintained.
-
-## Dialogue principles
-
-- Prefer specific observations, contradictions, evasions, and awkward pauses over abstract speeches.
-- Let ordinary bureaucratic language become strange through context.
-- Long dialogue must be broken by player observation, choices, movement, and silence.
-- Characters should have independent agendas; they are not merely exposition dispensers.
-- A choice should change tone, knowledge, relationship, access, or the player's interpretation. Avoid fake choices that collapse immediately to the same response without a reason.
-- Keep the player's immediate objective legible even when the larger story is not.
+- Write new game dialogue; use only short, explicitly approved dialogue references.
+- Q's speech should feel conversational and sometimes trivial, with information emerging incidentally.
+- N's dialogue should convey uncertainty and limited classroom authority without becoming a comic caricature.
+- B's eventual dialogue should not simply validate or disprove Q's account.
+- Choices should alter tone, knowledge, relationship, access, or interpretation.
+- Keep long dialogue interleaved with movement, inspection, silence, and player decisions.
