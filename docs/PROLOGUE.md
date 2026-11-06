@@ -3,8 +3,8 @@
 This milestone implements the first playable slice of the opening sequence:
 wake in the classroom → Q opens the conversation → search the schoolbag →
 inspect the room → the bell rings (B absent) → substitute N lets the class go →
-leave through the corridor → the school gate. The street route and the green
-animal are deliberately **not** in this build (milestone 2).
+leave through the corridor → the school gate → the street outside, where a
+green shape in a hedge is briefly seen — and then is not.
 
 ## Running it
 
@@ -23,6 +23,7 @@ mouse or arrow keys + Space · Tab backlog · Esc settings (text speed, text siz
 - `scenes/main/main.tscn` — project entry; composes the classroom only.
 - `scenes/locations/classroom/classroom.tscn` — the lesson. Self-contained.
 - `scenes/locations/corridor/corridor.tscn` — short exit route and the gate.
+- `scenes/locations/street/street.tscn` — the road beyond the gate; the hedge observation.
 - `scenes/ui/game_ui.tscn` — HUD, dialogue panel, backlog, settings, end card.
 - `scenes/actors/player/player.tscn` — CharacterBody3D + fixed 2.5D camera.
 - `scenes/environment/student_desk.tscn` — reusable graybox desk prop.
@@ -102,7 +103,25 @@ walk to) → bag discovery sets `observed.textbook_missing` → ≥ 2 other
 `observed.inspect.*` flags → the bell rings (60 s fallback after the bag is
 searched, so the player is never soft-locked) → `bell_gap` → N walks in →
 `n_arrival` ends with `flow.class_dismissed` → the exit unlocks →
-corridor → gate → end card (restart reloads the project fresh).
+corridor → `gate_end` → street → end card (restart reloads the project fresh).
+
+## Street segment
+
+`GateExit` plays `gate_end`, then `SceneFlow.travel` fades into
+`scenes/locations/street/street.tscn` with spawn `from_gate`. `StreetDirector`
+consumes the spawn id, positions the player at the gate end, and sets the
+objective ("Follow the road."). The street contains two interactables:
+
+- `GreenShapeInspect` — the ambiguous green thing in the hedge. `Inspectable`
+  with `street_green_animal` (original text; species and fate never resolved).
+  Completing it sets `observed.green_animal` (and `observed.green_animal_lingered`
+  on the look-closer branch), then `StreetDirector` hides the shape and disables
+  the interactable — briefly seen, then not.
+- `StreetEndExit` — prologue terminus (`EndExit`); sets `flow.prologue_complete`
+  and opens the end card.
+
+The beat is deliberately unresolved in every outcome; the end card reports only
+counts (`observed.inspect.*`) and whether the imagination beat was seen.
 
 ## Testing
 
@@ -119,14 +138,14 @@ Headless scripts in `tests/` (run with `godot --headless --path . --script res:/
   imagination isolation, finish signal, invalid-content rejection.
 - `dialogue_content_test.gd` — every `.tres` in `data/dialogue/` validates; speakers known;
   required conversations present.
-- `scene_composition_test.gd` — classroom, corridor and main instantiate with required nodes.
+- `scene_composition_test.gd` — classroom, corridor, street and main instantiate with required nodes.
 
 CI (`.github/workflows/godot-ci.yml`) runs: import + script parse, the three granular smoke
 steps, and the five unit-test scripts. Green as of the milestone-1 branch.
 
 ## Known limitations (this milestone)
 
-- Street route and the green animal observation are deferred to milestone 2.
+- Scope beyond the prologue (the full game) is not started; the street segment ends the prologue.
 - No save/load yet (state is per-session); backlog resets when the scene changes.
 - Temporary graybox primitives only; no production art, no portraits beyond placeholders.
 - Sound effects are synthesized at runtime (no recorded audio assets, no assets to license).

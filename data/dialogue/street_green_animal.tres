@@ -1,0 +1,91 @@
+[gd_resource type="Resource" script_class="DialogueConversation" load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_conversation.gd" id="1_conversation"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_entry.gd" id="2_entry"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_choice.gd" id="3_choice"]
+
+
+[sub_resource type="Resource" id="Entry_sa1"]
+script = ExtResource("2_entry")
+id = &"sa1"
+speaker_id = &"narrator"
+text = "The hedge at the corner has gone wild, the kind nobody trims until the rain bothers to. Something in it is not hedge."
+next_id = &"sa2"
+
+[sub_resource type="Resource" id="Entry_sa2"]
+script = ExtResource("2_entry")
+id = &"sa2"
+speaker_id = &"inner"
+text = "Green. Small. Low. The wrong shape for leaves, and held very still."
+next_id = &"sa3"
+
+[sub_resource type="Resource" id="Entry_sa3"]
+script = ExtResource("2_entry")
+id = &"sa3"
+speaker_id = &"narrator"
+text = "It does not move. You stand there longer than you meant to."
+choices = Array[ExtResource("3_choice")]([SubResource("Choice_sa3_0"), SubResource("Choice_sa3_1")])
+
+[sub_resource type="Resource" id="Choice_sa3_0"]
+script = ExtResource("3_choice")
+text = "Look closer."
+next_id = &"sa4"
+
+[sub_resource type="Resource" id="Choice_sa3_1"]
+script = ExtResource("3_choice")
+text = "Keep walking."
+next_id = &"sa7"
+
+[sub_resource type="Resource" id="Entry_sa4"]
+script = ExtResource("2_entry")
+id = &"sa4"
+speaker_id = &"inner"
+text = "Crouch. Up close it is a lump of bottle green — tarpaulin colored, maybe. Or the exact color of something that has decided to be patient."
+next_id = &"sa5"
+set_flag = &"observed.green_animal_lingered"
+set_value = true
+
+[sub_resource type="Resource" id="Entry_sa5"]
+script = ExtResource("2_entry")
+id = &"sa5"
+speaker_id = &"narrator"
+text = "A fold of it lifts. Or the wind passes through and thinks better of it. You never get close enough to know which."
+next_id = &"sa6"
+
+[sub_resource type="Resource" id="Entry_sa6"]
+script = ExtResource("2_entry")
+id = &"sa6"
+speaker_id = &"inner"
+text = "A lost toy. A dead scrap of tarp. Something with legs, holding its breath."
+next_id = &"sa8"
+
+[sub_resource type="Resource" id="Entry_sa7"]
+script = ExtResource("2_entry")
+id = &"sa7"
+speaker_id = &"inner"
+text = "Eyes forward. Some things are none of your business until they decide to be."
+next_id = &"sa8"
+
+[sub_resource type="Resource" id="Entry_sa8"]
+script = ExtResource("2_entry")
+id = &"sa8"
+speaker_id = &"narrator"
+text = "Behind you, politely, the wind goes through the hedge without anything in it mentioning it."
+next_id = &"sa9"
+set_flag = &"observed.green_animal"
+set_value = true
+
+[sub_resource type="Resource" id="Entry_sa9"]
+script = ExtResource("2_entry")
+id = &"sa9"
+speaker_id = &"inner"
+text = "Home. If home is where the road runs out."
+
+[resource]
+script = ExtResource("1_conversation")
+id = &"street_green_animal"
+start_id = &"sa1"
+presentation = "standard"
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_sa1"), SubResource("Entry_sa2"), SubResource("Entry_sa3"), SubResource("Entry_sa4"), SubResource("Entry_sa5"), SubResource("Entry_sa6"), SubResource("Entry_sa7"), SubResource("Entry_sa8"), SubResource("Entry_sa9")])

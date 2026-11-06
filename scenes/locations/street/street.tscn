@@ -1,0 +1,353 @@
+[gd_scene load_steps=32 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="2_ui"]
+[ext_resource type="Script" path="res://scripts/world/inspectable.gd" id="4_inspectable"]
+[ext_resource type="Script" path="res://scripts/world/end_exit.gd" id="5_endexit"]
+[ext_resource type="Resource" path="res://data/dialogue/street_green_animal.tres" id="6_green"]
+[ext_resource type="Script" path="res://scripts/world/street_director.gd" id="7_streetdirector"]
+
+[sub_resource type="Environment" id="env_street"]
+background_mode = 1
+background_color = Color(0.11, 0.12, 0.17, 1)
+ambient_light_color = Color(0.34, 0.35, 0.42, 1)
+ambient_light_energy = 0.78
+fog_enabled = true
+fog_light_color = Color(0.17, 0.18, 0.23, 1)
+fog_density = 0.022
+
+[sub_resource type="StandardMaterial3D" id="mat_sidewalk"]
+albedo_color = Color(0.52, 0.51, 0.47, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_road"]
+albedo_color = Color(0.155, 0.155, 0.165, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_kerb"]
+albedo_color = Color(0.58, 0.58, 0.55, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_house_a"]
+albedo_color = Color(0.55, 0.48, 0.38, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_house_b"]
+albedo_color = Color(0.42, 0.45, 0.5, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_house_c"]
+albedo_color = Color(0.6, 0.55, 0.46, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_roof"]
+albedo_color = Color(0.3, 0.22, 0.18, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_pole"]
+albedo_color = Color(0.24, 0.23, 0.215, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_lamp"]
+albedo_color = Color(0.4, 0.38, 0.34, 1)
+roughness = 0.92
+emission_enabled = true
+emission = Color(0.95, 0.78, 0.42, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="StandardMaterial3D" id="mat_window"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+roughness = 0.92
+emission_enabled = true
+emission = Color(0.82, 0.62, 0.34, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="StandardMaterial3D" id="mat_hedge"]
+albedo_color = Color(0.1, 0.21, 0.12, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="mat_green"]
+albedo_color = Color(0.14, 0.66, 0.24, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="mat_hill"]
+albedo_color = Color(0.19, 0.22, 0.24, 1)
+roughness = 0.92
+
+[sub_resource type="BoxShape3D" id="shape_hedge"]
+size = Vector3(1.6, 1.4, 1.3)
+
+[sub_resource type="BoxShape3D" id="shape_street_end"]
+size = Vector3(1.6, 2.6, 3.3)
+
+[sub_resource type="BoxShape3D" id="shape_wall_north"]
+size = Vector3(23.0, 3.0, 0.4)
+
+[sub_resource type="BoxShape3D" id="shape_wall_south"]
+size = Vector3(23.0, 3.0, 0.4)
+
+[sub_resource type="BoxShape3D" id="shape_wall_west"]
+size = Vector3(0.4, 3.0, 9.0)
+
+[sub_resource type="BoxShape3D" id="shape_wall_east"]
+size = Vector3(0.4, 3.0, 9.0)
+
+[sub_resource type="BoxMesh" id="mesh_unit"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="SphereMesh" id="mesh_green"]
+radius = 0.32
+height = 0.64
+radial_segments = 6
+rings = 3
+
+[sub_resource type="CylinderMesh" id="mesh_pole"]
+top_radius = 0.09
+bottom_radius = 0.11
+height = 4.6
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="mesh_lamp_pole"]
+top_radius = 0.06
+bottom_radius = 0.08
+height = 3.5
+radial_segments = 10
+
+[sub_resource type="PrismMesh" id="mesh_roof"]
+size = Vector3(1, 1, 1)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env_street")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+rotation_degrees = Vector3(-38, 35, 0)
+light_color = Color(0.95, 0.82, 0.66, 1)
+light_energy = 0.9
+shadow_enabled = true
+directional_shadow_max_distance = 34.0
+
+[node name="Sidewalk" type="MeshInstance3D" parent="."]
+position = Vector3(1.4, -0.05, 0)
+scale = Vector3(23, 0.1, 3.4)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_sidewalk")
+
+[node name="Road" type="MeshInstance3D" parent="."]
+position = Vector3(1.4, -0.02, 3.9)
+scale = Vector3(23, 0.1, 3.6)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_road")
+
+[node name="Kerb" type="MeshInstance3D" parent="."]
+position = Vector3(1.4, 0.07, 2.1)
+scale = Vector3(23, 0.15, 0.18)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_kerb")
+
+[node name="HillNorth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.1, -14)
+scale = Vector3(26, 2.6, 2.0)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_hill")
+
+[node name="HillSouth" type="MeshInstance3D" parent="."]
+position = Vector3(2, 1.4, 16)
+scale = Vector3(28, 3.2, 2.0)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_hill")
+
+[node name="HouseA" type="MeshInstance3D" parent="."]
+position = Vector3(-4.4, 1.35, -5.6)
+scale = Vector3(3.1, 2.7, 2.5)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_house_a")
+
+[node name="HouseARoof" type="MeshInstance3D" parent="."]
+position = Vector3(-4.4, 3.25, -5.6)
+scale = Vector3(3.6, 1.1, 3.0)
+mesh = SubResource("mesh_roof")
+material_override = SubResource("mat_roof")
+
+[node name="HouseAWindow0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.1000000000000005, 1.4, -4.319999999999999)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseAWindow1" type="MeshInstance3D" parent="."]
+position = Vector3(-3.6000000000000005, 2.0, -4.319999999999999)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseB" type="MeshInstance3D" parent="."]
+position = Vector3(0.4, 1.55, -6.1)
+scale = Vector3(3.6, 3.1, 2.6)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_house_b")
+
+[node name="HouseBRoof" type="MeshInstance3D" parent="."]
+position = Vector3(0.4, 3.6500000000000004, -6.1)
+scale = Vector3(4.1, 1.1, 3.1)
+mesh = SubResource("mesh_roof")
+material_override = SubResource("mat_roof")
+
+[node name="HouseBWindow0" type="MeshInstance3D" parent="."]
+position = Vector3(1.3, 2.2, -4.77)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseC" type="MeshInstance3D" parent="."]
+position = Vector3(5.6, 1.2, -5.5)
+scale = Vector3(2.9, 2.4, 2.3)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_house_c")
+
+[node name="HouseCRoof" type="MeshInstance3D" parent="."]
+position = Vector3(5.6, 2.95, -5.5)
+scale = Vector3(3.4, 1.1, 2.8)
+mesh = SubResource("mesh_roof")
+material_override = SubResource("mat_roof")
+
+[node name="HouseCWindow0" type="MeshInstance3D" parent="."]
+position = Vector3(5.0, 1.5, -4.319999999999999)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseD" type="MeshInstance3D" parent="."]
+position = Vector3(-2.6, 1.5, 8.0)
+scale = Vector3(3.6, 3.0, 2.4)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_house_b")
+
+[node name="HouseDRoof" type="MeshInstance3D" parent="."]
+position = Vector3(-2.6, 3.55, 8.0)
+scale = Vector3(4.1, 1.1, 2.9)
+mesh = SubResource("mesh_roof")
+material_override = SubResource("mat_roof")
+
+[node name="HouseDWindow0" type="MeshInstance3D" parent="."]
+position = Vector3(-1.9000000000000001, 1.6, 9.229999999999999)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseDWindow1" type="MeshInstance3D" parent="."]
+position = Vector3(-3.5, 2.3, 9.229999999999999)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="HouseE" type="MeshInstance3D" parent="."]
+position = Vector3(4.4, 1.3, 8.3)
+scale = Vector3(3.2, 2.6, 2.3)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_house_a")
+
+[node name="HouseERoof" type="MeshInstance3D" parent="."]
+position = Vector3(4.4, 3.1500000000000004, 8.3)
+scale = Vector3(3.7, 1.1, 2.8)
+mesh = SubResource("mesh_roof")
+material_override = SubResource("mat_roof")
+
+[node name="HouseEWindow0" type="MeshInstance3D" parent="."]
+position = Vector3(3.9000000000000004, 1.4, 9.48)
+scale = Vector3(0.55, 0.7, 0.08)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_window")
+
+[node name="UtilityPole" type="MeshInstance3D" parent="."]
+position = Vector3(7.0, 2.3, -1.35)
+mesh = SubResource("mesh_pole")
+material_override = SubResource("mat_pole")
+
+[node name="PoleCrossarm" type="MeshInstance3D" parent="."]
+position = Vector3(7.0, 4.15, -1.35)
+scale = Vector3(1.7, 0.12, 0.12)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_pole")
+
+[node name="StreetLampPole" type="MeshInstance3D" parent="."]
+position = Vector3(-3.4, 1.75, -1.85)
+mesh = SubResource("mesh_lamp_pole")
+material_override = SubResource("mat_pole")
+
+[node name="StreetLampHead" type="MeshInstance3D" parent="."]
+position = Vector3(-3.4, 3.52, -1.65)
+scale = Vector3(0.55, 0.14, 0.3)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_lamp")
+
+[node name="StreetLampLight" type="OmniLight3D" parent="."]
+position = Vector3(-3.4, 3.25, -1.55)
+omni_range = 6.5
+light_color = Color(1.0, 0.78, 0.45, 1)
+light_energy = 1.35
+shadow_enabled = false
+
+[node name="Hedge" type="MeshInstance3D" parent="."]
+position = Vector3(2.6, 0.38, -2.62)
+scale = Vector3(4.7, 0.76, 0.62)
+mesh = SubResource("mesh_unit")
+material_override = SubResource("mat_hedge")
+
+[node name="GreenShape" type="MeshInstance3D" parent="."]
+position = Vector3(2.55, 0.33, -2.3)
+mesh = SubResource("mesh_green")
+material_override = SubResource("mat_green")
+
+[node name="Bounds" type="StaticBody3D" parent="."]
+
+[node name="WallNorth" type="CollisionShape3D" parent="Bounds"]
+position = Vector3(1.4, 1.5, -2.08)
+shape = SubResource("shape_wall_north")
+
+[node name="WallSouth" type="CollisionShape3D" parent="Bounds"]
+position = Vector3(1.4, 1.5, 1.92)
+shape = SubResource("shape_wall_south")
+
+[node name="WallWest" type="CollisionShape3D" parent="Bounds"]
+position = Vector3(-8.75, 1.5, 0.0)
+shape = SubResource("shape_wall_west")
+
+[node name="WallEast" type="CollisionShape3D" parent="Bounds"]
+position = Vector3(11.9, 1.5, 0.0)
+shape = SubResource("shape_wall_east")
+
+[node name="GreenShapeInspect" type="Area3D" parent="."]
+position = Vector3(2.55, 0.7, -1.95)
+script = ExtResource("4_inspectable")
+prompt = "Look at the green thing in the hedge"
+interaction_id = &"street_green_animal"
+conversation = ExtResource("6_green")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GreenShapeInspect"]
+shape = SubResource("shape_hedge")
+
+[node name="StreetEndExit" type="Area3D" parent="."]
+position = Vector3(11.2, 1.3, 0)
+script = ExtResource("5_endexit")
+prompt = "Keep walking"
+interaction_id = &"street_end"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StreetEndExit"]
+shape = SubResource("shape_street_end")
+
+[node name="SpawnFromGate" type="Marker3D" parent="."]
+position = Vector3(-7.3, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(-7.3, 0, 0)
+
+[node name="StreetDirector" type="Node" parent="."]
+script = ExtResource("7_streetdirector")
+player = NodePath("../Player")
+spawn_from_gate = NodePath("../SpawnFromGate")
+green_shape = NodePath("../GreenShape")
+green_shape_inspect = NodePath("../GreenShapeInspect")
+
+[node name="GameUI" parent="." instance=ExtResource("2_ui")]

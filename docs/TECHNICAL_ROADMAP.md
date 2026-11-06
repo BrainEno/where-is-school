@@ -31,6 +31,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Scene transition orchestration (SceneFlow autoload) and graybox classroom/corridor.
 - Text speed and text size settings (Settings autoload, persisted to user://settings.cfg).
 - Runtime-synthesized sound effects (no recorded audio assets).
+- Street segment past the gate (graybox, hedge observation, prologue terminus).
 
 ### Planned, but deliberately not implemented yet
 - Dialogic/addon adoption review (the custom runtime may remain; no dependency was added).

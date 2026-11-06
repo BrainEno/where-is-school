@@ -112,7 +112,7 @@ func show_end_card() -> void:
 		+ "B never arrived. N let the class go.\n"
 		+ "You walked out anyway."
 	)
-	_end_card_note.text = "Prologue complete — next up: the street and the green animal."
+	_end_card_note.text = "Prologue complete."
 	if state != null:
 		var inspects: int = state.count_flags_with_prefix("observed.inspect.")
 		_end_card_note.text += "\n(things inspected: %d · imagination seen: %s)" % [

@@ -276,6 +276,8 @@ script = ExtResource("4_gateexit")
 prompt = "Push open the gate"
 interaction_id = &"school_gate"
 closing_conversation = ExtResource("6_gate")
+target_scene = "res://scenes/locations/street/street.tscn"
+spawn_id = &"from_gate"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GateExit"]
 shape = SubResource("shape_gate")

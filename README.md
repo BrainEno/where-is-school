@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Milestone 1: the Biology Class prologue is implemented.** A clean checkout opens into a playable classroom slice: wake at a desk, Q opens the conversation, the missing-textbook search, inspectable props (schoolbag, wooden set square, blackboard, noticeboard, teacher's desk, window, clock, name card), a clearly-marked subjective-imagination beat, B's absence, substitute N, dismissal, a corridor route, and the school-gate threshold. See [docs/PROLOGUE.md](docs/PROLOGUE.md) for the implementation map and validation commands. The full game and later prologue segments (street route, green animal) are not yet implemented.
+**Milestone 1: the Biology Class prologue is implemented.** A clean checkout opens into a playable slice: wake at a desk, Q opens the conversation, the missing-textbook search, inspectable props (schoolbag, wooden set square, blackboard, noticeboard, teacher's desk, window, clock, name card), a clearly-marked subjective-imagination beat, B's absence, substitute N, dismissal, the corridor route, the school gate, and the street beyond it — where a green shape in a hedge is briefly seen, then is not. See [docs/PROLOGUE.md](docs/PROLOGUE.md) for the implementation map and validation commands. Everything beyond the prologue is not yet implemented.
 
 ## Technical baseline
 

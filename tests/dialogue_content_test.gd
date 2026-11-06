@@ -6,6 +6,7 @@ const KNOWN_SPEAKERS: PackedStringArray = ["q", "n", "narrator", "inner", "imagi
 const REQUIRED_CONVERSATIONS: PackedStringArray = [
 	"wake_intro", "q_intro", "q_free_talk", "bag_search", "set_square",
 	"n_arrival", "bell_gap", "imagination_b", "door_locked", "gate_end",
+	"street_green_animal",
 ]
 
 func _initialize() -> void:

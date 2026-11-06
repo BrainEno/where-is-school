@@ -59,6 +59,27 @@ func _run() -> void:
 		corridor.queue_free()
 		await process_frame
 
+	# --- street direct composition
+	var street_scene: PackedScene = load("res://scenes/locations/street/street.tscn") as PackedScene
+	if street_scene == null:
+		failures.append("street.tscn could not be loaded")
+	else:
+		var street: Node = street_scene.instantiate()
+		root.add_child(street)
+		await process_frame
+		_expect_node(failures, street, "Player", true)
+		_expect_node(failures, street, "StreetDirector", true)
+		_expect_node(failures, street, "GameUI", true)
+		_expect_node(failures, street, "SpawnFromGate", true)
+		_expect_node(failures, street, "GreenShape", true)
+		_expect_node(failures, street, "GreenShapeInspect", true)
+		_expect_node(failures, street, "StreetEndExit", true)
+		var street_interactables: int = street.get_tree().get_nodes_in_group("interactables").size()
+		if street_interactables < 2:
+			failures.append("street expected at least 2 interactables, found %d" % street_interactables)
+		street.queue_free()
+		await process_frame
+
 	# --- main composes the classroom
 	var main_scene: PackedScene = load("res://scenes/main/main.tscn") as PackedScene
 	if main_scene == null:

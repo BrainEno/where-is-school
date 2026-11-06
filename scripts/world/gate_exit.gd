@@ -1,9 +1,11 @@
 class_name GateExit
 extends Interactable
 ## The school gate at the far end of the corridor.
-## Plays the closing beat, then hands off to the milestone end card.
+## Plays the closing beat, then hands off to the street.
 
 @export var closing_conversation: DialogueConversation
+@export var target_scene: String = "res://scenes/locations/street/street.tscn"
+@export var spawn_id: StringName = &"from_gate"
 
 var _waiting_for_end: bool = false
 
@@ -28,6 +30,9 @@ func _on_conversation_finished(conversation_id: StringName) -> void:
 	if conversation_id != &"gate_end":
 		return
 	_waiting_for_end = false
-	var ui := get_tree().get_first_node_in_group("game_ui")
-	if ui != null and ui.has_method("show_end_card"):
-		ui.show_end_card()
+	var root := get_tree().get_root()
+	var scene_flow: Node = root.get_node_or_null("SceneFlow") if root else null
+	if scene_flow != null:
+		scene_flow.travel(target_scene, spawn_id)
+	else:
+		get_tree().change_scene_to_file(target_scene)
