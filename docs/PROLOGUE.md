@@ -108,14 +108,21 @@ corridor → gate → end card (restart reloads the project fresh).
 
 Headless scripts in `tests/` (run with `godot --headless --path . --script res://tests/<name>.gd`):
 
-- `smoke_test.gd` — main scene composes; player, camera, UI, director, ≥ 6 interactables.
+- `smoke_main.gd` / `smoke_player.gd` / `smoke_ui.gd` — per-concern instantiation checks;
+  CI runs them as separate steps, so a failing step names the broken concern. Each godot
+  invocation runs under `timeout`, so an aborted script surfaces as a named step instead of
+  hanging the job.
+- `smoke_test.gd` — combined smoke check kept for local use (what the granular steps replaced in CI).
 - `game_state_test.gd` — flags, prefix counting, snapshot/clear.
-- `settings_test.gd` — persistence round trip, invalid-value rejection.
+- `settings_test.gd` — persistence round trip, invalid-value rejection (corrupt configs fall back to defaults).
 - `dialogue_runner_test.gd` — effects, divergent choices, choice gating, start override,
   imagination isolation, finish signal, invalid-content rejection.
 - `dialogue_content_test.gd` — every `.tres` in `data/dialogue/` validates; speakers known;
   required conversations present.
 - `scene_composition_test.gd` — classroom, corridor and main instantiate with required nodes.
+
+CI (`.github/workflows/godot-ci.yml`) runs: import + script parse, the three granular smoke
+steps, and the five unit-test scripts. Green as of the milestone-1 branch.
 
 ## Known limitations (this milestone)
 
