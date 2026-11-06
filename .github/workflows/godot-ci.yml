@@ -35,7 +35,7 @@ jobs:
           code=$?
           if [ $code -ne 0 ]; then
             echo "::error::smoke_main.gd exited $code"
-            tail -n 12 smoke_main.log | sed 's/^/::error::/'
+            grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_main.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
           tail -n 3 smoke_main.log || true
@@ -47,7 +47,7 @@ jobs:
           code=$?
           if [ $code -ne 0 ]; then
             echo "::error::smoke_player.gd exited $code"
-            tail -n 12 smoke_player.log | sed 's/^/::error::/'
+            grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_player.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
           tail -n 3 smoke_player.log || true
@@ -59,7 +59,7 @@ jobs:
           code=$?
           if [ $code -ne 0 ]; then
             echo "::error::smoke_ui.gd exited $code"
-            tail -n 12 smoke_ui.log | sed 's/^/::error::/'
+            grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_ui.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
           tail -n 3 smoke_ui.log || true
@@ -75,7 +75,7 @@ jobs:
             tail -n 2 "test_${t}.log" || true
             if [ $code -ne 0 ]; then
               echo "::error::${t}.gd exited $code"
-              tail -n 10 "test_${t}.log" | sed 's/^/::error::/'
+              grep -iE "ERROR|Failed|Parse|SCRIPT|ASSERT" "test_${t}.log" | head -9 | sed 's/^/::error::/'
               fail=1
             fi
           done
