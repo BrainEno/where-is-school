@@ -195,6 +195,11 @@ func _state() -> Node:
 	return root.get_node_or_null("GameState") if root else null
 
 
+func _scene_flow() -> Node:
+	var root := get_tree().get_root()
+	return root.get_node_or_null("SceneFlow") if root else null
+
+
 func _set_objective(text: String) -> void:
 	var ui := _ui()
 	if ui != null and ui.has_method("set_objective"):

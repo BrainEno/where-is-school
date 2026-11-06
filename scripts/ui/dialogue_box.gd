@@ -147,6 +147,23 @@ func apply_text_scale(factor: float) -> void:
 	_backlog_text.add_theme_font_size_override("font_size", int(round(BASE_SIZES["backlog"] * factor)))
 
 
+func _settings() -> Node:
+	if not is_inside_tree():
+		return null
+	var root := get_tree().get_root()
+	return root.get_node_or_null("Settings") if root else null
+
+
+func _typewriter_cps() -> float:
+	var settings: Node = _settings()
+	return float(settings.typewriter_cps()) if settings != null else 45.0
+
+
+func _font_scale() -> float:
+	var settings: Node = _settings()
+	return float(settings.font_scale()) if settings != null else 1.0
+
+
 func _process(delta: float) -> void:
 	if _typing:
 		_type_progress += _typewriter_cps() * delta
