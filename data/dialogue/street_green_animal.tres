@@ -21,13 +21,6 @@ speaker_id = &"inner"
 text = "Green. Small. Low. The wrong shape for leaves, and held very still."
 next_id = &"sa3"
 
-[sub_resource type="Resource" id="Entry_sa3"]
-script = ExtResource("2_entry")
-id = &"sa3"
-speaker_id = &"narrator"
-text = "It does not move. You stand there longer than you meant to."
-choices = Array[ExtResource("3_choice")]([SubResource("Choice_sa3_0"), SubResource("Choice_sa3_1")])
-
 [sub_resource type="Resource" id="Choice_sa3_0"]
 script = ExtResource("3_choice")
 text = "Look closer."
@@ -37,6 +30,13 @@ next_id = &"sa4"
 script = ExtResource("3_choice")
 text = "Keep walking."
 next_id = &"sa7"
+
+[sub_resource type="Resource" id="Entry_sa3"]
+script = ExtResource("2_entry")
+id = &"sa3"
+speaker_id = &"narrator"
+text = "It does not move. You stand there longer than you meant to."
+choices = Array[ExtResource("3_choice")]([SubResource("Choice_sa3_0"), SubResource("Choice_sa3_1")])
 
 [sub_resource type="Resource" id="Entry_sa4"]
 script = ExtResource("2_entry")
