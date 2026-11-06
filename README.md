@@ -35,7 +35,7 @@ The project takes inspiration from expressive, text-rich narrative RPGs and drea
 2. Clone this repository.
 3. Import/open the repository root containing project.godot.
 4. Run the main scene with F6/F5 or the editor's Run Project command.
-5. Use **WASD** or the arrow keys to move in the graybox test space.
+5. Use **WASD** to move in the graybox test space.
 
 Headless validation commands:
 
