@@ -1,6 +1,10 @@
-[gd_resource type="CharacterDef" format=3]
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/dialogue/character_def.gd" id="1_character_def"]
+
 
 [resource]
+script = ExtResource("1_character_def")
 id = &"narrator"
 display_name = ""
 description = "Neutral narration. No speaker shown."

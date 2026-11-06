@@ -1,30 +1,42 @@
-[gd_resource type="DialogueConversation" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="DialogueConversation" load_steps=8 format=3]
 
-[sub_resource type="DialogueEntry" id="Entry_w1"]
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_conversation.gd" id="1_conversation"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_entry.gd" id="2_entry"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_choice.gd" id="3_choice"]
+
+
+[sub_resource type="Resource" id="Entry_w1"]
+script = ExtResource("2_entry")
 id = &"w1"
 speaker_id = &"narrator"
 text = "Chalk dust. Old mop water. A ceiling pipe ticking like a slow clock."
 next_id = &"w2"
 
-[sub_resource type="DialogueEntry" id="Entry_w2"]
+[sub_resource type="Resource" id="Entry_w2"]
+script = ExtResource("2_entry")
 id = &"w2"
 speaker_id = &"inner"
 text = "Your head is ringing. The chair is too small and the desk is too close, and neither was chosen by you."
 next_id = &"w3"
 
-[sub_resource type="DialogueEntry" id="Entry_w3"]
+[sub_resource type="Resource" id="Entry_w3"]
+script = ExtResource("2_entry")
 id = &"w3"
 speaker_id = &"inner"
 text = "You don't remember sitting down. You don't remember this room. There is a gap where the last few weeks should be."
 next_id = &"w4"
 
-[sub_resource type="DialogueEntry" id="Entry_w4"]
+[sub_resource type="Resource" id="Entry_w4"]
+script = ExtResource("2_entry")
 id = &"w4"
 speaker_id = &"narrator"
 text = "Sunlight through dust. Somewhere behind you, plastic chair legs drag."
 
 [resource]
+script = ExtResource("1_conversation")
 id = &"wake_intro"
 start_id = &"w1"
 presentation = "standard"
-entries = Array[DialogueEntry]([SubResource("Entry_w1"), SubResource("Entry_w2"), SubResource("Entry_w3"), SubResource("Entry_w4")])
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_w1"), SubResource("Entry_w2"), SubResource("Entry_w3"), SubResource("Entry_w4")])

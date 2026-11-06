@@ -5,11 +5,11 @@
 [ext_resource type="Script" path="res://scripts/world/inspectable.gd" id="3_inspectable"]
 [ext_resource type="Script" path="res://scripts/world/gate_exit.gd" id="4_gateexit"]
 [ext_resource type="Script" path="res://scripts/world/corridor_director.gd" id="5_corridor"]
-[ext_resource type="DialogueConversation" path="res://data/dialogue/gate_end.tres" id="6_gate"]
-[ext_resource type="DialogueConversation" path="res://data/dialogue/trophy_case.tres" id="7_trophy"]
-[ext_resource type="DialogueConversation" path="res://data/dialogue/trophy_case_again.tres" id="8_trophyagain"]
-[ext_resource type="DialogueConversation" path="res://data/dialogue/corridor_notice.tres" id="9_notice"]
-[ext_resource type="DialogueConversation" path="res://data/dialogue/corridor_notice_again.tres" id="10_noticeagain"]
+[ext_resource type="Resource" path="res://data/dialogue/gate_end.tres" id="6_gate"]
+[ext_resource type="Resource" path="res://data/dialogue/trophy_case.tres" id="7_trophy"]
+[ext_resource type="Resource" path="res://data/dialogue/trophy_case_again.tres" id="8_trophyagain"]
+[ext_resource type="Resource" path="res://data/dialogue/corridor_notice.tres" id="9_notice"]
+[ext_resource type="Resource" path="res://data/dialogue/corridor_notice_again.tres" id="10_noticeagain"]
 
 [sub_resource type="Environment" id="env_corridor"]
 background_mode = 1

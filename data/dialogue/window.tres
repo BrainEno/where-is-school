@@ -1,18 +1,28 @@
-[gd_resource type="DialogueConversation" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="DialogueConversation" load_steps=6 format=3]
 
-[sub_resource type="DialogueEntry" id="Entry_w1"]
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_conversation.gd" id="1_conversation"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_entry.gd" id="2_entry"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_choice.gd" id="3_choice"]
+
+
+[sub_resource type="Resource" id="Entry_w1"]
+script = ExtResource("2_entry")
 id = &"w1"
 speaker_id = &"narrator"
 text = "The yard below. Grey sky doing its grey best. The fence with an excellent view of nothing."
 next_id = &"w2"
 
-[sub_resource type="DialogueEntry" id="Entry_w2"]
+[sub_resource type="Resource" id="Entry_w2"]
+script = ExtResource("2_entry")
 id = &"w2"
 speaker_id = &"narrator"
 text = "The yard is ordinary. The sky is not interested. You check the distance to the gate anyway, out of a habit you can't name."
 
 [resource]
+script = ExtResource("1_conversation")
 id = &"window"
 start_id = &"w1"
 presentation = "standard"
-entries = Array[DialogueEntry]([SubResource("Entry_w1"), SubResource("Entry_w2")])
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_w1"), SubResource("Entry_w2")])

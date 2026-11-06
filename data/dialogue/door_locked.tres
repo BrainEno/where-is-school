@@ -1,12 +1,21 @@
-[gd_resource type="DialogueConversation" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="DialogueConversation" load_steps=6 format=3]
 
-[sub_resource type="DialogueEntry" id="Entry_d1"]
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_conversation.gd" id="1_conversation"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_entry.gd" id="2_entry"]
+
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_choice.gd" id="3_choice"]
+
+
+[sub_resource type="Resource" id="Entry_d1"]
+script = ExtResource("2_entry")
 id = &"d1"
 speaker_id = &"narrator"
 text = "Your hand is on the handle before you've decided to do anything."
 next_id = &"d2"
 
-[sub_resource type="DialogueEntry" id="Entry_d2"]
+[sub_resource type="Resource" id="Entry_d2"]
+script = ExtResource("2_entry")
 id = &"d2"
 speaker_id = &"narrator"
 text = "Stop. The lesson hasn't started. Everyone would see. Everyone would remember. You let go of the handle."
@@ -14,7 +23,8 @@ set_flag = &"flow.thought_about_leaving"
 set_value = true
 
 [resource]
+script = ExtResource("1_conversation")
 id = &"door_locked"
 start_id = &"d1"
 presentation = "standard"
-entries = Array[DialogueEntry]([SubResource("Entry_d1"), SubResource("Entry_d2")])
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_d1"), SubResource("Entry_d2")])
