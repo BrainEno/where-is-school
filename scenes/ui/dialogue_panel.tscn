@@ -1,0 +1,190 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/dialogue_panel.gd" id="sc_panel"]
+[ext_resource type="Theme" path="res://resources/ui/prologue_theme.tres" id="theme_prologue"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="font_ui"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.07, 0.08, 0.09, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.50, 0.44, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 26
+content_margin_top = 18
+content_margin_right = 26
+content_margin_bottom = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2"]
+bg_color = Color(0.10, 0.12, 0.16, 0.0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.62, 0.68, 0.80, 0.55)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="DialoguePanel" type="Control"]
+script = ExtResource("sc_panel")
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("theme_prologue")
+
+[node name="AdvanceButton" type="Button" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
+flat = true
+focus_mode = 0
+mouse_default_cursor_shape = 0
+
+[node name="ImaginedBorder" type="Panel" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+
+[node name="Bottom" type="PanelContainer" parent="."]
+anchors_preset = 12
+anchor_top = "1.0"
+anchor_right = "1.0"
+anchor_bottom = "1.0"
+offset_top = -286.0
+offset_bottom = -34.0
+offset_left = "120.0"
+offset_right = -120.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+
+[node name="VBox" type="VBoxContainer" parent="Bottom"]
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Bottom/VBox"]
+theme_override_constants/separation = 14
+
+[node name="SpeakerLabel" type="Label" parent="Bottom/VBox/Header"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 26
+text = ""
+
+[node name="SpeakerNoteLabel" type="Label" parent="Bottom/VBox/Header"]
+unique_name_in_owner = true
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.62, 0.63, 0.60, 1)
+text = ""
+
+[node name="Spacer" type="Control" parent="Bottom/VBox/Header"]
+size_flags_horizontal = 3
+
+[node name="ProvenanceLabel" type="Label" parent="Bottom/VBox/Header"]
+unique_name_in_owner = true
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.70, 0.66, 0.52, 1)
+text = ""
+
+[node name="BodyScroll" type="ScrollContainer" parent="Bottom/VBox"]
+custom_minimum_size = Vector2(0, 96)
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BodyColumn" type="VBoxContainer" parent="Bottom/VBox/BodyScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="BodyLabel" type="RichTextLabel" parent="Bottom/VBox/BodyScroll/BodyColumn"]
+unique_name_in_owner = true
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+size_flags_horizontal = 3
+theme_override_font_sizes/normal_font_size = 23
+theme_override_constants/line_separation = 7
+text = ""
+
+[node name="EnglishLabel" type="RichTextLabel" parent="Bottom/VBox/BodyScroll/BodyColumn"]
+unique_name_in_owner = true
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+size_flags_horizontal = 3
+theme_override_font_sizes/normal_font_size = 15
+theme_override_colors/default_color = Color(0.68, 0.69, 0.67, 1)
+text = ""
+
+[node name="AsideLabel" type="Label" parent="Bottom/VBox"]
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.78, 0.72, 0.60, 1)
+text = ""
+
+[node name="ChoiceList" type="VBoxContainer" parent="Bottom/VBox"]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+
+[node name="ContinueHint" type="Label" parent="Bottom/VBox"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.60, 0.60, 0.56, 1)
+text = ""
+
+[node name="ImaginedCaption" type="Label" parent="."]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_top = "0.0"
+anchor_right = "1.0"
+offset_top = "24.0"
+offset_bottom = "86.0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.74, 0.79, 0.88, 1)
+text = ""
+
+[node name="BacklogPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
+offset_left = "180.0"
+offset_top = "80.0"
+offset_right = -180.0
+offset_bottom = -320.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+
+[node name="BacklogVBox" type="VBoxContainer" parent="BacklogPanel"]
+
+[node name="BacklogTitle" type="Label" parent="BacklogPanel/BacklogVBox"]
+text = "对话纪录 / History　[Tab 关闭]"
+theme_override_font_sizes/font_size = 18
+
+[node name="BacklogScroll" type="ScrollContainer" parent="BacklogPanel/BacklogVBox"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BacklogText" type="RichTextLabel" parent="BacklogPanel/BacklogVBox/BacklogScroll"]
+unique_name_in_owner = true
+bbcode_enabled = true
+fit_content = true
+size_flags_horizontal = 3
+theme_override_font_sizes/normal_font_size = 17
+text = ""

@@ -1,0 +1,333 @@
+[gd_scene load_steps=46 format=3]
+
+[ext_resource type="Material" path="res://resources/materials/asphalt.tres" id="mat_asphalt"]
+[ext_resource type="Material" path="res://resources/materials/kerb.tres" id="mat_kerb"]
+[ext_resource type="Material" path="res://resources/materials/concrete_wall.tres" id="mat_concrete_wall"]
+[ext_resource type="Material" path="res://resources/materials/wall_dado.tres" id="mat_wall_dado"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_gate"]
+[ext_resource type="Material" path="res://resources/materials/metal_dark.tres" id="mat_metal_dark"]
+[ext_resource type="Material" path="res://resources/materials/door_blue.tres" id="mat_door_blue"]
+[ext_resource type="Material" path="res://resources/materials/fabric_grey.tres" id="mat_fabric_grey"]
+[ext_resource type="Material" path="res://resources/materials/fabric_rust.tres" id="mat_fabric_rust"]
+[ext_resource type="Material" path="res://resources/materials/foliage_dull.tres" id="mat_foliage_dull"]
+[ext_resource type="Material" path="res://resources/materials/wood_warm.tres" id="mat_wood_warm"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_streetback"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.72, 0.52, 0.38, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.66, 0.56, 0.48, 1)
+ambient_light_energy = 0.9
+tonemap_mode = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(30, 0.2, 22)
+material = ExtResource("mat_asphalt")
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(30, 0.25, 3.2)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(30, 0.3, 0.4)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5"]
+size = Vector3(30, 0.2, 22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(26, 7, 0.5)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(26, 0.6, 0.08)
+material = ExtResource("mat_wall_dado")
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(1, 2.6, 1)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_9"]
+size = Vector3(1, 2.6, 1)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_10"]
+size = Vector3(26, 7, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_11"]
+size = Vector3(6.4, 2.4, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_12"]
+size = Vector3(14, 9, 3)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_13"]
+size = Vector3(12, 7, 3)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_14"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_15"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_16"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_17"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_18"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_19"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_21"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_22"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_23"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_24"]
+size = Vector3(1.8, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_25"]
+size = Vector3(1.8, 0.7, 0.06)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_26"]
+size = Vector3(6, 0.1, 1.6)
+material = ExtResource("mat_door_blue")
+
+[sub_resource type="BoxMesh" id="BoxMesh_27"]
+size = Vector3(0.7, 0.9, 1.8)
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+size = Vector3(0.7, 0.9, 1.8)
+material = ExtResource("mat_fabric_rust")
+
+[sub_resource type="BoxMesh" id="BoxMesh_29"]
+size = Vector3(4, 0.5, 1)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+size = Vector3(1.2, 0.9, 0.8)
+material = ExtResource("mat_foliage_dull")
+
+[sub_resource type="BoxMesh" id="BoxMesh_31"]
+size = Vector3(1.4, 1.1, 0.8)
+material = ExtResource("mat_foliage_dull")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_32"]
+top_radius = 0.11
+bottom_radius = 0.11
+height = 6
+radial_segments = 12
+rings = 1
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_33"]
+size = Vector3(5, 2.2, 0.8)
+
+[node name="StreetThreshold" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DuskLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-16, 84, 0)
+light_color = Color(1.0, 0.72, 0.46, 1)
+light_energy = "1.5"
+shadow_enabled = true
+
+[node name="Ground" type="Node3D" parent="."]
+
+[node name="Asphalt" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, -0.1, 4)
+mesh = SubResource("BoxMesh_2")
+
+[node name="Arcade" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, 0.02, -2.2)
+mesh = SubResource("BoxMesh_3")
+
+[node name="Kerb" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, 0.15, -0.5)
+mesh = SubResource("BoxMesh_4")
+
+[node name="GroundBody" type="StaticBody3D" parent="Ground"]
+position = Vector3(0, -0.1, 4)
+
+[node name="Shape" type="CollisionShape3D" parent="Ground/GroundBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_5")
+
+[node name="SchoolBuilding" type="Node3D" parent="."]
+
+[node name="Facade" type="MeshInstance3D" parent="SchoolBuilding"]
+position = Vector3(0, 3.5, -4.6)
+mesh = SubResource("BoxMesh_6")
+
+[node name="FacadeBand" type="MeshInstance3D" parent="SchoolBuilding"]
+position = Vector3(0, 1.4, -4.3)
+mesh = SubResource("BoxMesh_7")
+
+[node name="GatePillarL" type="MeshInstance3D" parent="SchoolBuilding"]
+position = Vector3(-3.6, 1.3, -3)
+mesh = SubResource("BoxMesh_8")
+
+[node name="GatePillarR" type="MeshInstance3D" parent="SchoolBuilding"]
+position = Vector3(3.6, 1.3, -3)
+mesh = SubResource("BoxMesh_9")
+
+[node name="FacadeBody" type="StaticBody3D" parent="SchoolBuilding"]
+position = Vector3(0, 3.5, -4.6)
+
+[node name="Shape" type="CollisionShape3D" parent="SchoolBuilding/FacadeBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_10")
+
+[node name="GateThreshold" type="Area3D" parent="SchoolBuilding"]
+script = ExtResource("int_gate")
+position = Vector3(0, 1.2, -2.4)
+kind = 3
+interact_id = &"street_gate"
+prompt_zh = "站在校门口"
+prompt_en = "\"Stand at the gate\""
+target_name_zh = "\"校门\""
+target_name_en = "\"school gate\""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolBuilding/GateThreshold"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_11")
+
+[node name="ResidentialBlock" type="Node3D" parent="."]
+
+[node name="BuildingA" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-6, 4.5, 13)
+mesh = SubResource("BoxMesh_12")
+
+[node name="BuildingB" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(9, 3.5, 13)
+mesh = SubResource("BoxMesh_13")
+
+[node name="Balcony0" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-11, 3.2, 11.4)
+mesh = SubResource("BoxMesh_14")
+
+[node name="Balcony0Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-11, 3.55, 11)
+mesh = SubResource("BoxMesh_15")
+
+[node name="Balcony1" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-8.4, 3.2, 11.4)
+mesh = SubResource("BoxMesh_16")
+
+[node name="Balcony1Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-8.4, 3.55, 11)
+mesh = SubResource("BoxMesh_17")
+
+[node name="Balcony2" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-5.8, 3.2, 11.4)
+mesh = SubResource("BoxMesh_18")
+
+[node name="Balcony2Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-5.8, 3.55, 11)
+mesh = SubResource("BoxMesh_19")
+
+[node name="Balcony3" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-3.2, 3.2, 11.4)
+mesh = SubResource("BoxMesh_20")
+
+[node name="Balcony3Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-3.2, 3.55, 11)
+mesh = SubResource("BoxMesh_21")
+
+[node name="Balcony4" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-0.6, 3.2, 11.4)
+mesh = SubResource("BoxMesh_22")
+
+[node name="Balcony4Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-0.6, 3.55, 11)
+mesh = SubResource("BoxMesh_23")
+
+[node name="Balcony5" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(2, 3.2, 11.4)
+mesh = SubResource("BoxMesh_24")
+
+[node name="Balcony5Rail" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(2, 3.55, 11)
+mesh = SubResource("BoxMesh_25")
+
+[node name="ShopAwning" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(4, 2.6, 11.6)
+mesh = SubResource("BoxMesh_26")
+
+[node name="ScooterA" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-8, 0.5, 2)
+mesh = SubResource("BoxMesh_27")
+
+[node name="ScooterB" type="MeshInstance3D" parent="ResidentialBlock"]
+position = Vector3(-6.8, 0.5, 2.2)
+mesh = SubResource("BoxMesh_28")
+
+[node name="Planting" type="Node3D" parent="."]
+
+[node name="PlanterBox" type="MeshInstance3D" parent="Planting"]
+position = Vector3(11, 0.25, 1.6)
+mesh = SubResource("BoxMesh_29")
+
+[node name="ShrubA" type="MeshInstance3D" parent="Planting"]
+position = Vector3(9.8, 0.85, 1.6)
+mesh = SubResource("BoxMesh_30")
+
+[node name="ShrubB" type="MeshInstance3D" parent="Planting"]
+position = Vector3(11.6, 0.95, 1.5)
+mesh = SubResource("BoxMesh_31")
+
+[node name="UtilityPole" type="MeshInstance3D" parent="Planting"]
+position = Vector3(14, 3, 0.4)
+mesh = SubResource("CylinderMesh_32")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromGate" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 0.05, -1.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromCorridor" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 0.05, -1.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="ToCorridor" type="Area3D" parent="SchoolBuilding"]
+script = ExtResource("int_streetback")
+position = Vector3(0, 1.1, -3.6)
+kind = 3
+interact_id = &"street_corridor"
+prompt_zh = "回学校"
+prompt_en = "\"Go back inside\""
+target_name_zh = "\"走廊\""
+target_name_en = "\"corridor\""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolBuilding/ToCorridor"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_33")

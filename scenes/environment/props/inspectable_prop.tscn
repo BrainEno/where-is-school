@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(0.4, 0.4, 0.4)
+
+[node name="InspectableProp" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_1")

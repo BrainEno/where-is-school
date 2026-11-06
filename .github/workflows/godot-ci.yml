@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   validate:
-    name: Import and smoke test
+    name: Import, content validation, and playable-flow tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -28,5 +28,38 @@ jobs:
       - name: Import project and parse scripts
         run: godot --headless --editor --path . --quit
 
-      - name: Run scene smoke test
+      - name: Fail on import errors
+        run: |
+          # Re-run the import and fail the job if Godot reported script parse
+          # errors or missing resources. A silent import is not proof of health.
+          godot --headless --editor --path . --quit 2>&1 | tee import.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed loading resource" import.log; then
+            echo "::error::Godot reported script or resource errors during import."
+            exit 1
+          fi
+
+      - name: Scene smoke test
         run: godot --headless --path . --script res://tests/smoke_test.gd
+
+      - name: Content privacy and bilingual coverage
+        run: godot --headless --path . --script res://tests/content_privacy_test.gd
+
+      - name: Narrative state tests
+        run: godot --headless --path . --script res://tests/narrative_state_test.gd
+
+      - name: Prologue playable-flow test
+        run: godot --headless --path . --script res://tests/prologue_flow_test.gd
+
+      - name: Reachability test
+        run: godot --headless --path . --script res://tests/reachability_test.gd
+
+      - name: Language switch test
+        run: godot --headless --path . --script res://tests/language_switch_test.gd
+
+      - name: Boot the game headlessly for 300 frames
+        run: |
+          godot --headless --path . --quit-after 300 2>&1 | tee runtime.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed loading resource" runtime.log; then
+            echo "::error::Runtime reported script or resource errors."
+            exit 1
+          fi

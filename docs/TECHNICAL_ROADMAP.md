@@ -17,22 +17,38 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 
 ## 2. Runtime components
 
-### Implemented in the starter foundation
+### Implemented in the foundation
 - Godot project configuration and a launchable graybox main scene.
 - Basic CharacterBody3D movement using WASD/arrow-key input.
 - Fixed 2.5D camera attached to the player scene.
 - GameState autoload for named runtime story flags.
 - Headless scene-instantiation smoke test and GitHub Actions validation.
 
-### Planned, but deliberately not implemented yet
-- Interaction targeting and inspectable-object contract.
-- Dialogue runtime / Dialogic adapter and portrait presentation.
-- Journal and unreliable route notebook.
-- Scene transition orchestration and world-state-driven environment changes.
-- Versioned save/load, slot management, and schema migration.
-- Accessibility settings, localization-ready text flow, audio, and input rebinding.
+### Implemented in the biology-class prologue milestone
+- Interaction targeting: `InteractionSensor` (on the player) and `Interactable3D`
+  (on props), with a contextual prompt and a single `interact` action.
+- A project-owned dialogue runtime (`DialogueScript` / `DialogueNode` /
+  `DialogueChoice` / `DialogueSession`) with speaker identity, long bilingual
+  text, choices, and a backlog. No addon is bundled.
+- A provenance-tagged narrative ledger (`observed` / `heard` / `recollected` /
+  `imagined`), surfaced in-game through the note page.
+- Location transition orchestration (`PrologueDirector`) across classroom,
+  corridor, and street, with per-location spawn markers.
+- A subjective-imagination presentation mode that is visually distinct and
+  provably unable to change world state.
+- Runtime-synthesised room tone and a lesson bell (no audio assets).
+- Four headless test suites, including an end-to-end playthrough test.
 
-Do not implement every planned item in one large foundation PR. Add each when a concrete slice requires it.
+### Planned, but deliberately not implemented yet
+- Dialogic 2 comparison spike. The custom runtime above is intentionally minimal
+  and sits behind `PrologueFlow`, which is the seam a future adapter would use.
+- Portraits. Speakers are identified by name, colour, and note for now.
+- Journal discovery records as distinct from the close-of-scene note page.
+- World-state-driven environment changes beyond the release/door state.
+- Versioned save/load, slot management, and schema migration.
+- Accessibility settings, localization pipeline, authored audio, input rebinding.
+
+Do not implement every planned item in one large PR. Add each when a concrete slice requires it.
 
 ## 3. Dialogue technology decision
 

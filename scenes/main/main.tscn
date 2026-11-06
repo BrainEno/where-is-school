@@ -1,39 +1,53 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=9 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
-
-[sub_resource type="Environment" id="Environment_main"]
-background_mode = 1
-background_color = Color(0.14, 0.16, 0.17, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(30, 0.2, 30)
-
-[sub_resource type="BoxMesh" id="BoxMesh_ground"]
-size = Vector3(30, 0.2, 30)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.34, 0.35, 0.33, 1)
-roughness = 1.0
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="player_scene"]
+[ext_resource type="Script" path="res://scripts/world/prologue_flow.gd" id="sc_flow"]
+[ext_resource type="Script" path="res://scripts/world/prologue_director.gd" id="sc_dir"]
+[ext_resource type="Script" path="res://scripts/main/main.gd" id="sc_main"]
+[ext_resource type="PackedScene" path="res://scenes/ui/prologue_hud.tscn" id="hud_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_panel.tscn" id="panel_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/notebook.tscn" id="note_scene"]
+[ext_resource type="Script" path="res://scripts/audio/room_tone.gd" id="sc_tone"]
 
 [node name="Main" type="Node3D"]
+script = ExtResource("sc_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_main")
+[node name="Hud" type="CanvasLayer" parent="." instance=ExtResource("hud_scene")]
+unique_name_in_owner = true
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -32, 0)
-light_energy = 1.1
-shadow_enabled = true
+[node name="DialoguePanel" type="Control" parent="." instance=ExtResource("panel_scene")]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
 
-[node name="Ground" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.1, 0)
+[node name="NoteBook" type="Control" parent="." instance=ExtResource("note_scene")]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = "1.0"
+anchor_bottom = "1.0"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_ground")
+[node name="LocationContainer" type="Node3D" parent="."]
+unique_name_in_owner = true
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("BoxMesh_ground")
-material_override = SubResource("StandardMaterial3D_ground")
+[node name="Player" type="CharacterBody3D" parent="." instance=ExtResource("player_scene")]
+unique_name_in_owner = true
+position = Vector3(-4, 0.05, -1.55)
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
+[node name="Director" type="Node" parent="."]
+script = ExtResource("sc_dir")
+unique_name_in_owner = true
+
+[node name="Flow" type="Node" parent="."]
+script = ExtResource("sc_flow")
+unique_name_in_owner = true
+player_path = NodePath("../Player")
+dialogue_panel_path = NodePath("../DialoguePanel")
+hud_path = NodePath("../Hud")
+director_path = NodePath("../Director")
+
+[node name="RoomTone" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+script = ExtResource("sc_tone")
+tone_volume_db = -26.0
+

@@ -1,0 +1,1585 @@
+[gd_scene load_steps=194 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/classroom.gd" id="cls_classroom"]
+[ext_resource type="Material" path="res://resources/materials/classroom_floor.tres" id="mat_classroom_floor"]
+[ext_resource type="Material" path="res://resources/materials/wall_paint.tres" id="mat_wall_paint"]
+[ext_resource type="Material" path="res://resources/materials/concrete_wall.tres" id="mat_concrete_wall"]
+[ext_resource type="Material" path="res://resources/materials/wall_dado.tres" id="mat_wall_dado"]
+[ext_resource type="Material" path="res://resources/materials/wood_warm.tres" id="mat_wood_warm"]
+[ext_resource type="Material" path="res://resources/materials/blackboard.tres" id="mat_blackboard"]
+[ext_resource type="Material" path="res://resources/materials/paper.tres" id="mat_paper"]
+[ext_resource type="Material" path="res://resources/materials/fabric_grey.tres" id="mat_fabric_grey"]
+[ext_resource type="Material" path="res://resources/materials/glass_dull.tres" id="mat_glass_dull"]
+[ext_resource type="Material" path="res://resources/materials/metal_dark.tres" id="mat_metal_dark"]
+[ext_resource type="Material" path="res://resources/materials/kerb.tres" id="mat_kerb"]
+[ext_resource type="Material" path="res://resources/materials/fabric_rust.tres" id="mat_fabric_rust"]
+[ext_resource type="Material" path="res://resources/materials/desk_wood.tres" id="mat_desk_wood"]
+[ext_resource type="Material" path="res://resources/materials/desk_metal.tres" id="mat_desk_metal"]
+[ext_resource type="Material" path="res://resources/materials/fabric_olive.tres" id="mat_fabric_olive"]
+[ext_resource type="Material" path="res://resources/materials/door_blue.tres" id="mat_door_blue"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_door"]
+[ext_resource type="Script" path="res://scripts/actors/npc/npc_actor.gd" id="npc_gd"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_qtalk"]
+[ext_resource type="Script" path="res://scripts/actors/npc/npc_actor.gd" id="npc_gd2"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_ntalk"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_bag"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_chair"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_tdesk"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_square"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_timetable"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_window"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable_3d.gd" id="int_think"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.15, 0.16, 0.17, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.44, 0.45, 0.46, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(12, 0.2, 10)
+material = ExtResource("mat_classroom_floor")
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(0.2, 3.4, 10)
+material = ExtResource("mat_wall_paint")
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(0.2, 3.4, 3.2)
+material = ExtResource("mat_wall_paint")
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.2, 3.4, 1.4)
+material = ExtResource("mat_wall_paint")
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(0.2, 1.1, 2)
+material = ExtResource("mat_wall_paint")
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(12, 3.4, 0.2)
+material = ExtResource("mat_wall_paint")
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(12, 1.1, 0.24)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_9"]
+size = Vector3(0.05, 1.1, 10)
+material = ExtResource("mat_wall_dado")
+
+[sub_resource type="BoxMesh" id="BoxMesh_10"]
+size = Vector3(0.05, 1.1, 3.2)
+material = ExtResource("mat_wall_dado")
+
+[sub_resource type="BoxMesh" id="BoxMesh_11"]
+size = Vector3(12, 1.1, 0.05)
+material = ExtResource("mat_wall_dado")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_12"]
+size = Vector3(12, 0.2, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_13"]
+size = Vector3(0.2, 3.4, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_14"]
+size = Vector3(12, 3.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_15"]
+size = Vector3(0.2, 3.4, 3.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_16"]
+size = Vector3(0.2, 3.4, 1.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_17"]
+size = Vector3(12, 1.1, 0.24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_18"]
+size = Vector3(5, 1.9, 0.07)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_19"]
+size = Vector3(4.7, 1.6, 0.1)
+material = ExtResource("mat_blackboard")
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+size = Vector3(4.8, 0.08, 0.18)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_21"]
+size = Vector3(0.09, 0.03, 0.03)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_22"]
+size = Vector3(0.06, 0.03, 0.03)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_23"]
+size = Vector3(0.14, 0.05, 0.06)
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxMesh" id="BoxMesh_24"]
+size = Vector3(5, 1.7, 0.06)
+material = ExtResource("mat_glass_dull")
+
+[sub_resource type="BoxMesh" id="BoxMesh_25"]
+size = Vector3(0.09, 1.8, 0.14)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_26"]
+size = Vector3(0.09, 1.8, 0.14)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_27"]
+size = Vector3(0.09, 1.8, 0.14)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+size = Vector3(5.2, 0.12, 0.42)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_29"]
+size = Vector3(5.2, 0.18, 0.26)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+size = Vector3(12, 1.2, 6)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_31"]
+size = Vector3(14, 7, 0.3)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_32"]
+size = Vector3(14, 0.5, 0.1)
+material = ExtResource("mat_wall_dado")
+
+[sub_resource type="BoxMesh" id="BoxMesh_33"]
+size = Vector3(5, 0.12, 0.9)
+material = ExtResource("mat_kerb")
+
+[sub_resource type="BoxMesh" id="BoxMesh_34"]
+size = Vector3(0.7, 0.85, 0.04)
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxMesh" id="BoxMesh_35"]
+size = Vector3(0.7, 0.85, 0.04)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_36"]
+size = Vector3(0.7, 0.85, 0.04)
+material = ExtResource("mat_fabric_rust")
+
+[sub_resource type="BoxMesh" id="BoxMesh_37"]
+size = Vector3(2.4, 0.08, 1)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_38"]
+size = Vector3(2.3, 0.72, 0.08)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_39"]
+size = Vector3(0.09, 0.8, 0.86)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_40"]
+size = Vector3(0.09, 0.8, 0.86)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_41"]
+size = Vector3(0.66, 0.5, 0.86)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_42"]
+size = Vector3(2.4, 0.9, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_43"]
+size = Vector3(0.5, 0.06, 0.5)
+material = ExtResource("mat_fabric_olive")
+
+[sub_resource type="BoxMesh" id="BoxMesh_44"]
+size = Vector3(0.5, 0.55, 0.06)
+material = ExtResource("mat_fabric_olive")
+
+[sub_resource type="BoxMesh" id="BoxMesh_45"]
+size = Vector3(0.06, 1, 2.2)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_46"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_47"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_48"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_49"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_50"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_51"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_52"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_53"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_54"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_55"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_56"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_57"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_58"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_59"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_60"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_61"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_62"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_63"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_64"]
+size = Vector3(0.3, 0.01, 0.22)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_65"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_66"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_67"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_68"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_69"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_70"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_71"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_72"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_73"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_74"]
+size = Vector3(0.18, 0.015, 0.015)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_75"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_76"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_77"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_78"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_79"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_80"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_81"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_82"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_83"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_84"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_85"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_86"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_87"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_88"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_89"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_90"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_91"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_92"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_93"]
+size = Vector3(0.3, 0.01, 0.22)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_94"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_95"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_96"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_97"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_98"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_99"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_100"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_101"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_102"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_103"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_104"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_105"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_106"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_107"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_108"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_109"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_110"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_111"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_112"]
+size = Vector3(0.3, 0.01, 0.22)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxMesh" id="BoxMesh_113"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_114"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_115"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_116"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_117"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_118"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_119"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_120"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_121"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_122"]
+size = Vector3(0.18, 0.015, 0.015)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_123"]
+size = Vector3(1.2, 0.06, 0.62)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_124"]
+size = Vector3(1.2, 0.12, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxMesh" id="BoxMesh_125"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_126"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_127"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxMesh" id="BoxMesh_128"]
+size = Vector3(0.05, 0.72, 0.05)
+material = ExtResource("mat_desk_metal")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_129"]
+size = Vector3(1.2, 0.78, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_130"]
+size = Vector3(0.46, 0.05, 0.46)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_131"]
+size = Vector3(0.46, 0.5, 0.05)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxMesh" id="BoxMesh_132"]
+size = Vector3(0.3, 2.3, 0.1)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_133"]
+size = Vector3(0.3, 2.3, 0.1)
+material = ExtResource("mat_concrete_wall")
+
+[sub_resource type="BoxMesh" id="BoxMesh_134"]
+size = Vector3(0.07, 2.1, 0.95)
+material = ExtResource("mat_door_blue")
+
+[sub_resource type="BoxMesh" id="BoxMesh_135"]
+size = Vector3(0.1, 0.05, 0.1)
+material = ExtResource("mat_metal_dark")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_136"]
+size = Vector3(0.7, 2.3, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_137"]
+size = Vector3(0.03, 1.1, 0.85)
+material = ExtResource("mat_paper")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_138"]
+radius = 0.34
+height = 1.1
+material = ExtResource("mat_fabric_olive")
+
+[sub_resource type="SphereMesh" id="SphereMesh_139"]
+radius = 0.28
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_olive")
+
+[sub_resource type="SphereMesh" id="SphereMesh_140"]
+radius = 0.17
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxMesh" id="BoxMesh_141"]
+size = Vector3(0.48, 0.18, 0.5)
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_142"]
+size = Vector3(1.4, 2, 1.4)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_143"]
+radius = 0.26
+height = 1.42
+material = ExtResource("mat_fabric_rust")
+
+[sub_resource type="SphereMesh" id="SphereMesh_144"]
+radius = 0.16
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxMesh" id="BoxMesh_145"]
+size = Vector3(0.24, 0.03, 0.32)
+material = ExtResource("mat_paper")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_146"]
+size = Vector3(1.4, 2, 1.4)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_147"]
+radius = 0.2
+height = 0.9
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="SphereMesh" id="SphereMesh_148"]
+radius = 0.14
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_149"]
+radius = 0.2
+height = 0.9
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="SphereMesh" id="SphereMesh_150"]
+radius = 0.14
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_151"]
+radius = 0.2
+height = 0.9
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="SphereMesh" id="SphereMesh_152"]
+radius = 0.14
+radial_segments = 12
+rings = 6
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_153"]
+size = Vector3(0.7, 0.5, 0.7)
+
+[sub_resource type="BoxMesh" id="BoxMesh_154"]
+size = Vector3(0.36, 0.32, 0.26)
+material = ExtResource("mat_fabric_rust")
+
+[sub_resource type="BoxMesh" id="BoxMesh_155"]
+size = Vector3(0.34, 0.04, 0.2)
+material = ExtResource("mat_fabric_grey")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_156"]
+size = Vector3(1, 1.4, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_157"]
+size = Vector3(2.4, 1.4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_158"]
+size = Vector3(0.6, 0.4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_159"]
+size = Vector3(0.62, 0.015, 0.05)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_160"]
+size = Vector3(0.4, 0.015, 0.045)
+material = ExtResource("mat_wood_warm")
+
+[sub_resource type="BoxMesh" id="BoxMesh_161"]
+size = Vector3(0.08, 0.012, 0.05)
+material = ExtResource("mat_desk_wood")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_162"]
+size = Vector3(0.5, 1.5, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_163"]
+size = Vector3(4.6, 1.6, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_164"]
+size = Vector3(1.6, 1.8, 1.6)
+
+[node name="Classroom" type="Node3D"]
+script = ExtResource("cls_classroom")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="SunsetLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-32, -122, 0)
+light_color = Color(0.97, 0.81, 0.63, 1)
+light_energy = "1.2"
+shadow_enabled = true
+
+[node name="WindowFill" type="OmniLight3D" parent="."]
+position = Vector3(2.6, 2.2, -4.2)
+light_color = Color(0.99, 0.87, 0.72, 1)
+light_energy = "1.6"
+omni_range = "10.0"
+
+[node name="CeilingTube" type="OmniLight3D" parent="."]
+position = Vector3(-1.6, 3, 0.6)
+light_color = Color(0.86, 0.91, 0.88, 1)
+light_energy = "1.0"
+omni_range = "8.0"
+shadow_enabled = true
+
+[node name="ExitLamp" type="OmniLight3D" parent="."]
+position = Vector3(4.9, 2.5, 2.5)
+light_color = Color(0.99, 0.91, 0.76, 1)
+light_energy = "0.8"
+omni_range = "4.5"
+
+[node name="Room" type="Node3D" parent="."]
+
+[node name="Floor" type="MeshInstance3D" parent="Room"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("BoxMesh_2")
+
+[node name="WallWest" type="MeshInstance3D" parent="Room"]
+position = Vector3(-6.1, 1.7, 0)
+mesh = SubResource("BoxMesh_3")
+
+[node name="WallEastA" type="MeshInstance3D" parent="Room"]
+position = Vector3(6.1, 1.7, -3.4)
+mesh = SubResource("BoxMesh_4")
+
+[node name="WallEastB" type="MeshInstance3D" parent="Room"]
+position = Vector3(6.1, 1.7, 4.3)
+mesh = SubResource("BoxMesh_5")
+
+[node name="WallEastLintel" type="MeshInstance3D" parent="Room"]
+position = Vector3(6.1, 2.85, 2.5)
+mesh = SubResource("BoxMesh_6")
+
+[node name="WallNorth" type="MeshInstance3D" parent="Room"]
+position = Vector3(0, 1.7, -5.1)
+mesh = SubResource("BoxMesh_7")
+
+[node name="ParapetSouth" type="MeshInstance3D" parent="Room"]
+position = Vector3(0, 0.55, 5)
+mesh = SubResource("BoxMesh_8")
+
+[node name="DadoWest" type="MeshInstance3D" parent="Room"]
+position = Vector3(-5.98, 0.55, 0)
+mesh = SubResource("BoxMesh_9")
+
+[node name="DadoEastA" type="MeshInstance3D" parent="Room"]
+position = Vector3(5.98, 0.55, -3.4)
+mesh = SubResource("BoxMesh_10")
+
+[node name="DadoNorth" type="MeshInstance3D" parent="Room"]
+position = Vector3(0, 0.55, -4.98)
+mesh = SubResource("BoxMesh_11")
+
+[node name="Collision" type="Node3D" parent="."]
+
+[node name="FloorBody" type="StaticBody3D" parent="Collision"]
+position = Vector3(0, -0.1, 0)
+
+[node name="FloorShape" type="CollisionShape3D" parent="Collision/FloorBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_12")
+
+[node name="WallWestBody" type="StaticBody3D" parent="Collision"]
+position = Vector3(-6.1, 1.7, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Collision/WallWestBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_13")
+
+[node name="WallNorthBody" type="StaticBody3D" parent="Collision"]
+position = Vector3(0, 1.7, -5.1)
+
+[node name="Shape" type="CollisionShape3D" parent="Collision/WallNorthBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_14")
+
+[node name="WallEastABody" type="StaticBody3D" parent="Collision"]
+position = Vector3(6.1, 1.7, -3.4)
+
+[node name="Shape" type="CollisionShape3D" parent="Collision/WallEastABody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_15")
+
+[node name="WallEastBBody" type="StaticBody3D" parent="Collision"]
+position = Vector3(6.1, 1.7, 4.3)
+
+[node name="Shape" type="CollisionShape3D" parent="Collision/WallEastBBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_16")
+
+[node name="ParapetBody" type="StaticBody3D" parent="Collision"]
+position = Vector3(0, 0.55, 5)
+
+[node name="Shape" type="CollisionShape3D" parent="Collision/ParapetBody"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_17")
+
+[node name="TeacherArea" type="Node3D" parent="."]
+
+[node name="BoardFrame" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-2.9, 1.9, -4.94)
+mesh = SubResource("BoxMesh_18")
+
+[node name="Blackboard" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-2.9, 1.9, -4.88)
+mesh = SubResource("BoxMesh_19")
+
+[node name="ChalkTray" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-2.9, 1.06, -4.8)
+mesh = SubResource("BoxMesh_20")
+
+[node name="ChalkA" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-3.9, 1.11, -4.79)
+mesh = SubResource("BoxMesh_21")
+
+[node name="ChalkB" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-3.6, 1.11, -4.78)
+mesh = SubResource("BoxMesh_22")
+
+[node name="Eraser" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(-1.9, 1.12, -4.79)
+mesh = SubResource("BoxMesh_23")
+
+[node name="WindowWall" type="Node3D" parent="."]
+
+[node name="WindowGlass" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(2.7, 2, -5)
+mesh = SubResource("BoxMesh_24")
+cast_shadow = 0
+
+[node name="Mullion0" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(1, 2, -4.95)
+mesh = SubResource("BoxMesh_25")
+
+[node name="Mullion1" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(2.7, 2, -4.95)
+mesh = SubResource("BoxMesh_26")
+
+[node name="Mullion2" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(4.4, 2, -4.95)
+mesh = SubResource("BoxMesh_27")
+
+[node name="WindowSill" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(2.7, 1.1, -4.85)
+mesh = SubResource("BoxMesh_28")
+
+[node name="WindowHead" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(2.7, 2.94, -4.95)
+mesh = SubResource("BoxMesh_29")
+
+[node name="ExteriorSlab" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(0, -0.6, -8)
+mesh = SubResource("BoxMesh_30")
+
+[node name="NeighbourWall" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(0, 2.6, -11.5)
+mesh = SubResource("BoxMesh_31")
+
+[node name="NeighbourBand" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(0, 1.6, -11.3)
+mesh = SubResource("BoxMesh_32")
+
+[node name="NeighbourBalcony" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(2.6, 1.4, -10.9)
+mesh = SubResource("BoxMesh_33")
+
+[node name="Laundry0" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(-1.4, 2.3, -10.85)
+mesh = SubResource("BoxMesh_34")
+
+[node name="Laundry1" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(0.6, 2.3, -10.85)
+mesh = SubResource("BoxMesh_35")
+
+[node name="Laundry2" type="MeshInstance3D" parent="WindowWall"]
+position = Vector3(3.4, 2.3, -10.85)
+mesh = SubResource("BoxMesh_36")
+
+[node name="TeacherDesk" type="StaticBody3D" parent="TeacherArea"]
+position = Vector3(0, 0, -3.3)
+
+[node name="Top" type="MeshInstance3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(0, 0.82, 0)
+mesh = SubResource("BoxMesh_37")
+
+[node name="Front" type="MeshInstance3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(0, 0.42, 0.48)
+mesh = SubResource("BoxMesh_38")
+
+[node name="LegL" type="MeshInstance3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(-1.1, 0.4, 0)
+mesh = SubResource("BoxMesh_39")
+
+[node name="LegR" type="MeshInstance3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(1.1, 0.4, 0)
+mesh = SubResource("BoxMesh_40")
+
+[node name="DrawerStack" type="MeshInstance3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(0.7, 0.5, 0)
+mesh = SubResource("BoxMesh_41")
+
+[node name="Shape" type="CollisionShape3D" parent="TeacherArea/TeacherDesk"]
+position = Vector3(0, 0.45, 0)
+shape = SubResource("BoxShape3D_42")
+
+[node name="TeacherChair" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(0, 0, -4)
+mesh = SubResource("BoxMesh_43")
+
+[node name="TeacherChairBack" type="MeshInstance3D" parent="TeacherArea"]
+position = Vector3(0, 0.35, -4.25)
+mesh = SubResource("BoxMesh_44")
+
+[node name="SetSquareProp" type="Node3D" parent="TeacherArea"]
+position = Vector3(-1.14, 0.87, -3.74)
+
+[node name="Pinboard" type="MeshInstance3D" parent="Room"]
+position = Vector3(-5.95, 1.8, 1.2)
+mesh = SubResource("BoxMesh_45")
+
+[node name="StudentDesks" type="Node3D" parent="."]
+
+[node name="Desk0" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-4, 0, -1.2)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_46")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_47")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_48")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_49")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_50")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk0"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_51")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk0"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_52")
+
+[node name="Chair0" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0, -0.42)
+mesh = SubResource("BoxMesh_53")
+
+[node name="ChairBack0" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0.42, -0.21)
+mesh = SubResource("BoxMesh_54")
+
+[node name="Desk1" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, -1.2)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_55")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_56")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_57")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_58")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_59")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk1"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_60")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk1"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_61")
+
+[node name="Chair1" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, -0.42)
+mesh = SubResource("BoxMesh_62")
+
+[node name="ChairBack1" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0.42, -0.21)
+mesh = SubResource("BoxMesh_63")
+
+[node name="Paper1" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.55, 0.78, -1.25)
+mesh = SubResource("BoxMesh_64")
+
+[node name="Desk2" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, -1.2)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_65")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_66")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_67")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_68")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_69")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk2"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_70")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk2"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_71")
+
+[node name="Chair2" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, -0.42)
+mesh = SubResource("BoxMesh_72")
+
+[node name="ChairBack2" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0.42, -0.21)
+mesh = SubResource("BoxMesh_73")
+
+[node name="Pencil2" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.4, 0.775, -1.1)
+rotation_degrees = Vector3(0, 24, 0)
+mesh = SubResource("BoxMesh_74")
+
+[node name="Desk3" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-4, 0, 0.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_75")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_76")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_77")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_78")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_79")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk3"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_80")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk3"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_81")
+
+[node name="Chair3" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0, 1.58)
+mesh = SubResource("BoxMesh_82")
+
+[node name="ChairBack3" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0.42, 1.79)
+mesh = SubResource("BoxMesh_83")
+
+[node name="Desk4" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, 0.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_84")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_85")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_86")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_87")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_88")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk4"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_89")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk4"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_90")
+
+[node name="Chair4" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, 1.58)
+mesh = SubResource("BoxMesh_91")
+
+[node name="ChairBack4" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0.42, 1.79)
+mesh = SubResource("BoxMesh_92")
+
+[node name="Paper4" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.55, 0.78, 0.75)
+mesh = SubResource("BoxMesh_93")
+
+[node name="Desk5" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, 0.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_94")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_95")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_96")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_97")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_98")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk5"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_99")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk5"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_100")
+
+[node name="Chair5" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, 1.58)
+mesh = SubResource("BoxMesh_101")
+
+[node name="ChairBack5" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0.42, 1.79)
+mesh = SubResource("BoxMesh_102")
+
+[node name="Desk6" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-4, 0, 2.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_103")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_104")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_105")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_106")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_107")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk6"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_108")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk6"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_109")
+
+[node name="Chair6" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0, 3.58)
+mesh = SubResource("BoxMesh_110")
+
+[node name="ChairBack6" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-4, 0.42, 3.79)
+mesh = SubResource("BoxMesh_111")
+
+[node name="Paper6" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-3.85, 0.78, 2.75)
+mesh = SubResource("BoxMesh_112")
+
+[node name="Desk7" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, 2.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_113")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_114")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_115")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_116")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_117")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk7"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_118")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk7"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_119")
+
+[node name="Chair7" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0, 3.58)
+mesh = SubResource("BoxMesh_120")
+
+[node name="ChairBack7" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.7, 0.42, 3.79)
+mesh = SubResource("BoxMesh_121")
+
+[node name="Pencil7" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(-1.9, 0.775, 2.9)
+rotation_degrees = Vector3(0, 24, 0)
+mesh = SubResource("BoxMesh_122")
+
+[node name="Desk8" type="StaticBody3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, 2.8)
+
+[node name="Top" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(0, 0.74, 0)
+mesh = SubResource("BoxMesh_123")
+
+[node name="Lip" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(0, 0.66, 0.3)
+mesh = SubResource("BoxMesh_124")
+
+[node name="Leg-5-2" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(-0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_125")
+
+[node name="Leg-52" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(-0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_126")
+
+[node name="Leg5-2" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(0.52, 0.37, -0.24)
+mesh = SubResource("BoxMesh_127")
+
+[node name="Leg52" type="MeshInstance3D" parent="StudentDesks/Desk8"]
+position = Vector3(0.52, 0.37, 0.24)
+mesh = SubResource("BoxMesh_128")
+
+[node name="Shape" type="CollisionShape3D" parent="StudentDesks/Desk8"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_129")
+
+[node name="Chair8" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0, 3.58)
+mesh = SubResource("BoxMesh_130")
+
+[node name="ChairBack8" type="MeshInstance3D" parent="StudentDesks"]
+position = Vector3(0.6, 0.42, 3.79)
+mesh = SubResource("BoxMesh_131")
+
+[node name="DoorFrame" type="Node3D" parent="."]
+
+[node name="JambNear" type="MeshInstance3D" parent="DoorFrame"]
+position = Vector3(6.05, 1.15, 3.55)
+mesh = SubResource("BoxMesh_132")
+
+[node name="JambFar" type="MeshInstance3D" parent="DoorFrame"]
+position = Vector3(6.05, 1.15, 1.45)
+mesh = SubResource("BoxMesh_133")
+
+[node name="DoorPanel" type="MeshInstance3D" parent="DoorFrame"]
+position = Vector3(6.02, 1.05, 2.5)
+mesh = SubResource("BoxMesh_134")
+
+[node name="DoorHandle" type="MeshInstance3D" parent="DoorFrame"]
+position = Vector3(5.94, 1, 2.95)
+mesh = SubResource("BoxMesh_135")
+
+[node name="ClassroomDoor" type="Area3D" parent="DoorFrame"]
+script = ExtResource("int_door")
+kind = 2
+interact_id = &"classroom_door"
+prompt_zh = "开门"
+prompt_en = "Open"
+target_name_zh = "教室门"
+target_name_en = "the door"
+position = Vector3(5.85, 1.15, 2.5)
+monitoring = true
+unique_name_in_owner = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorFrame/ClassroomDoor"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_136")
+
+[node name="TimetablePoster" type="MeshInstance3D" parent="Room"]
+position = Vector3(5.94, 1.75, 4.1)
+mesh = SubResource("BoxMesh_137")
+
+[node name="QActor" type="Node3D" parent="."]
+script = ExtResource("npc_gd")
+position = Vector3(-2, 0, -0.55)
+rotation_degrees = Vector3(0, 24, 0)
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="QActor"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("CapsuleMesh_138")
+
+[node name="Belly" type="MeshInstance3D" parent="QActor"]
+position = Vector3(0, 0.68, 0.18)
+mesh = SubResource("SphereMesh_139")
+
+[node name="Head" type="MeshInstance3D" parent="QActor"]
+position = Vector3(0, 1.34, 0.04)
+mesh = SubResource("SphereMesh_140")
+
+[node name="Legs" type="MeshInstance3D" parent="QActor"]
+position = Vector3(0.16, 0.28, 0.28)
+mesh = SubResource("BoxMesh_141")
+
+[node name="QTalkArea" type="Area3D" parent="QActor"]
+script = ExtResource("int_qtalk")
+position = Vector3(0, 1, 0)
+kind = 1
+interact_id = &"q"
+prompt_zh = "交谈"
+prompt_en = "Talk"
+target_name_zh = "Q"
+target_name_en = "Q"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="QActor/QTalkArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_142")
+
+[node name="NActor" type="Node3D" parent="."]
+script = ExtResource("npc_gd2")
+position = Vector3(4.7, 0, 2.4)
+rotation_degrees = Vector3(0, -96, 0)
+visible = false
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="NActor"]
+position = Vector3(0, 0.72, 0)
+mesh = SubResource("CapsuleMesh_143")
+
+[node name="Head" type="MeshInstance3D" parent="NActor"]
+position = Vector3(0, 1.56, 0)
+mesh = SubResource("SphereMesh_144")
+
+[node name="Folder" type="MeshInstance3D" parent="NActor"]
+position = Vector3(0.24, 0.95, 0.14)
+mesh = SubResource("BoxMesh_145")
+
+[node name="NTalkArea" type="Area3D" parent="NActor"]
+script = ExtResource("int_ntalk")
+position = Vector3(0, 1, 0)
+kind = 1
+interact_id = &"n"
+prompt_zh = "交谈"
+prompt_en = "Talk"
+target_name_zh = "N"
+target_name_en = "N"
+unique_name_in_owner = true
+enabled = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NActor/NTalkArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_146")
+
+[node name="BackgroundStudents" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Student0" type="Node3D" parent="BackgroundStudents"]
+position = Vector3(-1.7, 0, 1.85)
+rotation_degrees = Vector3(0, 174, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="BackgroundStudents/Student0"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("CapsuleMesh_147")
+
+[node name="Head" type="MeshInstance3D" parent="BackgroundStudents/Student0"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("SphereMesh_148")
+
+[node name="Student1" type="Node3D" parent="BackgroundStudents"]
+position = Vector3(0.6, 0, 1.85)
+rotation_degrees = Vector3(0, 186, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="BackgroundStudents/Student1"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("CapsuleMesh_149")
+
+[node name="Head" type="MeshInstance3D" parent="BackgroundStudents/Student1"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("SphereMesh_150")
+
+[node name="Student2" type="Node3D" parent="BackgroundStudents"]
+position = Vector3(-1.7, 0, 3.85)
+rotation_degrees = Vector3(0, 178, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="BackgroundStudents/Student2"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("CapsuleMesh_151")
+
+[node name="Head" type="MeshInstance3D" parent="BackgroundStudents/Student2"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("SphereMesh_152")
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="BagProp" type="Node3D" parent="Props"]
+position = Vector3(-4, 0.78, -1.02)
+unique_name_in_owner = true
+
+[node name="Interactable" type="Area3D" parent="Props/BagProp"]
+script = ExtResource("int_bag")
+kind = 0
+interact_id = &"bag"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "书包"
+target_name_en = "schoolbag"
+monitoring = true
+focus_priority = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/BagProp/Interactable"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_153")
+
+[node name="Mesh" type="MeshInstance3D" parent="Props/BagProp"]
+position = Vector3(0, 0.16, 0)
+mesh = SubResource("BoxMesh_154")
+
+[node name="Flap" type="MeshInstance3D" parent="Props/BagProp"]
+position = Vector3(0, 0.3, -0.06)
+rotation_degrees = Vector3(-12, 0, 0)
+mesh = SubResource("BoxMesh_155")
+
+[node name="ChairArea" type="Area3D" parent="Props"]
+script = ExtResource("int_chair")
+position = Vector3(-4, 0.6, 0.4)
+kind = 0
+interact_id = &"chair"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "椅子"
+target_name_en = "chair"
+focus_priority = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/ChairArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_156")
+
+[node name="TeacherDeskArea" type="Area3D" parent="Props"]
+script = ExtResource("int_tdesk")
+position = Vector3(0.35, 0.8, -3.25)
+kind = 0
+interact_id = &"teacher_desk"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "讲桌"
+target_name_en = "teacher's desk"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/TeacherDeskArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_157")
+
+[node name="SetSquareArea" type="Area3D" parent="TeacherArea/SetSquareProp"]
+script = ExtResource("int_square")
+kind = 0
+interact_id = &"set_square"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "木尺"
+target_name_en = "set square"
+monitoring = true
+focus_priority = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TeacherArea/SetSquareProp/SetSquareArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_158")
+
+[node name="Shape" type="MeshInstance3D" parent="TeacherArea/SetSquareProp"]
+rotation_degrees = Vector3(0, 12, 0)
+mesh = SubResource("BoxMesh_159")
+
+[node name="ShapeB" type="MeshInstance3D" parent="TeacherArea/SetSquareProp"]
+position = Vector3(-0.2, 0, 0.16)
+rotation_degrees = Vector3(0, 62, 0)
+mesh = SubResource("BoxMesh_160")
+
+[node name="Chip" type="MeshInstance3D" parent="TeacherArea/SetSquareProp"]
+position = Vector3(-0.29, 0, -0.02)
+mesh = SubResource("BoxMesh_161")
+
+[node name="TimetableArea" type="Area3D" parent="Props"]
+script = ExtResource("int_timetable")
+position = Vector3(5.8, 1.6, 4.1)
+kind = 0
+interact_id = &"timetable"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "课表"
+target_name_en = "timetable"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/TimetableArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_162")
+
+[node name="WindowArea" type="Area3D" parent="Props"]
+script = ExtResource("int_window")
+position = Vector3(2.7, 1.8, -4.7)
+kind = 0
+interact_id = &"window"
+prompt_zh = "查看"
+prompt_en = "Look"
+target_name_zh = "窗户"
+target_name_en = "window"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/WindowArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_163")
+
+[node name="DeskThinkArea" type="Area3D" parent="Props"]
+script = ExtResource("int_think")
+position = Vector3(3.4, 0.9, -2.4)
+kind = 3
+interact_id = &"desk_think"
+unique_name_in_owner = true
+prompt_zh = "想一想"
+prompt_en = "Think"
+target_name_zh = "讲台前"
+target_name_en = "the front of the room"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/DeskThinkArea"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_164")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="Desk" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-4, 0.05, -0.42)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="FromDoor" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(5, 0.05, 2.4)
+rotation_degrees = Vector3(0, -90, 0)
