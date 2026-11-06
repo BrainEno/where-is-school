@@ -1,0 +1,120 @@
+# Runtime Architecture
+
+This document defines boundaries, not an excuse to build every planned subsystem immediately. Implement a subsystem when a playable requirement needs it; keep its ownership clear as it grows.
+
+## 1. Top-level structure
+
+~~~text
+project.godot
+scenes/
+  main/                 # project entry scene and high-level composition
+  actors/player/        # player scene and reusable actor scenes
+  locations/            # authored location scenes, not procedural world data
+  environment/           # reusable architecture and prop scenes
+  ui/                   # menus, HUD, dialogue, journal
+  cutscenes/             # authored in-engine sequences
+scripts/
+  autoload/              # very few application-wide state services
+  actors/                # movement and actor behavior
+  interaction/           # interaction contracts and targeting
+  dialogue/              # dialogue runtime and adapters
+  world/                 # world state and spatial rule behavior
+  save/                  # serialization and migration
+  ui/                    # UI-specific presentation logic
+data/
+  dialogue/              # narrative content, not hard-coded in gameplay scripts
+  characters/
+  items/
+  locations/
+assets/
+  characters/
+  environment/
+  materials/
+  audio/
+  fonts/
+addons/                   # pinned third-party plugins only
+tests/
+docs/
+~~~
+
+Directories are created when a real asset or implementation lands; do not add large collections of empty placeholders.
+
+## 2. Dependency direction
+
+Keep dependencies moving from presentation toward application/domain logic:
+
+- **Scenes** compose nodes and resources. A scene should not own the entire narrative or save implementation.
+- **Actor scripts** own local movement, animation requests, and actor state.
+- **Interaction** identifies a target and requests an action; it should not decide how dialogue UI is drawn.
+- **Dialogue runtime** advances a content graph and emits presentation events. It should not directly manipulate arbitrary level nodes.
+- **UI** renders state and sends player intent. It should not become the authoritative story-state store.
+- **World state** owns named story/world flags and offers small APIs.
+- **Save system (future)** serializes explicit data snapshots. It must not serialize arbitrary live Nodes or scene-tree references.
+
+Use signals at clear boundaries. Do not create a global event bus by default; first consider a direct reference, a signal on the owning node, or a narrowly scoped controller.
+
+## 3. Autoload policy
+
+The starter project contains one autoload: GameState.
+
+Its responsibility is limited to runtime story flags and snapshot/restore of those flags. It is not a dumping ground for quests, dialogue UI, scene transitions, audio, inventory, settings, or save-file I/O.
+
+Add another autoload only when:
+1. multiple independent scenes genuinely need the same service;
+2. ownership and lifecycle cannot be expressed cleanly by a scene-level node;
+3. the API is small and documented;
+4. tests can validate it independently.
+
+A future save manager should call explicit serializers and use a versioned save schema. It should not be merged into GameState.
+
+## 4. Scene ownership
+
+- The main scene composes the active location and persistent application-level nodes.
+- Location scenes own their local geometry, navigation affordances, lighting, and location-specific interactive props.
+- Reusable architecture/prop scenes belong under scenes/environment/.
+- The player scene owns its controller and local camera rig. A later camera system may extract the rig if multiple actor modes require it.
+- UI scenes should be replaceable without rewriting narrative data.
+
+Avoid hard-coded NodePaths that reach across unrelated scene ownership. Prefer exported Node references, signals, groups used for a documented purpose, or explicit service APIs.
+
+## 5. Narrative data contract
+
+Dialogue content must be separate from gameplay scripts. Before adopting a dialogue addon or format, validate that it supports:
+- long Chinese text and readable typography;
+- named speakers and portrait identifiers;
+- choices and conditional choices;
+- story flags and explicit state changes;
+- history/backlog and accessibility controls;
+- interruption by environmental events;
+- deterministic serialization of the current conversation state, if mid-conversation saves are required.
+
+First run a bounded Dialogic 2 integration spike. Keep addon-specific calls behind a small project-owned adapter so content and gameplay code are not permanently coupled to one plugin. Do not install or pin the addon until its current Godot compatibility, license, and maintenance status are reviewed.
+
+## 6. Persistent identifiers and data
+
+- Use stable IDs for dialogue nodes, characters, items, locations, and story flags.
+- Treat IDs as save-data contracts; rename them only with an explicit migration plan.
+- Do not use display names as identifiers.
+- Validate external content at load time and report the file path and invalid field.
+- Keep presentation text out of movement and world simulation scripts.
+- Prefer typed Godot Resources for structured authoring; use JSON only where it materially improves localization, external editing, or automated validation.
+
+## 7. Save/load design (future requirement)
+
+When implemented, saves should contain a schema version and explicit snapshots for:
+- current location and safe spawn identifier;
+- story/world flags;
+- journal discoveries;
+- player progression and inventory, if later approved;
+- relevant dialogue state only if the design requires mid-dialogue continuation.
+
+Use user:// paths. Write to a temporary file, validate the result, then replace the prior save. Implement migrations before changing a released schema. Never save absolute machine paths or arbitrary Node references.
+
+## 8. Testing boundaries
+
+- Unit tests: pure state transformations, dialogue condition evaluation, content validation, save serialization/migration.
+- Scene smoke tests: required nodes/resources instantiate and scenes load.
+- Integration tests: movement/interaction/dialogue/scene-state transitions.
+- Manual tests: navigation readability, pacing, camera comfort, typography, controller feel, and spatial surprises.
+
+A successful headless import is not proof that the game is playable. PRs must say which level of validation they actually performed.
