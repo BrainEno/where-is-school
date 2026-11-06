@@ -2,69 +2,71 @@
 
 ## Goal
 
-Build a short playable experience that tests whether movement, environmental observation, literary dialogue, and a subjective memory sequence can work together. This is the first comparable implementation task for competing coding agents after the engineering foundation is merged.
+Build a short playable classroom sequence that tests movement, environmental interaction, literary dialogue, and the presentation of subjective recollection.
 
-## Player-facing experience
+## Player-facing flow
 
-The protagonist wakes at a desk in a school classroom. Q, a talkative classmate who seems to know the protagonist but is not remembered by them, starts a conversation about the final term and the protagonist's previous biology exam. The player can respond with different attitudes toward Q, memory, and the expected biology lesson.
+1. The protagonist wakes at a desk.
+2. Q starts a conversation and establishes the immediate classroom situation.
+3. The player searches the schoolbag and discovers the biology textbook is missing.
+4. The player can inspect a small number of classroom props, including a wooden set square.
+5. The protagonist anticipates a confrontation, but subjective imagination must remain distinct from objective scene events.
+6. B is absent. N, an inexperienced substitute, takes the class and eventually permits students to leave.
+7. The player exits the classroom and reaches a clear next objective.
 
-The protagonist searches their schoolbag and discovers that the biology textbook is missing. A worn wooden set square associated with the absent biology teacher B is present as an inspectable object or visible classroom detail. The protagonist's imagined confrontation with B should be conveyed as subjective text/voice or a bounded authored sequence, not mistaken for an event that objectively occurs.
-
-When the bell rings, B does not arrive. N, an inexperienced substitute, appears and eventually allows students to leave for free activity. The slice ends after the protagonist leaves the classroom and reaches a clear next objective at or beyond the school grounds. The full residential-street route and green-animal encounter may be reserved for a subsequent slice if scope requires it.
+The prototype should not reproduce unpublished manuscript passages. Write short, original placeholder dialogue for implementation tests; replace it only with game dialogue explicitly approved by the owner.
 
 ## Required content
 
 - One compact classroom with readable collision and navigation.
 - Q as the first conversational NPC; a temporary portrait placeholder is acceptable.
-- At least three inspectable objects with distinct descriptions. Include the schoolbag/textbook search and the wooden set square or its damaged/taped detail.
+- A schoolbag interaction that establishes the missing textbook.
+- At least three inspectable classroom props with concise, newly written descriptions.
 - One conversation with at least three meaningful player choices.
-- A representation of the protagonist's unstable recollection that distinguishes Q's claims from the protagonist's memory and speculation.
-- A clear beat in which B is absent and N substitutes for her; do not implement B as an opening-scene NPC.
-- A short route or exit beat that gives the player a next question or objective.
+- A subjective recollection/imagination presentation that cannot silently alter objective world state.
+- A clear beat in which B is absent and N substitutes for her.
+- A short exit route or transition.
 - At least one choice or discovery changes a named story flag.
 
 ## Required systems
 
-- Player movement and camera control with a consistent perspective.
+- Player movement and consistent camera control.
 - Contextual interaction feedback and input.
-- Dialogue presentation supporting long text, speaker identity, choices, and a backlog/history.
+- Dialogue presentation supporting speaker identity, choices, and backlog/history.
 - Explicit, testable story-state changes.
-- A way to present subjective memory/imagination without silently converting it into objective world state.
-- Scene transition behavior that preserves the intended story state.
-- Basic settings for text speed and text size, or a clearly scoped follow-up issue if not feasible in the first pass.
+- A presentation layer for subjective recollection.
+- Scene transition behavior that preserves story state.
+- Basic text-size and text-speed settings, or a scoped follow-up issue.
 
 ## Out of scope
 
-- A complete implementation of all A/B/C/D memory paths; their exact content is undecided.
-- B's full onstage appearance or a definitive explanation of her character.
-- The complete green-animal sequence if it would compromise the first slice's scope.
-- The elliptical building and a complete school-version transition system.
-- Combat, enemy AI, weapons, crafting, survival meters, or procedural generation.
-- Full inventory/quest systems.
-- Voice acting and cinematic facial animation.
-- All planned chapters or a definitive explanation of the world.
-- Final production art for every prop and NPC.
-- Online services, analytics, or paid dependencies.
+- Complete A/B/C/D memory paths.
+- B's full onstage appearance or definitive character explanation.
+- The full street and green-animal sequence.
+- The elliptical building or complete school-version transition system.
+- Combat, enemy AI, weapons, crafting, survival meters, procedural generation.
+- Full inventory/quest systems, voice acting, cinematic facial animation.
+- Online services, analytics, paid dependencies, or unpublished manuscript content.
 
 ## Acceptance criteria
 
-1. A clean clone opens in the pinned Godot version with no missing resources or script parse errors.
-2. The project launches into the intended classroom starting space.
-3. The player can traverse the classroom without getting trapped by collision or camera framing.
-4. Every required interactable can be reached, targeted, and inspected.
-5. Dialogue choices have distinct, observable consequences (text, flags, relationship, route, or environment).
-6. Q's dialogue communicates familiarity and useful context without turning him into a supernatural guide or a checklist of exposition.
-7. The player can distinguish Q's account, protagonist memory, and imagined confrontation.
+1. A clean clone opens in the pinned Godot version without missing resources or parse errors.
+2. The project launches into the intended classroom.
+3. The player can navigate the classroom without collision or camera traps.
+4. Required interactables can be reached, targeted, and inspected.
+5. Dialogue choices have distinct observable consequences.
+6. Q communicates familiarity and context without functioning as a quest terminal.
+7. The player can distinguish dialogue claims, recollection, and subjective imagination.
 8. B's absence and N's substitution are clear and reproducible.
-9. Returning to an earlier area does not silently lose required story state.
-10. Long text is readable at the default resolution and can be reviewed in a backlog.
-11. Headless import and smoke checks pass; manual test steps and limitations are recorded.
-12. No fake tests, silent error suppression, broken placeholder buttons, or unrelated rewrites are introduced.
+9. Required story state persists when revisiting an area.
+10. Long text is readable and reviewable in a backlog.
+11. Headless import and smoke checks pass; manual checks and limitations are recorded.
+12. No fake tests, silent error suppression, broken placeholder buttons, unrelated rewrites, or private manuscript text are introduced.
 
 ## Deliverables
 
 - A focused PR against the merged foundation.
 - Screenshots or a short capture of the playable flow.
 - Exact engine version and validation commands/results.
-- A concise architecture note explaining the ownership of interaction, dialogue, subjective recollection, and story state.
+- A concise architecture note covering interaction, dialogue, subjective recollection, and story state.
 - Known limitations and recommended next steps.
