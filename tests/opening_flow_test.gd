@@ -28,6 +28,7 @@ var _observed_during_expectation := 0
 
 
 func _initialize() -> void:
+	Harness.arm_watchdog(self, 300.0, "opening_flow_test.gd")
 	call_deferred("_run")
 
 

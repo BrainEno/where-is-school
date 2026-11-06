@@ -37,6 +37,18 @@ static func ensure_state_autoloads(tree: SceneTree) -> Dictionary:
 	}
 
 
+## Hard watchdog: a test that stalls must still terminate with a failure instead
+## of eating the CI job's whole time budget. The timer ignores Engine.time_scale.
+static func arm_watchdog(tree: SceneTree, seconds: float, label: String) -> void:
+	var timer := tree.create_timer(seconds, true, false, true)
+	timer.timeout.connect(
+		func() -> void:
+			push_error("TEST WATCHDOG: %s exceeded %.0f seconds and was aborted." % [label, seconds])
+			print("FAIL: %s timed out after %.0f seconds." % [label, seconds])
+			tree.quit(2)
+	)
+
+
 static func reset_state(tree: SceneTree) -> void:
 	var game_state := tree.root.get_node_or_null(^"GameState")
 	if game_state != null:

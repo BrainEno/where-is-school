@@ -58,6 +58,7 @@ var _failures: Array[String] = []
 
 
 func _initialize() -> void:
+	Harness.arm_watchdog(self, 120.0, "dialogue_runtime_test.gd")
 	call_deferred("_run")
 
 
