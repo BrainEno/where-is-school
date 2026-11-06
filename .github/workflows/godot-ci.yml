@@ -31,10 +31,10 @@ jobs:
       - name: Smoke — main scene instantiates and composes the classroom
         run: |
           set +e
-          godot --headless --path . --script res://tests/smoke_main.gd > smoke_main.log 2>&1
+          timeout 90 godot --headless --path . --script res://tests/smoke_main.gd > smoke_main.log 2>&1
           code=$?
           if [ $code -ne 0 ]; then
-            echo "::error::smoke_main.gd exited $code"
+            echo "::error::smoke_main.gd exited ${code}$( [ $code -eq 124 ] && printf ' (HUNG)')"
             grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_main.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
@@ -43,10 +43,10 @@ jobs:
       - name: Smoke — player, camera and interactables
         run: |
           set +e
-          godot --headless --path . --script res://tests/smoke_player.gd > smoke_player.log 2>&1
+          timeout 90 godot --headless --path . --script res://tests/smoke_player.gd > smoke_player.log 2>&1
           code=$?
           if [ $code -ne 0 ]; then
-            echo "::error::smoke_player.gd exited $code"
+            echo "::error::smoke_player.gd exited ${code}$( [ $code -eq 124 ] && printf ' (HUNG)')"
             grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_player.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
@@ -55,27 +55,31 @@ jobs:
       - name: Smoke — UI group and lesson director
         run: |
           set +e
-          godot --headless --path . --script res://tests/smoke_ui.gd > smoke_ui.log 2>&1
+          timeout 90 godot --headless --path . --script res://tests/smoke_ui.gd > smoke_ui.log 2>&1
           code=$?
           if [ $code -ne 0 ]; then
-            echo "::error::smoke_ui.gd exited $code"
+            echo "::error::smoke_ui.gd exited ${code}$( [ $code -eq 124 ] && printf ' (HUNG)')"
             grep -iE "ERROR|Failed|Parse|SCRIPT" smoke_ui.log | head -9 | sed 's/^/::error::/'
             exit 1
           fi
           tail -n 3 smoke_ui.log || true
 
       - name: Run unit tests
+        timeout-minutes: 6
         run: |
           set +e
           fail=0
           for t in game_state_test settings_test dialogue_runner_test dialogue_content_test scene_composition_test; do
-            godot --headless --path . --script "res://tests/${t}.gd" > "test_${t}.log" 2>&1
+            timeout 45 godot --headless --path . --script "res://tests/${t}.gd" > "test_${t}.log" 2>&1
             code=$?
             echo "== ${t}: exit ${code}"
             tail -n 2 "test_${t}.log" || true
             if [ $code -ne 0 ]; then
-              echo "::error::${t}.gd exited $code"
-              grep -iE "ERROR|Failed|Parse|SCRIPT|ASSERT" "test_${t}.log" | head -9 | sed 's/^/::error::/'
+              echo "::error::${t}.gd exited ${code}"
+              if [ $code -eq 124 ]; then
+                echo "::error::${t}.gd HUNG and was killed by timeout — an unhandled runtime error aborted the script before quit()"
+              fi
+              grep -iE "ERROR|Failed|Parse|SCRIPT|ASSERT|failed" "test_${t}.log" | head -9 | sed 's/^/::error::/'
               fail=1
             fi
           done
