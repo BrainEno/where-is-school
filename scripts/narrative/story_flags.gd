@@ -1,0 +1,97 @@
+class_name StoryFlags
+extends RefCounted
+## Stable identifiers for the opening slice's gameplay flags.
+##
+## GameState stores these as named values. The ids are save-data contracts:
+## rename one only with a migration plan. Flag values may be bool, String, or
+## int; the type each flag carries is documented next to the constant.
+
+# --- Beat bookkeeping -------------------------------------------------------
+## bool: the first conversation with Q has started.
+const MET_Q: StringName = &"met_q"
+## bool: the schoolbag has been searched and the textbook is missing.
+const TEXTBOOK_MISSING: StringName = &"textbook_missing"
+## bool: the player inspected the wooden set square.
+const SAW_SET_SQUARE: StringName = &"saw_set_square"
+## bool: the subjective expectation beat has been presented.
+const EXPECTATION_PLAYED: StringName = &"expectation_played"
+## bool: the second bell has rung.
+const BELL_RUNG: StringName = &"bell_rung"
+## bool: substitute N has reached the front of the classroom.
+const N_ARRIVED: StringName = &"n_arrived"
+## bool: N has allowed the class to leave for free activity.
+const CLASS_DISMISSED: StringName = &"class_dismissed"
+## bool: the player left the classroom for the walkway.
+const LEFT_CLASSROOM: StringName = &"left_classroom"
+
+# --- Dialogue choice consequences ------------------------------------------
+## bool: the protagonist admitted not remembering Q.
+const ASKED_Q_IDENTITY: StringName = &"asked_q_identity"
+## bool: the protagonist asked Q for the date.
+const ASKED_Q_DATE: StringName = &"asked_q_date"
+## bool: the protagonist stayed silent instead of answering Q.
+const STAYED_SILENT: StringName = &"stayed_silent"
+## bool: the protagonist denied remembering the biology exam.
+const DENIED_EXAM_MEMORY: StringName = &"denied_exam_memory"
+## bool: the protagonist insisted the exam was only one page.
+const CLAIMED_ONE_PAGE_EXAM: StringName = &"claimed_one_page_exam"
+## bool: the protagonist challenged Q's interest.
+const CHALLENGED_Q: StringName = &"challenged_q"
+## bool: the protagonist asked whether B is strict.
+const ASKED_IF_B_STRICT: StringName = &"asked_if_b_strict"
+## bool: the protagonist pointed out that B may be late.
+const NOTED_B_LATE: StringName = &"noted_b_late"
+## bool: the protagonist told Q the textbook is gone.
+const TOLD_Q_ABOUT_TEXTBOOK: StringName = &"told_q_about_textbook"
+## bool: the protagonist accused Q of taking the textbook.
+const ACCUSED_Q: StringName = &"accused_q"
+## bool: the player asked the substitute about B.
+const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
+## bool: the player asked the substitute about spare textbooks.
+const ASKED_N_ABOUT_TEXTBOOK: StringName = &"asked_n_about_textbook"
+## bool: the player noticed that N is a substitute.
+const NOTICED_N_SUBSTITUTE: StringName = &"noticed_n_substitute"
+
+# --- Small runtime values used by presentation ------------------------------
+## String: the single line of mission text the HUD shows.
+const OBJECTIVE_TEXT: StringName = &"objective_text"
+## StringName: id of the location the player is currently in.
+const CURRENT_LOCATION: StringName = &"current_location"
+
+const ALL_FLAGS: Array[StringName] = [
+	MET_Q,
+	TEXTBOOK_MISSING,
+	SAW_SET_SQUARE,
+	EXPECTATION_PLAYED,
+	BELL_RUNG,
+	N_ARRIVED,
+	CLASS_DISMISSED,
+	LEFT_CLASSROOM,
+	ASKED_Q_IDENTITY,
+	ASKED_Q_DATE,
+	STAYED_SILENT,
+	DENIED_EXAM_MEMORY,
+	CLAIMED_ONE_PAGE_EXAM,
+	CHALLENGED_Q,
+	ASKED_IF_B_STRICT,
+	NOTED_B_LATE,
+	TOLD_Q_ABOUT_TEXTBOOK,
+	ACCUSED_Q,
+	ASKED_N_ABOUT_B,
+	ASKED_N_ABOUT_TEXTBOOK,
+	NOTICED_N_SUBSTITUTE,
+	OBJECTIVE_TEXT,
+	CURRENT_LOCATION,
+]
+
+
+## Flag that records a single dialogue choice was taken. Dialogue content marks
+## a choice as `once` by pointing at this helper, and the runtime writes it.
+static func choice_flag(conversation_id: StringName, choice_id: StringName) -> StringName:
+	return StringName("choice:%s:%s" % [String(conversation_id), String(choice_id)])
+
+
+## Flag that records an inspection was read at least once, so repeat text and
+## repeat behaviour stay consistent across visits.
+static func inspection_seen_flag(inspection_id: StringName) -> StringName:
+	return StringName("seen:%s" % String(inspection_id))

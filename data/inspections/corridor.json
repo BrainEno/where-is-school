@@ -1,0 +1,41 @@
+{
+  "corridor_noticeboard": {
+    "title": "Noticeboard",
+    "prompt": "Read the noticeboard",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Fixtures for a sport you don't follow, a fire drill notice dated last year, and a photograph of a class standing in front of this building. You look at the photograph for a moment and then stop looking at it.",
+    "repeat_text": "The same photograph, the same class standing in front of the same building.",
+    "record": {
+      "entry_id": "saw_corridor_noticeboard",
+      "source": "observed",
+      "text": "The walkway noticeboard holds old fixtures, a fire drill notice, and a photograph of a class outside this building."
+    }
+  },
+  "corridor_extinguisher": {
+    "title": "Fire extinguisher",
+    "prompt": "Look at the extinguisher",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Red cylinder on a bracket, inspection tag punched last month, pin still in place. Somebody has written a phone number on the wall beside it and then written over the last two digits.",
+    "repeat_text": "The tag, the pin, the phone number with its two digits scratched out.",
+    "record": {
+      "entry_id": "saw_corridor_extinguisher",
+      "source": "observed",
+      "text": "The walkway extinguisher was inspected last month; a phone number beside it has been partly scratched out."
+    }
+  },
+  "corridor_classroom_glass": {
+    "title": "Classroom window",
+    "prompt": "Look through the glass",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The room through the glass: the desks, the board, the set square on the corner of the front desk, the substitute standing very still at the front of it. From out here the room looks smaller than it felt.",
+    "repeat_text": "Desks, board, set square. The substitute has not moved much.",
+    "record": {
+      "entry_id": "saw_classroom_from_walkway",
+      "source": "observed",
+      "text": "Seen from the walkway, the classroom looks smaller than it did from inside."
+    }
+  }
+}

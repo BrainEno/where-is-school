@@ -1,0 +1,562 @@
+[gd_scene load_steps=55 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/floor_concrete.tres" id="2_floor_concrete"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_paint.tres" id="3_wall_paint"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="4_wall_trim"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="5_desk_wood"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="6_metal_dark"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="7_paper_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass_pane"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/light_panel.tres" id="9_light_panel"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/dusk_glow.tres" id="10_dusk_glow"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_desk.tscn" id="11_classroom_desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_desk.tscn" id="12_teacher_desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/blackboard.tscn" id="13_blackboard"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/set_square.tscn" id="14_set_square"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/schoolbag.tscn" id="15_schoolbag"]
+[ext_resource type="PackedScene" path="res://scenes/actors/npc/npc_actor.tscn" id="16_npc_actor"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="17_interactable"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="18_location_exit"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_classroom.wav" id="19_room_tone_classroom"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="20_ambience_player"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.106, 0.118, 0.118, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.42, 0.43, 0.44, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_saturation = 0.84
+adjustment_contrast = 1.04
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(9.4, 0.2, 7.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(9.4, 0.2, 7.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4"]
+size = Vector3(9.4, 3.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(9.4, 3.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6"]
+size = Vector3(0.2, 3.2, 7.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(0.2, 3.2, 7.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8"]
+size = Vector3(7.2, 3.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_9"]
+size = Vector3(7.2, 3.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_10"]
+size = Vector3(0.8, 3.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_11"]
+size = Vector3(0.8, 3.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_12"]
+size = Vector3(1.2, 1.1, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_13"]
+size = Vector3(1.2, 1.1, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_14"]
+size = Vector3(9.4, 0.1, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_15"]
+size = Vector3(0.14, 0.1, 7.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_16"]
+size = Vector3(9.4, 0.12, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_17"]
+size = Vector3(0.05, 0.12, 7.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_18"]
+size = Vector3(7.2, 0.12, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_19"]
+size = Vector3(0.8, 0.12, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+size = Vector3(0.08, 2.1, 0.24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_21"]
+size = Vector3(1.3, 0.08, 0.24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_22"]
+size = Vector3(1.2, 0.03, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_23"]
+size = Vector3(0.02, 1.34, 1.54)
+
+[sub_resource type="BoxMesh" id="BoxMesh_24"]
+size = Vector3(0.02, 1.3, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_25"]
+size = Vector3(0.08, 0.08, 1.66)
+
+[sub_resource type="BoxMesh" id="BoxMesh_26"]
+size = Vector3(0.2, 0.08, 1.7)
+
+[sub_resource type="BoxMesh" id="BoxMesh_27"]
+size = Vector3(0.08, 1.4, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+size = Vector3(0.06, 1.3, 0.05)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_29"]
+top_radius = 0.23
+bottom_radius = 0.23
+height = 0.05
+radial_segments = 20
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+size = Vector3(0.02, 0.1, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_31"]
+size = Vector3(0.02, 0.15, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_32"]
+size = Vector3(0.5, 0.7, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_33"]
+size = Vector3(0.1, 0.04, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_34"]
+size = Vector3(1.1, 0.08, 0.16)
+
+[node name="Classroom" type="Node3D"]
+script = ExtResource("1_location_root")
+location_id = &"classroom"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-56, -24, 0)
+light_color = Color(1, 0.87, 0.72, 1)
+light_energy = 0.85
+shadow_enabled = true
+directional_shadow_max_distance = 40.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("2_floor_concrete")
+
+[node name="WallNorth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 1.6, -3.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallNorth"]
+shape = SubResource("BoxShape3D_4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallNorth"]
+mesh = SubResource("BoxMesh_5")
+material_override = ExtResource("3_wall_paint")
+
+[node name="WallWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-4.6, 1.6, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallWest"]
+shape = SubResource("BoxShape3D_6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallWest"]
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("3_wall_paint")
+
+[node name="WallEast" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.6, 1.6, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallEast"]
+shape = SubResource("BoxShape3D_6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallEast"]
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("3_wall_paint")
+
+[node name="WallSouthLeft" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-1, 1.6, 3.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallSouthLeft"]
+shape = SubResource("BoxShape3D_8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallSouthLeft"]
+mesh = SubResource("BoxMesh_9")
+material_override = ExtResource("3_wall_paint")
+
+[node name="WallSouthRight" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.2, 1.6, 3.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallSouthRight"]
+shape = SubResource("BoxShape3D_10")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallSouthRight"]
+mesh = SubResource("BoxMesh_11")
+material_override = ExtResource("3_wall_paint")
+
+[node name="DoorLintel" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(3.2, 2.65, 3.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorLintel"]
+shape = SubResource("BoxShape3D_12")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DoorLintel"]
+mesh = SubResource("BoxMesh_13")
+material_override = ExtResource("3_wall_paint")
+
+[node name="TrimNorth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.14, -3.48)
+mesh = SubResource("BoxMesh_14")
+material_override = ExtResource("4_wall_trim")
+
+[node name="TrimWest" type="MeshInstance3D" parent="."]
+position = Vector3(-4.48, 3.14, 0)
+mesh = SubResource("BoxMesh_15")
+material_override = ExtResource("4_wall_trim")
+
+[node name="TrimEast" type="MeshInstance3D" parent="."]
+position = Vector3(4.48, 3.14, 0)
+mesh = SubResource("BoxMesh_15")
+material_override = ExtResource("4_wall_trim")
+
+[node name="TrimSouth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.14, 3.48)
+mesh = SubResource("BoxMesh_14")
+material_override = ExtResource("4_wall_trim")
+
+[node name="SkirtNorth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.06, -3.49)
+mesh = SubResource("BoxMesh_16")
+material_override = ExtResource("4_wall_trim")
+
+[node name="SkirtWest" type="MeshInstance3D" parent="."]
+position = Vector3(-4.49, 0.06, 0)
+mesh = SubResource("BoxMesh_17")
+material_override = ExtResource("4_wall_trim")
+
+[node name="SkirtEast" type="MeshInstance3D" parent="."]
+position = Vector3(4.49, 0.06, 0)
+mesh = SubResource("BoxMesh_17")
+material_override = ExtResource("4_wall_trim")
+
+[node name="SkirtSouthLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-1, 0.06, 3.49)
+mesh = SubResource("BoxMesh_18")
+material_override = ExtResource("4_wall_trim")
+
+[node name="SkirtSouthRight" type="MeshInstance3D" parent="."]
+position = Vector3(4.2, 0.06, 3.49)
+mesh = SubResource("BoxMesh_19")
+material_override = ExtResource("4_wall_trim")
+
+[node name="DoorFrameLeft" type="MeshInstance3D" parent="."]
+position = Vector3(2.58, 1.05, 3.52)
+mesh = SubResource("BoxMesh_20")
+material_override = ExtResource("4_wall_trim")
+
+[node name="DoorFrameRight" type="MeshInstance3D" parent="."]
+position = Vector3(3.82, 1.05, 3.52)
+mesh = SubResource("BoxMesh_20")
+material_override = ExtResource("4_wall_trim")
+
+[node name="DoorFrameHead" type="MeshInstance3D" parent="."]
+position = Vector3(3.2, 2.12, 3.52)
+mesh = SubResource("BoxMesh_21")
+material_override = ExtResource("4_wall_trim")
+
+[node name="Threshold" type="MeshInstance3D" parent="."]
+position = Vector3(3.2, 0.01, 3.6)
+mesh = SubResource("BoxMesh_22")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowGlow0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.47, 1.72, -1.7)
+mesh = SubResource("BoxMesh_23")
+material_override = ExtResource("10_dusk_glow")
+
+[node name="WindowGlass0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.44, 1.72, -1.7)
+mesh = SubResource("BoxMesh_24")
+material_override = ExtResource("8_glass_pane")
+
+[node name="WindowFrameTop0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 2.4, -1.7)
+mesh = SubResource("BoxMesh_25")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameBottom0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.04, -1.7)
+mesh = SubResource("BoxMesh_26")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameLeft0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, -2.5)
+mesh = SubResource("BoxMesh_27")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameRight0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, -0.9)
+mesh = SubResource("BoxMesh_27")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowMullion0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, -1.7)
+mesh = SubResource("BoxMesh_28")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowGlow1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.47, 1.72, 1.3)
+mesh = SubResource("BoxMesh_23")
+material_override = ExtResource("10_dusk_glow")
+
+[node name="WindowGlass1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.44, 1.72, 1.3)
+mesh = SubResource("BoxMesh_24")
+material_override = ExtResource("8_glass_pane")
+
+[node name="WindowFrameTop1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 2.4, 1.3)
+mesh = SubResource("BoxMesh_25")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameBottom1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.04, 1.3)
+mesh = SubResource("BoxMesh_26")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameLeft1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, 0.5)
+mesh = SubResource("BoxMesh_27")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowFrameRight1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, 2.1)
+mesh = SubResource("BoxMesh_27")
+material_override = ExtResource("4_wall_trim")
+
+[node name="WindowMullion1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.42, 1.72, 1.3)
+mesh = SubResource("BoxMesh_28")
+material_override = ExtResource("4_wall_trim")
+
+[node name="ClockFace" type="MeshInstance3D" parent="."]
+position = Vector3(3.6, 2.42, -3.45)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("CylinderMesh_29")
+material_override = ExtResource("7_paper_pale")
+
+[node name="ClockHandHour" type="MeshInstance3D" parent="."]
+position = Vector3(3.6, 2.42, -3.41)
+mesh = SubResource("BoxMesh_30")
+material_override = ExtResource("6_metal_dark")
+
+[node name="ClockHandMinute" type="MeshInstance3D" parent="."]
+position = Vector3(3.66, 2.42, -3.41)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("BoxMesh_31")
+material_override = ExtResource("6_metal_dark")
+
+[node name="TimetableSheet" type="MeshInstance3D" parent="."]
+position = Vector3(1.6, 1.72, 3.48)
+mesh = SubResource("BoxMesh_32")
+material_override = ExtResource("7_paper_pale")
+
+[node name="TimetableClip" type="MeshInstance3D" parent="."]
+position = Vector3(1.6, 2.08, 3.47)
+mesh = SubResource("BoxMesh_33")
+material_override = ExtResource("6_metal_dark")
+
+[node name="Fitting0" type="MeshInstance3D" parent="."]
+position = Vector3(-1.7, 3.02, -3.22)
+mesh = SubResource("BoxMesh_34")
+material_override = ExtResource("9_light_panel")
+
+[node name="FittingLight0" type="OmniLight3D" parent="."]
+position = Vector3(-1.7, 2.86, -2.9)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.5
+omni_range = 7.0
+shadow_enabled = false
+
+[node name="Fitting1" type="MeshInstance3D" parent="."]
+position = Vector3(1.7, 3.02, -3.22)
+mesh = SubResource("BoxMesh_34")
+material_override = ExtResource("9_light_panel")
+
+[node name="FittingLight1" type="OmniLight3D" parent="."]
+position = Vector3(1.7, 2.86, -2.9)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.5
+omni_range = 7.0
+shadow_enabled = false
+
+[node name="BackFill" type="OmniLight3D" parent="."]
+position = Vector3(0, 2.9, 2.4)
+light_color = Color(0.95, 0.91, 0.86, 1)
+light_energy = 0.9
+omni_range = 7.5
+shadow_enabled = false
+
+[node name="Furniture" type="Node3D" parent="."]
+
+[node name="DeskA1" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(-2.5, 0, -1.5)
+
+[node name="DeskA2" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(0, 0, -1.5)
+
+[node name="DeskA3" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(2.5, 0, -1.5)
+
+[node name="DeskB1" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(-2.5, 0, 0.2)
+
+[node name="DeskB2" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(0, 0, 0.2)
+
+[node name="DeskB3" parent="Furniture" instance=ExtResource("11_classroom_desk")]
+position = Vector3(2.5, 0, 0.2)
+
+[node name="FrontDesk" parent="Furniture" instance=ExtResource("12_teacher_desk")]
+position = Vector3(2, 0, -2.85)
+rotation_degrees = Vector3(0, -3, 0)
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="Blackboard" parent="Props" instance=ExtResource("13_blackboard")]
+position = Vector3(0.2, 0, -3.45)
+
+[node name="SetSquare" parent="Props" instance=ExtResource("14_set_square")]
+position = Vector3(1.35, 0.81, -2.72)
+rotation_degrees = Vector3(0, 14, 0)
+
+[node name="Schoolbag" parent="Props" instance=ExtResource("15_schoolbag")]
+position = Vector3(0.62, 0, 1.02)
+rotation_degrees = Vector3(0, 26, 0)
+
+[node name="Actors" type="Node3D" parent="."]
+
+[node name="Q" parent="Actors" instance=ExtResource("16_npc_actor")]
+position = Vector3(-1.32, 0, 0.82)
+rotation_degrees = Vector3(0, 78, 0)
+npc_id = &"q"
+debug_name = "Q"
+body_color = Color(0.62, 0.55, 0.44, 1)
+
+[node name="N" parent="Actors" instance=ExtResource("16_npc_actor")]
+position = Vector3(3.2, 0, 3.2)
+visible = false
+npc_id = &"n"
+debug_name = "N"
+body_color = Color(0.5, 0.54, 0.56, 1)
+
+[node name="NEntryPath" type="Node3D" parent="."]
+
+[node name="InDoorway" type="Marker3D" parent="NEntryPath"]
+position = Vector3(3.2, 0, 3.2)
+
+[node name="Aisle" type="Marker3D" parent="NEntryPath"]
+position = Vector3(3.5, 0, 1.4)
+
+[node name="FrontAisle" type="Marker3D" parent="NEntryPath"]
+position = Vector3(3.5, 0, -2)
+
+[node name="AtFront" type="Marker3D" parent="NEntryPath"]
+position = Vector3(1.7, 0, -2.05)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BlackboardInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(0.2, 0.6, -3)
+interact_id = &"blackboard"
+prompt_text = "Read the blackboard"
+inspection_id = &"classroom_blackboard"
+radius = 1.5
+
+[node name="SetSquareInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(1.35, 0.6, -2.5)
+interact_id = &"set_square"
+prompt_text = "Look at the set square"
+inspection_id = &"classroom_set_square"
+radius = 0.8
+
+[node name="FrontDeskInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(2.4, 0.5, -2.5)
+interact_id = &"front_desk"
+prompt_text = "Look at the front desk"
+inspection_id = &"classroom_teacher_desk"
+radius = 1.3
+
+[node name="WindowInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(-3.9, 0.6, -0.2)
+interact_id = &"window"
+prompt_text = "Look out of the window"
+inspection_id = &"classroom_window"
+radius = 1.2
+
+[node name="OwnDeskInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(0, 0.4, 0.25)
+interact_id = &"own_desk"
+prompt_text = "Look at your desk"
+inspection_id = &"classroom_own_desk"
+radius = 0.9
+
+[node name="SchoolbagInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(0.62, 0.2, 1.02)
+interact_id = &"schoolbag"
+prompt_text = "Search the schoolbag"
+inspection_id = &"classroom_schoolbag"
+radius = 0.8
+
+[node name="TimetableInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(1.6, 0.6, 3.15)
+interact_id = &"timetable"
+prompt_text = "Read the timetable"
+inspection_id = &"classroom_timetable_sheet"
+radius = 0.9
+
+[node name="QTalk" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(-1.32, 0.8, 0.82)
+interact_id = &"q_talk"
+prompt_text = "Talk to Q"
+conversation_route = &"q"
+radius = 1.1
+
+[node name="ClassroomDoor" parent="Interactables" instance=ExtResource("18_location_exit")]
+position = Vector3(3.2, 0.6, 3.3)
+interact_id = &"classroom_door"
+prompt_text = "Try the door"
+radius = 1.15
+destination_scene = "res://scenes/locations/corridor/corridor.tscn"
+destination_spawn = &"FromClassroom"
+destination_id = &"corridor"
+required_flag = &"class_dismissed"
+blocked_inspection_id = &"classroom_door_blocked"
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="PlayerStart" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(0, 0, 0.85)
+
+[node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(3.2, 0, 2.85)
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("19_room_tone_classroom")
+volume_db = -14.0
+script = ExtResource("20_ambience_player")
+target_db = -20.0

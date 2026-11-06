@@ -1,0 +1,83 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="1_desk_wood"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="2_metal_dark"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="3_paper_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/door_blue.tres" id="4_door_blue"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(1.9, 0.8, 0.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(1.9, 0.06, 0.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(0.06, 0.75, 0.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(1.8, 0.5, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.26, 0.03, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(0.17, 0.07, 0.06)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7"]
+top_radius = 0.055
+bottom_radius = 0.05
+height = 0.12
+radial_segments = 16
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(0.02, 0.16, 0.02)
+
+[node name="TeacherDesk" type="Node3D"]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+position = Vector3(0, 0.4, 0)
+shape = SubResource("BoxShape3D_1")
+
+[node name="Top" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.78, 0)
+mesh = SubResource("BoxMesh_2")
+material_override = ExtResource("1_desk_wood")
+
+[node name="PanelLeft" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.9, 0.38, 0)
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("1_desk_wood")
+
+[node name="PanelRight" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.9, 0.38, 0)
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("1_desk_wood")
+
+[node name="BackPanel" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.55, 0.4)
+mesh = SubResource("BoxMesh_4")
+material_override = ExtResource("1_desk_wood")
+
+[node name="Register" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.55, 0.83, 0.05)
+rotation_degrees = Vector3(0, 8, 0)
+mesh = SubResource("BoxMesh_5")
+material_override = ExtResource("4_door_blue")
+
+[node name="Stapler" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.1, 0.84, 0.2)
+mesh = SubResource("BoxMesh_6")
+material_override = ExtResource("2_metal_dark")
+
+[node name="Mug" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.62, 0.87, 0.12)
+mesh = SubResource("CylinderMesh_7")
+material_override = ExtResource("3_paper_pale")
+
+[node name="ChalkInMug" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.6, 0.96, 0.1)
+rotation_degrees = Vector3(0, 0, 18)
+mesh = SubResource("BoxMesh_8")
+material_override = ExtResource("3_paper_pale")

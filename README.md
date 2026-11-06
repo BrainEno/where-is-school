@@ -6,7 +6,9 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, concise game-production documents, and a headless CI smoke test. The full game and vertical slice are not yet implemented.
+**First playable milestone: the biology-class prologue.** The project launches into the opening classroom, where the player can wake up, talk to Q, search the schoolbag, inspect the room, experience an expectation that is explicitly not a real event, sit through the substitute's lesson, and leave for the walkway. The street route and the green-animal observation are the next milestone and are not implemented.
+
+See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for controls, architecture, and known limitations.
 
 ## Technical baseline
 
@@ -16,12 +18,24 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 - **Target:** Windows PC first; keep the project portable for later Linux/Steam Deck evaluation.
 - **Dependencies:** no mandatory online services, paid APIs, analytics, or proprietary runtime dependencies.
 
+## Controls
+
+- **WASD / arrow keys** — walk (camera-relative).
+- **E** — interact with the highlighted object or person.
+- **Space / Enter / left click** — continue dialogue, or answer with the numbered choice.
+- **1–9** — pick a dialogue choice.
+- **Tab** — open or close the dialogue log.
+
 ## Repository map
 
 - AGENTS.md — authoritative coding-agent instructions.
-- project.godot, scenes/, scripts/ — Godot project and starter runtime.
+- project.godot, scenes/, scripts/ — Godot project and runtime.
+- data/ — dialogue, inspection text, and character presentation data (content, not code).
+- assets/ — placeholder materials and generated audio, tracked in docs/ASSET_PROVENANCE.md.
+- tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
+- tools/ — maintenance scripts (placeholder audio synthesis).
 
 ## Creative material
 

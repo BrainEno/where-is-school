@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="1_desk_wood"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="2_paper_pale"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_1"]
+size = Vector3(0.55, 0.038, 0.42)
+left_to_right = 0.45
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(0.09, 0.006, 0.05)
+
+[node name="SetSquare" type="Node3D"]
+
+[node name="Board" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.019, 0)
+rotation_degrees = Vector3(-90, 0, 0)
+mesh = SubResource("PrismMesh_1")
+material_override = ExtResource("1_desk_wood")
+
+[node name="TapeRepair" type="MeshInstance3D" parent="."]
+position = Vector3(-0.19, 0.039, 0.12)
+rotation_degrees = Vector3(0, 26, 0)
+mesh = SubResource("BoxMesh_2")
+material_override = ExtResource("2_paper_pale")

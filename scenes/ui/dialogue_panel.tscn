@@ -1,0 +1,93 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/dialogue_panel.gd" id="1_dialogue_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
+content_margin_left = 22.0
+content_margin_top = 16.0
+content_margin_right = 22.0
+content_margin_bottom = 16.0
+bg_color = Color(0.106, 0.118, 0.118, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.776, 0.733, 0.643, 0.45)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="DialoguePanel" type="Control"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 90.0
+offset_top = -320.0
+offset_right = -90.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_dialogue_panel")
+
+[node name="Frame" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
+
+[node name="Content" type="VBoxContainer" parent="Frame"]
+theme_override_constants/separation = 8
+
+[node name="HeaderRow" type="HBoxContainer" parent="Frame/Content"]
+theme_override_constants/separation = 10
+
+[node name="SpeakerLabel" type="Label" parent="Frame/Content/HeaderRow"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 24
+text = "Speaker"
+
+[node name="RoleLabel" type="Label" parent="Frame/Content/HeaderRow"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.6, 0.6, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "role"
+
+[node name="Spacer" type="Control" parent="Frame/Content/HeaderRow"]
+size_flags_horizontal = 3
+
+[node name="SourceBadge" type="Label" parent="Frame/Content/HeaderRow"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+text = "SEEN"
+
+[node name="TitleLabel" type="Label" parent="Frame/Content"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.72, 0.68, 0.6, 1)
+theme_override_font_sizes/font_size = 17
+text = "Title"
+
+[node name="BodyLabel" type="RichTextLabel" parent="Frame/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 116)
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = false
+scroll_active = false
+theme_override_constants/line_separation = 7
+theme_override_font_sizes/normal_font_size = 21
+text = "Body"
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="Frame/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="HintLabel" type="Label" parent="Frame/Content"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.55, 0.56, 0.54, 1)
+theme_override_font_sizes/font_size = 13
+text = "[Space] continue"
+horizontal_alignment = 2

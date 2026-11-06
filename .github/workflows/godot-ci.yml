@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   validate:
-    name: Import and smoke test
+    name: Import, smoke test, and gameplay tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -30,3 +30,16 @@ jobs:
 
       - name: Run scene smoke test
         run: godot --headless --path . --script res://tests/smoke_test.gd
+
+      - name: Run content, state, dialogue, and flow tests
+        run: |
+          set -euo pipefail
+          for test in \
+            res://tests/narrative_state_test.gd \
+            res://tests/dialogue_content_test.gd \
+            res://tests/dialogue_runtime_test.gd \
+            res://tests/opening_flow_test.gd
+          do
+            echo "== ${test}"
+            godot --headless --path . --script "${test}"
+          done

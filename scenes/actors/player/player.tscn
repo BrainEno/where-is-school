@@ -1,18 +1,25 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="1_controller"]
+[ext_resource type="Script" path="res://scripts/interaction/interaction_controller.gd" id="2_interaction"]
+[ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="3_occluder"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.35
 height = 1.8
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
-radius = 0.35
-height = 1.8
+radius = 0.32
+height = 1.7
+radial_segments = 12
+rings = 4
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
-albedo_color = Color(0.7, 0.68, 0.61, 1)
+albedo_color = Color(0.62, 0.6, 0.54, 1)
 roughness = 0.95
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_sensor"]
+radius = 2.2
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_controller")
@@ -21,12 +28,31 @@ script = ExtResource("1_controller")
 position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_player")
 
-[node name="Visual" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.9, 0)
+[node name="VisualPivot" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Visual" type="MeshInstance3D" parent="VisualPivot"]
+unique_name_in_owner = true
+position = Vector3(0, 0.85, 0)
 mesh = SubResource("CapsuleMesh_player")
 material_override = SubResource("StandardMaterial3D_player")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 unique_name_in_owner = true
+position = Vector3(3.4, 6.4, 3.4)
 current = true
-position = Vector3(7.5, 10, 7.5)
+fov = 58.0
+far = 120.0
+
+[node name="OcclusionFader" type="Node3D" parent="Camera3D"]
+script = ExtResource("3_occluder")
+
+[node name="InteractionSensor" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionSensor"]
+shape = SubResource("SphereShape3D_sensor")
+
+[node name="InteractionController" type="Node" parent="."]
+script = ExtResource("2_interaction")
