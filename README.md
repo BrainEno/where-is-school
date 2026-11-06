@@ -1,30 +1,28 @@
 # where-is-school
 
-> **A school that cannot remember you. A student who cannot leave.**
+> A surreal school exploration game about unstable memory and impossible geography.
 
-where-is-school is a painterly 2.5D surreal narrative RPG about memory, institutional repetition, adulthood, shame, and the impossible geography of school.
+where-is-school is a painterly 2.5D narrative exploration RPG. The protagonist wakes in a classroom as a student again, with no reliable explanation for how they got there. A routine lesson becomes a route through the school and into surrounding spaces, where familiar places and remembered events do not always agree.
 
-You play an adult who has somehow been sent back to school. The school has no stable address: classrooms migrate, staircases lead to contradictory places, and the exit may be several countries—or one wrong turn—away. You explore unstable everyday spaces, inspect objects, meet people who may or may not remember you, and navigate long, literary conversations alongside competing voices inside your own head.
-
-The project takes inspiration from expressive, text-rich narrative RPGs and dreamlike stories of spatial dislocation. It does not reproduce another game's characters, interface, writing, art, or assets. Its visual identity is grounded in ordinary lived-in architecture, damp concrete, faded institutional colors, and a persistent orange dusk.
+The game focuses on environmental observation, literary dialogue, ordinary objects, and spaces that gradually become difficult to navigate or classify. Its world is grounded in recognizable school and residential architecture, with subtle spatial impossibilities.
 
 ## Project status
 
-**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, architecture and production documents, agent instructions, and a headless CI smoke test. The full game and vertical slice are not yet implemented.
+**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, technical documentation, agent instructions, and a headless CI smoke test. The first playable narrative slice is in development.
 
 ## Design pillars
 
-1. **Unstable geography:** navigation is an expressive game mechanic; familiar places subtly refuse to stay put.
-2. **Literary conversations:** dialogue, interior voices, observation, and contradiction are the primary means of interaction.
-3. **Ordinary surrealism:** strange events emerge from recognizable schools, apartment blocks, stairwells, parking lots, and ports.
-4. **A coherent authored art direction:** painterly surfaces and expressive portraits, not a random collage of generated assets.
-5. **Player clarity inside an unclear world:** objectives, controls, saves, and interaction feedback remain understandable even when the fiction is not.
+1. **Unstable geography:** familiar routes and spaces can connect in unexpected ways.
+2. **Literary conversations:** ordinary speech, silence, and differing accounts shape the player's understanding.
+3. **Ordinary surrealism:** anomalies emerge from recognizable places and objects.
+4. **Observation without certainty:** seeing and naming something does not guarantee understanding.
+5. **Player clarity:** controls, immediate objectives, and interaction feedback remain legible.
 
 ## Technical baseline
 
 - **Engine:** Godot 4.7.2 Stable (standard build).
 - **Language:** GDScript; no .NET/C# runtime.
-- **Presentation:** 3D environments with a controlled 2.5D camera; hand-authored/painterly materials; illustrated 2D dialogue portraits.
+- **Presentation:** 3D environments with a controlled 2.5D camera.
 - **Target:** Windows PC first; keep the project portable for later Linux/Steam Deck evaluation.
 - **Narrative:** data-driven dialogue and story state. Evaluate Dialogic 2 in a bounded technical spike before adopting an addon or building a custom runtime.
 - **Dependencies:** no mandatory online services, paid APIs, analytics, or proprietary runtime dependencies.
@@ -51,19 +49,22 @@ The second command checks that the main scene can be instantiated and contains t
 - AGENTS.md — authoritative coding-agent instructions.
 - AGENT.md — compatibility pointer for tools that look for the singular filename.
 - project.godot, scenes/, scripts/ — the actual Godot project and starter runtime.
-- docs/PRODUCT_BRIEF.md — product concept, player experience, and scope.
+- docs/PRODUCT_BRIEF.md — product concept and scope.
 - docs/ARCHITECTURE.md — code boundaries, runtime ownership, and data flow.
 - docs/TECHNICAL_ROADMAP.md — engine, tools, and implementation phases.
-- docs/NARRATIVE_BIBLE.md — world rules, themes, scene sequence, and opening.
-- docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md — text-only art direction; no generated concept images are part of the project foundation.
+- docs/NARRATIVE_BIBLE.md — game-facing scene, character, and world constraints.
+- docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md — text-only art direction.
 - docs/PROTOTYPE_BRIEF.md — bounded, testable first vertical slice.
-- docs/AGENT_EVALUATION.md — fair protocol for comparing competing coding agents.
+- docs/AGENT_EVALUATION.md — fair protocol for comparing coding agents.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
-- docs/adr/ — records of important technical decisions.
 
 ## Agent workflow
 
 Read AGENTS.md and the relevant design documents before changing code. Work on isolated branches and focused PRs. Do not have multiple agents edit the same project settings, autoload, or scene files concurrently. Every implementation claim must be backed by a command, test, or reproducible manual check.
+
+## Creative material and confidentiality
+
+The repository contains game-production notes, not the author's unpublished literary manuscripts. Do not add private drafts, complete prose passages, extended literary descriptions, unused manuscript fragments, or unpublished story endings. Keep only concise game-facing scene requirements, interaction notes, and dialogue samples specifically approved for implementation. Do not infer permission to reproduce manuscript text from access to a game brief.
 
 ## License and asset provenance
 
