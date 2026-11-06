@@ -136,12 +136,13 @@ func _run() -> void:
 	var broken: Resource = conversation_script.new()
 	broken.id = &"broken_test"
 	broken.start_id = &"missing_entry"
-	var broken_entry: Resource = entry_script.new()
+	var broken_entry: DialogueEntry = entry_script.new()
 	broken_entry.id = &"orphan"
 	broken_entry.speaker_id = &"narrator"
 	broken_entry.text = "This is a broken test fixture."
 	broken_entry.next_id = &"nowhere"
-	broken.entries = [broken_entry]
+	var broken_entries: Array[DialogueEntry] = [broken_entry]
+	broken.entries = broken_entries
 	var state_x: Node = game_state_script.new()
 	var runner_x: RefCounted = runner_script.new(state_x)
 	if runner_x.start(broken):

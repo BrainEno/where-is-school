@@ -22,7 +22,7 @@ func _run() -> void:
 		return
 
 	var seen: Dictionary = {}
-	var file_names: Array[String] = dialogue_dir.get_files()
+	var file_names: PackedStringArray = dialogue_dir.get_files()
 	file_names.sort()
 	for file_name in file_names:
 		if not file_name.ends_with(".tres"):
