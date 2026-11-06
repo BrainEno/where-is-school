@@ -1,0 +1,727 @@
+[gd_scene load_steps=68 format=3]
+
+[ext_resource type="Script" path="res://scripts/locations/classroom.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="interactable"]
+[ext_resource type="PackedScene" path="res://scenes/environment/student_desk.tscn" id="desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/student_chair.tscn" id="chair"]
+[ext_resource type="PackedScene" path="res://scenes/actors/classmate.tscn" id="classmate"]
+[ext_resource type="PackedScene" path="res://scenes/actors/substitute.tscn" id="substitute"]
+
+[sub_resource type="StandardMaterial3D" id="Plaster"]
+albedo_color = Color(0.70, 0.69, 0.62, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Wainscot"]
+albedo_color = Color(0.42, 0.47, 0.41, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Floor"]
+albedo_color = Color(0.49, 0.43, 0.34, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Seam"]
+albedo_color = Color(0.38, 0.34, 0.28, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.17, 0.22, 0.20, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Frame"]
+albedo_color = Color(0.37, 0.31, 0.25, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Chalk"]
+albedo_color = Color(0.78, 0.78, 0.68, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Door"]
+albedo_color = Color(0.33, 0.40, 0.40, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Glass"]
+albedo_color = Color(0.55, 0.62, 0.60, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Metal"]
+albedo_color = Color(0.28, 0.32, 0.30, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Bag"]
+albedo_color = Color(0.30, 0.31, 0.28, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Paper"]
+albedo_color = Color(0.78, 0.73, 0.62, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Book"]
+albedo_color = Color(0.37, 0.40, 0.35, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Square"]
+albedo_color = Color(0.61, 0.43, 0.27, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(12.4, 0.04, 10.4)
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(0.012, 0.006, 10.3)
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(9.7, 3.6, 0.18)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(9.7, 3.6, 0.18)
+
+[sub_resource type="BoxMesh" id="Box_4"]
+size = Vector3(0.7, 3.6, 0.18)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.7, 3.6, 0.18)
+
+[sub_resource type="BoxMesh" id="Box_5"]
+size = Vector3(2.2, 0.84, 0.18)
+
+[sub_resource type="BoxShape3D" id="Shape_3"]
+size = Vector3(2.2, 0.84, 0.18)
+
+[sub_resource type="BoxMesh" id="Box_6"]
+size = Vector3(0.18, 3.6, 10.5)
+
+[sub_resource type="BoxShape3D" id="Shape_4"]
+size = Vector3(0.18, 3.6, 10.5)
+
+[sub_resource type="BoxMesh" id="Box_7"]
+size = Vector3(9.65, 1.14, 0.04)
+
+[sub_resource type="BoxMesh" id="Box_8"]
+size = Vector3(0.04, 1.14, 10.4)
+
+[sub_resource type="BoxShape3D" id="Shape_5"]
+size = Vector3(0.2, 3.6, 10.5)
+
+[sub_resource type="BoxShape3D" id="Shape_6"]
+size = Vector3(12.5, 3.6, 0.2)
+
+[sub_resource type="BoxMesh" id="Box_9"]
+size = Vector3(0.16, 0.38, 10.4)
+
+[sub_resource type="BoxMesh" id="Box_10"]
+size = Vector3(12.4, 0.38, 0.16)
+
+[sub_resource type="BoxMesh" id="Box_11"]
+size = Vector3(0.12, 1.72, 2.45)
+
+[sub_resource type="BoxMesh" id="Box_12"]
+size = Vector3(0.045, 1.5, 2.22)
+
+[sub_resource type="BoxMesh" id="Box_13"]
+size = Vector3(0.05, 1.54, 0.075)
+
+[sub_resource type="BoxMesh" id="Box_14"]
+size = Vector3(0.3, 0.1, 2.55)
+
+[sub_resource type="BoxMesh" id="Box_15"]
+size = Vector3(0.05, 0.14, 0.05)
+
+[sub_resource type="BoxMesh" id="Box_16"]
+size = Vector3(5.85, 1.75, 0.08)
+
+[sub_resource type="BoxMesh" id="Box_17"]
+size = Vector3(5.58, 1.48, 0.06)
+
+[sub_resource type="BoxMesh" id="Box_18"]
+size = Vector3(5.7, 0.08, 0.22)
+
+[sub_resource type="BoxMesh" id="Box_19"]
+size = Vector3(0.23, 0.035, 0.035)
+
+[sub_resource type="BoxMesh" id="Box_20"]
+size = Vector3(2.6, 0.012, 0.01)
+
+[sub_resource type="BoxMesh" id="Box_21"]
+size = Vector3(0.6, 0.04, 0.46)
+
+[sub_resource type="BoxMesh" id="Box_22"]
+size = Vector3(0.48, 0.012, 0.36)
+
+[sub_resource type="BoxMesh" id="Box_23"]
+size = Vector3(0.5, 0.06, 0.36)
+
+[sub_resource type="BoxMesh" id="Box_24"]
+size = Vector3(0.43, 0.015, 0.31)
+
+[sub_resource type="BoxMesh" id="Box_25"]
+size = Vector3(0.15, 2.64, 0.22)
+
+[sub_resource type="BoxMesh" id="Box_26"]
+size = Vector3(2, 0.15, 0.22)
+
+[sub_resource type="BoxMesh" id="Box_27"]
+size = Vector3(1.66, 2.5, 0.1)
+
+[sub_resource type="BoxMesh" id="Box_28"]
+size = Vector3(0.95, 0.78, 0.025)
+
+[sub_resource type="BoxMesh" id="Box_29"]
+size = Vector3(0.08, 0.16, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_7"]
+size = Vector3(1.75, 2.5, 0.16)
+
+[sub_resource type="BoxShape3D" id="Shape_8"]
+size = Vector3(1.72, 2.0, 0.7)
+
+[sub_resource type="BoxMesh" id="Box_30"]
+size = Vector3(0.56, 0.46, 0.28)
+
+[sub_resource type="BoxMesh" id="Box_31"]
+size = Vector3(0.52, 0.2, 0.035)
+
+[sub_resource type="BoxMesh" id="Box_32"]
+size = Vector3(0.28, 0.045, 0.08)
+
+[sub_resource type="BoxMesh" id="Box_33"]
+size = Vector3(0.82, 0.035, 0.07)
+
+[sub_resource type="BoxMesh" id="Box_34"]
+size = Vector3(0.07, 0.035, 0.57)
+
+[sub_resource type="BoxMesh" id="Box_35"]
+size = Vector3(0.88, 0.035, 0.07)
+
+[sub_resource type="BoxMesh" id="Box_36"]
+size = Vector3(0.7, 0.7, 0.07)
+
+[sub_resource type="BoxMesh" id="Box_37"]
+size = Vector3(0.58, 0.58, 0.025)
+
+[sub_resource type="BoxMesh" id="Box_38"]
+size = Vector3(0.025, 0.18, 0.015)
+
+[sub_resource type="BoxMesh" id="Box_39"]
+size = Vector3(0.16, 0.025, 0.015)
+
+[node name="Classroom" type="Node3D"]
+script = ExtResource("location")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.022, 0)
+mesh = SubResource("Box_1")
+material_override = SubResource("Floor")
+
+[node name="FloorSeam00" type="MeshInstance3D" parent="."]
+position = Vector3(-5.6, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam01" type="MeshInstance3D" parent="."]
+position = Vector3(-4.8, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam02" type="MeshInstance3D" parent="."]
+position = Vector3(-4, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam03" type="MeshInstance3D" parent="."]
+position = Vector3(-3.2, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam04" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam05" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam06" type="MeshInstance3D" parent="."]
+position = Vector3(-0.8, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam07" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam08" type="MeshInstance3D" parent="."]
+position = Vector3(0.8, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam09" type="MeshInstance3D" parent="."]
+position = Vector3(1.6, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam10" type="MeshInstance3D" parent="."]
+position = Vector3(2.4, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam11" type="MeshInstance3D" parent="."]
+position = Vector3(3.2, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam12" type="MeshInstance3D" parent="."]
+position = Vector3(4, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam13" type="MeshInstance3D" parent="."]
+position = Vector3(4.8, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="FloorSeam14" type="MeshInstance3D" parent="."]
+position = Vector3(5.6, 0.001, 0)
+mesh = SubResource("Box_2")
+material_override = SubResource("Seam")
+
+[node name="BackWallLeft" type="StaticBody3D" parent="."]
+position = Vector3(-1.35, 1.8, -5.25)
+
+[node name="Mesh" type="MeshInstance3D" parent="BackWallLeft"]
+mesh = SubResource("Box_3")
+material_override = SubResource("Plaster")
+
+[node name="Collision" type="CollisionShape3D" parent="BackWallLeft"]
+shape = SubResource("Shape_1")
+
+[node name="BackWallRight" type="StaticBody3D" parent="."]
+position = Vector3(5.85, 1.8, -5.25)
+
+[node name="Mesh" type="MeshInstance3D" parent="BackWallRight"]
+mesh = SubResource("Box_4")
+material_override = SubResource("Plaster")
+
+[node name="Collision" type="CollisionShape3D" parent="BackWallRight"]
+shape = SubResource("Shape_2")
+
+[node name="AboveDoor" type="StaticBody3D" parent="."]
+position = Vector3(4.4, 3.18, -5.25)
+
+[node name="Mesh" type="MeshInstance3D" parent="AboveDoor"]
+mesh = SubResource("Box_5")
+material_override = SubResource("Plaster")
+
+[node name="Collision" type="CollisionShape3D" parent="AboveDoor"]
+shape = SubResource("Shape_3")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-6.25, 1.8, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="LeftWall"]
+mesh = SubResource("Box_6")
+material_override = SubResource("Plaster")
+
+[node name="Collision" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_4")
+
+[node name="BackWainscot" type="MeshInstance3D" parent="."]
+position = Vector3(-1.35, 0.57, -5.12)
+mesh = SubResource("Box_7")
+material_override = SubResource("Wainscot")
+
+[node name="LeftWainscot" type="MeshInstance3D" parent="."]
+position = Vector3(-6.12, 0.57, 0)
+mesh = SubResource("Box_8")
+material_override = SubResource("Wainscot")
+
+[node name="RightBoundary" type="StaticBody3D" parent="."]
+position = Vector3(6.25, 1.8, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="RightBoundary"]
+shape = SubResource("Shape_5")
+
+[node name="NearBoundary" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.8, 5.25)
+
+[node name="Collision" type="CollisionShape3D" parent="NearBoundary"]
+shape = SubResource("Shape_6")
+
+[node name="RightCutaway" type="MeshInstance3D" parent="."]
+position = Vector3(6.15, 0.19, 0)
+mesh = SubResource("Box_9")
+material_override = SubResource("Wainscot")
+
+[node name="NearCutaway" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.19, 5.15)
+mesh = SubResource("Box_10")
+material_override = SubResource("Wainscot")
+
+[node name="WindowFrame0" type="MeshInstance3D" parent="."]
+position = Vector3(-6.04, 2.23, -2.75)
+mesh = SubResource("Box_11")
+material_override = SubResource("Frame")
+
+[node name="WindowGlass0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.96, 2.23, -2.75)
+mesh = SubResource("Box_12")
+material_override = SubResource("Glass")
+
+[node name="WindowBar0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.92, 2.23, -2.75)
+mesh = SubResource("Box_13")
+material_override = SubResource("Frame")
+
+[node name="WindowSill0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.89, 1.41, -2.75)
+mesh = SubResource("Box_14")
+material_override = SubResource("Chalk")
+
+[node name="WindowLatch0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.87, 2.08, -2.58)
+mesh = SubResource("Box_15")
+material_override = SubResource("Metal")
+
+[node name="WindowFrame1" type="MeshInstance3D" parent="."]
+position = Vector3(-6.04, 2.23, 0.25)
+mesh = SubResource("Box_11")
+material_override = SubResource("Frame")
+
+[node name="WindowGlass1" type="MeshInstance3D" parent="."]
+position = Vector3(-5.96, 2.23, 0.25)
+mesh = SubResource("Box_12")
+material_override = SubResource("Glass")
+
+[node name="WindowBar1" type="MeshInstance3D" parent="."]
+position = Vector3(-5.92, 2.23, 0.25)
+mesh = SubResource("Box_13")
+material_override = SubResource("Frame")
+
+[node name="WindowSill1" type="MeshInstance3D" parent="."]
+position = Vector3(-5.89, 1.41, 0.25)
+mesh = SubResource("Box_14")
+material_override = SubResource("Chalk")
+
+[node name="WindowLatch1" type="MeshInstance3D" parent="."]
+position = Vector3(-5.87, 2.08, 0.42000000000000004)
+mesh = SubResource("Box_15")
+material_override = SubResource("Metal")
+
+[node name="WindowFrame2" type="MeshInstance3D" parent="."]
+position = Vector3(-6.04, 2.23, 3.25)
+mesh = SubResource("Box_11")
+material_override = SubResource("Frame")
+
+[node name="WindowGlass2" type="MeshInstance3D" parent="."]
+position = Vector3(-5.96, 2.23, 3.25)
+mesh = SubResource("Box_12")
+material_override = SubResource("Glass")
+
+[node name="WindowBar2" type="MeshInstance3D" parent="."]
+position = Vector3(-5.92, 2.23, 3.25)
+mesh = SubResource("Box_13")
+material_override = SubResource("Frame")
+
+[node name="WindowSill2" type="MeshInstance3D" parent="."]
+position = Vector3(-5.89, 1.41, 3.25)
+mesh = SubResource("Box_14")
+material_override = SubResource("Chalk")
+
+[node name="WindowLatch2" type="MeshInstance3D" parent="."]
+position = Vector3(-5.87, 2.08, 3.42)
+mesh = SubResource("Box_15")
+material_override = SubResource("Metal")
+
+[node name="BlackboardFrame" type="MeshInstance3D" parent="."]
+position = Vector3(-1.45, 2.16, -5.08)
+mesh = SubResource("Box_16")
+material_override = SubResource("Frame")
+
+[node name="Blackboard" type="MeshInstance3D" parent="."]
+position = Vector3(-1.45, 2.16, -5.01)
+mesh = SubResource("Box_17")
+material_override = SubResource("Dark")
+
+[node name="ChalkTray" type="MeshInstance3D" parent="."]
+position = Vector3(-1.45, 1.39, -4.91)
+mesh = SubResource("Box_18")
+material_override = SubResource("Frame")
+
+[node name="ChalkPiece" type="MeshInstance3D" parent="."]
+position = Vector3(-2.65, 1.46, -4.9)
+mesh = SubResource("Box_19")
+material_override = SubResource("Chalk")
+
+[node name="BoardHeading" type="Label3D" parent="."]
+position = Vector3(-2.97, 2.52, -4.96)
+text = "BIOLOGY"
+pixel_size = 0.005
+font_size = 44
+outline_size = 2
+modulate = Color(0.73, 0.78, 0.71, 1)
+
+[node name="BoardLine" type="MeshInstance3D" parent="."]
+position = Vector3(-1.9, 2.17, -4.96)
+mesh = SubResource("Box_20")
+material_override = SubResource("Chalk")
+
+[node name="TeacherDesk" parent="." instance=ExtResource("desk")]
+position = Vector3(-1.05, 0, -3.70)
+scale = Vector3(1.55, 1, 1.15)
+
+[node name="Register" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 0.91, -3.69)
+mesh = SubResource("Box_21")
+material_override = SubResource("Book")
+
+[node name="RegisterPaper" type="MeshInstance3D" parent="."]
+position = Vector3(-1.47, 0.935, -3.69)
+mesh = SubResource("Box_22")
+material_override = SubResource("Paper")
+
+[node name="FrontLabel" type="Label3D" parent="."]
+position = Vector3(0.65, 1.2, -5.0)
+text = "TEACHER"
+pixel_size = 0.0032
+font_size = 30
+outline_size = 2
+modulate = Color(0.66, 0.69, 0.62, 1)
+
+[node name="Desk00" parent="." instance=ExtResource("desk")]
+position = Vector3(-3.3, 0, -0.5)
+
+[node name="Chair00" parent="." instance=ExtResource("chair")]
+position = Vector3(-3.3, 0, 0.37)
+
+[node name="Book00" type="MeshInstance3D" parent="."]
+position = Vector3(-3.4699999999999998, 0.91, -0.5)
+mesh = SubResource("Box_23")
+material_override = SubResource("Book")
+
+[node name="Paper00" type="MeshInstance3D" parent="."]
+position = Vector3(-3.46, 0.95, -0.5)
+mesh = SubResource("Box_24")
+material_override = SubResource("Paper")
+
+[node name="Desk01" parent="." instance=ExtResource("desk")]
+position = Vector3(0, 0, -0.5)
+
+[node name="Chair01" parent="." instance=ExtResource("chair")]
+position = Vector3(0, 0, 0.37)
+
+[node name="Desk02" parent="." instance=ExtResource("desk")]
+position = Vector3(3.3, 0, -0.5)
+
+[node name="Chair02" parent="." instance=ExtResource("chair")]
+position = Vector3(3.3, 0, 0.37)
+
+[node name="Book02" type="MeshInstance3D" parent="."]
+position = Vector3(3.13, 0.91, -0.5)
+mesh = SubResource("Box_23")
+material_override = SubResource("Book")
+
+[node name="Paper02" type="MeshInstance3D" parent="."]
+position = Vector3(3.1399999999999997, 0.95, -0.5)
+mesh = SubResource("Box_24")
+material_override = SubResource("Paper")
+
+[node name="Desk10" parent="." instance=ExtResource("desk")]
+position = Vector3(-3.3, 0, 2.2)
+
+[node name="Chair10" parent="." instance=ExtResource("chair")]
+position = Vector3(-3.3, 0, 3.0700000000000003)
+
+[node name="Book10" type="MeshInstance3D" parent="."]
+position = Vector3(-3.4699999999999998, 0.91, 2.2)
+mesh = SubResource("Box_23")
+material_override = SubResource("Book")
+
+[node name="Paper10" type="MeshInstance3D" parent="."]
+position = Vector3(-3.46, 0.95, 2.2)
+mesh = SubResource("Box_24")
+material_override = SubResource("Paper")
+
+[node name="Desk11" parent="." instance=ExtResource("desk")]
+position = Vector3(0, 0, 2.2)
+
+[node name="Chair11" parent="." instance=ExtResource("chair")]
+position = Vector3(0, 0, 3.0700000000000003)
+
+[node name="Desk12" parent="." instance=ExtResource("desk")]
+position = Vector3(3.3, 0, 2.2)
+
+[node name="Chair12" parent="." instance=ExtResource("chair")]
+position = Vector3(3.3, 0, 3.0700000000000003)
+
+[node name="Q" parent="." instance=ExtResource("classmate")]
+position = Vector3(-3.3, 0, 3.07)
+
+[node name="StudentA" parent="." instance=ExtResource("classmate")]
+position = Vector3(-3.3, 0, 0.37)
+scale = Vector3(0.82, 0.96, 0.88)
+
+[node name="StudentB" parent="." instance=ExtResource("classmate")]
+position = Vector3(3.3, 0, 0.37)
+scale = Vector3(0.86, 1.0, 0.9)
+
+[node name="DoorPostL" type="MeshInstance3D" parent="."]
+position = Vector3(3.48, 1.32, -5.05)
+mesh = SubResource("Box_25")
+material_override = SubResource("Frame")
+
+[node name="DoorPostR" type="MeshInstance3D" parent="."]
+position = Vector3(5.32, 1.32, -5.05)
+mesh = SubResource("Box_25")
+material_override = SubResource("Frame")
+
+[node name="DoorLintel" type="MeshInstance3D" parent="."]
+position = Vector3(4.4, 2.61, -5.05)
+mesh = SubResource("Box_26")
+material_override = SubResource("Frame")
+
+[node name="DoorLeaf" type="Node3D" parent="."]
+position = Vector3(3.56, 0, -5.05)
+
+[node name="DoorPanel" type="MeshInstance3D" parent="DoorLeaf"]
+position = Vector3(0.83, 1.27, 0)
+mesh = SubResource("Box_27")
+material_override = SubResource("Door")
+
+[node name="DoorWindow" type="MeshInstance3D" parent="DoorLeaf"]
+position = Vector3(0.83, 1.8, 0.062)
+mesh = SubResource("Box_28")
+material_override = SubResource("Glass")
+
+[node name="DoorHandle" type="MeshInstance3D" parent="DoorLeaf"]
+position = Vector3(1.46, 1.0, 0.09)
+mesh = SubResource("Box_29")
+material_override = SubResource("Metal")
+
+[node name="ExitBarrier" type="StaticBody3D" parent="."]
+position = Vector3(4.4, 1.25, -5.1)
+
+[node name="Collision" type="CollisionShape3D" parent="ExitBarrier"]
+shape = SubResource("Shape_7")
+
+[node name="ExitTrigger" type="Area3D" parent="."]
+position = Vector3(4.4, 1.0, -5.3)
+collision_layer = 0
+collision_mask = 1
+monitoring = false
+
+[node name="Collision" type="CollisionShape3D" parent="ExitTrigger"]
+shape = SubResource("Shape_8")
+
+[node name="Schoolbag" type="Node3D" parent="."]
+position = Vector3(1.0, 0, 3.04)
+script = ExtResource("interactable")
+interaction_id = &"schoolbag"
+prompt = "SEARCH SCHOOLBAG"
+interaction_radius = 1.5
+
+[node name="Body" type="MeshInstance3D" parent="Schoolbag"]
+position = Vector3(0, 0.24, 0)
+mesh = SubResource("Box_30")
+material_override = SubResource("Bag")
+
+[node name="Flap" type="MeshInstance3D" parent="Schoolbag"]
+position = Vector3(0, 0.34, 0.155)
+mesh = SubResource("Box_31")
+material_override = SubResource("Frame")
+
+[node name="Handle" type="MeshInstance3D" parent="Schoolbag"]
+position = Vector3(0, 0.5, 0)
+mesh = SubResource("Box_32")
+material_override = SubResource("Metal")
+
+[node name="SquareTarget" type="Node3D" parent="."]
+position = Vector3(-1.05, 0, -2.95)
+script = ExtResource("interactable")
+interaction_id = &"set_square"
+prompt = "INSPECT SET SQUARE"
+interaction_radius = 1.45
+
+[node name="SquareLong" type="MeshInstance3D" parent="SquareTarget"]
+position = Vector3(-0.15, 0.95, -0.7)
+mesh = SubResource("Box_33")
+material_override = SubResource("Square")
+
+[node name="SquareShort" type="MeshInstance3D" parent="SquareTarget"]
+position = Vector3(-0.52, 0.95, -0.42)
+mesh = SubResource("Box_34")
+material_override = SubResource("Square")
+
+[node name="SquareDiagonal" type="MeshInstance3D" parent="SquareTarget"]
+position = Vector3(-0.15, 0.96, -0.4)
+mesh = SubResource("Box_35")
+material_override = SubResource("Square")
+rotation_degrees = Vector3(0, 39, 0)
+
+[node name="BoardTarget" type="Node3D" parent="."]
+position = Vector3(-3.25, 0, -4.35)
+script = ExtResource("interactable")
+interaction_id = &"board"
+prompt = "READ BLACKBOARD"
+interaction_radius = 1.55
+
+[node name="WindowTarget" type="Node3D" parent="."]
+position = Vector3(-5.85, 0, 0.2)
+script = ExtResource("interactable")
+interaction_id = &"window"
+prompt = "LOOK AT WINDOW"
+interaction_radius = 1.55
+
+[node name="ClockTarget" type="Node3D" parent="."]
+position = Vector3(2.05, 0, -4.55)
+script = ExtResource("interactable")
+interaction_id = &"clock"
+prompt = "CHECK THE CLOCK"
+interaction_radius = 1.45
+
+[node name="ClockFrame" type="MeshInstance3D" parent="."]
+position = Vector3(2.05, 2.7, -5.0)
+mesh = SubResource("Box_36")
+material_override = SubResource("Frame")
+
+[node name="ClockFace" type="MeshInstance3D" parent="."]
+position = Vector3(2.05, 2.7, -4.95)
+mesh = SubResource("Box_37")
+material_override = SubResource("Paper")
+
+[node name="ClockHand1" type="MeshInstance3D" parent="."]
+position = Vector3(2.05, 2.79, -4.92)
+mesh = SubResource("Box_38")
+material_override = SubResource("Dark")
+
+[node name="ClockHand2" type="MeshInstance3D" parent="."]
+position = Vector3(2.13, 2.7, -4.92)
+mesh = SubResource("Box_39")
+material_override = SubResource("Dark")
+
+[node name="QTarget" type="Node3D" parent="."]
+position = Vector3(-3.3, 0, 3.07)
+script = ExtResource("interactable")
+interaction_id = &"q"
+prompt = "TALK TO Q"
+interaction_radius = 1.55
+
+[node name="NTarget" type="Node3D" parent="."]
+position = Vector3(1.25, 0, -3.6)
+script = ExtResource("interactable")
+interaction_id = &"n"
+prompt = "TALK TO N"
+interaction_radius = 1.5
+available = false
+
+[node name="ExitTarget" type="Node3D" parent="."]
+position = Vector3(4.4, 0, -4.30)
+script = ExtResource("interactable")
+interaction_id = &"classroom_exit"
+prompt = "CHECK CLASSROOM DOOR"
+interaction_radius = 1.45
+
+[node name="N" parent="." instance=ExtResource("substitute")]
+position = Vector3(4.4, 0, -5.8)
+visible = false

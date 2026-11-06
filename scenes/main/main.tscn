@@ -1,10 +1,21 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/locations/classroom.tscn" id="3_classroom"]
+[ext_resource type="PackedScene" path="res://scenes/ui/prologue_hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_runner.gd" id="5_dialogue"]
+[ext_resource type="Script" path="res://scripts/interaction/interaction_controller.gd" id="6_interaction"]
+[ext_resource type="AudioStream" path="res://assets/audio/classroom_roomtone.wav" id="7_roomtone"]
+[ext_resource type="AudioStream" path="res://assets/audio/lesson_bell.wav" id="8_bell"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
-background_color = Color(0.14, 0.16, 0.17, 1)
+background_color = Color(0.22, 0.25, 0.23, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.78, 0.79, 0.72, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(30, 0.2, 30)
@@ -12,18 +23,16 @@ size = Vector3(30, 0.2, 30)
 [sub_resource type="BoxMesh" id="BoxMesh_ground"]
 size = Vector3(30, 0.2, 30)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.34, 0.35, 0.33, 1)
-roughness = 1.0
-
 [node name="Main" type="Node3D"]
+script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_main")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -32, 0)
-light_energy = 1.1
+rotation_degrees = Vector3(-54, -30, 0)
+light_color = Color(1, 0.96, 0.90, 1)
+light_energy = 0.65
 shadow_enabled = true
 
 [node name="Ground" type="StaticBody3D" parent="."]
@@ -32,8 +41,26 @@ position = Vector3(0, -0.1, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
 shape = SubResource("BoxShape3D_ground")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("BoxMesh_ground")
-material_override = SubResource("StandardMaterial3D_ground")
+[node name="LocationRoot" type="Node3D" parent="."]
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
+[node name="Classroom" parent="LocationRoot" instance=ExtResource("3_classroom")]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0, 3.12)
+
+[node name="DialogueRunner" type="Node" parent="."]
+script = ExtResource("5_dialogue")
+
+[node name="InteractionController" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("6_interaction")
+player = NodePath("../Player")
+
+[node name="PrologueHUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="RoomTone" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7_roomtone")
+volume_db = -10.0
+
+[node name="Bell" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8_bell")
+volume_db = -8.0

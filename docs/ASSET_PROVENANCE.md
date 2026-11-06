@@ -1,10 +1,15 @@
 # Asset Provenance Ledger
 
-No production assets are approved by this foundation commit. Populate this ledger before adding third-party, generated, marketplace, or externally sourced assets.
+The assets below are **prototype placeholders**, not approved production art or audio. The project's original materials are reserved under [COPYRIGHT.md](../COPYRIGHT.md); that file does not grant a separate open-source license. The owner must review and approve assets and commercial-use rights before production use.
 
 | Asset/path | Type | Creator/source | Source URL | License / terms | Attribution required | Modifications | Commercial-use checked | Approved by |
 |---|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — | — |
+| `scenes/actors/{player/player,classmate,substitute}.tscn`, `scenes/environment/*.tscn`, `scenes/locations/*.tscn` | Graybox actors, furniture, and environments | Created for this prototype with Godot primitive meshes, shapes, colors, and labels; no third-party models or textures | None | Original project materials; see `COPYRIGHT.md` | No third-party attribution identified | Initial implementation and collision/lighting tuning | No third-party source used; owner review pending | Pending owner approval |
+| `assets/audio/classroom_roomtone.wav` | 4 s mono, 22.05 kHz placeholder ambience | Numerically synthesized in Python for this prototype; no sampled recording | None | Original project material; see `COPYRIGHT.md` | No third-party attribution identified | Synthesized and imported with Godot WAV settings | No third-party source used; owner review pending | Pending owner approval |
+| `assets/audio/lesson_bell.wav` | 1.5 s mono, 22.05 kHz placeholder bell | Numerically synthesized in Python for this prototype; no sampled recording | None | Original project material; see `COPYRIGHT.md` | No third-party attribution identified | Synthesized and imported with Godot WAV settings | No third-party source used; owner review pending | Pending owner approval |
+| `docs/screenshots/*.png` | Verification captures | Captured from the running prototype with the Godot 4.7.2 Compatibility renderer and software graphics | None | Project captures; see `COPYRIGHT.md` | No third-party attribution identified | Cropped to the game window by the capture script; no compositing | Owner review pending | Pending owner approval |
+
+Godot's default theme font and available system fallbacks are used at runtime; no external font file is bundled, so Chinese glyph coverage depends on the machine. The WAV import sidecars are committed, while generated `.godot/` caches are not. The placeholder text in `data/dialogue/biology_class.json` was independently written for implementation, not copied from unpublished manuscripts, and also requires owner review before production.
 
 ## Rules
 

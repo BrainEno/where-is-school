@@ -1,0 +1,464 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/prologue_hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+bg_color = Color(0.105, 0.14, 0.13, 0.96)
+border_width_top = 2
+border_color = Color(0.70, 0.59, 0.41, 1)
+content_margin_left = 25.0
+content_margin_top = 20.0
+content_margin_right = 25.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="Header"]
+bg_color = Color(0.105, 0.14, 0.13, 0.90)
+border_width_left = 3
+border_color = Color(0.70, 0.59, 0.41, 1)
+content_margin_left = 18.0
+content_margin_top = 13.0
+content_margin_right = 24.0
+content_margin_bottom = 15.0
+
+[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
+bg_color = Color(0.20, 0.25, 0.23, 1)
+border_width_bottom = 1
+border_color = Color(0.44, 0.48, 0.42, 1)
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+bg_color = Color(0.34, 0.38, 0.33, 1)
+border_width_bottom = 2
+border_color = Color(0.83, 0.70, 0.48, 1)
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="Portrait"]
+bg_color = Color(0.25, 0.30, 0.27, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.44, 0.48, 0.40, 1)
+
+[node name="PrologueHUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SubjectiveWash" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.58, 0.45, 0.26, 0.13)
+
+[node name="Header" type="PanelContainer" parent="Root"]
+layout_mode = 0
+offset_left = 38.0
+offset_top = 32.0
+offset_right = 430.0
+offset_bottom = 152.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Header")
+
+[node name="Column" type="VBoxContainer" parent="Root/Header"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Kicker" type="Label" parent="Root/Header/Column"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.67, 0.56, 1)
+theme_override_font_sizes/font_size = 14
+text = "WHERE IS SCHOOL     /     01"
+
+[node name="Location" type="Label" parent="Root/Header/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.92, 0.83, 1)
+theme_override_font_sizes/font_size = 25
+text = "BIOLOGY CLASS"
+
+[node name="Objective" type="Label" parent="Root/Header/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.80, 0.81, 0.72, 1)
+theme_override_font_sizes/font_size = 19
+text = "Take a moment."
+autowrap_mode = 2
+
+[node name="HistoryButton" type="Button" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -205.0
+offset_top = 32.0
+offset_right = -38.0
+offset_bottom = 75.0
+grow_horizontal = 0
+focus_mode = 0
+theme_override_colors/font_color = Color(0.90, 0.89, 0.81, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/pressed = SubResource("ButtonHover")
+text = "H    HISTORY"
+
+[node name="Controls" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 42.0
+offset_top = -42.0
+offset_right = 1300.0
+offset_bottom = -15.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.89, 0.88, 0.79, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.10, 0.09, 0.9)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16
+text = "WASD / ARROWS  MOVE     ·     E  INTERACT     ·     H  HISTORY"
+
+[node name="Prompt" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -190.0
+offset_top = -135.0
+offset_right = 190.0
+offset_bottom = -78.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Header")
+
+[node name="PromptText" type="Label" parent="Root/Prompt"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.91, 0.80, 1)
+theme_override_font_sizes/font_size = 18
+text = "E    SEARCH SCHOOLBAG"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Dialogue" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 65.0
+offset_top = -350.0
+offset_right = -65.0
+offset_bottom = -34.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 0
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Layout" type="HBoxContainer" parent="Root/Dialogue"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Portrait" type="PanelContainer" parent="Root/Dialogue/Layout"]
+custom_minimum_size = Vector2(110, 110)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_styles/panel = SubResource("Portrait")
+
+[node name="PortraitText" type="Label" parent="Root/Dialogue/Layout/Portrait"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87, 0.82, 0.69, 1)
+theme_override_font_sizes/font_size = 48
+text = "Q"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="VBoxContainer" parent="Root/Dialogue/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SpeakerRow" type="HBoxContainer" parent="Root/Dialogue/Layout/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Speaker" type="Label" parent="Root/Dialogue/Layout/Content/SpeakerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.88, 0.72, 1)
+theme_override_font_sizes/font_size = 21
+text = "Q"
+
+[node name="Kind" type="Label" parent="Root/Dialogue/Layout/Content/SpeakerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.73, 0.67, 1)
+theme_override_font_sizes/font_size = 15
+text = "CLASSMATE  /  PERSONAL ACCOUNT"
+vertical_alignment = 1
+
+[node name="Body" type="RichTextLabel" parent="Root/Dialogue/Layout/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.94, 0.93, 0.87, 1)
+theme_override_font_sizes/normal_font_size = 27
+theme_override_constants/line_separation = 7
+bbcode_enabled = false
+text = "A conversation begins."
+scroll_active = true
+selection_enabled = true
+
+[node name="Choices" type="HBoxContainer" parent="Root/Dialogue/Layout/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DialogueHint" type="Label" parent="Root/Dialogue/Layout/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.67, 0.72, 0.65, 1)
+theme_override_font_sizes/font_size = 15
+text = "E / ENTER  CONTINUE                         H  HISTORY"
+horizontal_alignment = 2
+
+[node name="Backlog" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.035, 0.055, 0.05, 0.84)
+
+[node name="Panel" type="PanelContainer" parent="Root/Backlog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.14
+anchor_top = 0.08
+anchor_right = 0.86
+anchor_bottom = 0.92
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Column" type="VBoxContainer" parent="Root/Backlog/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Top" type="HBoxContainer" parent="Root/Backlog/Panel/Column"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Heading" type="Label" parent="Root/Backlog/Panel/Column/Top"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.89, 0.75, 1)
+theme_override_font_sizes/font_size = 28
+text = "CONVERSATION HISTORY"
+
+[node name="Smaller" type="Button" parent="Root/Backlog/Panel/Column/Top"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "A−"
+
+[node name="Larger" type="Button" parent="Root/Backlog/Panel/Column/Top"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "A+"
+
+[node name="Speed" type="Button" parent="Root/Backlog/Panel/Column/Top"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "TEXT: INSTANT"
+
+[node name="CloseHistory" type="Button" parent="Root/Backlog/Panel/Column/Top"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "H / ESC  CLOSE"
+
+[node name="Scroll" type="ScrollContainer" parent="Root/Backlog/Panel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Entries" type="VBoxContainer" parent="Root/Backlog/Panel/Column/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Ending" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.045, 0.065, 0.06, 0.88)
+
+[node name="Card" type="PanelContainer" parent="Root/Ending"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -410.0
+offset_top = -185.0
+offset_right = 410.0
+offset_bottom = 185.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Column" type="VBoxContainer" parent="Root/Ending/Card"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Kicker" type="Label" parent="Root/Ending/Card/Column"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.67, 0.52, 1)
+theme_override_font_sizes/font_size = 17
+text = "PROLOGUE   /   MILESTONE 01"
+
+[node name="Title" type="Label" parent="Root/Ending/Card/Column"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.92, 0.82, 1)
+theme_override_font_sizes/font_size = 36
+text = "At the school exit"
+
+[node name="Description" type="Label" parent="Root/Ending/Card/Column"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.82, 0.83, 0.75, 1)
+theme_override_font_sizes/font_size = 22
+text = "The classroom is behind you. The next part of the journey has not been made yet."
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Ending/Card/Column"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Resume" type="Button" parent="Root/Ending/Card/Column/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "RETURN TO CORRIDOR"
+
+[node name="Restart" type="Button" parent="Root/Ending/Card/Column/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+text = "RESTART PROLOGUE"
+
+[node name="Fade" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.035, 0.045, 0.04, 1)
+
+[node name="OpeningCard" type="VBoxContainer" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -80.0
+offset_right = 350.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Small" type="Label" parent="Root/OpeningCard"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.73, 0.70, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+text = "WHERE IS SCHOOL    /    PROLOGUE"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="Root/OpeningCard"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.91, 0.82, 1)
+theme_override_font_sizes/font_size = 46
+text = "Biology class"
+horizontal_alignment = 1

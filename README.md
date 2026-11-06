@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, concise game-production documents, and a headless CI smoke test. The full game and vertical slice are not yet implemented.
+**Pre-production / playable graybox prologue.** A short biology-class sequence is playable from waking at a desk through the school exit. Its dialogue, primitive art, and synthesized sound are provisional. This is not the full game or production art; see the [implementation and validation note](docs/PROLOGUE_IMPLEMENTATION.md) for scope and limitations.
 
 ## Technical baseline
 
@@ -16,10 +16,23 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 - **Target:** Windows PC first; keep the project portable for later Linux/Steam Deck evaluation.
 - **Dependencies:** no mandatory online services, paid APIs, analytics, or proprietary runtime dependencies.
 
+## Play the prototype
+
+Open `project.godot` in **Godot 4.7.2 Stable, standard build**, let it import, then press F5 to run the main scene. There is no server or online dependency.
+
+- **WASD / arrow keys:** move relative to the camera. **E:** interact with the nearest prompted object.
+- **E / Enter:** advance dialogue; arrows select an answer; click an answer or press E / Enter to confirm.
+- **H:** open/close conversation history. Its buttons adjust dialogue text size and instant/slow reveal. Use the mouse wheel or Page Up / Page Down to review long history.
+- Search the schoolbag, explore, then press **Space** to wait for class. If asked, step away from the doorway/front desk before waiting.
+- After N grants free activity, walk through the open classroom door or interact with it. In the corridor, return to class or reach the school-exit prompt. The endpoint offers return and restart.
+
+The current session state is kept while revisiting areas, not saved to disk. Run the Linux headless checks with `GODOT=godot bash tests/run_headless.sh` after installing the pinned engine.
+
 ## Repository map
 
 - AGENTS.md — authoritative coding-agent instructions.
-- project.godot, scenes/, scripts/ — Godot project and starter runtime.
+- project.godot, scenes/, scripts/, data/ — Godot project, graybox runtime, and editable prototype dialogue.
+- tests/ — scene smoke test and prologue integration checks.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
 

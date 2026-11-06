@@ -1,0 +1,101 @@
+[gd_scene load_steps=12 format=3]
+
+
+
+[sub_resource type="StandardMaterial3D" id="Coat"]
+albedo_color = Color(0.43, 0.32, 0.27, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Skin"]
+albedo_color = Color(0.65, 0.50, 0.38, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Hair"]
+albedo_color = Color(0.22, 0.20, 0.18, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Pants"]
+albedo_color = Color(0.28, 0.28, 0.26, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(0.77, 0.67, 0.45)
+
+[sub_resource type="SphereMesh" id="Sphere_5"]
+radius = 0.23
+height = 0.46
+radial_segments = 16
+rings = 8
+
+[sub_resource type="SphereMesh" id="Sphere_6"]
+radius = 0.21
+height = 0.42
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(0.25, 0.2, 0.48)
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(0.2, 0.5, 0.2)
+
+[sub_resource type="BoxMesh" id="Box_4"]
+size = Vector3(0.19, 0.18, 0.5)
+
+[sub_resource type="CapsuleShape3D" id="ClassmateCollision"]
+radius = 0.38
+height = 1.55
+
+[node name="Classmate" type="Node3D"]
+
+[node name="BodyCollision" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BodyCollision"]
+position = Vector3(0, 0.78, 0)
+shape = SubResource("ClassmateCollision")
+
+[node name="Torso" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.91, 0)
+mesh = SubResource("Box_1")
+material_override = SubResource("Coat")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.43, 0)
+mesh = SubResource("Sphere_5")
+material_override = SubResource("Skin")
+
+[node name="Hair" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.57, 0.02)
+mesh = SubResource("Sphere_6")
+material_override = SubResource("Hair")
+scale = Vector3(1, 0.4, 1)
+
+[node name="ThighL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.22, 0.49, -0.12)
+mesh = SubResource("Box_2")
+material_override = SubResource("Pants")
+
+[node name="ShinL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.22, 0.26, -0.34)
+mesh = SubResource("Box_3")
+material_override = SubResource("Pants")
+
+[node name="ArmL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.396, 0.88, -0.19)
+mesh = SubResource("Box_4")
+material_override = SubResource("Coat")
+
+[node name="ThighR" type="MeshInstance3D" parent="."]
+position = Vector3(0.22, 0.49, -0.12)
+mesh = SubResource("Box_2")
+material_override = SubResource("Pants")
+
+[node name="ShinR" type="MeshInstance3D" parent="."]
+position = Vector3(0.22, 0.26, -0.34)
+mesh = SubResource("Box_3")
+material_override = SubResource("Pants")
+
+[node name="ArmR" type="MeshInstance3D" parent="."]
+position = Vector3(0.396, 0.88, -0.19)
+mesh = SubResource("Box_4")
+material_override = SubResource("Coat")

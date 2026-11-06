@@ -1,6 +1,6 @@
 # Runtime Architecture
 
-This document defines boundaries, not an excuse to build every planned subsystem immediately. Implement a subsystem when a playable requirement needs it; keep its ownership clear as it grows.
+This document defines boundaries, not an excuse to build every planned subsystem immediately. Implement a subsystem when a playable requirement needs it; keep its ownership clear as it grows. The current graybox prologue and its temporary dialogue implementation are described in [PROLOGUE_IMPLEMENTATION.md](PROLOGUE_IMPLEMENTATION.md); the Dialogic comparison and a production dialogue-tool decision remain open.
 
 ## 1. Top-level structure
 

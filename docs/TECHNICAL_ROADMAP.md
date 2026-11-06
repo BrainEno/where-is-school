@@ -1,5 +1,7 @@
 # Technical Roadmap
 
+> **Prototype alignment needed:** Phase 3 below describes a residential approach, while [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) and the classroom-prologue task start in the classroom. The current implementation follows the classroom-first task; the roadmap has not been reconciled by the owner. The prototype also uses a small temporary dialogue runtime to make the slice testable, not a final choice in place of the planned Dialogic comparison. Several items labeled planned below are now partially prototyped; see [PROLOGUE_IMPLEMENTATION.md](PROLOGUE_IMPLEMENTATION.md) for the actual scope.
+
 ## 1. Baseline decisions
 
 | Area | Decision | Reason / boundary |

@@ -1,0 +1,592 @@
+{
+  "conversations": {
+    "opening": {
+      "start": "q_wake",
+      "nodes": {
+        "q_wake": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "There you are. I was about to poke you with this pen.",
+          "next": "wake_observation",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "familiar_with_player",
+              "value": true,
+              "source": "q"
+            }
+          ]
+        },
+        "greeting": {
+          "speaker": "YOU",
+          "kind": "choice",
+          "text": "He says it as if this is an old routine.",
+          "choices": [
+            {
+              "text": "Do I know you?",
+              "next": "greet_question",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "q_greeting",
+                  "value": "question"
+                }
+              ]
+            },
+            {
+              "text": "Sorry. Were you talking?",
+              "next": "greet_polite",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "q_greeting",
+                  "value": "polite"
+                }
+              ]
+            },
+            {
+              "text": "Please don't poke me.",
+              "next": "greet_firm",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "q_greeting",
+                  "value": "firm"
+                }
+              ]
+            }
+          ]
+        },
+        "greet_question": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Very funny. We sat together all last term. You even borrowed my pen.",
+          "next": "q_term"
+        },
+        "greet_polite": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Only for a minute. You always come back just when I get to the interesting bit.",
+          "next": "q_term"
+        },
+        "greet_firm": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Fine, fine. I'll save my pen for someone more appreciative.",
+          "next": "q_term"
+        },
+        "q_term": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "First day of the final term and you're sleeping through biology already. That's impressive, even for you.",
+          "next": "q_exam",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "final_term",
+              "value": true,
+              "source": "q"
+            }
+          ]
+        },
+        "q_exam": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "After the last biology exam, I thought you'd be worried. Didn't you leave half of it blank? I barely finished mine.",
+          "next": "q_teacher",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "exam_left_blank",
+              "value": true,
+              "source": "q"
+            }
+          ]
+        },
+        "q_teacher": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Ms B usually takes this lesson. If she spots a mistake, the whole room gets to hear about it. Her old set square is still up front, look.",
+          "next": "memory_choice",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "expects_b",
+              "value": true,
+              "source": "q"
+            },
+            {
+              "category": "statement",
+              "id": "b_is_strict",
+              "value": true,
+              "source": "q"
+            },
+            {
+              "category": "statement",
+              "id": "square_associated_with_b",
+              "value": true,
+              "source": "q"
+            }
+          ]
+        },
+        "memory_choice": {
+          "speaker": "YOU",
+          "kind": "choice",
+          "text": "The exam is difficult to put in order.",
+          "choices": [
+            {
+              "text": "I can't place it at all.",
+              "next": "memory_blank",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "exam_response",
+                  "value": "unavailable"
+                },
+                {
+                  "category": "recollection",
+                  "id": "exam",
+                  "value": "unavailable"
+                }
+              ]
+            },
+            {
+              "text": "I think I was holding a pen.",
+              "next": "memory_pen",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "exam_response",
+                  "value": "pen"
+                },
+                {
+                  "category": "recollection",
+                  "id": "exam",
+                  "value": "uncertain_pen"
+                }
+              ]
+            },
+            {
+              "text": "I'd rather leave it alone.",
+              "next": "memory_later",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "exam_response",
+                  "value": "defer"
+                },
+                {
+                  "category": "recollection",
+                  "id": "exam",
+                  "value": "deferred"
+                }
+              ]
+            }
+          ]
+        },
+        "memory_blank": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Lucky you. I remember the clock more clearly than the questions.",
+          "next": "teacher_choice"
+        },
+        "memory_pen": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Well, that's a start. Mine stopped working halfway through, naturally.",
+          "next": "teacher_choice"
+        },
+        "memory_later": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "All right. We can put that subject back to sleep too.",
+          "next": "teacher_choice"
+        },
+        "q_bag": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Anyway, did you bring your biology book? Mine's under all this paper somewhere."
+        },
+        "wake_observation": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "Your head aches. Your sleeve is creased against the desk.",
+          "next": "greeting"
+        },
+        "teacher_choice": {
+          "speaker": "YOU",
+          "kind": "choice",
+          "text": "What do you make of Q's description of B?",
+          "choices": [
+            {
+              "text": "Is she always like that?",
+              "next": "teacher_ask",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "b_response",
+                  "value": "ask"
+                }
+              ]
+            },
+            {
+              "text": "You don't sound impressed.",
+              "next": "teacher_challenge",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "b_response",
+                  "value": "challenge"
+                }
+              ]
+            },
+            {
+              "text": "Let's talk about something else.",
+              "next": "teacher_change",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "b_response",
+                  "value": "change"
+                }
+              ]
+            }
+          ]
+        },
+        "teacher_ask": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Not always. That's just how I remember the last few lessons.",
+          "next": "q_bag"
+        },
+        "teacher_challenge": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "I'm impressed she can spot a wrong answer from the back of the room. Not that I volunteer them.",
+          "next": "q_bag"
+        },
+        "teacher_change": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "All right, all right. There are other things to worry about.",
+          "next": "q_bag"
+        }
+      }
+    },
+    "bag_first": {
+      "start": "open",
+      "nodes": {
+        "open": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The zip catches, then opens. A pencil case and a folded timetable, but no biology textbook.",
+          "next": "q_notice"
+        },
+        "q_notice": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "No book? I wouldn't announce that if B walks in.",
+          "next": "book_choice"
+        },
+        "book_choice": {
+          "speaker": "YOU",
+          "kind": "choice",
+          "text": "What do you say?",
+          "choices": [
+            {
+              "text": "Could I share yours?",
+              "next": "book_share",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "missing_book_response",
+                  "value": "share"
+                }
+              ]
+            },
+            {
+              "text": "I'll explain it myself.",
+              "next": "book_explain",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "missing_book_response",
+                  "value": "explain"
+                }
+              ]
+            },
+            {
+              "text": "Don't make a thing of it.",
+              "next": "book_avoid",
+              "effects": [
+                {
+                  "category": "choice",
+                  "id": "missing_book_response",
+                  "value": "avoid"
+                }
+              ]
+            }
+          ]
+        },
+        "book_share": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Sure, if you can see around my elbow. It's a very important elbow.",
+          "next": "imagining"
+        },
+        "book_explain": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "All right. I'm keeping my copy open either way.",
+          "next": "imagining"
+        },
+        "book_avoid": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "I wasn't going to announce it. I'll only mention it to my elbow.",
+          "next": "imagining"
+        },
+        "imagining": {
+          "speaker": "YOU",
+          "kind": "imagination",
+          "text": "For a moment, you picture having to explain the missing textbook at the teacher's desk. It is only a possibility; you don't know who will arrive or what they would say.",
+          "effects": [
+            {
+              "category": "imagination",
+              "id": "teacher_question",
+              "value": true
+            }
+          ]
+        }
+      }
+    },
+    "bag_again": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The bag still holds a pencil case and a timetable. The biology textbook is still missing."
+        }
+      }
+    },
+    "square": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "A wooden set square lies on the teacher's desk. One corner is chipped."
+        }
+      }
+    },
+    "square_again": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The chipped set square is where you left it. Looking at it tells you nothing about who last used it."
+        }
+      }
+    },
+    "board": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "BIOLOGY is written at the top of the board. The line below it has been rubbed away."
+        }
+      }
+    },
+    "window": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "Pale light comes through the window. One latch has a different screw from the others."
+        }
+      }
+    },
+    "clock": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The clock is running. There is still a little time before the lesson."
+        }
+      }
+    },
+    "clock_after": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The clock is running. N's free period has already begun."
+        }
+      }
+    },
+    "q_before_bag": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Your bag's right there. No rush. Well, a little rush, maybe."
+        }
+      }
+    },
+    "q_revisit": {
+      "start": "start",
+      "nodes": {
+        "start": {
+          "kind": "branch",
+          "cases": [
+            {
+              "flag": "observed.free_activity_granted",
+              "equals": true,
+              "next": "released"
+            },
+            {
+              "flag": "choice.missing_book_response",
+              "equals": "share",
+              "next": "share"
+            },
+            {
+              "flag": "choice.missing_book_response",
+              "equals": "explain",
+              "next": "explain"
+            },
+            {
+              "flag": "choice.missing_book_response",
+              "equals": "avoid",
+              "next": "avoid"
+            }
+          ],
+          "default": "fallback"
+        },
+        "share": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "If we need the book, you can look at mine. Just don't fold the corner."
+        },
+        "explain": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "You can explain it yourself. I'll try not to listen too obviously."
+        },
+        "avoid": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "I'm not making a thing of it. See? Not a word."
+        },
+        "released": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Well. I could have slept in too. I'm staying here for a bit."
+        },
+        "fallback": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "I hope I brought the right book, at least."
+        }
+      }
+    },
+    "door_before": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "The classroom door is closed. The lesson hasn't started."
+        }
+      }
+    },
+    "lesson": {
+      "start": "n_seen",
+      "nodes": {
+        "n_arrives": {
+          "speaker": "N",
+          "kind": "statement",
+          "text": "Ms B isn't here today. I'm N, covering her class.",
+          "next": "n_books",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "b_is_away",
+              "value": true,
+              "source": "n"
+            },
+            {
+              "category": "statement",
+              "id": "is_covering",
+              "value": true,
+              "source": "n"
+            }
+          ]
+        },
+        "n_books": {
+          "speaker": "N",
+          "kind": "statement",
+          "text": "Could you take out your books? Please. One conversation at a time.",
+          "next": "room_noise"
+        },
+        "room_noise": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "Chairs scrape. The talking continues. N waits, then looks down at the register.",
+          "next": "n_again"
+        },
+        "n_again": {
+          "speaker": "N",
+          "kind": "statement",
+          "text": "I did ask for quiet. All right—free activity for the rest of the period. You may leave, but keep the corridor clear. I need to finish this register.",
+          "next": "q_after",
+          "effects": [
+            {
+              "category": "statement",
+              "id": "free_activity_permission",
+              "value": true,
+              "source": "n"
+            }
+          ]
+        },
+        "q_after": {
+          "speaker": "Q",
+          "kind": "statement",
+          "text": "Huh. I thought B would be here. I could have stayed asleep."
+        },
+        "n_seen": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "A young teacher steps into the room and pauses by the desk.",
+          "next": "n_arrives"
+        }
+      }
+    },
+    "n_after": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "N",
+          "kind": "statement",
+          "text": "Free activity. Please don't gather in the doorway; I'm still working."
+        }
+      }
+    },
+    "threshold": {
+      "start": "first",
+      "nodes": {
+        "first": {
+          "speaker": "YOU NOTICE",
+          "kind": "observation",
+          "text": "Daylight reaches the school exit. The textbook is still missing, and the way ahead is open."
+        }
+      }
+    }
+  }
+}

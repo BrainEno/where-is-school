@@ -1,0 +1,53 @@
+[gd_scene load_steps=6 format=3]
+
+
+
+[sub_resource type="StandardMaterial3D" id="Wood"]
+albedo_color = Color(0.42, 0.32, 0.23, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Metal"]
+albedo_color = Color(0.26, 0.29, 0.28, 1)
+roughness = 0.9
+metallic = 0.2
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(0.74, 0.08, 0.66)
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(0.74, 0.59, 0.07)
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(0.045, 0.46, 0.045)
+
+[node name="Chair" type="Node3D"]
+
+[node name="Seat" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.47, 0)
+mesh = SubResource("Box_1")
+material_override = SubResource("Wood")
+
+[node name="Back" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.86, 0.27)
+mesh = SubResource("Box_2")
+material_override = SubResource("Wood")
+
+[node name="Leg_m0.29_m0.24" type="MeshInstance3D" parent="."]
+position = Vector3(-0.29, 0.23, -0.24)
+mesh = SubResource("Box_3")
+material_override = SubResource("Metal")
+
+[node name="Leg_m0.29_0.24" type="MeshInstance3D" parent="."]
+position = Vector3(-0.29, 0.23, 0.24)
+mesh = SubResource("Box_3")
+material_override = SubResource("Metal")
+
+[node name="Leg_0.29_m0.24" type="MeshInstance3D" parent="."]
+position = Vector3(0.29, 0.23, -0.24)
+mesh = SubResource("Box_3")
+material_override = SubResource("Metal")
+
+[node name="Leg_0.29_0.24" type="MeshInstance3D" parent="."]
+position = Vector3(0.29, 0.23, 0.24)
+mesh = SubResource("Box_3")
+material_override = SubResource("Metal")

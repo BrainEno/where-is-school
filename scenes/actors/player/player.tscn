@@ -1,32 +1,240 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=25 format=3]
 
-[ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="1_controller"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="player_script"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
-radius = 0.35
-height = 1.8
+[sub_resource type="StandardMaterial3D" id="Jacket"]
+albedo_color = Color(0.30, 0.38, 0.36, 1)
+roughness = 0.9
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
-radius = 0.35
-height = 1.8
+[sub_resource type="StandardMaterial3D" id="Shirt"]
+albedo_color = Color(0.72, 0.68, 0.57, 1)
+roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
-albedo_color = Color(0.7, 0.68, 0.61, 1)
-roughness = 0.95
+[sub_resource type="StandardMaterial3D" id="Trousers"]
+albedo_color = Color(0.22, 0.25, 0.24, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Skin"]
+albedo_color = Color(0.66, 0.52, 0.41, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Hair"]
+albedo_color = Color(0.20, 0.19, 0.17, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Shoes"]
+albedo_color = Color(0.15, 0.17, 0.16, 1)
+roughness = 0.9
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+radius = 0.31
+height = 1.72
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(0.55, 0.7, 0.32)
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(0.19, 0.38, 0.03)
+
+[sub_resource type="SphereMesh" id="Sphere_9"]
+radius = 0.22
+height = 0.44
+radial_segments = 16
+rings = 8
+
+[sub_resource type="SphereMesh" id="Sphere_10"]
+radius = 0.2
+height = 0.4
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(0.21, 0.72, 0.24)
+
+[sub_resource type="BoxMesh" id="Box_4"]
+size = Vector3(0.23, 0.12, 0.34)
+
+[sub_resource type="BoxMesh" id="Box_5"]
+size = Vector3(0.16, 0.62, 0.19)
+
+[sub_resource type="SphereMesh" id="Sphere_14"]
+radius = 0.075
+height = 0.15
+radial_segments = 16
+rings = 8
+
+[sub_resource type="SphereMesh" id="Sphere_15"]
+radius = 0.075
+height = 0.15
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="Box_6"]
+size = Vector3(0.57, 0.63, 0.34)
+
+[sub_resource type="SphereMesh" id="Sphere_17"]
+radius = 0.22
+height = 0.44
+radial_segments = 16
+rings = 8
+
+[sub_resource type="SphereMesh" id="Sphere_18"]
+radius = 0.2
+height = 0.4
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="Box_7"]
+size = Vector3(0.22, 0.18, 0.52)
+
+[sub_resource type="BoxMesh" id="Box_8"]
+size = Vector3(0.2, 0.5, 0.2)
+
+[sub_resource type="BoxMesh" id="Box_9"]
+size = Vector3(0.22, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="Box_10"]
+size = Vector3(0.15, 0.16, 0.54)
 
 [node name="Player" type="CharacterBody3D"]
-script = ExtResource("1_controller")
+script = ExtResource("player_script")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-position = Vector3(0, 0.9, 0)
-shape = SubResource("CapsuleShape3D_player")
+position = Vector3(0, 0.86, 0)
+shape = SubResource("PlayerShape")
 
-[node name="Visual" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_player")
-material_override = SubResource("StandardMaterial3D_player")
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Standing" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+visible = false
+
+[node name="Body" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0, 1.02, 0)
+mesh = SubResource("Box_1")
+material_override = SubResource("Jacket")
+
+[node name="Shirt" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0, 1.16, -0.17)
+mesh = SubResource("Box_2")
+material_override = SubResource("Shirt")
+
+[node name="Head" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0, 1.56, 0)
+mesh = SubResource("Sphere_9")
+material_override = SubResource("Skin")
+
+[node name="Hair" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0, 1.7, 0.015)
+mesh = SubResource("Sphere_10")
+material_override = SubResource("Hair")
+scale = Vector3(1, 0.42, 1)
+
+[node name="LegL" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(-0.19, 0.39, 0)
+mesh = SubResource("Box_3")
+material_override = SubResource("Trousers")
+
+[node name="ShoeL" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(-0.19, 0.07, -0.06)
+mesh = SubResource("Box_4")
+material_override = SubResource("Shoes")
+
+[node name="ArmL" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(-0.342, 1.02, 0)
+mesh = SubResource("Box_5")
+material_override = SubResource("Jacket")
+
+[node name="HandL" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(-0.342, 0.69, 0)
+mesh = SubResource("Sphere_14")
+material_override = SubResource("Skin")
+
+[node name="LegR" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0.19, 0.39, 0)
+mesh = SubResource("Box_3")
+material_override = SubResource("Trousers")
+
+[node name="ShoeR" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0.19, 0.07, -0.06)
+mesh = SubResource("Box_4")
+material_override = SubResource("Shoes")
+
+[node name="ArmR" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0.342, 1.02, 0)
+mesh = SubResource("Box_5")
+material_override = SubResource("Jacket")
+
+[node name="HandR" type="MeshInstance3D" parent="Visual/Standing"]
+position = Vector3(0.342, 0.69, 0)
+mesh = SubResource("Sphere_15")
+material_override = SubResource("Skin")
+
+[node name="Seated" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+
+[node name="Torso" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0, 0.91, -0.09)
+mesh = SubResource("Box_6")
+material_override = SubResource("Jacket")
+rotation_degrees = Vector3(-18, 0, 0)
+
+[node name="Head" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0, 1.27, -0.22)
+mesh = SubResource("Sphere_17")
+material_override = SubResource("Skin")
+
+[node name="Hair" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0, 1.41, -0.2)
+mesh = SubResource("Sphere_18")
+material_override = SubResource("Hair")
+scale = Vector3(1, 0.42, 1)
+
+[node name="ThighL" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(-0.18, 0.48, -0.13)
+mesh = SubResource("Box_7")
+material_override = SubResource("Trousers")
+
+[node name="LowerLegL" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(-0.18, 0.26, -0.37)
+mesh = SubResource("Box_8")
+material_override = SubResource("Trousers")
+
+[node name="ShoeL" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(-0.18, 0.06, -0.42)
+mesh = SubResource("Box_9")
+material_override = SubResource("Shoes")
+
+[node name="ArmL" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(-0.288, 0.88, -0.36)
+mesh = SubResource("Box_10")
+material_override = SubResource("Jacket")
+
+[node name="ThighR" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0.18, 0.48, -0.13)
+mesh = SubResource("Box_7")
+material_override = SubResource("Trousers")
+
+[node name="LowerLegR" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0.18, 0.26, -0.37)
+mesh = SubResource("Box_8")
+material_override = SubResource("Trousers")
+
+[node name="ShoeR" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0.18, 0.06, -0.42)
+mesh = SubResource("Box_9")
+material_override = SubResource("Shoes")
+
+[node name="ArmR" type="MeshInstance3D" parent="Visual/Seated"]
+position = Vector3(0.288, 0.88, -0.36)
+mesh = SubResource("Box_10")
+material_override = SubResource("Jacket")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 unique_name_in_owner = true
 current = true
-position = Vector3(7.5, 10, 7.5)
+projection = 1
+size = 12.7
+position = Vector3(8.5, 11, 10.5)
+far = 100.0
