@@ -28,8 +28,14 @@ jobs:
       - name: Import project and parse scripts
         run: godot --headless --editor --path . --quit
 
-      - name: Run scene smoke test
-        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Smoke — main scene instantiates and composes the classroom
+        run: godot --headless --path . --script res://tests/smoke_main.gd
+
+      - name: Smoke — player, camera and interactables
+        run: godot --headless --path . --script res://tests/smoke_player.gd
+
+      - name: Smoke — UI group and lesson director
+        run: godot --headless --path . --script res://tests/smoke_ui.gd
 
       - name: Run unit tests
         run: |
