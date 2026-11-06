@@ -2,22 +2,22 @@
 
 > **A school that cannot remember you. A student who cannot leave.**
 
-where-is-school is a painterly 2.5D surreal narrative RPG about memory, institutional repetition, adulthood, shame, and the impossible geography of school.
+where-is-school is a painterly 2.5D surreal narrative RPG about memory, institutional roles, adulthood, shame, observation, and the impossible geography of school.
 
-You play an adult who has somehow been sent back to school. The school has no stable address: classrooms migrate, staircases lead to contradictory places, and the exit may be several countries—or one wrong turn—away. You explore unstable everyday spaces, inspect objects, meet people who may or may not remember you, and navigate long, literary conversations alongside competing voices inside your own head.
+You wake at a classroom desk as a student again. A talkative classmate seems to know your past; the biology teacher everyone warns you about does not arrive. An ordinary school day becomes an attempt to leave the classroom, the school grounds, and perhaps the school itself. Beyond the gates, familiar streets and residential spaces begin to feel difficult to classify. The school has no stable address: classrooms and staircases connect to contradictory versions of the same institution, while people remember events differently.
 
-The project takes inspiration from expressive, text-rich narrative RPGs and dreamlike stories of spatial dislocation. It does not reproduce another game's characters, interface, writing, art, or assets. Its visual identity is grounded in ordinary lived-in architecture, damp concrete, faded institutional colors, and a persistent orange dusk.
+The game is built around literary dialogue, close environmental observation, unstable recollection, and everyday objects whose significance changes with context. Its visual identity is grounded in lived-in architecture, damp concrete, faded institutional colors, damaged school objects, and a persistent orange dusk. It takes inspiration from expressive, text-rich narrative games and dreamlike stories of spatial dislocation without reproducing another work's characters, writing, art, interface, or assets.
 
 ## Project status
 
-**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, architecture and production documents, agent instructions, and a headless CI smoke test. The full game and vertical slice are not yet implemented.
+**Pre-production / engineering foundation.** This repository contains a launchable Godot starter project, architecture and production documents, agent instructions, and a headless CI smoke test. The full game and first playable narrative slice are not yet implemented.
 
 ## Design pillars
 
 1. **Unstable geography:** navigation is an expressive game mechanic; familiar places subtly refuse to stay put.
-2. **Literary conversations:** dialogue, interior voices, observation, and contradiction are the primary means of interaction.
-3. **Ordinary surrealism:** strange events emerge from recognizable schools, apartment blocks, stairwells, parking lots, and ports.
-4. **A coherent authored art direction:** painterly surfaces and expressive portraits, not a random collage of generated assets.
+2. **Literary conversations:** ordinary chatter, interior voices, observation, and contradiction are primary means of interaction.
+3. **Ordinary surrealism:** strange events emerge from recognizable schools, apartment blocks, stairwells, streets, yards, and ports.
+4. **Observation without certainty:** people, memories, and living things resist simple classification.
 5. **Player clarity inside an unclear world:** objectives, controls, saves, and interaction feedback remain understandable even when the fiction is not.
 
 ## Technical baseline
@@ -54,7 +54,7 @@ The second command checks that the main scene can be instantiated and contains t
 - docs/PRODUCT_BRIEF.md — product concept, player experience, and scope.
 - docs/ARCHITECTURE.md — code boundaries, runtime ownership, and data flow.
 - docs/TECHNICAL_ROADMAP.md — engine, tools, and implementation phases.
-- docs/NARRATIVE_BIBLE.md — world rules, themes, scene sequence, and opening.
+- docs/NARRATIVE_BIBLE.md — world rules, character foundations, Biology Class opening, and narrative principles.
 - docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md — text-only art direction; no generated concept images are part of the project foundation.
 - docs/PROTOTYPE_BRIEF.md — bounded, testable first vertical slice.
 - docs/AGENT_EVALUATION.md — fair protocol for comparing competing coding agents.
