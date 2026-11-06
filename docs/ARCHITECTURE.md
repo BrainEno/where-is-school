@@ -55,9 +55,16 @@ Use signals at clear boundaries. Do not create a global event bus by default; fi
 
 ## 3. Autoload policy
 
-The starter project contains one autoload: GameState.
+The project contains two autoloads.
 
-Its responsibility is limited to runtime story flags and snapshot/restore of those flags. It is not a dumping ground for quests, dialogue UI, scene transitions, audio, inventory, settings, or save-file I/O.
+- **GameState** — runtime story flags and snapshot/restore of those flags. It is
+  not a dumping ground for quests, dialogue UI, scene transitions, audio,
+  inventory, settings, or save-file I/O.
+- **NarrativeState** — append-only narrative knowledge entries, each tagged
+  observed / reported / recalled / imagined, de-duplicated by id, with
+  snapshot/restore. It exists because knowledge categories are used by dialogue,
+  inspection, and presentation independently of gameplay flags; see
+  `docs/adr/0002-dialogue-and-narrative-state.md`.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;
@@ -79,7 +86,10 @@ Avoid hard-coded NodePaths that reach across unrelated scene ownership. Prefer e
 
 ## 5. Narrative data contract
 
-Dialogue content must be separate from gameplay scripts. Before adopting a dialogue addon or format, validate that it supports:
+Dialogue content must be separate from gameplay scripts. The current milestone
+implements a project-owned layer (see ADR 0002) that satisfies the requirements
+below; the Dialogic 2 spike remains an open decision. Before adopting a dialogue
+addon or format, validate that it supports:
 - long Chinese text and readable typography;
 - named speakers and portrait identifiers;
 - choices and conditional choices;
