@@ -617,7 +617,7 @@ func _place_behind_player() -> void:
 	back.y = 0.0
 	if back.length_squared() <= 0.0001:
 		back = Vector3.BACK
-	var spot := _player.global_position + back.normalized() * stop_distance
+	var spot := _pick_standing_spot(back.normalized())
 	spot.y = _player.global_position.y
 	# No snapping here on purpose. At the moment of the swap the map may still be
 	# answering from the room the player just left, and "the nearest walkable point" then
@@ -633,15 +633,47 @@ func _place_behind_player() -> void:
 	_face_player()
 
 
-## The new location's own mesh decides where a person can actually stand: behind the
-## player may be inside a desk, against a wall, or off the floor entirely. A map that
+## Where a person can actually stand: behind the player may be inside a doorway, against
+## a wall, or off the floor entirely. The candidates are asked about the current location's
+## **own** region, not the world map — during a swap the map may still be answering from
+## the room the player just left, and its answer would be a point in the wrong room.
+func _pick_standing_spot(back: Vector3) -> Vector3:
+	var here := _player.global_position
+	var shoulder := _player.global_basis.x
+	var candidates: Array[Vector3] = [
+		here + back * stop_distance,
+		here + back * (stop_distance * 0.7),
+		here + back * (stop_distance * 1.4),
+		here + back * stop_distance + shoulder * 1.0,
+		here + back * stop_distance - shoulder * 1.0,
+	]
+	for candidate: Vector3 in candidates:
+		if _current_region_owns(candidate):
+			return candidate
+	# Nothing answered — an un-baked or missing mesh. The plain spot behind is still the
+	# right place; being off the mesh is corrected once the location's mesh is up.
+	return candidates[0]
+
+
+## True when the current location's own navigation region covers this point. Deliberately
+## not a question for the world map: that map can still hold the previous location.
+func _current_region_owns(point: Vector3) -> bool:
+	var navigation := _current_navigation()
+	if navigation == null or not navigation.is_baked():
+		return false
+	var region := navigation.get_rid()
+	if not region.is_valid():
+		return false
+	return NavigationServer3D.region_owns_point(region, point)
+
+
+## The new location's own mesh decides where a person can actually stand. A map that
 ## cannot answer leaves the spot alone rather than guessing.
 func _snap_to_the_mesh(spot: Vector3) -> Vector3:
-	var map := _navigation_map()
-	if not _map_has_geometry(map):
-		return spot
-	var snapped := NavigationServer3D.map_get_closest_point(map, spot)
+	var snapped := NavigationServer3D.map_get_closest_point(_navigation_map(), spot)
 	if Vector2(snapped.x - spot.x, snapped.z - spot.z).length() > 1.5:
+		return spot
+	if not _current_region_owns(snapped):
 		return spot
 	return Vector3(snapped.x, spot.y, snapped.z)
 

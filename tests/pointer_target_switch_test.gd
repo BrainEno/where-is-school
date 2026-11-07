@@ -99,12 +99,14 @@ func _run() -> void:
 		Harness.finish(self, ["The classroom is not loaded."], "")
 		return
 
+	# The room's own hotspots cover most of its floor, and "is there open floor here" is
+	# part of where the probes can stand: the authored ones step aside while the spots are
+	# chosen, come back for the Q case, and step aside again for the probe cases.
+	_silence_authored(true)
 	await _place_probes()
+	_silence_authored(false)
 	await _check_npc_then_ground()
-	# From here on the cases are about probes, in a room whose own props are right where
-	# the probes stand: the pointer would answer with the nearer desk every time. The
-	# authored interactables keep their collision until the Q case is done.
-	_silence_authored()
+	_silence_authored(true)
 	await _check_object_replaces_object()
 	await _check_ground_replaces_ground()
 	await _check_target_freed_and_disabled()
@@ -203,10 +205,16 @@ func _make_probe(interact_id: StringName, position: Vector3) -> Interactable:
 	return probe
 
 
-## Takes the classroom's authored interactables out of the pointer's way. Collision
-## only: the props are untouched, and the game never does this — a synthetic probe has to
-## be findable by the pointer, not hidden behind the player's own desk.
-func _silence_authored() -> void:
+## Takes the classroom's authored interactables out of the pointer's way, or puts them
+## back. Collision only: the props are untouched, and the game never does this — a
+## synthetic probe has to be findable by the pointer, and open floor has to be open.
+func _silence_authored(silence: bool) -> void:
+	if not silence:
+		for item: Interactable in _silenced:
+			if is_instance_valid(item):
+				item.collision_layer = Interactable.INTERACTION_LAYER
+		_silenced.clear()
+		return
 	for node: Node in _location.find_children("*", "Area3D", true, false):
 		var item := node as Interactable
 		if item == null or item in [_probe_a, _probe_b, _probe_c, _probe_d]:
