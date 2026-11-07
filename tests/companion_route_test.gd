@@ -36,6 +36,9 @@ var _narrative: Node = null
 var _started_at_msec := 0
 var _seen_nodes: Array[StringName] = []
 var _check_count := 0
+## Where Q stood when the following check began, so a failure can say how far it moved
+## rather than only where it ended up.
+var _walk_q_start := Vector3.ZERO
 
 
 func _initialize() -> void:
@@ -203,17 +206,18 @@ func _check_following() -> void:
 	# Walk the player up the walkway in small steps, so Q has to keep up with real
 	# movement rather than with one teleport.
 	var start := _player.global_position
+	_walk_q_start = _companion.global_position
 	for step in 6:
 		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), start + Vector3(0, 0, 0.5 * step)))
 		await _frames(10)
 	var distance := _companion.global_position.distance_to(_player.global_position)
 	if distance > _companion.follow_distance + FOLLOW_TOLERANCE:
-		_failures.append("Q fell %.1f m behind a walking player." % distance)
+		_failures.append("Q fell %.1f m behind a walking player. %s" % [distance, _q_state()])
 	var moved := _companion.global_position.distance_to(start)
 	if moved < 1.0:
-		_failures.append("Q did not move at all while the player walked away.")
+		_failures.append("Q did not move at all while the player walked away. %s" % _q_state())
 	if _companion.is_waiting():
-		_failures.append("Q gave up following a player who was only a few metres ahead.")
+		_failures.append("Q gave up following a player who was only a few metres ahead. %s" % _q_state())
 
 
 func _check_waiting_and_resuming() -> void:
@@ -239,7 +243,10 @@ func _check_waiting_and_resuming() -> void:
 		_companion.give_up_distance = normal_give_up
 		return
 	if not _companion.is_waiting():
-		_failures.append("Q kept chasing a player who was more than %.0f m away." % _companion.give_up_distance)
+		_failures.append(
+			"Q kept chasing a player who was more than %.0f m away. %s"
+			% [_companion.give_up_distance, _q_state()]
+		)
 		_companion.give_up_distance = normal_give_up
 		return
 	if not ask.can_interact():
@@ -257,6 +264,22 @@ func _check_waiting_and_resuming() -> void:
 		_failures.append("Q did not close the gap after being asked along (%.1f m; Q at %s, player at %s)." % [
 			distance, _companion.global_position, _player.global_position
 		])
+
+
+## Everything that would explain a follower failure, in one line: where Q and the player
+## are, how far apart, whether Q is even allowed to walk, and what it last decided.
+func _q_state() -> String:
+	return (
+		"[q=%s q_start=%s player=%s facing_back=%s gap=%.2f joined=%s visible=%s"
+		+ " waiting=%s nav=%s regions=%d route=%d repath=%d note='%s' place='%s']"
+	) % [
+		str(_companion.global_position), str(_walk_q_start), str(_player.global_position),
+		str(_player.global_basis.z), _companion.global_position.distance_to(_player.global_position),
+		str(_companion.is_joined()), str(_companion.visible), str(_companion.is_waiting()),
+		str(_companion.is_navigation_ready()), _companion.get_navigation_region_count(),
+		_companion.get_route().size(), _companion.get_repath_count(),
+		_companion.get_last_chase_note(), _companion.get_placement_report(),
+	]
 
 
 func _walk_out_to_the_yard() -> void:

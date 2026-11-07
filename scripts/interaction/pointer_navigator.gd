@@ -181,10 +181,16 @@ func can_walk_to_screen_position(screen_position: Vector2) -> bool:
 ## A target freed mid-walk is noticed at once: pursuing a spot next to something that
 ## no longer exists is how a click turns into a character walking at nothing.
 func _physics_process(_delta: float) -> void:
-	if _has_pending and not is_instance_valid(_pending):
-		_abandon_pending()
-		if _player != null:
-			_player.cancel_path()
+	if not _has_pending:
+		return
+	# A target that was freed, or switched off, while the character walked towards it is
+	# no longer something to arrive at. Catching the disabled case here is the difference
+	# between "the prompt stopped offering it" and "the character keeps walking at it".
+	if is_instance_valid(_pending) and _pending.can_interact():
+		return
+	_abandon_pending()
+	if _player != null:
+		_player.cancel_path()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -245,8 +251,16 @@ func _ground_point_at(screen_position: Vector2) -> Variant:
 	return snapped
 
 
+## Replaces whatever was in flight with a walk to `point`.
+##
+## The old automatic-interaction target, if there was one, is abandoned here — once,
+## through `_abandon_pending()` — and not merely forgotten. Clearing `_pending` without
+## clearing `_has_pending` used to leave `_physics_process()` looking at a target it
+## believed had been freed, and it cancelled the ground path that this very function had
+## just asked for: click Q, change your mind, click the floor, and the character stopped.
 func _walk_to(point: Vector3) -> void:
-	_pending = null
+	if _has_pending:
+		_abandon_pending()
 	_approaching = false
 	if _player.request_path_to(point):
 		_last_click_accepted = true
@@ -292,11 +306,11 @@ func _screen_hint(screen_position: Vector2) -> Vector3:
 func _begin_approach(target: Interactable) -> void:
 	if target == null or not is_instance_valid(target):
 		return
-	if _has_pending and _pending != target:
-		# A new click on another object replaces the old target.
+	if _has_pending:
+		# A new click replaces the old target, whether it named the same object or a
+		# different one. The old approach is abandoned exactly once, before the walk it
+		# replaces is cancelled, so the cancellation is not mistaken for a fresh loss.
 		_abandon_pending()
-	_pending = null
-	_has_pending = false
 	_approaching = false
 	_player.cancel_path()
 	_hide_marker()

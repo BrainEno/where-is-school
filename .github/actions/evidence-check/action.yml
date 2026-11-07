@@ -1,0 +1,114 @@
+name: Check the capture evidence
+description: >-
+  Verifies the staged playthrough evidence and, when asked to publish, replaces the
+  committed screenshots with it. The current screenshots are never deleted before
+  the replacement has been verified, and a run with nothing new is a success.
+
+
+inputs:
+  evidence:
+    description: >-
+      Directory holding the capture output: `docs/screenshots/` (frames,
+      PLAYTHROUGH.log, PLAYTHROUGH.md) and `logs/` (capture and import logs).
+    required: true
+  publish:
+    description: "'true' replaces the committed screenshots; 'false' only verifies."
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Verify the evidence folder
+      shell: bash
+      env:
+        EVIDENCE: ${{ inputs.evidence }}
+      run: |
+        set -uo pipefail
+        # One shape, checked by name rather than assumed: after the artifact round trip
+        # the folder has to have exactly the structure the capture job staged.
+        echo "evidence root: ${EVIDENCE}"
+        if [ ! -d "${EVIDENCE}" ]; then
+          echo "::error title=no evidence folder::${EVIDENCE} does not exist"
+          exit 1
+        fi
+        echo "--- structure (depth 3) ---"
+        find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
+
+        shots="${EVIDENCE}/docs/screenshots"
+        log="${shots}/PLAYTHROUGH.log"
+        if [ ! -d "${shots}" ]; then
+          echo "::error title=no screenshots directory::${shots} is missing from the evidence"
+          exit 1
+        fi
+        count=$(find "${shots}" -maxdepth 1 -name '*.png' | wc -l)
+        echo "frames: ${count}"
+        if [ "${count}" -lt 1 ]; then
+          echo "::error title=no frames::the evidence holds no PNG in docs/screenshots"
+          exit 1
+        fi
+        if [ ! -f "${log}" ]; then
+          echo "::error title=no log::${log} is missing"
+          exit 1
+        fi
+        if ! grep -qE '^\[[^]]*\] RESULT: ' "${log}"; then
+          echo "::error title=no result marker::PLAYTHROUGH.log has no RESULT line"
+          tail -n 20 "${log}" || true
+          exit 1
+        fi
+        if grep -qE 'FAILURE: ' "${log}"; then
+          echo "::error title=failures in the log::PLAYTHROUGH.log reports failures"
+          grep -E 'FAILURE: ' "${log}" | head -n 10 || true
+          exit 1
+        fi
+        echo "::notice title=evidence verified::${count} frame(s), result marker present, no failures"
+
+    - name: Publish the frames
+      if: inputs.publish == 'true'
+      shell: bash
+      env:
+        EVIDENCE: ${{ inputs.evidence }}
+      run: |
+        set -euo pipefail
+        shots="${EVIDENCE}/docs/screenshots"
+        # Compare first: a run that changed nothing must end successfully, not fail on
+        # an empty commit.
+        if [ -d docs/screenshots ] && diff -rq docs/screenshots "${shots}" > /dev/null 2>&1; then
+          echo "no screenshot changes; nothing to commit"
+          exit 0
+        fi
+        # Build the replacement beside the live folder and keep the old one until the
+        # new one has been counted. The repository must never be left without its
+        # previous, valid screenshots.
+        incoming="$(mktemp -d)/screenshots"
+        previous="$(mktemp -d)/screenshots"
+        cp -a "${shots}" "${incoming}"
+        if [ -d docs/screenshots ]; then
+          cp -a docs/screenshots "${previous}"
+        fi
+        incoming_count=$(find "${incoming}" -maxdepth 1 -name '*.png' | wc -l)
+        if [ "${incoming_count}" -lt 1 ]; then
+          echo "::error title=nothing to publish::the new folder holds no frames; the old screenshots are untouched"
+          exit 1
+        fi
+        rm -rf docs/screenshots
+        cp -a "${incoming}" docs/screenshots
+        final_count=$(find docs/screenshots -maxdepth 1 -name '*.png' | wc -l)
+        if [ "${final_count}" -lt 1 ]; then
+          echo "::error title=swap failed::restoring the previous screenshots"
+          rm -rf docs/screenshots
+          if [ -d "${previous}" ]; then cp -a "${previous}" docs/screenshots; fi
+          exit 1
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add docs/screenshots
+        if git diff --cached --quiet; then
+          echo "no screenshot changes; nothing to commit"
+          exit 0
+        fi
+        # [skip ci]: the frames are evidence of a run that already happened, not a
+        # change that needs its own full CI pass.
+        git commit -m "Playthrough capture: update screenshots from a successful run [skip ci]"
+        git push origin "HEAD:${GITHUB_REF_NAME}"
+        echo "::notice title=screenshots published::${final_count} frame(s) committed to ${GITHUB_REF_NAME}"

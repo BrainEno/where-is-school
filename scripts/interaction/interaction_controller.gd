@@ -121,23 +121,35 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 	if direction.length_squared() <= 0.0001:
 		return null
 	var far_point := from + direction * 60.0
-	var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
 	var space := _player.get_world_3d().direct_space_state if _player.get_world_3d() != null else null
 	if space == null:
 		return null
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
-		return null
-	var candidate := hit.get("collider") as Interactable
-	if candidate == null or not candidate.can_interact():
-		return null
-	if require_reach and not _in_reach(candidate):
-		return null
-	if not _has_line_of_sight(candidate):
-		return null
-	return candidate
+	# A hotspot that is switched off — a companion waiting to be asked along, a door still
+	# locked, a prop that is out of the story — is not a wall. The pointer looks past it at
+	# whatever is behind, instead of answering every click with nothing.
+	var excluded: Array[RID] = []
+	for attempt in 4:
+		var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
+		query.collide_with_areas = true
+		query.collide_with_bodies = false
+		if not excluded.is_empty():
+			query.exclude = excluded
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return null
+		var candidate := hit.get("collider") as Interactable
+		if candidate == null or not candidate.can_interact():
+			var passed: RID = hit.get("rid", RID())
+			if not passed.is_valid():
+				return null
+			excluded.append(passed)
+			continue
+		if require_reach and not _in_reach(candidate):
+			return null
+		if not _has_line_of_sight(candidate):
+			return null
+		return candidate
+	return null
 
 
 ## Pins the pointer to a screen position (tests only). The real cursor path is
@@ -275,13 +287,20 @@ func _find_best_target() -> Interactable:
 	return best
 
 
-## You cannot read a notice through a wall. Two probes are cast (upper body and
-## knee height) and either one being clear is enough, so a desk in front of a
-## schoolbag does not make the bag unusable.
+## You cannot read a notice through a wall. Three probes are cast (upper body, knee
+## height, and straight across at eye height) and either one being clear is enough, so
+## a desk in front of a schoolbag does not make the bag unusable.
 ##
-## The object's own furniture is the usual thing a ray hits first: a desk hides the
-## desk. Colliders standing next to the candidate are therefore treated as part of
-## it and ignored, while anything further away (a wall, a door) still blocks.
+## Something does have to be ignored: the object's own furniture is the usual thing a
+## ray hits first — a desk "hides" the bag lying on it, and a wall hides the notice
+## pinned to that wall. The set of things that may be looked through is explicit and
+## belongs to the object: `Interactable.support_paths`, plus any body parented under the
+## interactable itself. Anything else in the way blocks, whatever its distance.
+##
+## An earlier version excluded colliders whose origin was close to the object's, on the
+## assumption that near means "part of it". A free-standing wall 0.9 m from a prop was
+## excluded by that rule, so the prop could be highlighted, clicked and used from the
+## other side of the wall. Distance is not ownership.
 ## The node that knows where the player is looking: the body that reports its own
 ## facing direction. The controller may be attached to the body, to one of its
 ## pivots, or to a wrapper, so this walks up instead of assuming a path.
@@ -310,47 +329,52 @@ func has_line_of_sight_from(from: Vector3, candidate: Interactable) -> bool:
 	var space := world.direct_space_state
 	if space == null:
 		return true
-	var own_limit := maxf(candidate.radius + 1.0, 1.6)
+	var allowed: Array[RID] = candidate.get_support_rids()
 	var excluded: Array[RID] = []
 	var player_body := _player as CollisionObject3D
 	if player_body != null:
 		excluded.append(player_body.get_rid())
-	var candidate_distance := from.distance_to(candidate.global_position)
 	var probes: Array[Vector3] = [
 		candidate.global_position + Vector3.UP * 0.35,
 		candidate.global_position + Vector3.UP * 0.05,
 		Vector3(candidate.global_position.x, from.y, candidate.global_position.z),
 	]
 	for probe in probes:
-		var to: Vector3 = probe
-		var blocked := false
-		for _attempt in 6:
-			var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
-			query.exclude = excluded
-			query.collide_with_areas = false
-			query.collide_with_bodies = true
-			var hit := space.intersect_ray(query)
-			if hit.is_empty():
-				blocked = false
-				break
-			blocked = true
-			# A surface that is not clearly in front of the object is the object's own
-			# backing: a notice on a wall, a gate in a doorway, a bag on a desk.
-			var hit_position: Vector3 = hit.get("position", Vector3.ZERO)
-			if from.distance_to(hit_position) > candidate_distance - 0.35:
-				blocked = false
-				break
-			var collider := hit.get("collider") as Node3D
-			if collider == null:
-				break
-			if collider.global_position.distance_to(candidate.global_position) > own_limit:
-				break
-			var own_body := collider as CollisionObject3D
-			if own_body == null:
-				break
-			excluded.append(own_body.get_rid())
-		if not blocked:
+		if _probe_is_clear(space, from, probe, allowed, excluded):
 			return true
+	return false
+
+
+## One ray, and the only place a collider is ever ignored.
+##
+## A hit on something the object declares as its own support — a desk, a wall it is
+## mounted on, a door frame — is not an obstruction for that object, so the ray is
+## re-cast without it. Every other hit blocks, full stop. The loop is bounded by the
+## number of declared supports so a badly authored object cannot spin here.
+func _probe_is_clear(
+	space: PhysicsDirectSpaceState3D,
+	from: Vector3,
+	to: Vector3,
+	allowed: Array[RID],
+	excluded: Array[RID]
+) -> bool:
+	var skipped: Array[RID] = []
+	var limit := allowed.size() + 1
+	for _attempt in limit:
+		var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
+		query.exclude = excluded + skipped
+		query.collide_with_areas = false
+		query.collide_with_bodies = true
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return true
+		var body := hit.get("collider") as CollisionObject3D
+		if body == null:
+			return false
+		var rid := body.get_rid()
+		if not allowed.has(rid):
+			return false
+		skipped.append(rid)
 	return false
 
 

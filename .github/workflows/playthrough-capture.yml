@@ -3,13 +3,27 @@ name: Playthrough capture
 # Runs the real game in a real window under Xvfb, drives it with simulated keys,
 # and saves what the player would see.
 #
-# Two jobs on purpose:
+# Three jobs on purpose:
 # - `capture` runs on pull requests, main and on demand, with **read-only**
-#   permissions. It is a verification job: it fails when the import fails or when
-#   the playthrough does not reach its end marker.
+#   permissions. It is a verification job: it fails when the import fails, when the
+#   playthrough does not reach its end marker, or when the evidence it staged is not
+#   shaped the way the publishing step expects.
 # - `publish` only runs for a successful capture on `main`, and is the only place
 #   that is allowed to write. A failed or partial run can therefore never replace
 #   the screenshots that a good run produced.
+# - `verify-publish` runs for pull requests against the same artifact and goes
+#   through the same checks with publishing switched off, so the publishing path is
+#   exercised before it is allowed to write anything. Without it, the only place the
+#   publishing step could be tried was `main` itself.
+#
+# The artifact has **one** root: `${{ runner.temp }}/evidence`
+#   evidence/logs/import-1.log, import-2.log, capture.log
+#   evidence/docs/screenshots/*.png, PLAYTHROUGH.log, PLAYTHROUGH.md
+# Everything is uploaded from that one directory, so the paths inside the artifact
+# are the same on the way out as on the way in. The previous version uploaded three
+# files in /tmp and one directory in the workspace; the artifact's common root then
+# depended on where the runner keeps its work folder, and the publishing job looked
+# in a directory that was never there ("the capture produced no frames to publish").
 
 on:
   push:
@@ -17,6 +31,7 @@ on:
     paths:
       - "tests/capture_playthrough.gd"
       - ".github/workflows/playthrough-capture.yml"
+      - ".github/actions/evidence-check/**"
       - "scenes/**"
       - "scripts/**"
       - "data/**"
@@ -25,6 +40,7 @@ on:
     paths:
       - "tests/capture_playthrough.gd"
       - ".github/workflows/playthrough-capture.yml"
+      - ".github/actions/evidence-check/**"
       - "scenes/**"
       - "scripts/**"
       - "data/**"
@@ -47,6 +63,19 @@ jobs:
         with:
           version: 4.7.2
           use-dotnet: false
+
+      - name: Prepare the evidence folder
+        shell: bash
+        run: |
+          set -uo pipefail
+          # RUNNER_TEMP is the one directory every step below agrees on. It is not a
+          # path inside the workspace, so nothing the capture writes into the project
+          # can end up in the artifact by accident.
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          rm -rf "${EVIDENCE}"
+          mkdir -p "${EVIDENCE}/logs" "${EVIDENCE}/docs/screenshots"
+          echo "EVIDENCE=${EVIDENCE}" >> "${GITHUB_ENV}"
+          find "${EVIDENCE}" -maxdepth 3 | sort
 
       - name: Static syntax check
         id: parse
@@ -74,41 +103,46 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
           # Two passes, on purpose. The first scans a fresh checkout, where an
           # asset that another resource points at may not have been imported yet
           # (the bundled CJK font is the usual one), so it may report a dependency
           # that the scan itself is about to create. The second pass starts from a
           # populated import cache: every remaining parse error is real, and this
           # is the pass whose result is trusted.
+          # The logs live in the staged folder from the start, so what is uploaded is
+          # exactly what was checked.
+          first_log="${EVIDENCE}/logs/import-1.log"
+          second_log="${EVIDENCE}/logs/import-2.log"
           run_import () {
             local log="$1"
             godot --headless --editor --path . --quit > "${log}" 2>&1
             return $?
           }
 
-          run_import /tmp/import-1.log
+          run_import "${first_log}"
           first=$?
-          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-1.log | head -n 20 || true
+          grep -E "SCRIPT ERROR|Parse Error|ERROR:" "${first_log}" | head -n 20 || true
           if [ "${first}" -ne 0 ]; then
-            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-1.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" "${first_log}" | head -n 10 | tr '\n' '|' | cut -c1-1500)
             echo "IMPORT_RESULT=failure"
             echo "::error title=import failed (exit ${first})::${summary:-no summary captured}"
             exit "${first}"
           fi
 
-          run_import /tmp/import-2.log
+          run_import "${second_log}"
           second=$?
-          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-2.log | head -n 20 || true
+          grep -E "SCRIPT ERROR|Parse Error|ERROR:" "${second_log}" | head -n 20 || true
           if [ "${second}" -ne 0 ]; then
-            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" "${second_log}" | head -n 10 | tr '\n' '|' | cut -c1-1500)
             echo "IMPORT_RESULT=failure"
             echo "::error title=import failed on the second pass (exit ${second})::${summary:-no summary captured}"
             exit "${second}"
           fi
           # A non-zero exit is not the only way an import breaks: a script that
           # fails to parse is reported in the log while the editor still quits.
-          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import-2.log; then
-            summary=$(grep -E "SCRIPT ERROR|Parse Error" /tmp/import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+          if grep -qE "SCRIPT ERROR|Parse Error" "${second_log}"; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error" "${second_log}" | head -n 10 | tr '\n' '|' | cut -c1-1500)
             echo "IMPORT_RESULT=failure"
             echo "::error title=import reported script errors::${summary}"
             exit 1
@@ -125,15 +159,25 @@ jobs:
           # fails at the end: a run that did not reach its end marker must not look
           # green.
           set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          capture_log="${EVIDENCE}/logs/capture.log"
           mkdir -p docs/screenshots
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
-            --script res://tests/capture_playthrough.gd > /tmp/capture.log 2>&1
+            --script res://tests/capture_playthrough.gd > "${capture_log}" 2>&1
           code=$?
           echo "capture exit=${code}"
-          grep -E "CAPTURE|SCRIPT ERROR|ERROR:" /tmp/capture.log | tail -n 60 || true
+          grep -E "CAPTURE|SCRIPT ERROR|ERROR:" "${capture_log}" | tail -n 60 || true
           ls -l docs/screenshots || true
-          summary=$(grep -E "FAILURE|RESULT" docs/screenshots/PLAYTHROUGH.log 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
+          # The frames the script wrote into the project folder are staged, not moved:
+          # the working tree is never the thing that gets uploaded.
+          if [ -d docs/screenshots ]; then
+            cp -a docs/screenshots/. "${EVIDENCE}/docs/screenshots/" || true
+          fi
+          staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name '*.png' | wc -l)
+          echo "staged frames: ${staged}"
+
+          summary=$(grep -E "FAILURE|RESULT" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
           # The script's own verdict decides, not the process exit code. `quit(0)` does
           # set it, but a windowed run under Xvfb also exits non-zero sometimes while
           # the engine tears down its window and GL context, after the playthrough has
@@ -141,12 +185,12 @@ jobs:
           # about the game. A run that never wrote its marker — because it stopped
           # early or died mid-coroutine — still fails here, as does one that wrote a
           # FAILURE line.
-          if grep -qE "FAILURE: " docs/screenshots/PLAYTHROUGH.log 2>/dev/null; then
+          if grep -qE "FAILURE: " "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null; then
             echo "CAPTURE_RESULT=failure"
             echo "::error title=playthrough reported a failure (exit ${code})::${summary:-no summary}"
             exit 1
           fi
-          if ! grep -qE "^\[[^]]*\] RESULT: " docs/screenshots/PLAYTHROUGH.log 2>/dev/null; then
+          if ! grep -qE "^\[[^]]*\] RESULT: " "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null; then
             echo "CAPTURE_RESULT=failure"
             echo "::error title=playthrough ended without a result marker (exit ${code})::${summary:-no log}"
             exit 1
@@ -155,8 +199,23 @@ jobs:
             echo "::warning title=playthrough::the run exited ${code} after writing its result marker; teardown, not the playthrough"
           fi
           echo "CAPTURE_RESULT=success"
-          echo "shot_count=$(find docs/screenshots -name '*.png' | wc -l)" >> "$GITHUB_OUTPUT"
+          echo "shot_count=${staged}" >> "$GITHUB_OUTPUT"
           echo "::notice title=playthrough::${summary:-capture finished}"
+
+      - name: Stage the frame list
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          # A plain, inspectable record of what the run produced: this is the evidence
+          # that the artifact structure is not a guess.
+          {
+            echo "evidence root: ${EVIDENCE}"
+            echo "--- files ---"
+            find "${EVIDENCE}" -type f | sort
+            echo "--- frames: $(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name '*.png' | wc -l) ---"
+          } | tee "${EVIDENCE}/logs/staged-files.txt"
 
       - name: Summarise the result
         if: always()
@@ -172,8 +231,8 @@ jobs:
             echo "| import | ${IMPORT_OUTCOME:-unknown} |"
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
             echo ""
-            echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) in docs/screenshots after the run."
-            echo "Log: see the run log and the 'playthrough-log' artifact."
+            echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
+            echo "Log: see the run log and the 'playthrough-evidence' artifact."
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           PARSE_OUTCOME: ${{ steps.parse.outcome }}
@@ -186,12 +245,34 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playthrough-evidence
-          path: |
-            /tmp/import-1.log
-            /tmp/import-2.log
-            /tmp/capture.log
-            docs/screenshots
+          # One path, so the artifact's root is this folder and nothing else.
+          path: ${{ runner.temp }}/evidence
           if-no-files-found: warn
+
+  verify-publish:
+    name: Check the publishing path (pull requests only, writes nothing)
+    needs: capture
+    if: github.event_name == 'pull_request' && needs.capture.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Download the artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playthrough-evidence
+          path: ${{ runner.temp }}/evidence
+
+      - name: Verify the structure and the logs
+        uses: ./.github/actions/evidence-check
+        with:
+          evidence: ${{ runner.temp }}/evidence
+          publish: "false"
 
   publish:
     name: Commit the frames (main, successful runs only)
@@ -206,31 +287,14 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Download the frames from the capture job
+      - name: Download the artifact
         uses: actions/download-artifact@v4
         with:
           name: playthrough-evidence
-          path: /tmp/evidence
+          path: ${{ runner.temp }}/evidence
 
-      - name: Commit the frames
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -d /tmp/evidence/docs/screenshots ]; then
-            echo "::error title=no screenshots in the artifact::the capture produced no frames to publish"
-            exit 1
-          fi
-          rm -rf docs/screenshots
-          mkdir -p docs/screenshots
-          cp -a /tmp/evidence/docs/screenshots/. docs/screenshots/
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/screenshots
-          if git diff --cached --quiet; then
-            echo "no screenshot changes"
-            exit 0
-          fi
-          # [skip ci]: the frames are evidence of a run that already happened, not a
-          # change that needs its own full CI pass.
-          git commit -m "Playthrough capture: update screenshots from a successful run [skip ci]"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Verify the structure, then publish
+        uses: ./.github/actions/evidence-check
+        with:
+          evidence: ${{ runner.temp }}/evidence
+          publish: "true"
