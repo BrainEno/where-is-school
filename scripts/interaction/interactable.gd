@@ -44,9 +44,23 @@ const INTERACTION_LAYER := 2
 ## marks the object, it does not decorate it.
 @export var hover_cue_height: float = 0.06
 
+## The bodies that belong to this object, or to the structure it is mounted on: the
+## desk a schoolbag sits on, the wall a timetable is pinned to, a door's frame.
+##
+## Paths are relative to this node and may name the collision body itself or a prop
+## root, in which case every collision body under it counts. Only these are looked
+## through by the line-of-sight probe. Nothing is ever ignored because it happens to
+## stand near the object: a wall beside a notice stays a wall, and blocks the view of
+## the notice from the other side.
+@export var support_paths: PackedStringArray = []
+
 var _prompt_override: String = ""
 var _highlighted := false
 var _cue: MeshInstance3D = null
+## Resolved `support_paths`, or an empty array while unresolved. Rebuilt lazily so the
+## probe does not look up node paths on every frame of every target.
+var _support_rids: Array[RID] = []
+var _support_resolved := false
 
 
 
@@ -58,6 +72,42 @@ func _ready() -> void:
 	if prompt_text.is_empty():
 		push_error("Interactable '%s' has an empty prompt_text." % interact_id)
 	_refresh_monitorable()
+
+
+## The collision bodies the visibility probe may look through for this object.
+##
+## Built from the explicit `support_paths` plus anything parented under this node.
+## Deliberately *not* "anything close by": that heuristic let a free-standing wall be
+## mistaken for part of the object it stood next to.
+func get_support_rids() -> Array[RID]:
+	if _support_resolved:
+		return _support_rids
+	var rids: Array[RID] = []
+	_collect_collider_rids(self, rids, true)
+	for path in support_paths:
+		var node := get_node_or_null(NodePath(path))
+		if node == null:
+			# A path that no longer resolves is a content bug, and a silent one: the
+			# object would simply stop being visible from where it should be.
+			push_error(
+				"Interactable '%s': support path '%s' does not resolve." % [interact_id, path]
+			)
+			continue
+		_collect_collider_rids(node, rids, false)
+	_support_rids = rids
+	_support_resolved = true
+	return _support_rids
+
+
+func _collect_collider_rids(node: Node, rids: Array[RID], skip_self: bool) -> void:
+	if not skip_self:
+		var body := node as CollisionObject3D
+		if body != null:
+			var rid := body.get_rid()
+			if not rids.has(rid):
+				rids.append(rid)
+	for child in node.get_children():
+		_collect_collider_rids(child, rids, false)
 
 
 func can_interact() -> bool:
