@@ -37,6 +37,10 @@ var _abilities: InnerAbilities = null
 var _resolver: CheckResolver = null
 ## The node a check continues to, worked out when the check node was entered.
 var _pending_branch: StringName = &""
+## Which node the pending branch belongs to. A check node continues to the branch *it*
+## rolled and to nothing else; without this, a check node skipped by its own conditions
+## would inherit a branch from an earlier node and jump somewhere unrelated.
+var _pending_branch_node: StringName = &""
 var _last_check: Dictionary = {}
 
 
@@ -226,6 +230,7 @@ func _enter_node(node_id: StringName) -> void:
 
 	_node = node
 	_pending_branch = &""
+	_pending_branch_node = &""
 	_apply_effects(node.effects)
 	if not node.check.is_empty():
 		_resolve_check(node)
@@ -239,9 +244,21 @@ func _enter_node(node_id: StringName) -> void:
 		choices_changed.emit(get_current_choices())
 
 
+## Where the conversation continues after `node`, using only the edges the runtime
+## really has. Validation walks the same rules (see `DialogueGraph._report_unreachable`),
+## so "unreachable" in a content error means unreachable in play.
 func _resolve_next_id(node: DialogueGraph.DialogueNode) -> StringName:
 	if not node.check.is_empty():
-		return _pending_branch
+		# The branch this node rolled, or nothing at all. A skipped check node must not
+		# continue into a branch belonging to some earlier node.
+		if _pending_branch_node == node.node_id:
+			return _pending_branch
+		return &""
+	# A node with choices never falls through. The schema says so, validation now says
+	# so, and this is the line that makes it true: with nothing to offer, the
+	# presentation ends instead of walking into a line the author was told was dead.
+	if not node.choices.is_empty():
+		return &""
 	if node.ends_here:
 		return &""
 	if not String(node.next_id).is_empty():
@@ -264,6 +281,7 @@ func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
 		_reject("a check in a subjective conversation was not rolled or recorded")
 		_last_check = {}
 		_pending_branch = node.check.get("failure", &"")
+		_pending_branch_node = node.node_id
 		return
 	var key := "%s/%s" % [conversation_id, node.node_id]
 	var record_flag := StoryFlags.check_record_flag(conversation_id, node.node_id)
@@ -289,6 +307,7 @@ func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
 			_set_flag(record_flag, result)
 	result["kind"] = String(node.check.get("kind", "visible"))
 	_last_check = result
+	_pending_branch_node = node.node_id
 	_pending_branch = (
 		node.check.get("success", &"")
 		if bool(result.get("success", false))
