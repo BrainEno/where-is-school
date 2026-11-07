@@ -447,6 +447,12 @@ func _diagnose_interaction(expected: StringName) -> String:
 		parts.append("expected_distance=%.2f" % offset.length())
 		parts.append("expected_can_interact=%s" % str(expected_node.can_interact()))
 		parts.append("expected_los=%s" % str(_interaction._has_line_of_sight(expected_node)))
+	parts.append("max_distance=%.2f facing_weight=%.2f" % [
+		_interaction.max_distance, _interaction.facing_weight
+	])
+	var facing := _player.get_facing_direction()
+	facing.y = 0.0
+	facing = facing.normalized()
 	for child in _player.get_children():
 		var sensor := child as Area3D
 		if sensor == null or not sensor.name.ends_with("InteractionSensor"):
@@ -454,9 +460,19 @@ func _diagnose_interaction(expected: StringName) -> String:
 		var ids := PackedStringArray()
 		for area: Area3D in sensor.get_overlapping_areas():
 			var interactable := area as Interactable
-			var label := "<freed>" if interactable == null else String(interactable.interact_id)
-			ids.append("%s@%.2f" % [label, area.global_position.distance_to(_player.global_position)])
-		parts.append("overlaps=[%s]" % ", ".join(ids))
+			if interactable == null:
+				ids.append("<freed>")
+				continue
+			var offset := interactable.global_position - _player.global_position
+			offset.y = 0.0
+			var distance := offset.length()
+			var alignment := facing.dot(offset.normalized()) if distance > 0.001 else 0.0
+			var score := distance + _interaction.facing_weight * (1.0 - maxf(alignment, 0.0))
+			ids.append("%s d=%.2f a=%.2f s=%.2f los=%s" % [
+				interactable.interact_id, distance, alignment, score,
+				str(_interaction._has_line_of_sight(interactable)),
+			])
+		parts.append("candidates=[%s]" % "; ".join(ids))
 	return " ".join(parts)
 
 
