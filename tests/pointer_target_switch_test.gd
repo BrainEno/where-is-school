@@ -20,6 +20,9 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
+## Standing near the back of the classroom, so the probes below are in view but out of
+## arm's reach: a click on one of them has to become a walk.
+const START := Vector3(0.0, 0.0, 3.0)
 const TIMEOUT_SECONDS := 12.0
 
 var _failures: Array[String] = []
@@ -112,13 +115,13 @@ func _run() -> void:
 ## a walk rather than an instant activation. Their ids are legal inspections so that an
 ## activation is a normal request; this test never reads what they say.
 func _place_probes() -> void:
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.6)))
+	_player.teleport(START)
 	await _physics_frames(2)
 	var origin := _player.global_position
-	_probe_a = _make_probe(&"switch_probe_a", origin + Vector3(-1.1, 0.9, -1.4))
-	_probe_b = _make_probe(&"switch_probe_b", origin + Vector3(1.1, 0.9, -1.4))
-	_probe_c = _make_probe(&"switch_probe_c", origin + Vector3(-1.1, 0.9, 1.4))
-	_probe_d = _make_probe(&"switch_probe_d", origin + Vector3(1.1, 0.9, 1.4))
+	_probe_a = _make_probe(&"switch_probe_a", origin + Vector3(-1.1, 0.9, -3.5))
+	_probe_b = _make_probe(&"switch_probe_b", origin + Vector3(0.9, 0.9, -3.8))
+	_probe_c = _make_probe(&"switch_probe_c", origin + Vector3(-1.1, 0.9, -2.8))
+	_probe_d = _make_probe(&"switch_probe_d", origin + Vector3(0.9, 0.9, -2.8))
 	await _physics_frames(4)
 
 
@@ -344,7 +347,7 @@ func _check_target_freed_and_disabled() -> void:
 func _reset_to_start() -> void:
 	await _settle_dialogue()
 	_sequence.allow_player_control()
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.6)))
+	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(3)
 
 

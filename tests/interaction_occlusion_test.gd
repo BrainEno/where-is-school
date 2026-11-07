@@ -103,20 +103,20 @@ func _run() -> void:
 ## wall part of the object.
 func _check_wall_far_from_the_target() -> void:
 	await _reset()
-	var target := _make_probe(&"occlusion_far", Vector3(0.0, 0.9, -3.0))
-	var wall := _make_wall(Vector3(0.0, 1.0, -1.5), Vector3(4.0, 2.0, 0.2))
+	var target := _make_probe(&"occlusion_far", Vector3(0.0, 0.9, -1.6))
+	var wall := _make_wall(Vector3(0.0, 1.2, -0.6), Vector3(4.0, 2.4, 0.2))
 	await _physics_frames(4)
-	await _assert_blocked(target, "a wall 1.5 m in front of the target", wall)
+	await _assert_blocked(target, "a wall 1.0 m in front of the target", wall)
 
 
 ## The same wall moved to 0.6 m in front of the target: close enough to have been
 ## excluded by the old distance rule, and just as solid.
 func _check_wall_next_to_the_target() -> void:
 	await _reset()
-	var target := _make_probe(&"occlusion_near", Vector3(0.0, 0.9, -3.0))
-	var wall := _make_wall(Vector3(0.0, 1.0, -2.4), Vector3(4.0, 2.0, 0.2))
+	var target := _make_probe(&"occlusion_near", Vector3(0.0, 0.9, -1.7))
+	var wall := _make_wall(Vector3(0.0, 1.2, -1.1), Vector3(4.0, 2.4, 0.2))
 	await _physics_frames(4)
-	await _assert_blocked(target, "a wall 0.6 m in front of the target", wall)
+	await _assert_blocked(target, "a wall 0.6 m in front of the target, well inside the old 1.6 m rule", wall)
 
 
 ## Everything a blocked target must fail, in one place: the visibility probe, the
@@ -151,25 +151,18 @@ func _assert_blocked(target: Interactable, what: String, wall: StaticBody3D) -> 
 
 
 ## A notice on a wall: the part of the wall it is fixed to is the object's own backing
-## and declares itself as support, so the notice is readable through it. A second notice
-## on the very same wall declares nothing, and the identical wall blocks it — which is
+## and declares itself as support, so the notice is readable through it. The same notice
+## with nothing declared, in the same place, is hidden by the very same wall — which is
 ## what makes the first result mean something.
 func _check_declared_backing_is_seen_through() -> void:
 	await _reset()
-	var wall := _make_wall(Vector3(0.0, 1.0, -2.0), Vector3(4.0, 3.0, 0.2))
-	var notice := _make_probe(&"occlusion_notice", Vector3(-0.7, 1.2, -1.95))
+	var wall := _make_wall(Vector3(0.0, 1.2, -0.6), Vector3(4.0, 2.4, 0.2))
+	var notice := _make_probe(&"occlusion_notice", Vector3(0.0, 1.2, -0.62), 0.5)
 	notice.support_paths = PackedStringArray([notice.get_path_to(wall)])
-	var unclaimed := _make_probe(&"occlusion_notice_undeclared", Vector3(0.7, 1.2, -1.95))
 	await _physics_frames(4)
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, notice):
 		_failures.append("A notice could not be seen through the wall it is mounted on. %s" % _explain(notice))
-	if _interaction.has_line_of_sight_from(eye, unclaimed):
-		_failures.append(
-			"An undeclared notice on the same wall was visible through it; the declared"
-			+ " case proves nothing. %s" % _explain(unclaimed)
-		)
-	_activated.clear()
 	_interaction.set_mouse_override(_screen_of(notice.global_position))
 	await _physics_frames(4)
 	if _interaction.get_current_target() != notice:
@@ -178,10 +171,25 @@ func _check_declared_backing_is_seen_through() -> void:
 			% [_name_of(_interaction.get_current_target()), _explain(notice)]
 		)
 	_interaction.clear_mouse_override()
+	_activated.clear()
 	await _push_e()
 	if not _activated.has(&"occlusion_notice"):
 		_failures.append("E could not use a notice on its own wall. %s" % _explain(notice))
 	await _settle_dialogue()
+
+	# The same notice, the same wall, nothing declared.
+	await _free_probe(notice)
+	var plain := _make_probe(&"occlusion_notice_undeclared", Vector3(0.0, 1.2, -0.62), 0.5)
+	await _physics_frames(4)
+	if _interaction.has_line_of_sight_from(eye, plain):
+		_failures.append(
+			"An undeclared notice was visible through the wall it stands on, so the"
+			+ " declared case proves nothing. %s" % _explain(plain)
+		)
+	_activated.clear()
+	await _push_e()
+	if _activated.has(&"occlusion_notice_undeclared"):
+		_failures.append("E used an undeclared notice through a wall.")
 
 
 # --- case 4: a bag behind the desk it sits on --------------------------------
@@ -189,27 +197,34 @@ func _check_declared_backing_is_seen_through() -> void:
 
 ## The case the old heuristic existed for, done explicitly. The cupboard stands between
 ## the player and the schoolbag, so every probe crosses it: the bag that declares the
-## cupboard is usable, the bag that declares nothing is not.
+## cupboard is usable, and the same bag with nothing declared is not.
 func _check_bag_on_a_desk() -> void:
 	await _reset()
-	var desk := _make_wall(Vector3(0.0, 0.7, -2.6), Vector3(1.2, 1.4, 0.6))
-	var bag := _make_probe(&"occlusion_bag", Vector3(-0.4, 0.55, -2.6))
+	var desk := _make_wall(Vector3(0.0, 0.7, -1.0), Vector3(1.2, 1.4, 0.6))
+	var bag := _make_probe(&"occlusion_bag", Vector3(0.0, 0.55, -1.0), 0.5)
 	bag.support_paths = PackedStringArray([bag.get_path_to(desk)])
-	var unclaimed := _make_probe(&"occlusion_bag_undeclared", Vector3(0.4, 0.55, -2.6))
 	await _physics_frames(4)
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, bag):
 		_failures.append("A schoolbag declared on its own desk could not be seen. %s" % _explain(bag))
-	if _interaction.has_line_of_sight_from(eye, unclaimed):
-		_failures.append(
-			"An undeclared object inside the desk was visible through it: the desk is not"
-			+ " blocking, so the declared case proves nothing. %s" % _explain(unclaimed)
-		)
 	_activated.clear()
 	await _push_e()
 	if not _activated.has(&"occlusion_bag"):
 		_failures.append("E could not use a schoolbag declared on its own desk. %s" % _explain(bag))
 	await _settle_dialogue()
+
+	await _free_probe(bag)
+	var plain := _make_probe(&"occlusion_bag_undeclared", Vector3(0.0, 0.55, -1.0), 0.5)
+	await _physics_frames(4)
+	if _interaction.has_line_of_sight_from(eye, plain):
+		_failures.append(
+			"An undeclared object inside the desk was visible through it: the desk is not"
+			+ " blocking, so the declared case proves nothing. %s" % _explain(plain)
+		)
+	_activated.clear()
+	await _push_e()
+	if _activated.has(&"occlusion_bag_undeclared"):
+		_failures.append("E used an undeclared object through the desk it sits on.")
 
 
 # --- case 5: heights ---------------------------------------------------------
@@ -219,9 +234,9 @@ func _check_bag_on_a_desk() -> void:
 ## height, and the same wall must block from a crouched one.
 func _check_eye_heights() -> void:
 	await _reset()
-	var target := _make_probe(&"occlusion_height", Vector3(0.0, 1.2, -3.0))
+	var target := _make_probe(&"occlusion_height", Vector3(0.0, 1.2, -1.6))
 	# 0.9 m tall: above a crouched eye, below a standing one.
-	_make_wall(Vector3(0.0, 0.45, -1.5), Vector3(4.0, 0.9, 0.2))
+	_make_wall(Vector3(0.0, 0.45, -0.6), Vector3(4.0, 0.9, 0.2))
 	await _physics_frames(4)
 	var from := _player.global_position
 	if _interaction.has_line_of_sight_from(from + Vector3.UP * 0.5, target):
@@ -239,8 +254,8 @@ func _check_eye_heights() -> void:
 ## nor activates, and says why.
 func _check_approach_spot_refuses_a_blocked_view() -> void:
 	await _reset()
-	var target := _make_probe(&"occlusion_approach", Vector3(0.0, 0.9, -2.2))
-	_make_wall(Vector3(0.0, 1.0, -1.35), Vector3(5.0, 2.0, 0.2))
+	var target := _make_probe(&"occlusion_approach", Vector3(0.0, 0.9, -1.2))
+	_make_wall(Vector3(0.0, 1.2, -0.4), Vector3(5.0, 2.4, 0.2))
 	await _physics_frames(4)
 	# Every spot the approach search would try is behind the wall.
 	var seen_from_a_spot := false
@@ -248,7 +263,7 @@ func _check_approach_spot_refuses_a_blocked_view() -> void:
 		var angle := TAU * float(index) / 16.0
 		var spot := target.global_position + Vector3(cos(angle) * 1.0, 0.0, sin(angle) * 1.0)
 		if _interaction.has_line_of_sight_from(spot + Vector3.UP * _interaction.eye_height, target) \
-				and spot.z > -1.35:
+				and spot.z > -0.4:
 			# A spot on the room side of the wall that can see the object would make
 			# this case meaningless.
 			seen_from_a_spot = true
@@ -292,14 +307,21 @@ func _clean_up() -> void:
 	_probes.clear()
 
 
-func _make_probe(interact_id: StringName, position: Vector3) -> Interactable:
+func _free_probe(probe: Interactable) -> void:
+	_probes.erase(probe)
+	if is_instance_valid(probe):
+		probe.queue_free()
+	await _physics_frames(2)
+
+
+func _make_probe(interact_id: StringName, position: Vector3, radius: float = 0.7) -> Interactable:
 	var packed: PackedScene = load(PROBE_SCENE)
 	var probe := packed.instantiate() as Interactable
 	probe.name = String(interact_id)
 	probe.interact_id = interact_id
 	probe.prompt_text = "Probe"
 	probe.inspection_id = &"classroom_own_desk"
-	probe.radius = 0.7
+	probe.radius = radius
 	_location.add_child(probe)
 	probe.global_position = position
 	_probes.append(probe)

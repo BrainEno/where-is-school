@@ -480,7 +480,9 @@ func _on_location_entered(location: LocationRoot, _spawn_id: StringName) -> void
 
 
 ## A location change is the one moment where Q legitimately stands still on a map that
-## is not there yet. Wait for the new scene's navigation to answer, then place Q on it.
+## is not there yet. Wait for the new scene's navigation to answer, then snap Q onto it
+## — but only while Q is still standing where it was put. Once Q has walked, moving it
+## again would be a teleport the player can see.
 func _settle_after_transition() -> void:
 	_navigation_ready = false
 	_clear_route()
@@ -490,12 +492,19 @@ func _settle_after_transition() -> void:
 	if not visible:
 		_navigation_ready = true
 		return
-	var deadline := Time.get_ticks_msec() + int(navigation_ready_timeout * 1000.0)
-	while is_inside_tree() and Time.get_ticks_msec() < deadline:
+	var placed_at := global_position
+	# Counted in physics frames, not milliseconds: a test (or a slow frame) can make
+	# wall-clock time mean nothing here.
+	var budget := maxi(1, int(navigation_ready_timeout * 60.0))
+	while is_inside_tree() and budget > 0:
 		if _map_has_geometry(_navigation_map()):
 			break
 		await get_tree().physics_frame
+		budget -= 1
 	_navigation_ready = true
+	if global_position.distance_to(placed_at) > 0.5:
+		# Q has already walked on the new floor; the mesh is good enough.
+		return
 	_place_behind_player()
 
 
