@@ -230,11 +230,15 @@ velocity, applies gravity, calls `move_and_slide()` and turns the visual; manual
 and path following both feed it a direction. A walk is started with
 `request_path_to(point)`, which refuses (returns false) when control is locked, when
 the map has no geometry, when the point is more than 0.75 m off the mesh horizontally
-or more than 1.5 m off it vertically, or when `map_get_path()` produces no route. It
-then hands the destination to the body's `NavigationAgent3D`, and each physics frame
-asks the agent for the next path position. Arrival is measured against `arrival_radius`,
-and a stall watchdog (`stall_timeout`, 2 s without progress) ends a walk that is
-pressed against geometry instead of letting it push forever. There is no second
+or more than 1.5 m off it vertically, or when `map_get_path()` produces no route. The
+route that comes back is kept and walked in order: each physics frame the body steers
+at the next corner, dropping any corner it has arrived at (`waypoint_radius`, 0.35 m).
+The body follows the route itself rather than asking the `NavigationAgent3D` for a next
+position, because the agent's own path index is updated on the server's step and lags
+the body: with a long physics step the character could rock between two corners it had
+already passed, indefinitely. Arrival is measured against `arrival_radius`, and a stall
+watchdog (`stall_timeout`, 2 s without progress) ends a walk that is pressed against
+geometry instead of letting it push forever. There is no second
 movement system, and no code path sets `global_position` to fake progress.
 
 **`PointerNavigator` — the intent.** It listens on `_unhandled_input`, so a click a

@@ -51,6 +51,11 @@ signal path_cancelled
 ## Give up on a walk that makes no progress for this long, instead of pressing into a
 ## wall forever.
 @export_range(0.5, 10.0, 0.1) var stall_timeout: float = 2.0
+## How close to a corner of the route counts as having reached it. The body then walks
+## on to the next leg; the map's route is followed by this body rather than by the
+## agent's own index, which lags a frame or two behind the body and can leave a walk
+## rocking between two corners it has already passed.
+@export_range(0.1, 1.5, 0.05) var waypoint_radius: float = 0.35
 
 var _control_enabled: bool = true
 var _camera_roll: float = 0.0
@@ -59,15 +64,10 @@ var _path_active: bool = false
 var _path_target: Vector3 = Vector3.ZERO
 var _path_progress_elapsed: float = 0.0
 var _path_last_position: Vector3 = Vector3.ZERO
-## The route this body asked the map for, kept for the frames before the agent has a
-## path of its own.
+## The route the navigation map returned for the current request, in order.
 var _path_legs := PackedVector3Array()
-## Whether the agent has produced a path for the current request. Until it has, it
-## reports "navigation finished", which must not be mistaken for arrival.
-var _path_armed := false
-## Seconds since the current request, used to stop waiting for an agent that never
-## answers.
-var _path_age: float = 0.0
+## Which leg of that route the body is walking towards.
+var _path_index: int = 0
 
 
 func _ready() -> void:
@@ -208,18 +208,29 @@ func request_path_to(destination: Vector3) -> bool:
 	_path_active = true
 	_path_target = target
 	_path_legs = path
-	_path_armed = false
-	_path_age = 0.0
+	# The first point is where the body already is.
+	_path_index = 1
 	_path_progress_elapsed = 0.0
 	_path_last_position = global_position
 	navigation_agent.target_position = target
 	return true
 
 
+## The route the current walk is following, for tests and diagnostics.
+func get_path_legs() -> PackedVector3Array:
+	return _path_legs
+
+
+func get_path_index() -> int:
+	return _path_index
+
+
 func cancel_path() -> void:
 	if not _path_active:
 		return
 	_path_active = false
+	_path_legs = PackedVector3Array()
+	_path_index = 0
 	if navigation_agent != null:
 		# Pointing the agent at the body clears the path it is holding.
 		navigation_agent.target_position = global_position
@@ -237,24 +248,10 @@ func get_path_target() -> Vector3:
 ## Direction to ask for this frame while following the navigation path. Ends the walk
 ## (with the matching signal) when it has arrived, lost its path, or stalled.
 func _path_direction(delta: float) -> Vector3:
-	_path_age += delta
-	var remaining := _flat_distance(_path_target)
-	if remaining <= arrival_radius:
+	if _flat_distance(_path_target) <= arrival_radius:
 		_finish_path()
 		return Vector3.ZERO
-
-	var agent_path := navigation_agent.get_current_navigation_path()
-	if agent_path.size() >= 2:
-		_path_armed = true
-	var agent_finished := navigation_agent.is_navigation_finished()
-	if agent_finished and _path_armed:
-		# The agent thinks it is done but the body is not inside the arrival radius:
-		# either it stopped at the edge of the mesh or the target drifted. Do not
-		# creep towards it in a straight line past geometry.
-		_finish_path()
-		return Vector3.ZERO
-	if agent_finished and _path_age > 0.5:
-		# Half a second and the agent still has no path of its own: nothing is coming.
+	if _path_legs.size() < 2:
 		_finish_path()
 		return Vector3.ZERO
 
@@ -271,37 +268,32 @@ func _path_direction(delta: float) -> Vector3:
 			_abort_path()
 			return Vector3.ZERO
 
-	# Before the agent has answered, follow the first leg of the route this body asked
-	# the map for. Waiting instead would leave the character standing on the first
-	# frame of every walk that starts before the agent has built its path.
-	var next_point: Vector3
-	if _path_armed and not agent_finished:
-		next_point = navigation_agent.get_next_path_position()
-	elif _path_legs.size() >= 2:
-		next_point = _path_legs[1]
-	else:
-		next_point = _path_target
+	# Walk the route: every corner the body has reached is dropped. The route comes
+	# from the navigation map, so it already bends around everything the map knows
+	# about; following it in order keeps a walk from turning back on itself.
+	var here := Vector3(global_position.x, 0.0, global_position.z)
+	while _path_index < _path_legs.size() - 1:
+		var leg := Vector3(_path_legs[_path_index].x, 0.0, _path_legs[_path_index].z)
+		if leg.distance_to(here) <= waypoint_radius:
+			_path_index += 1
+		else:
+			break
+
+	var next_point := _path_legs[_path_index]
 	var to_next := next_point - global_position
 	to_next.y = 0.0
-	var heading := Vector3(velocity.x, 0.0, velocity.z)
-	var step := heading.length() * delta
 	if to_next.length() < 0.05:
-		# The agent's next point is under the body and it has not advanced yet. Keep the
-		# current heading; standing still here would be counted as a stall above.
-		return heading.normalized() if heading.length() > 0.2 else Vector3.ZERO
-	var just_passed := to_next.dot(heading) < 0.0 and to_next.length() <= maxf(0.35, step * 1.5)
-	if heading.length() > 0.2 and just_passed:
-		# A point the body has just stepped past. Turning back to touch it is how a
-		# character ends up rocking east and west around a corner instead of walking:
-		# the agent advances its own index on its next process step, so hold the
-		# heading for this frame rather than reversing.
-		return heading.normalized()
-
+		# Standing on the last corner: the target itself is the only thing left.
+		var to_target := _path_target - global_position
+		to_target.y = 0.0
+		return to_target.normalized() if to_target.length() > 0.05 else Vector3.ZERO
 	return to_next.normalized()
 
 
 func _finish_path() -> void:
 	_path_active = false
+	_path_legs = PackedVector3Array()
+	_path_index = 0
 	if navigation_agent != null:
 		navigation_agent.target_position = global_position
 	path_finished.emit()
@@ -309,6 +301,8 @@ func _finish_path() -> void:
 
 func _abort_path() -> void:
 	_path_active = false
+	_path_legs = PackedVector3Array()
+	_path_index = 0
 	if navigation_agent != null:
 		navigation_agent.target_position = global_position
 	path_cancelled.emit()

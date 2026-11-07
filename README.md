@@ -87,8 +87,8 @@ courtyard, the alley and the schoolyard — and **each one owns its own navigati
 Nothing is imported from a neighbouring room and nothing is hand-painted: every
 location scene has a `NavigationRegion3D` named `Navigation` that bakes itself from
 that scene's own static colliders when the location loads
-(`scripts/world/location_navigation.gd`). The player owns a single `NavigationAgent3D`
-and one movement implementation, so a clicked walk accelerates, collides and turns
+(`scripts/world/location_navigation.gd`). The player walks the route the map returns
+with one movement implementation, so a clicked walk accelerates, collides and turns
 exactly like a walked one.
 
 Adding navigation to a new location is therefore one node and one line:

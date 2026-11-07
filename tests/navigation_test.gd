@@ -516,14 +516,11 @@ func _walk_until_settled(limit_seconds: float) -> bool:
 		await physics_frame
 		frames += 1
 		if frames % 40 == 0:
-			var agent := _player.navigation_agent
 			_walk_trail.append(
-				"(%0.1f,%0.1f|legs=%d|armed=%d|fin=%d)"
+				"(%0.1f,%0.1f|legs=%d|leg=%d)"
 				% [
 					_player.global_position.x, _player.global_position.z,
-					agent.get_current_navigation_path().size(),
-					int(agent.get_current_navigation_path().size() >= 2),
-					int(agent.is_navigation_finished())
+					_player.get_path_legs().size(), _player.get_path_index()
 				]
 			)
 		if Time.get_ticks_msec() > deadline:
@@ -535,17 +532,16 @@ func _walk_until_settled(limit_seconds: float) -> bool:
 ## What the walk was doing when it went wrong: the agent's next point, whether it
 ## thinks it is finished, the first waypoints, and where the body actually went.
 func _walk_state(nav: LocationNavigation) -> String:
-	var agent := _player.navigation_agent
-	var path := agent.get_current_navigation_path()
+	var path := _player.get_path_legs()
 	var waypoints := ""
 	for index in mini(path.size(), 5):
 		waypoints += "(%.1f,%.1f,%.1f)" % [path[index].x, path[index].y, path[index].z]
 	var trail := ""
 	for entry in _walk_trail:
 		trail += entry
-	return "[next=%s finished=%s path=%d %s trail=%s %s]" % [
-		str(agent.get_next_path_position()), str(agent.is_navigation_finished()),
-		path.size(), waypoints, trail, _report(nav)
+	return "[target=%s leg=%d path=%d %s active=%s trail=%s %s]" % [
+		str(_player.get_path_target()), _player.get_path_index(), path.size(), waypoints,
+		str(_player.is_path_active()), trail, _report(nav)
 	]
 
 

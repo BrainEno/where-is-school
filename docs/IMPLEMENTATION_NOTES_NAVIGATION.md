@@ -52,6 +52,11 @@ reasoning and the evidence.
   exposes `is_routable()` (it asks the map for a real route) and re-hands the mesh over
   once if the polygons did not arrive; the tests wait for it instead of for
   `is_baked()`.
+- **The route is followed by the body, not by the agent's index.** The walk keeps the
+  path the map returned and drops each corner it reaches. Asking `NavigationAgent3D`
+  for the next path position each frame reads a path index the server updates on its own
+  step, which lags the body; with a long physics step the character rocked between two
+  corners it had already passed, for as long as the walk was allowed to last.
 - **The body climbs a kerb, and the mesh agrees.** `CharacterBody3D` treats every box
   as a wall, so a 15–28 cm kerb stopped the character dead while the mesh (with a
   0.4 m climb) promised it was walkable. `PlayerController.max_step_height` (0.3 m)
