@@ -202,6 +202,48 @@ jobs:
           echo "shot_count=${staged}" >> "$GITHUB_OUTPUT"
           echo "::notice title=playthrough::${summary:-capture finished}"
 
+      - name: Capture the dialogue layout
+        id: ui_capture
+        shell: bash
+        run: |
+          # A second window run, for the text rather than the walk. It boots the same
+          # main scene and photographs the real dialogue panel at three resolutions in
+          # both languages, plus a real choice list, an inspection, a recollection and
+          # the log. The step fails when fewer frames than that arrive, so a silently
+          # empty capture cannot pass as evidence.
+          set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          ui_log="${EVIDENCE}/logs/ui-capture.log"
+          mkdir -p docs/screenshots
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_dialogue_ui.gd > "${ui_log}" 2>&1
+          code=$?
+          echo "dialogue capture exit=${code}"
+          grep -E "SHOT|FAILURE|PASS|SCRIPT ERROR|ERROR:" "${ui_log}" | tail -n 40 || true
+          if [ -d docs/screenshots ]; then
+            cp -a docs/screenshots/ui-*.png "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
+            cp -a docs/screenshots/UI_CAPTURE.log "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
+          fi
+          staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'ui-*.png' | wc -l)
+          echo "staged dialogue frames: ${staged}"
+          if [ "${staged}" -lt 6 ]; then
+            echo "UI_CAPTURE_RESULT=failure"
+            echo "::error title=dialogue capture::only ${staged} dialogue frame(s) were produced"
+            exit 1
+          fi
+          if grep -qE "^FAILURE: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
+            echo "UI_CAPTURE_RESULT=failure"
+            echo "::error title=dialogue capture::the script reported a failure"
+            exit 1
+          fi
+          if ! grep -qE "^RESULT: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
+            echo "UI_CAPTURE_RESULT=failure"
+            echo "::error title=dialogue capture::the script wrote no result marker"
+            exit 1
+          fi
+          echo "UI_CAPTURE_RESULT=success"
+
       - name: Stage the frame list
         if: always()
         shell: bash
@@ -230,6 +272,7 @@ jobs:
             echo "| syntax | ${PARSE_OUTCOME:-unknown} |"
             echo "| import | ${IMPORT_OUTCOME:-unknown} |"
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
+            echo "| dialogue frames | ${UI_CAPTURE_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
             echo "Log: see the run log and the 'playthrough-evidence' artifact."
@@ -238,6 +281,7 @@ jobs:
           PARSE_OUTCOME: ${{ steps.parse.outcome }}
           IMPORT_OUTCOME: ${{ steps.import.outcome }}
           CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
+          UI_CAPTURE_OUTCOME: ${{ steps.ui_capture.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
 
       - name: Upload the evidence

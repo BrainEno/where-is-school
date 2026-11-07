@@ -14,6 +14,7 @@ extends Node3D
 
 var _body: MeshInstance3D = null
 var _head: MeshInstance3D = null
+var _nameplate: CharacterNameplate = null
 
 
 func _ready() -> void:
@@ -25,6 +26,13 @@ func _ready() -> void:
 	if _body == null:
 		push_error("NpcActor '%s' needs a MeshInstance3D child named 'Body'." % debug_name)
 	_apply_color(body_color)
+	# The label already exists in the actor scene; it only needs to know who it is
+	# labelling. Doing it here means a new actor instance gets a name by setting
+	# `npc_id`, with no extra node to wire up in the location scene.
+	_nameplate = get_node_or_null(^"Nameplate") as CharacterNameplate
+	if _nameplate != null and String(_nameplate.character_id).is_empty():
+		_nameplate.character_id = npc_id
+		_nameplate.refresh()
 
 
 func _apply_color(color: Color) -> void:

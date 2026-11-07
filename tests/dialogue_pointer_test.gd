@@ -119,6 +119,11 @@ func _check_world_clicks_are_counted() -> void:
 ## which is done on the same choice screen so the run does not depend on the room
 ## offering its stay/leave node twice.
 func _check_real_conversation_click() -> void:
+	# The saved language is a per-user setting and the previous run may have left the
+	# other one behind. Start from a known language so "the options changed" means the
+	# switch worked and not that it switched to the language already on screen.
+	L10n.set_locale("en")
+	_dialogue.apply_locale("en")
 	if not await _open_a_choice():
 		return
 	var buttons := _buttons()

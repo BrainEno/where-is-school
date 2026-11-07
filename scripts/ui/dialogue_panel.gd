@@ -2,11 +2,26 @@ class_name DialoguePanel
 extends Control
 ## View for dialogue and inspection text. Owns presentation only.
 ##
-## It renders a line, its speaker, the narrative category badge, and any choices;
-## it translates input into intents (`advance_requested`, `choice_selected`) and
-## leaves story state to the DialogueController. Long text reveals at a readable
-## speed, and the first advance press completes the reveal instead of skipping
-## the line.
+## The panel is a **reading surface at the edge of the world**, not a chat window:
+##
+## - it is a band in the lower left, never full width, so the room stays the main
+##   picture; a soft ink wash fades its top edge into the scene instead of drawing a
+##   heavy box around it;
+## - the speaker's name is the anchor, the role is quieter, and the sentence is the
+##   largest thing on screen;
+## - the narrative source (seen / heard / remembered / imagined) is a hairline and a
+##   small tracked label, not a badge that competes with the prose;
+## - choices sit on their own lines below a rule, left-aligned, with a margin mark on
+##   hover — text to read and pick, not a column of buttons.
+##
+## It still translates input into intents (`advance_requested`, `choice_selected`)
+## and leaves story state to the DialogueController.
+##
+## Layout is measured, not guessed. The band width, the text column and the height are
+## computed from the viewport and from the text the panel is actually holding, so the
+## same scene reads correctly at 1280x720, 1600x900 and 1920x1080, and a long line
+## scrolls inside the body instead of growing past the screen. Nothing shrinks the type
+## to make text fit: the type sizes are fixed and the panel adapts around them.
 
 signal advance_requested
 signal choice_selected(index: int)
@@ -17,6 +32,28 @@ signal backlog_requested
 ## Extra characters revealed per frame while holding the advance key.
 @export var skip_multiplier: float = 8.0
 
+@export_category("Band")
+## Fraction of the viewport width the reading band may use at most.
+@export_range(0.3, 0.8, 0.01) var band_width_ratio: float = 0.6
+@export var band_min_width: float = 620.0
+@export var band_max_width: float = 1040.0
+## Distance from the left edge, as a fraction of the viewport width, capped below.
+@export_range(0.0, 0.2, 0.005) var side_margin_ratio: float = 0.055
+@export var side_margin_max: float = 92.0
+@export var bottom_margin: float = 38.0
+@export var min_height: float = 176.0
+## Fraction of the viewport height the band may grow to before the body scrolls.
+@export_range(0.35, 0.85, 0.01) var max_height_ratio: float = 0.62
+
+@export_category("Type")
+@export var speaker_size: int = 26
+@export var role_size: int = 13
+@export var badge_size: int = 12
+@export var title_size: int = 16
+@export var body_size: int = 22
+@export var choice_size: int = 20
+@export var hint_size: int = 12
+
 @onready var _speaker_label: Label = %SpeakerLabel
 @onready var _role_label: Label = %RoleLabel
 @onready var _badge_label: Label = %SourceBadge
@@ -25,6 +62,9 @@ signal backlog_requested
 @onready var _choices_container: VBoxContainer = %ChoicesContainer
 @onready var _hint_label: Label = %HintLabel
 @onready var _frame: PanelContainer = %Frame
+@onready var _source_rule: ColorRect = %SourceRule
+@onready var _choice_rule: ColorRect = %ChoiceRule
+@onready var _wash: TextureRect = %Wash
 
 const SOURCE_COLORS: Dictionary = {
 	NarrativeEntry.Source.OBSERVED: Color(0.776, 0.733, 0.643, 1.0),
@@ -34,95 +74,151 @@ const SOURCE_COLORS: Dictionary = {
 }
 
 const SUBJECTIVE_TINT := Color(0.717, 0.427, 0.286, 1.0)
+const PAPER := Color(0.898, 0.871, 0.804, 1.0)
+const MUTED := Color(0.611, 0.6, 0.561, 1.0)
+const INK := Color(0.055, 0.065, 0.067, 0.78)
 
 var _reveal_progress: float = 0.0
 var _revealing: bool = false
 var _choice_buttons: Array[Button] = []
 var _line: Dictionary = {}
+var _accent: Color = PAPER
+var _style_normal: StyleBoxEmpty = StyleBoxEmpty.new()
+var _style_hover: StyleBoxFlat = StyleBoxFlat.new()
+var _style_pressed: StyleBoxFlat = StyleBoxFlat.new()
+## Two-pass layout: the first frame sets the width the text will really wrap at, the
+## next one measures what that produced. Measuring in the same frame as the resize is
+## how a panel ends up sized for the text it had a moment ago.
+var _layout_dirty: bool = false
+var _layout_stage: int = 0
 
 
 func _ready() -> void:
 	hide()
 	_choices_container.hide()
 	_hint_label.hide()
+	_apply_type()
 	refresh_static_text()
+	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
+		get_viewport().size_changed.connect(_on_viewport_resized)
+	_build_choice_styles()
+	_choices_container.add_theme_constant_override("separation", 2)
+	_queue_fit()
 
 
-func show_line(line: Dictionary) -> void:
+## Type is set here rather than only in the scene so the panel has one source of truth
+## for its scale, and tests can read the sizes that are really in use.
+func _apply_type() -> void:
+	_speaker_label.add_theme_font_size_override("font_size", speaker_size)
+	_speaker_label.add_theme_font_override("font", _tracked_font(_speaker_label, 3))
+	# A name that would push the role and the source label out of the band is trimmed
+	# with an ellipsis instead. The name is the anchor, not a reason to break the frame.
+	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_role_label.add_theme_font_size_override("font_size", role_size)
+	_badge_label.add_theme_font_size_override("font_size", badge_size)
+	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label, 2))
+	_title_label.add_theme_font_size_override("font_size", title_size)
+	_hint_label.add_theme_font_size_override("font_size", hint_size)
+	_body_label.add_theme_font_size_override("normal_font_size", body_size)
+
+
+## A `FontVariation` of the project font with extra letter spacing. The project ships
+## one font; this widens it for the two short labels (name, source) instead of adding a
+## second typeface.
+func _tracked_font(source: Label, amount: int) -> Font:
+	var base := source.get_theme_font("font")
+	if base == null:
+		return null
+	var variation := FontVariation.new()
+	variation.base_font = base
+	variation.spacing_glyph = amount
+	return variation
+
+
+func show_line(line: Dictionary, keep_state: bool = false) -> void:
+	var was_complete := not _revealing
 	_line = line
 	show()
 	_move_to_front()
 
-	_speaker_label.text = String(line.get("speaker_name", ""))
-	var role_text := String(line.get("speaker_role", ""))
+	_speaker_label.text = _speaker_text(line)
+	_speaker_label.add_theme_color_override("font_color", _speaker_color(line))
+	var role_text := _role_text(line)
 	_role_label.text = role_text
 	_role_label.visible = not role_text.is_empty()
-	_speaker_label.add_theme_color_override("font_color", line.get("accent_color", Color.WHITE))
 
-	# The badge is stored as a locale key by the runtime/controller.
-	var badge_key := String(line.get("badge", ""))
-	var badge := L10n.t(badge_key) if not badge_key.is_empty() else ""
+	# The badge is stored as a locale key by the runtime/controller; the panel owns the
+	# translation so a language switch only has to call refresh_static_text().
+	var badge := _badge_text(line)
 	_badge_label.text = badge
 	_badge_label.visible = not badge.is_empty()
-	var source_value := int(line.get("source", NarrativeEntry.Source.OBSERVED))
-	var badge_color: Color = SOURCE_COLORS.get(source_value, Color.WHITE)
-	_badge_label.add_theme_color_override("font_color", badge_color)
-	if line.get("subjective", false):
-		badge_color = SUBJECTIVE_TINT
-		_badge_label.add_theme_color_override("font_color", badge_color)
-		_speaker_label.add_theme_color_override("font_color", SUBJECTIVE_TINT)
-	var border_color: Color = badge_color
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.106, 0.118, 0.118, 0.94)
-	style.border_color = Color(border_color.r, border_color.g, border_color.b, 0.55)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(3)
-	style.content_margin_left = 22.0
-	style.content_margin_right = 22.0
-	style.content_margin_top = 16.0
-	style.content_margin_bottom = 16.0
-	_frame.add_theme_stylebox_override("panel", style)
+
+	_accent = _accent_for(line)
+	_apply_accent(_accent)
 
 	var title := String(line.get("title", ""))
 	_title_label.text = title
 	_title_label.visible = not title.is_empty()
 
 	_body_label.text = String(line.get("text", ""))
-	_body_label.visible_characters = 0
-	_reveal_progress = 0.0
-	_revealing = _body_label.text.length() > 0
-
 	set_choices([])
+	if keep_state and was_complete:
+		_body_label.visible_characters = -1
+		_reveal_progress = float(_body_label.text.length())
+		_revealing = false
+	else:
+		_body_label.visible_characters = 0
+		_reveal_progress = 0.0
+		_revealing = _body_label.text.length() > 0
+
 	refresh_static_text()
 	_hint_label.show()
 	_update_hint_visibility()
+	_queue_fit()
 
 
 func set_choices(choices: Array) -> void:
 	for button in _choice_buttons:
-		button.queue_free()
+		if is_instance_valid(button):
+			_choices_container.remove_child(button)
+			button.queue_free()
 	_choice_buttons.clear()
 	_choices_container.hide()
+	_choice_rule.visible = false
 	if choices.is_empty():
+		_queue_fit()
 		return
 
 	for index in choices.size():
 		var choice: Dictionary = choices[index]
 		var button := Button.new()
-		button.text = "%d. %s" % [index + 1, String(choice.get("text", ""))]
+		button.name = "Choice%d" % (index + 1)
+		button.text = "%d.  %s" % [index + 1, String(choice.get("text", ""))]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.focus_mode = Control.FOCUS_NONE
-		button.add_theme_font_size_override("font_size", 20)
-		button.custom_minimum_size = Vector2(0.0, 40.0)
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		button.add_theme_font_size_override("font_size", choice_size)
+		button.add_theme_constant_override("outline_size", 0)
+		button.custom_minimum_size = Vector2(0.0, 32.0)
+		_apply_choice_colors(button)
+		button.add_theme_stylebox_override("normal", _style_normal)
+		button.add_theme_stylebox_override("hover", _style_hover)
+		button.add_theme_stylebox_override("pressed", _style_pressed)
+		button.add_theme_stylebox_override("hover_pressed", _style_pressed)
+		button.add_theme_stylebox_override("focus", _style_normal)
+		button.add_theme_stylebox_override("disabled", _style_normal)
 		button.pressed.connect(_on_choice_button_pressed.bind(index))
 		_choices_container.add_child(button)
 		_choice_buttons.append(button)
 	_choices_container.show()
+	_choice_rule.visible = true
 	if _revealing:
 		complete_reveal()
 	refresh_static_text()
 	_update_hint_visibility()
+	_queue_fit()
 
 
 func close() -> void:
@@ -156,6 +252,23 @@ func has_choices() -> bool:
 	return not _choice_buttons.is_empty()
 
 
+## The option buttons, in order. Read by the tests that click them for real.
+func get_choice_buttons() -> Array[Button]:
+	return _choice_buttons.duplicate()
+
+
+func get_body_label() -> RichTextLabel:
+	return _body_label
+
+
+func get_body_text() -> String:
+	return _body_label.text if _body_label != null else ""
+
+
+func is_body_scrolling() -> bool:
+	return _body_label != null and _body_label.scroll_active
+
+
 ## Re-resolves every string the panel owns. Called on language switches and
 ## whenever a line is shown, so hints and badges never stay in the old language.
 func refresh_static_text() -> void:
@@ -165,26 +278,27 @@ func refresh_static_text() -> void:
 		_hint_label.text = L10n.t("ui.dialogue_choose", {"count": _choice_buttons.size()})
 	else:
 		_hint_label.text = L10n.t("ui.dialogue_continue")
-	if not _line.is_empty():
-		var badge_key := String(_line.get("badge", ""))
-		if not badge_key.is_empty():
-			_badge_label.text = L10n.t(badge_key)
-		var role_key_source := String(_line.get("speaker_id", ""))
-		if not role_key_source.is_empty():
-			_role_label.text = L10n.t("role.%s" % role_key_source) \
-				if L10n.has_key("role.%s" % role_key_source) else _role_label.text
+	if _line.is_empty():
+		return
+	_badge_label.text = _badge_text(_line)
+	_role_label.text = _role_text(_line)
+	_speaker_label.text = _speaker_text(_line)
+	_choice_rule.visible = has_choices()
+	_queue_fit()
 
 
-## Redraws the line that is already on screen, used by a language switch.
+## Redraws the line that is already on screen, used by a language switch. The reveal
+## state is kept: a line that was already readable stays readable instead of typing
+## itself out again in the new language.
 func redraw_current_line() -> void:
 	if _line.is_empty():
 		return
-	var line := _line
-	line["badge"] = String(line.get("badge", ""))
-	show_line(line)
+	show_line(_line, true)
 
 
 func _process(delta: float) -> void:
+	if _layout_dirty and visible:
+		_settle_layout()
 	if not _revealing:
 		return
 	var direction := 1.0
@@ -221,6 +335,168 @@ func _unhandled_input(event: InputEvent) -> void:
 		advance_requested.emit()
 
 
+func _on_choice_button_pressed(index: int) -> void:
+	choice_selected.emit(index)
+
+
+func _on_viewport_resized() -> void:
+	_queue_fit()
+
+
+func _queue_fit() -> void:
+	_layout_stage = 0
+	_layout_dirty = true
+
+
+# --- Layout -----------------------------------------------------------------
+
+
+func _settle_layout() -> void:
+	var viewport_size := get_viewport_rect().size
+	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
+		return
+	var left := minf(viewport_size.x * side_margin_ratio, side_margin_max)
+	var width := clampf(viewport_size.x * band_width_ratio, band_min_width, band_max_width)
+	width = minf(width, viewport_size.x - left * 2.0)
+	var max_height := viewport_size.y * max_height_ratio
+
+	if _layout_stage == 0:
+		# Give the frame the width the text will really wrap at, and the tallest height
+		# it is allowed. What the content measures under those two constraints is what
+		# the band should be.
+		offset_left = left
+		offset_right = left + width
+		offset_bottom = -bottom_margin
+		offset_top = -bottom_margin - max_height
+		_body_label.fit_content = true
+		_body_label.scroll_active = false
+		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+		_layout_stage = 1
+		_layout_dirty = true
+		return
+
+	var needed: float = _frame.get_combined_minimum_size().y
+	var scrolling := needed > max_height + 0.5
+	var height := max_height if scrolling else clampf(needed, min_height, max_height)
+	offset_top = -bottom_margin - height
+	if scrolling:
+		# The body keeps the room that is left and scrolls; nothing is cut off and no
+		# type size is reduced to force the paragraph in.
+		_body_label.fit_content = false
+		_body_label.scroll_active = true
+	_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+	_layout_stage = 0
+	_layout_dirty = false
+
+
+## Everything the layout produced, for the tests and for a screenshot caption.
+func get_layout_report() -> Dictionary:
+	var rect := get_global_rect()
+	var body_rect := _body_label.get_global_rect()
+	return {
+		"viewport": get_viewport_rect().size,
+		"panel_rect": rect,
+		"body_rect": body_rect,
+		"body_content_height": _body_label.get_content_height(),
+		"body_scrolling": _body_label.scroll_active,
+		"body_font_size": _body_label.get_theme_font_size("normal_font_size"),
+		"speaker_font_size": _speaker_label.get_theme_font_size("font_size"),
+		"choice_count": _choice_buttons.size(),
+		"choice_font_size": choice_size,
+		"covers_width": rect.size.x / maxf(get_viewport_rect().size.x, 1.0),
+		"covers_height": rect.size.y / maxf(get_viewport_rect().size.y, 1.0),
+	}
+
+
+# --- Text -------------------------------------------------------------------
+
+
+## Names come from the character profile but are displayed from the locale table when
+## it has one, so the same speaker reads the same way on screen and in the backlog.
+func _speaker_text(line: Dictionary) -> String:
+	var speaker_id := String(line.get("speaker_id", ""))
+	if not speaker_id.is_empty() and L10n.has_key("name.%s" % speaker_id):
+		return L10n.t("name.%s" % speaker_id)
+	return String(line.get("speaker_name", ""))
+
+
+func _role_text(line: Dictionary) -> String:
+	var speaker_id := String(line.get("speaker_id", ""))
+	if speaker_id.is_empty():
+		return String(line.get("speaker_role", ""))
+	if L10n.has_key("role.%s" % speaker_id):
+		return L10n.t("role.%s" % speaker_id)
+	return String(line.get("speaker_role", ""))
+
+
+func _badge_text(line: Dictionary) -> String:
+	var badge_key := String(line.get("badge", ""))
+	if badge_key.is_empty():
+		return ""
+	return L10n.t(badge_key)
+
+
+func _speaker_color(line: Dictionary) -> Color:
+	if line.get("subjective", false):
+		return SUBJECTIVE_TINT
+	return line.get("accent_color", PAPER)
+
+
+func _accent_for(line: Dictionary) -> Color:
+	if line.get("subjective", false):
+		return SUBJECTIVE_TINT
+	var source_value := int(line.get("source", NarrativeEntry.Source.OBSERVED))
+	return SOURCE_COLORS.get(source_value, PAPER)
+
+
+## The source is drawn twice, both times quietly: a hairline along the top edge and a
+## small tracked label. Neither is allowed to out-shout the sentence.
+func _apply_accent(accent: Color) -> void:
+	_source_rule.color = Color(accent.r, accent.g, accent.b, 0.55)
+	_badge_label.add_theme_color_override(
+		"font_color", Color(accent.r, accent.g, accent.b, 0.66)
+	)
+	var style := StyleBoxFlat.new()
+	style.bg_color = INK
+	style.content_margin_left = 36.0
+	style.content_margin_top = 16.0
+	style.content_margin_right = 32.0
+	style.content_margin_bottom = 14.0
+	_frame.add_theme_stylebox_override("panel", style)
+	_wash.modulate = Color(1.0, 1.0, 1.0, 0.9)
+
+
+func _apply_choice_colors(button: Button) -> void:
+	button.add_theme_color_override("font_color", Color(0.807, 0.788, 0.741, 0.86))
+	button.add_theme_color_override("font_hover_color", PAPER)
+	button.add_theme_color_override("font_pressed_color", PAPER)
+	button.add_theme_color_override("font_focus_color", PAPER)
+
+
+## Option styling lives in one place so every rebuilt list looks the same after a
+## language switch: flat by default, a margin mark and a lifted line on hover. The
+## shapes are built once and shared by every option.
+func _build_choice_styles() -> void:
+	_style_normal.content_margin_left = 10.0
+	_style_normal.content_margin_right = 6.0
+	_style_normal.content_margin_top = 4.0
+	_style_normal.content_margin_bottom = 4.0
+	_style_hover.bg_color = Color(0.776, 0.733, 0.643, 0.07)
+	_style_hover.border_width_left = 2
+	_style_hover.border_color = Color(0.776, 0.733, 0.643, 0.55)
+	_style_hover.content_margin_left = 10.0
+	_style_hover.content_margin_right = 6.0
+	_style_hover.content_margin_top = 4.0
+	_style_hover.content_margin_bottom = 4.0
+	_style_pressed.bg_color = Color(0.776, 0.733, 0.643, 0.12)
+	_style_pressed.border_width_left = 2
+	_style_pressed.border_color = Color(0.898, 0.871, 0.804, 0.8)
+	_style_pressed.content_margin_left = 10.0
+	_style_pressed.content_margin_right = 6.0
+	_style_pressed.content_margin_top = 4.0
+	_style_pressed.content_margin_bottom = 4.0
+
+
 ## Returns a zero-based choice index when the event is a digit key.
 func _digit_from_event(event: InputEvent) -> int:
 	var key_event := event as InputEventKey
@@ -230,10 +506,6 @@ func _digit_from_event(event: InputEvent) -> int:
 	if code >= KEY_1 and code <= KEY_9:
 		return int(code - KEY_1)
 	return -1
-
-
-func _on_choice_button_pressed(index: int) -> void:
-	choice_selected.emit(index)
 
 
 func _update_hint_visibility() -> void:

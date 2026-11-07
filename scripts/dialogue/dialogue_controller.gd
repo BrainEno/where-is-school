@@ -55,6 +55,13 @@ var _active_inspection_id: StringName = &""
 var _active_inspection_variant: String = ""
 ## The line the panel is showing right now, whatever produced it.
 var _current_line: Dictionary = {}
+## Every event the player has read, identified by content ids rather than by text.
+## The backlog renders it; the tests read it to prove a language switch adds nothing.
+var _history := DialogueHistory.new()
+## True while a language switch is re-emitting the current line. The runtime cannot
+## tell a rebind from a new node, so the controller says so explicitly instead of
+## guessing from the text.
+var _republishing: bool = false
 
 
 func _ready() -> void:
@@ -111,6 +118,9 @@ func _ready() -> void:
 	_panel.backlog_requested.connect(_on_backlog_requested)
 	if _backlog != null:
 		_backlog.hide()
+		# The backlog rebuilds past lines from their content ids; the controller knows
+		# how to turn an id back into a line in the current language.
+		_backlog.set_resolver(_render_entry)
 	_panel.refresh_static_text()
 
 	# The language switch lives in the Loc autoload; the controller owns the
@@ -197,11 +207,16 @@ func apply_locale(locale: String) -> bool:
 	_inspections.set_locale(code)
 	if _abilities != null:
 		_abilities.set_locale(code)
+	# Everything inside this window is a re-render of the line already on screen. The
+	# runtime re-emits it, and the controller must not treat that as a new event: no
+	# effect, no record, no flag, no new backlog row.
+	_republishing = true
 	if _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_active():
 		var graph := _library.get_graph(_runtime.get_active_conversation_id())
 		_runtime.rebind_graph(graph)
 	elif _mode == Mode.INSPECTION and not String(_active_inspection_id).is_empty():
 		_refresh_inspection_text()
+	_republishing = false
 	if _panel != null:
 		_panel.refresh_static_text()
 	if _backlog != null:
@@ -373,12 +388,17 @@ func _present_next_queued_line() -> void:
 	_present_line(line)
 
 
-func _present_line(line: Dictionary) -> void:
+func _present_line(line: Dictionary, republished: bool = false) -> void:
+	if republished:
+		_publish_again(line)
+		return
 	_current_line = line
+	var descriptor := _descriptor(line)
+	_history.record(descriptor)
 	_apply_line_state(line)
 	_panel.show_line(line)
 	if _backlog != null:
-		_backlog.add_entry(line)
+		_backlog.add_entry(descriptor)
 	var is_subjective := bool(line.get("subjective", false))
 	if is_subjective != _subjective:
 		_subjective = is_subjective
@@ -386,34 +406,89 @@ func _present_line(line: Dictionary) -> void:
 	line_presented.emit(line)
 
 
-## Re-renders the line currently on screen after a language change. Only the
-## visible text is rebuilt; state stays exactly as it was.
+## Replaces what is on screen with the same event, said in the language that is now
+## selected. The backlog row is updated in place when it is the newest one; if the
+## identity does not match, the line is genuinely new and is appended, because two
+## different events must never collapse into one row.
+func _publish_again(line: Dictionary) -> void:
+	_current_line = line
+	var descriptor := _descriptor(line)
+	_history.update_last(descriptor)
+	_panel.show_line(line, true)
+	if _backlog != null:
+		_backlog.replace_last(descriptor)
+
+
+## Re-renders the line currently on screen after a language change. Only the visible
+## text is rebuilt; state stays exactly as it was.
 func _refresh_inspection_text() -> void:
 	var inspection := _inspections.get_inspection(_active_inspection_id)
 	if inspection == null:
 		return
-	var variant := _active_inspection_variant
+	var line := _compose_inspection(inspection, _active_inspection_variant)
+	if String(line.get("text", "")).is_empty():
+		return
+	_present_line(line, true)
+
+
+## Rebuilds one inspection line from its id and variant, in the current language. Used
+## both for the line on screen and for the backlog, so first read, repeat read and
+## recollection keep their own text, badge and title after any number of switches.
+func _compose_inspection(
+	inspection: InspectionLibrary.InspectionData, variant: String
+) -> Dictionary:
+	var chosen := variant
+	if chosen.is_empty():
+		chosen = "first"
 	var text := inspection.text
 	var badge_source := inspection.source
-	if variant == "repeat":
+	if chosen == "repeat":
 		text = _observation_text(inspection, true)
-	elif variant == "recall":
+	elif chosen == "recall":
 		text = inspection.recall_text
 		badge_source = NarrativeEntry.Source.RECALLED
-	if text.is_empty():
-		return
 	var line := _build_inspection_line(inspection, text)
-	if variant == "recall":
-		line["source"] = int(NarrativeEntry.Source.RECALLED)
-		line["badge"] = NarrativeEntry.badge_key_for(NarrativeEntry.Source.RECALLED)
-		line["variant"] = "recall"
-	else:
-		line["variant"] = variant
+	line["variant"] = chosen
+	line["source"] = int(badge_source)
 	line["badge"] = NarrativeEntry.badge_key_for(badge_source)
-	_current_line = line
-	_panel.show_line(line)
-	if _backlog != null:
-		_backlog.replace_last(line)
+	if chosen == "recall":
+		line["title"] = _recall_title(inspection)
+	return line
+
+
+## What the history and the backlog store: the line plus its identity, with everything
+## that changes the world removed. A rebuild re-renders text; it can never re-apply an
+## effect, re-record knowledge, or flip a flag, because those keys are not kept.
+func _descriptor(line: Dictionary) -> Dictionary:
+	var entry := line.duplicate(true)
+	entry["identity"] = DialogueHistory.identify(line)
+	for key in ["effects", "record", "set_flag"]:
+		entry.erase(key)
+	return entry
+
+
+## Turns a stored descriptor back into a line in the current language. The backlog
+## calls this on a language switch; it reads content and never writes state.
+func _render_entry(descriptor: Dictionary) -> Dictionary:
+	var conversation_id := StringName(String(descriptor.get("conversation_id", "")))
+	var node_id := StringName(String(descriptor.get("node_id", "")))
+	if not String(conversation_id).is_empty() and _library != null:
+		var graph := _library.get_graph(conversation_id)
+		if graph != null:
+			var conversation := graph.get_conversation(conversation_id)
+			if conversation != null:
+				var node: DialogueGraph.DialogueNode = conversation.nodes.get(node_id, null)
+				if node != null:
+					return DialogueRuntime.compose_line(
+						conversation, node, _characters, _abilities
+					)
+	var inspection_id := StringName(String(descriptor.get("inspection_id", "")))
+	if not String(inspection_id).is_empty() and _inspections != null:
+		var inspection := _inspections.get_inspection(inspection_id)
+		if inspection != null:
+			return _compose_inspection(inspection, String(descriptor.get("variant", "first")))
+	# Last resort: the text the row was created with, so a row is never blank.
+	return descriptor.duplicate(true)
 
 
 ## Applies the state changes a line carries. Only first reads and conversation
@@ -452,7 +527,7 @@ func _apply_inspection_effect(effect: Dictionary) -> void:
 
 
 func _on_line_changed(line: Dictionary) -> void:
-	_present_line(line)
+	_present_line(line, _republishing)
 
 
 # A visible check gets the numbers on screen; a hidden one gets nothing at all, so

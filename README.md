@@ -24,7 +24,27 @@ the same activation the E key runs. Every playable location carries its own navi
 mesh, baked when it loads.
 
 Everything the player reads is data, and the whole game can be switched between
-English and simplified Chinese while it runs.
+English and simplified Chinese while it runs — including the sentence on screen, the
+log behind it and the names over the people in the room.
+
+## Reading the game
+
+The dialogue is a band of text at the lower left of the picture, not a window over it.
+The room stays visible; the band fades into the scene instead of framing itself. Inside
+it, in this order: a single hairline in the colour of the narrative source, the
+speaker's name (large, tracked, tinted by the character), the role (small, quiet), the
+sentence (the largest thing on screen, with a measured line width and line spacing), a
+numbered list of options on their own lines under a rule, and a hint. Long prose scrolls
+inside the band; the type size never shrinks to make it fit, and the layout is measured
+from the real content at 1280x720, 1600x900 and 1920x1080. The four sources — seen,
+heard, remembered, imagined — stay distinguishable through that hairline and a small
+label, not through badges or loud colours.
+
+In development builds each grey-box person carries their name above their head, from
+the same character profile and the same locale tables as the dialogue, so it changes
+with the language. The labels have no collision and never receive a click, and they are
+off in a release export (override with
+`ui/nameplates/show_development_nameplates`).
 
 **Current route** (the intended way through the slice):
 
@@ -70,10 +90,12 @@ controls, architecture, and the older known limitations.
   always name the same object E would use. E remains the keyboard-only way to
   interact.
 - **Space / Enter** — continue dialogue.
-- **Left click on a dialogue option** — take that option. Options are ordinary
-  buttons, so a click selects exactly one; clicks on the panel never reach the world.
+- **Left click on a dialogue option** — take that option. Options are real buttons
+  drawn as text lines, so a click selects exactly one, the same option cannot be taken
+  twice, and clicks on the panel never reach the world.
 - **1–9** — pick a dialogue choice by number.
-- **Tab** — open or close the dialogue log.
+- **Tab** — open or close the dialogue log. Entries keep their identity and their order
+  when the language changes; only their words do.
 - **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
 
 While a conversation, a scripted beat or a location transition is running, the
@@ -113,7 +135,9 @@ missing.
 - AGENTS.md — authoritative coding-agent instructions.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
-- docs/screenshots/ — frames captured from a real, running window by `tests/capture_playthrough.gd`.
+- docs/screenshots/ — frames captured from a real, running window by
+  `tests/capture_playthrough.gd`, plus the dialogue layout frames written by
+  `tests/capture_dialogue_ui.gd` at 1280x720, 1600x900 and 1920x1080 in both languages.
 - assets/ — placeholder materials and generated audio, tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
