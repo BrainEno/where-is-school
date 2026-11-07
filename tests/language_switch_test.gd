@@ -63,7 +63,9 @@ func _run() -> void:
 	var before_text := String(before.get("text", ""))
 	var before_node := String(before.get("node_id", ""))
 	var flags_before := _flag_snapshot()
-	var entries_before := _narrative.get_entry_ids().size() if _narrative.has_method("get_entry_ids") else -1
+	var entries_before: int = -1
+	if _narrative.has_method("get_entry_ids"):
+		entries_before = int(_narrative.get_entry_ids().size())
 	var objectives_before := String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
 
 	# --- switch while the line is on screen ------------------------------

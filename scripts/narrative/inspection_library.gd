@@ -243,11 +243,15 @@ func _parse_effects(raw: Variant, context: String, locale: String) -> Array:
 func _check_parity() -> void:
 	var reference_locale: String = L10n.LOCALES[0]
 	var reference := InspectionLibrary.new()
+	# get_ids()/get_inspection() read the library's own locale, so the two shells
+	# used for the comparison must be told which language they are holding.
+	reference._locale = reference_locale
 	for locale in L10n.LOCALES:
 		if locale == reference_locale:
 			reference._entries[reference_locale] = _entries[reference_locale]
 			continue
 		var other := InspectionLibrary.new()
+		other._locale = locale
 		other._entries[locale] = _entries[locale]
 		errors.append_array(
 			DialogueParity.compare_inspections(reference, other, reference_locale, locale)

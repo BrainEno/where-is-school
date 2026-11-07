@@ -132,8 +132,8 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 	var body := _player as CollisionObject3D
 	if body != null:
 		excluded.append(body.get_rid())
-	for height in [0.35, 0.05]:
-		var to := candidate.global_position + Vector3.UP * height
+	for height: float in [0.35, 0.05]:
+		var to: Vector3 = candidate.global_position + Vector3.UP * height
 		var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
 		query.exclude = excluded
 		query.collide_with_areas = false

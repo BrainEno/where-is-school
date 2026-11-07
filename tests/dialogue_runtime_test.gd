@@ -23,12 +23,6 @@ const FIXTURE := {
 					"speaker": "b",
 					"text": "Fixture line inside an imagined conversation.",
 					"effects": [
-						{"type": "set_flag", "flag": "fixture_forbidden_flag", "value": true},
-						{"type": "set_objective", "key": "objective.check_bag"},
-						{"type": "record", "entry_id": "fixture_observed",
-						 "source": "observed", "speaker": "b", "text": "Fixture observed claim."},
-						{"type": "record", "entry_id": "fixture_reported",
-						 "source": "reported", "speaker": "b", "text": "Fixture reported claim."},
 						{"type": "record", "entry_id": "fixture_recalled",
 						 "source": "recalled", "speaker": "protagonist", "text": "Fixture memory."},
 						{"type": "record", "entry_id": "fixture_imagined",
@@ -52,6 +46,37 @@ const FIXTURE := {
 				},
 				{"id": "o2", "speaker": "q", "text": "Fixture repeat.", "next": "o1"},
 				{"id": "o3", "speaker": "q", "text": "Fixture end.", "next": null}
+			]
+		}
+	}
+}
+
+## Content that the parser has to refuse: a subjective conversation may never
+## write story state or record factual knowledge.
+const FORBIDDEN := {
+	"format_version": 2,
+	"locale": "en",
+	"chapter": "fixture",
+	"conversations": {
+		"fixture_forbidden": {
+			"default_source": "imagined",
+			"subjective": true,
+			"start": "f1",
+			"nodes": [
+				{
+					"id": "f1",
+					"speaker": "b",
+					"text": "Fixture line inside a forbidden conversation.",
+					"effects": [
+						{"type": "set_flag", "flag": "fixture_forbidden_flag", "value": true},
+						{"type": "set_objective", "key": "objective.check_bag"},
+						{"type": "record", "entry_id": "fixture_observed",
+						 "source": "observed", "speaker": "b", "text": "Fixture observed claim."},
+						{"type": "record", "entry_id": "fixture_reported",
+						 "source": "reported", "speaker": "b", "text": "Fixture reported claim."}
+					],
+					"next": null
+				}
 			]
 		}
 	}
@@ -154,10 +179,8 @@ func _test_subjective_boundaries(
 		return
 
 	var objective_before := String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
+	var flags_before := game_state.get_flag(&"fixture_forbidden_flag", null)
 	var runtime := _new_runtime(game_state, narrative, characters)
-	var rejections: Array[String] = []
-	runtime.effect_rejected.connect(func(reason: String) -> void: rejections.append(reason))
-
 	var flags := {"subjective_seen": false}
 	runtime.line_changed.connect(
 		func(line: Dictionary) -> void:
@@ -173,7 +196,7 @@ func _test_subjective_boundaries(
 
 	if not bool(flags["subjective_seen"]):
 		_failures.append("Subjective lines were not flagged as subjective.")
-	if bool(game_state.get_flag(&"fixture_forbidden_flag", false)):
+	if game_state.get_flag(&"fixture_forbidden_flag", null) != flags_before:
 		_failures.append("A subjective conversation changed a story flag.")
 	if String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != objective_before:
 		_failures.append("A subjective conversation changed the objective.")
@@ -185,10 +208,26 @@ func _test_subjective_boundaries(
 		_failures.append("A subjective conversation could not record a memory.")
 	if not narrative.has_entry(&"fixture_imagined"):
 		_failures.append("A subjective conversation could not record imagined content.")
-	if rejections.size() != 4:
-		_failures.append(
-			"Expected 4 rejected subjective effects, got %d." % rejections.size()
-		)
+
+	# The same content with the forbidden effects must not even parse: the rule has
+	# to hold before a single line is shown, not only while the runtime runs.
+	var forbidden_path := "user://dialogue_runtime_forbidden.json"
+	var file := FileAccess.open(forbidden_path, FileAccess.WRITE)
+	if file == null:
+		_failures.append("Could not write the forbidden fixture.")
+		return
+	file.store_string(JSON.stringify(FORBIDDEN, "  "))
+	file.close()
+	var forbidden := DialogueGraph.load_from_file(forbidden_path)
+	if forbidden.is_valid():
+		_failures.append("A subjective conversation that writes story state was accepted.")
+		return
+	var joined := "\n".join(forbidden.errors)
+	for fragment: String in ["fixture_forbidden", "f1", "flag", "objective", "observed", "reported"]:
+		if not joined.contains(fragment):
+			_failures.append(
+				"The subjective-content error does not mention '%s': %s" % [fragment, joined]
+			)
 
 
 func _test_once_choice(
