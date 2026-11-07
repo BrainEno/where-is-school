@@ -72,3 +72,32 @@ Do not force every scene to use every color. The palette should emerge from mate
 - Long Chinese dialogue requires comfortable line length, line spacing, font size controls, backlog, and clear speaker/choice hierarchy.
 - Do not put decorative textures behind text if they compromise contrast.
 - Support text speed and skip controls before content volume grows.
+
+### The dialogue surface (implemented)
+
+The dialogue reads as text laid on the world, not as a window over it. The band sits in
+the lower left, fades into the scene along its top edge, and never takes more than about
+two thirds of the width or height — the room remains the picture.
+
+The hierarchy is fixed, and it is the whole design:
+
+1. **the sentence** — the largest text on screen, at a measured line length and with
+   generous line spacing, in the project's one CJK-capable font;
+2. **the speaker's name** — an anchor, tracked slightly wider than body text, tinted by
+   that character's accent;
+3. **the role** — present, small, muted: the identity behind the name, not a label to
+   read first;
+4. **the narrative source** — a hairline and a 12 px label, in a muted version of the
+   source colour. Seen, heard, remembered and imagined must be distinguishable at a
+   glance and never announce themselves with badges, pills or saturated blocks;
+5. **the options** — text on their own lines under a rule, numbered, flat until the
+   pointer touches them, then a 2 px margin mark and a lifted line. No filled buttons,
+   no iconography, no glow.
+
+Portraits are planned and not drawn: the layout reserves the left margin and the space
+above the band for one, and shows nothing there until real art exists. A placeholder
+silhouette is not an acceptable substitute.
+
+Name labels over grey-box people are a **development instrument**, not a game UI
+element: small, tracked, paper-coloured, outlined, always facing the camera, hidden in
+release builds.

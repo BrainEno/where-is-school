@@ -390,25 +390,42 @@ func _requirements_met(requires: Dictionary) -> bool:
 
 
 func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
-	var source_value: int = _conversation.default_source
+	return compose_line(_conversation, node, _characters, _abilities)
+
+
+## Builds the presentation dictionary for one node of one conversation.
+##
+## Static and free of runtime state on purpose: the backlog rebuilds past lines from
+## their content ids after a language switch, and it has to produce exactly what the
+## live runtime produced, including the translated speaker name and the inner-voice
+## override. Two implementations would drift apart at the first content edit.
+static func compose_line(
+	conversation: DialogueGraph.DialogueConversation,
+	node: DialogueGraph.DialogueNode,
+	characters: CharacterDirectory,
+	abilities: InnerAbilities
+) -> Dictionary:
+	var source_value: int = conversation.default_source
 	if node.source >= 0:
 		source_value = node.source
 	var speaker_id := node.speaker_id
 	var speaker_name := String(speaker_id)
 	var speaker_role := ""
 	var accent_color := Color.WHITE
-	if _characters != null:
-		speaker_name = _characters.get_display_name(speaker_id)
-		speaker_role = _characters.get_short_role(speaker_id)
-		accent_color = _characters.get_accent_color(speaker_id)
+	if characters != null:
+		speaker_name = characters.get_localized_name(speaker_id)
+		speaker_role = characters.get_short_role(speaker_id)
+		accent_color = characters.get_accent_color(speaker_id)
+	elif L10n.has_key("name.%s" % String(speaker_id)):
+		speaker_name = L10n.t("name.%s" % String(speaker_id))
 	# Inner voices are not people: their name is the translated ability name, not
 	# a fixed string in a character resource.
-	if _abilities != null:
-		var voice_name := _abilities.get_name_for_speaker(speaker_id)
+	if abilities != null:
+		var voice_name := abilities.get_name_for_speaker(speaker_id)
 		if not voice_name.is_empty():
 			speaker_name = voice_name
 	return {
-		"conversation_id": _conversation.conversation_id,
+		"conversation_id": conversation.conversation_id,
 		"node_id": node.node_id,
 		"speaker_id": speaker_id,
 		"speaker_name": speaker_name,
@@ -418,7 +435,7 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"text": node.text,
 		"source": source_value,
 		"badge": NarrativeEntry.badge_key_for(source_value),
-		"subjective": _conversation.subjective,
+		"subjective": conversation.subjective,
 		"tags": node.tags,
 	}
 

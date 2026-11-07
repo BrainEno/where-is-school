@@ -21,6 +21,7 @@ const CHARACTER_PATHS: Array[String] = [
 
 var errors: Array[String] = []
 var _profiles: Dictionary = {}
+static var _cached: CharacterDirectory = null
 
 
 static func load_all() -> CharacterDirectory:
@@ -52,6 +53,30 @@ func has_character(character_id: StringName) -> bool:
 
 func get_profile(character_id: StringName) -> CharacterProfile:
 	return _profiles.get(character_id, null)
+
+
+## The name to put in front of a line of dialogue or above a character in the world.
+## The profile holds the name the content was written around; the locale table holds
+## how that name reads in each language. Falling back to the profile means a character
+## with no localized name still has a name, and falling back to the id keeps a missing
+## profile visible instead of silent.
+func get_localized_name(character_id: StringName) -> String:
+	var key := "name.%s" % String(character_id)
+	if L10n.has_key(key):
+		return L10n.t(key)
+	return get_display_name(character_id)
+
+
+## Cached directory for nodes that need a name but are not part of the dialogue
+## session (the character nameplates in the world).
+static func load_cached() -> CharacterDirectory:
+	if _cached == null:
+		_cached = load_all()
+	return _cached
+
+
+static func reset_cache_for_tests() -> void:
+	_cached = null
 
 
 ## Falls back to the raw id so a missing profile is visible in game rather than

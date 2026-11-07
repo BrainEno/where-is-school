@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="1_controller"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_controller.gd" id="2_interaction"]
 [ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="3_occluder"]
 [ext_resource type="Script" path="res://scripts/interaction/pointer_navigator.gd" id="4_navigator"]
+[ext_resource type="Script" path="res://scripts/actors/character_nameplate.gd" id="5_nameplate"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.35
@@ -69,3 +70,19 @@ height = 1.8
 
 [node name="PointerNavigator" type="Node" parent="."]
 script = ExtResource("4_navigator")
+
+[node name="Nameplate" type="Label3D" parent="."]
+position = Vector3(0, 1.95, 0)
+billboard = 1
+no_depth_test = false
+double_sided = true
+text = "You"
+font_size = 64
+outline_size = 18
+pixel_size = 0.0042
+modulate = Color(0.898, 0.871, 0.804, 1)
+outline_modulate = Color(0.043, 0.051, 0.051, 0.92)
+texture_filter = 3
+script = ExtResource("5_nameplate")
+character_id = &"protagonist"
+label_height = 1.95
