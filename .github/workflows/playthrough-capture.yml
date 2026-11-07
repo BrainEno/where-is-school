@@ -49,7 +49,20 @@ jobs:
           use-dotnet: false
 
       - name: Test CI success and failure paths
-        run: python3 tests/test_capture_ci.py --real-failures
+        shell: bash
+        run: |
+          log="$RUNNER_TEMP/playthrough-evidence/ci-tests.log"
+          if python3 tests/test_capture_ci.py --real-failures > "$log" 2>&1; then
+            cat "$log"
+            echo "::notice title=Capture failure-path tests::Simulated paths and real-engine failure injections passed"
+          else
+            cat "$log"
+            echo '{"result":"failure","stage":"failure_path_tests","import":"not_run","capture":"not_run"}' > "$RUNNER_TEMP/playthrough-evidence/status.json"
+            detail=$(tail -n 30 "$log" | tr '\n' '|' | cut -c1-4000)
+            detail=${detail//'%'/'%25'}
+            echo "::error title=Capture failure-path tests failed::$detail"
+            exit 1
+          fi
 
       - name: Import and capture
         shell: bash

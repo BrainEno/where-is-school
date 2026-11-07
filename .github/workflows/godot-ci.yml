@@ -43,11 +43,12 @@ jobs:
             local code=$?
             tail -n 30 "ci-logs/${name}.log"
             echo "--- exit ${code}"
+            printf '%s=%s\n' "$name" "$code" >> ci-logs/results.txt
             local summary
             summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error|ERROR:|DIAG|FAIL:|PASS:" \
               "ci-logs/${name}.log" | head -n 40 | tr '\n' '|' | cut -c1-4000)
             if [ "${code}" -eq 0 ]; then
-              echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
+              echo "${name} passed"
             else
               echo "::error title=${name} failed (exit ${code})::${summary:-no summary captured}"
               echo "${summary}"
@@ -71,4 +72,15 @@ jobs:
           run_check opening_flow 420 godot --headless --path . --script res://tests/opening_flow_test.gd || status=1
 
           echo "overall status: ${status}"
+          summary=$(tr '\n' ' ' < ci-logs/results.txt)
+          echo "::notice title=Headless check exit codes::${summary}"
+          printf '## Headless check exit codes\n\n```\n%s\n```\n' "$(cat ci-logs/results.txt)" >> "$GITHUB_STEP_SUMMARY"
           exit "${status}"
+
+      - name: Upload headless test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-ci-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-logs/
+          if-no-files-found: warn
