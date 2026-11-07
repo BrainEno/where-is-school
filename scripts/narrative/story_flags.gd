@@ -37,6 +37,14 @@ const ALLEY_ARRIVED: StringName = &"alley_arrived"
 const PLAYGROUND_ARRIVED: StringName = &"playground_arrived"
 ## bool: one of the playground checks has been attempted at least once.
 const PLAYGROUND_CHECKED: StringName = &"playground_checked"
+## bool: the player stayed at their desk after N announced the free period.
+const FREE_PERIOD_STAYED: StringName = &"free_period_stayed"
+## bool: the player chose to get up and leave after N announced the free period.
+const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
+## bool: Q is walking with the player. Set the first time the classroom is left.
+const Q_COMPANION: StringName = &"q_companion"
+## bool: the player used the walkway railing to let part of the period pass.
+const CORRIDOR_WAITED: StringName = &"corridor_waited"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -98,6 +106,11 @@ const ALL_FLAGS: Array[StringName] = [
 	NOTICED_N_SUBSTITUTE,
 	OBJECTIVE_KEY,
 	CURRENT_LOCATION,
+	# Free period and the companion.
+	FREE_PERIOD_STAYED,
+	FREE_PERIOD_LEAVING,
+	Q_COMPANION,
+	CORRIDOR_WAITED,
 	# Outdoor beats.
 	ALLEY_ARRIVED,
 	PLAYGROUND_ARRIVED,

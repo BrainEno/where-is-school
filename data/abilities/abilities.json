@@ -2,31 +2,16 @@
   "format_version": 1,
   "max_passive_per_session": 2,
   "abilities": {
-    "ledger": {
+    "orientation": {
       "value": 3,
-      "speaker": "voice_ledger",
-      "max_passive": 2
-    },
-    "boundary": {
-      "value": 4,
-      "speaker": "voice_boundary",
-      "max_passive": 2
-    },
-    "echo": {
-      "value": 2,
-      "speaker": "voice_echo",
-      "max_passive": 2
-    },
-    "onlooker": {
-      "value": 3,
-      "speaker": "voice_onlooker",
+      "speaker": "voice_orientation",
       "max_passive": 2
     }
   },
   "passives": [
     {
-      "id": "alley_notice_ledger",
-      "ability": "ledger",
+      "id": "alley_notice_orientation",
+      "ability": "orientation",
       "trigger": {
         "kind": "inspection",
         "id": "alley_notices"
@@ -35,8 +20,8 @@
       "once": true
     },
     {
-      "id": "playground_hoop_boundary",
-      "ability": "boundary",
+      "id": "playground_hoop_orientation",
+      "ability": "orientation",
       "trigger": {
         "kind": "inspection",
         "id": "pg_hoop"
@@ -45,28 +30,8 @@
       "once": true
     },
     {
-      "id": "playground_bench_onlooker",
-      "ability": "onlooker",
-      "trigger": {
-        "kind": "inspection",
-        "id": "pg_bench"
-      },
-      "conversation": "voice_bench",
-      "once": true
-    },
-    {
-      "id": "playground_frame_echo",
-      "ability": "echo",
-      "trigger": {
-        "kind": "inspection",
-        "id": "pg_frame"
-      },
-      "conversation": "voice_frame",
-      "once": true
-    },
-    {
-      "id": "playground_arrival_echo",
-      "ability": "echo",
+      "id": "playground_arrival_orientation",
+      "ability": "orientation",
       "trigger": {
         "kind": "location",
         "id": "playground"

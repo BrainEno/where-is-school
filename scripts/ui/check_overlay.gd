@@ -71,10 +71,19 @@ func _render() -> void:
 		return
 	_title.text = _ability_name if not _ability_name.is_empty() else String(_ability_id)
 	_title.add_theme_color_override("font_color", title_color)
+	var faces: Array = _result.get("dice", [])
+	var face_text := ""
+	for index in faces.size():
+		face_text += ("+" if index > 0 else "") + str(int(faces[index]))
 	_detail.text = L10n.t("check.detail", {
 		"value": int(_result.get("ability_value", 0)),
 		"die": int(_result.get("die", 0)),
+		"dice": "%dd%d" % [
+			int(_result.get("dice_count", CheckResolver.DICE_COUNT)),
+			int(_result.get("die_faces", CheckResolver.DIE_FACES)),
+		],
 		"faces": int(_result.get("die_faces", CheckResolver.DIE_FACES)),
+		"faces_list": face_text,
 		"modifier": _modifier_text(int(_result.get("modifier", 0))),
 		"total": int(_result.get("total", 0)),
 		"difficulty": int(_result.get("difficulty", 0)),

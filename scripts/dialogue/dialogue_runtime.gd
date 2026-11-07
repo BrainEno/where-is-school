@@ -162,7 +162,12 @@ func choose(choice_index: int) -> bool:
 		return false
 	var choice: DialogueGraph.DialogueChoice = available[choice_index]
 	if choice.once:
-		_set_flag(StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), true)
+		if _is_subjective():
+			# Static validation already refuses this. If content slips through, the
+			# line still plays but the bookkeeping never reaches GameState.
+			_reject("a 'once' choice in a subjective conversation cannot write a story flag")
+		else:
+			_set_flag(StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), true)
 	_apply_effects(choice.effects)
 	_awaiting_choice = false
 	_enter_node(choice.next_id)
@@ -252,6 +257,14 @@ func _resolve_next_id(node: DialogueGraph.DialogueNode) -> StringName:
 ## can be presented next to the attempt instead of before it.
 func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
 	var conversation_id := _conversation.conversation_id
+	if _is_subjective():
+		# Defence in depth: validation refuses the content, and the runtime refuses
+		# to roll or record anything if it arrives anyway. The failure branch is
+		# taken so the scene still moves on instead of stalling.
+		_reject("a check in a subjective conversation was not rolled or recorded")
+		_last_check = {}
+		_pending_branch = node.check.get("failure", &"")
+		return
 	var key := "%s/%s" % [conversation_id, node.node_id]
 	var record_flag := StoryFlags.check_record_flag(conversation_id, node.node_id)
 	var repeatable: bool = node.check.get("repeatable", false) == true
@@ -408,6 +421,14 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"subjective": _conversation.subjective,
 		"tags": node.tags,
 	}
+
+
+## True while the running conversation is one the protagonist is only imagining.
+## Every write path checks it: the graph validator refuses such content at load
+## time, and these guards make sure a hand-edited file that slips through still
+## cannot touch GameState.
+func _is_subjective() -> bool:
+	return _conversation != null and _conversation.subjective
 
 
 func _apply_effects(effects: Array) -> void:

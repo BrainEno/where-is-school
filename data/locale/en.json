@@ -41,7 +41,7 @@
     "prompt.stairs_up": "Go up the stairs",
     "prompt.animal": "Look at it",
     "prompt.back_to_street": "Go back to the street",
-    "check.detail": "{value} + d{faces} {die}{modifier} = {total}  vs  {difficulty}",
+    "check.detail": "{value} + {dice} {die}{modifier}  vs  {difficulty}",
     "check.success": "SUCCESS",
     "check.failure": "FAILURE",
     "check.reused": "already decided",
@@ -51,6 +51,15 @@
     "prompt.ball": "The ball under the shed",
     "prompt.gate_far": "Go through the gap in the fence",
     "prompt.alley_gate": "Through the gate",
-    "prompt.court": "Look at the court"
+    "prompt.court": "Look at the court",
+    "objective.free_period": "Free period. Stay at your desk, or go out of the classroom.",
+    "objective.stay_classroom": "You are staying. The period will pass on its own.",
+    "prompt.ask_along": "Ask Q to come along",
+    "prompt.yard_door": "Go out into the yard",
+    "prompt.corridor_speaker": "Listen to the speaker",
+    "prompt.corridor_trolley": "Look at the cleaning trolley",
+    "prompt.corridor_wait": "Stop at the railing",
+    "objective.schoolyard": "The yard is through the door at the end of the walkway.",
+    "prompt.yard_to_corridor": "Go back in through the fire door"
   }
 }

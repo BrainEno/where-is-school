@@ -16,6 +16,8 @@
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="14_wall_trim"]
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="15_room_tone_walkway"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="16_ambience_player"]
+[ext_resource type="Script" path="res://scripts/world/speaker_cue.gd" id="17_speaker_cue"]
+[ext_resource type="AudioStream" path="res://assets/audio/corridor_speaker.wav" id="18_speaker_cue_stream"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -119,6 +121,24 @@ size = Vector3(0.5, 0.08, 2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_31"]
 size = Vector3(0.4, 0.44, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_speaker"]
+size = Vector3(0.34, 0.24, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yard_door"]
+size = Vector3(1.3, 2.1, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yard_step"]
+size = Vector3(1.8, 0.12, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trolley_body"]
+size = Vector3(0.52, 0.86, 0.44)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trolley_lid"]
+size = Vector3(0.56, 0.06, 0.48)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trolley_bucket"]
+size = Vector3(0.3, 0.28, 0.3)
 
 [node name="Corridor" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -340,6 +360,44 @@ light_energy = 1.2
 omni_range = 6.5
 shadow_enabled = false
 
+[node name="SpeakerBox" type="MeshInstance3D" parent="."]
+position = Vector3(2.02, 2.35, -3)
+mesh = SubResource("BoxMesh_speaker")
+material_override = ExtResource("7_metal_dark")
+
+[node name="SpeakerCue" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(2.0, 2.3, -3)
+stream = ExtResource("18_speaker_cue_stream")
+volume_db = -16.0
+max_distance = 9.0
+script = ExtResource("17_speaker_cue")
+conversation_id = &"corridor_speaker"
+
+[node name="YardDoorLeaf" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.05, -9.0)
+mesh = SubResource("BoxMesh_yard_door")
+material_override = ExtResource("5_door_blue")
+
+[node name="YardDoorStep" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.06, -8.5)
+mesh = SubResource("BoxMesh_yard_step")
+material_override = ExtResource("2_floor_concrete")
+
+[node name="TrolleyBody" type="MeshInstance3D" parent="."]
+position = Vector3(1.72, 0.55, 3.6)
+mesh = SubResource("BoxMesh_trolley_body")
+material_override = ExtResource("7_metal_dark")
+
+[node name="TrolleyLid" type="MeshInstance3D" parent="."]
+position = Vector3(1.72, 1.0, 3.6)
+mesh = SubResource("BoxMesh_trolley_lid")
+material_override = ExtResource("13_canvas_bag")
+
+[node name="TrolleyBucket" type="MeshInstance3D" parent="."]
+position = Vector3(1.72, 1.16, 3.6)
+mesh = SubResource("BoxMesh_trolley_bucket")
+material_override = ExtResource("6_paper_pale")
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="NoticeboardInspect" parent="Interactables" instance=ExtResource("11_interactable")]
@@ -383,6 +441,40 @@ destination_scene = "res://scenes/locations/street/street.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"street"
 
+[node name="SpeakerInspect" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(1.9, 2.3, -3)
+interact_id = &"corridor_speaker"
+prompt_text = "Listen to the speaker"
+prompt_key = "prompt.corridor_speaker"
+conversation_route = &"corridor_speaker"
+radius = 1.2
+
+[node name="TrolleyInspect" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(1.7, 0.8, 3.6)
+interact_id = &"corridor_trolley"
+prompt_text = "Look at the cleaning trolley"
+prompt_key = "prompt.corridor_trolley"
+conversation_route = &"corridor_trolley"
+radius = 1.1
+
+[node name="RailingWait" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(1.75, 0.9, -1.2)
+interact_id = &"corridor_wait"
+prompt_text = "Stop at the railing"
+prompt_key = "prompt.corridor_wait"
+conversation_route = &"corridor_wait"
+radius = 1.2
+
+[node name="YardDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(0, 0.6, -8.3)
+interact_id = &"to_schoolyard"
+prompt_text = "Go out into the yard"
+prompt_key = "prompt.yard_door"
+radius = 1.4
+destination_scene = "res://scenes/locations/playground/playground.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"playground"
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromClassroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
@@ -390,6 +482,9 @@ position = Vector3(-1.2, 0, 2)
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0, 0, 5.4)
+
+[node name="FromSchoolyard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(0, 0, -6.9)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_room_tone_walkway")

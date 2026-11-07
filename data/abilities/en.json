@@ -2,21 +2,9 @@
   "format_version": 1,
   "locale": "en",
   "abilities": {
-    "ledger": {
-      "name": "The Ledger",
-      "description": "Counts things: rooms, bells, dates, the number of steps. It would rather be wrong than vague."
-    },
-    "boundary": {
-      "name": "The Boundary",
-      "description": "Where things are and how big they are. Distances, gaps, whether something fits. It speaks up when a space does not close."
-    },
-    "echo": {
-      "name": "Echo",
-      "description": "The part of you that remembers. Fast, generous, and often wrong about what it recognises."
-    },
-    "onlooker": {
-      "name": "The Onlooker",
-      "description": "Watches people: tone, faces, what someone does with their hands. Certain about other people's reasons, with no way to check them."
+    "orientation": {
+      "name": "Orientation",
+      "description": "A sense of where things are in relation to each other: heights, seams, what lines up and what does not. It is confident about shapes and has nothing to say about people. One voice, still provisional."
     }
   }
 }

@@ -49,8 +49,10 @@ func _run() -> void:
 
 func _check_shape() -> void:
 	var ids := _abilities.get_ability_ids()
-	if ids.size() != 4:
-		_failures.append("Expected four inner voices, found %d." % ids.size())
+	# One provisional voice for this milestone. The number is asserted so adding a
+	# second one is a decision someone makes, not something that happens quietly.
+	if ids.size() != 1:
+		_failures.append("Expected exactly one inner voice, found %d." % ids.size())
 	for ability_id: StringName in ids:
 		var ability := _abilities.get_ability(ability_id)
 		if String(ability_id).is_empty():
@@ -128,7 +130,7 @@ func _check_rules() -> void:
 
 
 ## Each voice must be reachable in shipped content, and only through itself: a check
-## labelled 'ledger' that actually rolls 'boundary' would be invisible to a player
+## labelled 'orientation' that actually rolls something else would be invisible to a player
 ## and to this test unless the ids are compared.
 func _check_coverage() -> void:
 	if _library == null:

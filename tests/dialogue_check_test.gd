@@ -58,7 +58,7 @@ func _run() -> void:
 
 func _check_block(overrides: Dictionary = {}) -> Dictionary:
 	var block := {
-		"ability": "boundary",
+		"ability": "orientation",
 		"difficulty": 11,
 		"kind": "visible",
 		"success": "good",
@@ -193,7 +193,7 @@ func _check_parsing() -> void:
 	if node.check.is_empty():
 		_failures.append("The check block did not survive parsing.")
 		return
-	if String(node.check["ability"]) != "boundary":
+	if String(node.check["ability"]) != "orientation":
 		_failures.append("The check lost its ability id.")
 	if int(node.check["difficulty"]) != 11:
 		_failures.append("The check lost its difficulty.")
@@ -262,7 +262,7 @@ func _check_resolution() -> void:
 		return
 	if String(result.get("kind", "")) != "visible":
 		_failures.append("The result lost the visible kind.")
-	if int(result.get("ability_value", -1)) != _abilities.get_value(&"boundary"):
+	if int(result.get("ability_value", -1)) != _abilities.get_value(&"orientation"):
 		_failures.append("The result did not use the ability's value.")
 	if int(result.get("difficulty", -1)) != 11:
 		_failures.append("The result did not carry the node's difficulty.")
@@ -291,8 +291,10 @@ func _check_visible_and_hidden() -> void:
 		var result := runtime.get_last_check()
 		if String(result.get("kind", "")) != kind:
 			_failures.append("A '%s' check reported kind '%s'." % [kind, result.get("kind", "")])
-		if int(result.get("die", 0)) < 1:
-			_failures.append("A '%s' check produced no die." % kind)
+		if int(result.get("die", 0)) < CheckResolver.MIN_TOTAL:
+			_failures.append("A '%s' check produced no dice." % kind)
+		if int(result.get("die", 0)) > CheckResolver.MAX_TOTAL:
+			_failures.append("A '%s' check rolled outside 2d6." % kind)
 
 
 ## The anti-reroll rule at the level the player experiences it: come back with a
@@ -324,7 +326,7 @@ func _check_no_reroll() -> void:
 
 func _check_failure_branch_is_not_a_wall() -> void:
 	Harness.clear_session_state(self)
-	# Difficulty 30 cannot be met by a value of 4 on a d10, so this always fails —
+	# Difficulty 30 cannot be met by a value of 3 on 2d6, so this always fails —
 	# which is exactly the case that must still leave a playable conversation.
 	var graph := _load("always_fails", _content({"difficulty": 30}))
 	if graph == null:

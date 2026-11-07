@@ -14,7 +14,7 @@ extends RefCounted
 ##   cannot drop a branch or point at a label that does not exist.
 
 const CHAPTERS: Array[String] = [
-	"prologue", "street", "residential", "alley", "playground",
+	"prologue", "corridor", "street", "residential", "alley", "playground",
 	# Inner-voice reactions live in their own chapter: they are not part of a
 	# place, and keeping them separate makes it obvious how much of the game is
 	# the protagonist talking to himself.

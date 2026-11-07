@@ -17,6 +17,9 @@ var _head: MeshInstance3D = null
 
 
 func _ready() -> void:
+	# Grouped so a test can count how many of a given person exist in the tree: the
+	# companion and an authored actor must never both be visible.
+	add_to_group("npc_actor")
 	_body = get_node_or_null(^"Body") as MeshInstance3D
 	_head = get_node_or_null(^"Head") as MeshInstance3D
 	if _body == null:

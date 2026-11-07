@@ -31,6 +31,14 @@ const ROUTES: Dictionary = {
 	],
 	# Outside the school the routes are things, not people: a wall, a notice, a
 	# staircase. Same table, same rules.
+	# The companion only ever says one thing when asked along, and it is not advice.
+	&"q_ask_along": [{"conversation": &"q_ask_along", "requires": {}}],
+	# The walkway's optional activities. They are conversations rather than plain
+	# inspections because Q has something to say in them when it is there, and the
+	# `conditions` on those lines are content, not a special case in code.
+	&"corridor_speaker": [{"conversation": &"corridor_speaker", "requires": {}}],
+	&"corridor_trolley": [{"conversation": &"corridor_trolley", "requires": {}}],
+	&"corridor_wait": [{"conversation": &"corridor_wait", "requires": {}}],
 	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],

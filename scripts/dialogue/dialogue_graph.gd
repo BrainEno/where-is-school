@@ -586,7 +586,20 @@ func _validate_subjective_node(node: DialogueNode, node_label: String) -> void:
 				"%s: subjective conversations cannot record '%s' knowledge (entry '%s')."
 				% [node_label, String(effect.get("source", "")), String(effect.get("entry_id", ""))]
 			)
+	# A check records its result in story state (so it cannot be rerolled) and a
+	# `once` choice records that it was taken. Both are objective bookkeeping, so
+	# neither belongs in a conversation the protagonist is only imagining.
+	if not node.check.is_empty():
+		errors.append(
+			"%s: subjective conversations cannot carry a check; its result would be written to story state."
+			% node_label
+		)
 	for choice: DialogueChoice in node.choices:
+		if choice.once:
+			errors.append(
+				"%s: choice '%s' is marked 'once' inside a subjective conversation; the 'once' bookkeeping is a story flag."
+				% [node_label, choice.choice_id]
+			)
 		for effect: Dictionary in choice.effects:
 			var type_name := String(effect.get("type", ""))
 			if type_name == "set_flag" or type_name == "set_objective":

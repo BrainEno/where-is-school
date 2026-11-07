@@ -25,7 +25,7 @@
     "prompt.milestone": "继续往前走",
     "objective.get_bearings": "先缓一缓。课还没开始。",
     "objective.check_bag": "找到生物课本。看看书包。",
-    "objective.leave_classroom": "离开这栋楼。",
+    "objective.leave_classroom": "走出这栋楼。",
     "objective.outside": "你在外面了。没有人要求你去哪里。",
     "objective.residential": "路继续往那几栋楼去。",
     "objective.animal": "水泥地上站着一个绿色的东西。",
@@ -41,7 +41,7 @@
     "prompt.stairs_up": "上楼",
     "prompt.animal": "看它",
     "prompt.back_to_street": "回到街上",
-    "check.detail": "{value} + d{faces} {die}{modifier} = {total}　对　{difficulty}",
+    "check.detail": "{value} + {dice} {die}{modifier}　对　{difficulty}",
     "check.success": "成功",
     "check.failure": "失败",
     "check.reused": "已有结果",
@@ -51,6 +51,15 @@
     "prompt.ball": "小屋底下的球",
     "prompt.gate_far": "从栅栏的缺口过去",
     "prompt.alley_gate": "穿过那道门",
-    "prompt.court": "看看球场"
+    "prompt.court": "看看球场",
+    "objective.free_period": "自由时间。留在座位上，或者走出教室。",
+    "objective.stay_classroom": "你留下来了。这一节课会自己过去。",
+    "prompt.ask_along": "叫上 Q 一起走",
+    "prompt.yard_door": "走到操场去",
+    "prompt.corridor_speaker": "听走廊里的喇叭",
+    "prompt.corridor_trolley": "看看清洁车",
+    "prompt.corridor_wait": "在栏杆边停一会儿",
+    "objective.schoolyard": "操场在走廊尽头的那扇门外。",
+    "prompt.yard_to_corridor": "从防火门回走廊"
   }
 }

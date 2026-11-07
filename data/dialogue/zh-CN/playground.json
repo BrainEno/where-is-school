@@ -88,11 +88,11 @@
         },
         {
           "id": "ps_boundary_check",
-          "speaker": "voice_boundary",
-          "text": "让我摸摸它怎么合。",
+          "speaker": "voice_orientation",
+          "text": "等等。先看这扇门是怎么卡在门框里的。",
           "check": {
-            "ability": "boundary",
-            "difficulty": 11,
+            "ability": "orientation",
+            "difficulty": 9,
             "kind": "visible",
             "success": "ps_boundary_ok",
             "failure": "ps_boundary_bad"
@@ -100,8 +100,8 @@
         },
         {
           "id": "ps_boundary_ok",
-          "speaker": "voice_boundary",
-          "text": "门没有涨。是这边门框比门宽——合页这一侧宽出来的。有人从框里取走了什么，没再放回去。",
+          "speaker": "voice_orientation",
+          "text": "门没有涨。合页那边，门框比门宽；那道缝从上到下一样宽。原本填住它的东西被拿走了，没有再放回去。",
           "effects": [
             {
               "type": "set_flag",
@@ -137,8 +137,8 @@
         },
         {
           "id": "ps_boundary_bad",
-          "speaker": "voice_boundary",
-          "text": "两指，也许三指。框比门宽。那道缝不该在那儿。",
+          "speaker": "voice_orientation",
+          "text": "门框是正的。看不出哪里不对。",
           "next": "ps_boundary_bad_2"
         },
         {
@@ -168,11 +168,11 @@
         },
         {
           "id": "ps_ledger_check",
-          "speaker": "voice_ledger",
-          "text": "行数。把行数给我。",
+          "speaker": "voice_orientation",
+          "text": "那扇窗。看看那张纸是怎么贴在玻璃上的。",
           "check": {
-            "ability": "ledger",
-            "difficulty": 9,
+            "ability": "orientation",
+            "difficulty": 8,
             "kind": "visible",
             "success": "ps_ledger_ok",
             "failure": "ps_ledger_bad"
@@ -180,8 +180,8 @@
         },
         {
           "id": "ps_ledger_ok",
-          "speaker": "voice_ledger",
-          "text": "九节。字越往下越小。最后两行是同一天写了两次，第二次的日期是下星期。",
+          "speaker": "voice_orientation",
+          "text": "九行，正好和窗框上下对齐。最后两行是同一天写了两遍，第二遍比第一行矮了一周的位子。",
           "effects": [
             {
               "type": "set_flag",
@@ -205,8 +205,8 @@
         },
         {
           "id": "ps_ledger_bad",
-          "speaker": "voice_ledger",
-          "text": "九。九行，九节。行数就是九。",
+          "speaker": "voice_orientation",
+          "text": "窗上贴着一张值日表。两条边，一道留白。",
           "next": "ps_ledger_bad_2"
         },
         {
@@ -286,11 +286,11 @@
         },
         {
           "id": "pb_boundary_check",
-          "speaker": "voice_boundary",
-          "text": "先伸手指。我告诉你后面在哪儿。",
+          "speaker": "voice_orientation",
+          "text": "先用手。我会告诉你它的后背在哪儿。",
           "check": {
-            "ability": "boundary",
-            "difficulty": 12,
+            "ability": "orientation",
+            "difficulty": 9,
             "kind": "visible",
             "success": "pb_boundary_ok",
             "failure": "pb_boundary_bad"
@@ -298,7 +298,7 @@
         },
         {
           "id": "pb_boundary_ok",
-          "speaker": "voice_boundary",
+          "speaker": "voice_orientation",
           "text": "一掌深，然后水泥，然后一道边。球后面有台面，台面上的东西不是圆的。",
           "effects": [
             {
@@ -329,8 +329,8 @@
         },
         {
           "id": "pb_boundary_bad",
-          "speaker": "voice_boundary",
-          "text": "后面没有东西。一掌深，然后就合上了。",
+          "speaker": "voice_orientation",
+          "text": "后面什么也没有。缝只有一手深，然后就合上了。",
           "next": "pb_boundary_bad_2"
         },
         {
@@ -360,11 +360,11 @@
         },
         {
           "id": "pb_ledger_check",
-          "speaker": "voice_ledger",
-          "text": "先算影子。影子比指节便宜。",
+          "speaker": "voice_orientation",
+          "text": "先看影子。影子比指节便宜。",
           "check": {
-            "ability": "ledger",
-            "difficulty": 8,
+            "ability": "orientation",
+            "difficulty": 7,
             "kind": "visible",
             "success": "pb_ledger_ok",
             "failure": "pb_ledger_bad"
@@ -372,8 +372,8 @@
         },
         {
           "id": "pb_ledger_ok",
-          "speaker": "voice_ledger",
-          "text": "影子比缝长。树篱底下那东西比球离你更近，而且不是球该有的形状。",
+          "speaker": "voice_orientation",
+          "text": "影子的进深比那道缝更长。树篱底下的东西离你比球更近，而且不是球的形状。",
           "effects": [
             {
               "type": "set_flag",
@@ -397,8 +397,8 @@
         },
         {
           "id": "pb_ledger_bad",
-          "speaker": "voice_ledger",
-          "text": "一条缝，一个球，一片影子。对得上。",
+          "speaker": "voice_orientation",
+          "text": "一道缝、一个球、一道影子。线都对上了。",
           "next": "pb_ledger_bad_2"
         },
         {

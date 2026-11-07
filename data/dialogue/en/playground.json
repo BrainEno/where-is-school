@@ -88,11 +88,11 @@
         },
         {
           "id": "ps_boundary_check",
-          "speaker": "voice_boundary",
-          "text": "Let me feel how it sits.",
+          "speaker": "voice_orientation",
+          "text": "Hold on. Look at how that door sits in its frame.",
           "check": {
-            "ability": "boundary",
-            "difficulty": 11,
+            "ability": "orientation",
+            "difficulty": 9,
             "kind": "visible",
             "success": "ps_boundary_ok",
             "failure": "ps_boundary_bad"
@@ -100,8 +100,8 @@
         },
         {
           "id": "ps_boundary_ok",
-          "speaker": "voice_boundary",
-          "text": "The door is not swollen. The opening is wider than the door on the hinge side. Something was taken out of this frame and nobody put it back.",
+          "speaker": "voice_orientation",
+          "text": "The door is not swollen. The opening is wider than the door on the hinge side, and the gap runs level all the way down. Something that used to fill it was taken out and not put back.",
           "effects": [
             {
               "type": "set_flag",
@@ -137,8 +137,8 @@
         },
         {
           "id": "ps_boundary_bad",
-          "speaker": "voice_boundary",
-          "text": "Two fingers, maybe three. The frame is wider than the door. That gap should not be there.",
+          "speaker": "voice_orientation",
+          "text": "The frame is true. Nothing about it is out of place.",
           "next": "ps_boundary_bad_2"
         },
         {
@@ -168,11 +168,11 @@
         },
         {
           "id": "ps_ledger_check",
-          "speaker": "voice_ledger",
-          "text": "Rows. Let me have the rows.",
+          "speaker": "voice_orientation",
+          "text": "The window. Look at where that sheet sits.",
           "check": {
-            "ability": "ledger",
-            "difficulty": 9,
+            "ability": "orientation",
+            "difficulty": 8,
             "kind": "visible",
             "success": "ps_ledger_ok",
             "failure": "ps_ledger_bad"
@@ -180,8 +180,8 @@
         },
         {
           "id": "ps_ledger_ok",
-          "speaker": "voice_ledger",
-          "text": "Nine periods. The hand gets smaller as it goes down. The last two rows are the same day written twice, and the second one is dated next week.",
+          "speaker": "voice_orientation",
+          "text": "Nine rows, and they run level with the frame. The last two are the same day written twice; the second one sits a week below the first.",
           "effects": [
             {
               "type": "set_flag",
@@ -205,8 +205,8 @@
         },
         {
           "id": "ps_ledger_bad",
-          "speaker": "voice_ledger",
-          "text": "Nine. Nine rows, nine periods. Nine is the number of rows.",
+          "speaker": "voice_orientation",
+          "text": "It is a rota on a window. Two edges and a margin.",
           "next": "ps_ledger_bad_2"
         },
         {
@@ -286,11 +286,11 @@
         },
         {
           "id": "pb_boundary_check",
-          "speaker": "voice_boundary",
+          "speaker": "voice_orientation",
           "text": "Fingers first. I will tell you where the back of it is.",
           "check": {
-            "ability": "boundary",
-            "difficulty": 12,
+            "ability": "orientation",
+            "difficulty": 9,
             "kind": "visible",
             "success": "pb_boundary_ok",
             "failure": "pb_boundary_bad"
@@ -298,7 +298,7 @@
         },
         {
           "id": "pb_boundary_ok",
-          "speaker": "voice_boundary",
+          "speaker": "voice_orientation",
           "text": "A hand deep, then concrete, then a lip. There is a ledge behind the ball. Something on the ledge is not round.",
           "effects": [
             {
@@ -329,7 +329,7 @@
         },
         {
           "id": "pb_boundary_bad",
-          "speaker": "voice_boundary",
+          "speaker": "voice_orientation",
           "text": "There is nothing behind it. The gap is a hand deep and then it closes.",
           "next": "pb_boundary_bad_2"
         },
@@ -360,11 +360,11 @@
         },
         {
           "id": "pb_ledger_check",
-          "speaker": "voice_ledger",
+          "speaker": "voice_orientation",
           "text": "Shadow first. Shadow is cheaper than knuckles.",
           "check": {
-            "ability": "ledger",
-            "difficulty": 8,
+            "ability": "orientation",
+            "difficulty": 7,
             "kind": "visible",
             "success": "pb_ledger_ok",
             "failure": "pb_ledger_bad"
@@ -372,8 +372,8 @@
         },
         {
           "id": "pb_ledger_ok",
-          "speaker": "voice_ledger",
-          "text": "The shadow is longer than the gap. Whatever is under the hedge is nearer to you than the ball is, and it is the wrong shape for a ball.",
+          "speaker": "voice_orientation",
+          "text": "The shadow runs longer than the gap does. Whatever is under the hedge is nearer to you than the ball is, and it is the wrong shape for a ball.",
           "effects": [
             {
               "type": "set_flag",
@@ -397,8 +397,8 @@
         },
         {
           "id": "pb_ledger_bad",
-          "speaker": "voice_ledger",
-          "text": "One gap, one ball, one shadow. It balances.",
+          "speaker": "voice_orientation",
+          "text": "One gap, one ball, one shadow. The lines meet.",
           "next": "pb_ledger_bad_2"
         },
         {

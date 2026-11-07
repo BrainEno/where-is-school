@@ -40,7 +40,13 @@ const INTERACTION_LAYER := 2
 		if is_inside_tree():
 			_refresh_monitorable()
 
+## Height of the hover cue above the interaction point. Small on purpose: the cue
+## marks the object, it does not decorate it.
+@export var hover_cue_height: float = 0.06
+
 var _prompt_override: String = ""
+var _highlighted := false
+var _cue: MeshInstance3D = null
 
 
 
@@ -56,6 +62,47 @@ func _ready() -> void:
 
 func can_interact() -> bool:
 	return interaction_enabled
+
+
+## The controller marks exactly one interactable as highlighted: the one E would
+## use right now. The cue is built in code from a torus, so it needs no art asset
+## and no scene edit per prop.
+func set_highlighted(value: bool) -> void:
+	if _highlighted == value:
+		return
+	_highlighted = value
+	_ensure_cue()
+	if _cue != null:
+		_cue.visible = value
+
+
+func is_highlighted() -> bool:
+	return _highlighted
+
+
+func _ensure_cue() -> void:
+	if _cue != null or not is_inside_tree():
+		return
+	_cue = MeshInstance3D.new()
+	_cue.name = "HoverCue"
+	var ring := TorusMesh.new()
+	ring.inner_radius = maxf(radius * 0.5, 0.16)
+	ring.outer_radius = maxf(radius * 0.72, 0.26)
+	ring.rings = 24
+	ring.ring_segments = 8
+	_cue.mesh = ring
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.96, 0.87, 0.63, 0.9)
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.86, 0.55)
+	material.emission_energy_multiplier = 1.5
+	_cue.material_override = material
+	_cue.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_cue.position = Vector3(0.0, hover_cue_height, 0.0)
+	add_child(_cue)
+	_cue.visible = false
 
 
 func get_prompt() -> String:

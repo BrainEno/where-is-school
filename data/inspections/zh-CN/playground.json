@@ -52,5 +52,31 @@
       "source": "observed",
       "text": "场子里的球场两半是分两次刷的。"
     }
+  },
+  "pg_container": {
+    "title": "集装箱",
+    "prompt": "看看那个集装箱",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一只金属集装箱架在两块水泥墩上，没有窗，一扇门，门上一根横杠，横杠上没挂锁。漆是学校的颜色，箱子比这块操场还旧。",
+    "repeat_text": "集装箱、横杠、没挂的锁。",
+    "record": {
+      "entry_id": "saw_pg_container",
+      "source": "observed",
+      "text": "器材集装箱的门杠上没有挂锁。"
+    }
+  },
+  "pg_tyres": {
+    "title": "轮胎",
+    "prompt": "看看那几只轮胎",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "靠工具棚墙边叠着三只轮胎，还有一只平放在地上。它们都曾被刷成和棚门一样的绿色，手常扶到的地方已经磨回黑色。",
+    "repeat_text": "轮胎，刷过一次，手扶的地方磨掉了。",
+    "record": {
+      "entry_id": "saw_pg_tyres",
+      "source": "observed",
+      "text": "棚边的轮胎曾被刷成和棚门一样的绿色。"
+    }
   }
 }

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_profile")
-character_id = &"voice_echo"
-display_name = "Echo"
+character_id = &"voice_orientation"
+display_name = "Orientation"
 short_role = ""
-accent_color = Color(0.7, 0.6, 0.66, 1)
+accent_color = Color(0.64, 0.62, 0.56, 1)

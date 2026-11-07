@@ -13,10 +13,10 @@ const CHARACTER_PATHS: Array[String] = [
 	# Inner voices are not people, but their lines are presented by the same panel,
 	# so they need the same profile for colour and for a fallback name. The translated
 	# name comes from data/abilities/<locale>.json; these files hold presentation only.
-	"res://data/characters/voice_ledger.tres",
-	"res://data/characters/voice_boundary.tres",
-	"res://data/characters/voice_echo.tres",
-	"res://data/characters/voice_onlooker.tres",
+	# One inner voice is in play for this milestone. Two files would be an
+	# accident, not a plan: the ability list is the single source of truth for
+	# which voices exist, and a second profile here would be dead weight.
+	"res://data/characters/voice_orientation.tres",
 ]
 
 var errors: Array[String] = []

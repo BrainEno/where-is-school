@@ -547,6 +547,31 @@ def build_playground():
         s.box(f"FrameRung_{i}", (18.0, y, 9.0), (0.12, 0.12, 4.0), "metal", None, False)
     s.box("FrameTopBar", (18.0, 2.85, 9.0), (0.14, 0.14, 4.2), "metal", None, False)
 
+    # tyres stacked against the shed: the yard's older gym, painted over twice
+    for i, y in enumerate((0.12, 0.36, 0.6)):
+        s.box(f"TyreStack_{i}", (-15.2, y, 2.6), (1.0, 0.22, 0.42), "metal", None, False)
+    s.box("TyreLoose", (-14.1, 0.12, 3.5), (0.92, 0.22, 0.4), "metal", None, False)
+
+    # the equipment container along the back: metal, no windows, a padlock bar
+    s.box("ContainerBody", (12.0, 1.3, -15.5), (6.0, 2.6, 2.4), "metal", ["camera_occluder"])
+    s.box("ContainerDoorLine", (12.0, 1.3, -14.28), (5.0, 2.2, 0.06), "shutter", None, False)
+    s.box("ContainerBar", (9.4, 1.3, -14.24), (0.1, 2.2, 0.08), "metal", None, False)
+    s.box("ContainerFootingA", (9.4, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
+    s.box("ContainerFootingB", (14.6, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
+
+    # outdoor fitness equipment along the west wall: two bars and a sit-up bench
+    for i, dz in enumerate((-1.2, 1.2)):
+        s.box(f"FitnessPost_{i}", (-20.6, 1.0, 6.0 + dz), (0.14, 2.0, 0.14), "metal")
+    s.box("FitnessBarHigh", (-20.6, 1.95, 6.0), (0.12, 0.12, 2.6), "metal", None, False)
+    s.box("FitnessBarLow", (-20.6, 1.05, 6.0), (0.12, 0.12, 2.6), "metal", None, False)
+    s.box("SitupFrame", (-20.4, 0.42, 9.4), (0.9, 0.1, 1.6), "metal")
+    s.box("SitupFootBar", (-20.4, 0.62, 10.2), (0.6, 0.5, 0.1), "metal", None, False)
+
+    # birds: three silhouettes on the fence and one wire, still and unlit
+    for i, (x, y, z) in enumerate(((6.2, 2.12, -18.5), (7.1, 2.12, -18.5), (-3.0, 1.75, -18.5))):
+        s.box(f"Bird_{i}", (x, y, z), (0.16, 0.12, 0.22), "metal", None, False)
+    s.box("BirdWire", (2.0, 2.9, -18.4), (16.0, 0.02, 0.02), "metal", None, False)
+
     # a tap and a drain: ordinary fittings, so the yard reads as used
     s.box("TapPost", (-6.0, 0.9, 14.0), (0.16, 1.8, 0.16), "metal")
     s.box("TapSpout", (-5.8, 1.6, 14.0), (0.4, 0.1, 0.1), "metal", None, False)
@@ -569,17 +594,28 @@ def build_playground():
          "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4},
         {"name": "BoardLook", "pos": (13.2, 1.7, 3.2), "id": "pg_board_look",
          "inspection": "pg_court", "radius": 1.2},
+        {"name": "ContainerLook", "pos": (12.0, 1.4, -13.9), "id": "pg_container_look",
+         "inspection": "pg_container", "radius": 1.8},
+        {"name": "TyreLook", "pos": (-14.6, 0.7, 2.9), "id": "pg_tyre_look",
+         "inspection": "pg_tyres", "radius": 1.4},
     ]
     s.exits = [
         {"name": "BackToAlley", "pos": (0.0, 0.9, 18.2), "id": "pg_back_to_alley",
          "prompt_key": "prompt.alley_gate", "radius": 1.8,
          "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromPlayground",
          "id_dest": "alley"},
+        {"name": "BackToCorridor", "pos": (-3.0, 0.9, -19.2), "id": "pg_to_corridor",
+         "prompt_key": "prompt.yard_to_corridor", "radius": 1.6,
+         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromSchoolyard",
+         "id_dest": "corridor"},
         {"name": "FarGap", "pos": (-14.0, 0.9, -18.2), "id": "pg_gap_in_fence",
          "prompt_key": "prompt.gate_far", "radius": 1.8, "milestone": "end.slice"},
     ]
     s.spawns = [
         ("FromAlley", (0.0, 0, 16.0)),
+        # The walkway's end door: this is the intended way into the yard, so the
+        # player arrives from the school side rather than from the estate gate.
+        ("FromCorridor", (-3.0, 0, -17.6)),
         # Kept for later arrivals: the yard is meant to be entered from more than
         # one side once there is something on the other side of the fence.
         ("FromSchool", (-3.0, 0, -17.4)),

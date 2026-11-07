@@ -52,5 +52,31 @@
       "source": "observed",
       "text": "The two halves of the yard court were painted at different times."
     }
+  },
+  "pg_container": {
+    "title": "The container",
+    "prompt": "Look at the container",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A metal container set on two concrete pads, no windows, one door with a bar across it and no padlock on the bar. The paint is a school colour and the container is older than the yard.",
+    "repeat_text": "The container, the bar, the missing padlock.",
+    "record": {
+      "entry_id": "saw_pg_container",
+      "source": "observed",
+      "text": "The equipment container's door bar has no padlock on it."
+    }
+  },
+  "pg_tyres": {
+    "title": "The tyres",
+    "prompt": "Look at the tyres",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Three tyres stacked against the shed wall and one lying flat, all of them painted the same green as the shed door at some point, and worn back to black where hands go.",
+    "repeat_text": "The tyres, painted once, worn where hands go.",
+    "record": {
+      "entry_id": "saw_pg_tyres",
+      "source": "observed",
+      "text": "The tyres against the shed were painted the same green as the shed door."
+    }
   }
 }

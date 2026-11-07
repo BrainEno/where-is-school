@@ -3,8 +3,19 @@ extends Node
 ## Finds the best interaction target near the player and forwards the player's
 ## intent. Owns no UI and no narrative logic.
 ##
-## Target choice prefers the object the player is facing, then distance, so two
-## props in the same isle do not produce a flickering prompt.
+## Two ways to pick a target, one of them always wins the same way:
+##
+## 1. **The pointer.** If the mouse is over an interactable that is close enough
+##    and not behind a wall, that object is the target, whatever the player is
+##    facing. A pointer is an explicit statement of intent.
+## 2. **Facing.** Otherwise the object in front of the player and nearest to them
+##    wins, so two props in the same aisle do not produce a flickering prompt.
+##
+## To stop the prompt blinking at the edge of a prop, a pointer pick has to hold
+## still for `mouse_hold_frames` frames before it takes over from a different
+## target. Nothing else about the two paths differs: both end in the same
+## `_set_current`, the same highlight, and the same E/`request_activation` call,
+## so what the cue shows is what the key uses.
 
 signal target_changed(interactable: Interactable)
 signal activation_requested(interactable: Interactable)
@@ -18,11 +29,27 @@ signal activation_requested(interactable: Interactable)
 @export_flags_3d_physics var occluder_mask: int = 1
 ## Eyeball height used for the line-of-sight probe.
 @export var eye_height: float = 1.1
+## Whether the mouse can pick a target. Turning this off leaves facing-only
+## targeting, which is what the headless tests for the old behaviour assume.
+@export var mouse_targeting: bool = true
+## Frames a new pointer pick must survive before it replaces a different target.
+## One frame is ~16 ms: enough to swallow a jitter at a prop's edge, invisible to
+## a player who means to point at something.
+@export var mouse_hold_frames: int = 1
 
 var _player: Node3D = null
 var _sensor: Area3D = null
 var _current: Interactable = null
 var _enabled: bool = true
+var _highlighted: Interactable = null
+## A pointer pick that has not yet been adopted, and how many frames it has held.
+var _mouse_pending: Interactable = null
+var _mouse_pending_frames: int = 0
+## Test seam: a pinned pointer position, used instead of the real cursor. Headless
+## runs have no cursor, and the capture run uses the real one, so this exists only
+## so a headless test can ask the same question the mouse asks.
+var _mouse_override := Vector2.ZERO
+var _has_mouse_override := false
 ## Counts completed target scans. Diagnostics only: it proves the scan is alive.
 var _scan_count: int = 0
 
@@ -58,6 +85,13 @@ func get_current_target() -> Interactable:
 	return _current
 
 
+## Every interactable currently marked as the target (there is at most one, and it
+## is the same node `get_current_target` returns). Kept as a helper so a test can
+## assert the cue and the key cannot drift apart.
+func get_highlighted() -> Interactable:
+	return _highlighted
+
+
 func _physics_process(_delta: float) -> void:
 	if not _enabled or _player == null or _sensor == null:
 		_set_current(null)
@@ -65,8 +99,95 @@ func _physics_process(_delta: float) -> void:
 	# A location swap frees the old props; never hold a dangling target.
 	if _current != null and not is_instance_valid(_current):
 		_set_current(null)
-	_set_current(_find_best_target())
+	if _highlighted != null and not is_instance_valid(_highlighted):
+		_set_highlighted(null)
+	_set_current(_resolve_target())
 	_scan_count += 1
+
+
+## The screen-space ray ask: which interactable is under this point, if any?
+## Public so a test (and the capture run) can ask the exact question the mouse
+## path asks, without needing a real cursor.
+func get_target_at_screen_position(screen_position: Vector2) -> Interactable:
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if camera == null or _player == null:
+		return null
+	var from := camera.project_ray_origin(screen_position)
+	var direction := camera.project_ray_normal(screen_position)
+	if direction.length_squared() <= 0.0001:
+		return null
+	var far_point := from + direction * 60.0
+	var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var space := _player.get_world_3d().direct_space_state if _player.get_world_3d() != null else null
+	if space == null:
+		return null
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return null
+	var candidate := hit.get("collider") as Interactable
+	if candidate == null or not candidate.can_interact():
+		return null
+	if not _in_reach(candidate):
+		return null
+	if not _has_line_of_sight(candidate):
+		return null
+	return candidate
+
+
+## Pins the pointer to a screen position (tests only). The real cursor path is
+## unchanged for the game and for the capture run.
+func set_mouse_override(screen_position: Vector2) -> void:
+	_has_mouse_override = true
+	_mouse_override = screen_position
+
+
+func clear_mouse_override() -> void:
+	_has_mouse_override = false
+
+
+func _find_mouse_target() -> Interactable:
+	if not mouse_targeting or not is_inside_tree():
+		return null
+	if _has_mouse_override:
+		return get_target_at_screen_position(_mouse_override)
+	if DisplayServer.get_name() == "headless":
+		# There is no cursor and no window; the pointer path stays dormant instead
+		# of returning a meaningless (0, 0) hit.
+		return null
+	return get_target_at_screen_position(get_viewport().get_mouse_position())
+
+
+func _in_reach(candidate: Interactable) -> bool:
+	if _player == null:
+		return false
+	var offset := candidate.global_position - _player.global_position
+	offset.y = 0.0
+	return offset.length() <= max_distance and offset.length() > 0.001
+
+
+## Pointer first, facing second, with one frame of hysteresis in between.
+func _resolve_target() -> Interactable:
+	var facing_target := _find_best_target()
+	if not mouse_targeting:
+		return facing_target
+	var mouse_target := _find_mouse_target()
+	if mouse_target == null:
+		_mouse_pending = null
+		_mouse_pending_frames = 0
+		return facing_target
+	if mouse_target == _current:
+		_mouse_pending = null
+		_mouse_pending_frames = 0
+		return _current
+	if _mouse_pending != mouse_target:
+		_mouse_pending = mouse_target
+		_mouse_pending_frames = 0
+	if _mouse_pending_frames < mouse_hold_frames:
+		_mouse_pending_frames += 1
+		return _current if _current != null and is_instance_valid(_current) else facing_target
+	return mouse_target
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -204,6 +325,20 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 
 func _set_current(interactable: Interactable) -> void:
 	if _current == interactable:
+		_set_highlighted(_current)
 		return
 	_current = interactable
+	# The highlight follows the target, never the other way round: one call site
+	# keeps the cue and the E key describing the same object.
+	_set_highlighted(_current)
 	target_changed.emit(_current)
+
+
+func _set_highlighted(interactable: Interactable) -> void:
+	if _highlighted == interactable:
+		return
+	if _highlighted != null and is_instance_valid(_highlighted):
+		_highlighted.set_highlighted(false)
+	_highlighted = interactable
+	if _highlighted != null and is_instance_valid(_highlighted):
+		_highlighted.set_highlighted(true)

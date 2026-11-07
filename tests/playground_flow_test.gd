@@ -168,7 +168,7 @@ func _walk_to_alley() -> void:
 	await _settle(45.0, "the notices and any voice that reacts to them")
 	if not _flag_is(StoryFlags.inspection_seen_flag(&"alley_notices")):
 		_failures.append("Reading the alley notices did not mark them as read.")
-	if not _flag_is(StoryFlags.passive_fired_flag(&"alley_notice_ledger")):
+	if not _flag_is(StoryFlags.passive_fired_flag(&"alley_notice_orientation")):
 		_failures.append("No passive voice reacted to reading the notices.")
 	var hidden: Variant = _game_state.get_flag(
 		StoryFlags.check_record_flag(&"voice_notice", &"vn_1"), null
@@ -284,7 +284,7 @@ func _explore_in_two_orders() -> void:
 func _attempt_shed_check_expecting_failure() -> void:
 	if not await _open_shed_choices("the shed choices"):
 		return
-	var seed_value := _find_seed("pg_shed/ps_boundary_check", 4, 11, false)
+	var seed_value := _find_seed("pg_shed/ps_boundary_check", 3, 9, false)
 	if seed_value < 0:
 		_failures.append("Could not find a seed that fails the shed check.")
 		return
@@ -301,9 +301,11 @@ func _attempt_shed_check_expecting_failure() -> void:
 		var result := _ui.check_overlay.get_result()
 		if result.get("success", true) == true:
 			_failures.append("The forced-failure seed reported success.")
-		if int(result.get("die", 0)) < 1 or int(result.get("die", 0)) > CheckResolver.DIE_FACES:
-			_failures.append("The visible check showed an impossible die.")
-		if String(result.get("ability", "")) != "boundary":
+		if int(result.get("die", 0)) < CheckResolver.MIN_TOTAL:
+			_failures.append("The visible check showed an impossible roll.")
+		if int(result.get("die", 0)) > CheckResolver.MAX_TOTAL:
+			_failures.append("The visible check rolled more than 2d6.")
+		if String(result.get("ability", "")) != "orientation":
 			_failures.append("The visible check did not name the voice that carried it.")
 	await _pump_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the shed attempt to finish")
 	if _flag_is(&"playground_shed_open"):
@@ -333,7 +335,7 @@ func _retry_shed_without_a_reroll() -> void:
 		_failures.append("The other approach disappeared after one attempt.")
 	var record_flag := StoryFlags.check_record_flag(&"pg_shed", &"ps_boundary_check")
 	var before: Variant = _game_state.get_flag(record_flag, null)
-	var seed_value := _find_seed("pg_shed/ps_ledger_check", 3, 9, true)
+	var seed_value := _find_seed("pg_shed/ps_ledger_check", 3, 8, true)
 	if seed_value < 0:
 		_failures.append("Could not find a seed that passes the rota check.")
 		_dialogue.advance_presentation()
@@ -507,7 +509,7 @@ func _flag_is(flag: StringName) -> bool:
 
 func _find_seed(key: String, ability_value: int, difficulty: int, want_success: bool) -> int:
 	for seed_value in 4000:
-		var die := CheckResolver.new(seed_value).face_for(key)
+		var die := CheckResolver.new(seed_value).dice_total_for(key)
 		if (die + ability_value >= difficulty) == want_success:
 			return seed_value
 	return -1

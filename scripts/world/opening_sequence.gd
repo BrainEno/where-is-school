@@ -20,6 +20,7 @@ extends Node
 ## Set to false to load the classroom without starting the authored beats
 ## (used by the headless smoke test).
 @export var autostart: bool = true
+@export var companion_path: NodePath = ^"../Companion"
 @export var bell_audio_path: NodePath = ^"../BellAudio"
 @export var wake_audio_path: NodePath = ^"../WakeAudio"
 
@@ -44,6 +45,7 @@ var _interaction: InteractionController = null
 var _ui: GameUI = null
 var _dialogue: DialogueController = null
 var _locations: LocationHost = null
+var _companion: CompanionController = null
 var _bell_audio: AudioStreamPlayer = null
 var _wake_audio: AudioStreamPlayer = null
 var _hud: GameHud = null
@@ -90,6 +92,7 @@ func _resolve_nodes() -> bool:
 	_ui = get_node_or_null(ui_path) as GameUI
 	_dialogue = get_node_or_null(dialogue_path) as DialogueController
 	_locations = get_node_or_null(location_host_path) as LocationHost
+	_companion = get_node_or_null(companion_path) as CompanionController
 	_bell_audio = get_node_or_null(bell_audio_path) as AudioStreamPlayer
 	_wake_audio = get_node_or_null(wake_audio_path) as AudioStreamPlayer
 	if _ui != null:
@@ -240,6 +243,8 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		await _begin_beat()
 		await _play_conversation(conversation)
 		_end_beat()
+		if interactable.interact_id == &"q_ask_along" and _companion != null:
+			_companion.resume_following()
 		return
 
 	if not String(interactable.inspection_id).is_empty():
@@ -292,13 +297,20 @@ func _transition_to(exit: LocationExit) -> void:
 
 	if not String(destination_id).is_empty():
 		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	# Leaving the room is what starts the companion, not the dialogue choice: a
+	# player who stays at the desk and walks out ten minutes later gets the same Q.
+	if _companion != null and not _companion.is_joined():
+		if destination_id != &"classroom" and _has_flag(StoryFlags.CLASS_DISMISSED):
+			_companion.join()
 	if destination_id == &"alley":
 		_hud.set_objective("objective.alley")
 	elif destination_id == &"playground":
 		_hud.set_objective("objective.playground")
 	if destination_id == &"corridor":
 		_game_state().set_flag(StoryFlags.LEFT_CLASSROOM, true)
-		_hud.set_objective("objective.leave_classroom")
+		# The walkway is the way to the yard now; the street gate is still there for
+		# a player who wants out of the building instead.
+		_hud.set_objective("objective.schoolyard")
 	elif destination_id == &"street":
 		_game_state().set_flag(StoryFlags.LEFT_SCHOOL, true)
 		_hud.set_objective("objective.outside")

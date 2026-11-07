@@ -4,29 +4,38 @@ extends RefCounted
 ##
 ## Rules are deliberately small enough to explain in one line:
 ##
-##     d10 + ability value + situational modifier  >=  difficulty  -> success
+##     2d6 + ability value + situational modifier  >=  difficulty  -> success
+##
+## The formula and every difficulty in the content are **provisional**: they are
+## an engineering proposal for playtesting, not an owner decision. Keeping it in
+## one place is what makes it cheap to retune later.
 ##
 ## Three properties matter more than the numbers:
 ##
 ## - **One code path.** A visible check (the player picked an inner voice) and a
 ##   hidden check (a voice speaks up on its own) differ only in whether the result
 ##   is shown. They cannot drift into two different systems.
-## - **The die is a function of the run and the check, not of the moment.** The
-##   face comes from `hash(session seed, key)`, so the same check always falls the
+## - **The dice are a function of the run and the check, not of the moment.** The
+##   faces come from `hash(session seed, key)`, so the same check always falls the
 ##   same way inside one session. Reloading a scene or clicking the same option
 ##   again cannot reroll it, which is exactly the exploit a plain `randi()` invites.
 ## - **Testable without the engine's clock.** `session_seed` is injected, so a test
-##   fixes it, computes what the die must be and asserts the whole result.
+##   fixes it, computes what the dice must be and asserts the whole result.
 ##
 ## The resolver knows nothing about content, UI, or story flags: callers pass the
 ## ability value, the difficulty and the situational modifier they already worked
 ## out. That keeps it usable from the dialogue runtime, from a passive-ability
 ## trigger, and from a unit test that has no scene at all.
 
-## Faces on the die. Kept in one constant so the maths can be read in one place.
-const DIE_FACES := 10
+## Two six-sided dice. Kept in constants so the maths can be read in one place.
+const DICE_COUNT := 2
+const DIE_FACES := 6
+## Smallest and largest a roll can be before modifiers. 2d6 is a bell curve, so
+## most results sit near 7; difficulties are tuned against that, not against d20.
+const MIN_TOTAL := DICE_COUNT
+const MAX_TOTAL := DICE_COUNT * DIE_FACES
 ## Content validation refuses values outside this range; the resolver clamps, so a
-## hand-edited file can never produce a negative difficulty or a 0-face die.
+## hand-edited file can never produce a negative difficulty or a 0-face roll.
 const MIN_DIFFICULTY := 1
 const MAX_DIFFICULTY := 30
 
@@ -46,18 +55,32 @@ func set_session_seed(session_seed: int) -> void:
 	_session_seed = session_seed
 
 
-## The face a given check shows in this session. Exposed so a test can predict the
-## outcome instead of looping until the roll happens to be interesting.
-func face_for(key: String) -> int:
+## The individual faces a given check shows in this session. Exposed so a test
+## can predict the outcome instead of looping until the roll happens to be
+## interesting.
+func faces_for(key: String) -> Array[int]:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d|%s" % [_session_seed, key])
-	return rng.randi_range(1, DIE_FACES)
+	var faces: Array[int] = []
+	for _index in DICE_COUNT:
+		faces.append(rng.randi_range(1, DIE_FACES))
+	return faces
+
+
+## The sum a given check shows in this session: 2..12.
+func dice_total_for(key: String) -> int:
+	var total := 0
+	for face in faces_for(key):
+		total += face
+	return total
 
 
 ## Rolls one check and returns the whole result as data, not as a boolean: the
-## presentation layer needs the number the player saw, and the content layer needs
-## to know which branch to take.
+## presentation layer needs the numbers the player saw, and the content layer
+## needs to know which branch to take.
 ##
+## `die` keeps the meaning "the number the dice produced" (the 2d6 sum) so the
+## overlay, the record flags and the tests read the same field for the total.
 ## Modifiers may be negative (a distracting noise, a punished memory).
 func roll(
 	ability_id: StringName,
@@ -67,13 +90,18 @@ func roll(
 	key: String = ""
 ) -> Dictionary:
 	var safe_difficulty := clampi(difficulty, MIN_DIFFICULTY, MAX_DIFFICULTY)
-	var die := face_for(key)
+	var faces := faces_for(key)
+	var die := 0
+	for face in faces:
+		die += face
 	var total := die + ability_value + modifier
 	return {
 		"ability": ability_id,
 		"ability_value": ability_value,
+		"dice": faces,
 		"die": die,
 		"die_faces": DIE_FACES,
+		"dice_count": DICE_COUNT,
 		"modifier": modifier,
 		"total": total,
 		"difficulty": safe_difficulty,
@@ -84,7 +112,7 @@ func roll(
 
 
 ## Rebuilds a result dictionary from a recorded one, so re-entering a check that
-## already happened reports the same die instead of pretending to roll again. The
+## already happened reports the same dice instead of pretending to roll again. The
 ## `reused` flag is what the panel uses to avoid showing a second animation.
 static func reuse(recorded: Dictionary) -> Dictionary:
 	var copy := recorded.duplicate()
@@ -113,12 +141,22 @@ static func is_valid_difficulty(value: int) -> bool:
 	return value >= MIN_DIFFICULTY and value <= MAX_DIFFICULTY
 
 
-## One readable line for logs and failure reports: "ledger 3 + d10 7 + 0 = 10 vs 11".
+## One readable line for logs and failure reports:
+## "orientation 3 + 2d6 (4+6) 10 + 0 = 13 vs 9 (success)".
 static func describe(result: Dictionary) -> String:
-	return "%s %d + d%d %d %s%d = %d vs %d (%s)" % [
+	var faces: Array = result.get("dice", [])
+	var face_text := ""
+	for index in faces.size():
+		face_text += ("+" if index > 0 else "") + str(int(faces[index]))
+	var roll_text := "%dd%d" % [
+		int(result.get("dice_count", DICE_COUNT)), int(result.get("die_faces", DIE_FACES))
+	]
+	if not face_text.is_empty():
+		roll_text += " (%s)" % face_text
+	return "%s %d + %s %d %s%d = %d vs %d (%s)" % [
 		String(result.get("ability", "")),
 		int(result.get("ability_value", 0)),
-		int(result.get("die_faces", DIE_FACES)),
+		roll_text,
 		int(result.get("die", 0)),
 		"+" if int(result.get("modifier", 0)) >= 0 else "-",
 		absi(int(result.get("modifier", 0))),
