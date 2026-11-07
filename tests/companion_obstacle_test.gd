@@ -385,17 +385,16 @@ func _state() -> String:
 		if is_instance_valid(wall):
 			walls += " wall@%s" % str(wall.global_position)
 	return (
-		"q=(%.2f,%.2f) player=(%.2f,%.2f) visible=%s waiting=%s route=%d repath=%d nav=%s"
-		+ " regions=%d walls=[%s] note='%s' trace=%s"
-		% [
-			_companion.global_position.x, _companion.global_position.z,
-			_player.global_position.x, _player.global_position.z,
-			str(_companion.visible), str(_companion.is_waiting()),
-			_companion.get_route().size(), _companion.get_repath_count(),
-			str(_companion.is_navigation_ready()), _companion.get_navigation_region_count(),
-			walls, _companion.get_last_chase_note(), str(_trace),
-		]
-	)
+		"q=(%.2f,%.2f) player=(%.2f,%.2f) visible=%s waiting=%s route=%d repath=%d"
+		+ " nav=%s regions=%d walls=[%s] note='%s' trace=%s"
+	) % [
+		_companion.global_position.x, _companion.global_position.z,
+		_player.global_position.x, _player.global_position.z,
+		str(_companion.visible), str(_companion.is_waiting()),
+		_companion.get_route().size(), _companion.get_repath_count(),
+		str(_companion.is_navigation_ready()), _companion.get_navigation_region_count(),
+		walls, _companion.get_last_chase_note(), str(_trace),
+	]
 
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:

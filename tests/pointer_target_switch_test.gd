@@ -115,7 +115,7 @@ func _run() -> void:
 ## a walk rather than an instant activation. Their ids are legal inspections so that an
 ## activation is a normal request; this test never reads what they say.
 func _place_probes() -> void:
-	_player.teleport(START)
+	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(2)
 	var origin := _player.global_position
 	_probe_a = _make_probe(&"switch_probe_a", origin + Vector3(-1.1, 0.9, -3.5))
@@ -154,7 +154,7 @@ func _check_npc_then_ground() -> void:
 		_failures.append("The classroom has no Q to click in the first case.")
 		return
 	_clear_events()
-	if not _click(q.global_position):
+	if not _click_target(q):
 		_failures.append("Clicking Q was refused before the switch could be tested (%s)." % _navigator.get_last_rejection())
 		return
 	await _physics_frames(3)
@@ -212,14 +212,14 @@ func _check_npc_then_ground() -> void:
 func _check_object_replaces_object() -> void:
 	await _reset_to_start()
 	_clear_events()
-	if not _click(_probe_a.global_position):
+	if not _click_target(_probe_a):
 		_failures.append("Clicking the first probe was refused (%s)." % _navigator.get_last_rejection())
 		return
 	await _physics_frames(3)
 	if not _navigator.is_approaching():
 		_failures.append("Clicking the first probe did not start an approach (%s)." % _why())
 		return
-	if not _click(_probe_b.global_position):
+	if not _click_target(_probe_b):
 		_failures.append("Clicking the second probe was refused (%s)." % _navigator.get_last_rejection())
 		return
 	if _count(_approaches_abandoned, &"switch_probe_a") != 1:
@@ -294,7 +294,7 @@ func _check_ground_replaces_ground() -> void:
 func _check_target_freed_and_disabled() -> void:
 	await _reset_to_start()
 	_clear_events()
-	if not _click(_probe_c.global_position):
+	if not _click_target(_probe_c):
 		_failures.append("Clicking the probe that gets freed was refused.")
 		return
 	await _physics_frames(3)
@@ -315,7 +315,7 @@ func _check_target_freed_and_disabled() -> void:
 	# The same, for a target that is switched off rather than deleted.
 	await _reset_to_start()
 	_clear_events()
-	if not _click(_probe_d.global_position):
+	if not _click_target(_probe_d):
 		_failures.append("Clicking the probe that gets disabled was refused.")
 		return
 	await _physics_frames(3)
@@ -349,6 +349,27 @@ func _reset_to_start() -> void:
 	_sequence.allow_player_control()
 	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(3)
+
+
+## A click on an object, at a screen position where the pointer is actually over it.
+## Scanned, because a projection is a guess about the camera and this test is about the
+## target-switch rule.
+func _click_target(target: Interactable) -> bool:
+	var rect := _player.get_viewport().get_visible_rect().size
+	for x_step in 20:
+		for y_step in 14:
+			var screen := Vector2(
+				rect.x * (0.02 + 0.96 * float(x_step) / 19.0),
+				rect.y * (0.02 + 0.96 * float(y_step) / 13.0)
+			)
+			if _interaction.get_target_at_screen_position(screen, false) != target:
+				continue
+			_last_clicked_under_pointer = _name_of(target)
+			_last_clicked_screen = screen
+			_navigator.click_at_screen_position(screen)
+			return _navigator.was_last_click_accepted()
+	_last_clicked_under_pointer = "<not on screen>"
+	return false
 
 
 ## A click at the screen position of a world point, through the same call the mouse uses.

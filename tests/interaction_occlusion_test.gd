@@ -127,8 +127,7 @@ func _assert_blocked(target: Interactable, what: String, wall: StaticBody3D) -> 
 		_failures.append("The line of sight went through %s." % what)
 	if _interaction.has_line_of_sight(target):
 		_failures.append("The controller reports a clear view through %s." % what)
-	var screen := _screen_of(target.global_position)
-	if _interaction.get_target_at_screen_position(screen, false) != null:
+	if _find_target_on_screen(target) != Vector2.ZERO:
 		_failures.append("The pointer selected a target behind %s." % what)
 	# Face it, with the pointer parked where it can claim nothing.
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
@@ -163,7 +162,10 @@ func _check_declared_backing_is_seen_through() -> void:
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, notice):
 		_failures.append("A notice could not be seen through the wall it is mounted on. %s" % _explain(notice))
-	_interaction.set_mouse_override(_screen_of(notice.global_position))
+	var screen := _find_target_on_screen(notice)
+	if screen == Vector2.ZERO:
+		_failures.append("The pointer never found the notice on screen. %s" % _explain(notice))
+	_interaction.set_mouse_override(screen)
 	await _physics_frames(4)
 	if _interaction.get_current_target() != notice:
 		_failures.append(
@@ -344,6 +346,22 @@ func _make_wall(position: Vector3, size: Vector3) -> StaticBody3D:
 	return body
 
 
+## Where on screen the pointer is over this object, by asking the same question the
+## pointer asks. Scanned rather than projected: a projection is a guess about a camera
+## transform, and this test should fail about the rule, not about the camera.
+func _find_target_on_screen(target: Interactable) -> Vector2:
+	var rect := _player.get_viewport().get_visible_rect().size
+	for x_step in 20:
+		for y_step in 14:
+			var screen := Vector2(
+				rect.x * (0.02 + 0.96 * float(x_step) / 19.0),
+				rect.y * (0.02 + 0.96 * float(y_step) / 13.0)
+			)
+			if _interaction.get_target_at_screen_position(screen, false) == target:
+				return screen
+	return Vector2.ZERO
+
+
 ## Everything that would explain a visibility failure, in one line.
 func _explain(target: Interactable) -> String:
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
@@ -352,7 +370,7 @@ func _explain(target: Interactable) -> String:
 		% [
 			String(target.interact_id), str(target.global_position),
 			str(_interaction.has_line_of_sight_from(eye, target)),
-			_name_of(_interaction.get_target_at_screen_position(_screen_of(target.global_position), false)),
+			str(_find_target_on_screen(target)),
 			_name_of(_interaction.get_current_target()),
 			_name_of(_interaction.get_highlighted()),
 			str(_interaction.is_in_reach(target)),
