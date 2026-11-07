@@ -40,6 +40,7 @@ signal navigation_baked(success: bool)
 var _baked := false
 var _polygon_count := 0
 var _bake_error: String = ""
+var _map_region_count: int = 0
 
 
 func _ready() -> void:
@@ -68,11 +69,21 @@ func bake_region() -> bool:
 	navigation_mesh = mesh
 	_polygon_count = mesh.get_polygon_count()
 	_baked = _polygon_count > 0
+	_map_region_count = get_map_region_count()
 	if not _baked:
 		_bake_error = "no walkable polygons were produced by '%s'" % root.name
 	# The map reads the region on its own schedule; force one update so the first
 	# path query after a load is answered instead of returning an empty path.
 	NavigationServer3D.map_force_update(get_navigation_map())
+	_map_region_count = get_map_region_count()
+	if _baked and _map_region_count <= 0:
+		# A mesh with polygons that never reached the map is invisible to every path
+		# query. That is a wiring problem, and it must not look like an empty room.
+		_bake_error = (
+			"the region did not register with the navigation map (mesh has %d polygons)"
+			% _polygon_count
+		)
+		push_error("LocationNavigation: %s" % _bake_error)
 	navigation_baked.emit(_baked)
 	return _baked
 
@@ -89,6 +100,15 @@ func get_bake_error() -> String:
 	return _bake_error
 
 
+## How many regions the navigation map holds. One means this location's mesh reached
+## the map; zero means every path query will come back empty however good the mesh is.
+func get_map_region_count() -> int:
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return 0
+	return NavigationServer3D.map_get_regions(map).size()
+
+
 ## A point on this region's navigation mesh, or `fallback` when the mesh is empty.
 func project_point(point: Vector3, fallback: Vector3 = Vector3.ZERO) -> Vector3:
 	if not _baked:
@@ -103,20 +123,22 @@ func _configure(mesh: NavigationMesh) -> void:
 	mesh.agent_height = agent_height
 	mesh.agent_max_climb = agent_max_climb
 	mesh.agent_max_slope = agent_max_slope
-	# The navigation map silently refuses a region whose mesh uses different cell
-	# dimensions ("navigation map synchronization error"), and a refused region looks
-	# exactly like a mesh with no polygons. Read the map's own values instead of
-	# assuming the defaults match.
+	# A navigation map refuses a region whose mesh uses different cell dimensions, and
+	# a refused region looks exactly like a room with no floor. The map's values are
+	# copied onto the mesh, and the map is asked to use the mesh's values as well, so
+	# the two agree whichever side the engine takes as authoritative.
 	var map := get_navigation_map()
-	if map.is_valid():
-		# Guarded rather than assumed: these two getters have moved around between
-		# Godot 4.x releases, and a location must still load on a build that does not
-		# expose them. When they are not there, the mesh keeps the engine defaults.
-		if NavigationServer3D.has_method("map_get_cell_size"):
-			var map_cell_size: float = NavigationServer3D.map_get_cell_size(map)
-			if map_cell_size > 0.0:
-				mesh.cell_size = map_cell_size
-		if NavigationServer3D.has_method("map_get_cell_height"):
-			var map_cell_height: float = NavigationServer3D.map_get_cell_height(map)
-			if map_cell_height > 0.0:
-				mesh.cell_height = map_cell_height
+	if not map.is_valid():
+		return
+	if NavigationServer3D.has_method("map_set_cell_size") and mesh.cell_size > 0.0:
+		NavigationServer3D.map_set_cell_size(map, mesh.cell_size)
+	if NavigationServer3D.has_method("map_set_cell_height") and mesh.cell_height > 0.0:
+		NavigationServer3D.map_set_cell_height(map, mesh.cell_height)
+	if NavigationServer3D.has_method("map_get_cell_size"):
+		var map_cell_size: float = NavigationServer3D.map_get_cell_size(map)
+		if map_cell_size > 0.0:
+			mesh.cell_size = map_cell_size
+	if NavigationServer3D.has_method("map_get_cell_height"):
+		var map_cell_height: float = NavigationServer3D.map_get_cell_height(map)
+		if map_cell_height > 0.0:
+			mesh.cell_height = map_cell_height

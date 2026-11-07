@@ -115,19 +115,38 @@ func _check_every_location_has_a_usable_mesh() -> void:
 			_failures.append("The %s has no Navigation region." % label)
 			continue
 		if not nav.is_baked():
-			_failures.append("The %s never finished baking (%s)." % [label, nav.get_bake_error()])
+			_failures.append(
+				"The %s never finished baking (%s) %s" % [label, nav.get_bake_error(), _report(nav)]
+			)
 			continue
 		if nav.get_polygon_count() <= 0:
-			_failures.append("The %s baked no walkable polygons." % label)
+			_failures.append("The %s baked no walkable polygons %s" % [label, _report(nav)])
+			continue
+		# A baked mesh is useless unless the map actually holds it; zero regions means
+		# every path query in this room will come back empty.
+		var registered := nav.get_map_region_count() > 0
+		var wait_frames := 0
+		while not registered and wait_frames < 30:
+			await process_frame
+			wait_frames += 1
+			registered = nav.get_map_region_count() > 0
+		if not registered:
+			_failures.append(
+				"In the %s the baked mesh never reached the navigation map %s" % [label, _report(nav)]
+			)
 			continue
 		var closest := _closest_point(_player.global_position)
 		var offset := Vector2(closest.x - _player.global_position.x, closest.z - _player.global_position.z).length()
 		if offset > 1.2:
 			_failures.append(
-				"In the %s the spawn is %.2f m off the navigation mesh." % [label, offset]
+				"In the %s the spawn %s is %.2f m off the navigation mesh (closest %s) %s"
+				% [label, str(_player.global_position), offset, str(closest), _report(nav)]
 			)
 		if not _has_reachable_exit(location):
-			_failures.append("In the %s no exit is reachable from the spawn." % label)
+			_failures.append(
+				"In the %s no exit is reachable from the spawn %s %s"
+				% [label, str(_player.global_position), _report(nav)]
+			)
 
 
 ## The walk itself, in the classroom: pick the farthest reachable destination within
@@ -149,7 +168,13 @@ func _check_walk_arrives_and_stops() -> void:
 		return
 	var arrived := await _walk_until_settled(WALK_LIMIT_SECONDS)
 	if not arrived:
-		_failures.append("The walk did not finish within %.0f s." % WALK_LIMIT_SECONDS)
+		_failures.append(
+			"The walk did not finish within %.0f s: from %s to %s, active=%s, position %s."
+			% [
+				WALK_LIMIT_SECONDS, str(start), str(destination), str(_player.is_path_active()),
+				str(_player.global_position)
+			]
+		)
 		return
 	var travelled := Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length()
 	if travelled < 2.0:
@@ -374,6 +399,34 @@ func _nav_of(location: LocationRoot) -> LocationNavigation:
 	return location.get_node_or_null("Navigation") as LocationNavigation
 
 
+## A compact description of a location's navigation state, included in failure
+## messages so a CI log says *why* a mesh is unusable without a second run.
+func _report(nav: LocationNavigation) -> String:
+	if nav == null:
+		return "[no navigation region]"
+	var map := nav.get_navigation_map()
+	var mesh: NavigationMesh = nav.navigation_mesh
+	var polygons := nav.get_polygon_count()
+	var vertices := 0
+	var bounds := "none"
+	if mesh != null:
+		var points := mesh.get_vertices()
+		vertices = points.size()
+		if vertices > 0:
+			var box := AABB(points[0], Vector3.ZERO)
+			for point in points:
+				box = box.expand(point)
+			bounds = "%s..%s" % [str(box.position), str(box.end)]
+	var regions := NavigationServer3D.map_get_regions(map).size() if map.is_valid() else -1
+	var cell := "?"
+	if map.is_valid() and NavigationServer3D.has_method("map_get_cell_size"):
+		cell = str(NavigationServer3D.map_get_cell_size(map))
+	var mesh_cell := str(mesh.cell_size) if mesh != null else "?"
+	return "[region_pos=%s polygons=%d vertices=%d bounds=%s map_regions=%d map_cell=%s mesh_cell=%s agent_radius=%.2f]" % [
+		str(nav.global_position), polygons, vertices, bounds, regions, cell, mesh_cell, nav.agent_radius
+	]
+
+
 func _closest_point(point: Vector3) -> Vector3:
 	return NavigationServer3D.map_get_closest_point(_player.navigation_agent.get_navigation_map(), point)
 
@@ -417,7 +470,8 @@ func _has_reachable_exit(location: LocationRoot) -> bool:
 		var snapped := NavigationServer3D.map_get_closest_point(map, exit.global_position)
 		if Vector2(snapped.x - exit.global_position.x, snapped.z - exit.global_position.z).length() > 1.5:
 			continue
-		var path := NavigationServer3D.map_get_path(map, snapped, _player.global_position, true)
+		var player_point := NavigationServer3D.map_get_closest_point(map, _player.global_position)
+		var path := NavigationServer3D.map_get_path(map, snapped, player_point, true)
 		if path.size() >= 2:
 			return true
 	return false
