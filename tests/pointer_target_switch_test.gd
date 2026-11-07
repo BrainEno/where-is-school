@@ -41,6 +41,9 @@ var _approaches_activated: Array[StringName] = []
 var _approaches_abandoned: Array[StringName] = []
 
 var _silenced: Array[Interactable] = []
+## How many screen positions survived each question while looking for floor to stand the
+## probes on. A count of zero at the first step means the room, not the rule.
+var _spot_stats := {}
 var _probe_a: Interactable = null
 var _probe_b: Interactable = null
 var _probe_c: Interactable = null
@@ -120,23 +123,24 @@ func _run() -> void:
 ## a walk rather than an instant activation. Their ids are legal inspections so that an
 ## activation is a normal request; this test never reads what they say.
 func _place_probes() -> void:
-	# The classroom's mesh is baked deferred; a route query before it answers would make
-	# every floor point look unreachable and leave the probes unplaced.
-	var navigation := _location.get_node_or_null("Navigation") as LocationNavigation
-	var guard := 0
-	while guard < 240:
-		if navigation != null and navigation.is_baked() and navigation.is_routable():
-			break
-		await physics_frame
-		guard += 1
 	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(2)
 	# The probes stand above open, walkable floor rather than at hand-picked offsets:
 	# whether there is somewhere to stand beside an object with a clear view of it is
 	# part of what this test checks, and furniture is not what it is about.
-	var spots := _open_floor_spots(4)
+	# The mesh is baked deferred: the first frames of a session can see no floor at all,
+	# so the search is retried rather than taken as a verdict on the room.
+	var spots: Array[Vector3] = []
+	for attempt in 12:
+		spots = _open_floor_spots(4)
+		if spots.size() >= 4:
+			break
+		await _physics_frames(10)
 	if spots.size() < 4:
-		_failures.append("The classroom offered only %d open floor spot(s) for the probes." % spots.size())
+		_failures.append(
+			"The classroom offered only %d open floor spot(s) for the probes %s."
+			% [spots.size(), str(_spot_stats)]
+		)
 		return
 	_probe_a = _make_probe(&"switch_probe_a", spots[0] + Vector3.UP * 0.9)
 	_probe_b = _make_probe(&"switch_probe_b", spots[1] + Vector3.UP * 0.9)
@@ -151,6 +155,7 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 	var rect := _player.get_viewport().get_visible_rect().size
 	var map := _player.navigation_agent.get_navigation_map()
 	var found: Array[Vector3] = []
+	_spot_stats = {"ground": 0, "range": 0, "free": 0, "routable": 0}
 	for x_step in 14:
 		for y_step in 10:
 			if found.size() >= count:
@@ -162,14 +167,18 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 			var point: Variant = _navigator.get_ground_point_at(screen)
 			if point == null:
 				continue
+			_spot_stats["ground"] = int(_spot_stats["ground"]) + 1
 			var world: Vector3 = point
 			var distance := _flat_distance(_player.global_position, world)
 			if distance < 2.0 or distance > 4.2:
 				continue
+			_spot_stats["range"] = int(_spot_stats["range"]) + 1
 			if _interaction.get_target_at_screen_position(screen, false) != null:
 				continue
+			_spot_stats["free"] = int(_spot_stats["free"]) + 1
 			if NavigationServer3D.map_get_path(map, _player.global_position, world, true).size() < 2:
 				continue
+			_spot_stats["routable"] = int(_spot_stats["routable"]) + 1
 			var crowded := false
 			for other: Vector3 in found:
 				if _flat_distance(other, world) < 1.6:
