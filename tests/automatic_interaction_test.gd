@@ -338,6 +338,9 @@ func _check_e_still_works() -> void:
 	var location := await _enter(CLASSROOM, &"PlayerStart")
 	if location == null:
 		return
+	if not await _stand_away_from_interactables(2.5):
+		_failures.append("Could not find a spot away from the other objects for the E check.")
+		return
 	var probe := _make_probe(location, &"probe_key", &"classroom_own_desk")
 	probe.radius = 0.6
 	if not await _place_clear_of_props(probe, 1.0, 1.8, true):
@@ -540,6 +543,38 @@ func _place_clear_of_props(
 	return false
 
 
+## Moves the player somewhere the only thing in reach is what the check adds. E acts on
+## the nearest object in reach, so a probe dropped beside the desk the player starts at
+## proves the wrong thing however well it is placed.
+func _stand_away_from_interactables(clearance: float, ignore: Interactable = null) -> bool:
+	var map := _player.navigation_agent.get_navigation_map()
+	var origin := _player.global_position
+	for radius: float in [2.5, 2.0, 1.5, 1.0]:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
+				continue
+			var clear := true
+			if _location != null:
+				for other in _location.get_interactables():
+					if other == ignore or not is_instance_valid(other):
+						continue
+					var offset := Vector2(
+						other.global_position.x - snapped.x, other.global_position.z - snapped.z
+					)
+					if offset.length() < clearance:
+						clear = false
+						break
+			if not clear:
+				continue
+			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+			await _physics_frames(3)
+			return true
+	return false
+
+
 ## True when another interactable in this location stands closer than `clearance` to
 ## the given one. The interaction controller answers with the best target under the
 ## cursor, so a probe parked beside the person who is already in the room proves the
@@ -593,8 +628,14 @@ func _has_approach_room(target: Interactable) -> bool:
 			continue
 		if NavigationServer3D.map_get_path(
 			map, _player.global_position, Vector3(snapped.x, candidate.y, snapped.z), true
-		).size() >= 2:
-			return true
+		).size() < 2:
+			continue
+		# The navigator also wants to see the object from where it would stand.
+		if not _interaction.has_line_of_sight_from(
+			Vector3(snapped.x, candidate.y + _interaction.eye_height, snapped.z), target
+		):
+			continue
+		return true
 	return false
 
 

@@ -237,18 +237,6 @@ func _path_direction(delta: float) -> Vector3:
 		_finish_path()
 		return Vector3.ZERO
 
-	var next_point := navigation_agent.get_next_path_position()
-	var to_next := next_point - global_position
-	to_next.y = 0.0
-	if to_next.length() < 0.05:
-		# Standing on the next point while the agent refuses to advance is not progress
-		# either. Without this the walk stays "active" forever, asking for a direction
-		# of zero: the character stands still and nothing ever notices.
-		_path_progress_elapsed += delta
-		if _path_progress_elapsed > stall_timeout:
-			_abort_path()
-		return Vector3.ZERO
-
 	# Progress watchdog, measured by how far the *body* actually moved rather than by
 	# the straight-line distance to the target: going around a wall can legitimately
 	# take the character away from its destination for a moment.
@@ -261,6 +249,23 @@ func _path_direction(delta: float) -> Vector3:
 		if _path_progress_elapsed > stall_timeout:
 			_abort_path()
 			return Vector3.ZERO
+
+	var next_point := navigation_agent.get_next_path_position()
+	var to_next := next_point - global_position
+	to_next.y = 0.0
+	var heading := Vector3(velocity.x, 0.0, velocity.z)
+	var step := heading.length() * delta
+	if to_next.length() < 0.05:
+		# The agent's next point is under the body and it has not advanced yet. Keep the
+		# current heading; standing still here would be counted as a stall above.
+		return heading.normalized() if heading.length() > 0.2 else Vector3.ZERO
+	var just_passed := to_next.dot(heading) < 0.0 and to_next.length() <= maxf(0.35, step * 1.5)
+	if heading.length() > 0.2 and just_passed:
+		# A point the body has just stepped past. Turning back to touch it is how a
+		# character ends up rocking east and west around a corner instead of walking:
+		# the agent advances its own index on its next process step, so hold the
+		# heading for this frame rather than reversing.
+		return heading.normalized()
 
 	return to_next.normalized()
 
