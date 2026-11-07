@@ -408,10 +408,14 @@ func _check_prompt(interact_id: StringName, label: String) -> void:
 	var started := Time.get_ticks_msec()
 	while Time.get_ticks_msec() - started < 3000 and _ui.hud.get_prompt_text().strip_edges().is_empty():
 		await process_frame
+	var scans_before := _interaction.get_scan_count()
+	await process_frame
+	await process_frame
 	var text := _ui.hud.get_prompt_text()
 	if text.strip_edges().is_empty():
 		_failures.append(
-			"No interaction prompt was shown for %s (%s)." % [label, _diagnose_interaction(interact_id)]
+			"No interaction prompt was shown for %s (%s)."
+			% [label, _diagnose_interaction(interact_id, scans_before)]
 		)
 		return
 	if not text.contains("E]"):
@@ -422,20 +426,21 @@ func _check_prompt(interact_id: StringName, label: String) -> void:
 			"The %s prompt is showing for '%s' instead of '%s' (%s)."
 			% [
 				label, "<nothing>" if target == null else target.interact_id, interact_id,
-				_diagnose_interaction(interact_id),
+				_diagnose_interaction(interact_id, scans_before),
 			]
 		)
 
 
 ## Why an interaction prompt is missing: what the controller holds, what the sensor
 ## overlaps, and where the player is standing.
-func _diagnose_interaction(expected: StringName) -> String:
+func _diagnose_interaction(expected: StringName, scans_before: int = -1) -> String:
 	var parts := PackedStringArray()
 	var target := _interaction.get_current_target()
 	parts.append("target=%s" % ("<none>" if target == null else String(target.interact_id)))
 	parts.append("expected_in_scene=%s" % str(_host.get_current() != null
 		and _host.get_current().find_interactable(expected) != null))
 	parts.append("position=%s" % str(_player.global_position))
+	parts.append("scans=%d->%d" % [scans_before, _interaction.get_scan_count()])
 	parts.append("facing=%s" % str(_player.get_facing_direction()))
 	parts.append("control=%s" % str(_player.is_control_enabled()))
 	parts.append("busy=%s" % str(_dialogue.is_busy()))
@@ -447,10 +452,6 @@ func _diagnose_interaction(expected: StringName) -> String:
 		parts.append("expected_distance=%.2f" % offset.length())
 		parts.append("expected_can_interact=%s" % str(expected_node.can_interact()))
 		parts.append("expected_los=%s" % str(_interaction._has_line_of_sight(expected_node)))
-	var scans_before := _interaction.get_scan_count()
-	await process_frame
-	await process_frame
-	parts.append("scans=%d->%d" % [scans_before, _interaction.get_scan_count()])
 	var fresh: Interactable = _interaction._find_best_target()
 	parts.append("fresh_pick=%s" % ("<none>" if fresh == null else String(fresh.interact_id)))
 	parts.append("controller_player=%s" % str(_interaction._player.name if _interaction._player != null else "<null>"))
