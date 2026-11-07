@@ -1,0 +1,127 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "corridor",
+  "conversations": {
+    "corridor_speaker": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cs_1",
+      "nodes": [
+        {
+          "id": "cs_1",
+          "speaker": "protagonist",
+          "text": "A box speaker sits above the fire door, the kind that used to carry the bell. It is still on.",
+          "source": "observed",
+          "next": "cs_2"
+        },
+        {
+          "id": "cs_2",
+          "speaker": "protagonist",
+          "text": "Behind the wall a class is talking all at once, and then stops, as if someone had walked in.",
+          "source": "observed",
+          "next": "cs_q_q"
+        },
+        {
+          "id": "cs_q_q",
+          "speaker": "q",
+          "text": "That is C's lot. They do that.",
+          "next": "cs_3",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "cs_3",
+          "speaker": "protagonist",
+          "text": "The speaker clicks twice and goes quiet.",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "corridor_trolley": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ct_1",
+      "nodes": [
+        {
+          "id": "ct_1",
+          "speaker": "protagonist",
+          "text": "A cleaning trolley is parked across the cupboard, wheels turned in.",
+          "source": "observed",
+          "next": "ct_2"
+        },
+        {
+          "id": "ct_2",
+          "speaker": "protagonist",
+          "text": "A mop, a bucket half full, a bottle of something yellow. The cupboard behind it holds exercise books by the look of the spines.",
+          "source": "observed",
+          "next": "ct_q_q"
+        },
+        {
+          "id": "ct_q_q",
+          "speaker": "q",
+          "text": "Leave the bucket. It has been there since Monday.",
+          "next": "ct_3",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "ct_3",
+          "speaker": "protagonist",
+          "text": "You leave the trolley where it is. It is in the way of nothing except a cupboard.",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "corridor_wait": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cw_1",
+      "nodes": [
+        {
+          "id": "cw_1",
+          "speaker": "protagonist",
+          "text": "You stop at the railing. From up here the yard is a different colour than it is from inside.",
+          "source": "observed",
+          "next": "cw_2"
+        },
+        {
+          "id": "cw_2",
+          "speaker": "protagonist",
+          "text": "Two hoops, a shed, the concrete. Nothing happens in it for a while.",
+          "source": "observed",
+          "next": "cw_3"
+        },
+        {
+          "id": "cw_3",
+          "speaker": "protagonist",
+          "text": "The period goes on without you. That is not unpleasant.",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_waited",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "corridor_waited",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You stood at the walkway railing during the free period and watched the yard."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

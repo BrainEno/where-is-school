@@ -1,0 +1,10 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "abilities": {
+    "orientation": {
+      "name": "Orientation",
+      "description": "A sense of where things are in relation to each other: heights, seams, what lines up and what does not. It is confident about shapes and has nothing to say about people. One voice, still provisional."
+    }
+  }
+}

@@ -782,7 +782,7 @@
             },
             {
               "type": "set_objective",
-              "key": "objective.leave_classroom"
+              "key": "objective.free_period"
             },
             {
               "type": "record",
@@ -797,6 +797,107 @@
           "id": "n_turn_3",
           "speaker": "n",
           "text": "I'll be here. If anyone asks, I was here.",
+          "next": "n_choice"
+        },
+        {
+          "id": "n_choice",
+          "speaker": "protagonist",
+          "text": "You could stay at your desk. You could go.",
+          "source": "observed",
+          "choices": [
+            {
+              "id": "leave",
+              "text": "Get up and go.",
+              "next": "n_leave_1"
+            },
+            {
+              "id": "stay",
+              "text": "Stay where you are.",
+              "next": "n_stay_1"
+            }
+          ]
+        },
+        {
+          "id": "n_leave_1",
+          "speaker": "protagonist",
+          "text": "You pick up your bag. Q is in the doorway already, holding the door open with one foot.",
+          "source": "observed",
+          "next": "n_leave_2",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.leave_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_leaving",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You left the classroom for the free period."
+            }
+          ]
+        },
+        {
+          "id": "n_leave_2",
+          "speaker": "q",
+          "text": "Took you long enough.",
+          "next": null
+        },
+        {
+          "id": "n_stay_1",
+          "speaker": "protagonist",
+          "text": "You stay. N looks at the empty chairs, then at the sheet, then at the window, in that order, and does not ask again.",
+          "source": "observed",
+          "next": "n_stay_2",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "free_period_stayed",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.stay_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_stayed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You stayed at your desk for the free period."
+            }
+          ]
+        },
+        {
+          "id": "n_stay_2",
+          "speaker": "protagonist",
+          "text": "The door is open. It stays open. Nothing in the room requires you to be anywhere else.",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "q_ask_along": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "qa_1",
+      "nodes": [
+        {
+          "id": "qa_1",
+          "speaker": "q",
+          "text": "I am here. I was always here. You walked off.",
+          "next": "qa_2"
+        },
+        {
+          "id": "qa_2",
+          "speaker": "protagonist",
+          "text": "(Q catches up.)",
+          "source": "observed",
           "next": null
         }
       ]

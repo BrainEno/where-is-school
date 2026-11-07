@@ -1,0 +1,48 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "alley",
+  "conversations": {
+    "alley_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "aa_1",
+      "nodes": [
+        {
+          "id": "aa_1",
+          "speaker": "protagonist",
+          "text": "The alley is narrower than it looked from the courtyard: one skip, two drains, and a wall of notices stapled over each other."
+        },
+        {
+          "id": "aa_2",
+          "speaker": "protagonist",
+          "text": "At the far end there is a gate in a fence, and past the gate the ground goes on without a building on it.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "alley_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.alley"
+            },
+            {
+              "type": "record",
+              "entry_id": "alley_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You walked the alley between the flats. There is a gate at the end of it."
+            }
+          ]
+        },
+        {
+          "id": "aa_3",
+          "speaker": "protagonist",
+          "text": "Nobody is in the alley. The gate is not locked.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "corridor",
+  "conversations": {
+    "corridor_speaker": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cs_1",
+      "nodes": [
+        {
+          "id": "cs_1",
+          "speaker": "protagonist",
+          "text": "防火门上方有一个匣子喇叭，从前是它打铃的。现在它还开着。",
+          "source": "observed",
+          "next": "cs_2"
+        },
+        {
+          "id": "cs_2",
+          "speaker": "protagonist",
+          "text": "墙那边整班人一起说话，然后忽然停了，像是有人走了进去。",
+          "source": "observed",
+          "next": "cs_q_q"
+        },
+        {
+          "id": "cs_q_q",
+          "speaker": "q",
+          "text": "那是 C 他们班。他们一直这样。",
+          "next": "cs_3",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "cs_3",
+          "speaker": "protagonist",
+          "text": "喇叭咔嗒响了两下，安静了。",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "corridor_trolley": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ct_1",
+      "nodes": [
+        {
+          "id": "ct_1",
+          "speaker": "protagonist",
+          "text": "一辆清洁车横停在柜子前，轮子是朝里的。",
+          "source": "observed",
+          "next": "ct_2"
+        },
+        {
+          "id": "ct_2",
+          "speaker": "protagonist",
+          "text": "一把拖把、半桶水、一瓶黄色的东西。后面那个柜子里，从书脊看是练习本。",
+          "source": "observed",
+          "next": "ct_q_q"
+        },
+        {
+          "id": "ct_q_q",
+          "speaker": "q",
+          "text": "桶就别动了。从周一搁到现在了。",
+          "next": "ct_3",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "ct_3",
+          "speaker": "protagonist",
+          "text": "你把清洁车留在原地。它挡着的只有一只柜子。",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "corridor_wait": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cw_1",
+      "nodes": [
+        {
+          "id": "cw_1",
+          "speaker": "protagonist",
+          "text": "你在栏杆边停下。从这里看下去，操场和在屋里看是两种颜色。",
+          "source": "observed",
+          "next": "cw_2"
+        },
+        {
+          "id": "cw_2",
+          "speaker": "protagonist",
+          "text": "两个篮架、一间工具棚、一片水泥。有一阵什么也没发生。",
+          "source": "observed",
+          "next": "cw_3"
+        },
+        {
+          "id": "cw_3",
+          "speaker": "protagonist",
+          "text": "这一节课在你没参与的情况下继续着。这并不难受。",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_waited",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "corridor_waited",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "自由时间里，你站在走廊栏杆边，看了一会儿操场。"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

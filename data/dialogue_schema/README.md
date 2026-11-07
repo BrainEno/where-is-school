@@ -58,7 +58,7 @@ Two rules keep this maintainable:
 | `locale` | Must match the directory. |
 | `chapter` | Free-text label; one file per chapter. |
 | `default_source` | Narrative category inherited by every node: `observed`, `reported`, `recalled`, `imagined`. |
-| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, or record observed/reported knowledge. |
+| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, record observed/reported knowledge, carry a `check`, or mark a choice `once`. The last two are refused because both write story state (the dice record and the "already taken" record); see the notes under Checks and Choices. |
 | `start` | Node id the conversation opens on. |
 
 ### Nodes
@@ -85,9 +85,65 @@ otherwise the end of the file is ambiguous and the build fails.
 | `id` | yes | Unique inside the node. Part of the save/`once` key, so never reuse one. |
 | `text` | yes | The option as the player reads it. |
 | `next` | yes | Node id the option jumps to. |
-| `once` | no | The option disappears after it was taken (tracked per conversation). |
+| `once` | no | The option disappears after it was taken (tracked per conversation). Writes a story flag, so it is refused inside a `subjective` conversation. |
 | `effects` | no | Applied when the option is chosen, not when it is listed. |
 | `conditions` | no | Same shape as a node's conditions. |
+
+### Checks
+
+A node may carry a `check` block. It is refused inside a `subjective` conversation:
+the resolved result is stored so it cannot be re-rolled, and that record is story
+state. The runtime rolls a check when the node is entered,
+shows the line, and then continues to one of two branches. A check node never has
+`next` and never has `choices`.
+
+| Field | Required | Meaning |
+|---|---|---|
+| `ability` | yes | Inner-voice id from `data/abilities/abilities.json` (`ledger`, `boundary`, `echo`, `onlooker`). Its value is added to the die. |
+| `difficulty` | yes | 1..30. The total needed. Typical values are 8-12. |
+| `kind` | yes | `visible` = the player sees the voice, the die, the difficulty and the outcome. `hidden` = only the resulting line is shown. Use `visible` when the player chose the attempt, `hidden` when a voice speaks up on its own. |
+| `success` | yes | Node id to continue to on success. |
+| `failure` | yes | Node id to continue to on failure. Must exist and must carry real content: a failed check can never be the only way past a required beat. |
+| `modifiers` | no | `[{"flag": "saw_set_square", "value": 1}]`. Each set flag adds its value; unset flags add nothing. |
+| `repeatable` | no | Default `false`. When false the resolved result is recorded under `check:<conversation>:<node>` and replayed on a later visit, so the attempt cannot be re-rolled. Leave it false. |
+
+```json
+{
+  "id": "ps_boundary_check",
+  "speaker": "voice_orientation",
+  "text": "Let me feel how it sits.",
+  "check": {
+    "ability": "orientation", "difficulty": 9, "kind": "visible",
+    "success": "ps_boundary_ok", "failure": "ps_boundary_bad"
+  }
+}
+```
+
+To stop an attempt being offered twice, gate the *choice* that leads to the check on
+its record:
+
+```json
+{"id": "frame", "text": "Try the door against its frame.", "next": "ps_boundary_check",
+ "conditions": {"not_flags": ["check:pg_shed:ps_boundary_check"]}}
+```
+
+Note the colon: the key is `check:<conversation>:<node>`, which is exactly what
+`StoryFlags.check_record_flag()` writes.
+
+### Passive inner-voice lines
+
+A voice that speaks without being asked is an ordinary conversation whose first
+node is a `hidden` check, plus a rule in `data/abilities/abilities.json`:
+
+```json
+{"id": "playground_hoop_orientation", "ability": "orientation",
+ "trigger": {"kind": "inspection", "id": "pg_hoop"},
+ "conversation": "voice_hoop", "once": true}
+```
+
+`trigger.kind` is `inspection`, `location` or `conversation_end`. Rules are rationed
+by the director (once per rule, a per-voice session cap, and no two unprompted lines
+in a row); see ADR 0003.
 
 ### Effects
 

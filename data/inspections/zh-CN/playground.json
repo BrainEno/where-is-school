@@ -1,0 +1,82 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "pg_hoop": {
+    "title": "篮筐",
+    "prompt": "看看篮筐",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一根杆上顶着篮筐，没有网，篮板漆过一遍又被雨淋过。球场边线从杆底下穿过去，而不是接到杆上。",
+    "repeat_text": "篮筐，立杆，从底下穿过去的边线。",
+    "record": {
+      "entry_id": "saw_pg_hoop",
+      "source": "observed",
+      "text": "球场的边线从近端篮筐的杆底下穿过，没有接到杆上。"
+    }
+  },
+  "pg_bench": {
+    "title": "长椅",
+    "prompt": "看看长椅",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "长椅上放着一个运动包，拉链拉好，提手朝上。座面是湿的，包不湿，只有顶上湿。",
+    "repeat_text": "长椅，包，湿的座面。",
+    "record": {
+      "entry_id": "saw_pg_bench",
+      "source": "observed",
+      "text": "场子里的长椅上放着一个拉好的运动包，端端正正，提手朝上。"
+    }
+  },
+  "pg_frame": {
+    "title": "攀爬架",
+    "prompt": "看看攀爬架",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "四根横杆加一根顶杆。除了第三根横杆和顶杆上手常扶过的地方，其他都重新漆过。",
+    "repeat_text": "四根横杆，一根顶杆，两处磨掉的地方。",
+    "record": {
+      "entry_id": "saw_pg_frame",
+      "source": "observed",
+      "text": "场子里的攀爬架除了手常扶的地方，全都重新漆过。"
+    }
+  },
+  "pg_court": {
+    "title": "球场",
+    "prompt": "看看球场",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两个篮筐，一条中线，两端各一个禁区。远端的漆深一号，像那一半是晚一年才刷的。",
+    "repeat_text": "两个篮筐，两个禁区，两种深浅的漆。",
+    "record": {
+      "entry_id": "saw_pg_court",
+      "source": "observed",
+      "text": "场子里的球场两半是分两次刷的。"
+    }
+  },
+  "pg_container": {
+    "title": "集装箱",
+    "prompt": "看看那个集装箱",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一只金属集装箱架在两块水泥墩上，没有窗，一扇门，门上一根横杠，横杠上没挂锁。漆是学校的颜色，箱子比这块操场还旧。",
+    "repeat_text": "集装箱、横杠、没挂的锁。",
+    "record": {
+      "entry_id": "saw_pg_container",
+      "source": "observed",
+      "text": "器材集装箱的门杠上没有挂锁。"
+    }
+  },
+  "pg_tyres": {
+    "title": "轮胎",
+    "prompt": "看看那几只轮胎",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "靠工具棚墙边叠着三只轮胎，还有一只平放在地上。它们都曾被刷成和棚门一样的绿色，手常扶到的地方已经磨回黑色。",
+    "repeat_text": "轮胎，刷过一次，手扶的地方磨掉了。",
+    "record": {
+      "entry_id": "saw_pg_tyres",
+      "source": "observed",
+      "text": "棚边的轮胎曾被刷成和棚门一样的绿色。"
+    }
+  }
+}

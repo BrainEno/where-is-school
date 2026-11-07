@@ -20,6 +20,7 @@ extends Node
 ## Set to false to load the classroom without starting the authored beats
 ## (used by the headless smoke test).
 @export var autostart: bool = true
+@export var companion_path: NodePath = ^"../Companion"
 @export var bell_audio_path: NodePath = ^"../BellAudio"
 @export var wake_audio_path: NodePath = ^"../WakeAudio"
 
@@ -44,6 +45,7 @@ var _interaction: InteractionController = null
 var _ui: GameUI = null
 var _dialogue: DialogueController = null
 var _locations: LocationHost = null
+var _companion: CompanionController = null
 var _bell_audio: AudioStreamPlayer = null
 var _wake_audio: AudioStreamPlayer = null
 var _hud: GameHud = null
@@ -84,12 +86,24 @@ func start() -> void:
 	_run_opening()
 
 
+## Hands control to the player without running the authored beats.
+##
+## The beats normally release the player during the wake, so a start that skips them
+## (a test, or a future debug entry point) would otherwise leave the player frozen
+## and the interaction controller switched off. This is the supported way to say
+## "the room is live, nothing authored is happening".
+func allow_player_control() -> void:
+	_control_allowed = true
+	_sync_player_locks()
+
+
 func _resolve_nodes() -> bool:
 	_player = get_node_or_null(player_path) as PlayerController
 	_interaction = get_node_or_null(interaction_path) as InteractionController
 	_ui = get_node_or_null(ui_path) as GameUI
 	_dialogue = get_node_or_null(dialogue_path) as DialogueController
 	_locations = get_node_or_null(location_host_path) as LocationHost
+	_companion = get_node_or_null(companion_path) as CompanionController
 	_bell_audio = get_node_or_null(bell_audio_path) as AudioStreamPlayer
 	_wake_audio = get_node_or_null(wake_audio_path) as AudioStreamPlayer
 	if _ui != null:
@@ -240,6 +254,8 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		await _begin_beat()
 		await _play_conversation(conversation)
 		_end_beat()
+		if interactable.interact_id == &"q_ask_along" and _companion != null:
+			_companion.resume_following()
 		return
 
 	if not String(interactable.inspection_id).is_empty():
@@ -292,9 +308,20 @@ func _transition_to(exit: LocationExit) -> void:
 
 	if not String(destination_id).is_empty():
 		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	# Leaving the room is what starts the companion, not the dialogue choice: a
+	# player who stays at the desk and walks out ten minutes later gets the same Q.
+	if _companion != null and not _companion.is_joined():
+		if destination_id != &"classroom" and _has_flag(StoryFlags.CLASS_DISMISSED):
+			_companion.join()
+	if destination_id == &"alley":
+		_hud.set_objective("objective.alley")
+	elif destination_id == &"playground":
+		_hud.set_objective("objective.playground")
 	if destination_id == &"corridor":
 		_game_state().set_flag(StoryFlags.LEFT_CLASSROOM, true)
-		_hud.set_objective("objective.leave_classroom")
+		# The walkway is the way to the yard now; the street gate is still there for
+		# a player who wants out of the building instead.
+		_hud.set_objective("objective.schoolyard")
 	elif destination_id == &"street":
 		_game_state().set_flag(StoryFlags.LEFT_SCHOOL, true)
 		_hud.set_objective("objective.outside")
@@ -322,6 +349,12 @@ func _play_arrival_beat(destination_id: StringName) -> void:
 		"residential":
 			conversation = &"residential_arrival"
 			flag = StoryFlags.RESIDENTIAL_ARRIVED
+		"alley":
+			conversation = &"alley_arrival"
+			flag = StoryFlags.ALLEY_ARRIVED
+		"playground":
+			conversation = &"playground_arrival"
+			flag = StoryFlags.PLAYGROUND_ARRIVED
 		_:
 			return
 	if _has_flag(flag) or String(conversation).is_empty():
@@ -354,6 +387,17 @@ func _play_conversation(conversation_id: StringName) -> void:
 	if not _dialogue.play_conversation(conversation_id):
 		return
 	await _dialogue.conversation_finished
+
+
+## True while an authored beat (arrival lines, scripted conversation) owns the
+## frame. Passive inner voices wait for this to clear instead of talking over it.
+func is_beat_active() -> bool:
+	return _beat_active
+
+
+## True once the end card is up: the slice is over and nothing should start.
+func is_slice_finished() -> bool:
+	return _slice_finished
 
 
 func _begin_beat() -> void:

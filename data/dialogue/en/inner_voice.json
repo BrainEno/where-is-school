@@ -1,0 +1,118 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "inner_voice",
+  "conversations": {
+    "voice_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vn_1",
+      "nodes": [
+        {
+          "id": "vn_1",
+          "speaker": "voice_orientation",
+          "text": "Something here is out of line. Give me a second.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "vn_ok",
+            "failure": "vn_bad"
+          }
+        },
+        {
+          "id": "vn_ok",
+          "speaker": "voice_orientation",
+          "text": "The notices are pinned at the same height except one. That one sits higher, and the tape behind it is clean where the old tape was. Someone moved it up to be read.",
+          "next": null
+        },
+        {
+          "id": "vn_bad",
+          "speaker": "voice_orientation",
+          "text": "A board with paper on it. That is all a board is.",
+          "next": "vn_bad_2"
+        },
+        {
+          "id": "vn_bad_2",
+          "speaker": "protagonist",
+          "text": "You read the top two: a room wanted, a piano for sale. The third has been turned face-in. It has not been taken down.",
+          "next": null
+        }
+      ]
+    },
+    "voice_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "va_1",
+      "nodes": [
+        {
+          "id": "va_1",
+          "speaker": "voice_orientation",
+          "text": "This yard is longer than it is wide, and the path comes in at the corner.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "va_ok",
+            "failure": "va_bad"
+          }
+        },
+        {
+          "id": "va_ok",
+          "speaker": "voice_orientation",
+          "text": "The concrete has a seam where two pours meet, and the seam runs past the middle of the yard. The gate is set at the short end. Whoever laid the path expected people to arrive somewhere else.",
+          "next": null
+        },
+        {
+          "id": "va_bad",
+          "speaker": "voice_orientation",
+          "text": "A yard. Two hoops, a shed, a bench.",
+          "next": "va_bad_2"
+        },
+        {
+          "id": "va_bad_2",
+          "speaker": "protagonist",
+          "text": "It is the shape a schoolyard is. You have stood in one before, or in a yard built from the same plan.",
+          "next": null
+        }
+      ]
+    },
+    "voice_hoop": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vh_1",
+      "nodes": [
+        {
+          "id": "vh_1",
+          "speaker": "voice_orientation",
+          "text": "Hold on. Look at where that pole stands.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "vh_ok",
+            "failure": "vh_bad"
+          }
+        },
+        {
+          "id": "vh_ok",
+          "speaker": "voice_orientation",
+          "text": "Its pole stands in concrete that is newer than the yard, and the old bolt holes are still in the wall, filled and painted over. This hoop has been moved closer.",
+          "next": null
+        },
+        {
+          "id": "vh_bad",
+          "speaker": "voice_orientation",
+          "text": "The rim is at the height a rim is.",
+          "next": "vh_bad_2"
+        },
+        {
+          "id": "vh_bad_2",
+          "speaker": "protagonist",
+          "text": "You do not know that height. The pole is set in a patch of concrete a different colour from the rest of the yard, and the net is newer than the rim.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

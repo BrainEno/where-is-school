@@ -1,0 +1,438 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "playground",
+  "conversations": {
+    "playground_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pa_1",
+      "nodes": [
+        {
+          "id": "pa_1",
+          "speaker": "protagonist",
+          "text": "A yard with a court painted on it, a climbing frame, a bench, and a shed at the side. The gate you came through is behind you."
+        },
+        {
+          "id": "pa_2",
+          "speaker": "protagonist",
+          "text": "There is nobody here and nothing in the yard asks you to stand anywhere in particular.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You reached the open yard behind the estate: a court two hoops wide, a shed, a bench, a climbing frame."
+            }
+          ]
+        },
+        {
+          "id": "pa_3",
+          "speaker": "protagonist",
+          "text": "Behind the shed the fence has a gap in it, and the ground past the gap is the same concrete as the yard.",
+          "next": null
+        }
+      ]
+    },
+    "pg_shed": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ps_1",
+      "nodes": [
+        {
+          "id": "ps_1",
+          "speaker": "protagonist",
+          "text": "The equipment shed has a green door, a hasp, and a padlock hanging from the hasp. The sheet taped inside the window faces out."
+        },
+        {
+          "id": "ps_2",
+          "speaker": "protagonist",
+          "text": "You could put a hand on the door. You could read the sheet. You could walk on.",
+          "choices": [
+            {
+              "id": "frame",
+              "text": "Try the door against its frame.",
+              "next": "ps_boundary_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_shed:ps_boundary_check"
+                ]
+              }
+            },
+            {
+              "id": "count",
+              "text": "Read the sheet in the window.",
+              "next": "ps_ledger_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_shed:ps_ledger_check"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it shut.",
+              "next": "ps_leave"
+            }
+          ]
+        },
+        {
+          "id": "ps_boundary_check",
+          "speaker": "voice_orientation",
+          "text": "Hold on. Look at how that door sits in its frame.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "ps_boundary_ok",
+            "failure": "ps_boundary_bad"
+          }
+        },
+        {
+          "id": "ps_boundary_ok",
+          "speaker": "voice_orientation",
+          "text": "The door is not swollen. The opening is wider than the door on the hinge side, and the gap runs level all the way down. Something that used to fill it was taken out and not put back.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_open",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shed_open",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The shed door swings in: the padlock is shut around empty air and the hasp is held by nothing."
+            }
+          ],
+          "next": "ps_inside"
+        },
+        {
+          "id": "ps_inside",
+          "speaker": "protagonist",
+          "text": "Chairs stacked to the ceiling, a coiled rope, three broken shuttlecocks. On the top chair, taped under the seat where nobody sitting would see it, a name in marker.",
+          "next": "ps_inside_2"
+        },
+        {
+          "id": "ps_inside_2",
+          "speaker": "protagonist",
+          "text": "You cannot read it from the doorway. You would have to move the stack, and the stack is the only thing in the shed holding the stack up.",
+          "next": null
+        },
+        {
+          "id": "ps_boundary_bad",
+          "speaker": "voice_orientation",
+          "text": "The frame is true. Nothing about it is out of place.",
+          "next": "ps_boundary_bad_2"
+        },
+        {
+          "id": "ps_boundary_bad_2",
+          "speaker": "protagonist",
+          "text": "The door does not move. There is daylight under it, and the paint behind the hasp is clean, as if the hasp had been somewhere else for a long time.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_looked",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shed_looked",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The shed door does not close flush. The paint behind the hasp is clean and the hasp is screwed in crooked."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_ledger_check",
+          "speaker": "voice_orientation",
+          "text": "The window. Look at where that sheet sits.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 8,
+            "kind": "visible",
+            "success": "ps_ledger_ok",
+            "failure": "ps_ledger_bad"
+          }
+        },
+        {
+          "id": "ps_ledger_ok",
+          "speaker": "voice_orientation",
+          "text": "Nine rows, and they run level with the frame. The last two are the same day written twice; the second one sits a week below the first.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_rota_read",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_rota_read",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The duty sheet in the shed window lists the same day twice; the second copy is dated next week."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_ledger_bad",
+          "speaker": "voice_orientation",
+          "text": "It is a rota on a window. Two edges and a margin.",
+          "next": "ps_ledger_bad_2"
+        },
+        {
+          "id": "ps_ledger_bad_2",
+          "speaker": "protagonist",
+          "text": "You count them again and get eight. Rain has run two rows together. One name is still legible, and it is the surname chalked on the wall at the mouth of the alley.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_rota_smudged",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_rota_smudged",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The duty sheet has been rained on. One surname on it is also chalked on the alley wall."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_leave",
+          "speaker": "protagonist",
+          "text": "You leave the padlock hanging. Behind you the hoop on the near side has no net, and the one at the far end does.",
+          "next": null
+        }
+      ]
+    },
+    "pg_ball": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pb_1",
+      "nodes": [
+        {
+          "id": "pb_1",
+          "speaker": "protagonist",
+          "text": "A table-tennis ball is wedged between the shed's footing and the concrete. Under the hedge behind it there is something pale and flat."
+        },
+        {
+          "id": "pb_2",
+          "speaker": "protagonist",
+          "text": "The gap goes back further than the ball does.",
+          "choices": [
+            {
+              "id": "reach",
+              "text": "Reach into the gap.",
+              "next": "pb_boundary_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_ball:pb_boundary_check"
+                ]
+              }
+            },
+            {
+              "id": "shadow",
+              "text": "Measure it by the shadow.",
+              "next": "pb_ledger_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_ball:pb_ledger_check"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it.",
+              "next": "pb_leave"
+            }
+          ]
+        },
+        {
+          "id": "pb_boundary_check",
+          "speaker": "voice_orientation",
+          "text": "Fingers first. I will tell you where the back of it is.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "pb_boundary_ok",
+            "failure": "pb_boundary_bad"
+          }
+        },
+        {
+          "id": "pb_boundary_ok",
+          "speaker": "voice_orientation",
+          "text": "A hand deep, then concrete, then a lip. There is a ledge behind the ball. Something on the ledge is not round.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_tag_found",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_tag_found",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "Behind the ball, on a ledge under the shed, there is a flat metal tag with a hole in one end."
+            }
+          ],
+          "next": "pb_tag"
+        },
+        {
+          "id": "pb_tag",
+          "speaker": "protagonist",
+          "text": "The tag is cold and blank on one side. On the other side there is a stamped number, four digits, and the paint in the digits is the same green as the shed door.",
+          "next": null
+        },
+        {
+          "id": "pb_boundary_bad",
+          "speaker": "voice_orientation",
+          "text": "There is nothing behind it. The gap is a hand deep and then it closes.",
+          "next": "pb_boundary_bad_2"
+        },
+        {
+          "id": "pb_boundary_bad_2",
+          "speaker": "protagonist",
+          "text": "Your knuckles scrape and the ball shifts and settles again. The pale thing under the hedge is not behind the ball at all. It is further out, and it is a strip of white paint on a stick.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_ball_stuck",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_ball_stuck",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The ball stays wedged. The shed has two footings and the gap is only on one side."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_ledger_check",
+          "speaker": "voice_orientation",
+          "text": "Shadow first. Shadow is cheaper than knuckles.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 7,
+            "kind": "visible",
+            "success": "pb_ledger_ok",
+            "failure": "pb_ledger_bad"
+          }
+        },
+        {
+          "id": "pb_ledger_ok",
+          "speaker": "voice_orientation",
+          "text": "The shadow runs longer than the gap does. Whatever is under the hedge is nearer to you than the ball is, and it is the wrong shape for a ball.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shadow_measured",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shadow_measured",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The pale thing under the hedge sits nearer than the wedged ball, so it is not the ball's shadow."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_ledger_bad",
+          "speaker": "voice_orientation",
+          "text": "One gap, one ball, one shadow. The lines meet.",
+          "next": "pb_ledger_bad_2"
+        },
+        {
+          "id": "pb_ledger_bad_2",
+          "speaker": "protagonist",
+          "text": "It balances and tells you nothing. The ball stays where it is. The shed has two footings and the gap is only on the left one, which is the kind of thing you notice when a sum has just failed you.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_ball_stuck",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_ball_balance_failed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The sums balanced and told you nothing. The shed has two footings and the gap is only on the left one."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_leave",
+          "speaker": "protagonist",
+          "text": "You leave the ball where it is. It is not yours, and nobody in this yard is waiting for it.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

@@ -110,9 +110,19 @@ static func _compare_node(
 		problems.append("%s: jump target differs between languages." % node_label)
 	if reference.tags != other.tags:
 		problems.append("%s: tags differ between languages." % node_label)
+	_compare_check(reference.check, other.check, node_label, problems)
 
 	_compare_effects(reference.effects, other.effects, node_label, problems)
-	_compare_conditions(reference, other, node_label, problems)
+	_compare_conditions(
+		reference.requires,
+		reference.all_flags,
+		reference.not_flags,
+		other.requires,
+		other.all_flags,
+		other.not_flags,
+		node_label,
+		problems
+	)
 
 	if reference.choices.size() != other.choices.size():
 		problems.append(
@@ -135,18 +145,122 @@ static func _compare_node(
 		if reference_choice.once != other_choice.once:
 			problems.append("%s: 'once' differs between languages." % choice_label)
 		_compare_effects(reference_choice.effects, other_choice.effects, choice_label, problems)
+		# A choice that is gated in one language and open in the other lets the
+		# player reach a branch the translation cannot show. Compare the gate
+		# itself, not only the number of choices.
+		_compare_conditions(
+			reference_choice.requires,
+			reference_choice.all_flags,
+			reference_choice.not_flags,
+			other_choice.requires,
+			other_choice.all_flags,
+			other_choice.not_flags,
+			choice_label,
+			problems
+		)
 
 
+## A check is behaviour: which voice, how hard, and what happens either way. Only
+## the prose around it may be translated.
+static func _compare_check(
+	reference: Dictionary, other: Dictionary, node_label: String, problems: Array[String]
+) -> void:
+	if reference.is_empty() != other.is_empty():
+		problems.append("%s: one language has a check here and the other does not." % node_label)
+		return
+	if reference.is_empty():
+		return
+	for field: String in ["ability", "difficulty", "kind", "success", "failure", "repeatable"]:
+		if str(reference.get(field, "<none>")) != str(other.get(field, "<none>")):
+			problems.append(
+				"%s: check field '%s' is '%s' but should be '%s'."
+				% [
+					node_label,
+					field,
+					str(other.get(field, "<none>")),
+					str(reference.get(field, "<none>")),
+				]
+			)
+	var reference_modifiers: Array = reference.get("modifiers", [])
+	var other_modifiers: Array = other.get("modifiers", [])
+	if _describe_modifiers(reference_modifiers) != _describe_modifiers(other_modifiers):
+		problems.append(
+			"%s: check modifiers differ between languages (%s vs %s)."
+			% [
+				node_label,
+				_describe_modifiers(other_modifiers),
+				_describe_modifiers(reference_modifiers),
+			]
+		)
+
+
+static func _describe_modifiers(modifiers: Array) -> String:
+	if modifiers.is_empty():
+		return "none"
+	var parts := PackedStringArray()
+	for entry: Variant in modifiers:
+		if entry is Dictionary:
+			var data: Dictionary = entry
+			parts.append("%s=%d" % [String(data.get("flag", "")), int(data.get("value", 0))])
+	return ", ".join(parts)
+
+
+## The same condition block is used by nodes and by choices, so it is compared in
+## one place: a translator may change wording, never which gate the player has to
+## pass to see a line or take an option.
 static func _compare_conditions(
-	reference: DialogueGraph.DialogueNode,
-	other: DialogueGraph.DialogueNode,
-	node_label: String,
+	reference_requires: Dictionary,
+	reference_all: Array[StringName],
+	reference_not: Array[StringName],
+	other_requires: Dictionary,
+	other_all: Array[StringName],
+	other_not: Array[StringName],
+	label: String,
 	problems: Array[String]
 ) -> void:
-	if reference.requires != other.requires:
-		problems.append("%s: conditions.requires differ between languages." % node_label)
-	if reference.all_flags != other.all_flags or reference.not_flags != other.not_flags:
-		problems.append("%s: condition flags differ between languages." % node_label)
+	if reference_requires != other_requires:
+		problems.append(
+			"%s: conditions.requires differ between languages (%s vs %s)."
+			% [label, _describe_requires(other_requires), _describe_requires(reference_requires)]
+		)
+	# Flag order carries no meaning, so compare the sets: a translator who reorders
+	# a list must not be accused of changing the gate.
+	if _sorted_flags(reference_all) != _sorted_flags(other_all):
+		problems.append(
+			"%s: conditions.all_flags differ between languages (%s vs %s)."
+			% [label, _describe_flags(other_all), _describe_flags(reference_all)]
+		)
+	if _sorted_flags(reference_not) != _sorted_flags(other_not):
+		problems.append(
+			"%s: conditions.not_flags differ between languages (%s vs %s)."
+			% [label, _describe_flags(other_not), _describe_flags(reference_not)]
+		)
+
+
+static func _sorted_flags(flags: Array[StringName]) -> PackedStringArray:
+	var names := PackedStringArray()
+	for flag: StringName in flags:
+		names.append(String(flag))
+	names.sort()
+	return names
+
+
+static func _describe_requires(requires: Dictionary) -> String:
+	if requires.is_empty():
+		return "none"
+	var parts := PackedStringArray()
+	for flag: Variant in requires.keys():
+		parts.append("%s=%s" % [String(flag), str(requires[flag])])
+	return ", ".join(parts)
+
+
+static func _describe_flags(flags: Array[StringName]) -> String:
+	if flags.is_empty():
+		return "none"
+	var parts := PackedStringArray()
+	for flag: StringName in flags:
+		parts.append(String(flag))
+	return ", ".join(parts)
 
 
 ## Effects are behaviour, not prose: flag names, objective keys and entry ids

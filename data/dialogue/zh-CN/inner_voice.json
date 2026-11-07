@@ -1,0 +1,118 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "inner_voice",
+  "conversations": {
+    "voice_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vn_1",
+      "nodes": [
+        {
+          "id": "vn_1",
+          "speaker": "voice_orientation",
+          "text": "这儿有什么东西不在线上。等我一下。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "vn_ok",
+            "failure": "vn_bad"
+          }
+        },
+        {
+          "id": "vn_ok",
+          "speaker": "voice_orientation",
+          "text": "告示都钉在同一高度，只有一张例外。那张更高，背后胶带的印子还是干净的。有人把它挪高了，好让人读到。",
+          "next": null
+        },
+        {
+          "id": "vn_bad",
+          "speaker": "voice_orientation",
+          "text": "一块板，上面贴着纸。板就是板。",
+          "next": "vn_bad_2"
+        },
+        {
+          "id": "vn_bad_2",
+          "speaker": "protagonist",
+          "text": "你读了最上面两张：求租一间房，钢琴出售。第三张被翻过去贴住了，但没有被撕下来。",
+          "next": null
+        }
+      ]
+    },
+    "voice_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "va_1",
+      "nodes": [
+        {
+          "id": "va_1",
+          "speaker": "voice_orientation",
+          "text": "这块操场长大于宽，小路是从角上进来的。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "va_ok",
+            "failure": "va_bad"
+          }
+        },
+        {
+          "id": "va_ok",
+          "speaker": "voice_orientation",
+          "text": "水泥地上有一道两次浇筑留下的接缝，一直延伸过操场正中。大门却开在短的那一头。铺路的人以为人会从别处来。",
+          "next": null
+        },
+        {
+          "id": "va_bad",
+          "speaker": "voice_orientation",
+          "text": "一块操场。两个篮架、一间工具棚、一条长椅。",
+          "next": "va_bad_2"
+        },
+        {
+          "id": "va_bad_2",
+          "speaker": "protagonist",
+          "text": "操场就是这个形状。你站过这样的操场，或者是照同一张图建的。",
+          "next": null
+        }
+      ]
+    },
+    "voice_hoop": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vh_1",
+      "nodes": [
+        {
+          "id": "vh_1",
+          "speaker": "voice_orientation",
+          "text": "等等。看那根杆子立在哪儿。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "vh_ok",
+            "failure": "vh_bad"
+          }
+        },
+        {
+          "id": "vh_ok",
+          "speaker": "voice_orientation",
+          "text": "杆子立在比整块操场更新的水泥里，旧螺栓孔还在墙上，被填平刷过。这个篮架被挪近过。",
+          "next": null
+        },
+        {
+          "id": "vh_bad",
+          "speaker": "voice_orientation",
+          "text": "篮筐就在篮筐该在的高度上。",
+          "next": "vh_bad_2"
+        },
+        {
+          "id": "vh_bad_2",
+          "speaker": "protagonist",
+          "text": "你并不知道那个高度。杆子底座那块水泥和操场其他地方颜色不一样，网比圈新。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

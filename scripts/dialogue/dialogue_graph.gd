@@ -52,6 +52,13 @@ class DialogueNode extends RefCounted:
 	var requires: Dictionary = {}
 	var all_flags: Array[StringName] = []
 	var not_flags: Array[StringName] = []
+	## A die roll this node performs before it continues. Empty when the node is an
+	## ordinary line. See `_parse_check` for the shape and the runtime for the
+	## resolution order.
+	var check: Dictionary = {}
+	## The two (or more) nodes a check can continue to, in the order
+	## success, failure. Used by validation and by the parity checker.
+	var check_targets: Array[StringName] = []
 
 
 class Conversation extends RefCounted:
@@ -265,6 +272,7 @@ func _parse_node(
 				node.tags.append(String(tag))
 
 	_parse_conditions(data.get("conditions", null), context, node.requires, node.all_flags, node.not_flags)
+	node.check = _parse_check(data.get("check", null), context, node.check_targets)
 	node.effects = _parse_effects(data.get("effects", []), context + " effects")
 
 	var raw_choices: Variant = data.get("choices", [])
@@ -332,6 +340,79 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 		data.get("effects", []), "%s choice '%s'" % [context, choice.choice_id]
 	)
 	return choice
+
+
+## A check node rolls once and continues to one of two nodes:
+##
+##   "check": {"ability": "orientation", "difficulty": 9, "kind": "visible",
+##             "success": "looked_closely", "failure": "looked_badly",
+##             "modifiers": [{"flag": "saw_set_square", "value": 1}],
+##             "repeatable": false}
+##
+## - `ability` is the inner voice that carries the attempt; its value is added to
+##   the die, so a check without an ability that exists is a content error.
+## - `kind` is `visible` (the player sees the die and the result, because they
+##   asked for the attempt) or `hidden` (a voice speaks up on its own and only the
+##   consequence is shown).
+## - `repeatable` is false by default: the recorded outcome is replayed instead of
+##   rolled again, so the same attempt cannot be farmed for a better die.
+func _parse_check(raw: Variant, context: String, targets: Array[StringName]) -> Dictionary:
+	if raw == null:
+		return {}
+	if not (raw is Dictionary):
+		errors.append("%s: 'check' must be an object." % context)
+		return {}
+	var data: Dictionary = raw
+	var check := {}
+	check["ability"] = StringName(String(data.get("ability", "")))
+	if String(check["ability"]).is_empty():
+		errors.append("%s: check needs an 'ability' (an inner-voice id)." % context)
+	var difficulty := int(data.get("difficulty", 0))
+	if not CheckResolver.is_valid_difficulty(difficulty):
+		errors.append(
+			"%s: check difficulty %d is outside %d..%d."
+			% [context, difficulty, CheckResolver.MIN_DIFFICULTY, CheckResolver.MAX_DIFFICULTY]
+		)
+	check["difficulty"] = difficulty
+	var kind := String(data.get("kind", "visible"))
+	if not ["visible", "hidden"].has(kind):
+		errors.append("%s: check kind '%s' must be 'visible' or 'hidden'." % [context, kind])
+	check["kind"] = kind
+	check["success"] = StringName(String(data.get("success", "")))
+	check["failure"] = StringName(String(data.get("failure", "")))
+	for branch: String in ["success", "failure"]:
+		var target: StringName = check[branch]
+		if String(target).is_empty():
+			errors.append("%s: check needs a '%s' node." % [context, branch])
+		else:
+			targets.append(target)
+	check["repeatable"] = data.get("repeatable", false) == true
+	var modifiers: Array = []
+	var raw_modifiers: Variant = data.get("modifiers", [])
+	if not (raw_modifiers is Array):
+		errors.append("%s: check 'modifiers' must be an array." % context)
+	else:
+		for index in (raw_modifiers as Array).size():
+			var entry: Variant = (raw_modifiers as Array)[index]
+			if not (entry is Dictionary):
+				errors.append("%s: check modifier #%d must be an object." % [context, index])
+				continue
+			var modifier: Dictionary = entry
+			var flag := String(modifier.get("flag", ""))
+			if flag.is_empty():
+				errors.append("%s: check modifier #%d needs a 'flag'." % [context, index])
+				continue
+			modifiers.append({"flag": StringName(flag), "value": int(modifier.get("value", 0))})
+	check["modifiers"] = modifiers
+	for key: Variant in data.keys():
+		if String(key) not in [
+			"ability", "difficulty", "kind", "success", "failure", "modifiers", "repeatable"
+		]:
+			errors.append(
+				"%s: unknown check field '%s' (use ability, difficulty, kind, success, " % [context, String(key)]
+				+ "failure, modifiers or repeatable)."
+			)
+	return check
 
 
 ## Shared condition syntax for nodes and choices:
@@ -453,6 +534,19 @@ func _validate_conversation(conversation: Conversation, path: String) -> void:
 				)
 		if not node.choices.is_empty() and not String(node.next_id).is_empty():
 			errors.append("%s: a node cannot have both choices and 'next'." % node_label)
+		if not node.check.is_empty():
+			if not node.choices.is_empty():
+				errors.append("%s: a check node cannot also offer choices." % node_label)
+			if not String(node.next_id).is_empty() or node.ends_here:
+				errors.append(
+					"%s: a check node continues to success/failure, so it cannot have 'next'."
+					% node_label
+				)
+			for target: StringName in node.check_targets:
+				if not conversation.nodes.has(target):
+					errors.append(
+						"%s: check continues to missing node '%s'." % [node_label, target]
+					)
 		if node.ends_here and not node.choices.is_empty():
 			errors.append("%s: a node with choices must not also end the conversation." % node_label)
 		if conversation.subjective:
@@ -492,7 +586,20 @@ func _validate_subjective_node(node: DialogueNode, node_label: String) -> void:
 				"%s: subjective conversations cannot record '%s' knowledge (entry '%s')."
 				% [node_label, String(effect.get("source", "")), String(effect.get("entry_id", ""))]
 			)
+	# A check records its result in story state (so it cannot be rerolled) and a
+	# `once` choice records that it was taken. Both are objective bookkeeping, so
+	# neither belongs in a conversation the protagonist is only imagining.
+	if not node.check.is_empty():
+		errors.append(
+			"%s: subjective conversations cannot carry a check; its result would be written to story state."
+			% node_label
+		)
 	for choice: DialogueChoice in node.choices:
+		if choice.once:
+			errors.append(
+				"%s: choice '%s' is marked 'once' inside a subjective conversation; the 'once' bookkeeping is a story flag."
+				% [node_label, choice.choice_id]
+			)
 		for effect: Dictionary in choice.effects:
 			var type_name := String(effect.get("type", ""))
 			if type_name == "set_flag" or type_name == "set_objective":
@@ -523,7 +630,7 @@ func _validate_no_linear_cycle(conversation: Conversation, label: String) -> voi
 				break
 			seen[current] = true
 			var node: DialogueNode = conversation.nodes[current]
-			if node.ends_here or not node.choices.is_empty():
+			if node.ends_here or not node.choices.is_empty() or not node.check.is_empty():
 				break
 			if not String(node.next_id).is_empty():
 				current = node.next_id
@@ -549,6 +656,8 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 		var node: DialogueNode = conversation.nodes[current]
 		for choice: DialogueChoice in node.choices:
 			queue.append(choice.next_id)
+		for target: StringName in node.check_targets:
+			queue.append(target)
 		if node.ends_here:
 			continue
 		if not String(node.next_id).is_empty():

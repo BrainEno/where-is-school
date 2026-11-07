@@ -13,11 +13,20 @@ extends RefCounted
 ##   and objective keys are checked against the locale tables, so a translator
 ##   cannot drop a branch or point at a label that does not exist.
 
-const CHAPTERS: Array[String] = ["prologue", "street", "residential"]
+const CHAPTERS: Array[String] = [
+	"prologue", "corridor", "street", "residential", "alley", "playground",
+	# Inner-voice reactions live in their own chapter: they are not part of a
+	# place, and keeping them separate makes it obvious how much of the game is
+	# the protagonist talking to himself.
+	"inner_voice",
+]
 const DIALOGUE_DIR := "res://data/dialogue"
 
 var errors: Array[String] = []
 var _graphs: Dictionary = {}
+## Which inner voices exist, so a check cannot name a voice nobody implemented.
+## Optional: a test may load dialogue without the ability registry.
+var _abilities: InnerAbilities = null
 var _index: Dictionary = {}
 var _locale: String = L10n.DEFAULT_LOCALE
 
@@ -26,8 +35,9 @@ static func chapter_path(locale: String, chapter: String) -> String:
 	return "%s/%s/%s.json" % [DIALOGUE_DIR, locale, chapter]
 
 
-static func load_all() -> DialogueLibrary:
+static func load_all(abilities: InnerAbilities = null) -> DialogueLibrary:
 	var library := DialogueLibrary.new()
+	library._abilities = abilities
 	for locale in L10n.LOCALES:
 		library._graphs[locale] = {}
 		library._index[locale] = {}
@@ -48,6 +58,7 @@ static func load_all() -> DialogueLibrary:
 					continue
 				index[conversation_id] = graph
 			library._check_objective_keys(graph)
+			library._check_check_abilities(graph)
 
 	library._check_parity()
 	library.set_locale(L10n.current)
@@ -145,6 +156,25 @@ func _check_objective_keys(graph: DialogueGraph) -> void:
 					_check_objective_effect(
 						effect, "%s choice '%s'" % [label, choice.choice_id], graph.locale
 					)
+
+
+## A check without a real voice would roll at value 0 forever, which reads as a
+## broken scene rather than as a hard check.
+func _check_check_abilities(graph: DialogueGraph) -> void:
+	if _abilities == null:
+		return
+	for conversation_id: StringName in graph.get_conversation_ids():
+		var conversation: DialogueGraph.Conversation = graph.get_conversation(conversation_id)
+		for node_id: StringName in conversation.order:
+			var node: DialogueGraph.DialogueNode = conversation.nodes[node_id]
+			if node.check.is_empty():
+				continue
+			var ability_id: StringName = node.check.get("ability", &"")
+			if not _abilities.has_ability(ability_id):
+				errors.append(
+					"%s: %s/%s rolls a check on unknown inner voice '%s'."
+					% [graph.source_path, conversation_id, node_id, ability_id]
+				)
 
 
 func _check_objective_effect(effect: Dictionary, label: String, locale: String) -> void:

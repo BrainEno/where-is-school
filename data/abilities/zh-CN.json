@@ -1,0 +1,10 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "abilities": {
+    "orientation": {
+      "name": "路感",
+      "description": "一种知道东西彼此相对位置的感觉：高低、接缝、什么对得齐、什么对不齐。它对形状有把握，对人无话可说。只有一个声音，而且仍是暂定。"
+    }
+  }
+}

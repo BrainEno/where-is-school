@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "alley_notices": {
+    "title": "The notices",
+    "prompt": "Read the notices",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Six sheets stapled over each other. A lost cat, a room to rent, a sports day, a lost cat again. The bottom one is upside down and has a time written on the back.",
+    "repeat_text": "Six sheets, one upside down, a time on the back of it.",
+    "record": {
+      "entry_id": "saw_alley_notices",
+      "source": "observed",
+      "text": "The notices in the alley are stapled over each other and not in date order."
+    }
+  },
+  "alley_bins": {
+    "title": "The bins",
+    "prompt": "Look at the bins",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two bins and a skip. In the skip, a school chair with one leg shorter than the others and a strip of tape on the back that says FORM 3.",
+    "repeat_text": "The bins, the skip, the chair with the short leg.",
+    "record": {
+      "entry_id": "saw_alley_bins",
+      "source": "observed",
+      "text": "There is a school chair in the skip behind the flats, labelled FORM 3."
+    }
+  },
+  "alley_door": {
+    "title": "The service door",
+    "prompt": "Look at the door",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A metal door with a plaque screwed on at an angle: no deliveries, no parking, no ball games. The door has a handle and no lock.",
+    "repeat_text": "The plaque, the handle, the absence of a lock.",
+    "record": {
+      "entry_id": "saw_alley_door",
+      "source": "observed",
+      "text": "The service door in the alley has a handle and no lock."
+    }
+  }
+}

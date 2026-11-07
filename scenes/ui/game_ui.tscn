@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/game_ui.gd" id="1_game_ui"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="2_hud"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/dialogue_panel.tscn" id="5_dialogue_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/backlog_panel.tscn" id="6_backlog_panel"]
 [ext_resource type="Script" path="res://scripts/ui/end_card.gd" id="7_end_card"]
+[ext_resource type="PackedScene" path="res://scenes/ui/check_overlay.tscn" id="8_check_overlay"]
 
 [node name="GameUI" type="CanvasLayer"]
 script = ExtResource("1_game_ui")
@@ -109,6 +110,9 @@ theme_override_colors/font_color = Color(0.72, 0.66, 0.6, 1)
 theme_override_font_sizes/font_size = 15
 text = ""
 horizontal_alignment = 1
+
+[node name="CheckOverlay" parent="." instance=ExtResource("8_check_overlay")]
+unique_name_in_owner = true
 
 [node name="DialoguePanel" parent="." instance=ExtResource("5_dialogue_panel")]
 unique_name_in_owner = true

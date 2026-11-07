@@ -782,7 +782,7 @@
             },
             {
               "type": "set_objective",
-              "key": "objective.leave_classroom"
+              "key": "objective.free_period"
             },
             {
               "type": "record",
@@ -797,6 +797,107 @@
           "id": "n_turn_3",
           "speaker": "n",
           "text": "我就在这儿。要是有人问，就说我在这儿。",
+          "next": "n_choice"
+        },
+        {
+          "id": "n_choice",
+          "speaker": "protagonist",
+          "text": "你可以留在座位上，也可以走。",
+          "source": "observed",
+          "choices": [
+            {
+              "id": "leave",
+              "text": "起身走。",
+              "next": "n_leave_1"
+            },
+            {
+              "id": "stay",
+              "text": "就待在原地。",
+              "next": "n_stay_1"
+            }
+          ]
+        },
+        {
+          "id": "n_leave_1",
+          "speaker": "protagonist",
+          "text": "你拎起书包。Q 已经站在门口，一只脚抵着门。",
+          "source": "observed",
+          "next": "n_leave_2",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.leave_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_leaving",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "自由时间你离开了教室。"
+            }
+          ]
+        },
+        {
+          "id": "n_leave_2",
+          "speaker": "q",
+          "text": "你可算来了。",
+          "next": null
+        },
+        {
+          "id": "n_stay_1",
+          "speaker": "protagonist",
+          "text": "你留了下来。N 依次看了看空椅子、手里的名单、然后是窗子，没有再问第二遍。",
+          "source": "observed",
+          "next": "n_stay_2",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "free_period_stayed",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.stay_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_stayed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "自由时间你留在座位上。"
+            }
+          ]
+        },
+        {
+          "id": "n_stay_2",
+          "speaker": "protagonist",
+          "text": "门开着，就一直开着。教室里没有任何事要求你去别处。",
+          "source": "observed",
+          "next": null
+        }
+      ]
+    },
+    "q_ask_along": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "qa_1",
+      "nodes": [
+        {
+          "id": "qa_1",
+          "speaker": "q",
+          "text": "我在呢。我一直在。是你自己走开的。",
+          "next": "qa_2"
+        },
+        {
+          "id": "qa_2",
+          "speaker": "protagonist",
+          "text": "（Q 跟了上来。）",
+          "source": "observed",
           "next": null
         }
       ]

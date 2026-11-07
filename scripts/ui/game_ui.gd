@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var end_card: EndCard = %EndCard
 @onready var dialogue_panel: DialoguePanel = %DialoguePanel
 @onready var backlog: BacklogPanel = %BacklogPanel
+@onready var check_overlay: CheckOverlay = %CheckOverlay
 
 
 func _ready() -> void:

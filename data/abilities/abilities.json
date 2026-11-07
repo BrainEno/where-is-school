@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "max_passive_per_session": 2,
+  "abilities": {
+    "orientation": {
+      "value": 3,
+      "speaker": "voice_orientation",
+      "max_passive": 2
+    }
+  },
+  "passives": [
+    {
+      "id": "alley_notice_orientation",
+      "ability": "orientation",
+      "trigger": {
+        "kind": "inspection",
+        "id": "alley_notices"
+      },
+      "conversation": "voice_notice",
+      "once": true
+    },
+    {
+      "id": "playground_hoop_orientation",
+      "ability": "orientation",
+      "trigger": {
+        "kind": "inspection",
+        "id": "pg_hoop"
+      },
+      "conversation": "voice_hoop",
+      "once": true
+    },
+    {
+      "id": "playground_arrival_orientation",
+      "ability": "orientation",
+      "trigger": {
+        "kind": "location",
+        "id": "playground"
+      },
+      "conversation": "voice_arrival",
+      "once": true
+    }
+  ]
+}
