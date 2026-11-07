@@ -1,0 +1,27 @@
+[03:08:06] capture started: 2026-11-07T03:08:06
+[03:08:08] viewport: 1600x900, locale=en
+[03:08:14] screenshot 01_opening_line: The first line of the opening conversation, in English. (1600x900)
+[03:08:15] held move_forward for 0.8 s: player moved 0.00 m
+[03:08:16] screenshot 02_walking: The player after holding the forward key. (1600x900)
+[03:08:23] objective after the opening conversation: objective.check_bag
+[03:08:23] screenshot 03_world_after_opening: The classroom with control returned and the objective set. (1600x900)
+[03:08:24] screenshot 04_prompt_schoolbag: The interaction prompt with the key that is bound in the input map. (1600x900)
+[03:08:25] screenshot 05_inspection_text: The schoolbag description, reached by pressing E. (1600x900)
+[03:08:27] locale after pressing L: zh-CN
+[03:08:27] screenshot 06_chinese_world: The same classroom after switching to simplified Chinese at runtime. (1600x900)
+[03:08:32] screenshot 07_prompt_chinese: The interaction prompt after the switch: the prompt text is translated. (1600x900)
+[03:08:34] screenshot 08_repeat_read_chinese: The second read of the same object, in Chinese. (1600x900)
+[03:08:39] screenshot 09_prompt_talk_chinese: The prompt for a conversation, in Chinese. (1600x900)
+[03:08:41] screenshot 10_conversation_chinese: A conversation line in Chinese, opened with E. (1600x900)
+[03:08:43] locale after pressing L again: en
+[03:08:43] screenshot 11_back_to_english: The same scene after switching back to English. (1600x900)
+[03:08:57] screenshot 12_door_prompt: The classroom door is open: its prompt changed with the story. (1600x900)
+[03:09:00] screenshot 13_corridor: The walkway outside the classroom. (1600x900)
+[03:09:02] screenshot 14_street: The street outside the school gate, with the arrival line finished. (1600x900)
+[03:09:52] current location: street
+[03:09:52] locale: en, objective: objective.outside
+[03:09:52] recorded knowledge entries: -1
+[03:09:52] screenshots written: 14
+[03:09:52] FAILURE: Holding the forward key did not move the player.
+[03:09:52] FAILURE: The schoolbag was not prompted again after the language switch.
+[03:09:53] screenshot FAIL_last_frame: The last frame before the capture stopped. (1600x900)
