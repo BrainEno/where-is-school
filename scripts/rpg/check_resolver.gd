@@ -104,7 +104,7 @@ static func modifier_for(modifier_table: Array, flag_lookup: Callable) -> int:
 		var flag := StringName(String(data.get("flag", "")))
 		if String(flag).is_empty():
 			continue
-		if bool(flag_lookup.call(flag, false)):
+		if flag_lookup.call(flag, false) == true:
 			total += int(data.get("value", 0))
 	return total
 
@@ -124,5 +124,5 @@ static func describe(result: Dictionary) -> String:
 		absi(int(result.get("modifier", 0))),
 		int(result.get("total", 0)),
 		int(result.get("difficulty", 0)),
-		"success" if bool(result.get("success", false)) else "failure",
+		"success" if result.get("success", false) == true else "failure",
 	]

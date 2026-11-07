@@ -386,7 +386,7 @@ func _parse_check(raw: Variant, context: String, targets: Array[StringName]) -> 
 			errors.append("%s: check needs a '%s' node." % [context, branch])
 		else:
 			targets.append(target)
-	check["repeatable"] = bool(data.get("repeatable", false))
+	check["repeatable"] = data.get("repeatable", false) == true
 	var modifiers: Array = []
 	var raw_modifiers: Variant = data.get("modifiers", [])
 	if not (raw_modifiers is Array):

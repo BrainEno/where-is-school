@@ -80,12 +80,12 @@ func _render() -> void:
 		"difficulty": int(_result.get("difficulty", 0)),
 	})
 	_detail.add_theme_color_override("font_color", detail_color)
-	var success := bool(_result.get("success", false))
+	var success: bool = _result.get("success", false) == true
 	_verdict.text = L10n.t("check.success" if success else "check.failure")
 	_verdict.add_theme_color_override(
 		"font_color", success_color if success else failure_color
 	)
-	if bool(_result.get("reused", false)):
+	if _result.get("reused", false) == true:
 		# A repeated attempt does not pretend to roll again: it says so.
 		_verdict.text = "%s · %s" % [_verdict.text, L10n.t("check.reused")]
 

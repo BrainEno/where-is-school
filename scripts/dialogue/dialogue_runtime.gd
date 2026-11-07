@@ -254,7 +254,7 @@ func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
 	var conversation_id := _conversation.conversation_id
 	var key := "%s/%s" % [conversation_id, node.node_id]
 	var record_flag := StoryFlags.check_record_flag(conversation_id, node.node_id)
-	var repeatable := bool(node.check.get("repeatable", false))
+	var repeatable: bool = node.check.get("repeatable", false) == true
 	var recorded: Variant = _get_flag(record_flag, null)
 	var result: Dictionary = {}
 	if not repeatable and recorded is Dictionary:
@@ -303,11 +303,36 @@ func _conditions_met(
 	if not _requirements_met(requires):
 		return false
 	for flag in all_flags:
-		if not bool(_get_flag(flag, false)):
+		if not _flag_is_set(flag):
 			return false
 	for flag in not_flags:
-		if bool(_get_flag(flag, false)):
+		if _flag_is_set(flag):
 			return false
+	return true
+
+
+## Whether a story flag counts as set.
+##
+## This cannot be `bool(value)`: a check records its whole result in a flag, so a
+## flag legitimately holds a Dictionary, and GDScript's bool constructor does not
+## accept one. That was a real crash the first time a choice was gated on
+## `not_flags: ["check:…"]`, i.e. the exact pattern used to stop an attempt being
+## offered twice.
+func _flag_is_set(flag: StringName) -> bool:
+	var value: Variant = _get_flag(flag, null)
+	if value == null:
+		return false
+	if value is bool:
+		return value
+	if value is int:
+		return int(value) != 0
+	if value is float:
+		return not is_zero_approx(float(value))
+	if value is String:
+		return not (value as String).is_empty()
+	if value is Array:
+		return not (value as Array).is_empty()
+	# A Dictionary (a check record) or any other stored value counts as set.
 	return true
 
 

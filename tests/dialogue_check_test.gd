@@ -49,6 +49,7 @@ func _run() -> void:
 	_check_visible_and_hidden()
 	_check_no_reroll()
 	_check_failure_branch_is_not_a_wall()
+	_check_conditions_with_dictionary_flags()
 	Harness.finish(self, _failures, "checks parse strictly and resolve through one shared core.")
 
 
@@ -114,6 +115,65 @@ func _new_runtime(graph: DialogueGraph, seed_value: int) -> DialogueRuntime:
 	var runtime := DialogueRuntime.new(_game_state, _narrative, null, _abilities, resolver)
 	runtime.start(graph, &"trial")
 	return runtime
+
+
+## Regression: a recorded check puts a Dictionary in a flag, and the choice filter
+## that stops an attempt being offered twice is exactly a `not_flags` entry on that
+## flag. Converting such a flag with bool() crashed: GDScript cannot construct a
+## bool from a Dictionary.
+func _check_conditions_with_dictionary_flags() -> void:
+	Harness.clear_session_state(self)
+	var data := {
+		"format_version": 2,
+		"locale": "en",
+		"chapter": "checks",
+		"conversations": {
+			"gate": {
+				"default_source": "observed",
+				"start": "offer",
+				"nodes": [
+					{
+						"id": "offer",
+						"speaker": "protagonist",
+						"text": "Which way.",
+						"choices": [
+							{
+								"id": "try",
+								"text": "Try it.",
+								"next": "try_roll",
+								"conditions": {"not_flags": ["check:gate:try_roll"]},
+							},
+							{"id": "walk", "text": "Walk on.", "next": "walked"},
+						],
+					},
+					{
+						"id": "try_roll",
+						"speaker": "protagonist",
+						"text": "You try.",
+						"check": _check_block({"difficulty": 5}),
+					},
+					{"id": "good", "speaker": "protagonist", "text": "It opens.", "next": null},
+					{"id": "bad", "speaker": "protagonist", "text": "It holds.", "next": null},
+					{"id": "walked", "speaker": "protagonist", "text": "You walk on.", "next": null},
+				],
+			}
+		},
+	}
+	var graph := _load("dict_flags", data)
+	if graph == null:
+		return
+	# A record-shaped flag value, exactly the shape the runtime writes.
+	_game_state.set_flag(
+		StoryFlags.check_record_flag(&"gate", &"try_roll"),
+		{"success": false, "die": 2, "total": 6, "difficulty": 5}
+	)
+	var runtime := DialogueRuntime.new(_game_state, _narrative, null, _abilities, CheckResolver.new(1))
+	runtime.start(graph, &"gate")
+	var ids := runtime.get_available_choice_ids()
+	if ids.has(&"try"):
+		_failures.append("A choice gated on a recorded check result was still offered.")
+	if not ids.has(&"walk"):
+		_failures.append("Filtering one choice removed the others.")
 
 
 # --- cases ------------------------------------------------------------------

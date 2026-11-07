@@ -245,7 +245,7 @@ func _parse_rule(raw: Variant, index: int) -> PassiveRule:
 	rule.conversation_id = StringName(String(data.get("conversation", "")))
 	if String(rule.conversation_id).is_empty():
 		errors.append("%s needs a 'conversation' id." % context)
-	rule.once = bool(data.get("once", true))
+	rule.once = data.get("once", true) == true
 	for flag: Variant in data.get("requires", []):
 		rule.requires.append(StringName(String(flag)))
 	return rule

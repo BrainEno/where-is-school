@@ -134,7 +134,7 @@ func _can_fire(rule: InnerAbilities.PassiveRule) -> bool:
 	if count >= ability.max_passive:
 		return false
 	for flag: StringName in rule.requires:
-		if not bool(_flag(flag, false)):
+		if _flag(flag, false) != true:
 			return false
 	var library := _dialogue.get_dialogue_library()
 	if library == null or library.get_graph(rule.conversation_id) == null:
@@ -151,7 +151,7 @@ func _pump() -> void:
 		return
 	if _dialogue.is_busy():
 		return
-	if _sequence != null and bool(_sequence.call("is_beat_active")):
+	if _sequence != null and _sequence.call("is_beat_active") == true:
 		return
 	var rule: InnerAbilities.PassiveRule = _pending.pop_front()
 	if not _can_fire(rule):
@@ -173,7 +173,7 @@ func _fire(rule: InnerAbilities.PassiveRule) -> void:
 func _is_slice_finished() -> bool:
 	if _sequence == null:
 		return false
-	return bool(_sequence.call("is_slice_finished"))
+	return _sequence.call("is_slice_finished") == true
 
 
 # --- state ------------------------------------------------------------------
