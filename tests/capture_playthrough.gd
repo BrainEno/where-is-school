@@ -307,9 +307,14 @@ func _wait(seconds: float) -> void:
 ## The director locks the player while a beat plays, and beats can start at any
 ## time (the bell, the reminder, the arrival line). Nothing is pressed until
 ## control has actually come back, otherwise the input goes nowhere.
+## Waits for a moment with no presentation and with control returned, pressing the
+## keys a player would press: story beats can start at any time, and one of them
+## will be mid-conversation when the script arrives.
 func _wait_for_free(timeout_seconds: float) -> bool:
-	return await _poll(func() -> bool:
-		return not _dialogue.is_busy() and _player.is_control_enabled(), timeout_seconds)
+	return await _drive_until(
+		func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
+		timeout_seconds, "the player to be free"
+	)
 
 
 func _wait_for_line(timeout_seconds: float) -> bool:

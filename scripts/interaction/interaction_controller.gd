@@ -138,8 +138,13 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 	if player_body != null:
 		excluded.append(player_body.get_rid())
 	var candidate_distance := from.distance_to(candidate.global_position)
-	for height: float in [0.35, 0.05]:
-		var to: Vector3 = candidate.global_position + Vector3.UP * height
+	var probes: Array[Vector3] = [
+		candidate.global_position + Vector3.UP * 0.35,
+		candidate.global_position + Vector3.UP * 0.05,
+		Vector3(candidate.global_position.x, from.y, candidate.global_position.z),
+	]
+	for probe in probes:
+		var to: Vector3 = probe
 		var blocked := false
 		for _attempt in 6:
 			var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
