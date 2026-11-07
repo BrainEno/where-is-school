@@ -170,7 +170,9 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 			_spot_stats["ground"] = int(_spot_stats["ground"]) + 1
 			var world: Vector3 = point
 			var distance := _flat_distance(_player.global_position, world)
-			if distance < 1.9 or distance > 5.5:
+			# Out of arm's reach, or clicking the probe would simply use it and there would
+			# be no walk to switch away from.
+			if distance < _interaction.max_distance + 0.5 or distance > 5.5:
 				continue
 			_spot_stats["range"] = int(_spot_stats["range"]) + 1
 			if _interaction.get_target_at_screen_position(screen, false) != null:
@@ -196,7 +198,7 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 			if nearest > best_gap:
 				best_gap = nearest
 				best = candidate
-		if best_gap < 1.5:
+		if best_gap < 1.2:
 			break
 		found.append(best)
 	return found
