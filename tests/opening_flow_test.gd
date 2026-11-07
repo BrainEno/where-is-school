@@ -436,6 +436,7 @@ func _diagnose_interaction(expected: StringName) -> String:
 	parts.append("expected_in_scene=%s" % str(_host.get_current() != null
 		and _host.get_current().find_interactable(expected) != null))
 	parts.append("position=%s" % str(_player.global_position))
+	parts.append("facing=%s" % str(_player.get_facing_direction()))
 	parts.append("control=%s" % str(_player.is_control_enabled()))
 	parts.append("busy=%s" % str(_dialogue.is_busy()))
 	var expected_node: Interactable = null

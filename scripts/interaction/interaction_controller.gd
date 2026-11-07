@@ -92,8 +92,15 @@ func _find_best_target() -> Interactable:
 	var best: Interactable = null
 	var best_score := INF
 	var origin := _player.global_position
+	# The actor's own facing, not the node's basis: the player turns its visual
+	# pivot and reports the direction separately, so the body itself never rotates.
 	var facing := -_player.global_basis.z
+	var actor := _player as Node
+	if actor != null and actor.has_method("get_facing_direction"):
+		facing = actor.get_facing_direction()
 	facing.y = 0.0
+	if facing.length_squared() <= 0.0001:
+		facing = Vector3.FORWARD
 	facing = facing.normalized()
 
 	for area: Area3D in _sensor.get_overlapping_areas():
