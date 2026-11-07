@@ -310,6 +310,7 @@ func _run() -> void:
 			await _check_prompt(&"res_alley_end", "alley prompt")
 			_interaction.request_activation(alley)
 			if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "alley", 30.0, "the alley to load"):
+				await _settle(30.0, "the alley transition to settle")
 				if not bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)):
 					_failures.append("Entering the alley did not set ALLEY_ARRIVED.")
 				# alley -> estate_gate
@@ -322,9 +323,10 @@ func _run() -> void:
 					await physics_frame
 					await physics_frame
 					_interaction.request_activation(to_gate)
-					if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "estate_gate", 30.0, "estate_gate to load"):
+				if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "estate_gate", 30.0, "estate_gate to load"):
 						if not bool(_game_state.get_flag(StoryFlags.ESTATE_GATE_PASSED, false)):
 							_failures.append("Passing estate gate did not set ESTATE_GATE_PASSED.")
+						await _settle(30.0, "the estate gate transition to settle")
 						var gate_loc = _host.get_current()
 						var to_playground = gate_loc.find_interactable(&"estate_to_playground") if gate_loc != null else null
 						if to_playground == null:
