@@ -1,11 +1,27 @@
 name: Playthrough capture
 
 # Runs the real game in a real window under Xvfb, drives it with simulated keys,
-# and commits what it saw to docs/screenshots. The screenshots in the pull request
-# come from this job, not from the editor.
+# and saves what the player would see.
+#
+# Two jobs on purpose:
+# - `capture` runs on pull requests, main and on demand, with **read-only**
+#   permissions. It is a verification job: it fails when the import fails or when
+#   the playthrough does not reach its end marker.
+# - `publish` only runs for a successful capture on `main`, and is the only place
+#   that is allowed to write. A failed or partial run can therefore never replace
+#   the screenshots that a good run produced.
 
 on:
   push:
+    branches: [main]
+    paths:
+      - "tests/capture_playthrough.gd"
+      - ".github/workflows/playthrough-capture.yml"
+      - "scenes/**"
+      - "scripts/**"
+      - "data/**"
+  pull_request:
+    branches: [main]
     paths:
       - "tests/capture_playthrough.gd"
       - ".github/workflows/playthrough-capture.yml"
@@ -15,17 +31,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   capture:
     name: Drive the game under Xvfb and save the frames
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
 
       - uses: chickensoft-games/setup-godot@v2.4.3
         with:
@@ -33,21 +49,37 @@ jobs:
           use-dotnet: false
 
       - name: Import project
+        id: import
         shell: bash
         run: |
           set -uo pipefail
-          set +e
           godot --headless --editor --path . --quit > /tmp/import.log 2>&1
-          echo "import exit=$?"
+          code=$?
           grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import.log | head -n 20 || true
+          if [ "${code}" -ne 0 ]; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "IMPORT_RESULT=failure"
+            echo "::error title=import failed (exit ${code})::${summary:-no summary captured}"
+            exit "${code}"
+          fi
+          # A non-zero exit is not the only way an import breaks: a script that
+          # fails to parse is reported in the log while the editor still quits.
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import.log; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error" /tmp/import.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "IMPORT_RESULT=failure"
+            echo "::error title=import reported script errors::${summary}"
+            exit 1
+          fi
+          echo "IMPORT_RESULT=success"
 
       - name: Capture the playthrough
+        id: capture
         shell: bash
         run: |
-          # GitHub runs bash steps with -e; the capture is allowed to fail, because
-          # a failed run still has to commit the frame where it stopped.
+          # GitHub runs bash steps with -e; the capture is allowed to fail so the
+          # frames it did save are kept. The step still fails: a run that did not
+          # reach its end marker must not look green.
           set -uo pipefail
-          set +e
           mkdir -p docs/screenshots
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
@@ -57,20 +89,84 @@ jobs:
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" /tmp/capture.log | tail -n 60 || true
           ls -l docs/screenshots || true
           summary=$(grep -E "FAILURE|RESULT" docs/screenshots/PLAYTHROUGH.log 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
-          if [ "${code}" -eq 0 ]; then
-            echo "::notice title=playthrough::${summary:-capture finished}"
-          else
+          if [ "${code}" -ne 0 ]; then
+            echo "CAPTURE_RESULT=failure"
             echo "::error title=playthrough failed (exit ${code})::${summary:-no summary}"
+            exit "${code}"
           fi
-          # Evidence is committed even when the run failed: a screenshot of the
-          # frame where it stopped is the point.
-          exit 0
+          # Exit code 0 alone is not enough: the script has to say it reached the
+          # end of the slice, otherwise a run that stopped early would pass.
+          if ! grep -qE "^\[[^]]*\] RESULT: " docs/screenshots/PLAYTHROUGH.log 2>/dev/null; then
+            echo "CAPTURE_RESULT=failure"
+            echo "::error title=playthrough ended without a result marker::${summary:-no log}"
+            exit 1
+          fi
+          echo "CAPTURE_RESULT=success"
+          echo "shot_count=$(find docs/screenshots -name '*.png' | wc -l)" >> "$GITHUB_OUTPUT"
+          echo "::notice title=playthrough::${summary:-capture finished}"
 
-      - name: Commit the screenshots
+      - name: Summarise the result
+        if: always()
         shell: bash
         run: |
           set -uo pipefail
-          set +e
+          {
+            echo "### Playthrough capture"
+            echo ""
+            echo "| check | result |"
+            echo "| --- | --- |"
+            echo "| import | ${IMPORT_OUTCOME:-unknown} |"
+            echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
+            echo ""
+            echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) in docs/screenshots after the run."
+            echo "Log: see the run log and the 'playthrough-log' artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          IMPORT_OUTCOME: ${{ steps.import.outcome }}
+          CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
+          SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
+
+      - name: Upload the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playthrough-evidence
+          path: |
+            /tmp/import.log
+            /tmp/capture.log
+            docs/screenshots
+          if-no-files-found: warn
+
+  publish:
+    name: Commit the frames (main, successful runs only)
+    needs: capture
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.capture.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Download the frames from the capture job
+        uses: actions/download-artifact@v4
+        with:
+          name: playthrough-evidence
+          path: /tmp/evidence
+
+      - name: Commit the frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d /tmp/evidence/docs/screenshots ]; then
+            echo "::error title=no screenshots in the artifact::the capture produced no frames to publish"
+            exit 1
+          fi
+          rm -rf docs/screenshots
+          mkdir -p docs/screenshots
+          cp -a /tmp/evidence/docs/screenshots/. docs/screenshots/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/screenshots
@@ -78,17 +174,7 @@ jobs:
             echo "no screenshot changes"
             exit 0
           fi
-          # [skip ci]: the screenshots are evidence, not a change that needs a new
-          # full CI run (and a bot-triggered run would only wait for approval).
-          git commit -m "Playthrough capture: update screenshots from the real window [skip ci]"
+          # [skip ci]: the frames are evidence of a run that already happened, not a
+          # change that needs its own full CI pass.
+          git commit -m "Playthrough capture: update screenshots from a successful run [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
-
-      - name: Upload the log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playthrough-log
-          path: |
-            /tmp/capture.log
-            docs/screenshots/PLAYTHROUGH.log
-          if-no-files-found: warn
