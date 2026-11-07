@@ -79,7 +79,6 @@ func _ready() -> void:
 		push_error("PointerNavigator: interaction_path '%s' did not resolve." % interaction_path)
 	_player.path_finished.connect(_on_path_finished)
 	_player.path_cancelled.connect(_on_path_cancelled)
-	_ensure_marker()
 
 
 func set_enabled(interact: bool) -> void:
@@ -404,7 +403,10 @@ func _ensure_marker() -> void:
 	if not marker_enabled or _marker != null:
 		return
 	var parent: Node = _player.get_parent() if _player != null else null
-	if parent == null:
+	# Created on first use, never in _ready(): adding a child to a node that is still
+	# setting up its own children fails, and an orphan marker would report a transform
+	# error on every click.
+	if parent == null or not parent.is_inside_tree():
 		return
 	_marker = MeshInstance3D.new()
 	_marker.name = "DestinationMarker"

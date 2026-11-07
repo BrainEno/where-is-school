@@ -355,6 +355,12 @@ func has_line_of_sight_from(from: Vector3, candidate: Interactable) -> bool:
 
 
 func _set_current(interactable: Interactable) -> void:
+	# A freed object compares equal to null, so a location swap can otherwise reach
+	# the assignment below with a dangling reference and raise a type error.
+	if not is_instance_valid(_current):
+		_current = null
+	if not is_instance_valid(interactable):
+		interactable = null
 	if _current == interactable:
 		_set_highlighted(_current)
 		return
@@ -366,6 +372,10 @@ func _set_current(interactable: Interactable) -> void:
 
 
 func _set_highlighted(interactable: Interactable) -> void:
+	if not is_instance_valid(_highlighted):
+		_highlighted = null
+	if not is_instance_valid(interactable):
+		interactable = null
 	if _highlighted == interactable:
 		return
 	if _highlighted != null and is_instance_valid(_highlighted):

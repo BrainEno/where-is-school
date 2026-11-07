@@ -117,6 +117,10 @@ func _check_street_exit_text() -> void:
 	if exit.is_milestone_end:
 		_failures.append("The street exit turned into a milestone end.")
 	for locale: String in EXPECTED.keys():
+		# The game switches language through the `Loc` autoload, which sets both the
+		# dialogue library and the static display locale. A plain script run has no
+		# autoload, so both steps are done here, in the same order.
+		L10n.set_locale(locale)
 		_dialogue.apply_locale(locale)
 		var prompt := _dialogue.get_interact_prompt(exit)
 		if prompt != String(EXPECTED[locale]):
@@ -124,6 +128,7 @@ func _check_street_exit_text() -> void:
 				"In %s the street exit shows '%s' instead of '%s'."
 				% [locale, prompt, String(EXPECTED[locale])]
 			)
+	L10n.set_locale("en")
 	_dialogue.apply_locale("en")
 	await _frames(2)
 
@@ -192,6 +197,7 @@ func _check_dismissal_does_not_rewrite_the_street() -> void:
 
 
 func _check_text(interactable: Interactable, expected: String) -> bool:
+	L10n.set_locale("en")
 	_dialogue.apply_locale("en")
 	var shown := _dialogue.get_interact_prompt(interactable)
 	return shown == expected

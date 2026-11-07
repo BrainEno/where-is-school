@@ -159,7 +159,10 @@ func _check_click_in_reach_is_immediate() -> void:
 		return
 	var probe := _make_probe(location, &"probe_near", &"classroom_own_desk")
 	probe.radius = 0.6
-	probe.global_position = _player.global_position + Vector3(0.9, 0.9, 0.0)
+	if not await _place_clear_of_props(probe, 1.0, 1.8):
+		_failures.append("Could not place an in-reach probe with a clear view.")
+		_free(probe)
+		return
 	await _physics_frames(3)
 	_activations.clear()
 	var screen := _screen_of(probe.global_position)
@@ -330,7 +333,11 @@ func _check_e_still_works() -> void:
 	if location == null:
 		return
 	var probe := _make_probe(location, &"probe_key", &"classroom_own_desk")
-	probe.global_position = _player.global_position + Vector3(1.0, 0.9, 0.0)
+	probe.radius = 0.6
+	if not await _place_clear_of_props(probe, 1.0, 1.8):
+		_failures.append("Could not place the probe for the E check.")
+		_free(probe)
+		return
 	await _physics_frames(4)
 	_activations.clear()
 	# Pin the pointer on the probe so the target is decided, not guessed: this case is

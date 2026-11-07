@@ -65,8 +65,16 @@ jobs:
             tail -n 30 "ci-logs/${name}.log"
             echo "--- exit ${code}"
             local summary
-            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error|ERROR:|DIAG|FAIL:|PASS:" \
-              "ci-logs/${name}.log" | head -n 40 | tr '\n' '|' | cut -c1-4000)
+            # Prefer the test's own verdict lines. Engine ERROR noise (a freed-node
+            # warning repeated every frame) can be hundreds of lines long and would
+            # otherwise push the real failure out of the check annotation.
+            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|PASS:|Parse Error" \
+              "ci-logs/${name}.log" | head -n 20 | tr '\n' '|' | cut -c1-4000)
+            if [ -z "${summary}" ]; then
+              summary=$(grep -E "SCRIPT ERROR|ERROR:" "ci-logs/${name}.log" \
+                | head -n 12 | tr '\n' '|' | cut -c1-4000)
+            fi
+            grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:" "ci-logs/${name}.log" | head -n 20 || true
             if [ "${code}" -eq 0 ]; then
               echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
             else

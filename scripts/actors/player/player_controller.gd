@@ -54,7 +54,7 @@ var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
 var _path_active: bool = false
 var _path_target: Vector3 = Vector3.ZERO
 var _path_progress_elapsed: float = 0.0
-var _path_last_distance: float = INF
+var _path_last_position: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
@@ -166,7 +166,7 @@ func request_path_to(destination: Vector3) -> bool:
 	_path_active = true
 	_path_target = target
 	_path_progress_elapsed = 0.0
-	_path_last_distance = _flat_distance(target)
+	_path_last_position = global_position
 	navigation_agent.target_position = target
 	return true
 
@@ -210,9 +210,12 @@ func _path_direction(delta: float) -> Vector3:
 	if to_next.length() < 0.05:
 		return Vector3.ZERO
 
-	# Progress watchdog: pressed against a wall, or a path that resolves to nothing.
-	if remaining < _path_last_distance - 0.05:
-		_path_last_distance = remaining
+	# Progress watchdog, measured by how far the *body* actually moved rather than by
+	# the straight-line distance to the target: going around a wall can legitimately
+	# take the character away from its destination for a moment.
+	var moved := global_position.distance_to(_path_last_position)
+	_path_last_position = global_position
+	if moved > 0.01:
 		_path_progress_elapsed = 0.0
 	else:
 		_path_progress_elapsed += delta

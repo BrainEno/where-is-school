@@ -127,18 +127,24 @@ func _check_real_conversation_click() -> void:
 			_failures.append("An option button takes keyboard focus, which the digits do not need.")
 		if not button.has_theme_stylebox("hover"):
 			_failures.append("An option button has no hover style, so pointing at it shows nothing.")
+	# The panel sits in a CanvasLayer, so it cannot be re-ordered by moving the node;
+	# what matters is that it is drawn above the HUD and that it is the layer that
+	# receives the click.
 	var parent := _panel.get_parent()
-	if parent != null and parent.get_child(parent.get_child_count() - 1) != _panel:
-		_failures.append("The dialogue panel is not the front-most layer while a choice is open.")
-	if parent != null:
+	if parent == null:
+		_failures.append("The dialogue panel has no parent layer.")
+	else:
 		var hud := parent.get_node_or_null("HUD")
 		if hud != null and _panel.get_index() < hud.get_index():
 			_failures.append("The dialogue panel is drawn below the HUD.")
+	if not _panel.is_visible_in_tree():
+		_failures.append("The dialogue panel is not visible while a choice is open.")
 
 	# --- same choice, in the other language -------------------------------
 	var english: Array[String] = []
 	for button in buttons:
 		english.append(button.text)
+	L10n.set_locale("zh-CN")
 	var switched := _dialogue.apply_locale("zh-CN")
 	await _frames(5)
 	var translated := _buttons()
@@ -171,6 +177,7 @@ func _check_real_conversation_click() -> void:
 		_failures.append("A click on a dialogue option also reached the world.")
 	if _player.is_path_active():
 		_failures.append("A click on a dialogue option started the character walking.")
+	L10n.set_locale("en")
 	_dialogue.apply_locale("en")
 	await _close_conversation()
 
@@ -286,21 +293,21 @@ func _click_at(position: Vector2) -> void:
 	motion.position = position
 	motion.global_position = position
 	motion.button_mask = 0
-	root.push_input(motion)
+	root.push_input(motion, true)
 	await _frames(1)
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
 	press.position = position
 	press.global_position = position
-	root.push_input(press)
+	root.push_input(press, true)
 	await _frames(1)
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
 	release.position = position
 	release.global_position = position
-	root.push_input(release)
+	root.push_input(release, true)
 	await _frames(1)
 
 
@@ -310,14 +317,14 @@ func _press_key(code: Key, shift: bool = false) -> void:
 	press.keycode = code
 	press.pressed = true
 	press.shift_pressed = shift
-	root.push_input(press)
+	root.push_input(press, true)
 	await _frames(1)
 	var release := InputEventKey.new()
 	release.physical_keycode = code
 	release.keycode = code
 	release.pressed = false
 	release.shift_pressed = shift
-	root.push_input(release)
+	root.push_input(release, true)
 	await _frames(1)
 
 
