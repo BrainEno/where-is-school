@@ -95,8 +95,8 @@ func _find_best_target() -> Interactable:
 	# The actor's own facing, not the node's basis: the player turns its visual
 	# pivot and reports the direction separately, so the body itself never rotates.
 	var facing := -_player.global_basis.z
-	var actor := _player as Node
-	if actor != null and actor.has_method("get_facing_direction"):
+	var actor := _actor_with_facing(_player)
+	if actor != null:
 		facing = actor.get_facing_direction()
 	facing.y = 0.0
 	if facing.length_squared() <= 0.0001:
@@ -129,6 +129,18 @@ func _find_best_target() -> Interactable:
 ## The object's own furniture is the usual thing a ray hits first: a desk hides the
 ## desk. Colliders standing next to the candidate are therefore treated as part of
 ## it and ignored, while anything further away (a wall, a door) still blocks.
+## The node that knows where the player is looking: the body that reports its own
+## facing direction. The controller may be attached to the body, to one of its
+## pivots, or to a wrapper, so this walks up instead of assuming a path.
+func _actor_with_facing(start: Node) -> Node:
+	var node := start
+	while node != null:
+		if node.has_method("get_facing_direction"):
+			return node
+		node = node.get_parent()
+	return null
+
+
 func _has_line_of_sight(candidate: Interactable) -> bool:
 	if _player == null or occluder_mask == 0:
 		return true
