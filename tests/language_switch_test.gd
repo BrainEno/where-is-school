@@ -59,6 +59,7 @@ func _run() -> void:
 	_dialogue.check_resolved.connect(_on_check_resolved)
 
 	# --- wait for a line that is actually on screen ----------------------
+	Harness.stage = "waiting for the opening line"
 	if not await _wait_for_line(60.0):
 		Harness.finish(self, _failures + ["The opening conversation never showed a line."], "")
 		return
@@ -76,6 +77,7 @@ func _run() -> void:
 	var checks_before := _check_events
 
 	# --- switch while the line is on screen ------------------------------
+	Harness.stage = "the mid-line language switch"
 	checks_before = _check_events
 	if not _loc.set_locale("zh-CN"):
 		_failures.append("Loc refused to switch to zh-CN.")
@@ -111,6 +113,7 @@ func _run() -> void:
 		_failures.append("The speaker badge did not switch language: '%s'." % badge_zh)
 
 	# --- finish the conversation in Chinese ------------------------------
+	Harness.stage = "finishing the conversation in Chinese"
 	if not await _settle(120.0):
 		_failures.append("The conversation did not finish after the switch.")
 	var objective_zh := _ui.hud.get_objective_text()
@@ -120,6 +123,7 @@ func _run() -> void:
 		_failures.append("The objective was not translated: '%s'." % objective_zh)
 
 	# --- the prompt follows the language as well -------------------------
+	Harness.stage = "the prompt after the switch"
 	var classroom := _host.get_current()
 	var bag := classroom.find_interactable(&"schoolbag") if classroom != null else null
 	if bag == null:
@@ -146,6 +150,7 @@ func _run() -> void:
 		await _settle(60.0)
 
 	# --- issue #18: inspection variants keep their identity -------------
+	Harness.stage = "the set square first read"
 	# The controller queue for an inspection is: the observation, then the separate
 	# recollection. Both are recorded, both must survive any number of switches, and
 	# neither may be confused with the other.
@@ -172,10 +177,15 @@ func _run() -> void:
 			_failures.append("The first read is not identified as a first read.")
 		if not identities.has("inspection:classroom_set_square/recall"):
 			_failures.append("The recollection is not identified as a recollection.")
-		var recall_text_en := String(log_first_read["texts"][identities.find("inspection:classroom_set_square/recall")])
-		if not _has_cjk(recall_text_en):
-			_failures.append("The recollection was not shown in Chinese: '%s'." % recall_text_en)
+		var recall_index := identities.find("inspection:classroom_set_square/recall")
+		if recall_index < 0:
+			_failures.append("The recollection is missing from the log.")
+		else:
+			var recall_text := String((log_first_read["texts"] as PackedStringArray)[recall_index])
+			if not _has_cjk(recall_text):
+				_failures.append("The recollection was not shown in Chinese: '%s'." % recall_text)
 
+		Harness.stage = "the log round trips"
 		# zh -> en -> zh -> en -> zh: the log keeps every row, in order, and ends up
 		# with exactly the text it had the first time it was Chinese.
 		for round_index in 2:
@@ -206,6 +216,7 @@ func _run() -> void:
 		if _check_events != checks_at_inspection:
 			_failures.append("A language switch re-ran a check after the recollection.")
 
+		Harness.stage = "the repeat read"
 		# Reading the same object again is a *new* event: same content, different
 		# variant, and it must append rather than replace.
 		if not _dialogue.present_inspection(&"classroom_set_square"):
@@ -235,6 +246,7 @@ func _run() -> void:
 				_failures.append("The repeat read was not re-rendered in Chinese: '%s'." % repeat_text)
 
 	# --- the conversation history is localised too ----------------------
+	Harness.stage = "the final language check"
 	var conversation_texts: PackedStringArray = _backlog_snapshot()["texts"]
 	for index in conversation_texts.size():
 		if _has_cjk(String(conversation_texts[index])) and _loc.get_locale() == "en":

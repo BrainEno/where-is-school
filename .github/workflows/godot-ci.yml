@@ -68,7 +68,11 @@ jobs:
             # Prefer the test's own verdict lines. Engine ERROR noise (a freed-node
             # warning repeated every frame) can be hundreds of lines long and would
             # otherwise push the real failure out of the check annotation.
-            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|PASS:|Parse Error" \
+            # `SCRIPT ERROR` belongs in the summary: an uncaught runtime error kills
+            # the test's coroutine without printing a verdict, and the run then looks
+            # like a silent timeout. Without this line the only visible symptom is the
+            # watchdog, which says nothing about the cause.
+            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|SCRIPT ERROR|Parse Error|PASS:" \
               "ci-logs/${name}.log" | head -n 20 | tr '\n' '|' | cut -c1-4000)
             if [ -z "${summary}" ]; then
               summary=$(grep -E "SCRIPT ERROR|ERROR:" "ci-logs/${name}.log" \
