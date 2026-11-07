@@ -434,6 +434,16 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 		return null
 	await _frames(3)
 	await _physics_frames(2)
+	# A transition the test drove itself can leave a story beat holding the body: the
+	# beat belongs to the place the player just left. This test jumps between rooms on
+	# purpose, so it hands control back rather than blaming the next click for it.
+	var waited := 0
+	while _player != null and not _player.is_control_enabled() and waited < 40:
+		await _frames(1)
+		waited += 1
+	if _player != null and not _player.is_control_enabled() and _sequence != null:
+		_sequence.allow_player_control()
+		await _frames(3)
 	# Wait for a *routable* map, not just a baked mesh: the region's polygons reach
 	# the navigation server a frame or two after the bake, and a query in that window
 	# answers with nothing at all.

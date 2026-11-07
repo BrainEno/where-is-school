@@ -250,9 +250,11 @@ func _walk_to(point: Vector3) -> void:
 	_approaching = false
 	if _player.request_path_to(point):
 		_last_click_accepted = true
+		_last_rejection = ""
 		_show_marker(point)
 		destination_accepted.emit(point)
 		return
+	_last_rejection = "no route from here to that point"
 	_reject_point(point)
 
 

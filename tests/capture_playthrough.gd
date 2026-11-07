@@ -621,8 +621,12 @@ func _capture_click_navigation() -> void:
 		_failures.append("The player never got control back for the mouse shots.")
 		return
 	_note("mouse shots: scripted left clicks pushed through the input system, not a human playtest")
+	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	var start := _player.global_position
 	var destination := ""
+	var walking := false
+	var settled := false
+	var walked := 0.0
 	for _attempt in 2:
 		var screen := _find_ground_click_screen(4.0, 6.5)
 		if screen == Vector2.ZERO:
@@ -630,7 +634,7 @@ func _capture_click_navigation() -> void:
 		start = _player.global_position
 		await _click_at_screen(screen)
 		await _wait(0.2)
-		var walking := _player.is_path_active()
+		walking = _player.is_path_active()
 		if walking:
 			# The route itself, in numbers: this is the evidence that the walk is a
 			# navigation route and not a straight line through the furniture.
@@ -646,8 +650,8 @@ func _capture_click_navigation() -> void:
 		await _shot("03a_click_destination", "A left click on the floor: the destination ring and the walk starting.")
 		await _wait(0.5)
 		await _shot("03b_click_walking", "Mid-walk, after one click on the floor: no keys held.")
-		var settled := await _poll(func() -> bool: return not _player.is_path_active(), 25.0)
-		var walked := Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length()
+		settled = await _poll(func() -> bool: return not _player.is_path_active(), 25.0)
+		walked = Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length()
 		_note("floor click: walking=%s arrived=%s walked %.2f metres" % [walking, settled, walked])
 		if walking and settled and walked > 1.5:
 			destination = "walked"
@@ -658,7 +662,14 @@ func _capture_click_navigation() -> void:
 			await _wait_for_free(45.0)
 			continue
 	if destination.is_empty():
-		_failures.append("A click on walkable floor did not move the character.")
+		_failures.append(
+			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s)."
+			% [
+				navigator.get_last_rejection() if navigator != null else "no navigator",
+				str(walking), str(settled), walked,
+				str(_player.global_position)
+			]
+		)
 
 	# The keys take over mid-walk.
 	var second := _find_ground_click_screen(3.0, 6.0)
