@@ -1,6 +1,7 @@
-[gd_scene load_steps=55 format=3]
+[gd_scene load_steps=56 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/floor_concrete.tres" id="2_floor_concrete"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_paint.tres" id="3_wall_paint"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="4_wall_trim"]
@@ -147,6 +148,9 @@ light_color = Color(1, 0.87, 0.72, 1)
 light_energy = 0.85
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("90_navigation")
 
 [node name="Floor" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.1, 0)

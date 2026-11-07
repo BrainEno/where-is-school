@@ -40,7 +40,10 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - The hybrid inner-voice system, reduced to **one provisional voice** with passive
   triggers and active checks, and the single shared dice core behind both visible and
   hidden checks (ADR 0003, which is a proposal awaiting the owner).
-- CI: a static syntax gate over every `.gd` file, nineteen headless checks, and a
+- Native navigation in every playable location, with mouse click-to-move and
+  click-to-interact sharing the existing movement and activation paths (see
+  `docs/ARCHITECTURE.md` §5f).
+- CI: a static syntax gate over every `.gd` file, twenty-three headless checks, and a
   read-only capture job whose artifacts are the visual evidence for a pull
   request. Failures produce artifacts as well, so a red run is diagnosable.
 
@@ -52,6 +55,10 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - A bundled CJK font subset (the current font ships whole).
 - Populating the yard with people, events and further checks, now that the space
   and its interaction anchors exist.
+- Navigation features that click-to-move deliberately does **not** have yet: agent
+  avoidance between moving bodies, off-mesh links for stairs and ledges that are not
+  ramps, path smoothing, and a navigation-aware companion. Each location's mesh is
+  baked from its own colliders only, so nothing crosses a location boundary.
 
 Do not implement every planned item in one large foundation PR. Add each when a
 concrete slice requires it.
@@ -149,6 +156,30 @@ document.
 - Evidence: the capture workflow now walks the corridor-to-yard transition on foot
   and moves a real cursor for the hover shot. Windows hands-on checks are listed in
   the pull request and are not yet performed.
+
+### Phase 5b — Mouse navigation and automatic interaction (delivered in this round)
+- Every playable location — classroom, walkway, street, residential courtyard, alley,
+  schoolyard — owns a `NavigationRegion3D` that bakes its mesh from its own static
+  colliders on load. The four generated outdoor scenes get the node from
+  `tools/build_outdoor_locations.py`.
+- `PlayerController` gained one path-following branch that shares acceleration,
+  gravity, `move_and_slide()` and facing with manual movement. A walk can be cancelled
+  by any movement key, by a control lock, by a second destination, or by a location
+  change; a walk that cannot progress ends through a stall watchdog.
+- `PointerNavigator` maps one left click to either a walk, an approach-and-activate, or
+  a refusal. Automatic activation goes through
+  `InteractionController.request_activation()`, the same call E makes, and happens at
+  most once.
+- A left click on a dialogue option selects exactly one option and never reaches the
+  world; the options keep their hover styling, their digits, and their text across a
+  language switch.
+- The street's way back into the school is now `prompt.back_to_classroom`
+  ("Return to classroom" / "回到教室"), and the story's dismissal rewrite only touches
+  the classroom door.
+- Evidence: `tests/navigation_test.gd`, `tests/automatic_interaction_test.gd`,
+  `tests/dialogue_pointer_test.gd`, `tests/street_prompt_test.gd`, and capture frames
+  taken with real pointer events. Windows hands-on checks are listed in the pull
+  request and are not yet performed.
 
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the

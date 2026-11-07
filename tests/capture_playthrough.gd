@@ -110,6 +110,10 @@ func _run() -> void:
 	await _shot("02_walking", "The player after holding the forward key.")
 	await _shot("03_world_after_opening", "The classroom with control returned and the objective set.")
 
+	# 3b. The mouse, with real pointer events: a click on the floor, a click that the
+	# keys interrupt, a click on a person, and a click on a prop.
+	await _capture_click_navigation()
+
 	# 4. The interaction prompt for the schoolbag, with the key it names.
 	await _wait_for_free(60.0)
 	_teleport(Vector3(0.55, 0, 1.7), 0.0)
@@ -158,10 +162,31 @@ func _run() -> void:
 		_teleport(Vector3(-1.32, 0, 1.75), 0.0)
 		if await _wait_for_target(&"q_talk", 30.0):
 			await _shot("09_prompt_talk_chinese", "The prompt for a conversation, in Chinese.")
-			await _press(KEY_E)
-			if await _wait_for_line(5.0):
-				await _wait(0.6)
-				await _shot("10_conversation_chinese", "A conversation line in Chinese, opened with E.")
+		# The conversation itself is started with the mouse, from out of reach: the
+		# character walks over to Q and only then does anything get said. E still works
+		# for every object; the prompts photographed elsewhere are its evidence.
+		if await _position_near(q, 3.5):
+			var q_screen := _screen_position_of(q)
+			if _interaction.get_target_at_screen_position(q_screen, false) == q:
+				await _click_at_screen(q_screen)
+				await _wait(0.35)
+				await _shot(
+					"09b_click_person_approach",
+					"Q clicked from out of reach: the character walks over to them."
+				)
+				if await _wait_for_line(45.0):
+					await _wait(0.6)
+					await _shot(
+						"10_conversation_chinese",
+						"A conversation line in Chinese, started by clicking Q from a distance."
+					)
+					_note("click-to-talk: the walk and the conversation both came from one click")
+				else:
+					_failures.append("Clicking Q did not start a conversation on arrival.")
+			else:
+				_failures.append("Q was not under the cursor for the click-to-talk shot.")
+		else:
+			_failures.append("Could not stand within sight of Q for the click-to-talk shot.")
 		await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the conversation to close")
 	await _press(KEY_L)
 	await _wait(0.4)
@@ -184,7 +209,17 @@ func _run() -> void:
 		_teleport(Vector3(3.2, 0, 2.55), 180.0)
 		await _wait_for_target(&"classroom_door", 5.0)
 		await _shot("12_door_prompt", "The classroom door is open: its prompt changed with the story.")
-		await _press(KEY_E)
+		# The transition is made with the mouse if the door is under the cursor; E stays
+		# the fallback and the log says which one was used.
+		var door_screen := _screen_position_of(door)
+		if _interaction.get_target_at_screen_position(door_screen, false) == door:
+			await _click_at_screen(door_screen)
+			await _wait(0.25)
+			await _shot("12b_click_door", "The door clicked with the mouse: the transition starts without a key.")
+			_note("left-clicked the classroom door")
+		else:
+			_note("the door was not under the cursor; pressed E instead")
+			await _press(KEY_E)
 		if await _wait_for_location("corridor", 40.0):
 			await _wait(1.2)
 			await _shot("13_corridor", "The walkway outside the classroom.")
@@ -234,6 +269,37 @@ func _run() -> void:
 				await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the residential arrival line")
 				await _wait(0.8)
 				await _shot("17_residential", "The courtyard behind the school: three blocks and the stair.")
+
+	var stair_location := _host.get_current()
+	if stair_location != null and String(stair_location.location_id) == "residential":
+		var stair := stair_location.find_interactable(&"res_stair")
+		if stair == null:
+			_failures.append("The courtyard has no stair to click.")
+		else:
+			await _wait_for_free(60.0)
+			if await _position_near(stair, 1.6):
+				await _click_at_screen(_screen_position_of(stair))
+				if await _poll(func() -> bool: return _dialogue.has_pending_choices(), 30.0):
+					await _shot(
+						"17b_mouse_choice_prompt",
+						"The stair conversation with its two options, opened by a mouse click."
+					)
+					if await _click_dialogue_option(1):
+						await _wait(0.5)
+						await _shot(
+							"17c_mouse_choice_taken",
+							"The second option taken with the mouse; the panel shows the line it leads to."
+						)
+						_note("dialogue option 2 selected with a left click")
+					else:
+						_failures.append("Clicking the second dialogue option did nothing.")
+				else:
+					_failures.append("Clicking the stair did not offer a choice.")
+				await _drive_until(
+					func() -> bool: return not _dialogue.is_busy(), 60.0, "the stair conversation"
+				)
+			else:
+				_failures.append("Could not stand next to the stair to click it.")
 
 	var flats := _host.get_current()
 	if flats != null and String(flats.location_id) == "residential":
@@ -542,6 +608,296 @@ func _capture_yard_checks() -> void:
 		)
 	else:
 		_failures.append("Stepping through the far gap did not show the end card.")
+
+
+# --- mouse navigation -------------------------------------------------------
+
+
+## Click-to-move, as a player does it: every step below is a real left click pushed
+## through the input system. Nothing here teleports to fake a walk; a teleport is only
+## used to reach the *starting* position from which an approach is then clicked.
+func _capture_click_navigation() -> void:
+	if not await _wait_for_free(45.0):
+		_failures.append("The player never got control back for the mouse shots.")
+		return
+	await _unstick()
+	_note("mouse shots: scripted left clicks pushed through the input system, not a human playtest")
+	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
+	# Which way an automatic walk ends: a finish or a cancel. A walk that stops without
+	# travelling has to say which of the two ended it.
+	var endings := [0, 0]
+	_player.path_finished.connect(func() -> void: endings[0] += 1)
+	_player.path_cancelled.connect(func() -> void: endings[1] += 1)
+	var start := _player.global_position
+	var destination := ""
+	var walking := false
+	var settled := false
+	var walked := 0.0
+	var after_click := "not sampled"
+	var clicked := false
+	for _attempt in 3:
+		# A camera looking at the player only shows so much floor: widen the window
+		# before giving up, so "no point to click" is not reported as "the click did
+		# not move the character".
+		var screen := _find_ground_click_screen(4.0, 6.5)
+		if screen == Vector2.ZERO:
+			screen = _find_ground_click_screen(3.0, 8.0)
+		if screen == Vector2.ZERO:
+			break
+		clicked = true
+		start = _player.global_position
+		var clicks_before := navigator.get_click_count() if navigator != null else 0
+		await _click_at_screen(screen)
+		await _wait(0.2)
+		walking = _player.is_path_active()
+		after_click = "control=%s, legs=%d, index=%d, dialogue=%s, pending=%s, target=%s" % [
+			str(_player.is_control_enabled()),
+			_player.get_path_legs().size(),
+			_player.get_path_index(),
+			str(_dialogue.is_busy()),
+			str(navigator.get_pending_target()) if navigator != null else "no navigator",
+			str(_player.get_path_target()),
+		]
+		if not walking and navigator != null and navigator.get_click_count() == clicks_before:
+			# The press never arrived as unhandled input: something on screen took it.
+			# That is worth saying out loud, and worth another point rather than a
+			# failure that blames navigation.
+			_note("a scripted click on the floor never reached the world; trying another point")
+			continue
+		if walking:
+			# The route itself, in numbers: this is the evidence that the walk is a
+			# navigation route and not a straight line through the furniture.
+			var map := _player.navigation_agent.get_navigation_map()
+			var path := NavigationServer3D.map_get_path(map, start, _player.get_path_target(), true)
+			var length := 0.0
+			for index in range(1, path.size()):
+				length += Vector2(path[index].x - path[index - 1].x, path[index].z - path[index - 1].z).length()
+			_note(
+				"clicked route: %d waypoints, %.2f m of path for a %.2f m straight line"
+				% [path.size(), length, Vector2(start.x - _player.get_path_target().x, start.z - _player.get_path_target().z).length()]
+			)
+		await _shot("03a_click_destination", "A left click on the floor: the destination ring and the walk starting.")
+		await _wait(0.5)
+		await _shot("03b_click_walking", "Mid-walk, after one click on the floor: no keys held.")
+		settled = await _poll(func() -> bool: return not _player.is_path_active(), 25.0)
+		walked = Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length()
+		_note("floor click: walking=%s arrived=%s walked %.2f metres" % [walking, settled, walked])
+		if walking and settled and walked > 1.5:
+			destination = "walked"
+			break
+		if _dialogue.is_busy():
+			_note("a story beat interrupted the clicked walk; retrying once")
+			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the interrupting beat")
+			await _wait_for_free(45.0)
+			continue
+	if destination.is_empty() and not clicked:
+		_failures.append(
+			"No walkable floor between 3 and 8 metres of the player could be found to click (at %s)."
+			% str(_player.global_position)
+		)
+	elif destination.is_empty():
+		_failures.append(
+			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s, started at %s; %s; ended %d finish, %d cancel)."
+			% [
+				navigator.get_last_rejection() if navigator != null else "no navigator",
+				str(walking), str(settled), walked,
+				str(_player.global_position), str(start), after_click,
+				endings[0], endings[1]
+			]
+		)
+
+	# The keys take over mid-walk.
+	var second := _find_ground_click_screen(3.0, 6.0)
+	if second != Vector2.ZERO:
+		await _click_at_screen(second)
+		await _wait(0.25)
+		var was_walking := _player.is_path_active()
+		Input.action_press("move_forward")
+		await _wait(0.4)
+		Input.action_release("move_forward")
+		await _wait(0.2)
+		var stopped := not _player.is_path_active()
+		await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
+		_note("walk before WASD=%s, walk after WASD=%s" % [was_walking, stopped])
+		if not was_walking or not stopped:
+			_failures.append("Holding a movement key did not take over from the automatic walk.")
+	else:
+		_failures.append("No second floor point was clickable for the interruption shot.")
+
+	# A click on a prop: the inspection, reached by the mouse only.
+	var sheet := _host.get_current().find_interactable(&"timetable")
+	if sheet == null:
+		_failures.append("The timetable sheet is missing from the classroom.")
+		return
+	await _wait_for_free(60.0)
+	if await _position_near(sheet, 1.5):
+		var sheet_screen := _screen_position_of(sheet)
+		if _interaction.get_target_at_screen_position(sheet_screen, false) == sheet:
+			await _click_at_screen(sheet_screen)
+			if await _wait_for_line(15.0):
+				await _shot("03f_click_inspect", "The timetable sheet opened by a click, with no key pressed.")
+				_note("click-to-inspect: the sheet opened from a click")
+			else:
+				_failures.append("Clicking the timetable sheet opened nothing.")
+			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the clicked inspection")
+		else:
+			_failures.append("The timetable sheet was not under the cursor for the click-to-inspect shot.")
+	else:
+		_failures.append("Could not stand in front of the timetable sheet.")
+
+
+## A screen position whose click lands on floor 4-6.5 m away, found by asking the same
+## question the click will ask.
+func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vector2:
+	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
+	if navigator == null:
+		return Vector2.ZERO
+	var rect := _player.get_viewport().get_visible_rect().size
+	for x_step in 12:
+		for y_step in 10:
+			# The dialogue panel is anchored to the bottom edge and would swallow a
+			# click aimed at the floor behind it, so the scan stays above it.
+			var screen := Vector2(
+				rect.x * (0.15 + 0.7 * float(x_step) / 11.0),
+				rect.y * (0.28 + 0.34 * float(y_step) / 9.0)
+			)
+			var point: Variant = navigator.get_ground_point_at(screen)
+			if point == null:
+				continue
+			var distance := Vector2(
+				point.x - _player.global_position.x, point.z - _player.global_position.z
+			).length()
+			if distance < min_distance or distance > max_distance:
+				continue
+			if _interaction.get_target_at_screen_position(screen, false) != null:
+				continue
+			if not _reaches(point):
+				continue
+			return screen
+	return Vector2.ZERO
+
+
+## Makes sure the body can move before a walk is judged by whether it moved.
+##
+## The capture reaches a starting position by teleporting, and a teleport can drop the
+## capsule inside a desk: the navigation map still answers with a route, the walk starts,
+## `move_and_slide()` finds nowhere to go, and the stall watchdog cancels it three times
+## in a row. That is a capture position problem, not a navigation one, so it is found
+## and fixed here — and said out loud rather than silently corrected.
+func _unstick() -> void:
+	var probe := 0.5
+	var directions := [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]
+	for direction in directions:
+		if not _player.test_move(_player.global_transform, direction * probe):
+			return
+	_note("the player could not move in any direction from %s; stepping it clear" % str(_player.global_position))
+	for radius in [0.6, 1.0, 1.6, 2.2]:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := _player.global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			if not _reaches(candidate):
+				continue
+			var clear := true
+			for direction in directions:
+				var placed := Transform3D(_player.global_transform.basis, candidate)
+				if _player.test_move(placed, direction * probe):
+					clear = false
+					break
+			if clear:
+				_player.global_position = candidate
+				_player.velocity = Vector3.ZERO
+				await get_tree().physics_frame
+				await get_tree().physics_frame
+				_note("stepped the player to %s to start the mouse shots" % str(candidate))
+				return
+	_note("no clear spot within 2.2 m; the mouse shots start where the player stands")
+
+
+## Whether the navigation map can actually take the player to this point.
+##
+## Without this a click can land on ground the map cannot reach: the navigator builds a
+## short route to the nearest point it can reach, the character takes two steps and the
+## capture reads that as a walk. Reachability is part of what a clickable floor point
+## means, so it is checked before the click rather than after.
+func _reaches(point: Vector3) -> bool:
+	var map := _player.navigation_agent.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var route := NavigationServer3D.map_get_path(map, _player.global_position, point, true)
+	if route.is_empty():
+		return false
+	return route[route.size() - 1].distance_to(point) <= 0.75
+
+
+## Stands the player near an object, facing it, at a spot the navigation mesh knows.
+func _position_near(target: Interactable, distance: float) -> bool:
+	var map := _player.navigation_agent.get_navigation_map()
+	var origin := target.global_position
+	for index in 16:
+		var angle := TAU * float(index) / 16.0
+		var candidate := origin + Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
+		var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+		if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
+			continue
+		var to_target := origin - snapped
+		var yaw := atan2(-to_target.x, -to_target.z)
+		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+		await _wait(0.2)
+		if _interaction.get_target_at_screen_position(_screen_position_of(target), false) == target:
+			return true
+	return false
+
+
+func _screen_position_of(target: Node3D) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null or target == null:
+		return Vector2.ZERO
+	return camera.unproject_position(target.global_position)
+
+
+## A real left click at a screen position: cursor first, then press and release
+## through the input system, the same path a player's mouse takes.
+func _click_at_screen(screen: Vector2) -> void:
+	var rect := _player.get_viewport().get_visible_rect().size
+	var position := Vector2(clampf(screen.x, 1.0, rect.x - 1.0), clampf(screen.y, 1.0, rect.y - 1.0))
+	Input.warp_mouse(position)
+	await process_frame
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
+	press.position = position
+	press.global_position = position
+	Input.parse_input_event(press)
+	await process_frame
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = position
+	release.global_position = position
+	Input.parse_input_event(release)
+	await process_frame
+
+
+## Clicks one of the option buttons currently on screen. Returns false when there is
+## no such option, or when the click left the options up.
+func _click_dialogue_option(index: int) -> bool:
+	if _panel == null:
+		return false
+	var container := _panel.get_node_or_null("Frame/Content/ChoicesContainer")
+	if container == null:
+		return false
+	var buttons: Array[Button] = []
+	for child in container.get_children():
+		var button := child as Button
+		if button != null:
+			buttons.append(button)
+	if index < 0 or index >= buttons.size():
+		return false
+	await _click_at_screen(buttons[index].get_global_rect().get_center())
+	await _wait(0.3)
+	return not _panel.has_choices()
 
 
 # --- input ------------------------------------------------------------------

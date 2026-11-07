@@ -1,4 +1,4 @@
-[gd_scene load_steps=59 format=3]
+[gd_scene load_steps=60 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="2_asphalt"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="11_location_exit"]
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="12_ambience"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="13_ambience_player"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="15_navigation"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -165,6 +166,9 @@ location_id = &"alley"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("15_navigation")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-8, 196, 0)

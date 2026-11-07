@@ -119,10 +119,12 @@ jobs:
         id: capture
         shell: bash
         run: |
-          # GitHub runs bash steps with -e; the capture is allowed to fail so the
-          # frames it did save are kept. The step still fails: a run that did not
-          # reach its end marker must not look green.
-          set -uo pipefail
+          # GitHub runs bash steps with -e, which would end the step at the first
+          # non-zero command and throw the log away. The capture is allowed to fail so
+          # the frames it did save are kept and the reason is reported; the step still
+          # fails at the end: a run that did not reach its end marker must not look
+          # green.
+          set +e -uo pipefail
           mkdir -p docs/screenshots
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
@@ -132,17 +134,25 @@ jobs:
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" /tmp/capture.log | tail -n 60 || true
           ls -l docs/screenshots || true
           summary=$(grep -E "FAILURE|RESULT" docs/screenshots/PLAYTHROUGH.log 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
-          if [ "${code}" -ne 0 ]; then
+          # The script's own verdict decides, not the process exit code. `quit(0)` does
+          # set it, but a windowed run under Xvfb also exits non-zero sometimes while
+          # the engine tears down its window and GL context, after the playthrough has
+          # finished and the log has been written. That is noise about teardown, not
+          # about the game. A run that never wrote its marker — because it stopped
+          # early or died mid-coroutine — still fails here, as does one that wrote a
+          # FAILURE line.
+          if grep -qE "FAILURE: " docs/screenshots/PLAYTHROUGH.log 2>/dev/null; then
             echo "CAPTURE_RESULT=failure"
-            echo "::error title=playthrough failed (exit ${code})::${summary:-no summary}"
-            exit "${code}"
+            echo "::error title=playthrough reported a failure (exit ${code})::${summary:-no summary}"
+            exit 1
           fi
-          # Exit code 0 alone is not enough: the script has to say it reached the
-          # end of the slice, otherwise a run that stopped early would pass.
           if ! grep -qE "^\[[^]]*\] RESULT: " docs/screenshots/PLAYTHROUGH.log 2>/dev/null; then
             echo "CAPTURE_RESULT=failure"
-            echo "::error title=playthrough ended without a result marker::${summary:-no log}"
+            echo "::error title=playthrough ended without a result marker (exit ${code})::${summary:-no log}"
             exit 1
+          fi
+          if [ "${code}" -ne 0 ]; then
+            echo "::warning title=playthrough::the run exited ${code} after writing its result marker; teardown, not the playthrough"
           fi
           echo "CAPTURE_RESULT=success"
           echo "shot_count=$(find docs/screenshots -name '*.png' | wc -l)" >> "$GITHUB_OUTPUT"

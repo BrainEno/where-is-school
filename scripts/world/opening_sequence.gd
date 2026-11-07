@@ -30,6 +30,8 @@ const STREET_SCENE := "res://scenes/locations/street/street.tscn"
 const RESIDENTIAL_SCENE := "res://scenes/locations/residential/residential.tscn"
 const CLASSROOM_START := &"PlayerStart"
 const CORRIDOR_START := &"FromClassroom"
+## The only exit whose prompt the director rewrites.
+const COMPLETION_DOOR_ID := &"classroom_door"
 
 const WAKE_FADE_SECONDS := 3.0
 const WAKE_SETTLE_SECONDS := 2.0
@@ -445,17 +447,27 @@ func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant
 		_update_exit_prompt()
 
 
+## The classroom door is the only exit whose prompt changes with the story.
+##
+## This used to match on `destination_id == "corridor"`, which also matched the
+## street's return exit once the street existed: walking out of the school and
+## standing at that door showed "Leave the classroom" in the middle of the street.
+## The door is identified by its own id now, and the street exit keeps the prompt its
+## scene gives it.
 func _update_exit_prompt() -> void:
 	var dismissed := _has_flag(StoryFlags.CLASS_DISMISSED)
+	var door: LocationExit = null
 	for node in get_tree().get_nodes_in_group("location_exit"):
-		var exit := node as LocationExit
-		if exit == null:
-			continue
-		if exit.destination_id == &"corridor":
-			if dismissed:
-				exit.set_prompt("prompt.door_leave")
-			else:
-				exit.clear_prompt_override()
+		var candidate := node as LocationExit
+		if candidate != null and candidate.interact_id == COMPLETION_DOOR_ID:
+			door = candidate
+			break
+	if door == null:
+		return
+	if dismissed:
+		door.set_prompt("prompt.door_leave")
+	else:
+		door.clear_prompt_override()
 
 
 func _wait_for_flag(flag: StringName, limit_seconds: float) -> void:

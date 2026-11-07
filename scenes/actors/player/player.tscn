@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="1_controller"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_controller.gd" id="2_interaction"]
 [ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="3_occluder"]
+[ext_resource type="Script" path="res://scripts/interaction/pointer_navigator.gd" id="4_navigator"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.35
@@ -56,3 +57,14 @@ shape = SubResource("SphereShape3D_sensor")
 
 [node name="InteractionController" type="Node" parent="."]
 script = ExtResource("2_interaction")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+unique_name_in_owner = true
+path_desired_distance = 0.3
+target_desired_distance = 0.25
+path_max_distance = 3.0
+radius = 0.35
+height = 1.8
+
+[node name="PointerNavigator" type="Node" parent="."]
+script = ExtResource("4_navigator")

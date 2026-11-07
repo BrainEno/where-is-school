@@ -18,6 +18,11 @@ any direction, has its own optional checks, and ends at the gap in the far fence
 The street, the residential courtyard and the green animal from the previous
 milestone are unchanged and still reachable.
 
+The slice can be played with the mouse or with the keyboard. Clicking the floor walks
+there; clicking a person, a prop or a door walks over and uses it on arrival, running
+the same activation the E key runs. Every playable location carries its own navigation
+mesh, baked when it loads.
+
 Everything the player reads is data, and the whole game can be switched between
 English and simplified Chinese while it runs.
 
@@ -33,8 +38,10 @@ The walkway is the short way in and the street is the long way round; both end i
 the same yard, and the end card sits at `pg_gap_in_fence` in the yard, not at an
 alley mouth.
 
-See [docs/IMPLEMENTATION_NOTES_FREE_PERIOD.md](docs/IMPLEMENTATION_NOTES_FREE_PERIOD.md)
-for this milestone's decisions, and
+See [docs/IMPLEMENTATION_NOTES_NAVIGATION.md](docs/IMPLEMENTATION_NOTES_NAVIGATION.md)
+for the mouse-navigation round (click-to-move, automatic interaction, evidence and
+limitations), [docs/IMPLEMENTATION_NOTES_FREE_PERIOD.md](docs/IMPLEMENTATION_NOTES_FREE_PERIOD.md)
+for the free-period milestone's decisions, and
 [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for
 controls, architecture, and the older known limitations.
 
@@ -48,14 +55,58 @@ controls, architecture, and the older known limitations.
 
 ## Controls
 
-- **WASD / arrow keys** — walk (camera-relative).
-- **E** — interact with the highlighted object or person. The highlight follows the
-  mouse when the cursor is over something in reach, and the player's facing
-  otherwise; both always name the same object E would use.
-- **Space / Enter / left click** — continue dialogue, or answer with the numbered choice.
-- **1–9** — pick a dialogue choice.
+- **WASD / arrow keys** — walk (camera-relative). Holding any of them also stops an
+  automatic walk in progress: the keys always win.
+- **Left click on the floor** — walk there. The route follows the location's
+  navigation mesh, so it goes around desks, walls and fences; a quiet ring marks the
+  spot and disappears when the walk ends. Clicking a wall, a desk top or anything else
+  that is not walkable is refused instead of being walked at.
+- **Left click on a person or an object** — walk to a suitable spot next to it and use
+  it on arrival. A click on something already within reach uses it at once. This is
+  the same activation the E key performs; the object decides what it does, so a
+  clicked door, exit or prop behaves exactly like a pressed one.
+- **E** — use whatever is highlighted, without moving. The highlight follows the mouse
+  when the cursor is over something in reach, and the player's facing otherwise; both
+  always name the same object E would use. E remains the keyboard-only way to
+  interact.
+- **Space / Enter** — continue dialogue.
+- **Left click on a dialogue option** — take that option. Options are ordinary
+  buttons, so a click selects exactly one; clicks on the panel never reach the world.
+- **1–9** — pick a dialogue choice by number.
 - **Tab** — open or close the dialogue log.
 - **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
+
+While a conversation, a scripted beat or a location transition is running, the
+character does not move and world clicks are ignored (the walk in progress is
+cancelled rather than resumed afterwards).
+
+## Navigation
+
+Six locations are playable — the classroom, the walkway, the street, the residential
+courtyard, the alley and the schoolyard — and **each one owns its own navigation mesh**.
+Nothing is imported from a neighbouring room and nothing is hand-painted: every
+location scene has a `NavigationRegion3D` named `Navigation` that bakes itself from
+that scene's own static colliders when the location loads
+(`scripts/world/location_navigation.gd`). The player walks the route the map returns
+with one movement implementation, so a clicked walk accelerates, collides and turns
+exactly like a walked one.
+
+Adding navigation to a new location is therefore one node and one line:
+
+```
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("<id>_navigation")
+```
+
+It must be a direct child of the location root, and the walkable floor must be made of
+`StaticBody3D` colliders (props that are only meshes are decoration and stay
+pass-through, as before). The four generated outdoor locations get the same node from
+`tools/build_outdoor_locations.py`; re-run that script rather than editing those scenes
+by hand. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5f-navigation-click-to-move-and-automatic-interaction)
+for the movement and activation contracts, and
+[docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md) for what is deliberately still
+missing.
 
 ## Repository map
 
