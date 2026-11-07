@@ -21,12 +21,12 @@
 background_mode = 1
 background_color = Color(0.22, 0.18, 0.17, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.4, 0.32, 0.27, 1)
-ambient_light_energy = 0.5
+ambient_light_color = Color(0.5, 0.42, 0.35, 1)
+ambient_light_energy = 1.0
 tonemap_mode = 2
 fog_enabled = true
-fog_light_color = Color(0.3, 0.23, 0.2, 1)
-fog_density = 0.015
+fog_light_color = Color(0.32, 0.26, 0.21, 1)
+fog_density = 0.005
 adjustment_enabled = true
 adjustment_saturation = 0.82
 
@@ -375,8 +375,8 @@ environment = SubResource("Environment_1")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-10, 208, 0)
-light_color = Color(1, 0.62, 0.4, 1)
-light_energy = 1.25
+light_color = Color(1, 0.7, 0.48, 1)
+light_energy = 1.9
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 
@@ -1009,7 +1009,7 @@ end_card_key = "end.slice"
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-6.0, 0, 14.0)
+position = Vector3(-4.0, 0, 10.0)
 
 [node name="FromStair" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-13.6, 1.8, -13.4)

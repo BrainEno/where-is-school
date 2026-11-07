@@ -202,13 +202,13 @@ def build_street():
     s = Scene("Street", "street")
     s.env = {
         'sky': 'Color(0.243, 0.196, 0.176, 1)',
-        'ambient': 'Color(0.44, 0.34, 0.28, 1)',
-        'energy': '0.55',
-        'fog': 'Color(0.32, 0.24, 0.2, 1)',
-        'fog_density': '0.012',
+        'ambient': 'Color(0.52, 0.43, 0.36, 1)',
+        'energy': '1.05',
+        'fog': 'Color(0.34, 0.27, 0.22, 1)',
+        'fog_density': '0.004',
         'saturation': '0.85',
     }
-    s.sun = {'rotation': (-14, 38, 0), 'color': 'Color(1, 0.66, 0.42, 1)', 'energy': 1.5}
+    s.sun = {'rotation': (-14, 38, 0), 'color': 'Color(1, 0.72, 0.5, 1)', 'energy': 2.1}
     s.ambience = {'volume': -16.0, 'target': -24.0}
 
     # ground and pavements
@@ -279,7 +279,7 @@ def build_street():
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromStreet",
          "id_dest": "residential"},
     ]
-    s.spawns = [("FromCorridor", (-8.0, 0, 16.0)), ("FromResidential", (10.5, 1.6, -34.4))]
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromResidential", (10.5, 1.6, -34.4))]
     return s
 
 
@@ -287,13 +287,13 @@ def build_residential():
     s = Scene("Residential", "residential")
     s.env = {
         'sky': 'Color(0.22, 0.18, 0.17, 1)',
-        'ambient': 'Color(0.4, 0.32, 0.27, 1)',
-        'energy': '0.5',
-        'fog': 'Color(0.3, 0.23, 0.2, 1)',
-        'fog_density': '0.015',
+        'ambient': 'Color(0.5, 0.42, 0.35, 1)',
+        'energy': '1.0',
+        'fog': 'Color(0.32, 0.26, 0.21, 1)',
+        'fog_density': '0.005',
         'saturation': '0.82',
     }
-    s.sun = {'rotation': (-10, 208, 0), 'color': 'Color(1, 0.62, 0.4, 1)', 'energy': 1.25}
+    s.sun = {'rotation': (-10, 208, 0), 'color': 'Color(1, 0.7, 0.48, 1)', 'energy': 1.9}
     s.ambience = {'volume': -16.0, 'target': -24.0}
 
     s.box("Courtyard", (0, -0.1, -2), (34, 0.2, 40), "concrete")
@@ -369,7 +369,7 @@ def build_residential():
         {"name": "AlleyEnd", "pos": (6.0, 0.9, -33.0), "id": "res_alley_end",
          "prompt_key": "prompt.milestone", "radius": 1.6, "milestone": "end.slice"},
     ]
-    s.spawns = [("FromStreet", (-6.0, 0, 14.0)), ("FromStair", (-13.6, 1.8, -13.4))]
+    s.spawns = [("FromStreet", (-4.0, 0, 10.0)), ("FromStair", (-13.6, 1.8, -13.4))]
     return s
 
 

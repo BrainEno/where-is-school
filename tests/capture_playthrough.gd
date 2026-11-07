@@ -234,7 +234,7 @@ func _run() -> void:
 			_failures.append("The green animal is missing from the courtyard.")
 		else:
 			await _wait_for_free(60.0)
-			_teleport(Vector3(6.5, 0, -1.5), -90.0)
+			_teleport(Vector3(6.8, 0, 0.8), -19.0)
 			if not await _wait_for_target(&"green_animal", 30.0):
 				_failures.append("The green animal was never offered as an interaction target.")
 				await _shot("FAIL_animal_prompt", "No prompt appeared for the animal.")

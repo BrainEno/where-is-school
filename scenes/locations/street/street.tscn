@@ -20,12 +20,12 @@
 background_mode = 1
 background_color = Color(0.243, 0.196, 0.176, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.44, 0.34, 0.28, 1)
-ambient_light_energy = 0.55
+ambient_light_color = Color(0.52, 0.43, 0.36, 1)
+ambient_light_energy = 1.05
 tonemap_mode = 2
 fog_enabled = true
-fog_light_color = Color(0.32, 0.24, 0.2, 1)
-fog_density = 0.012
+fog_light_color = Color(0.34, 0.27, 0.22, 1)
+fog_density = 0.004
 adjustment_enabled = true
 adjustment_saturation = 0.85
 
@@ -299,8 +299,8 @@ environment = SubResource("Environment_1")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-14, 38, 0)
-light_color = Color(1, 0.66, 0.42, 1)
-light_energy = 1.5
+light_color = Color(1, 0.72, 0.5, 1)
+light_energy = 2.1
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 
@@ -800,7 +800,7 @@ destination_id = &"residential"
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-8.0, 0, 16.0)
+position = Vector3(-5.5, 0, 13.5)
 
 [node name="FromResidential" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(10.5, 1.6, -34.4)
