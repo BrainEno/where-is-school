@@ -153,16 +153,10 @@ func _run_opening() -> void:
 
 func _beat_expectation() -> void:
 	await _begin_beat()
-	_ui.overlay.show_overlay(
-		L10n.t("overlay.expect_title"),
-		L10n.t("overlay.expect_body")
-	)
+	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
 	await get_tree().create_timer(0.7).timeout
 	await _play_conversation(&"expected_b")
-	_ui.overlay.show_overlay(
-		L10n.t("overlay.deny_title"),
-		L10n.t("overlay.deny_body")
-	)
+	_ui.overlay.show_localized_overlay("overlay.deny_title", "overlay.deny_body")
 	await get_tree().create_timer(EXPECTATION_DISCLAIMER_SECONDS).timeout
 	await _ui.overlay.hide_overlay()
 	_game_state().set_flag(StoryFlags.EXPECTATION_PLAYED, true)

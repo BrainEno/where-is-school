@@ -80,18 +80,6 @@ func _run() -> void:
 	await _wait(0.7)
 	await _shot("01_opening_line", "The first line of the opening conversation, in English.")
 
-	# 2. A held movement key, to prove input reaches the player and the camera.
-	var start_position := _player.global_position
-	Input.action_press("move_forward")
-	await _wait(0.8)
-	Input.action_release("move_forward")
-	await _wait(0.2)
-	var moved := _player.global_position.distance_to(start_position)
-	_note("held move_forward for 0.8 s: player moved %.2f m" % moved)
-	if moved < 0.2:
-		_failures.append("Holding the forward key did not move the player.")
-	await _shot("02_walking", "The player after holding the forward key.")
-
 	# 3. Finish the opening conversation with the keyboard only.
 	if not await _drive_until(
 		func() -> bool:
@@ -101,12 +89,30 @@ func _run() -> void:
 		await _fail("the opening conversation could not be driven to its end with the keyboard")
 		return
 	_note("objective after the opening conversation: %s" % _ui.hud.get_objective_key())
+
+	# 2. A held movement key, driven as late as possible: the story beats lock the
+	# player, so the walk is measured at the first moment control actually returns.
+	if not await _wait_for_free(30.0):
+		_failures.append("The player never got control back to walk.")
+	else:
+		var start_position := _player.global_position
+		Input.action_press("move_forward")
+		await _wait(0.8)
+		Input.action_release("move_forward")
+		await _wait(0.2)
+		var moved := _player.global_position.distance_to(start_position)
+		_note("held move_forward for 0.8 s: player moved %.2f m" % moved)
+		if moved < 0.2:
+			_failures.append("Holding the forward key did not move the player.")
+	await _shot("02_walking", "The player after holding the forward key.")
 	await _shot("03_world_after_opening", "The classroom with control returned and the objective set.")
 
 	# 4. The interaction prompt for the schoolbag, with the key it names.
+	await _wait_for_free(60.0)
 	_teleport(Vector3(0.55, 0, 1.7), 0.0)
-	if not await _wait_for_target(&"schoolbag", 5.0):
+	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was never offered as an interaction target.")
+		await _shot("FAIL_schoolbag_prompt", "No prompt appeared for the schoolbag.")
 	await _shot("04_prompt_schoolbag", "The interaction prompt with the key that is bound in the input map.")
 
 	# 5. Press E and photograph the description.
@@ -125,8 +131,11 @@ func _run() -> void:
 	if L10n.current != "zh-CN":
 		_failures.append("Pressing L did not switch the language.")
 	await _shot("06_chinese_world", "The same classroom after switching to simplified Chinese at runtime.")
-	if not await _wait_for_target(&"schoolbag", 5.0):
+	await _wait_for_free(60.0)
+	_teleport(Vector3(0.55, 0, 1.7), 0.0)
+	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was not prompted again after the language switch.")
+		await _shot("FAIL_prompt_chinese", "No prompt appeared after the language switch.")
 	await _shot("07_prompt_chinese", "The interaction prompt after the switch: the prompt text is translated.")
 
 	# 7. An object read a second time, in Chinese.
@@ -142,8 +151,9 @@ func _run() -> void:
 	if q == null:
 		_failures.append("Q has no interaction point in the classroom.")
 	else:
+		await _wait_for_free(60.0)
 		_teleport(Vector3(-1.32, 0, 1.75), 0.0)
-		if await _wait_for_target(&"q_talk", 5.0):
+		if await _wait_for_target(&"q_talk", 30.0):
 			await _shot("09_prompt_talk_chinese", "The prompt for a conversation, in Chinese.")
 			await _press(KEY_E)
 			if await _wait_for_line(5.0):
@@ -179,8 +189,9 @@ func _run() -> void:
 	if corridor != null and String(corridor.location_id) == "corridor":
 		var gate := corridor.find_interactable(&"school_gate")
 		if gate != null:
+			await _wait_for_free(60.0)
 			_teleport(Vector3(0, 0, 5.4), 0.0)
-			await _wait_for_target(&"school_gate", 5.0)
+			await _wait_for_target(&"school_gate", 30.0)
 			await _press(KEY_E)
 			if await _wait_for_location("street", 40.0):
 				await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the street arrival line")
@@ -191,18 +202,25 @@ func _run() -> void:
 	if street != null and String(street.location_id) == "street":
 		var gutter := street.find_interactable(&"street_gutter")
 		if gutter != null:
+			await _wait_for_free(60.0)
 			_teleport(Vector3(-8.9, 0, -21.4), 0.0)
-			if await _wait_for_target(&"street_gutter", 5.0):
-				await _shot("15_street_prompt", "A street object with its prompt.")
-				await _press(KEY_E)
-				if await _wait_for_line(5.0):
-					await _wait(0.6)
-					await _shot("16_street_inspection", "The street object's description.")
-				await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the description to close")
+			var prompted := await _wait_for_target(&"street_gutter", 30.0)
+			if not prompted:
+				_failures.append("The gutter was never offered as an interaction target.")
+				await _shot("FAIL_street_prompt", "No prompt appeared for the street object.")
+			await _shot("15_street_prompt", "A street object with its prompt.")
+			await _press(KEY_E)
+			if await _wait_for_line(5.0):
+				await _wait(0.6)
+				await _shot("16_street_inspection", "The street object's description.")
+			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the description to close")
 		var stairs := street.find_interactable(&"street_to_residential")
 		if stairs != null:
+			await _wait_for_free(60.0)
 			_teleport(Vector3(10.5, 0, -28.6), 0.0)
-			await _wait_for_target(&"street_to_residential", 5.0)
+			if not await _wait_for_target(&"street_to_residential", 30.0):
+				_failures.append("The way to the residential area was never offered.")
+			await _shot("15b_stair_prompt", "The way up to the residential area.")
 			await _press(KEY_E)
 			if await _wait_for_location("residential", 40.0):
 				await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the residential arrival line")
@@ -215,20 +233,24 @@ func _run() -> void:
 		if animal == null:
 			_failures.append("The green animal is missing from the courtyard.")
 		else:
+			await _wait_for_free(60.0)
 			_teleport(Vector3(6.5, 0, -1.5), -90.0)
-			if await _wait_for_target(&"green_animal", 5.0):
-				await _shot("18_animal_prompt", "The green animal, with the prompt to look at it.")
-				await _press(KEY_E)
-				if await _wait_for_line(5.0):
-					await _wait(0.8)
-					await _shot("19_animal_conversation", "Meeting the animal: the first line.")
+			if not await _wait_for_target(&"green_animal", 30.0):
+				_failures.append("The green animal was never offered as an interaction target.")
+				await _shot("FAIL_animal_prompt", "No prompt appeared for the animal.")
+			await _shot("18_animal_prompt", "The green animal, with the prompt to look at it.")
+			await _press(KEY_E)
+			if await _wait_for_line(5.0):
+				await _wait(0.8)
+				await _shot("19_animal_conversation", "Meeting the animal: the first line.")
 			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 90.0, "the animal conversation")
 			if _dialogue.is_busy():
 				await _shot("FAIL_animal_conversation", "The animal conversation did not finish.")
 			var alley := flats.find_interactable(&"res_alley_end")
 			if alley != null:
+				await _wait_for_free(60.0)
 				_teleport(Vector3(6.0, 0, -31.6), 0.0)
-				await _wait_for_target(&"res_alley_end", 5.0)
+				await _wait_for_target(&"res_alley_end", 30.0)
 				await _press(KEY_E)
 				if await _wait_for_visible(_ui.end_card, 20.0):
 					await _wait(0.6)
@@ -280,6 +302,14 @@ func _wait(seconds: float) -> void:
 	if seconds > 0.0:
 		await create_timer(seconds).timeout
 	await process_frame
+
+
+## The director locks the player while a beat plays, and beats can start at any
+## time (the bell, the reminder, the arrival line). Nothing is pressed until
+## control has actually come back, otherwise the input goes nowhere.
+func _wait_for_free(timeout_seconds: float) -> bool:
+	return await _poll(func() -> bool:
+		return not _dialogue.is_busy() and _player.is_control_enabled(), timeout_seconds)
 
 
 func _wait_for_line(timeout_seconds: float) -> bool:
