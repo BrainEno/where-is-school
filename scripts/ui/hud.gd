@@ -10,6 +10,10 @@ extends Control
 @onready var _language_label: Label = %LanguageLabel
 
 var _objective_tween: Tween = null
+## True while the dialogue panel is on screen. The panel carries its own key
+## hints at the bottom right, so the HUD's language hint steps aside to keep the
+## two from printing on top of each other.
+var _dialogue_open: bool = false
 ## Locale key of the current objective, so it can be re-translated in place.
 var _objective_key: String = ""
 
@@ -77,6 +81,14 @@ func refresh_language_text() -> void:
 	if _language_label == null:
 		return
 	_language_label.text = L10n.t("ui.language_switch", {"name": L10n.locale_name(L10n.other_locale())})
+	_language_label.visible = not _dialogue_open
+
+
+## Called by the UI root when the dialogue panel opens or closes.
+func set_dialogue_open(open: bool) -> void:
+	_dialogue_open = open
+	if _language_label != null:
+		_language_label.visible = not open
 
 
 ## Reads the actual interact binding so the hint cannot drift from the input map.
