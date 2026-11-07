@@ -32,6 +32,8 @@ static func load_all() -> DialogueLibrary:
 		library._graphs[locale] = {}
 		library._index[locale] = {}
 		var check_ids: Dictionary = {}
+		for rule: Dictionary in PassiveVoices.RULES.values():
+			check_ids[String(rule["check_id"])] = "passive voice rule"
 		for chapter in CHAPTERS:
 			var path := chapter_path(locale, chapter)
 			var graph := DialogueGraph.load_from_file(path)

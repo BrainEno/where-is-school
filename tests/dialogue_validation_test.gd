@@ -32,6 +32,8 @@ func _run() -> void:
 	_expect_error("unknown check ability", _bad_check("ability", "unknown"), ["check_fixture", "ability"])
 	_expect_error("invalid check difficulty", _bad_check("difficulty", 11), ["check_fixture", "difficulty"])
 	_expect_error("missing failure target", _bad_check("failure", "missing"), ["check_fixture", "missing"])
+	_expect_error("choice hub cannot fall through", _choice_orphan(), ["choice_orphan", "orphan"])
+	_expect_error("condition flag list type", _bad_condition(), ["bad_condition", "all_flags"])
 
 	_check_locale_parity()
 	_check_real_content()
@@ -105,6 +107,22 @@ func _unknown_effect() -> Dictionary:
 	return _graph("bad_effect", [
 		{"id": "x1", "speaker": "q", "text": "Fixture line.",
 		 "effects": [{"type": "teleport_player"}], "next": null},
+	])
+
+
+func _choice_orphan() -> Dictionary:
+	return _graph("choice_orphan", [
+		{"id": "hub", "speaker": "q", "text": "Choose.",
+		 "choices": [{"id": "go", "text": "Go.", "next": "target"}]},
+		{"id": "orphan", "speaker": "q", "text": "Not a fall-through.", "next": null},
+		{"id": "target", "speaker": "q", "text": "There.", "next": null},
+	])
+
+
+func _bad_condition() -> Dictionary:
+	return _graph("bad_condition", [
+		{"id": "node", "speaker": "q", "text": "A.",
+		 "conditions": {"all_flags": "not-an-array"}, "next": null},
 	])
 
 

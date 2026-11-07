@@ -386,10 +386,19 @@ func _parse_conditions(
 			errors.append(
 				"%s: unknown condition '%s' (use all_flags, not_flags or requires)." % [context, String(key)]
 			)
-	for entry: Variant in data.get("all_flags", []):
-		all_flags.append(StringName(String(entry)))
-	for entry: Variant in data.get("not_flags", []):
-		not_flags.append(StringName(String(entry)))
+	for field: String in ["all_flags", "not_flags"]:
+		var raw_flags: Variant = data.get(field, [])
+		if not (raw_flags is Array):
+			errors.append("%s: conditions.%s must be an array of flag ids." % [context, field])
+			continue
+		for entry: Variant in raw_flags:
+			if not (entry is String) or String(entry).strip_edges().is_empty():
+				errors.append("%s: conditions.%s contains an invalid flag id." % [context, field])
+				continue
+			if field == "all_flags":
+				all_flags.append(StringName(entry))
+			else:
+				not_flags.append(StringName(entry))
 	var raw_requires: Variant = data.get("requires", {})
 	if raw_requires is Dictionary:
 		for flag: Variant in (raw_requires as Dictionary).keys():
@@ -590,6 +599,9 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 			queue.append(choice.next_id)
 			if not choice.check.is_empty():
 				queue.append(StringName(String(choice.check["failure"])))
+		# A choice hub never falls through to the next node in file order.
+		if not node.choices.is_empty():
+			continue
 		if node.ends_here:
 			continue
 		if not String(node.next_id).is_empty():
