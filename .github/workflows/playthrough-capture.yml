@@ -72,6 +72,17 @@ jobs:
         shell: bash
         run: CAPTURE_EVIDENCE_DIR="$RUNNER_TEMP/playthrough-evidence" scripts/ci/run_playthrough_capture.sh
 
+      # Temporary review aid: removed after inspecting these isolated thumbnails.
+      - name: Emit review thumbnails
+        run: |
+          set -euo pipefail
+          for frame in 14_passage_en 15_playground_en 17_playground_check_success_en 19_playground_zh 20_end_card; do
+            convert "$CAPTURE_DIR/$frame.png" -resize 960x540 -quality 40 "$RUNNER_TEMP/review.jpg"
+            if [ "$(wc -c < "$RUNNER_TEMP/review.jpg")" -gt 45000 ]; then
+              convert "$CAPTURE_DIR/$frame.png" -resize 640x360 -quality 35 "$RUNNER_TEMP/review.jpg"
+            fi
+            printf '::notice title=REVIEW_%s::%s\n' "$frame" "$(base64 -w0 "$RUNNER_TEMP/review.jpg")"
+          done
       - name: Upload status, logs and any frames
         if: always()
         uses: actions/upload-artifact@v4
