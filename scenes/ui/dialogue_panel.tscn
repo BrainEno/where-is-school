@@ -65,6 +65,7 @@ layout_mode = 2
 color = Color(0.776, 0.733, 0.643, 0.55)
 
 [node name="HeaderRow" type="HBoxContainer" parent="Frame/Content"]
+clip_contents = true
 theme_override_constants/separation = 12
 
 [node name="SpeakerLabel" type="Label" parent="Frame/Content/HeaderRow"]

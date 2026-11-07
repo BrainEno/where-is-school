@@ -233,7 +233,7 @@ func _run() -> void:
 				_failures.append("The repeat read was not re-rendered in Chinese: '%s'." % repeat_text)
 
 	# --- the conversation history is localised too ----------------------
-	var conversation_texts := _backlog_snapshot()["texts"]
+	var conversation_texts: PackedStringArray = _backlog_snapshot()["texts"]
 	for index in conversation_texts.size():
 		if _has_cjk(String(conversation_texts[index])) and _loc.get_locale() == "en":
 			_failures.append("A backlog row stayed Chinese in English: '%s'." % conversation_texts[index])

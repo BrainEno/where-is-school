@@ -111,6 +111,10 @@ func _ready() -> void:
 func _apply_type() -> void:
 	_speaker_label.add_theme_font_size_override("font_size", speaker_size)
 	_speaker_label.add_theme_font_override("font", _tracked_font(_speaker_label, 3))
+	# A name that would push the role and the source label out of the band is trimmed
+	# with an ellipsis instead. The name is the anchor, not a reason to break the frame.
+	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_role_label.add_theme_font_size_override("font_size", role_size)
 	_badge_label.add_theme_font_size_override("font_size", badge_size)
 	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label, 2))

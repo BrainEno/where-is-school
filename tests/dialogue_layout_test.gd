@@ -54,12 +54,24 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 
-	var long_en := _longest_text("res://data/dialogue/en/prologue.json")
-	var long_zh := _longest_text("res://data/dialogue/zh-CN/prologue.json")
-	var recall_en := _longest_text("res://data/inspections/en/classroom.json")
-	var recall_zh := _longest_text("res://data/inspections/zh-CN/classroom.json")
-	if long_en.length() < 80 or long_zh.length() < 40 or recall_en.is_empty() or recall_zh.is_empty():
-		_failures.append("The content files did not yield usable sample text.")
+	# The longest paragraphs the shipped content actually has, in both languages: the
+	# object descriptions are the long ones, the prologue supplies the shorter beats.
+	var samples := {
+		"prose_en": _longest_text("res://data/inspections/en/classroom.json"),
+		"prose_zh": _longest_text("res://data/inspections/zh-CN/classroom.json"),
+		"beat_en": _longest_text("res://data/dialogue/en/prologue.json"),
+		"beat_zh": _longest_text("res://data/dialogue/zh-CN/prologue.json"),
+	}
+	var report := "content samples: prose_en %d, prose_zh %d, beat_en %d, beat_zh %d" % [
+		String(samples["prose_en"]).length(),
+		String(samples["prose_zh"]).length(),
+		String(samples["beat_en"]).length(),
+		String(samples["beat_zh"]).length(),
+	]
+	print(report)
+	if String(samples["prose_en"]).length() < 120 or String(samples["prose_zh"]).length() < 40 \
+			or String(samples["beat_en"]).is_empty() or String(samples["beat_zh"]).is_empty():
+		_failures.append("The content files did not yield usable sample text (%s)." % report)
 		Harness.finish(self, _failures, "")
 		return
 
@@ -68,7 +80,7 @@ func _run() -> void:
 		await process_frame
 		await process_frame
 		await process_frame
-		await _run_cases(size, long_en, long_zh, recall_en, recall_zh)
+		await _run_cases(size, samples)
 
 	# A visible check (`CheckOverlay`) shares the screen with the band; it must stay a
 	# small frame at the top and never overlap the dialogue at the smallest size.
@@ -87,15 +99,17 @@ func size_smallest() -> Vector2i:
 	return RESOLUTIONS[0]
 
 
-func _run_cases(
-	size: Vector2i, long_en: String, long_zh: String, recall_en: String, recall_zh: String
-) -> void:
+func _run_cases(size: Vector2i, samples: Dictionary) -> void:
 	var tag := "%dx%d" % [size.x, size.y]
+	var prose_en := String(samples["prose_en"])
+	var prose_zh := String(samples["prose_zh"])
+	var beat_zh := String(samples["beat_zh"])
+	var beat_en := String(samples["beat_en"])
 
 	# 1. A long English paragraph, seen.
 	L10n.set_locale("en")
 	await _show(
-		_line(long_en, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false)
+		_line(prose_en, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false)
 	)
 	_measure("%s long English prose" % tag, size, true)
 
@@ -103,13 +117,20 @@ func _run_cases(
 	#    one whose line lengths the layout has to survive.
 	L10n.set_locale("zh-CN")
 	await _show(
-		_line(long_zh, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
+		_line(prose_zh, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
 	)
 	_measure("%s long Chinese prose" % tag, size, true)
 
-	# 3. Three paragraphs of recollection, with a title.
+	# 3. One paragraph long enough that no fixed box could hold it: the scroll path.
 	L10n.set_locale("zh-CN")
-	var paragraphs := "%s\n\n%s\n\n%s" % [recall_zh, long_zh, recall_zh]
+	var wall := "%s\n%s" % [prose_zh, prose_zh + beat_zh]
+	await _show(_line(wall, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false))
+	_measure("%s over-long single paragraph" % tag, size, false)
+	if not bool(_panel.get_layout_report()["body_scrolling"]):
+		_failures.append("%s: an over-long paragraph did not fall back to scrolling." % tag)
+
+	# 4. Three paragraphs of recollection, with a title.
+	var paragraphs := "%s\n\n%s\n\n%s" % [prose_zh, beat_zh, prose_zh]
 	var recall_line := _line(
 		paragraphs, "protagonist", "You", "", NarrativeEntry.Source.RECALLED, false
 	)
@@ -117,13 +138,13 @@ func _run_cases(
 	await _show(recall_line)
 	_measure("%s multi-paragraph recollection" % tag, size, false)
 
-	# 4. Four long options under a long line: the layout that breaks first.
-	var choice_line := _line(long_zh, "n", "N", "role.n", NarrativeEntry.Source.REPORTED, false)
+	# 5. Four long options under a long line: the layout that breaks first.
+	var choice_line := _line(prose_zh, "n", "N", "role.n", NarrativeEntry.Source.REPORTED, false)
 	await _show(choice_line)
 	var options: Array = []
 	for index in 4:
 		options.append({
-			"text": "%s（%d）" % [long_zh.substr(0, mini(38, long_zh.length())), index + 1],
+			"text": "%s（%d）" % [prose_zh.substr(0, mini(38, prose_zh.length())), index + 1],
 		})
 	_panel.set_choices(options)
 	await process_frame
@@ -131,18 +152,18 @@ func _run_cases(
 	_measure("%s four long options" % tag, size, false)
 	_measure_options("%s four long options" % tag, size)
 
-	# 5. A name and a role that are both too long, plus a title.
+	# 6. A name and a role that are both too long, plus a title.
 	var long_name := "名字非常非常长的一个人物名称"
-	var long_role := "role.that.does.not.exist.but.is.still.too.long.to.fit"
-	var long_line := _line(long_zh, "q", long_name, "", NarrativeEntry.Source.OBSERVED, false)
+	var long_role := "role.that.is.much.too.long.to.fit"
+	var long_line := _line(prose_zh, "q", long_name, "", NarrativeEntry.Source.OBSERVED, false)
 	long_line["speaker_role"] = long_role
 	long_line["title"] = "一个同样很长的标题，用来检查标题行会不会越过面板"
 	await _show(long_line)
 	_measure("%s overlong name and role" % tag, size, true)
 
-	# 6. Consecutive inner voices: subjective, imagined, no role.
+	# 7. Consecutive inner voices: subjective, imagined, no role.
 	var voice_line := _line(
-		recall_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
+		beat_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
 	)
 	await _show(voice_line)
 	_measure("%s inner voice" % tag, size, true)

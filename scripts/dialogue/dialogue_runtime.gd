@@ -400,7 +400,7 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 ## live runtime produced, including the translated speaker name and the inner-voice
 ## override. Two implementations would drift apart at the first content edit.
 static func compose_line(
-	conversation: DialogueGraph.DialogueConversation,
+	conversation: DialogueGraph.Conversation,
 	node: DialogueGraph.DialogueNode,
 	characters: CharacterDirectory,
 	abilities: InnerAbilities
