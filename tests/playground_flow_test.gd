@@ -10,14 +10,14 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
-	var autoloads := Harness.ensure_state_autoloads(self)
+	var autoloads = Harness.ensure_state_autoloads(self)
 	var gs: Node = autoloads["game_state"]
 	var ns: Node = autoloads["narrative_state"]
 	if gs == null or ns == null:
 		Harness.finish(self, ["State autoloads unavailable"], "")
 		return
 	Harness.clear_session_state(self)
-	var rpg := Harness.ensure_autoload(self, "Rpg", "res://scripts/rpg/rpg_manager.gd")
+	var rpg = Harness.ensure_autoload(self, "Rpg", "res://scripts/rpg/rpg_manager.gd")
 	if rpg != null:
 		# ensure abilities loaded
 		if rpg.has_method("abilities_load"):
@@ -44,7 +44,7 @@ func _run() -> void:
 		return
 
 	# Load residential directly, simulate having reached it
-	var pg_path := "res://scenes/locations/residential/residential.tscn"
+	var pg_path = "res://scenes/locations/residential/residential.tscn"
 	if not host.load_location(pg_path, &"PlayerStart", player):
 		_failures.append("Could not load residential for playground test")
 	else:
@@ -53,8 +53,8 @@ func _run() -> void:
 		gs.set_flag(StoryFlags.CURRENT_LOCATION, &"residential")
 		ns.record(&"animal_seen", NarrativeEntry.Source.OBSERVED, &"protagonist", "animal")
 
-		var res_loc := host.get_current()
-		var alley_exit := res_loc.find_interactable(&"res_alley_end") if res_loc else null
+		var res_loc = host.get_current()
+		var alley_exit = res_loc.find_interactable(&"res_alley_end") if res_loc else null
 		if alley_exit == null:
 			_failures.append("Residential missing res_alley_end exit to alley.")
 		else:
@@ -67,30 +67,30 @@ func _run() -> void:
 			host.load_location(alley_exit.destination_scene, alley_exit.destination_spawn, player)
 			gs.set_flag(StoryFlags.ALLEY_ARRIVED, true)
 			gs.set_flag(StoryFlags.CURRENT_LOCATION, &"alley")
-			var alley := host.get_current()
+			var alley = host.get_current()
 			if alley == null or String(alley.location_id) != "alley":
 				_failures.append("Did not arrive in alley.")
 			else:
 				if alley.get_interactables().size() < 2:
 					_failures.append("Alley should have at least 2 interactables.")
-				var to_gate := alley.find_interactable(&"alley_to_gate")
+				var to_gate = alley.find_interactable(&"alley_to_gate")
 				if to_gate == null:
 					_failures.append("Alley missing alley_to_gate.")
 				else:
 					host.load_location(to_gate.destination_scene, to_gate.destination_spawn, player)
 					gs.set_flag(StoryFlags.ESTATE_GATE_PASSED, true)
 					gs.set_flag(StoryFlags.CURRENT_LOCATION, &"estate_gate")
-					var gate := host.get_current()
+					var gate = host.get_current()
 					if gate == null or String(gate.location_id) != "estate_gate":
 						_failures.append("Did not arrive in estate_gate.")
 					else:
-						var to_pg := gate.find_interactable(&"estate_to_playground")
+						var to_pg = gate.find_interactable(&"estate_to_playground")
 						if to_pg == null:
 							_failures.append("Estate gate missing estate_to_playground.")
 						else:
 							host.load_location(to_pg.destination_scene, to_pg.destination_spawn, player)
 							gs.set_flag(StoryFlags.CURRENT_LOCATION, &"playground")
-							var playground := host.get_current()
+							var playground = host.get_current()
 							if playground == null or String(playground.location_id) != "playground":
 								_failures.append("Did not arrive in playground.")
 							else:
@@ -108,13 +108,13 @@ func _run() -> void:
 									_failures.append("Knowledge not preserved after playground transition.")
 
 								# Try active check via dialogue (playground_shed)
-								var lib := dialogue.get_dialogue_library()
+								var lib = dialogue.get_dialogue_library()
 								if lib != null and lib.has_conversation(&"playground_shed"):
-									var rt := dialogue.get_runtime()
+									var rt = dialogue.get_runtime()
 									# inject deterministic engine
-									var rng := RandomNumberGenerator.new()
+									var rng = RandomNumberGenerator.new()
 									rng.seed = 1
-									var eng := CheckEngine.new(rng, gs)
+									var eng = CheckEngine.new(rng, gs)
 									rt.set_check_engine(eng)
 									if not rt.start(lib.get_graph(&"playground_shed"), &"playground_shed"):
 										_failures.append("Could not start playground_shed conversation.")
@@ -131,22 +131,22 @@ func _run() -> void:
 										if rt.get_last_check() != null:
 											prev_roll = rt.get_last_check().roll
 										# Try again with same id, without allow_reroll - should return already_attempted
-										var eng2 := CheckEngine.new(rng, gs)
-										var r2 := eng2.roll(&"playground_shed_search", &"keen_eye", 2, 12, 0, true, false)
+										var eng2 = CheckEngine.new(rng, gs)
+										var r2 = eng2.roll(&"playground_shed_search", &"keen_eye", 2, 12, 0, true, false)
 										if prev_roll != 0 and r2.roll != prev_roll:
 											_failures.append("Anti-spam: second roll should reuse previous result, got %d vs %d" % [prev_roll, r2.roll])
 								else:
 									_failures.append("Dialogue library missing playground_shed conversation.")
 
 								# Verify playground exit is milestone
-								var exit := playground.find_interactable(&"playground_exit")
+								var exit = playground.find_interactable(&"playground_exit")
 								if exit == null:
 									_failures.append("Playground missing playground_exit milestone.")
 								elif not exit.is_milestone_end:
 									_failures.append("playground_exit should be milestone_end.")
 
 								# Return path: back to gate should work (free traversal)
-								var back := playground.find_interactable(&"playground_to_gate")
+								var back = playground.find_interactable(&"playground_to_gate")
 								if back == null:
 									_failures.append("Playground missing back-to-gate exit.")
 								else:

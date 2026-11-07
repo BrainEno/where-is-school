@@ -78,7 +78,9 @@
           "speaker": "protagonist",
           "text": "On the ledger's last page: the same timetable format as the one in your classroom, but the subject column says PHYS. ED. and the room is YARD. Someone kept the old paper.",
           "conditions": {
-            "all_flags": ["check_success:playground_shed_search"]
+            "all_flags": [
+              "check_success:playground_shed_search"
+            ]
           },
           "effects": [
             {
@@ -101,7 +103,9 @@
           "speaker": "protagonist",
           "text": "The page is too wet. You can make out the grid but the ink has run into the lines that matter. The shape is familiar even if the words are not.",
           "conditions": {
-            "not_flags": ["check_success:playground_shed_search"]
+            "not_flags": [
+              "check_success:playground_shed_search"
+            ]
           },
           "effects": [
             {
@@ -173,7 +177,9 @@
           "speaker": "protagonist",
           "text": "The back row, second from the left. The same haircut as the timetable drawing, but older. You cannot tell if that is a memory or a suggestion.",
           "conditions": {
-            "all_flags": ["check_success:playground_wall_memory"]
+            "all_flags": [
+              "check_success:playground_wall_memory"
+            ]
           },
           "effects": [
             {
@@ -196,7 +202,9 @@
           "speaker": "protagonist",
           "text": "Nothing comes. The photo stays where it is, and you stay where you are. It might be better that way.",
           "conditions": {
-            "not_flags": ["check_success:playground_wall_memory"]
+            "not_flags": [
+              "check_success:playground_wall_memory"
+            ]
           },
           "effects": [
             {
@@ -275,7 +283,9 @@
           "speaker": "protagonist",
           "text": "It is not the bar. The concrete under it holds the heat, as if a room below ran too long and then stopped. No door is visible.",
           "conditions": {
-            "all_flags": ["check_success:playground_equipment_sense"]
+            "all_flags": [
+              "check_success:playground_equipment_sense"
+            ]
           },
           "effects": [
             {
@@ -298,7 +308,9 @@
           "speaker": "protagonist",
           "text": "You feel nothing new. Or you feel something and call it nothing, which is almost the same. The bar is just a bar, for now.",
           "conditions": {
-            "not_flags": ["check_success:playground_equipment_sense"]
+            "not_flags": [
+              "check_success:playground_equipment_sense"
+            ]
           },
           "effects": [
             {
@@ -333,7 +345,9 @@
           "speaker": "protagonist",
           "text": "The replacement was careful. Someone wanted this held together.",
           "conditions": {
-            "all_flags": ["check_success:playground_equipment_steady"]
+            "all_flags": [
+              "check_success:playground_equipment_steady"
+            ]
           },
           "effects": [
             {
@@ -356,7 +370,9 @@
           "speaker": "protagonist",
           "text": "They are bolts. They hold. You decide not to make it more than that today.",
           "conditions": {
-            "not_flags": ["check_success:playground_equipment_steady"]
+            "not_flags": [
+              "check_success:playground_equipment_steady"
+            ]
           },
           "effects": [
             {

@@ -578,7 +578,17 @@ func _validate_no_linear_cycle(conversation: Conversation, label: String) -> voi
 
 
 ## Anything the player can never see is dead content: usually a typo in a `next`.
+## Conditional branches (success/failure gated by check_success flags) live
+## back-to-back in file order and rely on DialogueRuntime skipping: if
+## ps_success fails its all_flags check, runtime falls through to ps_failure
+## even though ps_success is marked ends_here. The validator must allow that
+## skip, otherwise every check conversation would be reported unreachable.
 func _report_unreachable(conversation: Conversation, label: String) -> void:
+	var conditional: Dictionary = {}
+	for nid in conversation.order:
+		var nn: DialogueNode = conversation.nodes[nid]
+		if not nn.all_flags.is_empty() or not nn.not_flags.is_empty() or not nn.requires.is_empty():
+			conditional[nid] = true
 	var reached: Dictionary = {}
 	var queue: Array[StringName] = []
 	if conversation.nodes.has(conversation.start_id):
@@ -591,14 +601,22 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 		var node: DialogueNode = conversation.nodes[current]
 		for choice: DialogueChoice in node.choices:
 			queue.append(choice.next_id)
+		var has_next := not String(node.next_id).is_empty()
+		var order_idx := conversation.order.find(current)
+		var next_in_order: StringName = &""
+		if order_idx >= 0 and order_idx + 1 < conversation.order.size():
+			next_in_order = conversation.order[order_idx + 1]
 		if node.ends_here:
+			if not String(next_in_order).is_empty() and conditional.has(next_in_order):
+				queue.append(next_in_order)
 			continue
-		if not String(node.next_id).is_empty():
+		if has_next:
 			queue.append(node.next_id)
+			if not String(next_in_order).is_empty() and conditional.has(next_in_order) and next_in_order != node.next_id:
+				queue.append(next_in_order)
 		else:
-			var order_index := conversation.order.find(current)
-			if order_index >= 0 and order_index + 1 < conversation.order.size():
-				queue.append(conversation.order[order_index + 1])
+			if not String(next_in_order).is_empty():
+				queue.append(next_in_order)
 	for node_id: StringName in conversation.order:
 		if not reached.has(node_id):
 			errors.append(

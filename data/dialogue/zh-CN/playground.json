@@ -78,7 +78,9 @@
           "speaker": "protagonist",
           "text": "最后一页：和教室里一样的课表格式，但科目那栏写着体育，地点是操场。有人把旧纸留下来了。",
           "conditions": {
-            "all_flags": ["check_success:playground_shed_search"]
+            "all_flags": [
+              "check_success:playground_shed_search"
+            ]
           },
           "effects": [
             {
@@ -101,7 +103,9 @@
           "speaker": "protagonist",
           "text": "那一页太湿了。格子还在，墨水已经晕进该看字的地方。这个形状你认得，字不认得。",
           "conditions": {
-            "not_flags": ["check_success:playground_shed_search"]
+            "not_flags": [
+              "check_success:playground_shed_search"
+            ]
           },
           "effects": [
             {
@@ -173,7 +177,9 @@
           "speaker": "protagonist",
           "text": "最后一排，左二。和课表画上一样的发型，但年纪大了。你分不清这是记忆还是暗示。",
           "conditions": {
-            "all_flags": ["check_success:playground_wall_memory"]
+            "all_flags": [
+              "check_success:playground_wall_memory"
+            ]
           },
           "effects": [
             {
@@ -196,7 +202,9 @@
           "speaker": "protagonist",
           "text": "什么也没来。照片留在原地，你也留在原地。也许这样更好。",
           "conditions": {
-            "not_flags": ["check_success:playground_wall_memory"]
+            "not_flags": [
+              "check_success:playground_wall_memory"
+            ]
           },
           "effects": [
             {
@@ -275,7 +283,9 @@
           "speaker": "protagonist",
           "text": "不是杆子。底下的水泥在存热，像下面的房间开太久刚关掉。看不到门。",
           "conditions": {
-            "all_flags": ["check_success:playground_equipment_sense"]
+            "all_flags": [
+              "check_success:playground_equipment_sense"
+            ]
           },
           "effects": [
             {
@@ -298,7 +308,9 @@
           "speaker": "protagonist",
           "text": "没感到新的东西。或者感到了，被你叫成没有，也差不多。这根杆子暂时就是杆子。",
           "conditions": {
-            "not_flags": ["check_success:playground_equipment_sense"]
+            "not_flags": [
+              "check_success:playground_equipment_sense"
+            ]
           },
           "effects": [
             {
@@ -333,7 +345,9 @@
           "speaker": "protagonist",
           "text": "换得很用心。有人想让它撑住。",
           "conditions": {
-            "all_flags": ["check_success:playground_equipment_steady"]
+            "all_flags": [
+              "check_success:playground_equipment_steady"
+            ]
           },
           "effects": [
             {
@@ -356,7 +370,9 @@
           "speaker": "protagonist",
           "text": "是螺栓。起固定作用。今天就先不把它想成别的。",
           "conditions": {
-            "not_flags": ["check_success:playground_equipment_steady"]
+            "not_flags": [
+              "check_success:playground_equipment_steady"
+            ]
           },
           "effects": [
             {

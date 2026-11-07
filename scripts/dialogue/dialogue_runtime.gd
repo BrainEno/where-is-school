@@ -189,11 +189,22 @@ func _enter_node(node_id: StringName) -> void:
 			return
 		if _conditions_met(node.requires, node.all_flags, node.not_flags):
 			break
-		var skipped_target := _resolve_next_id(node)
-		if String(skipped_target).is_empty():
-			_finish()
-			return
-		node_id = skipped_target
+		# If this conditional branch ends_here but the next node in file
+			# order is also conditional (e.g. sibling failure branch after a
+			# conditional success that ends_here), skip to that sibling instead
+			# of ending the conversation - this is how check branches are encoded.
+			var skipped_target := _resolve_next_id(node)
+			if String(skipped_target).is_empty():
+				var oi := _conversation.order.find(node.node_id)
+				if oi >= 0 and oi + 1 < _conversation.order.size():
+					var nxt: StringName = _conversation.order[oi + 1]
+					var nxt_node: DialogueGraph.DialogueNode = _conversation.nodes.get(nxt, null)
+					if nxt_node != null and (not nxt_node.all_flags.is_empty() or not nxt_node.not_flags.is_empty() or not nxt_node.requires.is_empty()):
+						skipped_target = nxt
+			if String(skipped_target).is_empty():
+				_finish()
+				return
+			node_id = skipped_target
 
 	_node = node
 	_apply_effects(node.effects)

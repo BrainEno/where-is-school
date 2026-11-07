@@ -19,7 +19,7 @@ func _run() -> void:
 	Harness.finish(self, _failures, "inner abilities load/value/passive/active/different results work.")
 
 func _test_load() -> void:
-	var reg := AbilityRegistry.load_all()
+	var reg = AbilityRegistry.load_all()
 	if not reg.is_valid():
 		_failures.append(reg.describe_errors())
 	if reg.get_ids().size() < 4:
@@ -29,8 +29,8 @@ func _test_load() -> void:
 			_failures.append("Missing ability %s" % id)
 
 func _test_values() -> void:
-	var reg := AbilityRegistry.load_all()
-	var a := reg.get_ability(&"keen_eye")
+	var reg = AbilityRegistry.load_all()
+	var a = reg.get_ability(&"keen_eye")
 	if a == null:
 		_failures.append("keen_eye missing")
 		return
@@ -40,9 +40,9 @@ func _test_values() -> void:
 		_failures.append("Ability missing name/description keys")
 
 func _test_passive_trigger() -> void:
-	var gs := load(Harness.GAME_STATE_SCRIPT).new()
+	var gs = load(Harness.GAME_STATE_SCRIPT).new()
 	gs.name = "GameState"
-	var rpg := load("res://scripts/rpg/rpg_manager.gd").new()
+	var rpg = load("res://scripts/rpg/rpg_manager.gd").new()
 	rpg._game_state = gs
 	rpg.abilities_load()
 	rpg._init_passive_triggers()
@@ -58,9 +58,9 @@ func _test_passive_trigger() -> void:
 		pass
 
 func _test_passive_not_firing_when_condition_missing() -> void:
-	var gs := load(Harness.GAME_STATE_SCRIPT).new()
+	var gs = load(Harness.GAME_STATE_SCRIPT).new()
 	gs.name = "GameState"
-	var t := PassiveTrigger.new()
+	var t = PassiveTrigger.new()
 	t.trigger_id = &"test_cond"
 	t.ability_id = &"keen_eye"
 	t.condition_flags = [&"nonexistent_flag"]
@@ -69,23 +69,23 @@ func _test_passive_not_firing_when_condition_missing() -> void:
 		_failures.append("Trigger with unmet flag should not be conditions_met.")
 
 func _test_active_check_path() -> void:
-	var gs := load(Harness.GAME_STATE_SCRIPT).new()
+	var gs = load(Harness.GAME_STATE_SCRIPT).new()
 	gs.name = "GameState"
-	var ns := load(Harness.NARRATIVE_STATE_SCRIPT).new()
+	var ns = load(Harness.NARRATIVE_STATE_SCRIPT).new()
 	ns.name = "NarrativeState"
-	var chars := CharacterDirectory.load_all()
-	var graph := DialogueGraph.new()
+	var chars = CharacterDirectory.load_all()
+	var graph = DialogueGraph.new()
 	graph.source_path = "test.json"
 	graph.locale = "en"
 	graph.chapter = "fixture"
-	var conv := DialogueGraph.Conversation.new()
+	var conv = DialogueGraph.Conversation.new()
 	conv.conversation_id = &"chk"
 	conv.start_id = &"a1"
-	var n1 := DialogueGraph.DialogueNode.new()
+	var n1 = DialogueGraph.DialogueNode.new()
 	n1.node_id = &"a1"
 	n1.speaker_id = &"protagonist"
 	n1.text = "Try."
-	var chk := DialogueGraph.DialogueCheck.new()
+	var chk = DialogueGraph.DialogueCheck.new()
 	chk.check_id = &"test_active"
 	chk.ability_id = &"keen_eye"
 	chk.difficulty = 5
@@ -94,7 +94,7 @@ func _test_active_check_path() -> void:
 	n1.next_id = &"a2"
 	conv.nodes[n1.node_id] = n1
 	conv.order.append(n1.node_id)
-	var n2 := DialogueGraph.DialogueNode.new()
+	var n2 = DialogueGraph.DialogueNode.new()
 	n2.node_id = &"a2"
 	n2.speaker_id = &"protagonist"
 	n2.text = "After check."
@@ -102,10 +102,10 @@ func _test_active_check_path() -> void:
 	conv.nodes[n2.node_id] = n2
 	conv.order.append(n2.node_id)
 	graph.conversations[&"chk"] = conv
-	var rt := DialogueRuntime.new(gs, ns, chars)
-	var rng := RandomNumberGenerator.new()
+	var rt = DialogueRuntime.new(gs, ns, chars)
+	var rng = RandomNumberGenerator.new()
 	rng.seed = 1
-	var engine := CheckEngine.new(rng, gs)
+	var engine = CheckEngine.new(rng, gs)
 	rt.set_check_engine(engine)
 	if not rt.start(graph, &"chk"):
 		_failures.append("Runtime should start check conversation.")
@@ -118,20 +118,20 @@ func _test_active_check_path() -> void:
 		_failures.append("After check, should advance to a2, got %s" % rt.get_current_node_id())
 
 func _test_different_abilities_results() -> void:
-	var reg := AbilityRegistry.load_all()
-	var a1 := reg.get_ability(&"keen_eye")
-	var a2 := reg.get_ability(&"recollection")
+	var reg = AbilityRegistry.load_all()
+	var a1 = reg.get_ability(&"keen_eye")
+	var a2 = reg.get_ability(&"recollection")
 	if a1 == null or a2 == null:
 		_failures.append("Missing abilities for diff test")
 		return
 	# They have different base values (keen_eye 3, recollection 2) -> totals differ given same roll
-	var gs := load(Harness.GAME_STATE_SCRIPT).new()
-	var e1 := CheckEngine.new(null, gs)
+	var gs = load(Harness.GAME_STATE_SCRIPT).new()
+	var e1 = CheckEngine.new(null, gs)
 	e1.reseed(1)
-	var r1 := e1.roll_for_ability(&"diff", a1, 10, 0, true, true)
+	var r1 = e1.roll_for_ability(&"diff", a1, 10, 0, true, true)
 	e1.reseed(1)
-	var r2 := e1.roll_for_ability(&"diff2", a2, 10, 0, true, true)
+	var r2 = e1.roll_for_ability(&"diff2", a2, 10, 0, true, true)
 	# r1 total - r2 total should equal difference in ability values
-	var diff := a1.get_value() - a2.get_value()
+	var diff = a1.get_value() - a2.get_value()
 	if r1.total - r2.total != diff:
 		_failures.append("Different abilities should affect total by %d, got %d vs %d" % [diff, r1.total, r2.total])
