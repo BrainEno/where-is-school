@@ -96,6 +96,10 @@ jobs:
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1
           run_check companion_route 300 godot --headless --path . --script res://tests/companion_route_test.gd || status=1
           run_check interaction_hover 240 godot --headless --path . --script res://tests/interaction_hover_test.gd || status=1
+          run_check navigation 420 godot --headless --path . --script res://tests/navigation_test.gd || status=1
+          run_check automatic_interaction 420 godot --headless --path . --script res://tests/automatic_interaction_test.gd || status=1
+          run_check dialogue_pointer 300 godot --headless --path . --script res://tests/dialogue_pointer_test.gd || status=1
+          run_check street_prompt 180 godot --headless --path . --script res://tests/street_prompt_test.gd || status=1
 
           echo "overall status: ${status}"
           exit "${status}"

@@ -108,7 +108,11 @@ func _physics_process(_delta: float) -> void:
 ## The screen-space ray ask: which interactable is under this point, if any?
 ## Public so a test (and the capture run) can ask the exact question the mouse
 ## path asks, without needing a real cursor.
-func get_target_at_screen_position(screen_position: Vector2) -> Interactable:
+##
+## `require_reach` is what separates the two callers: hovering and the E key only care
+## about something the player could use right now, while a click may legitimately name
+## an object across the room that the character should walk to first.
+func get_target_at_screen_position(screen_position: Vector2, require_reach: bool = true) -> Interactable:
 	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
 	if camera == null or _player == null:
 		return null
@@ -129,7 +133,7 @@ func get_target_at_screen_position(screen_position: Vector2) -> Interactable:
 	var candidate := hit.get("collider") as Interactable
 	if candidate == null or not candidate.can_interact():
 		return null
-	if not _in_reach(candidate):
+	if require_reach and not _in_reach(candidate):
 		return null
 	if not _has_line_of_sight(candidate):
 		return null
@@ -159,10 +163,31 @@ func _find_mouse_target() -> Interactable:
 	return get_target_at_screen_position(get_viewport().get_mouse_position())
 
 
+## Public view of the reach test, used by the pointer navigator before it activates
+## something it walked to.
+func is_in_reach(candidate: Interactable) -> bool:
+	return _in_reach(candidate)
+
+
+## Public view of the line-of-sight test. Kept as a wrapper so the "can I see it"
+## rule has exactly one implementation.
+func has_line_of_sight(candidate: Interactable) -> bool:
+	return _has_line_of_sight(candidate)
+
+
 func _in_reach(candidate: Interactable) -> bool:
 	if _player == null:
 		return false
-	var offset := candidate.global_position - _player.global_position
+	return is_in_reach_at(_player.global_position, candidate)
+
+
+## The same reach test measured from an arbitrary point, so a caller looking for
+## somewhere to stand can ask "would this spot be close enough?" without moving the
+## character to find out.
+func is_in_reach_at(from: Vector3, candidate: Interactable) -> bool:
+	if candidate == null:
+		return false
+	var offset := candidate.global_position - from
 	offset.y = 0.0
 	return offset.length() <= max_distance and offset.length() > 0.001
 
@@ -270,6 +295,13 @@ func _actor_with_facing(start: Node) -> Node:
 
 
 func _has_line_of_sight(candidate: Interactable) -> bool:
+	return has_line_of_sight_from(_player.global_position + Vector3.UP * eye_height, candidate) \
+		if _player != null else true
+
+
+## The same probe from an arbitrary eye position, so a caller choosing where to stand
+## can ask "could I see it from there?" without walking there first.
+func has_line_of_sight_from(from: Vector3, candidate: Interactable) -> bool:
 	if _player == null or occluder_mask == 0:
 		return true
 	var world := _player.get_world_3d()
@@ -278,7 +310,6 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 	var space := world.direct_space_state
 	if space == null:
 		return true
-	var from := _player.global_position + Vector3.UP * eye_height
 	var own_limit := maxf(candidate.radius + 1.0, 1.6)
 	var excluded: Array[RID] = []
 	var player_body := _player as CollisionObject3D

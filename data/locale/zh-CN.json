@@ -60,6 +60,7 @@
     "prompt.corridor_trolley": "看看清洁车",
     "prompt.corridor_wait": "在栏杆边停一会儿",
     "objective.schoolyard": "操场在走廊尽头的那扇门外。",
-    "prompt.yard_to_corridor": "从防火门回走廊"
+    "prompt.yard_to_corridor": "从防火门回走廊",
+    "prompt.back_to_classroom": "回到教室"
   }
 }

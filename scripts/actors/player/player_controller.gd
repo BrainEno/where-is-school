@@ -6,6 +6,14 @@ class_name PlayerController
 ## pivot turns to face the direction of travel. Movement can be locked by the
 ## sequence director (during the wake beat and while dialogue is open) without
 ## the player losing their physical position.
+##
+## There is **one** movement implementation. Manual (WASD) and automatic
+## (click-to-move) input both end up in `_apply_movement()`: same acceleration, same
+## `move_and_slide()`, same facing. Automatic movement only decides which direction to
+## ask for, by following the `NavigationAgent3D` path this body owns.
+
+signal path_finished
+signal path_cancelled
 
 @export_category("Movement")
 @export_range(0.5, 12.0, 0.1) var move_speed: float = 3.6
@@ -29,10 +37,24 @@ class_name PlayerController
 @onready var camera: Camera3D = %Camera3D
 @onready var visual_pivot: Node3D = %VisualPivot
 @onready var visual: MeshInstance3D = %Visual
+@onready var navigation_agent: NavigationAgent3D = %NavigationAgent3D
+
+## How close to the requested point counts as arrived.
+@export_category("Automatic movement")
+@export_range(0.1, 2.0, 0.05) var arrival_radius: float = 0.45
+## Any manual input this strong cancels an automatic walk.
+@export_range(0.05, 1.0, 0.05) var manual_cancel_threshold: float = 0.2
+## Give up on a walk that makes no progress for this long, instead of pressing into a
+## wall forever.
+@export_range(0.5, 10.0, 0.1) var stall_timeout: float = 2.0
 
 var _control_enabled: bool = true
 var _camera_roll: float = 0.0
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
+var _path_active: bool = false
+var _path_target: Vector3 = Vector3.ZERO
+var _path_progress_elapsed: float = 0.0
+var _path_last_distance: float = INF
 
 
 func _ready() -> void:
@@ -52,6 +74,21 @@ func _physics_process(delta: float) -> void:
 	if _control_enabled:
 		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 
+	if _path_active and input_vector.length() > manual_cancel_threshold:
+		# A hand on the keys always wins over an automatic walk.
+		cancel_path()
+
+	var move_direction := Vector3.ZERO
+	if _path_active:
+		move_direction = _path_direction(delta)
+	elif input_vector.length_squared() > 0.0001:
+		move_direction = _camera_relative(input_vector)
+
+	_apply_movement(move_direction, delta)
+
+
+## Turns stick input into a camera-relative world direction.
+func _camera_relative(input_vector: Vector2) -> Vector3:
 	var camera_right := camera.global_basis.x
 	camera_right.y = 0.0
 	camera_right = camera_right.normalized()
@@ -60,13 +97,20 @@ func _physics_process(delta: float) -> void:
 	camera_forward.y = 0.0
 	camera_forward = camera_forward.normalized()
 
-	var move_direction := (camera_right * input_vector.x + camera_forward * -input_vector.y)
-	if move_direction.length_squared() > 0.0001:
-		move_direction = move_direction.normalized()
-		_facing_direction = move_direction
+	var direction := (camera_right * input_vector.x + camera_forward * -input_vector.y)
+	if direction.length_squared() > 0.0001:
+		return direction.normalized()
+	return Vector3.ZERO
 
-	var target_x := move_direction.x * move_speed
-	var target_z := move_direction.z * move_speed
+
+## The one place velocity is written. Manual and automatic movement share it so the
+## character accelerates, slides and turns exactly the same way either way.
+func _apply_movement(direction: Vector3, delta: float) -> void:
+	if direction.length_squared() > 0.0001:
+		_facing_direction = direction
+
+	var target_x := direction.x * move_speed
+	var target_z := direction.z * move_speed
 
 	velocity.x = move_toward(velocity.x, target_x, acceleration * delta)
 	velocity.z = move_toward(velocity.z, target_z, acceleration * delta)
@@ -87,12 +131,133 @@ func _update_visual_facing(delta: float) -> void:
 	visual_pivot.rotation.y = lerp_angle(visual_pivot.rotation.y, target_angle, turn_speed * delta)
 
 
+# --- Automatic movement -----------------------------------------------------
+
+
+## Asks to walk to `destination` along the navigation map.
+##
+## Returns false when the request cannot be honoured — control is locked, there is no
+## navigation map, the point is off the mesh, or there is no route — so callers can
+## react instead of watching the character walk into a wall. A false return leaves any
+## previous walk untouched; call `cancel_path()` first if that is not what you want.
+func request_path_to(destination: Vector3) -> bool:
+	if not _control_enabled or navigation_agent == null:
+		return false
+	var map := navigation_agent.get_navigation_map()
+	if not _map_has_geometry(map):
+		return false
+	var closest := NavigationServer3D.map_get_closest_point(map, destination)
+	if Vector2(closest.x - destination.x, closest.z - destination.z).length() > 0.75:
+		return false
+	if absf(closest.y - destination.y) > 1.5:
+		# A point well above or below the mesh is not a place to walk to: without this
+		# a request fifteen metres in the air would collapse onto the floor below and
+		# look like it had been accepted.
+		return false
+	var target := Vector3(closest.x, destination.y + 0.05, closest.z)
+	if _flat_distance(target) <= arrival_radius:
+		# Already standing there: nothing to walk, but the request is satisfied.
+		_path_target = target
+		_finish_path()
+		return true
+	var path := NavigationServer3D.map_get_path(map, global_position, target, true)
+	if path.size() < 2:
+		return false
+	_path_active = true
+	_path_target = target
+	_path_progress_elapsed = 0.0
+	_path_last_distance = _flat_distance(target)
+	navigation_agent.target_position = target
+	return true
+
+
+func cancel_path() -> void:
+	if not _path_active:
+		return
+	_path_active = false
+	if navigation_agent != null:
+		# Pointing the agent at the body clears the path it is holding.
+		navigation_agent.target_position = global_position
+	path_cancelled.emit()
+
+
+func is_path_active() -> bool:
+	return _path_active
+
+
+func get_path_target() -> Vector3:
+	return _path_target
+
+
+## Direction to ask for this frame while following the navigation path. Ends the walk
+## (with the matching signal) when it has arrived, lost its path, or stalled.
+func _path_direction(delta: float) -> Vector3:
+	var remaining := _flat_distance(_path_target)
+	if remaining <= arrival_radius:
+		_finish_path()
+		return Vector3.ZERO
+
+	if navigation_agent.is_navigation_finished():
+		# The agent thinks it is done but the body is not inside the arrival radius:
+		# either it stopped at the edge of the mesh or the target drifted. Do not
+		# creep towards it in a straight line past geometry.
+		_finish_path()
+		return Vector3.ZERO
+
+	var next_point := navigation_agent.get_next_path_position()
+	var to_next := next_point - global_position
+	to_next.y = 0.0
+	if to_next.length() < 0.05:
+		return Vector3.ZERO
+
+	# Progress watchdog: pressed against a wall, or a path that resolves to nothing.
+	if remaining < _path_last_distance - 0.05:
+		_path_last_distance = remaining
+		_path_progress_elapsed = 0.0
+	else:
+		_path_progress_elapsed += delta
+		if _path_progress_elapsed > stall_timeout:
+			_abort_path()
+			return Vector3.ZERO
+
+	return to_next.normalized()
+
+
+func _finish_path() -> void:
+	_path_active = false
+	if navigation_agent != null:
+		navigation_agent.target_position = global_position
+	path_finished.emit()
+
+
+func _abort_path() -> void:
+	_path_active = false
+	if navigation_agent != null:
+		navigation_agent.target_position = global_position
+	path_cancelled.emit()
+
+
+func _flat_distance(point: Vector3) -> float:
+	var delta := point - global_position
+	return Vector2(delta.x, delta.z).length()
+
+
+func _map_has_geometry(map: RID) -> bool:
+	if not map.is_valid():
+		return false
+	return NavigationServer3D.map_get_regions(map).size() > 0
+
+
 # --- Director API -----------------------------------------------------------
 
 
 ## Locked during the wake beat and whenever a presentation is open.
 func set_control_enabled(enabled: bool) -> void:
 	_control_enabled = enabled
+	if not enabled:
+		# Dialogue, a scripted beat or a transition owns the body now; a walk in
+		# progress must not resume afterwards.
+		cancel_path()
 
 
 func is_control_enabled() -> bool:
@@ -138,6 +303,9 @@ func _set_camera_roll_degrees(value: float) -> void:
 
 
 func teleport(target: Transform3D) -> void:
+	# A teleport means a location change: any walk being followed belongs to the old
+	# scene's navigation map.
+	cancel_path()
 	global_position = target.origin
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):

@@ -67,6 +67,7 @@ class Scene:
         ext.append(('PackedScene', 'res://scenes/interaction/location_exit.tscn', f'{base + 1}_location_exit'))
         ext.append(('AudioStream', 'res://assets/audio/room_tone_walkway.wav', f'{base + 2}_ambience'))
         ext.append(('Script', 'res://scripts/world/ambience_player.gd', f'{base + 3}_ambience_player'))
+        ext.append(('Script', 'res://scripts/world/location_navigation.gd', f'{base + 5}_navigation'))
         has_animal = any(i.get('animal') for i in self.interactables)
         if has_animal:
             ext.append(('PackedScene', 'res://scenes/environment/fauna/green_animal.tscn', f'{base + 4}_animal'))
@@ -115,6 +116,9 @@ class Scene:
         lines.append('')
         lines.append('[node name="WorldEnvironment" type="WorldEnvironment" parent="."]')
         lines.append('environment = SubResource("Environment_1")')
+        lines.append('')
+        lines.append('[node name="Navigation" type="NavigationRegion3D" parent="."]')
+        lines.append(f'script = ExtResource("{base + 5}_navigation")')
         lines.append('')
         lines.append('[node name="Sun" type="DirectionalLight3D" parent="."]')
         lines.append('rotation_degrees = %s' % v3(self.sun['rotation']))
@@ -271,7 +275,7 @@ def build_street():
     ]
     s.exits = [
         {"name": "BackToSchool", "pos": (-9.6, 0.9, 16.0), "id": "street_back_to_school",
-         "prompt_key": "prompt.back_inside", "radius": 1.1,
+         "prompt_key": "prompt.back_to_classroom", "radius": 1.1,
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromStreet",
          "id_dest": "corridor"},
         {"name": "ToResidential", "pos": (10.5, 1.0, -30.4), "id": "street_to_residential",

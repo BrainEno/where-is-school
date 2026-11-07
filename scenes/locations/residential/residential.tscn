@@ -1,4 +1,4 @@
-[gd_scene load_steps=130 format=3]
+[gd_scene load_steps=131 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="2_concrete"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="13_location_exit"]
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="14_ambience"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="15_ambience_player"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="17_navigation"]
 [ext_resource type="PackedScene" path="res://scenes/environment/fauna/green_animal.tscn" id="16_animal"]
 
 [sub_resource type="Environment" id="Environment_1"]
@@ -372,6 +373,9 @@ location_id = &"residential"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("17_navigation")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-10, 208, 0)

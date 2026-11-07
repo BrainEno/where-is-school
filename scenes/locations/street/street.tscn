@@ -1,4 +1,4 @@
-[gd_scene load_steps=104 format=3]
+[gd_scene load_steps=105 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="2_asphalt"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="13_location_exit"]
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="14_ambience"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="15_ambience_player"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="17_navigation"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -296,6 +297,9 @@ location_id = &"street"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("17_navigation")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-14, 38, 0)
@@ -782,7 +786,7 @@ radius = 1.2
 [node name="BackToSchool" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(-9.6, 0.9, 16.0)
 interact_id = &"street_back_to_school"
-prompt_key = "prompt.back_inside"
+prompt_key = "prompt.back_to_classroom"
 radius = 1.1
 destination_scene = "res://scenes/locations/corridor/corridor.tscn"
 destination_spawn = &"FromStreet"
