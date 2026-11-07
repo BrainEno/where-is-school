@@ -620,6 +620,7 @@ func _capture_click_navigation() -> void:
 	if not await _wait_for_free(45.0):
 		_failures.append("The player never got control back for the mouse shots.")
 		return
+	await _unstick()
 	_note("mouse shots: scripted left clicks pushed through the input system, not a human playtest")
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	# Which way an automatic walk ends: a finish or a cancel. A walk that stops without
@@ -774,6 +775,42 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 				continue
 			return screen
 	return Vector2.ZERO
+
+
+## Makes sure the body can move before a walk is judged by whether it moved.
+##
+## The capture reaches a starting position by teleporting, and a teleport can drop the
+## capsule inside a desk: the navigation map still answers with a route, the walk starts,
+## `move_and_slide()` finds nowhere to go, and the stall watchdog cancels it three times
+## in a row. That is a capture position problem, not a navigation one, so it is found
+## and fixed here — and said out loud rather than silently corrected.
+func _unstick() -> void:
+	var probe := 0.5
+	var directions := [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]
+	for direction in directions:
+		if not _player.test_move(_player.global_transform, direction * probe):
+			return
+	_note("the player could not move in any direction from %s; stepping it clear" % str(_player.global_position))
+	for radius in [0.6, 1.0, 1.6, 2.2]:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := _player.global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			if not _reaches(candidate):
+				continue
+			var clear := true
+			for direction in directions:
+				var placed := Transform3D(_player.global_transform.basis, candidate)
+				if _player.test_move(placed, direction * probe):
+					clear = false
+					break
+			if clear:
+				_player.global_position = candidate
+				_player.velocity = Vector3.ZERO
+				await get_tree().physics_frame
+				await get_tree().physics_frame
+				_note("stepped the player to %s to start the mouse shots" % str(candidate))
+				return
+	_note("no clear spot within 2.2 m; the mouse shots start where the player stands")
 
 
 ## Whether the navigation map can actually take the player to this point.
