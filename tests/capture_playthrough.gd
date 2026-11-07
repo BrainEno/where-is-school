@@ -770,8 +770,26 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 				continue
 			if _interaction.get_target_at_screen_position(screen, false) != null:
 				continue
+			if not _reaches(point):
+				continue
 			return screen
 	return Vector2.ZERO
+
+
+## Whether the navigation map can actually take the player to this point.
+##
+## Without this a click can land on ground the map cannot reach: the navigator builds a
+## short route to the nearest point it can reach, the character takes two steps and the
+## capture reads that as a walk. Reachability is part of what a clickable floor point
+## means, so it is checked before the click rather than after.
+func _reaches(point: Vector3) -> bool:
+	var map := _player.navigation_agent.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var route := NavigationServer3D.map_get_path(map, _player.global_position, point, true)
+	if route.is_empty():
+		return false
+	return route[route.size() - 1].distance_to(point) <= 0.75
 
 
 ## Stands the player near an object, facing it, at a spot the navigation mesh knows.
