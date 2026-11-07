@@ -102,6 +102,8 @@ func _run() -> void:
 	_loc.set_locale("en")
 	_main.queue_free()
 	await process_frame
+	# Location ambience is stopped on scene teardown; allow the audio server to release it.
+	await create_timer(0.2).timeout
 	Harness.finish(self, _failures, "simulated walking reached and revisited independent playground anchors and returned.")
 
 
