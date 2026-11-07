@@ -122,9 +122,11 @@ Visual (capture workflow, scripted, not a human playtest):
 
 Both CI jobs pass on the branch head: the Godot CI job (24 headless checks, the four
 new ones included) and the playthrough capture job, which reports `RESULT: the
-playthrough reached the end of the built content.` The first push was red; seven
-rounds of red-to-green later, each failure had turned out to be a defect rather than a
-test to relax. The three that were invisible from reading the code:
+playthrough reached the end of the built content.` and writes the frames.
+
+The game code was red for seven rounds before that, and every failure turned out to be
+a defect rather than a test to relax. The three that were invisible from reading the
+code:
 
 - a navigation region whose cell dimensions disagree with the map is refused silently,
   and the map only answers queries a frame or two after the bake — `is_routable()`
@@ -133,6 +135,30 @@ test to relax. The three that were invisible from reading the code:
   top edge and a click on one of its buttons lands outside the viewport;
 - the engine's source-geometry parser did not pick up the instanced prop bodies, so the
   classroom baked a floor plate with every desk left out.
+
+The capture went red six more times with the game code untouched, and every one of those
+was the capture's own brittleness:
+
+- a step written under GitHub's `-e` threw its log away at the first non-zero exit, so a
+  failure arrived as "Process completed with exit code 1" and nothing else;
+- the floor-click scan reached down to 85% of the viewport height, inside the
+  bottom-anchored dialogue panel, so a point picked there was a click on the panel;
+- the same scan asked for floor 4–6.5 m away with no fallback, and at one classroom spot
+  found none — which was then reported as "a click did not move the character";
+- a clicked point can sit on visible floor the map cannot reach. The navigator builds a
+  route to the nearest point it *can* reach, the character takes two steps, and the
+  capture read that as a walk that did not happen;
+- teleporting to a starting position can leave the capsule inside a desk. The map still
+  answers, the walk starts, `move_and_slide()` has nowhere to go, and the stall watchdog
+  cancels it — three attempts, each 0.00 m from where it started;
+- the engine can exit non-zero under Xvfb while tearing down the window and GL context,
+  after the run wrote `RESULT` and printed no failure, which failed a playthrough that
+  had finished.
+
+That last one changed what the capture job trusts. The log decides now: a `FAILURE:`
+line fails the job, and so does a missing `RESULT` marker; a non-zero exit after a clean
+marker is reported as a warning about teardown instead. A run that stops early still has
+no marker and still fails, so the bar has not moved.
 
 The capture has not been run on Windows, and no hands-on playtest has been performed
 on any platform. The Windows checklist for a human is in the pull request.
