@@ -271,7 +271,7 @@ func _run() -> void:
 		if animal == null:
 			_failures.append("The green animal is missing from the courtyard.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-19.0)), Vector3(6.8, 0, 0.8)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-10.0)), Vector3(7.3, 0, 0.1)))
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"green_animal", "animal prompt")
