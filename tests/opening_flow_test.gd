@@ -19,6 +19,7 @@ var _main: Node = null
 var _dialogue: DialogueController = null
 var _host: LocationHost = null
 var _player: PlayerController = null
+var _interaction: InteractionController = null
 var _ui: GameUI = null
 var _game_state: Node = null
 var _narrative: Node = null
@@ -55,7 +56,9 @@ func _run() -> void:
 	_host = _main.get_node_or_null("LocationHost") as LocationHost
 	_player = _main.get_node_or_null("Player") as PlayerController
 	_ui = _main.get_node_or_null("GameUI") as GameUI
-	if _dialogue == null or _host == null or _player == null or _ui == null:
+	_interaction = _player.get_node_or_null("InteractionController") as InteractionController
+	if _dialogue == null or _host == null or _player == null or _ui == null \
+			or _interaction == null:
 		Harness.finish(self, ["Main did not expose its core nodes."], "")
 		return
 
@@ -90,7 +93,7 @@ func _run() -> void:
 		else:
 			if door.is_open():
 				_failures.append("The classroom door is open before the class is dismissed.")
-			door.activate()
+			_interaction.request_activation(door)
 			await process_frame
 			if not _dialogue.is_busy():
 				_failures.append("Trying the locked door did not show its blocked text.")
@@ -106,7 +109,7 @@ func _run() -> void:
 	if bag == null:
 		_failures.append("The schoolbag interactable is missing.")
 	else:
-		bag.activate()
+		_interaction.request_activation(bag)
 		await process_frame
 		await _pump_until(
 			func() -> bool: return bool(_game_state.get_flag(StoryFlags.TEXTBOOK_MISSING, false)),
@@ -167,7 +170,7 @@ func _run() -> void:
 	elif not door_after.is_open():
 		_failures.append("The classroom door stayed locked after the class was dismissed.")
 	else:
-		door_after.activate()
+		_interaction.request_activation(door_after)
 		if await _pump_until(
 			func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "corridor",
 			45.0, "the walkway to load"
@@ -183,7 +186,8 @@ func _run() -> void:
 		if gate == null:
 			_failures.append("The walkway has no milestone-exit interactable.")
 		else:
-			gate.activate()
+			await _settle(30.0, "the walkway to settle")
+			_interaction.request_activation(gate)
 			await _pump_until(
 				func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"
 			)
@@ -254,8 +258,7 @@ func _check_targeting() -> void:
 		{"position": Vector3(1.6, 0, 2.6), "yaw": 180.0, "expected": &"timetable"},
 		{"position": Vector3(3.2, 0, 2.55), "yaw": 180.0, "expected": &"classroom_door"},
 	]
-	var interaction := _player.get_node_or_null("InteractionController") as InteractionController
-	if interaction == null:
+	if _interaction == null:
 		_failures.append("The player has no InteractionController to test.")
 		return
 	for test_case: Dictionary in cases:
@@ -263,7 +266,7 @@ func _check_targeting() -> void:
 			test_case["position"]))
 		await physics_frame
 		await physics_frame
-		var target := interaction.get_current_target()
+		var target := _interaction.get_current_target()
 		var found := String(target.interact_id) if target != null else "<nothing>"
 		if target == null or target.interact_id != test_case["expected"]:
 			_failures.append(

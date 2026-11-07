@@ -63,7 +63,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _current == null:
 		return
 	get_viewport().set_input_as_handled()
-	activation_requested.emit(_current)
+	request_activation(_current)
+
+
+## The single activation intent path: input, automated tests, and any future
+## remapping layer all come through here. The interactable still decides whether
+## it can be used, so callers do not need to pre-check.
+func request_activation(interactable: Interactable) -> void:
+	if not _enabled or interactable == null:
+		return
+	if not interactable.activate():
+		return
+	activation_requested.emit(interactable)
 
 
 func _find_best_target() -> Interactable:
