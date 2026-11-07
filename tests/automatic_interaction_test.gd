@@ -276,7 +276,10 @@ func _check_disabled_target_is_not_activated() -> void:
 		return
 	_navigator.click_at_screen_position(screen)
 	if not _player.is_path_active():
-		_failures.append("Clicking a distant probe did not start a walk.")
+		_failures.append(
+			"Clicking a distant probe did not start a walk (accepted=%s, pending=%s)."
+			% [str(_navigator.was_last_click_accepted()), _name_of(_navigator.get_pending_target())]
+		)
 		_free(probe)
 		return
 	await _physics_frames(2)
@@ -324,7 +327,10 @@ func _check_freed_target_is_not_activated() -> void:
 	if not _activations.is_empty():
 		_failures.append("A target freed mid-walk was still activated.")
 	if _approaches_abandoned.is_empty():
-		_failures.append("A vanished target was not reported as abandoned.")
+		_failures.append(
+			"A vanished target was not reported as abandoned (pending=%s, walk=%s)."
+			% [str(_navigator.get_pending_target()), str(_player.is_path_active())]
+		)
 
 
 ## The keyboard has to keep working, and it has to reach the same activation path.
@@ -422,15 +428,18 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 		return null
 	await _frames(3)
 	await _physics_frames(2)
+	# Wait for a *routable* map, not just a baked mesh: the region's polygons reach
+	# the navigation server a frame or two after the bake, and a query in that window
+	# answers with nothing at all.
 	var guard := 0
-	while guard < 60:
+	while guard < 120:
 		var current := _host.get_current()
 		var nav: LocationNavigation = null
 		if current != null:
 			nav = current.get_node_or_null("Navigation") as LocationNavigation
-		if nav != null and nav.is_baked():
+		if nav != null and nav.is_baked() and nav.is_routable():
 			break
-		await process_frame
+		await physics_frame
 		guard += 1
 	_location = _host.get_current()
 	_navigator.cancel()

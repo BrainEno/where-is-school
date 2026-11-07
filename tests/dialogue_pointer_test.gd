@@ -31,6 +31,7 @@ var _panel: DialoguePanel = null
 var _sequence: OpeningSequence = null
 var _navigator: PointerNavigator = null
 var _selected: Array[int] = []
+var _last_click_note: String = ""
 
 
 func _initialize() -> void:
@@ -167,10 +168,12 @@ func _check_real_conversation_click() -> void:
 	var world_before := _navigator.get_world_click_event_count()
 	_selected.clear()
 	var target: Button = translated[1] if translated.size() > 1 else buttons[1]
-	await _click_at(target.get_global_rect().get_center())
+	await _click_control(target)
 	await _frames(4)
 	if _selected.size() != 1:
-		_failures.append("Clicking an option selected %d options." % _selected.size())
+		_failures.append(
+			"Clicking an option selected %d options (%s)." % [_selected.size(), _last_click_note]
+		)
 	elif _selected[0] != 1:
 		_failures.append("Clicking the second option selected index %d." % _selected[0])
 	if _navigator.get_world_click_event_count() != world_before:
@@ -211,7 +214,7 @@ func _check_digit_keys() -> void:
 	_selected.clear()
 	var frame := _panel.get_node_or_null("Frame") as Control
 	if frame != null:
-		await _click_at(frame.get_global_rect().position + Vector2(12.0, 12.0))
+		await _click_control(frame, Vector2(12.0, 12.0))
 		await _frames(3)
 		if not _selected.is_empty():
 			_failures.append("Clicking the panel background selected option %d." % _selected[0])
@@ -219,10 +222,14 @@ func _check_digit_keys() -> void:
 			_failures.append("Clicking the panel background reached the world.")
 		# And the buttons still work afterwards: the panel was not left half-open.
 		_selected.clear()
-		await _click_at(_buttons()[2].get_global_rect().get_center())
+		var third := _buttons()[2] if _buttons().size() > 2 else null
+		await _click_control(third)
 		await _frames(3)
 		if _selected.size() != 1 or _selected[0] != 2:
-			_failures.append("After a background click the third option selected %s." % str(_selected))
+			_failures.append(
+				"After a background click the third option selected %s (%s)."
+				% [str(_selected), _last_click_note]
+			)
 	_panel.close()
 	await _frames(2)
 
@@ -298,6 +305,7 @@ func _click_at(position: Vector2) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.position = position
 	press.global_position = position
 	root.push_input(press, true)
@@ -305,10 +313,37 @@ func _click_at(position: Vector2) -> void:
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
+	release.button_mask = 0
 	release.position = position
 	release.global_position = position
 	root.push_input(release, true)
 	await _frames(1)
+
+
+## Clicks a control at a point in its own local space, converting with the canvas
+## transform so a layer offset or a scale cannot move the click. Records what was on
+## screen at that point, so a failure says *where* the click went instead of only that
+## nothing happened.
+func _click_control(control: Control, local_point: Variant = null) -> void:
+	_last_click_note = "no control to click"
+	if control == null or not is_instance_valid(control):
+		return
+	var point: Vector2 = control.size * 0.5 if local_point == null else local_point
+	var position := control.get_global_transform_with_canvas() * point
+	var rect := control.get_global_rect()
+	var id_before := control.get_instance_id()
+	await _click_at(position)
+	var hovered := root.gui_get_hovered_control()
+	var hovered_name := "nothing"
+	if hovered != null and is_instance_valid(hovered):
+		hovered_name = String(hovered.name)
+	_last_click_note = (
+		"clicked %s (id %d) at %s, its rect is %s, viewport %s, hovered %s, alive %s"
+		% [
+			String(control.name), id_before, str(position), str(rect),
+			str(root.get_visible_rect().size), hovered_name, str(is_instance_valid(control))
+		]
+	)
 
 
 func _press_key(code: Key, shift: bool = false) -> void:

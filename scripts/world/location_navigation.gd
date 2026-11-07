@@ -75,6 +75,12 @@ func bake_region() -> bool:
 	# The map reads the region on its own schedule; force one update so the first
 	# path query after a load is answered instead of returning an empty path.
 	NavigationServer3D.map_force_update(get_navigation_map())
+	if _baked and not is_routable():
+		# Handing the mesh over again makes the region re-read it; on the first load
+		# of a session the map can be too new to have picked the polygons up yet.
+		navigation_mesh = null
+		navigation_mesh = mesh
+		NavigationServer3D.map_force_update(get_navigation_map())
 	_map_region_count = get_map_region_count()
 	if _baked and _map_region_count <= 0:
 		# A mesh with polygons that never reached the map is invisible to every path
@@ -98,6 +104,24 @@ func get_polygon_count() -> int:
 
 func get_bake_error() -> String:
 	return _bake_error
+
+
+## True when the navigation map can answer a route from this region, i.e. the baked
+## polygons really reached the server. A region can exist on the map while its
+## polygons are still queued, and a query in that window answers with nothing, which
+## looks exactly like a room with no floor.
+func is_routable() -> bool:
+	if not _baked:
+		return false
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return false
+	var from := NavigationServer3D.map_get_closest_point(map, global_position)
+	var to := NavigationServer3D.map_get_closest_point(map, from + Vector3(0.1, 0.0, 0.1))
+	if Vector3.ZERO.is_equal_approx(from) and not global_position.is_equal_approx(Vector3.ZERO):
+		# An empty map answers the zero vector for every query.
+		return false
+	return NavigationServer3D.map_get_path(map, from, to, false).size() >= 2
 
 
 ## How many regions the navigation map holds. One means this location's mesh reached

@@ -381,13 +381,14 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 	await _frames(3)
 	await _physics_frames(2)
 	# The bake is deferred to the end of the load; wait for it rather than guessing.
+	# A baked mesh is not enough: the map answers queries only once it has taken the
+	# polygons, and a query in that window returns nothing at all.
 	var guard := 0
-	while guard < 60:
-		var current := _host.get_current()
-		var nav := _nav_of(current)
-		if nav != null and nav.is_baked():
+	while guard < 120:
+		var nav := _nav_of(_host.get_current())
+		if nav != null and nav.is_baked() and nav.is_routable():
 			break
-		await process_frame
+		await physics_frame
 		guard += 1
 	_location = _host.get_current()
 	return _location
