@@ -11,6 +11,11 @@ extends SceneTree
 ## Loading is not running: no `_ready` is called, no autoload is touched, and the
 ## main scene is never instantiated. So a project whose scripts are fine but whose
 ## content is temporarily broken still reports the parse problem only.
+##
+## A file that fails to parse may take the engine down with it on some Godot
+## builds (the loader aborts instead of returning null). That is noisy but not a
+## hole: the process still exits non-zero, the failing path is printed, and CI
+## fails. What must never happen is a broken script reported as fine.
 
 const Harness = preload("res://tests/test_harness.gd")
 ## Directories that hold engine cache, imported binaries or third-party addons.
