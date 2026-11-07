@@ -627,14 +627,21 @@ func _capture_click_navigation() -> void:
 	var walking := false
 	var settled := false
 	var walked := 0.0
-	for _attempt in 2:
+	for _attempt in 3:
 		var screen := _find_ground_click_screen(4.0, 6.5)
 		if screen == Vector2.ZERO:
 			break
 		start = _player.global_position
+		var clicks_before := navigator.get_click_count() if navigator != null else 0
 		await _click_at_screen(screen)
 		await _wait(0.2)
 		walking = _player.is_path_active()
+		if not walking and navigator != null and navigator.get_click_count() == clicks_before:
+			# The press never arrived as unhandled input: something on screen took it.
+			# That is worth saying out loud, and worth another point rather than a
+			# failure that blames navigation.
+			_note("a scripted click on the floor never reached the world; trying another point")
+			continue
 		if walking:
 			# The route itself, in numbers: this is the evidence that the walk is a
 			# navigation route and not a straight line through the furniture.
@@ -720,9 +727,11 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 	var rect := _player.get_viewport().get_visible_rect().size
 	for x_step in 12:
 		for y_step in 10:
+			# The dialogue panel is anchored to the bottom edge and would swallow a
+			# click aimed at the floor behind it, so the scan stays above it.
 			var screen := Vector2(
 				rect.x * (0.15 + 0.7 * float(x_step) / 11.0),
-				rect.y * (0.35 + 0.5 * float(y_step) / 9.0)
+				rect.y * (0.28 + 0.34 * float(y_step) / 9.0)
 			)
 			var point: Variant = navigator.get_ground_point_at(screen)
 			if point == null:
@@ -774,6 +783,7 @@ func _click_at_screen(screen: Vector2) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.position = position
 	press.global_position = position
 	Input.parse_input_event(press)
