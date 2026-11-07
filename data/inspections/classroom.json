@@ -1,0 +1,111 @@
+{
+  "classroom_schoolbag": {
+    "title": "Your schoolbag",
+    "prompt": "Search the schoolbag",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Canvas, one strap, and the smell of pencil shavings. Two exercise books, a pen without a cap, a timetable folded twice. No biology textbook. You check the side pocket, then the gap behind the lining, which is where things usually end up. Not there either.",
+    "repeat_text": "The same bag, the same pocket, the same missing book. Nothing has moved since you looked.",
+    "record": {
+      "entry_id": "bag_missing_textbook",
+      "source": "observed",
+      "text": "You searched your schoolbag. The biology textbook is not in it."
+    },
+    "effects": [
+      {"type": "set_flag", "flag": "textbook_missing", "value": true},
+      {"type": "set_objective", "text": "No biology textbook. Look around the room before the second bell."}
+    ]
+  },
+  "classroom_set_square": {
+    "title": "Wooden set square",
+    "prompt": "Look at the set square",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A set square the length of your forearm, laid on the corner of the front desk. The varnish is pale where a hand would hold it. One corner has split, and someone has taped it with tape that has since gone brown.",
+    "repeat_text": "The set square, still on the corner of the desk. The taped corner faces the room.",
+    "recall": {
+      "entry_id": "recall_set_square_placed",
+      "text": "You remember this being put down on a desk. Twice, to be heard. You cannot say whether you were in the room when it happened."
+    },
+    "record": {
+      "entry_id": "saw_set_square",
+      "source": "observed",
+      "text": "A damaged wooden set square sits on the corner of the biology teacher's desk."
+    },
+    "effects": [
+      {"type": "set_flag", "flag": "saw_set_square", "value": true}
+    ]
+  },
+  "classroom_blackboard": {
+    "title": "Blackboard",
+    "prompt": "Read the blackboard",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The board has been wiped, and then not quite wiped. Under the grey: LAST TERM — REVISION, and a date three weeks old. The chalk tray holds one broken stick and a clip that has lost its board.",
+    "repeat_text": "LAST TERM — REVISION, three weeks old, and a broken stick of chalk.",
+    "record": {
+      "entry_id": "saw_blackboard_revision",
+      "source": "observed",
+      "text": "The blackboard still carries last term's revision heading and a three-week-old date."
+    }
+  },
+  "classroom_window": {
+    "title": "Window",
+    "prompt": "Look out of the window",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two panes, one cracked and repaired with clear tape. Below the sill: wet concrete, a low wall, a line of bins. The light outside is already the colour of late afternoon, and it is not yet nine.",
+    "repeat_text": "The same wet concrete, the same impossible orange light.",
+    "record": {
+      "entry_id": "saw_window_light",
+      "source": "observed",
+      "text": "The light outside the classroom window looks like late afternoon even though it is early morning."
+    }
+  },
+  "classroom_own_desk": {
+    "title": "Your desk",
+    "prompt": "Look at your desk",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A name has been cut into the varnish with a compass point and then scratched out. A sticker on the corner, half peeled, for something you don't recognise. The front edge has a groove worn into it where a forearm goes.",
+    "repeat_text": "The scratched-out name. The groove in the front edge, exactly where your arm sits.",
+    "recall": {
+      "entry_id": "recall_desk_groove",
+      "text": "You know the groove. Your arm has been in it for a long time. That is as much as you can say about it."
+    }
+  },
+  "classroom_teacher_desk": {
+    "title": "Teacher's desk",
+    "prompt": "Look at the front desk",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Bigger than the student desks and tidier by a small margin. A register in a plastic cover, a stapler, a mug being used to hold chalk. The chair is pushed in at an angle, as if the person leaving it had somewhere else to be first.",
+    "repeat_text": "Register, stapler, mug of chalk. The chair still at its angle.",
+    "record": {
+      "entry_id": "saw_teacher_desk",
+      "source": "observed",
+      "text": "The front desk is tidy in a way the student desks are not, and its chair is pushed in at an angle."
+    }
+  },
+  "classroom_timetable_sheet": {
+    "title": "Timetable by the door",
+    "prompt": "Read the timetable",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A printed timetable in a plastic sleeve, with a coffee ring on one corner. Biology, Thursday, first period. The teacher's name is printed at the top, and somebody has drawn a line through it in biro.",
+    "repeat_text": "Biology, Thursday, first period. The name is still lined out.",
+    "record": {
+      "entry_id": "saw_lined_out_name",
+      "source": "observed",
+      "text": "The classroom timetable lists biology first period on Thursday with the teacher's name lined out in biro."
+    }
+  },
+  "classroom_door_blocked": {
+    "title": "Classroom door",
+    "prompt": "Try the door",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The handle turns easily. The corridor is out there, and the rest of the building with it, and you are supposed to be in a biology lesson that has not started yet. You take your hand off the handle.",
+    "repeat_text": "The corridor is still out there. It can wait."
+  }
+}

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/location_exit.gd" id="1_location_exit"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 1.0
+
+[node name="LocationExit" type="Area3D"]
+script = ExtResource("1_location_exit")
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_1")

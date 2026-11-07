@@ -1,0 +1,162 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/game_ui.gd" id="1_game_ui"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="2_hud"]
+[ext_resource type="Script" path="res://scripts/ui/fade_layer.gd" id="3_fade_layer"]
+[ext_resource type="Script" path="res://scripts/ui/imagination_overlay.gd" id="4_imagination_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_panel.tscn" id="5_dialogue_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/backlog_panel.tscn" id="6_backlog_panel"]
+[ext_resource type="Script" path="res://scripts/ui/end_card.gd" id="7_end_card"]
+
+[node name="GameUI" type="CanvasLayer"]
+script = ExtResource("1_game_ui")
+
+[node name="HUD" type="Control" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_hud")
+
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 54.0
+offset_top = 40.0
+offset_right = 900.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(0.776, 0.733, 0.643, 1)
+theme_override_font_sizes/font_size = 20
+text = ""
+
+[node name="PromptLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -74.0
+offset_right = 320.0
+offset_bottom = -42.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.86, 0.83, 0.75, 1)
+theme_override_font_sizes/font_size = 19
+text = ""
+horizontal_alignment = 1
+
+[node name="ImaginationOverlay" type="Control" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_imagination_overlay")
+
+[node name="Tint" type="ColorRect" parent="ImaginationOverlay"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.298, 0.169, 0.129, 0)
+
+[node name="Banner" type="Label" parent="ImaginationOverlay"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 46.0
+offset_right = 420.0
+offset_bottom = 82.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.82, 0.553, 0.349, 1)
+theme_override_font_sizes/font_size = 22
+text = "WHAT YOU EXPECT"
+horizontal_alignment = 1
+
+[node name="Flavour" type="Label" parent="ImaginationOverlay"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -460.0
+offset_top = 84.0
+offset_right = 460.0
+offset_bottom = 112.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.72, 0.66, 0.6, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+
+[node name="DialoguePanel" parent="." instance=ExtResource("5_dialogue_panel")]
+unique_name_in_owner = true
+
+[node name="BacklogPanel" parent="." instance=ExtResource("6_backlog_panel")]
+unique_name_in_owner = true
+
+[node name="FadeLayer" type="ColorRect" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.043, 0.051, 0.051, 1)
+script = ExtResource("3_fade_layer")
+
+[node name="EndCard" type="Control" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_end_card")
+
+[node name="Backdrop" type="ColorRect" parent="EndCard"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.043, 0.051, 0.051, 0.88)
+
+[node name="Layout" type="VBoxContainer" parent="EndCard"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -140.0
+offset_right = 420.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 18
+
+[node name="EndTitle" type="Label" parent="EndCard/Layout"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.776, 0.733, 0.643, 1)
+theme_override_font_sizes/font_size = 28
+text = "End of this build"
+horizontal_alignment = 1
+
+[node name="EndBody" type="Label" parent="EndCard/Layout"]
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.72, 0.7, 0.65, 1)
+theme_override_font_sizes/font_size = 19
+text = ""
+horizontal_alignment = 1
+
+[node name="EndHint" type="Label" parent="EndCard/Layout"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.55, 0.56, 0.54, 1)
+theme_override_font_sizes/font_size = 14
+text = ""
+horizontal_alignment = 1

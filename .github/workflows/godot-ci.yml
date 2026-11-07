@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   validate:
-    name: Import and smoke test
+    name: Import, smoke test, and gameplay tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -25,8 +25,43 @@ jobs:
           version: 4.7.2
           use-dotnet: false
 
-      - name: Import project and parse scripts
-        run: godot --headless --editor --path . --quit
+      # Each command runs under `timeout` so a stalled test fails visibly instead of
+      # consuming the job budget. Results are echoed to stdout and to the check
+      # run's annotations, which makes failures readable from the API as well as
+      # from the web log view.
+      - name: Import and run headless checks
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p ci-logs
 
-      - name: Run scene smoke test
-        run: godot --headless --path . --script res://tests/smoke_test.gd
+          run_check () {
+            local name="$1"; shift
+            local limit="$1"; shift
+            echo "=== ${name}: $*"
+            timeout "${limit}" "$@" > "ci-logs/${name}.log" 2>&1
+            local code=$?
+            tail -n 30 "ci-logs/${name}.log"
+            echo "--- exit ${code}"
+            local summary
+            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error|ERROR:|DIAG|FAIL:|PASS:" \
+              "ci-logs/${name}.log" | head -n 40 | tr '\n' '|' | cut -c1-4000)
+            if [ "${code}" -eq 0 ]; then
+              echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
+            else
+              echo "::error title=${name} failed (exit ${code})::${summary:-no summary captured}"
+              echo "${summary}"
+            fi
+            return "${code}"
+          }
+
+          status=0
+          run_check import 420 godot --headless --editor --path . --quit || status=1
+          run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
+          run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
+          run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
+          run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
+          run_check opening_flow 420 godot --headless --path . --script res://tests/opening_flow_test.gd || status=1
+
+          echo "overall status: ${status}"
+          exit "${status}"

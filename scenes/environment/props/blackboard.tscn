@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="1_wall_trim"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/board_slate.tres" id="2_board_slate"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="3_paper_pale"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(5, 1.45, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(4.84, 1.3, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(4.84, 0.05, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(0.01, 0.09, 0.01)
+
+[node name="Blackboard" type="Node3D"]
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.7, 0)
+mesh = SubResource("BoxMesh_1")
+material_override = ExtResource("1_wall_trim")
+
+[node name="Board" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.7, 0.045)
+mesh = SubResource("BoxMesh_2")
+material_override = ExtResource("2_board_slate")
+
+[node name="ChalkTray" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1, 0.1)
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("1_wall_trim")
+
+[node name="Chalk" type="MeshInstance3D" parent="."]
+position = Vector3(-1.1, 1.03, 0.1)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("BoxMesh_4")
+material_override = ExtResource("3_paper_pale")

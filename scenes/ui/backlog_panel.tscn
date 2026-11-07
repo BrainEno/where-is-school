@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/backlog_panel.gd" id="1_backlog_panel"]
+
+[node name="BacklogPanel" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_backlog_panel")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.07, 0.07, 0.94)
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 120
+theme_override_constants/margin_top = 60
+theme_override_constants/margin_right = 120
+theme_override_constants/margin_bottom = 60
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/Layout"]
+theme_override_colors/font_color = Color(0.776, 0.733, 0.643, 1)
+theme_override_font_sizes/font_size = 26
+text = "Log"
+
+[node name="BacklogEmpty" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.55, 0.56, 0.54, 1)
+theme_override_font_sizes/font_size = 18
+text = "Nothing has been said yet."
+
+[node name="BacklogScroll" type="ScrollContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BacklogList" type="VBoxContainer" parent="Margin/Layout/BacklogScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Footer" type="Label" parent="Margin/Layout"]
+theme_override_colors/font_color = Color(0.55, 0.56, 0.54, 1)
+theme_override_font_sizes/font_size = 14
+text = "[Tab] or [Space] to close"
+horizontal_alignment = 2

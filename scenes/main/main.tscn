@@ -1,39 +1,33 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
-
-[sub_resource type="Environment" id="Environment_main"]
-background_mode = 1
-background_color = Color(0.14, 0.16, 0.17, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(30, 0.2, 30)
-
-[sub_resource type="BoxMesh" id="BoxMesh_ground"]
-size = Vector3(30, 0.2, 30)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.34, 0.35, 0.33, 1)
-roughness = 1.0
+[ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_game_ui"]
+[ext_resource type="Script" path="res://scripts/dialogue/dialogue_controller.gd" id="4_dialogue_controller"]
+[ext_resource type="Script" path="res://scripts/world/opening_sequence.gd" id="5_opening_sequence"]
+[ext_resource type="AudioStream" path="res://assets/audio/bell_second.wav" id="6_bell"]
+[ext_resource type="AudioStream" path="res://assets/audio/wake_thud.wav" id="7_wake"]
 
 [node name="Main" type="Node3D"]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_main")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -32, 0)
-light_energy = 1.1
-shadow_enabled = true
-
-[node name="Ground" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.1, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_ground")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("BoxMesh_ground")
-material_override = SubResource("StandardMaterial3D_ground")
+[node name="LocationHost" type="Node3D" parent="."]
+script = ExtResource("2_location_host")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(0, 0, 0.85)
+
+[node name="BellAudio" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_bell")
+volume_db = -9.0
+
+[node name="WakeAudio" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7_wake")
+volume_db = -13.0
+
+[node name="GameUI" parent="." instance=ExtResource("3_game_ui")]
+
+[node name="DialogueController" type="Node" parent="."]
+script = ExtResource("4_dialogue_controller")
+
+[node name="OpeningSequence" type="Node" parent="."]
+script = ExtResource("5_opening_sequence")
