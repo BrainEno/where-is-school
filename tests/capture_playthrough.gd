@@ -23,6 +23,7 @@ var _host: LocationHost = null
 var _player: PlayerController = null
 var _interaction: InteractionController = null
 var _ui: GameUI = null
+var _panel: DialoguePanel = null
 var _game_state: Node = null
 var _narrative: Node = null
 var _loc: Node = null
@@ -61,6 +62,8 @@ func _run() -> void:
 	_host = _main.get_node_or_null("LocationHost") as LocationHost
 	_player = _main.get_node_or_null("Player") as PlayerController
 	_ui = _main.get_node_or_null("GameUI") as GameUI
+	if _ui != null:
+		_panel = _ui.get_node_or_null("DialoguePanel") as DialoguePanel
 	_interaction = _player.get_node_or_null("InteractionController") as InteractionController if _player != null else null
 	if _dialogue == null or _host == null or _player == null or _ui == null or _interaction == null:
 		await _fail("main scene did not expose its core nodes")
@@ -318,8 +321,12 @@ func _wait_for_free(timeout_seconds: float) -> bool:
 
 
 func _wait_for_line(timeout_seconds: float) -> bool:
+	# Wait for the whole line, not the first frame of the reveal: a screenshot
+	# taken mid-reveal looks like text that was cut off.
 	return await _poll(func() -> bool:
-		return _dialogue.is_busy() and not String(_dialogue.get_current_line().get("text", "")).is_empty(),
+		var line := String(_dialogue.get_current_line().get("text", ""))
+		return _dialogue.is_busy() and not line.is_empty() \
+			and (_panel == null or not _panel.is_revealing()),
 		timeout_seconds)
 
 
