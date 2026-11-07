@@ -78,7 +78,9 @@ jobs:
             echo "no screenshot changes"
             exit 0
           fi
-          git commit -m "Playthrough capture: update screenshots from the real window"
+          # [skip ci]: the screenshots are evidence, not a change that needs a new
+          # full CI run (and a bot-triggered run would only wait for approval).
+          git commit -m "Playthrough capture: update screenshots from the real window [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Upload the log

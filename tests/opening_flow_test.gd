@@ -419,8 +419,11 @@ func _check_prompt(interact_id: StringName, label: String) -> void:
 	var target := _interaction.get_current_target()
 	if target == null or target.interact_id != interact_id:
 		_failures.append(
-			"The %s prompt is showing for '%s' instead of '%s'."
-			% [label, "<nothing>" if target == null else target.interact_id, interact_id]
+			"The %s prompt is showing for '%s' instead of '%s' (%s)."
+			% [
+				label, "<nothing>" if target == null else target.interact_id, interact_id,
+				_diagnose_interaction(interact_id),
+			]
 		)
 
 
@@ -435,6 +438,14 @@ func _diagnose_interaction(expected: StringName) -> String:
 	parts.append("position=%s" % str(_player.global_position))
 	parts.append("control=%s" % str(_player.is_control_enabled()))
 	parts.append("busy=%s" % str(_dialogue.is_busy()))
+	var expected_node: Interactable = null
+	if _host.get_current() != null:
+		expected_node = _host.get_current().find_interactable(expected)
+	if expected_node != null:
+		var offset := expected_node.global_position - _player.global_position
+		parts.append("expected_distance=%.2f" % offset.length())
+		parts.append("expected_can_interact=%s" % str(expected_node.can_interact()))
+		parts.append("expected_los=%s" % str(_interaction._has_line_of_sight(expected_node)))
 	for child in _player.get_children():
 		var sensor := child as Area3D
 		if sensor == null or not sensor.name.ends_with("InteractionSensor"):
@@ -442,7 +453,8 @@ func _diagnose_interaction(expected: StringName) -> String:
 		var ids := PackedStringArray()
 		for area: Area3D in sensor.get_overlapping_areas():
 			var interactable := area as Interactable
-			ids.append("<freed>" if interactable == null else String(interactable.interact_id))
+			var label := "<freed>" if interactable == null else String(interactable.interact_id)
+			ids.append("%s@%.2f" % [label, area.global_position.distance_to(_player.global_position)])
 		parts.append("overlaps=[%s]" % ", ".join(ids))
 	return " ".join(parts)
 
