@@ -1,6 +1,10 @@
 name: Window probe
 
 on:
+  push:
+    paths:
+      - "tests/window_probe.gd"
+      - ".github/workflows/window-probe.yml"
   workflow_dispatch:
 
 permissions:
