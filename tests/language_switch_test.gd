@@ -67,6 +67,8 @@ func _run() -> void:
 	if _narrative.has_method("get_entry_ids"):
 		entries_before = int(_narrative.get_entry_ids().size())
 	var objectives_before := String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
+	var backlog_before := _ui.backlog.get_entry_count()
+	var knowledge_before: int = _narrative.get_entries().size()
 
 	# --- switch while the line is on screen ------------------------------
 	if not _loc.set_locale("zh-CN"):
@@ -87,6 +89,10 @@ func _run() -> void:
 		_failures.append("The objective changed value during a language switch.")
 	if _flag_snapshot() != flags_before:
 		_failures.append("Story flags changed during a language switch.")
+	if _ui.backlog.get_entry_count() != backlog_before:
+		_failures.append("Re-rendering a line duplicated it in the backlog.")
+	if _narrative.get_entries().size() != knowledge_before:
+		_failures.append("Re-rendering a line duplicated narrative knowledge.")
 	if _narrative.has_method("get_entry_ids") and _narrative.get_entry_ids().size() != entries_before:
 		_failures.append("Knowledge entries changed during a language switch.")
 

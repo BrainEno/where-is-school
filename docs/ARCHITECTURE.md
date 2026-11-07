@@ -128,8 +128,11 @@ the dialogue controller prefers the localized key or the inspection's own prompt
 
 The display language can change at any time: `Loc.locale_changed` makes the
 dialogue controller rebind the open conversation to the same node id in the other
-language, re-resolve the prompt, redraw the backlog and re-translate the objective.
-No scene reload, no lost state.
+language, re-resolve the prompt, redraw backlog chrome and re-translate the
+objective. The currently displayed line replaces its backlog row rather than
+being duplicated. Earlier backlog prose remains in the language in which it was
+shown; full historical retranslation remains a future limitation. No scene reload
+or state reset is required.
 
 ## 5c. Inner viewpoints (ADR 0003)
 

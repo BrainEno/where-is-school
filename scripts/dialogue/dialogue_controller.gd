@@ -46,6 +46,8 @@ var _active_inspection_id: StringName = &""
 var _active_inspection_variant: String = ""
 ## The line the panel is showing right now, whatever produced it.
 var _current_line: Dictionary = {}
+## Rebinding a localized graph re-emits the current line, not a new event.
+var _relocalizing_line := false
 
 
 func _ready() -> void:
@@ -157,7 +159,9 @@ func apply_locale(locale: String) -> bool:
 	_inspections.set_locale(code)
 	if _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_active():
 		var graph := _library.get_graph(_runtime.get_active_conversation_id())
+		_relocalizing_line = true
 		_runtime.rebind_graph(graph)
+		_relocalizing_line = false
 	elif _mode == Mode.INSPECTION and not String(_active_inspection_id).is_empty():
 		_refresh_inspection_text()
 	if _panel != null:
@@ -333,7 +337,10 @@ func _present_line(line: Dictionary) -> void:
 	_apply_line_state(line)
 	_panel.show_line(line)
 	if _backlog != null:
-		_backlog.add_entry(line)
+		if _relocalizing_line:
+			_backlog.replace_last(line)
+		else:
+			_backlog.add_entry(line)
 	var is_subjective := bool(line.get("subjective", false))
 	if is_subjective != _subjective:
 		_subjective = is_subjective

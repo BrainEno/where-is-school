@@ -283,7 +283,9 @@ completeness error. It is not a human playtest. Historical images already in
   runtime state. The versioned SaveManager is still a future task, with
   `to_snapshot()`/`restore_snapshot()` kept as its data shape.
 - No settings UI yet: no text size, text speed, or skip control. The language
-  toggle is the first setting and it is bound to a key, not to a menu.
+  toggle is the first setting and it is bound to a key, not to a menu. Earlier
+  backlog prose keeps the language in which it was shown; the current line is
+  replaced, not duplicated, when the player switches language.
 - Chairs are non-colliding decoration so the aisles stay readable in a graybox.
   Q and N are capsule blockouts with a flat colour; no portraits or animation.
 - The capture drives the slice with teleports between scenes so it fits in CI;
