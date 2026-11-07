@@ -136,11 +136,10 @@ func _check_coverage() -> void:
 	var used: Dictionary = {}
 	for rule: InnerAbilities.PassiveRule in _abilities.get_rules():
 		used[rule.ability_id] = true
-	for chapter in DialogueLibrary.CHAPTERS:
-		var graph := _library.get_graph(chapter)
-		if graph == null:
-			_failures.append("Chapter '%s' did not load." % chapter)
-			continue
+	var graphs := _library.get_graphs_for(_library.get_locale())
+	if graphs.is_empty():
+		_failures.append("No dialogue chapters loaded for the active language.")
+	for graph: DialogueGraph in graphs:
 		for conversation_id: StringName in graph.get_conversation_ids():
 			var conversation: DialogueGraph.Conversation = graph.get_conversation(conversation_id)
 			for node_id: StringName in conversation.order:

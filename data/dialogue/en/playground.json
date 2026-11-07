@@ -65,7 +65,7 @@
               "next": "ps_boundary_check",
               "conditions": {
                 "not_flags": [
-                  "check:pg_shed/ps_boundary_check"
+                  "check:pg_shed:ps_boundary_check"
                 ]
               }
             },
@@ -75,7 +75,7 @@
               "next": "ps_ledger_check",
               "conditions": {
                 "not_flags": [
-                  "check:pg_shed/ps_ledger_check"
+                  "check:pg_shed:ps_ledger_check"
                 ]
               }
             },
@@ -263,7 +263,7 @@
               "next": "pb_boundary_check",
               "conditions": {
                 "not_flags": [
-                  "check:pg_ball/pb_boundary_check"
+                  "check:pg_ball:pb_boundary_check"
                 ]
               }
             },
@@ -273,7 +273,7 @@
               "next": "pb_ledger_check",
               "conditions": {
                 "not_flags": [
-                  "check:pg_ball/pb_ledger_check"
+                  "check:pg_ball:pb_ledger_check"
                 ]
               }
             },

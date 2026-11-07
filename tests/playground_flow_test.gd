@@ -143,6 +143,13 @@ func _walk_to_alley() -> void:
 		45.0, "the alley to load"
 	):
 		return
+	# The arrival line plays after the fade, so wait for its flag rather than for a
+	# quiet frame: a quiet frame happens during the fade, before the beat starts.
+	if not await _pump_until(
+		func() -> bool: return bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)),
+		60.0, "the alley arrival line"
+	):
+		_failures.append("Reaching the alley did not play its arrival line.")
 	await _settle(45.0, "the alley arrival beat")
 	var location := _host.get_current()
 	if location == null:
@@ -178,9 +185,12 @@ func _walk_to_playground() -> void:
 		45.0, "the yard to load"
 	):
 		return
-	await _settle(60.0, "the yard arrival beat and any voice that reacts to it")
-	if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):
+	if not await _pump_until(
+		func() -> bool: return bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)),
+		60.0, "the yard arrival line"
+	):
 		_failures.append("Reaching the yard did not set its flag.")
+	await _settle(60.0, "the yard arrival beat and any voice that reacts to it")
 	if String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.playground":
 		_failures.append("Reaching the yard did not change the objective.")
 	# The alley's knowledge must survive the transition.
@@ -394,9 +404,12 @@ func _check_animal_still_works() -> void:
 		return
 	_interaction.set_enabled(true)
 	_interaction.request_activation(animal)
-	await process_frame
-	if not _dialogue.is_busy():
-		_failures.append("Looking at the green animal no longer starts its conversation.")
+	if not await _pump_until(func() -> bool: return _dialogue.is_busy(), 15.0, "the animal conversation"):
+		_failures.append(
+			"Looking at the green animal no longer starts its conversation "
+			+ "(can_interact=%s, interaction_enabled=%s, slice_finished=%s)."
+			% [str(animal.can_interact()), str(_interaction.is_enabled()), str(_sequence.is_slice_finished())]
+		)
 	else:
 		var conversation := _dialogue.get_runtime().get_active_conversation_id()
 		if String(conversation) != "green_animal":
