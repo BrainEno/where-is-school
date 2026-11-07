@@ -1,4 +1,4 @@
-[gd_scene load_steps=130 format=3]
+[gd_scene load_steps=136 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="2_concrete"]
@@ -40,10 +40,28 @@ size = Vector3(34, 0.2, 40)
 size = Vector3(6, 0.06, 12)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
-size = Vector3(34, 17, 10)
+size = Vector3(20, 17, 10)
 
 [sub_resource type="BoxMesh" id="BoxMesh_2"]
-size = Vector3(34, 17, 10)
+size = Vector3(20, 17, 10)
+
+[sub_resource type="BoxShape3D" id="NorthRightShape"]
+size = Vector3(8, 17, 10)
+
+[sub_resource type="BoxMesh" id="NorthRightMesh"]
+size = Vector3(8, 17, 10)
+
+[sub_resource type="BoxShape3D" id="NorthArchShape"]
+size = Vector3(6, 14, 10)
+
+[sub_resource type="BoxMesh" id="NorthArchMesh"]
+size = Vector3(6, 14, 10)
+
+[sub_resource type="BoxShape3D" id="AlleyFloorShape"]
+size = Vector3(6, 0.2, 20)
+
+[sub_resource type="BoxMesh" id="AlleyFloorMesh"]
+size = Vector3(6, 0.2, 20)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3"]
 size = Vector3(10, 14, 26)
@@ -396,7 +414,7 @@ mesh = SubResource("BoxMesh_1")
 material_override = ExtResource("3_asphalt")
 
 [node name="BlockNorth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(0, 8.5, -22)
+position = Vector3(-7, 8.5, -22)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BlockNorth"]
 shape = SubResource("BoxShape3D_2")
@@ -404,6 +422,36 @@ shape = SubResource("BoxShape3D_2")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BlockNorth"]
 mesh = SubResource("BoxMesh_2")
 material_override = ExtResource("4_brick")
+
+[node name="BlockNorthRight" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(13, 8.5, -22)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BlockNorthRight"]
+shape = SubResource("NorthRightShape")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BlockNorthRight"]
+mesh = SubResource("NorthRightMesh")
+material_override = ExtResource("4_brick")
+
+[node name="BlockNorthArch" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(6, 10, -22)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BlockNorthArch"]
+shape = SubResource("NorthArchShape")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BlockNorthArch"]
+mesh = SubResource("NorthArchMesh")
+material_override = ExtResource("4_brick")
+
+[node name="AlleyFloor" type="StaticBody3D" parent="."]
+position = Vector3(6, -0.1, -27)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AlleyFloor"]
+shape = SubResource("AlleyFloorShape")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="AlleyFloor"]
+mesh = SubResource("AlleyFloorMesh")
+material_override = ExtResource("3_asphalt")
 
 [node name="BlockWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-16, 7.0, -2)
@@ -1001,15 +1049,20 @@ destination_id = &"street"
 [node name="AlleyEnd" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(6.0, 0.9, -33.0)
 interact_id = &"res_alley_end"
-prompt_key = "prompt.milestone"
+prompt_key = "prompt.to_estate_exit"
 radius = 1.6
-is_milestone_end = true
-end_card_key = "end.slice"
+destination_scene = "res://scenes/locations/estate_passage/estate_passage.tscn"
+destination_spawn = &"FromResidential"
+destination_id = &"estate_passage"
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-4.0, 0, 10.0)
+
+[node name="FromEstatePassage" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(6, 0, -30)
+rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FromStair" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-13.6, 1.8, -13.4)

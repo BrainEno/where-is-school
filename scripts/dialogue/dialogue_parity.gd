@@ -134,19 +134,24 @@ static func _compare_node(
 			problems.append("%s: jump target differs between languages." % choice_label)
 		if reference_choice.once != other_choice.once:
 			problems.append("%s: 'once' differs between languages." % choice_label)
+		if reference_choice.check != other_choice.check:
+			problems.append("%s: check definition differs between languages." % choice_label)
+		_compare_conditions(reference_choice, other_choice, choice_label, problems)
 		_compare_effects(reference_choice.effects, other_choice.effects, choice_label, problems)
 
 
 static func _compare_conditions(
-	reference: DialogueGraph.DialogueNode,
-	other: DialogueGraph.DialogueNode,
+	reference: Variant,
+	other: Variant,
 	node_label: String,
 	problems: Array[String]
 ) -> void:
 	if reference.requires != other.requires:
 		problems.append("%s: conditions.requires differ between languages." % node_label)
-	if reference.all_flags != other.all_flags or reference.not_flags != other.not_flags:
-		problems.append("%s: condition flags differ between languages." % node_label)
+	if reference.all_flags != other.all_flags:
+		problems.append("%s: conditions.all_flags differ between languages." % node_label)
+	if reference.not_flags != other.not_flags:
+		problems.append("%s: conditions.not_flags differ between languages." % node_label)
 
 
 ## Effects are behaviour, not prose: flag names, objective keys and entry ids
@@ -164,7 +169,10 @@ static func _compare_effects(
 		for field: String in ["type", "flag", "value", "key", "entry_id", "source", "speaker"]:
 			if not reference_effect.has(field) and not other_effect.has(field):
 				continue
-			if str(reference_effect.get(field, "<none>")) != str(other_effect.get(field, "<none>")):
+			if reference_effect.has(field) != other_effect.has(field) or (
+				typeof(reference_effect.get(field)) != typeof(other_effect.get(field))
+				 or reference_effect.get(field) != other_effect.get(field)
+			):
 				problems.append(
 					"%s: effect #%d field '%s' is '%s' but should be '%s'."
 					% [
@@ -194,8 +202,8 @@ static func compare_inspections(
 			continue
 		if other_data.text.strip_edges().is_empty():
 			problems.append("%s: missing translation (empty observation text)." % label)
-		if not reference_data.repeat_text.is_empty() and other_data.repeat_text.strip_edges().is_empty():
-			problems.append("%s: missing translation (empty repeat text)." % label)
+		if reference_data.repeat_text.is_empty() != other_data.repeat_text.is_empty():
+			problems.append("%s: repeat text is present in only one language." % label)
 		if reference_data.source != other_data.source:
 			problems.append("%s: narrative source tag differs between languages." % label)
 		if String(reference_data.speaker_id) != String(other_data.speaker_id):

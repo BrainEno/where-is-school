@@ -29,6 +29,9 @@ func _run() -> void:
 	_expect_error("literal objective", _literal_objective(), ["objective_text", "text"])
 	_expect_error("unknown effect", _unknown_effect(), ["bad_effect", "x1"])
 	_expect_error("wrong locale", _wrong_locale(), ["de-DE"])
+	_expect_error("unknown check ability", _bad_check("ability", "unknown"), ["check_fixture", "ability"])
+	_expect_error("invalid check difficulty", _bad_check("difficulty", 11), ["check_fixture", "difficulty"])
+	_expect_error("missing failure target", _bad_check("failure", "missing"), ["check_fixture", "missing"])
 
 	_check_locale_parity()
 	_check_real_content()
@@ -102,6 +105,18 @@ func _unknown_effect() -> Dictionary:
 	return _graph("bad_effect", [
 		{"id": "x1", "speaker": "q", "text": "Fixture line.",
 		 "effects": [{"type": "teleport_player"}], "next": null},
+	])
+
+
+func _bad_check(field: String, value: Variant) -> Dictionary:
+	var check := {"id": "check_fixture", "ability": "pattern", "difficulty": 6,
+		"success": "yes", "failure": "no"}
+	check[field] = value
+	return _graph("check_fixture", [
+		{"id": "hub", "speaker": "protagonist", "text": "Fixture.",
+		 "choices": [{"id": "try", "text": "Try.", "check": check}]},
+		{"id": "yes", "speaker": "pattern", "text": "A.", "next": null},
+		{"id": "no", "speaker": "pattern", "text": "B.", "next": null},
 	])
 
 

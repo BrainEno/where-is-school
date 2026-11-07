@@ -30,16 +30,21 @@ var _steps: int = 0
 var _game_state: Node = null
 var _narrative_state: Node = null
 var _characters: CharacterDirectory = null
+var _checks: InnerCheckEngine = null
+## Visible only on the first line after an active choice; re-rendered on locale switch.
+var _displayed_check: Dictionary = {}
 
 
 func _init(
 	game_state: Node = null,
 	narrative_state: Node = null,
-	characters: CharacterDirectory = null
+	characters: CharacterDirectory = null,
+	rng: Variant = null
 ) -> void:
 	_game_state = game_state if game_state != null else _find_autoload("GameState")
 	_narrative_state = narrative_state if narrative_state != null else _find_autoload("NarrativeState")
 	_characters = characters if characters != null else CharacterDirectory.load_all()
+	_checks = InnerCheckEngine.new(_game_state, rng)
 	if _characters != null and not _characters.errors.is_empty():
 		for message in _characters.errors:
 			push_error("DialogueRuntime: %s" % message)
@@ -53,6 +58,10 @@ static func _find_autoload(node_name: String) -> Node:
 	if root == null:
 		return null
 	return root.get_node_or_null(NodePath(node_name))
+
+
+func get_check_engine() -> InnerCheckEngine:
+	return _checks
 
 
 func is_active() -> bool:
@@ -94,6 +103,7 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	_conversation = conversation
 	_active = true
 	_steps = 0
+	_displayed_check = {}
 	conversation_started.emit(conversation_id)
 	_enter_node(conversation.start_id)
 	return true
@@ -104,6 +114,7 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 func advance() -> bool:
 	if not _active or _awaiting_choice or _node == null:
 		return false
+	_displayed_check = {}
 	var next_id := _resolve_next_id(_node)
 	if String(next_id).is_empty():
 		_finish()
@@ -123,11 +134,20 @@ func choose(choice_index: int) -> bool:
 		)
 		return false
 	var choice: DialogueGraph.DialogueChoice = available[choice_index]
+	var target := choice.next_id
+	_displayed_check = {}
+	if not choice.check.is_empty():
+		var check: Dictionary = choice.check
+		var result := _checks.attempt(StringName(check["id"]), StringName(check["ability"]), int(check["difficulty"]), "active")
+		if result.is_empty():
+			return false
+		_displayed_check = result
+		target = StringName(check["success"] if bool(result["success"]) else check["failure"])
 	if choice.once:
 		_set_flag(StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), true)
 	_apply_effects(choice.effects)
 	_awaiting_choice = false
-	_enter_node(choice.next_id)
+	_enter_node(target)
 	return true
 
 
@@ -144,7 +164,13 @@ func get_current_choices() -> Array:
 	var available := _available_choices(_node)
 	for index in available.size():
 		var choice: DialogueGraph.DialogueChoice = available[index]
-		presented.append({"index": index, "text": choice.text})
+		var text := choice.text
+		if not choice.check.is_empty():
+			var ability := StringName(choice.check["ability"])
+			text = L10n.t("check.option", {"ability": InnerAbilities.display_name(ability),
+				"rating": InnerAbilities.get_rating(_game_state, ability),
+				"difficulty": int(choice.check["difficulty"]), "text": choice.text})
+		presented.append({"index": index, "text": text})
 	return presented
 
 
@@ -290,13 +316,25 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"speaker_name": speaker_name,
 		"speaker_role": speaker_role,
 		"accent_color": accent_color,
-		"title": "",
+		"title": _check_title(),
 		"text": node.text,
 		"source": source_value,
 		"badge": NarrativeEntry.badge_key_for(source_value),
 		"subjective": _conversation.subjective,
 		"tags": node.tags,
 	}
+
+
+## Only active checks supply a visible summary. Passive conversations have no
+## numeric title; the same cached result survives a language switch.
+func _check_title() -> String:
+	if _displayed_check.is_empty() or String(_displayed_check.get("visibility", "")) != "active":
+		return ""
+	var result := _displayed_check
+	var outcome := L10n.t("check.success" if bool(result["success"]) else "check.failure")
+	return L10n.t("check.result", {"ability": InnerAbilities.display_name(StringName(result["ability"])),
+		"rating": result["rating"], "difficulty": result["difficulty"], "roll": result["roll"],
+		"total": result["total"], "outcome": outcome})
 
 
 func _apply_effects(effects: Array) -> void:
@@ -366,6 +404,7 @@ func _finish() -> void:
 	_node = null
 	_conversation = null
 	_graph = null
+	_displayed_check = {}
 	conversation_finished.emit(finished_id)
 
 

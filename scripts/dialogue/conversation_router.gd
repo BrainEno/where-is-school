@@ -34,6 +34,8 @@ const ROUTES: Dictionary = {
 	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],
+	&"playground_bench": [{"conversation": &"playground_bench", "requires": {}}],
+	&"playground_notice": [{"conversation": &"playground_notice", "requires": {}}],
 	# The animal is met, not summoned: the first visit is the discovery, every
 	# later visit is a shorter look. Neither one explains what it is.
 	&"green_animal": [

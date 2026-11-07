@@ -1,0 +1,313 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "playground",
+  "conversations": {
+    "playground_bench": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "bench_hub",
+      "nodes": [
+        {
+          "id": "bench_hub",
+          "speaker": "protagonist",
+          "text": "长椅朝着跑道，一只椅脚落在漆线外。你想从哪里想起？",
+          "choices": [
+            {
+              "id": "pattern",
+              "text": "顺着漆线看看。",
+              "once": true,
+              "check": {
+                "id": "bench_pattern",
+                "ability": "pattern",
+                "difficulty": 6,
+                "success": "bench_p_yes",
+                "failure": "bench_p_no"
+              }
+            },
+            {
+              "id": "guard",
+              "text": "看看这里能不能歇脚。",
+              "once": true,
+              "check": {
+                "id": "bench_guard",
+                "ability": "guard",
+                "difficulty": 6,
+                "success": "bench_g_yes",
+                "failure": "bench_g_no"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "暂时不想了。",
+              "next": "bench_leave"
+            }
+          ]
+        },
+        {
+          "id": "bench_p_yes",
+          "speaker": "pattern",
+          "text": "漆线绕开了椅脚。也许重画跑道的时候长椅已经在这里；这只是猜测。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_p_yes",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "漆线绕开了椅脚。也许重画跑道的时候长椅已经在这里；这只是猜测。"
+            }
+          ]
+        },
+        {
+          "id": "bench_p_no",
+          "speaker": "pattern",
+          "text": "四条线，四个座位，你这样想着。再数一遍椅板，发现自己的规律也许来得太急。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_p_no",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "四条线，四个座位，你这样想着。再数一遍椅板，发现自己的规律也许来得太急。"
+            }
+          ]
+        },
+        {
+          "id": "bench_g_yes",
+          "speaker": "guard",
+          "text": "从这里看，固定件还完整。这里有地方坐下，不必马上对其他事做决定。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_g_yes",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "从这里看，固定件还完整。这里有地方坐下，不必马上对其他事做决定。"
+            }
+          ]
+        },
+        {
+          "id": "bench_g_no",
+          "speaker": "guard",
+          "text": "那片阴影可能是松动的固定件，也可能只是阴影。先留一点余地，以后再看。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_g_no",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "那片阴影可能是松动的固定件，也可能只是阴影。先留一点余地，以后再看。"
+            }
+          ]
+        },
+        {
+          "id": "bench_leave",
+          "speaker": "protagonist",
+          "text": "暂时让长椅只是长椅。",
+          "next": null
+        }
+      ]
+    },
+    "playground_notice": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "notice_hub",
+      "nodes": [
+        {
+          "id": "notice_hub",
+          "speaker": "protagonist",
+          "text": "告示褪了色，下方的字迹节奏有些不同。你想跟随哪个念头？",
+          "choices": [
+            {
+              "id": "resonance",
+              "text": "追着熟悉的感觉想一想。",
+              "once": true,
+              "check": {
+                "id": "notice_resonance",
+                "ability": "resonance",
+                "difficulty": 6,
+                "success": "notice_r_yes",
+                "failure": "notice_r_no"
+              }
+            },
+            {
+              "id": "guard",
+              "text": "看看有没有需要留意的地方。",
+              "once": true,
+              "check": {
+                "id": "notice_guard",
+                "ability": "guard",
+                "difficulty": 6,
+                "success": "notice_g_yes",
+                "failure": "notice_g_no"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "暂时不想了。",
+              "next": "notice_leave"
+            }
+          ]
+        },
+        {
+          "id": "notice_r_yes",
+          "speaker": "resonance",
+          "text": "有一笔停过又接上。也许换了人写，也许只是写字的人中途停了一下。你记不起是哪种。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_r_yes",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "有一笔停过又接上。也许换了人写，也许只是写字的人中途停了一下。你记不起是哪种。"
+            }
+          ]
+        },
+        {
+          "id": "notice_r_no",
+          "speaker": "resonance",
+          "text": "有一瞬间，你觉得那像自己的字。感觉很鲜明，但不能说明是谁写的。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_r_no",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "有一瞬间，你觉得那像自己的字。感觉很鲜明，但不能说明是谁写的。"
+            }
+          ]
+        },
+        {
+          "id": "notice_g_yes",
+          "speaker": "guard",
+          "text": "折起的角没有挡住时间。也许有人希望下一个人不用展开就能看到。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_g_yes",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "折起的角没有挡住时间。也许有人希望下一个人不用展开就能看到。"
+            }
+          ]
+        },
+        {
+          "id": "notice_g_no",
+          "speaker": "guard",
+          "text": "你想象折角下面有条警告。背面也许是空白的，没有必要先替它编出一场紧急情况。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_g_no",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "你想象折角下面有条警告。背面也许是空白的，没有必要先替它编出一场紧急情况。"
+            }
+          ]
+        },
+        {
+          "id": "notice_leave",
+          "speaker": "protagonist",
+          "text": "你移开视线，告示仍在那里。",
+          "next": null
+        }
+      ]
+    },
+    "inner_track_success": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_track_success",
+      "nodes": [
+        {
+          "id": "passive_track_success",
+          "speaker": "pattern",
+          "text": "两条线差一点相交。差一点不是地图；先把这个小小的不同留着。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_track_success",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "两条线差一点相交。差一点不是地图；先把这个小小的不同留着。"
+            }
+          ]
+        }
+      ]
+    },
+    "inner_track_failure": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_track_failure",
+      "nodes": [
+        {
+          "id": "passive_track_failure",
+          "speaker": "pattern",
+          "text": "两条线一定通向同一处。接着漆线断了，结论仍然只是你自己的。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_track_failure",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "两条线一定通向同一处。接着漆线断了，结论仍然只是你自己的。"
+            }
+          ]
+        }
+      ]
+    },
+    "inner_hoop_success": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_hoop_success",
+      "nodes": [
+        {
+          "id": "passive_hoop_success",
+          "speaker": "resonance",
+          "text": "圆环让你想到一场暂停的游戏。这只是联想，不是记忆。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_hoop_success",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "圆环让你想到一场暂停的游戏。这只是联想，不是记忆。"
+            }
+          ]
+        }
+      ]
+    },
+    "inner_hoop_failure": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_hoop_failure",
+      "nodes": [
+        {
+          "id": "passive_hoop_failure",
+          "speaker": "resonance",
+          "text": "你好像听见一声哨响。也许是记忆，也可能只是风碰到了金属。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_hoop_failure",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "你好像听见一声哨响。也许是记忆，也可能只是风碰到了金属。"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

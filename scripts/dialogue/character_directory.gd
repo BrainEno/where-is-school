@@ -10,6 +10,9 @@ const CHARACTER_PATHS: Array[String] = [
 	"res://data/characters/q.tres",
 	"res://data/characters/n.tres",
 	"res://data/characters/b.tres",
+	"res://data/characters/pattern.tres",
+	"res://data/characters/resonance.tres",
+	"res://data/characters/guard.tres",
 ]
 
 var errors: Array[String] = []
@@ -50,6 +53,9 @@ func get_profile(character_id: StringName) -> CharacterProfile:
 ## Falls back to the raw id so a missing profile is visible in game rather than
 ## silently rendering an empty name.
 func get_display_name(character_id: StringName) -> String:
+	var localized_key := "speaker.%s" % character_id
+	if L10n.has_key(localized_key):
+		return L10n.t(localized_key)
 	var profile: CharacterProfile = get_profile(character_id)
 	if profile == null or profile.display_name.is_empty():
 		return String(character_id)
@@ -57,6 +63,9 @@ func get_display_name(character_id: StringName) -> String:
 
 
 func get_short_role(character_id: StringName) -> String:
+	var key := "role.%s" % character_id
+	if L10n.has_key(key):
+		return L10n.t(key)
 	var profile: CharacterProfile = get_profile(character_id)
 	if profile == null:
 		return ""

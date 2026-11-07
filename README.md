@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Second milestone: from the classroom to the green animal.** The player wakes in the biology classroom, talks to Q, searches the schoolbag, inspects the room, lives through an expectation that is explicitly not a real event, sits through the substitute's lesson, leaves for the walkway, and walks out into a street and a residential courtyard where the green animal is standing. The slice ends after that first meeting. Everything the player reads is data, and the whole game can be switched between English and simplified Chinese while it runs.
+**Playable slice: from the classroom to the open playground.** The player wakes in the biology classroom, talks to Q, searches the schoolbag, experiences a clearly imagined expectation, attends the substitute's lesson, and walks through the street and residential courtyard to the green animal. An alley and estate gateway continue to a freely explorable playground with four independent anchors and optional inner-ability checks. The end card is optional. Dialogue and descriptions are data, with English and simplified Chinese switchable at runtime; the new writing and tuning await author review.
 
 See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for controls, architecture, and known limitations.
 
@@ -32,7 +32,8 @@ See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md)
 - AGENTS.md — authoritative coding-agent instructions.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
-- docs/screenshots/ — frames captured from a real, running window by `tests/capture_playthrough.gd`.
+- docs/screenshots/ — historical frames from the previous slice; current automated captures are isolated workflow artifacts and use simulated input/teleports, not human playtesting.
+- docs/WINDOWS_MANUAL_TEST.md — unperformed Windows playtest checklist.
 - assets/ — placeholder materials and generated audio, tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.

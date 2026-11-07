@@ -6,8 +6,9 @@ room can be inspected, an anticipated confrontation is shown and explicitly
 framed as imagination, the second bell rings without B, substitute N takes the
 lesson and allows a free period, the player leaves for the walkway, walks out of
 the school gate into a street, climbs the stair to a residential courtyard, and
-meets the green animal standing at the edge of the planter. The build stops there
-with an end-of-slice card. Every line the player reads is data, and the whole
+meets the green animal standing at the edge of the planter. The route continues
+through the alley and estate gate to an open playground; its far-edge end card is
+optional. Every line the player reads is data, and the whole
 slice can be switched between English and simplified Chinese while it runs.
 
 All dialogue and object text in this milestone is new placeholder writing created
@@ -177,8 +178,8 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
     the washing line, the stair, two identical stained wall fragments, and the
     green animal on the planter's edge.
 11. **Animal** — the first conversation sets `animal_seen` and records observed
-    knowledge; meeting it again uses a shorter conversation. At the alley end an
-    explicit end-of-build card closes the slice.
+    knowledge; meeting it again uses a shorter conversation. The alley continues
+    through the estate gateway to an open playground; its end card is optional.
 
 A reminder line from Q fires after 40 s if the bag has not been searched, and the
 bell is forced after 95 s, so no player can dead-lock the slice.
@@ -244,18 +245,19 @@ What each test covers:
   the whole slice headlessly: wake → Q → targeting of every authored interaction →
   locked door → schoolbag → expectation (verifying no observed knowledge appears)
   → bell → substitute → class dismissed → walkway → street → stair → courtyard →
-  animal (twice) → end card.
+  animal (twice) → estate exit → playground → optional end card.
 
 The language-agnostic half of that coverage is UID-driven by content files, so a
 mistake in the Chinese tree fails the same tests as a mistake in the English one.
 
 That run is engine-verified logic, not a look at the game. To close that gap,
-`.github/workflows/playthrough-capture.yml` runs the real build in a real window
-under Xvfb (`--rendering-driver opengl3`, 1600×900), drives it with simulated key
-events, saves 21 PNGs and a log into `docs/screenshots/`, and commits them back
-with `[skip ci]`. `tests/capture_playthrough.gd` is that script; it waits for a
-line's typewriter reveal to finish before it photographs the screen, so a frame
-never shows half a sentence.
+`.github/workflows/playthrough-capture.yml` is intended to run the build in a real
+window under Xvfb (`--rendering-driver opengl3`, 1600×900) using simulated keys
+and some teleports. The workflow now saves status, logs and any frames to an
+isolated artifact, never commits them, and fails on an import, capture or
+completeness error. It is not a human playtest. Historical images already in
+`docs/screenshots/` predate the playground and are not evidence for this slice.
+`tests/capture_playthrough.gd` waits for the typewriter reveal before a frame.
 
 ## 9. Known limitations
 
@@ -284,23 +286,22 @@ never shows half a sentence.
 - The capture drives the slice with teleports between scenes so it fits in CI;
   nobody has played the build with a mouse and keyboard end to end yet, so camera
   comfort and walking feel are unverified.
-- Screenshot commits carry `[skip ci]`, so the newest commit on a screenshot
-  branch has no checks of its own; the checks belong to the code commit before it.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
 - The tests that build the main scene print Godot's "2 ObjectDB instances were
   leaked at exit" and "1 resource still in use at exit" warnings. They are
   cosmetic (the engine reports them while the tree is torn down), do not fail the
   run, and have not been chased down.
-- The alley behind the animal, the gate out of the estate, and the courtyard the
-  animal walks towards are still to be built; the slice ends at a card.
+- The route now continues through the alley and estate gate to an open playground.
+  The optional end card is beyond the playable anchors; the next space is unbuilt.
+  The animal's species, destination and fate remain undecided.
 
 ## 10. Next steps
 
 1. Author review of both language trees, starting with the pending-review table.
 2. Add the settings pass: text size, text speed, skip, and a language menu entry.
 3. Introduce a versioned SaveManager on top of the existing snapshots.
-4. Build the alley, the estate gate and the courtyard the animal walks towards,
-   keeping the same interaction, dialogue and narrative-state boundaries.
+4. Review the new playground route, subjective voices and dice cadence with the
+   author and via the Windows manual checklist; do not infer the animal's fate.
 5. An art pass on the outdoor blocks (materials, lighting, the animal) once the
    beats are locked.

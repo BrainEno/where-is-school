@@ -302,25 +302,43 @@ func _run() -> void:
 
 		var alley := flats.find_interactable(&"res_alley_end")
 		if alley == null:
-			_failures.append("The residential area has no milestone exit.")
+			_failures.append("The residential area has no alley exit.")
 		else:
 			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
 			await physics_frame
 			await physics_frame
 			_interaction.request_activation(alley)
-			if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
-				var card_title := _ui.end_card.get_title()
-				if card_title.strip_edges().is_empty():
-					_failures.append("The end-of-slice card has no title.")
-				elif card_title != L10n.t("end.slice.title"):
-					_failures.append("The end-of-slice card is not using its locale key.")
+			await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "estate_passage", 60.0, "the estate exit")
+			await _settle(30.0, "the estate transition")
+			var estate := _host.get_current()
+			var to_playground := estate.find_interactable(&"estate_to_playground") if estate != null else null
+			if to_playground == null:
+				_failures.append("The estate exit does not lead to the playground.")
+			else:
+				_interaction.request_activation(to_playground)
+				await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "playground", 60.0, "the playground")
+				await _settle(30.0, "the playground transition")
+				var playground := _host.get_current()
+				var finish := playground.find_interactable(&"pg_finish") if playground != null else null
+				if finish == null:
+					_failures.append("The playground has no optional milestone card.")
+				else:
+					_interaction.request_activation(finish)
+					if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
+						var card_title := _ui.end_card.get_title()
+						if card_title.strip_edges().is_empty():
+							_failures.append("The end-of-slice card has no title.")
+						elif card_title != L10n.t("end.slice.title"):
+							_failures.append("The end-of-slice card is not using its locale key.")
+					if not bool(_game_state.get_flag(StoryFlags.ANIMAL_SEEN, false)):
+						_failures.append("The animal state was lost on the way to the playground.")
 
 	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
 	Harness.finish(
-		self, _failures, "the slice runs from waking up to the green animal and the milestone card."
+		self, _failures, "the slice runs from waking up through the animal to the playground milestone card."
 	)
 
 

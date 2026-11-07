@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "pg_track": {
+    "title": "跑道线",
+    "prompt": "看看跑道线",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "几条白色跑道线穿过空地。弯道上有一条被重新画过，旧的弧线还看得见。",
+    "repeat_text": "旧弧线和新线仍挨在一起。",
+    "record": {
+      "entry_id": "saw_pg_track",
+      "source": "observed",
+      "text": "新的跑道线下面露出旧弧线。"
+    }
+  },
+  "pg_hoop": {
+    "title": "练习环",
+    "prompt": "看看练习环",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "空地边立着一个金属环。网已经不在了，立柱上刷过不止一层漆。",
+    "repeat_text": "环，空着的边缘，层层漆。",
+    "record": {
+      "entry_id": "saw_pg_hoop",
+      "source": "observed",
+      "text": "旧练习环立在那里，没有网。"
+    }
+  }
+}

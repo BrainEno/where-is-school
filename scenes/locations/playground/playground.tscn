@@ -1,0 +1,393 @@
+[gd_scene load_steps=49 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="concrete"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="asphalt"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_brick.tres" id="brick"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="metal"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="paper"]
+
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_hedge.tres" id="hedge"]
+
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interact"]
+
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="ambience"]
+
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambient_player"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.24, 0.20, 0.18, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.53, 0.46, 0.40, 1)
+ambient_light_energy = 1.0
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.38, 0.32, 0.27, 1)
+fog_density = 0.003
+adjustment_enabled = true
+adjustment_saturation = 0.85
+
+[sub_resource type="BoxMesh" id="M1"]
+size = Vector3(32, 0.2, 28)
+
+[sub_resource type="BoxShape3D" id="S1"]
+size = Vector3(32, 0.2, 28)
+
+[sub_resource type="BoxMesh" id="M2"]
+size = Vector3(0.3, 1.05, 28)
+
+[sub_resource type="BoxShape3D" id="S2"]
+size = Vector3(0.3, 1.05, 28)
+
+[sub_resource type="BoxMesh" id="M3"]
+size = Vector3(0.3, 1.05, 28)
+
+[sub_resource type="BoxShape3D" id="S3"]
+size = Vector3(0.3, 1.05, 28)
+
+[sub_resource type="BoxMesh" id="M4"]
+size = Vector3(32, 1.05, 0.3)
+
+[sub_resource type="BoxShape3D" id="S4"]
+size = Vector3(32, 1.05, 0.3)
+
+[sub_resource type="BoxMesh" id="M5"]
+size = Vector3(12.8, 1.05, 0.3)
+
+[sub_resource type="BoxShape3D" id="S5"]
+size = Vector3(12.8, 1.05, 0.3)
+
+[sub_resource type="BoxMesh" id="M6"]
+size = Vector3(12.8, 1.05, 0.3)
+
+[sub_resource type="BoxShape3D" id="S6"]
+size = Vector3(12.8, 1.05, 0.3)
+
+[sub_resource type="BoxMesh" id="M7"]
+size = Vector3(0.09, 0.025, 18)
+
+[sub_resource type="BoxMesh" id="M8"]
+size = Vector3(0.09, 0.025, 18)
+
+[sub_resource type="BoxMesh" id="M9"]
+size = Vector3(0.09, 0.025, 18)
+
+[sub_resource type="BoxMesh" id="M10"]
+size = Vector3(0.09, 0.025, 18)
+
+[sub_resource type="BoxMesh" id="M11"]
+size = Vector3(0.09, 0.025, 18)
+
+[sub_resource type="BoxMesh" id="M12"]
+size = Vector3(12, 0.025, 0.09)
+
+[sub_resource type="BoxMesh" id="M13"]
+size = Vector3(12, 0.025, 0.09)
+
+[sub_resource type="BoxMesh" id="M14"]
+size = Vector3(0.12, 0.03, 4.5)
+
+[sub_resource type="BoxMesh" id="M15"]
+size = Vector3(3, 0.22, 0.8)
+
+[sub_resource type="BoxShape3D" id="S15"]
+size = Vector3(3, 0.22, 0.8)
+
+[sub_resource type="BoxMesh" id="M16"]
+size = Vector3(0.18, 0.55, 0.7)
+
+[sub_resource type="BoxMesh" id="M17"]
+size = Vector3(0.18, 0.55, 0.7)
+
+[sub_resource type="BoxMesh" id="M18"]
+size = Vector3(2.8, 1.8, 0.2)
+
+[sub_resource type="BoxShape3D" id="S18"]
+size = Vector3(2.8, 1.8, 0.2)
+
+[sub_resource type="BoxMesh" id="M19"]
+size = Vector3(2.45, 1.5, 0.03)
+
+[sub_resource type="BoxMesh" id="M20"]
+size = Vector3(0.15, 2.8, 0.15)
+
+[sub_resource type="BoxMesh" id="M21"]
+size = Vector3(0.15, 2.8, 0.15)
+
+[sub_resource type="BoxMesh" id="M22"]
+size = Vector3(0.18, 3.2, 0.18)
+
+[sub_resource type="BoxShape3D" id="S22"]
+size = Vector3(0.18, 3.2, 0.18)
+
+[sub_resource type="BoxMesh" id="M23"]
+size = Vector3(1.4, 0.12, 0.12)
+
+[sub_resource type="BoxMesh" id="M24"]
+size = Vector3(1.1, 0.1, 0.1)
+
+[sub_resource type="BoxMesh" id="M25"]
+size = Vector3(1.1, 0.1, 0.1)
+
+[sub_resource type="BoxMesh" id="M26"]
+size = Vector3(0.1, 0.1, 1.2)
+
+[sub_resource type="BoxMesh" id="M27"]
+size = Vector3(0.1, 0.1, 1.2)
+
+[node name="Playground" type="Node3D"]
+script = ExtResource("location")
+location_id = &"playground"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-24, 205, 0)
+light_color = Color(1, 0.76, 0.58, 1)
+light_energy = 1.5
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("S1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("M1")
+material_override = ExtResource("asphalt")
+
+[node name="WestBoundary" type="StaticBody3D" parent="."]
+position = Vector3(-15.85, 0.525, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestBoundary"]
+shape = SubResource("S2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestBoundary"]
+mesh = SubResource("M2")
+material_override = ExtResource("metal")
+
+[node name="EastBoundary" type="StaticBody3D" parent="."]
+position = Vector3(15.85, 0.525, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastBoundary"]
+shape = SubResource("S3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastBoundary"]
+mesh = SubResource("M3")
+material_override = ExtResource("metal")
+
+[node name="NorthBoundary" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.525, -13.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthBoundary"]
+shape = SubResource("S4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthBoundary"]
+mesh = SubResource("M4")
+material_override = ExtResource("metal")
+
+[node name="SouthWest" type="StaticBody3D" parent="."]
+position = Vector3(-9.6, 0.525, 13.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWest"]
+shape = SubResource("S5")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWest"]
+mesh = SubResource("M5")
+material_override = ExtResource("metal")
+
+[node name="SouthEast" type="StaticBody3D" parent="."]
+position = Vector3(9.6, 0.525, 13.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthEast"]
+shape = SubResource("S6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthEast"]
+mesh = SubResource("M6")
+material_override = ExtResource("metal")
+
+[node name="LaneM6" type="MeshInstance3D" parent="."]
+position = Vector3(-6, 0.018, -0.5)
+mesh = SubResource("M7")
+material_override = ExtResource("paper")
+
+[node name="LaneM3" type="MeshInstance3D" parent="."]
+position = Vector3(-3, 0.018, -0.5)
+mesh = SubResource("M8")
+material_override = ExtResource("paper")
+
+[node name="Lane0" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.018, -0.5)
+mesh = SubResource("M9")
+material_override = ExtResource("paper")
+
+[node name="Lane3" type="MeshInstance3D" parent="."]
+position = Vector3(3, 0.018, -0.5)
+mesh = SubResource("M10")
+material_override = ExtResource("paper")
+
+[node name="Lane6" type="MeshInstance3D" parent="."]
+position = Vector3(6, 0.018, -0.5)
+mesh = SubResource("M11")
+material_override = ExtResource("paper")
+
+[node name="NorthLaneEnd" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.019, -9.5)
+mesh = SubResource("M12")
+material_override = ExtResource("paper")
+
+[node name="SouthLaneEnd" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.019, 8.5)
+mesh = SubResource("M13")
+material_override = ExtResource("paper")
+
+[node name="OldLaneMark" type="MeshInstance3D" parent="."]
+position = Vector3(-6.35, 0.023, -4.8)
+mesh = SubResource("M14")
+material_override = ExtResource("concrete")
+
+[node name="BenchSeat" type="StaticBody3D" parent="."]
+position = Vector3(-10, 0.62, -1.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BenchSeat"]
+shape = SubResource("S15")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BenchSeat"]
+mesh = SubResource("M15")
+material_override = ExtResource("concrete")
+
+[node name="BenchLegM11" type="MeshInstance3D" parent="."]
+position = Vector3(-11, 0.28, -1.5)
+mesh = SubResource("M16")
+material_override = ExtResource("metal")
+
+[node name="BenchLegM9" type="MeshInstance3D" parent="."]
+position = Vector3(-9, 0.28, -1.5)
+mesh = SubResource("M17")
+material_override = ExtResource("metal")
+
+[node name="NoticeFrame" type="StaticBody3D" parent="."]
+position = Vector3(10, 1.9, -7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NoticeFrame"]
+shape = SubResource("S18")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NoticeFrame"]
+mesh = SubResource("M18")
+material_override = ExtResource("metal")
+
+[node name="NoticePaper" type="MeshInstance3D" parent="."]
+position = Vector3(10, 1.9, -6.88)
+mesh = SubResource("M19")
+material_override = ExtResource("paper")
+
+[node name="NoticePost9" type="MeshInstance3D" parent="."]
+position = Vector3(9, 1.4, -7)
+mesh = SubResource("M20")
+material_override = ExtResource("metal")
+
+[node name="NoticePost11" type="MeshInstance3D" parent="."]
+position = Vector3(11, 1.4, -7)
+mesh = SubResource("M21")
+material_override = ExtResource("metal")
+
+[node name="PracticePole" type="StaticBody3D" parent="."]
+position = Vector3(10, 1.6, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PracticePole"]
+shape = SubResource("S22")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PracticePole"]
+mesh = SubResource("M22")
+material_override = ExtResource("metal")
+
+[node name="PracticeArm" type="MeshInstance3D" parent="."]
+position = Vector3(9.4, 3.1, 3)
+mesh = SubResource("M23")
+material_override = ExtResource("metal")
+
+[node name="RingFront" type="MeshInstance3D" parent="."]
+position = Vector3(8.65, 3.1, 3.55)
+mesh = SubResource("M24")
+material_override = ExtResource("metal")
+
+[node name="RingBack" type="MeshInstance3D" parent="."]
+position = Vector3(8.65, 3.1, 2.45)
+mesh = SubResource("M25")
+material_override = ExtResource("metal")
+
+[node name="RingLeft" type="MeshInstance3D" parent="."]
+position = Vector3(8.1, 3.1, 3)
+mesh = SubResource("M26")
+material_override = ExtResource("metal")
+
+[node name="RingRight" type="MeshInstance3D" parent="."]
+position = Vector3(9.2, 3.1, 3)
+mesh = SubResource("M27")
+material_override = ExtResource("metal")
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToEstate" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(0, 0.9, 12.5)
+interact_id = &"pg_to_estate"
+radius = 1.3
+prompt_key = "prompt.back_estate"
+destination_scene = "res://scenes/locations/estate_passage/estate_passage.tscn"
+destination_spawn = &"FromPlayground"
+destination_id = &"estate_passage"
+
+[node name="TrackLook" parent="Interactables" instance=ExtResource("interact")]
+position = Vector3(-6, 0.7, 0)
+interact_id = &"pg_track"
+radius = 1.3
+inspection_id = &"pg_track"
+
+[node name="HoopLook" parent="Interactables" instance=ExtResource("interact")]
+position = Vector3(9.2, 1.1, 3)
+interact_id = &"pg_hoop"
+radius = 1.3
+inspection_id = &"pg_hoop"
+
+[node name="BenchLook" parent="Interactables" instance=ExtResource("interact")]
+position = Vector3(-10, 0.9, -0.6)
+interact_id = &"pg_bench"
+radius = 1.3
+prompt_key = "prompt.pg_bench"
+conversation_route = &"playground_bench"
+
+[node name="NoticeLook" parent="Interactables" instance=ExtResource("interact")]
+position = Vector3(10, 1.2, -6)
+interact_id = &"pg_notice"
+radius = 1.3
+prompt_key = "prompt.pg_notice"
+conversation_route = &"playground_notice"
+
+[node name="FarEdge" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(12, 0.9, -12)
+interact_id = &"pg_finish"
+radius = 1.3
+prompt_key = "prompt.finish_build"
+is_milestone_end = true
+end_card_key = "end.slice"
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromEstatePassage" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(0, 0, 10.2)
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("ambience")
+volume_db = -16.0
+script = ExtResource("ambient_player")
+target_db = -24.0

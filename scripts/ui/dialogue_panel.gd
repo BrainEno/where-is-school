@@ -103,6 +103,10 @@ func set_choices(choices: Array) -> void:
 		button.queue_free()
 	_choice_buttons.clear()
 	_choices_container.hide()
+	# Reserve space for up to three optional check choices without crowding the
+	# fixed-height panel. Restore the normal reading area on non-choice lines.
+	if _body_label != null:
+		_body_label.custom_minimum_size.y = 52.0 if not choices.is_empty() else 116.0
 	if choices.is_empty():
 		return
 

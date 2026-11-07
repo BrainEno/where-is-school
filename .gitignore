@@ -22,3 +22,7 @@ Thumbs.db
 # IDE / local environment
 .vscode/
 .idea/
+
+# Untracked local CI capture artifacts
+ci-evidence/
+ci-logs/

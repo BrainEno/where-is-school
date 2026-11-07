@@ -1,0 +1,313 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "playground",
+  "conversations": {
+    "playground_bench": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "bench_hub",
+      "nodes": [
+        {
+          "id": "bench_hub",
+          "speaker": "protagonist",
+          "text": "The bench faces the lanes; one foot rests just outside the paint. How do you want to think about it?",
+          "choices": [
+            {
+              "id": "pattern",
+              "text": "Follow the painted lines.",
+              "once": true,
+              "check": {
+                "id": "bench_pattern",
+                "ability": "pattern",
+                "difficulty": 6,
+                "success": "bench_p_yes",
+                "failure": "bench_p_no"
+              }
+            },
+            {
+              "id": "guard",
+              "text": "Check whether there is room to rest.",
+              "once": true,
+              "check": {
+                "id": "bench_guard",
+                "ability": "guard",
+                "difficulty": 6,
+                "success": "bench_g_yes",
+                "failure": "bench_g_no"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "bench_leave"
+            }
+          ]
+        },
+        {
+          "id": "bench_p_yes",
+          "speaker": "pattern",
+          "text": "The paint curves around the foot. Perhaps the bench was already here when the lane was repainted. That is only a guess.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_p_yes",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "The paint curves around the foot. Perhaps the bench was already here when the lane was repainted. That is only a guess."
+            }
+          ]
+        },
+        {
+          "id": "bench_p_no",
+          "speaker": "pattern",
+          "text": "Four stripes, four seats, you decide. Then you count the bench slats again. Perhaps your pattern was in too much of a hurry.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_p_no",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "Four stripes, four seats, you decide. Then you count the bench slats again. Perhaps your pattern was in too much of a hurry."
+            }
+          ]
+        },
+        {
+          "id": "bench_g_yes",
+          "speaker": "guard",
+          "text": "The fastenings look intact from here. There is space to sit without having to make a decision about anything else.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_g_yes",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "The fastenings look intact from here. There is space to sit without having to make a decision about anything else."
+            }
+          ]
+        },
+        {
+          "id": "bench_g_no",
+          "speaker": "guard",
+          "text": "That shadow could be a loose fastening. Or it could just be a shadow; leave a little room and look again later.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_bench_g_no",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "That shadow could be a loose fastening. Or it could just be a shadow; leave a little room and look again later."
+            }
+          ]
+        },
+        {
+          "id": "bench_leave",
+          "speaker": "protagonist",
+          "text": "The bench can stay a bench for now.",
+          "next": null
+        }
+      ]
+    },
+    "playground_notice": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "notice_hub",
+      "nodes": [
+        {
+          "id": "notice_hub",
+          "speaker": "protagonist",
+          "text": "The notice is faded. Its letters have a different rhythm near the bottom. Which thought do you want to follow?",
+          "choices": [
+            {
+              "id": "resonance",
+              "text": "Follow the feeling of familiarity.",
+              "once": true,
+              "check": {
+                "id": "notice_resonance",
+                "ability": "resonance",
+                "difficulty": 6,
+                "success": "notice_r_yes",
+                "failure": "notice_r_no"
+              }
+            },
+            {
+              "id": "guard",
+              "text": "Look for a reason to be careful.",
+              "once": true,
+              "check": {
+                "id": "notice_guard",
+                "ability": "guard",
+                "difficulty": 6,
+                "success": "notice_g_yes",
+                "failure": "notice_g_no"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "notice_leave"
+            }
+          ]
+        },
+        {
+          "id": "notice_r_yes",
+          "speaker": "resonance",
+          "text": "One stroke stops and starts again. It suggests a change of hand, or just an interrupted writer. You cannot remember which.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_r_yes",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "One stroke stops and starts again. It suggests a change of hand, or just an interrupted writer. You cannot remember which."
+            }
+          ]
+        },
+        {
+          "id": "notice_r_no",
+          "speaker": "resonance",
+          "text": "For a moment it feels like your handwriting. The feeling is vivid, but it does not tell you who wrote it.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_r_no",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "For a moment it feels like your handwriting. The feeling is vivid, but it does not tell you who wrote it."
+            }
+          ]
+        },
+        {
+          "id": "notice_g_yes",
+          "speaker": "guard",
+          "text": "The folded corner leaves the times visible. Someone may have wanted the next reader to find them without unfolding it.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_g_yes",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "The folded corner leaves the times visible. Someone may have wanted the next reader to find them without unfolding it."
+            }
+          ]
+        },
+        {
+          "id": "notice_g_no",
+          "speaker": "guard",
+          "text": "You imagine a warning under the fold. The back may be blank. There is no need to invent an emergency.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_notice_g_no",
+              "source": "imagined",
+              "speaker": "guard",
+              "text": "You imagine a warning under the fold. The back may be blank. There is no need to invent an emergency."
+            }
+          ]
+        },
+        {
+          "id": "notice_leave",
+          "speaker": "protagonist",
+          "text": "The notice is still there when you look away.",
+          "next": null
+        }
+      ]
+    },
+    "inner_track_success": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_track_success",
+      "nodes": [
+        {
+          "id": "passive_track_success",
+          "speaker": "pattern",
+          "text": "the lines nearly meet, but a nearly is not a map. Keep the small difference.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_track_success",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "the lines nearly meet, but a nearly is not a map. Keep the small difference."
+            }
+          ]
+        }
+      ]
+    },
+    "inner_track_failure": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_track_failure",
+      "nodes": [
+        {
+          "id": "passive_track_failure",
+          "speaker": "pattern",
+          "text": "two lines must lead to the same place. Then the paint runs out, and the conclusion is still yours alone.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_track_failure",
+              "source": "imagined",
+              "speaker": "pattern",
+              "text": "two lines must lead to the same place. Then the paint runs out, and the conclusion is still yours alone."
+            }
+          ]
+        }
+      ]
+    },
+    "inner_hoop_success": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_hoop_success",
+      "nodes": [
+        {
+          "id": "passive_hoop_success",
+          "speaker": "resonance",
+          "text": "the ring makes you think of a game someone paused. That is an association, not a memory.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_hoop_success",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "the ring makes you think of a game someone paused. That is an association, not a memory."
+            }
+          ]
+        }
+      ]
+    },
+    "inner_hoop_failure": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "passive_hoop_failure",
+      "nodes": [
+        {
+          "id": "passive_hoop_failure",
+          "speaker": "resonance",
+          "text": "you can almost hear a whistle here. It might be memory, or only the wind moving the metal.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "thought_passive_hoop_failure",
+              "source": "imagined",
+              "speaker": "resonance",
+              "text": "you can almost hear a whistle here. It might be memory, or only the wind moving the metal."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

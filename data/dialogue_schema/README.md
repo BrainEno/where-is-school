@@ -13,7 +13,7 @@ data/
 ```
 
 `<locale>` is `en` or `zh-CN`. `<chapter>` is the location group a conversation
-belongs to: `prologue`, `street`, `residential`.
+belongs to: `prologue`, `street`, `residential`, `playground`.
 
 Two rules keep this maintainable:
 
@@ -66,7 +66,7 @@ Two rules keep this maintainable:
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | yes | Stable, unique inside the conversation. Used by tests, parity and `next`. |
-| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`). |
+| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `pattern`, `resonance`, `guard`). |
 | `text` | yes | The line. May not be empty; a node with only choices may omit it. |
 | `source` | no | Overrides `default_source` for this line. |
 | `next` | no | Id of the next node. **Absent** = fall through to the next node in file order. **`null`** = the conversation ends here. |
@@ -84,7 +84,8 @@ otherwise the end of the file is ambiguous and the build fails.
 |---|---|---|
 | `id` | yes | Unique inside the node. Part of the save/`once` key, so never reuse one. |
 | `text` | yes | The option as the player reads it. |
-| `next` | yes | Node id the option jumps to. |
+| `next` | yes, unless `check` is present | Node id the option jumps to. |
+| `check` | no | Active ability check with success/failure targets, instead of `next`; see below. |
 | `once` | no | The option disappears after it was taken (tracked per conversation). |
 | `effects` | no | Applied when the option is chosen, not when it is listed. |
 | `conditions` | no | Same shape as a node's conditions. |
@@ -149,7 +150,7 @@ the content test check, in CI, that:
 - every file is valid JSON with the declared `format_version`;
 - node and choice ids are unique, and every `next` points at a node that exists;
 - no node is unreachable from `start`, no `next` chain loops, and the last node ends;
-- every node has text or choices, and every choice has text, an id and a `next`;
+- every node has text or choices, and every choice has text, an id and a `next` or valid `check`;
 - speakers exist in `data/characters/`, and objective keys exist in every locale;
 - a subjective conversation writes no flags, no objective, and no observed or
   reported knowledge (this is refused while parsing, before any line is shown);
@@ -203,3 +204,38 @@ into content. These files contain original placeholder dialogue written for the
 prototype. Do not paste manuscript passages, paraphrases of them, or private
 drafts into this directory, into tests, into commit messages, or into pull request
 descriptions.
+
+## Optional active inner-ability checks (ADR 0003)
+
+A choice can use `check` **instead of** `next`:
+
+```json
+{
+  "id": "notice_pattern",
+  "text": "Follow the lines.",
+  "once": true,
+  "check": {
+    "id": "bench_pattern",
+    "ability": "pattern",
+    "difficulty": 6,
+    "success": "bench_p_yes",
+    "failure": "bench_p_no"
+  }
+}
+```
+
+`id` is a session-wide check cache key and must be unique within each language;
+`ability` is `pattern`, `resonance`, or `guard`; `difficulty` is an integer
+2–10; both distinct targets must exist in the same conversation. The graph and
+reachability validator check both targets; bilingual parity compares every check
+field, choice condition (`requires`, `all_flags`, `not_flags`), and effect.
+Only prose (including the text of recorded entries) is translated. The visible
+choice shows rating and target; the subsequent line shows the d6 result. Revisit
+returns the cached outcome instead of rolling again. `once` can hide a used
+choice, but is not the sole reroll defense. Passive rules are separate,
+contextual and do not expose their roll. They play ordinary subjective JSON
+conversations and cannot write factual effects. Both branches must offer useful
+narrative, not block the route. See ADR 0003 for formula and interfaces.
+
+The playground text and translations are new provisional game writing awaiting
+author review; no line determines the animal's species, origin, or fate.

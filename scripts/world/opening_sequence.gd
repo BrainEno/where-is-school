@@ -47,6 +47,7 @@ var _locations: LocationHost = null
 var _bell_audio: AudioStreamPlayer = null
 var _wake_audio: AudioStreamPlayer = null
 var _hud: GameHud = null
+var _passive_voices: PassiveVoices = null
 
 var _beat_active := false
 var _control_allowed := false
@@ -60,6 +61,7 @@ func _ready() -> void:
 	_game_state().story_flag_changed.connect(_on_story_flag_changed)
 	_interaction.activation_requested.connect(_on_activation_requested)
 	_interaction.target_changed.connect(_on_target_changed)
+	_passive_voices = PassiveVoices.new(_game_state(), _dialogue.get_runtime().get_check_engine())
 
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
@@ -238,18 +240,37 @@ func _on_activation_requested(interactable: Interactable) -> void:
 			)
 			return
 		await _begin_beat()
+		var interaction_id := interactable.interact_id
 		await _play_conversation(conversation)
 		_end_beat()
+		await _play_passive_reaction(interaction_id)
 		return
 
 	if not String(interactable.inspection_id).is_empty():
-		_dialogue.present_inspection(interactable.inspection_id)
+		var interaction_id := interactable.interact_id
+		if _dialogue.present_inspection(interactable.inspection_id):
+			while _dialogue.is_busy():
+				await _dialogue.presentation_active_changed
+			await _play_passive_reaction(interaction_id)
 		return
 
 	push_error(
 		"OpeningSequence: interactable '%s' declares no inspection, conversation, or exit."
 		% interactable.interact_id
 	)
+
+
+## Reactions are contextual and deliberately sparse. They are ordinary
+## subjective JSON conversations, not a second narration or a factual claim.
+func _play_passive_reaction(interaction_id: StringName) -> void:
+	if _passive_voices == null:
+		return
+	var conversation := _passive_voices.after_interaction(interaction_id)
+	if String(conversation).is_empty():
+		return
+	await _begin_beat()
+	await _play_conversation(conversation)
+	_end_beat()
 
 
 func _on_target_changed(interactable: Interactable) -> void:
@@ -300,6 +321,8 @@ func _transition_to(exit: LocationExit) -> void:
 		_hud.set_objective("objective.outside")
 	elif destination_id == &"residential":
 		_hud.set_objective("objective.residential")
+	elif destination_id in [&"estate_passage", &"playground"]:
+		_hud.set_objective("objective.explore")
 	_hud.clear_prompt()
 	_update_exit_prompt()
 	await get_tree().create_timer(0.3).timeout

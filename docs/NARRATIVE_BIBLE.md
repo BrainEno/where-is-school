@@ -94,3 +94,18 @@ An initial choice may influence scene order and which evidence appears first. It
 - B's eventual dialogue should not simply validate or disprove Q's account.
 - Choices should alter tone, knowledge, relationship, access, or interpretation.
 - Keep long dialogue interleaved with movement, inspection, silence, and player decisions.
+
+
+## Playground prototype: inner viewpoints
+
+The open playground is an ordinary, readable place with a few quiet discrepancies,
+not an explanation of the world. Four independent anchors can be visited in any
+order. The green animal's species, origin and fate remain undecided; no encounter
+is used as a quest lock.
+
+Thread connects details, Resonance associates sensations with familiarity, and
+Shelter looks for room or safety. These are subjective functions, not characters
+with superior knowledge: they can leap to incompatible or mistaken conclusions.
+An active choice or a sparse passive reaction may offer a useful thought after
+either success or setback. Thoughts are recorded as imagined, separate from
+observations. The names, phrasing and balance await author approval; see ADR 0003.

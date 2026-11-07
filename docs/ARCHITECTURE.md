@@ -18,6 +18,7 @@ scripts/
   actors/                # movement and actor behavior
   interaction/           # interaction contracts and targeting
   dialogue/              # dialogue runtime and adapters
+  inner/                 # subjective abilities, checks, passive pacing
   world/                 # world state and spatial rule behavior
   save/                  # serialization and migration
   ui/                    # UI-specific presentation logic
@@ -55,7 +56,7 @@ Use signals at clear boundaries. Do not create a global event bus by default; fi
 
 ## 3. Autoload policy
 
-The project contains two autoloads.
+The project contains three autoloads (the earlier “two” count omitted the existing localization service; no new autoload was added for this slice).
 
 - **GameState** — runtime story flags and snapshot/restore of those flags. It is
   not a dumping ground for quests, dialogue UI, scene transitions, audio,
@@ -65,6 +66,8 @@ The project contains two autoloads.
   snapshot/restore. It exists because knowledge categories are used by dialogue,
   inspection, and presentation independently of gameplay flags; see
   `docs/adr/0002-dialogue-and-narrative-state.md`.
+- **Loc** — current locale, settings persistence and the locale-changed signal;
+  `L10n` performs static lookups. It is not story state.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;
@@ -116,7 +119,7 @@ Every line the game says is data, in two languages, loaded by chapter:
 `InspectionLibrary` the descriptions, and `L10n` (static) plus `Loc` (autoload,
 persisted in `user://settings.cfg`) the interface strings. Both language trees must
 have identical structure; `DialogueParity` compares them node by node and reports
-any dropped node, choice or effect. Authors edit JSON, not GDScript; the schema and
+any dropped node, choice, condition, check definition or effect. Authors edit JSON, not GDScript; the schema and
 the editing rules are in `data/dialogue_schema/README.md`.
 
 Nothing in `scripts/` may hold narrative text. The only literals left in scenes
@@ -127,6 +130,17 @@ The display language can change at any time: `Loc.locale_changed` makes the
 dialogue controller rebind the open conversation to the same node id in the other
 language, re-resolve the prompt, redraw the backlog and re-translate the objective.
 No scene reload, no lost state.
+
+## 5c. Inner viewpoints (ADR 0003)
+
+`InnerAbilities` defines three stable rated viewpoints; `InnerCheckEngine` owns
+injectable d6 rolls and idempotent session results; `PassiveVoices` owns sparse,
+conditional triggers. Dialogue choices can request visible checks and branch to
+success/setback nodes; passive checks use the same core without exposing dice.
+Thoughts are authored as imagined JSON dialogue and never promoted to observed
+facts. Existing `GameState` owns check/choice bookkeeping across location swaps;
+`NarrativeState` owns categorized notes. No new autoload, skill tree or save
+manager is introduced. See `docs/adr/0003-inner-abilities-and-checks.md`.
 
 ## 6. Persistent identifiers and data
 

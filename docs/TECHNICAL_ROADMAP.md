@@ -29,15 +29,22 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Inspection content with first-read effects, repeat text, and recollections.
 - Subjective (imagined) presentation that cannot alter objective world state.
 - Location swapping that preserves story state, plus authored beat sequencing.
-- Headless smoke, content, unit, and end-to-end flow tests in GitHub Actions.
+- English and simplified Chinese JSON dialogue, inspection and UI strings,
+  runtime language switching, `Loc`, and a bundled CJK font (author review pending).
+- Classroom → walkway → street → residential courtyard and green-animal encounter.
+- Residential alley passage → estate gate space → open, revisitable playground;
+  four independent anchors and an optional end-of-build card.
+- Small hybrid inner-ability prototype and active/passive checks (ADR 0003).
+- Headless smoke, content, unit, and end-to-end flow tests in GitHub Actions;
+  graphical capture uploads isolated artifacts, without auto-committing evidence.
 
 ### Planned, but deliberately not implemented yet
 - Dialogic comparison spike and the resulting adapter decision.
 - Journal and unreliable route notebook.
 - Portrait presentation for dialogue.
 - Versioned save/load, slot management, and schema migration.
-- Accessibility settings, localisation pipeline (including a bundled CJK font),
-  audio mixing, and input rebinding.
+- Broader accessibility settings and localization authoring/review workflow,
+  audio mixing, and input rebinding. The two-language runtime and CJK font exist.
 
 Do not implement every planned item in one large foundation PR. Add each when a concrete slice requires it.
 
@@ -64,7 +71,7 @@ Do not add Git LFS until large binary assets actually justify it. Decide file-si
 
 ## 5. Development phases
 
-### Phase 0 — Engineering foundation (current)
+### Phase 0 — Engineering foundation (implemented)
 - Launchable Godot project.
 - Agent instructions and architecture boundaries.
 - CI project import and scene smoke test.
@@ -82,15 +89,17 @@ Do not add Git LFS until large binary assets actually justify it. Decide file-si
 - Data-driven branches and story flags.
 - Decide Dialogic/custom integration from evidence.
 
-### Phase 3 — First vertical slice (classroom milestone delivered)
-- Delivered: classroom prologue — wake, Q, schoolbag, seven inspectables, the
-  expectation beat, the substitute, and the walkway exit.
-- Next: the gate/street route and the green-animal observation, keeping the same
-  interaction, dialogue, and narrative-state boundaries.
+### Phase 3 — First vertical slice (implemented; manual review pending)
+- Classroom prologue — wake, Q, schoolbag, inspectables, expectation, substitute,
+  dismissal and walkway — is followed by street, flats and the green animal.
+- The alley, estate gate and open playground now extend that route, using the
+  existing location, interaction, dialogue and narrative-state boundaries.
+- Bilingual content and hybrid active/passive inner checks are implemented;
+  authorial review, Windows playtesting and tuning remain open.
 - Save/load only after world-state ownership is stable.
 
 ### Phase 4 — Production readiness
-- Versioned persistence, settings, accessibility, localization strategy.
+- Versioned persistence, settings, accessibility, broader localization workflow.
 - Content authoring validation and reusable art pipeline.
 - Performance budgets and profiling.
 - Steam build and platform compatibility checks.

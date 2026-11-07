@@ -3,7 +3,7 @@ extends SceneTree
 ##
 ## This is not a headless assertion suite: it runs under Xvfb with a real viewport,
 ## presses real keys through the input system, and saves what the player would see
-## to docs/screenshots. Failures are written next to the screenshots (a FAIL_*.png
+## to a fresh evidence directory. Failures are written next to the screenshots (a FAIL_*.png
 ## of the moment it stopped plus PLAYTHROUGH.log) so a broken build leaves evidence
 ## instead of a stack trace.
 ##
@@ -14,8 +14,12 @@ extends SceneTree
 ## the log.
 
 const Harness = preload("res://tests/test_harness.gd")
-const SHOT_DIR := "res://docs/screenshots"
-const LOG_PATH := "res://docs/screenshots/PLAYTHROUGH.log"
+## CI sets an isolated absolute directory; local captures use a fresh user:// directory.
+var _shot_dir: String = OS.get_environment("CAPTURE_DIR")
+
+
+func _output_path(filename: String) -> String:
+	return _shot_dir.path_join(filename)
 
 var _main: Node = null
 var _dialogue: DialogueController = null
@@ -38,7 +42,14 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
+	if _shot_dir.is_empty():
+		var base := "user://playthrough-captures/%d" % int(Time.get_unix_time_from_system())
+		_shot_dir = base
+		var suffix := 0
+		while DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_shot_dir)):
+			suffix += 1
+			_shot_dir = "%s-%d" % [base, suffix]
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_shot_dir))
 	_note("capture started: %s" % Time.get_datetime_string_from_system())
 
 	var autoloads := Harness.ensure_state_autoloads(self)
@@ -250,14 +261,53 @@ func _run() -> void:
 			if _dialogue.is_busy():
 				await _shot("FAIL_animal_conversation", "The animal conversation did not finish.")
 			var alley := flats.find_interactable(&"res_alley_end")
-			if alley != null:
-				await _wait_for_free(60.0)
-				_teleport(Vector3(6.0, 0, -31.6), 0.0)
-				await _wait_for_target(&"res_alley_end", 30.0)
-				await _press(KEY_E)
-				if await _wait_for_visible(_ui.end_card, 20.0):
-					await _wait(0.6)
-					await _shot("20_end_card", "The end-of-slice card at the end of the built content.")
+			if alley == null:
+				_failures.append("The alley exit is missing.")
+			elif await _travel(&"res_alley_end", Vector3(6.0, 0, -31.6), 0.0, "estate_passage"):
+				await _shot("20_estate_exit", "The open space outside the estate gate.")
+				if await _travel(&"estate_to_playground", Vector3(0, 0, -8.0), 0.0, "playground"):
+					await _shot("21_playground", "The playground: open space and independent landmarks.")
+					await _wait_for_free(30.0)
+					_teleport(Vector3(-10, 0, 0.8), 0.0)
+					if not await _wait_for_target(&"pg_bench", 30.0):
+						_failures.append("The playground bench prompt was not offered.")
+					else:
+						await _press(KEY_E)
+						if await _poll(func() -> bool: return _dialogue.has_pending_choices(), 10.0):
+							await _shot("22_active_choices", "An optional ability choice with rating and target.")
+							await _press(KEY_1)
+							if await _poll(func() -> bool: return not String(_dialogue.get_current_line().get("title", "")).is_empty(), 10.0):
+								await _wait(0.7)
+								await _shot("23_active_result", "The visible die, ability, target and result.")
+							else:
+								_failures.append("The active roll result did not appear.")
+						else:
+							_failures.append("The ability choices did not appear.")
+						await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the bench thought")
+					await _press(KEY_L)
+					await _wait_for_free(30.0)
+					_teleport(Vector3(10, 0, -4.5), 0.0)
+					if await _wait_for_target(&"pg_notice", 30.0):
+						await _press(KEY_E)
+						if await _poll(func() -> bool: return _dialogue.has_pending_choices(), 10.0):
+							await _shot("24_active_choices_chinese", "The same ability interface in simplified Chinese.")
+							await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the notice thought")
+						else:
+							_failures.append("The Chinese ability choices did not appear.")
+					else:
+						_failures.append("The notice board prompt was not offered.")
+					await _press(KEY_L)
+					await _wait_for_free(30.0)
+					_teleport(Vector3(12, 0, -10.4), 0.0)
+					if not await _wait_for_target(&"pg_finish", 30.0):
+						_failures.append("The optional end-of-build prompt was not offered.")
+					else:
+						await _press(KEY_E)
+						if await _wait_for_visible(_ui.end_card, 20.0):
+							await _wait(0.6)
+							await _shot("20_end_card", "The optional end card, beyond the open playground.")
+						else:
+							_failures.append("The end-of-build card did not appear.")
 
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))
@@ -271,8 +321,29 @@ func _run() -> void:
 		for failure: String in _failures:
 			_note("FAILURE: %s" % failure)
 		await _shot("FAIL_last_frame", "The last frame before the capture stopped.")
-	_write_log()
+	if not _write_log():
+		_failures.append("Could not write the capture log or index.")
+	if _failures.is_empty():
+		print("CAPTURE_RESULT: PASS")
+	else:
+		print("CAPTURE_RESULT: FAIL")
 	quit(0 if _failures.is_empty() else 1)
+
+
+## Crosses a threshold via the real interaction input. Teleports only shorten
+## the walking portion; a missing prompt or failed transition remains a failure.
+func _travel(id: StringName, position: Vector3, yaw: float, destination: String) -> bool:
+	if not await _wait_for_free(30.0):
+		return false
+	_teleport(position, yaw)
+	if not await _wait_for_target(id, 30.0):
+		_failures.append("No prompt for %s." % id)
+		return false
+	await _press(KEY_E)
+	if not await _wait_for_location(destination, 40.0):
+		_failures.append("Transition to %s did not finish." % destination)
+		return false
+	return await _wait_for_free(40.0)
 
 
 # --- input ------------------------------------------------------------------
@@ -394,11 +465,15 @@ func _shot(shot_name: String, caption: String) -> void:
 	RenderingServer.force_draw(true)
 	await process_frame
 	await process_frame
-	var image: Image = root.get_texture().get_image()
+	var texture := root.get_texture()
+	if texture == null:
+		_failures.append("No viewport texture was available for screenshot %s." % shot_name)
+		return
+	var image: Image = texture.get_image()
 	if image == null:
 		_failures.append("No image was available for screenshot %s." % shot_name)
 		return
-	var path := "%s/%s.png" % [SHOT_DIR, shot_name]
+	var path := _output_path("%s.png" % shot_name)
 	var err := image.save_png(path)
 	if err != OK:
 		_failures.append("Screenshot %s could not be saved (error %d)." % [shot_name, err])
@@ -413,6 +488,7 @@ func _fail(reason: String) -> void:
 	for failure: String in _failures:
 		_note("FAILURE: %s" % failure)
 	_write_log()
+	print("CAPTURE_RESULT: FAIL")
 	quit(1)
 
 
@@ -422,11 +498,12 @@ func _note(message: String) -> void:
 	print("CAPTURE %s" % line)
 
 
-func _write_log() -> void:
-	var file := FileAccess.open(LOG_PATH, FileAccess.WRITE)
+func _write_log() -> bool:
+	var log_path := _output_path("PLAYTHROUGH.log")
+	var file := FileAccess.open(log_path, FileAccess.WRITE)
 	if file == null:
-		push_error("Could not write %s" % LOG_PATH)
-		return
+		push_error("Could not write %s" % log_path)
+		return false
 	file.store_string("\n".join(_log_lines) + "\n")
 	file.close()
 	# A Markdown index, so the pull request can show the frames with their captions.
@@ -453,7 +530,9 @@ func _write_log() -> void:
 		markdown.append("")
 		markdown.append("![%s](%s.png)" % [shot_name, shot_name])
 		markdown.append("")
-	var markdown_file := FileAccess.open("res://docs/screenshots/PLAYTHROUGH.md", FileAccess.WRITE)
-	if markdown_file != null:
-		markdown_file.store_string("\n".join(markdown) + "\n")
-		markdown_file.close()
+	var markdown_file := FileAccess.open(_output_path("PLAYTHROUGH.md"), FileAccess.WRITE)
+	if markdown_file == null:
+		return false
+	markdown_file.store_string("\n".join(markdown) + "\n")
+	markdown_file.close()
+	return true

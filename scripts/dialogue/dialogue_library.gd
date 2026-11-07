@@ -13,7 +13,7 @@ extends RefCounted
 ##   and objective keys are checked against the locale tables, so a translator
 ##   cannot drop a branch or point at a label that does not exist.
 
-const CHAPTERS: Array[String] = ["prologue", "street", "residential"]
+const CHAPTERS: Array[String] = ["prologue", "street", "residential", "playground"]
 const DIALOGUE_DIR := "res://data/dialogue"
 
 var errors: Array[String] = []
@@ -31,6 +31,7 @@ static func load_all() -> DialogueLibrary:
 	for locale in L10n.LOCALES:
 		library._graphs[locale] = {}
 		library._index[locale] = {}
+		var check_ids: Dictionary = {}
 		for chapter in CHAPTERS:
 			var path := chapter_path(locale, chapter)
 			var graph := DialogueGraph.load_from_file(path)
@@ -48,6 +49,7 @@ static func load_all() -> DialogueLibrary:
 					continue
 				index[conversation_id] = graph
 			library._check_objective_keys(graph)
+			library._check_unique_checks(graph, check_ids)
 
 	library._check_parity()
 	library.set_locale(L10n.current)
@@ -117,6 +119,23 @@ func get_referenced_speaker_ids(locale: String = "") -> Array[StringName]:
 			if not ids.has(typed):
 				ids.append(typed)
 	return ids
+
+
+## Check IDs are session-wide cache keys, not merely local choice labels.
+func _check_unique_checks(graph: DialogueGraph, seen: Dictionary) -> void:
+	for conversation_id: StringName in graph.get_conversation_ids():
+		var conversation: DialogueGraph.Conversation = graph.get_conversation(conversation_id)
+		for node_id: StringName in conversation.order:
+			var node: DialogueGraph.DialogueNode = conversation.nodes[node_id]
+			for choice: DialogueGraph.DialogueChoice in node.choices:
+				if choice.check.is_empty():
+					continue
+				var check_id := String(choice.check["id"])
+				var label := "%s:%s/%s/%s" % [graph.source_path, conversation_id, node_id, choice.choice_id]
+				if seen.has(check_id):
+					errors.append("%s: duplicate check id '%s' (also %s)." % [label, check_id, seen[check_id]])
+				else:
+					seen[check_id] = label
 
 
 func _check_parity() -> void:

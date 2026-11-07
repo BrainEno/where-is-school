@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "pg_track": {
+    "title": "The lane markings",
+    "prompt": "Look at the lane markings",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Several white lane lines cross the open ground. One has been painted over at the bend; the old curve is still visible.",
+    "repeat_text": "The old curve and the newer line remain side by side.",
+    "record": {
+      "entry_id": "saw_pg_track",
+      "source": "observed",
+      "text": "An old lane curve shows through a newer line."
+    }
+  },
+  "pg_hoop": {
+    "title": "The practice ring",
+    "prompt": "Look at the practice ring",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A metal ring stands at one edge of the ground. Its net is gone, and the pole has been painted more than once.",
+    "repeat_text": "A ring, an empty rim, layers of paint.",
+    "record": {
+      "entry_id": "saw_pg_hoop",
+      "source": "observed",
+      "text": "An old practice ring stands without a net."
+    }
+  }
+}

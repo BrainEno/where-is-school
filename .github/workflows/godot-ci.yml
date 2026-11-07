@@ -62,6 +62,10 @@ jobs:
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
           run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
           run_check dialogue_validation 180 godot --headless --path . --script res://tests/dialogue_validation_test.gd || status=1
+          run_check dialogue_parity 120 godot --headless --path . --script res://tests/dialogue_parity_test.gd || status=1
+          run_check inner_abilities 180 godot --headless --path . --script res://tests/inner_abilities_test.gd || status=1
+          run_check playground_flow 300 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
+          run_check capture_pipeline 120 python3 tests/test_capture_ci.py || status=1
           run_check i18n 120 godot --headless --path . --script res://tests/i18n_test.gd || status=1
           run_check language_switch 300 godot --headless --path . --script res://tests/language_switch_test.gd || status=1
           run_check opening_flow 420 godot --headless --path . --script res://tests/opening_flow_test.gd || status=1
