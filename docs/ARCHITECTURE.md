@@ -138,6 +138,12 @@ dialogue controller rebind the open conversation to the same node id in the othe
 language, re-resolve the prompt, redraw the backlog and re-translate the objective.
 No scene reload, no lost state.
 
+A rebind is a **re-render, not a new event**. The runtime re-emits the node it is
+standing on; the controller marks that window (`_republishing`) and neither applies
+effects, records knowledge, rolls a check, nor appends anything. History is stored by
+identity, never by text (see §5g), which is what makes repeated `en → zh-CN → en →
+zh-CN` switching idempotent — the case issue #18 reported.
+
 ## 5c. Inner voices and checks (implemented contract)
 
 The ability system is deliberately small and lives in three places, each with one
@@ -271,6 +277,106 @@ mid-walk, E still working, and ground clicks never activating anything.
 digits, hover styling, layer order, and a language switch that re-renders the options.
 `tests/street_prompt_test.gd` — the street's own prompt key, and the story's door
 rewrite touching only the classroom door.
+
+## 5g. The reading surface: dialogue panel, history, name labels
+
+The dialogue is a **reading surface at the edge of the world**, not a chat window.
+The room is the picture; the panel is the text laid over its lower edge.
+
+### Hierarchy and layout (`scenes/ui/dialogue_panel.tscn`)
+
+```
+DialoguePanel (Control, lower-left band, mouse passes through)
+└── Wash            vertical ink gradient, fades the band's top edge into the scene
+└── Frame           subtle PanelContainer, no border, no glow
+    └── Content     VBox
+        ├── SourceRule     2 px hairline tinted by narrative source
+        ├── HeaderRow      SpeakerLabel (26, tracked) · RoleLabel (13, muted)
+        │                  · Spacer · SourceBadge (12, tracked, muted)
+        ├── TitleLabel     16, only for recollections
+        ├── BodyLabel      RichTextLabel, 22, line separation 10, the largest thing here
+        ├── ChoiceRule     1 px rule separating prose from options
+        ├── ChoicesContainer
+        └── HintLabel      12, right aligned
+```
+
+Rules the layout keeps, and why:
+
+1. **The band never becomes the screen.** Width is 60% of the viewport, clamped to
+   620-1040 px; height is measured from the content and capped at 62% of the viewport.
+   A long paragraph scrolls inside the body instead of growing the panel.
+2. **Type is fixed.** 22 px body, 20 px options, 26 px speaker name at every
+   resolution. The panel adapts to the text; the text never shrinks to fit the panel.
+3. **The name is the anchor, the role is secondary.** The speaker name carries the
+   character's accent colour; the role is smaller and muted; the source is a hairline
+   plus a 12 px tracked label. `observed`/`reported`/`recalled`/`imagined` stay
+   distinguishable, but nothing shouts.
+4. **Options are text, not buttons.** Flat, left aligned, numbered, one per line; hover
+   raises the line and draws a 2 px margin mark. They keep
+   `mouse_filter = MOUSE_FILTER_STOP` and `focus_mode = FOCUS_NONE` so a left click
+   selects exactly one option and never leaks to the world, and the 1-9 keys go through
+   the same `choice_selected(index)` signal.
+5. **No portraits yet.** The layout leaves the left margin and the free space above the
+   band for a future portrait; nothing renders one. (Portrait art is not in the
+   repository and must not be faked with a placeholder silhouette.)
+6. The panel is measured, not tuned: `_settle_layout()` runs in two passes, first
+   applying the width the text will wrap at, then measuring what that produced.
+   `tests/dialogue_layout_test.gd` asserts the result at 1280x720, 1600x900 and
+   1920x1080 with long English, long Chinese, three paragraphs of recollection, four
+   long options, an over-long name and role, and an inner voice.
+
+The panel's public surface is unchanged by any of this: `advance_requested`,
+`choice_selected(index)`, `backlog_requested`, `show_line`, `set_choices`,
+`refresh_static_text`, `redraw_current_line`. Presentation changes; the controller and
+the runtime do not.
+
+### History by identity (`scripts/dialogue/dialogue_history.gd`)
+
+`BacklogPanel` stores **descriptors**, not screen rows: identity, the conversation or
+inspection it came from, the speaker, the narrative source, and the last rendered text
+as a fallback. Rows are rebuilt from descriptors by a resolver the controller supplies
+(`_render_entry`), which recomposes a conversation line with
+`DialogueRuntime.compose_line()` — the same static function the live runtime uses — or
+an inspection line from its id and variant.
+
+Identities come from content ids only:
+
+| source | identity |
+|---|---|
+| conversation line | `conv:<conversation_id>/<node_id>` |
+| inspection | `inspection:<inspection_id>/<variant>`, variant `first`, `repeat` or `recall` |
+
+Consequences:
+
+- a language switch replaces the newest row when its identity matches and appends
+  nothing (issue #18);
+- two different events are never merged, even when their text is identical, because
+  only an explicit republish touches the newest row and text is never compared;
+- `first`, `repeat` and `recall` stay three distinct entries, in reading order;
+- descriptors are stored with `effects`, `record` and `set_flag` removed, so a rebuild
+  physically cannot re-apply an effect, re-record knowledge or flip a flag;
+- `DialogueController._history` is the narrative record and
+  `BacklogPanel.get_entry_identities()` must always agree with it.
+
+### Character name labels (`scripts/actors/character_nameplate.gd`)
+
+Grey-box people have no faces, so each actor scene carries a `CharacterNameplate`
+(a `Label3D` named `Nameplate`):
+
+- the name is resolved from `CharacterProfile` + `data/locale/*.json` (`name.<id>`),
+  never typed into a script, and re-resolved on `locale_changed`;
+- `billboard` on, depth test on, `fixed_size` off, so it faces the camera and is
+  occluded by geometry rather than drawn through walls;
+- no collision, area or body: it cannot be walked into, cannot block the mouse ray and
+  cannot widen an interaction radius. `tests/nameplate_test.gd` asserts the subtree
+  contains no physics nodes;
+- it is a child of the actor, so it follows the actor, disappears when the actor is
+  hidden, and cannot be left behind or duplicated by a scene change;
+- `ui/nameplates/show_development_nameplates` overrides visibility; with no override
+  the labels follow `OS.is_debug_build()` — on while developing, off in a release
+  export;
+- a character who is not in a scene gets no label; B is not in the start scene and no
+  actor was created to hold one.
 
 ## 6. Persistent identifiers and data
 

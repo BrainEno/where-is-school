@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/npc/npc_actor.gd" id="1_npc_actor"]
+[ext_resource type="Script" path="res://scripts/actors/character_nameplate.gd" id="2_nameplate"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
 radius = 0.28
@@ -24,3 +25,18 @@ mesh = SubResource("CapsuleMesh_1")
 [node name="Head" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.53, 0)
 mesh = SubResource("SphereMesh_2")
+
+[node name="Nameplate" type="Label3D" parent="."]
+position = Vector3(0, 1.92, 0)
+billboard = 1
+no_depth_test = false
+double_sided = true
+text = "Q"
+font_size = 64
+outline_size = 18
+pixel_size = 0.0042
+modulate = Color(0.898, 0.871, 0.804, 1)
+outline_modulate = Color(0.043, 0.051, 0.051, 0.92)
+texture_filter = 3
+script = ExtResource("2_nameplate")
+label_height = 1.92

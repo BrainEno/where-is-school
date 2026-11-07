@@ -282,3 +282,19 @@ The game retains a controlled 2.5D camera over 3D environments.
 An outdoor space can be almost empty and still carry a strong presence. A single tree, bench, fence, or distant building may give the scene all the structure it needs. A character can be awkwardly proportioned, visibly distorted, and emotionally exposed without becoming a cartoon.
 
 The visual identity of where-is-school comes from the tension between an expressive, graphic world; the absurd quiet of an exposed stage; and people whose faces and gestures carry more feeling than the spaces around them.
+
+
+## Current dialogue presentation (implemented baseline)
+
+The current runtime dialogue surface was redesigned and tested in PR #29. This section records the implementation that exists today; it is a production baseline, not a replacement for the integrated portrait direction defined above.
+
+- The dialogue is presented as a text-led band in the lower-left area, fading into the scene along its upper edge. It is sized from the current content and leaves the environment visible.
+- The sentence is the largest element, with measured line length and generous line spacing.
+- The speaker name anchors the composition and uses the character's accent color. The role remains small and muted.
+- Narrative source (observed, reported, recalled, or imagined) is communicated through a restrained hairline and small label rather than a badge, pill, or saturated block.
+- Choices appear as numbered text lines under a rule. They remain visually quiet until pointer interaction; avoid filled buttons, decorative iconography, and glow.
+- Dialogue portraits are planned but are not yet production assets. The existing layout reserves space at the left margin and above the text band. Do not add a placeholder silhouette or a fake portrait.
+
+When approved portrait artwork becomes available, evolve the current reading surface into the integrated portrait/text composition defined in this Art Bible. The portrait should feel composed into the scene and reading surface, not placed inside a conventional avatar frame. Preserve the successful properties of the current implementation: text-first hierarchy when needed, Chinese long-form readability, responsive sizing, clear choices, keyboard/mouse behavior, and narrative-source distinction.
+
+Development nameplates over graybox characters are debugging aids, not final game UI. They remain a development-only feature and should not be treated as part of the character portrait system.

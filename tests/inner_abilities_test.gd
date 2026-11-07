@@ -26,6 +26,10 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	# The registry loads in the active language, and the active language can be whatever
+	# the last session left in user://settings.cfg. Pin it, so "English first, then
+	# Chinese" is a fact of this test rather than of the machine it runs on.
+	L10n.set_locale("en")
 	_abilities = InnerAbilities.load_all()
 	if not _abilities.is_valid():
 		Harness.finish(self, ["abilities: " + _abilities.describe_errors()], "")

@@ -67,6 +67,7 @@ The author's literary manuscripts are private source material and may be intende
 - Environment art may use bold color planes, hand-drawn outlines, rough brush marks, selective graffiti-like gestures, and simplified geometry. Graphic treatment must not obscure walkable space or important interactables.
 - In-game 3D characters prioritize silhouette, proportion, posture, clothing identity, and gameplay-distance readability. Dialogue portraits are separate 2D artworks, not renders or screenshots of the 3D models.
 - Dialogue UI follows an integrated composition: portrait, text, speaker identity, and choices belong to one visual arrangement. Long Chinese text must remain comfortable to read.
+- The currently implemented dialogue surface is a text-led lower-left reading band; treat it as the implementation baseline and evolve it toward the integrated portrait composition when approved portrait art exists. Preserve its tested readability and interaction behavior.
 - Do not treat dampness, dirt, rust, or heavy weathering as mandatory atmosphere. Surface treatment is selected according to each scene's composition and narrative purpose.
 - Keep the English art documents canonical for agent execution and update their matching .zh-CN.md reading copies whenever they change.
 - Do not add generated or downloaded assets without recording provenance and commercial-use rights in docs/ASSET_PROVENANCE.md.

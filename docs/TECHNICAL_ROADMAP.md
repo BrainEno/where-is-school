@@ -43,9 +43,16 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Native navigation in every playable location, with mouse click-to-move and
   click-to-interact sharing the existing movement and activation paths (see
   `docs/ARCHITECTURE.md` §5f).
-- CI: a static syntax gate over every `.gd` file, twenty-three headless checks, and a
-  read-only capture job whose artifacts are the visual evidence for a pull
-  request. Failures produce artifacts as well, so a red run is diagnosable.
+- A reading surface built for long bilingual prose: a band in the lower left rather
+  than a full-width box, a name and a quiet role above the sentence, the narrative
+  source drawn as a hairline and a small tracked label, options on their own lines,
+  and a layout that is measured from the content at 1280x720, 1600x900 and 1920x1080
+  instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
+- Development-only name labels over the grey-box people, translated with the rest of
+  the interface and switched off in release builds (`tests/nameplate_test.gd`).
+- CI: a static syntax gate over every `.gd` file, twenty-eight headless checks, an
+  import pass, and a read-only capture job whose artifacts are the visual evidence for
+  a pull request. Failures produce artifacts as well, so a red run is diagnosable.
 
 ### Planned, but deliberately not implemented yet
 - Journal and unreliable route notebook.
@@ -57,8 +64,13 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   and its interaction anchors exist.
 - Navigation features that click-to-move deliberately does **not** have yet: agent
   avoidance between moving bodies, off-mesh links for stairs and ledges that are not
-  ramps, path smoothing, and a navigation-aware companion. Each location's mesh is
-  baked from its own colliders only, so nothing crosses a location boundary.
+  ramps, and path smoothing. Each location's mesh is baked from its own colliders
+  only, so nothing crosses a location boundary. These are separate from companion
+  movement, which **is** implemented: Q follows the player's navigation path, keeps a
+  follow distance, stops when the player stops, resumes on movement, and gives up
+  beyond its leash (see `docs/ARCHITECTURE.md` §5d and `tests/companion_route_test.gd`).
+  What the companion still does not do is dynamic obstacle avoidance around other
+  moving bodies: it walks the map, it does not negotiate with anyone on it.
 
 Do not implement every planned item in one large foundation PR. Add each when a
 concrete slice requires it.

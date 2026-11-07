@@ -6,6 +6,11 @@ extends RefCounted
 ## engine did not register them for a plain script run, so this harness creates
 ## them on demand instead of assuming a boot order.
 
+## The stage the running test is in. A test sets it before each section; the watchdog
+## reports it on timeout, so a silent hang says where it stopped instead of only how
+## long it waited.
+static var stage: String = ""
+
 const GAME_STATE_SCRIPT := "res://scripts/autoload/game_state.gd"
 const NARRATIVE_STATE_SCRIPT := "res://scripts/autoload/narrative_state.gd"
 
@@ -52,8 +57,12 @@ static func arm_watchdog(tree: SceneTree, seconds: float, label: String) -> void
 	timer.autostart = true
 	timer.timeout.connect(
 		func() -> void:
-			push_error("TEST WATCHDOG: %s exceeded %.0f seconds and was aborted." % [label, seconds])
-			print("FAIL: %s timed out after %.0f seconds." % [label, seconds])
+			var where := stage if not stage.is_empty() else "an unnamed stage"
+			push_error(
+				"TEST WATCHDOG: %s exceeded %.0f seconds (stage: %s) and was aborted."
+				% [label, seconds, where]
+			)
+			print("FAIL: %s timed out after %.0f seconds (stage: %s)." % [label, seconds, where])
 			tree.quit(2)
 	)
 	# autostart: the root is not inside the tree yet while _initialize() runs, so
