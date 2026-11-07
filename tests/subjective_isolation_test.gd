@@ -146,14 +146,14 @@ func _check_runtime_refuses_once() -> void:
 	var graph := _load("runtime_once", data)
 	if graph == null:
 		return
-	var before := _game_state.get_snapshot().duplicate(true)
+	var before: Dictionary = _game_state.get_snapshot().duplicate(true)
 	var runtime := _new_runtime(graph)
 	if runtime == null:
 		return
 	var rejections := _count_rejections(runtime)
 	runtime.choose(0)
 	_drain(runtime)
-	var after := _game_state.get_snapshot()
+	var after: Dictionary = _game_state.get_snapshot()
 	var choice_flag := StoryFlags.choice_flag(&"fantasy", &"say_it")
 	if _has_flag(after, choice_flag):
 		_failures.append("The runtime wrote the 'once' choice flag of a subjective conversation.")
@@ -174,13 +174,13 @@ func _check_runtime_refuses_check() -> void:
 	var graph := _load("runtime_check", data)
 	if graph == null:
 		return
-	var before := _game_state.get_snapshot().duplicate(true)
+	var before: Dictionary = _game_state.get_snapshot().duplicate(true)
 	var runtime := _new_runtime(graph)
 	if runtime == null:
 		return
 	var rejections := _count_rejections(runtime)
 	_drain(runtime)
-	var after := _game_state.get_snapshot()
+	var after: Dictionary = _game_state.get_snapshot()
 	var record_flag := StoryFlags.check_record_flag(&"fantasy", &"b")
 	if _has_flag(after, record_flag):
 		_failures.append("The runtime recorded a dice result inside a subjective conversation.")

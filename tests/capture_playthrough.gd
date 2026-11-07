@@ -281,9 +281,13 @@ func _run() -> void:
 
 	if _failures.is_empty():
 		_note("RESULT: the playthrough reached the end of the built content.")
+		print("::notice title=playthrough::reached the end of the built content")
 	else:
 		for failure: String in _failures:
 			_note("FAILURE: %s" % failure)
+			# Workflow command: the job log is not always retrievable, but an
+			# annotation is, and an annotation is enough to see what broke.
+			print("::error title=playthrough::%s" % failure)
 		await _shot("FAIL_last_frame", "The last frame before the capture stopped.")
 	_write_log()
 	quit(0 if _failures.is_empty() else 1)
@@ -303,6 +307,10 @@ func _capture_free_period() -> void:
 	elif not companion.is_joined():
 		_failures.append("Q did not join the player after the classroom was left.")
 	else:
+		# Facing is set explicitly: a teleport to an identity basis keeps whatever
+		# facing the player had, which would make "hold forward" a guess.
+		_teleport(Vector3(-0.6, 0, 2.5), 1.0)
+		await _wait(0.3)
 		var start := _player.global_position
 		Input.action_press("move_forward")
 		await _wait(1.1)
@@ -326,7 +334,7 @@ func _capture_free_period() -> void:
 	var trolley := corridor.find_interactable(&"corridor_trolley")
 	if trolley != null:
 		await _wait_for_free(45.0)
-		_teleport(Vector3(0.5, 0, 3.6), 90.0)
+		_teleport(Vector3(0.5, 0, 3.6), 270.0)
 		await _wait(0.4)
 		await _mouse_to_world(trolley.global_position + Vector3.UP * 0.2)
 		var hovered := await _poll(
@@ -358,7 +366,7 @@ func _capture_free_period() -> void:
 	var speaker := corridor.find_interactable(&"corridor_speaker")
 	if speaker != null:
 		await _wait_for_free(45.0)
-		_teleport(Vector3(0.8, 0, -3.0), 90.0)
+		_teleport(Vector3(0.8, 0, -3.0), 270.0)
 		if await _wait_for_target(&"corridor_speaker", 10.0):
 			await _press(KEY_E)
 			if await _wait_for_line(6.0):
@@ -376,13 +384,19 @@ func _capture_free_period() -> void:
 		_failures.append("The walkway has no door to the yard.")
 		return
 	await _wait_for_free(45.0)
-	_teleport(Vector3(0.0, 0, -4.2), 0.0)
+	_teleport(Vector3(0.0, 0, -4.2), 1.0)
 	await _wait(0.3)
-	Input.action_press("move_forward")
-	await _wait(1.4)
-	Input.action_release("move_forward")
-	await _wait(0.3)
-	var reached := await _wait_for_target(&"to_schoolyard", 12.0)
+	# Walk in short pulses and stop as soon as the door is offered. A single long
+	# hold overshoots into the end wall, where the door is no longer in front.
+	var reached := false
+	for _pulse in 8:
+		Input.action_press("move_forward")
+		await _wait(0.25)
+		Input.action_release("move_forward")
+		await _wait(0.15)
+		if await _wait_for_target(&"to_schoolyard", 1.0):
+			reached = true
+			break
 	if not reached:
 		_failures.append("Walking to the end door did not offer it as a target.")
 	await _shot("13e_yard_door_prompt", "The end door of the walkway, reached on foot.")
@@ -398,7 +412,7 @@ func _capture_free_period() -> void:
 	)
 	# And back in, so the rest of the walkthrough keeps its original order.
 	await _wait_for_free(45.0)
-	_teleport(Vector3(-3.0, 0, -18.2), 180.0)
+	_teleport(Vector3(-3.0, 0, -18.2), 1.0)
 	if await _wait_for_target(&"pg_to_corridor", 12.0):
 		await _press(KEY_E)
 		if await _wait_for_location("corridor", 45.0):

@@ -1,5 +1,7 @@
 {
-  "format_version": 1,
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "inner_voice",
   "conversations": {
     "voice_notice": {
       "default_source": "observed",
