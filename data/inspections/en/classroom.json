@@ -1,4 +1,6 @@
 {
+  "format_version": 1,
+  "locale": "en",
   "classroom_schoolbag": {
     "title": "Your schoolbag",
     "prompt": "Search the schoolbag",
@@ -12,8 +14,15 @@
       "text": "You searched your schoolbag. The biology textbook is not in it."
     },
     "effects": [
-      {"type": "set_flag", "flag": "textbook_missing", "value": true},
-      {"type": "set_objective", "text": "No biology textbook. Look around the room before the second bell."}
+      {
+        "type": "set_flag",
+        "flag": "textbook_missing",
+        "value": true
+      },
+      {
+        "type": "set_objective",
+        "key": "objective.no_textbook"
+      }
     ]
   },
   "classroom_set_square": {
@@ -33,7 +42,11 @@
       "text": "A damaged wooden set square sits on the corner of the biology teacher's desk."
     },
     "effects": [
-      {"type": "set_flag", "flag": "saw_set_square", "value": true}
+      {
+        "type": "set_flag",
+        "flag": "saw_set_square",
+        "value": true
+      }
     ]
   },
   "classroom_blackboard": {

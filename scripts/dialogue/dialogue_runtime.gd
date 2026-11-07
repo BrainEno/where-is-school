@@ -152,23 +152,34 @@ func get_current_choices() -> Array:
 
 
 func _enter_node(node_id: StringName) -> void:
-	_steps += 1
-	if _steps > MAX_STEPS_PER_CONVERSATION:
-		push_error(
-			"DialogueRuntime: conversation '%s' exceeded %d steps, stopping. Check for a loop."
-			% [_conversation.conversation_id, MAX_STEPS_PER_CONVERSATION]
-		)
-		_finish()
-		return
-
-	var node: DialogueGraph.DialogueNode = _conversation.nodes.get(node_id, null)
-	if node == null:
-		push_error(
-			"DialogueRuntime: conversation '%s' has no node '%s'."
-			% [_conversation.conversation_id, node_id]
-		)
-		_finish()
-		return
+	# A node whose `conditions` are not met is skipped exactly like a `next` step:
+	# its effects do not run and nothing is shown. That keeps optional lines
+	# ("only if the player already asked about B") free of branching noise.
+	var node: DialogueGraph.DialogueNode = null
+	while true:
+		_steps += 1
+		if _steps > MAX_STEPS_PER_CONVERSATION:
+			push_error(
+				"DialogueRuntime: conversation '%s' exceeded %d steps, stopping. Check for a loop."
+				% [_conversation.conversation_id, MAX_STEPS_PER_CONVERSATION]
+			)
+			_finish()
+			return
+		node = _conversation.nodes.get(node_id, null)
+		if node == null:
+			push_error(
+				"DialogueRuntime: conversation '%s' has no node '%s'."
+				% [_conversation.conversation_id, node_id]
+			)
+			_finish()
+			return
+		if _conditions_met(node.requires, node.all_flags, node.not_flags):
+			break
+		var skipped_target := _resolve_next_id(node)
+		if String(skipped_target).is_empty():
+			_finish()
+			return
+		node_id = skipped_target
 
 	_node = node
 	_apply_effects(node.effects)
@@ -200,10 +211,57 @@ func _available_choices(node: DialogueGraph.DialogueNode) -> Array:
 			StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), false
 		):
 			continue
-		if not _requirements_met(choice.requires):
+		if not _conditions_met(choice.requires, choice.all_flags, choice.not_flags):
 			continue
 		result.append(choice)
 	return result
+
+
+func _conditions_met(
+	requires: Dictionary, all_flags: Array[StringName], not_flags: Array[StringName]
+) -> bool:
+	if not _requirements_met(requires):
+		return false
+	for flag in all_flags:
+		if not bool(_get_flag(flag, false)):
+			return false
+	for flag in not_flags:
+		if bool(_get_flag(flag, false)):
+			return false
+	return true
+
+
+## Swaps in the same conversation from another language. Only text is re-emitted;
+## effects are *not* applied again, so switching language mid-scene can never
+## rewrite story state.
+func rebind_graph(new_graph: DialogueGraph) -> bool:
+	if not _active or _conversation == null or new_graph == null:
+		return false
+	var conversation := new_graph.get_conversation(_conversation.conversation_id)
+	if conversation == null:
+		push_error(
+			"DialogueRuntime.rebind_graph: '%s' is missing from %s."
+			% [_conversation.conversation_id, new_graph.source_path]
+		)
+		return false
+	var current_id: StringName = _node.node_id if _node != null else &""
+	_graph = new_graph
+	_conversation = conversation
+	if String(current_id).is_empty():
+		return true
+	var node: DialogueGraph.DialogueNode = conversation.nodes.get(current_id, null)
+	if node == null:
+		push_error(
+			"DialogueRuntime.rebind_graph: node '%s' is missing from %s."
+			% [current_id, new_graph.source_path]
+		)
+		return false
+	_node = node
+	if not node.text.is_empty():
+		line_changed.emit(get_current_line())
+	if _awaiting_choice:
+		choices_changed.emit(get_current_choices())
+	return true
 
 
 func _requirements_met(requires: Dictionary) -> bool:
@@ -235,7 +293,7 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"title": "",
 		"text": node.text,
 		"source": source_value,
-		"badge": NarrativeEntry.badge_for(source_value),
+		"badge": NarrativeEntry.badge_key_for(source_value),
 		"subjective": _conversation.subjective,
 		"tags": node.tags,
 	}
@@ -265,7 +323,7 @@ func _apply_effect(effect: Dictionary) -> void:
 					% _conversation.conversation_id
 				)
 				return
-			_set_flag(StoryFlags.OBJECTIVE_TEXT, String(effect.get("text", "")))
+			_set_flag(StoryFlags.OBJECTIVE_KEY, String(effect.get("key", "")))
 		"record":
 			_record_narrative(effect)
 		_:

@@ -1,27 +1,38 @@
 class_name DialogueGraph
 extends RefCounted
-## Parsed, validated dialogue content.
+## Parsed, validated dialogue content for one language of one chapter.
 ##
-## Content lives in data/dialogue/*.json and is loaded here rather than in a
-## gameplay script. Parsing is strict: every structural problem becomes an entry
-## in `errors` naming the file and node, so a broken conversation fails loudly
-## instead of silently ending.
+## Content lives in data/dialogue/<locale>/<chapter>.json. Language files share
+## their structure exactly (same conversations, same node ids, same order, same
+## effects) and differ only in text; DialogueParity proves that, so a translator
+## can never silently drop a line or a branch.
+##
+## Parsing is strict: every structural problem becomes an entry in `errors` naming
+## the file, conversation and node, so a broken conversation fails loudly in CI
+## instead of silently ending mid-scene.
 ##
 ## Runtime contracts:
 ## - a node without `next` falls through to the next node in file order;
 ## - `"next": null` ends the conversation at that node;
 ## - a node with `choices` never falls through, each choice names its target;
-## - `once` choices disappear after they were taken (tracked in GameState).
+## - `once` choices disappear after they were taken (tracked in GameState);
+## - a node whose `conditions` are not met is skipped, as if it were a `next` step.
 
-const FORMAT_VERSION := 1
+const FORMAT_VERSION := 2
 const EFFECT_TYPES: Array[String] = ["set_flag", "set_objective", "record"]
+## Sources that describe what actually happened. A subjective conversation may
+## never record these, and never write flags or the objective.
+const FACTUAL_SOURCES: Array[String] = ["observed", "reported"]
 
 
 class DialogueChoice extends RefCounted:
 	var choice_id: StringName = &""
 	var text: String = ""
 	var next_id: StringName = &""
+	## flag -> expected value
 	var requires: Dictionary = {}
+	var all_flags: Array[StringName] = []
+	var not_flags: Array[StringName] = []
 	var effects: Array = []
 	var once: bool = false
 
@@ -38,6 +49,9 @@ class DialogueNode extends RefCounted:
 	var effects: Array = []
 	var choices: Array = []
 	var tags: PackedStringArray = PackedStringArray()
+	var requires: Dictionary = {}
+	var all_flags: Array[StringName] = []
+	var not_flags: Array[StringName] = []
 
 
 class Conversation extends RefCounted:
@@ -52,6 +66,8 @@ class Conversation extends RefCounted:
 
 
 var source_path: String = ""
+var locale: String = ""
+var chapter: String = ""
 var errors: Array[String] = []
 var conversations: Dictionary = {}
 var speaker_ids: Dictionary = {}
@@ -120,6 +136,17 @@ func _parse_file(path: String) -> void:
 		)
 		return
 
+	locale = String(data.get("locale", "")).strip_edges()
+	if locale.is_empty():
+		errors.append("%s: 'locale' is required (for example \"en\" or \"zh-CN\")." % path)
+	chapter = String(data.get("chapter", "")).strip_edges()
+	if chapter.is_empty():
+		errors.append("%s: 'chapter' is required (for example \"prologue\")." % path)
+	if not L10n.is_supported(locale):
+		errors.append(
+			"%s: locale '%s' is not one of %s." % [path, locale, ", ".join(L10n.LOCALES)]
+		)
+
 	var raw_conversations: Variant = data.get("conversations")
 	if not (raw_conversations is Dictionary):
 		errors.append("%s: 'conversations' must be an object." % path)
@@ -132,7 +159,7 @@ func _parse_file(path: String) -> void:
 			errors.append("%s: conversation '%s' must be an object." % [path, conversation_id])
 			continue
 		if conversations.has(conversation_id):
-			errors.append("Duplicate conversation id '%s' in %s" % [conversation_id, path])
+			errors.append("%s: duplicate conversation id '%s'." % [path, conversation_id])
 			continue
 		var conversation := _parse_conversation(conversation_id, raw_conversation, path)
 		conversations[conversation_id] = conversation
@@ -144,38 +171,39 @@ func _parse_conversation(
 ) -> Conversation:
 	var conversation := Conversation.new()
 	conversation.conversation_id = conversation_id
+	var label := "%s: conversation '%s'" % [path, conversation_id]
 
 	var default_source := String(data.get("default_source", "observed"))
 	var source_value := NarrativeEntry.source_from_id(default_source)
 	if source_value < 0:
-		errors.append(
-			"%s: conversation '%s' has unknown default_source '%s'."
-			% [path, conversation_id, default_source]
-		)
+		errors.append("%s has unknown default_source '%s'." % [label, default_source])
 		source_value = NarrativeEntry.Source.OBSERVED
 	conversation.default_source = source_value
 	conversation.subjective = bool(data.get("subjective", false))
+	if conversation.subjective and source_value in [
+		NarrativeEntry.Source.OBSERVED, NarrativeEntry.Source.REPORTED
+	]:
+		errors.append(
+			"%s is subjective, so default_source '%s' cannot be used: imagination may only "
+			% [label, default_source]
+			+ "carry imagined or recalled lines."
+		)
 
 	var raw_nodes: Variant = data.get("nodes")
 	if not (raw_nodes is Array) or (raw_nodes as Array).is_empty():
-		errors.append("%s: conversation '%s' needs a non-empty 'nodes' array." % [path, conversation_id])
+		errors.append("%s needs a non-empty 'nodes' array." % label)
 		return conversation
 
 	for index in (raw_nodes as Array).size():
 		var raw_node: Variant = (raw_nodes as Array)[index]
 		if not (raw_node is Dictionary):
-			errors.append(
-				"%s: conversation '%s' node #%d must be an object." % [path, conversation_id, index]
-			)
+			errors.append("%s node #%d must be an object." % [label, index])
 			continue
 		var node := _parse_node(conversation, raw_node as Dictionary, index, path)
 		if node == null:
 			continue
 		if conversation.nodes.has(node.node_id):
-			errors.append(
-				"%s: conversation '%s' has duplicate node id '%s'."
-				% [path, conversation_id, node.node_id]
-			)
+			errors.append("%s has duplicate node id '%s'." % [label, node.node_id])
 			continue
 		conversation.nodes[node.node_id] = node
 		conversation.order.append(node.node_id)
@@ -192,9 +220,7 @@ func _parse_node(
 	var node := DialogueNode.new()
 	node.node_id = StringName(String(data.get("id", "")))
 	if String(node.node_id).is_empty():
-		errors.append(
-			"%s: conversation '%s' node #%d is missing 'id'." % [path, conversation_id, index]
-		)
+		errors.append("%s: conversation '%s' node #%d is missing 'id'." % [path, conversation_id, index])
 		return null
 
 	var context := "%s: %s/%s" % [path, conversation_id, node.node_id]
@@ -212,6 +238,14 @@ func _parse_node(
 		if source_value < 0:
 			errors.append("%s: unknown source '%s'." % [context, source_name])
 			source_value = int(conversation.default_source)
+		elif conversation.subjective and source_value in [
+			NarrativeEntry.Source.OBSERVED, NarrativeEntry.Source.REPORTED
+		]:
+			errors.append(
+				"%s: a subjective conversation cannot carry a '%s' line; use \"imagined\" or "
+				% [context, source_name]
+				+ "\"recalled\"."
+			)
 		node.source = source_value
 
 	if data.has("next"):
@@ -230,18 +264,27 @@ func _parse_node(
 			for tag: Variant in tags_raw:
 				node.tags.append(String(tag))
 
+	_parse_conditions(data.get("conditions", null), context, node.requires, node.all_flags, node.not_flags)
 	node.effects = _parse_effects(data.get("effects", []), context + " effects")
 
 	var raw_choices: Variant = data.get("choices", [])
 	if raw_choices is Array:
+		var seen_choice_ids: Dictionary = {}
 		for choice_index in (raw_choices as Array).size():
 			var raw_choice: Variant = (raw_choices as Array)[choice_index]
 			if not (raw_choice is Dictionary):
 				errors.append("%s: choice #%d must be an object." % [context, choice_index])
 				continue
 			var choice := _parse_choice(raw_choice as Dictionary, choice_index, context)
-			if choice != null:
-				node.choices.append(choice)
+			if choice == null:
+				continue
+			if seen_choice_ids.has(choice.choice_id):
+				errors.append(
+					"%s: duplicate choice id '%s'." % [context, choice.choice_id]
+				)
+				continue
+			seen_choice_ids[choice.choice_id] = true
+			node.choices.append(choice)
 	elif raw_choices != null:
 		errors.append("%s: 'choices' must be an array." % context)
 
@@ -255,8 +298,12 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 	var choice := DialogueChoice.new()
 	choice.choice_id = StringName(String(data.get("id", "")))
 	if String(choice.choice_id).is_empty():
-		# Ids are optional for authoring convenience, but must be stable for the
-		# `once` bookkeeping, so derive one from the position when missing.
+		# Ids used to be optional. They are required now: `once` bookkeeping and
+		# translation parity both key off them.
+		errors.append(
+			"%s: choice #%d needs an 'id' (stable, used for 'once' and for translations)."
+			% [context, index]
+		)
 		choice.choice_id = StringName("choice_%d" % index)
 	choice.text = String(data.get("text", "")).strip_edges()
 	if choice.text.is_empty():
@@ -274,10 +321,46 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 				choice.requires[StringName(String(key))] = (requires_raw as Dictionary)[key]
 		else:
 			errors.append("%s: choice '%s' requires must be an object." % [context, choice.choice_id])
+	_parse_conditions(
+		data.get("conditions", null),
+		"%s choice '%s'" % [context, choice.choice_id],
+		choice.requires,
+		choice.all_flags,
+		choice.not_flags
+	)
 	choice.effects = _parse_effects(
 		data.get("effects", []), "%s choice '%s'" % [context, choice.choice_id]
 	)
 	return choice
+
+
+## Shared condition syntax for nodes and choices:
+##   "conditions": {"all_flags": ["a"], "not_flags": ["b"], "requires": {"c": true}}
+func _parse_conditions(
+	raw: Variant, context: String, requires: Dictionary,
+	all_flags: Array[StringName], not_flags: Array[StringName]
+) -> void:
+	if raw == null:
+		return
+	if not (raw is Dictionary):
+		errors.append("%s: 'conditions' must be an object." % context)
+		return
+	var data: Dictionary = raw
+	for key: Variant in data.keys():
+		if String(key) not in ["all_flags", "not_flags", "requires"]:
+			errors.append(
+				"%s: unknown condition '%s' (use all_flags, not_flags or requires)." % [context, String(key)]
+			)
+	for entry: Variant in data.get("all_flags", []):
+		all_flags.append(StringName(String(entry)))
+	for entry: Variant in data.get("not_flags", []):
+		not_flags.append(StringName(String(entry)))
+	var raw_requires: Variant = data.get("requires", {})
+	if raw_requires is Dictionary:
+		for flag: Variant in (raw_requires as Dictionary).keys():
+			requires[StringName(String(flag))] = (raw_requires as Dictionary)[flag]
+	elif raw_requires != null:
+		errors.append("%s: conditions.requires must be an object." % context)
 
 
 func _parse_effects(raw: Variant, context: String) -> Array:
@@ -307,8 +390,24 @@ func _parse_effects(raw: Variant, context: String) -> Array:
 					errors.append("%s: set_flag needs a 'value'." % effect_context)
 					continue
 			"set_objective":
-				if String(effect.get("text", "")).strip_edges().is_empty():
-					errors.append("%s: set_objective needs 'text'." % effect_context)
+				var key := String(effect.get("key", "")).strip_edges()
+				if key.is_empty():
+					errors.append(
+						"%s: set_objective needs a 'key' (a locale key such as "
+						% effect_context
+						+ "\"objective.check_bag\"), not literal text."
+					)
+					continue
+				if effect.has("text"):
+					errors.append(
+						"%s: set_objective takes a 'key'; literal 'text' is not translated."
+						% effect_context
+					)
+					continue
+				if not key.contains("."):
+					errors.append(
+						"%s: objective key '%s' does not look like a locale key." % [effect_context, key]
+					)
 					continue
 			"record":
 				if String(effect.get("entry_id", "")).is_empty():
@@ -354,8 +453,58 @@ func _validate_conversation(conversation: Conversation, path: String) -> void:
 				)
 		if not node.choices.is_empty() and not String(node.next_id).is_empty():
 			errors.append("%s: a node cannot have both choices and 'next'." % node_label)
+		if node.ends_here and not node.choices.is_empty():
+			errors.append("%s: a node with choices must not also end the conversation." % node_label)
+		if conversation.subjective:
+			_validate_subjective_node(node, node_label)
 
+	_check_last_node_terminates(conversation, label)
 	_validate_no_linear_cycle(conversation, label)
+	_report_unreachable(conversation, label)
+
+
+## The last node in file order has no fall-through target, so it must end the
+## conversation explicitly instead of dying silently at runtime.
+func _check_last_node_terminates(conversation: Conversation, label: String) -> void:
+	var last_id: StringName = conversation.order[conversation.order.size() - 1]
+	var last: DialogueNode = conversation.nodes[last_id]
+	if last.choices.is_empty() and not last.ends_here and String(last.next_id).is_empty():
+		errors.append(
+			"%s/%s: the last node of a file cannot fall through; add \"next\": null or choices."
+			% [label, last_id]
+		)
+
+
+## Statically refuse the effects a subjective conversation is not allowed to
+## have. The runtime also refuses them at play time; this makes the mistake
+## visible while editing instead of as a warning in a log.
+func _validate_subjective_node(node: DialogueNode, node_label: String) -> void:
+	for effect: Dictionary in node.effects:
+		var type_name := String(effect.get("type", ""))
+		if type_name == "set_flag":
+			errors.append(
+				"%s: subjective conversations cannot set flag '%s'." % [node_label, String(effect.get("flag", ""))]
+			)
+		elif type_name == "set_objective":
+			errors.append("%s: subjective conversations cannot change the objective." % node_label)
+		elif type_name == "record" and String(effect.get("source", "")) in FACTUAL_SOURCES:
+			errors.append(
+				"%s: subjective conversations cannot record '%s' knowledge (entry '%s')."
+				% [node_label, String(effect.get("source", "")), String(effect.get("entry_id", ""))]
+			)
+	for choice: DialogueChoice in node.choices:
+		for effect: Dictionary in choice.effects:
+			var type_name := String(effect.get("type", ""))
+			if type_name == "set_flag" or type_name == "set_objective":
+				errors.append(
+					"%s: choice '%s' belongs to a subjective conversation and cannot change story state."
+					% [node_label, choice.choice_id]
+				)
+			elif type_name == "record" and String(effect.get("source", "")) in FACTUAL_SOURCES:
+				errors.append(
+					"%s: choice '%s' cannot record '%s' knowledge inside a subjective conversation."
+					% [node_label, choice.choice_id, String(effect.get("source", ""))]
+				)
 
 
 ## `next` chains must terminate. Loops through choices are allowed (a hub of
@@ -384,6 +533,36 @@ func _validate_no_linear_cycle(conversation: Conversation, label: String) -> voi
 					break
 				current = conversation.order[order_index + 1]
 			steps += 1
+
+
+## Anything the player can never see is dead content: usually a typo in a `next`.
+func _report_unreachable(conversation: Conversation, label: String) -> void:
+	var reached: Dictionary = {}
+	var queue: Array[StringName] = []
+	if conversation.nodes.has(conversation.start_id):
+		queue.append(conversation.start_id)
+	while not queue.is_empty():
+		var current: StringName = queue.pop_back()
+		if reached.has(current) or not conversation.nodes.has(current):
+			continue
+		reached[current] = true
+		var node: DialogueNode = conversation.nodes[current]
+		for choice: DialogueChoice in node.choices:
+			queue.append(choice.next_id)
+		if node.ends_here:
+			continue
+		if not String(node.next_id).is_empty():
+			queue.append(node.next_id)
+		else:
+			var order_index := conversation.order.find(current)
+			if order_index >= 0 and order_index + 1 < conversation.order.size():
+				queue.append(conversation.order[order_index + 1])
+	for node_id: StringName in conversation.order:
+		if not reached.has(node_id):
+			errors.append(
+				"%s/%s: unreachable node (nothing leads here from start '%s')."
+				% [label, node_id, conversation.start_id]
+			)
 
 
 func describe_errors() -> String:

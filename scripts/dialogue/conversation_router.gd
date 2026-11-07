@@ -29,6 +29,23 @@ const ROUTES: Dictionary = {
 			"requires": {},
 		},
 	],
+	# Outside the school the routes are things, not people: a wall, a notice, a
+	# staircase. Same table, same rules.
+	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
+	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
+	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],
+	# The animal is met, not summoned: the first visit is the discovery, every
+	# later visit is a shorter look. Neither one explains what it is.
+	&"green_animal": [
+		{
+			"conversation": &"animal_again",
+			"requires": {StoryFlags.ANIMAL_SEEN: true},
+		},
+		{
+			"conversation": &"animal_sighting",
+			"requires": {},
+		},
+	],
 }
 
 

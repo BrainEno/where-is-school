@@ -1,0 +1,805 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "prologue",
+  "conversations": {
+    "q_wake": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_1",
+      "nodes": [
+        {
+          "id": "q_1",
+          "speaker": "q",
+          "text": "哦——你醒了。我都在想是不是得戳你一下了。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "met_q",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_2",
+          "speaker": "q",
+          "text": "不过，最后一年了。最后一年。怎么就到最后一年了呢。"
+        },
+        {
+          "id": "q_3",
+          "speaker": "q",
+          "text": "你又来了那个表情。就是不知道自己今天星期几的那个。",
+          "choices": [
+            {
+              "id": "who",
+              "text": "我认识你吗？",
+              "next": "p_who"
+            },
+            {
+              "id": "day",
+              "text": "今天星期几？",
+              "next": "p_day"
+            },
+            {
+              "id": "silent",
+              "text": "（什么也不说。）",
+              "next": "p_silent"
+            }
+          ]
+        },
+        {
+          "id": "p_who",
+          "speaker": "protagonist",
+          "text": "我认识你吗？",
+          "source": "observed",
+          "next": "q_who_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_q_identity",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_who_1",
+          "speaker": "q",
+          "text": "哈。哈哈。好吧。"
+        },
+        {
+          "id": "q_who_2",
+          "speaker": "q",
+          "text": "上周在走廊你就这样。问我你是谁，然后一头撞在防火门上。"
+        },
+        {
+          "id": "q_who_3",
+          "speaker": "q",
+          "text": "我是 Q。我坐你旁边。我坐你旁边两年了。",
+          "next": "q_exam_1"
+        },
+        {
+          "id": "p_day",
+          "speaker": "protagonist",
+          "text": "今天星期几？",
+          "source": "observed",
+          "next": "q_day_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_q_date",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_day_1",
+          "speaker": "q",
+          "text": "周四。最后一个学期的第一个周四。大概还有四分钟打第二遍铃。"
+        },
+        {
+          "id": "q_day_2",
+          "speaker": "q",
+          "text": "第一节生物。所以，能站起来就站起来吧。",
+          "next": "q_exam_1"
+        },
+        {
+          "id": "p_silent",
+          "speaker": "protagonist",
+          "text": "（你没说话。）",
+          "source": "observed",
+          "next": "q_silent_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "stayed_silent",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_silent_1",
+          "speaker": "q",
+          "text": "行。又开始不说话了。没事。"
+        },
+        {
+          "id": "q_silent_2",
+          "speaker": "q",
+          "text": "那我一个人说两个人的份。顺便说一句，今天周四。还有大概四分钟打铃。",
+          "next": "q_exam_1"
+        },
+        {
+          "id": "q_exam_1",
+          "speaker": "q",
+          "text": "说正事。考试。"
+        },
+        {
+          "id": "q_exam_2",
+          "speaker": "q",
+          "text": "第二页你一个字没写。不是写错，是空的。她把那张纸举起来，举得像证据一样。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_claims_blank_exam",
+              "source": "reported",
+              "speaker": "q",
+              "text": "Q 说你生物考试的第二页整页空着，还说 B 把那张纸举在全班面前。"
+            }
+          ]
+        },
+        {
+          "id": "q_exam_3",
+          "speaker": "q",
+          "text": "也不是说我好到哪儿去。我写了自己的名字。然后又写了一遍。",
+          "choices": [
+            {
+              "id": "deny",
+              "text": "我不记得有考试。",
+              "next": "p_deny"
+            },
+            {
+              "id": "one_page",
+              "text": "只有一页。",
+              "next": "p_one_page"
+            },
+            {
+              "id": "why_care",
+              "text": "你这么在意干什么？",
+              "next": "p_why"
+            }
+          ]
+        },
+        {
+          "id": "p_deny",
+          "speaker": "protagonist",
+          "text": "我不记得有考试。",
+          "source": "observed",
+          "next": "q_deny_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "denied_exam_memory",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "protagonist_denies_exam",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你告诉 Q，你不记得那次生物考试。"
+            }
+          ]
+        },
+        {
+          "id": "q_deny_1",
+          "speaker": "q",
+          "text": "行吧。你抱着那本书晃了两个星期，然后你不记得考试。"
+        },
+        {
+          "id": "q_deny_2",
+          "speaker": "q",
+          "text": "说也奇怪，我信你。",
+          "next": "q_b_1"
+        },
+        {
+          "id": "p_one_page",
+          "speaker": "protagonist",
+          "text": "只有一页。",
+          "source": "observed",
+          "next": "q_one_page_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "claimed_one_page_exam",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_one_page_1",
+          "speaker": "q",
+          "text": "是两页。我数了。我也没有别的事可干。",
+          "next": "q_b_1"
+        },
+        {
+          "id": "p_why",
+          "speaker": "protagonist",
+          "text": "你这么在意干什么？",
+          "source": "observed",
+          "next": "q_why_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "challenged_q",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_why_1",
+          "speaker": "q",
+          "text": "我不在意。我这是在友好。早上九点，友好一下。"
+        },
+        {
+          "id": "q_why_2",
+          "speaker": "q",
+          "text": "再说这是最后一年了。最后一年，人都变得怪怪的。",
+          "next": "q_b_1"
+        },
+        {
+          "id": "q_b_1",
+          "speaker": "q",
+          "text": "顺便说一句，她会要求把书翻开。她永远要求把书翻开。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_claims_b_wants_book",
+              "source": "reported",
+              "speaker": "q",
+              "text": "Q 说生物老师要求把课本摊开放在桌上。"
+            }
+          ]
+        },
+        {
+          "id": "q_b_2",
+          "speaker": "q",
+          "text": "B。生物。她踩着第二遍铃进来，好像这屋是她的。说起来大概也确实是。",
+          "choices": [
+            {
+              "id": "strict",
+              "text": "她严吗？",
+              "next": "p_strict"
+            },
+            {
+              "id": "late",
+              "text": "她迟到了。",
+              "next": "p_late"
+            },
+            {
+              "id": "silent2",
+              "text": "（看着自己的桌子。）",
+              "next": "p_silent2"
+            }
+          ]
+        },
+        {
+          "id": "p_strict",
+          "speaker": "protagonist",
+          "text": "她严吗？",
+          "source": "observed",
+          "next": "q_strict_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_if_b_strict",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_strict_1",
+          "speaker": "q",
+          "text": "严只是其中一个说法。"
+        },
+        {
+          "id": "q_strict_2",
+          "speaker": "q",
+          "text": "她讲台上有一把木头三角尺。没人动它。也没人把书包放在它旁边。",
+          "next": "q_end_1",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_claims_set_square_matters",
+              "source": "reported",
+              "speaker": "q",
+              "text": "Q 说 B 桌上那把木头三角尺没人敢动。"
+            }
+          ]
+        },
+        {
+          "id": "p_late",
+          "speaker": "protagonist",
+          "text": "她迟到了。",
+          "source": "observed",
+          "next": "q_late_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "noted_b_late",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_late_1",
+          "speaker": "q",
+          "text": "她从来不迟到。她这人就这样。要么她人在，要么总有个原因，而没人告诉我原因。"
+        },
+        {
+          "id": "q_late_2",
+          "speaker": "q",
+          "text": "你等着看。她从那个门进来，屋子就变小。",
+          "next": "q_end_1"
+        },
+        {
+          "id": "p_silent2",
+          "speaker": "protagonist",
+          "text": "（你看着自己的桌子。）",
+          "source": "observed",
+          "next": "q_silent2_1"
+        },
+        {
+          "id": "q_silent2_1",
+          "speaker": "q",
+          "text": "你又不说话了。行。别说我没跟你说过。",
+          "next": "q_end_1"
+        },
+        {
+          "id": "q_end_1",
+          "speaker": "q",
+          "text": "顺便，看看你书包。你一早上都拎着它，像是要去哪儿。",
+          "effects": [
+            {
+              "type": "set_objective",
+              "key": "objective.check_bag"
+            }
+          ]
+        },
+        {
+          "id": "q_end_2",
+          "speaker": "q",
+          "text": "我准备不说了。本来是这么打算的。",
+          "next": null
+        }
+      ]
+    },
+    "q_after_bag": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_ab_1",
+      "nodes": [
+        {
+          "id": "q_ab_1",
+          "speaker": "q",
+          "text": "你这表情。丢东西的表情。",
+          "choices": [
+            {
+              "id": "told",
+              "text": "我课本不见了。",
+              "next": "p_told"
+            },
+            {
+              "id": "accused",
+              "text": "是不是你拿的？",
+              "next": "p_accused"
+            },
+            {
+              "id": "never",
+              "text": "（算了。）",
+              "next": "p_never"
+            }
+          ]
+        },
+        {
+          "id": "p_told",
+          "speaker": "protagonist",
+          "text": "我课本不见了。",
+          "source": "observed",
+          "next": "q_told_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "told_q_about_textbook",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_told_1",
+          "speaker": "q",
+          "text": "不见到哪儿去了？早上还在你包里。我看见书的角了。"
+        },
+        {
+          "id": "q_told_2",
+          "speaker": "q",
+          "text": "其实。不对。可能我看见的是别的什么东西的角。",
+          "next": "q_ab_end"
+        },
+        {
+          "id": "p_accused",
+          "speaker": "protagonist",
+          "text": "是不是你拿的？",
+          "source": "observed",
+          "next": "q_accused_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "accused_q",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_accused_1",
+          "speaker": "q",
+          "text": "我。你觉得我拿了你的生物书。"
+        },
+        {
+          "id": "q_accused_2",
+          "speaker": "q",
+          "text": "我连课表都找不到。顺便说，这事我记下了。用墨水记的。",
+          "next": "q_ab_end"
+        },
+        {
+          "id": "p_never",
+          "speaker": "protagonist",
+          "text": "（算了。）",
+          "source": "observed",
+          "next": "q_never_1"
+        },
+        {
+          "id": "q_never_1",
+          "speaker": "q",
+          "text": "行。算了。我就在这儿，什么也不算了。",
+          "next": "q_ab_end"
+        },
+        {
+          "id": "q_ab_end",
+          "speaker": "q",
+          "text": "她问起来的时候，你就看自己的桌子。比说话管用。",
+          "next": null
+        }
+      ]
+    },
+    "q_after_dismissal": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_ad_1",
+      "nodes": [
+        {
+          "id": "q_ad_1",
+          "speaker": "q",
+          "text": "自习。我就知道。我说了吧。",
+          "choices": [
+            {
+              "id": "noticed",
+              "text": "那是代课老师，不是 B。",
+              "next": "p_noticed"
+            },
+            {
+              "id": "coming",
+              "text": "走吗？",
+              "next": "p_coming"
+            },
+            {
+              "id": "quiet",
+              "text": "（拿起书包。）",
+              "next": "p_quiet"
+            }
+          ]
+        },
+        {
+          "id": "p_noticed",
+          "speaker": "protagonist",
+          "text": "那是代课老师，不是 B。",
+          "source": "observed",
+          "next": "q_noticed_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "noticed_n_substitute",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_noticed_1",
+          "speaker": "q",
+          "text": "一个已经放弃了的代课老师。最好的那种。",
+          "next": "q_ad_end"
+        },
+        {
+          "id": "p_coming",
+          "speaker": "protagonist",
+          "text": "走吗？",
+          "source": "observed",
+          "next": "q_coming_1"
+        },
+        {
+          "id": "q_coming_1",
+          "speaker": "q",
+          "text": "等会儿。我想看看他们到底会不会在黑板上写字。",
+          "next": "q_ad_end"
+        },
+        {
+          "id": "p_quiet",
+          "speaker": "protagonist",
+          "text": "（你拿起书包。）",
+          "source": "observed",
+          "next": "q_quiet_1"
+        },
+        {
+          "id": "q_quiet_1",
+          "speaker": "q",
+          "text": "嗯。你先走。我一会儿跟上来。",
+          "next": "q_ad_end"
+        },
+        {
+          "id": "q_ad_end",
+          "speaker": "q",
+          "text": "别一个人出校门。路挺长的，我一个人撑不起两个人的话。",
+          "next": null
+        }
+      ]
+    },
+    "q_bag_reminder": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_br_1",
+      "nodes": [
+        {
+          "id": "q_br_1",
+          "speaker": "q",
+          "text": "你不会去看的，对吧。"
+        },
+        {
+          "id": "q_br_2",
+          "speaker": "q",
+          "text": "书包。在地上。你脚边。就是那个。",
+          "next": null
+        }
+      ]
+    },
+    "bell_moment": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_bm_1",
+      "nodes": [
+        {
+          "id": "q_bm_1",
+          "speaker": "q",
+          "text": "打铃了。"
+        },
+        {
+          "id": "q_bm_2",
+          "speaker": "q",
+          "text": "她不在外头。她要在，我能听见。"
+        },
+        {
+          "id": "q_bm_3",
+          "speaker": "q",
+          "text": "别那样看我。迟到的不是我。",
+          "next": null
+        }
+      ]
+    },
+    "expected_b": {
+      "default_source": "imagined",
+      "subjective": true,
+      "start": "b_e_1",
+      "nodes": [
+        {
+          "id": "b_e_1",
+          "speaker": "b",
+          "text": "站起来。"
+        },
+        {
+          "id": "b_e_2",
+          "speaker": "b",
+          "text": "我说，站起来。"
+        },
+        {
+          "id": "b_e_3",
+          "speaker": "b",
+          "text": "别人都翻开书了。你只有两只手。"
+        },
+        {
+          "id": "b_e_4",
+          "speaker": "b",
+          "text": "过来。把你的书包带上。"
+        },
+        {
+          "id": "rec_1",
+          "speaker": "protagonist",
+          "text": "三角尺砸在讲台上的声音。很重。这个声音你记得。别的事你就不太确定了。",
+          "source": "recalled",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "recall_set_square_sound",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "你隐约记得那把木头三角尺被重重放在讲台上，你自己也不太信这个记忆。"
+            }
+          ]
+        },
+        {
+          "id": "b_e_5",
+          "speaker": "b",
+          "text": "这件事我会找你算。",
+          "next": null
+        }
+      ]
+    },
+    "n_class": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "n_1",
+      "nodes": [
+        {
+          "id": "n_1",
+          "speaker": "n",
+          "text": "好。你们好。呃。"
+        },
+        {
+          "id": "n_2",
+          "speaker": "n",
+          "text": "生物。这是生物课，对吧。"
+        },
+        {
+          "id": "n_3",
+          "speaker": "n",
+          "text": "我代课。代原来那位老师的课。没人告诉我该讲多少——我手上有张单子。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "n_covers_for_b",
+              "source": "reported",
+              "speaker": "n",
+              "text": "N 说自己是来替原来那位老师上生物课的。"
+            }
+          ]
+        },
+        {
+          "id": "n_4",
+          "speaker": "n",
+          "text": "点名。我念名单，是你就应一声。"
+        },
+        {
+          "id": "n_5",
+          "speaker": "protagonist",
+          "text": "没有人应。N 还是在本子上写了点什么。",
+          "source": "observed"
+        },
+        {
+          "id": "n_6",
+          "speaker": "n",
+          "text": "好。行。大部分人我都打上勾了。",
+          "choices": [
+            {
+              "id": "where_b",
+              "text": "原来的老师呢？",
+              "next": "p_where"
+            },
+            {
+              "id": "textbook",
+              "text": "要用课本吗？",
+              "next": "p_textbook"
+            },
+            {
+              "id": "wait",
+              "text": "（等着。）",
+              "next": "p_wait"
+            }
+          ]
+        },
+        {
+          "id": "p_where",
+          "speaker": "protagonist",
+          "text": "原来的老师呢？",
+          "source": "observed",
+          "next": "n_where_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_n_about_b",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "n_where_1",
+          "speaker": "n",
+          "text": "她在这张单子上。她名字上划了一道。"
+        },
+        {
+          "id": "n_where_2",
+          "speaker": "n",
+          "text": "划一道是什么意思我不知道。我先当它没事。",
+          "next": "n_turn"
+        },
+        {
+          "id": "p_textbook",
+          "speaker": "protagonist",
+          "text": "要用课本吗？",
+          "source": "observed",
+          "next": "n_textbook_1",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_n_about_textbook",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "n_textbook_1",
+          "speaker": "n",
+          "text": "走廊里应该有个柜子。放多余的课本。"
+        },
+        {
+          "id": "n_textbook_2",
+          "speaker": "n",
+          "text": "我没下去过。可以有人去看看。不——不一定是我。",
+          "next": "n_turn"
+        },
+        {
+          "id": "p_wait",
+          "speaker": "protagonist",
+          "text": "（你等着。）",
+          "source": "observed",
+          "next": "n_wait_1"
+        },
+        {
+          "id": "n_wait_1",
+          "speaker": "n",
+          "text": "一般会有人说点什么。没关系的。安静——也允许。",
+          "next": "n_turn"
+        },
+        {
+          "id": "n_turn",
+          "speaker": "n",
+          "text": "这样吧。今天是周四，是最后一年，我不打算站在这儿假装这是节课。"
+        },
+        {
+          "id": "n_turn_2",
+          "speaker": "n",
+          "text": "看点书。安静坐着。或者去——去做大家都会做的事。自习。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "class_dismissed",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.leave_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_allows_free_period",
+              "source": "reported",
+              "speaker": "n",
+              "text": "N 说这节课可以当自习，学生可以离开。"
+            }
+          ]
+        },
+        {
+          "id": "n_turn_3",
+          "speaker": "n",
+          "text": "我就在这儿。要是有人问，就说我在这儿。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

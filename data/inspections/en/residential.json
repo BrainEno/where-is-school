@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "res_planter": {
+    "title": "花坛",
+    "prompt": "看花坛",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Hard soil, a hedge cut to a straight top, and a patch of wet concrete at the edge. The wet part has the shape of something that was lying down.",
+    "repeat_text": "The hedge, the hard soil, the shape in the wet concrete.",
+    "record": {
+      "entry_id": "saw_res_planter",
+      "source": "observed",
+      "text": "The concrete at the edge of the planter is wet in the shape of something lying down."
+    }
+  },
+  "res_bench": {
+    "title": "长椅",
+    "prompt": "看长椅",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A bench with its middle slat replaced by a different wood. Someone has swept the seat clean and left the sweepings under it.",
+    "repeat_text": "The odd slat, the clean seat, the pile underneath."
+  },
+  "res_washing": {
+    "title": "晾衣绳",
+    "prompt": "看晾的衣服",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Four shirts and a towel on a line between two windows. The clothes do not move when the air does.",
+    "repeat_text": "Still four shirts and a towel, still not moving.",
+    "record": {
+      "entry_id": "saw_res_washing",
+      "source": "observed",
+      "text": "The washing between two windows does not move even when the air does."
+    }
+  },
+  "res_stain": {
+    "title": "墙上的污渍",
+    "prompt": "看那面墙",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A dark stain on the render, roughly the shape of a hand. You came in past this wall. You are fairly sure the stain was on the other side of it.",
+    "repeat_text": "The stain is where you left it. You are less sure where that is.",
+    "record": {
+      "entry_id": "saw_res_stain",
+      "source": "observed",
+      "text": "You passed the same stain on the same wall twice, and you cannot say which side of the wall you were on."
+    }
+  }
+}

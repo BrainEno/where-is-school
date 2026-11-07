@@ -10,6 +10,10 @@ extends Control
 @onready var _scroll: ScrollContainer = %BacklogScroll
 @onready var _empty_label: Label = %BacklogEmpty
 
+## Every line ever shown, kept as data so the list can be rebuilt in another
+## language instead of freezing the text the player happened to read first.
+var _entries: Array[Dictionary] = []
+
 
 func _ready() -> void:
 	hide()
@@ -17,13 +21,50 @@ func _ready() -> void:
 
 
 func add_entry(line: Dictionary) -> void:
+	_entries.append(line.duplicate(true))
 	_empty_label.visible = false
+	_add_rows([line])
+
+
+## Replaces the newest row (used when the visible line is re-rendered because the
+## language changed) so the backlog does not collect a duplicate.
+func replace_last(line: Dictionary) -> void:
+	if _entries.is_empty():
+		add_entry(line)
+		return
+	_entries[_entries.size() - 1] = line.duplicate(true)
+	rebuild()
+
+
+## Drops every row and re-creates them from the stored data in the current language.
+func rebuild() -> void:
+	for child in _list.get_children():
+		_list.remove_child(child)
+		child.queue_free()
+	_empty_label.visible = _entries.is_empty()
+	_empty_label.text = L10n.t("ui.log_empty")
+	_add_rows(_entries)
+	await get_tree().process_frame
+	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
+
+
+func get_entry_count() -> int:
+	return _entries.size()
+
+
+func _add_rows(lines: Array) -> void:
+	for line_variant: Variant in lines:
+		_add_row(line_variant as Dictionary)
+
+
+func _add_row(line: Dictionary) -> void:
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
 
 	var header := Label.new()
 	var speaker := String(line.get("speaker_name", ""))
-	var badge := String(line.get("badge", ""))
+	var badge_key := String(line.get("badge", ""))
+	var badge := L10n.t(badge_key) if not badge_key.is_empty() else ""
 	var title := String(line.get("title", ""))
 	if not title.is_empty():
 		speaker = title
@@ -40,8 +81,6 @@ func add_entry(line: Dictionary) -> void:
 	row.add_child(header)
 	row.add_child(body)
 	_list.add_child(row)
-	await get_tree().process_frame
-	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
 
 
 func open() -> void:

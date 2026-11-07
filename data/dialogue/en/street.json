@@ -1,0 +1,112 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "street",
+  "conversations": {
+    "street_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "s_1",
+      "nodes": [
+        {
+          "id": "s_1",
+          "speaker": "protagonist",
+          "text": "The street is brighter than the corridor, and no warmer.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.outside"
+            },
+            {
+              "type": "record",
+              "entry_id": "street_outside",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You walked out of the school into a street in the late afternoon light."
+            }
+          ]
+        },
+        {
+          "id": "s_2",
+          "speaker": "protagonist",
+          "text": "The gate is behind you. Nobody stopped you, nobody walked you out."
+        },
+        {
+          "id": "s_3",
+          "speaker": "protagonist",
+          "text": "The road goes on, turns once, and stops being a road you know.",
+          "next": null
+        }
+      ]
+    },
+    "street_wall": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "w_1",
+      "nodes": [
+        {
+          "id": "w_1",
+          "speaker": "protagonist",
+          "text": "The school from the outside: tile up to the window sills, plain concrete above them."
+        },
+        {
+          "id": "w_2",
+          "speaker": "protagonist",
+          "text": "A camera on a bracket, pointing at the strip of grass nobody stands on.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "street_camera",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "A camera outside the school points at an empty strip of grass."
+            }
+          ]
+        },
+        {
+          "id": "w_3",
+          "speaker": "protagonist",
+          "text": "One window on the second floor is open. The room behind it is dark.",
+          "next": null
+        }
+      ]
+    },
+    "street_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "n_1",
+      "nodes": [
+        {
+          "id": "n_1",
+          "speaker": "protagonist",
+          "text": "A notice taped to a pole, printed in a font that has been photocopied too many times."
+        },
+        {
+          "id": "n_2",
+          "speaker": "protagonist",
+          "text": "It is about a lost cat. The photograph is not of the cat in the description.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "street_lost_cat",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The lost-cat notice on the pole shows a different cat than the one it describes."
+            }
+          ]
+        },
+        {
+          "id": "n_3",
+          "speaker": "protagonist",
+          "text": "The date at the bottom is four years old. The tape is new.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

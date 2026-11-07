@@ -1,0 +1,112 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "street",
+  "conversations": {
+    "street_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "s_1",
+      "nodes": [
+        {
+          "id": "s_1",
+          "speaker": "protagonist",
+          "text": "外面比走廊里亮，也没有更暖。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.outside"
+            },
+            {
+              "type": "record",
+              "entry_id": "street_outside",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你从学校里走出来，站在傍晚的光里的一条街上。"
+            }
+          ]
+        },
+        {
+          "id": "s_2",
+          "speaker": "protagonist",
+          "text": "校门在你身后。没人拦你，也没人送你出来。"
+        },
+        {
+          "id": "s_3",
+          "speaker": "protagonist",
+          "text": "路往前走，拐一下，就不再是你认识的那条路。",
+          "next": null
+        }
+      ]
+    },
+    "street_wall": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "w_1",
+      "nodes": [
+        {
+          "id": "w_1",
+          "speaker": "protagonist",
+          "text": "从外面看学校：瓷砖贴到窗台，再往上是素水泥。"
+        },
+        {
+          "id": "w_2",
+          "speaker": "protagonist",
+          "text": "支架上有个摄像头，对着那块没人站的草地。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "street_camera",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "学校外面有个摄像头，画面里是一小片空草地。"
+            }
+          ]
+        },
+        {
+          "id": "w_3",
+          "speaker": "protagonist",
+          "text": "二楼有一扇窗开着。窗子后面的屋子是黑的。",
+          "next": null
+        }
+      ]
+    },
+    "street_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "n_1",
+      "nodes": [
+        {
+          "id": "n_1",
+          "speaker": "protagonist",
+          "text": "杆子上贴着一张通知，字已经复印得发虚。"
+        },
+        {
+          "id": "n_2",
+          "speaker": "protagonist",
+          "text": "是找猫的。照片上的猫和文字里写的那只不是同一只。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "street_lost_cat",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "杆子上那张找猫的通知，照片和文字说的不是同一只猫。"
+            }
+          ]
+        },
+        {
+          "id": "n_3",
+          "speaker": "protagonist",
+          "text": "最下面的日期是四年前的。胶带是新的。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

@@ -367,6 +367,7 @@ radius = 1.1
 position = Vector3(-1.55, 0.6, 2)
 interact_id = &"back_to_classroom"
 prompt_text = "Go back inside"
+prompt_key = "prompt.back_inside"
 radius = 1.0
 destination_scene = "res://scenes/locations/classroom/classroom.tscn"
 destination_spawn = &"FromCorridor"
@@ -376,15 +377,19 @@ destination_id = &"classroom"
 position = Vector3(0, 0.6, 6.5)
 interact_id = &"school_gate"
 prompt_text = "Go down towards the gate"
+prompt_key = "prompt.gate"
 radius = 1.3
-is_milestone_end = true
-end_card_title = "End of the implemented slice"
-end_card_body = "You are out of the classroom. The walkway and the stairs down are built; the school gate, the street route and the green animal beyond it are the next milestone."
+destination_scene = "res://scenes/locations/street/street.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"street"
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromClassroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-1.2, 0, 2)
+
+[node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(0, 0, 5.4)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_room_tone_walkway")

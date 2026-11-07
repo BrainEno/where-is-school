@@ -14,6 +14,10 @@ signal activation_requested(interactable: Interactable)
 @export var max_distance: float = 2.4
 ## How strongly facing direction outweighs raw distance when ranking targets.
 @export var facing_weight: float = 0.9
+## Physics layer(s) that can hide an interactable (walls, floors, props).
+@export_flags_3d_physics var occluder_mask: int = 1
+## Eyeball height used for the line-of-sight probe.
+@export var eye_height: float = 1.1
 
 var _player: Node3D = null
 var _sensor: Area3D = null
@@ -52,6 +56,9 @@ func _physics_process(_delta: float) -> void:
 	if not _enabled or _player == null or _sensor == null:
 		_set_current(null)
 		return
+	# A location swap frees the old props; never hold a dangling target.
+	if _current != null and not is_instance_valid(_current):
+		_set_current(null)
 	_set_current(_find_best_target())
 
 
@@ -60,7 +67,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not event.is_action_pressed("interact"):
 		return
-	if _current == null:
+	# Held keys repeat; only a fresh press may trigger a new interaction, so the
+	# player can let go and press again for the next object.
+	if event is InputEventKey and (event as InputEventKey).echo:
+		return
+	if _current == null or not is_instance_valid(_current):
 		return
 	get_viewport().set_input_as_handled()
 	request_activation(_current)
@@ -95,11 +106,41 @@ func _find_best_target() -> Interactable:
 		if distance > max_distance or distance <= 0.001:
 			continue
 		var alignment := facing.dot(offset.normalized())
+		if not _has_line_of_sight(candidate):
+			continue
 		var score := distance + facing_weight * (1.0 - maxf(alignment, 0.0))
 		if score < best_score:
 			best_score = score
 			best = candidate
 	return best
+
+
+## You cannot read a notice through a wall. Two probes are cast (upper body and
+## knee height) and either one being clear is enough, so a desk in front of a
+## schoolbag does not make the bag unusable.
+func _has_line_of_sight(candidate: Interactable) -> bool:
+	if _player == null or occluder_mask == 0:
+		return true
+	var world := _player.get_world_3d()
+	if world == null:
+		return true
+	var space := world.direct_space_state
+	if space == null:
+		return true
+	var from := _player.global_position + Vector3.UP * eye_height
+	var excluded: Array[RID] = []
+	var body := _player as CollisionObject3D
+	if body != null:
+		excluded.append(body.get_rid())
+	for height in [0.35, 0.05]:
+		var to := candidate.global_position + Vector3.UP * height
+		var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
+		query.exclude = excluded
+		query.collide_with_areas = false
+		query.collide_with_bodies = true
+		if space.intersect_ray(query).is_empty():
+			return true
+	return false
 
 
 func _set_current(interactable: Interactable) -> void:

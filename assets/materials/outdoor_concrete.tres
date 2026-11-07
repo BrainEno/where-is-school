@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "concrete_outdoor"
+albedo_color = Color(0.42, 0.41, 0.39, 1)
+roughness = 0.9

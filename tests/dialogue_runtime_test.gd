@@ -9,7 +9,9 @@ const Harness = preload("res://tests/test_harness.gd")
 const FIXTURE_PATH := "user://dialogue_runtime_fixture.json"
 
 const FIXTURE := {
-	"format_version": 1,
+	"format_version": 2,
+	"locale": "en",
+	"chapter": "fixture",
 	"conversations": {
 		"fixture_subjective": {
 			"default_source": "imagined",
@@ -22,7 +24,7 @@ const FIXTURE := {
 					"text": "Fixture line inside an imagined conversation.",
 					"effects": [
 						{"type": "set_flag", "flag": "fixture_forbidden_flag", "value": true},
-						{"type": "set_objective", "text": "Fixture forbidden objective"},
+						{"type": "set_objective", "key": "objective.check_bag"},
 						{"type": "record", "entry_id": "fixture_observed",
 						 "source": "observed", "speaker": "b", "text": "Fixture observed claim."},
 						{"type": "record", "entry_id": "fixture_reported",
@@ -49,7 +51,7 @@ const FIXTURE := {
 					]
 				},
 				{"id": "o2", "speaker": "q", "text": "Fixture repeat.", "next": "o1"},
-				{"id": "o3", "speaker": "q", "text": "Fixture end."}
+				{"id": "o3", "speaker": "q", "text": "Fixture end.", "next": null}
 			]
 		}
 	}
@@ -132,8 +134,7 @@ func _test_opening_conversation(
 		_failures.append("Choosing the first option did not set its story flag.")
 	if bool(game_state.get_flag(StoryFlags.STAYED_SILENT, false)):
 		_failures.append("An unchosen branch set its flag anyway.")
-	if String(game_state.get_flag(StoryFlags.OBJECTIVE_TEXT, "")) != \
-			"Find your biology textbook. Check your bag.":
+	if String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
 		_failures.append("The conversation did not set the bag objective.")
 
 	var exam_claim: NarrativeEntry = narrative.get_entry(&"q_claims_blank_exam")
@@ -152,7 +153,7 @@ func _test_subjective_boundaries(
 		_failures.append(graph.describe_errors())
 		return
 
-	var objective_before := String(game_state.get_flag(StoryFlags.OBJECTIVE_TEXT, ""))
+	var objective_before := String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
 	var runtime := _new_runtime(game_state, narrative, characters)
 	var rejections: Array[String] = []
 	runtime.effect_rejected.connect(func(reason: String) -> void: rejections.append(reason))
@@ -174,7 +175,7 @@ func _test_subjective_boundaries(
 		_failures.append("Subjective lines were not flagged as subjective.")
 	if bool(game_state.get_flag(&"fixture_forbidden_flag", false)):
 		_failures.append("A subjective conversation changed a story flag.")
-	if String(game_state.get_flag(StoryFlags.OBJECTIVE_TEXT, "")) != objective_before:
+	if String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != objective_before:
 		_failures.append("A subjective conversation changed the objective.")
 	if narrative.has_entry(&"fixture_observed"):
 		_failures.append("A subjective conversation recorded observed knowledge.")

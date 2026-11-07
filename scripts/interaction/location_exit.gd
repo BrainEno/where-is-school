@@ -20,6 +20,9 @@ extends Interactable
 ## When true the exit does not change location: it ends the implemented slice
 ## with an explicit build card instead of inventing narrative content.
 @export var is_milestone_end: bool = false
+## Locale key prefix for the card ("end.slice" resolves end.slice.title/.body).
+## The literal fields below stay as the fallback for a card that has no key.
+@export var end_card_key: String = ""
 @export var end_card_title: String = "End of this build"
 @export var end_card_body: String = ""
 

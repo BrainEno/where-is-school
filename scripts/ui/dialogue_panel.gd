@@ -45,6 +45,7 @@ func _ready() -> void:
 	hide()
 	_choices_container.hide()
 	_hint_label.hide()
+	refresh_static_text()
 
 
 func show_line(line: Dictionary) -> void:
@@ -58,7 +59,9 @@ func show_line(line: Dictionary) -> void:
 	_role_label.visible = not role_text.is_empty()
 	_speaker_label.add_theme_color_override("font_color", line.get("accent_color", Color.WHITE))
 
-	var badge := String(line.get("badge", ""))
+	# The badge is stored as a locale key by the runtime/controller.
+	var badge_key := String(line.get("badge", ""))
+	var badge := L10n.t(badge_key) if not badge_key.is_empty() else ""
 	_badge_label.text = badge
 	_badge_label.visible = not badge.is_empty()
 	var source_value := int(line.get("source", NarrativeEntry.Source.OBSERVED))
@@ -90,7 +93,7 @@ func show_line(line: Dictionary) -> void:
 	_revealing = _body_label.text.length() > 0
 
 	set_choices([])
-	_hint_label.text = "[Space] continue    [Tab] log"
+	refresh_static_text()
 	_hint_label.show()
 	_update_hint_visibility()
 
@@ -118,7 +121,7 @@ func set_choices(choices: Array) -> void:
 	_choices_container.show()
 	if _revealing:
 		complete_reveal()
-	_hint_label.text = "1-9 select    [Tab] log"
+	refresh_static_text()
 	_update_hint_visibility()
 
 
@@ -127,6 +130,15 @@ func close() -> void:
 	_line = {}
 	_revealing = false
 	set_choices([])
+
+
+## Text of the source badge currently shown, for the language switch and tests.
+func get_speaker_badge_text() -> String:
+	return _badge_label.text if _badge_label != null else ""
+
+
+func get_speaker_text() -> String:
+	return _speaker_label.text if _speaker_label != null else ""
 
 
 func is_revealing() -> bool:
@@ -142,6 +154,34 @@ func complete_reveal() -> void:
 
 func has_choices() -> bool:
 	return not _choice_buttons.is_empty()
+
+
+## Re-resolves every string the panel owns. Called on language switches and
+## whenever a line is shown, so hints and badges never stay in the old language.
+func refresh_static_text() -> void:
+	if _hint_label == null:
+		return
+	if has_choices():
+		_hint_label.text = L10n.t("ui.dialogue_choose", {"count": _choice_buttons.size()})
+	else:
+		_hint_label.text = L10n.t("ui.dialogue_continue")
+	if not _line.is_empty():
+		var badge_key := String(_line.get("badge", ""))
+		if not badge_key.is_empty():
+			_badge_label.text = L10n.t(badge_key)
+		var role_key_source := String(_line.get("speaker_id", ""))
+		if not role_key_source.is_empty():
+			_role_label.text = L10n.t("role.%s" % role_key_source) \
+				if L10n.has_key("role.%s" % role_key_source) else _role_label.text
+
+
+## Redraws the line that is already on screen, used by a language switch.
+func redraw_current_line() -> void:
+	if _line.is_empty():
+		return
+	var line := _line
+	line["badge"] = String(line.get("badge", ""))
+	show_line(line)
 
 
 func _process(delta: float) -> void:
