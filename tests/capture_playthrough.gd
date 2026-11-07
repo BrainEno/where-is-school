@@ -38,6 +38,8 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	await _fail("TEMPORARY probe: the capture is meant to fail here")
+	return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
 	_note("capture started: %s" % Time.get_datetime_string_from_system())
 
