@@ -240,7 +240,9 @@ func _check_waiting_and_resuming() -> void:
 	await _frames(120)
 	var distance := _companion.global_position.distance_to(_player.global_position)
 	if distance > _companion.follow_distance + FOLLOW_TOLERANCE:
-		_failures.append("Q did not close the gap after being asked along (%.1f m)." % distance)
+		_failures.append("Q did not close the gap after being asked along (%.1f m; Q at %s, player at %s)." % [
+			distance, _companion.global_position, _player.global_position
+		])
 
 
 func _walk_out_to_the_yard() -> void:

@@ -48,6 +48,10 @@ var _actor: NpcActor = null
 var _ask: Interactable = null
 var _joined := false
 var _waiting := false
+## True between "asked along" and "caught up". While catching up, the give-up rule
+## does not apply: a player who deliberately walks far away and then asks Q along
+## expects Q to arrive, not to give up again immediately.
+var _catching_up := false
 var _look_timer := 0.0
 var _look_aside := false
 
@@ -105,6 +109,7 @@ func can_ask_along() -> bool:
 func resume_following() -> void:
 	if not _joined:
 		return
+	_catching_up = true
 	_set_waiting(false)
 
 
@@ -114,13 +119,15 @@ func _process(delta: float) -> void:
 	var to_player := _player.global_position - global_position
 	to_player.y = 0.0
 	var distance := to_player.length()
-	if distance > give_up_distance:
+	if distance > give_up_distance and not _catching_up:
 		if not _waiting:
 			_set_waiting(true)
 		return
 	if _waiting:
 		_face_player()
 		return
+	if distance <= follow_distance:
+		_catching_up = false
 	if distance > follow_distance:
 		var direction := to_player / maxf(distance, 0.001)
 		var target := _player.global_position - direction * stop_distance
@@ -195,6 +202,7 @@ func _refresh_visibility(location: LocationRoot) -> void:
 	if should_show:
 		_place_behind_player()
 	visible = should_show
+	_catching_up = false
 	_set_waiting(false)
 	if _ask != null:
 		_ask.interaction_enabled = false

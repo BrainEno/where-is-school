@@ -207,7 +207,10 @@ func _check_honest_subjective_still_works() -> void:
 	if graph == null:
 		return
 	if not graph.is_valid():
-		_failures.append("A legitimate subjective conversation was rejected: %s" % graph.describe_errors())
+		# One failure per error, so the reason survives into a CI annotation instead
+		# of being swallowed by a joined string.
+		for message: String in graph.errors:
+			_failures.append("A legitimate subjective conversation was rejected: %s" % message)
 		return
 	var runtime := _new_runtime(graph)
 	if runtime == null:

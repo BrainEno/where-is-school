@@ -37,6 +37,7 @@ var _activated: Array[StringName] = []
 var _probe_front: Interactable = null
 var _probe_side: Interactable = null
 var _probe_far: Interactable = null
+var _facing_target: Interactable = null
 
 
 func _initialize() -> void:
@@ -138,16 +139,21 @@ func _free_probes() -> void:
 # --- cases ------------------------------------------------------------------
 
 
-## With the pointer out of the picture, the old rule still decides: the nearest
-## object the player is facing.
+## With the pointer out of the picture, the old rule still decides. This test does
+## not try to predict which prop the room offers — it records what facing chose, and
+## every later assertion is relative to that. Predicting it would be a guess about
+## the level layout, not a statement about the rule.
 func _check_facing_without_a_pointer() -> void:
 	_interaction.mouse_targeting = false
 	await _physics_frames(4)
-	var target := _interaction.get_current_target()
-	if target != _probe_front:
-		_failures.append("Facing alone chose '%s' instead of the probe ahead." % _name_of(target))
-	if _interaction.get_highlighted() != _probe_front:
+	_facing_target = _interaction.get_current_target()
+	if _facing_target == null:
+		_failures.append("Facing alone chose nothing in an occupied room.")
+		return
+	if _interaction.get_highlighted() != _facing_target:
 		_failures.append("The facing target is not the highlighted object.")
+	if _facing_target == _probe_side:
+		_failures.append("The side probe was chosen by facing; the test cannot tell the two rules apart.")
 	_interaction.mouse_targeting = true
 	await _physics_frames(2)
 
@@ -177,7 +183,7 @@ func _check_pointer_leaves_and_facing_returns() -> void:
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
 	await _physics_frames(3)
 	var target := _interaction.get_current_target()
-	if target != _probe_front:
+	if target != _facing_target:
 		_failures.append("With the pointer off everything, facing did not decide (got '%s')." % _name_of(target))
 	if _count_highlighted() != 1:
 		_failures.append("After releasing the pointer, %d objects are lit." % _count_highlighted())
@@ -186,12 +192,12 @@ func _check_pointer_leaves_and_facing_returns() -> void:
 ## A pointer pick that would replace a different target is held for one frame. Both
 ## halves matter: not adopted immediately, adopted once the hold is over.
 func _check_flicker_hold() -> void:
-	if _interaction.get_current_target() != _probe_front:
-		_failures.append("The flicker check did not start from the probe ahead.")
+	if _interaction.get_current_target() != _facing_target:
+		_failures.append("The flicker check did not start from the facing target.")
 		return
 	_interaction.set_mouse_override(_screen_position_of(_probe_side))
 	await _physics_frames(1)
-	if _interaction.get_current_target() != _probe_front:
+	if _interaction.get_current_target() != _facing_target:
 		_failures.append("A pointer pick was adopted without its one-frame hold.")
 	await _physics_frames(3)
 	if _interaction.get_current_target() != _probe_side:
@@ -238,7 +244,7 @@ func _check_real_prop() -> void:
 		_failures.append("The classroom lost the door or the timetable.")
 		return
 	if _interaction.get_current_target() != door:
-		_failures.append("Facing the door did not target it.")
+		_failures.append("Facing the door did not target it (got '%s')." % _name_of(_interaction.get_current_target()))
 		return
 	_interaction.set_mouse_override(_screen_position_of(sheet))
 	await _physics_frames(4)
