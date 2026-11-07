@@ -549,7 +549,7 @@ func _place_clear_of_props(
 func _stand_away_from_interactables(clearance: float, ignore: Interactable = null) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := _player.global_position
-	for radius: float in [2.5, 2.0, 1.5, 1.0]:
+	for radius: float in [4.0, 3.5, 3.0, 2.5, 2.0]:
 		for index in 16:
 			var angle := TAU * float(index) / 16.0
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)

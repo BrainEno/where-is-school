@@ -34,7 +34,7 @@ const WALK_LIMIT_SECONDS := 14.0
 
 var _failures: Array[String] = []
 ## Where the body was during the last walk, sampled for failure messages.
-var _walk_trail: Array[Vector3] = []
+var _walk_trail: Array[String] = []
 var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
@@ -188,7 +188,9 @@ func _check_walk_arrives_and_stops() -> void:
 		_failures.append("The character stopped %.2f m short of the destination." % gap)
 	if _player.global_position.y < -1.0:
 		_failures.append("The character left the floor while walking (y = %.2f)." % _player.global_position.y)
-	# Standing still has to mean standing still: sample the body after arrival.
+	# Let the body come to rest first: slowing to a stop after arrival is stopping, not
+	# drift. Then standing still has to mean standing still.
+	await _physics_frames(10)
 	var before := _player.global_position
 	var largest := 0.0
 	for _index in 20:
@@ -513,8 +515,17 @@ func _walk_until_settled(limit_seconds: float) -> bool:
 	while _player.is_path_active():
 		await physics_frame
 		frames += 1
-		if frames % 20 == 0:
-			_walk_trail.append(_player.global_position)
+		if frames % 40 == 0:
+			var agent := _player.navigation_agent
+			_walk_trail.append(
+				"(%0.1f,%0.1f|legs=%d|armed=%d|fin=%d)"
+				% [
+					_player.global_position.x, _player.global_position.z,
+					agent.get_current_navigation_path().size(),
+					int(agent.get_current_navigation_path().size() >= 2),
+					int(agent.is_navigation_finished())
+				]
+			)
 		if Time.get_ticks_msec() > deadline:
 			_player.cancel_path()
 			return false
@@ -530,8 +541,8 @@ func _walk_state(nav: LocationNavigation) -> String:
 	for index in mini(path.size(), 5):
 		waypoints += "(%.1f,%.1f,%.1f)" % [path[index].x, path[index].y, path[index].z]
 	var trail := ""
-	for point in _walk_trail:
-		trail += "(%.1f,%.1f)" % [point.x, point.z]
+	for entry in _walk_trail:
+		trail += entry
 	return "[next=%s finished=%s path=%d %s trail=%s %s]" % [
 		str(agent.get_next_path_position()), str(agent.is_navigation_finished()),
 		path.size(), waypoints, trail, _report(nav)
