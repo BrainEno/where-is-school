@@ -83,7 +83,7 @@ func _run() -> void:
 	_companion.join()
 	await _physics_frames(6)
 	if not _companion.is_with_player():
-		_failures.append("Q did not appear after joining in the corridor.")
+		_failures.append("Q did not appear after joining in the corridor: %s." % _state())
 		return
 
 	await _check_unknown_wall_stops_the_body()
@@ -114,8 +114,7 @@ func _check_unknown_wall_stops_the_body() -> void:
 	)
 	if crossed:
 		_failures.append(
-			"Q crossed a wall the body should have stopped it at: it is at %s."
-			% str(_companion.global_position)
+			"Q crossed a wall the body should have stopped it at: %s." % _state()
 		)
 	if _companion.global_position.z < 4.4:
 		_failures.append("Q ended up on the far side of the wall (z=%.2f)." % _companion.global_position.z)
@@ -123,10 +122,7 @@ func _check_unknown_wall_stops_the_body() -> void:
 		_failures.append("Q is standing inside the wall (z=%.2f)." % _companion.global_position.z)
 	await _wait_until(func() -> bool: return _companion.is_waiting(), 10.0)
 	if not _companion.is_waiting():
-		_failures.append(
-			"Q kept pressing at a wall instead of waiting (note: '%s')."
-			% _companion.get_last_chase_note()
-		)
+		_failures.append("Q kept pressing at a wall instead of waiting: %s." % _state())
 	_clean_up_walls()
 
 
@@ -160,8 +156,8 @@ func _check_gap_is_walked_around() -> void:
 	var gap := _flat_distance(_companion.global_position, _player.global_position)
 	if gap > _companion.follow_distance + 0.6:
 		_failures.append(
-			"Q did not walk around the wall through the gap (%.1f m from the player, note: '%s')."
-			% [gap, _companion.get_last_chase_note()]
+			"Q did not walk around the wall through the gap (%.1f m from the player): %s."
+			% [gap, _state()]
 		)
 	if not crossed:
 		_failures.append("Q never reached the player's side of the wall.")
@@ -193,10 +189,7 @@ func _check_no_route_means_waiting() -> void:
 		func() -> bool: return _companion.is_waiting(), 12.0
 	)
 	if not waited:
-		_failures.append(
-			"With no route to the player, Q never settled into waiting (note: '%s')."
-			% _companion.get_last_chase_note()
-		)
+		_failures.append("With no route to the player, Q never settled into waiting: %s." % _state())
 	if _companion.global_position.z < 3.0:
 		_failures.append("Q got through a wall with no gap in it (z=%.2f)." % _companion.global_position.z)
 	if _companion.is_walking_route():
@@ -241,11 +234,8 @@ func _check_asked_along_rebuilds_the_route() -> void:
 	)
 	if not arrived:
 		_failures.append(
-			"Q did not close the gap after being asked along (%.1f m, note: '%s')."
-			% [
-				_flat_distance(_companion.global_position, _player.global_position),
-				_companion.get_last_chase_note(),
-			]
+			"Q did not close the gap after being asked along (%.1f m): %s."
+			% [_flat_distance(_companion.global_position, _player.global_position), _state()]
 		)
 	if _companion.get_repath_count() <= before:
 		_failures.append("No new route was requested after being asked along.")
@@ -389,6 +379,21 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 		guard += 1
 	_location = _host.get_current()
 	return _location
+
+
+func _state() -> String:
+	return (
+		"q=(%.2f,%.2f) player=(%.2f,%.2f) visible=%s joined=%s waiting=%s route=%d repath=%d vel=(%.2f,%.2f) layer=%d mask=%d note='%s'"
+		% [
+			_companion.global_position.x, _companion.global_position.z,
+			_player.global_position.x, _player.global_position.z,
+			str(_companion.visible), str(_companion.is_joined()), str(_companion.is_waiting()),
+			_companion.get_route().size(), _companion.get_repath_count(),
+			_companion.velocity.x, _companion.velocity.z,
+			_companion.collision_layer, _companion.collision_mask,
+			_companion.get_last_chase_note(),
+		]
+	)
 
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:
