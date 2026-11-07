@@ -92,6 +92,18 @@ jobs:
             echo "::error title=import reported script errors::${summary}"
             exit 1
           fi
+          # The editor pass does not compile every script it walks past, so the
+          # import step also loads each script, scene and resource explicitly.
+          godot --headless --path . --script res://tests/content_parse_test.gd             > /tmp/parse.log 2>&1
+          parse=$?
+          tail -n 5 /tmp/parse.log || true
+          if [ "${parse}" -ne 0 ]; then
+            summary=$(grep -E "TEST FAILURE|Parse Error|did not load|no base type" /tmp/parse.log \
+              | head -n 12 | tr '\n' '|' | cut -c1-1500)
+            echo "IMPORT_RESULT=failure"
+            echo "::error title=scripts or scenes do not parse::${summary:-no summary captured}"
+            exit "${parse}"
+          fi
           echo "IMPORT_RESULT=success"
 
       - name: Capture the playthrough
@@ -156,6 +168,7 @@ jobs:
           path: |
             /tmp/import-1.log
             /tmp/import-2.log
+            /tmp/parse.log
             /tmp/capture.log
             docs/screenshots
           if-no-files-found: warn

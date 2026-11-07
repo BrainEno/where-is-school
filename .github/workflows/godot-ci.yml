@@ -58,6 +58,7 @@ jobs:
           status=0
           run_check import 420 godot --headless --editor --path . --quit || status=1
           run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
+          run_check parse 300 godot --headless --path . --script res://tests/content_parse_test.gd || status=1
           run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
           run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
