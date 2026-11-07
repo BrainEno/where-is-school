@@ -14,7 +14,8 @@ The primary experience is exploration, environmental observation, and literary d
 - Runtime boundaries: docs/ARCHITECTURE.md
 - Technical decisions: docs/TECHNICAL_ROADMAP.md
 - Game-facing narrative constraints: docs/NARRATIVE_BIBLE.md
-- Visual direction: docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md
+- Visual direction (English source of truth): docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md
+- Chinese reading copies: docs/ART_BIBLE.zh-CN.md and docs/CONCEPT_DIRECTION.zh-CN.md. Keep each English/Chinese pair synchronized; agents should use the English version as the canonical production instruction.
 - First vertical-slice acceptance: docs/PROTOTYPE_BRIEF.md
 - Agent comparison protocol: docs/AGENT_EVALUATION.md
 
@@ -61,9 +62,14 @@ The author's literary manuscripts are private source material and may be intende
 
 ## Art and asset constraints
 
-- Visual target: restrained painterly realism, damp concrete, faded institutional colors, lived-in objects, and subtle spatial impossibilities.
-- The world should feel ordinary before it feels surreal.
-- Do not imitate the distinctive art, UI, character designs, dialogue, or assets of any existing game.
+- Visual target: expressionist people and independent expressionist dialogue portraits; graphic, hand-made environments; and absurd theatrical negative space, especially outdoors. See docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md for the full direction.
+- Outdoor spaces may feel like spare stage sets: broad areas of sky and ground, an exposed horizon, isolated objects, simplified distant structures, and a deliberate atmosphere of waiting or disorientation. Do not fill empty space merely to make a scene look complete.
+- Environment art may use bold color planes, hand-drawn outlines, rough brush marks, selective graffiti-like gestures, and simplified geometry. Graphic treatment must not obscure walkable space or important interactables.
+- In-game 3D characters prioritize silhouette, proportion, posture, clothing identity, and gameplay-distance readability. Dialogue portraits are separate 2D artworks, not renders or screenshots of the 3D models.
+- Dialogue UI follows an integrated composition: portrait, text, speaker identity, and choices belong to one visual arrangement. Long Chinese text must remain comfortable to read.
+- The currently implemented dialogue surface is a text-led lower-left reading band; treat it as the implementation baseline and evolve it toward the integrated portrait composition when approved portrait art exists. Preserve its tested readability and interaction behavior.
+- Do not treat dampness, dirt, rust, or heavy weathering as mandatory atmosphere. Surface treatment is selected according to each scene's composition and narrative purpose.
+- Keep the English art documents canonical for agent execution and update their matching .zh-CN.md reading copies whenever they change.
 - Do not add generated or downloaded assets without recording provenance and commercial-use rights in docs/ASSET_PROVENANCE.md.
 - Temporary graybox assets are encouraged and must be treated as placeholders.
 

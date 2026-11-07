@@ -1,25 +1,68 @@
 # Concept Direction — Text Only
 
-This document records what concept exploration should communicate. It intentionally contains no generated concept art and does not prescribe a specific camera composition or finished scene illustration.
+> **English source of truth.** The matching Chinese reading copy is [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md). Keep both files synchronized when this document changes.
+
+This document records what visual concept exploration should communicate. It intentionally contains no generated concept art and does not prescribe a fixed camera composition or finished scene illustration. The visual rules live in [ART_BIBLE.md](ART_BIBLE.md).
 
 ## What to explore
 
-- The boundary between an ordinary residential place and a school entrance.
-- The feeling of a school building assembled from corridors, service stairs, rooms, and annexes with no coherent external address.
-- Damp concrete, faded institutional paint, worn metal, old paper, tangled utility lines, and inexpensive furniture.
-- A warm orange dusk that persists too long and never quite becomes night.
-- Spatial errors that are simple enough to read: a landing that should not fit, a door opening into a familiar room from the wrong side, a stair that changes its destination, or a distant sea visible from an enclosed building.
+### 1. The world as a graphic, hand-made image
+
+- Environments built from clear silhouettes, broad color planes, loose outlines, rough marks, and selective graffiti-like gestures.
+- Recognizable school and residential architecture simplified into expressive shapes.
+- A balance between flat graphic areas and enough 3D depth for a playable 2.5D space.
+- Selective visual emphasis on a few interactive objects; background objects remain quiet.
+
+### 2. Outdoor spaces as absurd stage sets
+
+Explore the schoolyard, open grounds, paths, roadside gaps, and spaces between residential buildings through theatrical emptiness associated with Waiting for Godot:
+
+- large areas of sky and ground;
+- a simple, exposed horizon;
+- one or a few isolated objects such as a tree, bench, lamp, sign, fence segment, or distant building;
+- simplified or backdrop-like distant architecture;
+- unusual scale and spacing that remain readable;
+- a small human figure surrounded by more space than seems necessary.
+
+The image should feel prepared for an event that may never happen. Preserve the atmosphere of waiting, isolation, and uncertainty without turning the location into a literal theatre.
+
+### 3. People as expressionist presences
+
+- Character studies informed by the expressive proportions, gestures, and lines of Egon Schiele.
+- Psychological color, distortion, and atmosphere informed by expressionist painting and Edvard Munch.
+- Portraits that are independent 2D artworks, not renders of the in-game 3D models.
+- Different portrait crops, mark-making, color relationships, and degrees of distortion for different characters.
+- 3D character blockouts that prioritize silhouette, posture, clothing identity, and readability at gameplay distance.
+
+### 4. Integrated dialogue composition
+
+Explore dialogue screens in which portrait, speaker identity, text, and choices form one composition:
+
+- variable portrait size and placement;
+- irregular crops and portrait silhouettes;
+- color fields connecting the portrait to the dialogue area;
+- long Chinese text with comfortable width and line spacing;
+- a clear hierarchy that does not depend on heavy frames or decorative panels.
+
+The composition may vary by character and dramatic context while retaining a consistent underlying system.
 
 ## What to avoid
 
-- Literal visual imitation of Disco Elysium or any other game's recognizable art direction.
-- Generic horror imagery: blood, monsters, occult symbols, jump-scare compositions, or heavy black fog.
-- Dense surreal collages where the player cannot identify walkable geometry.
-- Bright fantasy color schemes, glossy science-fiction surfaces, cyberpunk neon, or cute cartoon proportions.
-- Concept art so detailed that it prematurely fixes the layout, camera, architecture, or final asset design before the graybox is playable.
+- Photo-real architectural visualization or conventional academic realism.
+- Standardized cute-cartoon or anime character proportions.
+- Dense environmental clutter or graffiti applied uniformly to every surface.
+- Treating pervasive dirt, rust, dampness, and heavy weathering as mandatory atmosphere.
+- Dense surreal collages that make walkable geometry difficult to read.
+- Generic horror imagery such as monsters, occult decoration, blood, jump-scare framing, or heavy black fog.
+- Fixed avatar-frame plus text-box layouts that make portraits feel like small UI icons.
+- Concept art so detailed that it prematurely fixes level layout, camera, architecture, or final asset design before the graybox is playable.
 
 ## Concept-art brief for a future artist
 
-Explore material, light, spatial continuity, and emotional temperature rather than illustrating a fixed story moment. Deliver loose studies with visible alternatives. Keep architecture plausible at first glance; let one or two details violate expectation. Provide neutral views that can inform a 3D blockout rather than polished key art that the game cannot reproduce.
+Explore composition, shape, gesture, color, spatial emptiness, and emotional temperature rather than illustrating a fixed story moment.
+
+Deliver loose studies with visible alternatives. For outdoor scenes, include at least one deliberately sparse stage-set composition and test how one isolated object changes the emotional reading of the space. For people, explore portrait studies with different levels of expressionist distortion and different mark-making approaches.
+
+Provide neutral, legible views that can inform 3D blockouts alongside expressive artwork that communicates mood. Keep the playable route and interaction targets understandable.
 
 The project owner approves visual direction. AI-generated explorations are references only until their provenance, rights, and consistency with the art bible have been reviewed.
