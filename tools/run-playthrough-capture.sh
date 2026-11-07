@@ -44,7 +44,7 @@ if [ "$code" -ne 0 ] || ! grep -q 'CAPTURE_STATUS=success' "$output/PLAYTHROUGH.
    ! compgen -G "$output/*.png" > /dev/null; then
   printf 'CAPTURE_STATUS=capture_failed\n' >> "$output/status.txt"
   tail -n 70 "$output/capture.log"
-  echo "::error title=playthrough capture failed::$(grep -E 'FAILURE:|SCRIPT ERROR|Parse Error|ERROR:' "$output/capture.log" | tail -n 5 | tr '\n' '|' | cut -c1-800) (exit $code; see artifact)"
+  echo "::error title=playthrough capture failed::$(grep -B 4 -A 3 -E 'FAILURE:|SCRIPT ERROR|Parse Error|ERROR:' "$output/capture.log" | tail -n 24 | tr '\n' '|' | cut -c1-1500) (exit $code; see artifact)"
   echo "Capture evidence: $(ls -A "$output" | tr '
 ' ' ')"
   exit 1
