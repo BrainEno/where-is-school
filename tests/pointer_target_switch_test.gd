@@ -122,12 +122,54 @@ func _run() -> void:
 func _place_probes() -> void:
 	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(2)
-	var origin := _player.global_position
-	_probe_a = _make_probe(&"switch_probe_a", origin + Vector3(-1.1, 0.9, -3.5))
-	_probe_b = _make_probe(&"switch_probe_b", origin + Vector3(0.9, 0.9, -3.8))
-	_probe_c = _make_probe(&"switch_probe_c", origin + Vector3(-1.1, 0.9, -2.8))
-	_probe_d = _make_probe(&"switch_probe_d", origin + Vector3(0.9, 0.9, -2.8))
+	# The probes stand above open, walkable floor rather than at hand-picked offsets:
+	# whether there is somewhere to stand beside an object with a clear view of it is
+	# part of what this test checks, and furniture is not what it is about.
+	var spots := _open_floor_spots(4)
+	if spots.size() < 4:
+		_failures.append("The classroom offered only %d open floor spot(s) for the probes." % spots.size())
+		return
+	_probe_a = _make_probe(&"switch_probe_a", spots[0] + Vector3.UP * 0.9)
+	_probe_b = _make_probe(&"switch_probe_b", spots[1] + Vector3.UP * 0.9)
+	_probe_c = _make_probe(&"switch_probe_c", spots[2] + Vector3.UP * 0.9)
+	_probe_d = _make_probe(&"switch_probe_d", spots[3] + Vector3.UP * 0.9)
 	await _physics_frames(4)
+
+
+## Floor points that are out of arm's reach, far enough apart to be distinct targets, in
+## view, and reachable on foot. Scanned through the same calls the mouse uses.
+func _open_floor_spots(count: int) -> Array[Vector3]:
+	var rect := _player.get_viewport().get_visible_rect().size
+	var map := _player.navigation_agent.get_navigation_map()
+	var found: Array[Vector3] = []
+	for x_step in 14:
+		for y_step in 10:
+			if found.size() >= count:
+				return found
+			var screen := Vector2(
+				rect.x * (0.1 + 0.8 * float(x_step) / 13.0),
+				rect.y * (0.2 + 0.6 * float(y_step) / 9.0)
+			)
+			var point: Variant = _navigator.get_ground_point_at(screen)
+			if point == null:
+				continue
+			var world: Vector3 = point
+			var distance := _flat_distance(_player.global_position, world)
+			if distance < 2.2 or distance > 4.2:
+				continue
+			if _interaction.get_target_at_screen_position(screen, false) != null:
+				continue
+			if NavigationServer3D.map_get_path(map, _player.global_position, world, true).size() < 2:
+				continue
+			var crowded := false
+			for other: Vector3 in found:
+				if _flat_distance(other, world) < 1.8:
+					crowded = true
+					break
+			if crowded:
+				continue
+			found.append(world)
+	return found
 
 
 func _make_probe(interact_id: StringName, position: Vector3) -> Interactable:

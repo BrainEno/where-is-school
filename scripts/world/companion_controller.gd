@@ -131,6 +131,12 @@ var _navigation_ready := false
 ## ended, in words.
 var _repath_count := 0
 var _last_chase_note := ""
+## Where the last placement put Q, and where it wanted to. Read by tests: a companion
+## that is "behind the player" and actually 1 m from the intended spot is worth knowing
+## about before blaming the follow logic.
+var _place_count := 0
+var _last_place_from: Vector3 = Vector3.ZERO
+var _last_place_to: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
@@ -207,6 +213,11 @@ func get_repath_count() -> int:
 
 func get_last_chase_note() -> String:
 	return _last_chase_note
+
+
+## One line about the last time Q was put somewhere by hand.
+func get_placement_report() -> String:
+	return "%d: %s -> %s" % [_place_count, str(_last_place_from), str(_last_place_to)]
 
 
 ## Whether Q is allowed to walk yet. False only between a location change and the new
@@ -577,7 +588,11 @@ func _place_behind_player() -> void:
 		back = Vector3.BACK
 	var spot := _player.global_position + back.normalized() * stop_distance
 	spot.y = _player.global_position.y
+	var wanted := spot
 	spot = _snap_to_the_mesh(spot)
+	_place_count += 1
+	_last_place_from = wanted
+	_last_place_to = spot
 	global_position = spot
 	velocity = Vector3.ZERO
 	_last_body_position = spot
@@ -638,6 +653,9 @@ func _settle_after_transition() -> void:
 	var snapped := _snap_to_the_mesh(placed_at)
 	if snapped.distance_to(placed_at) <= 0.01:
 		return
+	_place_count += 1
+	_last_place_from = placed_at
+	_last_place_to = snapped
 	global_position = snapped
 	velocity = Vector3.ZERO
 	_last_body_position = snapped

@@ -196,6 +196,14 @@ func _check_asked_along_rebuilds_the_route() -> void:
 	if not await _rebake():
 		_failures.append("The corridor's navigation could not be restored.")
 		return
+	# Removing the wall has to reach the map before the invitation can mean anything:
+	# otherwise Q is asked along into a mesh that still believes the walkway is divided.
+	if not await _wait_for_a_route():
+		_failures.append(
+			"The corridor's mesh still cannot join the two halves after the wall was"
+			+ " removed: %s." % _state()
+		)
+		return
 	var ask := _main.get_node_or_null(^"Companion/AskAlong") as Interactable
 	if ask == null:
 		_failures.append("The companion has no 'ask along' interaction.")
@@ -319,6 +327,25 @@ func _rebake() -> bool:
 	while guard < 240:
 		if nav.is_baked() and nav.is_routable():
 			return true
+		await physics_frame
+		guard += 1
+	return false
+
+
+## Waits until the map can actually take Q to the player, rather than until the bake
+## call returned: a path that ends short is the bake not having reached the map yet.
+func _wait_for_a_route() -> bool:
+	var guard := 0
+	while guard < 240:
+		var map := _companion.get_world_3d().navigation_map
+		if map.is_valid():
+			var path := NavigationServer3D.map_get_path(
+				map, _companion.global_position, _player.global_position, true
+			)
+			if path.size() >= 2:
+				var end: Vector3 = path[path.size() - 1]
+				if _flat_distance(end, _player.global_position) <= 0.8:
+					return true
 		await physics_frame
 		guard += 1
 	return false
