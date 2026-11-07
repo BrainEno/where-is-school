@@ -119,10 +119,12 @@ jobs:
         id: capture
         shell: bash
         run: |
-          # GitHub runs bash steps with -e; the capture is allowed to fail so the
-          # frames it did save are kept. The step still fails: a run that did not
-          # reach its end marker must not look green.
-          set -uo pipefail
+          # GitHub runs bash steps with -e, which would end the step at the first
+          # non-zero command and throw the log away. The capture is allowed to fail so
+          # the frames it did save are kept and the reason is reported; the step still
+          # fails at the end: a run that did not reach its end marker must not look
+          # green.
+          set +e -uo pipefail
           mkdir -p docs/screenshots
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \

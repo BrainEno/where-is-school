@@ -71,6 +71,9 @@ var _click_count := 0
 var _world_click_events := 0
 ## Best-effort point to mark when a click is refused; never used for movement.
 var _last_ground_hint: Vector3 = Vector3.ZERO
+## Why the last click did nothing, in words. A refused click is quiet on screen; this is
+## the sentence a log or a test can print instead.
+var _last_rejection: String = ""
 
 
 func _ready() -> void:
@@ -103,6 +106,10 @@ func get_click_count() -> int:
 
 func was_last_click_accepted() -> bool:
 	return _last_click_accepted
+
+
+func get_last_rejection() -> String:
+	return _last_rejection
 
 
 func get_world_click_event_count() -> int:
@@ -138,10 +145,12 @@ func click_at_screen_position(screen_position: Vector2) -> void:
 		return
 	_click_count += 1
 	_last_click_accepted = false
+	_last_rejection = ""
 	if _player == null or _interaction == null:
 		return
 	if not _player.is_control_enabled():
 		# Presentation owns input. Do not queue the click for later.
+		_last_rejection = "the player does not have control"
 		cancel()
 		return
 	var target := _interaction.get_target_at_screen_position(screen_position, false)
@@ -249,6 +258,8 @@ func _walk_to(point: Vector3) -> void:
 
 func _reject_point(point: Vector3) -> void:
 	_last_click_accepted = false
+	if _last_rejection.is_empty():
+		_last_rejection = "no walkable ground under the click"
 	_last_ground_hint = point
 	destination_rejected.emit(point)
 	# Restrained: a brief dim ring where the click landed, nothing modal, no walk.
@@ -296,10 +307,12 @@ func _begin_approach(target: Interactable) -> void:
 	if spot == null:
 		# Nothing the character can stand next to, or no route to it: say so with the
 		# same quiet ring a refused ground click gets, and stay put.
+		_last_rejection = "no walkable spot with a clear view next to %s" % String(target.interact_id)
 		_abandon_pending()
 		_show_marker(target.global_position, true)
 		return
 	if not _player.request_path_to(spot):
+		_last_rejection = "no route to the spot next to %s" % String(target.interact_id)
 		_abandon_pending()
 		_show_marker(target.global_position, true)
 		return
@@ -378,10 +391,12 @@ func _activate_pending() -> void:
 	# Re-validated at the last moment: the object may have been disabled or freed
 	# while the character was walking.
 	if not _can_activate_now(target):
+		_last_rejection = "%s is no longer usable from here" % String(target.interact_id)
 		approach_abandoned.emit(target)
 		return
 	_interaction.request_activation(target)
 	_last_click_accepted = true
+	_last_rejection = ""
 	approach_activated.emit(target)
 
 

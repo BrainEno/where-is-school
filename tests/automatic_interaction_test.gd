@@ -277,8 +277,11 @@ func _check_disabled_target_is_not_activated() -> void:
 	_navigator.click_at_screen_position(screen)
 	if not _player.is_path_active():
 		_failures.append(
-			"Clicking a distant probe did not start a walk (accepted=%s, pending=%s)."
-			% [str(_navigator.was_last_click_accepted()), _name_of(_navigator.get_pending_target())]
+			"Clicking a distant probe did not start a walk (accepted=%s, pending=%s, %s)."
+			% [
+				str(_navigator.was_last_click_accepted()), _name_of(_navigator.get_pending_target()),
+				_navigator.get_last_rejection()
+			]
 		)
 		_free(probe)
 		return
