@@ -20,11 +20,15 @@ func _run() -> void:
 	var library := DialogueLibrary.load_all()
 	if not library.is_valid():
 		_failures.append(library.describe_errors())
+		for message: String in library.errors:
+			print("DIAG dialogue: %s" % message)
 	_inspect_conversations(library)
 
 	var inspections := InspectionLibrary.load_all()
 	if not inspections.is_valid():
 		_failures.append(inspections.describe_errors())
+		for message: String in inspections.errors:
+			print("DIAG inspection: %s" % message)
 	_check_inspections(inspections)
 
 	Harness.finish(self, _failures, "dialogue and inspection content are consistent.")
@@ -146,8 +150,14 @@ func _check_inspections(inspections: InspectionLibrary) -> void:
 					if String(effect.get("flag", "")).is_empty():
 						_failures.append("Inspection '%s' has a set_flag without a flag." % inspection_id)
 				"set_objective":
-					if String(effect.get("text", "")).is_empty():
-						_failures.append("Inspection '%s' has an empty objective." % inspection_id)
+					var key := String(effect.get("key", ""))
+					if key.is_empty():
+						_failures.append("Inspection '%s' has an empty objective key." % inspection_id)
+					elif not L10n.has_key(key):
+						_failures.append(
+							"Inspection '%s' uses objective key '%s' that no locale defines."
+							% [inspection_id, key]
+						)
 				_:
 					_failures.append(
 						"Inspection '%s' uses unsupported effect '%s'."

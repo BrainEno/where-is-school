@@ -533,6 +533,8 @@ radius = 0.9
 position = Vector3(-1.32, 0.8, 0.82)
 interact_id = &"q_talk"
 prompt_text = "Talk to Q"
+prompt_key = "prompt.talk"
+speaker_id = &"q"
 conversation_route = &"q"
 radius = 1.1
 
@@ -540,6 +542,7 @@ radius = 1.1
 position = Vector3(3.2, 0.6, 3.3)
 interact_id = &"classroom_door"
 prompt_text = "Try the door"
+prompt_key = "prompt.door_try"
 radius = 1.15
 destination_scene = "res://scenes/locations/corridor/corridor.tscn"
 destination_spawn = &"FromClassroom"

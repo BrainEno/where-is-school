@@ -3,12 +3,14 @@ extends Node
 ## Owns the presentation side of conversations and inspections.
 ##
 ## Responsibilities:
-## - load dialogue/inspection content once and report load errors;
+## - load dialogue/inspection content for every language once and report errors;
 ## - drive the DialogueRuntime and mirror its events into the DialoguePanel;
 ## - turn the first read of an inspectable object into one or two lines
 ##   (observation, then an optional uncertain recollection) and apply the
 ##   object's state changes;
-## - keep the backlog complete.
+## - keep the backlog complete;
+## - keep what is on screen in the language the player selected, including
+##   halfway through a line.
 ##
 ## It does not move the player, load scenes, or decide story progression: the
 ## sequence director listens to `presentation_active_changed`.
@@ -19,6 +21,8 @@ signal conversation_finished(conversation_id: StringName)
 signal line_presented(line: Dictionary)
 ## True while a subjective (imagined) conversation is on screen.
 signal subjective_changed(active: bool)
+## Emitted when the display language changed, so the HUD can re-apply its prompt.
+signal locale_applied(locale: String)
 
 enum Mode { NONE, CONVERSATION, INSPECTION }
 
@@ -37,6 +41,11 @@ var _backlog: BacklogPanel = null
 var _mode: Mode = Mode.NONE
 var _queue: Array = []
 var _subjective: bool = false
+## Which inspection line is on screen, so a language switch can rebuild it.
+var _active_inspection_id: StringName = &""
+var _active_inspection_variant: String = ""
+## The line the panel is showing right now, whatever produced it.
+var _current_line: Dictionary = {}
 
 
 func _ready() -> void:
@@ -78,6 +87,13 @@ func _ready() -> void:
 	_panel.backlog_requested.connect(_on_backlog_requested)
 	if _backlog != null:
 		_backlog.hide()
+	_panel.refresh_static_text()
+
+	# The language switch lives in the Loc autoload; the controller owns the
+	# re-render, so it listens directly instead of going through the UI.
+	var loc := get_node_or_null(^"/root/Loc")
+	if loc != null and loc.has_signal("locale_changed"):
+		loc.locale_changed.connect(apply_locale)
 
 
 func is_busy() -> bool:
@@ -94,6 +110,10 @@ func get_dialogue_library() -> DialogueLibrary:
 
 func get_inspection_library() -> InspectionLibrary:
 	return _inspections
+
+
+func get_runtime() -> DialogueRuntime:
+	return _runtime
 
 
 ## True while the current presentation is waiting for the player to pick a choice.
@@ -114,6 +134,69 @@ func advance_presentation() -> void:
 
 func select_choice(index: int) -> void:
 	_on_choice_selected(index)
+
+
+## The line the player is currently reading, if any. Used by tests and by the
+## language switch to prove the same line is re-rendered.
+func get_current_line() -> Dictionary:
+	if not _current_line.is_empty():
+		return _current_line
+	if _mode == Mode.CONVERSATION and _runtime != null:
+		return _runtime.get_current_line()
+	return {}
+
+
+## Switches the display language. Safe mid-scene: texts are re-rendered from the
+## same node ids and no effect is applied twice.
+func apply_locale(locale: String) -> bool:
+	if _library == null or _inspections == null:
+		return false
+	var code := L10n.normalize(locale)
+	if not _library.set_locale(code):
+		return false
+	_inspections.set_locale(code)
+	if _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_active():
+		var graph := _library.get_graph(_runtime.get_active_conversation_id())
+		_runtime.rebind_graph(graph)
+	elif _mode == Mode.INSPECTION and not String(_active_inspection_id).is_empty():
+		_refresh_inspection_text()
+	if _panel != null:
+		_panel.refresh_static_text()
+	if _backlog != null:
+		_backlog.rebuild()
+	locale_applied.emit(code)
+	return true
+
+
+## Localized prompt for an interactable: "Look at", "Talk to Q", "Try the door".
+## Content data (inspection prompt, locale key) wins over the scene's fallback
+## text, so no scene needs editing when a language is added.
+func get_interact_prompt(interactable: Interactable) -> String:
+	if interactable == null:
+		return ""
+	var override_key := interactable.get_prompt_override()
+	if not override_key.is_empty():
+		var resolved := _resolve_key(override_key, interactable)
+		if not resolved.is_empty():
+			return resolved
+	if not String(interactable.inspection_id).is_empty() and _inspections != null:
+		var inspection := _inspections.get_inspection(interactable.inspection_id)
+		if inspection != null and not inspection.prompt.is_empty():
+			return inspection.prompt
+	if not interactable.prompt_key.is_empty():
+		var resolved := _resolve_key(interactable.prompt_key, interactable)
+		if not resolved.is_empty():
+			return resolved
+	return interactable.get_prompt()
+
+
+func _resolve_key(key: String, interactable: Interactable) -> String:
+	if not L10n.has_key(key):
+		return ""
+	var args := {}
+	if not String(interactable.speaker_id).is_empty():
+		args["name"] = _characters.get_display_name(interactable.speaker_id) if _characters != null else String(interactable.speaker_id)
+	return L10n.t(key, args)
 
 
 ## Starts an authored conversation. Returns false when content is missing or a
@@ -153,17 +236,12 @@ func present_inspection(inspection_id: StringName) -> bool:
 		push_error("DialogueController: unknown inspection '%s'." % inspection_id)
 		return false
 
-	var seen_flag := StoryFlags.inspection_seen_flag(inspection_id)
-	var already_seen := bool(_game_state.get_flag(seen_flag, false))
-	var shown_text := inspection.text
-	if already_seen and not inspection.repeat_text.is_empty():
-		shown_text = inspection.repeat_text
-
+	var already_seen := bool(_game_state.get_flag(StoryFlags.inspection_seen_flag(inspection_id), false))
 	_queue.clear()
-	var observation := _build_inspection_line(inspection, shown_text)
+	var observation := _build_inspection_line(inspection, _observation_text(inspection, already_seen))
 	if not already_seen:
 		observation["effects"] = inspection.effects
-		observation["set_flag"] = seen_flag
+		observation["set_flag"] = StoryFlags.inspection_seen_flag(inspection_id)
 		if not String(inspection.record_entry_id).is_empty():
 			observation["record"] = {
 				"entry_id": inspection.record_entry_id,
@@ -174,8 +252,9 @@ func present_inspection(inspection_id: StringName) -> bool:
 		if not inspection.recall_text.is_empty():
 			var recall := _build_inspection_line(inspection, inspection.recall_text)
 			recall["source"] = int(NarrativeEntry.Source.RECALLED)
-			recall["badge"] = NarrativeEntry.badge_for(NarrativeEntry.Source.RECALLED)
-			recall["title"] = "%s — remembered" % inspection.title
+			recall["badge"] = NarrativeEntry.badge_key_for(NarrativeEntry.Source.RECALLED)
+			recall["title"] = _recall_title(inspection)
+			recall["variant"] = "recall"
 			recall["record"] = {
 				"entry_id": inspection.recall_entry_id,
 				"source": int(NarrativeEntry.Source.RECALLED),
@@ -183,6 +262,7 @@ func present_inspection(inspection_id: StringName) -> bool:
 				"text": inspection.recall_text,
 			}
 			_queue.append(recall)
+	observation["variant"] = "repeat" if already_seen else "first"
 	_queue.push_front(observation)
 
 	_mode = Mode.INSPECTION
@@ -194,7 +274,19 @@ func present_inspection(inspection_id: StringName) -> bool:
 # --- Internals --------------------------------------------------------------
 
 
-func _build_inspection_line(inspection: InspectionLibrary.InspectionData, text: String) -> Dictionary:
+func _observation_text(inspection: InspectionLibrary.InspectionData, already_seen: bool) -> String:
+	if already_seen and not inspection.repeat_text.is_empty():
+		return inspection.repeat_text
+	return inspection.text
+
+
+func _recall_title(inspection: InspectionLibrary.InspectionData) -> String:
+	return String(inspection.title)
+
+
+func _build_inspection_line(
+	inspection: InspectionLibrary.InspectionData, text: String
+) -> Dictionary:
 	var speaker_name := "You"
 	var accent := Color(0.776, 0.733, 0.643, 1.0)
 	if _characters != null:
@@ -205,15 +297,27 @@ func _build_inspection_line(inspection: InspectionLibrary.InspectionData, text: 
 		"node_id": &"",
 		"speaker_id": inspection.speaker_id,
 		"speaker_name": speaker_name,
-		"speaker_role": "",
+		"speaker_role": _role_text(inspection.speaker_id),
 		"accent_color": accent,
 		"title": inspection.title,
 		"text": text,
 		"source": inspection.source,
-		"badge": NarrativeEntry.badge_for(inspection.source),
+		"badge": NarrativeEntry.badge_key_for(inspection.source),
 		"subjective": false,
 		"tags": PackedStringArray(),
+		"inspection_id": inspection.inspection_id,
 	}
+
+
+func _role_text(speaker_id: StringName) -> String:
+	if String(speaker_id).is_empty():
+		return ""
+	var key := "role.%s" % String(speaker_id)
+	if L10n.has_key(key):
+		return L10n.t(key)
+	if _characters != null:
+		return _characters.get_short_role(speaker_id)
+	return ""
 
 
 func _present_next_queued_line() -> void:
@@ -225,6 +329,7 @@ func _present_next_queued_line() -> void:
 
 
 func _present_line(line: Dictionary) -> void:
+	_current_line = line
 	_apply_line_state(line)
 	_panel.show_line(line)
 	if _backlog != null:
@@ -234,6 +339,36 @@ func _present_line(line: Dictionary) -> void:
 		_subjective = is_subjective
 		subjective_changed.emit(_subjective)
 	line_presented.emit(line)
+
+
+## Re-renders the line currently on screen after a language change. Only the
+## visible text is rebuilt; state stays exactly as it was.
+func _refresh_inspection_text() -> void:
+	var inspection := _inspections.get_inspection(_active_inspection_id)
+	if inspection == null:
+		return
+	var variant := _active_inspection_variant
+	var text := inspection.text
+	var badge_source := inspection.source
+	if variant == "repeat":
+		text = _observation_text(inspection, true)
+	elif variant == "recall":
+		text = inspection.recall_text
+		badge_source = NarrativeEntry.Source.RECALLED
+	if text.is_empty():
+		return
+	var line := _build_inspection_line(inspection, text)
+	if variant == "recall":
+		line["source"] = int(NarrativeEntry.Source.RECALLED)
+		line["badge"] = NarrativeEntry.badge_key_for(NarrativeEntry.Source.RECALLED)
+		line["variant"] = "recall"
+	else:
+		line["variant"] = variant
+	line["badge"] = NarrativeEntry.badge_key_for(badge_source)
+	_current_line = line
+	_panel.show_line(line)
+	if _backlog != null:
+		_backlog.replace_last(line)
 
 
 ## Applies the state changes a line carries. Only first reads and conversation
@@ -255,6 +390,10 @@ func _apply_line_state(line: Dictionary) -> void:
 			)
 	if line.has("set_flag"):
 		_game_state.set_flag(StringName(String(line["set_flag"])), true)
+	# Remember which inspection line is visible so a language switch can rebuild it.
+	if _mode == Mode.INSPECTION:
+		_active_inspection_variant = String(line.get("variant", ""))
+		_active_inspection_id = StringName(String(line.get("inspection_id", "")))
 
 
 func _apply_inspection_effect(effect: Dictionary) -> void:
@@ -262,7 +401,7 @@ func _apply_inspection_effect(effect: Dictionary) -> void:
 		"set_flag":
 			_game_state.set_flag(StringName(String(effect.get("flag", ""))), effect.get("value", true))
 		"set_objective":
-			_game_state.set_flag(StoryFlags.OBJECTIVE_TEXT, String(effect.get("text", "")))
+			_game_state.set_flag(StoryFlags.OBJECTIVE_KEY, String(effect.get("key", "")))
 		_:
 			push_error("DialogueController: unsupported inspection effect '%s'." % effect.get("type", ""))
 
@@ -287,6 +426,8 @@ func _on_runtime_conversation_finished(conversation_id: StringName) -> void:
 func _close_presentation() -> void:
 	_queue.clear()
 	_mode = Mode.NONE
+	_active_inspection_id = &""
+	_active_inspection_variant = ""
 	_panel.close()
 	if _subjective:
 		_subjective = false

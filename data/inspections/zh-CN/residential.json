@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "res_planter": {
+    "title": "花坛",
+    "prompt": "看花坛",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "土是硬的，绿篱的顶剪得笔平，边上有一块湿掉的水泥地。湿的那块形状像有什么东西在这儿躺过。",
+    "repeat_text": "绿篱，硬土，湿水泥地上的那个形状。",
+    "record": {
+      "entry_id": "saw_res_planter",
+      "source": "observed",
+      "text": "花坛边的水泥地湿了一块，形状像有什么东西躺在那儿。"
+    }
+  },
+  "res_bench": {
+    "title": "长椅",
+    "prompt": "看长椅",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "长椅中间那条板子换成了另一种木头。有人把椅面扫干净了，扫出来的东西堆在椅子底下。",
+    "repeat_text": "换过的那条板子，干净的椅面，底下的那堆东西。"
+  },
+  "res_washing": {
+    "title": "晾衣绳",
+    "prompt": "看晾的衣服",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两扇窗之间拉着一条绳，四件衬衫和一条毛巾。空气动的时候，衣服不动。",
+    "repeat_text": "还是四件衬衫一条毛巾，还是不动。",
+    "record": {
+      "entry_id": "saw_res_washing",
+      "source": "observed",
+      "text": "两扇窗之间的衣服，空气动的时候不动。"
+    }
+  },
+  "res_stain": {
+    "title": "墙上的污渍",
+    "prompt": "看那面墙",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "抹灰墙面上有一块深色污渍，大概是一只手的形状。你进来时经过的就是这面墙。你比较确定，刚才这污渍在这面墙的另一边。",
+    "repeat_text": "污渍还在你离开它的地方。至于那是什么地方，你就不太确定了。",
+    "record": {
+      "entry_id": "saw_res_stain",
+      "source": "observed",
+      "text": "你先后来过同一面墙，看见同一块污渍，却说不清自己当时在墙的哪一边。"
+    }
+  }
+}

@@ -100,6 +100,34 @@ addon or format, validate that it supports:
 
 First run a bounded Dialogic 2 integration spike. Keep addon-specific calls behind a small project-owned adapter so content and gameplay code are not permanently coupled to one plugin. Do not install or pin the addon until its current Godot compatibility, license, and maintenance status are reviewed.
 
+## 5b. Where text lives (implemented contract)
+
+Every line the game says is data, in two languages, loaded by chapter:
+
+- `data/dialogue/<locale>/<chapter>.json` — conversations (ids, speakers, text,
+  `next`, choices, effects, conditions, narrative source);
+- `data/inspections/<locale>/<chapter>.json` — object descriptions, their prompt,
+  the first-read and repeat text, the optional recollection, the knowledge entry
+  they record and the effects they apply once;
+- `data/locale/<locale>.json` — the short strings the interface generates
+  (prompts, objective labels, source badges, end card).
+
+`DialogueGraph`/`DialogueLibrary` parse and validate the dialogue,
+`InspectionLibrary` the descriptions, and `L10n` (static) plus `Loc` (autoload,
+persisted in `user://settings.cfg`) the interface strings. Both language trees must
+have identical structure; `DialogueParity` compares them node by node and reports
+any dropped node, choice or effect. Authors edit JSON, not GDScript; the schema and
+the editing rules are in `data/dialogue_schema/README.md`.
+
+Nothing in `scripts/` may hold narrative text. The only literals left in scenes
+(`prompt_text`, `end_card_title`) are fallbacks used when content is missing, and
+the dialogue controller prefers the localized key or the inspection's own prompt.
+
+The display language can change at any time: `Loc.locale_changed` makes the
+dialogue controller rebind the open conversation to the same node id in the other
+language, re-resolve the prompt, redraw the backlog and re-translate the objective.
+No scene reload, no lost state.
+
 ## 6. Persistent identifiers and data
 
 - Use stable IDs for dialogue nodes, characters, items, locations, and story flags.
@@ -107,7 +135,7 @@ First run a bounded Dialogic 2 integration spike. Keep addon-specific calls behi
 - Do not use display names as identifiers.
 - Validate external content at load time and report the file path and invalid field.
 - Keep presentation text out of movement and world simulation scripts.
-- Prefer typed Godot Resources for structured authoring; use JSON only where it materially improves localization, external editing, or automated validation.
+- Prefer typed Godot Resources for structured authoring; use JSON only where it materially improves localization, external editing, or automated validation. (Dialogue and inspection text use JSON for exactly that reason; see section 5b.)
 
 ## 7. Save/load design (future requirement)
 

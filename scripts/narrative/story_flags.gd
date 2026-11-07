@@ -23,6 +23,14 @@ const N_ARRIVED: StringName = &"n_arrived"
 const CLASS_DISMISSED: StringName = &"class_dismissed"
 ## bool: the player left the classroom for the walkway.
 const LEFT_CLASSROOM: StringName = &"left_classroom"
+## bool: the player walked out of the school building into the street.
+const LEFT_SCHOOL: StringName = &"left_school"
+## bool: the first street conversation has played.
+const STREET_ARRIVED: StringName = &"street_arrived"
+## bool: the first residential-area conversation has played.
+const RESIDENTIAL_ARRIVED: StringName = &"residential_arrived"
+## bool: the green animal has been seen at least once.
+const ANIMAL_SEEN: StringName = &"animal_seen"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -53,8 +61,10 @@ const ASKED_N_ABOUT_TEXTBOOK: StringName = &"asked_n_about_textbook"
 const NOTICED_N_SUBSTITUTE: StringName = &"noticed_n_substitute"
 
 # --- Small runtime values used by presentation ------------------------------
-## String: the single line of mission text the HUD shows.
-const OBJECTIVE_TEXT: StringName = &"objective_text"
+## String: locale key of the single objective line the HUD shows, e.g.
+## "objective.check_bag". Literal text is never stored, so the objective
+## re-translates the moment the player switches language.
+const OBJECTIVE_KEY: StringName = &"objective_key"
 ## StringName: id of the location the player is currently in.
 const CURRENT_LOCATION: StringName = &"current_location"
 
@@ -80,7 +90,7 @@ const ALL_FLAGS: Array[StringName] = [
 	ASKED_N_ABOUT_B,
 	ASKED_N_ABOUT_TEXTBOOK,
 	NOTICED_N_SUBSTITUTE,
-	OBJECTIVE_TEXT,
+	OBJECTIVE_KEY,
 	CURRENT_LOCATION,
 ]
 

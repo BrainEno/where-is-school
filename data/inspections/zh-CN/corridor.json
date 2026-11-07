@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "corridor_noticeboard": {
+    "title": "公告栏",
+    "prompt": "看公告栏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "你不看的那个项目的赛程，一张去年的消防演习通知，还有一张照片——一个班站在这栋楼前面。你看了一会儿，然后把视线移开。",
+    "repeat_text": "还是那张照片，还是那个班站在这栋楼前面。",
+    "record": {
+      "entry_id": "saw_corridor_noticeboard",
+      "source": "observed",
+      "text": "走廊的公告栏上有旧的赛程、一张消防演习通知，还有一张这个班在楼前的照片。"
+    }
+  },
+  "corridor_extinguisher": {
+    "title": "灭火器",
+    "prompt": "看灭火器",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "红罐子挂在支架上，检查标签是上个月打的孔，保险销还在。有人在旁边的墙上写了一个电话号码，又把最后两位涂掉了。",
+    "repeat_text": "标签，保险销，还有被涂掉两位的号码。",
+    "record": {
+      "entry_id": "saw_corridor_extinguisher",
+      "source": "observed",
+      "text": "走廊的灭火器上个月检查过，旁边墙上的电话号码被涂掉了两位。"
+    }
+  },
+  "corridor_classroom_glass": {
+    "title": "教室的窗",
+    "prompt": "透过玻璃看",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "玻璃那头的教室：桌椅，黑板，讲台角上的三角尺，代课老师一动不动地站在最前面。从外面看，这间屋子比在里面感觉的要小。",
+    "repeat_text": "桌椅，黑板，三角尺。代课老师没怎么动。",
+    "record": {
+      "entry_id": "saw_classroom_from_walkway",
+      "source": "observed",
+      "text": "从走廊看，教室比在里面感觉的要小。"
+    }
+  }
+}

@@ -15,6 +15,15 @@ func _ready() -> void:
 	hide()
 
 
+## Text currently on the card, for the language switch and for tests.
+func get_title() -> String:
+	return _title.text if _title != null else ""
+
+
+func get_body() -> String:
+	return _body.text if _body != null else ""
+
+
 func present(title: String, body: String, hint: String = "") -> void:
 	_title.text = title
 	_body.text = body

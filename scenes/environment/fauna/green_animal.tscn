@@ -1,0 +1,112 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/green_animal.gd" id="1_animal"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/animal_green.tres" id="2_green"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="3_dark"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.26
+height = 0.86
+radial_segments = 16
+rings = 4
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.19
+height = 0.38
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_bill"]
+size = Vector3(0.3, 0.08, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tail"]
+size = Vector3(0.34, 0.07, 0.36)
+
+[sub_resource type="SphereMesh" id="SphereMesh_eye"]
+radius = 0.035
+height = 0.07
+radial_segments = 8
+rings = 4
+
+[sub_resource type="BoxMesh" id="BoxMesh_leg"]
+size = Vector3(0.07, 0.2, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_foot"]
+size = Vector3(0.16, 0.03, 0.2)
+
+[node name="GreenAnimal" type="Node3D"]
+script = ExtResource("1_animal")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.42, 0)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("CapsuleMesh_body")
+material_override = ExtResource("2_green")
+
+[node name="Tail" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.4, 0.52)
+rotation_degrees = Vector3(-12, 0, 0)
+mesh = SubResource("BoxMesh_tail")
+material_override = ExtResource("2_green")
+
+[node name="Head" type="Node3D" parent="."]
+position = Vector3(0, 0.46, -0.34)
+
+[node name="Skull" type="MeshInstance3D" parent="Head"]
+mesh = SubResource("SphereMesh_head")
+material_override = ExtResource("2_green")
+
+[node name="Bill" type="MeshInstance3D" parent="Head"]
+position = Vector3(0, -0.07, -0.2)
+mesh = SubResource("BoxMesh_bill")
+material_override = ExtResource("2_green")
+
+[node name="EyeLeft" type="MeshInstance3D" parent="Head"]
+position = Vector3(-0.085, 0.07, -0.12)
+mesh = SubResource("SphereMesh_eye")
+material_override = ExtResource("3_dark")
+
+[node name="EyeRight" type="MeshInstance3D" parent="Head"]
+position = Vector3(0.085, 0.07, -0.12)
+mesh = SubResource("SphereMesh_eye")
+material_override = ExtResource("3_dark")
+
+[node name="LegFrontLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.15, 0.1, -0.2)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_green")
+
+[node name="LegFrontRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.15, 0.1, -0.2)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_green")
+
+[node name="LegBackLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.15, 0.1, 0.22)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_green")
+
+[node name="LegBackRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.15, 0.1, 0.22)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_green")
+
+[node name="FootFrontLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.15, 0.015, -0.24)
+mesh = SubResource("BoxMesh_foot")
+material_override = ExtResource("2_green")
+
+[node name="FootFrontRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.15, 0.015, -0.24)
+mesh = SubResource("BoxMesh_foot")
+material_override = ExtResource("2_green")
+
+[node name="FootBackLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.15, 0.015, 0.26)
+mesh = SubResource("BoxMesh_foot")
+material_override = ExtResource("2_green")
+
+[node name="FootBackRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.15, 0.015, 0.26)
+mesh = SubResource("BoxMesh_foot")
+material_override = ExtResource("2_green")

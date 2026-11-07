@@ -1,0 +1,124 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "classroom_schoolbag": {
+    "title": "你的书包",
+    "prompt": "翻翻书包",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "帆布，一根肩带，还有铅笔屑的味道。两个练习本，一支没盖帽的笔，一张折了两道的课表。没有生物课本。你又摸了侧袋，再摸了内衬后面那道缝——东西一般都会掉在那儿。也没有。",
+    "repeat_text": "同一个包，同一个口袋，同一本不见了的书。从你看过以后，什么都没动。",
+    "record": {
+      "entry_id": "bag_missing_textbook",
+      "source": "observed",
+      "text": "你翻了自己的书包。生物课本不在里面。"
+    },
+    "effects": [
+      {
+        "type": "set_flag",
+        "flag": "textbook_missing",
+        "value": true
+      },
+      {
+        "type": "set_objective",
+        "key": "objective.no_textbook"
+      }
+    ]
+  },
+  "classroom_set_square": {
+    "title": "木头三角尺",
+    "prompt": "看看三角尺",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一把有你小臂那么长的三角尺，放在讲台角上。手会握的地方，漆已经磨白了。有一个角裂开过，被人用胶带粘上，胶带已经变黄。",
+    "repeat_text": "三角尺还在讲台角上。粘过的那个角朝着教室。",
+    "recall": {
+      "entry_id": "recall_set_square_placed",
+      "text": "你记得它被放在某张桌子上。放了两次，为了让人听见。你说不清当时自己是不是在屋里。"
+    },
+    "record": {
+      "entry_id": "saw_set_square",
+      "source": "observed",
+      "text": "生物老师讲台角上放着一把坏了的木头三角尺。"
+    },
+    "effects": [
+      {
+        "type": "set_flag",
+        "flag": "saw_set_square",
+        "value": true
+      }
+    ]
+  },
+  "classroom_blackboard": {
+    "title": "黑板",
+    "prompt": "看黑板",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "黑板擦过，又没擦干净。灰底下还留着：上学期——复习，还有一个三周前的日期。粉笔槽里只剩一截断粉笔，和一个丢了板子的夹子。",
+    "repeat_text": "上学期——复习，三周前的日期，一截断粉笔。",
+    "record": {
+      "entry_id": "saw_blackboard_revision",
+      "source": "observed",
+      "text": "黑板灰底下还留着上学期的复习标题，和一个三周前的日期。"
+    }
+  },
+  "classroom_window": {
+    "title": "窗户",
+    "prompt": "看窗外",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两格玻璃，其中一格裂了，用透明胶粘过。窗台下面是湿的水泥地，一堵矮墙，一排垃圾桶。外面的光已经是傍晚的颜色了，可现在还没到九点。",
+    "repeat_text": "还是那片湿水泥地，还是那种不该出现的橙色光。",
+    "record": {
+      "entry_id": "saw_window_light",
+      "source": "observed",
+      "text": "教室窗外的光看着像傍晚，可现在还是早上。"
+    }
+  },
+  "classroom_own_desk": {
+    "title": "你的桌子",
+    "prompt": "看你的桌子",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "有人在漆面上用圆规尖刻了一个名字，然后又划掉了。角落有张撕了一半的贴纸，上面是你认不出的东西。桌沿前端有一道被小臂磨出来的槽。",
+    "repeat_text": "划掉的名字。前端的槽，正好是你胳膊放着的位置。",
+    "recall": {
+      "entry_id": "recall_desk_groove",
+      "text": "你认得那道槽。你的胳膊在里面放了很久。关于它，你只能说到这儿。"
+    }
+  },
+  "classroom_teacher_desk": {
+    "title": "讲台",
+    "prompt": "看讲台",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "比学生的桌子大一些，也整齐一点，只是一点。塑封的点名册，订书机，一个拿来插粉笔的杯子。椅子斜着推在桌下，像离开的人还有别的地方要先去。",
+    "repeat_text": "点名册，订书机，插着粉笔的杯子。椅子还是斜的。",
+    "record": {
+      "entry_id": "saw_teacher_desk",
+      "source": "observed",
+      "text": "讲台比学生桌子整齐，椅子斜着推在桌下。"
+    }
+  },
+  "classroom_timetable_sheet": {
+    "title": "门边的课表",
+    "prompt": "看课表",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一张塑封的打印课表，一角有杯子的印。生物，周四，第一节。任课老师的名字印在最上面，有人用圆珠笔在上面划了一道。",
+    "repeat_text": "生物，周四，第一节。名字上那道线还在。",
+    "record": {
+      "entry_id": "saw_lined_out_name",
+      "source": "observed",
+      "text": "教室的课表上写着周四第一节是生物，老师的名字被圆珠笔划掉了。"
+    }
+  },
+  "classroom_door_blocked": {
+    "title": "教室门",
+    "prompt": "试着开门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "门把手一转就开。走廊在外面，整栋楼都在外面，而你现在应该待在一节还没开始的生物课里。你把手从门把上拿开。",
+    "repeat_text": "走廊还在外面。它可以等。"
+  }
+}

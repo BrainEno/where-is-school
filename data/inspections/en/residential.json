@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "res_planter": {
+    "title": "The planter",
+    "prompt": "Look at the planter",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Hard soil, a hedge cut to a straight top, and a patch of wet concrete at the edge. The wet part has the shape of something that was lying down.",
+    "repeat_text": "The hedge, the hard soil, the shape in the wet concrete.",
+    "record": {
+      "entry_id": "saw_res_planter",
+      "source": "observed",
+      "text": "The concrete at the edge of the planter is wet in the shape of something lying down."
+    }
+  },
+  "res_bench": {
+    "title": "The bench",
+    "prompt": "Look at the bench",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A bench with its middle slat replaced by a different wood. Someone has swept the seat clean and left the sweepings under it.",
+    "repeat_text": "The odd slat, the clean seat, the pile underneath."
+  },
+  "res_washing": {
+    "title": "The washing line",
+    "prompt": "Look at the washing",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Four shirts and a towel on a line between two windows. The clothes do not move when the air does.",
+    "repeat_text": "Still four shirts and a towel, still not moving.",
+    "record": {
+      "entry_id": "saw_res_washing",
+      "source": "observed",
+      "text": "The washing between two windows does not move even when the air does."
+    }
+  },
+  "res_stain": {
+    "title": "The stain",
+    "prompt": "Look at the wall",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A dark stain on the render, roughly the shape of a hand. You came in past this wall. You are fairly sure the stain was on the other side of it.",
+    "repeat_text": "The stain is where you left it. You are less sure where that is.",
+    "record": {
+      "entry_id": "saw_res_stain",
+      "source": "observed",
+      "text": "You passed the same stain on the same wall twice, and you cannot say which side of the wall you were on."
+    }
+  }
+}

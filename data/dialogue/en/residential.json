@@ -1,0 +1,215 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "residential",
+  "conversations": {
+    "residential_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ra_1",
+      "nodes": [
+        {
+          "id": "ra_1",
+          "speaker": "protagonist",
+          "text": "Three blocks around a courtyard. Someone's washing, going nowhere in the still air."
+        },
+        {
+          "id": "ra_2",
+          "speaker": "protagonist",
+          "text": "A slide, a bench, and a patch of concrete where the grass gave up.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "residential_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.residential"
+            },
+            {
+              "type": "record",
+              "entry_id": "residential_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You reached the flats behind the school: three blocks around a courtyard."
+            }
+          ]
+        },
+        {
+          "id": "ra_3",
+          "speaker": "protagonist",
+          "text": "Between the blocks, the road comes out of a gap you did not walk through.",
+          "next": null
+        }
+      ]
+    },
+    "residential_stair": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "rs_1",
+      "nodes": [
+        {
+          "id": "rs_1",
+          "speaker": "protagonist",
+          "text": "Stairs up between two blocks. Eleven steps, a landing, then more steps.",
+          "choices": [
+            {
+              "id": "up",
+              "text": "Go up.",
+              "next": "rs_up_1"
+            },
+            {
+              "id": "down",
+              "text": "Stay on the ground.",
+              "next": "rs_down_1"
+            }
+          ]
+        },
+        {
+          "id": "rs_up_1",
+          "speaker": "protagonist",
+          "text": "You go up. The landing is the same landing, and the stairs below are the ones you just came up.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "residential_loop_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You climbed the stair between the blocks and arrived back where you started."
+            }
+          ]
+        },
+        {
+          "id": "rs_up_2",
+          "speaker": "protagonist",
+          "text": "You go back down. It takes the same number of steps.",
+          "next": null
+        },
+        {
+          "id": "rs_down_1",
+          "speaker": "protagonist",
+          "text": "You stay on the ground. The stairs are still there, going up.",
+          "next": null
+        }
+      ]
+    },
+    "animal_sighting": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "a_1",
+      "nodes": [
+        {
+          "id": "a_1",
+          "speaker": "protagonist",
+          "text": "There is something at the edge of the planter. Green. Not the green of the hedge.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "animal_seen",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.animal"
+            },
+            {
+              "type": "record",
+              "entry_id": "animal_seen",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You saw a green animal on the concrete beside the planter. You cannot say what it is."
+            }
+          ]
+        },
+        {
+          "id": "a_2",
+          "speaker": "protagonist",
+          "text": "It is wet, and it moves slowly, the way something moves when it is counting.",
+          "choices": [
+            {
+              "id": "closer",
+              "text": "Take two steps closer.",
+              "next": "a_c_1"
+            },
+            {
+              "id": "stay",
+              "text": "Stay where you are.",
+              "next": "a_s_1"
+            }
+          ]
+        },
+        {
+          "id": "a_c_1",
+          "speaker": "protagonist",
+          "text": "It does not run. It turns its head just enough to keep you in view."
+        },
+        {
+          "id": "a_c_2",
+          "speaker": "protagonist",
+          "text": "Close up: a flat bill, wet fur, a tail like a paddle held clear of the ground.",
+          "next": "a_recall",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "animal_bill_seen",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The green animal has a flat bill and a flat tail. Nothing else about it is clear."
+            }
+          ]
+        },
+        {
+          "id": "a_s_1",
+          "speaker": "protagonist",
+          "text": "You stay where you are. It carries on doing whatever it was doing."
+        },
+        {
+          "id": "a_s_2",
+          "speaker": "protagonist",
+          "text": "It does not look at you the way an animal usually looks at a person.",
+          "next": "a_recall"
+        },
+        {
+          "id": "a_recall",
+          "speaker": "protagonist",
+          "text": "You have seen a drawing of this. In the biology book. You cannot find the page.",
+          "source": "recalled",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "animal_recall",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "Something about the animal is like a drawing in the biology textbook. You cannot find the page."
+            }
+          ]
+        },
+        {
+          "id": "a_end",
+          "speaker": "protagonist",
+          "text": "You cannot tell what it is. You also cannot say whether it belongs here.",
+          "next": null
+        }
+      ]
+    },
+    "animal_again": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "aa_1",
+      "nodes": [
+        {
+          "id": "aa_1",
+          "speaker": "protagonist",
+          "text": "Still there. It has moved about a metre along the planter, towards the alley."
+        },
+        {
+          "id": "aa_2",
+          "speaker": "protagonist",
+          "text": "You still do not know what it is.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

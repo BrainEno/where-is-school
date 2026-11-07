@@ -15,8 +15,14 @@ const INTERACTION_LAYER := 2
 
 ## Stable id used by tests and routing tables.
 @export var interact_id: StringName = &""
-## Short line shown in the contextual prompt, e.g. "Read the blackboard".
+## Prompt used when no other source describes this object. Authored text is kept
+## as a developer fallback; the game normally resolves a locale key instead.
 @export var prompt_text: String = "Look at"
+## Locale key for the contextual prompt, e.g. "prompt.door_try". Optional: an
+## interactable with an inspection uses that inspection's localized prompt.
+@export var prompt_key: String = ""
+## Speaker this interactable represents, so prompts can name them ("Talk to Q").
+@export var speaker_id: StringName = &""
 ## Set for objects the player examines.
 @export var inspection_id: StringName = &""
 ## Set for characters the player can talk to; treated as a route id, not a
@@ -35,6 +41,7 @@ const INTERACTION_LAYER := 2
 			_refresh_monitorable()
 
 var _prompt_override: String = ""
+
 
 
 func _ready() -> void:
@@ -57,8 +64,14 @@ func get_prompt() -> String:
 	return prompt_text
 
 
+## Locale key override set at runtime (e.g. a door that unlocks). Empty by default.
+func get_prompt_override() -> String:
+	return _prompt_override
+
+
 ## Lets a location change the prompt after a state change (e.g. a door that
-## becomes passable) without rebuilding the area.
+## becomes passable) without rebuilding the area. `prompt` may be a locale key;
+## the dialogue controller translates it and falls back to it as literal text.
 func set_prompt(prompt: String) -> void:
 	_prompt_override = prompt
 
@@ -74,6 +87,7 @@ func activate() -> bool:
 		return false
 	activated.emit(self)
 	return true
+
 
 
 func _refresh_monitorable() -> void:

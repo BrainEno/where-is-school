@@ -1,0 +1,215 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "residential",
+  "conversations": {
+    "residential_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ra_1",
+      "nodes": [
+        {
+          "id": "ra_1",
+          "speaker": "protagonist",
+          "text": "三栋楼围着一个院子。谁家的衣服晾在那儿，空气不动，衣服也不动。"
+        },
+        {
+          "id": "ra_2",
+          "speaker": "protagonist",
+          "text": "一个滑梯，一张长椅，还有一小片草地放弃长草的水泥地。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "residential_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.residential"
+            },
+            {
+              "type": "record",
+              "entry_id": "residential_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你走到了学校后面的居民楼：三栋楼围着一个院子。"
+            }
+          ]
+        },
+        {
+          "id": "ra_3",
+          "speaker": "protagonist",
+          "text": "楼和楼之间，那条路从一道你没走过的缝里伸出来。",
+          "next": null
+        }
+      ]
+    },
+    "residential_stair": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "rs_1",
+      "nodes": [
+        {
+          "id": "rs_1",
+          "speaker": "protagonist",
+          "text": "两栋楼之间有一段楼梯。十一级，一个平台，然后还有。",
+          "choices": [
+            {
+              "id": "up",
+              "text": "往上走。",
+              "next": "rs_up_1"
+            },
+            {
+              "id": "down",
+              "text": "留在原地。",
+              "next": "rs_down_1"
+            }
+          ]
+        },
+        {
+          "id": "rs_up_1",
+          "speaker": "protagonist",
+          "text": "你往上走。平台还是这个平台，下面的楼梯就是你刚上来的那些。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "residential_loop_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你爬上楼与楼之间那段楼梯，又回到了原地。"
+            }
+          ]
+        },
+        {
+          "id": "rs_up_2",
+          "speaker": "protagonist",
+          "text": "你往下走。级数一样多。",
+          "next": null
+        },
+        {
+          "id": "rs_down_1",
+          "speaker": "protagonist",
+          "text": "你留在原地。楼梯还在，仍然往上。",
+          "next": null
+        }
+      ]
+    },
+    "animal_sighting": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "a_1",
+      "nodes": [
+        {
+          "id": "a_1",
+          "speaker": "protagonist",
+          "text": "花坛边上有个东西。绿色的。不是绿篱的那种绿。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "animal_seen",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.animal"
+            },
+            {
+              "type": "record",
+              "entry_id": "animal_seen",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你在花坛边的水泥地上看见一只绿色的动物。你说不出那是什么。"
+            }
+          ]
+        },
+        {
+          "id": "a_2",
+          "speaker": "protagonist",
+          "text": "它是湿的，动得很慢，像在数什么。",
+          "choices": [
+            {
+              "id": "closer",
+              "text": "走近两步。",
+              "next": "a_c_1"
+            },
+            {
+              "id": "stay",
+              "text": "站着不动。",
+              "next": "a_s_1"
+            }
+          ]
+        },
+        {
+          "id": "a_c_1",
+          "speaker": "protagonist",
+          "text": "它没有跑。它把头转了转，刚好能一直看着你。"
+        },
+        {
+          "id": "a_c_2",
+          "speaker": "protagonist",
+          "text": "凑近看：扁扁的嘴，湿的毛，一条像桨一样的尾巴，没挨着地。",
+          "next": "a_recall",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "animal_bill_seen",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "这只绿色的动物有扁扁的嘴和扁扁的尾巴。别的都说不清。"
+            }
+          ]
+        },
+        {
+          "id": "a_s_1",
+          "speaker": "protagonist",
+          "text": "你站着不动。它继续做它本来在做的事。"
+        },
+        {
+          "id": "a_s_2",
+          "speaker": "protagonist",
+          "text": "它看你的样子，不像动物平常看人那样。",
+          "next": "a_recall"
+        },
+        {
+          "id": "a_recall",
+          "speaker": "protagonist",
+          "text": "这个你见过画。在生物课本里。你翻不到那一页。",
+          "source": "recalled",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "animal_recall",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "这只动物让你想起生物课本里的一张图。你翻不到那一页。"
+            }
+          ]
+        },
+        {
+          "id": "a_end",
+          "speaker": "protagonist",
+          "text": "你说不出这是什么。你也说不清它是不是该在这儿。",
+          "next": null
+        }
+      ]
+    },
+    "animal_again": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "aa_1",
+      "nodes": [
+        {
+          "id": "aa_1",
+          "speaker": "protagonist",
+          "text": "还在那儿。它顺着花坛挪了大概一米，朝小巷那边。"
+        },
+        {
+          "id": "aa_2",
+          "speaker": "protagonist",
+          "text": "你还是不知道它是什么。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

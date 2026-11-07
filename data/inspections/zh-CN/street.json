@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "street_gutter": {
+    "title": "排水沟",
+    "prompt": "看排水沟",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "排水沟里积着水，水正朝一个比它位置更高的井盖流过去。这水看起来一点也不急。",
+    "repeat_text": "还是那些积水，还在往上坡流。",
+    "record": {
+      "entry_id": "saw_street_gutter",
+      "source": "observed",
+      "text": "街边排水沟里的水，正朝一个比它还高的井盖流过去。"
+    }
+  },
+  "street_shutter": {
+    "title": "卷帘门",
+    "prompt": "看卷帘门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "商店的卷帘门拉着，底下挂了锁。上面的招牌被刷过两遍，第二遍的漆还没干。",
+    "repeat_text": "门拉着，锁挂着，第二遍漆还是湿的。",
+    "record": {
+      "entry_id": "saw_street_shutter",
+      "source": "observed",
+      "text": "街上那家关着的店，招牌被刷过两遍，最上面那层漆还是湿的。"
+    }
+  },
+  "street_bin": {
+    "title": "垃圾桶",
+    "prompt": "看垃圾桶",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两个垃圾桶。一个清空了，一个没有。两个盖子上的收运日期是同一天。",
+    "repeat_text": "一个空的，一个满的，盖子上是同一天。"
+  },
+  "street_lamp": {
+    "title": "路灯",
+    "prompt": "看路灯",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "路灯已经亮了，可天还亮得能看书。一只飞蛾绕着它转，跟飞蛾一贯的做法一样。",
+    "repeat_text": "灯亮着，天亮着，飞蛾还在转。"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "street_gutter": {
+    "title": "The gutter",
+    "prompt": "Look at the gutter",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Water stands in the gutter and runs towards a drain set higher up the road. The water does not look like it is in a hurry.",
+    "repeat_text": "The same standing water, still going uphill.",
+    "record": {
+      "entry_id": "saw_street_gutter",
+      "source": "observed",
+      "text": "The water in the street gutter runs towards a drain that sits higher than it."
+    }
+  },
+  "street_shutter": {
+    "title": "The shutter",
+    "prompt": "Look at the shutter",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A shop shutter pulled down and padlocked at the bottom. The sign above it has been painted over twice. The second colour is still wet.",
+    "repeat_text": "Shutter down, padlock on, the second coat still wet.",
+    "record": {
+      "entry_id": "saw_street_shutter",
+      "source": "observed",
+      "text": "A closed shop on the street has a sign painted over twice; the top coat is still wet."
+    }
+  },
+  "street_bin": {
+    "title": "The bins",
+    "prompt": "Look at the bins",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two bins. One has been emptied and one has not, and both lids carry the same collection day.",
+    "repeat_text": "One emptied, one not, the same day on both lids."
+  },
+  "street_lamp": {
+    "title": "The street lamp",
+    "prompt": "Look at the lamp",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The lamp is already on, though the sky is still bright enough to read by. A moth is working at it the way moths do.",
+    "repeat_text": "Lamp on, sky bright, moth still at it."
+  }
+}

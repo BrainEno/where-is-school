@@ -75,8 +75,7 @@ func _run() -> void:
 		await _settle(90.0, "Q's opening conversation to finish")
 		if not bool(_game_state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
 			_failures.append("The first choice did not produce its story flag.")
-		if String(_game_state.get_flag(StoryFlags.OBJECTIVE_TEXT, "")) != \
-				"Find your biology textbook. Check your bag.":
+		if String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
 			_failures.append("The bag objective was not set after Q's conversation.")
 		if not _player.is_control_enabled():
 			_failures.append("Control did not return after the opening lines.")
@@ -179,26 +178,150 @@ func _run() -> void:
 				_failures.append("Leaving the classroom did not set its flag.")
 
 	var corridor := _host.get_current()
-	if corridor != null and String(corridor.location_id) == "corridor":
+	if corridor == null or String(corridor.location_id) != "corridor":
+		_failures.append("The player did not end up in the walkway.")
+	else:
 		if corridor.get_interactables().size() < 4:
 			_failures.append("The walkway has too few interactables.")
 		var gate := corridor.find_interactable(&"school_gate")
 		if gate == null:
-			_failures.append("The walkway has no milestone-exit interactable.")
+			_failures.append("The walkway has no exit towards the street.")
 		else:
 			await _settle(30.0, "the walkway to settle")
+			# Stand on the near side of the gate and face it, so the prompt has to be
+			# the gate's and not whatever else is inside the interaction radius.
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(0.0, 0, 5.0)))
+			await physics_frame
+			await physics_frame
+			await _check_prompt(&"school_gate", "gate prompt")
 			_interaction.request_activation(gate)
-			await _pump_until(
-				func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"
-			)
+			if await _pump_until(
+				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "street",
+				60.0, "the street to load"
+			):
+				if not bool(_game_state.get_flag(StoryFlags.LEFT_SCHOOL, false)):
+					_failures.append("Walking out of the school did not set its flag.")
+				if not await _settle(60.0, "the street arrival line"):
+					_failures.append("The street arrival line did not finish.")
+				elif not bool(_game_state.get_flag(StoryFlags.STREET_ARRIVED, false)):
+					_failures.append("Reaching the street did not play its arrival line.")
+
+	# --- Beat H: an object on the street, read once and then again ---------
+	var street := _host.get_current()
+	if street == null or String(street.location_id) != "street":
+		_failures.append("The street did not stay loaded.")
 	else:
-		_failures.append("The player did not end up in the walkway.")
+		if street.get_interactables().size() < 6:
+			_failures.append("The street has too few things to look at.")
+		var gutter := street.find_interactable(&"street_gutter")
+		if gutter == null:
+			_failures.append("The street has no gutter to look at.")
+		else:
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(-8.9, 0, -21.4)))
+			await physics_frame
+			await physics_frame
+			await _check_prompt(&"street_gutter", "gutter prompt")
+			_interaction.request_activation(gutter)
+			await process_frame
+			var first_text := ""
+			if not _dialogue.is_busy():
+				_failures.append("Looking at the gutter showed nothing.")
+			else:
+				first_text = String(_dialogue.get_current_line().get("text", ""))
+				if first_text.is_empty():
+					_failures.append("The gutter description was empty.")
+			await _settle(30.0, "the gutter description")
+			if not _narrative.has_entry(&"saw_street_gutter"):
+				_failures.append("Looking at the gutter recorded no knowledge entry.")
+			if not bool(_game_state.get_flag(StoryFlags.inspection_seen_flag(&"street_gutter"), false)):
+				_failures.append("Looking at the gutter did not mark it as seen.")
+			_interaction.request_activation(gutter)
+			await process_frame
+			if _dialogue.is_busy():
+				var repeat_text := String(_dialogue.get_current_line().get("text", ""))
+				if repeat_text == first_text:
+					_failures.append("Reading the gutter twice showed the same long text again.")
+			else:
+				_failures.append("Looking at the gutter a second time showed nothing.")
+			await _settle(30.0, "the second gutter description")
+
+	# --- Beat I: the residential area and the green animal ----------------
+	if street != null:
+		var to_residential := street.find_interactable(&"street_to_residential")
+		if to_residential == null:
+			_failures.append("The street has no way on to the residential area.")
+		else:
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(10.5, 0, -28.6)))
+			await physics_frame
+			await physics_frame
+			_interaction.request_activation(to_residential)
+			if await _pump_until(
+				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "residential",
+				60.0, "the residential area to load"
+			):
+				await _settle(60.0, "the residential arrival line")
+				if not bool(_game_state.get_flag(StoryFlags.RESIDENTIAL_ARRIVED, false)):
+					_failures.append("Reaching the flats did not play its arrival line.")
+
+	var flats := _host.get_current()
+	if flats == null or String(flats.location_id) != "residential":
+		_failures.append("The residential area did not stay loaded.")
+	else:
+		var animal := flats.find_interactable(&"green_animal")
+		if animal == null:
+			_failures.append("The green animal is missing from the courtyard.")
+		else:
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-10.0)), Vector3(7.3, 0, 0.1)))
+			await physics_frame
+			await physics_frame
+			await _check_prompt(&"green_animal", "animal prompt")
+			_interaction.request_activation(animal)
+			await process_frame
+			if not _dialogue.is_busy():
+				_failures.append("Looking at the green animal started nothing.")
+			else:
+				# E during a conversation must not start a second one.
+				var conversation_line := String(_dialogue.get_current_line().get("node_id", ""))
+				_interaction.request_activation(animal)
+				await process_frame
+				if String(_dialogue.get_current_line().get("node_id", "")) != conversation_line:
+					_failures.append("A key press during a conversation started another one.")
+			await _settle(90.0, "the first animal conversation")
+			if not bool(_game_state.get_flag(StoryFlags.ANIMAL_SEEN, false)):
+				_failures.append("Meeting the animal did not set its flag.")
+			if not _narrative.has_entry(&"animal_seen"):
+				_failures.append("Meeting the animal recorded no knowledge entry.")
+			_interaction.request_activation(animal)
+			await process_frame
+			if _dialogue.is_busy():
+				if String(_dialogue.get_current_line().get("node_id", "")) != "aa_1":
+					_failures.append("Meeting the animal a second time did not use the shorter conversation.")
+			else:
+				_failures.append("Meeting the animal a second time showed nothing.")
+			await _settle(60.0, "the second animal conversation")
+
+		var alley := flats.find_interactable(&"res_alley_end")
+		if alley == null:
+			_failures.append("The residential area has no milestone exit.")
+		else:
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
+			await physics_frame
+			await physics_frame
+			_interaction.request_activation(alley)
+			if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
+				var card_title := _ui.end_card.get_title()
+				if card_title.strip_edges().is_empty():
+					_failures.append("The end-of-slice card has no title.")
+				elif card_title != L10n.t("end.slice.title"):
+					_failures.append("The end-of-slice card is not using its locale key.")
 
 	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
-	Harness.finish(self, _failures, "the classroom slice runs from waking up to the walkway exit.")
+	Harness.finish(
+		self, _failures, "the slice runs from waking up to the green animal and the milestone card."
+	)
 
 
 func _on_subjective_changed(active: bool) -> void:
@@ -277,12 +400,97 @@ func _check_targeting() -> void:
 
 ## Compact state line printed once at the end of a run (and used by CI to
 ## summarise a failure without the full log).
+## The prompt the HUD is showing must describe the object the player faces, in the
+## current language, and it must come from data rather than from a literal.
+func _check_prompt(interact_id: StringName, label: String) -> void:
+	# The prompt follows the target found during a physics frame, so give it a
+	# couple of seconds instead of assuming it is on screen immediately.
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 3000 and _ui.hud.get_prompt_text().strip_edges().is_empty():
+		await process_frame
+	var scans_before := _interaction.get_scan_count()
+	await process_frame
+	await process_frame
+	var text := _ui.hud.get_prompt_text()
+	if text.strip_edges().is_empty():
+		_failures.append(
+			"No interaction prompt was shown for %s (%s)."
+			% [label, _diagnose_interaction(interact_id, scans_before)]
+		)
+		return
+	if not text.contains("E]"):
+		_failures.append("The %s prompt does not name the interact key: '%s'." % [label, text])
+	var target := _interaction.get_current_target()
+	if target == null or target.interact_id != interact_id:
+		_failures.append(
+			"The %s prompt is showing for '%s' instead of '%s' (%s)."
+			% [
+				label, "<nothing>" if target == null else target.interact_id, interact_id,
+				_diagnose_interaction(interact_id, scans_before),
+			]
+		)
+
+
+## Why an interaction prompt is missing: what the controller holds, what the sensor
+## overlaps, and where the player is standing.
+func _diagnose_interaction(expected: StringName, scans_before: int = -1) -> String:
+	var parts := PackedStringArray()
+	var target := _interaction.get_current_target()
+	parts.append("target=%s" % ("<none>" if target == null else String(target.interact_id)))
+	parts.append("expected_in_scene=%s" % str(_host.get_current() != null
+		and _host.get_current().find_interactable(expected) != null))
+	parts.append("position=%s" % str(_player.global_position))
+	parts.append("scans=%d->%d" % [scans_before, _interaction.get_scan_count()])
+	parts.append("facing=%s" % str(_player.get_facing_direction()))
+	parts.append("control=%s" % str(_player.is_control_enabled()))
+	parts.append("busy=%s" % str(_dialogue.is_busy()))
+	var expected_node: Interactable = null
+	if _host.get_current() != null:
+		expected_node = _host.get_current().find_interactable(expected)
+	if expected_node != null:
+		var offset := expected_node.global_position - _player.global_position
+		parts.append("expected_distance=%.2f" % offset.length())
+		parts.append("expected_can_interact=%s" % str(expected_node.can_interact()))
+		parts.append("expected_los=%s" % str(_interaction._has_line_of_sight(expected_node)))
+	var fresh: Interactable = _interaction._find_best_target()
+	parts.append("fresh_pick=%s" % ("<none>" if fresh == null else String(fresh.interact_id)))
+	parts.append("controller_player=%s" % str(_interaction._player.name if _interaction._player != null else "<null>"))
+	parts.append("max_distance=%.2f facing_weight=%.2f" % [
+		_interaction.max_distance, _interaction.facing_weight
+	])
+	var facing := _player.get_facing_direction()
+	facing.y = 0.0
+	facing = facing.normalized()
+	for child in _player.get_children():
+		var sensor := child as Area3D
+		if sensor == null or not sensor.name.ends_with("InteractionSensor"):
+			continue
+		var ids := PackedStringArray()
+		for area: Area3D in sensor.get_overlapping_areas():
+			var interactable := area as Interactable
+			if interactable == null:
+				ids.append("<freed>")
+				continue
+			var offset := interactable.global_position - _player.global_position
+			offset.y = 0.0
+			var distance := offset.length()
+			var alignment := facing.dot(offset.normalized()) if distance > 0.001 else 0.0
+			var score := distance + _interaction.facing_weight * (1.0 - maxf(alignment, 0.0))
+			ids.append("%s d=%.2f a=%.2f s=%.2f los=%s" % [
+				interactable.interact_id, distance, alignment, score,
+				str(_interaction._has_line_of_sight(interactable)),
+			])
+		parts.append("candidates=[%s]" % "; ".join(ids))
+	return " ".join(parts)
+
+
 func _dump_state() -> void:
 	var raised: Array[String] = []
 	for flag: StringName in [
 		StoryFlags.MET_Q, StoryFlags.ASKED_Q_IDENTITY, StoryFlags.TEXTBOOK_MISSING,
 		StoryFlags.EXPECTATION_PLAYED, StoryFlags.BELL_RUNG, StoryFlags.N_ARRIVED,
-		StoryFlags.CLASS_DISMISSED, StoryFlags.LEFT_CLASSROOM,
+		StoryFlags.CLASS_DISMISSED, StoryFlags.LEFT_CLASSROOM, StoryFlags.LEFT_SCHOOL,
+		StoryFlags.STREET_ARRIVED, StoryFlags.RESIDENTIAL_ARRIVED, StoryFlags.ANIMAL_SEEN,
 	]:
 		if bool(_game_state.get_flag(flag, false)):
 			raised.append(String(flag))

@@ -25,6 +25,8 @@ extends Node
 
 const CLASSROOM_SCENE := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR_SCENE := "res://scenes/locations/corridor/corridor.tscn"
+const STREET_SCENE := "res://scenes/locations/street/street.tscn"
+const RESIDENTIAL_SCENE := "res://scenes/locations/residential/residential.tscn"
 const CLASSROOM_START := &"PlayerStart"
 const CORRIDOR_START := &"FromClassroom"
 
@@ -58,6 +60,11 @@ func _ready() -> void:
 	_game_state().story_flag_changed.connect(_on_story_flag_changed)
 	_interaction.activation_requested.connect(_on_activation_requested)
 	_interaction.target_changed.connect(_on_target_changed)
+
+	var loc := get_node_or_null(^"/root/Loc")
+	if loc != null:
+		loc.locale_changed.connect(_on_locale_changed)
+	_dialogue.locale_applied.connect(_on_locale_changed)
 
 	_ui.fade.set_opaque()
 	_player.set_wake_pose(1.0)
@@ -121,7 +128,7 @@ func _run_opening() -> void:
 	await get_tree().create_timer(0.4).timeout
 	_control_allowed = true
 	_sync_player_locks()
-	_hud.set_objective("Get your bearings. The lesson has not started.")
+	_hud.set_objective("objective.get_bearings")
 
 	# Beat B: Q starts talking without being asked.
 	await get_tree().create_timer(0.9).timeout
@@ -146,16 +153,10 @@ func _run_opening() -> void:
 
 func _beat_expectation() -> void:
 	await _begin_beat()
-	_ui.overlay.show_overlay(
-		"WHAT YOU EXPECT",
-		"Nothing in this has happened. It is what you imagine."
-	)
+	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
 	await get_tree().create_timer(0.7).timeout
 	await _play_conversation(&"expected_b")
-	_ui.overlay.show_overlay(
-		"THAT HAS NOT HAPPENED",
-		"The bell has not rung. Nobody has come in."
-	)
+	_ui.overlay.show_localized_overlay("overlay.deny_title", "overlay.deny_body")
 	await get_tree().create_timer(EXPECTATION_DISCLAIMER_SECONDS).timeout
 	await _ui.overlay.hide_overlay()
 	_game_state().set_flag(StoryFlags.EXPECTATION_PLAYED, true)
@@ -169,7 +170,7 @@ func _beat_bell() -> void:
 		return
 	_game_state().set_flag(StoryFlags.BELL_RUNG, true)
 	_bell_audio.play()
-	_hud.set_objective("Second bell. The lesson is starting.")
+	_hud.set_objective("objective.bell")
 	await get_tree().create_timer(1.0).timeout
 	await _play_conversation(&"bell_moment")
 	_end_beat()
@@ -255,7 +256,7 @@ func _on_target_changed(interactable: Interactable) -> void:
 	if _dialogue.is_busy() or _beat_active or _slice_finished:
 		_hud.clear_prompt()
 		return
-	_hud.set_prompt(interactable)
+	_hud.set_prompt_text(_dialogue.get_interact_prompt(interactable))
 
 
 func _handle_exit(exit: LocationExit) -> void:
@@ -272,27 +273,61 @@ func _handle_exit(exit: LocationExit) -> void:
 
 
 func _transition_to(exit: LocationExit) -> void:
+	# Loading the next location frees this one, and `exit` with it, so everything
+	# the transition needs afterwards is copied first.
+	var destination_scene := exit.destination_scene
+	var destination_spawn := exit.destination_spawn
+	var destination_id := exit.destination_id
+	var exit_id := exit.interact_id
 	await _begin_beat()
 	await _ui.fade.fade_to_black(0.7)
-	var loaded := _locations.load_location(exit.destination_scene, exit.destination_spawn, _player)
+	var loaded := _locations.load_location(destination_scene, destination_spawn, _player)
 	if not loaded:
 		push_error(
-			"OpeningSequence: could not enter '%s' from exit '%s'."
-			% [exit.destination_scene, exit.interact_id]
+			"OpeningSequence: could not enter '%s' from exit '%s'." % [destination_scene, exit_id]
 		)
 		await _ui.fade.fade_from_black(0.5)
 		_end_beat()
 		return
 
-	if not String(exit.destination_id).is_empty():
-		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, exit.destination_id)
-	if exit.destination_id == &"corridor":
+	if not String(destination_id).is_empty():
+		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	if destination_id == &"corridor":
 		_game_state().set_flag(StoryFlags.LEFT_CLASSROOM, true)
-		_hud.set_objective("Get out of the building.")
+		_hud.set_objective("objective.leave_classroom")
+	elif destination_id == &"street":
+		_game_state().set_flag(StoryFlags.LEFT_SCHOOL, true)
+		_hud.set_objective("objective.outside")
+	elif destination_id == &"residential":
+		_hud.set_objective("objective.residential")
 	_hud.clear_prompt()
 	_update_exit_prompt()
 	await get_tree().create_timer(0.3).timeout
 	await _ui.fade.fade_from_black(0.9)
+	# The arrival line plays after the transition beat releases the lock, otherwise
+	# the beat that plays the conversation would wait for itself.
+	_end_beat()
+	await _play_arrival_beat(destination_id)
+
+
+## One short conversation the first time the player reaches an outdoor location.
+## Outside the school nothing hands out a task: the beat only says where you are.
+func _play_arrival_beat(destination_id: StringName) -> void:
+	var conversation := &""
+	var flag := &""
+	match String(destination_id):
+		"street":
+			conversation = &"street_arrival"
+			flag = StoryFlags.STREET_ARRIVED
+		"residential":
+			conversation = &"residential_arrival"
+			flag = StoryFlags.RESIDENTIAL_ARRIVED
+		_:
+			return
+	if _has_flag(flag) or String(conversation).is_empty():
+		return
+	await _begin_beat()
+	await _play_conversation(conversation)
 	_end_beat()
 
 
@@ -300,11 +335,16 @@ func _finish_slice(exit: LocationExit) -> void:
 	_slice_finished = true
 	_sync_player_locks()
 	await _ui.fade.fade_to_black(1.0)
-	_ui.end_card.present(
-		exit.end_card_title,
-		exit.end_card_body,
-		"End of the implemented slice."
-	)
+	var title := exit.end_card_title
+	var body := exit.end_card_body
+	if not exit.end_card_key.is_empty():
+		var title_key := "%s.title" % exit.end_card_key
+		var body_key := "%s.body" % exit.end_card_key
+		if L10n.has_key(title_key):
+			title = L10n.t(title_key)
+		if L10n.has_key(body_key):
+			body = L10n.t(body_key)
+	_ui.end_card.present(title, body, L10n.t("ui.end_hint"))
 
 
 # --- Presentation plumbing --------------------------------------------------
@@ -326,6 +366,10 @@ func _begin_beat() -> void:
 func _end_beat() -> void:
 	_beat_active = false
 	_sync_player_locks()
+	# Locking the player clears the prompt; unlocking has to put it back, because
+	# the target itself may not change again for a while.
+	if _interaction != null and _hud != null and not _slice_finished:
+		_on_target_changed(_interaction.get_current_target())
 
 
 func _on_presentation_active_changed(_active: bool) -> void:
@@ -342,8 +386,16 @@ func _sync_player_locks() -> void:
 		_hud.clear_prompt()
 
 
+## A language switch re-renders whatever is on screen (the dialogue controller does
+## that) and re-resolves the contextual prompt, which is owned here.
+func _on_locale_changed(_locale: String) -> void:
+	if _interaction == null or _hud == null:
+		return
+	_on_target_changed(_interaction.get_current_target())
+
+
 func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant) -> void:
-	if flag == StoryFlags.OBJECTIVE_TEXT:
+	if flag == StoryFlags.OBJECTIVE_KEY:
 		_hud.set_objective(String(value))
 	elif flag == StoryFlags.CLASS_DISMISSED:
 		_update_exit_prompt()
@@ -357,7 +409,7 @@ func _update_exit_prompt() -> void:
 			continue
 		if exit.destination_id == &"corridor":
 			if dismissed:
-				exit.set_prompt("Leave the classroom")
+				exit.set_prompt("prompt.door_leave")
 			else:
 				exit.clear_prompt_override()
 

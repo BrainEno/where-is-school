@@ -11,6 +11,7 @@ run/main_scene="res://scenes/main/main.tscn"
 
 GameState="*res://scripts/autoload/game_state.gd"
 NarrativeState="*res://scripts/autoload/narrative_state.gd"
+Loc="*res://scripts/i18n/loc.gd"
 
 [display]
 
@@ -53,6 +54,14 @@ cancel={
 "deadzone": 0.2,
 "events": [Object(InputEventKey, "physical_keycode": 4194305)]
 }
+toggle_language={
+"deadzone": 0.2,
+"events": [Object(InputEventKey, "physical_keycode": 76)]
+}
+
+[gui]
+
+theme/custom="res://assets/ui/app_theme.tres"
 
 [physics]
 

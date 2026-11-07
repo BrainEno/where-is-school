@@ -1,4 +1,6 @@
 {
+  "format_version": 1,
+  "locale": "en",
   "corridor_noticeboard": {
     "title": "Noticeboard",
     "prompt": "Read the noticeboard",

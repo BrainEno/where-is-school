@@ -11,3 +11,12 @@ extends CanvasLayer
 @onready var end_card: EndCard = %EndCard
 @onready var dialogue_panel: DialoguePanel = %DialoguePanel
 @onready var backlog: BacklogPanel = %BacklogPanel
+
+
+func _ready() -> void:
+	dialogue_panel.visibility_changed.connect(_on_dialogue_visibility_changed)
+	hud.set_dialogue_open(dialogue_panel.visible)
+
+
+func _on_dialogue_visibility_changed() -> void:
+	hud.set_dialogue_open(dialogue_panel.visible)

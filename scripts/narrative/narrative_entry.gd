@@ -29,11 +29,13 @@ const SOURCE_IDS: Dictionary = {
 	"imagined": Source.IMAGINED,
 }
 
-const SOURCE_LABELS: Dictionary = {
-	Source.OBSERVED: "SEEN",
-	Source.REPORTED: "HEARD",
-	Source.RECALLED: "REMEMBERED",
-	Source.IMAGINED: "IMAGINED",
+## Locale keys for the badge shown next to a speaker. The interface translates
+## them, so the four categories read the same way in every language.
+const SOURCE_LABEL_KEYS: Dictionary = {
+	Source.OBSERVED: "badge.observed",
+	Source.REPORTED: "badge.reported",
+	Source.RECALLED: "badge.recalled",
+	Source.IMAGINED: "badge.imagined",
 }
 
 var entry_id: StringName = &""
@@ -69,8 +71,9 @@ static func source_to_id(value: int) -> String:
 	return ""
 
 
-static func badge_for(value: int) -> String:
-	return String(SOURCE_LABELS.get(value, "NOTE"))
+## Locale key of the badge, e.g. "badge.imagined". Callers translate it.
+static func badge_key_for(value: int) -> String:
+	return String(SOURCE_LABEL_KEYS.get(value, "badge.observed"))
 
 
 func get_source_name() -> String:
