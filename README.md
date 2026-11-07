@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**First playable milestone: the biology-class prologue.** The project launches into the opening classroom, where the player can wake up, talk to Q, search the schoolbag, inspect the room, experience an expectation that is explicitly not a real event, sit through the substitute's lesson, and leave for the walkway. The street route and the green-animal observation are the next milestone and are not implemented.
+**Second milestone: from the classroom to the green animal.** The player wakes in the biology classroom, talks to Q, searches the schoolbag, inspects the room, lives through an expectation that is explicitly not a real event, sits through the substitute's lesson, leaves for the walkway, and walks out into a street and a residential courtyard where the green animal is standing. The slice ends after that first meeting. Everything the player reads is data, and the whole game can be switched between English and simplified Chinese while it runs.
 
 See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for controls, architecture, and known limitations.
 
@@ -25,12 +25,14 @@ See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md)
 - **Space / Enter / left click** — continue dialogue, or answer with the numbered choice.
 - **1–9** — pick a dialogue choice.
 - **Tab** — open or close the dialogue log.
+- **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
 
 ## Repository map
 
 - AGENTS.md — authoritative coding-agent instructions.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
-- data/ — dialogue, inspection text, and character presentation data (content, not code).
+- data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
+- docs/screenshots/ — frames captured from a real, running window by `tests/capture_playthrough.gd`.
 - assets/ — placeholder materials and generated audio, tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
