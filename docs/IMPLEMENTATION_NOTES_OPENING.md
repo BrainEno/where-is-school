@@ -256,7 +256,9 @@ window under Xvfb (`--rendering-driver opengl3`, 1600×900, Dummy audio) using
 simulated keys and some teleports. The runner has no audio device; this does not
 test the game's audio. The workflow now saves status, logs and any frames to an
 isolated artifact, never commits them, and fails on an import, capture or
-completeness error. It is not a human playtest. Historical images already in
+completeness error. Its `injected-failures/` folder also retains the status,
+logs and partial frames from the deliberate failure-path tests, separately from
+the normal capture. It is not a human playtest. Historical images already in
 `docs/screenshots/` predate the playground and are not evidence for this slice.
 `tests/capture_playthrough.gd` waits for the typewriter reveal before a frame.
 

@@ -56,7 +56,8 @@ jobs:
         shell: bash
         run: |
           log="$RUNNER_TEMP/playthrough-evidence/ci-tests.log"
-          if python3 tests/test_capture_ci.py --real-failures > "$log" 2>&1; then
+          if CAPTURE_TEST_EVIDENCE_DIR="$RUNNER_TEMP/playthrough-evidence/injected-failures" \
+            python3 tests/test_capture_ci.py --real-failures > "$log" 2>&1; then
             cat "$log"
             echo "::notice title=Capture failure-path tests::Simulated paths and real-engine failure injections passed"
           else
@@ -74,15 +75,28 @@ jobs:
 
       # Temporary review aid: removed after inspecting these isolated thumbnails.
       - name: Emit review thumbnails
+        shell: bash
         run: |
           set -euo pipefail
-          for frame in 20_estate_exit 21_playground 23_active_result 24_active_choices_chinese 20_end_card; do
-            convert "$RUNNER_TEMP/playthrough-evidence/frames/$frame.png" -resize 960x540 -quality 40 "$RUNNER_TEMP/review.jpg"
-            if [ "$(wc -c < "$RUNNER_TEMP/review.jpg")" -gt 45000 ]; then
-              convert "$RUNNER_TEMP/playthrough-evidence/frames/$frame.png" -resize 640x360 -quality 35 "$RUNNER_TEMP/review.jpg"
-            fi
-            printf '::notice title=REVIEW_%s::%s\n' "$frame" "$(base64 -w0 "$RUNNER_TEMP/review.jpg")"
-          done
+          python3 -m venv "$RUNNER_TEMP/review-env"
+          "$RUNNER_TEMP/review-env/bin/python" -m pip install --quiet Pillow==11.3.0
+          "$RUNNER_TEMP/review-env/bin/python" - "$RUNNER_TEMP/playthrough-evidence/frames" <<'PY'
+          import base64, io, sys
+          from pathlib import Path
+          from PIL import Image
+          for name in ("20_estate_exit", "21_playground", "23_active_result", "24_active_choices_chinese", "20_end_card"):
+              image = Image.open(Path(sys.argv[1]) / (name + ".png")).convert("RGB")
+              image.thumbnail((960, 540))
+              output = io.BytesIO()
+              image.save(output, "JPEG", quality=40, optimize=True)
+              if output.tell() > 45000:
+                  image.thumbnail((640, 360))
+                  output = io.BytesIO()
+                  image.save(output, "JPEG", quality=35, optimize=True)
+              if output.tell() > 45000:
+                  raise RuntimeError("Review thumbnail too large")
+              print("::notice title=REVIEW_%s::%s" % (name, base64.b64encode(output.getvalue()).decode()))
+          PY
       - name: Upload status, logs and any frames
         if: always()
         uses: actions/upload-artifact@v4

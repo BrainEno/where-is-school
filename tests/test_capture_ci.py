@@ -32,11 +32,12 @@ mkdir -p "$CAPTURE_DIR"
 printf partial > "$CAPTURE_DIR/partial.png"
 if [[ ${MODE} == capture_fail ]]; then echo "deliberate capture failure"; exit 32; fi
 python3 - "$CAPTURE_DIR/_fixture.png" <<'FRAME'
-import struct, sys, zlib
+import os, struct, sys, zlib
 def chunk(kind, data):
     return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
 header = struct.pack(">IIBBBBB", 1600, 900, 8, 0, 0, 0, 0)
-scanlines = (b"\x00" + bytes(1600)) * 900
+filter_byte = b"\x05" if os.environ["MODE"] == "invalid_filter" else b"\x00"
+scanlines = (filter_byte + bytes(1600)) * 900
 with open(sys.argv[1], "wb") as f:
     f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(scanlines)) + chunk(b"IEND", b""))
 FRAME
@@ -70,6 +71,15 @@ class CapturePipelineTest(unittest.TestCase):
         self.prior.write_bytes(b"prior reviewed evidence")
 
     def tearDown(self):
+        # Keep the exercised wrappers' own status and logs in the CI artifact,
+        # including failures and partial frames; never copy into tracked evidence.
+        archive_root = os.environ.get("CAPTURE_TEST_EVIDENCE_DIR")
+        if archive_root:
+            for evidence in self.dir.iterdir():
+                if evidence.is_dir() and (evidence / "status.json").is_file():
+                    destination = Path(archive_root) / self._testMethodName / evidence.name
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(evidence, destination)
         self.tmp.cleanup()
 
     def _write_exec(self, name, text):
@@ -113,13 +123,15 @@ class CapturePipelineTest(unittest.TestCase):
         self.assertIn("deliberate capture failure", (self.evidence / "capture.log").read_text())
 
     def test_incomplete_or_unmarked_output_fails_even_with_zero_exit(self):
-        for mode in ("incomplete", "missing_marker", "corrupt"):
+        for mode in ("incomplete", "missing_marker", "corrupt", "invalid_filter"):
             with self.subTest(mode=mode):
                 self.evidence = self.dir / mode
                 process, status = self.run_pipeline(mode)
                 self.assertNotEqual(process.returncode, 0)
                 self.assertEqual((status["result"], status["stage"]), ("failure", "incomplete"))
                 self.assertTrue((self.evidence / "frames/partial.png").exists())
+                if mode == "invalid_filter":
+                    self.assertIn("invalid PNG scanline filter", (self.evidence / "validation.log").read_text())
 
     def test_logged_errors_with_zero_exit_are_failures(self):
         for mode, stage in (("import_error_zero", "import"), ("capture_error_zero", "capture")):

@@ -34,10 +34,12 @@ def validate(path: Path):
         if zlib.crc32(kind + payload) & 0xFFFFFFFF != crc:
             raise ValueError("PNG chunk CRC mismatch")
         if kind == b"IHDR":
-            if dimensions is not None or length != 13:
+            if dimensions is not None or length != 13 or position != len(SIGNATURE):
                 raise ValueError("invalid IHDR")
             dimensions = struct.unpack(">IIBBBBB", payload)
         elif kind == b"IDAT":
+            if dimensions is None:
+                raise ValueError("PNG data before IHDR")
             image_data.extend(payload)
         elif kind == b"IEND":
             ended = True
@@ -51,7 +53,9 @@ def validate(path: Path):
     if (width, height) != (1600, 900):
         raise ValueError(f"unexpected size {width}x{height}, expected 1600x900")
     channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}.get(color_type)
-    if channels is None or bit_depth not in (1, 2, 4, 8, 16) or compression or filtering or interlace:
+    valid_depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8),
+                    4: (8, 16), 6: (8, 16)}
+    if channels is None or bit_depth not in valid_depths[color_type] or compression or filtering or interlace:
         raise ValueError("unsupported PNG layout")
     row_bytes = (width * channels * bit_depth + 7) // 8
     expected = (row_bytes + 1) * height
@@ -59,6 +63,8 @@ def validate(path: Path):
     decoded = decoder.decompress(bytes(image_data), expected + 1)
     if len(decoded) != expected or not decoder.eof or decoder.unused_data:
         raise ValueError("incomplete PNG scanlines")
+    if any(decoded[row * (row_bytes + 1)] > 4 for row in range(height)):
+        raise ValueError("invalid PNG scanline filter")
 
 
 def main():
