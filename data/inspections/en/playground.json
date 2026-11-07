@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "pg_hoop": {
+    "title": "The hoop",
+    "prompt": "Look at the hoop",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A hoop on a pole, no net, and a backboard that was repainted and then rained on. The line of the court runs under the pole rather than meeting it.",
+    "repeat_text": "The hoop, the pole, the line running underneath.",
+    "record": {
+      "entry_id": "saw_pg_hoop",
+      "source": "observed",
+      "text": "The painted court line runs under the near hoop's pole instead of meeting it."
+    }
+  },
+  "pg_bench": {
+    "title": "The bench",
+    "prompt": "Look at the bench",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A bench with a sports bag on it, zipped, handles up. The seat is wet and the bag is not, except on top.",
+    "repeat_text": "The bench, the bag, the wet seat.",
+    "record": {
+      "entry_id": "saw_pg_bench",
+      "source": "observed",
+      "text": "A zipped sports bag has been left on the bench in the yard, set square, handles up."
+    }
+  },
+  "pg_frame": {
+    "title": "The climbing frame",
+    "prompt": "Look at the climbing frame",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A frame of four rungs and a top bar. The paint is new except on the third rung and the top bar, where hands have been.",
+    "repeat_text": "Four rungs, a top bar, two worn places.",
+    "record": {
+      "entry_id": "saw_pg_frame",
+      "source": "observed",
+      "text": "The climbing frame in the yard has been repainted everywhere except where hands go."
+    }
+  },
+  "pg_court": {
+    "title": "The court",
+    "prompt": "Look at the court",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two hoops, a centre line, and a key painted at each end. The paint at the far end is a shade darker, as if that half was done a year later.",
+    "repeat_text": "Two hoops, two keys, two shades of paint.",
+    "record": {
+      "entry_id": "saw_pg_court",
+      "source": "observed",
+      "text": "The two halves of the yard court were painted at different times."
+    }
+  }
+}

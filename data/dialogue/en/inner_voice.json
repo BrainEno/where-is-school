@@ -1,0 +1,192 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "inner_voice",
+  "conversations": {
+    "voice_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vn_1",
+      "nodes": [
+        {
+          "id": "vn_1",
+          "speaker": "voice_ledger",
+          "text": "Dates. There are dates on that wall.",
+          "check": {
+            "ability": "ledger",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "vn_ok",
+            "failure": "vn_bad"
+          }
+        },
+        {
+          "id": "vn_ok",
+          "speaker": "voice_ledger",
+          "text": "The notices are not in order. One from March is stapled over one from June, and the June one is still dry.",
+          "next": null
+        },
+        {
+          "id": "vn_bad",
+          "speaker": "voice_ledger",
+          "text": "Three notices, three dates, going down. It adds up.",
+          "next": "vn_bad_2"
+        },
+        {
+          "id": "vn_bad_2",
+          "speaker": "protagonist",
+          "text": "It adds up to nothing. The bottom notice is upside down, and someone has written a time on the back of it in a different pen.",
+          "next": null
+        }
+      ]
+    },
+    "voice_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "va_1",
+      "nodes": [
+        {
+          "id": "va_1",
+          "speaker": "voice_echo",
+          "text": "This one. This yard. I know this one.",
+          "check": {
+            "ability": "echo",
+            "difficulty": 11,
+            "kind": "hidden",
+            "success": "va_ok",
+            "failure": "va_bad"
+          }
+        },
+        {
+          "id": "va_ok",
+          "speaker": "voice_echo",
+          "text": "The court, the shed, the gate at the far end. It fits the way a room fits a photograph of it. I cannot find the day.",
+          "next": null
+        },
+        {
+          "id": "va_bad",
+          "speaker": "voice_echo",
+          "text": "In the evening. You were here in the evening, with someone, and the light was going.",
+          "next": "va_bad_2"
+        },
+        {
+          "id": "va_bad_2",
+          "speaker": "protagonist",
+          "text": "You cannot find the evening. The yard is empty and the light is going now, and the whole shape of the place still feels borrowed.",
+          "next": null
+        }
+      ]
+    },
+    "voice_hoop": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vh_1",
+      "nodes": [
+        {
+          "id": "vh_1",
+          "speaker": "voice_boundary",
+          "text": "Let me look at that.",
+          "check": {
+            "ability": "boundary",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "vh_ok",
+            "failure": "vh_bad"
+          }
+        },
+        {
+          "id": "vh_ok",
+          "speaker": "voice_boundary",
+          "text": "The hoop is low, and its pole stands in concrete that is newer than the yard. The old holes are still there, filled and painted over. This hoop has been moved.",
+          "next": null
+        },
+        {
+          "id": "vh_bad",
+          "speaker": "voice_boundary",
+          "text": "The hoop is at the height a hoop is. There will be a rule about it.",
+          "next": "vh_bad_2"
+        },
+        {
+          "id": "vh_bad_2",
+          "speaker": "protagonist",
+          "text": "You do not know the rule. The pole is set in a patch of concrete that is a different colour from the rest of the yard, and the net is newer than the rim.",
+          "next": null
+        }
+      ]
+    },
+    "voice_bench": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vb_1",
+      "nodes": [
+        {
+          "id": "vb_1",
+          "speaker": "voice_onlooker",
+          "text": "Someone left that.",
+          "check": {
+            "ability": "onlooker",
+            "difficulty": 10,
+            "kind": "hidden",
+            "success": "vb_ok",
+            "failure": "vb_bad"
+          }
+        },
+        {
+          "id": "vb_ok",
+          "speaker": "voice_onlooker",
+          "text": "Zipped shut, set square on the seat, handles up. Whoever left it put it where the gate could see it. That is not how you leave something you are coming back for.",
+          "next": null
+        },
+        {
+          "id": "vb_bad",
+          "speaker": "voice_onlooker",
+          "text": "They will be back in a minute. People always come back for a bag.",
+          "next": "vb_bad_2"
+        },
+        {
+          "id": "vb_bad_2",
+          "speaker": "protagonist",
+          "text": "The bench has been rained on since. The bag is wet on top and dry underneath, so it has not been moved, and it has been here longer than a minute.",
+          "next": null
+        }
+      ]
+    },
+    "voice_frame": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vf_1",
+      "nodes": [
+        {
+          "id": "vf_1",
+          "speaker": "voice_echo",
+          "text": "You have climbed this before.",
+          "check": {
+            "ability": "echo",
+            "difficulty": 10,
+            "kind": "hidden",
+            "success": "vf_ok",
+            "failure": "vf_bad"
+          }
+        },
+        {
+          "id": "vf_ok",
+          "speaker": "voice_echo",
+          "text": "The third rung gives a little, and the top bar is worn where hands go. You have climbed this before, in a yard with a different wall behind it.",
+          "next": null
+        },
+        {
+          "id": "vf_bad",
+          "speaker": "voice_echo",
+          "text": "This is the frame from the yard by the river. Same paint, same bend in the top bar.",
+          "next": "vf_bad_2"
+        },
+        {
+          "id": "vf_bad_2",
+          "speaker": "protagonist",
+          "text": "There is no river here. You remember the bend, though, and you cannot say from where, and that is worse than not remembering it at all.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

@@ -110,6 +110,7 @@ static func _compare_node(
 		problems.append("%s: jump target differs between languages." % node_label)
 	if reference.tags != other.tags:
 		problems.append("%s: tags differ between languages." % node_label)
+	_compare_check(reference.check, other.check, node_label, problems)
 
 	_compare_effects(reference.effects, other.effects, node_label, problems)
 	_compare_conditions(
@@ -157,6 +158,51 @@ static func _compare_node(
 			choice_label,
 			problems
 		)
+
+
+## A check is behaviour: which voice, how hard, and what happens either way. Only
+## the prose around it may be translated.
+static func _compare_check(
+	reference: Dictionary, other: Dictionary, node_label: String, problems: Array[String]
+) -> void:
+	if reference.is_empty() != other.is_empty():
+		problems.append("%s: one language has a check here and the other does not." % node_label)
+		return
+	if reference.is_empty():
+		return
+	for field: String in ["ability", "difficulty", "kind", "success", "failure", "repeatable"]:
+		if str(reference.get(field, "<none>")) != str(other.get(field, "<none>")):
+			problems.append(
+				"%s: check field '%s' is '%s' but should be '%s'."
+				% [
+					node_label,
+					field,
+					str(other.get(field, "<none>")),
+					str(reference.get(field, "<none>")),
+				]
+			)
+	var reference_modifiers: Array = reference.get("modifiers", [])
+	var other_modifiers: Array = other.get("modifiers", [])
+	if _describe_modifiers(reference_modifiers) != _describe_modifiers(other_modifiers):
+		problems.append(
+			"%s: check modifiers differ between languages (%s vs %s)."
+			% [
+				node_label,
+				_describe_modifiers(other_modifiers),
+				_describe_modifiers(reference_modifiers),
+			]
+		)
+
+
+static func _describe_modifiers(modifiers: Array) -> String:
+	if modifiers.is_empty():
+		return "none"
+	var parts := PackedStringArray()
+	for entry: Variant in modifiers:
+		if entry is Dictionary:
+			var data: Dictionary = entry
+			parts.append("%s=%d" % [String(data.get("flag", "")), int(data.get("value", 0))])
+	return ", ".join(parts)
 
 
 ## The same condition block is used by nodes and by choices, so it is compared in

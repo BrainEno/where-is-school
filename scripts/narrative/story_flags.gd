@@ -31,6 +31,12 @@ const STREET_ARRIVED: StringName = &"street_arrived"
 const RESIDENTIAL_ARRIVED: StringName = &"residential_arrived"
 ## bool: the green animal has been seen at least once.
 const ANIMAL_SEEN: StringName = &"animal_seen"
+## bool: the player has walked from the residential courtyard into the alley.
+const ALLEY_ARRIVED: StringName = &"alley_arrived"
+## bool: the player has reached the open playground.
+const PLAYGROUND_ARRIVED: StringName = &"playground_arrived"
+## bool: one of the playground checks has been attempted at least once.
+const PLAYGROUND_CHECKED: StringName = &"playground_checked"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -92,6 +98,9 @@ const ALL_FLAGS: Array[StringName] = [
 	NOTICED_N_SUBSTITUTE,
 	OBJECTIVE_KEY,
 	CURRENT_LOCATION,
+	# Outdoor beats.
+	ALLEY_ARRIVED,
+	PLAYGROUND_ARRIVED,
 ]
 
 
@@ -105,3 +114,20 @@ static func choice_flag(conversation_id: StringName, choice_id: StringName) -> S
 ## repeat behaviour stay consistent across visits.
 static func inspection_seen_flag(inspection_id: StringName) -> StringName:
 	return StringName("seen:%s" % String(inspection_id))
+
+
+## Flag that keeps the result of one dialogue check, as a Dictionary. Storing the
+## whole result (die, total, branch) is what stops a check from being re-rolled by
+## walking back into the same node: the recorded outcome is replayed instead.
+static func check_record_flag(conversation_id: StringName, node_id: StringName) -> StringName:
+	return StringName("check:%s:%s" % [String(conversation_id), String(node_id)])
+
+
+## Flag that marks a passive inner-voice rule as spent. `once` rules use it.
+static func passive_fired_flag(rule_id: StringName) -> StringName:
+	return StringName("voice:%s" % String(rule_id))
+
+
+## Counter flag: how many times one inner voice has spoken unprompted this session.
+static func passive_count_flag(ability_id: StringName) -> StringName:
+	return StringName("voice_count:%s" % String(ability_id))

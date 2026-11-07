@@ -1,0 +1,438 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "playground",
+  "conversations": {
+    "playground_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pa_1",
+      "nodes": [
+        {
+          "id": "pa_1",
+          "speaker": "protagonist",
+          "text": "一片空地上画着球场，一个攀爬架，一张长椅，旁边一间小屋。你进来的那道门在身后。"
+        },
+        {
+          "id": "pa_2",
+          "speaker": "protagonist",
+          "text": "这里没有人，也没有什么东西要求你站在哪一个位置上。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你走到了小区后面的空地：一个两头有篮筐的球场、一间小屋、一张长椅、一个攀爬架。"
+            }
+          ]
+        },
+        {
+          "id": "pa_3",
+          "speaker": "protagonist",
+          "text": "小屋后面的栅栏上开着一个口子，口子那边的地和场子是同一种水泥。",
+          "next": null
+        }
+      ]
+    },
+    "pg_shed": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ps_1",
+      "nodes": [
+        {
+          "id": "ps_1",
+          "speaker": "protagonist",
+          "text": "器材室是一扇绿门，一个搭扣，搭扣上挂着锁。窗子里面贴着的那张表朝外。"
+        },
+        {
+          "id": "ps_2",
+          "speaker": "protagonist",
+          "text": "你可以把手按在门上。你可以读那张表。你也可以就这样走开。",
+          "choices": [
+            {
+              "id": "frame",
+              "text": "照着门框试这扇门。",
+              "next": "ps_boundary_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_shed/ps_boundary_check"
+                ]
+              }
+            },
+            {
+              "id": "count",
+              "text": "读窗子里的那张表。",
+              "next": "ps_ledger_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_shed/ps_ledger_check"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "就让它锁着。",
+              "next": "ps_leave"
+            }
+          ]
+        },
+        {
+          "id": "ps_boundary_check",
+          "speaker": "voice_boundary",
+          "text": "让我摸摸它怎么合。",
+          "check": {
+            "ability": "boundary",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "ps_boundary_ok",
+            "failure": "ps_boundary_bad"
+          }
+        },
+        {
+          "id": "ps_boundary_ok",
+          "speaker": "voice_boundary",
+          "text": "门没有涨。是这边门框比门宽——合页这一侧宽出来的。有人从框里取走了什么，没再放回去。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_open",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shed_open",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "器材室的门能被推进去：锁扣在空气里，搭扣没有钉住任何东西。"
+            }
+          ],
+          "next": "ps_inside"
+        },
+        {
+          "id": "ps_inside",
+          "speaker": "protagonist",
+          "text": "椅子摞到天花板，一卷绳，三个打坏的羽毛球。最高那把椅子底下贴着胶带，写着名字——坐着的人看不见那里。",
+          "next": "ps_inside_2"
+        },
+        {
+          "id": "ps_inside_2",
+          "speaker": "protagonist",
+          "text": "从门口读不出来。要读就得挪开这一摞，而这一摞是整间屋子唯一撑着这一摞的东西。",
+          "next": null
+        },
+        {
+          "id": "ps_boundary_bad",
+          "speaker": "voice_boundary",
+          "text": "两指，也许三指。框比门宽。那道缝不该在那儿。",
+          "next": "ps_boundary_bad_2"
+        },
+        {
+          "id": "ps_boundary_bad_2",
+          "speaker": "protagonist",
+          "text": "门没有动。门底下透光，搭扣后面的漆是干净的，像那个搭扣有很长一段时间钉在别的地方。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_looked",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shed_looked",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "器材室的门关不严。搭扣后面的漆是干净的，搭扣钉得歪。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_ledger_check",
+          "speaker": "voice_ledger",
+          "text": "行数。把行数给我。",
+          "check": {
+            "ability": "ledger",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "ps_ledger_ok",
+            "failure": "ps_ledger_bad"
+          }
+        },
+        {
+          "id": "ps_ledger_ok",
+          "speaker": "voice_ledger",
+          "text": "九节。字越往下越小。最后两行是同一天写了两次，第二次的日期是下星期。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_rota_read",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_rota_read",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "器材室窗里的值日表把同一天列了两次，第二张的日期是下星期。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_ledger_bad",
+          "speaker": "voice_ledger",
+          "text": "九。九行，九节。行数就是九。",
+          "next": "ps_ledger_bad_2"
+        },
+        {
+          "id": "ps_ledger_bad_2",
+          "speaker": "protagonist",
+          "text": "你再数一遍，是八行。雨把两行泡在了一起。有一个姓还认得出来，就是巷子口墙上用粉笔写的那个姓。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_rota_smudged",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_rota_smudged",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "值日表被雨泡过。上面有一个姓，和巷口墙上的粉笔字一样。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_leave",
+          "speaker": "protagonist",
+          "text": "你让锁继续挂着。身后的近篮没有网，远篮有。",
+          "next": null
+        }
+      ]
+    },
+    "pg_ball": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pb_1",
+      "nodes": [
+        {
+          "id": "pb_1",
+          "speaker": "protagonist",
+          "text": "一个乒乓球卡在小屋基座和水泥地之间。它后面的树篱底下有一块发白的东西，扁的。"
+        },
+        {
+          "id": "pb_2",
+          "speaker": "protagonist",
+          "text": "那道缝比球深。",
+          "choices": [
+            {
+              "id": "reach",
+              "text": "把手伸进缝里。",
+              "next": "pb_boundary_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_ball/pb_boundary_check"
+                ]
+              }
+            },
+            {
+              "id": "shadow",
+              "text": "拿影子去量。",
+              "next": "pb_ledger_check",
+              "conditions": {
+                "not_flags": [
+                  "check:pg_ball/pb_ledger_check"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "不管它。",
+              "next": "pb_leave"
+            }
+          ]
+        },
+        {
+          "id": "pb_boundary_check",
+          "speaker": "voice_boundary",
+          "text": "先伸手指。我告诉你后面在哪儿。",
+          "check": {
+            "ability": "boundary",
+            "difficulty": 12,
+            "kind": "visible",
+            "success": "pb_boundary_ok",
+            "failure": "pb_boundary_bad"
+          }
+        },
+        {
+          "id": "pb_boundary_ok",
+          "speaker": "voice_boundary",
+          "text": "一掌深，然后水泥，然后一道边。球后面有台面，台面上的东西不是圆的。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_tag_found",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_tag_found",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "球后面、小屋底下的台面上，有一块扁金属牌，一头有个孔。"
+            }
+          ],
+          "next": "pb_tag"
+        },
+        {
+          "id": "pb_tag",
+          "speaker": "protagonist",
+          "text": "金属牌一面冰凉空白。另一面压着四位数字，数字里的漆和小屋的门是同一种绿。",
+          "next": null
+        },
+        {
+          "id": "pb_boundary_bad",
+          "speaker": "voice_boundary",
+          "text": "后面没有东西。一掌深，然后就合上了。",
+          "next": "pb_boundary_bad_2"
+        },
+        {
+          "id": "pb_boundary_bad_2",
+          "speaker": "protagonist",
+          "text": "指节擦破了，球动了一下又停住。树篱下那块发白的东西根本不在球后面，它更靠外，是一根棍上的一道白漆。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_ball_stuck",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_ball_stuck",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "球还卡着。小屋有两个基座，缝只在一边。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_ledger_check",
+          "speaker": "voice_ledger",
+          "text": "先算影子。影子比指节便宜。",
+          "check": {
+            "ability": "ledger",
+            "difficulty": 8,
+            "kind": "visible",
+            "success": "pb_ledger_ok",
+            "failure": "pb_ledger_bad"
+          }
+        },
+        {
+          "id": "pb_ledger_ok",
+          "speaker": "voice_ledger",
+          "text": "影子比缝长。树篱底下那东西比球离你更近，而且不是球该有的形状。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shadow_measured",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_shadow_measured",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "树篱下那块发白的东西比卡住的球更靠前，所以它不是球的影子。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_ledger_bad",
+          "speaker": "voice_ledger",
+          "text": "一条缝，一个球，一片影子。对得上。",
+          "next": "pb_ledger_bad_2"
+        },
+        {
+          "id": "pb_ledger_bad_2",
+          "speaker": "protagonist",
+          "text": "对得上，什么也没说明。球留在原处。小屋有两个基座，缝只在左边那个——这种细节，通常是在一道算式刚辜负你的时候才会看见。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_ball_stuck",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "playground_checked",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "pg_ball_stuck",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "球还卡着。小屋有两个基座，缝只在一边。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pb_leave",
+          "speaker": "protagonist",
+          "text": "你把球留在原处。它不是你的，这院子里也没有人在等它。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

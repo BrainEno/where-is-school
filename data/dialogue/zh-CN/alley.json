@@ -1,0 +1,48 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "alley",
+  "conversations": {
+    "alley_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "aa_1",
+      "nodes": [
+        {
+          "id": "aa_1",
+          "speaker": "protagonist",
+          "text": "巷子比从院子里看要窄：一个垃圾斗，两个下水口，一面墙上贴满了压着贴的告示。"
+        },
+        {
+          "id": "aa_2",
+          "speaker": "protagonist",
+          "text": "巷子尽头有一道栅栏门，门那边没有房子，地面一直铺过去。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "alley_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.alley"
+            },
+            {
+              "type": "record",
+              "entry_id": "alley_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你走过了楼与楼之间那条巷子，尽头有一道门。"
+            }
+          ]
+        },
+        {
+          "id": "aa_3",
+          "speaker": "protagonist",
+          "text": "巷子里没有人。门没有锁。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

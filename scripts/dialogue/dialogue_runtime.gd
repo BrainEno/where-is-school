@@ -17,6 +17,9 @@ signal conversation_started(conversation_id: StringName)
 signal conversation_finished(conversation_id: StringName)
 signal narrative_entry_recorded(entry: NarrativeEntry)
 signal effect_rejected(reason: String)
+## Emitted when a check node is entered, after its line is shown. `visible` checks
+## are presented with the numbers; `hidden` ones only change which line comes next.
+signal check_resolved(result: Dictionary)
 
 const MAX_STEPS_PER_CONVERSATION := 512
 
@@ -30,12 +33,19 @@ var _steps: int = 0
 var _game_state: Node = null
 var _narrative_state: Node = null
 var _characters: CharacterDirectory = null
+var _abilities: InnerAbilities = null
+var _resolver: CheckResolver = null
+## The node a check continues to, worked out when the check node was entered.
+var _pending_branch: StringName = &""
+var _last_check: Dictionary = {}
 
 
 func _init(
 	game_state: Node = null,
 	narrative_state: Node = null,
-	characters: CharacterDirectory = null
+	characters: CharacterDirectory = null,
+	abilities: InnerAbilities = null,
+	resolver: CheckResolver = null
 ) -> void:
 	_game_state = game_state if game_state != null else _find_autoload("GameState")
 	_narrative_state = narrative_state if narrative_state != null else _find_autoload("NarrativeState")
@@ -43,6 +53,8 @@ func _init(
 	if _characters != null and not _characters.errors.is_empty():
 		for message in _characters.errors:
 			push_error("DialogueRuntime: %s" % message)
+	_abilities = abilities
+	_resolver = resolver if resolver != null else CheckResolver.new()
 
 
 static func _find_autoload(node_name: String) -> Node:
@@ -59,6 +71,21 @@ func is_active() -> bool:
 	return _active
 
 
+## The most recent check this runtime resolved. Tests use it to assert the die,
+## the branch and that a second visit replayed the recorded outcome.
+func get_last_check() -> Dictionary:
+	return _last_check
+
+
+## Late wiring, so a controller can hand in the registries after construction.
+func set_abilities(abilities: InnerAbilities) -> void:
+	_abilities = abilities
+
+
+func set_resolver(resolver: CheckResolver) -> void:
+	_resolver = resolver if resolver != null else CheckResolver.new()
+
+
 func is_awaiting_choice() -> bool:
 	return _awaiting_choice
 
@@ -67,6 +94,17 @@ func get_active_conversation_id() -> StringName:
 	if _conversation == null:
 		return &""
 	return _conversation.conversation_id
+
+
+## Ids of the choices the player can pick right now, in display order. Used by the
+## tests to prove that an attempt already made stops being offered.
+func get_available_choice_ids() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	if _node == null or not _awaiting_choice:
+		return ids
+	for choice: DialogueGraph.DialogueChoice in _available_choices(_node):
+		ids.append(choice.choice_id)
+	return ids
 
 
 func get_current_node_id() -> StringName:
@@ -182,7 +220,10 @@ func _enter_node(node_id: StringName) -> void:
 		node_id = skipped_target
 
 	_node = node
+	_pending_branch = &""
 	_apply_effects(node.effects)
+	if not node.check.is_empty():
+		_resolve_check(node)
 
 	var available := _available_choices(node)
 	_awaiting_choice = not available.is_empty()
@@ -194,6 +235,8 @@ func _enter_node(node_id: StringName) -> void:
 
 
 func _resolve_next_id(node: DialogueGraph.DialogueNode) -> StringName:
+	if not node.check.is_empty():
+		return _pending_branch
 	if node.ends_here:
 		return &""
 	if not String(node.next_id).is_empty():
@@ -202,6 +245,43 @@ func _resolve_next_id(node: DialogueGraph.DialogueNode) -> StringName:
 	if order_index >= 0 and order_index + 1 < _conversation.order.size():
 		return _conversation.order[order_index + 1]
 	return &""
+
+
+## Rolls (or replays) the check a node carries and remembers which branch it
+## continues to. The line is already on screen when this runs, so a visible check
+## can be presented next to the attempt instead of before it.
+func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
+	var conversation_id := _conversation.conversation_id
+	var key := "%s/%s" % [conversation_id, node.node_id]
+	var record_flag := StoryFlags.check_record_flag(conversation_id, node.node_id)
+	var repeatable := bool(node.check.get("repeatable", false))
+	var recorded: Variant = _get_flag(record_flag, null)
+	var result: Dictionary = {}
+	if not repeatable and recorded is Dictionary:
+		# The die already fell here. Replaying the record is what makes walking away
+		# and coming back useless as a reroll strategy.
+		result = CheckResolver.reuse(recorded as Dictionary)
+	else:
+		var ability_id: StringName = node.check.get("ability", &"")
+		var ability_value := 0
+		if _abilities != null:
+			ability_value = _abilities.get_value(ability_id)
+		var modifier := CheckResolver.modifier_for(
+			node.check.get("modifiers", []), Callable(self, "_get_flag")
+		)
+		result = _resolver.roll(
+			ability_id, ability_value, int(node.check.get("difficulty", 0)), modifier, key
+		)
+		if not repeatable:
+			_set_flag(record_flag, result)
+	result["kind"] = String(node.check.get("kind", "visible"))
+	_last_check = result
+	_pending_branch = (
+		node.check.get("success", &"")
+		if bool(result.get("success", false))
+		else node.check.get("failure", &"")
+	)
+	check_resolved.emit(result)
 
 
 func _available_choices(node: DialogueGraph.DialogueNode) -> Array:
@@ -283,6 +363,12 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		speaker_name = _characters.get_display_name(speaker_id)
 		speaker_role = _characters.get_short_role(speaker_id)
 		accent_color = _characters.get_accent_color(speaker_id)
+	# Inner voices are not people: their name is the translated ability name, not
+	# a fixed string in a character resource.
+	if _abilities != null:
+		var voice_name := _abilities.get_name_for_speaker(speaker_id)
+		if not voice_name.is_empty():
+			speaker_name = voice_name
 	return {
 		"conversation_id": _conversation.conversation_id,
 		"node_id": node.node_id,
@@ -364,6 +450,7 @@ func _finish() -> void:
 	_active = false
 	_awaiting_choice = false
 	_node = null
+	_pending_branch = &""
 	_conversation = null
 	_graph = null
 	conversation_finished.emit(finished_id)

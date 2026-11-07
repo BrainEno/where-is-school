@@ -292,6 +292,10 @@ func _transition_to(exit: LocationExit) -> void:
 
 	if not String(destination_id).is_empty():
 		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	if destination_id == &"alley":
+		_hud.set_objective("objective.alley")
+	elif destination_id == &"playground":
+		_hud.set_objective("objective.playground")
 	if destination_id == &"corridor":
 		_game_state().set_flag(StoryFlags.LEFT_CLASSROOM, true)
 		_hud.set_objective("objective.leave_classroom")
@@ -322,6 +326,12 @@ func _play_arrival_beat(destination_id: StringName) -> void:
 		"residential":
 			conversation = &"residential_arrival"
 			flag = StoryFlags.RESIDENTIAL_ARRIVED
+		"alley":
+			conversation = &"alley_arrival"
+			flag = StoryFlags.ALLEY_ARRIVED
+		"playground":
+			conversation = &"playground_arrival"
+			flag = StoryFlags.PLAYGROUND_ARRIVED
 		_:
 			return
 	if _has_flag(flag) or String(conversation).is_empty():
@@ -354,6 +364,17 @@ func _play_conversation(conversation_id: StringName) -> void:
 	if not _dialogue.play_conversation(conversation_id):
 		return
 	await _dialogue.conversation_finished
+
+
+## True while an authored beat (arrival lines, scripted conversation) owns the
+## frame. Passive inner voices wait for this to clear instead of talking over it.
+func is_beat_active() -> bool:
+	return _beat_active
+
+
+## True once the end card is up: the slice is over and nothing should start.
+func is_slice_finished() -> bool:
+	return _slice_finished
 
 
 func _begin_beat() -> void:

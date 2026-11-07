@@ -367,9 +367,223 @@ def build_residential():
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromResidential",
          "id_dest": "street"},
         {"name": "AlleyEnd", "pos": (6.0, 0.9, -33.0), "id": "res_alley_end",
-         "prompt_key": "prompt.milestone", "radius": 1.6, "milestone": "end.slice"},
+         "prompt_key": "prompt.milestone", "radius": 1.6,
+         "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromCourtyard",
+         "id_dest": "alley"},
     ]
-    s.spawns = [("FromStreet", (-4.0, 0, 10.0)), ("FromStair", (-13.6, 1.8, -13.4))]
+    s.spawns = [
+        ("FromStreet", (-4.0, 0, 10.0)),
+        ("FromStair", (-13.6, 1.8, -13.4)),
+        ("FromAlley", (6.0, 0, -31.0)),
+    ]
+    return s
+
+
+def build_alley():
+    """The lane behind the flats: short, walled, and with one bay wide enough
+    that it is not a tube. Everything the player can reach is within a few steps
+    of the gate, because an alley is a place you pass through, not a level."""
+    s = Scene("Alley", "alley")
+    s.env = {
+        'sky': 'Color(0.2, 0.17, 0.16, 1)',
+        'ambient': 'Color(0.48, 0.41, 0.35, 1)',
+        'energy': '0.95',
+        'fog': 'Color(0.3, 0.25, 0.21, 1)',
+        'fog_density': '0.008',
+        'saturation': '0.8',
+    }
+    s.sun = {'rotation': (-8, 196, 0), 'color': 'Color(1, 0.7, 0.48, 1)', 'energy': 1.3}
+    s.ambience = {'volume': -18.0, 'target': -26.0}
+
+    # the lane runs north from the courtyard
+    s.box("LaneGround", (0, -0.1, -4), (7, 0.2, 38), "asphalt")
+    s.box("LanePaving", (0, 0.01, -4), (1.4, 0.04, 38), "concrete", None, False)
+    # walls, tall enough to keep the lane a lane
+    s.box("WallWest", (-3.9, 2.0, -4), (0.5, 4.0, 38), "brick", ["camera_occluder"])
+    s.box("WallEast", (3.9, 2.0, -4), (0.5, 4.0, 38), "brick", ["camera_occluder"])
+    s.box("WallCopingWest", (-3.9, 4.1, -4), (0.7, 0.2, 38), "concrete", None, False)
+    s.box("WallCopingEast", (3.9, 4.1, -4), (0.7, 0.2, 38), "concrete", None, False)
+    # one bay on the west side: wider than the lane, so the space opens once
+    s.box("BayBackWall", (-8.4, 2.0, -12), (0.5, 4.0, 8), "brick", ["camera_occluder"])
+    s.box("BayNorthWall", (-6.2, 2.0, -16.2), (5.0, 4.0, 0.5), "brick")
+    s.box("BaySouthWall", (-6.2, 2.0, -7.8), (5.0, 4.0, 0.5), "brick")
+    s.box("BayGround", (-6.2, -0.09, -12), (5.0, 0.2, 8.4), "concrete")
+    # service door and its plaque
+    s.box("ServiceDoor", (-8.1, 1.2, -12), (0.15, 2.4, 1.2), "metal", None, False)
+    s.box("ServicePlaque", (-8.0, 2.1, -12.9), (0.06, 0.3, 0.4), "paper", None, False)
+    # the notices: paper stapled over paper
+    for i, z in enumerate((-1.0, -1.35, -1.7, -2.05, -2.4, -2.75)):
+        s.box(f"Notice_{i}", (3.62, 1.7 - (0.02 * i), z), (0.03, 0.42, 0.3), "paper", None, False)
+    # skip and bins
+    s.box("SkipBody", (-2.2, 0.75, -2.5), (2.0, 1.3, 3.2), "shutter")
+    s.box("SkipRim", (-2.2, 1.42, -2.5), (2.1, 0.1, 3.3), "metal", None, False)
+    s.box("ChairInSkip", (-2.2, 1.55, -3.2), (0.45, 0.5, 0.45), "floor", None, False)
+    s.box("BinA", (2.9, 0.55, -9.0), (0.6, 1.1, 0.6), "metal")
+    s.box("BinB", (2.9, 0.55, -9.8), (0.6, 1.1, 0.6), "shutter")
+    # drain grate and a puddle that never dries
+    s.box("Grate", (0.0, 0.02, -6.0), (0.9, 0.06, 0.9), "metal", None, False)
+    s.box("Puddle", (-1.0, 0.03, -14.0), (2.2, 0.02, 1.4), "glass", None, False)
+    # the estate gate at the far end: an opening in a fence, not a fortress
+    s.box("FenceWest", (-2.2, 1.1, -22.6), (2.6, 2.2, 0.16), "metal", ["camera_occluder"])
+    s.box("FenceEast", (2.2, 1.1, -22.6), (2.6, 2.2, 0.16), "metal", ["camera_occluder"])
+    s.box("GatePostWest", (-1.0, 1.2, -22.6), (0.2, 2.4, 0.2), "metal")
+    s.box("GatePostEast", (1.0, 1.2, -22.6), (0.2, 2.4, 0.2), "metal")
+    s.box("GateLeaf", (-0.55, 1.05, -22.4), (1.1, 2.1, 0.08), "metal", None, False)
+
+    s.interactables = [
+        {"name": "NoticesLook", "pos": (3.2, 1.6, -1.9), "id": "alley_notice_wall",
+         "inspection": "alley_notices", "radius": 1.3},
+        {"name": "SkipLook", "pos": (-2.2, 1.0, -2.5), "id": "alley_skip",
+         "inspection": "alley_bins", "radius": 1.5},
+        {"name": "ServiceDoorLook", "pos": (-7.4, 1.2, -12.0), "id": "alley_service_door",
+         "inspection": "alley_door", "radius": 1.4},
+    ]
+    s.exits = [
+        {"name": "BackToCourtyard", "pos": (0.0, 0.9, 12.5), "id": "alley_back_to_courtyard",
+         "prompt_key": "prompt.back_to_street", "radius": 1.4,
+         "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromAlley",
+         "id_dest": "residential"},
+        {"name": "ToPlayground", "pos": (0.0, 0.9, -21.6), "id": "alley_to_playground",
+         "prompt_key": "prompt.alley_gate", "radius": 1.6,
+         "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromAlley",
+         "id_dest": "playground"},
+    ]
+    s.spawns = [("FromCourtyard", (0.0, 0, 10.5)), ("FromPlayground", (0.0, 0, -20.0))]
+    return s
+
+
+def build_playground():
+    """The open yard.
+
+    Deliberately not a corridor and not a circuit: it is a rectangle you can walk
+    across in any direction, with four things worth stopping for placed on three
+    different sides so the player has to choose an order. The middle is left
+    empty on purpose: that is the room later events and NPCs need.
+    """
+    s = Scene("Playground", "playground")
+    s.env = {
+        'sky': 'Color(0.26, 0.22, 0.2, 1)',
+        'ambient': 'Color(0.54, 0.46, 0.38, 1)',
+        'energy': '1.05',
+        'fog': 'Color(0.34, 0.28, 0.23, 1)',
+        'fog_density': '0.004',
+        'saturation': '0.84',
+    }
+    s.sun = {'rotation': (-12, 32, 0), 'color': 'Color(1, 0.74, 0.52, 1)', 'energy': 1.9}
+    s.ambience = {'volume': -17.0, 'target': -25.0}
+
+    # ground, and the painted court on it
+    s.box("YardGround", (0, -0.1, 0), (46, 0.2, 40), "concrete")
+    s.box("CourtSurface", (0, 0.005, -2), (22, 0.02, 26), "asphalt", None, False)
+    s.box("CourtLineSouth", (0, 0.02, 11), (22, 0.012, 0.14), "paper", None, False)
+    s.box("CourtLineNorth", (0, 0.02, -15), (22, 0.012, 0.14), "paper", None, False)
+    s.box("CourtLineWest", (-11, 0.02, -2), (0.14, 0.012, 26), "paper", None, False)
+    s.box("CourtLineEast", (11, 0.02, -2), (0.14, 0.012, 26), "paper", None, False)
+    s.box("CourtCentre", (0, 0.02, -2), (22, 0.012, 0.12), "paper", None, False)
+    for name, z in (("KeyNear", 7.2), ("KeyFar", -11.2)):
+        s.box(name, (0, 0.02, z), (5.0, 0.012, 3.2), "paper", None, False)
+    # the far half was painted later: a slightly darker wash over it
+    s.box("CourtFarHalf", (0, 0.008, -9.5), (21.8, 0.012, 11.0), "dusk", None, False)
+
+    # the school behind the yard: a back wall, barred windows, a fire door
+    s.box("SchoolBackWall", (0, 6.0, -21), (46, 12, 2.0), "wall", ["camera_occluder"])
+    s.box("SchoolPlinth", (0, 0.6, -19.9), (46, 1.2, 0.4), "concrete")
+    for i, x in enumerate((-16.0, -9.0, 9.0, 16.0)):
+        for j, y in enumerate((3.2, 6.2)):
+            s.box(f"BackWindow_{i}_{j}", (x, y, -19.85), (2.2, 1.4, 0.14), "glass", None, False)
+            s.box(f"BackBars_{i}_{j}", (x, y, -19.75), (2.2, 0.05, 0.04), "metal", None, False)
+    s.box("FireDoor", (-3.0, 1.3, -19.9), (1.4, 2.6, 0.14), "metal", None, False)
+    s.box("FireStep", (-3.0, 0.12, -19.3), (2.0, 0.24, 1.0), "concrete", None, False)
+    # the gap in the fence at the north-west: the slice ends past it
+    s.box("FenceRunNorth", (10.0, 1.0, -18.6), (24, 2.0, 0.14), "metal", None, False)
+    s.box("FenceRunGap", (-14.0, 1.0, -18.6), (11, 2.0, 0.14), "metal", None, False)
+    s.box("FencePostGapWest", (-8.4, 1.1, -18.6), (0.16, 2.2, 0.2), "metal")
+    s.box("FencePostGapEast", (-19.4, 1.1, -18.6), (0.16, 2.2, 0.2), "metal")
+
+    # south side: the fence the gate comes through, and the estate behind it
+    s.box("SouthFenceWest", (-12.5, 1.1, 19.6), (21, 2.2, 0.16), "metal", ["camera_occluder"])
+    s.box("SouthFenceEast", (12.5, 1.1, 19.6), (21, 2.2, 0.16), "metal", ["camera_occluder"])
+    s.box("EstateBlockSouth", (0, 5.0, 26), (46, 10, 8), "brick", ["camera_occluder"])
+    # east side: flats, and the hedge that hides what is under the shed
+    s.box("EstateBlockEast", (24, 6.0, -2), (8, 12, 40), "brick", ["camera_occluder"])
+
+    # the two hoops
+    for name, x in (("HoopNear", -8.0), ("HoopFar", 8.0)):
+        z = 7.5 if name == "HoopNear" else -11.5
+        s.box(f"{name}Pole", (x, 1.6, z), (0.18, 3.2, 0.18), "metal")
+        s.box(f"{name}Board", (x, 3.05, z), (1.8, 1.1, 0.08), "paper", None, False)
+        s.box(f"{name}Rim", (x, 2.6, z - 0.3), (0.05, 0.05, 0.45), "metal")
+        s.box(f"{name}Footing", (x, 0.1, z), (1.2, 0.2, 1.2), "concrete")
+
+    # the equipment shed on the west side
+    s.box("ShedBody", (-17.0, 1.5, -4.0), (6.0, 3.0, 8.0), "wall", ["camera_occluder"])
+    s.box("ShedRoof", (-17.0, 3.1, -4.0), (6.4, 0.2, 8.4), "metal", None, False)
+    s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
+    s.box("ShedWindow", (-13.95, 1.9, -6.2), (0.1, 0.8, 1.2), "glass", None, False)
+    s.box("ShedSheet", (-13.9, 1.9, -6.2), (0.08, 0.5, 0.9), "paper", None, False)
+    # two footings, and the gap is only on the left one
+    s.box("ShedFootingWest", (-15.6, 0.2, -0.1), (1.4, 0.4, 1.4), "concrete")
+    s.box("ShedFootingEast", (-13.2, 0.3, -0.1), (1.4, 0.6, 1.4), "concrete")
+    s.box("ShedHedge", (-18.5, 0.9, 0.6), (5.0, 1.6, 3.0), "hedge", None, False)
+    s.box("PaleUnderHedge", (-16.6, 0.45, 0.9), (0.9, 0.05, 0.16), "paper", None, False)
+    s.box("PingPongBall", (-14.4, 0.16, -0.1), (0.06, 0.06, 0.06), "paper", None, False)
+
+    # notice board on the east side, by the bench
+    s.box("BoardPostA", (14.0, 1.3, 2.0), (0.12, 2.6, 0.12), "metal")
+    s.box("BoardPostB", (14.0, 1.3, 4.4), (0.12, 2.6, 0.12), "metal")
+    s.box("BoardSheet", (14.0, 1.9, 3.2), (0.06, 1.1, 1.8), "paper", None, False)
+    s.box("BoardBacking", (14.06, 1.9, 3.2), (0.04, 1.2, 1.9), "metal", None, False)
+
+    # bench, with room either side of it
+    s.box("BenchSeat", (11.0, 0.45, 3.2), (0.7, 0.12, 2.6), "floor")
+    s.box("BenchLegA", (11.0, 0.22, 2.2), (0.6, 0.45, 0.12), "metal", None, False)
+    s.box("BenchLegB", (11.0, 0.22, 4.2), (0.6, 0.45, 0.12), "metal", None, False)
+    s.box("BagOnBench", (11.0, 0.72, 3.2), (0.4, 0.42, 0.8), "shutter", None, False)
+
+    # climbing frame on the east side
+    for i, z in enumerate((7.0, 9.0, 11.0)):
+        s.box(f"FramePost_{i}", (18.0, 1.4, z), (0.14, 2.8, 0.14), "metal")
+    for i, y in enumerate((0.9, 1.4, 1.9, 2.4)):
+        s.box(f"FrameRung_{i}", (18.0, y, 9.0), (0.12, 0.12, 4.0), "metal", None, False)
+    s.box("FrameTopBar", (18.0, 2.85, 9.0), (0.14, 0.14, 4.2), "metal", None, False)
+
+    # a tap and a drain: ordinary fittings, so the yard reads as used
+    s.box("TapPost", (-6.0, 0.9, 14.0), (0.16, 1.8, 0.16), "metal")
+    s.box("TapSpout", (-5.8, 1.6, 14.0), (0.4, 0.1, 0.1), "metal", None, False)
+    s.box("TapDrain", (-5.4, 0.02, 14.3), (0.8, 0.06, 0.6), "metal", None, False)
+    s.box("TreeTrunk", (20.0, 2.0, 15.0), (0.5, 4.0, 0.5), "soil")
+    s.box("TreeCrown", (20.0, 4.6, 15.0), (3.6, 2.2, 3.6), "hedge", None, False)
+
+    s.interactables = [
+        {"name": "HoopLook", "pos": (-8.0, 1.4, 8.8), "id": "pg_hoop_near",
+         "inspection": "pg_hoop", "radius": 1.5},
+        {"name": "CourtLook", "pos": (0.0, 0.9, 2.0), "id": "pg_court_middle",
+         "inspection": "pg_court", "radius": 1.8},
+        {"name": "BenchLook", "pos": (10.2, 1.0, 3.2), "id": "pg_bench_look",
+         "inspection": "pg_bench", "radius": 1.4},
+        {"name": "FrameLook", "pos": (17.0, 1.4, 9.0), "id": "pg_frame_look",
+         "inspection": "pg_frame", "radius": 1.5},
+        {"name": "ShedLook", "pos": (-13.2, 1.1, -4.0), "id": "pg_shed_door",
+         "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5},
+        {"name": "BallLook", "pos": (-14.2, 0.8, 0.6), "id": "pg_ball_look",
+         "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4},
+        {"name": "BoardLook", "pos": (13.2, 1.7, 3.2), "id": "pg_board_look",
+         "inspection": "pg_court", "radius": 1.2},
+    ]
+    s.exits = [
+        {"name": "BackToAlley", "pos": (0.0, 0.9, 18.2), "id": "pg_back_to_alley",
+         "prompt_key": "prompt.alley_gate", "radius": 1.8,
+         "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromPlayground",
+         "id_dest": "alley"},
+        {"name": "FarGap", "pos": (-14.0, 0.9, -18.2), "id": "pg_gap_in_fence",
+         "prompt_key": "prompt.gate_far", "radius": 1.8, "milestone": "end.slice"},
+    ]
+    s.spawns = [
+        ("FromAlley", (0.0, 0, 16.0)),
+        # Kept for later arrivals: the yard is meant to be entered from more than
+        # one side once there is something on the other side of the fence.
+        ("FromSchool", (-3.0, 0, -17.4)),
+    ]
     return s
 
 
@@ -382,3 +596,5 @@ def write(scene, path):
 
 write(build_street(), f"{ROOT}/scenes/locations/street/street.tscn")
 write(build_residential(), f"{ROOT}/scenes/locations/residential/residential.tscn")
+write(build_alley(), f"{ROOT}/scenes/locations/alley/alley.tscn")
+write(build_playground(), f"{ROOT}/scenes/locations/playground/playground.tscn")

@@ -1,0 +1,192 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "inner_voice",
+  "conversations": {
+    "voice_notice": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vn_1",
+      "nodes": [
+        {
+          "id": "vn_1",
+          "speaker": "voice_ledger",
+          "text": "日期。那面墙上有日期。",
+          "check": {
+            "ability": "ledger",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "vn_ok",
+            "failure": "vn_bad"
+          }
+        },
+        {
+          "id": "vn_ok",
+          "speaker": "voice_ledger",
+          "text": "告示不是按顺序贴的。三月的压着六月的那张，六月那张还是干的。",
+          "next": null
+        },
+        {
+          "id": "vn_bad",
+          "speaker": "voice_ledger",
+          "text": "三张告示，三个日期，一路往下。对得上。",
+          "next": "vn_bad_2"
+        },
+        {
+          "id": "vn_bad_2",
+          "speaker": "protagonist",
+          "text": "对得上，等于什么也没有。最下面那张是倒着贴的，背面有人用另一支笔写了一个时间。",
+          "next": null
+        }
+      ]
+    },
+    "voice_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "va_1",
+      "nodes": [
+        {
+          "id": "va_1",
+          "speaker": "voice_echo",
+          "text": "这一片。这个场子。我认得。",
+          "check": {
+            "ability": "echo",
+            "difficulty": 11,
+            "kind": "hidden",
+            "success": "va_ok",
+            "failure": "va_bad"
+          }
+        },
+        {
+          "id": "va_ok",
+          "speaker": "voice_echo",
+          "text": "球场、小屋、尽头那道门。它像一张照片合进一间屋子那样合得上。我找不到那一天。",
+          "next": null
+        },
+        {
+          "id": "va_bad",
+          "speaker": "voice_echo",
+          "text": "傍晚。你傍晚来过这里，和一个一起的人，光正在暗下去。",
+          "next": "va_bad_2"
+        },
+        {
+          "id": "va_bad_2",
+          "speaker": "protagonist",
+          "text": "你找不到那个傍晚。场子是空的，光这会儿也在暗，而这地方整个的形状仍然像是借来的。",
+          "next": null
+        }
+      ]
+    },
+    "voice_hoop": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vh_1",
+      "nodes": [
+        {
+          "id": "vh_1",
+          "speaker": "voice_boundary",
+          "text": "让我看看那个。",
+          "check": {
+            "ability": "boundary",
+            "difficulty": 9,
+            "kind": "hidden",
+            "success": "vh_ok",
+            "failure": "vh_bad"
+          }
+        },
+        {
+          "id": "vh_ok",
+          "speaker": "voice_boundary",
+          "text": "篮筐低了，立杆浇在比这场子新的水泥里。旧孔还在，填了，也漆过。这个篮筐被挪过。",
+          "next": null
+        },
+        {
+          "id": "vh_bad",
+          "speaker": "voice_boundary",
+          "text": "篮筐的高度就是篮筐该有的高度。这总有规定。",
+          "next": "vh_bad_2"
+        },
+        {
+          "id": "vh_bad_2",
+          "speaker": "protagonist",
+          "text": "你不知道那条规定。立杆立在一片颜色和场地不一样的水泥里，网比圈新。",
+          "next": null
+        }
+      ]
+    },
+    "voice_bench": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vb_1",
+      "nodes": [
+        {
+          "id": "vb_1",
+          "speaker": "voice_onlooker",
+          "text": "那样东西是有人放下的。",
+          "check": {
+            "ability": "onlooker",
+            "difficulty": 10,
+            "kind": "hidden",
+            "success": "vb_ok",
+            "failure": "vb_bad"
+          }
+        },
+        {
+          "id": "vb_ok",
+          "speaker": "voice_onlooker",
+          "text": "拉链拉好，端端正正摆在座面上，提手朝上。放下它的人把它放在了门口能看见的地方。回来取的东西不会这样放。",
+          "next": null
+        },
+        {
+          "id": "vb_bad",
+          "speaker": "voice_onlooker",
+          "text": "他们一会儿就回来。自己的包，人总是会回来拿的。",
+          "next": "vb_bad_2"
+        },
+        {
+          "id": "vb_bad_2",
+          "speaker": "protagonist",
+          "text": "长椅后来被雨淋过。包上面是湿的，底下是干的，所以它没被挪动过，放在这里也远不止一会儿。",
+          "next": null
+        }
+      ]
+    },
+    "voice_frame": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "vf_1",
+      "nodes": [
+        {
+          "id": "vf_1",
+          "speaker": "voice_echo",
+          "text": "这个你爬过。",
+          "check": {
+            "ability": "echo",
+            "difficulty": 10,
+            "kind": "hidden",
+            "success": "vf_ok",
+            "failure": "vf_bad"
+          }
+        },
+        {
+          "id": "vf_ok",
+          "speaker": "voice_echo",
+          "text": "第三根横杆有点松，顶杆上手常扶的地方磨掉了。你爬过这个，在一个背后是另一堵墙的院子里。",
+          "next": null
+        },
+        {
+          "id": "vf_bad",
+          "speaker": "voice_echo",
+          "text": "这是河边那个院子的架子。同一种漆，顶杆上同一道弯。",
+          "next": "vf_bad_2"
+        },
+        {
+          "id": "vf_bad_2",
+          "speaker": "protagonist",
+          "text": "这里没有河。可那道弯你记得，只是说不出是从哪儿记来的——这比完全想不起来更糟。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

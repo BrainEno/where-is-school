@@ -23,11 +23,17 @@ signal line_presented(line: Dictionary)
 signal subjective_changed(active: bool)
 ## Emitted when the display language changed, so the HUD can re-apply its prompt.
 signal locale_applied(locale: String)
+## Emitted once per check, whether it was rolled now or replayed from a record.
+signal check_resolved(result: Dictionary)
+## Emitted when the first line of an inspection is on screen, so passive inner
+## voices can react to *reading* something rather than to standing near it.
+signal inspection_presented(inspection_id: StringName)
 
 enum Mode { NONE, CONVERSATION, INSPECTION }
 
 @export var panel_path: NodePath = ^"../GameUI/DialoguePanel"
 @export var backlog_path: NodePath = ^"../GameUI/BacklogPanel"
+@export var check_overlay_path: NodePath = ^"../GameUI/CheckOverlay"
 
 var _game_state: Node = null
 var _narrative_state: Node = null
@@ -37,6 +43,9 @@ var _inspections: InspectionLibrary = null
 var _runtime: DialogueRuntime = null
 var _panel: DialoguePanel = null
 var _backlog: BacklogPanel = null
+var _overlay: CheckOverlay = null
+var _abilities: InnerAbilities = null
+var _resolver: CheckResolver = null
 
 var _mode: Mode = Mode.NONE
 var _queue: Array = []
@@ -68,7 +77,17 @@ func _ready() -> void:
 	for message in _characters.errors:
 		push_error("DialogueController: %s" % message)
 
-	_library = DialogueLibrary.load_all()
+	# Inner voices load before dialogue: the library refuses a check that names a
+	# voice nobody implemented, so the ids have to exist first.
+	_abilities = InnerAbilities.load_all()
+	if not _abilities.is_valid():
+		push_error("DialogueController: %s" % _abilities.describe_errors())
+	# One resolver for the whole session. Its seed comes from the clock so two
+	# playthroughs differ, but within a run every check is fixed by its own key:
+	# leaving a scene and coming back cannot reroll anything.
+	_resolver = CheckResolver.new(int(Time.get_unix_time_from_system()))
+
+	_library = DialogueLibrary.load_all(_abilities)
 	if not _library.is_valid():
 		push_error("DialogueController: %s" % _library.describe_errors())
 
@@ -76,8 +95,13 @@ func _ready() -> void:
 	if not _inspections.is_valid():
 		push_error("DialogueController: %s" % _inspections.describe_errors())
 
-	_runtime = DialogueRuntime.new(_game_state, _narrative_state, _characters)
+	_overlay = get_node_or_null(check_overlay_path) as CheckOverlay
+	if _overlay == null:
+		push_error("DialogueController: check overlay not found at '%s'." % check_overlay_path)
+
+	_runtime = DialogueRuntime.new(_game_state, _narrative_state, _characters, _abilities, _resolver)
 	_runtime.line_changed.connect(_on_line_changed)
+	_runtime.check_resolved.connect(_on_check_resolved)
 	_runtime.choices_changed.connect(_on_choices_changed)
 	_runtime.conversation_started.connect(_on_runtime_conversation_started)
 	_runtime.conversation_finished.connect(_on_runtime_conversation_finished)
@@ -114,6 +138,22 @@ func get_inspection_library() -> InspectionLibrary:
 
 func get_runtime() -> DialogueRuntime:
 	return _runtime
+
+
+func get_abilities() -> InnerAbilities:
+	return _abilities
+
+
+func get_check_resolver() -> CheckResolver:
+	return _resolver
+
+
+## Replaces the dice core. The session seed is otherwise taken from the clock, so a
+## test uses this to force a known outcome instead of re-running until it is lucky.
+func set_check_resolver(resolver: CheckResolver) -> void:
+	_resolver = resolver if resolver != null else CheckResolver.new()
+	if _runtime != null:
+		_runtime.set_resolver(_resolver)
 
 
 ## True while the current presentation is waiting for the player to pick a choice.
@@ -155,6 +195,8 @@ func apply_locale(locale: String) -> bool:
 	if not _library.set_locale(code):
 		return false
 	_inspections.set_locale(code)
+	if _abilities != null:
+		_abilities.set_locale(code)
 	if _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_active():
 		var graph := _library.get_graph(_runtime.get_active_conversation_id())
 		_runtime.rebind_graph(graph)
@@ -268,6 +310,9 @@ func present_inspection(inspection_id: StringName) -> bool:
 	_mode = Mode.INSPECTION
 	_set_active(true)
 	_present_next_queued_line()
+	# Announced only after the text is on screen, so a voice that reacts to reading
+	# cannot talk over the line the player is still being shown.
+	inspection_presented.emit(inspection_id)
 	return true
 
 
@@ -410,6 +455,21 @@ func _on_line_changed(line: Dictionary) -> void:
 	_present_line(line)
 
 
+# A visible check gets the numbers on screen; a hidden one gets nothing at all, so
+# the only thing the player learns is what the voice said about it.
+func _on_check_resolved(result: Dictionary) -> void:
+	check_resolved.emit(result)
+	if String(result.get("kind", "visible")) != "visible":
+		return
+	if _overlay == null:
+		return
+	var ability_id := StringName(String(result.get("ability", "")))
+	var ability_name := ""
+	if _abilities != null and _abilities.has_ability(ability_id):
+		ability_name = _abilities.get_ability(ability_id).display_name
+	_overlay.present(ability_id, ability_name, result)
+
+
 func _on_choices_changed(choices: Array) -> void:
 	_panel.set_choices(choices)
 
@@ -425,6 +485,8 @@ func _on_runtime_conversation_finished(conversation_id: StringName) -> void:
 
 func _close_presentation() -> void:
 	_queue.clear()
+	if _overlay != null:
+		_overlay.hide_check()
 	_mode = Mode.NONE
 	_active_inspection_id = &""
 	_active_inspection_variant = ""
@@ -440,6 +502,8 @@ func _set_active(active: bool) -> void:
 
 
 func _on_advance_requested() -> void:
+	if _overlay != null:
+		_overlay.hide_check()
 	match _mode:
 		Mode.CONVERSATION:
 			_runtime.advance()

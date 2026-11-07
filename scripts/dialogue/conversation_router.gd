@@ -34,6 +34,10 @@ const ROUTES: Dictionary = {
 	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],
+	# The yard's two attempts are conversations with a choice (and then a check), not
+	# inspections: the player has to commit to an approach before dice are involved.
+	&"pg_shed": [{"conversation": &"pg_shed", "requires": {}}],
+	&"pg_ball": [{"conversation": &"pg_ball", "requires": {}}],
 	# The animal is met, not summoned: the first visit is the discovery, every
 	# later visit is a shorter look. Neither one explains what it is.
 	&"green_animal": [

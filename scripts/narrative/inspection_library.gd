@@ -6,7 +6,9 @@ extends RefCounted
 ## Descriptions stay short on purpose: a player should be able to read a desk
 ## without reading a paragraph.
 
-const CHAPTERS: Array[String] = ["classroom", "corridor", "street", "residential"]
+const CHAPTERS: Array[String] = [
+	"classroom", "corridor", "street", "residential", "alley", "playground",
+]
 const INSPECTION_DIR := "res://data/inspections"
 
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/world/opening_sequence.gd" id="5_opening_sequence"]
 [ext_resource type="AudioStream" path="res://assets/audio/bell_second.wav" id="6_bell"]
 [ext_resource type="AudioStream" path="res://assets/audio/wake_thud.wav" id="7_wake"]
+[ext_resource type="Script" path="res://scripts/world/inner_voice_director.gd" id="8_inner_voice"]
 
 [node name="Main" type="Node3D"]
 
@@ -31,3 +32,6 @@ script = ExtResource("4_dialogue_controller")
 
 [node name="OpeningSequence" type="Node" parent="."]
 script = ExtResource("5_opening_sequence")
+
+[node name="InnerVoiceDirector" type="Node" parent="."]
+script = ExtResource("8_inner_voice")

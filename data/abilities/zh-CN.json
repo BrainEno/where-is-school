@@ -1,0 +1,22 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "abilities": {
+    "ledger": {
+      "name": "账本",
+      "description": "数东西：房间、钟声、日期、台阶的级数。它宁可说错，也不肯含糊。"
+    },
+    "boundary": {
+      "name": "边界",
+      "description": "东西在哪儿、有多大。距离、缝隙、装不装得下。空间合不拢的时候，它最先开口。"
+    },
+    "echo": {
+      "name": "回声",
+      "description": "你负责记得的那一部分。很快，很慷慨，也常常弄错自己认出了什么。"
+    },
+    "onlooker": {
+      "name": "旁人",
+      "description": "看人：语气、脸色、手放在哪儿。对别人的动机很有把握，却没办法核实。"
+    }
+  }
+}

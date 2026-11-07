@@ -249,15 +249,24 @@ func _run() -> void:
 			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 90.0, "the animal conversation")
 			if _dialogue.is_busy():
 				await _shot("FAIL_animal_conversation", "The animal conversation did not finish.")
-			var alley := flats.find_interactable(&"res_alley_end")
-			if alley != null:
+			var alley_exit := flats.find_interactable(&"res_alley_end")
+			if alley_exit == null:
+				_failures.append("The courtyard has no way into the alley.")
+			else:
 				await _wait_for_free(60.0)
 				_teleport(Vector3(6.0, 0, -31.6), 0.0)
-				await _wait_for_target(&"res_alley_end", 30.0)
+				if not await _wait_for_target(&"res_alley_end", 30.0):
+					_failures.append("The alley was never offered from the courtyard.")
 				await _press(KEY_E)
-				if await _wait_for_visible(_ui.end_card, 20.0):
-					await _wait(0.6)
-					await _shot("20_end_card", "The end-of-slice card at the end of the built content.")
+				if await _wait_for_location("alley", 45.0):
+					await _drive_until(
+						func() -> bool: return not _dialogue.is_busy(), 60.0, "the alley arrival line"
+					)
+					await _wait(0.8)
+					await _shot("20_alley", "The lane behind the flats, with its arrival line finished.")
+					await _capture_alley()
+					if await _capture_playground():
+						await _capture_yard_checks()
 
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))
@@ -273,6 +282,130 @@ func _run() -> void:
 		await _shot("FAIL_last_frame", "The last frame before the capture stopped.")
 	_write_log()
 	quit(0 if _failures.is_empty() else 1)
+
+
+# --- the alley and the yard -------------------------------------------------
+
+
+## The alley is short on purpose: one look at the notice wall, which is also the
+## inspection that lets a passive inner voice speak for the first time.
+func _capture_alley() -> void:
+	var location := _host.get_current()
+	if location == null or String(location.location_id) != "alley":
+		_failures.append("The alley did not stay loaded for its screenshots.")
+		return
+	await _wait_for_free(45.0)
+	_teleport(Vector3(2.4, 0, -1.9), 90.0)
+	if not await _wait_for_target(&"alley_notice_wall", 30.0):
+		_failures.append("The notice wall in the alley was never offered.")
+		await _shot("FAIL_alley_prompt", "No prompt appeared for the alley notices.")
+		return
+	await _shot("21_alley_notices_prompt", "The notice wall in the alley, with its prompt.")
+	await _press(KEY_E)
+	if await _wait_for_line(6.0):
+		await _wait(0.6)
+		await _shot("22_alley_notice_line", "Reading the alley notices.")
+	await _drive_until(
+		func() -> bool: return not _dialogue.is_busy(), 45.0, "the notice description to close"
+	)
+	# The passive voice reacts to the reading, not to a keypress: wait for it.
+	if await _poll(func() -> bool: return _dialogue.is_busy(), 12.0):
+		if await _wait_for_line(6.0):
+			await _wait(0.5)
+			await _shot(
+				"23_inner_voice_passive",
+				"An inner voice speaking unprompted after the read. The roll behind this line is hidden: only the reaction is shown."
+			)
+	await _drive_until(
+		func() -> bool: return not _dialogue.is_busy(), 45.0, "the inner-voice line"
+	)
+	await _wait(0.4)
+
+
+## Walks through the estate gate into the yard. Returns true when the yard is the
+## current location, so the caller knows whether the rest is worth attempting.
+func _capture_playground() -> bool:
+	await _wait_for_free(45.0)
+	_teleport(Vector3(0.0, 0, -20.4), 180.0)
+	if not await _wait_for_target(&"alley_to_playground", 30.0):
+		_failures.append("The estate gate was never offered as a target.")
+		return false
+	await _shot("24_gate_prompt", "The estate gate at the end of the alley.")
+	await _press(KEY_E)
+	if not await _wait_for_location("playground", 45.0):
+		_failures.append("The estate gate did not load the yard.")
+		return false
+	await _drive_until(
+		func() -> bool: return not _dialogue.is_busy(), 60.0, "the yard arrival line"
+	)
+	await _wait(0.8)
+	_teleport(Vector3(0.0, 0, 14.0), 0.0)
+	await _wait(0.5)
+	await _shot("25_playground_wide", "The open yard from the gate: court, hoops, bench, climbing frame, shed.")
+	return true
+
+
+## The two things the yard adds beyond a bigger room: a visible check with the
+## numbers on screen, and the end card at the far gap instead of the alley mouth.
+func _capture_yard_checks() -> void:
+	var location := _host.get_current()
+	if location == null:
+		return
+	await _wait_for_free(45.0)
+	_teleport(Vector3(-8.0, 0, 9.2), 0.0)
+	if await _wait_for_target(&"pg_hoop_near", 30.0):
+		await _shot("26_hoop_prompt", "The near hoop, with its prompt.")
+		await _press(KEY_E)
+		if await _wait_for_line(6.0):
+			await _wait(0.6)
+			await _shot("27_hoop_inspection", "The hoop's description.")
+		await _drive_until(
+			func() -> bool: return not _dialogue.is_busy(), 45.0, "the hoop description to close"
+		)
+	else:
+		_failures.append("The hoop was never offered as a target.")
+
+	await _wait_for_free(45.0)
+	_teleport(Vector3(-12.4, 0, -4.0), 90.0)
+	if not await _wait_for_target(&"pg_shed_door", 30.0):
+		_failures.append("The shed door was never offered as a target.")
+	else:
+		await _shot("28_shed_prompt", "The equipment shed, with its prompt.")
+		await _press(KEY_E)
+		if await _poll(func() -> bool: return _dialogue.has_pending_choices(), 20.0):
+			await _shot(
+				"29_shed_choices",
+				"The shed's two approaches: the frame (Boundary) or the sheet (The Ledger), or leave it."
+			)
+			await _press(KEY_1)
+			await _wait(0.4)
+			if _ui.check_overlay.visible:
+				await _shot(
+					"30_visible_check",
+					"A visible check: the voice, its value, the die, the difficulty, and the outcome."
+				)
+			else:
+				_failures.append("The visible check panel did not appear for the shed attempt.")
+			await _drive_until(
+				func() -> bool: return not _dialogue.is_busy(), 60.0, "the shed attempt"
+			)
+			await _shot("31_check_result", "What the attempt left behind on screen.")
+
+	await _wait_for_free(45.0)
+	_teleport(Vector3(-14.0, 0, -16.8), 0.0)
+	if not await _wait_for_target(&"pg_gap_in_fence", 30.0):
+		_failures.append("The gap in the fence at the far end was never offered.")
+		return
+	await _shot("32_far_gap_prompt", "The gap in the fence at the far end of the yard.")
+	await _press(KEY_E)
+	if await _wait_for_visible(_ui.end_card, 25.0):
+		await _wait(0.6)
+		await _shot(
+			"33_end_card",
+			"The end-of-slice card, now at the far end of the yard instead of the alley mouth."
+		)
+	else:
+		_failures.append("Stepping through the far gap did not show the end card.")
 
 
 # --- input ------------------------------------------------------------------
