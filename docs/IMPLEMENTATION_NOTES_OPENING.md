@@ -42,6 +42,9 @@ DialoguePanel (scripts/ui/dialogue_panel.gd)
 InteractionController + Interactable (scripts/interaction/*)
   Target selection and intent. Interactables declare a payload (inspection id,
   conversation route, exit) and never open UI or decide story outcomes.
+  `request_activation()` is the single intent path: input, tests, and any future
+  remapping all go through it, and the interactable still decides whether it can
+  be used.
 
 LocationHost + LocationRoot (scripts/world/*)
   Location swapping, spawn markers, waypoint paths, actor and interactable lookup.
@@ -172,8 +175,15 @@ What each test covers:
   locked door → schoolbag → expectation (verifying no observed knowledge appears)
   → bell → substitute → class dismissed → walkway → end card.
 
-Manual checks still required on a Windows PC with a real window: camera comfort,
-collision feel in the desk aisles, prompt readability, and text pacing.
+Result on Godot 4.7.2 Stable through GitHub Actions (`.github/workflows/godot-ci.yml`):
+the import pass and all five tests are green, including the headless drive of the
+whole slice in `opening_flow_test`. Each command runs under a timeout and reports a
+summary as a check annotation, and every test arms a watchdog so a stall fails
+instead of consuming the job budget.
+
+That run is engine-verified logic, not a look at the game. Manual checks still
+required on a Windows PC with a real window: camera comfort, collision feel in
+the desk aisles, prompt readability, and text pacing.
 
 ## 9. Known limitations
 
@@ -192,6 +202,9 @@ collision feel in the desk aisles, prompt readability, and text pacing.
   are **not** implemented. The walkway ends at a deliberate build card.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
+- The two tests that build the main scene print Godot's "2 ObjectDB instances
+  were leaked at exit" warning. It is cosmetic (the engine reports it while the
+  tree is torn down), does not fail the run, and has not been chased down.
 - The graybox classroom is authored geometry, not final art; all materials are
   flat placeholder colours.
 
