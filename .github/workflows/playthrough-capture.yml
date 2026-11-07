@@ -76,10 +76,10 @@ jobs:
       - name: Emit review thumbnails
         run: |
           set -euo pipefail
-          for frame in 14_passage_en 15_playground_en 17_playground_check_success_en 19_playground_zh 20_end_card; do
-            convert "$CAPTURE_DIR/$frame.png" -resize 960x540 -quality 40 "$RUNNER_TEMP/review.jpg"
+          for frame in 20_estate_exit 21_playground 23_active_result 24_active_choices_chinese 20_end_card; do
+            convert "$RUNNER_TEMP/playthrough-evidence/frames/$frame.png" -resize 960x540 -quality 40 "$RUNNER_TEMP/review.jpg"
             if [ "$(wc -c < "$RUNNER_TEMP/review.jpg")" -gt 45000 ]; then
-              convert "$CAPTURE_DIR/$frame.png" -resize 640x360 -quality 35 "$RUNNER_TEMP/review.jpg"
+              convert "$RUNNER_TEMP/playthrough-evidence/frames/$frame.png" -resize 640x360 -quality 35 "$RUNNER_TEMP/review.jpg"
             fi
             printf '::notice title=REVIEW_%s::%s\n' "$frame" "$(base64 -w0 "$RUNNER_TEMP/review.jpg")"
           done
