@@ -188,7 +188,9 @@ func _run() -> void:
 			_failures.append("The walkway has no exit towards the street.")
 		else:
 			await _settle(30.0, "the walkway to settle")
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(0.0, 0, 5.4)))
+			# Stand on the near side of the gate and face it, so the prompt has to be
+			# the gate's and not whatever else is inside the interaction radius.
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(0.0, 0, 5.0)))
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"school_gate", "gate prompt")
@@ -401,9 +403,16 @@ func _check_targeting() -> void:
 ## The prompt the HUD is showing must describe the object the player faces, in the
 ## current language, and it must come from data rather than from a literal.
 func _check_prompt(interact_id: StringName, label: String) -> void:
+	# The prompt follows the target found during a physics frame, so give it a
+	# couple of seconds instead of assuming it is on screen immediately.
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 3000 and _ui.hud.get_prompt_text().strip_edges().is_empty():
+		await process_frame
 	var text := _ui.hud.get_prompt_text()
 	if text.strip_edges().is_empty():
-		_failures.append("No interaction prompt was shown for %s." % label)
+		_failures.append(
+			"No interaction prompt was shown for %s (%s)." % [label, _diagnose_interaction(interact_id)]
+		)
 		return
 	if not text.contains("E]"):
 		_failures.append("The %s prompt does not name the interact key: '%s'." % [label, text])
@@ -413,6 +422,29 @@ func _check_prompt(interact_id: StringName, label: String) -> void:
 			"The %s prompt is showing for '%s' instead of '%s'."
 			% [label, "<nothing>" if target == null else target.interact_id, interact_id]
 		)
+
+
+## Why an interaction prompt is missing: what the controller holds, what the sensor
+## overlaps, and where the player is standing.
+func _diagnose_interaction(expected: StringName) -> String:
+	var parts := PackedStringArray()
+	var target := _interaction.get_current_target()
+	parts.append("target=%s" % ("<none>" if target == null else String(target.interact_id)))
+	parts.append("expected_in_scene=%s" % str(_host.get_current() != null
+		and _host.get_current().find_interactable(expected) != null))
+	parts.append("position=%s" % str(_player.global_position))
+	parts.append("control=%s" % str(_player.is_control_enabled()))
+	parts.append("busy=%s" % str(_dialogue.is_busy()))
+	for child in _player.get_children():
+		var sensor := child as Area3D
+		if sensor == null or not sensor.name.ends_with("InteractionSensor"):
+			continue
+		var ids := PackedStringArray()
+		for area: Area3D in sensor.get_overlapping_areas():
+			var interactable := area as Interactable
+			ids.append("<freed>" if interactable == null else String(interactable.interact_id))
+		parts.append("overlaps=[%s]" % ", ".join(ids))
+	return " ".join(parts)
 
 
 func _dump_state() -> void:
