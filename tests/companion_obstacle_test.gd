@@ -190,6 +190,9 @@ func _check_no_route_means_waiting() -> void:
 func _check_asked_along_rebuilds_the_route() -> void:
 	var before := _companion.get_repath_count()
 	_clean_up_walls()
+	# `queue_free()` takes the wall out at the end of the frame: baking before that bakes
+	# the wall it was supposed to remove, and Q then reports a route that ends short.
+	await _physics_frames(2)
 	if not await _rebake():
 		_failures.append("The corridor's navigation could not be restored.")
 		return

@@ -401,17 +401,44 @@ func _find_target_on_screen(target: Interactable) -> Vector2:
 func _explain(target: Interactable) -> String:
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	return (
-		"[%s at %s: sight=%s, pointer=%s, current=%s, highlight=%s, in_reach=%s, distance=%.2f]"
-		% [
-			String(target.interact_id), str(target.global_position),
-			str(_interaction.has_line_of_sight_from(eye, target)),
-			str(_find_target_on_screen(target)),
-			_name_of(_interaction.get_current_target()),
-			_name_of(_interaction.get_highlighted()),
-			str(_interaction.is_in_reach(target)),
-			_flat_distance(_player.global_position, target.global_position),
-		]
+		"[%s at %s: sight=%s, pointer=%s, current=%s, highlight=%s, in_reach=%s,"
+		+ " distance=%.2f, centre=%s]"
+	) % [
+		String(target.interact_id), str(target.global_position),
+		str(_interaction.has_line_of_sight_from(eye, target)),
+		str(_find_target_on_screen(target)),
+		_name_of(_interaction.get_current_target()),
+		_name_of(_interaction.get_highlighted()),
+		str(_interaction.is_in_reach(target)),
+		_flat_distance(_player.global_position, target.global_position),
+		_what_the_centre_of_the_screen_hits(),
+	]
+
+
+## What is actually under the crosshair. When a probe cannot be found, this says whether
+## the pointer missed everything or was answered by something standing in front.
+func _what_the_centre_of_the_screen_hits() -> String:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		return "<no camera>"
+	var rect := _player.get_viewport().get_visible_rect().size
+	var screen := rect * 0.5
+	var from := camera.project_ray_origin(screen)
+	var query := PhysicsRayQueryParameters3D.create(
+		from, from + camera.project_ray_normal(screen) * 60.0, Interactable.INTERACTION_LAYER
 	)
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var hit := _player.get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return "<nothing>"
+	var node: Node = hit.get("collider")
+	if node == null:
+		return "<no collider>"
+	var item := node as Interactable
+	if item == null:
+		return node.name
+	return "%s(usable=%s)" % [node.name, str(item.can_interact())]
 
 
 func _name_of(interactable: Interactable) -> String:

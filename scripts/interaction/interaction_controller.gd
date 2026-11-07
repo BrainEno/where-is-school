@@ -121,23 +121,35 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 	if direction.length_squared() <= 0.0001:
 		return null
 	var far_point := from + direction * 60.0
-	var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
 	var space := _player.get_world_3d().direct_space_state if _player.get_world_3d() != null else null
 	if space == null:
 		return null
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
-		return null
-	var candidate := hit.get("collider") as Interactable
-	if candidate == null or not candidate.can_interact():
-		return null
-	if require_reach and not _in_reach(candidate):
-		return null
-	if not _has_line_of_sight(candidate):
-		return null
-	return candidate
+	# A hotspot that is switched off — a companion waiting to be asked along, a door still
+	# locked, a prop that is out of the story — is not a wall. The pointer looks past it at
+	# whatever is behind, instead of answering every click with nothing.
+	var excluded: Array[RID] = []
+	for attempt in 4:
+		var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
+		query.collide_with_areas = true
+		query.collide_with_bodies = false
+		if not excluded.is_empty():
+			query.exclude = excluded
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return null
+		var candidate := hit.get("collider") as Interactable
+		if candidate == null or not candidate.can_interact():
+			var passed: RID = hit.get("rid", RID())
+			if not passed.is_valid():
+				return null
+			excluded.append(passed)
+			continue
+		if require_reach and not _in_reach(candidate):
+			return null
+		if not _has_line_of_sight(candidate):
+			return null
+		return candidate
+	return null
 
 
 ## Pins the pointer to a screen position (tests only). The real cursor path is

@@ -284,7 +284,7 @@ func _follow_direction(delta: float) -> Vector3:
 			return Vector3.ZERO
 
 	if distance > give_up_distance and not _catching_up:
-		_enter_waiting("the player is %.1f m away, past the give-up distance" % distance)
+		_enter_waiting("the player is %.1f m away, past the give-up distance" % distance, false)
 		_face_player()
 		return Vector3.ZERO
 
@@ -364,12 +364,13 @@ func _should_resume(distance: float) -> bool:
 		return true
 	if _player == null:
 		return false
-	if distance <= follow_distance:
-		return true
 	if not _stuck:
-		return true
+		# Waiting because the player went too far: coming back into reach is enough.
+		return distance <= follow_distance
 	if distance > give_up_distance:
 		return false
+	# A chase that ended against something: only a player who has actually moved, so that
+	# the retry is a new situation rather than the same wall from the same angle.
 	return _player.global_position.distance_to(_stuck_player_position) > resume_move_distance
 
 
@@ -381,8 +382,10 @@ func _release_waiting() -> void:
 
 
 ## Ends a chase that cannot work, and records where the player was so the retry has a
-## reason to happen later.
-func _enter_waiting(note: String) -> void:
+## reason to happen later. `stuck` separates the two kinds of waiting: a player who
+## walked too far away is worth following again the moment they come back, while a chase
+## that ended against a wall only makes sense to retry once something has changed.
+func _enter_waiting(note: String, stuck: bool = true) -> void:
 	if not note.is_empty():
 		_last_chase_note = note
 	_moving = false
@@ -390,7 +393,7 @@ func _enter_waiting(note: String) -> void:
 	_stall_elapsed = 0.0
 	_no_route_elapsed = 0.0
 	_clear_route()
-	_stuck = true
+	_stuck = stuck
 	if _player != null:
 		_stuck_player_position = _player.global_position
 	_set_waiting(true)
@@ -574,18 +577,25 @@ func _place_behind_player() -> void:
 		back = Vector3.BACK
 	var spot := _player.global_position + back.normalized() * stop_distance
 	spot.y = _player.global_position.y
-	# The new location's own mesh decides where a person can actually stand: behind
-	# the player may be inside a desk, against a wall, or off the floor entirely.
-	var map := _navigation_map()
-	if _map_has_geometry(map):
-		var snapped := NavigationServer3D.map_get_closest_point(map, spot)
-		if Vector2(snapped.x - spot.x, snapped.z - spot.z).length() <= 1.5:
-			spot = Vector3(snapped.x, _player.global_position.y, snapped.z)
+	spot = _snap_to_the_mesh(spot)
 	global_position = spot
 	velocity = Vector3.ZERO
 	_last_body_position = spot
 	_clear_route()
 	_face_player()
+
+
+## The new location's own mesh decides where a person can actually stand: behind the
+## player may be inside a desk, against a wall, or off the floor entirely. A map that
+## cannot answer leaves the spot alone rather than guessing.
+func _snap_to_the_mesh(spot: Vector3) -> Vector3:
+	var map := _navigation_map()
+	if not _map_has_geometry(map):
+		return spot
+	var snapped := NavigationServer3D.map_get_closest_point(map, spot)
+	if Vector2(snapped.x - spot.x, snapped.z - spot.z).length() > 1.5:
+		return spot
+	return Vector3(snapped.x, spot.y, snapped.z)
 
 
 func _on_location_entered(location: LocationRoot, _spawn_id: StringName) -> void:
@@ -611,7 +621,7 @@ func _settle_after_transition() -> void:
 	var placed_at := global_position
 	# Counted in physics frames, not milliseconds: a test (or a slow frame) can make
 	# wall-clock time mean nothing here.
-	var budget := maxi(1, int(navigation_ready_timeout * 60.0))
+	var budget := maxi(1, int(minf(navigation_ready_timeout, 0.5) * 60.0))
 	while is_inside_tree() and budget > 0:
 		if _map_has_geometry(_navigation_map()):
 			break
@@ -621,7 +631,16 @@ func _settle_after_transition() -> void:
 	if global_position.distance_to(placed_at) > 0.5:
 		# Q has already walked on the new floor; the mesh is good enough.
 		return
-	_place_behind_player()
+	# Q was already put behind the player when the location changed. What may still be
+	# wrong is the floor under it: snapping the place Q is standing, and nothing else, is
+	# the only correction that cannot teleport it across a room the player has since
+	# walked through.
+	var snapped := _snap_to_the_mesh(placed_at)
+	if snapped.distance_to(placed_at) <= 0.01:
+		return
+	global_position = snapped
+	velocity = Vector3.ZERO
+	_last_body_position = snapped
 
 
 ## Q is visible only where it belongs: joined, and not standing in a location that
