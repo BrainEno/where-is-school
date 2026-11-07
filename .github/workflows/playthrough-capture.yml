@@ -53,19 +53,41 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          godot --headless --editor --path . --quit > /tmp/import.log 2>&1
-          code=$?
-          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import.log | head -n 20 || true
-          if [ "${code}" -ne 0 ]; then
-            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+          # Two passes, on purpose. The first scans a fresh checkout, where an
+          # asset that another resource points at may not have been imported yet
+          # (the bundled CJK font is the usual one), so it may report a dependency
+          # that the scan itself is about to create. The second pass starts from a
+          # populated import cache: every remaining parse error is real, and this
+          # is the pass whose result is trusted.
+          run_import () {
+            local log="$1"
+            godot --headless --editor --path . --quit > "${log}" 2>&1
+            return $?
+          }
+
+          run_import /tmp/import-1.log
+          first=$?
+          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-1.log | head -n 20 || true
+          if [ "${first}" -ne 0 ]; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-1.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
             echo "IMPORT_RESULT=failure"
-            echo "::error title=import failed (exit ${code})::${summary:-no summary captured}"
-            exit "${code}"
+            echo "::error title=import failed (exit ${first})::${summary:-no summary captured}"
+            exit "${first}"
+          fi
+
+          run_import /tmp/import-2.log
+          second=$?
+          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-2.log | head -n 20 || true
+          if [ "${second}" -ne 0 ]; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "IMPORT_RESULT=failure"
+            echo "::error title=import failed on the second pass (exit ${second})::${summary:-no summary captured}"
+            exit "${second}"
           fi
           # A non-zero exit is not the only way an import breaks: a script that
           # fails to parse is reported in the log while the editor still quits.
-          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import.log; then
-            summary=$(grep -E "SCRIPT ERROR|Parse Error" /tmp/import.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import-2.log; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error" /tmp/import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
             echo "IMPORT_RESULT=failure"
             echo "::error title=import reported script errors::${summary}"
             exit 1
@@ -132,7 +154,8 @@ jobs:
         with:
           name: playthrough-evidence
           path: |
-            /tmp/import.log
+            /tmp/import-1.log
+            /tmp/import-2.log
             /tmp/capture.log
             docs/screenshots
           if-no-files-found: warn

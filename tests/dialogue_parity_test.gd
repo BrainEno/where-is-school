@@ -49,8 +49,8 @@ func _run() -> void:
 	)
 	_expect_problem(
 		"a node gated on a different flag",
-		{"not_flags": ["met_q"]}, {},
-		{"not_flags": []}, {},
+		{"conditions": {"not_flags": ["met_q"]}}, {},
+		{"conditions": {"not_flags": []}}, {},
 		["start", "not_flags"]
 	)
 
