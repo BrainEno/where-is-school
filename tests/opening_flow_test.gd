@@ -447,6 +447,10 @@ func _diagnose_interaction(expected: StringName) -> String:
 		parts.append("expected_distance=%.2f" % offset.length())
 		parts.append("expected_can_interact=%s" % str(expected_node.can_interact()))
 		parts.append("expected_los=%s" % str(_interaction._has_line_of_sight(expected_node)))
+	var scans_before := _interaction.get_scan_count()
+	await process_frame
+	await process_frame
+	parts.append("scans=%d->%d" % [scans_before, _interaction.get_scan_count()])
 	var fresh: Interactable = _interaction._find_best_target()
 	parts.append("fresh_pick=%s" % ("<none>" if fresh == null else String(fresh.interact_id)))
 	parts.append("controller_player=%s" % str(_interaction._player.name if _interaction._player != null else "<null>"))

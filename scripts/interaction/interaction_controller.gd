@@ -23,6 +23,8 @@ var _player: Node3D = null
 var _sensor: Area3D = null
 var _current: Interactable = null
 var _enabled: bool = true
+## Counts completed target scans. Diagnostics only: it proves the scan is alive.
+var _scan_count: int = 0
 
 
 func _ready() -> void:
@@ -48,6 +50,10 @@ func is_enabled() -> bool:
 	return _enabled
 
 
+func get_scan_count() -> int:
+	return _scan_count
+
+
 func get_current_target() -> Interactable:
 	return _current
 
@@ -60,6 +66,7 @@ func _physics_process(_delta: float) -> void:
 	if _current != null and not is_instance_valid(_current):
 		_set_current(null)
 	_set_current(_find_best_target())
+	_scan_count += 1
 
 
 func _unhandled_input(event: InputEvent) -> void:
