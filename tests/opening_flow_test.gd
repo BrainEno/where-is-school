@@ -362,7 +362,41 @@ func _run() -> void:
 								if first != null:
 									_interaction.request_activation(first)
 									await _settle(30.0, "revisiting the notice")
-								if _narrative.get_entries().size() < knowledge_before or not _narrative.has_entry(&"animal_seen"):
+								var goal := ground.find_interactable(&"field_goal")
+				if goal == null:
+					_failures.append("The open field has no active check anchor.")
+				else:
+					_player.teleport(Transform3D(Basis.IDENTITY, Vector3(7, 0, -3)))
+					await physics_frame
+					await physics_frame
+					_interaction.request_activation(goal)
+					await process_frame
+					if not _dialogue.has_pending_choices():
+						_failures.append("No ability choice offered at the goal.")
+					else:
+						_dialogue.select_choice(0)
+						await process_frame
+						var shown := String(_dialogue.get_current_line().get("text", ""))
+						if not shown.contains("1d12") or not shown.contains("DC"):
+							_failures.append("The active check does not display die and difficulty.")
+						await _settle(30.0, "visible Measure result")
+						var recorded: Variant = _game_state.get_flag(&"check.field_goal.measure", null)
+						if not (recorded is Dictionary):
+							_failures.append("The chosen ability has no cached result.")
+						else:
+							_interaction.request_activation(goal)
+							await process_frame
+							_dialogue.select_choice(0)
+							await _settle(30.0, "revisited Measure")
+							if _game_state.get_flag(&"check.field_goal.measure", null) != recorded:
+								_failures.append("The player could reroll the goal on revisit.")
+							_interaction.request_activation(goal)
+							await process_frame
+							_dialogue.select_choice(1)
+							await _settle(30.0, "Echo check")
+							if not _game_state.has_flag(&"check.field_goal.echo"):
+								_failures.append("The second ability never reached the check core.")
+				if _narrative.get_entries().size() < knowledge_before or not _narrative.has_entry(&"animal_seen"):
 									_failures.append("The route reset knowledge recorded before leaving the courtyard.")
 								var end := ground.find_interactable(&"field_end") as LocationExit
 								if end != null:
