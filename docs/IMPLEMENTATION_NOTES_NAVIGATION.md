@@ -39,6 +39,24 @@ reasoning and the evidence.
   `tools/build_outdoor_locations.py`, so a stored mesh would silently go stale the
   first time a box moved. A failed bake is visible: `get_polygon_count() == 0` and the
   navigation test fails that location by name.
+- **The component collects its own geometry.** `LocationNavigation` walks the location
+  tree itself and hands every `StaticBody3D` on the world layer to the baker, rather
+  than calling the engine's source-geometry parser. The furniture in a greybox room is
+  an instanced prop two or three nodes down, and when those bodies were left out the
+  bake produced a single floor plate: the mesh promised a route through the desks, and
+  the body ground against them halfway across the room. `get_geometry_face_count()`
+  makes the difference visible in a log.
+- **A baked mesh is not a working map.** The navigation server takes a region's
+  polygons a frame or two after the bake, and a query in that window answers with the
+  zero vector — which reads as "the spawn is 14 m off its own floor". The component
+  exposes `is_routable()` (it asks the map for a real route) and re-hands the mesh over
+  once if the polygons did not arrive; the tests wait for it instead of for
+  `is_baked()`.
+- **The body climbs a kerb, and the mesh agrees.** `CharacterBody3D` treats every box
+  as a wall, so a 15–28 cm kerb stopped the character dead while the mesh (with a
+  0.4 m climb) promised it was walkable. `PlayerController.max_step_height` (0.3 m)
+  lifts the body onto low steps only — a desk or a wall still stops it — and
+  `agent_max_climb` is set to the same 0.3 m so the two cannot disagree again.
 - **The street's way back is its own key.** `prompt.back_to_classroom`
   ("Return to classroom" / "回到教室") on `street_back_to_school` only; the corridor's
   door keeps `prompt.back_inside` ("Go back inside" / "回到里面"). The destination,

@@ -228,8 +228,7 @@ func _check_isolated_island_is_not_reached() -> void:
 		return
 	var island_center := _player.global_position + Vector3(4.0, 3.0, 0.0)
 	_add_slab(location, island_center, Vector3(3.0, 0.2, 3.0), "IslandSlab")
-	nav.bake_region()
-	await _frames(2)
+	await _rebake(nav)
 	_player.request_path_to(island_center + Vector3(0.0, 0.9, 0.0))
 	await _frames(2)
 	var deadline := Time.get_ticks_msec() + 6000
@@ -243,8 +242,7 @@ func _check_isolated_island_is_not_reached() -> void:
 		_player.cancel_path()
 		_failures.append("The walk to an unreachable island never stopped.")
 	_remove_node(location, "IslandSlab")
-	if nav != null:
-		nav.bake_region()
+	await _rebake(nav)
 
 
 ## A wall straight between the player and a destination. The route has to bend, and the
@@ -276,12 +274,11 @@ func _check_obstacle_is_walked_around() -> void:
 	# The slab is thin across and long along its own Z; turning it so that long axis
 	# lies across the route makes it a wall, not a kerb beside the path.
 	wall.rotation.y = atan2(across.x, across.z)
-	nav.bake_region()
-	await _frames(2)
+	await _rebake(nav)
 	if not _player.request_path_to(destination):
 		_failures.append("The destination behind a wall with room around it was refused.")
 		_remove_node(location, "ProbeWall")
-		nav.bake_region()
+		await _rebake(nav)
 		return
 	var path := NavigationServer3D.map_get_path(
 		nav.get_navigation_map(), _player.global_position, destination, true
@@ -301,8 +298,7 @@ func _check_obstacle_is_walked_around() -> void:
 	if closest < 0.45:
 		_failures.append("The character walked %.2f m from the wall's face instead of around it." % closest)
 	_remove_node(location, "ProbeWall")
-	nav.bake_region()
-	await _frames(2)
+	await _rebake(nav)
 
 
 func _check_manual_input_cancels() -> void:
@@ -394,6 +390,32 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 	return _location
 
 
+## Bakes the region and waits until the map is routing on the new polygons. A bake that
+## has not reached the navigation server yet answers every query with an empty path,
+## so a walk asked for in that window quietly does not start and the character stands
+## still while the test blames the walk.
+func _rebake(nav: LocationNavigation) -> void:
+	if nav == null:
+		return
+	var map := _player.navigation_agent.get_navigation_map()
+	var has_iteration := map.is_valid() and NavigationServer3D.has_method("map_get_iteration_id")
+	var before := _iteration_id(map)
+	nav.bake_region()
+	var limit := 60 if has_iteration else 12
+	var guard := 0
+	while guard < limit:
+		await physics_frame
+		guard += 1
+		if nav.is_routable() and (not has_iteration or _iteration_id(map) > before):
+			break
+
+
+func _iteration_id(map: RID) -> int:
+	if not map.is_valid() or not NavigationServer3D.has_method("map_get_iteration_id"):
+		return 0
+	return NavigationServer3D.map_get_iteration_id(map)
+
+
 func _nav_of(location: LocationRoot) -> LocationNavigation:
 	if location == null:
 		return null
@@ -423,8 +445,9 @@ func _report(nav: LocationNavigation) -> String:
 	if map.is_valid() and NavigationServer3D.has_method("map_get_cell_size"):
 		cell = str(NavigationServer3D.map_get_cell_size(map))
 	var mesh_cell := str(mesh.cell_size) if mesh != null else "?"
-	return "[region_pos=%s polygons=%d vertices=%d bounds=%s map_regions=%d map_cell=%s mesh_cell=%s agent_radius=%.2f]" % [
-		str(nav.global_position), polygons, vertices, bounds, regions, cell, mesh_cell, nav.agent_radius
+	return "[faces=%d region_pos=%s polygons=%d vertices=%d bounds=%s map_regions=%d map_cell=%s mesh_cell=%s agent_radius=%.2f]" % [
+		nav.get_geometry_face_count(), str(nav.global_position), polygons, vertices, bounds,
+		regions, cell, mesh_cell, nav.agent_radius
 	]
 
 

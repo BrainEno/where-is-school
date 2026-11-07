@@ -40,6 +40,11 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	# A headless run opens a 64x64 window, so the bottom-anchored dialogue panel is laid
+	# out mostly above the top edge and a click on one of its buttons lands outside the
+	# viewport. The game is authored for 1600x900; give the run that surface first.
+	root.size = Vector2i(1600, 900)
+	await _frames(3)
 	var autoloads := Harness.ensure_state_autoloads(self)
 	if autoloads["game_state"] == null or autoloads["narrative_state"] == null:
 		Harness.finish(self, ["State autoloads are unavailable."], "")

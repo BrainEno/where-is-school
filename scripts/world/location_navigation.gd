@@ -32,7 +32,9 @@ signal navigation_baked(success: bool)
 ## Kept just under the player's height so low clearance is not marked walkable.
 @export var agent_height: float = 1.8
 ## Steps this tall count as walkable, so a kerb or a fire step is a ramp, not a wall.
-@export var agent_max_climb: float = 0.4
+## Kept at the player's step height: a mesh that promises a taller step than the body
+## can take produces routes the character walks into and grinds against.
+@export var agent_max_climb: float = 0.3
 @export_range(1.0, 89.0, 1.0) var agent_max_slope: float = 45.0
 ## Which physics layer the walkable world lives on.
 @export_flags_3d_physics var geometry_collision_mask: int = 1
@@ -41,6 +43,7 @@ var _baked := false
 var _polygon_count := 0
 var _bake_error: String = ""
 var _map_region_count: int = 0
+var _source_face_count: int = 0
 
 
 func _ready() -> void:
@@ -64,7 +67,7 @@ func bake_region() -> bool:
 		mesh = NavigationMesh.new()
 	_configure(mesh)
 	var source := NavigationMeshSourceGeometryData3D.new()
-	NavigationServer3D.parse_source_geometry_data(mesh, source, root)
+	_source_face_count = _collect_geometry(root, source)
 	NavigationServer3D.bake_from_source_geometry_data(mesh, source)
 	navigation_mesh = mesh
 	_polygon_count = mesh.get_polygon_count()
@@ -92,6 +95,13 @@ func bake_region() -> bool:
 		push_error("LocationNavigation: %s" % _bake_error)
 	navigation_baked.emit(_baked)
 	return _baked
+
+
+## How many triangles went into the bake. A room with desks reports far more than a
+## room with only a floor and four walls, which is the quickest way to see that the
+## furniture was left out of the geometry.
+func get_geometry_face_count() -> int:
+	return _source_face_count
 
 
 func is_baked() -> bool:
@@ -138,6 +148,64 @@ func project_point(point: Vector3, fallback: Vector3 = Vector3.ZERO) -> Vector3:
 	if not _baked:
 		return fallback
 	return NavigationServer3D.map_get_closest_point(get_navigation_map(), point)
+
+
+## Collects the solid geometry to bake from: every `StaticBody3D` under the location
+## root, at any depth, on the world layer.
+##
+## The engine's own source-geometry parser is not used here. Nested and instanced
+## bodies are exactly what a greybox room is made of (a desk prop is a `StaticBody3D`
+## three nodes down), and a body that is silently left out bakes a floor plate that
+## the character's path runs straight through — the room looks navigable and the body
+## grinds against furniture it was never told about.
+func _collect_geometry(root: Node, data: NavigationMeshSourceGeometryData3D) -> int:
+	var triangles := 0
+	for child in root.get_children():
+		var body := child as StaticBody3D
+		if body != null and (body.collision_layer & geometry_collision_mask) != 0:
+			for owner_id in body.get_shape_owners():
+				var local := body.shape_owner_get_transform(owner_id)
+				var shape_count := body.shape_owner_get_shape_count(owner_id)
+				for index in shape_count:
+					var shape := body.shape_owner_get_shape(owner_id, index)
+					if shape == null:
+						continue
+					triangles += _add_shape(data, shape, body.global_transform * local)
+		triangles += _collect_geometry(child, data)
+	return triangles
+
+
+## Adds one collision shape. Boxes are the whole vocabulary of this greybox world and
+## are written out exactly; anything else falls back to its debug mesh.
+func _add_shape(data: NavigationMeshSourceGeometryData3D, shape: Shape3D, xform: Transform3D) -> int:
+	var box := shape as BoxShape3D
+	if box != null:
+		var half := box.size * 0.5
+		var corners := PackedVector3Array([
+			Vector3(-half.x, -half.y, -half.z), Vector3(half.x, -half.y, -half.z),
+			Vector3(half.x, -half.y, half.z), Vector3(-half.x, -half.y, half.z),
+			Vector3(-half.x, half.y, -half.z), Vector3(half.x, half.y, -half.z),
+			Vector3(half.x, half.y, half.z), Vector3(-half.x, half.y, half.z),
+		])
+		var quads := [
+			[0, 1, 2, 3], [7, 6, 5, 4], [4, 5, 1, 0],
+			[5, 6, 2, 1], [6, 7, 3, 2], [7, 4, 0, 3],
+		]
+		var faces := PackedVector3Array()
+		for quad: Array in quads:
+			faces.append(corners[quad[0]])
+			faces.append(corners[quad[1]])
+			faces.append(corners[quad[2]])
+			faces.append(corners[quad[0]])
+			faces.append(corners[quad[2]])
+			faces.append(corners[quad[3]])
+		data.add_faces(faces, xform)
+		return faces.size() / 3
+	var mesh := shape.get_debug_mesh()
+	if mesh == null:
+		return 0
+	data.add_mesh(mesh, xform)
+	return mesh.get_faces().size() / 3
 
 
 func _configure(mesh: NavigationMesh) -> void:

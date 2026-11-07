@@ -21,6 +21,10 @@ signal path_cancelled
 @export_range(1.0, 30.0, 0.5) var gravity: float = 9.8
 ## How quickly the visual turns toward the movement direction.
 @export_range(1.0, 30.0, 0.5) var turn_speed: float = 12.0
+## How tall a step the body can walk up. `CharacterBody3D` treats every box as a wall,
+## so without this a 15 cm kerb stops the character dead and a click across the street
+## walks into it and grinds. Kept equal to the navigation mesh's `agent_max_climb`.
+@export_range(0.0, 0.6, 0.01) var max_step_height: float = 0.3
 
 @export_category("Camera")
 @export var camera_offset: Vector3 = Vector3(3.4, 6.4, 3.4)
@@ -120,8 +124,37 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 	elif velocity.y < 0.0:
 		velocity.y = 0.0
 
+	_try_step_up(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 	_update_visual_facing(delta)
+
+
+## Lifts the body onto a low step instead of letting it press against one.
+##
+## Only when the body is on the floor, moving, and actually blocked: the block has to
+## be low enough to step over (a kerb, a threshold) and there has to be room above it.
+## Anything taller — a desk, a wall — still stops the character.
+func _try_step_up(motion: Vector3) -> void:
+	if max_step_height <= 0.0 or not is_on_floor() or motion.length() < 0.0001:
+		return
+	if not test_move(global_transform, motion):
+		return
+	var raised := global_transform.translated(Vector3.UP * max_step_height)
+	if test_move(raised, motion):
+		return
+	var ahead := motion.normalized() * maxf(0.3, motion.length() + 0.15)
+	var from := global_position + Vector3.UP * max_step_height + ahead
+	var query := PhysicsRayQueryParameters3D.create(
+		from, from - Vector3.UP * max_step_height * 2.0
+	)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return
+	var rise := float(hit["position"].y) - global_position.y
+	if rise <= 0.02 or rise > max_step_height:
+		return
+	global_position.y += rise + 0.01
 
 
 func _update_visual_facing(delta: float) -> void:

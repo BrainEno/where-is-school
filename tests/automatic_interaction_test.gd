@@ -525,8 +525,48 @@ func _place_clear_of_props(target: Interactable, min_distance: float, max_distan
 			var path := NavigationServer3D.map_get_path(map, origin, snapped, true)
 			if path.size() < 2:
 				continue
+			# A click must be answered by *this* probe: somewhere else to stand next to
+			# it, and no other object close enough to win the cursor instead.
+			if _crowded(target, 2.0) or not _has_approach_room(target):
+				continue
 			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:
 				return true
+	return false
+
+
+## True when another interactable in this location stands closer than `clearance` to
+## the given one. The interaction controller answers with the best target under the
+## cursor, so a probe parked beside the person who is already in the room proves the
+## wrong thing.
+func _crowded(target: Interactable, clearance: float) -> bool:
+	if _location == null:
+		return false
+	for other in _location.get_interactables():
+		if other == null or other == target or not is_instance_valid(other):
+			continue
+		var offset := Vector2(
+			other.global_position.x - target.global_position.x,
+			other.global_position.z - target.global_position.z
+		)
+		if offset.length() < clearance:
+			return true
+	return false
+
+
+## There has to be somewhere to stand next to the target and walk from, or the
+## approach search has nothing to offer however well the target itself is placed.
+func _has_approach_room(target: Interactable) -> bool:
+	var map := _player.navigation_agent.get_navigation_map()
+	for index in 16:
+		var angle := TAU * float(index) / 16.0
+		var candidate := target.global_position + Vector3(cos(angle) * 0.7, 0.0, sin(angle) * 0.7)
+		var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+		if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.35:
+			continue
+		if NavigationServer3D.map_get_path(
+			map, _player.global_position, Vector3(snapped.x, candidate.y, snapped.z), true
+		).size() >= 2:
+			return true
 	return false
 
 
