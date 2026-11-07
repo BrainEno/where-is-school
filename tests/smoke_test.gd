@@ -123,6 +123,11 @@ func _check_ui(main: Node) -> void:
 		_failures.append("GameUI is missing the dialogue panel.")
 	if ui.backlog == null:
 		_failures.append("GameUI is missing the backlog panel.")
+	# The CJK theme is applied to each UI root after resource import, rather
+	# than loaded by the project before the font has been imported on a clone.
+	for panel: Control in [ui.hud, ui.overlay, ui.dialogue_panel, ui.backlog, ui.end_card]:
+		if panel == null or panel.theme == null or panel.theme.default_font == null:
+			_failures.append("A game UI root is missing the bundled CJK theme.")
 
 
 func _check_content(main: Node) -> void:

@@ -267,7 +267,9 @@ completeness error. It is not a human playtest. Historical images already in
   needs a decision.
 - The bundled `assets/fonts/NotoSansSC-Regular.ttf` is the only third-party asset
   in the repository (SIL OFL 1.1, license text shipped next to it). Font size is
-  fixed; there is no typography pass for either language.
+  fixed; there is no typography pass for either language. The same theme is
+  attached to each game UI root (rather than loaded globally before the font's
+  first import), so a clean import does not silently emit font-load errors.
 - Every environment is a graybox: flat placeholder colours, no textures, no
   animation. The green animal is three primitives and reads as "something green"
   rather than as a creature; its design is deliberately undecided.
