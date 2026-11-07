@@ -758,6 +758,7 @@ interact_id = &"street_notice_pole"
 prompt_text = "Read the notice"
 conversation_route = &"street_notice"
 radius = 1.2
+support_paths = PackedStringArray("../NoticePole")
 
 [node name="GutterLook" parent="Interactables" instance=ExtResource("12_interactable")]
 position = Vector3(-9.2, 0.4, -22.0)
@@ -782,6 +783,7 @@ position = Vector3(10.6, 1.2, -18.0)
 interact_id = &"street_lamp"
 inspection_id = &"street_lamp"
 radius = 1.2
+support_paths = PackedStringArray("../LampPost")
 
 [node name="BackToSchool" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(-9.6, 0.9, 16.0)

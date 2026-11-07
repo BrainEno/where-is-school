@@ -34,6 +34,10 @@ var _companion: CompanionController = null
 var _location: LocationRoot = null
 var _walls: Array[StaticBody3D] = []
 var _closest_approach := INF
+## A short position trace, so a failed case can say what Q actually did instead of
+## guessing from where it ended up.
+var _trace: Array[String] = []
+var _trace_timer := 0.0
 
 
 func _initialize() -> void:
@@ -283,6 +287,7 @@ func _stage(q_z: float, player_z: float) -> void:
 	_companion.global_position = Vector3(0.0, 0.0, q_z)
 	_companion.velocity = Vector3.ZERO
 	_closest_approach = INF
+	_trace.clear()
 	if _companion.is_waiting():
 		_companion.resume_following()
 	await _physics_frames(3)
@@ -298,6 +303,20 @@ func _sample_approach(frames: int) -> void:
 			_closest_approach,
 			_flat_distance(_companion.global_position, _player.global_position)
 		)
+
+
+func _record() -> void:
+	if _trace.size() >= 18:
+		return
+	_trace.append(
+		"z=%.2f d=%.2f route=%d v=%.2f"
+		% [
+			_companion.global_position.z,
+			_flat_distance(_companion.global_position, _player.global_position),
+			_companion.get_route().size(),
+			_companion.velocity.z,
+		]
+	)
 
 
 func _make_wall(position: Vector3, size: Vector3) -> StaticBody3D:
@@ -382,6 +401,13 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 
 
 func _state() -> String:
+	var walls := ""
+	for wall: StaticBody3D in _walls:
+		if not is_instance_valid(wall):
+			continue
+		var shape := wall.get_child(0) as CollisionShape3D
+		var box := shape.shape as BoxShape3D if shape != null else null
+		walls += " wall@%s size=%s" % [str(wall.global_position), str(box.size if box else Vector3.ZERO)]
 	return (
 		"q=(%.2f,%.2f) player=(%.2f,%.2f) visible=%s joined=%s waiting=%s route=%d repath=%d vel=(%.2f,%.2f) layer=%d mask=%d note='%s'"
 		% [
@@ -393,7 +419,9 @@ func _state() -> String:
 			_companion.collision_layer, _companion.collision_mask,
 			_companion.get_last_chase_note(),
 		]
-	)
+	) + " nav_ready=%s regions=%d" % [
+		str(_companion.is_navigation_ready()), _companion.get_navigation_region_count()
+	] + walls + " trace=" + str(_trace)
 
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:
@@ -402,11 +430,15 @@ func _flat_distance(a: Vector3, b: Vector3) -> float:
 
 func _wait_until(condition: Callable, limit_seconds: float) -> bool:
 	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
+	var sampled := 0
 	while not condition.call():
 		_closest_approach = minf(
 			_closest_approach,
 			_flat_distance(_companion.global_position, _player.global_position)
 		)
+		sampled += 1
+		if sampled % 4 == 0:
+			_record()
 		await physics_frame
 		if Time.get_ticks_msec() > deadline:
 			return false

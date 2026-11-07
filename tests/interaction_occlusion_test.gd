@@ -150,59 +150,65 @@ func _assert_blocked(target: Interactable, what: String, wall: StaticBody3D) -> 
 # --- case 3: the wall the object is mounted on -------------------------------
 
 
-## A notice pinned to a wall: the wall is the object's own backing and declares itself
-## as support, so the notice is readable while the same wall still blocks everything
-## else.
+## A notice on a wall: the part of the wall it is fixed to is the object's own backing
+## and declares itself as support, so the notice is readable through it. A second notice
+## on the very same wall declares nothing, and the identical wall blocks it — which is
+## what makes the first result mean something.
 func _check_declared_backing_is_seen_through() -> void:
 	await _reset()
 	var wall := _make_wall(Vector3(0.0, 1.0, -2.0), Vector3(4.0, 3.0, 0.2))
-	var notice := _make_probe(&"occlusion_notice", Vector3(0.0, 1.2, -1.85))
+	var notice := _make_probe(&"occlusion_notice", Vector3(-0.7, 1.2, -1.95))
 	notice.support_paths = PackedStringArray([notice.get_path_to(wall)])
+	var unclaimed := _make_probe(&"occlusion_notice_undeclared", Vector3(0.7, 1.2, -1.95))
 	await _physics_frames(4)
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, notice):
-		_failures.append("A notice could not be seen through the wall it is mounted on.")
-		return
-	var screen := _screen_of(notice.global_position)
-	if _interaction.get_target_at_screen_position(screen, false) != notice:
-		_failures.append("The pointer could not select a notice on its own wall.")
-	_interaction.set_mouse_override(screen)
+		_failures.append("A notice could not be seen through the wall it is mounted on. %s" % _explain(notice))
+	if _interaction.has_line_of_sight_from(eye, unclaimed):
+		_failures.append(
+			"An undeclared notice on the same wall was visible through it; the declared"
+			+ " case proves nothing. %s" % _explain(unclaimed)
+		)
+	_activated.clear()
+	_interaction.set_mouse_override(_screen_of(notice.global_position))
 	await _physics_frames(4)
 	if _interaction.get_current_target() != notice:
-		_failures.append("Facing did not adopt a notice on its own wall.")
+		_failures.append(
+			"The pointer did not adopt a notice on its own wall (target: %s). %s"
+			% [_name_of(_interaction.get_current_target()), _explain(notice)]
+		)
 	_interaction.clear_mouse_override()
 	await _push_e()
 	if not _activated.has(&"occlusion_notice"):
-		_failures.append("E could not use a notice on its own wall.")
+		_failures.append("E could not use a notice on its own wall. %s" % _explain(notice))
 	await _settle_dialogue()
 
 
-# --- case 4: a bag on a desk -------------------------------------------------
+# --- case 4: a bag behind the desk it sits on --------------------------------
 
 
-## The case the old heuristic existed for, done explicitly: the bag sits inside the
-## desk's collision box, the desk is declared, and the bag stays usable. A second bag
-## with no declaration is hidden by the very same desk, which is what makes the first
-## result mean something.
+## The case the old heuristic existed for, done explicitly. The cupboard stands between
+## the player and the schoolbag, so every probe crosses it: the bag that declares the
+## cupboard is usable, the bag that declares nothing is not.
 func _check_bag_on_a_desk() -> void:
 	await _reset()
-	var desk := _make_wall(Vector3(0.0, 0.4, -2.6), Vector3(1.2, 0.8, 0.6))
-	var bag := _make_probe(&"occlusion_bag", Vector3(0.0, 0.55, -2.6))
+	var desk := _make_wall(Vector3(0.0, 0.7, -2.6), Vector3(1.2, 1.4, 0.6))
+	var bag := _make_probe(&"occlusion_bag", Vector3(-0.4, 0.55, -2.6))
 	bag.support_paths = PackedStringArray([bag.get_path_to(desk)])
-	var unclaimed := _make_probe(&"occlusion_bag_undeclared", Vector3(0.0, 0.55, -2.62))
+	var unclaimed := _make_probe(&"occlusion_bag_undeclared", Vector3(0.4, 0.55, -2.6))
 	await _physics_frames(4)
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, bag):
-		_failures.append("A schoolbag declared on its own desk could not be seen.")
+		_failures.append("A schoolbag declared on its own desk could not be seen. %s" % _explain(bag))
 	if _interaction.has_line_of_sight_from(eye, unclaimed):
 		_failures.append(
 			"An undeclared object inside the desk was visible through it: the desk is not"
-			+ " being blocked, so the declared case proves nothing."
+			+ " blocking, so the declared case proves nothing. %s" % _explain(unclaimed)
 		)
 	_activated.clear()
 	await _push_e()
 	if not _activated.has(&"occlusion_bag"):
-		_failures.append("E could not use a schoolbag declared on its own desk.")
+		_failures.append("E could not use a schoolbag declared on its own desk. %s" % _explain(bag))
 	await _settle_dialogue()
 
 
@@ -228,25 +234,38 @@ func _check_eye_heights() -> void:
 # --- case 6: where the character would stand ---------------------------------
 
 
-## The approach-spot search asks the same question, so a target with a wall right in
-## front of it has nowhere to stand: the click is refused instead of walking into the
-## wall and activating from behind it.
+## The approach-spot search asks the same question. A wall between the room and the
+## object means there is no standing position that can see it, so a click neither walks
+## nor activates, and says why.
 func _check_approach_spot_refuses_a_blocked_view() -> void:
 	await _reset()
 	var target := _make_probe(&"occlusion_approach", Vector3(0.0, 0.9, -2.2))
-	# A wall standing between the room and the object: every candidate ring spot on the
-	# near side looks through it.
 	_make_wall(Vector3(0.0, 1.0, -1.35), Vector3(5.0, 2.0, 0.2))
 	await _physics_frames(4)
+	# Every spot the approach search would try is behind the wall.
+	var seen_from_a_spot := false
+	for index in 16:
+		var angle := TAU * float(index) / 16.0
+		var spot := target.global_position + Vector3(cos(angle) * 1.0, 0.0, sin(angle) * 1.0)
+		if _interaction.has_line_of_sight_from(spot + Vector3.UP * _interaction.eye_height, target) \
+				and spot.z > -1.35:
+			# A spot on the room side of the wall that can see the object would make
+			# this case meaningless.
+			seen_from_a_spot = true
+	if seen_from_a_spot:
+		_failures.append("A standing spot on the room side could see the target through the wall.")
+	_activated.clear()
 	_navigator.click_at_screen_position(_screen_of(target.global_position))
 	await _physics_frames(4)
 	if _navigator.is_approaching():
-		_failures.append("The navigator approached a target it could not see.")
+		_failures.append("The navigator approached a target it could not see. %s" % _explain(target))
 	if _player.is_path_active():
-		_failures.append("The character started walking at a target behind a wall.")
-	var reason := _navigator.get_last_rejection()
-	if not reason.contains("clear view"):
-		_failures.append("A blocked approach was refused for the wrong reason ('%s')." % reason)
+		_failures.append("The character started walking at a target behind a wall. %s" % _explain(target))
+	if _navigator.get_last_rejection().is_empty():
+		_failures.append("A click on a target behind a wall was refused without saying why.")
+	await _push_e()
+	if _activated.has(&"occlusion_approach"):
+		_failures.append("E used a target behind a wall.")
 	_clean_up()
 
 
@@ -301,6 +320,31 @@ func _make_wall(position: Vector3, size: Vector3) -> StaticBody3D:
 	body.global_position = position
 	_walls.append(body)
 	return body
+
+
+## Everything that would explain a visibility failure, in one line.
+func _explain(target: Interactable) -> String:
+	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
+	return (
+		"[%s at %s: sight=%s, pointer=%s, current=%s, highlight=%s, in_reach=%s, distance=%.2f]"
+		% [
+			String(target.interact_id), str(target.global_position),
+			str(_interaction.has_line_of_sight_from(eye, target)),
+			_name_of(_interaction.get_target_at_screen_position(_screen_of(target.global_position), false)),
+			_name_of(_interaction.get_current_target()),
+			_name_of(_interaction.get_highlighted()),
+			str(_interaction.is_in_reach(target)),
+			_flat_distance(_player.global_position, target.global_position),
+		]
+	)
+
+
+func _name_of(interactable: Interactable) -> String:
+	return String(interactable.interact_id) if interactable != null else "<nothing>"
+
+
+func _flat_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
 func _screen_of(world_position: Vector3) -> Vector2:

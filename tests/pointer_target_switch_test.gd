@@ -156,7 +156,7 @@ func _check_npc_then_ground() -> void:
 		return
 	await _physics_frames(3)
 	if not _navigator.is_approaching():
-		_failures.append("Clicking Q from across the room did not start an approach.")
+		_failures.append("Clicking Q from across the room did not start an approach (%s)." % _why())
 		return
 	if _navigator.get_pending_target() != q:
 		_failures.append("The approach did not hold Q as its target.")
@@ -214,7 +214,7 @@ func _check_object_replaces_object() -> void:
 		return
 	await _physics_frames(3)
 	if not _navigator.is_approaching():
-		_failures.append("Clicking the first probe did not start an approach.")
+		_failures.append("Clicking the first probe did not start an approach (%s)." % _why())
 		return
 	if not _click(_probe_b.global_position):
 		_failures.append("Clicking the second probe was refused (%s)." % _navigator.get_last_rejection())
@@ -258,7 +258,7 @@ func _check_ground_replaces_ground() -> void:
 	if not _player.is_path_active():
 		_failures.append("A plain floor click did not start a walk (%s)." % _navigator.get_last_rejection())
 		return
-	var second: Variant = _reachable_ground_screen(2.0, 4.0)
+	var second: Variant = _reachable_ground_screen(2.5, 5.0, first_point)
 	if second == null:
 		_failures.append("No second floor point was clickable.")
 		return
@@ -296,7 +296,7 @@ func _check_target_freed_and_disabled() -> void:
 		return
 	await _physics_frames(3)
 	if not _navigator.is_approaching():
-		_failures.append("The probe that gets freed was never approached.")
+		_failures.append("The probe that gets freed was never approached (%s)." % _why())
 		return
 	_probe_c.queue_free()
 	await _physics_frames(4)
@@ -317,7 +317,7 @@ func _check_target_freed_and_disabled() -> void:
 		return
 	await _physics_frames(3)
 	if not _navigator.is_approaching():
-		_failures.append("The probe that gets disabled was never approached.")
+		_failures.append("The probe that gets disabled was never approached (%s)." % _why())
 		return
 	_probe_d.interaction_enabled = false
 	await _physics_frames(4)
@@ -353,14 +353,33 @@ func _click(world_position: Vector3) -> bool:
 	var camera := _player.get_viewport().get_camera_3d()
 	if camera == null:
 		return false
-	_navigator.click_at_screen_position(camera.unproject_position(world_position))
+	var screen := camera.unproject_position(world_position)
+	_last_clicked_under_pointer = _name_of(_interaction.get_target_at_screen_position(screen, false))
+	_last_clicked_screen = screen
+	_navigator.click_at_screen_position(screen)
 	return _navigator.was_last_click_accepted()
+
+
+## The object the pointer was over at the last click, and where the click landed. A
+## refusal is much easier to read with both than with a boolean.
+var _last_clicked_under_pointer := ""
+var _last_clicked_screen := Vector2.ZERO
+
+
+func _why() -> String:
+	return "pointer was over '%s' at %s, rejection '%s'" % [
+		_last_clicked_under_pointer, str(_last_clicked_screen), _navigator.get_last_rejection()
+	]
+
+
+func _name_of(interactable: Interactable) -> String:
+	return String(interactable.interact_id) if interactable != null else "<nothing>"
 
 
 ## A screen position whose click would land on walkable floor between these distances,
 ## with a route to it. Scanned rather than guessed: the camera is fixed and the room is
 ## not symmetrical.
-func _reachable_ground_screen(min_distance: float, max_distance: float) -> Variant:
+func _reachable_ground_screen(min_distance: float, max_distance: float, avoid: Vector3 = Vector3.ZERO) -> Variant:
 	var rect := _player.get_viewport().get_visible_rect().size
 	var map := _player.navigation_agent.get_navigation_map()
 	for x_step in 14:
@@ -377,6 +396,8 @@ func _reachable_ground_screen(min_distance: float, max_distance: float) -> Varia
 			if distance < min_distance or distance > max_distance:
 				continue
 			if _interaction.get_target_at_screen_position(screen, false) != null:
+				continue
+			if not avoid.is_zero_approx() and _flat_distance(world, avoid) < 1.5:
 				continue
 			if NavigationServer3D.map_get_path(map, _player.global_position, world, true).size() < 2:
 				continue

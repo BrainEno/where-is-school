@@ -195,6 +195,21 @@ func get_last_chase_note() -> String:
 	return _last_chase_note
 
 
+## Whether Q is allowed to walk yet. False only between a location change and the new
+## scene's navigation answering.
+func is_navigation_ready() -> bool:
+	return _navigation_ready
+
+
+## How many navigation regions the map Q is querying holds. Zero means every path
+## query answers with nothing, however good the mesh is.
+func get_navigation_region_count() -> int:
+	var map := _navigation_map()
+	if not map.is_valid():
+		return -1
+	return NavigationServer3D.map_get_regions(map).size()
+
+
 ## Resumes following. The interaction that calls this is an ordinary conversation;
 ## afterwards Q simply catches up again, along a fresh route.
 func resume_following() -> void:
