@@ -137,6 +137,7 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 	var player_body := _player as CollisionObject3D
 	if player_body != null:
 		excluded.append(player_body.get_rid())
+	var candidate_distance := from.distance_to(candidate.global_position)
 	for height: float in [0.35, 0.05]:
 		var to: Vector3 = candidate.global_position + Vector3.UP * height
 		var blocked := false
@@ -150,6 +151,12 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 				blocked = false
 				break
 			blocked = true
+			# A surface that is not clearly in front of the object is the object's own
+			# backing: a notice on a wall, a gate in a doorway, a bag on a desk.
+			var hit_position: Vector3 = hit.get("position", Vector3.ZERO)
+			if from.distance_to(hit_position) > candidate_distance - 0.35:
+				blocked = false
+				break
 			var collider := hit.get("collider") as Node3D
 			if collider == null:
 				break

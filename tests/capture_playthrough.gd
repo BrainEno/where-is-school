@@ -319,10 +319,21 @@ func _wait_for_line(timeout_seconds: float) -> bool:
 
 
 func _wait_for_target(interact_id: StringName, timeout_seconds: float) -> bool:
-	return await _poll(func() -> bool:
+	var found := await _poll(func() -> bool:
 		var target := _interaction.get_current_target()
 		return target != null and target.interact_id == interact_id and not _ui.hud.get_prompt_text().is_empty(),
 		timeout_seconds)
+	if not found:
+		var target := _interaction.get_current_target()
+		_note("prompt for '%s' never appeared: target=%s prompt='%s' position=%s busy=%s control=%s" % [
+			interact_id,
+			"<none>" if target == null else String(target.interact_id),
+			_ui.hud.get_prompt_text(),
+			str(_player.global_position),
+			_dialogue.is_busy(),
+			_player.is_control_enabled(),
+		])
+	return found
 
 
 func _wait_for_location(location_id: String, timeout_seconds: float) -> bool:

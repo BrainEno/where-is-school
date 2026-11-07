@@ -366,6 +366,10 @@ func _begin_beat() -> void:
 func _end_beat() -> void:
 	_beat_active = false
 	_sync_player_locks()
+	# Locking the player clears the prompt; unlocking has to put it back, because
+	# the target itself may not change again for a while.
+	if _interaction != null and _hud != null and not _slice_finished:
+		_on_target_changed(_interaction.get_current_target())
 
 
 func _on_presentation_active_changed(_active: bool) -> void:
