@@ -628,10 +628,17 @@ func _capture_click_navigation() -> void:
 	var settled := false
 	var walked := 0.0
 	var after_click := "not sampled"
+	var clicked := false
 	for _attempt in 3:
+		# A camera looking at the player only shows so much floor: widen the window
+		# before giving up, so "no point to click" is not reported as "the click did
+		# not move the character".
 		var screen := _find_ground_click_screen(4.0, 6.5)
 		if screen == Vector2.ZERO:
+			screen = _find_ground_click_screen(3.0, 8.0)
+		if screen == Vector2.ZERO:
 			break
+		clicked = true
 		start = _player.global_position
 		var clicks_before := navigator.get_click_count() if navigator != null else 0
 		await _click_at_screen(screen)
@@ -676,7 +683,12 @@ func _capture_click_navigation() -> void:
 			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the interrupting beat")
 			await _wait_for_free(45.0)
 			continue
-	if destination.is_empty():
+	if destination.is_empty() and not clicked:
+		_failures.append(
+			"No walkable floor between 3 and 8 metres of the player could be found to click (at %s)."
+			% str(_player.global_position)
+		)
+	elif destination.is_empty():
 		_failures.append(
 			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s; %s)."
 			% [
