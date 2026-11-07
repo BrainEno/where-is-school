@@ -115,12 +115,6 @@ The courtyard behind the school
 
 ![17_residential](17_residential.png)
 
-## FAIL_animal_prompt
-
-No prompt appeared for the animal.
-
-![FAIL_animal_prompt](FAIL_animal_prompt.png)
-
 ## 18_animal_prompt
 
 The green animal, with the prompt to look at it.
@@ -138,10 +132,4 @@ Meeting the animal
 The end-of-slice card at the end of the built content.
 
 ![20_end_card](20_end_card.png)
-
-## FAIL_last_frame
-
-The last frame before the capture stopped.
-
-![FAIL_last_frame](FAIL_last_frame.png)
 
