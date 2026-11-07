@@ -33,8 +33,6 @@ jobs:
     name: Drive the game under Xvfb and keep evidence
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      CAPTURE_EVIDENCE_DIR: ${{ runner.temp }}/playthrough-evidence
     steps:
       - uses: actions/checkout@v6
 
@@ -42,8 +40,8 @@ jobs:
       - name: Initialize evidence
         shell: bash
         run: |
-          mkdir -p "$CAPTURE_EVIDENCE_DIR"
-          echo '{"result":"failure","stage":"setup","import":"not_run","capture":"not_run"}' > "$CAPTURE_EVIDENCE_DIR/status.json"
+          mkdir -p "$RUNNER_TEMP/playthrough-evidence"
+          echo '{"result":"failure","stage":"setup","import":"not_run","capture":"not_run"}' > "$RUNNER_TEMP/playthrough-evidence/status.json"
 
       - uses: chickensoft-games/setup-godot@v2.4.3
         with:
@@ -55,7 +53,7 @@ jobs:
 
       - name: Import and capture
         shell: bash
-        run: scripts/ci/run_playthrough_capture.sh
+        run: CAPTURE_EVIDENCE_DIR="$RUNNER_TEMP/playthrough-evidence" scripts/ci/run_playthrough_capture.sh
 
       - name: Upload status, logs and any frames
         if: always()
