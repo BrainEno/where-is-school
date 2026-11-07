@@ -63,6 +63,13 @@ signal waiting_changed(waiting: bool)
 @export_range(1.0, 30.0, 0.5) var gravity: float = 9.8
 ## Past this separation Q gives up chasing and waits.
 @export var give_up_distance: float = 11.0
+## Once Q has stopped and is waiting, it tries again when the player has moved this far
+## since. Without it a wall that the mesh does not know about is walked into forever:
+## stop, press, stop, press.
+@export var resume_move_distance: float = 1.5
+## A route longer than the straight line by more than this is a detour — around a desk,
+## through a doorway — and Q walks it even when the player looks close enough to stop.
+@export var detour_slack: float = 0.75
 ## How often Q looks somewhere else while standing still.
 @export var idle_look_interval: float = 5.0
 
@@ -104,7 +111,14 @@ var _look_aside := false
 ## The route currently being walked, in order, and which corner of it is next.
 var _route := PackedVector3Array()
 var _route_index := 0
+## The end of the route the map gave, and the point the map considers the player's
+## ground position. When those differ the map cannot reach the player at all.
 var _route_target: Vector3 = Vector3.ZERO
+var _route_goal: Vector3 = Vector3.ZERO
+## True while Q is waiting because a chase went wrong (a wall, a gap it could not
+## cross), and where the player stood when that happened.
+var _stuck := false
+var _stuck_player_position: Vector3 = Vector3.ZERO
 var _repath_timer := 0.0
 var _last_repath_player_position: Vector3 = Vector3.ZERO
 var _stall_elapsed := 0.0
@@ -216,6 +230,7 @@ func resume_following() -> void:
 	if not _joined:
 		return
 	_catching_up = true
+	_stuck = false
 	_clear_route()
 	_stall_elapsed = 0.0
 	_no_route_elapsed = 0.0
@@ -227,7 +242,8 @@ func resume_following() -> void:
 
 func _physics_process(delta: float) -> void:
 	var direction := Vector3.ZERO
-	if _can_follow() and _navigation_ready:
+	if _can_follow():
+		_update_navigation_readiness()
 		direction = _follow_direction(delta)
 	else:
 		_clear_route()
@@ -238,60 +254,146 @@ func _can_follow() -> bool:
 	return _joined and visible and _player != null and _actor != null
 
 
+## Readiness is a live question — "can the map answer a path query right now" — not a
+## state that only the location signal may set. A missed signal must not leave Q frozen
+## for the rest of the scene.
+func _update_navigation_readiness() -> void:
+	if _navigation_ready:
+		return
+	_navigation_ready = _map_has_geometry(_navigation_map())
+
+
 ## The one place the chase decides anything: whether to walk, where to walk, and when
 ## to stop and wait. Returns the direction to ask for this frame.
+##
+## The decision follows the **route**, not the straight line. A player standing 2 m away
+## across a wall is not "close enough": the route to them is either a detour Q has to
+## walk or it does not exist, and in the second case pressing forward is the bug this
+## whole class was rewritten for.
 func _follow_direction(delta: float) -> Vector3:
 	var to_player := _player.global_position - global_position
 	to_player.y = 0.0
 	var distance := to_player.length()
 
-	if distance > give_up_distance and not _catching_up:
-		if not _waiting:
-			_last_chase_note = "the player is %.1f m away, past the give-up distance" % distance
-			_set_waiting(true)
-		_clear_route()
-		_face_player()
-		return Vector3.ZERO
-
 	if _waiting:
-		_clear_route()
+		if _should_resume(distance):
+			_release_waiting()
+		else:
+			_face_player()
+			_idle_look(delta)
+			return Vector3.ZERO
+
+	if distance > give_up_distance and not _catching_up:
+		_enter_waiting("the player is %.1f m away, past the give-up distance" % distance)
 		_face_player()
-		_idle_look(delta)
 		return Vector3.ZERO
 
-	if distance <= stop_distance:
+	if distance <= stop_distance and not _waiting:
+		# Close enough to stand beside without walking into their back.
 		_moving = false
 		_catching_up = false
-		_clear_route()
+		_no_route_elapsed = 0.0
 		_face_player()
 		_idle_look(delta)
 		return Vector3.ZERO
 
-	if not _moving and distance <= follow_distance:
-		# Inside the band: stay put. Moving here is what produces the shuffle.
-		_clear_route()
+	if not _navigation_ready:
+		# The new location's mesh is not answering yet. Standing still is the only
+		# honest thing to do on a map that cannot say where a wall is.
+		return Vector3.ZERO
+
+	if _repath_due(delta):
+		if not _rebuild_route():
+			_face_player()
+			_no_route_elapsed += delta
+			if _no_route_elapsed >= stall_timeout:
+				_enter_waiting("no route to the player from %s" % str(global_position))
+			return Vector3.ZERO
+		_no_route_elapsed = 0.0
+
+	if not _route_reaches_the_player():
+		# The map answered with a route that stops somewhere else: the player is on the
+		# far side of something with no way round. Walking the rest is walking into it.
+		_enter_waiting(
+			"the route ends %.1f m short of the player" % _flat_length(_route_target - _route_goal)
+		)
+		_face_player()
+		return Vector3.ZERO
+
+	var remaining := _remaining_route_length()
+	var detour := remaining > distance + detour_slack
+	if not _moving and not detour and distance <= follow_distance:
+		# Inside the band, on a route that is the straight line: stay put. Moving here is
+		# what produces the shuffle.
+		_face_player()
+		_idle_look(delta)
+		return Vector3.ZERO
+
+	if remaining <= stop_distance:
+		_moving = false
+		_catching_up = false
 		_face_player()
 		_idle_look(delta)
 		return Vector3.ZERO
 
 	_moving = true
-	if not _route_is_current(delta):
-		if not _rebuild_route():
-			_clear_route()
-			_face_player()
-			_no_route_elapsed += delta
-			if _no_route_elapsed >= stall_timeout:
-				_last_chase_note = "no route to the player from %s" % str(global_position)
-				_set_waiting(true)
-			return Vector3.ZERO
-		_no_route_elapsed = 0.0
-
 	var direction := _route_direction()
 	if direction.length_squared() > 0.0001:
 		_actor.face_towards(_player.global_position)
 		_look_timer = 0.0
 		_look_aside = false
 	return direction
+
+
+## Path queries are throttled on two clocks: the interval, and how far the player has
+## moved since the last one. Standing still must not cost a query per frame.
+func _repath_due(delta: float) -> bool:
+	_repath_timer -= delta
+	if _route.size() < 2:
+		return true
+	if _repath_timer <= 0.0:
+		return true
+	return _player.global_position.distance_to(_last_repath_player_position) > repath_distance
+
+
+## Nobody gets up from waiting for no reason. Q waits because the chase failed, and
+## tries again when the player has moved somewhere that might make a difference — or
+## when the player walks back into arm's reach, or after being asked along.
+func _should_resume(distance: float) -> bool:
+	if _catching_up:
+		return true
+	if _player == null:
+		return false
+	if distance <= follow_distance:
+		return true
+	if not _stuck:
+		return true
+	if distance > give_up_distance:
+		return false
+	return _player.global_position.distance_to(_stuck_player_position) > resume_move_distance
+
+
+func _release_waiting() -> void:
+	_stuck = false
+	_stall_elapsed = 0.0
+	_no_route_elapsed = 0.0
+	_set_waiting(false)
+
+
+## Ends a chase that cannot work, and records where the player was so the retry has a
+## reason to happen later.
+func _enter_waiting(note: String) -> void:
+	if not note.is_empty():
+		_last_chase_note = note
+	_moving = false
+	_catching_up = false
+	_stall_elapsed = 0.0
+	_no_route_elapsed = 0.0
+	_clear_route()
+	_stuck = true
+	if _player != null:
+		_stuck_player_position = _player.global_position
+	_set_waiting(true)
 
 
 func _apply_movement(direction: Vector3, delta: float) -> void:
@@ -312,7 +414,7 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 func _watch_progress(delta: float) -> void:
 	var moved := global_position.distance_to(_last_body_position)
 	_last_body_position = global_position
-	if not _moving or _route.is_empty():
+	if not _moving or _route.is_empty() or _waiting:
 		_stall_elapsed = 0.0
 		return
 	if moved > 0.01:
@@ -320,10 +422,33 @@ func _watch_progress(delta: float) -> void:
 		return
 	_stall_elapsed += delta
 	if _stall_elapsed >= stall_timeout:
-		_last_chase_note = "no progress for %.1f s; stopped at %s" % [stall_timeout, str(global_position)]
-		_clear_route()
-		_moving = false
-		_set_waiting(true)
+		_enter_waiting("no progress for %.1f s; stopped at %s" % [stall_timeout, str(global_position)])
+
+
+## How much walking the route still asks for, from where Q stands to its last point.
+func _remaining_route_length() -> float:
+	if _route.size() < 2:
+		return 0.0
+	var previous := Vector3(global_position.x, 0.0, global_position.z)
+	var total := 0.0
+	var from := maxi(_route_index, 0)
+	for index in range(from, _route.size()):
+		var point := Vector3(_route[index].x, 0.0, _route[index].z)
+		total += previous.distance_to(point)
+		previous = point
+	return total
+
+
+## Whether the route the map gave actually ends at the player, as opposed to stopping at
+## the edge of the walkable island the player is not standing on.
+func _route_reaches_the_player() -> bool:
+	if _route.size() < 2:
+		return false
+	return _flat_length(_route_target - _route_goal) <= arrival_radius + 0.3
+
+
+func _flat_length(offset: Vector3) -> float:
+	return Vector2(offset.x, offset.z).length()
 
 
 func _route_direction() -> Vector3:
@@ -346,12 +471,9 @@ func _route_direction() -> Vector3:
 			# The route is finished but the player is still far away: this is the
 			# nearest place the map can take Q, and pressing on would be walking into
 			# whatever blocks the rest.
-			_last_chase_note = "the route ends %.1f m short of the player" % (
+			_enter_waiting("the route ends %.1f m short of the player" % (
 				_player.global_position.distance_to(global_position)
-			)
-			_clear_route()
-			_moving = false
-			_set_waiting(true)
+			))
 			return Vector3.ZERO
 		return to_target.normalized()
 	return to_next.normalized()
@@ -372,23 +494,14 @@ func _map_has_geometry(map: RID) -> bool:
 	return NavigationServer3D.map_get_regions(map).size() > 0
 
 
-func _route_is_current(delta: float) -> bool:
-	if _route.size() < 2:
-		return false
-	_repath_timer -= delta
-	if _repath_timer <= 0.0:
-		return false
-	return _player.global_position.distance_to(_last_repath_player_position) <= repath_distance
-
-
 ## Asks the map for a route from Q to the player. Returns false when there is no route
 ## — the player off the mesh, a wall with no way around, navigation not loaded yet —
 ## and leaves the caller to decide what that means.
 func _rebuild_route() -> bool:
-	_repath_timer = repath_interval
-	_last_repath_player_position = _player.global_position
 	if _player == null:
 		return false
+	_repath_timer = repath_interval
+	_last_repath_player_position = _player.global_position
 	var map := _navigation_map()
 	if not _map_has_geometry(map):
 		return false
@@ -402,7 +515,10 @@ func _rebuild_route() -> bool:
 		return false
 	_route = path
 	_route_index = 1
-	_route_target = goal
+	_route_goal = goal
+	# The map may answer with a path that stops at the edge of a different island. Where
+	# it actually ends is what says whether the player can be reached at all.
+	_route_target = path[path.size() - 1]
 	_repath_count += 1
 	return true
 
@@ -520,6 +636,7 @@ func _refresh_visibility(location: LocationRoot) -> void:
 	collision_mask = 1
 	_catching_up = false
 	_moving = false
+	_stuck = false
 	_clear_route()
 	_stall_elapsed = 0.0
 	_no_route_elapsed = 0.0

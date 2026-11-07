@@ -34,6 +34,7 @@ var _location: LocationRoot = null
 var _walls: Array[StaticBody3D] = []
 var _probes: Array[Interactable] = []
 var _activated: Array[StringName] = []
+var _silenced: Array[Interactable] = []
 
 
 func _initialize() -> void:
@@ -81,6 +82,11 @@ func _run() -> void:
 	if _location == null:
 		Harness.finish(self, ["The classroom is not loaded."], "")
 		return
+	# The room's own props stand exactly where these cases build their geometry, and the
+	# pointer answers with the nearest area: the player's desk would take every click
+	# before the probe behind it was ever asked. The synthetic cases get the room to
+	# themselves, so a miss means the rule and not the furniture.
+	_silence_authored(true)
 
 	await _check_wall_far_from_the_target()
 	await _check_wall_next_to_the_target()
@@ -209,6 +215,17 @@ func _check_bag_on_a_desk() -> void:
 	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
 	if not _interaction.has_line_of_sight_from(eye, bag):
 		_failures.append("A schoolbag declared on its own desk could not be seen. %s" % _explain(bag))
+	var screen := _find_target_on_screen(bag)
+	if screen == Vector2.ZERO:
+		_failures.append("The pointer never found the bag on its desk. %s" % _explain(bag))
+	_interaction.set_mouse_override(screen)
+	await _physics_frames(4)
+	if _interaction.get_current_target() != bag:
+		_failures.append(
+			"The pointer did not adopt a bag sitting on its own desk (target: %s). %s"
+			% [_name_of(_interaction.get_current_target()), _explain(bag)]
+		)
+	_interaction.clear_mouse_override()
 	_activated.clear()
 	await _push_e()
 	if not _activated.has(&"occlusion_bag"):
@@ -314,6 +331,24 @@ func _free_probe(probe: Interactable) -> void:
 	if is_instance_valid(probe):
 		probe.queue_free()
 	await _physics_frames(2)
+
+
+## Takes the room's authored interactables out of the pointer's way (or puts them back).
+## Collision only: nothing about the props themselves is changed, and the game never
+## does this — it exists so a synthetic case is not decided by the classroom's furniture.
+func _silence_authored(silence: bool) -> void:
+	if silence:
+		for node: Node in _location.find_children("*", "Area3D", true, false):
+			var item := node as Interactable
+			if item == null or _probes.has(item) or _silenced.has(item):
+				continue
+			item.collision_layer = 0
+			_silenced.append(item)
+		return
+	for item: Interactable in _silenced:
+		if is_instance_valid(item):
+			item.collision_layer = Interactable.INTERACTION_LAYER
+	_silenced.clear()
 
 
 func _make_probe(interact_id: StringName, position: Vector3, radius: float = 0.7) -> Interactable:

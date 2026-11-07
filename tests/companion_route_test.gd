@@ -208,12 +208,12 @@ func _check_following() -> void:
 		await _frames(10)
 	var distance := _companion.global_position.distance_to(_player.global_position)
 	if distance > _companion.follow_distance + FOLLOW_TOLERANCE:
-		_failures.append("Q fell %.1f m behind a walking player." % distance)
+		_failures.append("Q fell %.1f m behind a walking player. %s" % [distance, _q_state()])
 	var moved := _companion.global_position.distance_to(start)
 	if moved < 1.0:
-		_failures.append("Q did not move at all while the player walked away.")
+		_failures.append("Q did not move at all while the player walked away. %s" % _q_state())
 	if _companion.is_waiting():
-		_failures.append("Q gave up following a player who was only a few metres ahead.")
+		_failures.append("Q gave up following a player who was only a few metres ahead. %s" % _q_state())
 
 
 func _check_waiting_and_resuming() -> void:
@@ -239,7 +239,10 @@ func _check_waiting_and_resuming() -> void:
 		_companion.give_up_distance = normal_give_up
 		return
 	if not _companion.is_waiting():
-		_failures.append("Q kept chasing a player who was more than %.0f m away." % _companion.give_up_distance)
+		_failures.append(
+			"Q kept chasing a player who was more than %.0f m away. %s"
+			% [_companion.give_up_distance, _q_state()]
+		)
 		_companion.give_up_distance = normal_give_up
 		return
 	if not ask.can_interact():
@@ -257,6 +260,22 @@ func _check_waiting_and_resuming() -> void:
 		_failures.append("Q did not close the gap after being asked along (%.1f m; Q at %s, player at %s)." % [
 			distance, _companion.global_position, _player.global_position
 		])
+
+
+## Everything that would explain a follower failure, in one line: where Q and the player
+## are, how far apart, whether Q is even allowed to walk, and what it last decided.
+func _q_state() -> String:
+	return (
+		"[q=%s player=%s gap=%.2f joined=%s visible=%s waiting=%s nav=%s regions=%d"
+		+ " route=%d repath=%d note='%s']"
+	) % [
+		str(_companion.global_position), str(_player.global_position),
+		_companion.global_position.distance_to(_player.global_position),
+		str(_companion.is_joined()), str(_companion.visible), str(_companion.is_waiting()),
+		str(_companion.is_navigation_ready()), _companion.get_navigation_region_count(),
+		_companion.get_route().size(), _companion.get_repath_count(),
+		_companion.get_last_chase_note(),
+	]
 
 
 func _walk_out_to_the_yard() -> void:

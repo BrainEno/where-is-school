@@ -40,6 +40,7 @@ var _approaches_started: Array[StringName] = []
 var _approaches_activated: Array[StringName] = []
 var _approaches_abandoned: Array[StringName] = []
 
+var _silenced: Array[Interactable] = []
 var _probe_a: Interactable = null
 var _probe_b: Interactable = null
 var _probe_c: Interactable = null
@@ -97,6 +98,10 @@ func _run() -> void:
 
 	await _place_probes()
 	await _check_npc_then_ground()
+	# From here on the cases are about probes, in a room whose own props are right where
+	# the probes stand: the pointer would answer with the nearer desk every time. The
+	# authored interactables keep their collision until the Q case is done.
+	_silence_authored()
 	await _check_object_replaces_object()
 	await _check_ground_replaces_ground()
 	await _check_target_freed_and_disabled()
@@ -136,6 +141,18 @@ func _make_probe(interact_id: StringName, position: Vector3) -> Interactable:
 	_location.add_child(probe)
 	probe.global_position = position
 	return probe
+
+
+## Takes the classroom's authored interactables out of the pointer's way. Collision
+## only: the props are untouched, and the game never does this — a synthetic probe has to
+## be findable by the pointer, not hidden behind the player's own desk.
+func _silence_authored() -> void:
+	for node: Node in _location.find_children("*", "Area3D", true, false):
+		var item := node as Interactable
+		if item == null or item in [_probe_a, _probe_b, _probe_c, _probe_d]:
+			continue
+		item.collision_layer = 0
+		_silenced.append(item)
 
 
 func _free_probes() -> void:
