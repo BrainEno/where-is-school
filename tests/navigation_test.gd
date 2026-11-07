@@ -33,6 +33,8 @@ const LOCATIONS: Array[Dictionary] = [
 const WALK_LIMIT_SECONDS := 14.0
 
 var _failures: Array[String] = []
+## Where the body was during the last walk, sampled for failure messages.
+var _walk_trail: Array[Vector3] = []
 var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
@@ -169,10 +171,10 @@ func _check_walk_arrives_and_stops() -> void:
 	var arrived := await _walk_until_settled(WALK_LIMIT_SECONDS)
 	if not arrived:
 		_failures.append(
-			"The walk did not finish within %.0f s: from %s to %s, active=%s, position %s."
+			"The walk did not finish within %.0f s: from %s to %s, position %s, %s"
 			% [
-				WALK_LIMIT_SECONDS, str(start), str(destination), str(_player.is_path_active()),
-				str(_player.global_position)
+				WALK_LIMIT_SECONDS, str(start), str(destination), str(_player.global_position),
+				_walk_state(_nav_of(_location))
 			]
 		)
 		return
@@ -294,7 +296,10 @@ func _check_obstacle_is_walked_around() -> void:
 		_player.global_position.x - destination.x, _player.global_position.z - destination.z
 	).length()
 	if gap > 1.2:
-		_failures.append("The character did not reach the far side of the obstacle (%.2f m short)." % gap)
+		_failures.append(
+			"The character did not reach the far side of the obstacle (%.2f m short) %s"
+			% [gap, _walk_state(nav)]
+		)
 	if closest < 0.45:
 		_failures.append("The character walked %.2f m from the wall's face instead of around it." % closest)
 	_remove_node(location, "ProbeWall")
@@ -502,13 +507,35 @@ func _has_reachable_exit(location: LocationRoot) -> bool:
 
 
 func _walk_until_settled(limit_seconds: float) -> bool:
+	_walk_trail.clear()
 	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
+	var frames := 0
 	while _player.is_path_active():
 		await physics_frame
+		frames += 1
+		if frames % 20 == 0:
+			_walk_trail.append(_player.global_position)
 		if Time.get_ticks_msec() > deadline:
 			_player.cancel_path()
 			return false
 	return true
+
+
+## What the walk was doing when it went wrong: the agent's next point, whether it
+## thinks it is finished, the first waypoints, and where the body actually went.
+func _walk_state(nav: LocationNavigation) -> String:
+	var agent := _player.navigation_agent
+	var path := agent.get_current_navigation_path()
+	var waypoints := ""
+	for index in mini(path.size(), 5):
+		waypoints += "(%.1f,%.1f,%.1f)" % [path[index].x, path[index].y, path[index].z]
+	var trail := ""
+	for point in _walk_trail:
+		trail += "(%.1f,%.1f)" % [point.x, point.z]
+	return "[next=%s finished=%s path=%d %s trail=%s %s]" % [
+		str(agent.get_next_path_position()), str(agent.is_navigation_finished()),
+		path.size(), waypoints, trail, _report(nav)
+	]
 
 
 func _add_slab(location: LocationRoot, center: Vector3, size: Vector3, node_name: String) -> StaticBody3D:

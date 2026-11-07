@@ -241,6 +241,12 @@ func _path_direction(delta: float) -> Vector3:
 	var to_next := next_point - global_position
 	to_next.y = 0.0
 	if to_next.length() < 0.05:
+		# Standing on the next point while the agent refuses to advance is not progress
+		# either. Without this the walk stays "active" forever, asking for a direction
+		# of zero: the character stands still and nothing ever notices.
+		_path_progress_elapsed += delta
+		if _path_progress_elapsed > stall_timeout:
+			_abort_path()
 		return Vector3.ZERO
 
 	# Progress watchdog, measured by how far the *body* actually moved rather than by

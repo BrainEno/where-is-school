@@ -56,6 +56,10 @@ var _interaction: InteractionController = null
 var _marker: MeshInstance3D = null
 var _marker_tween: Tween = null
 var _pending: Interactable = null
+## Whether `_pending` names a target we are still walking towards. Kept separately
+## because a freed object compares equal to `null`: `_pending != null` cannot tell
+## "no target" from "the target I was walking to has been deleted".
+var _has_pending := false
 var _approaching := false
 var _enabled := true
 var _last_click_accepted := false
@@ -106,7 +110,7 @@ func get_world_click_event_count() -> int:
 
 
 func get_pending_target() -> Interactable:
-	return _pending
+	return _pending if _has_pending and is_instance_valid(_pending) else null
 
 
 func is_approaching() -> bool:
@@ -116,13 +120,15 @@ func is_approaching() -> bool:
 ## Forgets the current walk and target. Safe to call at any time.
 func cancel() -> void:
 	var abandoned := _pending
+	var had_pending := _has_pending
 	_pending = null
+	_has_pending = false
 	_approaching = false
 	_hide_marker()
 	if _player != null:
 		_player.cancel_path()
-	if abandoned != null and is_instance_valid(abandoned):
-		approach_abandoned.emit(abandoned)
+	if had_pending:
+		approach_abandoned.emit(abandoned if is_instance_valid(abandoned) else null)
 
 
 ## A click at a screen position, in the same shape the real mouse produces. Public so
@@ -161,6 +167,15 @@ func get_ground_point_at(screen_position: Vector2) -> Variant:
 ## Whether a click at this screen position would land on walkable ground.
 func can_walk_to_screen_position(screen_position: Vector2) -> bool:
 	return get_ground_point_at(screen_position) != null
+
+
+## A target freed mid-walk is noticed at once: pursuing a spot next to something that
+## no longer exists is how a click turns into a character walking at nothing.
+func _physics_process(_delta: float) -> void:
+	if _has_pending and not is_instance_valid(_pending):
+		_abandon_pending()
+		if _player != null:
+			_player.cancel_path()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -264,14 +279,16 @@ func _screen_hint(screen_position: Vector2) -> Vector3:
 func _begin_approach(target: Interactable) -> void:
 	if target == null or not is_instance_valid(target):
 		return
-	if _pending != null and _pending != target:
+	if _has_pending and _pending != target:
 		# A new click on another object replaces the old target.
 		_abandon_pending()
 	_pending = null
+	_has_pending = false
 	_approaching = false
 	_player.cancel_path()
 	_hide_marker()
 	_pending = target
+	_has_pending = true
 	if _can_activate_now(target):
 		_activate_pending()
 		return
@@ -353,6 +370,7 @@ func _can_activate_now(target: Interactable) -> bool:
 func _activate_pending() -> void:
 	var target := _pending
 	_pending = null
+	_has_pending = false
 	_approaching = false
 	_hide_marker()
 	if target == null or not is_instance_valid(target):
@@ -370,14 +388,17 @@ func _activate_pending() -> void:
 func _abandon_pending() -> void:
 	var target := _pending
 	_pending = null
+	_has_pending = false
 	_approaching = false
 	_hide_marker()
-	if target != null and is_instance_valid(target):
-		approach_abandoned.emit(target)
+	# A target that was freed while the character walked has no object left to name,
+	# so the signal carries null. It still fires: a walk that ends because the thing
+	# at the other end vanished is not a walk that quietly succeeded.
+	approach_abandoned.emit(target if is_instance_valid(target) else null)
 
 
 func _on_path_finished() -> void:
-	if _pending != null:
+	if _has_pending:
 		_activate_pending()
 		return
 	if _approaching:
@@ -387,7 +408,7 @@ func _on_path_finished() -> void:
 func _on_path_cancelled() -> void:
 	# Cancelled from outside (manual input, control lock, transition): drop the target
 	# so a later arrival in another room cannot activate it.
-	if _pending != null:
+	if _has_pending:
 		_abandon_pending()
 	else:
 		_approaching = false

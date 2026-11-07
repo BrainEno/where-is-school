@@ -340,7 +340,7 @@ func _check_e_still_works() -> void:
 		return
 	var probe := _make_probe(location, &"probe_key", &"classroom_own_desk")
 	probe.radius = 0.6
-	if not await _place_clear_of_props(probe, 1.0, 1.8):
+	if not await _place_clear_of_props(probe, 1.0, 1.8, true):
 		_failures.append("Could not place the probe for the E check.")
 		_free(probe)
 		return
@@ -510,7 +510,9 @@ func _stand_near(target: Interactable, min_distance: float, max_distance: float)
 
 ## Moves a freshly added probe/exit to a spot the player can see and reach from where
 ## they stand, and leaves the player in front of it.
-func _place_clear_of_props(target: Interactable, min_distance: float, max_distance: float) -> bool:
+func _place_clear_of_props(
+	target: Interactable, min_distance: float, max_distance: float, nearest: bool = false
+) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := _player.global_position
 	for radius in [max_distance - 0.3, (min_distance + max_distance) * 0.5, min_distance + 0.3]:
@@ -527,7 +529,11 @@ func _place_clear_of_props(target: Interactable, min_distance: float, max_distan
 				continue
 			# A click must be answered by *this* probe: somewhere else to stand next to
 			# it, and no other object close enough to win the cursor instead.
-			if _crowded(target, 2.0) or not _has_approach_room(target):
+			if _crowded(target, 1.0):
+				continue
+			if not _interaction.is_in_reach(target) and not _has_approach_room(target):
+				continue
+			if nearest and not _is_nearest(target):
 				continue
 			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:
 				return true
@@ -551,6 +557,28 @@ func _crowded(target: Interactable, clearance: float) -> bool:
 		if offset.length() < clearance:
 			return true
 	return false
+
+
+## True when no other interactable stands closer to the player than this one. E acts on
+## the nearest object in reach, so a probe parked behind the classmate proves the wrong
+## thing.
+func _is_nearest(target: Interactable) -> bool:
+	if _location == null:
+		return true
+	var mine := Vector2(
+		target.global_position.x - _player.global_position.x,
+		target.global_position.z - _player.global_position.z
+	).length()
+	for other in _location.get_interactables():
+		if other == target or not is_instance_valid(other):
+			continue
+		var theirs := Vector2(
+			other.global_position.x - _player.global_position.x,
+			other.global_position.z - _player.global_position.z
+		).length()
+		if theirs < mine - 0.15:
+			return false
+	return true
 
 
 ## There has to be somewhere to stand next to the target and walk from, or the
@@ -624,7 +652,10 @@ func _on_approach_activated(interactable: Interactable) -> void:
 
 
 func _on_approach_abandoned(interactable: Interactable) -> void:
-	_approaches_abandoned.append(interactable.interact_id)
+	# A target freed mid-walk is reported as null: there is no object left to name.
+	_approaches_abandoned.append(
+		String(interactable.interact_id) if is_instance_valid(interactable) else "<gone>"
+	)
 
 
 func _wait_until(condition: Callable, limit_seconds: float) -> bool:
