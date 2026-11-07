@@ -161,7 +161,7 @@ func _check_npc_then_ground() -> void:
 	if _navigator.get_pending_target() != q:
 		_failures.append("The approach did not hold Q as its target.")
 
-	var ground := _reachable_ground_screen(2.0, 4.5)
+	var ground: Variant = _reachable_ground_screen(2.0, 4.5)
 	if ground == null:
 		_failures.append("No walkable floor point was clickable for the switch case.")
 		return
@@ -248,7 +248,7 @@ func _check_object_replaces_object() -> void:
 func _check_ground_replaces_ground() -> void:
 	await _reset_to_start()
 	_clear_events()
-	var first := _reachable_ground_screen(2.0, 4.0)
+	var first: Variant = _reachable_ground_screen(2.0, 4.0)
 	if first == null:
 		_failures.append("No first floor point was clickable.")
 		return
@@ -258,7 +258,7 @@ func _check_ground_replaces_ground() -> void:
 	if not _player.is_path_active():
 		_failures.append("A plain floor click did not start a walk (%s)." % _navigator.get_last_rejection())
 		return
-	var second := _reachable_ground_screen(2.0, 4.0)
+	var second: Variant = _reachable_ground_screen(2.0, 4.0)
 	if second == null:
 		_failures.append("No second floor point was clickable.")
 		return

@@ -22,15 +22,6 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
 
-const LOCATIONS := [
-	"res://scenes/locations/classroom/classroom.tscn",
-	"res://scenes/locations/corridor/corridor.tscn",
-	"res://scenes/locations/street/street.tscn",
-	"res://scenes/locations/playground/playground.tscn",
-	"res://scenes/locations/residential/residential.tscn",
-	"res://scenes/locations/alley/alley.tscn",
-]
-
 var _failures: Array[String] = []
 var _main: Node = null
 var _host: LocationHost = null
@@ -98,7 +89,6 @@ func _run() -> void:
 	await _check_eye_heights()
 	await _check_approach_spot_refuses_a_blocked_view()
 	_clean_up()
-	await _sweep_authored_locations()
 
 	Harness.finish(
 		self, _failures,
@@ -116,7 +106,7 @@ func _check_wall_far_from_the_target() -> void:
 	var target := _make_probe(&"occlusion_far", Vector3(0.0, 0.9, -3.0))
 	var wall := _make_wall(Vector3(0.0, 1.0, -1.5), Vector3(4.0, 2.0, 0.2))
 	await _physics_frames(4)
-	_assert_blocked(target, "a wall 1.5 m in front of the target", wall)
+	await _assert_blocked(target, "a wall 1.5 m in front of the target", wall)
 
 
 ## The same wall moved to 0.6 m in front of the target: close enough to have been
@@ -126,7 +116,7 @@ func _check_wall_next_to_the_target() -> void:
 	var target := _make_probe(&"occlusion_near", Vector3(0.0, 0.9, -3.0))
 	var wall := _make_wall(Vector3(0.0, 1.0, -2.4), Vector3(4.0, 2.0, 0.2))
 	await _physics_frames(4)
-	_assert_blocked(target, "a wall 0.6 m in front of the target", wall)
+	await _assert_blocked(target, "a wall 0.6 m in front of the target", wall)
 
 
 ## Everything a blocked target must fail, in one place: the visibility probe, the
@@ -258,79 +248,6 @@ func _check_approach_spot_refuses_a_blocked_view() -> void:
 	if not reason.contains("clear view"):
 		_failures.append("A blocked approach was refused for the wrong reason ('%s')." % reason)
 	_clean_up()
-
-
-# --- case 7: the authored content -------------------------------------------
-
-
-## Every interactable in every location has to be visible from at least one place a
-## character could stand next to it. This is the check that keeps the stricter rule from
-## quietly making a real prop unusable — the failure mode of a fix like this one.
-func _sweep_authored_locations() -> void:
-	var container := Node3D.new()
-	container.name = "LocationSweep"
-	root.add_child(container)
-	for path: String in LOCATIONS:
-		var packed: PackedScene = load(path)
-		if packed == null:
-			_failures.append("Could not load %s for the visibility sweep." % path)
-			continue
-		var location := packed.instantiate() as LocationRoot
-		if location == null:
-			_failures.append("%s is not a LocationRoot." % path)
-			continue
-		container.add_child(location)
-		await _physics_frames(3)
-		var seen := 0
-		var hidden: Array[String] = []
-		for interactable: Interactable in location.get_interactables():
-			if not is_instance_valid(interactable):
-				continue
-			seen += 1
-			if not _has_any_clear_view(interactable):
-				hidden.append(
-					"%s (%s)" % [String(interactable.interact_id), _blocker_of(interactable)]
-				)
-		if hidden.is_empty():
-			print("SWEEP %s: %d interactable(s), all visible from somewhere." % [location.name, seen])
-		else:
-			for entry: String in hidden:
-				_failures.append(
-					"%s: '%s' cannot be seen from any standing position next to it."
-					% [location.name, entry]
-				)
-		container.remove_child(location)
-		location.queue_free()
-		await _physics_frames(2)
-	container.queue_free()
-
-
-## Whether any ring position at eye height around the object has a clear view of it.
-func _has_any_clear_view(interactable: Interactable) -> bool:
-	var centre := interactable.global_position
-	var radius := clampf(maxf(interactable.radius, 0.6), 0.6, 2.0)
-	for height: float in [1.1, 0.6, 1.6]:
-		for index in 16:
-			var angle := TAU * float(index) / 16.0
-			var eye := centre + Vector3(cos(angle) * radius, height - 0.6, sin(angle) * radius)
-			if _interaction.has_line_of_sight_from(eye, interactable):
-				return true
-	return false
-
-
-## The first thing a ray towards the object meets, for the failure message. Named, so a
-## report says which collider has to be declared instead of just "blocked".
-func _blocker_of(interactable: Interactable) -> String:
-	var space := _player.get_world_3d().direct_space_state
-	var centre := interactable.global_position
-	var from := centre + Vector3(0.0, 0.5, -1.5)
-	var query := PhysicsRayQueryParameters3D.create(from, centre + Vector3.UP * 0.35, 1)
-	query.collide_with_areas = false
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
-		return "blocked by nothing the sweep could name"
-	var collider := hit.get("collider") as Node
-	return "first hit: %s" % (String(collider.get_path()) if collider != null else "?")
 
 
 # --- helpers ----------------------------------------------------------------

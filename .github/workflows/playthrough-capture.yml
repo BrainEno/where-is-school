@@ -56,8 +56,6 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      EVIDENCE: ${{ runner.temp }}/evidence
     steps:
       - uses: actions/checkout@v6
 
@@ -70,6 +68,10 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          # RUNNER_TEMP is the one directory every step below agrees on. It is not a
+          # path inside the workspace, so nothing the capture writes into the project
+          # can end up in the artifact by accident.
+          EVIDENCE="${RUNNER_TEMP}/evidence"
           rm -rf "${EVIDENCE}"
           mkdir -p "${EVIDENCE}/logs" "${EVIDENCE}/docs/screenshots"
           echo "EVIDENCE=${EVIDENCE}" >> "${GITHUB_ENV}"
@@ -101,6 +103,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
           # Two passes, on purpose. The first scans a fresh checkout, where an
           # asset that another resource points at may not have been imported yet
           # (the bundled CJK font is the usual one), so it may report a dependency
@@ -156,6 +159,7 @@ jobs:
           # fails at the end: a run that did not reach its end marker must not look
           # green.
           set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
           capture_log="${EVIDENCE}/logs/capture.log"
           mkdir -p docs/screenshots
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
@@ -203,6 +207,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
           # A plain, inspectable record of what the run produced: this is the evidence
           # that the artifact structure is not a guess.
           {
@@ -241,7 +246,7 @@ jobs:
         with:
           name: playthrough-evidence
           # One path, so the artifact's root is this folder and nothing else.
-          path: ${{ env.EVIDENCE }}
+          path: ${{ runner.temp }}/evidence
           if-no-files-found: warn
 
   verify-publish:

@@ -103,6 +103,7 @@ jobs:
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1
           run_check companion_route 300 godot --headless --path . --script res://tests/companion_route_test.gd || status=1
+          run_check companion_obstacle 300 godot --headless --path . --script res://tests/companion_obstacle_test.gd || status=1
           run_check interaction_hover 240 godot --headless --path . --script res://tests/interaction_hover_test.gd || status=1
           run_check navigation 420 godot --headless --path . --script res://tests/navigation_test.gd || status=1
           run_check automatic_interaction 420 godot --headless --path . --script res://tests/automatic_interaction_test.gd || status=1
@@ -110,6 +111,7 @@ jobs:
           run_check street_prompt 180 godot --headless --path . --script res://tests/street_prompt_test.gd || status=1
           run_check pointer_target_switch 300 godot --headless --resolution 1600x900 --path . --script res://tests/pointer_target_switch_test.gd || status=1
           run_check interaction_occlusion 300 godot --headless --resolution 1600x900 --path . --script res://tests/interaction_occlusion_test.gd || status=1
+          run_check interaction_visibility_sweep 300 godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd || status=1
 
           echo "overall status: ${status}"
           exit "${status}"
