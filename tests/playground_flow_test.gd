@@ -163,7 +163,7 @@ func _walk_to_alley() -> void:
 		_failures.append("Reading the alley notices did not mark them as read.")
 	if not bool(_game_state.get_flag(StoryFlags.passive_fired_flag(&"alley_notice_ledger"), false)):
 		_failures.append("No passive voice reacted to reading the notices.")
-	var hidden := _game_state.get_flag(
+	var hidden: Variant = _game_state.get_flag(
 		StoryFlags.check_record_flag(&"voice_notice", &"vn_1"), null
 	)
 	if not (hidden is Dictionary):
@@ -251,10 +251,10 @@ func _explore_in_two_orders() -> void:
 			_failures.append("Looking at '%s' was not recorded." % interactable_id)
 
 	# Revisit one of them: the text must exist for a second read and nothing resets.
-	var observed_before := _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
+	var observed_before: int = int(_narrative.count_for_source(NarrativeEntry.Source.OBSERVED))
 	await _activate(&"pg_hoop_near", "the hoop again")
 	await _settle(30.0, "the repeat read of the hoop")
-	var observed_after := _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
+	var observed_after: int = int(_narrative.count_for_source(NarrativeEntry.Source.OBSERVED))
 	if observed_after < observed_before:
 		_failures.append("Revisiting an anchor removed knowledge.")
 	if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):

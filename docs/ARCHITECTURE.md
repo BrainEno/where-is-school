@@ -18,11 +18,14 @@ scripts/
   actors/                # movement and actor behavior
   interaction/           # interaction contracts and targeting
   dialogue/              # dialogue runtime and adapters
+  rpg/                   # inner voices and the one dice core
   world/                 # world state and spatial rule behavior
   save/                  # serialization and migration
   ui/                    # UI-specific presentation logic
 data/
   dialogue/              # narrative content, not hard-coded in gameplay scripts
+  inspections/           # object descriptions, per language
+  abilities/             # inner-voice values, passive rules, and their text
   characters/
   items/
   locations/
@@ -88,8 +91,15 @@ Avoid hard-coded NodePaths that reach across unrelated scene ownership. Prefer e
 
 Dialogue content must be separate from gameplay scripts. The current milestone
 implements a project-owned layer (see ADR 0002) that satisfies the requirements
-below; the Dialogic 2 spike remains an open decision. Before adopting a dialogue
-addon or format, validate that it supports:
+below.
+
+> **Recorded conflict.** Earlier revisions of this section described the Dialogic 2
+> integration spike as an open decision and asked for it to be run before choosing.
+> The implementation went ahead with the in-project layer, and ADR 0002 records that
+> choice. The spike has not been run and is no longer planned; ADR 0002 stands. The
+> paragraph below is kept as the checklist that decision had to satisfy.
+
+Before adopting a dialogue addon or format, validate that it supports:
 - long Chinese text and readable typography;
 - named speakers and portrait identifiers;
 - choices and conditional choices;
@@ -128,6 +138,41 @@ dialogue controller rebind the open conversation to the same node id in the othe
 language, re-resolve the prompt, redraw the backlog and re-translate the objective.
 No scene reload, no lost state.
 
+## 5c. Inner voices and checks (implemented contract)
+
+The ability system is deliberately small and lives in three places, each with one
+job:
+
+- `scripts/rpg/check_resolver.gd` — the only code that throws a die. Pure maths
+  (`d10 + value + modifier >= difficulty`), an injected session seed, and a result
+  dictionary. It knows nothing about content, UI or flags.
+- `scripts/rpg/inner_abilities.gd` — reads `data/abilities/abilities.json`
+  (values, speakers, passive rules) and `data/abilities/<locale>.json` (names and
+  descriptions), validates them strictly, and reports every problem with a file
+  path.
+- `scripts/world/inner_voice_director.gd` — decides *when* a passive voice may
+  speak: event triggers, `once` per rule, a per-voice session cap, no two
+  unprompted lines in a row, and silence while an authored beat, a conversation or
+  the end card owns the frame.
+
+A check itself is dialogue data, not a script: a node carries a `check` block with
+an ability id, a difficulty, `kind` (`visible`/`hidden`) and two branch targets.
+`DialogueGraph` validates the block, `DialogueRuntime` resolves it when the node is
+entered, emits `check_resolved`, records the result under
+`check:<conversation>:<node>` and continues to the branch. `DialogueController`
+shows visible results in `CheckOverlay` and shows nothing for hidden ones.
+
+Invariants that later work must keep:
+
+1. exactly one dice implementation; both modes call it;
+2. the RNG is injectable and seedable, so tests never depend on luck;
+3. a resolved check is recorded and replayed, so re-entering cannot reroll it;
+4. a failed check may never be the only route past a required beat;
+5. no gameplay script may contain a roll, a difficulty, or an ability name.
+
+ADR 0003 records the reasoning, the formula, the frequency policy and the open
+design questions.
+
 ## 6. Persistent identifiers and data
 
 - Use stable IDs for dialogue nodes, characters, items, locations, and story flags.
@@ -150,7 +195,8 @@ Use user:// paths. Write to a temporary file, validate the result, then replace 
 
 ## 8. Testing boundaries
 
-- Unit tests: pure state transformations, dialogue condition evaluation, content validation, save serialization/migration.
+- Unit tests: pure state transformations, dialogue condition evaluation, content validation, save serialization/migration, dice maths and seeds.
+- Negative fixtures: a validator that has never rejected anything proves nothing, so the content and check tests feed it deliberately broken input and assert the rejection.
 - Scene smoke tests: required nodes/resources instantiate and scenes load.
 - Integration tests: movement/interaction/dialogue/scene-state transitions.
 - Manual tests: navigation readability, pacing, camera comfort, typography, controller feel, and spatial surprises.

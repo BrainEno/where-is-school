@@ -25,21 +25,51 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   knowledge log (ADR 0002).
 - Interaction targeting, interactable contract, and location exits.
 - Project-owned dialogue runtime with choices, conditions, once-only choices,
-  backlog, and validated JSON content.
+  hidden/visible dice checks, backlog, and validated JSON content.
 - Inspection content with first-read effects, repeat text, and recollections.
 - Subjective (imagined) presentation that cannot alter objective world state.
 - Location swapping that preserves story state, plus authored beat sequencing.
-- Headless smoke, content, unit, and end-to-end flow tests in GitHub Actions.
+- Bilingual content (English and Simplified Chinese) with runtime switching that
+  also works mid-line, and a parity checker that refuses a translation which
+  changes the shape of a conversation.
+- Data-driven dialogue throughout: every line, choice, condition, effect and check
+  lives in `data/dialogue/<locale>/`, never in a gameplay script.
+- Outdoor locations: the street, the residential courtyard, the alley behind the
+  flats, and the open school yard (playground), with the green animal in the
+  courtyard and the end of the slice at the far gap in the yard's fence.
+- The hybrid inner-voice system (four voices, passive triggers, active checks) and
+  the single shared dice core behind both visible and hidden checks (ADR 0003).
+- CI: a static syntax gate over every `.gd` file, fifteen headless checks, and a
+  read-only capture job whose artifacts are the visual evidence for a pull
+  request. Failures produce artifacts as well, so a red run is diagnosable.
 
 ### Planned, but deliberately not implemented yet
-- Dialogic comparison spike and the resulting adapter decision.
 - Journal and unreliable route notebook.
 - Portrait presentation for dialogue.
 - Versioned save/load, slot management, and schema migration.
-- Accessibility settings, localisation pipeline (including a bundled CJK font),
-  audio mixing, and input rebinding.
+- Accessibility settings, audio mixing, and input rebinding.
+- A bundled CJK font subset (the current font ships whole).
+- Populating the yard with people, events and further checks, now that the space
+  and its interaction anchors exist.
 
-Do not implement every planned item in one large foundation PR. Add each when a concrete slice requires it.
+Do not implement every planned item in one large foundation PR. Add each when a
+concrete slice requires it.
+
+## 2a. Recorded documentation conflicts
+
+Two places where this document disagreed with the code, recorded rather than
+silently rewritten:
+
+- **Dialogue technology.** Section 3 below still describes a spike between
+  Dialogic, a custom layer and Yarn Spinner. The implementation chose the custom
+  layer, and ADR 0002 records that decision. The spike was never run and is no
+  longer planned. The decision stands; this note exists so the divergence is not
+  mistaken for an oversight.
+- **Localisation.** This document used to list the localisation pipeline as future
+  work while `Loc`, `L10n`, the bilingual content trees and the language-switch
+  test were already shipping. Bilingual switching is now listed as implemented.
+  What remains genuinely unbuilt is the font subsetting and the translator
+  workflow, and those stay in the planned list.
 
 ## 3. Dialogue technology decision
 
@@ -64,33 +94,52 @@ Do not add Git LFS until large binary assets actually justify it. Decide file-si
 
 ## 5. Development phases
 
-### Phase 0 — Engineering foundation (current)
-- Launchable Godot project.
-- Agent instructions and architecture boundaries.
-- CI project import and scene smoke test.
+Phases 0-3 are delivered. Phase 4 is the round this branch belongs to. Anything
+after that is intent, not a promise, and none of it is scheduled by this
+document.
+
+### Phase 0 — Engineering foundation (delivered)
+- Launchable Godot project, agent instructions, architecture boundaries.
+- CI project import, a static syntax gate, and scene smoke coverage.
 - Narrative and art direction documents.
 
-### Phase 1 — Movement and graybox exploration
-- Stabilize camera framing and movement feel.
-- Add basic collision, stair traversal, door/room boundaries, and scene loading.
-- Verify keyboard and controller input expectations.
-- Establish one reusable environment scale and navigation conventions.
+### Phase 1 — Movement and graybox exploration (delivered)
+- Camera framing, movement feel, collision, stair traversal, scene loading.
+- One reusable environment scale; interiors and exteriors share it.
 
-### Phase 2 — Interaction and dialogue spike
-- Interactable object targeting and feedback.
-- One NPC, one conversation, portrait and choice UI.
-- Data-driven branches and story flags.
-- Decide Dialogic/custom integration from evidence.
+### Phase 2 — Interaction and dialogue (delivered)
+- Interactable targeting, one NPC and one conversation, choices, story flags.
+- The dialogue layer was built in-project rather than adopted (ADR 0002).
 
-### Phase 3 — First vertical slice (classroom milestone delivered)
-- Delivered: classroom prologue — wake, Q, schoolbag, seven inspectables, the
-  expectation beat, the substitute, and the walkway exit.
-- Next: the gate/street route and the green-animal observation, keeping the same
-  interaction, dialogue, and narrative-state boundaries.
-- Save/load only after world-state ownership is stable.
+### Phase 3 — First vertical slice (delivered)
+- Classroom prologue: wake, Q, schoolbag, seven inspectables, the expectation
+  beat, the substitute, the walkway exit.
+- The gate and the street, the residential courtyard, and the green-animal
+  observation, on the same interaction/dialogue/narrative-state boundaries.
+- Bilingual content and switching.
 
-### Phase 4 — Production readiness
-- Versioned persistence, settings, accessibility, localization strategy.
+### Phase 4 — Open yard, inner voices, dice (delivered in this round)
+- The alley behind the flats and the estate gate, leading to an open school yard
+  that is walked freely rather than in a corridor.
+- The hybrid inner-voice system: passive rules that fire on events with strict
+  frequency control, and active checks the player chooses in a conversation.
+- One dice core serving visible checks (numbers shown) and hidden checks (only
+  the reaction shown), with an injectable, seedable RNG and recorded outcomes so
+  an attempt cannot be farmed.
+- The end of the slice moved to the far gap in the yard's fence.
+- Evidence: `docs/screenshots` from the capture workflow, plus the headless test
+  suite. Windows hands-on checks are listed in the pull request and are not yet
+  performed.
+
+### Phase 5 — Filling the yard (planned, not started)
+- People, events and further checks in the yard, using the anchors that exist
+  now: the court, the shed, the bench, the climbing frame, the notice board.
+- More content for the inner voices, including the ones that disagree.
+- A journal/notebook for what the protagonist knows, once there is enough of it
+  to be worth reading.
+
+### Phase 6 — Production readiness (planned, not started)
+- Versioned persistence, settings, accessibility, font subsetting.
 - Content authoring validation and reusable art pipeline.
 - Performance budgets and profiling.
 - Steam build and platform compatibility checks.

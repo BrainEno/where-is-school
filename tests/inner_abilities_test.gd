@@ -113,7 +113,9 @@ func _check_rules() -> void:
 			)
 		else:
 			var start := graph.get_conversation(rule.conversation_id).start_id
-			var node := graph.get_conversation(rule.conversation_id).nodes.get(start, null)
+			var node: DialogueGraph.DialogueNode = (
+				graph.get_conversation(rule.conversation_id).nodes.get(start, null)
+			)
 			if node == null or node.check.is_empty():
 				_failures.append(
 					"Passive conversation '%s' must open with a hidden check." % rule.conversation_id

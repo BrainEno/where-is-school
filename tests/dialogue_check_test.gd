@@ -251,7 +251,7 @@ func _check_no_reroll() -> void:
 
 	var second := _new_runtime(graph, 99999)
 	var second_result := second.get_last_check()
-	if bool(second_result.get("reused", false)) is false:
+	if not bool(second_result.get("reused", false)):
 		_failures.append("A repeated check was not reported as reused.")
 	if int(second_result.get("die", -1)) != first_die:
 		_failures.append(

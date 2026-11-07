@@ -78,6 +78,45 @@ A/B/C are intended as active directions for recollection, but their subjects are
 
 An initial choice may influence scene order and which evidence appears first. It should not automatically lock the player out of all other memories. Keep remembered claims distinct from independently observable evidence.
 
+## Inner voices
+
+Four faculties speak in the protagonist's own voice register and are presented as
+inner voices, not as characters or NPCs: **The Ledger** (counting, dates,
+quantities), **The Boundary** (space, distance, fit), **Echo** (memory,
+recognition), **The Onlooker** (people, tone, intent). They ship in
+`data/abilities/` and are described in ADR 0003.
+
+Rules for writing them:
+
+- A voice is **partial and biased**, never an oracle. It may misjudge, insist, or
+  contradict another voice, and the prose should let the player notice.
+- A voice's failure is written as its own mistake, not as the world withholding
+  information: the line still leaves one concrete thing to look at.
+- No voice explains the school, identifies the animal, diagnoses the protagonist,
+  or settles whether a memory happened.
+- A voice never states a fact about another character's interior life as fact.
+- Voices speak unprompted only on events, are capped per session, and never
+  chatter while the player is walking or thinking (ADR 0003 §6).
+- The player choosing a voice to attempt something is a decision about *how to
+  look*, expressed in the fiction ("try the frame", "read the sheet"), not a skill
+  menu.
+
+## The open yard
+
+The slice now ends in an open school yard behind the residential estate: a painted
+court with two hoops, an equipment shed, a bench with a bag left on it, a climbing
+frame, a notice board, a tap, and a gap in the fence at the far end. It is walked
+freely in any order; the story does not lock any of it.
+
+- It must read as an ordinary school space first. The oddity is a few specific
+  findings (a hasp with no purchase, a rota dated next week, a hoop that was moved,
+  a stamped tag under the shed), not decoration.
+- Nothing in the yard explains the anomaly, and nothing there names the animal. The
+  animal remains in the residential courtyard and remains unclassified.
+- Failures are content: each failed attempt yields a different detail and a new
+  question, and no required beat depends on a successful roll.
+- Empty middle ground is deliberate: later people and events go there.
+
 ## World and later spaces
 
 - The same school may have multiple contradictory versions.
@@ -85,6 +124,9 @@ An initial choice may influence scene order and which evidence appears first. It
 - The cause of these changes remains unknown.
 - The elliptical building is a later-discovered structure connecting versions of the school. Do not place it in the opening sequence.
 - Other candidate spaces include laboratories, toilets, gyms, unfinished stairwells, container yards, and port-like areas. Their order is not fixed.
+- Built so far: the classroom, the walkway, the street, the residential courtyard,
+  the alley behind the flats, and the school yard (playground). The end of the
+  built slice is the gap in the yard's far fence.
 
 ## Dialogue and implementation guidance
 

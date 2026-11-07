@@ -418,10 +418,10 @@
             },
             {
               "type": "record",
-              "entry_id": "pg_ball_stuck",
+              "entry_id": "pg_ball_balance_failed",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "The ball stays wedged. The shed has two footings and the gap is only on one side."
+              "text": "The sums balanced and told you nothing. The shed has two footings and the gap is only on the left one."
             }
           ],
           "next": null

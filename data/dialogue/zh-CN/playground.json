@@ -418,10 +418,10 @@
             },
             {
               "type": "record",
-              "entry_id": "pg_ball_stuck",
+              "entry_id": "pg_ball_balance_failed",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "球还卡着。小屋有两个基座，缝只在一边。"
+              "text": "算式对得上，什么也没说明。小屋有两个基座，缝只在左边那个。"
             }
           ],
           "next": null

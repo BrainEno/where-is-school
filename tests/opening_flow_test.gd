@@ -12,7 +12,7 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const TIME_SCALE := 4.0
-const OVERALL_TIMEOUT_SECONDS := 240.0
+const OVERALL_TIMEOUT_SECONDS := 320.0
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -29,7 +29,7 @@ var _observed_during_expectation := 0
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 300.0, "opening_flow_test.gd")
+	Harness.arm_watchdog(self, 360.0, "opening_flow_test.gd")
 	call_deferred("_run")
 
 
@@ -300,27 +300,92 @@ func _run() -> void:
 				_failures.append("Meeting the animal a second time showed nothing.")
 			await _settle(60.0, "the second animal conversation")
 
-		var alley := flats.find_interactable(&"res_alley_end")
-		if alley == null:
-			_failures.append("The residential area has no milestone exit.")
+		# --- Beat J: the alley and the open yard, to the real end of the slice ---
+		# The courtyard's alley exit used to end the slice. It now leads on: alley,
+		# estate gate, open yard, and only the gap in the far fence ends it.
+		var alley_exit := flats.find_interactable(&"res_alley_end")
+		if alley_exit == null:
+			_failures.append("The residential area has no way into the alley.")
 		else:
+			var exit_node := alley_exit as LocationExit
+			if exit_node != null and exit_node.is_milestone_end:
+				_failures.append("The courtyard still ends the slice at its alley exit.")
 			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
 			await physics_frame
 			await physics_frame
-			_interaction.request_activation(alley)
-			if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
-				var card_title := _ui.end_card.get_title()
-				if card_title.strip_edges().is_empty():
-					_failures.append("The end-of-slice card has no title.")
-				elif card_title != L10n.t("end.slice.title"):
-					_failures.append("The end-of-slice card is not using its locale key.")
+			_interaction.request_activation(alley_exit)
+			if await _pump_until(
+				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "alley",
+				60.0, "the alley to load"
+			):
+				await _settle(60.0, "the alley arrival line")
+				if not bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)):
+					_failures.append("Reaching the alley did not play its arrival line.")
+				if _ui.end_card.visible:
+					_failures.append("The end card appeared in the alley; it belongs at the far fence.")
+
+				var alley := _host.get_current()
+				if alley != null:
+					var gate := alley.find_interactable(&"alley_to_playground")
+					if gate == null:
+						_failures.append("The alley has no way on to the yard.")
+					else:
+						_player.teleport(
+							Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(0.0, 0, -20.4))
+						)
+						await physics_frame
+						await physics_frame
+						_interaction.request_activation(gate)
+						if await _pump_until(
+							func() -> bool:
+								return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "playground",
+							60.0, "the yard to load"
+						):
+							await _settle(60.0, "the yard arrival line")
+							if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):
+								_failures.append("Reaching the yard did not play its arrival line.")
+							if _ui.end_card.visible:
+								_failures.append("The end card appeared on entering the yard.")
+							var yard := _host.get_current()
+							if yard != null:
+								var ids: Array[StringName] = []
+								for interactable: Interactable in yard.get_interactables():
+									ids.append(interactable.interact_id)
+								for required: StringName in [
+									&"pg_hoop_near", &"pg_bench_look", &"pg_frame_look",
+									&"pg_shed_door", &"pg_ball_look",
+								]:
+									if not ids.has(required):
+										_failures.append("The yard is missing its anchor '%s'." % required)
+								var gap := yard.find_interactable(&"pg_gap_in_fence")
+								if gap == null:
+									_failures.append("The yard has no far gap to end the slice at.")
+								else:
+									_player.teleport(
+										Transform3D(Basis(Vector3.UP, 0.0), Vector3(-14.0, 0, -16.8))
+									)
+									await physics_frame
+									await physics_frame
+									_interaction.request_activation(gap)
+									if await _pump_until(
+										func() -> bool: return _ui.end_card.visible,
+										30.0, "the end-of-slice card"
+									):
+										var card_title := _ui.end_card.get_title()
+										if card_title.strip_edges().is_empty():
+											_failures.append("The end-of-slice card has no title.")
+										elif card_title != L10n.t("end.slice.title"):
+											_failures.append(
+												"The end-of-slice card is not using its locale key."
+											)
 
 	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
 	Harness.finish(
-		self, _failures, "the slice runs from waking up to the green animal and the milestone card."
+		self, _failures,
+		"the slice runs from waking up through the yard to the milestone card at its far fence."
 	)
 
 
