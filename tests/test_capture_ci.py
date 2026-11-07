@@ -152,8 +152,11 @@ exec "{godot}" --headless --path "{ROOT}" --script "{broken}"
         self.evidence = self.dir / "real-capture-evidence"
         process, status = self.run_pipeline("real_capture_fail", wrapper)
         self.assertNotEqual(process.returncode, 0, process.stdout + process.stderr)
+        import_log = (self.evidence / "import.log").read_text()
+        error_lines = "\n".join(line for line in import_log.splitlines()
+                                if any(token in line for token in ("ERROR", "Parse Error", "SCRIPT ERROR")))
         self.assertEqual((status["import"], status["capture"]), ("success", "failure"),
-                         "Real import log: " + (self.evidence / "import.log").read_text()[-5000:])
+                         f"Real import status: {status}; error lines: {error_lines[-2500:]}")
         self.assertIn("DELIBERATE_CAPTURE_FAILURE", (self.evidence / "capture.log").read_text())
         self.assertEqual(status["capture_exit"], 37)
 

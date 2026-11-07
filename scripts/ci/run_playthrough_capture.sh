@@ -42,7 +42,9 @@ else
 fi
 if (( import_exit != 0 )) || grep -Eq 'SCRIPT ERROR|Parse Error|^ERROR:' "$evidence_dir/import.log"; then
   import_status=failure
-  echo "::error title=Import failed::See import.log and status.json in the artifact"
+  detail=$(grep -E 'SCRIPT ERROR|Parse Error|^ERROR:' "$evidence_dir/import.log" | head -n 12 | tr '\n' '|' | cut -c1-2000 || true)
+  detail=${detail//'%'/'%25'}
+  echo "::error title=Import failed::exit=$import_exit ${detail:-See import.log and status.json in the artifact}"
   exit 1
 fi
 import_status=success
@@ -56,7 +58,9 @@ else
 fi
 if (( capture_exit != 0 )) || grep -Eq 'SCRIPT ERROR|Parse Error|^ERROR:' "$evidence_dir/capture.log"; then
   capture_status=failure
-  echo "::error title=Capture failed::See capture.log and any partial frames in the artifact"
+  detail=$(grep -E 'SCRIPT ERROR|Parse Error|^ERROR:|CAPTURE_RESULT|FAILURE:' "$evidence_dir/capture.log" | tail -n 12 | tr '\n' '|' | cut -c1-2000 || true)
+  detail=${detail//'%'/'%25'}
+  echo "::error title=Capture failed::exit=$capture_exit ${detail:-See capture.log and any partial frames in the artifact}"
   exit 1
 fi
 
