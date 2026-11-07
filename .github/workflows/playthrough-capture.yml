@@ -48,6 +48,27 @@ jobs:
           version: 4.7.2
           use-dotnet: false
 
+      - name: Static syntax check
+        id: parse
+        shell: bash
+        run: |
+          # The engine's import pass only compiles the scripts something actually
+          # loads, so a broken file nothing references can sit in the tree and the
+          # import still exits 0. gdtoolkit's parser reads every file, without
+          # needing a display or an engine instance. It is a CI-only tool: nothing
+          # from it ships with the game.
+          set -uo pipefail
+          python3 -m venv /tmp/lint >/dev/null 2>&1
+          /tmp/lint/bin/pip install --quiet "gdtoolkit==4.5.0"
+          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' -not -path './addons/*' | sort)
+          echo "checking ${#files[@]} GDScript file(s)"
+          if ! /tmp/lint/bin/gdparse "${files[@]}"; then
+            echo "PARSE_RESULT=failure"
+            echo "::error title=GDScript syntax::gdparse rejected at least one file (see the step log)"
+            exit 1
+          fi
+          echo "PARSE_RESULT=success"
+
       - name: Import project
         id: import
         shell: bash
@@ -91,18 +112,6 @@ jobs:
             echo "IMPORT_RESULT=failure"
             echo "::error title=import reported script errors::${summary}"
             exit 1
-          fi
-          # The editor pass does not compile every script it walks past, so the
-          # import step also loads each script, scene and resource explicitly.
-          godot --headless --path . --script res://tests/content_parse_test.gd             > /tmp/parse.log 2>&1
-          parse=$?
-          tail -n 5 /tmp/parse.log || true
-          if [ "${parse}" -ne 0 ]; then
-            summary=$(grep -E "TEST FAILURE|Parse Error|did not load|no base type" /tmp/parse.log \
-              | head -n 12 | tr '\n' '|' | cut -c1-1500)
-            echo "IMPORT_RESULT=failure"
-            echo "::error title=scripts or scenes do not parse::${summary:-no summary captured}"
-            exit "${parse}"
           fi
           echo "IMPORT_RESULT=success"
 
@@ -149,6 +158,7 @@ jobs:
             echo ""
             echo "| check | result |"
             echo "| --- | --- |"
+            echo "| syntax | ${PARSE_OUTCOME:-unknown} |"
             echo "| import | ${IMPORT_OUTCOME:-unknown} |"
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
             echo ""
@@ -156,6 +166,7 @@ jobs:
             echo "Log: see the run log and the 'playthrough-log' artifact."
           } >> "$GITHUB_STEP_SUMMARY"
         env:
+          PARSE_OUTCOME: ${{ steps.parse.outcome }}
           IMPORT_OUTCOME: ${{ steps.import.outcome }}
           CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
@@ -168,7 +179,6 @@ jobs:
           path: |
             /tmp/import-1.log
             /tmp/import-2.log
-            /tmp/parse.log
             /tmp/capture.log
             docs/screenshots
           if-no-files-found: warn

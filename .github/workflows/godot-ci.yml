@@ -25,6 +25,27 @@ jobs:
           version: 4.7.2
           use-dotnet: false
 
+      - name: Static syntax check
+        id: parse
+        shell: bash
+        run: |
+          # The engine's import pass only compiles the scripts something actually
+          # loads, so a broken file nothing references can sit in the tree and the
+          # import still exits 0. gdtoolkit's parser reads every file, without
+          # needing a display or an engine instance. It is a CI-only tool: nothing
+          # from it ships with the game.
+          set -uo pipefail
+          python3 -m venv /tmp/lint >/dev/null 2>&1
+          /tmp/lint/bin/pip install --quiet "gdtoolkit==4.5.0"
+          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' -not -path './addons/*' | sort)
+          echo "checking ${#files[@]} GDScript file(s)"
+          if ! /tmp/lint/bin/gdparse "${files[@]}"; then
+            echo "PARSE_RESULT=failure"
+            echo "::error title=GDScript syntax::gdparse rejected at least one file (see the step log)"
+            exit 1
+          fi
+          echo "PARSE_RESULT=success"
+
       # Each command runs under `timeout` so a stalled test fails visibly instead of
       # consuming the job budget. Results are echoed to stdout and to the check
       # run's annotations, which makes failures readable from the API as well as
@@ -58,7 +79,6 @@ jobs:
           status=0
           run_check import 420 godot --headless --editor --path . --quit || status=1
           run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
-          run_check parse 300 godot --headless --path . --script res://tests/content_parse_test.gd || status=1
           run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
           run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
