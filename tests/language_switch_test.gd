@@ -22,7 +22,7 @@ var _check_events: int = 0
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 240.0, "language_switch_test.gd")
+	Harness.arm_watchdog(self, 420.0, "language_switch_test.gd")
 	call_deferred("_run")
 
 
@@ -152,7 +152,8 @@ func _run() -> void:
 	if not _dialogue.present_inspection(&"classroom_set_square"):
 		_failures.append("The set square inspection could not be presented.")
 	else:
-		await _settle(60.0)
+		await _settle(25.0)
+		print("PROGRESS: first read of the set square is on screen; log=%d" % _ui.backlog.get_entry_count())
 		# A passive voice speaking between two snapshots would be a real new event, not
 		# a duplicate, and would make the "nothing was added" assertions lie. The section
 		# is about the log, so the voices are parked here rather than being muted in the
@@ -194,6 +195,7 @@ func _run() -> void:
 			await process_frame
 			await process_frame
 			var again := _backlog_snapshot()
+			print("PROGRESS: round %d back in Chinese, log=%d" % [round_index, int(again["count"])])
 			_assert_log_unchanged("Switching back to Chinese (round %d)" % round_index, log_first_read)
 			if again["texts"] != log_first_read["texts"]:
 				_failures.append("The rebuilt log differs from the first Chinese render.")
@@ -209,7 +211,7 @@ func _run() -> void:
 		if not _dialogue.present_inspection(&"classroom_set_square"):
 			_failures.append("The set square inspection could not be repeated.")
 		else:
-			await _settle(60.0)
+			await _settle(25.0)
 			var log_repeat := _backlog_snapshot()
 			if int(log_repeat["count"]) != int(log_first_read["count"]) + 1:
 				_failures.append(

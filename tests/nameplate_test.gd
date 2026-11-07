@@ -119,11 +119,23 @@ func _check_language_switch() -> void:
 
 	_loc.set_locale("zh-CN")
 	await process_frame
-	if not _has_cjk(plate.text):
-		_failures.append("The label stayed English after switching to Chinese: '%s'." % plate.text)
 	var directory := CharacterDirectory.load_cached()
 	if plate.text != directory.get_localized_name(&"q"):
 		_failures.append("The label does not use the localized profile name: '%s'." % plate.text)
+	# Q is called Q in both languages — a name does not have to change to be correct.
+	# The protagonist's does, so that is where "the label follows the language" is
+	# actually observable.
+	var player: Node3D = load(PLAYER_SCENE).instantiate()
+	root.add_child(player)
+	await process_frame
+	var player_plate := _nameplates(player)[0]
+	if not _has_cjk(player_plate.text):
+		_failures.append(
+			"The protagonist's label stayed English after switching to Chinese: '%s'."
+			% player_plate.text
+		)
+	player.queue_free()
+	await process_frame
 
 	_loc.set_locale("en")
 	await process_frame

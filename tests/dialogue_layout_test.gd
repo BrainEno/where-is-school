@@ -123,7 +123,13 @@ func _run_cases(size: Vector2i, samples: Dictionary) -> void:
 
 	# 3. One paragraph long enough that no fixed box could hold it: the scroll path.
 	L10n.set_locale("zh-CN")
-	var wall := "%s\n%s" % [prose_zh, prose_zh + beat_zh]
+	# 16 paragraphs of the shipped prose: ~1300 characters, which cannot fit the band at
+	# any of the three sizes, so the scroll fallback is exercised instead of assumed.
+	var wall := ""
+	for index in 16:
+		wall += prose_zh
+		if index < 15:
+			wall += "\n"
 	await _show(_line(wall, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false))
 	_measure("%s over-long single paragraph" % tag, size, false)
 	if not bool(_panel.get_layout_report()["body_scrolling"]):
