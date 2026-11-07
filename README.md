@@ -6,7 +6,7 @@ where-is-school is a painterly 2.5D surreal narrative exploration game about mem
 
 ## Project status
 
-**Second milestone: from the classroom to the green animal.** The player wakes in the biology classroom, talks to Q, searches the schoolbag, inspects the room, lives through an expectation that is explicitly not a real event, sits through the substitute's lesson, leaves for the walkway, and walks out into a street and a residential courtyard where the green animal is standing. The slice ends after that first meeting. Everything the player reads is data, and the whole game can be switched between English and simplified Chinese while it runs.
+**Third milestone: playground open slice with hybrid RPG.** The player continues from the residential alley through the estate gate to an open playground (sports shed, notice wall, old equipment — freely explorable in any order) and experiences the first inner abilities (Keen Eye, Recollection, Gut Feeling, Steadiness) with visible and hidden dice checks. Both success and failure yield narrative value; no hard locks. Previous slice (classroom → green animal) remains fully playable with state preserved across transitions. See `docs/adr/0003-inner-abilities-and-checks.md` and `docs/TECHNICAL_ROADMAP.md` Phase 3b.
 
 See [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for controls, architecture, and known limitations.
 

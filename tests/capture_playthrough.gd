@@ -254,10 +254,68 @@ func _run() -> void:
 				await _wait_for_free(60.0)
 				_teleport(Vector3(6.0, 0, -31.6), 0.0)
 				await _wait_for_target(&"res_alley_end", 30.0)
+				await _shot("19b_alley_prompt", "The alley beyond the courtyard: the way to the gate.")
 				await _press(KEY_E)
-				if await _wait_for_visible(_ui.end_card, 20.0):
-					await _wait(0.6)
-					await _shot("20_end_card", "The end-of-slice card at the end of the built content.")
+				if await _wait_for_location("alley", 40.0):
+					await _wait(0.8)
+					await _shot("20_alley", "The narrow alley between the flats.")
+					var gate_exit := _host.get_current().find_interactable(&"alley_to_gate") if _host.get_current() != null else null
+					if gate_exit != null:
+						await _wait_for_free(60.0)
+						_teleport(Vector3(0, 0, -14), 0.0)
+						await _wait_for_target(&"alley_to_gate", 30.0)
+						await _press(KEY_E)
+						if await _wait_for_location("estate_gate", 40.0):
+							await _wait(0.8)
+							await _shot("21_estate_gate", "The estate gate. The playground notice hangs on its post.")
+							var gate_inner := _host.get_current().find_interactable(&"estate_to_playground") if _host.get_current() != null else null
+							if gate_inner != null:
+								await _wait_for_free(60.0)
+								_teleport(Vector3(0, 0, -10), 0.0)
+								await _wait_for_target(&"estate_to_playground", 30.0)
+								await _press(KEY_E)
+								if await _wait_for_location("playground", 40.0):
+									await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the playground arrival line")
+									await _wait(0.8)
+									await _shot("22_playground_arrival", "The playground: open, still, three anchors visible.")
+									# Shed
+									await _wait_for_free(60.0)
+									_teleport(Vector3(-10, 0, -8), 0.0)
+									await _wait_for_target(&"playground_shed", 30.0)
+									await _shot("23_shed_prompt", "The sports shed with its door half open.")
+									await _press(KEY_E)
+									if await _wait_for_line(5.0):
+										await _wait(0.8)
+										await _shot("24_shed_dialogue", "The shed dialogue and a visible Keen Eye check.")
+									await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the shed conversation to close")
+									# Wall
+									await _wait_for_free(60.0)
+									_teleport(Vector3(10, 0, -10), 0.0)
+									await _wait_for_target(&"playground_wall", 30.0)
+									await _shot("25_wall_prompt", "The notice wall with its crooked photo.")
+									await _press(KEY_E)
+									if await _wait_for_line(5.0):
+										await _wait(0.8)
+										await _shot("26_wall_dialogue", "The wall dialogue and a Recollection check.")
+									await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the wall conversation to close")
+									# Equipment
+									await _wait_for_free(60.0)
+									_teleport(Vector3(0, 0, 6), 0.0)
+									await _wait_for_target(&"playground_equipment", 30.0)
+									await _shot("27_equipment_prompt", "The old climbing equipment.")
+									await _press(KEY_E)
+									if await _wait_for_line(5.0):
+										await _wait(0.8)
+										await _shot("28_equipment_dialogue", "The equipment dialogue and a Gut Feeling check.")
+									await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the equipment conversation to close")
+									# Final milestone
+									await _wait_for_free(60.0)
+									_teleport(Vector3(-18, 0, 20), 0.0)
+									await _wait_for_target(&"playground_exit", 30.0)
+									await _press(KEY_E)
+									if await _wait_for_visible(_ui.end_card, 20.0):
+										await _wait(0.6)
+										await _shot("29_end_card", "The end-of-slice card at the playground exit.")
 
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))

@@ -46,6 +46,20 @@ const ROUTES: Dictionary = {
 			"requires": {},
 		},
 	],
+	# Playground: three anchors, each with a visible check conversation.
+	&"playground_shed": [{"conversation": &"playground_shed", "requires": {}}],
+	&"playground_wall": [{"conversation": &"playground_wall", "requires": {}}],
+	&"playground_equipment": [{"conversation": &"playground_equipment", "requires": {}}],
+	&"playground_q": [
+		{
+			"conversation": &"playground_q_after",
+			"requires": {StoryFlags.PLAYGROUND_EXPLORED: true},
+		},
+		{
+			"conversation": &"playground_q_intro",
+			"requires": {},
+		},
+	],
 }
 
 

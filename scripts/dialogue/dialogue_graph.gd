@@ -35,6 +35,15 @@ class DialogueChoice extends RefCounted:
 	var not_flags: Array[StringName] = []
 	var effects: Array = []
 	var once: bool = false
+	var check: DialogueCheck = null
+
+
+class DialogueCheck extends RefCounted:
+	var check_id: StringName = &""
+	var ability_id: StringName = &""
+	var difficulty: int = 10
+	var modifier: int = 0
+	var visible: bool = true
 
 
 class DialogueNode extends RefCounted:
@@ -52,6 +61,7 @@ class DialogueNode extends RefCounted:
 	var requires: Dictionary = {}
 	var all_flags: Array[StringName] = []
 	var not_flags: Array[StringName] = []
+	var check: DialogueCheck = null
 
 
 class Conversation extends RefCounted:
@@ -266,6 +276,7 @@ func _parse_node(
 
 	_parse_conditions(data.get("conditions", null), context, node.requires, node.all_flags, node.not_flags)
 	node.effects = _parse_effects(data.get("effects", []), context + " effects")
+	node.check = _parse_check(data.get("check", null), context)
 
 	var raw_choices: Variant = data.get("choices", [])
 	if raw_choices is Array:
@@ -331,6 +342,7 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 	choice.effects = _parse_effects(
 		data.get("effects", []), "%s choice '%s'" % [context, choice.choice_id]
 	)
+	choice.check = _parse_check(data.get("check", null), "%s choice '%s'" % [context, choice.choice_id])
 	return choice
 
 
@@ -426,6 +438,36 @@ func _parse_effects(raw: Variant, context: String) -> Array:
 				speaker_ids[StringName(String(effect["speaker"]))] = true
 		effects.append(effect)
 	return effects
+
+
+func _parse_check(raw: Variant, context: String) -> DialogueCheck:
+	if raw == null:
+		return null
+	if not (raw is Dictionary):
+		errors.append("%s: 'check' must be an object." % context)
+		return null
+	var data: Dictionary = raw
+	var check := DialogueCheck.new()
+	var id_raw := String(data.get("id", "")).strip_edges()
+	if id_raw.is_empty():
+		errors.append("%s: check needs an 'id' (stable check identifier)." % context)
+		return null
+	check.check_id = StringName(id_raw)
+	var ability_raw := String(data.get("ability", "")).strip_edges()
+	if ability_raw.is_empty():
+		errors.append("%s: check '%s' needs an 'ability'." % [context, id_raw])
+		return null
+	check.ability_id = StringName(ability_raw)
+	check.difficulty = int(data.get("difficulty", 10))
+	if check.difficulty < 1 or check.difficulty > 30:
+		errors.append("%s: check '%s' difficulty %d is out of range 1..30." % [context, id_raw, check.difficulty])
+	check.modifier = int(data.get("modifier", 0))
+	check.visible = bool(data.get("visible", true))
+	# Unknown fields warn
+	for key: Variant in data.keys():
+		if String(key) not in ["id", "ability", "difficulty", "modifier", "visible"]:
+			errors.append("%s: check '%s' has unknown field '%s'." % [context, id_raw, String(key)])
+	return check
 
 
 func _validate_conversation(conversation: Conversation, path: String) -> void:

@@ -16,6 +16,7 @@ signal choices_changed(choices: Array)
 signal conversation_started(conversation_id: StringName)
 signal conversation_finished(conversation_id: StringName)
 signal narrative_entry_recorded(entry: NarrativeEntry)
+signal check_performed(result: CheckResult)
 signal effect_rejected(reason: String)
 
 const MAX_STEPS_PER_CONVERSATION := 512
@@ -30,6 +31,9 @@ var _steps: int = 0
 var _game_state: Node = null
 var _narrative_state: Node = null
 var _characters: CharacterDirectory = null
+var _rpg_manager: Node = null
+var _last_check: CheckResult = null
+var _check_engine: CheckEngine = null
 
 
 func _init(
@@ -40,6 +44,14 @@ func _init(
 	_game_state = game_state if game_state != null else _find_autoload("GameState")
 	_narrative_state = narrative_state if narrative_state != null else _find_autoload("NarrativeState")
 	_characters = characters if characters != null else CharacterDirectory.load_all()
+	_rpg_manager = _find_autoload("Rpg")
+	# Also handle case where Rpg is not autoload but available as child of tree root via main scene
+	if _rpg_manager == null:
+		var tree := Engine.get_main_loop()
+		if tree is SceneTree:
+			var root := (tree as SceneTree).root
+			if root != null:
+				_rpg_manager = root.get_node_or_null(NodePath("Rpg"))
 	if _characters != null and not _characters.errors.is_empty():
 		for message in _characters.errors:
 			push_error("DialogueRuntime: %s" % message)
@@ -126,6 +138,8 @@ func choose(choice_index: int) -> bool:
 	if choice.once:
 		_set_flag(StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), true)
 	_apply_effects(choice.effects)
+	if choice.check != null:
+		_run_check(choice.check)
 	_awaiting_choice = false
 	_enter_node(choice.next_id)
 	return true
@@ -183,6 +197,8 @@ func _enter_node(node_id: StringName) -> void:
 
 	_node = node
 	_apply_effects(node.effects)
+	if node.check != null:
+		_run_check(node.check)
 
 	var available := _available_choices(node)
 	_awaiting_choice = not available.is_empty()
@@ -283,6 +299,9 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		speaker_name = _characters.get_display_name(speaker_id)
 		speaker_role = _characters.get_short_role(speaker_id)
 		accent_color = _characters.get_accent_color(speaker_id)
+	var check_info: Dictionary = {}
+	if _last_check != null:
+		check_info = _last_check.to_dict()
 	return {
 		"conversation_id": _conversation.conversation_id,
 		"node_id": node.node_id,
@@ -295,8 +314,36 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"source": source_value,
 		"badge": NarrativeEntry.badge_key_for(source_value),
 		"subjective": _conversation.subjective,
+		"check_result": check_info,
 		"tags": node.tags,
 	}
+
+
+func _run_check(check: DialogueGraph.DialogueCheck) -> CheckResult:
+	if check == null:
+		return null
+	var engine: CheckEngine = _check_engine
+	if engine == null and _rpg_manager != null and _rpg_manager.has_method("get_engine"):
+		engine = _rpg_manager.get_engine()
+	if engine == null:
+		# Fallback: create temporary engine with current GameState
+		engine = CheckEngine.new(null, _game_state)
+	var ability_val := 2
+	var ability_reg: AbilityRegistry = null
+	if _rpg_manager != null and _rpg_manager.has_method("get_registry"):
+		ability_reg = _rpg_manager.get_registry()
+	if ability_reg != null:
+		var abil := ability_reg.get_ability(check.ability_id)
+		if abil != null:
+			ability_val = abil.get_value()
+	var result := engine.roll(check.check_id, check.ability_id, ability_val, check.difficulty, check.modifier, check.visible, false)
+	_last_check = result
+	check_performed.emit(result)
+	# Store success flag for branching: check_success:<id> = bool, and attempt flag
+	_set_flag(StoryFlags.check_success_flag(check.check_id), result.success)
+	_set_flag(StoryFlags.check_attempted_flag(check.check_id), true)
+	# Also keep engine's own attempt tracking (it writes check:<id>)
+	return result
 
 
 func _apply_effects(effects: Array) -> void:
@@ -367,6 +414,18 @@ func _finish() -> void:
 	_conversation = null
 	_graph = null
 	conversation_finished.emit(finished_id)
+
+
+func set_rpg_manager(manager: Node) -> void:
+	_rpg_manager = manager
+
+
+func set_check_engine(engine: CheckEngine) -> void:
+	_check_engine = engine
+
+
+func get_last_check() -> CheckResult:
+	return _last_check
 
 
 func _get_flag(flag: StringName, default_value: Variant) -> Variant:

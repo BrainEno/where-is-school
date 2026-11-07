@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "alley_bins": {
+    "title": "巷子里的垃圾桶",
+    "prompt": "看垃圾桶",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "垃圾桶被往里拉了一点，像是有人为了腾地方搬过，搬完忘了搬回。有一个盖子被不太照得进来的太阳晒得有点温。",
+    "repeat_text": "垃圾桶，还在原来的地方。",
+    "record": {
+      "entry_id": "saw_alley_bins",
+      "source": "observed",
+      "text": "巷子里的垃圾桶为了腾地方被搬过，之后就留在那里。"
+    }
+  },
+  "alley_pipes": {
+    "title": "墙上的管道",
+    "prompt": "看管道",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "管道和线缆沿着右墙走。一处接口在滴水，把同一块水泥反复染深。",
+    "repeat_text": "管道，接口，还是那块深色。",
+    "record": {
+      "entry_id": "saw_alley_pipes",
+      "source": "observed",
+      "text": "巷子里一处管道接口往同一块水泥上滴水。"
+    }
+  }
+}

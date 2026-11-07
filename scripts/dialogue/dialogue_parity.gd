@@ -113,6 +113,7 @@ static func _compare_node(
 
 	_compare_effects(reference.effects, other.effects, node_label, problems)
 	_compare_conditions(reference, other, node_label, problems)
+	_compare_check(reference.check, other.check, node_label, problems)
 
 	if reference.choices.size() != other.choices.size():
 		problems.append(
@@ -134,7 +135,35 @@ static func _compare_node(
 			problems.append("%s: jump target differs between languages." % choice_label)
 		if reference_choice.once != other_choice.once:
 			problems.append("%s: 'once' differs between languages." % choice_label)
+		if reference_choice.requires != other_choice.requires:
+			problems.append("%s: conditions.requires differ between languages." % choice_label)
+		if reference_choice.all_flags != other_choice.all_flags or reference_choice.not_flags != other_choice.not_flags:
+			problems.append("%s: condition flags differ between languages." % choice_label)
 		_compare_effects(reference_choice.effects, other_choice.effects, choice_label, problems)
+		_compare_check(reference_choice.check, other_choice.check, choice_label, problems)
+
+
+static func _compare_check(
+	reference: DialogueGraph.DialogueCheck,
+	other: DialogueGraph.DialogueCheck,
+	label: String,
+	problems: Array[String]
+) -> void:
+	if reference == null and other == null:
+		return
+	if (reference == null) != (other == null):
+		problems.append("%s: one language has a dice check and the other does not." % label)
+		return
+	if String(reference.check_id) != String(other.check_id):
+		problems.append("%s: check id is '%s' but should be '%s'." % [label, other.check_id, reference.check_id])
+	if String(reference.ability_id) != String(other.ability_id):
+		problems.append("%s: check ability is '%s' but should be '%s'." % [label, other.ability_id, reference.ability_id])
+	if reference.difficulty != other.difficulty:
+		problems.append("%s: check difficulty is %d but should be %d." % [label, other.difficulty, reference.difficulty])
+	if reference.modifier != other.modifier:
+		problems.append("%s: check modifier is %d but should be %d." % [label, other.modifier, reference.modifier])
+	if reference.visible != other.visible:
+		problems.append("%s: check visibility differs between languages." % label)
 
 
 static func _compare_conditions(

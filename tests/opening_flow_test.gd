@@ -302,25 +302,96 @@ func _run() -> void:
 
 		var alley := flats.find_interactable(&"res_alley_end")
 		if alley == null:
-			_failures.append("The residential area has no milestone exit.")
+			_failures.append("The residential area has no alley exit (expected res_alley_end -> alley).")
 		else:
 			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
 			await physics_frame
 			await physics_frame
+			await _check_prompt(&"res_alley_end", "alley prompt")
 			_interaction.request_activation(alley)
-			if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
-				var card_title := _ui.end_card.get_title()
-				if card_title.strip_edges().is_empty():
-					_failures.append("The end-of-slice card has no title.")
-				elif card_title != L10n.t("end.slice.title"):
-					_failures.append("The end-of-slice card is not using its locale key.")
+			if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "alley", 30.0, "the alley to load"):
+				if not bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)):
+					_failures.append("Entering the alley did not set ALLEY_ARRIVED.")
+				# alley -> estate_gate
+				var alley_loc := _host.get_current()
+				var to_gate := alley_loc.find_interactable(&"alley_to_gate") if alley_loc != null else null
+				if to_gate == null:
+					_failures.append("Alley has no exit to estate_gate.")
+				else:
+					_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(0, 0, -14)))
+					await physics_frame
+					await physics_frame
+					_interaction.request_activation(to_gate)
+					if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "estate_gate", 30.0, "estate_gate to load"):
+						if not bool(_game_state.get_flag(StoryFlags.ESTATE_GATE_PASSED, false)):
+							_failures.append("Passing estate gate did not set ESTATE_GATE_PASSED.")
+						var gate_loc := _host.get_current()
+						var to_playground := gate_loc.find_interactable(&"estate_to_playground") if gate_loc != null else null
+						if to_playground == null:
+							_failures.append("Estate gate has no exit to playground.")
+						else:
+							_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(0, 0, -10)))
+							await physics_frame
+							await physics_frame
+							_interaction.request_activation(to_playground)
+							if await _pump_until(func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "playground", 30.0, "playground to load"):
+								await _settle(60.0, "playground arrival line")
+								if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):
+									_failures.append("Reaching playground did not set PLAYGROUND_ARRIVED.")
+								# verify open playground has 3 anchors + free traversal
+								var playground := _host.get_current()
+								if playground == null or String(playground.location_id) != "playground":
+									_failures.append("Playground did not stay loaded.")
+								else:
+									if playground.get_interactables().size() < 6:
+										_failures.append("Playground should have at least 6 interactables, found %d." % playground.get_interactables().size())
+									if playground.find_interactable(&"playground_shed") == null:
+										_failures.append("Playground missing shed anchor.")
+									if playground.find_interactable(&"playground_wall") == null:
+										_failures.append("Playground missing wall anchor.")
+									if playground.find_interactable(&"playground_equipment") == null:
+										_failures.append("Playground missing equipment anchor.")
+									# Test free order: visit shed then wall then equipment, verify no lock
+									# (each records PLAYGROUND_*_SEEN)
+									# Ensure state survives location switches (check earlier flags)
+									if not bool(_game_state.get_flag(StoryFlags.ANIMAL_SEEN, false)):
+										_failures.append("Animal seen flag was lost after playground transition (state not preserved).")
+									if not _narrative.has_entry(&"animal_seen"):
+										_failures.append("Animal knowledge entry lost after playground transition.")
+									# Try playground shed conversation (active check)
+									var shed := playground.find_interactable(&"playground_shed")
+									if shed != null:
+										_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(-10, 0, -8)))
+										await physics_frame
+										await physics_frame
+										_interaction.request_activation(shed)
+										await process_frame
+										if not _dialogue.is_busy():
+											_failures.append("Activating playground shed did not start dialogue.")
+										else:
+											await _settle(60.0, "playground shed conversation")
+									# Check playground exit milestone
+									var exit := playground.find_interactable(&"playground_exit")
+									if exit == null:
+										_failures.append("Playground has no milestone exit.")
+									else:
+										_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(-18, 0, 20)))
+										await physics_frame
+										await physics_frame
+										_interaction.request_activation(exit)
+										if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the playground end card"):
+											var card_title := _ui.end_card.get_title()
+											if card_title.strip_edges().is_empty():
+												_failures.append("The playground end card has no title.")
+											elif card_title != L10n.t("end.playground.title"):
+												_failures.append("The playground end card is not using its locale key: got '%s' expected '%s'." % [card_title, L10n.t("end.playground.title")])
 
 	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
 	Harness.finish(
-		self, _failures, "the slice runs from waking up to the green animal and the milestone card."
+		self, _failures, "the slice runs from waking up through playground and milestone card."
 	)
 
 

@@ -1001,10 +1001,14 @@ destination_id = &"street"
 [node name="AlleyEnd" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(6.0, 0.9, -33.0)
 interact_id = &"res_alley_end"
-prompt_key = "prompt.milestone"
+prompt_key = "prompt.alley"
 radius = 1.6
-is_milestone_end = true
-end_card_key = "end.slice"
+destination_scene = "res://scenes/locations/alley/alley.tscn"
+destination_spawn = &"EntryFromResidential"
+destination_id = &"alley"
+
+[node name="PlayerStart" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(0, 0, 0)
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 

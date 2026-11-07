@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "playground_shed_inspection": {
+    "title": "器材棚",
+    "prompt": "查看棚屋",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "铁皮棚，边缘绿漆已经褪色。挂锁开着。雨已经进了角落书堆那里。",
+    "repeat_text": "棚还是半开着。里面的书还是潮的。",
+    "record": {
+      "entry_id": "playground_ins_shed",
+      "source": "observed",
+      "text": "操场棚屋半开着，雨已经打到里面的书。"
+    }
+  },
+  "playground_wall_inspection": {
+    "title": "布告栏",
+    "prompt": "看布告栏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "被撕掉的通知留下的订书钉，和留下来的通知。照片歪了，没人扶正。",
+    "repeat_text": "歪的照片，订书钉，留下来的通知。",
+    "record": {
+      "entry_id": "playground_ins_wall",
+      "source": "observed",
+      "text": "操场布告栏上留着旧订书钉和一张歪的合影。"
+    }
+  },
+  "playground_equipment_inspection": {
+    "title": "旧器械",
+    "prompt": "看器械",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两根立柱，三根横杆，一架梯子漆已磨到见铁。温的那根杆子和立柱的焊口不一样。",
+    "repeat_text": "旧架子，磨掉的漆，不一样的焊口。",
+    "record": {
+      "entry_id": "playground_ins_equipment",
+      "source": "observed",
+      "text": "操场器械很旧，温的那根杆子焊口不一样。"
+    }
+  },
+  "playground_ground": {
+    "title": "地面",
+    "prompt": "看地面",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "沥青地上画着旧球场的线。线在墙下消失，又从另一边出来，像墙是后来才来的。",
+    "repeat_text": "那条线，穿墙过去。",
+    "record": {
+      "entry_id": "playground_ground_line",
+      "source": "observed",
+      "text": "操场上旧球场的白线穿过墙体，在另一边又出现。"
+    }
+  },
+  "playground_fence": {
+    "title": "围栏",
+    "prompt": "看围栏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "铁丝网，略往北倾。外面：还是你来时经过的那三栋楼，但窗子都暗着。",
+    "repeat_text": "围栏，倾斜，暗的窗。",
+    "record": {
+      "entry_id": "playground_fence_view",
+      "source": "observed",
+      "text": "操场围栏外的三栋楼窗子是暗的。"
+    }
+  }
+}

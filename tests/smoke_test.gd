@@ -145,3 +145,8 @@ func _check_content(main: Node) -> void:
 	var characters := CharacterDirectory.load_all()
 	if not characters.errors.is_empty():
 		_failures.append("\n".join(characters.errors))
+	var abilities := AbilityRegistry.load_all()
+	if not abilities.is_valid():
+		_failures.append(abilities.describe_errors())
+	if abilities.get_ids().size() < 4:
+		_failures.append("Expected at least 4 inner abilities, found %d." % abilities.get_ids().size())

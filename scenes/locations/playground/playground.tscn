@@ -1,0 +1,292 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="2_asphalt"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="3_concrete"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_paint.tres" id="4_wall"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="5_metal"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="6_paper"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/dusk_glow.tres" id="7_dusk"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/floor_concrete.tres" id="8_floor"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_brick.tres" id="9_brick"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="10_interactable"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="11_location_exit"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="12_ambience"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="13_ambience_player"]
+[ext_resource type="PackedScene" path="res://scenes/actors/npc/npc_actor.tscn" id="14_npc_actor"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.22, 0.18, 0.17, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.42, 0.35, 1)
+ambient_light_energy = 1.0
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.32, 0.26, 0.21, 1)
+fog_density = 0.004
+adjustment_enabled = true
+adjustment_saturation = 0.82
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0"]
+size = Vector3(48, 0.2, 48)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0"]
+size = Vector3(48, 0.2, 48)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(48, 6, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(48, 6, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(0.4, 6, 48)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(0.4, 6, 48)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3"]
+size = Vector3(6, 2.5, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(6, 2.5, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4"]
+size = Vector3(8, 3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(8, 3, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5"]
+size = Vector3(6, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(6, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(10, 0.02, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(2, 2.4, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(0.3, 6, 48)
+
+[node name="Playground" type="Node3D"]
+script = ExtResource("1_location_root")
+location_id = &"playground"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8, -0.5, 0.3, 0, 0.85, 0.52, -0.6, -0.44, 0.68, 0, 6, 0)
+light_color = Color(0.95, 0.82, 0.62, 1)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_0")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_0")
+material_override = ExtResource("2_asphalt")
+cast_shadow = 0
+
+[node name="NorthWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -24)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="NorthWall"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="NorthWall"]
+mesh = SubResource("BoxMesh_1")
+material_override = ExtResource("9_brick")
+
+[node name="SouthWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 24)
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="SouthWall"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="SouthWall"]
+mesh = SubResource("BoxMesh_1")
+material_override = ExtResource("9_brick")
+
+[node name="EastWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 3, 0)
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="EastWall"]
+shape = SubResource("BoxShape3D_2")
+
+[node name="Mesh" type="MeshInstance3D" parent="EastWall"]
+mesh = SubResource("BoxMesh_2")
+material_override = ExtResource("4_wall")
+
+[node name="WestWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 3, 0)
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="WestWall"]
+shape = SubResource("BoxShape3D_8")
+
+[node name="Mesh" type="MeshInstance3D" parent="WestWall"]
+mesh = SubResource("BoxMesh_8")
+material_override = ExtResource("4_wall")
+
+[node name="CourtLine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_6")
+material_override = ExtResource("6_paper")
+cast_shadow = 0
+
+[node name="Shed" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 1.25, -12)
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Shed"]
+shape = SubResource("BoxShape3D_3")
+
+[node name="Mesh" type="MeshInstance3D" parent="Shed"]
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("5_metal")
+
+[node name="ShedInterior" type="MeshInstance3D" parent="Shed"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("7_dusk")
+
+[node name="NoticeWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1.5, -14)
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="NoticeWall"]
+shape = SubResource("BoxShape3D_4")
+
+[node name="Mesh" type="MeshInstance3D" parent="NoticeWall"]
+mesh = SubResource("BoxMesh_4")
+material_override = ExtResource("8_floor")
+
+[node name="Notices" type="MeshInstance3D" parent="NoticeWall"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.16)
+mesh = SubResource("BoxMesh_5")
+material_override = ExtResource("6_paper")
+
+[node name="Equipment" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+collision_layer = 1
+
+[node name="PostA" type="MeshInstance3D" parent="Equipment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.2, 0)
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("5_metal")
+
+[node name="PostB" type="MeshInstance3D" parent="Equipment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.2, 0)
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("5_metal")
+
+[node name="Bar" type="MeshInstance3D" parent="Equipment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+mesh = SubResource("BoxMesh_6")
+material_override = ExtResource("5_metal")
+
+[node name="Q" parent="." instance=ExtResource("14_npc_actor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 5)
+npc_id = &"q"
+
+[node name="EntryFromGate" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+groups = ["spawn_point"]
+
+[node name="ShedSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -8)
+groups = ["spawn_point"]
+
+[node name="WallSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -10)
+groups = ["spawn_point"]
+
+[node name="EquipmentSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+groups = ["spawn_point"]
+
+[node name="ExitSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 20)
+groups = ["spawn_point"]
+
+[node name="QInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 5)
+interact_id = &"playground_q"
+conversation_route = &"playground_q"
+prompt_key = "prompt.talk"
+speaker_id = &"q"
+radius = 1.8
+
+[node name="ShedInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -10)
+interact_id = &"playground_shed"
+conversation_route = &"playground_shed"
+prompt_key = "prompt.shed"
+radius = 1.8
+
+[node name="WallInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -12)
+interact_id = &"playground_wall"
+conversation_route = &"playground_wall"
+prompt_key = "prompt.notice_wall"
+radius = 1.8
+
+[node name="EquipmentInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+interact_id = &"playground_equipment"
+conversation_route = &"playground_equipment"
+prompt_key = "prompt.equipment"
+radius = 1.8
+
+[node name="GroundInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+interact_id = &"playground_ground"
+inspection_id = &"playground_ground"
+prompt_key = "prompt.look"
+radius = 2.0
+
+[node name="FenceInteract" parent="." instance=ExtResource("10_interactable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 0)
+interact_id = &"playground_fence"
+inspection_id = &"playground_fence"
+prompt_key = "prompt.look"
+radius = 2.0
+
+[node name="BackToGate" parent="." instance=ExtResource("11_location_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 22)
+interact_id = &"playground_to_gate"
+destination_scene = "res://scenes/locations/estate_gate/estate_gate.tscn"
+destination_spawn = &"FromPlayground"
+destination_id = &"estate_gate"
+prompt_key = "prompt.estate_gate"
+
+[node name="PlaygroundExit" parent="." instance=ExtResource("11_location_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 0)
+interact_id = &"playground_exit"
+is_milestone_end = true
+end_card_key = "end.playground"
+prompt_key = "prompt.playground_exit"
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.6, -0.7, 0.3, 0, 0.4, -0.9, -0.8, -0.6, -0.3, 0, 8, 0)
+light_energy = 1.0
+shadow_enabled = true
+
+[node name="Ambience" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("12_ambience")
+autoplay = true
+script = ExtResource("13_ambience_player")

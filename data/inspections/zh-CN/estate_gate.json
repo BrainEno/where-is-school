@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "estate_gate_notice": {
+    "title": "门口通知",
+    "prompt": "看通知",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "贴在门柱上的打印纸：操场开放。下面手写：锁了走侧门。胶带已经换过两次。",
+    "repeat_text": "操场开放。锁了走侧门。",
+    "record": {
+      "entry_id": "saw_estate_notice",
+      "source": "observed",
+      "text": "小区门口的通知说操场是开放的。"
+    }
+  },
+  "estate_wall": {
+    "title": "围墙",
+    "prompt": "看墙",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "修补处用了不一样的白，新补的那块颜色浅，已经在往旧的颜色变。有人修过两次，还在意。",
+    "repeat_text": "新补的那块，正在变成旧的颜色。",
+    "record": {
+      "entry_id": "saw_estate_wall_patch",
+      "source": "observed",
+      "text": "小区的墙用不同的材料补过两次。"
+    }
+  }
+}

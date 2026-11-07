@@ -94,3 +94,10 @@ An initial choice may influence scene order and which evidence appears first. It
 - B's eventual dialogue should not simply validate or disprove Q's account.
 - Choices should alter tone, knowledge, relationship, access, or interpretation.
 - Keep long dialogue interleaved with movement, inspection, silence, and player decisions.
+- Inner abilities are not objective narrators: they may mislead, contradict, or withhold.
+- Dice checks change understanding, not access: both success and failure yield narrative value and do not hard-lock progress.
+
+## New spaces in playground slice
+
+- **Residential alley → estate gate → playground**: a short continuation of the residential courtyard that preserves spatial oddness (the courtyard's road comes out of a gap you did not walk through). No explanation of the anomaly is given.
+- **Playground (open)**: a continuous, freely explorable area with three anchors — sports shed, notice wall, old climbing equipment. Each anchor is independently approachable; order does not matter. Q may appear but remains an ordinary classmate, not a quest giver.

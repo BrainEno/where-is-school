@@ -87,7 +87,24 @@ func show_line(line: Dictionary) -> void:
 	_title_label.text = title
 	_title_label.visible = not title.is_empty()
 
-	_body_label.text = String(line.get("text", ""))
+	var check_result: Dictionary = line.get("check_result", {})
+	var body_text := String(line.get("text", ""))
+	if not check_result.is_empty() and bool(check_result.get("visible", false)):
+		var ability := String(check_result.get("ability_id", ""))
+		var roll: int = int(check_result.get("roll", 0))
+		var total: int = int(check_result.get("total", 0))
+		var difficulty: int = int(check_result.get("difficulty", 0))
+		var success: bool = bool(check_result.get("success", false))
+		if not ability.is_empty() and roll != 0:
+			var check_name := ability
+			if L10n.has_key("ability.%s.name" % ability):
+				check_name = L10n.t("ability.%s.name" % ability)
+			var label := L10n.t("check.visible_label", {"ability": check_name, "roll": str(roll), "total": str(total), "difficulty": str(difficulty)})
+			var outcome := L10n.t("check.success") if success else L10n.t("check.failure")
+			body_text += "\n\n[color=#D1A35C]%s — %s[/color]" % [label, outcome]
+			if bool(check_result.get("already_attempted", false)):
+				body_text += " (%s)" % L10n.t("check.already")
+	_body_label.text = body_text
 	_body_label.visible_characters = 0
 	_reveal_progress = 0.0
 	_revealing = _body_label.text.length() > 0

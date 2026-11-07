@@ -55,7 +55,7 @@ Use signals at clear boundaries. Do not create a global event bus by default; fi
 
 ## 3. Autoload policy
 
-The project contains two autoloads.
+The project contains three autoloads.
 
 - **GameState** — runtime story flags and snapshot/restore of those flags. It is
   not a dumping ground for quests, dialogue UI, scene transitions, audio,
@@ -65,6 +65,10 @@ The project contains two autoloads.
   snapshot/restore. It exists because knowledge categories are used by dialogue,
   inspection, and presentation independently of gameplay flags; see
   `docs/adr/0002-dialogue-and-narrative-state.md`.
+- **Rpg** (`RpgManager`) — inner-ability registry and unified dice engine
+  (`CheckEngine`) for visible/hidden checks (ADR 0003). Owns ability definitions
+  and passive-trigger rules; delegates roll results to `GameState` flags and
+  `DialogueRuntime` branching.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;

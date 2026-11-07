@@ -1,0 +1,432 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "playground",
+  "conversations": {
+    "playground_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pa_1",
+      "nodes": [
+        {
+          "id": "pa_1",
+          "speaker": "protagonist",
+          "text": "操场比院子大，也更安静。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你穿过大门，进了小区后面的操场。它是开放的，很静。"
+            }
+          ]
+        },
+        {
+          "id": "pa_2",
+          "speaker": "protagonist",
+          "text": "一边是半开门的器材棚，远处是一整面布告栏，中间是一架旧的攀爬架，漆很久没补过了。",
+          "next": null
+        }
+      ]
+    },
+    "playground_shed": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ps_1",
+      "nodes": [
+        {
+          "id": "ps_1",
+          "speaker": "protagonist",
+          "text": "棚里堆着标志桶，一个放了气的球，一本封面被雨打过的记录册。",
+          "choices": [
+            {
+              "id": "look_closely",
+              "text": "仔细看看。[细察]",
+              "next": "ps_check"
+            },
+            {
+              "id": "leave",
+              "text": "算了。",
+              "next": "ps_leave"
+            }
+          ]
+        },
+        {
+          "id": "ps_check",
+          "speaker": "protagonist",
+          "text": "你探进去。里面是橡胶和纸的味道。",
+          "check": {
+            "id": "playground_shed_search",
+            "ability": "keen_eye",
+            "difficulty": 12,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "ps_success",
+          "speaker": "protagonist",
+          "text": "最后一页：和教室里一样的课表格式，但科目那栏写着体育，地点是操场。有人把旧纸留下来了。",
+          "conditions": {
+            "all_flags": ["check_success:playground_shed_search"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_shed_timetable",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "在操场的棚屋里，你找到一页记录纸，用的是和教室同样的课表格式。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_failure",
+          "speaker": "protagonist",
+          "text": "那一页太湿了。格子还在，墨水已经晕进该看字的地方。这个形状你认得，字不认得。",
+          "conditions": {
+            "not_flags": ["check_success:playground_shed_search"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_shed_wet_ledger",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你试着去读操场棚屋里的湿记录册。课表的形状在，细节没了。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_leave",
+          "speaker": "protagonist",
+          "text": "你退出来。桶堆保持原样。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_wall": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pw_1",
+      "nodes": [
+        {
+          "id": "pw_1",
+          "speaker": "protagonist",
+          "text": "一整面布告：丢钥匙的纸，两学期前的选拔名单，一张班级合影。名单里没有你的名字。",
+          "choices": [
+            {
+              "id": "recall",
+              "text": "努力想想。[回想]",
+              "next": "pw_check"
+            },
+            {
+              "id": "scan",
+              "text": "看看别的通知。",
+              "next": "pw_scan"
+            }
+          ]
+        },
+        {
+          "id": "pw_check",
+          "speaker": "protagonist",
+          "text": "你盯着照片，盯到人不再是人。",
+          "check": {
+            "id": "playground_wall_memory",
+            "ability": "recollection",
+            "difficulty": 10,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pw_success",
+          "speaker": "protagonist",
+          "text": "最后一排，左二。和课表画上一样的发型，但年纪大了。你分不清这是记忆还是暗示。",
+          "conditions": {
+            "all_flags": ["check_success:playground_wall_memory"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_recall",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "在操场布告栏的班级合影里，你似乎认出一张脸，但不确定。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pw_failure",
+          "speaker": "protagonist",
+          "text": "什么也没来。照片留在原地，你也留在原地。也许这样更好。",
+          "conditions": {
+            "not_flags": ["check_success:playground_wall_memory"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_no_memory",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你在操场布告栏的合影前站了一会儿，没有想起什么。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pw_scan",
+          "speaker": "protagonist",
+          "text": "选拔名单被改过太多次，最后的队伍已经看不清。丢钥匙的纸还在，钥匙还没找到。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_notices",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "操场布告栏上贴着旧的选拔名单和丢钥匙的通知，都没有结果。"
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_equipment": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pe_1",
+      "nodes": [
+        {
+          "id": "pe_1",
+          "speaker": "protagonist",
+          "text": "攀爬架在这里很久了。有一根横杆是温的，尽管晒不到太阳。",
+          "choices": [
+            {
+              "id": "feel",
+              "text": "凭直觉。[直觉]",
+              "next": "pe_check"
+            },
+            {
+              "id": "steady",
+              "text": "稳住，再看一次。[定力]",
+              "next": "pe_steady"
+            }
+          ]
+        },
+        {
+          "id": "pe_check",
+          "speaker": "protagonist",
+          "text": "你把手放到温的那根杆子旁边，没碰到。",
+          "check": {
+            "id": "playground_equipment_sense",
+            "ability": "gut_feeling",
+            "difficulty": 13,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pe_success",
+          "speaker": "protagonist",
+          "text": "不是杆子。底下的水泥在存热，像下面的房间开太久刚关掉。看不到门。",
+          "conditions": {
+            "all_flags": ["check_success:playground_equipment_sense"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_warmth",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "操场器械下面的水泥是温的，像下面有房间。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_failure",
+          "speaker": "protagonist",
+          "text": "没感到新的东西。或者感到了，被你叫成没有，也差不多。这根杆子暂时就是杆子。",
+          "conditions": {
+            "not_flags": ["check_success:playground_equipment_sense"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bar",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你在操场器械前停了一下，决定先把那种热当成普通的事。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_steady",
+          "speaker": "protagonist",
+          "text": "你吸一口气，顺着架子看过去。温的那根杆子螺栓不一样：新一点，紧一点，像是被换过。",
+          "check": {
+            "id": "playground_equipment_steady",
+            "ability": "steadiness",
+            "difficulty": 11,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pe_steady_success",
+          "speaker": "protagonist",
+          "text": "换得很用心。有人想让它撑住。",
+          "conditions": {
+            "all_flags": ["check_success:playground_equipment_steady"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bolts",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "操场器械温的那根杆子螺栓是新的，像是特意换过。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_steady_failure",
+          "speaker": "protagonist",
+          "text": "是螺栓。起固定作用。今天就先不把它想成别的。",
+          "conditions": {
+            "not_flags": ["check_success:playground_equipment_steady"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bolts_unclear",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你看了看操场器械的螺栓，把问题留到以后。"
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_q_intro": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pq_1",
+      "nodes": [
+        {
+          "id": "pq_1",
+          "speaker": "q",
+          "text": "所以你找到操场了。我还以为他们锁了。"
+        },
+        {
+          "id": "pq_2",
+          "speaker": "protagonist",
+          "text": "没有锁。"
+        },
+        {
+          "id": "pq_3",
+          "speaker": "q",
+          "text": "是吗。好吧。要是听见球声，别去追。自从我在这里，它就没打过气。",
+          "next": null
+        }
+      ]
+    },
+    "playground_q_after": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pqa_1",
+      "nodes": [
+        {
+          "id": "pqa_1",
+          "speaker": "q",
+          "text": "你把这一圈都走完了？布告栏终于记住你名字了？"
+        },
+        {
+          "id": "pqa_2",
+          "speaker": "protagonist",
+          "text": "没有。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_explored",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground_done"
+            }
+          ],
+          "next": null
+        }
+      ]
+    }
+  }
+}

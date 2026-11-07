@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "alley_bins": {
+    "title": "Bins in the alley",
+    "prompt": "Look at the bins",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The bins are pulled a little into the alley, as if someone moved them to make room and never moved them back. One lid is warm from the sun that does not quite reach here.",
+    "repeat_text": "The bins, still where they were left.",
+    "record": {
+      "entry_id": "saw_alley_bins",
+      "source": "observed",
+      "text": "The bins in the alley have been moved to make room and left there."
+    }
+  },
+  "alley_pipes": {
+    "title": "Pipes on the wall",
+    "prompt": "Look at the pipes",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Pipes and cables run along the right-hand wall. One joint drips, darkening the same patch of concrete again and again.",
+    "repeat_text": "The pipes, the joint, the same dark patch.",
+    "record": {
+      "entry_id": "saw_alley_pipes",
+      "source": "observed",
+      "text": "A pipe joint in the alley drips onto the same patch of concrete."
+    }
+  }
+}

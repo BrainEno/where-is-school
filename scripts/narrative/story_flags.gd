@@ -68,6 +68,19 @@ const OBJECTIVE_KEY: StringName = &"objective_key"
 ## StringName: id of the location the player is currently in.
 const CURRENT_LOCATION: StringName = &"current_location"
 
+## bool: reached the alley behind the residential area.
+const ALLEY_ARRIVED: StringName = &"alley_arrived"
+## bool: passed through the estate gate.
+const ESTATE_GATE_PASSED: StringName = &"estate_gate_passed"
+## bool: first arrived in playground.
+const PLAYGROUND_ARRIVED: StringName = &"playground_arrived"
+## bool: explored at least one playground anchor deeply.
+const PLAYGROUND_EXPLORED: StringName = &"playground_explored"
+## bool: playground anchors individually visited.
+const PLAYGROUND_SHED_SEEN: StringName = &"playground_shed_seen"
+const PLAYGROUND_WALL_SEEN: StringName = &"playground_wall_seen"
+const PLAYGROUND_EQUIPMENT_SEEN: StringName = &"playground_equipment_seen"
+
 const ALL_FLAGS: Array[StringName] = [
 	MET_Q,
 	TEXTBOOK_MISSING,
@@ -92,6 +105,13 @@ const ALL_FLAGS: Array[StringName] = [
 	NOTICED_N_SUBSTITUTE,
 	OBJECTIVE_KEY,
 	CURRENT_LOCATION,
+	ALLEY_ARRIVED,
+	ESTATE_GATE_PASSED,
+	PLAYGROUND_ARRIVED,
+	PLAYGROUND_EXPLORED,
+	PLAYGROUND_SHED_SEEN,
+	PLAYGROUND_WALL_SEEN,
+	PLAYGROUND_EQUIPMENT_SEEN,
 ]
 
 
@@ -105,3 +125,12 @@ static func choice_flag(conversation_id: StringName, choice_id: StringName) -> S
 ## repeat behaviour stay consistent across visits.
 static func inspection_seen_flag(inspection_id: StringName) -> StringName:
 	return StringName("seen:%s" % String(inspection_id))
+
+
+## Flag set to bool success of an ability check. Content may branch on it.
+static func check_success_flag(check_id: StringName) -> StringName:
+	return StringName("check_success:%s" % String(check_id))
+
+
+static func check_attempted_flag(check_id: StringName) -> StringName:
+	return StringName("check:attempted:%s" % String(check_id))

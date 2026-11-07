@@ -1,0 +1,432 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "playground",
+  "conversations": {
+    "playground_arrival": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pa_1",
+      "nodes": [
+        {
+          "id": "pa_1",
+          "speaker": "protagonist",
+          "text": "The playground is larger than the courtyard was, and quieter.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_arrived",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You entered the playground beyond the estate gate. It is open and still."
+            }
+          ]
+        },
+        {
+          "id": "pa_2",
+          "speaker": "protagonist",
+          "text": "To one side, a sports shed with its door half open. Along the far edge, a notice wall. In the middle, an old set of climbing frames no one has painted in a while.",
+          "next": null
+        }
+      ]
+    },
+    "playground_shed": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ps_1",
+      "nodes": [
+        {
+          "id": "ps_1",
+          "speaker": "protagonist",
+          "text": "Inside the shed: stacked cones, a deflated ball, a ledger with rain on its cover.",
+          "choices": [
+            {
+              "id": "look_closely",
+              "text": "Look closer. [Keen Eye]",
+              "next": "ps_check"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it.",
+              "next": "ps_leave"
+            }
+          ]
+        },
+        {
+          "id": "ps_check",
+          "speaker": "protagonist",
+          "text": "You lean in. The air smells of rubber and paper.",
+          "check": {
+            "id": "playground_shed_search",
+            "ability": "keen_eye",
+            "difficulty": 12,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "ps_success",
+          "speaker": "protagonist",
+          "text": "On the ledger's last page: the same timetable format as the one in your classroom, but the subject column says PHYS. ED. and the room is YARD. Someone kept the old paper.",
+          "conditions": {
+            "all_flags": ["check_success:playground_shed_search"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_shed_timetable",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "In the playground shed you found a ledger page using the same timetable format as your classroom."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_failure",
+          "speaker": "protagonist",
+          "text": "The page is too wet. You can make out the grid but the ink has run into the lines that matter. The shape is familiar even if the words are not.",
+          "conditions": {
+            "not_flags": ["check_success:playground_shed_search"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_shed_wet_ledger",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You tried to read a wet ledger in the playground shed. The timetable shape is there, but the details are lost."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_leave",
+          "speaker": "protagonist",
+          "text": "You step back. The cone stack keeps its shape.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_shed_seen",
+              "value": true
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_wall": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pw_1",
+      "nodes": [
+        {
+          "id": "pw_1",
+          "speaker": "protagonist",
+          "text": "A wall of notices: lost keys, a tryouts list from two terms ago, a class photo. The names under the photo do not include yours.",
+          "choices": [
+            {
+              "id": "recall",
+              "text": "Try to remember. [Recollection]",
+              "next": "pw_check"
+            },
+            {
+              "id": "scan",
+              "text": "Read the other notices.",
+              "next": "pw_scan"
+            }
+          ]
+        },
+        {
+          "id": "pw_check",
+          "speaker": "protagonist",
+          "text": "You look at the photo until the faces stop being faces.",
+          "check": {
+            "id": "playground_wall_memory",
+            "ability": "recollection",
+            "difficulty": 10,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pw_success",
+          "speaker": "protagonist",
+          "text": "The back row, second from the left. The same haircut as the timetable drawing, but older. You cannot tell if that is a memory or a suggestion.",
+          "conditions": {
+            "all_flags": ["check_success:playground_wall_memory"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_recall",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "On the playground notice wall you thought you recognised a face in a class photo, but you are not sure."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pw_failure",
+          "speaker": "protagonist",
+          "text": "Nothing comes. The photo stays where it is, and you stay where you are. It might be better that way.",
+          "conditions": {
+            "not_flags": ["check_success:playground_wall_memory"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_no_memory",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You looked at the class photo on the playground wall and no memory came."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pw_scan",
+          "speaker": "protagonist",
+          "text": "The tryouts list has been corrected so many times the final team is unreadable. The lost-keys notice is still there, keys still lost.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_wall_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_wall_notices",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The playground wall lists old tryouts and lost keys, both unresolved."
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_equipment": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "pe_1",
+      "nodes": [
+        {
+          "id": "pe_1",
+          "speaker": "protagonist",
+          "text": "The climbing frames have been here a long time. One bar is warm even though the sun is not on it.",
+          "choices": [
+            {
+              "id": "feel",
+              "text": "Trust your gut. [Gut Feeling]",
+              "next": "pe_check"
+            },
+            {
+              "id": "steady",
+              "text": "Hold still. Look again. [Steadiness]",
+              "next": "pe_steady"
+            }
+          ]
+        },
+        {
+          "id": "pe_check",
+          "speaker": "protagonist",
+          "text": "You put a hand near the warm bar without touching it.",
+          "check": {
+            "id": "playground_equipment_sense",
+            "ability": "gut_feeling",
+            "difficulty": 13,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pe_success",
+          "speaker": "protagonist",
+          "text": "It is not the bar. The concrete under it holds the heat, as if a room below ran too long and then stopped. No door is visible.",
+          "conditions": {
+            "all_flags": ["check_success:playground_equipment_sense"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_warmth",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The concrete under the playground equipment felt warm as if from a room below."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_failure",
+          "speaker": "protagonist",
+          "text": "You feel nothing new. Or you feel something and call it nothing, which is almost the same. The bar is just a bar, for now.",
+          "conditions": {
+            "not_flags": ["check_success:playground_equipment_sense"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bar",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You focused on the playground equipment and decided to treat the warmth as ordinary."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_steady",
+          "speaker": "protagonist",
+          "text": "You breathe once and look along the frame instead of at it. The bolts are different on the warm bar: newer, tighter, as if it had been replaced.",
+          "check": {
+            "id": "playground_equipment_steady",
+            "ability": "steadiness",
+            "difficulty": 11,
+            "modifier": 0,
+            "visible": true
+          }
+        },
+        {
+          "id": "pe_steady_success",
+          "speaker": "protagonist",
+          "text": "The replacement was careful. Someone wanted this held together.",
+          "conditions": {
+            "all_flags": ["check_success:playground_equipment_steady"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bolts",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The playground equipment's warm bar has newer bolts, as if replaced with care."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "pe_steady_failure",
+          "speaker": "protagonist",
+          "text": "They are bolts. They hold. You decide not to make it more than that today.",
+          "conditions": {
+            "not_flags": ["check_success:playground_equipment_steady"]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_equipment_seen",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "playground_equipment_bolts_unclear",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You looked at the bolts on the playground equipment and left the question open."
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "playground_q_intro": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pq_1",
+      "nodes": [
+        {
+          "id": "pq_1",
+          "speaker": "q",
+          "text": "So you found the yard. I thought they'd locked it."
+        },
+        {
+          "id": "pq_2",
+          "speaker": "protagonist",
+          "text": "They didn't."
+        },
+        {
+          "id": "pq_3",
+          "speaker": "q",
+          "text": "Huh. Well. If you hear the ball, don't go chasing it. It hasn't been pumped since I was here.",
+          "next": null
+        }
+      ]
+    },
+    "playground_q_after": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pqa_1",
+      "nodes": [
+        {
+          "id": "pqa_1",
+          "speaker": "q",
+          "text": "You did the whole loop, then. Did the notices finally learn your name?"
+        },
+        {
+          "id": "pqa_2",
+          "speaker": "protagonist",
+          "text": "No.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_explored",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground_done"
+            }
+          ],
+          "next": null
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "playground_shed_inspection": {
+    "title": "Sports shed",
+    "prompt": "Check the shed",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A tin shed, its green paint faded at the edges. The padlock hangs open. Rain has got into the corner where the books are.",
+    "repeat_text": "The shed is still half open. The books inside are still damp.",
+    "record": {
+      "entry_id": "playground_ins_shed",
+      "source": "observed",
+      "text": "The playground shed is half open; rain has reached the books inside."
+    }
+  },
+  "playground_wall_inspection": {
+    "title": "Notice wall",
+    "prompt": "Read the notices",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Staples where notices used to be, plus the ones that stayed. The photo is crooked and no one has straightened it.",
+    "repeat_text": "The crooked photo, the staples, the notices that stayed.",
+    "record": {
+      "entry_id": "playground_ins_wall",
+      "source": "observed",
+      "text": "The playground notice wall holds old staples and a crooked class photo."
+    }
+  },
+  "playground_equipment_inspection": {
+    "title": "Old equipment",
+    "prompt": "Look at the equipment",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two uprights, three crossbars, a ladder whose paint has worn to the metal underneath. The welds are different where the warm bar meets the post.",
+    "repeat_text": "The old frames, the worn paint, the different welds.",
+    "record": {
+      "entry_id": "playground_ins_equipment",
+      "source": "observed",
+      "text": "The playground equipment is old; the welds on the warm bar look different."
+    }
+  },
+  "playground_ground": {
+    "title": "The ground",
+    "prompt": "Look at the ground",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Asphalt with a line painted around where a court used to be. The line goes under the wall and comes out the other side, as if the wall arrived later.",
+    "repeat_text": "The court line, going under the wall.",
+    "record": {
+      "entry_id": "playground_ground_line",
+      "source": "observed",
+      "text": "A painted court line on the playground goes under the wall and reappears on the other side."
+    }
+  },
+  "playground_fence": {
+    "title": "The fence",
+    "prompt": "Look at the fence",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Chain-link, leaning a little north. Beyond it: the backs of the same three blocks you came past, but their windows are dark.",
+    "repeat_text": "The fence, the leaning, the dark windows beyond it.",
+    "record": {
+      "entry_id": "playground_fence_view",
+      "source": "observed",
+      "text": "Beyond the playground fence the same three blocks stand with dark windows."
+    }
+  }
+}

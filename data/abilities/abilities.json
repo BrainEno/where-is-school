@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "abilities": [
+    {
+      "id": "keen_eye",
+      "format_version": 1,
+      "name_key": "ability.keen_eye.name",
+      "description_key": "ability.keen_eye.desc",
+      "base_value": 3,
+      "level": 1,
+      "tone": "precise, slightly detached",
+      "active_allowed": true,
+      "passive_allowed": true
+    },
+    {
+      "id": "recollection",
+      "format_version": 1,
+      "name_key": "ability.recollection.name",
+      "description_key": "ability.recollection.desc",
+      "base_value": 2,
+      "level": 1,
+      "tone": "uncertain, associative",
+      "active_allowed": true,
+      "passive_allowed": true
+    },
+    {
+      "id": "gut_feeling",
+      "format_version": 1,
+      "name_key": "ability.gut_feeling.name",
+      "description_key": "ability.gut_feeling.desc",
+      "base_value": 2,
+      "level": 1,
+      "tone": "urgent, impressionistic",
+      "active_allowed": true,
+      "passive_allowed": true
+    },
+    {
+      "id": "steadiness",
+      "format_version": 1,
+      "name_key": "ability.steadiness.name",
+      "description_key": "ability.steadiness.desc",
+      "base_value": 2,
+      "level": 1,
+      "tone": "calm, grounding",
+      "active_allowed": true,
+      "passive_allowed": true
+    }
+  ]
+}

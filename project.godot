@@ -12,6 +12,7 @@ run/main_scene="res://scenes/main/main.tscn"
 GameState="*res://scripts/autoload/game_state.gd"
 NarrativeState="*res://scripts/autoload/narrative_state.gd"
 Loc="*res://scripts/i18n/loc.gd"
+Rpg="*res://scripts/rpg/rpg_manager.gd"
 
 [display]
 

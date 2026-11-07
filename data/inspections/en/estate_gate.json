@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "estate_gate_notice": {
+    "title": "Gate notice",
+    "prompt": "Read the notice",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A printed notice taped to the gatepost: PLAYGROUND OPEN. Below it, in handwriting: use the side if locked. The tape has been replaced twice.",
+    "repeat_text": "PLAYGROUND OPEN. Use the side if locked.",
+    "record": {
+      "entry_id": "saw_estate_notice",
+      "source": "observed",
+      "text": "A notice on the estate gate says the playground is open."
+    }
+  },
+  "estate_wall": {
+    "title": "Estate wall",
+    "prompt": "Look at the wall",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Render patched with a different mix, the new part lighter and already going the same colour as the old. Someone cares enough to patch it twice.",
+    "repeat_text": "The patched part, going the same colour as the rest.",
+    "record": {
+      "entry_id": "saw_estate_wall_patch",
+      "source": "observed",
+      "text": "The estate wall has been patched twice with different render."
+    }
+  }
+}
