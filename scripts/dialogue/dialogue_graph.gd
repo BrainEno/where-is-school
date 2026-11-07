@@ -344,7 +344,7 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 
 ## A check node rolls once and continues to one of two nodes:
 ##
-##   "check": {"ability": "boundary", "difficulty": 10, "kind": "visible",
+##   "check": {"ability": "orientation", "difficulty": 9, "kind": "visible",
 ##             "success": "looked_closely", "failure": "looked_badly",
 ##             "modifiers": [{"flag": "saw_set_square", "value": 1}],
 ##             "repeatable": false}

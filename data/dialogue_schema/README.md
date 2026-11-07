@@ -110,10 +110,10 @@ shows the line, and then continues to one of two branches. A check node never ha
 ```json
 {
   "id": "ps_boundary_check",
-  "speaker": "voice_boundary",
+  "speaker": "voice_orientation",
   "text": "Let me feel how it sits.",
   "check": {
-    "ability": "boundary", "difficulty": 11, "kind": "visible",
+    "ability": "orientation", "difficulty": 9, "kind": "visible",
     "success": "ps_boundary_ok", "failure": "ps_boundary_bad"
   }
 }
@@ -136,7 +136,7 @@ A voice that speaks without being asked is an ordinary conversation whose first
 node is a `hidden` check, plus a rule in `data/abilities/abilities.json`:
 
 ```json
-{"id": "playground_hoop_boundary", "ability": "boundary",
+{"id": "playground_hoop_orientation", "ability": "orientation",
  "trigger": {"kind": "inspection", "id": "pg_hoop"},
  "conversation": "voice_hoop", "once": true}
 ```

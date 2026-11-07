@@ -3,9 +3,11 @@ extends RefCounted
 ## The protagonist's inner voices: what they are, what they are worth, and when
 ## they are allowed to speak on their own.
 ##
-## Deliberately small. Four voices, one value each, one rule list. The point of this
-## pass is not a skill tree; it is to prove that a voice can be a *character* with
-## its own limitations instead of a stat that unlocks correct answers.
+## Deliberately small. One provisional voice, one value, one rule list. The point of
+## this pass is not a skill tree; it is to prove that a voice can be a *character*
+## with its own limitations instead of a stat that unlocks correct answers. The
+## earlier four-voice roster was withdrawn (see ADR 0003), and nothing here assumes
+## that a second voice will be added.
 ##
 ## Content layout, mirroring dialogue and inspections:
 ##

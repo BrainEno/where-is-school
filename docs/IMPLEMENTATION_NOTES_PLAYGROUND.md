@@ -86,7 +86,9 @@ Not verified:
   items: nothing can be picked up, and nothing should be until an inventory exists.
 - `PingPongBall` and `PaleUnderHedge` are separate boxes with no collision. They are
   scenery for the `pg_ball` conversation.
-- Two of the four voices (Ledger, Onlooker) are only reachable through one anchor
+- Two of the inner voices that this note was written against (Ledger, Onlooker) are
+  gone: the milestone now ships one provisional voice, so those two anchors are plain
+  inspections.
   each. That is content depth, not a system limit.
 
 
