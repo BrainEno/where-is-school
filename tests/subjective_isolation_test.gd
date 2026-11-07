@@ -59,7 +59,9 @@ func _run() -> void:
 
 func _content(overrides: Dictionary = {}) -> Dictionary:
 	var conversation := {
-		"default_source": "observed",
+		# A subjective conversation may only carry imagined or recalled lines, so its
+		# default source has to say so. This is itself one of the rules under test.
+		"default_source": "imagined",
 		"subjective": true,
 		"start": "a",
 		"nodes": [

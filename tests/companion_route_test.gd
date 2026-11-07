@@ -223,15 +223,22 @@ func _check_waiting_and_resuming() -> void:
 		return
 	if ask.can_interact():
 		_failures.append("Q can be asked along while already walking with the player.")
-	# Leave Q far behind: Q must stop and wait instead of sliding across the room.
-	var far := _player.global_position + Vector3(0, 0, -14.0)
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), far))
+	# Leave Q far behind: Q must stop and wait instead of sliding along the floor.
+	# The walkway is only ~16 m long, so the give-up threshold is lowered for this
+	# check rather than teleporting the player out of the level (which drops them
+	# through the floor and measures a fall, not a companion rule).
+	var normal_give_up := _companion.give_up_distance
+	_companion.give_up_distance = 4.0
+	var far := _player.global_position + Vector3(0, 0, 6.0)
+	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(1.0)), far))
 	await _frames(20)
 	if not _companion.is_waiting():
 		_failures.append("Q kept chasing a player who was more than %.0f m away." % _companion.give_up_distance)
+		_companion.give_up_distance = normal_give_up
 		return
 	if not ask.can_interact():
 		_failures.append("Q cannot be asked along while waiting.")
+		_companion.give_up_distance = normal_give_up
 		return
 	await _activate(&"q_ask_along", "asking Q along")
 	await _settle(30.0, "the 'ask along' conversation")
@@ -239,6 +246,7 @@ func _check_waiting_and_resuming() -> void:
 		_failures.append("Q stayed in waiting mode after being asked along.")
 	await _frames(120)
 	var distance := _companion.global_position.distance_to(_player.global_position)
+	_companion.give_up_distance = normal_give_up
 	if distance > _companion.follow_distance + FOLLOW_TOLERANCE:
 		_failures.append("Q did not close the gap after being asked along (%.1f m; Q at %s, player at %s)." % [
 			distance, _companion.global_position, _player.global_position
