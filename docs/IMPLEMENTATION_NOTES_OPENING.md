@@ -1,11 +1,14 @@
 # Implementation Notes — Biology Class Prologue
 
-Scope: the first playable milestone. The player wakes at a desk in a biology
+Scope: the second playable milestone. The player wakes at a desk in a biology
 classroom, Q talks to them unprompted, the schoolbag is missing its textbook, the
 room can be inspected, an anticipated confrontation is shown and explicitly
 framed as imagination, the second bell rings without B, substitute N takes the
-lesson and allows a free period, and the player leaves for the walkway where the
-build stops.
+lesson and allows a free period, the player leaves for the walkway, walks out of
+the school gate into a street, climbs the stair to a residential courtyard, and
+meets the green animal standing at the edge of the planter. The build stops there
+with an end-of-slice card. Every line the player reads is data, and the whole
+slice can be switched between English and simplified Chinese while it runs.
 
 All dialogue and object text in this milestone is new placeholder writing created
 for the game. No manuscript prose is reproduced, paraphrased, or stored anywhere
@@ -16,28 +19,49 @@ in this repository.
 | Input | Action |
 |---|---|
 | WASD / arrow keys | Camera-relative walking |
-| E | Contextual interact (inspect, talk, door) |
+| E | Contextual interact (inspect, talk, door, stair, exit) |
 | Space / Enter / left click | Continue dialogue; the first press completes a long line |
 | 1–9 | Pick a dialogue choice |
 | Tab | Open/close the dialogue log |
+| L | Switch between English and simplified Chinese, at any time |
+
+The language choice is written to `user://settings.cfg` and survives a restart.
 
 ## 2. Ownership boundaries
 
 ~~~text
 OpeningSequence (scripts/world/opening_sequence.gd)
-  Sequenced beats only: wake, Q, expectation, bell, substitute, exit, milestone end.
-  Holds a beat lock so two authored sequences cannot overlap.
+  Sequenced beats only: wake, Q, expectation, bell, substitute, exit, arrival
+  lines, the two ends of the slice. Holds a beat lock so two authored sequences
+  cannot overlap.
 
 DialogueController (scripts/dialogue/dialogue_controller.gd)
   Presentation owner: loads content, drives the runtime, mirrors it into the panel,
-  turns an inspection into one or two lines, and applies first-read state changes.
+  turns an inspection into one or two lines, applies first-read state changes, and
+  rebinds the open conversation to the other language when the locale changes.
 
 DialogueRuntime (scripts/dialogue/dialogue_runtime.gd)
   Graph walker with no UI knowledge. Emits line/choice events, writes flags and
   narrative entries through injected GameState/NarrativeState references.
 
+DialogueLibrary + DialogueGraph (scripts/dialogue/*)
+  Per-chapter, per-locale loading and validation. A broken file fails loudly with
+  the file path and node id.
+
+DialogueParity (scripts/dialogue/dialogue_parity.gd)
+  Compares the two language trees node by node and reports any dropped node,
+  choice, effect or condition.
+
+InspectionLibrary (scripts/narrative/inspection_library.gd)
+  Object descriptions, their prompts, first-read and repeat text, recollections,
+  recorded knowledge entries, and once-only effects.
+
 DialoguePanel (scripts/ui/dialogue_panel.gd)
   View only: speaker, source badge, title, body, choices, typewriter, input intents.
+
+HUD (scripts/ui/hud.gd)
+  Objective line, contextual prompt, language hint. Steps its own hint aside while
+  the dialogue panel is on screen, because the panel prints the same keys.
 
 InteractionController + Interactable (scripts/interaction/*)
   Target selection and intent. Interactables declare a payload (inspection id,
@@ -49,7 +73,11 @@ InteractionController + Interactable (scripts/interaction/*)
 LocationHost + LocationRoot (scripts/world/*)
   Location swapping, spawn markers, waypoint paths, actor and interactable lookup.
 
-GameState (autoload)  — named gameplay flags and snapshots (existing).
+L10n (static) + Loc (autoload)
+  Interface strings. `Loc.locale_changed` is what lets a switch happen without a
+  scene reload.
+
+GameState (autoload)  — named gameplay flags and snapshots.
 NarrativeState (autoload) — what the protagonist knows, and how.
 ~~~
 
@@ -61,8 +89,9 @@ UI renders, and content lives in data files.
 Two separate stores, deliberately:
 
 - **GameState** holds gameplay bookkeeping: `met_q`, `textbook_missing`,
-  `bell_rung`, `class_dismissed`, one flag per meaningful choice, the current
-  objective string, and the current location id. Flag ids live in
+  `bell_rung`, `class_dismissed`, `left_classroom`, `left_school`,
+  `street_arrived`, `residential_arrived`, `animal_seen`, one flag per meaningful
+  choice, the current objective key, and the current location id. Flag ids live in
   `scripts/narrative/story_flags.gd`.
 - **NarrativeState** holds knowledge entries. Every entry is tagged with one of
   four sources: `observed`, `reported`, `recalled`, `imagined`. Entries are
@@ -75,9 +104,9 @@ The UI shows the category as a badge next to the speaker (`SEEN`, `HEARD`,
 ## 4. Subjective imagination
 
 The expectation beat is an ordinary conversation marked `"subjective": true` and
-`"default_source": "imagined"` in `data/dialogue/opening.json`, plus a full-screen
-tint and a banner that says what the player is looking at. The DialogueRuntime
-enforces the boundary in code, not by convention:
+`"default_source": "imagined"` in `data/dialogue/en/prologue.json`, plus a
+full-screen tint and a banner that says what the player is looking at. The
+DialogueRuntime enforces the boundary in code, not by convention:
 
 - a subjective conversation may **not** set gameplay flags or the objective
   (attempts are rejected and logged);
@@ -91,23 +120,33 @@ the banner changes to "THAT HAS NOT HAPPENED" before control returns.
 
 ## 5. Content format
 
-`data/dialogue/opening.json` — conversations, validated at load
-(`scripts/dialogue/dialogue_graph.gd`): unique node ids, resolvable `next` and
-choice targets, no silent `next` loops, required fields per effect, and known
-source identifiers. A broken file fails loudly with the file path and node id.
+Text lives in three places, each in both languages (see `docs/ARCHITECTURE.md`
+§5b and `data/dialogue_schema/README.md`):
 
-`data/inspections/*.json` — inspectable objects: `title`, `prompt`, observation
-`text`, optional `repeat_text`, optional `recall` (a second line presented as a
-memory), optional `record`, and once-only `effects` (for example, the schoolbag
-sets `textbook_missing` and a new objective).
+- `data/dialogue/<locale>/<chapter>.json` — conversations (`prologue`, `street`,
+  `residential`), validated at load (`scripts/dialogue/dialogue_graph.gd`): unique
+  node ids, resolvable `next` and choice targets, no silent `next` loops, required
+  fields per effect, and known source identifiers.
+- `data/inspections/<locale>/<chapter>.json` — inspectable objects: `title`,
+  `prompt`, observation `text`, optional `repeat_text`, optional `recall` (a
+  second line presented as a memory), optional `record`, and once-only `effects`.
+- `data/locale/<locale>.json` — the short strings the interface generates:
+  prompts, objective labels, source badges, speaker roles, end card.
 
 `data/characters/*.tres` — `CharacterProfile` resources: display name, short role,
 accent colour. Content refers to characters by stable id only.
 
-Dialogue is JSON rather than typed Resources for this milestone because it needs
-external editing, diff review, and automated validation; the loader is a single
-project-owned seam (`DialogueLibrary`) that a future Dialogic adapter could
-replace without touching scene code.
+Dialogue is JSON rather than typed Resources because it needs external editing,
+diff review, automated validation, and two language trees that can be compared
+mechanically; the loader is a single project-owned seam (`DialogueLibrary`) that a
+future Dialogic adapter could replace without touching scene code.
+
+Nothing in `scripts/` holds narrative text. The only literals left in scenes
+(`prompt_text`, `end_card_title`) are fallbacks used when content is missing.
+
+Current volume per language: prologue 7 conversations / 82 nodes, street 3 / 9,
+residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
+(residential); 38 interface strings.
 
 ## 6. Beats and triggers
 
@@ -117,9 +156,11 @@ replace without touching scene code.
    and produce distinct replies; the last line sets the bag objective.
 3. **Schoolbag** — a real interaction; it records observed knowledge, sets
    `textbook_missing`, and shows different text on repeat visits.
-4. **Inspections** — seven objects in the classroom (`blackboard`, `set_square`,
-   `front_desk`, `window`, `own_desk`, `schoolbag`, `timetable`), each with its own
-   text; the set square and the desk also produce tagged recollections.
+4. **Inspections** — eight objects in the classroom (`classroom_blackboard`,
+   `classroom_set_square`, `classroom_teacher_desk`, `classroom_window`,
+   `classroom_own_desk`, `classroom_schoolbag`, `classroom_timetable_sheet`,
+   `classroom_door_blocked`), each with its own text; the set square and the own
+   desk also produce tagged recollections, and the blocked door explains itself.
 5. **Expectation** — begins ~1 s after the bag is found, once. Bookkeeping flag
    `expectation_played` is written by the director, never by the subjective
    content.
@@ -127,19 +168,37 @@ replace without touching scene code.
    readable as an exit but refuses until the class is dismissed.
 7. **Substitute** — N walks an authored marker path to the front and takes the
    register; the conversation sets `class_dismissed` and a new objective.
-8. **Exit** — the door becomes usable, the player enters the walkway, and the
-   walkway's far end presents an explicit end-of-build card.
+8. **Exit** — the door becomes usable, the player crosses the walkway, and the
+   school exit drops them into the street with an arrival line.
+9. **Street** — the school wall, the notice on its pole, the gutter, the shutter,
+   the bins and the lamp are all inspectable or conversational; the stair at the
+   north end leads up to the residential area.
+10. **Residential** — an arrival line in the courtyard; the planter, the bench,
+    the washing line, the stair, two identical stained wall fragments, and the
+    green animal on the planter's edge.
+11. **Animal** — the first conversation sets `animal_seen` and records observed
+    knowledge; meeting it again uses a shorter conversation. At the alley end an
+    explicit end-of-build card closes the slice.
 
 A reminder line from Q fires after 40 s if the bag has not been searched, and the
 bell is forced after 95 s, so no player can dead-lock the slice.
 
-## 7. Camera
+## 7. Camera and target selection
 
 The camera keeps the fixed 2.5D offset (3.4, 6.4, 3.4) with a 58° field of view.
 The player body never rotates; a visual pivot turns toward travel, which keeps
 camera-relative movement stable. `CameraOccluderFader` dithers any geometry in the
 `camera_occluder` group that falls between the camera and the player, so a near
-wall cannot hide the player when they walk up to it.
+wall cannot hide the player when they walk up to it. The outdoor blocks are in
+that group.
+
+`InteractionController` ranks candidates by
+`distance + 0.9 * (1 - facing.dot(to_target))`, skipping anything further than
+2.4 m, anything the interactable refuses, and anything without line of sight. The
+facing vector comes from the walking actor (`PlayerController.get_facing_direction()`),
+**not** from the body's global basis — the body is never rotated, so reading its
+basis silently disabled the facing weight and made the controller pick whatever
+was nearest, including objects behind the player.
 
 ## 8. Validation
 
@@ -151,6 +210,9 @@ godot --headless --path . --script res://tests/smoke_test.gd
 godot --headless --path . --script res://tests/narrative_state_test.gd
 godot --headless --path . --script res://tests/dialogue_content_test.gd
 godot --headless --path . --script res://tests/dialogue_runtime_test.gd
+godot --headless --path . --script res://tests/dialogue_validation_test.gd
+godot --headless --path . --script res://tests/i18n_test.gd
+godot --headless --path . --script res://tests/language_switch_test.gd
 godot --headless --path . --script res://tests/opening_flow_test.gd
 ~~~
 
@@ -170,49 +232,75 @@ What each test covers:
   a subjective conversation cannot set flags, change the objective, or store
   observed/reported knowledge while still allowing imagined and recalled entries;
   also covers `once` choices.
+- `dialogue_validation_test` — feeds the validator a set of deliberately broken
+  fixtures (missing fields, dangling `next`, unknown source, duplicate ids) and
+  requires each one to be rejected with its file and node id.
+- `i18n_test` — the two locale files carry the same keys, every `L10n` lookup
+  resolves, and `Loc` writes and restores the language through its settings file.
+- `language_switch_test` — switches language with a conversation open and checks
+  that the same node is re-presented in the other language, that the prompt, the
+  objective and the backlog are re-translated, and that no state is lost.
 - `opening_flow_test` — boots the real main scene with beats enabled and drives
   the whole slice headlessly: wake → Q → targeting of every authored interaction →
   locked door → schoolbag → expectation (verifying no observed knowledge appears)
-  → bell → substitute → class dismissed → walkway → end card.
+  → bell → substitute → class dismissed → walkway → street → stair → courtyard →
+  animal (twice) → end card.
 
-Result on Godot 4.7.2 Stable through GitHub Actions (`.github/workflows/godot-ci.yml`):
-the import pass and all five tests are green, including the headless drive of the
-whole slice in `opening_flow_test`. Each command runs under a timeout and reports a
-summary as a check annotation, and every test arms a watchdog so a stall fails
-instead of consuming the job budget.
+The language-agnostic half of that coverage is UID-driven by content files, so a
+mistake in the Chinese tree fails the same tests as a mistake in the English one.
 
-That run is engine-verified logic, not a look at the game. Manual checks still
-required on a Windows PC with a real window: camera comfort, collision feel in
-the desk aisles, prompt readability, and text pacing.
+That run is engine-verified logic, not a look at the game. To close that gap,
+`.github/workflows/playthrough-capture.yml` runs the real build in a real window
+under Xvfb (`--rendering-driver opengl3`, 1600×900), drives it with simulated key
+events, saves 21 PNGs and a log into `docs/screenshots/`, and commits them back
+with `[skip ci]`. `tests/capture_playthrough.gd` is that script; it waits for a
+line's typewriter reveal to finish before it photographs the screen, so a frame
+never shows half a sentence.
 
 ## 9. Known limitations
 
-- Chinese dialogue is not authored yet. The default Godot font has no CJK glyphs,
-  so a bundled CJK font with recorded provenance is a prerequisite for that
-  localisation pass; all strings already live in data files.
+- **The Chinese prose is placeholder too.** It is a working translation written
+  alongside the English text and has not been reviewed by the author; the table in
+  `data/dialogue_schema/README.md` (\"Lines pending author review\") lists what
+  needs a decision.
+- The bundled `assets/fonts/NotoSansSC-Regular.ttf` is the only third-party asset
+  in the repository (SIL OFL 1.1, license text shipped next to it). Font size is
+  fixed; there is no typography pass for either language.
+- Every environment is a graybox: flat placeholder colours, no textures, no
+  animation. The green animal is three primitives and reads as "something green"
+  rather than as a creature; its design is deliberately undecided.
+- Outdoor lighting is only tuned to be readable: strong flat shadows and a fog
+  layer stand in for real dusk lighting. The courtyard's arrival framing is
+  sparse (`docs/screenshots/17_residential.png`).
 - Following `docs/ARCHITECTURE.md` §5, the dialogue technology spike was not run
   and no addon is installed; this milestone uses the small project-owned layer.
 - Only one save-less session exists: GameState/NarrativeState are session
   runtime state. The versioned SaveManager is still a future task, with
   `to_snapshot()`/`restore_snapshot()` kept as its data shape.
-- No text-size/text-speed settings UI yet (exposed constants only).
+- No settings UI yet: no text size, text speed, or skip control. The language
+  toggle is the first setting and it is bound to a key, not to a menu.
 - Chairs are non-colliding decoration so the aisles stay readable in a graybox.
-- Q and N are capsule blockouts with a flat colour; no portraits or animation.
-- The street route, the school gate interior, and the green-animal observation
-  are **not** implemented. The walkway ends at a deliberate build card.
+  Q and N are capsule blockouts with a flat colour; no portraits or animation.
+- The capture drives the slice with teleports between scenes so it fits in CI;
+  nobody has played the build with a mouse and keyboard end to end yet, so camera
+  comfort and walking feel are unverified.
+- Screenshot commits carry `[skip ci]`, so the newest commit on a screenshot
+  branch has no checks of its own; the checks belong to the code commit before it.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
-- The two tests that build the main scene print Godot's "2 ObjectDB instances
-  were leaked at exit" warning. It is cosmetic (the engine reports it while the
-  tree is torn down), does not fail the run, and has not been chased down.
-- The graybox classroom is authored geometry, not final art; all materials are
-  flat placeholder colours.
+- The tests that build the main scene print Godot's "2 ObjectDB instances were
+  leaked at exit" and "1 resource still in use at exit" warnings. They are
+  cosmetic (the engine reports them while the tree is torn down), do not fail the
+  run, and have not been chased down.
+- The alley behind the animal, the gate out of the estate, and the courtyard the
+  animal walks towards are still to be built; the slice ends at a card.
 
 ## 10. Next steps
 
-1. Author approved game dialogue (and, if Chinese text is chosen, bundle a
-   licensed CJK font and verify typography in-engine).
-2. Add the settings pass: text size, text speed, and skip.
-3. Build the gate/street transition and the animal observation as milestone 2,
-   keeping the same interaction, dialogue, and narrative-state boundaries.
-4. Introduce a versioned SaveManager on top of the existing snapshots.
+1. Author review of both language trees, starting with the pending-review table.
+2. Add the settings pass: text size, text speed, skip, and a language menu entry.
+3. Introduce a versioned SaveManager on top of the existing snapshots.
+4. Build the alley, the estate gate and the courtyard the animal walks towards,
+   keeping the same interaction, dialogue and narrative-state boundaries.
+5. An art pass on the outdoor blocks (materials, lighting, the animal) once the
+   beats are locked.
