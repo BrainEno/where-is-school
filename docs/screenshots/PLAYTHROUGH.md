@@ -43,12 +43,6 @@ The same classroom after switching to simplified Chinese at runtime.
 
 ![06_chinese_world](06_chinese_world.png)
 
-## FAIL_prompt_chinese
-
-No prompt appeared after the language switch.
-
-![FAIL_prompt_chinese](FAIL_prompt_chinese.png)
-
 ## 07_prompt_chinese
 
 The interaction prompt after the switch
@@ -97,12 +91,6 @@ The street outside the school gate, with the arrival line finished.
 
 ![14_street](14_street.png)
 
-## FAIL_street_prompt
-
-No prompt appeared for the street object.
-
-![FAIL_street_prompt](FAIL_street_prompt.png)
-
 ## 15_street_prompt
 
 A street object with its prompt.
@@ -127,12 +115,6 @@ The courtyard behind the school
 
 ![17_residential](17_residential.png)
 
-## FAIL_animal_prompt
-
-No prompt appeared for the animal.
-
-![FAIL_animal_prompt](FAIL_animal_prompt.png)
-
 ## 18_animal_prompt
 
 The green animal, with the prompt to look at it.
@@ -150,10 +132,4 @@ Meeting the animal
 The end-of-slice card at the end of the built content.
 
 ![20_end_card](20_end_card.png)
-
-## FAIL_last_frame
-
-The last frame before the capture stopped.
-
-![FAIL_last_frame](FAIL_last_frame.png)
 
