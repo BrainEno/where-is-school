@@ -152,6 +152,8 @@ func _run() -> void:
 	_loc.set_locale("en")
 	_main.queue_free()
 	await process_frame
+	# Let the audio server release the opening thud playback before the tree exits.
+	await create_timer(0.2).timeout
 	Harness.finish(self, _failures, "the game switches language mid-scene without losing state.")
 
 

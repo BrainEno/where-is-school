@@ -74,29 +74,42 @@ jobs:
         run: CAPTURE_EVIDENCE_DIR="$RUNNER_TEMP/playthrough-evidence" scripts/ci/run_playthrough_capture.sh
 
       # Temporary review aid: removed after inspecting these isolated thumbnails.
-      - name: Emit review thumbnails
+      - name: Prepare review thumbnails
         shell: bash
         run: |
           set -euo pipefail
           python3 -m venv "$RUNNER_TEMP/review-env"
           "$RUNNER_TEMP/review-env/bin/python" -m pip install --quiet Pillow==11.3.0
-          "$RUNNER_TEMP/review-env/bin/python" - "$RUNNER_TEMP/playthrough-evidence/frames" <<'PY'
+          cat > "$RUNNER_TEMP/review.py" <<'PY'
           import base64, io, sys
           from pathlib import Path
           from PIL import Image
-          for name in ("20_estate_exit", "21_playground", "23_active_result", "24_active_choices_chinese", "20_end_card"):
-              image = Image.open(Path(sys.argv[1]) / (name + ".png")).convert("RGB")
-              image.thumbnail((960, 540))
+          source = Path(sys.argv[1])
+          original = Image.open(source).convert("RGB")
+          for dimensions, quality in (((960, 540), 40), ((640, 360), 30), ((480, 270), 20)):
+              image = original.copy()
+              image.thumbnail(dimensions)
               output = io.BytesIO()
-              image.save(output, "JPEG", quality=40, optimize=True)
-              if output.tell() > 45000:
-                  image.thumbnail((640, 360))
-                  output = io.BytesIO()
-                  image.save(output, "JPEG", quality=35, optimize=True)
-              if output.tell() > 45000:
-                  raise RuntimeError("Review thumbnail too large")
-              print("::notice title=REVIEW_%s::%s" % (name, base64.b64encode(output.getvalue()).decode()))
+              image.save(output, "JPEG", quality=quality, optimize=True)
+              encoded = base64.b64encode(output.getvalue()).decode()
+              chunks = [encoded[i:i + 3600] for i in range(0, len(encoded), 3600)]
+              if len(chunks) <= 8:
+                  break
+          if len(chunks) > 8:
+              raise RuntimeError("Review thumbnail too large")
+          for index, part in enumerate(chunks):
+              print("::notice title=REVIEW_%s_%02d_of_%02d::%s" % (source.stem, index, len(chunks), part))
           PY
+      - name: Review 20_estate_exit
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/20_estate_exit.png"'
+      - name: Review 21_playground
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/21_playground.png"'
+      - name: Review 23_active_result
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/23_active_result.png"'
+      - name: Review 24_active_choices_chinese
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/24_active_choices_chinese.png"'
+      - name: Review 20_end_card
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/20_end_card.png"'
       - name: Upload status, logs and any frames
         if: always()
         uses: actions/upload-artifact@v4
