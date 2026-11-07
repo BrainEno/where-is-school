@@ -68,9 +68,7 @@ func _run() -> void:
 	var before_text := String(before.get("text", ""))
 	var before_node := String(before.get("node_id", ""))
 	var flags_before := _flag_snapshot()
-	var entries_before: int = -1
-	if _narrative.has_method("get_entry_ids"):
-		entries_before = int(_narrative.get_entry_ids().size())
+	var entries_before := _knowledge_count()
 	var objectives_before := String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
 	# Issue #18 was exactly this: the log grew a row every time the language changed.
 	var log_before := _backlog_snapshot()
@@ -97,7 +95,7 @@ func _run() -> void:
 		_failures.append("The objective changed value during a language switch.")
 	if _flag_snapshot() != flags_before:
 		_failures.append("Story flags changed during a language switch.")
-	if _narrative.has_method("get_entry_ids") and _narrative.get_entry_ids().size() != entries_before:
+	if _knowledge_count() != entries_before:
 		_failures.append("Knowledge entries changed during a language switch.")
 	_assert_log_unchanged("Switching language mid-conversation", log_before)
 	if _check_events != checks_before:
@@ -171,7 +169,7 @@ func _run() -> void:
 		if not bool(_game_state.get_flag(&"saw_set_square", false)):
 			_failures.append("The first read of the set square did not set its flag.")
 		var flags_after_first_read := _flag_snapshot()
-		var entries_after_first_read: int = _narrative.get_entry_ids().size()
+		var entries_after_first_read := _knowledge_count()
 		var identities: PackedStringArray = log_first_read["identities"]
 		if not identities.has("inspection:classroom_set_square/first"):
 			_failures.append("The first read is not identified as a first read.")
@@ -211,7 +209,7 @@ func _run() -> void:
 				_failures.append("The rebuilt log differs from the first Chinese render.")
 		if _flag_snapshot() != flags_after_first_read:
 			_failures.append("A language switch changed a story flag.")
-		if _narrative.get_entry_ids().size() != entries_after_first_read:
+		if _knowledge_count() != entries_after_first_read:
 			_failures.append("A language switch added or removed a knowledge entry.")
 		if _check_events != checks_at_inspection:
 			_failures.append("A language switch re-ran a check after the recollection.")
@@ -231,7 +229,7 @@ func _run() -> void:
 				)
 			if not (log_repeat["identities"] as PackedStringArray).has("inspection:classroom_set_square/repeat"):
 				_failures.append("The second read is not identified as a repeat read.")
-			if _narrative.get_entry_ids().size() != entries_after_first_read:
+			if _knowledge_count() != entries_after_first_read:
 				_failures.append("A repeat read recorded knowledge again.")
 			# ... and it survives a round trip as its own row.
 			_loc.set_locale("en")
@@ -272,6 +270,17 @@ func _run() -> void:
 
 
 # --- helpers ----------------------------------------------------------------
+
+
+## How many knowledge entries the session has recorded. `NarrativeState` exposes
+## `get_entries()`, and the count is what a language switch must not change. The whole
+## suite used to ask for `get_entry_ids()`, which does not exist, so the assertion was
+## quietly dead; this makes it live.
+func _knowledge_count() -> int:
+	if _narrative == null or not _narrative.has_method("get_entries"):
+		_failures.append("NarrativeState does not expose its entries.")
+		return -1
+	return (_narrative.get_entries() as Array).size()
 
 
 func _backlog_snapshot() -> Dictionary:
