@@ -47,7 +47,7 @@
         {
           "id": "bench_p_yes",
           "speaker": "pattern",
-          "text": "The paint curves around the foot. Perhaps the bench was already here when the lane was repainted. That is only a guess.",
+          "text": "A stripe stops beside the foot. Perhaps someone painted around a bench that was already here. That is only a guess.",
           "next": null,
           "effects": [
             {
@@ -55,14 +55,14 @@
               "entry_id": "thought_bench_p_yes",
               "source": "imagined",
               "speaker": "pattern",
-              "text": "The paint curves around the foot. Perhaps the bench was already here when the lane was repainted. That is only a guess."
+              "text": "A stripe stops beside the foot. Perhaps someone painted around a bench that was already here. That is only a guess."
             }
           ]
         },
         {
           "id": "bench_p_no",
           "speaker": "pattern",
-          "text": "Four stripes, four seats, you decide. Then you count the bench slats again. Perhaps your pattern was in too much of a hurry.",
+          "text": "You decide four stripes must mean four seats. Then you notice the line beside the bench is interrupted. Perhaps your pattern came too quickly.",
           "next": null,
           "effects": [
             {
@@ -70,14 +70,14 @@
               "entry_id": "thought_bench_p_no",
               "source": "imagined",
               "speaker": "pattern",
-              "text": "Four stripes, four seats, you decide. Then you count the bench slats again. Perhaps your pattern was in too much of a hurry."
+              "text": "You decide four stripes must mean four seats. Then you notice the line beside the bench is interrupted. Perhaps your pattern came too quickly."
             }
           ]
         },
         {
           "id": "bench_g_yes",
           "speaker": "guard",
-          "text": "The fastenings look intact from here. There is space to sit without having to make a decision about anything else.",
+          "text": "The foot seems to sit over the paint. Perhaps the bench came later. Either way, the fastenings look steady enough for a rest.",
           "next": null,
           "effects": [
             {
@@ -85,7 +85,7 @@
               "entry_id": "thought_bench_g_yes",
               "source": "imagined",
               "speaker": "guard",
-              "text": "The fastenings look intact from here. There is space to sit without having to make a decision about anything else."
+              "text": "The foot seems to sit over the paint. Perhaps the bench came later. Either way, the fastenings look steady enough for a rest."
             }
           ]
         },

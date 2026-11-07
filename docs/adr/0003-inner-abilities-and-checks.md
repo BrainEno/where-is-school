@@ -84,8 +84,9 @@ flags/objectives or record observed/reported knowledge.
 
 The playground anchors are independent and may be approached in any order.
 Failure is not a dead end: for example, Thread may find its four-seat inference
-premature, while success notices paint curving around the bench; Resonance may
-feel a false familiarity rather than identifying a writer. In both cases the
+premature, while success wonders whether paint was applied around the bench.
+Shelter can instead guess that the bench came later: both claims remain uncertain.
+Resonance may feel a false familiarity rather than identifying a writer. In both cases the
 player can keep exploring. Passive failure also has an authored line rather
 than forcing a retry. Re-entering a location preserves session flags and notes.
 The only end card is an explicitly labelled, optional far-edge interaction.

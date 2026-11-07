@@ -1,4 +1,4 @@
-[gd_scene load_steps=49 format=3]
+[gd_scene load_steps=51 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 
@@ -143,6 +143,12 @@ size = Vector3(0.1, 0.1, 1.2)
 [sub_resource type="BoxMesh" id="M27"]
 size = Vector3(0.1, 0.1, 1.2)
 
+[sub_resource type="BoxMesh" id="BenchPaintMesh"]
+size = Vector3(0.09, 0.025, 1.8)
+
+[sub_resource type="BoxMesh" id="NoticeMarkMesh"]
+size = Vector3(1.5, 0.035, 0.025)
+
 [node name="Playground" type="Node3D"]
 script = ExtResource("location")
 location_id = &"playground"
@@ -256,6 +262,16 @@ position = Vector3(-6.35, 0.023, -4.8)
 mesh = SubResource("M14")
 material_override = ExtResource("concrete")
 
+[node name="BenchPaintNorth" type="MeshInstance3D" parent="."]
+position = Vector3(-11.2, 0.024, -2.9)
+mesh = SubResource("BenchPaintMesh")
+material_override = ExtResource("paper")
+
+[node name="BenchPaintSouth" type="MeshInstance3D" parent="."]
+position = Vector3(-11.2, 0.024, -0.3)
+mesh = SubResource("BenchPaintMesh")
+material_override = ExtResource("paper")
+
 [node name="BenchSeat" type="StaticBody3D" parent="."]
 position = Vector3(-10, 0.62, -1.5)
 
@@ -299,6 +315,21 @@ material_override = ExtResource("metal")
 [node name="NoticePost11" type="MeshInstance3D" parent="."]
 position = Vector3(11, 1.4, -7)
 mesh = SubResource("M21")
+material_override = ExtResource("metal")
+
+[node name="NoticeMarkA" type="MeshInstance3D" parent="."]
+position = Vector3(9.8, 2.35, -6.85)
+mesh = SubResource("NoticeMarkMesh")
+material_override = ExtResource("metal")
+
+[node name="NoticeMarkB" type="MeshInstance3D" parent="."]
+position = Vector3(10.1, 2.08, -6.85)
+mesh = SubResource("NoticeMarkMesh")
+material_override = ExtResource("metal")
+
+[node name="NoticeMarkC" type="MeshInstance3D" parent="."]
+position = Vector3(9.9, 1.81, -6.85)
+mesh = SubResource("NoticeMarkMesh")
 material_override = ExtResource("metal")
 
 [node name="PracticePole" type="StaticBody3D" parent="."]

@@ -47,7 +47,7 @@
         {
           "id": "bench_p_yes",
           "speaker": "pattern",
-          "text": "漆线绕开了椅脚。也许重画跑道的时候长椅已经在这里；这只是猜测。",
+          "text": "一条漆线停在椅脚旁。也许画线的人绕开了一张早已在这里的长椅；这只是猜测。",
           "next": null,
           "effects": [
             {
@@ -55,14 +55,14 @@
               "entry_id": "thought_bench_p_yes",
               "source": "imagined",
               "speaker": "pattern",
-              "text": "漆线绕开了椅脚。也许重画跑道的时候长椅已经在这里；这只是猜测。"
+              "text": "一条漆线停在椅脚旁。也许画线的人绕开了一张早已在这里的长椅；这只是猜测。"
             }
           ]
         },
         {
           "id": "bench_p_no",
           "speaker": "pattern",
-          "text": "四条线，四个座位，你这样想着。再数一遍椅板，发现自己的规律也许来得太急。",
+          "text": "你觉得四条线一定代表四个座位。接着发现椅旁的线是断开的，也许这个规律来得太急了。",
           "next": null,
           "effects": [
             {
@@ -70,14 +70,14 @@
               "entry_id": "thought_bench_p_no",
               "source": "imagined",
               "speaker": "pattern",
-              "text": "四条线，四个座位，你这样想着。再数一遍椅板，发现自己的规律也许来得太急。"
+              "text": "你觉得四条线一定代表四个座位。接着发现椅旁的线是断开的，也许这个规律来得太急了。"
             }
           ]
         },
         {
           "id": "bench_g_yes",
           "speaker": "guard",
-          "text": "从这里看，固定件还完整。这里有地方坐下，不必马上对其他事做决定。",
+          "text": "椅脚看着像压在漆上，也许长椅是后来放的。不管怎样，固定件看起来足够稳，可以歇一歇。",
           "next": null,
           "effects": [
             {
@@ -85,7 +85,7 @@
               "entry_id": "thought_bench_g_yes",
               "source": "imagined",
               "speaker": "guard",
-              "text": "从这里看，固定件还完整。这里有地方坐下，不必马上对其他事做决定。"
+              "text": "椅脚看着像压在漆上，也许长椅是后来放的。不管怎样，固定件看起来足够稳，可以歇一歇。"
             }
           ]
         },
