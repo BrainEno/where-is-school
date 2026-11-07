@@ -336,7 +336,7 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 			choice.check = data["check"]
 			var spec: Dictionary = choice.check
 			for field: String in ["ability", "difficulty", "success", "failure"]:
-				if not spec.has(field) or String(spec[field]).is_empty():
+				if not spec.has(field) or str(spec[field]).is_empty():
 					errors.append("%s choice '%s': check needs '%s'." % [context, choice.choice_id, field])
 			if int(spec.get("difficulty", 0)) < 1:
 				errors.append("%s choice '%s': check difficulty must be positive." % [context, choice.choice_id])

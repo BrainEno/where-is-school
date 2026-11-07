@@ -261,16 +261,19 @@ func _run() -> void:
 				await _wait_for_target(&"res_alley_end", 30.0)
 				await _press(KEY_E)
 				if await _wait_for_location("alley", 30.0):
+					await _wait_for_free(30.0)
 					await _shot("20_alley", "The narrow alley turns towards a service yard.")
 					_teleport(Vector3(8, 0, -9), 0.0)
 					await _wait_for_target(&"alley_to_yard", 20.0)
 					await _press(KEY_E)
 					if await _wait_for_location("service_yard", 30.0):
+						await _wait_for_free(30.0)
 						await _shot("21_yard", "The residential exit opens into a small service yard.")
 						_teleport(Vector3(8, 0, -5), 0.0)
 						await _wait_for_target(&"yard_to_playground", 20.0)
 						await _press(KEY_E)
 						if await _wait_for_location("playground", 30.0):
+							await _wait_for_free(30.0)
 							await _shot("22_field", "The open field, with independent anchors around it.")
 							_teleport(Vector3(12, 0, -9), 0.0)
 							await _wait_for_target(&"field_end", 20.0)

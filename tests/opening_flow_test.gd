@@ -310,6 +310,7 @@ func _run() -> void:
 			await physics_frame
 			_interaction.request_activation(alley)
 			if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "alley", 30.0, "the alley"):
+				await _settle(30.0, "alley transition to finish")
 				var alley_scene := _host.get_current()
 				var to_yard := alley_scene.find_interactable(&"alley_to_yard")
 				if to_yard == null:
@@ -320,6 +321,7 @@ func _run() -> void:
 					await physics_frame
 					_interaction.request_activation(to_yard)
 					if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "service_yard", 30.0, "the service yard"):
+						await _settle(30.0, "yard transition to finish")
 						var yard := _host.get_current()
 						var drain := yard.find_interactable(&"yard_drain")
 						if drain == null:
@@ -341,6 +343,7 @@ func _run() -> void:
 							await physics_frame
 							_interaction.request_activation(field_exit)
 							if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "playground", 30.0, "the playground"):
+								await _settle(30.0, "playground transition to finish")
 								var ground := _host.get_current()
 								if ground.get_interactables().size() < 5:
 									_failures.append("The open field lacks independently inspectable areas.")
