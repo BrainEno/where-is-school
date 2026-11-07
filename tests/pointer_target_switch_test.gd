@@ -156,15 +156,13 @@ func _place_probes() -> void:
 func _open_floor_spots(count: int) -> Array[Vector3]:
 	var rect := _player.get_viewport().get_visible_rect().size
 	var map := _player.navigation_agent.get_navigation_map()
-	var found: Array[Vector3] = []
+	var candidates: Array[Vector3] = []
 	_spot_stats = {"ground": 0, "range": 0, "free": 0, "routable": 0}
-	for x_step in 14:
-		for y_step in 10:
-			if found.size() >= count:
-				return found
+	for x_step in 24:
+		for y_step in 16:
 			var screen := Vector2(
-				rect.x * (0.1 + 0.8 * float(x_step) / 13.0),
-				rect.y * (0.2 + 0.6 * float(y_step) / 9.0)
+				rect.x * (0.08 + 0.84 * float(x_step) / 23.0),
+				rect.y * (0.18 + 0.64 * float(y_step) / 15.0)
 			)
 			var point: Variant = _navigator.get_ground_point_at(screen)
 			if point == null:
@@ -172,7 +170,7 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 			_spot_stats["ground"] = int(_spot_stats["ground"]) + 1
 			var world: Vector3 = point
 			var distance := _flat_distance(_player.global_position, world)
-			if distance < 2.0 or distance > 4.2:
+			if distance < 1.9 or distance > 5.5:
 				continue
 			_spot_stats["range"] = int(_spot_stats["range"]) + 1
 			if _interaction.get_target_at_screen_position(screen, false) != null:
@@ -181,14 +179,26 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 			if NavigationServer3D.map_get_path(map, _player.global_position, world, true).size() < 2:
 				continue
 			_spot_stats["routable"] = int(_spot_stats["routable"]) + 1
-			var crowded := false
-			for other: Vector3 in found:
-				if _flat_distance(other, world) < 1.6:
-					crowded = true
-					break
-			if crowded:
-				continue
-			found.append(world)
+			candidates.append(world)
+	# Spread the probes out rather than taking the first four the scan happened to hit:
+	# two probes whose hotspots overlap would make "which one did the pointer pick" a
+	# question about the order of two areas instead of about the switch.
+	var found: Array[Vector3] = []
+	if not candidates.is_empty():
+		found.append(candidates[0])
+	while found.size() < count:
+		var best := Vector3.ZERO
+		var best_gap := -1.0
+		for candidate: Vector3 in candidates:
+			var nearest := INF
+			for chosen: Vector3 in found:
+				nearest = minf(nearest, _flat_distance(chosen, candidate))
+			if nearest > best_gap:
+				best_gap = nearest
+				best = candidate
+		if best_gap < 1.5:
+			break
+		found.append(best)
 	return found
 
 
