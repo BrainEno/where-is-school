@@ -146,7 +146,7 @@ func _walk_to_alley() -> void:
 	# The arrival line plays after the fade, so wait for its flag rather than for a
 	# quiet frame: a quiet frame happens during the fade, before the beat starts.
 	if not await _pump_until(
-		func() -> bool: return bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)),
+		func() -> bool: return _flag_is(StoryFlags.ALLEY_ARRIVED),
 		60.0, "the alley arrival line"
 	):
 		_failures.append("Reaching the alley did not play its arrival line.")
@@ -157,7 +157,7 @@ func _walk_to_alley() -> void:
 		return
 	if location.get_interactables().size() < 3:
 		_failures.append("The alley has too few things to look at (%d)." % location.get_interactables().size())
-	if not bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)):
+	if not _flag_is(StoryFlags.ALLEY_ARRIVED):
 		_failures.append("Arriving in the alley did not set its flag.")
 	if String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.alley":
 		_failures.append("Arriving in the alley did not change the objective.")
@@ -166,9 +166,9 @@ func _walk_to_alley() -> void:
 	# speak, without the player asking it to.
 	await _activate(&"alley_notice_wall", "the notice wall")
 	await _settle(45.0, "the notices and any voice that reacts to them")
-	if not bool(_game_state.get_flag(StoryFlags.inspection_seen_flag(&"alley_notices"), false)):
+	if not _flag_is(StoryFlags.inspection_seen_flag(&"alley_notices")):
 		_failures.append("Reading the alley notices did not mark them as read.")
-	if not bool(_game_state.get_flag(StoryFlags.passive_fired_flag(&"alley_notice_ledger"), false)):
+	if not _flag_is(StoryFlags.passive_fired_flag(&"alley_notice_ledger")):
 		_failures.append("No passive voice reacted to reading the notices.")
 	var hidden: Variant = _game_state.get_flag(
 		StoryFlags.check_record_flag(&"voice_notice", &"vn_1"), null
@@ -186,7 +186,7 @@ func _walk_to_playground() -> void:
 	):
 		return
 	if not await _pump_until(
-		func() -> bool: return bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)),
+		func() -> bool: return _flag_is(StoryFlags.PLAYGROUND_ARRIVED),
 		60.0, "the yard arrival line"
 	):
 		_failures.append("Reaching the yard did not set its flag.")
@@ -194,7 +194,7 @@ func _walk_to_playground() -> void:
 	if String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.playground":
 		_failures.append("Reaching the yard did not change the objective.")
 	# The alley's knowledge must survive the transition.
-	if not bool(_game_state.get_flag(StoryFlags.ALLEY_ARRIVED, false)):
+	if not _flag_is(StoryFlags.ALLEY_ARRIVED):
 		_failures.append("The alley flag was lost when the yard loaded.")
 	if not _narrative.has_entry(&"alley_arrived"):
 		_failures.append("Knowledge recorded in the alley was lost in the yard.")
@@ -257,7 +257,7 @@ func _explore_in_two_orders() -> void:
 		await _activate(interactable_id, str(interactable_id))
 		await _settle(45.0, "looking at %s" % interactable_id)
 		var flag: StringName = seen_flags[interactable_id]
-		if not bool(_game_state.get_flag(flag, false)):
+		if not _flag_is(flag):
 			_failures.append("Looking at '%s' was not recorded." % interactable_id)
 
 	# Revisit one of them: the text must exist for a second read and nothing resets.
@@ -267,7 +267,7 @@ func _explore_in_two_orders() -> void:
 	var observed_after: int = int(_narrative.count_for_source(NarrativeEntry.Source.OBSERVED))
 	if observed_after < observed_before:
 		_failures.append("Revisiting an anchor removed knowledge.")
-	if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):
+	if not _flag_is(StoryFlags.PLAYGROUND_ARRIVED):
 		_failures.append("Revisiting an anchor cleared the arrival flag.")
 
 	# The reverse order, in a fresh visit to the same scene: the space must not lock
@@ -299,25 +299,25 @@ func _attempt_shed_check_expecting_failure() -> void:
 		_failures.append("A visible check did not show its numbers.")
 	else:
 		var result := _ui.check_overlay.get_result()
-		if bool(result.get("success", true)):
+		if result.get("success", true) == true:
 			_failures.append("The forced-failure seed reported success.")
 		if int(result.get("die", 0)) < 1 or int(result.get("die", 0)) > CheckResolver.DIE_FACES:
 			_failures.append("The visible check showed an impossible die.")
 		if String(result.get("ability", "")) != "boundary":
 			_failures.append("The visible check did not name the voice that carried it.")
 	await _pump_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the shed attempt to finish")
-	if bool(_game_state.get_flag(&"playground_shed_open", false)):
+	if _flag_is(&"playground_shed_open"):
 		_failures.append("A failed attempt reported the shed as open.")
-	if not bool(_game_state.get_flag(&"playground_shed_looked", false)):
+	if not _flag_is(&"playground_shed_looked"):
 		_failures.append("A failed attempt produced no story at all.")
-	if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_CHECKED, false)):
+	if not _flag_is(StoryFlags.PLAYGROUND_CHECKED):
 		_failures.append("A failed attempt did not count as an attempt.")
 	var record: Variant = _game_state.get_flag(
 		StoryFlags.check_record_flag(&"pg_shed", &"ps_boundary_check"), null
 	)
 	if not (record is Dictionary):
 		_failures.append("The failed attempt was not recorded.")
-	elif bool((record as Dictionary).get("success", true)):
+	elif (record as Dictionary).get("success", true) == true:
 		_failures.append("The recorded failure was stored as a success.")
 
 
@@ -344,14 +344,14 @@ func _retry_shed_without_a_reroll() -> void:
 	await process_frame
 	if _ui.check_overlay.is_showing():
 		var result := _ui.check_overlay.get_result()
-		if not bool(result.get("success", false)):
+		if result.get("success", false) != true:
 			_failures.append("The forced-success seed reported failure.")
 		else:
 			_visible_checks += 1
 	else:
 		_failures.append("The second visible check did not show its numbers.")
 	await _pump_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the rota attempt to finish")
-	if not bool(_game_state.get_flag(&"playground_rota_read", false)):
+	if not _flag_is(&"playground_rota_read"):
 		_failures.append("The passing check produced no story.")
 	var after: Variant = _game_state.get_flag(record_flag, null)
 	if before is Dictionary and after is Dictionary and before != after:
@@ -368,7 +368,7 @@ func _check_no_soft_lock() -> void:
 		_failures.append("A failed check blocked the way back out of the yard.")
 		return
 	await _settle(30.0, "the alley after the checks")
-	if not bool(_game_state.get_flag(StoryFlags.PLAYGROUND_ARRIVED, false)):
+	if not _flag_is(StoryFlags.PLAYGROUND_ARRIVED):
 		_failures.append("Leaving the yard lost its arrival flag.")
 
 	await _activate(&"alley_to_playground", "the estate gate again")
@@ -411,9 +411,14 @@ func _check_animal_still_works() -> void:
 			% [str(animal.can_interact()), str(_interaction.is_enabled()), str(_sequence.is_slice_finished())]
 		)
 	else:
-		var conversation := _dialogue.get_runtime().get_active_conversation_id()
-		if String(conversation) != "green_animal":
-			_failures.append("The animal opened '%s' instead of its own conversation." % conversation)
+		var conversation := String(_dialogue.get_runtime().get_active_conversation_id())
+		var expected := String(ConversationRouter.select(
+			&"green_animal", _game_state.get_snapshot()
+		))
+		if conversation.is_empty() or conversation != expected:
+			_failures.append(
+				"The animal opened '%s' instead of '%s'." % [conversation, expected]
+			)
 	await _pump_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the animal conversation")
 
 
@@ -458,12 +463,15 @@ func _activate(interactable_id: StringName, label: String) -> void:
 
 func _pump_until(predicate: Callable, timeout_seconds: float, label: String) -> bool:
 	var started := Time.get_ticks_msec()
-	while not bool(predicate.call()):
+	while predicate.call() != true:
 		if Time.get_ticks_msec() - _started_at_msec > int(OVERALL_TIMEOUT_SECONDS * 1000.0):
 			_failures.append("The whole flow exceeded its budget while waiting for %s." % label)
 			return false
-		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
-			_dialogue.advance_presentation()
+		if _dialogue.is_busy():
+			if _dialogue.has_pending_choices():
+				_dialogue.select_choice(0)
+			else:
+				_dialogue.advance_presentation()
 		await process_frame
 		if Time.get_ticks_msec() - started > int(timeout_seconds * 1000.0):
 			_failures.append("Timed out waiting for %s." % label)
@@ -490,6 +498,13 @@ func _settle(timeout_seconds: float, label: String) -> bool:
 		var retried := await _settle(timeout_seconds, label)
 		return retried
 	return true
+
+
+## One place that reads a boolean flag, so a Variant never has to be converted with
+## a constructor call at the point of use.
+func _flag_is(flag: StringName) -> bool:
+	var value: Variant = _game_state.get_flag(flag, false)
+	return value == true
 
 
 func _find_seed(key: String, ability_value: int, difficulty: int, want_success: bool) -> int:
