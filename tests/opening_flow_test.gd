@@ -67,6 +67,9 @@ func _run() -> void:
 		func() -> bool: return bool(_game_state.get_flag(StoryFlags.MET_Q, false)),
 		45.0, "Q to start talking"
 	):
+		# met_q is set by the conversation's first line, so the flags below only
+		# exist once the director has handed control back.
+		await _settle(90.0, "Q's opening conversation to finish")
 		if not bool(_game_state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
 			_failures.append("The first choice did not produce its story flag.")
 		if String(_game_state.get_flag(StoryFlags.OBJECTIVE_TEXT, "")) != \
@@ -127,8 +130,7 @@ func _run() -> void:
 			_failures.append("The imagined beat added observed knowledge.")
 		if not _narrative.has_entry(&"recall_set_square_sound"):
 			_failures.append("The half-remembered set square entry was not recorded.")
-		if _narrative.get_entry(&"recall_set_square_sound").source != \
-				NarrativeEntry.Source.RECALLED:
+		elif _entry_source(&"recall_set_square_sound") != NarrativeEntry.Source.RECALLED:
 			_failures.append("The half-remembered set square was not stored as a recollection.")
 		if _ui.overlay.visible:
 			_failures.append("The imagination overlay is still on screen after the beat.")
@@ -149,9 +151,10 @@ func _run() -> void:
 			var actor := location.find_actor(&"n")
 			if actor == null or not actor.visible:
 				_failures.append("The substitute actor is not visible at the front of the room.")
+		await _settle(90.0, "the substitute's conversation to finish")
 		if not _narrative.has_entry(&"n_covers_for_b"):
 			_failures.append("N's account of covering the lesson was not recorded.")
-		if _narrative.get_entry(&"n_covers_for_b").source != NarrativeEntry.Source.REPORTED:
+		elif _entry_source(&"n_covers_for_b") != NarrativeEntry.Source.REPORTED:
 			_failures.append("N's statement was not stored as reported, not observed.")
 
 	# --- Beat G: leave the classroom and reach the milestone end ----------
@@ -187,6 +190,7 @@ func _run() -> void:
 	else:
 		_failures.append("The player did not end up in the walkway.")
 
+	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
@@ -215,6 +219,21 @@ func _pump_until(predicate: Callable, timeout_seconds: float, label: String) -> 
 			_failures.append("Timed out waiting for %s." % label)
 			return false
 	return true
+
+
+## Waits until no presentation is on screen and the player has control again.
+func _settle(timeout_seconds: float, label: String) -> bool:
+	return await _pump_until(
+		func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
+		timeout_seconds, label
+	)
+
+
+## Source category of a knowledge entry, or -1 when it was never recorded.
+func _entry_source(entry_id: StringName) -> int:
+	if _narrative == null or not _narrative.has_entry(entry_id):
+		return -1
+	return int(_narrative.get_entry(entry_id).source)
 
 
 func _advance_presentation() -> void:
@@ -251,3 +270,30 @@ func _check_targeting() -> void:
 				"At %s the interaction prompt targeted '%s' instead of '%s'."
 				% [test_case["position"], found, test_case["expected"]]
 			)
+
+
+## Compact state line printed once at the end of a run (and used by CI to
+## summarise a failure without the full log).
+func _dump_state() -> void:
+	var raised: Array[String] = []
+	for flag: StringName in [
+		StoryFlags.MET_Q, StoryFlags.ASKED_Q_IDENTITY, StoryFlags.TEXTBOOK_MISSING,
+		StoryFlags.EXPECTATION_PLAYED, StoryFlags.BELL_RUNG, StoryFlags.N_ARRIVED,
+		StoryFlags.CLASS_DISMISSED, StoryFlags.LEFT_CLASSROOM,
+	]:
+		if bool(_game_state.get_flag(flag, false)):
+			raised.append(String(flag))
+	var control := "n/a"
+	if _player != null:
+		control = str(_player.is_control_enabled())
+	print(
+		"DIAG busy=%s control=%s mode=%d location=%s flags=%s failures=%d"
+		% [
+			_dialogue.is_busy(),
+			control,
+			_dialogue.get_mode(),
+			String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")),
+			",".join(raised),
+			_failures.size(),
+		]
+	)

@@ -49,14 +49,16 @@ static func arm_watchdog(tree: SceneTree, seconds: float, label: String) -> void
 	timer.wait_time = seconds
 	timer.one_shot = true
 	timer.ignore_time_scale = true
+	timer.autostart = true
 	timer.timeout.connect(
 		func() -> void:
 			push_error("TEST WATCHDOG: %s exceeded %.0f seconds and was aborted." % [label, seconds])
 			print("FAIL: %s timed out after %.0f seconds." % [label, seconds])
 			tree.quit(2)
 	)
+	# autostart: the root is not inside the tree yet while _initialize() runs, so
+	# calling start() here would fail; the timer begins once it enters the tree.
 	tree.root.add_child(timer)
-	timer.start()
 
 
 static func clear_session_state(tree: SceneTree) -> void:

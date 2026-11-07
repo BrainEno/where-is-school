@@ -44,8 +44,8 @@ jobs:
             tail -n 30 "ci-logs/${name}.log"
             echo "--- exit ${code}"
             local summary
-            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error|ERROR:|FAIL:|PASS:" \
-              "ci-logs/${name}.log" | head -n 12 | tr '\n' '|' | cut -c1-1200)
+            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error|ERROR:|DIAG|FAIL:|PASS:" \
+              "ci-logs/${name}.log" | head -n 40 | tr '\n' '|' | cut -c1-4000)
             if [ "${code}" -eq 0 ]; then
               echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
             else
