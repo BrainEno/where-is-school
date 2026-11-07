@@ -73,6 +73,9 @@ func _run() -> void:
 		Harness.finish(self, ["Main did not expose the nodes this test needs."], "")
 		return
 	_interaction.activation_requested.connect(_on_activation)
+	if _sequence != null:
+		# No authored beats run in this test, so control is handed over by hand.
+		_sequence.allow_player_control()
 	Engine.time_scale = 4.0
 	await _frames(4)
 
