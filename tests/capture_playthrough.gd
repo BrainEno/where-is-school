@@ -188,6 +188,11 @@ func _run() -> void:
 		if await _wait_for_location("corridor", 40.0):
 			await _wait(1.2)
 			await _shot("13_corridor", "The walkway outside the classroom.")
+	# 9b. The free period as the player now meets it: Q walking along, optional things
+	# in the walkway, a real cursor hover, and the yard entered through the end door
+	# on foot. Returns with the player back in the walkway.
+	await _capture_free_period()
+
 	var corridor := _host.get_current()
 	if corridor != null and String(corridor.location_id) == "corridor":
 		var gate := corridor.find_interactable(&"school_gate")
@@ -282,6 +287,123 @@ func _run() -> void:
 		await _shot("FAIL_last_frame", "The last frame before the capture stopped.")
 	_write_log()
 	quit(0 if _failures.is_empty() else 1)
+
+
+## The free period, from the walkway to the yard and back.
+##
+## Everything that can be walked is walked: the corridor-to-yard transition is made
+## by holding the forward key at the door, not by teleporting past it, and the
+## hover shot moves the real cursor with `Input.warp_mouse` so the highlight ring,
+## the prompt and the E key are exercised together.
+func _capture_free_period() -> void:
+	var companion := _main.get_node_or_null("Companion") as CompanionController
+	await _wait_for_free(60.0)
+	if companion == null:
+		_failures.append("The companion node is missing from the main scene.")
+	elif not companion.is_joined():
+		_failures.append("Q did not join the player after the classroom was left.")
+	else:
+		var start := _player.global_position
+		Input.action_press("move_forward")
+		await _wait(1.1)
+		Input.action_release("move_forward")
+		await _wait(0.6)
+		var walked := _player.global_position.distance_to(start)
+		var gap := companion.global_position.distance_to(_player.global_position)
+		_note("walked %.2f m with Q; Q is %.2f m behind" % [walked, gap])
+		if walked < 0.5:
+			_failures.append("Holding forward in the walkway did not move the player.")
+		if gap > companion.follow_distance + 1.0:
+			_failures.append("Q did not keep up in the walkway (%.2f m behind)." % gap)
+		await _shot("13a_q_following", "Q walking with the player in the walkway, at a natural distance.")
+
+	# The pointer: stand in front of the cleaning trolley, then move the real cursor
+	# onto it and check that the cue, the prompt and the target agree.
+	var corridor := _host.get_current()
+	if corridor == null:
+		_failures.append("The walkway is not loaded during the free-period capture.")
+		return
+	var trolley := corridor.find_interactable(&"corridor_trolley")
+	if trolley != null:
+		await _wait_for_free(45.0)
+		_teleport(Vector3(0.5, 0, 3.6), 90.0)
+		await _wait(0.4)
+		await _mouse_to_world(trolley.global_position + Vector3.UP * 0.2)
+		var hovered := await _poll(
+			func() -> bool:
+				var target := _interaction.get_current_target()
+				return target != null and target.interact_id == &"corridor_trolley",
+			10.0
+		)
+		if not hovered:
+			_failures.append("Moving the real cursor onto the trolley did not target it.")
+			await _shot("FAIL_hover_trolley", "The cursor was over the trolley but nothing was targeted.")
+		var prompt := _ui.hud.get_prompt_text() if _ui != null and _ui.hud.has_method("get_prompt_text") else ""
+		_note("hover prompt: '%s'" % prompt)
+		await _shot(
+			"13b_hover_trolley",
+			"The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing."
+		)
+		await _press(KEY_E)
+		if await _wait_for_line(6.0):
+			await _wait(0.5)
+			await _shot("13c_trolley_line", "Looking at the trolley, with Q's comment because Q is there.")
+		await _drive_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the trolley line")
+		# Release the pointer: nothing on screen is under it any more.
+		await _mouse_to_world(Vector3(0, 0, 0))
+		Input.warp_mouse(Vector2(4.0, 4.0))
+		await _wait(0.2)
+
+	# The wall speaker makes a noise of its own, once.
+	var speaker := corridor.find_interactable(&"corridor_speaker")
+	if speaker != null:
+		await _wait_for_free(45.0)
+		_teleport(Vector3(0.8, 0, -3.0), 90.0)
+		if await _wait_for_target(&"corridor_speaker", 10.0):
+			await _press(KEY_E)
+			if await _wait_for_line(6.0):
+				await _wait(0.5)
+				await _shot(
+					"13d_corridor_speaker",
+					"The wall speaker: a short noise cue of its own, and a line about the class behind the wall."
+				)
+			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the speaker line")
+
+	# Walk to the end door and go through it. This is the transition the slice is
+	# about, so it is made on foot rather than by teleporting into the yard.
+	var yard_door := corridor.find_interactable(&"to_schoolyard")
+	if yard_door == null:
+		_failures.append("The walkway has no door to the yard.")
+		return
+	await _wait_for_free(45.0)
+	_teleport(Vector3(0.0, 0, -4.2), 0.0)
+	await _wait(0.3)
+	Input.action_press("move_forward")
+	await _wait(1.4)
+	Input.action_release("move_forward")
+	await _wait(0.3)
+	var reached := await _wait_for_target(&"to_schoolyard", 12.0)
+	if not reached:
+		_failures.append("Walking to the end door did not offer it as a target.")
+	await _shot("13e_yard_door_prompt", "The end door of the walkway, reached on foot.")
+	await _press(KEY_E)
+	if not await _wait_for_location("playground", 45.0):
+		_failures.append("The walkway's end door did not load the yard.")
+		return
+	await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the yard arrival line")
+	await _wait(0.9)
+	await _shot(
+		"13f_schoolyard_from_corridor",
+		"The yard entered from the school side, with Q arriving beside the player."
+	)
+	# And back in, so the rest of the walkthrough keeps its original order.
+	await _wait_for_free(45.0)
+	_teleport(Vector3(-3.0, 0, -18.2), 180.0)
+	if await _wait_for_target(&"pg_to_corridor", 12.0):
+		await _press(KEY_E)
+		if await _wait_for_location("corridor", 45.0):
+			await _wait(0.8)
+			await _shot("13g_back_in_the_walkway", "Back inside the walkway through the fire door.")
 
 
 # --- the alley and the yard -------------------------------------------------
@@ -413,6 +535,18 @@ func _capture_yard_checks() -> void:
 
 ## A real key press through the input system, the same path a player's keyboard
 ## takes: down and up as separate events, one frame apart.
+## Moves the real cursor to the screen position of a world point. `Input.warp_mouse`
+## moves the OS cursor, so the hover path in the game is the same one a player uses.
+func _mouse_to_world(world_position: Vector3) -> void:
+	var camera := _player.get_viewport().get_camera_3d() if _player != null else null
+	if camera == null:
+		return
+	var screen := camera.unproject_position(world_position)
+	var rect := _player.get_viewport().get_visible_rect().size
+	Input.warp_mouse(Vector2(clampf(screen.x, 1.0, rect.x - 1.0), clampf(screen.y, 1.0, rect.y - 1.0)))
+	await process_frame
+
+
 func _press(keycode: Key) -> void:
 	var down := InputEventKey.new()
 	down.physical_keycode = keycode

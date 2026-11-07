@@ -144,7 +144,7 @@ The ability system is deliberately small and lives in three places, each with on
 job:
 
 - `scripts/rpg/check_resolver.gd` — the only code that throws a die. Pure maths
-  (`d10 + value + modifier >= difficulty`), an injected session seed, and a result
+  (`2d6 + value + modifier >= difficulty`, provisional), an injected session seed, and a result
   dictionary. It knows nothing about content, UI or flags.
 - `scripts/rpg/inner_abilities.gd` — reads `data/abilities/abilities.json`
   (values, speakers, passive rules) and `data/abilities/<locale>.json` (names and
@@ -171,7 +171,35 @@ Invariants that later work must keep:
 5. no gameplay script may contain a roll, a difficulty, or an ability name.
 
 ADR 0003 records the reasoning, the formula, the frequency policy and the open
-design questions.
+design questions. It is a **proposal**: exactly one voice ships in this milestone
+(`orientation`), and every number in it is provisional.
+
+## 5d. The companion, and why it is not in a location
+
+`scripts/world/companion_controller.gd` lives on the main scene, next to the player,
+not inside `LocationRoot`. `LocationHost` frees everything under a location on every
+transition, so a companion authored there would vanish at the first door. The
+controller instead listens to `LocationHost.location_entered`, places Q behind the
+player after a swap, and hides itself in any location that already has an authored
+actor with the same `npc_id` — which is how two Qs are made impossible rather than
+merely unlikely. It owns no dialogue: the "ask along" interaction is an ordinary
+`Interactable` with a `conversation_route`, so the same director that plays every
+other conversation plays that one.
+
+## 5e. Targeting: pointer, facing, and the cue
+
+`InteractionController` resolves one target per physics frame from two inputs:
+
+- a screen-space ray from the camera through the pointer, restricted to the
+  interaction layer, with the same reach and line-of-sight rules as facing;
+- the facing/distance score that existed before.
+
+The pointer wins when it hits something, a new pointer pick has to hold for one frame
+before it replaces a different target, and facing takes over immediately when the
+pointer hits nothing. `_set_current()` is the only place that assigns the target and
+the only place that moves the highlight, so the cue and the E key cannot describe
+different objects. `Interactable` builds its cue mesh in code, so no prop needs a
+scene edit to become hoverable.
 
 ## 6. Persistent identifiers and data
 

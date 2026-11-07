@@ -37,9 +37,10 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Outdoor locations: the street, the residential courtyard, the alley behind the
   flats, and the open school yard (playground), with the green animal in the
   courtyard and the end of the slice at the far gap in the yard's fence.
-- The hybrid inner-voice system (four voices, passive triggers, active checks) and
-  the single shared dice core behind both visible and hidden checks (ADR 0003).
-- CI: a static syntax gate over every `.gd` file, fifteen headless checks, and a
+- The hybrid inner-voice system, reduced to **one provisional voice** with passive
+  triggers and active checks, and the single shared dice core behind both visible and
+  hidden checks (ADR 0003, which is a proposal awaiting the owner).
+- CI: a static syntax gate over every `.gd` file, nineteen headless checks, and a
   read-only capture job whose artifacts are the visual evidence for a pull
   request. Failures produce artifacts as well, so a red run is diagnosable.
 
@@ -131,14 +132,34 @@ document.
   suite. Windows hands-on checks are listed in the pull request and are not yet
   performed.
 
-### Phase 5 — Filling the yard (planned, not started)
-- People, events and further checks in the yard, using the anchors that exist
-  now: the court, the shed, the bench, the climbing frame, the notice board.
-- More content for the inner voices, including the ones that disagree.
+### Phase 5 — Free period, companion, and the yard behind the school (delivered in this round)
+- N's announcement ends with a real choice: stay at the desk, or leave. Both are
+  recorded, neither forces a transition, and the classroom stays playable if the
+  player stays.
+- Q becomes a companion who survives location swaps, follows at a natural distance,
+  waits instead of teleporting when left behind, and can be asked along through one
+  ordinary interaction.
+- The walkway gains optional activities (a wall speaker with its own noise cue, a
+  cleaning trolley, the railing) and the end door that opens onto the yard.
+- The yard is now reached through the walkway as well as through the alley, and gains
+  tyres, an equipment container, outdoor fitness gear and birds on the fence.
+- Pointer targeting with an explicit priority rule against facing, and a hover cue
+  that always names the object E would use.
+- One provisional voice on a provisional 2d6 formula.
+- Evidence: the capture workflow now walks the corridor-to-yard transition on foot
+  and moves a real cursor for the hover shot. Windows hands-on checks are listed in
+  the pull request and are not yet performed.
+
+### Phase 6 — Filling the yard (planned, not started)
+- People and events in the yard, using the anchors that exist now: the court, the
+  shed, the container, the bench, the climbing frame, the notice board.
+- A decision from the owner on whether the one provisional voice stays, changes, or
+  is joined by others; only then is more voice content worth writing.
+- Retuning the dice against real playtest data.
 - A journal/notebook for what the protagonist knows, once there is enough of it
   to be worth reading.
 
-### Phase 6 — Production readiness (planned, not started)
+### Phase 7 — Production readiness (planned, not started)
 - Versioned persistence, settings, accessibility, font subsetting.
 - Content authoring validation and reusable art pipeline.
 - Performance budgets and profiling.

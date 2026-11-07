@@ -80,11 +80,22 @@ An initial choice may influence scene order and which evidence appears first. It
 
 ## Inner voices
 
-Four faculties speak in the protagonist's own voice register and are presented as
-inner voices, not as characters or NPCs: **The Ledger** (counting, dates,
-quantities), **The Boundary** (space, distance, fit), **Echo** (memory,
-recognition), **The Onlooker** (people, tone, intent). They ship in
-`data/abilities/` and are described in ADR 0003.
+**One provisional voice is implemented**, not a cast. It speaks in the protagonist's
+own register and is presented as an inner voice, not as a character or an NPC:
+
+> **Orientation** (路感) — a sense of where things are in relation to each other:
+> heights, seams, what lines up and what does not. Confident about shapes, silent
+> about people.
+
+That voice ships in `data/abilities/` and is described in ADR 0003, which is a
+**proposal**, not an accepted decision. Its name, its value (3), the 2d6 formula and
+every difficulty in the content are provisional and expected to change after
+playtesting. A wider set of faculties (counting, memory, other people) is a design
+direction that has *not* been built and is not canon: it appeared in an earlier draft
+of ADR 0003 and was withdrawn because three of the four had no scene that needed
+them.
+
+Nothing in this section records a decision the owner has not made.
 
 Rules for writing them:
 
@@ -94,7 +105,8 @@ Rules for writing them:
   information: the line still leaves one concrete thing to look at.
 - No voice explains the school, identifies the animal, diagnoses the protagonist,
   or settles whether a memory happened.
-- A voice never states a fact about another character's interior life as fact.
+- A voice never states a fact about another character's interior life as fact. This
+  is why the one implemented voice is about space rather than about people.
 - Voices speak unprompted only on events, are capped per session, and never
   chatter while the player is walking or thinking (ADR 0003 §6).
 - The player choosing a voice to attempt something is a decision about *how to

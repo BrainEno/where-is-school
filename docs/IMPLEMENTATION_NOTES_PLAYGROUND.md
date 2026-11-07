@@ -88,3 +88,14 @@ Not verified:
   scenery for the `pg_ball` conversation.
 - Two of the four voices (Ledger, Onlooker) are only reachable through one anchor
   each. That is content depth, not a system limit.
+
+
+## Superseded in part
+
+The yard is still the end of the slice, but the route into it changed: the walkway's
+end door now leads into the yard from the school side, and the alley route is the long
+way round rather than the only one. The yard also gained tyres, an equipment
+container, outdoor fitness gear and birds, and the checks were re-pointed at the one
+provisional voice on the provisional 2d6 formula. See
+[IMPLEMENTATION_NOTES_FREE_PERIOD.md](IMPLEMENTATION_NOTES_FREE_PERIOD.md) for the
+current state; this file is kept for the regeneration steps and the earlier reasoning.
