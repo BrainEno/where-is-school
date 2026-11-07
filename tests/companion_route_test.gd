@@ -229,9 +229,15 @@ func _check_waiting_and_resuming() -> void:
 	# through the floor and measures a fall, not a companion rule).
 	var normal_give_up := _companion.give_up_distance
 	_companion.give_up_distance = 4.0
-	var far := _player.global_position + Vector3(0, 0, 6.0)
+	# Move back down the walkway, away from the street end: the floor ends at the
+	# gate, and a companion test must not measure a fall.
+	var far := _player.global_position + Vector3(0, 0, -5.0)
 	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(1.0)), far))
 	await _frames(20)
+	if _player.global_position.y < -1.0:
+		_failures.append("The test put the player outside the walkway and they fell (y=%.2f)." % _player.global_position.y)
+		_companion.give_up_distance = normal_give_up
+		return
 	if not _companion.is_waiting():
 		_failures.append("Q kept chasing a player who was more than %.0f m away." % _companion.give_up_distance)
 		_companion.give_up_distance = normal_give_up
