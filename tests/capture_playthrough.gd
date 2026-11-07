@@ -33,6 +33,7 @@ var _loc: Node = null
 var _log_lines: Array[String] = []
 var _failures: Array[String] = []
 var _shot_index: int = 0
+var _reached_field_end := false
 
 
 func _initialize() -> void:
@@ -280,12 +281,15 @@ func _run() -> void:
 							await _press(KEY_E)
 							if await _wait_for_visible(_ui.end_card, 20.0):
 								await _shot("23_end_card", "The end-of-slice card beyond the open field.")
+								_reached_field_end = true
 
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))
 	_note("locale: %s, objective: %s" % [L10n.current, _ui.hud.get_objective_key()])
 	_note("recorded knowledge entries: %d" % int(_narrative.get_entry_ids().size() if _narrative.has_method("get_entry_ids") else -1))
 	_note("screenshots written: %d" % _shot_index)
+	if not _reached_field_end:
+		_failures.append("The capture never reached the end card beyond the playground.")
 
 	if _failures.is_empty():
 		_note("RESULT: the playthrough reached the end of the built content.")
