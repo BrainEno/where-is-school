@@ -1,32 +1,32 @@
-[04:14:11] capture started: 2026-11-07T04:14:11
-[04:14:14] viewport: 1600x900, locale=en
-[04:14:20] screenshot 01_opening_line: The first line of the opening conversation, in English. (1600x900)
-[04:14:27] objective after the opening conversation: objective.check_bag
-[04:14:28] held move_forward for 0.8 s: player moved 2.43 m
-[04:14:29] screenshot 02_walking: The player after holding the forward key. (1600x900)
-[04:14:29] screenshot 03_world_after_opening: The classroom with control returned and the objective set. (1600x900)
-[04:14:30] screenshot 04_prompt_schoolbag: The interaction prompt with the key that is bound in the input map. (1600x900)
-[04:14:36] screenshot 05_inspection_text: The schoolbag description, reached by pressing E. (1600x900)
-[04:14:37] locale after pressing L: zh-CN
-[04:14:37] screenshot 06_chinese_world: The same classroom after switching to simplified Chinese at runtime. (1600x900)
-[04:14:43] screenshot 07_prompt_chinese: The interaction prompt after the switch: the prompt text is translated. (1600x900)
-[04:14:44] screenshot 08_repeat_read_chinese: The second read of the same object, in Chinese. (1600x900)
-[04:14:45] screenshot 09_prompt_talk_chinese: The prompt for a conversation, in Chinese. (1600x900)
-[04:14:47] screenshot 10_conversation_chinese: A conversation line in Chinese, opened with E. (1600x900)
-[04:14:49] locale after pressing L again: en
-[04:14:49] screenshot 11_back_to_english: The same scene after switching back to English. (1600x900)
-[04:15:01] screenshot 12_door_prompt: The classroom door is open: its prompt changed with the story. (1600x900)
-[04:15:03] screenshot 13_corridor: The walkway outside the classroom. (1600x900)
-[04:15:06] screenshot 14_street: The street outside the school gate, with the arrival line finished. (1600x900)
-[04:15:08] screenshot 15_street_prompt: A street object with its prompt. (1600x900)
-[04:15:11] screenshot 16_street_inspection: The street object's description. (1600x900)
-[04:15:12] screenshot 15b_stair_prompt: The way up to the residential area. (1600x900)
-[04:15:14] screenshot 17_residential: The courtyard behind the school: three blocks and the stair. (1600x900)
-[04:15:16] screenshot 18_animal_prompt: The green animal, with the prompt to look at it. (1600x900)
-[04:15:18] screenshot 19_animal_conversation: Meeting the animal: the first line. (1600x900)
-[04:15:22] screenshot 20_end_card: The end-of-slice card at the end of the built content. (1600x900)
-[04:15:22] current location: residential
-[04:15:22] locale: en, objective: objective.animal
-[04:15:22] recorded knowledge entries: -1
-[04:15:22] screenshots written: 21
-[04:15:22] RESULT: the playthrough reached the end of the built content.
+[04:17:51] capture started: 2026-11-07T04:17:51
+[04:17:53] viewport: 1600x900, locale=en
+[04:18:00] screenshot 01_opening_line: The first line of the opening conversation, in English. (1600x900)
+[04:18:08] objective after the opening conversation: objective.check_bag
+[04:18:09] held move_forward for 0.8 s: player moved 2.19 m
+[04:18:09] screenshot 02_walking: The player after holding the forward key. (1600x900)
+[04:18:10] screenshot 03_world_after_opening: The classroom with control returned and the objective set. (1600x900)
+[04:18:10] screenshot 04_prompt_schoolbag: The interaction prompt with the key that is bound in the input map. (1600x900)
+[04:18:16] screenshot 05_inspection_text: The schoolbag description, reached by pressing E. (1600x900)
+[04:18:17] locale after pressing L: zh-CN
+[04:18:17] screenshot 06_chinese_world: The same classroom after switching to simplified Chinese at runtime. (1600x900)
+[04:18:22] screenshot 07_prompt_chinese: The interaction prompt after the switch: the prompt text is translated. (1600x900)
+[04:18:24] screenshot 08_repeat_read_chinese: The second read of the same object, in Chinese. (1600x900)
+[04:18:24] screenshot 09_prompt_talk_chinese: The prompt for a conversation, in Chinese. (1600x900)
+[04:18:26] screenshot 10_conversation_chinese: A conversation line in Chinese, opened with E. (1600x900)
+[04:18:28] locale after pressing L again: en
+[04:18:28] screenshot 11_back_to_english: The same scene after switching back to English. (1600x900)
+[04:18:41] screenshot 12_door_prompt: The classroom door is open: its prompt changed with the story. (1600x900)
+[04:18:43] screenshot 13_corridor: The walkway outside the classroom. (1600x900)
+[04:18:45] screenshot 14_street: The street outside the school gate, with the arrival line finished. (1600x900)
+[04:18:47] screenshot 15_street_prompt: A street object with its prompt. (1600x900)
+[04:18:50] screenshot 16_street_inspection: The street object's description. (1600x900)
+[04:18:51] screenshot 15b_stair_prompt: The way up to the residential area. (1600x900)
+[04:18:53] screenshot 17_residential: The courtyard behind the school: three blocks and the stair. (1600x900)
+[04:18:54] screenshot 18_animal_prompt: The green animal, with the prompt to look at it. (1600x900)
+[04:18:57] screenshot 19_animal_conversation: Meeting the animal: the first line. (1600x900)
+[04:19:01] screenshot 20_end_card: The end-of-slice card at the end of the built content. (1600x900)
+[04:19:01] current location: residential
+[04:19:01] locale: en, objective: objective.animal
+[04:19:01] recorded knowledge entries: -1
+[04:19:01] screenshots written: 21
+[04:19:01] RESULT: the playthrough reached the end of the built content.
