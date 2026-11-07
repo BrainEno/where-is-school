@@ -265,13 +265,13 @@ func _can_follow() -> bool:
 	return _joined and visible and _player != null and _actor != null
 
 
-## Readiness is a live question — "can the map answer a path query right now" — not a
-## state that only the location signal may set. A missed signal must not leave Q frozen
-## for the rest of the scene.
+## Readiness is a live question — "is the mesh under Q the one this location baked" — not
+## a state that only the location signal may set. A missed signal must not leave Q frozen
+## for the rest of the scene, and a map still holding the previous room must not count.
 func _update_navigation_readiness() -> void:
 	if _navigation_ready:
 		return
-	_navigation_ready = _map_has_geometry(_navigation_map())
+	_navigation_ready = _current_mesh_is_ready()
 
 
 ## The one place the chase decides anything: whether to walk, where to walk, and when
@@ -502,6 +502,26 @@ func _navigation_map() -> RID:
 	return get_world_3d().navigation_map
 
 
+## The navigation node of the location the player is in, if it has one.
+func _current_navigation() -> LocationNavigation:
+	if _host == null:
+		return null
+	var location := _host.get_current()
+	if location == null:
+		return null
+	return location.get_node_or_null("Navigation") as LocationNavigation
+
+
+## True when the mesh the player is standing on belongs to the location they are in and
+## can answer a route. The world map alone cannot say that: right after a swap it can still
+## be holding the room the player left.
+func _current_mesh_is_ready() -> bool:
+	var navigation := _current_navigation()
+	if navigation == null:
+		return _map_has_geometry(_navigation_map())
+	return navigation.is_baked() and navigation.is_routable()
+
+
 func _map_has_geometry(map: RID) -> bool:
 	if not map.is_valid():
 		return false
@@ -588,10 +608,12 @@ func _place_behind_player() -> void:
 		back = Vector3.BACK
 	var spot := _player.global_position + back.normalized() * stop_distance
 	spot.y = _player.global_position.y
-	var wanted := spot
-	spot = _snap_to_the_mesh(spot)
+	# No snapping here on purpose. At the moment of the swap the map may still be
+	# answering from the room the player just left, and "the nearest walkable point" then
+	# means a point in the wrong room. The correction below runs once the new scene's own
+	# mesh is the one answering.
 	_place_count += 1
-	_last_place_from = wanted
+	_last_place_from = spot
 	_last_place_to = spot
 	global_position = spot
 	velocity = Vector3.ZERO
@@ -638,7 +660,7 @@ func _settle_after_transition() -> void:
 	# wall-clock time mean nothing here.
 	var budget := maxi(1, int(minf(navigation_ready_timeout, 0.5) * 60.0))
 	while is_inside_tree() and budget > 0:
-		if _map_has_geometry(_navigation_map()):
+		if _current_mesh_is_ready():
 			break
 		await get_tree().physics_frame
 		budget -= 1

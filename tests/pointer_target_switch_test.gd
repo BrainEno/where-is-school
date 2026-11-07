@@ -120,6 +120,15 @@ func _run() -> void:
 ## a walk rather than an instant activation. Their ids are legal inspections so that an
 ## activation is a normal request; this test never reads what they say.
 func _place_probes() -> void:
+	# The classroom's mesh is baked deferred; a route query before it answers would make
+	# every floor point look unreachable and leave the probes unplaced.
+	var navigation := _location.get_node_or_null("Navigation") as LocationNavigation
+	var guard := 0
+	while guard < 240:
+		if navigation != null and navigation.is_baked() and navigation.is_routable():
+			break
+		await physics_frame
+		guard += 1
 	_player.teleport(Transform3D(Basis.IDENTITY, START))
 	await _physics_frames(2)
 	# The probes stand above open, walkable floor rather than at hand-picked offsets:
@@ -155,7 +164,7 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 				continue
 			var world: Vector3 = point
 			var distance := _flat_distance(_player.global_position, world)
-			if distance < 2.2 or distance > 4.2:
+			if distance < 2.0 or distance > 4.2:
 				continue
 			if _interaction.get_target_at_screen_position(screen, false) != null:
 				continue
@@ -163,7 +172,7 @@ func _open_floor_spots(count: int) -> Array[Vector3]:
 				continue
 			var crowded := false
 			for other: Vector3 in found:
-				if _flat_distance(other, world) < 1.8:
+				if _flat_distance(other, world) < 1.6:
 					crowded = true
 					break
 			if crowded:
