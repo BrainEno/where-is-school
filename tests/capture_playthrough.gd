@@ -622,6 +622,11 @@ func _capture_click_navigation() -> void:
 		return
 	_note("mouse shots: scripted left clicks pushed through the input system, not a human playtest")
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
+	# Which way an automatic walk ends: a finish or a cancel. A walk that stops without
+	# travelling has to say which of the two ended it.
+	var endings := [0, 0]
+	_player.path_finished.connect(func() -> void: endings[0] += 1)
+	_player.path_cancelled.connect(func() -> void: endings[1] += 1)
 	var start := _player.global_position
 	var destination := ""
 	var walking := false
@@ -644,12 +649,13 @@ func _capture_click_navigation() -> void:
 		await _click_at_screen(screen)
 		await _wait(0.2)
 		walking = _player.is_path_active()
-		after_click = "control=%s, legs=%d, index=%d, dialogue=%s, pending=%s" % [
+		after_click = "control=%s, legs=%d, index=%d, dialogue=%s, pending=%s, target=%s" % [
 			str(_player.is_control_enabled()),
 			_player.get_path_legs().size(),
 			_player.get_path_index(),
 			str(_dialogue.is_busy()),
 			str(navigator.get_pending_target()) if navigator != null else "no navigator",
+			str(_player.get_path_target()),
 		]
 		if not walking and navigator != null and navigator.get_click_count() == clicks_before:
 			# The press never arrived as unhandled input: something on screen took it.
@@ -690,11 +696,12 @@ func _capture_click_navigation() -> void:
 		)
 	elif destination.is_empty():
 		_failures.append(
-			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s; %s)."
+			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s, started at %s; %s; ended %d finish, %d cancel)."
 			% [
 				navigator.get_last_rejection() if navigator != null else "no navigator",
 				str(walking), str(settled), walked,
-				str(_player.global_position), after_click
+				str(_player.global_position), str(start), after_click,
+				endings[0], endings[1]
 			]
 		)
 
