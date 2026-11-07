@@ -41,6 +41,11 @@ jobs:
             echo "=== ${name}: $*"
             timeout "${limit}" "$@" > "ci-logs/${name}.log" 2>&1
             local code=$?
+            # A clean editor import can print parser/resource errors and still
+            # exit 0. Never let those errors turn into a green import check.
+            if [[ "$name" == import ]] && grep -Eq 'SCRIPT ERROR|Parse Error|^ERROR:' "ci-logs/${name}.log"; then
+              code=1
+            fi
             tail -n 30 "ci-logs/${name}.log"
             echo "--- exit ${code}"
             printf '%s=%s\n' "$name" "$code" >> ci-logs/results.txt

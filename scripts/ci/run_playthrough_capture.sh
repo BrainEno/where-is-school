@@ -10,7 +10,7 @@ godot="${GODOT_BIN:-godot}"
 xvfb="${XVFB_RUN_BIN:-xvfb-run}"
 mkdir -p "$evidence_dir" || exit 2
 # Do not mix a previous run's frames/logs into this one (or destroy them).
-for name in frames import.log capture.log; do
+for name in frames import.log capture.log validation.log; do
   if [[ -e "$evidence_dir/$name" ]]; then
     echo "Evidence path already exists: $evidence_dir/$name" >&2
     exit 2
@@ -69,14 +69,14 @@ required=(01_opening_line 04_prompt_schoolbag 05_inspection_text 06_chinese_worl
           10_conversation_chinese 13_corridor 14_street 17_residential
           19_animal_conversation 20_estate_exit 21_playground 22_active_choices
           23_active_result 24_active_choices_chinese 20_end_card)
-for frame in "${required[@]}"; do
-  if [[ ! -s "$evidence_dir/frames/$frame.png" ]]; then
-    stage=incomplete
-    capture_status=failure
-    echo "::error title=Capture incomplete::Missing frame $frame.png"
-    exit 1
-  fi
-done
+validator="$(dirname "$0")/validate_capture_frames.py"
+if ! python3 "$validator" "$evidence_dir/frames" "${required[@]}" > "$evidence_dir/validation.log" 2>&1; then
+  stage=incomplete
+  capture_status=failure
+  detail=$(grep '^INVALID ' "$evidence_dir/validation.log" | tr '\n' '|' | cut -c1-2000 || true)
+  echo "::error title=Capture incomplete::${detail:-See validation.log in the artifact}"
+  exit 1
+fi
 if [[ ! -s "$evidence_dir/frames/PLAYTHROUGH.log" || ! -s "$evidence_dir/frames/PLAYTHROUGH.md" ]] \
   || ! grep -q '^CAPTURE_RESULT: PASS$' "$evidence_dir/capture.log" \
   || grep -q 'FAILURE:' "$evidence_dir/frames/PLAYTHROUGH.log"; then

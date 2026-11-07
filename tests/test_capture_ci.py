@@ -31,12 +31,23 @@ fi
 mkdir -p "$CAPTURE_DIR"
 printf partial > "$CAPTURE_DIR/partial.png"
 if [[ ${MODE} == capture_fail ]]; then echo "deliberate capture failure"; exit 32; fi
+python3 - "$CAPTURE_DIR/_fixture.png" <<'FRAME'
+import struct, sys, zlib
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
+header = struct.pack(">IIBBBBB", 1600, 900, 8, 0, 0, 0, 0)
+scanlines = (b"\x00" + bytes(1600)) * 900
+with open(sys.argv[1], "wb") as f:
+    f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(scanlines)) + chunk(b"IEND", b""))
+FRAME
 for frame in 01_opening_line 04_prompt_schoolbag 05_inspection_text 06_chinese_world \
   10_conversation_chinese 13_corridor 14_street 17_residential 19_animal_conversation 20_estate_exit 21_playground 22_active_choices \
   23_active_result 24_active_choices_chinese 20_end_card; do
   if [[ ${MODE} == incomplete && $frame == 20_end_card ]]; then continue; fi
-  printf simulated-frame > "$CAPTURE_DIR/$frame.png"
+  cp "$CAPTURE_DIR/_fixture.png" "$CAPTURE_DIR/$frame.png"
 done
+rm "$CAPTURE_DIR/_fixture.png"
+if [[ ${MODE} == corrupt ]]; then printf corrupt > "$CAPTURE_DIR/21_playground.png"; fi
 printf 'RESULT: fixture\n' > "$CAPTURE_DIR/PLAYTHROUGH.log"
 printf '# fixture\n' > "$CAPTURE_DIR/PLAYTHROUGH.md"
 if [[ ${MODE} == capture_error_zero ]]; then echo 'ERROR: deliberate capture error'; fi
@@ -102,7 +113,7 @@ class CapturePipelineTest(unittest.TestCase):
         self.assertIn("deliberate capture failure", (self.evidence / "capture.log").read_text())
 
     def test_incomplete_or_unmarked_output_fails_even_with_zero_exit(self):
-        for mode in ("incomplete", "missing_marker"):
+        for mode in ("incomplete", "missing_marker", "corrupt"):
             with self.subTest(mode=mode):
                 self.evidence = self.dir / mode
                 process, status = self.run_pipeline(mode)

@@ -6,6 +6,8 @@ name: Playthrough capture
 on:
   push:
     paths:
+      - "project.godot"
+      - "assets/**"
       - "tests/capture_playthrough.gd"
       - "tests/test_capture_ci.py"
       - "scripts/ci/**"
@@ -16,6 +18,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "project.godot"
+      - "assets/**"
       - "tests/capture_playthrough.gd"
       - "tests/test_capture_ci.py"
       - "scripts/ci/**"
