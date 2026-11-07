@@ -1,0 +1,12 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "alley_mark": {
+    "title": "墙上的印子",
+    "prompt": "看看墙",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "墙上有块浅色的长方形。以前挂过牌子。字没留下。",
+    "repeat_text": "浅色的印子还在。"
+  }
+}

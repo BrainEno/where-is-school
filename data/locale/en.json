@@ -36,10 +36,15 @@
     "objective.bell": "Second bell. The lesson is starting.",
     "objective.no_textbook": "No textbook. Look around before the second bell. You can glance at the corridor if you like.",
     "end.slice.title": "End of this build",
-    "end.slice.body": "You are past the school, on the street, and among the flats. The alley behind the animal, the gate out of the estate, and the courtyard it is walking towards are the next thing to build.",
+    "end.slice.body": "The field is open. The marked lines, the stands and the goal are still here. The rest of the school waits beyond this build.",
     "prompt.back_inside": "Go back inside",
     "prompt.stairs_up": "Go up the stairs",
     "prompt.animal": "Look at it",
-    "prompt.back_to_street": "Go back to the street"
+    "prompt.back_to_street": "Go back to the street",
+    "objective.playground": "The route opens towards the playing field.",
+    "prompt.back_to_residential": "Return to the courtyard",
+    "prompt.to_alley": "Return to the alley",
+    "prompt.to_yard": "Cross the yard",
+    "prompt.to_playground": "Enter the playing field"
   }
 }

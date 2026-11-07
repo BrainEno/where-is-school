@@ -1003,8 +1003,9 @@ position = Vector3(6.0, 0.9, -33.0)
 interact_id = &"res_alley_end"
 prompt_key = "prompt.milestone"
 radius = 1.6
-is_milestone_end = true
-end_card_key = "end.slice"
+destination_scene = "res://scenes/locations/alley/alley.tscn"
+destination_spawn = &"FromResidential"
+destination_id = &"alley"
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 
@@ -1013,6 +1014,9 @@ position = Vector3(-4.0, 0, 10.0)
 
 [node name="FromStair" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-13.6, 1.8, -13.4)
+
+[node name="FromAlley" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(6.0, 0, -31.6)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("14_ambience")

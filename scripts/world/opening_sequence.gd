@@ -51,11 +51,15 @@ var _hud: GameHud = null
 var _beat_active := false
 var _control_allowed := false
 var _slice_finished := false
+var _checks: AbilityChecks = null
 
 
 func _ready() -> void:
 	if not _resolve_nodes():
 		return
+	_checks = AbilityChecks.new(_game_state())
+	for issue: String in _checks.errors:
+		push_error("OpeningSequence: %s" % issue)
 	_dialogue.presentation_active_changed.connect(_on_presentation_active_changed)
 	_game_state().story_flag_changed.connect(_on_story_flag_changed)
 	_interaction.activation_requested.connect(_on_activation_requested)
@@ -227,6 +231,13 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		_handle_exit(exit)
 		return
 
+	var passive_conversation := _checks.passive_conversation(interactable.interact_id)
+	if not String(passive_conversation).is_empty():
+		await _begin_beat()
+		await _play_conversation(passive_conversation)
+		_end_beat()
+		return
+
 	if not String(interactable.conversation_route).is_empty():
 		var conversation := ConversationRouter.select(
 			interactable.conversation_route, _game_state().get_snapshot()
@@ -300,6 +311,8 @@ func _transition_to(exit: LocationExit) -> void:
 		_hud.set_objective("objective.outside")
 	elif destination_id == &"residential":
 		_hud.set_objective("objective.residential")
+	elif destination_id in [&"alley", &"service_yard", &"playground"]:
+		_hud.set_objective("objective.playground")
 	_hud.clear_prompt()
 	_update_exit_prompt()
 	await get_tree().create_timer(0.3).timeout

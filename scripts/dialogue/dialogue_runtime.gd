@@ -30,6 +30,9 @@ var _steps: int = 0
 var _game_state: Node = null
 var _narrative_state: Node = null
 var _characters: CharacterDirectory = null
+var _checks: AbilityChecks = null
+var _visible_result: Dictionary = {}
+var _visible_result_node: StringName = &""
 
 
 func _init(
@@ -40,6 +43,7 @@ func _init(
 	_game_state = game_state if game_state != null else _find_autoload("GameState")
 	_narrative_state = narrative_state if narrative_state != null else _find_autoload("NarrativeState")
 	_characters = characters if characters != null else CharacterDirectory.load_all()
+	_checks = AbilityChecks.new(_game_state)
 	if _characters != null and not _characters.errors.is_empty():
 		for message in _characters.errors:
 			push_error("DialogueRuntime: %s" % message)
@@ -94,6 +98,8 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	_conversation = conversation
 	_active = true
 	_steps = 0
+	_visible_result = {}
+	_visible_result_node = &""
 	conversation_started.emit(conversation_id)
 	_enter_node(conversation.start_id)
 	return true
@@ -127,7 +133,16 @@ func choose(choice_index: int) -> bool:
 		_set_flag(StoryFlags.choice_flag(_conversation.conversation_id, choice.choice_id), true)
 	_apply_effects(choice.effects)
 	_awaiting_choice = false
-	_enter_node(choice.next_id)
+	if not choice.check.is_empty():
+		var key := StringName("%s.%s" % [_conversation.conversation_id, choice.choice_id])
+		_visible_result = _checks.resolve(key, choice.check, true)
+		if _visible_result.is_empty():
+			return false
+		_visible_result_node = StringName(String(choice.check["success"] if _visible_result["success"] else choice.check["failure"]))
+		_enter_node(_visible_result_node)
+	else:
+		_visible_result = {}
+		_enter_node(choice.next_id)
 	return true
 
 
@@ -144,7 +159,12 @@ func get_current_choices() -> Array:
 	var available := _available_choices(_node)
 	for index in available.size():
 		var choice: DialogueGraph.DialogueChoice = available[index]
-		presented.append({"index": index, "text": choice.text})
+		var label := choice.text
+		if not choice.check.is_empty():
+			label += " (%s %d / DC %d)" % [
+				_checks.name_of(String(choice.check["ability"]), L10n.current),
+				_checks.level_of(String(choice.check["ability"])), int(choice.check["difficulty"])]
+		presented.append({"index": index, "text": label})
 	return presented
 
 
@@ -182,6 +202,9 @@ func _enter_node(node_id: StringName) -> void:
 		node_id = skipped_target
 
 	_node = node
+	if node.node_id != _visible_result_node:
+		_visible_result = {}
+		_visible_result_node = &""
 	_apply_effects(node.effects)
 
 	var available := _available_choices(node)
@@ -283,6 +306,10 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		speaker_name = _characters.get_display_name(speaker_id)
 		speaker_role = _characters.get_short_role(speaker_id)
 		accent_color = _characters.get_accent_color(speaker_id)
+	var display_text := node.text
+	if node.node_id == _visible_result_node and not _visible_result.is_empty():
+		display_text = _checks.visible_report(_visible_result, L10n.current) + "
+" + display_text
 	return {
 		"conversation_id": _conversation.conversation_id,
 		"node_id": node.node_id,
@@ -291,7 +318,7 @@ func _build_line(node: DialogueGraph.DialogueNode) -> Dictionary:
 		"speaker_role": speaker_role,
 		"accent_color": accent_color,
 		"title": "",
-		"text": node.text,
+		"text": display_text,
 		"source": source_value,
 		"badge": NarrativeEntry.badge_key_for(source_value),
 		"subjective": _conversation.subjective,

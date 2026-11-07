@@ -1,21 +1,16 @@
 name: Playthrough capture
 
-# Runs the real game in a real window under Xvfb, drives it with simulated keys,
-# and commits what it saw to docs/screenshots. The screenshots in the pull request
-# come from this job, not from the editor.
-
+# Read-only validation on PRs; logs/frames are run artifacts, never pushed back
+# to the source branch or over previously reviewed successful screenshots.
 on:
+  pull_request:
+    branches: [main]
   push:
-    paths:
-      - "tests/capture_playthrough.gd"
-      - ".github/workflows/playthrough-capture.yml"
-      - "scenes/**"
-      - "scripts/**"
-      - "data/**"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   capture:
@@ -24,71 +19,19 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
-
       - uses: chickensoft-games/setup-godot@v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
-
-      - name: Import project
+      - name: Import and capture
         shell: bash
-        run: |
-          set -uo pipefail
-          set +e
-          godot --headless --editor --path . --quit > /tmp/import.log 2>&1
-          echo "import exit=$?"
-          grep -E "SCRIPT ERROR|Parse Error|ERROR:" /tmp/import.log | head -n 20 || true
-
-      - name: Capture the playthrough
-        shell: bash
-        run: |
-          # GitHub runs bash steps with -e; the capture is allowed to fail, because
-          # a failed run still has to commit the frame where it stopped.
-          set -uo pipefail
-          set +e
-          mkdir -p docs/screenshots
-          xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
-            --script res://tests/capture_playthrough.gd > /tmp/capture.log 2>&1
-          code=$?
-          echo "capture exit=${code}"
-          grep -E "CAPTURE|SCRIPT ERROR|ERROR:" /tmp/capture.log | tail -n 60 || true
-          ls -l docs/screenshots || true
-          summary=$(grep -E "FAILURE|RESULT" docs/screenshots/PLAYTHROUGH.log 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
-          if [ "${code}" -eq 0 ]; then
-            echo "::notice title=playthrough::${summary:-capture finished}"
-          else
-            echo "::error title=playthrough failed (exit ${code})::${summary:-no summary}"
-          fi
-          # Evidence is committed even when the run failed: a screenshot of the
-          # frame where it stopped is the point.
-          exit 0
-
-      - name: Commit the screenshots
-        shell: bash
-        run: |
-          set -uo pipefail
-          set +e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/screenshots
-          if git diff --cached --quiet; then
-            echo "no screenshot changes"
-            exit 0
-          fi
-          # [skip ci]: the screenshots are evidence, not a change that needs a new
-          # full CI run (and a bot-triggered run would only wait for approval).
-          git commit -m "Playthrough capture: update screenshots from the real window [skip ci]"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-
-      - name: Upload the log
+        env:
+          CAPTURE_OUTPUT_DIR: ${{ runner.temp }}/playthrough-evidence
+        run: tools/run-playthrough-capture.sh
+      - name: Upload evidence (including failed logs and partial frames)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playthrough-log
-          path: |
-            /tmp/capture.log
-            docs/screenshots/PLAYTHROUGH.log
+          name: playthrough-evidence
+          path: ${{ runner.temp }}/playthrough-evidence/
           if-no-files-found: warn

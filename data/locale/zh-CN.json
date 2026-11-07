@@ -36,10 +36,15 @@
     "objective.bell": "第二遍铃响了。课要开始了。",
     "objective.no_textbook": "没有课本。打铃前先在屋里看看。想去走廊看一眼也可以。",
     "end.slice.title": "本次构建到这里",
-    "end.slice.body": "你已经出了学校，站在街上，也走进了居民楼之间。它身后那条小巷、小区的出口，还有它正走过去的院子，是接下来要做的部分。",
+    "end.slice.body": "操场还开着。跑道、看台和球门都在。学校的其他地方留给下一段。",
     "prompt.back_inside": "回到里面",
     "prompt.stairs_up": "上楼",
     "prompt.animal": "看它",
-    "prompt.back_to_street": "回到街上"
+    "prompt.back_to_street": "回到街上",
+    "objective.playground": "路通向操场。",
+    "prompt.back_to_residential": "回天井",
+    "prompt.to_alley": "回巷道",
+    "prompt.to_yard": "去院子",
+    "prompt.to_playground": "进操场"
   }
 }

@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "field_lines": {
+    "title": "The lane marks",
+    "prompt": "Look at the lanes",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "White marks run out towards the fence. The field itself is quiet.",
+    "repeat_text": "The marks have not moved."
+  },
+  "field_bleachers": {
+    "title": "The stands",
+    "prompt": "Look at the stands",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two low concrete rows. Somebody left a bottle cap under the second step.",
+    "repeat_text": "The bottle cap is still under the step."
+  },
+  "field_notice": {
+    "title": "The noticeboard",
+    "prompt": "Look at the notice",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The board lists regular practice times. One square has been rubbed out.",
+    "repeat_text": "That square is blank."
+  }
+}

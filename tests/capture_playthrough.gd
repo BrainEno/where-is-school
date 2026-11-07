@@ -14,8 +14,10 @@ extends SceneTree
 ## the log.
 
 const Harness = preload("res://tests/test_harness.gd")
-const SHOT_DIR := "res://docs/screenshots"
-const LOG_PATH := "res://docs/screenshots/PLAYTHROUGH.log"
+# CI writes into an isolated artifact directory. Never overwrite committed evidence
+# from an earlier successful capture with partial frames from a failed run.
+var _shot_dir: String = "res://docs/screenshots"
+var _log_path: String = ""
 
 var _main: Node = null
 var _dialogue: DialogueController = null
@@ -38,7 +40,10 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
+	if not OS.get_environment("CAPTURE_OUTPUT_DIR").is_empty():
+		_shot_dir = OS.get_environment("CAPTURE_OUTPUT_DIR")
+	_log_path = _shot_dir.path_join("PLAYTHROUGH.log")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_shot_dir))
 	_note("capture started: %s" % Time.get_datetime_string_from_system())
 
 	var autoloads := Harness.ensure_state_autoloads(self)
@@ -255,9 +260,23 @@ func _run() -> void:
 				_teleport(Vector3(6.0, 0, -31.6), 0.0)
 				await _wait_for_target(&"res_alley_end", 30.0)
 				await _press(KEY_E)
-				if await _wait_for_visible(_ui.end_card, 20.0):
-					await _wait(0.6)
-					await _shot("20_end_card", "The end-of-slice card at the end of the built content.")
+				if await _wait_for_location("alley", 30.0):
+					await _shot("20_alley", "The narrow alley turns towards a service yard.")
+					_teleport(Vector3(8, 0, -9), 0.0)
+					await _wait_for_target(&"alley_to_yard", 20.0)
+					await _press(KEY_E)
+					if await _wait_for_location("service_yard", 30.0):
+						await _shot("21_yard", "The residential exit opens into a small service yard.")
+						_teleport(Vector3(8, 0, -5), 0.0)
+						await _wait_for_target(&"yard_to_playground", 20.0)
+						await _press(KEY_E)
+						if await _wait_for_location("playground", 30.0):
+							await _shot("22_field", "The open field, with independent anchors around it.")
+							_teleport(Vector3(12, 0, -9), 0.0)
+							await _wait_for_target(&"field_end", 20.0)
+							await _press(KEY_E)
+							if await _wait_for_visible(_ui.end_card, 20.0):
+								await _shot("23_end_card", "The end-of-slice card beyond the open field.")
 
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))
@@ -267,10 +286,12 @@ func _run() -> void:
 
 	if _failures.is_empty():
 		_note("RESULT: the playthrough reached the end of the built content.")
+		_note("CAPTURE_STATUS=success")
 	else:
 		for failure: String in _failures:
 			_note("FAILURE: %s" % failure)
 		await _shot("FAIL_last_frame", "The last frame before the capture stopped.")
+		_note("CAPTURE_STATUS=failure")
 	_write_log()
 	quit(0 if _failures.is_empty() else 1)
 
@@ -398,7 +419,7 @@ func _shot(shot_name: String, caption: String) -> void:
 	if image == null:
 		_failures.append("No image was available for screenshot %s." % shot_name)
 		return
-	var path := "%s/%s.png" % [SHOT_DIR, shot_name]
+	var path := "%s/%s.png" % [_shot_dir, shot_name]
 	var err := image.save_png(path)
 	if err != OK:
 		_failures.append("Screenshot %s could not be saved (error %d)." % [shot_name, err])
@@ -412,6 +433,7 @@ func _fail(reason: String) -> void:
 	await _shot("FAIL_stopped", "The frame where the capture stopped: %s" % reason)
 	for failure: String in _failures:
 		_note("FAILURE: %s" % failure)
+	_note("CAPTURE_STATUS=failure")
 	_write_log()
 	quit(1)
 
@@ -423,9 +445,9 @@ func _note(message: String) -> void:
 
 
 func _write_log() -> void:
-	var file := FileAccess.open(LOG_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(_log_path, FileAccess.WRITE)
 	if file == null:
-		push_error("Could not write %s" % LOG_PATH)
+		push_error("Could not write %s" % _log_path)
 		return
 	file.store_string("\n".join(_log_lines) + "\n")
 	file.close()
@@ -453,7 +475,7 @@ func _write_log() -> void:
 		markdown.append("")
 		markdown.append("![%s](%s.png)" % [shot_name, shot_name])
 		markdown.append("")
-	var markdown_file := FileAccess.open("res://docs/screenshots/PLAYTHROUGH.md", FileAccess.WRITE)
+	var markdown_file := FileAccess.open(_shot_dir.path_join("PLAYTHROUGH.md"), FileAccess.WRITE)
 	if markdown_file != null:
 		markdown_file.store_string("\n".join(markdown) + "\n")
 		markdown_file.close()

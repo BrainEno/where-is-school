@@ -94,3 +94,14 @@ An initial choice may influence scene order and which evidence appears first. It
 - B's eventual dialogue should not simply validate or disprove Q's account.
 - Choices should alter tone, knowledge, relationship, access, or interpretation.
 - Keep long dialogue interleaved with movement, inspection, silence, and player decisions.
+
+## Next playable route (provisional content)
+
+From the residential courtyard, a turning alley leads to a service yard. The
+service yard opens into a school playground. The field is free to explore in any
+order: lanes, stands, noticeboard and goal. Their proximity does not explain how
+residential space meets school space. A hidden Trace reaction at the yard drain,
+a hidden Measure reaction at the lines, and player-chosen Measure/Echo attempts
+at the goal offer *fallible internal impressions*, not authoritative exposition.
+No outcome identifies the green animal or the source of the spatial discrepancy.
+The text and ability names are placeholders for author review (ADR 0003).

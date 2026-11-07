@@ -13,7 +13,7 @@ extends RefCounted
 ##   and objective keys are checked against the locale tables, so a translator
 ##   cannot drop a branch or point at a label that does not exist.
 
-const CHAPTERS: Array[String] = ["prologue", "street", "residential"]
+const CHAPTERS: Array[String] = ["prologue", "street", "residential", "service_yard", "playground"]
 const DIALOGUE_DIR := "res://data/dialogue"
 
 var errors: Array[String] = []

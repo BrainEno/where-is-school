@@ -1,0 +1,277 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="3"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="concrete"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="asphalt"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_brick.tres" id="brick"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="metal"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="paper"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_soil.tres" id="soil"]
+
+[sub_resource type="Environment" id="dusk"]
+background_mode = 1
+background_color = Color(0.22, 0.18, 0.17, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.42, 0.35, 1)
+ambient_light_energy = 1.0
+
+[sub_resource type="BoxMesh" id="mesh0"]
+size = Vector3(30, 0.2, 26)
+
+[sub_resource type="BoxShape3D" id="shape0"]
+size = Vector3(30, 0.2, 26)
+
+[sub_resource type="BoxMesh" id="mesh1"]
+size = Vector3(23, 0.02, 17)
+
+[sub_resource type="BoxMesh" id="mesh2"]
+size = Vector3(19, 0.03, 12)
+
+[sub_resource type="BoxMesh" id="mesh3"]
+size = Vector3(0.08, 0.03, 12)
+
+[sub_resource type="BoxMesh" id="mesh4"]
+size = Vector3(0.08, 0.03, 12)
+
+[sub_resource type="BoxMesh" id="mesh5"]
+size = Vector3(18, 0.03, 0.08)
+
+[sub_resource type="BoxMesh" id="mesh6"]
+size = Vector3(30, 1.6, 0.18)
+
+[sub_resource type="BoxShape3D" id="shape6"]
+size = Vector3(30, 1.6, 0.18)
+
+[sub_resource type="BoxMesh" id="mesh7"]
+size = Vector3(0.18, 1.6, 26)
+
+[sub_resource type="BoxShape3D" id="shape7"]
+size = Vector3(0.18, 1.6, 26)
+
+[sub_resource type="BoxMesh" id="mesh8"]
+size = Vector3(5, 0.45, 1.2)
+
+[sub_resource type="BoxShape3D" id="shape8"]
+size = Vector3(5, 0.45, 1.2)
+
+[sub_resource type="BoxMesh" id="mesh9"]
+size = Vector3(5, 0.9, 1.2)
+
+[sub_resource type="BoxShape3D" id="shape9"]
+size = Vector3(5, 0.9, 1.2)
+
+[sub_resource type="BoxMesh" id="mesh10"]
+size = Vector3(0.13, 2, 0.13)
+
+[sub_resource type="BoxShape3D" id="shape10"]
+size = Vector3(0.13, 2, 0.13)
+
+[sub_resource type="BoxMesh" id="mesh11"]
+size = Vector3(0.13, 2, 0.13)
+
+[sub_resource type="BoxShape3D" id="shape11"]
+size = Vector3(0.13, 2, 0.13)
+
+[sub_resource type="BoxMesh" id="mesh12"]
+size = Vector3(0.13, 0.13, 3)
+
+[sub_resource type="BoxShape3D" id="shape12"]
+size = Vector3(0.13, 0.13, 3)
+
+[sub_resource type="BoxMesh" id="mesh13"]
+size = Vector3(2.5, 1.6, 0.13)
+
+[sub_resource type="BoxShape3D" id="shape13"]
+size = Vector3(2.5, 1.6, 0.13)
+
+[node name="Playground" type="Node3D"]
+script = ExtResource("1")
+location_id = &"playground"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("dusk")
+
+[node name="DuskLight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.65, -0.7, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("shape0")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("mesh0")
+material_override = ExtResource("asphalt")
+
+[node name="Track" type="Node3D" parent="."]
+position = Vector3(0, 0.02, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Track"]
+mesh = SubResource("mesh1")
+material_override = ExtResource("concrete")
+
+[node name="Field" type="Node3D" parent="."]
+position = Vector3(0, 0.04, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Field"]
+mesh = SubResource("mesh2")
+material_override = ExtResource("soil")
+
+[node name="LineWest" type="Node3D" parent="."]
+position = Vector3(-9, 0.06, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="LineWest"]
+mesh = SubResource("mesh3")
+material_override = ExtResource("paper")
+
+[node name="LineEast" type="Node3D" parent="."]
+position = Vector3(9, 0.06, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="LineEast"]
+mesh = SubResource("mesh4")
+material_override = ExtResource("paper")
+
+[node name="CenterLine" type="Node3D" parent="."]
+position = Vector3(0, 0.06, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="CenterLine"]
+mesh = SubResource("mesh5")
+material_override = ExtResource("paper")
+
+[node name="NorthFence" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.8, -13)
+
+[node name="Collision" type="CollisionShape3D" parent="NorthFence"]
+shape = SubResource("shape6")
+
+[node name="Mesh" type="MeshInstance3D" parent="NorthFence"]
+mesh = SubResource("mesh6")
+material_override = ExtResource("metal")
+
+[node name="WestFence" type="StaticBody3D" parent="."]
+position = Vector3(-15, 0.8, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="WestFence"]
+shape = SubResource("shape7")
+
+[node name="Mesh" type="MeshInstance3D" parent="WestFence"]
+mesh = SubResource("mesh7")
+material_override = ExtResource("metal")
+
+[node name="BleacherOne" type="StaticBody3D" parent="."]
+position = Vector3(-10, 0.22, 9)
+
+[node name="Collision" type="CollisionShape3D" parent="BleacherOne"]
+shape = SubResource("shape8")
+
+[node name="Mesh" type="MeshInstance3D" parent="BleacherOne"]
+mesh = SubResource("mesh8")
+material_override = ExtResource("concrete")
+
+[node name="BleacherTwo" type="StaticBody3D" parent="."]
+position = Vector3(-10, 0.45, 10.6)
+
+[node name="Collision" type="CollisionShape3D" parent="BleacherTwo"]
+shape = SubResource("shape9")
+
+[node name="Mesh" type="MeshInstance3D" parent="BleacherTwo"]
+mesh = SubResource("mesh9")
+material_override = ExtResource("concrete")
+
+[node name="GoalLeft" type="StaticBody3D" parent="."]
+position = Vector3(8, 1, -4)
+
+[node name="Collision" type="CollisionShape3D" parent="GoalLeft"]
+shape = SubResource("shape10")
+
+[node name="Mesh" type="MeshInstance3D" parent="GoalLeft"]
+mesh = SubResource("mesh10")
+material_override = ExtResource("metal")
+
+[node name="GoalRight" type="StaticBody3D" parent="."]
+position = Vector3(8, 1, -1)
+
+[node name="Collision" type="CollisionShape3D" parent="GoalRight"]
+shape = SubResource("shape11")
+
+[node name="Mesh" type="MeshInstance3D" parent="GoalRight"]
+mesh = SubResource("mesh11")
+material_override = ExtResource("metal")
+
+[node name="GoalCross" type="StaticBody3D" parent="."]
+position = Vector3(8, 2, -2.5)
+
+[node name="Collision" type="CollisionShape3D" parent="GoalCross"]
+shape = SubResource("shape12")
+
+[node name="Mesh" type="MeshInstance3D" parent="GoalCross"]
+mesh = SubResource("mesh12")
+material_override = ExtResource("metal")
+
+[node name="NoticeBoard" type="StaticBody3D" parent="."]
+position = Vector3(10, 1.3, 7)
+
+[node name="Collision" type="CollisionShape3D" parent="NoticeBoard"]
+shape = SubResource("shape13")
+
+[node name="Mesh" type="MeshInstance3D" parent="NoticeBoard"]
+mesh = SubResource("mesh13")
+material_override = ExtResource("paper")
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackYard" parent="Interactables" instance=ExtResource("3")]
+position = Vector3(13, 0.9, 11)
+interact_id = &"field_back"
+prompt_key = "prompt.to_yard"
+radius = 1.8
+destination_scene = "res://scenes/locations/service_yard/service_yard.tscn"
+destination_spawn = &"FromPlayground"
+destination_id = &"service_yard"
+
+[node name="FieldLines" parent="Interactables" instance=ExtResource("2")]
+position = Vector3(-7, 0.9, 0)
+interact_id = &"field_lines"
+prompt_key = "prompt.look"
+radius = 1.8
+inspection_id = &"field_lines"
+
+[node name="Bleachers" parent="Interactables" instance=ExtResource("2")]
+position = Vector3(-10, 0.9, 8)
+interact_id = &"field_bleachers"
+prompt_key = "prompt.look"
+radius = 1.8
+inspection_id = &"field_bleachers"
+
+[node name="Notice" parent="Interactables" instance=ExtResource("2")]
+position = Vector3(10, 0.9, 7)
+interact_id = &"field_notice"
+prompt_key = "prompt.look"
+radius = 1.8
+inspection_id = &"field_notice"
+
+[node name="Goal" parent="Interactables" instance=ExtResource("2")]
+position = Vector3(7, 0.9, -3)
+interact_id = &"field_goal"
+prompt_key = "prompt.look"
+radius = 1.8
+conversation_route = &"field_goal"
+
+[node name="End" parent="Interactables" instance=ExtResource("3")]
+position = Vector3(12, 0.9, -10)
+interact_id = &"field_end"
+prompt_key = "prompt.milestone"
+radius = 1.8
+is_milestone_end = true
+end_card_key = "end.slice"
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromYard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(12, 0, 10)
+

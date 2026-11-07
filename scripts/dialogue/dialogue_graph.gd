@@ -35,6 +35,7 @@ class DialogueChoice extends RefCounted:
 	var not_flags: Array[StringName] = []
 	var effects: Array = []
 	var once: bool = false
+	var check: Dictionary = {}
 
 
 class DialogueNode extends RefCounted:
@@ -328,6 +329,17 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 		choice.all_flags,
 		choice.not_flags
 	)
+	if data.has("check"):
+		if not (data["check"] is Dictionary):
+			errors.append("%s choice '%s': check must be an object." % [context, choice.choice_id])
+		else:
+			choice.check = data["check"]
+			var spec: Dictionary = choice.check
+			for field: String in ["ability", "difficulty", "success", "failure"]:
+				if not spec.has(field) or String(spec[field]).is_empty():
+					errors.append("%s choice '%s': check needs '%s'." % [context, choice.choice_id, field])
+			if int(spec.get("difficulty", 0)) < 1:
+				errors.append("%s choice '%s': check difficulty must be positive." % [context, choice.choice_id])
 	choice.effects = _parse_effects(
 		data.get("effects", []), "%s choice '%s'" % [context, choice.choice_id]
 	)
@@ -446,6 +458,10 @@ func _validate_conversation(conversation: Conversation, path: String) -> void:
 		if not String(node.next_id).is_empty() and not conversation.nodes.has(node.next_id):
 			errors.append("%s: next node '%s' does not exist." % [node_label, node.next_id])
 		for choice: DialogueChoice in node.choices:
+			if not choice.check.is_empty():
+				for outcome: String in ["success", "failure"]:
+					if not conversation.nodes.has(StringName(String(choice.check.get(outcome, "")))):
+						errors.append("%s: choice '%s' check %s target is missing." % [node_label, choice.choice_id, outcome])
 			if not conversation.nodes.has(choice.next_id):
 				errors.append(
 					"%s: choice '%s' points at missing node '%s'."
@@ -549,6 +565,9 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 		var node: DialogueNode = conversation.nodes[current]
 		for choice: DialogueChoice in node.choices:
 			queue.append(choice.next_id)
+			if not choice.check.is_empty():
+				queue.append(StringName(String(choice.check.get("success", ""))))
+				queue.append(StringName(String(choice.check.get("failure", ""))))
 		if node.ends_here:
 			continue
 		if not String(node.next_id).is_empty():

@@ -156,3 +156,16 @@ Use user:// paths. Write to a temporary file, validate the result, then replace 
 - Manual tests: navigation readability, pacing, camera comfort, typography, controller feel, and spatial surprises.
 
 A successful headless import is not proof that the game is playable. PRs must say which level of validation they actually performed.
+
+## 9. Hybrid inner-ability checks (slice 2)
+
+`data/abilities/abilities.json` holds three provisional bilingual abilities and
+passive trigger data. `AbilityChecks` is a small non-autoload domain service with
+an injectable RNG; its first result is stored by stable id in GameState and
+reused on revisits. Active checks are `choice.check` data in the existing
+DialogueGraph, dispatched by DialogueRuntime into success/failure nodes, with the
+roll shown in the dialogue panel. Passive checks are dispatched by the opening
+director from interaction ids into authored conversations through the same
+DialogueController, with no die shown. Both use the same resolution core.
+NarrativeState remains a separate append-only store; a skill's suggestion is not
+a world fact. See ADR 0003 for the formula, boundaries and pending decisions.

@@ -135,18 +135,23 @@ static func _compare_node(
 		if reference_choice.once != other_choice.once:
 			problems.append("%s: 'once' differs between languages." % choice_label)
 		_compare_effects(reference_choice.effects, other_choice.effects, choice_label, problems)
+		_compare_conditions(reference_choice, other_choice, choice_label, problems)
+		if reference_choice.check != other_choice.check:
+			problems.append("%s: check specification differs between languages." % choice_label)
 
 
 static func _compare_conditions(
-	reference: DialogueGraph.DialogueNode,
-	other: DialogueGraph.DialogueNode,
+	reference: Variant,
+	other: Variant,
 	node_label: String,
 	problems: Array[String]
 ) -> void:
 	if reference.requires != other.requires:
 		problems.append("%s: conditions.requires differ between languages." % node_label)
-	if reference.all_flags != other.all_flags or reference.not_flags != other.not_flags:
-		problems.append("%s: condition flags differ between languages." % node_label)
+	if reference.all_flags != other.all_flags:
+		problems.append("%s: conditions.all_flags differ between languages." % node_label)
+	if reference.not_flags != other.not_flags:
+		problems.append("%s: conditions.not_flags differ between languages." % node_label)
 
 
 ## Effects are behaviour, not prose: flag names, objective keys and entry ids

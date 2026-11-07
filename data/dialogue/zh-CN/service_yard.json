@@ -1,0 +1,35 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "service_yard",
+  "conversations": {
+    "drain_trace": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "drain_trace_1",
+      "nodes": [
+        {
+          "id": "drain_trace_1",
+          "speaker": "protagonist",
+          "text": "寻迹：水槽一直通向门边。最近有人清理过。痕迹只能说明这个。",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "drain_uncertain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "drain_uncertain_1",
+      "nodes": [
+        {
+          "id": "drain_uncertain_1",
+          "speaker": "protagonist",
+          "text": "寻迹：有道新痕迹。也可能只是水冲的。门还能走。",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    }
+  }
+}

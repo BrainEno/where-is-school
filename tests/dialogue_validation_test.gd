@@ -31,6 +31,7 @@ func _run() -> void:
 	_expect_error("wrong locale", _wrong_locale(), ["de-DE"])
 
 	_check_locale_parity()
+	_check_choice_conditions_parity()
 	_check_real_content()
 
 	Harness.finish(self, _failures, "the dialogue validator rejects every broken fixture.")
@@ -186,6 +187,42 @@ func _check_locale_parity() -> void:
 	var joined := "\n".join(problems)
 	if not joined.contains("p2"):
 		_failures.append("The parity error does not name the dropped node: %s" % joined)
+
+
+## Each of the three choice predicates affects availability; a translated branch
+## with a different predicate must be rejected even if its target is unchanged.
+func _check_choice_conditions_parity() -> void:
+	var conditions := {"requires": {"flag_a": true}, "all_flags": ["flag_b"], "not_flags": ["flag_c"]}
+	var base := _graph("choice_parity", [
+		{"id": "hub", "speaker": "q", "text": "Choose.", "choices": [
+			{"id": "one", "text": "Option.", "next": "end", "conditions": conditions}]},
+		{"id": "end", "speaker": "q", "text": "End.", "next": null},
+	])
+	var reference := DialogueGraph.load_from_file(_write("choice_reference", base))
+	if not reference.is_valid():
+		_failures.append(reference.describe_errors())
+		return
+	for field: String in ["requires", "all_flags", "not_flags"]:
+		var translated: Dictionary = base.duplicate(true)
+		translated["locale"] = "zh-CN"
+		var choice: Dictionary = translated["conversations"]["choice_parity"]["nodes"][0]["choices"][0]
+		var changed: Dictionary = choice["conditions"]
+		match field:
+			"requires": changed[field] = {"flag_a": false}
+			"all_flags": changed[field] = ["different"]
+			"not_flags": changed[field] = ["different"]
+		var other := DialogueGraph.load_from_file(_write("choice_" + field, translated))
+		if not other.is_valid():
+			_failures.append(other.describe_errors())
+			continue
+		var result := "\n".join(DialogueParity.compare(reference, other))
+		if not result.contains("choice 'one'") or not result.contains(field):
+			_failures.append("Changed choice %s was not rejected with its id: %s" % [field, result])
+	var same: Dictionary = base.duplicate(true)
+	same["locale"] = "zh-CN"
+	var matching := DialogueGraph.load_from_file(_write("choice_matching", same))
+	if not matching.is_valid() or not DialogueParity.compare(reference, matching).is_empty():
+		_failures.append("Identical choice conditions must pass parity.")
 
 
 ## The content that ships must be valid in both languages.

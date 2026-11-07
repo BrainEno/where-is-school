@@ -1,0 +1,12 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "alley_mark": {
+    "title": "Wall mark",
+    "prompt": "Look at the wall",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A pale rectangle where a sign used to hang. No writing remains.",
+    "repeat_text": "The pale rectangle is still there."
+  }
+}

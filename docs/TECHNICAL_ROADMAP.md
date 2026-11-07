@@ -36,8 +36,8 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Journal and unreliable route notebook.
 - Portrait presentation for dialogue.
 - Versioned save/load, slot management, and schema migration.
-- Accessibility settings, localisation pipeline (including a bundled CJK font),
-  audio mixing, and input rebinding.
+- Accessibility settings (text size / speed), audio mixing, and input rebinding.
+  A bundled CJK font and the en/zh-CN live switch are already implemented.
 
 Do not implement every planned item in one large foundation PR. Add each when a concrete slice requires it.
 
@@ -64,32 +64,43 @@ Do not add Git LFS until large binary assets actually justify it. Decide file-si
 
 ## 5. Development phases
 
-### Phase 0 — Engineering foundation (current)
+### Phase 0 — Engineering foundation (delivered)
 - Launchable Godot project.
 - Agent instructions and architecture boundaries.
 - CI project import and scene smoke test.
 - Narrative and art direction documents.
 
-### Phase 1 — Movement and graybox exploration
+### Phase 1 — Movement and graybox exploration (delivered; feel still needs manual review)
 - Stabilize camera framing and movement feel.
 - Add basic collision, stair traversal, door/room boundaries, and scene loading.
 - Verify keyboard and controller input expectations.
 - Establish one reusable environment scale and navigation conventions.
 
-### Phase 2 — Interaction and dialogue spike
+### Phase 2 — Interaction and dialogue (project-owned layer delivered; addon comparison deferred)
 - Interactable object targeting and feedback.
 - One NPC, one conversation, portrait and choice UI.
 - Data-driven branches and story flags.
 - Decide Dialogic/custom integration from evidence.
 
-### Phase 3 — First vertical slice (classroom milestone delivered)
-- Delivered: classroom prologue — wake, Q, schoolbag, seven inspectables, the
-  expectation beat, the substitute, and the walkway exit.
-- Next: the gate/street route and the green-animal observation, keeping the same
-  interaction, dialogue, and narrative-state boundaries.
+### Phase 3 — First vertical slice (delivered)
+- Classroom through corridor, street, residential courtyard and the uncertain
+  green-animal encounter. Story/knowledge state survives transitions.
+- Data-driven JSON dialogue and inspections with structural bilingual parity;
+  live English / simplified-Chinese switching and bundled CJK font.
+- Real-window capture is a read-only PR check with isolated artifacts. No CI
+  capture can overwrite previously approved screenshots.
+
+### Phase 4 — Open playground + hybrid RPG (this slice)
+- Residential courtyard → angled alley → service yard → freely explorable
+  playground. Three separate regions are visitable in any order without locks;
+  exit card moves to the far side of the field.
+- Provisional Measure / Trace / Echo abilities. A single 1d12 check core serves
+  visible active dialogue choices and hidden once-only passive reactions.
+- Next: author review of ability names and content; Windows camera, pacing and
+  input playtest; iterate on feedback before expanding the skill list.
 - Save/load only after world-state ownership is stable.
 
-### Phase 4 — Production readiness
+### Phase 5 — Production readiness
 - Versioned persistence, settings, accessibility, localization strategy.
 - Content authoring validation and reusable art pipeline.
 - Performance budgets and profiling.

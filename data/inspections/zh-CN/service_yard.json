@@ -1,0 +1,20 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "yard_drain": {
+    "title": "排水槽",
+    "prompt": "看看排水槽",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "篦子湿着。水朝门边流。",
+    "repeat_text": "水还在流。"
+  },
+  "yard_shelter": {
+    "title": "棚子",
+    "prompt": "看看棚子下面",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "短棚下面有块干燥的空地。",
+    "repeat_text": "还是空的。"
+  }
+}

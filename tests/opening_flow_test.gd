@@ -302,25 +302,83 @@ func _run() -> void:
 
 		var alley := flats.find_interactable(&"res_alley_end")
 		if alley == null:
-			_failures.append("The residential area has no milestone exit.")
+			_failures.append("The residential area has no alley exit.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
+			var knowledge_before: int = _narrative.get_entries().size()
+			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(6, 0, -31.6)))
 			await physics_frame
 			await physics_frame
 			_interaction.request_activation(alley)
-			if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
-				var card_title := _ui.end_card.get_title()
-				if card_title.strip_edges().is_empty():
-					_failures.append("The end-of-slice card has no title.")
-				elif card_title != L10n.t("end.slice.title"):
-					_failures.append("The end-of-slice card is not using its locale key.")
+			if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "alley", 30.0, "the alley"):
+				var alley_scene := _host.get_current()
+				var to_yard := alley_scene.find_interactable(&"alley_to_yard")
+				if to_yard == null:
+					_failures.append("The alley has no way out through the yard.")
+				else:
+					_player.teleport(Transform3D(Basis.IDENTITY, Vector3(8, 0, -9)))
+					await physics_frame
+					await physics_frame
+					_interaction.request_activation(to_yard)
+					if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "service_yard", 30.0, "the service yard"):
+						var yard := _host.get_current()
+						var drain := yard.find_interactable(&"yard_drain")
+						if drain == null:
+							_failures.append("The service yard has no passive ability anchor.")
+						else:
+							_player.teleport(Transform3D(Basis.IDENTITY, Vector3(2, 0, 3)))
+							await physics_frame
+							await physics_frame
+							_interaction.request_activation(drain)
+							await _settle(30.0, "the passive drain reaction")
+							if not _game_state.has_flag(&"check.yard_drain"):
+								_failures.append("The drain did not run the hidden check.")
+						var field_exit := yard.find_interactable(&"yard_to_playground")
+						if field_exit == null:
+							_failures.append("No route to the playground.")
+						else:
+							_player.teleport(Transform3D(Basis.IDENTITY, Vector3(8, 0, -5)))
+							await physics_frame
+							await physics_frame
+							_interaction.request_activation(field_exit)
+							if await _pump_until(func() -> bool: return String(_host.get_current().location_id) == "playground", 30.0, "the playground"):
+								var ground := _host.get_current()
+								if ground.get_interactables().size() < 5:
+									_failures.append("The open field lacks independently inspectable areas.")
+								for id: StringName in [&"field_notice", &"field_bleachers", &"field_lines"]:
+									var anchor := ground.find_interactable(id)
+									if anchor == null:
+										_failures.append("Missing field anchor %s." % id)
+										continue
+									_player.teleport(Transform3D(Basis.IDENTITY, anchor.global_position - Vector3(0, .9, 0)))
+									await physics_frame
+									await physics_frame
+									_interaction.request_activation(anchor)
+									await _settle(30.0, "field anchor %s" % id)
+								# Return to the first anchor WITHOUT reloading the location.
+								var first := ground.find_interactable(&"field_notice")
+								if first != null:
+									_interaction.request_activation(first)
+									await _settle(30.0, "revisiting the notice")
+								if _narrative.get_entries().size() < knowledge_before or not _narrative.has_entry(&"animal_seen"):
+									_failures.append("The route reset knowledge recorded before leaving the courtyard.")
+								var end := ground.find_interactable(&"field_end") as LocationExit
+								if end != null:
+									_player.teleport(Transform3D(Basis.IDENTITY, Vector3(12, 0, -9)))
+									await physics_frame
+									await physics_frame
+									_interaction.request_activation(end)
+									if await _pump_until(func() -> bool: return _ui.end_card.visible, 30.0, "the end-of-slice card"):
+										if _ui.end_card.get_title() != L10n.t("end.slice.title"):
+											_failures.append("The end card is not localized.")
+								else:
+									_failures.append("The playground has no end card at its far side.")
 
 	_dump_state()
 	Engine.time_scale = 1.0
 	_main.queue_free()
 	await process_frame
 	Harness.finish(
-		self, _failures, "the slice runs from waking up to the green animal and the milestone card."
+		self, _failures, "the slice runs from waking up through the animal and the open field to the milestone card."
 	)
 
 

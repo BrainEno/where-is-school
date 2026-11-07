@@ -1,0 +1,35 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "service_yard",
+  "conversations": {
+    "drain_trace": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "drain_trace_1",
+      "nodes": [
+        {
+          "id": "drain_trace_1",
+          "speaker": "protagonist",
+          "text": "Trace: The wet groove continues towards the gate. Someone maintained it recently. The mark says no more.",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "drain_uncertain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "drain_uncertain_1",
+      "nodes": [
+        {
+          "id": "drain_uncertain_1",
+          "speaker": "protagonist",
+          "text": "Trace: There is a fresh mark. Or the water made it. You can still walk to the gate.",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    }
+  }
+}

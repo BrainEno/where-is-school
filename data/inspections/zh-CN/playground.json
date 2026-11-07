@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "field_lines": {
+    "title": "跑道线",
+    "prompt": "看看跑道",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "白线一直画到围栏那边。场上没什么声音。",
+    "repeat_text": "线还是那些线。"
+  },
+  "field_bleachers": {
+    "title": "看台",
+    "prompt": "看看看台",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两排低矮的水泥台阶。第二级下面有个瓶盖。",
+    "repeat_text": "瓶盖还在台阶下面。"
+  },
+  "field_notice": {
+    "title": "公告栏",
+    "prompt": "看看公告栏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "上面写着平时的训练时间。有一格被擦掉了。",
+    "repeat_text": "那一格还是空的。"
+  }
+}

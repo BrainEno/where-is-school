@@ -1,0 +1,20 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "yard_drain": {
+    "title": "The drain",
+    "prompt": "Look at the drain",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The grate is wet. Water runs towards the gate.",
+    "repeat_text": "The water is still running."
+  },
+  "yard_shelter": {
+    "title": "The shelter",
+    "prompt": "Look under the shelter",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "An empty patch of dry concrete under a short roof.",
+    "repeat_text": "Still empty."
+  }
+}

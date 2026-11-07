@@ -1,0 +1,116 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "playground",
+  "conversations": {
+    "field_measure": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "field_measure_1",
+      "nodes": [
+        {
+          "id": "field_measure_1",
+          "speaker": "protagonist",
+          "text": "Measure: The lanes seem familiar, but the last ends against the fence. Maybe you miscounted.",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "field_uncertain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "field_uncertain_1",
+      "nodes": [
+        {
+          "id": "field_uncertain_1",
+          "speaker": "protagonist",
+          "text": "Measure: You lose count halfway. The track stays open; nothing stops you walking across it.",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "field_goal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "g_start",
+      "nodes": [
+        {
+          "id": "g_start",
+          "speaker": "protagonist",
+          "text": "The goalposts stand a little beyond the marked field.",
+          "choices": [
+            {
+              "id": "measure",
+              "text": "Measure the distance.",
+              "next": "g_miss",
+              "check": {
+                "ability": "measure",
+                "difficulty": 10,
+                "success": "g_measured",
+                "failure": "g_miss"
+              }
+            },
+            {
+              "id": "echo",
+              "text": "See if you remember this place.",
+              "next": "g_echo_miss",
+              "check": {
+                "ability": "echo",
+                "difficulty": 11,
+                "success": "g_echo",
+                "failure": "g_echo_miss"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Just look.",
+              "next": "g_look"
+            }
+          ]
+        },
+        {
+          "id": "g_measured",
+          "speaker": "protagonist",
+          "text": "Measure: The posts are level. The painted line is crooked. Or you started at the wrong end.",
+          "next": "g_end",
+          "source": "recalled"
+        },
+        {
+          "id": "g_miss",
+          "speaker": "protagonist",
+          "text": "Measure: You cannot hold both distances in your head. There is a seam in the paint you had missed.",
+          "next": "g_end",
+          "source": "recalled"
+        },
+        {
+          "id": "g_echo",
+          "speaker": "protagonist",
+          "text": "Echo: This goal looks familiar. That feeling might be from another field.",
+          "source": "recalled",
+          "next": "g_end"
+        },
+        {
+          "id": "g_echo_miss",
+          "speaker": "protagonist",
+          "text": "Echo: A shout almost comes back to you. No words. The posts are still there.",
+          "source": "recalled",
+          "next": "g_end"
+        },
+        {
+          "id": "g_look",
+          "speaker": "protagonist",
+          "text": "There is old tape around one upright. The paint has worn through beneath it.",
+          "next": "g_end"
+        },
+        {
+          "id": "g_end",
+          "speaker": "protagonist",
+          "text": "The rest of the field is open. You can go back to the stands, or cross to the noticeboard.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

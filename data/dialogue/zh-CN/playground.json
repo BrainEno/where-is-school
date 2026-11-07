@@ -1,0 +1,116 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "playground",
+  "conversations": {
+    "field_measure": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "field_measure_1",
+      "nodes": [
+        {
+          "id": "field_measure_1",
+          "speaker": "protagonist",
+          "text": "衡量：跑道长度像是正常的。但最后一条顶到了围栏。也许是我数错了。",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "field_uncertain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "field_uncertain_1",
+      "nodes": [
+        {
+          "id": "field_uncertain_1",
+          "speaker": "protagonist",
+          "text": "衡量：数到一半乱了。跑道还在，走过去也没人拦。",
+          "next": null,
+          "source": "recalled"
+        }
+      ]
+    },
+    "field_goal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "g_start",
+      "nodes": [
+        {
+          "id": "g_start",
+          "speaker": "protagonist",
+          "text": "球门架摆在场地线外面一点。",
+          "choices": [
+            {
+              "id": "measure",
+              "text": "量一量距离。",
+              "next": "g_miss",
+              "check": {
+                "ability": "measure",
+                "difficulty": 10,
+                "success": "g_measured",
+                "failure": "g_miss"
+              }
+            },
+            {
+              "id": "echo",
+              "text": "试着想想来没来过。",
+              "next": "g_echo_miss",
+              "check": {
+                "ability": "echo",
+                "difficulty": 11,
+                "success": "g_echo",
+                "failure": "g_echo_miss"
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先看看。",
+              "next": "g_look"
+            }
+          ]
+        },
+        {
+          "id": "g_measured",
+          "speaker": "protagonist",
+          "text": "衡量：门架是平的。歪的是线。也可能是我从错的一头量的。",
+          "next": "g_end",
+          "source": "recalled"
+        },
+        {
+          "id": "g_miss",
+          "speaker": "protagonist",
+          "text": "衡量：两个距离没法一起算。漆上有道接缝，刚才没看见。",
+          "next": "g_end",
+          "source": "recalled"
+        },
+        {
+          "id": "g_echo",
+          "speaker": "protagonist",
+          "text": "回声：这球门看着眼熟。也许我想的是别的操场。",
+          "source": "recalled",
+          "next": "g_end"
+        },
+        {
+          "id": "g_echo_miss",
+          "speaker": "protagonist",
+          "text": "回声：好像有人喊了一声。听不清。门架就在那儿。",
+          "source": "recalled",
+          "next": "g_end"
+        },
+        {
+          "id": "g_look",
+          "speaker": "protagonist",
+          "text": "一根柱子缠过胶带。下面的漆磨掉了。",
+          "next": "g_end"
+        },
+        {
+          "id": "g_end",
+          "speaker": "protagonist",
+          "text": "场地还开着。可以回看台，也可以去公告栏。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

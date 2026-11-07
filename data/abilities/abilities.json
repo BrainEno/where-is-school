@@ -1,0 +1,11 @@
+{
+  "abilities": {
+    "measure": {"level": 2, "name": {"en": "Measure", "zh-CN": "衡量"}, "description": {"en": "Compare visible distances. It can be too sure of itself.", "zh-CN": "比较看得见的距离。它有时太肯定。"}, "voice": {"en": "First count what is there.", "zh-CN": "先数眼前有的。"}},
+    "trace": {"level": 1, "name": {"en": "Trace", "zh-CN": "寻迹"}, "description": {"en": "Notice marks left by use, not their cause.", "zh-CN": "留意使用过的痕迹，不推断原因。"}, "voice": {"en": "Something was here.", "zh-CN": "这里以前有东西。"}},
+    "echo": {"level": 2, "name": {"en": "Echo", "zh-CN": "回声"}, "description": {"en": "Follow a familiar feeling; familiarity is not proof.", "zh-CN": "跟着熟悉感走。但熟悉不算证据。"}, "voice": {"en": "Does that seem familiar?", "zh-CN": "这是不是见过？"}}
+  },
+  "passive": {
+    "yard_drain": {"ability": "trace", "difficulty": 9, "success": "drain_trace", "failure": "drain_uncertain"},
+    "field_lines": {"ability": "measure", "difficulty": 10, "success": "field_measure", "failure": "field_uncertain"}
+  }
+}
