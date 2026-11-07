@@ -27,7 +27,8 @@ const FIXTURE := {
 						 "source": "recalled", "speaker": "protagonist", "text": "Fixture memory."},
 						{"type": "record", "entry_id": "fixture_imagined",
 						 "source": "imagined", "speaker": "b", "text": "Fixture imagined line."}
-					]
+					],
+					"next": null
 				}
 			]
 		},

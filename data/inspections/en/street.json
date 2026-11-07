@@ -2,8 +2,8 @@
   "format_version": 1,
   "locale": "en",
   "street_gutter": {
-    "title": "排水沟",
-    "prompt": "看排水沟",
+    "title": "The gutter",
+    "prompt": "Look at the gutter",
     "speaker": "protagonist",
     "source": "observed",
     "text": "Water stands in the gutter and runs towards a drain set higher up the road. The water does not look like it is in a hurry.",
@@ -15,8 +15,8 @@
     }
   },
   "street_shutter": {
-    "title": "卷帘门",
-    "prompt": "看卷帘门",
+    "title": "The shutter",
+    "prompt": "Look at the shutter",
     "speaker": "protagonist",
     "source": "observed",
     "text": "A shop shutter pulled down and padlocked at the bottom. The sign above it has been painted over twice. The second colour is still wet.",
@@ -28,16 +28,16 @@
     }
   },
   "street_bin": {
-    "title": "垃圾桶",
-    "prompt": "看垃圾桶",
+    "title": "The bins",
+    "prompt": "Look at the bins",
     "speaker": "protagonist",
     "source": "observed",
     "text": "Two bins. One has been emptied and one has not, and both lids carry the same collection day.",
     "repeat_text": "One emptied, one not, the same day on both lids."
   },
   "street_lamp": {
-    "title": "路灯",
-    "prompt": "看路灯",
+    "title": "The street lamp",
+    "prompt": "Look at the lamp",
     "speaker": "protagonist",
     "source": "observed",
     "text": "The lamp is already on, though the sky is still bright enough to read by. A moth is working at it the way moths do.",

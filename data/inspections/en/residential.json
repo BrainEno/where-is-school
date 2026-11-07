@@ -2,8 +2,8 @@
   "format_version": 1,
   "locale": "en",
   "res_planter": {
-    "title": "花坛",
-    "prompt": "看花坛",
+    "title": "The planter",
+    "prompt": "Look at the planter",
     "speaker": "protagonist",
     "source": "observed",
     "text": "Hard soil, a hedge cut to a straight top, and a patch of wet concrete at the edge. The wet part has the shape of something that was lying down.",
@@ -15,16 +15,16 @@
     }
   },
   "res_bench": {
-    "title": "长椅",
-    "prompt": "看长椅",
+    "title": "The bench",
+    "prompt": "Look at the bench",
     "speaker": "protagonist",
     "source": "observed",
     "text": "A bench with its middle slat replaced by a different wood. Someone has swept the seat clean and left the sweepings under it.",
     "repeat_text": "The odd slat, the clean seat, the pile underneath."
   },
   "res_washing": {
-    "title": "晾衣绳",
-    "prompt": "看晾的衣服",
+    "title": "The washing line",
+    "prompt": "Look at the washing",
     "speaker": "protagonist",
     "source": "observed",
     "text": "Four shirts and a towel on a line between two windows. The clothes do not move when the air does.",
@@ -36,8 +36,8 @@
     }
   },
   "res_stain": {
-    "title": "墙上的污渍",
-    "prompt": "看那面墙",
+    "title": "The stain",
+    "prompt": "Look at the wall",
     "speaker": "protagonist",
     "source": "observed",
     "text": "A dark stain on the render, roughly the shape of a hand. You came in past this wall. You are fairly sure the stain was on the other side of it.",

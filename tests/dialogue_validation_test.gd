@@ -193,6 +193,8 @@ func _check_real_content() -> void:
 	var library := DialogueLibrary.load_all()
 	if not library.is_valid():
 		_failures.append(library.describe_errors())
+		for message: String in library.errors:
+			print("DIAG dialogue: %s" % message)
 		return
 	var english := library.get_graphs_for("en")
 	var chinese := library.get_graphs_for("zh-CN")
@@ -212,6 +214,8 @@ func _check_real_content() -> void:
 	var inspections := InspectionLibrary.load_all()
 	if not inspections.is_valid():
 		_failures.append(inspections.describe_errors())
+		for message: String in inspections.errors:
+			print("DIAG inspection: %s" % message)
 	else:
 		# The library compares the two languages per chapter while loading; this
 		# only re-checks that the merged id sets are identical.

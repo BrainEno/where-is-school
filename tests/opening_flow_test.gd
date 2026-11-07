@@ -188,6 +188,9 @@ func _run() -> void:
 			_failures.append("The walkway has no exit towards the street.")
 		else:
 			await _settle(30.0, "the walkway to settle")
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(0.0, 0, 5.4)))
+			await physics_frame
+			await physics_frame
 			await _check_prompt(&"school_gate", "gate prompt")
 			_interaction.request_activation(gate)
 			if await _pump_until(
@@ -212,7 +215,7 @@ func _run() -> void:
 		if gutter == null:
 			_failures.append("The street has no gutter to look at.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(-8.4, 0, -21.0)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(-8.9, 0, -21.4)))
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"street_gutter", "gutter prompt")
@@ -266,7 +269,7 @@ func _run() -> void:
 		if animal == null:
 			_failures.append("The green animal is missing from the courtyard.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(6.2, 0, -1.4)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(6.5, 0, -1.5)))
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"green_animal", "animal prompt")

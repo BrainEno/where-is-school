@@ -191,7 +191,7 @@ func _run() -> void:
 	if street != null and String(street.location_id) == "street":
 		var gutter := street.find_interactable(&"street_gutter")
 		if gutter != null:
-			_teleport(Vector3(-8.4, 0, -21.0), 0.0)
+			_teleport(Vector3(-8.9, 0, -21.4), 0.0)
 			if await _wait_for_target(&"street_gutter", 5.0):
 				await _shot("15_street_prompt", "A street object with its prompt.")
 				await _press(KEY_E)
@@ -215,7 +215,7 @@ func _run() -> void:
 		if animal == null:
 			_failures.append("The green animal is missing from the courtyard.")
 		else:
-			_teleport(Vector3(6.2, 0, -1.4), -90.0)
+			_teleport(Vector3(6.5, 0, -1.5), -90.0)
 			if await _wait_for_target(&"green_animal", 5.0):
 				await _shot("18_animal_prompt", "The green animal, with the prompt to look at it.")
 				await _press(KEY_E)
