@@ -43,7 +43,7 @@ with open(sys.argv[1], "wb") as f:
 FRAME
 for frame in 01_opening_line 04_prompt_schoolbag 05_inspection_text 06_chinese_world \
   10_conversation_chinese 13_corridor 14_street 17_residential 19_animal_conversation 20_estate_exit 21_playground 22_active_choices \
-  23_active_result 24_active_choices_chinese 20_end_card; do
+  23_active_result 24_active_choices_chinese 25_practice_ring 20_end_card; do
   if [[ ${MODE} == incomplete && $frame == 20_end_card ]]; then continue; fi
   cp "$CAPTURE_DIR/_fixture.png" "$CAPTURE_DIR/$frame.png"
 done

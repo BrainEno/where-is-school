@@ -68,7 +68,7 @@ fi
 required=(01_opening_line 04_prompt_schoolbag 05_inspection_text 06_chinese_world
           10_conversation_chinese 13_corridor 14_street 17_residential
           19_animal_conversation 20_estate_exit 21_playground 22_active_choices
-          23_active_result 24_active_choices_chinese 20_end_card)
+          23_active_result 24_active_choices_chinese 25_practice_ring 20_end_card)
 validator="$(dirname "$0")/validate_capture_frames.py"
 if ! python3 "$validator" "$evidence_dir/frames" "${required[@]}" > "$evidence_dir/validation.log" 2>&1; then
   stage=incomplete

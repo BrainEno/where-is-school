@@ -108,6 +108,8 @@ jobs:
         run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/23_active_result.png"'
       - name: Review 24_active_choices_chinese
         run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/24_active_choices_chinese.png"'
+      - name: Review 25_practice_ring
+        run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/25_practice_ring.png"'
       - name: Review 20_end_card
         run: '"$RUNNER_TEMP/review-env/bin/python" "$RUNNER_TEMP/review.py" "$RUNNER_TEMP/playthrough-evidence/frames/20_end_card.png"'
       - name: Upload status, logs and any frames

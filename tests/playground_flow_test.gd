@@ -130,6 +130,18 @@ func _exercise_active_and_locale() -> void:
 	if not _dialogue.has_pending_choices():
 		_failures.append("The bench did not offer active ability choices.")
 		return
+	var ui := _main.get_node("GameUI") as GameUI
+	var hub_backlog := ui.backlog.get_entry_count()
+	if ui.dialogue_panel.get_speaker_text() != "You":
+		_failures.append("The protagonist label is not English at the ability hub.")
+	_loc.set_locale("zh-CN")
+	await process_frame
+	if ui.dialogue_panel.get_speaker_text() != "你" or not _dialogue.has_pending_choices():
+		_failures.append("The Chinese ability hub lost its localized protagonist or choices.")
+	_loc.set_locale("en")
+	await process_frame
+	if ui.dialogue_panel.get_speaker_text() != "You" or ui.backlog.get_entry_count() != hub_backlog:
+		_failures.append("Switching the ability hub back duplicated its backlog or lost its speaker.")
 	_dialogue.select_choice(0)
 	var result: Dictionary = _state.get_flag(InnerCheckEngine.flag_for(&"bench_pattern"), {})
 	var english := String(_dialogue.get_current_line().get("title", ""))

@@ -77,8 +77,8 @@ func _run() -> void:
 	if _ui != null:
 		_panel = _ui.get_node_or_null("DialoguePanel") as DialoguePanel
 	_interaction = _player.get_node_or_null("InteractionController") as InteractionController if _player != null else null
-	if _dialogue == null or _host == null or _player == null or _ui == null or _interaction == null:
-		await _fail("main scene did not expose its core nodes")
+	if _dialogue == null or _host == null or _player == null or _ui == null or _panel == null or _interaction == null:
+		await _fail("main scene did not expose its core nodes and dialogue panel")
 		return
 	if root.get_texture() == null or root.get_texture().get_image() == null:
 		await _fail("the viewport has no image: this is not a real window")
@@ -278,8 +278,11 @@ func _run() -> void:
 							await _shot("22_active_choices", "An optional ability choice with rating and target.")
 							await _press(KEY_1)
 							if await _poll(func() -> bool: return not String(_dialogue.get_current_line().get("title", "")).is_empty(), 10.0):
-								await _wait(0.7)
-								await _shot("23_active_result", "The visible die, ability, target and result.")
+								if await _wait_for_line(20.0):
+									_note("active result text fully revealed before capture")
+									await _shot("23_active_result", "The visible die, ability, target and fully revealed result.")
+								else:
+									_failures.append("The active roll result never finished revealing.")
 							else:
 								_failures.append("The active roll result did not appear.")
 						else:
@@ -291,6 +294,8 @@ func _run() -> void:
 					if await _wait_for_target(&"pg_notice", 30.0):
 						await _press(KEY_E)
 						if await _poll(func() -> bool: return _dialogue.has_pending_choices(), 10.0):
+							if _panel.get_speaker_text() != L10n.t("speaker.protagonist"):
+								_failures.append("The protagonist label did not switch to Chinese.")
 							await _shot("24_active_choices_chinese", "The same ability interface in simplified Chinese.")
 							await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the notice thought")
 						else:
@@ -299,6 +304,11 @@ func _run() -> void:
 						_failures.append("The notice board prompt was not offered.")
 					await _press(KEY_L)
 					await _wait_for_free(30.0)
+					_teleport(Vector3(8, 0, 4.4), 0.0)
+					if await _wait_for_target(&"pg_hoop", 30.0):
+						await _shot("25_practice_ring", "The practice ring is another independent landmark.")
+					else:
+						_failures.append("The practice ring prompt was not offered.")
 					_teleport(Vector3(12, 0, -10.4), 0.0)
 					if not await _wait_for_target(&"pg_finish", 30.0):
 						_failures.append("The optional end-of-build prompt was not offered.")
