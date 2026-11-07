@@ -279,37 +279,41 @@ func _handle_exit(exit: LocationExit) -> void:
 
 
 func _transition_to(exit: LocationExit) -> void:
+	# Loading the next location frees this one, and `exit` with it, so everything
+	# the transition needs afterwards is copied first.
+	var destination_scene := exit.destination_scene
+	var destination_spawn := exit.destination_spawn
+	var destination_id := exit.destination_id
+	var exit_id := exit.interact_id
 	await _begin_beat()
 	await _ui.fade.fade_to_black(0.7)
-	var loaded := _locations.load_location(exit.destination_scene, exit.destination_spawn, _player)
+	var loaded := _locations.load_location(destination_scene, destination_spawn, _player)
 	if not loaded:
 		push_error(
-			"OpeningSequence: could not enter '%s' from exit '%s'."
-			% [exit.destination_scene, exit.interact_id]
+			"OpeningSequence: could not enter '%s' from exit '%s'." % [destination_scene, exit_id]
 		)
 		await _ui.fade.fade_from_black(0.5)
 		_end_beat()
 		return
 
-	if not String(exit.destination_id).is_empty():
-		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, exit.destination_id)
-	if exit.destination_id == &"corridor":
+	if not String(destination_id).is_empty():
+		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	if destination_id == &"corridor":
 		_game_state().set_flag(StoryFlags.LEFT_CLASSROOM, true)
 		_hud.set_objective("objective.leave_classroom")
-	elif exit.destination_id == &"street":
+	elif destination_id == &"street":
 		_game_state().set_flag(StoryFlags.LEFT_SCHOOL, true)
 		_hud.set_objective("objective.outside")
-	elif exit.destination_id == &"residential":
+	elif destination_id == &"residential":
 		_hud.set_objective("objective.residential")
 	_hud.clear_prompt()
 	_update_exit_prompt()
 	await get_tree().create_timer(0.3).timeout
 	await _ui.fade.fade_from_black(0.9)
-	var destination := exit.destination_id
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.
 	_end_beat()
-	await _play_arrival_beat(destination)
+	await _play_arrival_beat(destination_id)
 
 
 ## One short conversation the first time the player reaches an outdoor location.

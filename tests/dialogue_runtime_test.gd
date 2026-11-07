@@ -179,7 +179,7 @@ func _test_subjective_boundaries(
 		return
 
 	var objective_before := String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, ""))
-	var flags_before := game_state.get_flag(&"fixture_forbidden_flag", null)
+	var flags_before: Variant = game_state.get_flag(&"fixture_forbidden_flag", null)
 	var runtime := _new_runtime(game_state, narrative, characters)
 	var flags := {"subjective_seen": false}
 	runtime.line_changed.connect(

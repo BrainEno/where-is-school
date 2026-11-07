@@ -27,7 +27,12 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "两扇窗之间拉着一条绳，四件衬衫和一条毛巾。空气动的时候，衣服不动。",
-    "repeat_text": "还是四件衬衫一条毛巾，还是不动。"
+    "repeat_text": "还是四件衬衫一条毛巾，还是不动。",
+    "record": {
+      "entry_id": "saw_res_washing",
+      "source": "observed",
+      "text": "两扇窗之间的衣服，空气动的时候不动。"
+    }
   },
   "res_stain": {
     "title": "墙上的污渍",

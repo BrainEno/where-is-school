@@ -44,6 +44,8 @@ var _subjective: bool = false
 ## Which inspection line is on screen, so a language switch can rebuild it.
 var _active_inspection_id: StringName = &""
 var _active_inspection_variant: String = ""
+## The line the panel is showing right now, whatever produced it.
+var _current_line: Dictionary = {}
 
 
 func _ready() -> void:
@@ -137,6 +139,8 @@ func select_choice(index: int) -> void:
 ## The line the player is currently reading, if any. Used by tests and by the
 ## language switch to prove the same line is re-rendered.
 func get_current_line() -> Dictionary:
+	if not _current_line.is_empty():
+		return _current_line
 	if _mode == Mode.CONVERSATION and _runtime != null:
 		return _runtime.get_current_line()
 	return {}
@@ -325,6 +329,7 @@ func _present_next_queued_line() -> void:
 
 
 func _present_line(line: Dictionary) -> void:
+	_current_line = line
 	_apply_line_state(line)
 	_panel.show_line(line)
 	if _backlog != null:
@@ -360,6 +365,7 @@ func _refresh_inspection_text() -> void:
 	else:
 		line["variant"] = variant
 	line["badge"] = NarrativeEntry.badge_key_for(badge_source)
+	_current_line = line
 	_panel.show_line(line)
 	if _backlog != null:
 		_backlog.replace_last(line)

@@ -118,6 +118,10 @@ func _find_best_target() -> Interactable:
 ## You cannot read a notice through a wall. Two probes are cast (upper body and
 ## knee height) and either one being clear is enough, so a desk in front of a
 ## schoolbag does not make the bag unusable.
+##
+## The object's own furniture is the usual thing a ray hits first: a desk hides the
+## desk. Colliders standing next to the candidate are therefore treated as part of
+## it and ignored, while anything further away (a wall, a door) still blocks.
 func _has_line_of_sight(candidate: Interactable) -> bool:
 	if _player == null or occluder_mask == 0:
 		return true
@@ -128,17 +132,34 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 	if space == null:
 		return true
 	var from := _player.global_position + Vector3.UP * eye_height
+	var own_limit := maxf(candidate.radius + 1.0, 1.6)
 	var excluded: Array[RID] = []
-	var body := _player as CollisionObject3D
-	if body != null:
-		excluded.append(body.get_rid())
+	var player_body := _player as CollisionObject3D
+	if player_body != null:
+		excluded.append(player_body.get_rid())
 	for height: float in [0.35, 0.05]:
 		var to: Vector3 = candidate.global_position + Vector3.UP * height
-		var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
-		query.exclude = excluded
-		query.collide_with_areas = false
-		query.collide_with_bodies = true
-		if space.intersect_ray(query).is_empty():
+		var blocked := false
+		for _attempt in 6:
+			var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
+			query.exclude = excluded
+			query.collide_with_areas = false
+			query.collide_with_bodies = true
+			var hit := space.intersect_ray(query)
+			if hit.is_empty():
+				blocked = false
+				break
+			blocked = true
+			var collider := hit.get("collider") as Node3D
+			if collider == null:
+				break
+			if collider.global_position.distance_to(candidate.global_position) > own_limit:
+				break
+			var own_body := collider as CollisionObject3D
+			if own_body == null:
+				break
+			excluded.append(own_body.get_rid())
+		if not blocked:
 			return true
 	return false
 
