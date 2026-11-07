@@ -9,6 +9,7 @@ cat > "$tmp/godot" <<'MOCK'
 if [[ " $* " == *' --editor '* ]]; then
   echo 'import diagnostic'
   [ "${FAIL_IMPORT:-0}" = 0 ] || exit 23
+  [ "${IMPORT_ERROR:-0}" = 0 ] || echo 'ERROR: synthetic import problem' 
   exit 0
 fi
 mkdir -p "$CAPTURE_OUTPUT_DIR"
@@ -34,7 +35,8 @@ run_case () {
     [ "$result" -ne 0 ] || { echo "$label falsely succeeded"; exit 1; }
   fi
   grep -q "CAPTURE_STATUS=$marker" "$tmp/$label/status.txt"
-  [ -s "$tmp/$label/import.log" ]
+  [ -s "$tmp/$label/import-first.log" ]
+  if [ "$marker" != import_failed ]; then [ -s "$tmp/$label/import.log" ]; fi
   if [ "$marker" = capture_failed ]; then
     [ -s "$tmp/$label/capture.log" ] || [ -f "$tmp/$label/01.png" ]
     [ -f "$tmp/$label/01.png" ]
@@ -43,4 +45,5 @@ run_case () {
 }
 run_case normal success success env
 run_case import_failure fail import_failed env FAIL_IMPORT=1
+run_case import_error fail import_failed env IMPORT_ERROR=1
 run_case capture_failure fail capture_failed env FAIL_CAPTURE=1
