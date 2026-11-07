@@ -1,0 +1,39 @@
+name: Window probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Render one frame under Xvfb
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: chickensoft-games/setup-godot@v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+      - name: Probe
+        shell: bash
+        run: |
+          set -uo pipefail
+          godot --headless --editor --path . --quit > /tmp/import.log 2>&1
+          echo "import exit=$?"
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/window_probe.gd > /tmp/probe.log 2>&1
+          code=$?
+          echo "probe exit=${code}"
+          tail -n 25 /tmp/probe.log
+          ls -l docs/screenshots 2>/dev/null || true
+          msg=$(grep -E "PROBE|ERROR|SCRIPT ERROR" /tmp/probe.log | head -n 12 | tr '\n' '|' | cut -c1-1500)
+          if [ "${code}" -eq 0 ]; then
+            echo "::notice title=probe::$((tail -n 3 /tmp/probe.log; ls -l docs/screenshots) | tr '\n' '|' | cut -c1-800)"
+          else
+            echo "::error title=probe failed (exit ${code})::${msg:-no summary}"
+          fi
+          exit "${code}"
