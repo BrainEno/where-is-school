@@ -144,6 +144,17 @@ effects, records knowledge, rolls a check, nor appends anything. History is stor
 identity, never by text (see §5g), which is what makes repeated `en → zh-CN → en →
 zh-CN` switching idempotent — the case issue #18 reported.
 
+The validator is only worth what it proves, so its walk follows the runtime's edges
+and nothing else: a `choices` node reaches only its options' targets (the runtime
+blocks `advance()` while an option is on screen), a `check` node reaches only its
+`success`/`failure` targets, and only an ordinary node falls through to the next node
+in file order. A line parked after a hub with no edge of its own is therefore reported
+as unreachable — which is what issue #20 was: the walk added a sequence edge the
+runtime never takes, and dead lines passed CI. When no option is available or a
+skipped `check` node has no branch of its own, the presentation ends instead of
+advancing somewhere the schema says is unreachable, so "unreachable" in an error
+message means unreachable in play.
+
 ## 5c. Inner voices and checks (implemented contract)
 
 The ability system is deliberately small and lives in three places, each with one

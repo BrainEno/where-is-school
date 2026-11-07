@@ -32,6 +32,28 @@ const FIXTURE := {
 				}
 			]
 		},
+		## The hub offers two options, both locked behind a flag nothing sets. The line
+		## after it in file order is reachable only as a choice target, so the file is
+		## valid; a hub with nothing to offer must end, not fall into that line.
+		"fixture_no_options": {
+			"default_source": "observed",
+			"start": "n1",
+			"nodes": [
+				{
+					"id": "n1",
+					"speaker": "q",
+					"text": "Fixture hub with nothing available.",
+					"choices": [
+						{"id": "a", "text": "Fixture locked A", "next": "n2",
+						 "requires": {"fixture_gate": true}},
+						{"id": "b", "text": "Fixture locked B", "next": "n3",
+						 "requires": {"fixture_gate": true}}
+					]
+				},
+				{"id": "n2", "speaker": "q", "text": "Fixture branch A.", "next": "n3"},
+				{"id": "n3", "speaker": "q", "text": "Fixture branch end.", "next": null}
+			]
+		},
 		"fixture_once": {
 			"default_source": "observed",
 			"start": "o1",
@@ -101,6 +123,7 @@ func _run() -> void:
 	_test_opening_conversation(game_state, narrative, characters)
 	_test_subjective_boundaries(game_state, narrative, characters)
 	_test_once_choice(game_state, narrative, characters)
+	_test_hub_without_options(game_state, narrative, characters)
 
 	game_state.free()
 	narrative.free()
@@ -265,6 +288,42 @@ func _test_once_choice(
 		guard += 1
 	if runtime.is_active():
 		_failures.append("The once-choice fixture conversation did not finish.")
+
+
+## A node with choices never falls through (issue #20).
+##
+## The runtime used to advance into the next node in file order whenever no option was
+## available — a node the validator, counting edges the way the runtime walks them,
+## calls unreachable. The two must agree: with nothing to offer the presentation ends.
+func _test_hub_without_options(
+	game_state: Node, narrative: Node, characters: CharacterDirectory
+) -> void:
+	var graph := DialogueGraph.load_from_file(FIXTURE_PATH)
+	if not graph.is_valid():
+		_failures.append(graph.describe_errors())
+		return
+	var runtime := _new_runtime(game_state, narrative, characters)
+	var shown: Array[String] = []
+	runtime.line_changed.connect(
+		func(line: Dictionary) -> void:
+			shown.append(String(line.get("node_id", "")))
+	)
+	if not runtime.start(graph, &"fixture_no_options"):
+		_failures.append("The no-options fixture would not start.")
+		return
+	if runtime.is_awaiting_choice():
+		_failures.append("A choice unlocked by an unset flag was offered.")
+	if not runtime.get_current_choices().is_empty():
+		_failures.append(
+			"The no-options hub presented %d option(s)." % runtime.get_current_choices().size()
+		)
+	runtime.advance()
+	if runtime.is_active():
+		_failures.append("A hub with nothing to offer kept the conversation open.")
+	if shown.has("n2"):
+		_failures.append("A hub with nothing to offer fell through into the line after it.")
+	if not shown.has("n1"):
+		_failures.append("The no-options hub never showed its own line.")
 
 
 func _write_fixture() -> void:

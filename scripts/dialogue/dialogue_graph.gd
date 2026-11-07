@@ -643,6 +643,21 @@ func _validate_no_linear_cycle(conversation: Conversation, label: String) -> voi
 
 
 ## Anything the player can never see is dead content: usually a typo in a `next`.
+##
+## The walk has to follow the same edges the runtime follows, or it proves nothing
+## about the game:
+##
+## - a node with **choices** continues only through its choices. `DialogueRuntime`
+##   blocks `advance()` while an option is on screen, and the content contract says a
+##   node with choices never falls through, so the next node in file order is not
+##   reachable from it;
+## - a node with a **check** continues only to the node it rolled: the runtime answers
+##   `_resolve_next_id()` with the branch, never with `next` or the sequence;
+## - an ordinary node keeps its `next`, or the next node in file order when it has none.
+##
+## Adding the sequence edge for all three, as this function used to, made a line parked
+## after a choice hub look reachable when no playthrough could ever show it: the
+## validator accepted dead content, and the translation of it sank with it (issue #20).
 func _report_unreachable(conversation: Conversation, label: String) -> void:
 	var reached: Dictionary = {}
 	var queue: Array[StringName] = []
@@ -658,6 +673,10 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 			queue.append(choice.next_id)
 		for target: StringName in node.check_targets:
 			queue.append(target)
+		# Explicit branches only: a node the player chooses from, or rolls at, has no
+		# fall-through edge, because the runtime never walks one from it.
+		if not node.choices.is_empty() or not node.check.is_empty():
+			continue
 		if node.ends_here:
 			continue
 		if not String(node.next_id).is_empty():

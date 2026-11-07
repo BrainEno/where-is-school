@@ -70,9 +70,9 @@ Two rules keep this maintainable:
 | `text` | yes | The line. May not be empty; a node with only choices may omit it. |
 | `source` | no | Overrides `default_source` for this line. |
 | `next` | no | Id of the next node. **Absent** = fall through to the next node in file order. **`null`** = the conversation ends here. |
-| `choices` | no | Player choices. A node with choices never falls through. |
+| `choices` | no | Player choices. A node with choices never falls through: only the branches the options point at are reachable from it, so a line placed after a hub needs an explicit `next` from somewhere. If no option is available the presentation ends rather than continuing. |
 | `effects` | no | State changes applied when the line is shown. |
-| `conditions` | no | `{"all_flags": [...], "not_flags": [...], "requires": {"flag": true}}`. A node whose conditions are not met is skipped, as if it were a `next` step. |
+| `conditions` | no | `{"all_flags": [...], "not_flags": [...], "requires": {"flag": true}}`. A node whose conditions are not met is skipped, as if it were a `next` step. A skipped `check` node ends the conversation instead of continuing: its branch belongs to the node that rolled it. |
 | `tags` | no | Free markers for tooling; unused by the runtime. |
 
 The last node of every conversation must end explicitly with `"next": null`,
@@ -205,6 +205,9 @@ the content test check, in CI, that:
 - every file is valid JSON with the declared `format_version`;
 - node and choice ids are unique, and every `next` points at a node that exists;
 - no node is unreachable from `start`, no `next` chain loops, and the last node ends;
+  the walk follows exactly the edges the runtime follows — choices for a `choices`
+  node, `success`/`failure` for a `check` node, `next` or the file order only for an
+  ordinary node — so "unreachable" here means unreachable in play;
 - every node has text or choices, and every choice has text, an id and a `next`;
 - speakers exist in `data/characters/`, and objective keys exist in every locale;
 - a subjective conversation writes no flags, no objective, and no observed or
