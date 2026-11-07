@@ -342,7 +342,7 @@ func _run() -> void:
 	# 10. A final state dump so the log can be read without the screenshots.
 	_note("current location: %s" % String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "<none>")))
 	_note("locale: %s, objective: %s" % [L10n.current, _ui.hud.get_objective_key()])
-	_note("recorded knowledge entries: %d" % int(_narrative.get_entry_ids().size() if _narrative.has_method("get_entry_ids") else -1))
+	_note("recorded knowledge entries: %d" % _knowledge_count())
 	_note("screenshots written: %d" % _shot_index)
 
 	if _failures.is_empty():
@@ -1051,6 +1051,14 @@ func _fail(reason: String) -> void:
 		_note("FAILURE: %s" % failure)
 	_write_log()
 	quit(1)
+
+
+## `NarrativeState` exposes `get_entries()`; there is no `get_entry_ids()`, so the older
+## line here always reported -1.
+func _knowledge_count() -> int:
+	if _narrative == null or not _narrative.has_method("get_entries"):
+		return -1
+	return (_narrative.get_entries() as Array).size()
 
 
 func _note(message: String) -> void:
