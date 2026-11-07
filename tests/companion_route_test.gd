@@ -78,6 +78,10 @@ func _run() -> void:
 		return
 	_dialogue.line_presented.connect(_on_line_presented)
 	_dialogue.check_resolved.connect(_on_check_resolved)
+	if _sequence != null:
+		# The authored beats are skipped here, so the player has to be handed control
+		# explicitly; otherwise the interaction controller stays switched off.
+		_sequence.allow_player_control()
 	Engine.time_scale = TIME_SCALE
 
 	# The classroom is loaded by the director in _ready; the beats are not replayed.

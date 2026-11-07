@@ -31,6 +31,7 @@ var _host: LocationHost = null
 var _player: PlayerController = null
 var _interaction: InteractionController = null
 var _dialogue: DialogueController = null
+var _sequence: OpeningSequence = null
 var _location: LocationRoot = null
 var _activated: Array[StringName] = []
 var _probe_front: Interactable = null
@@ -65,6 +66,7 @@ func _run() -> void:
 	_host = _main.get_node_or_null("LocationHost") as LocationHost
 	_player = _main.get_node_or_null("Player") as PlayerController
 	_dialogue = _main.get_node_or_null("DialogueController") as DialogueController
+	_sequence = _main.get_node_or_null("OpeningSequence") as OpeningSequence
 	if _player != null:
 		_interaction = _player.get_node_or_null("InteractionController") as InteractionController
 	if _host == null or _player == null or _interaction == null or _dialogue == null:

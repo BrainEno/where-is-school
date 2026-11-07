@@ -86,6 +86,17 @@ func start() -> void:
 	_run_opening()
 
 
+## Hands control to the player without running the authored beats.
+##
+## The beats normally release the player during the wake, so a start that skips them
+## (a test, or a future debug entry point) would otherwise leave the player frozen
+## and the interaction controller switched off. This is the supported way to say
+## "the room is live, nothing authored is happening".
+func allow_player_control() -> void:
+	_control_allowed = true
+	_sync_player_locks()
+
+
 func _resolve_nodes() -> bool:
 	_player = get_node_or_null(player_path) as PlayerController
 	_interaction = get_node_or_null(interaction_path) as InteractionController

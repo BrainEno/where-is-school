@@ -200,7 +200,7 @@ func _check_honest_subjective_still_works() -> void:
 	var data := _content()
 	var node: Dictionary = (data["conversations"]["fantasy"]["nodes"] as Array)[0]
 	(node["choices"] as Array)[1]["effects"] = [
-		{"type": "record", "entry_id": "imagined_goodbye", "source": "memory",
+		{"type": "record", "entry_id": "imagined_goodbye", "source": "imagined",
 		 "speaker": "protagonist", "text": "You imagined saying a proper goodbye."},
 	]
 	var graph := _load("honest", data)
