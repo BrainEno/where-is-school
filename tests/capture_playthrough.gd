@@ -627,6 +627,7 @@ func _capture_click_navigation() -> void:
 	var walking := false
 	var settled := false
 	var walked := 0.0
+	var after_click := "not sampled"
 	for _attempt in 3:
 		var screen := _find_ground_click_screen(4.0, 6.5)
 		if screen == Vector2.ZERO:
@@ -636,6 +637,13 @@ func _capture_click_navigation() -> void:
 		await _click_at_screen(screen)
 		await _wait(0.2)
 		walking = _player.is_path_active()
+		after_click = "control=%s, legs=%d, index=%d, dialogue=%s, pending=%s" % [
+			str(_player.is_control_enabled()),
+			_player.get_path_legs().size(),
+			_player.get_path_index(),
+			str(_dialogue.is_busy()),
+			str(navigator.get_pending_target()) if navigator != null else "no navigator",
+		]
 		if not walking and navigator != null and navigator.get_click_count() == clicks_before:
 			# The press never arrived as unhandled input: something on screen took it.
 			# That is worth saying out loud, and worth another point rather than a
@@ -670,11 +678,11 @@ func _capture_click_navigation() -> void:
 			continue
 	if destination.is_empty():
 		_failures.append(
-			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s)."
+			"A click on walkable floor did not move the character (%s; walking=%s, arrived=%s, walked %.2f m, at %s; %s)."
 			% [
 				navigator.get_last_rejection() if navigator != null else "no navigator",
 				str(walking), str(settled), walked,
-				str(_player.global_position)
+				str(_player.global_position), after_click
 			]
 		)
 
