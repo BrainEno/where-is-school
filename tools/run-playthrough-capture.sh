@@ -15,6 +15,8 @@ printf 'import_exit=%d\n' "$code" >> "$output/status.txt"
 if [ "$code" -ne 0 ] || grep -Eq 'SCRIPT ERROR|Parse Error|ERROR:' "$output/import.log"; then
   printf 'CAPTURE_STATUS=import_failed\n' >> "$output/status.txt"
   tail -n 60 "$output/import.log"
+  echo "::error title=playthrough import failed::$(grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$output/import.log" | head -n 3 | tr '
+' '|' | cut -c1-800) (exit $code; see artifact import.log)"
   exit 1
 fi
 # timeout prevents a stalled window from receiving a false success on job timeout.
@@ -29,6 +31,10 @@ if [ "$code" -ne 0 ] || ! grep -q 'CAPTURE_STATUS=success' "$output/PLAYTHROUGH.
    ! compgen -G "$output/*.png" > /dev/null; then
   printf 'CAPTURE_STATUS=capture_failed\n' >> "$output/status.txt"
   tail -n 70 "$output/capture.log"
+  echo "::error title=playthrough capture failed::$(grep -E 'CAPTURE|FAILURE|SCRIPT ERROR|Parse Error|ERROR:' "$output/capture.log" | tail -n 5 | tr '
+' '|' | cut -c1-800) (exit $code; see artifact)"
+  echo "Capture evidence: $(ls -A "$output" | tr '
+' ' ')"
   exit 1
 fi
 printf 'CAPTURE_STATUS=success\n' >> "$output/status.txt"
