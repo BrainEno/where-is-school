@@ -252,8 +252,9 @@ mistake in the Chinese tree fails the same tests as a mistake in the English one
 
 That run is engine-verified logic, not a look at the game. To close that gap,
 `.github/workflows/playthrough-capture.yml` is intended to run the build in a real
-window under Xvfb (`--rendering-driver opengl3`, 1600×900) using simulated keys
-and some teleports. The workflow now saves status, logs and any frames to an
+window under Xvfb (`--rendering-driver opengl3`, 1600×900, Dummy audio) using
+simulated keys and some teleports. The runner has no audio device; this does not
+test the game's audio. The workflow now saves status, logs and any frames to an
 isolated artifact, never commits them, and fails on an import, capture or
 completeness error. It is not a human playtest. Historical images already in
 `docs/screenshots/` predate the playground and are not evidence for this slice.

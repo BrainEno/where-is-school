@@ -50,7 +50,7 @@ fi
 import_status=success
 stage=capture
 if CAPTURE_DIR="$evidence_dir/frames" timeout "${CAPTURE_TIMEOUT:-1200}" "$xvfb" -a --server-args="-screen 0 1600x900x24" \
-  "$godot" --path "$project_dir" --resolution 1600x900 --rendering-driver opengl3 \
+  "$godot" --path "$project_dir" --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
   --script res://tests/capture_playthrough.gd > "$evidence_dir/capture.log" 2>&1; then
   capture_exit=0
 else

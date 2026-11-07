@@ -1,7 +1,8 @@
 extends SceneTree
 ## Drives the real game in a real window and photographs the flows that matter.
 ##
-## This is not a headless assertion suite: it runs under Xvfb with a real viewport,
+## This is not a headless assertion suite: it runs under Xvfb with a real viewport
+## (the CI runner uses the Dummy audio driver, so sound is not being tested),
 ## presses real keys through the input system, and saves what the player would see
 ## to a fresh evidence directory. Failures are written next to the screenshots (a FAIL_*.png
 ## of the moment it stopped plus PLAYTHROUGH.log) so a broken build leaves evidence
@@ -511,7 +512,7 @@ func _write_log() -> bool:
 	markdown.append("# Playthrough screenshots")
 	markdown.append("")
 	markdown.append("Captured by `tests/capture_playthrough.gd` in a real Godot window under")
-	markdown.append("Xvfb (`--rendering-driver opengl3`, 1600x900). Interaction, dialogue")
+	markdown.append("Xvfb (`--rendering-driver opengl3`, 1600x900; Dummy audio). Interaction, dialogue")
 	markdown.append("advance, choice selection and the language switch were produced with")
 	markdown.append("simulated key events; walking between scenes was shortened with")
 	markdown.append("teleports so the capture fits in CI. Regenerate with the")
