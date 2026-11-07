@@ -120,5 +120,19 @@ Visual (capture workflow, scripted, not a human playtest):
 - a click on the classroom door: the transition without a key;
 - a mouse-selected dialogue option in the residential stair conversation.
 
+Both CI jobs pass on the branch head: the Godot CI job (24 headless checks, the four
+new ones included) and the playthrough capture job, which reports `RESULT: the
+playthrough reached the end of the built content.` The first push was red; seven
+rounds of red-to-green later, each failure had turned out to be a defect rather than a
+test to relax. The three that were invisible from reading the code:
+
+- a navigation region whose cell dimensions disagree with the map is refused silently,
+  and the map only answers queries a frame or two after the bake — `is_routable()`
+  exists because a mesh can be perfect and the map still empty;
+- a headless run opens a 64×64 window, so a bottom-anchored panel is laid out above the
+  top edge and a click on one of its buttons lands outside the viewport;
+- the engine's source-geometry parser did not pick up the instanced prop bodies, so the
+  classroom baked a floor plate with every desk left out.
+
 The capture has not been run on Windows, and no hands-on playtest has been performed
 on any platform. The Windows checklist for a human is in the pull request.
