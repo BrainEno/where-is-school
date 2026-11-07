@@ -73,6 +73,15 @@ size = Vector3(2, 2.4, 2)
 [sub_resource type="BoxMesh" id="BoxMesh_8"]
 size = Vector3(0.3, 6, 48)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_8"]
+size = Vector3(0.3, 6, 48)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6"]
+size = Vector3(0.4, 6, 48)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7"]
+size = Vector3(0.4, 6, 48)
+
 [node name="Playground" type="Node3D"]
 script = ExtResource("1_location_root")
 location_id = &"playground"
