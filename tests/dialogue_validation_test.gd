@@ -29,6 +29,16 @@ func _run() -> void:
 	_expect_error("literal objective", _literal_objective(), ["objective_text", "text"])
 	_expect_error("unknown effect", _unknown_effect(), ["bad_effect", "x1"])
 	_expect_error("wrong locale", _wrong_locale(), ["de-DE"])
+	# Issue #20: a line parked after a choice hub or a check was treated as reachable
+	# because the walk added a sequence edge the runtime never takes. Both must fail.
+	_expect_error("orphan after a choice hub", _orphan_after_choice(), ["orphan_after_choice", "orphan"])
+	_expect_error("orphan after a check", _orphan_after_check(), ["orphan_after_check", "orphan"])
+
+	# ... and the fix must not turn valid hubs, checks or ordinary chains into errors.
+	_expect_valid("a choice hub with ending branches", _valid_choice_hub())
+	_expect_valid("a check with two ending branches", _valid_check_branches())
+	_expect_valid("an ordinary next chain", _valid_sequence())
+	_expect_valid("a choice hub whose branches share a node", _valid_shared_hub())
 
 	_check_locale_parity()
 	_check_real_content()
@@ -105,6 +115,70 @@ func _unknown_effect() -> Dictionary:
 	])
 
 
+## The fixture from issue #20: the hub's only option goes straight to the end, so the
+## node between them can never be shown. The old walk counted it as reachable.
+func _orphan_after_choice() -> Dictionary:
+	return _graph("orphan_after_choice", [
+		{"id": "hub", "speaker": "q", "text": "Fixture hub.",
+		 "choices": [{"id": "c1", "text": "Fixture choice.", "next": "end"}]},
+		{"id": "orphan", "speaker": "q", "text": "Fixture orphan.", "next": null},
+		{"id": "end", "speaker": "q", "text": "Fixture end.", "next": null},
+	])
+
+
+## Same shape after a roll: `success`/`failure` are the only ways on.
+func _orphan_after_check() -> Dictionary:
+	return _graph("orphan_after_check", [
+		{"id": "roll", "speaker": "q", "text": "Fixture roll.",
+		 "check": {"ability": "orientation", "difficulty": 8, "kind": "hidden",
+				   "success": "ok", "failure": "bad"}},
+		{"id": "orphan", "speaker": "q", "text": "Fixture orphan.", "next": null},
+		{"id": "ok", "speaker": "q", "text": "Fixture ok.", "next": null},
+		{"id": "bad", "speaker": "q", "text": "Fixture bad.", "next": null},
+	])
+
+
+func _valid_choice_hub() -> Dictionary:
+	return _graph("valid_choice_hub", [
+		{"id": "h1", "speaker": "q", "text": "Fixture hub.",
+		 "choices": [
+			{"id": "a", "text": "Fixture A", "next": "h2"},
+			{"id": "b", "text": "Fixture B", "next": "h3"},
+		 ]},
+		{"id": "h2", "speaker": "q", "text": "Fixture A end.", "next": null},
+		{"id": "h3", "speaker": "q", "text": "Fixture B end.", "next": null},
+	])
+
+
+func _valid_shared_hub() -> Dictionary:
+	return _graph("valid_shared_hub", [
+		{"id": "s1", "speaker": "q", "text": "Fixture hub.",
+		 "choices": [
+			{"id": "a", "text": "Fixture A", "next": "s2"},
+			{"id": "b", "text": "Fixture B", "next": "s2"},
+		 ]},
+		{"id": "s2", "speaker": "q", "text": "Fixture shared end.", "next": null},
+	])
+
+
+func _valid_check_branches() -> Dictionary:
+	return _graph("valid_check_branches", [
+		{"id": "k1", "speaker": "q", "text": "Fixture roll.",
+		 "check": {"ability": "orientation", "difficulty": 8, "kind": "visible",
+				   "success": "k2", "failure": "k3"}},
+		{"id": "k2", "speaker": "q", "text": "Fixture success.", "next": null},
+		{"id": "k3", "speaker": "q", "text": "Fixture failure.", "next": null},
+	])
+
+
+func _valid_sequence() -> Dictionary:
+	return _graph("valid_sequence", [
+		{"id": "n1", "speaker": "q", "text": "Fixture one.", "next": "n2"},
+		{"id": "n2", "speaker": "q", "text": "Fixture two.", "next": "n3"},
+		{"id": "n3", "speaker": "q", "text": "Fixture three.", "next": null},
+	])
+
+
 func _wrong_locale() -> Dictionary:
 	var data := _graph("locale", [
 		{"id": "l1", "speaker": "q", "text": "Fixture line.", "next": null},
@@ -143,6 +217,20 @@ func _expect_error(label: String, data: Dictionary, fragments: Array) -> void:
 			_failures.append(
 				"The %s error does not mention '%s': %s" % [label, fragment, joined]
 			)
+
+
+## The mirror of `_expect_error`: content that plays must load clean. Without this the
+## reachability fix could "pass" by rejecting everything.
+func _expect_valid(label: String, data: Dictionary) -> void:
+	var path := _write("valid_" + label.replace(" ", "_"), data)
+	if path.is_empty():
+		return
+	var graph := DialogueGraph.load_from_file(path)
+	if graph.is_valid():
+		return
+	_failures.append(
+		"The validator rejected valid content (%s): %s" % [label, " | ".join(graph.errors)]
+	)
 
 
 ## A translation that drops a node must be reported with the node id, otherwise a
