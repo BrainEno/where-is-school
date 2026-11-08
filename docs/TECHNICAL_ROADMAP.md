@@ -28,7 +28,11 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   hidden/visible dice checks, backlog, and validated JSON content.
 - Inspection content with first-read effects, repeat text, and recollections.
 - Subjective (imagined) presentation that cannot alter objective world state.
-- Location swapping that preserves story state, plus authored beat sequencing.
+- Location swapping that preserves story state, plus authored beat sequencing. A swap
+  is a transaction: scene, `location_id`, spawn marker and the player's placement are
+  all checked before the old scene is touched, and a failure leaves the room, the
+  player, Q, the story flag and the emitted signals exactly as they were
+  (`docs/ARCHITECTURE.md` §5h, `tests/location_transition_test.gd`).
 - Bilingual content (English and Simplified Chinese) with runtime switching that
   also works mid-line, and a parity checker that refuses a translation which
   changes the shape of a conversation.
@@ -50,7 +54,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, twenty-eight headless checks, an
+- CI: a static syntax gate over every `.gd` file, twenty-nine headless checks, an
   import pass, and a read-only capture job whose artifacts are the visual evidence for
   a pull request. Failures produce artifacts as well, so a red run is diagnosable.
 
@@ -80,25 +84,45 @@ concrete slice requires it.
 Two places where this document disagreed with the code, recorded rather than
 silently rewritten:
 
-- **Dialogue technology.** Section 3 below still describes a spike between
-  Dialogic, a custom layer and Yarn Spinner. The implementation chose the custom
-  layer, and ADR 0002 records that decision. The spike was never run and is no
-  longer planned. The decision stands; this note exists so the divergence is not
-  mistaken for an oversight.
+- **Dialogue technology.** This entry used to say that section 3 still described a
+  spike between Dialogic, a custom layer and Yarn Spinner while the implementation had
+  chosen the custom layer (ADR 0002). Section 3 now states the decision itself, so the
+  divergence is gone; the entry is kept as the record of it.
 - **Localisation.** This document used to list the localisation pipeline as future
   work while `Loc`, `L10n`, the bilingual content trees and the language-switch
   test were already shipping. Bilingual switching is now listed as implemented.
   What remains genuinely unbuilt is the font subsetting and the translator
   workflow, and those stay in the planned list.
 
-## 3. Dialogue technology decision
+## 3. Dialogue technology decision (decided, implemented)
 
-Run a small comparison spike before choosing:
-- **Dialogic 2:** first candidate because it is Godot-native and aimed at dialogue/timeline workflows.
-- **Custom dialogue layer:** only if the addon fails requirements or imposes unacceptable constraints. Keep any custom implementation small and testable.
-- **Yarn Spinner Godot integration:** an alternative to investigate, not an assumed dependency.
+**Decision: the project-owned dialogue layer, not an addon.** ADR 0002 records it, and
+the implementation ships: `DialogueGraph`/`DialogueLibrary` parse and validate the
+bilingual JSON, `DialogueRuntime` walks the graph, `DialogueController` presents it, and
+`NarrativeState` keeps the knowledge log. No dialogue addon is installed, pinned or
+referenced by gameplay code.
 
-The spike must prove long text, portraits, branching choices, conditions, persistent flags, Chinese font handling, backlog, and how dialogue reacts to world events. Record the tested plugin tag/commit, exact Godot version, license, and limitations. No plugin is bundled in this foundation.
+The comparison that once stood here — a bounded Dialogic 2 spike, a custom layer as the
+fallback, and Yarn Spinner as an alternative — was **never run and is not planned**. It
+is kept out of the plan deliberately: an unrun spike listed as future work reads like a
+pending decision and invites a migration nobody approved.
+
+The requirements the spike was meant to test are now the contract the shipped layer is
+held to, and each is covered by an automated check:
+
+| Requirement | Where it is implemented / checked |
+|---|---|
+| Long Chinese text and readable typography | `tests/dialogue_layout_test.gd`, `tests/i18n_test.gd` |
+| Named speakers and portrait identifiers | `data/characters/`, `CharacterDirectory`, dialogue panel name row |
+| Choices and conditional choices | `DialogueGraph` conditions, `tests/dialogue_runtime_test.gd` |
+| Story flags and explicit state changes | `StoryFlags`, effects, `tests/narrative_state_test.gd` |
+| History/backlog | `DialogueHistory`, `BacklogPanel`, `tests/language_switch_test.gd` |
+| Accessibility controls | **not implemented**: listed in the planned items below; the spike requirement is unmet and is not claimed otherwise |
+| Interruption by environmental events | `InnerVoiceDirector`, beat locking in `OpeningSequence` |
+| Deterministic serialization of conversation state | not required yet: mid-conversation saves are not implemented (save/load is in the planned list in §2). The dice core is seeded and replayable (`tests/check_resolver_test.gd`). |
+
+If an addon is ever reconsidered, it starts as a new ADR with the spike results attached
+— not as a silent change to this section.
 
 ## 4. Content and asset pipeline
 

@@ -82,6 +82,7 @@ func _check_location(location: String, locale: String) -> void:
 	for exit_block in _exit_blocks(text):
 		var scene := String(exit_block.get("destination_scene", ""))
 		var spawn := String(exit_block.get("destination_spawn", ""))
+		var destination_id := String(exit_block.get("destination_id", ""))
 		var end_key := String(exit_block.get("end_card_key", ""))
 		if scene.is_empty():
 			if end_key.is_empty():
@@ -95,13 +96,40 @@ func _check_location(location: String, locale: String) -> void:
 		if not ResourceLoader.exists(scene):
 			_failures.append("%s: exit leads to missing scene '%s'." % [label, scene])
 			continue
-		if not spawn.is_empty():
-			var destination_name := scene.get_file().get_basename()
-			var destination_text := _read_scene(destination_name)
-			if not destination_text.is_empty() and not (("name=\"%s\"" % spawn) in destination_text):
+		var destination_name := scene.get_file().get_basename()
+		var destination_text := _read_scene(destination_name)
+		if spawn.is_empty():
+			_failures.append(
+				"%s: exit leads to '%s' without naming a spawn point."
+				% [label, destination_name]
+			)
+		elif (
+			not destination_text.is_empty()
+			and not (("name=\"%s\"" % spawn) in destination_text)
+		):
+			_failures.append(
+				"%s: exit points at spawn '%s', which '%s' does not have."
+				% [label, spawn, destination_name]
+			)
+		# The exit's claim about *which* place it enters has to match the place itself:
+		# CURRENT_LOCATION is written from this id, so a mismatch would put the player
+		# in one room and the story flag in another.
+		if destination_id.is_empty():
+			_failures.append(
+				"%s: exit leads to '%s' without declaring a destination_id."
+				% [label, destination_name]
+			)
+		elif not destination_text.is_empty():
+			var declared := _matches(destination_text, "location_id = &\"([^\"]+)\"")
+			if declared.is_empty():
 				_failures.append(
-					"%s: exit points at spawn '%s', which '%s' does not have."
-					% [label, spawn, destination_name]
+					"%s: exit leads to '%s', which declares no location_id."
+					% [label, destination_name]
+				)
+			elif declared[0] != destination_id:
+				_failures.append(
+					"%s: exit declares location_id '%s' but '%s' is '%s'."
+					% [label, destination_id, destination_name, declared[0]]
 				)
 
 

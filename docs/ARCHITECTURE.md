@@ -108,7 +108,13 @@ Before adopting a dialogue addon or format, validate that it supports:
 - interruption by environmental events;
 - deterministic serialization of the current conversation state, if mid-conversation saves are required.
 
-First run a bounded Dialogic 2 integration spike. Keep addon-specific calls behind a small project-owned adapter so content and gameplay code are not permanently coupled to one plugin. Do not install or pin the addon until its current Godot compatibility, license, and maintenance status are reviewed.
+**What happened instead.** The checklist above was met by the in-project layer
+described in §5b and ADR 0002; no dialogue addon is installed or pinned. The bounded
+Dialogic 2 spike was never run and is no longer planned, so it is not a pending task:
+the requirements it was meant to test are the ones the shipped layer is held to by the
+content and runtime tests. The paragraphs that asked for the spike are kept only as the
+checklist it had to satisfy. If a later decision reopens the question, it starts as a
+new ADR, not as an implicit migration.
 
 ## 5b. Where text lives (implemented contract)
 
@@ -388,6 +394,53 @@ Grey-box people have no faces, so each actor scene carries a `CharacterNameplate
   export;
 - a character who is not in a scene gets no label; B is not in the start scene and no
   actor was created to hold one.
+
+## 5h. Entering a location: pre-flight, then commit (implemented contract)
+
+A location change is the one operation that can destroy the room the player is standing
+in, so `LocationHost.load_location(scene_path, spawn_id, player, expected_location_id)`
+is written as a transaction and `tests/location_transition_test.gd` holds it to that.
+
+**Stage 1 — pre-flight, while nothing outside the function changes.** In order: the path
+is non-empty; `ResourceLoader.exists()`; the resource loads as a `PackedScene`; it
+instantiates; the root uses the `LocationRoot` script; `location_id` is not empty; when
+the caller passed `expected_location_id` (an exit's `destination_id`), it equals the
+id the scene declares; the player exists and can be placed; the requested spawn marker
+exists. Any failure returns false with an error naming the scene, the location id, the
+requested spawn and the markers the scene does have — and the instance is freed right
+there, so nothing is left for a later frame to clean up.
+
+**Stage 2 — commit.** Only now is the new scene added, the player teleported onto the
+marker, `_current`/`_current_path` replaced, the old scene removed and freed, and
+`location_entered` emitted. The player's arrival is *checked* (`PLACEMENT_TOLERANCE`
+0.05 m); a body that refused the transform rolls the whole commit back: the new scene
+leaves the tree and is freed, the old scene stays current, and the call returns false.
+
+**Spawn ids.** An empty `spawn_id` means "the location's default": the first
+`spawn_point` marker in tree order, which is how the classroom opens. A **named** id
+must match a marker exactly. There is no fallback — `LocationRoot.get_spawn()` returns
+`null` and reports the id, the location_id, the scene path and the available markers.
+A typo therefore fails the transition instead of quietly putting the player somewhere
+else (issue #19).
+
+**What a failure leaves behind.** The old scene remains loaded and current,
+`_current_path` is unchanged, the player keeps their position and facing,
+`CURRENT_LOCATION` still describes the room they are in, `location_entered` is not
+emitted, and the return value is false. `OpeningSequence._transition_to()` fades back in
+and hands control back; nothing downstream (Q's placement, the objective line, the
+arrival beat) runs off a transition that did not happen.
+
+**The story flag follows the verified scene.** `CURRENT_LOCATION` is written from the id
+of the location that was actually entered — after it was checked against the exit's
+claim — not from the exit's `destination_id` on its own. The exit and the scene can no
+longer disagree about which room the player is in.
+
+**Spawn markers carry position, not heading.** Every marker that ships is position-only,
+so arrival keeps the heading the player already had; the mechanism is real (a marker
+with a rotation does set the arrival facing, and the test pins that on a fixture), and
+authoring a rotation on a marker is what changes it. Which marker an exit names is
+checked by the test above: the marker must exist, must be the one the player lands on,
+must be walkable ground, and for a return trip must sit by the exit that leads back.
 
 ## 6. Persistent identifiers and data
 
