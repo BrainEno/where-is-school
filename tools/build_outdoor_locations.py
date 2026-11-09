@@ -7,6 +7,7 @@ shape is a narrative decision, not a blockout.
 
 Run from the repository root: `python3 tools/build_outdoor_locations.py`
 """
+import math
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +38,7 @@ class Scene:
         self.extras = []     # literal node blocks
         self.env = None
         self.sun = None
+        self.props = []      # (name, scene path, pos, degrees) — an imported model wrapper
         self.interactables = []
         self.exits = []
         self.spawns = []
@@ -71,6 +73,15 @@ class Scene:
         has_animal = any(i.get('animal') for i in self.interactables)
         if has_animal:
             ext.append(('PackedScene', 'res://scenes/environment/fauna/green_animal.tscn', f'{base + 4}_animal'))
+
+        # Model wrappers are hand-authored scenes under scenes/environment/, never files
+        # this script writes: the generator only decides *where* one stands, so a
+        # regeneration cannot overwrite the wrapper or its collision (issue #21).
+        prop_ids = {}
+        for item in self.props:
+            if item[1] not in prop_ids:
+                prop_ids[item[1]] = f'{base + 6 + len(prop_ids)}_prop'
+                ext.append(('PackedScene', item[1], prop_ids[item[1]]))
 
         mat_res = {mat: f'{i + 2}_{mat}' for i, mat in enumerate(used)}
 
@@ -146,6 +157,13 @@ class Scene:
                 lines.append('position = %s' % v3(pos))
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
+            lines.append('')
+
+        for name, scene_path, pos, degrees in self.props:
+            lines.append(f'[node name="{name}" parent="." instance=ExtResource("{prop_ids[scene_path]}")]')
+            lines.append('position = %s' % v3(pos))
+            if degrees:
+                lines.append('rotation = Vector3(0, %s, 0)' % round(math.radians(degrees), 6))
             lines.append('')
 
         if self.interactables or self.exits:
@@ -364,6 +382,13 @@ def build_residential():
     # the lane is walkable, and the navmesh can bake it (issue #33).
     s.box("AlleyGround", (6.0, -0.05, -29.0), (6.4, 0.1, 14.0), "asphalt")
     s.box("Drain", (4.0, 0.03, 2.0), (1.2, 0.06, 0.6), "metal", None, False)
+
+    # The imported-model hook-up, and the only one in the slice: a wrapper scene from
+    # scenes/environment/props/ stands in a corner nobody walks through, so the pipeline
+    # has a real instance to measure and the courtyard keeps its empty middle.
+    s.props = [
+        ("SampleChair", "res://scenes/environment/props/sample_chair.tscn", (10.3, 0.0, 13.5), 26.0),
+    ]
 
     s.interactables = [
         {"name": "PlanterLook", "pos": (6.0, 0.8, 0.6), "id": "res_planter",

@@ -127,6 +127,16 @@ If an addon is ever reconsidered, it starts as a new ADR with the spike results 
 ## 4. Content and asset pipeline
 
 - Use Blender to create blockouts and reusable 3D props.
+- Imported models follow `docs/ASSET_PIPELINE.md`: glTF 2.0 binary, one unit = one metre,
+  +Y up and -Z forward, origin on the floor, no node scale, one named material per mesh.
+  Two project-owned placeholder samples (`assets/models/sample/chair.glb` and
+  `figure.glb`) are written by `tools/build_sample_models.py` and measured by
+  `tests/model_import_test.gd`; CI also rebuilds them and fails if the committed bytes
+  differ from a fresh build.
+- Collision, the interaction anchor and navigation belong to a hand-authored wrapper
+  scene under `scenes/environment/`, never to the model and never to a generated
+  location: `tools/build_outdoor_locations.py` only decides where a wrapper stands, so
+  regenerating any of the four outdoor scenes keeps the hook-up and cannot overwrite it.
 - Use Krita or Blender texture painting for authored material work.
 - Keep source assets (for example, .blend, layered art files, and source audio) separate from optimized runtime exports where useful.
 - Name assets by stable function, not temporary narrative meaning (for example, classroom_desk_a rather than desk_from_chapter_2).

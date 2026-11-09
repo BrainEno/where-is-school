@@ -46,6 +46,14 @@ jobs:
           fi
           echo "PARSE_RESULT=success"
 
+      - name: Check the sample models are reproducible
+        shell: bash
+        run: |
+          # The committed .glb files are build artefacts of a checked-in script. If the
+          # two ever disagree, the provenance recorded in docs/ASSET_PROVENANCE.md is
+          # describing a file nobody can rebuild.
+          python3 tools/build_sample_models.py --check
+
       # Each command runs under `timeout` so a stalled test fails visibly instead of
       # consuming the job budget. Results are echoed to stdout and to the check
       # run's annotations, which makes failures readable from the API as well as
@@ -103,6 +111,7 @@ jobs:
           run_check inner_abilities 120 godot --headless --path . --script res://tests/inner_abilities_test.gd || status=1
           run_check dialogue_check 180 godot --headless --path . --script res://tests/dialogue_check_test.gd || status=1
           run_check content_integrity 180 godot --headless --path . --script res://tests/content_integrity_test.gd || status=1
+          run_check model_import 300 godot --headless --path . --script res://tests/model_import_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1

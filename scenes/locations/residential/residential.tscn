@@ -1,4 +1,4 @@
-[gd_scene load_steps=137 format=3]
+[gd_scene load_steps=138 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="2_concrete"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="15_ambience_player"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="17_navigation"]
 [ext_resource type="PackedScene" path="res://scenes/environment/fauna/green_animal.tscn" id="16_animal"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/sample_chair.tscn" id="18_prop"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -991,6 +992,10 @@ material_override = ExtResource("10_asphalt")
 position = Vector3(4.0, 0.03, 2.0)
 mesh = SubResource("BoxMesh_90")
 material_override = ExtResource("6_metal")
+
+[node name="SampleChair" parent="." instance=ExtResource("18_prop")]
+position = Vector3(10.3, 0.0, 13.5)
+rotation = Vector3(0, 0.453786, 0)
 
 [node name="Interactables" type="Node3D" parent="."]
 

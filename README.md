@@ -147,10 +147,13 @@ missing.
 - docs/screenshots/ — frames captured from a real, running window by
   `tests/capture_playthrough.gd`, plus the dialogue layout frames written by
   `tests/capture_dialogue_ui.gd` at 1280x720, 1600x900 and 1920x1080 in both languages.
-- assets/ — placeholder materials and generated audio, tracked in docs/ASSET_PROVENANCE.md.
+- assets/ — placeholder materials, generated audio and the two sample models, all
+  tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
+- docs/ASSET_PIPELINE.md — the import contract for 3D models (format, axes, scale,
+  collision wrappers, regeneration).
 - tools/ — maintenance scripts (placeholder audio synthesis).
 
 ## Creative material
