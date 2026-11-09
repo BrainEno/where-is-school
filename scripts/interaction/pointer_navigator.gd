@@ -317,6 +317,10 @@ func _begin_approach(target: Interactable) -> void:
 	_pending = target
 	_has_pending = true
 	if _can_activate_now(target):
+		# Nothing to walk to, so there is no shape to draw — the action is already happening
+		# under the cursor. The click still answers in the ears: a mouse that makes no sound
+		# when it works is the one case a player reads as "the click was lost".
+		_announce(WorldCue.ROLE_TARGET)
 		_activate_pending()
 		return
 	var spot: Variant = _find_approach_spot(target)

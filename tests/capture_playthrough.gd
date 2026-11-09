@@ -729,6 +729,10 @@ func _capture_click_navigation() -> void:
 
 	# The keys take over mid-walk.
 	var second := _find_ground_click_screen(3.0, 6.0)
+	if second == Vector2.ZERO:
+		second = _find_ground_click_screen(2.0, 5.0)
+	if second == Vector2.ZERO:
+		second = _find_ground_click_screen(4.0, 8.0)
 	if second != Vector2.ZERO:
 		await _click_at_screen(second)
 		await _wait(0.25)
@@ -752,12 +756,12 @@ func _capture_click_navigation() -> void:
 		return
 	await _wait_for_free(60.0)
 	if await _position_near(sheet, 1.5):
-		var sheet_screen := _screen_position_of(sheet)
 		# The cue itself, with the real cursor resting on the object. This is the picture
 		# of what this round changed: without it the pull request would be describing a
-		# cue it cannot show.
-		await _mouse_to_world(sheet.global_position)
-		if await _wait_for_target(sheet.interact_id, 6.0):
+		# cue it cannot show. The cursor is placed by asking the controller which pixel
+		# resolves to the sheet, rather than by projecting its origin and hoping.
+		var sheet_screen: Vector2 = await _cursor_onto(sheet)
+		if sheet_screen != Vector2.ZERO and await _wait_for_target(sheet.interact_id, 6.0):
 			# Long enough for the fade to finish and for the ring to have turned: a frame
 			# taken in the first sixteenth of a second shows the cue at its dimmest.
 			await _wait(0.45)
@@ -776,7 +780,7 @@ func _capture_click_navigation() -> void:
 				_note("hover cue: the object is highlighted but carries no cue")
 		else:
 			_note("the hover cue shot found no target under the cursor; the frame is missing")
-		if _interaction.get_target_at_screen_position(sheet_screen, false) == sheet:
+		if sheet_screen != Vector2.ZERO:
 			await _click_at_screen(sheet_screen)
 			if await _wait_for_line(15.0):
 				await _shot("03f_click_inspect", "The timetable sheet opened by a click, with no key pressed.")
@@ -840,12 +844,15 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 		return Vector2.ZERO
 	var rect := _player.get_viewport().get_visible_rect().size
 	for x_step in 12:
-		for y_step in 10:
-			# The dialogue panel is anchored to the bottom edge and would swallow a
-			# click aimed at the floor behind it, so the scan stays above it.
+		for y_step in 12:
+			# The dialogue panel is anchored to the bottom edge and would swallow a click
+			# aimed at the floor behind it, so the scan stays above it — but not far above:
+			# a narrow band tuned for one camera pitch left "no floor to click" behind
+			# whenever the camera settled a little differently, which turned into two
+			# different failures blaming navigation.
 			var screen := Vector2(
-				rect.x * (0.15 + 0.7 * float(x_step) / 11.0),
-				rect.y * (0.28 + 0.34 * float(y_step) / 9.0)
+				rect.x * (0.12 + 0.76 * float(x_step) / 11.0),
+				rect.y * (0.24 + 0.42 * float(y_step) / 11.0)
 			)
 			var point: Variant = navigator.get_ground_point_at(screen)
 			if point == null:
@@ -922,6 +929,40 @@ func _reaches(point: Vector3) -> bool:
 	if route.is_empty():
 		return false
 	return route[route.size() - 1].distance_to(point) <= 0.75
+
+
+## Puts the real cursor on a target, and returns the screen position that resolves to it.
+##
+## `_screen_position_of()` projects the object's *origin*, which for a prop authored at the
+## middle of its mesh can land a few pixels outside its own collision box — and the cursor
+## ray then hits the wall behind it. Instead of guessing a pixel, the same question the click
+## will ask is asked of a small ring of pixels around the projection, with a short poll
+## because the controller resolves targets on its own cadence.
+func _cursor_onto(target: Interactable) -> Vector2:
+	if target == null:
+		return Vector2.ZERO
+	var centre := _screen_position_of(target)
+	if centre == Vector2.ZERO:
+		return Vector2.ZERO
+	var rect := _player.get_viewport().get_visible_rect().size
+	var offsets := [
+		Vector2.ZERO, Vector2(0, -16), Vector2(0, 16), Vector2(-16, 0), Vector2(16, 0),
+		Vector2(0, -32), Vector2(0, 32), Vector2(-32, 0), Vector2(32, 0),
+	]
+	for offset: Vector2 in offsets:
+		var screen := Vector2(
+			clampf(centre.x + offset.x, 1.0, rect.x - 1.0),
+			clampf(centre.y + offset.y, 1.0, rect.y - 1.0)
+		)
+		Input.warp_mouse(screen)
+		await process_frame
+		if await _poll(
+			func() -> bool:
+				return _interaction.get_target_at_screen_position(screen, false) == target,
+			0.25
+		):
+			return screen
+	return Vector2.ZERO
 
 
 ## Stands the player near an object, facing it, at a spot the navigation mesh knows.
