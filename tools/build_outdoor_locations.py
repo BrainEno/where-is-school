@@ -352,9 +352,9 @@ def build_residential():
     # courtyard furniture
     s.box("SlideRamp", (-6.0, 0.9, -8.0), (1.2, 0.2, 4.0), "metal", None, False)
     s.box("SlideLegs", (-6.0, 0.45, -6.2), (0.9, 0.9, 0.2), "metal")
-    s.box("BenchSeat", (-3.2, 0.45, 6.0), (2.6, 0.12, 0.7), "floor")
-    s.box("BenchLegA", (-4.3, 0.22, 6.0), (0.12, 0.45, 0.6), "metal", None, False)
-    s.box("BenchLegB", (-2.1, 0.22, 6.0), (0.12, 0.45, 0.6), "metal", None, False)
+    # The courtyard bench is an authored model now (see s.props below), not three
+    # boxes. Its seat plane is the same 0.51 m the grey-box seat top was, so nothing
+    # that leaned on the old seat moves.
     # planter with a cut hedge, and the wet patch where something was lying
     s.box("PlanterWall", (6.0, 0.25, -2.0), (5.0, 0.5, 3.0), "concrete")
     s.box("PlanterSoil", (6.0, 0.52, -2.0), (4.6, 0.1, 2.6), "soil", None, False)
@@ -383,17 +383,27 @@ def build_residential():
     s.box("AlleyGround", (6.0, -0.05, -29.0), (6.4, 0.1, 14.0), "asphalt")
     s.box("Drain", (4.0, 0.03, 2.0), (1.2, 0.06, 0.6), "metal", None, False)
 
-    # The imported-model hook-up, and the only one in the slice: a wrapper scene from
-    # scenes/environment/props/ stands in a corner nobody walks through, so the pipeline
-    # has a real instance to measure and the courtyard keeps its empty middle.
+    # Imported-model hook-ups. The generator only decides *where* a wrapper stands: the
+    # wrapper, its collision and its anchors are hand-authored under
+    # scenes/environment/props/, so a regeneration cannot overwrite them (issue #21).
+    #
+    # The chair stands in a corner nobody walks through, so the pipeline keeps a real
+    # instance to measure and the courtyard keeps its empty middle. The bench replaces
+    # the three boxes that used to stand here, and faces -Z, towards the planter: the
+    # model's back is on its -Z side, so 180 degrees turns it round. The table carries a
+    # yaw only, which doubles as a guard against a prop being dropped in sideways.
     s.props = [
         ("SampleChair", "res://scenes/environment/props/sample_chair.tscn", (10.3, 0.0, 13.5), 26.0),
+        ("CourtyardBench", "res://scenes/environment/props/playground_bench.tscn", (-3.2, 0.0, 6.0), 180.0),
     ]
 
     s.interactables = [
         {"name": "PlanterLook", "pos": (6.0, 0.8, 0.6), "id": "res_planter",
          "inspection": "res_planter", "radius": 1.4},
-        {"name": "BenchLook", "pos": (-3.2, 0.6, 6.0), "id": "res_bench",
+        # The anchor sits just off the seat's front edge rather than in the middle of the
+        # bench: a 1.04 m body owns its whole footprint, and an anchor inside it is hidden
+        # from every standing position by the bench itself.
+        {"name": "BenchLook", "pos": (-3.2, 0.63, 5.6), "id": "res_bench",
          "inspection": "res_bench", "radius": 1.2},
         {"name": "WashingLook", "pos": (-1.6, 3.4, -14.6), "id": "res_washing",
          "inspection": "res_washing", "radius": 1.6},
@@ -579,11 +589,8 @@ def build_playground():
     s.box("BoardSheet", (14.0, 1.9, 3.2), (0.06, 1.1, 1.8), "paper", None, False)
     s.box("BoardBacking", (14.06, 1.9, 3.2), (0.04, 1.2, 1.9), "metal", None, False)
 
-    # bench, with room either side of it
-    s.box("BenchSeat", (11.0, 0.45, 3.2), (0.7, 0.12, 2.6), "floor")
-    s.box("BenchLegA", (11.0, 0.22, 2.2), (0.6, 0.45, 0.12), "metal", None, False)
-    s.box("BenchLegB", (11.0, 0.22, 4.2), (0.6, 0.45, 0.12), "metal", None, False)
-    s.box("BagOnBench", (11.0, 0.72, 3.2), (0.4, 0.42, 0.8), "shutter", None, False)
+    # bench and the bag on it: both are authored models now (s.props below). The seat
+    # plane is still 0.51 m and the bag still rests on it, so the yard reads the same.
 
     # climbing frame on the east side
     for i, z in enumerate((7.0, 9.0, 11.0)):
@@ -623,6 +630,15 @@ def build_playground():
     s.box("TapDrain", (-5.4, 0.02, 14.3), (0.8, 0.06, 0.6), "metal", None, False)
     s.box("TreeTrunk", (20.0, 2.0, 15.0), (0.5, 4.0, 0.5), "soil")
     s.box("TreeCrown", (20.0, 4.6, 15.0), (3.6, 2.2, 3.6), "hedge", None, False)
+
+    # The bench runs along Z, so it needs a 90 degree yaw to line up with the space the
+    # grey-box seat left. -90 puts its back to the notice board and its seat towards the
+    # court, which is the way the boxes already faced. The bag sits on the seat at 0.52 m
+    # (its own base is 1.4 cm under its origin) and leans into the back of the bench.
+    s.props = [
+        ("YardBench", "res://scenes/environment/props/playground_bench.tscn", (11.0, 0.0, 3.2), -90.0),
+        ("YardBag", "res://scenes/environment/props/student_backpack.tscn", (11.03, 0.52, 3.75), -90.0),
+    ]
 
     s.interactables = [
         {"name": "HoopLook", "pos": (-8.0, 1.4, 8.8), "id": "pg_hoop_near",
