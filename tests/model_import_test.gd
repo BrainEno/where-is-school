@@ -268,7 +268,11 @@ func _check_placement() -> void:
 		var away := Vector2(
 			closest.x - chair.global_position.x, closest.z - chair.global_position.z
 		).length()
-		if away > 1.0:
+		# The chair's own footprint is eroded out of the mesh (agent radius 0.4 m plus
+		# the 0.26 m half-width), so the nearest polygon is about a metre away when the
+		# placement is correct; 16 m means the map was empty, a metre and a half away
+		# means the chair stands somewhere with no floor.
+		if away > 1.5:
 			_failures.append(
 				"The chair stands %.2f m from the nearest walkable point; it is not on the courtyard's ground."
 				% away
@@ -398,10 +402,14 @@ func _collision_bounds(shape_node: CollisionShape3D) -> AABB:
 	return AABB(shape_node.position - size * 0.5, size)
 
 
+## Baking is deferred, and a baked mesh is not a mesh the server answers for yet: until
+## the region has reached the navigation map, the map is empty and answers the zero
+## vector for every query — which reads as "everything is metres away in the wrong
+## direction" rather than as "nothing is baked".
 func _wait_for_bake(nav: LocationNavigation) -> bool:
 	var budget := 0
-	while budget < 120:
-		if nav.is_baked():
+	while budget < 180:
+		if nav.is_baked() and nav.get_map_region_count() > 0 and nav.is_routable():
 			return true
 		await physics_frame
 		budget += 1
