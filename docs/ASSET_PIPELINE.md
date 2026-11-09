@@ -75,13 +75,21 @@ A placement is a line in the generator's table, not a node added in the editor:
 ```python
 s.props = [
     ("SampleChair", "res://scenes/environment/props/sample_chair.tscn", (10.3, 0.0, 13.5), 26.0),
+    ("CourtyardBench", "res://scenes/environment/props/playground_bench.tscn", (-3.2, 0.0, 6.0), 180.0),
 ]
 ```
 
 The generator writes an `ExtResource` instance with that position and rotation, and
-leaves the wrapper alone. Regenerating the location therefore keeps the hook-up, and
-`tests/model_import_test.gd` fails if the table line, the wrapper, or the instance ever
-disappears.
+leaves the wrapper alone. The rotation is a yaw in degrees: the table has no room for a
+tilt, which doubles as a guard against a prop being dropped in sideways. Regenerating the
+location therefore keeps the hook-up, and `tests/model_import_test.gd` (the samples) and
+`tests/prop_placement_test.gd` (the authored props) fail if the table line, the wrapper,
+or the instance ever disappears.
+
+A placed prop is furniture: it collides, so it carves the navigation mesh and it blocks
+the interaction line-of-sight probe. A look-anchor for that prop therefore has to stand
+off its own collision, or be listed in the interactable's `support_paths` — an anchor in
+the middle of a bench is a hotspot no standing position can see.
 
 Place a prop where it does not carve the walkable space in two and where it cannot hide
 an interactable: the agent radius is 0.4 m, so a 0.5 m prop erodes a hole about 1.3 m

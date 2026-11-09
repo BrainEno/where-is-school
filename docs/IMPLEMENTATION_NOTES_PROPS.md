@@ -141,15 +141,39 @@ Godot re-import.
 Both props are ordinary `Node3D` scenes with a single `Model` child holding the
 imported mesh. They are independent and carry no script.
 
-- **In the editor:** drag `scenes/environment/props/playground_bench.tscn` or
-  `student_backpack.tscn` into a location scene. Position and rotate the instance
-  like any node; nothing else is required.
+Both are placed from the generator's `s.props` table, never by dragging in the editor:
+a node added to a generated location is deleted by the next run of
+`tools/build_outdoor_locations.py` (`docs/ASSET_PIPELINE.md` §4).
+
+| Where | Node | Scene | Position, yaw | Why there |
+|---|---|---|---|---|
+| Residential courtyard | `CourtyardBench` | `playground_bench.tscn` | `(-3.2, 0, 6.0)`, 180° | Replaces the three grey boxes that stood by the planter. Its back is on the model's −Z side, so 180° turns the seat towards the courtyard middle. |
+| Schoolyard | `YardBench` | `playground_bench.tscn` | `(11.0, 0, 3.2)`, −90° | Replaces the grey-box seat by the notice board; the yaw lines its long axis up with the space the boxes left, back to the board, seat towards the court. |
+| Schoolyard | `YardBag` | `student_backpack.tscn` | `(11.03, 0.52, 3.75)`, −90° | The bag that was already sitting on that bench as a grey box. Its own base is 1.4 cm under its origin, so 0.52 m of node height puts the base on the 0.51 m seat plane, leaning into the back. |
+
+Both seat planes are the same 0.51 m the grey boxes had, so nothing that leaned on the
+old seat moved.
+
 - **The bench** drops with its feet on `y = 0`.
 - **The backpack** drops at its own base, upright relative to its authored tilt. Tune
   the instance's rotation if you want it standing perfectly flat.
+- **Look-anchors belong outside the prop.** `BenchLook` in the courtyard moved from the
+  middle of the seat to `(-3.2, 0.63, 5.6)`, just off the seat's front edge. A 1.04 m
+  body owns the whole of its own footprint, and the visibility probe treats the prop as
+  a wall, so an anchor inside it is invisible from every standing position — the object
+  hiding its own hotspot. The schoolyard anchor at `(10.2, 1.0, 3.2)` already stands off
+  the bench's front and was left alone. The alternative, for an anchor that has to sit
+  inside its prop, is to list the prop in the interactable's `support_paths`; the bench
+  does not need it.
 - **Preview:** open `scenes/dev/prop_asset_preview.tscn` and run it to see the two
   props composed the way the Blender source shows them, with a simple environment,
   key light and camera.
+
+`tests/prop_placement_test.gd` checks the three placements above: the instance is the
+wrapper (not a bare `glb`), it stands at the declared position and yaw, the grey boxes it
+replaced are gone from both the scene and the generator table, the bag rests on the seat,
+each look-anchor is outside its prop's collision and has walkable ground within reach, and
+both sites still route from the arrival spawn to the far exit.
 
 ## 6. Editing and re-importing
 

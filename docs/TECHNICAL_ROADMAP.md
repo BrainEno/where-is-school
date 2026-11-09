@@ -54,9 +54,10 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, twenty-nine headless checks, an
-  import pass, and a read-only capture job whose artifacts are the visual evidence for
-  a pull request. Failures produce artifacts as well, so a red run is diagnosable.
+- CI: a static syntax gate over every `.gd` file, thirty-four headless checks, a
+  blocking import pass with an audit that every tracked `.import` produced its file, and
+  a read-only capture job whose artifacts are the visual evidence for a pull request.
+  Failures produce artifacts as well, so a red run is diagnosable.
 
 ### Planned, but deliberately not implemented yet
 - Journal and unreliable route notebook.
@@ -234,6 +235,27 @@ document.
   `tests/dialogue_pointer_test.gd`, `tests/street_prompt_test.gd`, and capture frames
   taken with real pointer events. Windows hands-on checks are listed in the pull
   request and are not yet performed.
+
+### Phase 5c — The authored props in the world (delivered in this round)
+- The two owner-authored Blender props stopped being preview-only. The residential
+  courtyard's three grey boxes by the planter became `playground_bench.tscn`, and the
+  schoolyard's grey-box seat and the box that stood for a bag became the bench and the
+  backpack. Both seat planes are the same 0.51 m the boxes had, so nothing that leaned on
+  the old seat moved.
+- Placements are rows in `tools/build_outdoor_locations.py`'s `s.props` table, so a
+  regeneration cannot drop them; the wrappers, their collision and their anchors stay
+  hand-authored outside `scenes/locations/` (§4, issue #21).
+- The courtyard's `BenchLook` anchor moved from the middle of the seat to just off its
+  front edge. A 1.04 m body owns its whole footprint, and the visibility probe treats a
+  prop as a wall, so an anchor inside it is invisible from everywhere: the object hides
+  its own hotspot. Declaring the prop in `support_paths` is the alternative, and is not
+  needed here.
+- Evidence: `tests/prop_placement_test.gd` (instance is the wrapper, declared transform,
+  grey boxes gone from scene and table, the bag rests on the seat, anchors clear of their
+  own collision with walkable ground in reach, both sites still route spawn to far exit),
+  on top of the existing `tests/prop_asset_test.gd`, `tests/model_import_test.gd` and
+  `tests/interaction_visibility_sweep_test.gd`. Windows hands-on checks are listed in the
+  pull request and are not yet performed.
 
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the

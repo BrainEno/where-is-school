@@ -150,6 +150,7 @@ jobs:
           run_check content_integrity 180 godot --headless --path . --script res://tests/content_integrity_test.gd || status=1
           run_check model_import 300 godot --headless --path . --script res://tests/model_import_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
+          run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1
