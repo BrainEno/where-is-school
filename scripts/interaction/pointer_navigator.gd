@@ -472,6 +472,7 @@ func _ensure_cue() -> void:
 
 ## A walk to the floor was accepted.
 func _mark_destination(point: Vector3) -> void:
+	_announce(WorldCue.ROLE_DESTINATION)
 	if not marker_enabled:
 		return
 	_ensure_cue()
@@ -483,6 +484,7 @@ func _mark_destination(point: Vector3) -> void:
 ## A walk that ends by using something was accepted: same cue, amber, at the spot the
 ## walk ends on.
 func _mark_target(point: Vector3) -> void:
+	_announce(WorldCue.ROLE_TARGET)
 	if not marker_enabled:
 		return
 	_ensure_cue()
@@ -493,12 +495,27 @@ func _mark_target(point: Vector3) -> void:
 
 ## The click was heard and refused.
 func _mark_refused(point: Vector3) -> void:
+	_announce(WorldCue.ROLE_REFUSED)
 	if not marker_enabled:
 		return
 	_ensure_cue()
 	if _cue == null:
 		return
 	_cue.show_refused(point, _ground_normal_at(point))
+
+
+## The cue is heard as well as seen, and the role that decides the colour decides the
+## sound: the same three words reach `scripts/audio/cue_audio.gd`. The autoload is looked
+## up by path, not by a global identifier, so a headless test that registers no autoloads
+## gets a silent cue instead of a failing script. `marker_enabled` gates both senses: a bare
+## capture is bare in the ears as well as in the frame.
+func _announce(role: String) -> void:
+	if not marker_enabled:
+		return
+	var audio := get_node_or_null("/root/CueAudio")
+	if audio == null or not audio.has_method("play"):
+		return
+	audio.play(StringName(role))
 
 
 func _clear_cue(immediate: bool = false) -> void:

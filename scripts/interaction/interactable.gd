@@ -47,6 +47,11 @@ const WORLD_LAYER := 1
 ## the cue marks the object and the floor it stands on, it does not decorate either.
 @export var hover_cue_height: float = 0.06
 
+## Whether being highlighted makes a sound. On for props, and left on: the tick is the one
+## piece of feedback that says "the pointer found something" without the player having to
+## look at the ring. It is rate-limited in `scripts/audio/cue_audio.gd`, not here.
+@export var hover_cue_audio: bool = true
+
 ## The bodies that belong to this object, or to the structure it is mounted on: the
 ## desk a schoolbag sits on, the wall a timetable is pinned to, a door's frame.
 ##
@@ -133,8 +138,18 @@ func set_highlighted(value: bool) -> void:
 		return
 	if value:
 		_cue.reveal()
+		if hover_cue_audio:
+			_play_hover_cue()
 	else:
 		_cue.conceal()
+
+
+## The hover tick, looked up by path so a headless run without autoloads stays silent.
+func _play_hover_cue() -> void:
+	var audio := get_node_or_null("/root/CueAudio")
+	if audio == null or not audio.has_method("play_hover"):
+		return
+	audio.play_hover()
 
 
 func is_highlighted() -> bool:

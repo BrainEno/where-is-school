@@ -647,6 +647,11 @@ func _capture_click_navigation() -> void:
 	var after_click := "not sampled"
 	var clicked := false
 	for _attempt in 3:
+		# Each attempt first asks whether the player can move at all. A capsule wedged
+		# between two desks makes `move_and_slide()` find nowhere to go, the walk watchdog
+		# cancels three times, and the retry that follows used to click the same floor from
+		# the same wedge and report "the click did not move the character".
+		await _unstick()
 		# A camera looking at the player only shows so much floor: widen the window
 		# before giving up, so "no point to click" is not reported as "the click did
 		# not move the character".
@@ -780,6 +785,14 @@ func _capture_click_navigation() -> void:
 		_failures.append("Could not stand in front of the timetable sheet.")
 
 	await _capture_refused_click(sheet)
+	# The cue is heard as well as seen, and a frame cannot show that. The counts are the
+	# only evidence a real run can carry for the sounds: three clicks through the real input
+	# system, so at least one accepted and one refused cue should have spoken.
+	var audio := root.get_node_or_null("CueAudio")
+	if audio != null and audio.has_method("get_counts"):
+		_note("cue audio after the mouse shots: %s" % str(audio.get_counts()))
+	else:
+		_note("cue audio: no CueAudio autoload in this run; the cues were silent")
 
 
 ## A click the world refuses: the cue has to say "no" somewhere the player is looking, and
