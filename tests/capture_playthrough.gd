@@ -701,6 +701,11 @@ func _capture_click_navigation() -> void:
 		if walking and settled and walked > 1.5:
 			destination = "walked"
 			break
+		if walking and settled and walked < 0.2:
+			# Accepted, then cancelled without moving: a wedge, not a navigation refusal.
+			# Step clear of it and try again from somewhere the route can actually leave.
+			_note("the clicked walk was cancelled without travelling; stepping the player clear")
+			await _unstick(true)
 		if _dialogue.is_busy():
 			_note("a story beat interrupted the clicked walk; retrying once")
 			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the interrupting beat")
@@ -865,12 +870,17 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 ## `move_and_slide()` finds nowhere to go, and the stall watchdog cancels it three times
 ## in a row. That is a capture position problem, not a navigation one, so it is found
 ## and fixed here — and said out loud rather than silently corrected.
-func _unstick() -> void:
+## `force` skips the "can it move at all" question. It is used after a walk that was
+## accepted and then cancelled three times without travelling: `test_move()` says the capsule
+## can move (it slides along a desk), while `move_and_slide()` along the route finds nowhere
+## to go, so the unforced check returns early and the player stays wedged.
+func _unstick(force: bool = false) -> void:
 	var probe := 0.5
 	var directions := [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]
-	for direction in directions:
-		if not _player.test_move(_player.global_transform, direction * probe):
-			return
+	if not force:
+		for direction in directions:
+			if not _player.test_move(_player.global_transform, direction * probe):
+				return
 	_note("the player could not move in any direction from %s; stepping it clear" % str(_player.global_position))
 	for radius in [0.6, 1.0, 1.6, 2.2]:
 		for index in 16:
@@ -928,7 +938,17 @@ func _position_near(target: Interactable, distance: float) -> bool:
 		var yaw := atan2(-to_target.x, -to_target.z)
 		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 		await _wait(0.2)
-		if _interaction.get_target_at_screen_position(_screen_position_of(target), false) == target:
+		# The camera trails the body and the visibility ray is cast from wherever it has got
+		# to, so a teleport needs a frame or two before the object is under the cursor. One
+		# check after a fixed sleep made this the flakiest step in the capture: give it half
+		# a second instead of one frame, and only then move on to the next angle.
+		if await _poll(
+			func() -> bool:
+				return _interaction.get_target_at_screen_position(
+					_screen_position_of(target), false
+				) == target,
+			0.5
+		):
 			return true
 	return false
 

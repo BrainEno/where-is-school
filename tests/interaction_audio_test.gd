@@ -202,8 +202,23 @@ func _check_hover_limit() -> void:
 		% [played, float(CueAudioScript.HOVER_MIN_INTERVAL_SECONDS)]
 	)
 	_expect(_audio.get_play_count(&"hover") == 1, "The hover count does not match the plays.")
-	await _wait(float(CueAudioScript.HOVER_MIN_INTERVAL_SECONDS) + 0.05)
-	_expect(_audio.play_hover(), "The hover tick never came back after its interval.")
+	# Measured, not assumed: a "wait" that returns early would turn this stage into a test
+	# of the rate limiter's refusal rather than of its expiry.
+	var interval := int(CueAudioScript.HOVER_MIN_INTERVAL_SECONDS * 1000.0)
+	var before := Time.get_ticks_msec()
+	await _wait(float(CueAudioScript.HOVER_MIN_INTERVAL_SECONDS) + 0.25)
+	var waited := Time.get_ticks_msec() - before
+	_expect(
+		waited >= interval,
+		"The wait before the second hover tick lasted only %d ms, under the %d ms interval."
+		% [waited, interval]
+	)
+	var played_again := _audio.play_hover()
+	_expect(
+		played_again,
+		"The hover tick never came back: waited %d ms, interval %d ms, count %d, silent %s."
+		% [waited, interval, _audio.get_play_count(&"hover"), str(_audio.is_silent())]
+	)
 	_expect(_audio.get_play_count(&"hover") == 2, "The second hover tick was not counted.")
 	# The click sounds are not rate-limited: a click is always worth hearing.
 	_audio.reset_counts()
