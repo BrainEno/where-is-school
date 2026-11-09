@@ -76,6 +76,8 @@ jobs:
           python3 -m venv /tmp/font >/dev/null
           /tmp/font/bin/pip install --quiet "fonttools==4.58.5"
           /tmp/font/bin/python tools/subset_font.py --check
+          echo "::notice title=probe::annotation channel probe (notice)"
+          echo "::error title=probe::annotation channel probe (error, in a passing step)"
 
       # Blocking import: `--editor --quit` returns after one frame while the first scan is
       # still running, which leaves `.godot/imported/` empty and makes every tracked
