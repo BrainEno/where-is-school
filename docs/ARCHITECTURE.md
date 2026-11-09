@@ -329,7 +329,36 @@ world. One click resolves to exactly one of three outcomes:
 2. otherwise, walkable ground under the cursor is a destination: the ray only tests
    the world layer with bodies (never areas), the surface normal must face up, and the
    hit point must be within `max_snap_distance` of the navigation mesh;
-3. everything else is refused with a brief dimmed ring and no walk.
+3. everything else is refused: the cue collapses inward in the refusal colour and the
+   character stays where they are. No walk, no dialogue, nothing to dismiss.
+
+**The cues the mouse draws** (`scripts/interaction/world_cue.gd`,
+`hover_cue.gd`, `destination_cue.gd`). Three decisions hold them together:
+
+- **One palette, one pen.** `WorldCue` owns the colours (bone = where you clicked, amber =
+  the thing you clicked or can use, a duller rose = refused), the stroke width, the dash
+  rhythm and one cached unshaded alpha-only material per role. A cue is a mark, not a
+  light: unshaded, no depth write, back faces drawn, so it reads on any surface without
+  being lit by the room or punching a hole in what is behind it. Every mesh is built in
+  code (`SurfaceTool`), so no prop, scene or camera distance needs new art.
+- **Motion is the interface.** The destination ripple expands once and fades; the ring
+  left behind turns and breathes while the character walks; the hover cue's ground ring
+  spins, its halo breathes out of step, and its shard bobs and tumbles; both cues fade in
+  and out over ~0.15 s instead of switching between frames. The motion is slow on purpose
+  (a full turn in about forty seconds) so a cue never competes with the character or the
+  reading band. The refused cue is the exception that proves the rule: it *collapses*,
+  because an expanding ring is a promise of a walk.
+- **The cue is laid on the world, not on a plane.** The navigator passes the ground normal
+  under the click (one short ray, only on a click) and the cue's basis puts its +Y on that
+  normal, so a kerb, a ramp or a tilted floor plate gets a ring that lies flat on it. The
+  hover cue's ground ring is projected the same way, downwards: an interactable is authored
+  at the middle of its prop, so `Interactable` casts one ray to find the floor under it and
+  draws the ring there rather than at the sheet's own height.
+- **Nothing here decides anything.** The navigator decides what a click meant and tells the
+  cue; the cue knows no targets, routes or walks. The object's own highlight stays with
+  `InteractionController` — exactly one interactable is ever lit, which is what makes "E
+  uses what the cue shows" true — so a walk towards a clicked prop is drawn in the *target*
+  colour at the spot the walk ends on, never by lighting the prop itself.
 
 **The rules that keep these apart** (each one has a test):
 `tests/navigation_test.gd` — per-location bake and spawn coverage, spawn→exit
@@ -344,6 +373,10 @@ mid-walk, E still working, and ground clicks never activating anything.
 digits, hover styling, layer order, and a language switch that re-renders the options.
 `tests/street_prompt_test.gd` — the street's own prompt key, and the story's door
 rewrite touching only the classroom door.
+`tests/interaction_cue_test.gd` — the two cues as objects rather than as pixels: the parts
+they claim to have, that they are animated, that a role decides the colour, that the ring
+is laid on the ground normal it was given, that a refusal collapses and ends itself, that a
+cue hides when it is finished, and that the hover ring follows the interaction radius.
 
 ## 5g. The reading surface: dialogue panel, history, name labels
 

@@ -186,6 +186,9 @@ jobs:
           run_check pointer_target_switch 300 godot --headless --resolution 1600x900 --path . --script res://tests/pointer_target_switch_test.gd || status=1
           run_check interaction_occlusion 300 godot --headless --resolution 1600x900 --path . --script res://tests/interaction_occlusion_test.gd || status=1
           run_check interaction_visibility_sweep 300 godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd || status=1
+          # The two cues the mouse draws: their parts, their motion, their colour per
+          # role, the ground they are laid on, and that they hide when finished.
+          run_check interaction_cue 180 godot --headless --path . --script res://tests/interaction_cue_test.gd || status=1
           # The editor tool's data layer, driven headlessly against a user:// copy of the
           # real chapters: load, locate, edit, save, fail to save, and prove the files come
           # back byte-identical when nothing changed.

@@ -48,13 +48,12 @@ signal approach_abandoned(interactable: Interactable)
 @export var max_snap_distance: float = 0.9
 ## Highest surface normal that still counts as ground (1 = perfectly flat).
 @export_range(0.0, 1.0, 0.01) var min_ground_normal_y: float = 0.6
-## Show the quiet ring at the destination (turn off for a bare capture).
+## Draw the destination cue where a click lands (turn off for a bare capture).
 @export var marker_enabled: bool = true
 
 var _player: PlayerController = null
 var _interaction: InteractionController = null
-var _marker: MeshInstance3D = null
-var _marker_tween: Tween = null
+var _cue: DestinationCue = null
 var _pending: Interactable = null
 ## Whether `_pending` names a target we are still walking towards. Kept separately
 ## because a freed object compares equal to `null`: `_pending != null` cannot tell
@@ -131,7 +130,7 @@ func cancel() -> void:
 	_pending = null
 	_has_pending = false
 	_approaching = false
-	_hide_marker()
+	_clear_cue(true)
 	if _player != null:
 		_player.cancel_path()
 	if had_pending:
@@ -265,7 +264,7 @@ func _walk_to(point: Vector3) -> void:
 	if _player.request_path_to(point):
 		_last_click_accepted = true
 		_last_rejection = ""
-		_show_marker(point)
+		_mark_destination(point)
 		destination_accepted.emit(point)
 		return
 	_last_rejection = "no route from here to that point"
@@ -278,8 +277,9 @@ func _reject_point(point: Vector3) -> void:
 		_last_rejection = "no walkable ground under the click"
 	_last_ground_hint = point
 	destination_rejected.emit(point)
-	# Restrained: a brief dim ring where the click landed, nothing modal, no walk.
-	_show_marker(point, true)
+	# Restrained: the cue collapses inward where the click landed and flickers twice.
+	# Nothing modal, no walk, no line of text to dismiss.
+	_mark_refused(point)
 
 
 ## Where a refused click visually lands: the camera ray against the plane the player
@@ -313,7 +313,7 @@ func _begin_approach(target: Interactable) -> void:
 		_abandon_pending()
 	_approaching = false
 	_player.cancel_path()
-	_hide_marker()
+	_clear_cue()
 	_pending = target
 	_has_pending = true
 	if _can_activate_now(target):
@@ -325,16 +325,19 @@ func _begin_approach(target: Interactable) -> void:
 		# same quiet ring a refused ground click gets, and stay put.
 		_last_rejection = "no walkable spot with a clear view next to %s" % String(target.interact_id)
 		_abandon_pending()
-		_show_marker(target.global_position, true)
+		_mark_refused(target.global_position)
 		return
 	if not _player.request_path_to(spot):
 		_last_rejection = "no route to the spot next to %s" % String(target.interact_id)
 		_abandon_pending()
-		_show_marker(target.global_position, true)
+		_mark_refused(target.global_position)
 		return
 	_approaching = true
 	_last_click_accepted = true
-	_show_marker(spot)
+	# Amber, at the spot the walk ends on: the cue says "this walk ends by using
+	# something", without lighting the object itself (the highlight belongs to the
+	# interaction controller and to E, and only one object may carry it).
+	_mark_target(spot)
 	approach_started.emit(target)
 
 
@@ -401,7 +404,7 @@ func _activate_pending() -> void:
 	_pending = null
 	_has_pending = false
 	_approaching = false
-	_hide_marker()
+	_clear_cue(true)
 	if target == null or not is_instance_valid(target):
 		return
 	# Re-validated at the last moment: the object may have been disabled or freed
@@ -421,7 +424,7 @@ func _abandon_pending() -> void:
 	_pending = null
 	_has_pending = false
 	_approaching = false
-	_hide_marker()
+	_clear_cue()
 	# A target that was freed while the character walked has no object left to name,
 	# so the signal carries null. It still fires: a walk that ends because the thing
 	# at the other end vanished is not a walk that quietly succeeded.
@@ -443,70 +446,109 @@ func _on_path_cancelled() -> void:
 		_abandon_pending()
 	else:
 		_approaching = false
-		_hide_marker()
+		_clear_cue(true)
 
 
-# --- Destination marker -----------------------------------------------------
+# --- Destination cue ---------------------------------------------------------
 
 
-## A flat ring at the destination. Deliberately quiet: it answers "did that click
-## register, and where?" and then gets out of the way.
-func _ensure_marker() -> void:
-	if not marker_enabled or _marker != null:
+## The object the cue is made of lives in `scripts/interaction/destination_cue.gd`; this
+## section only decides which of its three roles a click produced. Keeping the drawing
+## out of the navigator means the cue can be photographed and tested without a navigation
+## mesh, and the navigator keeps deciding and nothing else.
+func _ensure_cue() -> void:
+	if not marker_enabled or _cue != null:
 		return
 	var parent: Node = _player.get_parent() if _player != null else null
 	# Created on first use, never in _ready(): adding a child to a node that is still
-	# setting up its own children fails, and an orphan marker would report a transform
-	# error on every click.
+	# setting up its own children fails, and an orphan cue would report a transform error
+	# on every click.
 	if parent == null or not parent.is_inside_tree():
 		return
-	_marker = MeshInstance3D.new()
-	_marker.name = "DestinationMarker"
-	var ring := TorusMesh.new()
-	ring.inner_radius = 0.22
-	ring.outer_radius = 0.3
-	ring.rings = 16
-	ring.ring_segments = 8
-	_marker.mesh = ring
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.albedo_color = Color(0.86, 0.85, 0.78, 0.55)
-	material.emission_enabled = true
-	material.emission = Color(0.9, 0.88, 0.8)
-	material.emission_energy_multiplier = 0.6
-	_marker.material_override = material
-	_marker.rotation_degrees.x = 90.0
-	_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_marker.visible = false
-	parent.add_child(_marker)
+	_cue = DestinationCue.new()
+	_cue.name = "DestinationCue"
+	parent.add_child(_cue)
 
 
-func _show_marker(point: Vector3, rejected: bool = false) -> void:
-	_ensure_marker()
-	if _marker == null:
+## A walk to the floor was accepted.
+func _mark_destination(point: Vector3) -> void:
+	if not marker_enabled:
 		return
-	if _marker_tween != null and _marker_tween.is_valid():
-		_marker_tween.kill()
-	_marker.global_position = point + Vector3.UP * 0.03
-	_marker.scale = Vector3.ONE * (1.0 if not rejected else 0.7)
-	var material := _marker.material_override as StandardMaterial3D
-	if material != null:
-		material.albedo_color = Color(0.75, 0.6, 0.55, 0.45) if rejected \
-			else Color(0.86, 0.85, 0.78, 0.55)
-	_marker.visible = true
-	if rejected:
-		_marker_tween = create_tween()
-		_marker_tween.tween_interval(0.35)
-		_marker_tween.tween_callback(_hide_marker)
+	_ensure_cue()
+	if _cue == null:
+		return
+	_cue.show_destination(point, _ground_normal_at(point))
 
 
-func _hide_marker() -> void:
-	if _marker_tween != null and _marker_tween.is_valid():
-		_marker_tween.kill()
-	_marker_tween = null
-	if _marker != null and is_instance_valid(_marker):
-		_marker.visible = false
+## A walk that ends by using something was accepted: same cue, amber, at the spot the
+## walk ends on.
+func _mark_target(point: Vector3) -> void:
+	if not marker_enabled:
+		return
+	_ensure_cue()
+	if _cue == null:
+		return
+	_cue.show_target(point, _ground_normal_at(point))
+
+
+## The click was heard and refused.
+func _mark_refused(point: Vector3) -> void:
+	if not marker_enabled:
+		return
+	_ensure_cue()
+	if _cue == null:
+		return
+	_cue.show_refused(point, _ground_normal_at(point))
+
+
+func _clear_cue(immediate: bool = false) -> void:
+	if _cue == null:
+		return
+	if not is_instance_valid(_cue):
+		_cue = null
+		return
+	_cue.dismiss(immediate)
+
+
+## The cue the clicks currently draw, or null before the first click. Public for the
+## tests and for the capture run.
+func get_cue() -> DestinationCue:
+	return _cue
+
+
+## `"destination"`, `"target"`, `"refused"`, or `""` when nothing is drawn. The colour of
+## the cue is a decision this node made, so the state is readable from here instead of
+## from pixels.
+func get_cue_role() -> String:
+	if _cue == null or not is_instance_valid(_cue):
+		return ""
+	return _cue.get_role()
+
+
+## How the ground under a point is tilted, so the ring lies on it instead of cutting into
+## it. One short ray, only on an accepted or refused click — never per frame.
+func _ground_normal_at(point: Vector3) -> Vector3:
+	if _player == null:
+		return Vector3.UP
+	var world := _player.get_world_3d()
+	if world == null:
+		return Vector3.UP
+	var space := world.direct_space_state
+	if space == null:
+		return Vector3.UP
+	var query := PhysicsRayQueryParameters3D.create(
+		point + Vector3.UP * 0.6, point + Vector3.DOWN * 0.6, ground_mask
+	)
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.exclude = [_player.get_rid()]
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return Vector3.UP
+	var normal: Vector3 = hit.get("normal", Vector3.UP)
+	if normal.length_squared() <= 0.0001:
+		return Vector3.UP
+	return normal
 
 
 func _map_has_geometry(map: RID) -> bool:

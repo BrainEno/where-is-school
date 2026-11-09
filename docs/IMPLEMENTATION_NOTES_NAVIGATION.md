@@ -9,7 +9,8 @@ reasoning and the evidence.
 ## 1. What the player can now do
 
 - **Click the floor** and the character walks there along the location's navigation
-  mesh. A quiet ring marks the destination and clears when the walk ends.
+  mesh. The click ripples once where it landed and leaves a quiet ring that turns and
+  breathes while the character walks; the ring collapses and fades when the walk ends.
 - **Click a person, a prop or a door** and the character walks to a spot inside that
   object's interaction radius and uses it on arrival. Clicking something already
   within reach uses it immediately, without a step.
@@ -79,7 +80,71 @@ reasoning and the evidence.
   unhandled input, and check that counter against a control case, so "no leak" cannot
   be true by accident.
 
-## 4. Not in this round
+## 4. The cue round: what the mouse draws
+
+The first version of the cues was two hand-rolled tori — one flat ring on the highlighted
+object, one flat ring at the destination — and they looked like what they were: three
+days of code that nobody had looked at on a screen. What was wrong with them, in order:
+
+1. **A solid glowing hoop is the most generic mark in a 3D game.** The object ring also sat
+   at a fixed radius regardless of the object, so a door and a schoolbag got the same ring,
+   and neither told the player where to *stand*.
+2. **Nothing moved.** Both rings were switched on and off between two frames, which reads
+   as a rendering fault rather than as the game pointing at something.
+3. **The two rings shared nothing.** Different colours, different thickness, different
+   emission: an object saying "use me" and a floor saying "walk here" looked like two
+   different tools made by two different people.
+4. **The refusal was a dimmer version of the acceptance.** Same shape, same direction,
+   weaker colour — so the cue that promised a walk and the cue that refused one differed by
+   a shade of brightness.
+5. **The ring was always horizontal**, so on a kerb or a ramp it floated on one edge.
+
+`scripts/interaction/world_cue.gd` answers 1 and 3: one palette, one pen width, one dash
+rhythm, one unshaded material per role, every mesh built from code with `SurfaceTool`. The
+roles are words (`destination`, `target`, `refused`) rather than colours at the call site,
+because the role is the decision and the colour is only how it is drawn.
+
+`scripts/interaction/hover_cue.gd` answers 1 and 2 for the object: a dashed ground ring
+whose radius is derived from the interaction radius (the ring marks where the player has to
+stand, so it has to agree with the reach test) and which `Interactable` projects down onto
+the floor with one ray — interactables are authored at the middle of the prop, so their own
+height is not the ground — a wider halo breathing out of step with it,
+and a small shard tumbling above the object — which keeps the cue legible when the prop
+stands on a shelf, in a doorway or behind a desk, where a ground ring is hidden. All three
+parts fade in over 0.14 s and fade out over 0.16 s.
+
+`scripts/interaction/destination_cue.gd` answers 2 and 4 for the click: the accepted click
+ripples outwards once (the gesture of a click landing), leaves a ring that turns and
+breathes for as long as the walk lasts, and collapses when the walk ends. The refused click
+*collapses inward* with two flicks instead of expanding, because direction is what carries
+the meaning: outward is a promise, inward is a withdrawal. It ends itself after 0.55 s —
+a refusal is not something the player has to dismiss.
+
+Point 5 is one ray, cast only when a click is accepted or refused, against the ground layer:
+the hit normal orients the cue. A flat ring on a slope floats on one side and sinks on the
+other, which is the kind of detail that makes an effect look broken without anyone being
+able to say why.
+
+Two things were deliberately *not* done:
+
+- **The clicked prop is not lit while the character walks to it.** It would have been the
+  obvious Disco-Elysium-ish move, and it would have broken the rule that exactly one
+  object is highlighted and it is the one E uses: `InteractionController` owns the
+  highlight, and a second owner would have made the cue and the key disagree. The walk is
+  drawn in the *target* colour at the spot it ends on instead — the same information,
+  attributed to the same object, with one owner.
+- **No cursor replacement and no world-space prompt text.** Both are real Disco Elysium
+  affordances, and both need art and a font pass the project does not have yet. The prompt
+  keeps its text and gains a 0.12 s fade; nothing was invented to fill the gap.
+
+Evidence: `tests/interaction_cue_test.gd` (headless: parts, motion, roles, ground
+alignment, self-dismissal, radius follows the interaction radius) plus three capture frames
+— `03a_click_destination`, the new `03d_hover_cue` (real cursor on the timetable sheet) and
+`03g_refused_click` (a click on a wall). What a headless test cannot prove is what the
+cues *look* like; that is what the frames are for, and a human pass on Windows is still
+listed in the pull request.
+
+## 5. Not in this round
 
 - No dialogue-panel redesign, no NPC name labels, no new character models, no story or
   dialogue rewrites, no minimap, no combat, inventory or quests, no camera or location
@@ -94,7 +159,7 @@ reasoning and the evidence.
   floor flush with the courtyard (issue #33). See
   [IMPLEMENTATION_NOTES_PLAYGROUND.md](IMPLEMENTATION_NOTES_PLAYGROUND.md) §6.
 
-## 5. Evidence, and what it is not
+## 6. Evidence, and what it is not
 
 Automated (headless, CI):
 
