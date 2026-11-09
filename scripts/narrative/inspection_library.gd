@@ -38,6 +38,18 @@ var errors: Array[String] = []
 var _entries: Dictionary = {}
 var _locale: String = L10n.DEFAULT_LOCALE
 
+## What the last `load_all()` cost and loaded, per language and per chapter:
+##
+##     {"total_usec": int,
+##      "locales": {"zh-CN": {"bytes": int, "entries": int, "usec": int,
+##                            "chapters": {"classroom": {"bytes": int,
+##                                                       "entries": int,
+##                                                       "usec": int}, ...}}, ...}}
+##
+## ``entries`` is how many inspectables that chapter contributed, so the report answers
+## "how much is there to read" as well as "how much does it weigh". Filled once per load.
+var load_report: Dictionary = {}
+
 
 static func chapter_path(locale: String, chapter: String) -> String:
 	return "%s/%s/%s.json" % [INSPECTION_DIR, locale, chapter]
@@ -45,13 +57,102 @@ static func chapter_path(locale: String, chapter: String) -> String:
 
 static func load_all() -> InspectionLibrary:
 	var library := InspectionLibrary.new()
+	var started := Time.get_ticks_usec()
 	for locale in L10n.LOCALES:
 		library._entries[locale] = {}
 		for chapter in CHAPTERS:
-			library._parse_file(chapter_path(locale, chapter), locale)
+			var path := chapter_path(locale, chapter)
+			var before: int = (library._entries[locale] as Dictionary).size()
+			var chapter_started := Time.get_ticks_usec()
+			library._parse_file(path, locale)
+			library._note_chapter(
+				locale,
+				chapter,
+				path,
+				(library._entries[locale] as Dictionary).size() - before,
+				Time.get_ticks_usec() - chapter_started
+			)
 	library._check_parity()
+	library.load_report["total_usec"] = Time.get_ticks_usec() - started
+	library._print_load_report()
 	library.set_locale(L10n.current)
 	return library
+
+
+## Adds one chapter's size, entry count and parse time to `load_report`.
+func _note_chapter(
+	locale: String, chapter: String, path: String, entries: int, usec: int
+) -> void:
+	var bytes := _file_bytes(path)
+	var locales: Dictionary = load_report.get("locales", {})
+	var entry: Dictionary = locales.get(
+		locale, {"bytes": 0, "entries": 0, "usec": 0, "chapters": {}}
+	)
+	entry["bytes"] = int(entry["bytes"]) + bytes
+	entry["entries"] = int(entry["entries"]) + entries
+	entry["usec"] = int(entry["usec"]) + usec
+	var chapters: Dictionary = entry["chapters"]
+	chapters[chapter] = {"bytes": bytes, "entries": entries, "usec": usec}
+	entry["chapters"] = chapters
+	locales[locale] = entry
+	load_report["locales"] = locales
+
+
+static func _file_bytes(path: String) -> int:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return 0
+	var length := file.get_length()
+	file.close()
+	return length
+
+
+func get_load_report() -> Dictionary:
+	return load_report
+
+
+## The report as text, for the console, a test, or a document.
+func describe_load_report() -> String:
+	if load_report.is_empty():
+		return "InspectionLibrary: nothing loaded."
+	var locales: Dictionary = load_report.get("locales", {})
+	var lines: Array[String] = []
+	lines.append(
+		"InspectionLibrary: %d language(s) in %.1f ms."
+		% [locales.size(), int(load_report.get("total_usec", 0)) / 1000.0]
+	)
+	for locale: String in locales.keys():
+		var entry: Dictionary = locales[locale]
+		lines.append(
+			"  %s: %.1f KB, %d entries, parsed in %.1f ms"
+			% [
+				locale,
+				int(entry["bytes"]) / 1024.0,
+				int(entry["entries"]),
+				int(entry["usec"]) / 1000.0,
+			]
+		)
+		var chapters: Dictionary = entry["chapters"]
+		for chapter: String in CHAPTERS:
+			if not chapters.has(chapter):
+				continue
+			var chapter_entry: Dictionary = chapters[chapter]
+			lines.append(
+				"    %s: %.1f KB, %d entries, %.1f ms"
+				% [
+					chapter,
+					int(chapter_entry["bytes"]) / 1024.0,
+					int(chapter_entry["entries"]),
+					int(chapter_entry["usec"]) / 1000.0,
+				]
+			)
+	return "\n".join(lines)
+
+
+func _print_load_report() -> void:
+	if not OS.is_debug_build():
+		return
+	print(describe_load_report())
 
 
 func set_locale(locale: String) -> bool:

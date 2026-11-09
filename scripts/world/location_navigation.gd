@@ -45,6 +45,12 @@ var _bake_error: String = ""
 var _map_region_count: int = 0
 var _source_face_count: int = 0
 
+## Timing of the last bake, in microseconds: the whole bake and the geometry collection
+## inside it. Measured once per bake — a bake happens when a location enters the tree, not
+## per frame — so the numbers describe the load, never the running game.
+var _bake_usec: int = 0
+var _collect_usec: int = 0
+
 
 func _ready() -> void:
 	add_to_group("location_navigation")
@@ -57,9 +63,12 @@ func _ready() -> void:
 ## Bakes the mesh now. Returns false when the geometry produced no walkable polygons,
 ## which is a content error, not a runtime hiccup.
 func bake_region() -> bool:
+	var started := Time.get_ticks_usec()
 	var root := get_parent()
 	if root == null:
 		_bake_error = "the region has no parent to bake from"
+		_bake_usec = Time.get_ticks_usec() - started
+		_report("")
 		navigation_baked.emit(false)
 		return false
 	var mesh: NavigationMesh = navigation_mesh
@@ -67,7 +76,9 @@ func bake_region() -> bool:
 		mesh = NavigationMesh.new()
 	_configure(mesh)
 	var source := NavigationMeshSourceGeometryData3D.new()
+	var collect_started := Time.get_ticks_usec()
 	_source_face_count = _collect_geometry(root, source)
+	_collect_usec = Time.get_ticks_usec() - collect_started
 	NavigationServer3D.bake_from_source_geometry_data(mesh, source)
 	navigation_mesh = mesh
 	_polygon_count = mesh.get_polygon_count()
@@ -93,8 +104,46 @@ func bake_region() -> bool:
 			% _polygon_count
 		)
 		push_error("LocationNavigation: %s" % _bake_error)
+	_bake_usec = Time.get_ticks_usec() - started
+	_report(String(root.name))
 	navigation_baked.emit(_baked)
 	return _baked
+
+
+## How long the last bake took, and how much of that was collecting geometry. Zero until a
+## bake has run. Debug builds and tests print the same numbers; release builds stay quiet.
+func get_bake_usec() -> int:
+	return _bake_usec
+
+
+func get_collect_usec() -> int:
+	return _collect_usec
+
+
+## One line per bake for the console, only in debug builds: what was baked, how long it took,
+## how much geometry went in, how many polygons came out, and how many regions the map
+## actually registered. A location that takes a second to bake is a location that will hitch
+## on the door.
+func _report(location_name: String) -> void:
+	if not OS.is_debug_build():
+		return
+	if not _baked:
+		print(
+			"LocationNavigation: '%s' FAILED to bake in %.1f ms (%d faces parsed): %s"
+			% [location_name, _bake_usec / 1000.0, _source_face_count, _bake_error]
+		)
+		return
+	print(
+		"LocationNavigation: '%s' baked in %.1f ms (collect %.1f), %d faces -> %d polygons, %d region(s)."
+		% [
+			location_name,
+			_bake_usec / 1000.0,
+			_collect_usec / 1000.0,
+			_source_face_count,
+			_polygon_count,
+			_map_region_count,
+		]
+	)
 
 
 ## How many triangles went into the bake. A room with desks reports far more than a

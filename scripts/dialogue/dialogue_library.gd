@@ -30,6 +30,24 @@ var _abilities: InnerAbilities = null
 var _index: Dictionary = {}
 var _locale: String = L10n.DEFAULT_LOCALE
 
+## What the last `load_all()` actually cost and actually loaded, so the size of the corpus
+## is a number instead of an impression. Shape:
+##
+##     {
+##       "total_usec": int,                       # the whole load, all languages
+##       "locales": {
+##         "zh-CN": {
+##           "bytes": int, "conversations": int, "nodes": int, "usec": int,
+##           "chapters": { "prologue": {"bytes": int, "conversations": int,
+##                                      "nodes": int, "usec": int}, ... },
+##         }, ...
+##       },
+##     }
+##
+## Filled once per load, never per frame. The loader is still "every chapter, every
+## language, at start-up": this reports that cost, it does not change it.
+var load_report: Dictionary = {}
+
 
 static func chapter_path(locale: String, chapter: String) -> String:
 	return "%s/%s/%s.json" % [DIALOGUE_DIR, locale, chapter]
@@ -38,12 +56,17 @@ static func chapter_path(locale: String, chapter: String) -> String:
 static func load_all(abilities: InnerAbilities = null) -> DialogueLibrary:
 	var library := DialogueLibrary.new()
 	library._abilities = abilities
+	var started := Time.get_ticks_usec()
 	for locale in L10n.LOCALES:
 		library._graphs[locale] = {}
 		library._index[locale] = {}
 		for chapter in CHAPTERS:
 			var path := chapter_path(locale, chapter)
+			var chapter_started := Time.get_ticks_usec()
 			var graph := DialogueGraph.load_from_file(path)
+			library._note_chapter(
+				locale, chapter, path, graph, Time.get_ticks_usec() - chapter_started
+			)
 			for message in graph.errors:
 				library.errors.append(message)
 			library._graphs[locale][chapter] = graph
@@ -61,8 +84,99 @@ static func load_all(abilities: InnerAbilities = null) -> DialogueLibrary:
 			library._check_check_abilities(graph)
 
 	library._check_parity()
+	library.load_report["total_usec"] = Time.get_ticks_usec() - started
+	library._print_load_report()
 	library.set_locale(L10n.current)
 	return library
+
+
+## Adds one chapter's size, counts and parse time to `load_report`.
+func _note_chapter(
+	locale: String, chapter: String, path: String, graph: DialogueGraph, usec: int
+) -> void:
+	var bytes := _file_bytes(path)
+	var conversations := graph.get_conversation_ids().size()
+	var nodes := 0
+	for conversation_id: StringName in graph.get_conversation_ids():
+		var conversation := graph.get_conversation(conversation_id)
+		if conversation != null:
+			nodes += conversation.nodes.size()
+	var locales: Dictionary = load_report.get("locales", {})
+	var entry: Dictionary = locales.get(
+		locale, {"bytes": 0, "conversations": 0, "nodes": 0, "usec": 0, "chapters": {}}
+	)
+	entry["bytes"] = int(entry["bytes"]) + bytes
+	entry["conversations"] = int(entry["conversations"]) + conversations
+	entry["nodes"] = int(entry["nodes"]) + nodes
+	entry["usec"] = int(entry["usec"]) + usec
+	var chapters: Dictionary = entry["chapters"]
+	chapters[chapter] = {
+		"bytes": bytes, "conversations": conversations, "nodes": nodes, "usec": usec
+	}
+	entry["chapters"] = chapters
+	locales[locale] = entry
+	load_report["locales"] = locales
+
+
+static func _file_bytes(path: String) -> int:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return 0
+	var length := file.get_length()
+	file.close()
+	return length
+
+
+## The report as text: the same numbers the console gets, for a test or a document.
+func describe_load_report() -> String:
+	if load_report.is_empty():
+		return "DialogueLibrary: nothing loaded."
+	var lines: Array[String] = []
+	lines.append(
+		"DialogueLibrary: %d language(s) in %.1f ms."
+		% [int(load_report.get("locales", {}).size()), int(load_report.get("total_usec", 0)) / 1000.0]
+	)
+	var locales: Dictionary = load_report.get("locales", {})
+	for locale: String in locales.keys():
+		var entry: Dictionary = locales[locale]
+		lines.append(
+			"  %s: %.1f KB, %d conversations, %d nodes, parsed in %.1f ms"
+			% [
+				locale,
+				int(entry["bytes"]) / 1024.0,
+				int(entry["conversations"]),
+				int(entry["nodes"]),
+				int(entry["usec"]) / 1000.0,
+			]
+		)
+		var chapters: Dictionary = entry["chapters"]
+		for chapter: String in CHAPTERS:
+			if not chapters.has(chapter):
+				continue
+			var chapter_entry: Dictionary = chapters[chapter]
+			lines.append(
+				"    %s: %.1f KB, %d conversations, %d nodes, %.1f ms"
+				% [
+					chapter,
+					int(chapter_entry["bytes"]) / 1024.0,
+					int(chapter_entry["conversations"]),
+					int(chapter_entry["nodes"]),
+					int(chapter_entry["usec"]) / 1000.0,
+				]
+			)
+	return "\n".join(lines)
+
+
+func get_load_report() -> Dictionary:
+	return load_report
+
+
+## Printed at start-up in debug builds only: the corpus size is a development number, not
+## something a player should see in a console.
+func _print_load_report() -> void:
+	if not OS.is_debug_build():
+		return
+	print(describe_load_report())
 
 
 func set_locale(locale: String) -> bool:

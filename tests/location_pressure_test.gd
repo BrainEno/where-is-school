@@ -1,0 +1,395 @@
+extends SceneTree
+## The cost of a location, and the cost of leaving it.
+##
+## This is the pressure test for scene swapping: it walks every playable location the game
+## ships, then bounces between two of them until the numbers stop moving. It asserts what a
+## door has to do rather than what it looks like:
+##
+## 1. every location loads, and its navigation is really baked — a mesh with faces, polygons
+##    and a region registered with the map, plus a route between two of its own spawn points,
+##    answered by the navigation server;
+## 2. the bake is timed once per bake, and the numbers the region reports are the ones the
+##    navigation server sees, not values a test could have invented;
+## 3. after any number of transitions there is exactly one location scene in the tree, one
+##    player and one companion;
+## 4. coming back to the same room costs the same node count as the first time: the old
+##    scene is freed, not stacked, and no orphans accumulate;
+## 5. the companion stays joined and follows while the rooms change under it;
+## 6. every transition the host recorded succeeded, with no more than one location alive at
+##    the moment of the swap.
+##
+## The numbers are printed, because the point of the test is also to know them.
+
+const Harness = preload("res://tests/test_harness.gd")
+
+const LOCATIONS: Array[String] = [
+	"res://scenes/locations/classroom/classroom.tscn",
+	"res://scenes/locations/corridor/corridor.tscn",
+	"res://scenes/locations/street/street.tscn",
+	"res://scenes/locations/residential/residential.tscn",
+	"res://scenes/locations/alley/alley.tscn",
+	"res://scenes/locations/playground/playground.tscn",
+]
+
+const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
+const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
+
+## How many nodes the tree may grow by over a full return trip before it counts as a leak.
+## The room is the same room; a handful of nodes is a timer or a tween, not a second scene.
+const NODE_GROWTH_TOLERANCE := 12
+## The same, for nodes nothing owns. They are the ones a `queue_free` pattern gets wrong.
+const ORPHAN_GROWTH_TOLERANCE := 4
+## A companion further away than this, after a transition, is a companion that was left
+## behind in the previous room.
+const COMPANION_LEASH := 12.0
+
+var _failures: Array[String] = []
+var _checks: int = 0
+var _main: Node = null
+var _host: LocationHost = null
+var _player: PlayerController = null
+var _companion: CompanionController = null
+
+
+func _initialize() -> void:
+	Harness.arm_watchdog(self, 300.0, "location_pressure_test.gd")
+	call_deferred("_run")
+
+
+func _run() -> void:
+	var autoloads := Harness.ensure_state_autoloads(self)
+	if autoloads["game_state"] == null or autoloads["narrative_state"] == null:
+		Harness.finish(self, ["State autoloads are unavailable."], "")
+		return
+	Harness.ensure_autoload(self, "Loc", "res://scripts/i18n/loc.gd")
+	L10n.load_tables()
+	Harness.clear_session_state(self)
+
+	var packed: PackedScene = load("res://scenes/main/main.tscn")
+	if packed == null:
+		Harness.finish(self, ["main.tscn could not be loaded."], "")
+		return
+	_main = packed.instantiate()
+	var sequence := _main.get_node_or_null("OpeningSequence")
+	if sequence != null:
+		sequence.set("autostart", false)
+	root.add_child(_main)
+	await _frames(3)
+
+	_host = _main.get_node_or_null("LocationHost") as LocationHost
+	_player = _main.get_node_or_null("Player") as PlayerController
+	_companion = _main.get_node_or_null("Companion") as CompanionController
+	if _host == null or _player == null:
+		Harness.finish(self, ["Main did not expose the host or the player."], "")
+		return
+	if sequence != null:
+		sequence.call("allow_player_control")
+	await _frames(2)
+
+	await _check_every_location()
+	await _check_round_trips()
+	await _check_single_instances()
+	await _check_companion_follows()
+	_check_transition_log()
+
+	_print_report()
+	Harness.finish(
+		self,
+		_failures,
+		"every location loads, bakes its own navigation, and is replaced exactly once per "
+		+ "transition: one room, one player, one companion, no accumulating nodes.",
+	)
+
+
+# --- cases ------------------------------------------------------------------
+
+
+## Each shipped location, entered from the previous one's default spawn.
+func _check_every_location() -> void:
+	for path: String in LOCATIONS:
+		Harness.stage = "entering %s" % path
+		var entered := await _enter(path)
+		if not entered:
+			continue
+		var location := _host.get_current()
+		_expect(location != null, "%s entered but the host reports no location." % path)
+		if location == null:
+			continue
+		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
+		if navigation == null:
+			_failures.append("%s has no Navigation region." % path)
+			continue
+		_expect(navigation.is_baked(), "%s: the navigation mesh did not bake." % path)
+		_expect(
+			navigation.get_geometry_face_count() > 0,
+			"%s: the bake parsed no geometry; nothing would be walkable." % path
+		)
+		_expect(
+			navigation.get_polygon_count() > 0,
+			"%s: the bake produced no polygons." % path
+		)
+		_expect(
+			navigation.get_map_region_count() > 0,
+			"%s: the region never registered with the navigation map." % path
+		)
+		_expect(
+			navigation.get_bake_usec() > 0,
+			"%s: the bake has no measured duration; the timing is not wired." % path
+		)
+		_expect(
+			navigation.get_bake_usec() >= navigation.get_collect_usec(),
+			"%s: collecting geometry took longer than the whole bake." % path
+		)
+		_expect(navigation.is_routable(), "%s: the navigation map cannot answer a route." % path)
+		_expect_location_route(path, location, navigation)
+
+	print(
+		"pressure: %d location(s) entered, %d transition(s) logged."
+		% [LOCATIONS.size(), _host.transition_history.size()]
+	)
+
+
+## Two spawn points of this location, routed through the navigation server. This is the
+## difference between "a mesh exists" and "a route exists": the server answers both a
+## closest point and a path, using the region the scene just baked.
+func _expect_location_route(
+	path: String, location: LocationRoot, navigation: LocationNavigation
+) -> void:
+	var ids := location.get_spawn_ids()
+	if ids.size() < 2:
+		_failures.append("%s has fewer than two spawn points to route between." % path)
+		return
+	var from_marker := location.get_spawn(ids[0])
+	var to_marker := location.get_spawn(ids[1])
+	if from_marker == null or to_marker == null:
+		_failures.append("%s lost a spawn point between listing and lookup." % path)
+		return
+	var map := navigation.get_navigation_map()
+	var from := NavigationServer3D.map_get_closest_point(map, from_marker.global_position)
+	var to := NavigationServer3D.map_get_closest_point(map, to_marker.global_position)
+	_expect(
+		from.distance_to(from_marker.global_position) < 3.0,
+		"%s: spawn '%s' is %.1f m from the closest walkable point."
+		% [path, ids[0], from.distance_to(from_marker.global_position)]
+	)
+	var route := NavigationServer3D.map_get_path(map, from, to, true)
+	_expect(
+		route.size() >= 2,
+		"%s: no route between '%s' and '%s'." % [path, ids[0], ids[1]]
+	)
+	if route.size() >= 2:
+		_expect(
+			route[route.size() - 1].distance_to(to) < 1.0,
+			"%s: the route ends %.1f m from where it was asked to go."
+			% [path, route[route.size() - 1].distance_to(to)]
+		)
+
+
+## Back and forth until the numbers stop moving: the room a player returns to has to cost
+## the same as the room they left.
+func _check_round_trips() -> void:
+	Harness.stage = "round trips"
+	if not await _enter(CLASSROOM):
+		return
+	await _settle()
+	var nodes_before := _node_count()
+	var orphans_before := _orphan_count()
+	for index in 3:
+		Harness.stage = "round trip %d (out)" % (index + 1)
+		if not await _enter(CORRIDOR):
+			return
+		Harness.stage = "round trip %d (back)" % (index + 1)
+		if not await _enter(CLASSROOM):
+			return
+	await _settle()
+	var nodes_after := _node_count()
+	var orphans_after := _orphan_count()
+	_expect(
+		nodes_after - nodes_before <= NODE_GROWTH_TOLERANCE,
+		"The tree grew by %d nodes over three round trips (%d -> %d): a scene is being left behind."
+		% [nodes_after - nodes_before, nodes_before, nodes_after]
+	)
+	_expect(
+		orphans_after - orphans_before <= ORPHAN_GROWTH_TOLERANCE,
+		"%d orphan node(s) appeared over three round trips (%d -> %d)."
+		% [orphans_after - orphans_before, orphans_before, orphans_after]
+	)
+	print(
+		"pressure: three round trips, nodes %d -> %d, orphans %d -> %d."
+		% [nodes_before, nodes_after, orphans_before, orphans_after]
+	)
+
+
+## One room, one player, one companion, however many times the room changed.
+func _check_single_instances() -> void:
+	Harness.stage = "counting instances"
+	var locations := _count_of(_main, "location")
+	var players := _count_of(_main, "player")
+	var companions := _count_of(_main, "companion")
+	_expect(locations == 1, "%d location scene(s) are in the tree at once." % locations)
+	_expect(players == 1, "%d player node(s) are in the tree." % players)
+	_expect(companions == 1, "%d companion node(s) are in the tree." % companions)
+	_expect(
+		_host.get_child_count() == 1,
+		"The location host holds %d children; it should hold the one room." % _host.get_child_count()
+	)
+
+
+## Q joins once and stays joined; being carried between rooms does not unjoin it, and a
+## companion that is visible stands near the player rather than in the previous room.
+func _check_companion_follows() -> void:
+	Harness.stage = "companion following"
+	if _companion == null:
+		_failures.append("Main has no Companion node to test.")
+		return
+	if not _companion.is_joined():
+		_companion.join()
+	_expect(_companion.is_joined(), "The companion refused to join.")
+	for index in 2:
+		if not await _enter(CORRIDOR if index == 0 else CLASSROOM):
+			return
+		await _frames(30)
+		_expect(
+			_companion.is_joined(),
+			"The companion unjoined itself after transition %d." % (index + 1)
+		)
+		if not _companion.is_with_player():
+			# Hiding is legal: a room without a place for Q is a room Q is not in. What is
+			# not legal is being visible and standing in the previous room.
+			continue
+		var distance := _companion.global_position.distance_to(_player.global_position)
+		_expect(
+			distance <= COMPANION_LEASH,
+			"The companion is %.1f m from the player after transition %d."
+			% [distance, index + 1]
+		)
+	_companion.resume_following()
+	await _frames(2)
+	_expect(
+		not _companion.is_waiting(),
+		"Asking the companion along again left it waiting."
+	)
+
+
+## The host's own log: every transition succeeded, and never more than one room was alive.
+func _check_transition_log() -> void:
+	Harness.stage = "transition log"
+	var history := _host.transition_history
+	_expect(not history.is_empty(), "The host recorded no transitions at all.")
+	for entry: Dictionary in history:
+		_expect(bool(entry["ok"]), "A transition to %s failed." % entry["scene"])
+		_expect(
+			int(entry["live_locations"]) == 1,
+			"%d location scene(s) were alive after entering %s."
+			% [int(entry["live_locations"]), entry["scene"]]
+		)
+		_expect(
+			int(entry["total_usec"]) > 0,
+			"The transition to %s has no measured duration." % entry["scene"]
+		)
+		_expect(
+			int(entry["total_usec"])
+			>= int(entry["load_usec"])
+			+ int(entry["instantiate_usec"])
+			+ int(entry["tree_usec"])
+			+ int(entry["placement_usec"]),
+			"The stages of %s add up to more than the transition did." % entry["scene"]
+		)
+		_expect(
+			int(entry["scene_nodes"]) > 0,
+			"%s was entered with no nodes in it." % entry["scene"]
+		)
+
+
+# --- helpers ----------------------------------------------------------------
+
+
+func _enter(path: String) -> bool:
+	var before := _host.get_current()
+	var ok := _host.load_location(path, &"", _player)
+	_expect(ok, "%s could not be entered." % path)
+	if not ok:
+		return false
+	var entered := _host.get_current()
+	_expect(entered != null, "%s reported success but left no current location." % path)
+	if entered == null:
+		return false
+	_expect(
+		before == null or entered != before,
+		"%s reported success but the old scene is still current." % path
+	)
+	_expect(
+		not String(entered.location_id).is_empty(),
+		"%s entered without declaring a location_id." % path
+	)
+	_expect(
+		_player.global_position.distance_to(entered.get_default_spawn().global_position) < 0.1,
+		"%s: the player was not placed on the default spawn." % path
+	)
+	await _frames(3)
+	return true
+
+
+## Lets the deferred bake and the physics settle before the node count is read.
+func _settle() -> void:
+	for _index in 20:
+		await process_frame
+
+
+func _count_of(node: Node, what: String) -> int:
+	var total := 0
+	match what:
+		"location":
+			if node is LocationRoot:
+				total += 1
+		"player":
+			if node is PlayerController:
+				total += 1
+		"companion":
+			if node is CompanionController:
+				total += 1
+	for child in node.get_children():
+		total += _count_of(child, what)
+	return total
+
+
+func _node_count() -> int:
+	return int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+
+
+func _orphan_count() -> int:
+	return int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+
+
+func _print_report() -> void:
+	var history := _host.transition_history
+	if history.is_empty():
+		return
+	print("pressure: the last %d transition(s):" % history.size())
+	for entry: Dictionary in history:
+		print(
+			"  %-22s %6.1f ms (load %5.1f, inst %5.1f, tree %5.1f, place %4.1f, commit %4.1f) %5d nodes, %d live"
+			% [
+				entry["scene"].get_file().get_basename(),
+				int(entry["total_usec"]) / 1000.0,
+				int(entry["load_usec"]) / 1000.0,
+				int(entry["instantiate_usec"]) / 1000.0,
+				int(entry["tree_usec"]) / 1000.0,
+				int(entry["placement_usec"]) / 1000.0,
+				int(entry["commit_usec"]) / 1000.0,
+				int(entry["scene_nodes"]),
+				int(entry["live_locations"]),
+			]
+		)
+
+
+func _frames(count: int) -> void:
+	for _index in count:
+		await process_frame
+
+
+func _expect(condition: bool, message: String) -> void:
+	_checks += 1
+	if condition:
+		return
+	_failures.append(message)

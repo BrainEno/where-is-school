@@ -205,6 +205,10 @@ jobs:
           run_check hud_layout_720 180 godot --headless --resolution 1280x720 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_900 180 godot --headless --resolution 1600x900 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_1080 180 godot --headless --resolution 1920x1080 --path . --script res://tests/hud_layout_test.gd || status=1
+          # What the text corpus costs, and what it contains: every chapter, every language.
+          run_check content_load_report 240 godot --headless --path . --script res://tests/content_load_report_test.gd || status=1
+          # The pressure test: all six locations, three round trips, one room in the tree.
+          run_check location_pressure 420 godot --headless --path . --script res://tests/location_pressure_test.gd || status=1
           # The editor tool's data layer, driven headlessly against a user:// copy of the
           # real chapters: load, locate, edit, save, fail to save, and prove the files come
           # back byte-identical when nothing changed.
