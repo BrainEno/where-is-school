@@ -1,0 +1,48 @@
+where-is-school — the vertical slice
+====================================
+
+Run it
+------
+Double-click where-is-school.exe.
+
+The build is unsigned, so Windows SmartScreen will show "Windows protected your PC" the
+first time. Choose "More info" -> "Run anyway". Nothing is installed, nothing is written
+outside the game's own settings file (language choice, in %APPDATA%\Godot\app_userdata\
+where-is-school).
+
+Controls
+--------
+  WASD / arrow keys        walk (camera-relative); pressing them also cancels an
+                           automatic walk
+  left click on the floor  walk there
+  left click on a thing    walk over and use it (same as E)
+  E                        use what the prompt names
+  Space / Enter / click    advance a line of dialogue; the sentence on screen is
+                           finished first if it is still typing
+  Tab / Esc                open, and close, the log of what has been read
+  1..9                     pick a dialogue option
+  L                        switch between English and simplified Chinese, mid-line
+
+A conversation, once started, is read to its end: there is no way to walk out of one
+mid-sentence, which is deliberate for a slice this short and is listed as a limitation,
+not a bug.
+
+The mouse cursor changes over anything in reach, and the prompt names the same object
+the E key would use.
+
+What this build is
+------------------
+The end of a milestone, not the end of the story: the slice stops at a gap in the yard's
+fence with an end card. There is no save/load, no options screen, no pause menu, and the
+only setting remembered between runs is the language.
+
+Known cosmetic gaps (not bugs to report):
+  - grey boxes stand in for people, and some furniture is still a box
+  - the executable carries the default engine icon
+
+Reporting something
+-------------------
+If you are the owner: docs/PLAYTEST_CHECKLIST.md in the repository is the list this build
+is meant to be played against, with what to write down. If something breaks, the useful
+details are where you were (room), what you did, and what you expected — the game has no
+telemetry and sends nothing anywhere.
