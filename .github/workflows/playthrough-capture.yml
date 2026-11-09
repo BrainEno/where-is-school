@@ -250,6 +250,11 @@ jobs:
           echo "CAPTURE_RESULT=success"
           echo "shot_count=${staged}" >> "$GITHUB_OUTPUT"
           echo "::notice title=playthrough::${summary:-capture finished}"
+          # The names, not just the count: which frames a run produced is the first thing
+          # a reviewer asks, and the artifact itself is not readable from a pull request.
+          echo "::notice title=playthrough frames::$(grep -oE 'screenshot [a-z0-9_]+' \
+            "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" | sed 's/screenshot //' \
+            | tr '\n' ' ' | cut -c-1400)"
 
       - name: Capture the dialogue layout
         id: ui_capture
