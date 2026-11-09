@@ -179,16 +179,33 @@ def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, i
     blob = path.read_bytes()
     if not embedded:
         return read_pack(blob, 0)
-    # The pack is appended to the executable; take the last magic so an executable that
-    # happens to contain the bytes earlier still resolves to the real pack.
-    start = blob.rfind(MAGIC)
-    if start == -1:
+
+    # The pack is appended to the executable, so the magic is somewhere near the end — but
+    # "near the end" is not "the last occurrence": an executable can end with bytes that
+    # happen to spell GDPC (the first CI run of this tool found one four bytes from the end
+    # of the file and reported a truncated header). Every occurrence is therefore tried,
+    # newest first, and the first one that parses into a directory of res:// paths wins.
+    starts: list[int] = []
+    index = blob.rfind(MAGIC)
+    while index != -1 and len(starts) < 64:
+        starts.append(index)
+        index = blob.rfind(MAGIC, 0, index)
+    if not starts:
         raise PackError(
             "no 'GDPC' magic found in this file. Either the export did not embed the "
             "pack (binary_format/embed_pck), or the export failed and left a bare "
             "template executable."
         )
-    return read_pack(blob, start)
+    problems: list[str] = []
+    for start in starts:
+        try:
+            return read_pack(blob, start)
+        except PackError as error:
+            problems.append(f"0x{start:x}: {error}")
+    raise PackError(
+        f"no readable pack among {len(starts)} candidate('GDPC') offset(s): "
+        + "; ".join(problems[:4])
+    )
 
 
 def verify(entries: list[tuple[str, int]], header: dict[str, int]) -> list[str]:
