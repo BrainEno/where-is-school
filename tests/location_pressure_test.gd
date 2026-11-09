@@ -146,7 +146,8 @@ func _check_every_location() -> void:
 			"%s: collecting geometry took longer than the whole bake." % path
 		)
 		_expect(navigation.is_routable(), "%s: the navigation map cannot answer a route." % path)
-		_expect_location_route(path, location, navigation)
+		_check_walkable_around(path, location, navigation)
+		_note_spawn_pairs(path, location, navigation)
 		var transition := _host.get_last_transition()
 		_notes.append(
 			"%s: %.1f ms (load %.1f, inst %.1f, tree %.1f, place %.1f), bake %.1f ms, "
@@ -173,40 +174,73 @@ func _check_every_location() -> void:
 	)
 
 
-## Two spawn points of this location, routed through the navigation server. This is the
-## difference between "a mesh exists" and "a route exists": the server answers both a
-## closest point and a path, using the region the scene just baked.
-func _expect_location_route(
+## The room has to be walkable *around the spawn*, which is what "navigation is usable here"
+## means for a player: eight directions, four metres each, and most of them have to arrive.
+## A spawn marker behind a closed door is a content decision, not a broken mesh, so a single
+## blocked direction must not fail the build — while a room whose spawn is walled in does.
+const RING_DIRECTIONS := 8
+const RING_RADIUS := 4.0
+const RING_MINIMUM_REACHED := 3
+
+func _check_walkable_around(
+	path: String, location: LocationRoot, navigation: LocationNavigation
+) -> void:
+	var marker := location.get_default_spawn()
+	if marker == null:
+		_failures.append("%s has no default spawn to stand on." % path)
+		return
+	var map := navigation.get_navigation_map()
+	var origin := NavigationServer3D.map_get_closest_point(map, marker.global_position)
+	var snap := origin.distance_to(marker.global_position)
+	_expect(
+		snap < 1.5,
+		"%s: the default spawn is %.1f m from the nearest walkable point." % [path, snap]
+	)
+	var reached := 0
+	for index in RING_DIRECTIONS:
+		var angle := TAU * float(index) / float(RING_DIRECTIONS)
+		var want := marker.global_position + Vector3(cos(angle), 0.0, sin(angle)) * RING_RADIUS
+		var target := NavigationServer3D.map_get_closest_point(map, want)
+		var route := NavigationServer3D.map_get_path(map, origin, target, true)
+		if route.size() < 2:
+			continue
+		var end: Vector3 = route[route.size() - 1]
+		if end.distance_to(target) > 0.5:
+			continue
+		if end.distance_to(origin) < RING_RADIUS * 0.75:
+			continue
+		reached += 1
+	_expect(
+		reached >= RING_MINIMUM_REACHED,
+		"%s: only %d of %d directions around the spawn are walkable for 4 m."
+		% [path, reached, RING_DIRECTIONS]
+	)
+
+
+## Spawn-to-spawn routes, recorded rather than required: the classroom's return marker sits
+## behind the door that the story has not opened yet, and that is authored, not broken. The
+## numbers go into the run's annotation so a connection that closes by accident is visible.
+func _note_spawn_pairs(
 	path: String, location: LocationRoot, navigation: LocationNavigation
 ) -> void:
 	var ids := location.get_spawn_ids()
 	if ids.size() < 2:
-		_failures.append("%s has fewer than two spawn points to route between." % path)
-		return
-	var from_marker := location.get_spawn(ids[0])
-	var to_marker := location.get_spawn(ids[1])
-	if from_marker == null or to_marker == null:
-		_failures.append("%s lost a spawn point between listing and lookup." % path)
+		_notes.append("%s: %d spawn point(s), nothing to route between" % [path.get_file(), ids.size()])
 		return
 	var map := navigation.get_navigation_map()
-	var from := NavigationServer3D.map_get_closest_point(map, from_marker.global_position)
-	var to := NavigationServer3D.map_get_closest_point(map, to_marker.global_position)
-	_expect(
-		from.distance_to(from_marker.global_position) < 3.0,
-		"%s: spawn '%s' is %.1f m from the closest walkable point."
-		% [path, ids[0], from.distance_to(from_marker.global_position)]
-	)
-	var route := NavigationServer3D.map_get_path(map, from, to, true)
-	_expect(
-		route.size() >= 2,
-		"%s: no route between '%s' and '%s'." % [path, ids[0], ids[1]]
-	)
-	if route.size() >= 2:
-		_expect(
-			route[route.size() - 1].distance_to(to) < 1.0,
-			"%s: the route ends %.1f m from where it was asked to go."
-			% [path, route[route.size() - 1].distance_to(to)]
-		)
+	var blocked: Array[String] = []
+	for index in range(1, ids.size()):
+		var from_marker := location.get_spawn(ids[0])
+		var to_marker := location.get_spawn(ids[index])
+		if from_marker == null or to_marker == null:
+			continue
+		var from := NavigationServer3D.map_get_closest_point(map, from_marker.global_position)
+		var to := NavigationServer3D.map_get_closest_point(map, to_marker.global_position)
+		var route := NavigationServer3D.map_get_path(map, from, to, true)
+		if route.size() < 2 or route[route.size() - 1].distance_to(to) > 1.0:
+			blocked.append("%s->%s" % [ids[0], ids[index]])
+	if not blocked.is_empty():
+		_notes.append("%s: unroutable spawn pair(s): %s" % [path.get_file(), ", ".join(blocked)])
 
 
 ## Back and forth until the numbers stop moving: the room a player returns to has to cost

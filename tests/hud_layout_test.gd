@@ -85,15 +85,15 @@ func _run() -> void:
 	)
 
 	# The shipped strings, not invented ones: the objective key the story sets, and the
-	# longest inspection text the content has, used as the prompt so the measurement is the
-	# worst case rather than a short one.
-	var long_prompt := _longest_inspection_text()
+	# longest prompt the content actually asks the HUD to print. The prompt line is a short
+	# contextual label ("Look", "Open"); the long paragraphs belong to the dialogue panel,
+	# which `tests/dialogue_layout_test.gd` measures at these same three sizes.
 	for locale: String in ["en", "zh-CN"]:
 		Harness.stage = "HUD at %s in %s" % [str(viewport), locale]
 		L10n.set_locale(locale)
 		await _frames(2)
 		hud.set_objective("objective.animal")
-		hud.set_prompt_text(long_prompt)
+		hud.set_prompt_text(_longest_prompt(locale))
 		await _frames(4)
 		var objective := _label(main, "GameUI/HUD/ObjectiveLabel")
 		var prompt := _label(main, "GameUI/HUD/PromptLabel")
@@ -194,32 +194,36 @@ func _expected_resolution() -> Vector2i:
 	return Vector2i.ZERO
 
 
-## The longest object description the shipped content has, in the current locale: the worst
-## case for a one-line prompt, taken from the game rather than typed here.
-func _longest_inspection_text() -> String:
+## The longest `prompt` string the shipped inspections contain, in `locale`: the worst case
+## for the prompt line, read from the game's own content rather than typed here.
+func _longest_prompt(locale: String) -> String:
 	var best := ""
-	for file_name: String in ["res://data/inspections/en/classroom.json"]:
-		var file := FileAccess.open(file_name, FileAccess.READ)
+	var chapters: Array[String] = InspectionLibrary.CHAPTERS
+	for chapter: String in chapters:
+		var path := InspectionLibrary.chapter_path(locale, chapter)
+		var file := FileAccess.open(path, FileAccess.READ)
 		if file == null:
 			continue
 		var parsed: Variant = JSON.parse_string(file.get_as_text())
 		file.close()
-		best = _longest_value(parsed, best)
+		best = _longest_prompt_in(parsed, best)
 	if best.is_empty():
 		best = L10n.objective_text("objective.animal")
 	return best
 
 
-func _longest_value(node: Variant, best: String) -> String:
-	if node is String:
-		var text := String(node)
-		return text if text.length() > best.length() else best
+func _longest_prompt_in(node: Variant, best: String) -> String:
 	if node is Dictionary:
-		for key: Variant in (node as Dictionary).keys():
-			best = _longest_value((node as Dictionary)[key], best)
+		var dictionary := node as Dictionary
+		if dictionary.has("prompt") and dictionary["prompt"] is String:
+			var prompt := String(dictionary["prompt"])
+			if prompt.length() > best.length():
+				best = prompt
+		for key: Variant in dictionary.keys():
+			best = _longest_prompt_in(dictionary[key], best)
 	elif node is Array:
 		for item: Variant in (node as Array):
-			best = _longest_value(item, best)
+			best = _longest_prompt_in(item, best)
 	return best
 
 
