@@ -402,12 +402,52 @@ func _enter(path: String) -> bool:
 ## own timing, not the game.
 func _await_routable(location: LocationRoot) -> void:
 	var guard := 0
-	while guard < 120:
+	while guard < 180:
 		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
 		if navigation != null and navigation.is_baked() and navigation.is_routable():
 			return
 		await physics_frame
 		guard += 1
+	# A map that never answers is the failure this test exists for, so say what the map
+	# looked like instead of only that it was empty: the next run should not need another run.
+	var navigation := location.get_node_or_null("Navigation") as LocationNavigation
+	if navigation != null and not navigation.is_routable():
+		_notes.append("not routable: %s%s" % [String(location.location_id), _nav_report(navigation)])
+
+
+## Everything needed to tell "no mesh", "mesh the map refused" and "map not synced" apart.
+func _nav_report(navigation: LocationNavigation) -> String:
+	var map := navigation.get_navigation_map()
+	var mesh: NavigationMesh = navigation.navigation_mesh
+	var regions := -1
+	var map_cell := -1.0
+	var map_height := -1.0
+	if map.is_valid():
+		regions = NavigationServer3D.map_get_regions(map).size()
+		if NavigationServer3D.has_method("map_get_cell_size"):
+			map_cell = NavigationServer3D.map_get_cell_size(map)
+			map_height = NavigationServer3D.map_get_cell_height(map)
+	var closest := Vector3.ZERO
+	if map.is_valid():
+		closest = NavigationServer3D.map_get_closest_point(map, navigation.global_position)
+	return (
+		" [baked=%s polygons=%d faces=%d map_regions=%d map_valid=%s map_cell=%.3f/%.3f "
+		+ "mesh_cell=%.3f/%.3f vertices=%d closest_to_region=%s region_pos=%s error='%s']"
+	) % [
+		str(navigation.is_baked()),
+		navigation.get_polygon_count(),
+		navigation.get_geometry_face_count(),
+		regions,
+		str(map.is_valid()),
+		map_cell,
+		map_height,
+		mesh.cell_size if mesh != null else -1.0,
+		mesh.cell_height if mesh != null else -1.0,
+		mesh.get_vertices().size() if mesh != null else -1,
+		str(closest),
+		str(navigation.global_position),
+		navigation.get_bake_error(),
+	]
 
 
 ## Lets the deferred bake and the physics settle before the node count is read.

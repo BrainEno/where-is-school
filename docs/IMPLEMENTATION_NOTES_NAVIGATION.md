@@ -214,6 +214,43 @@ Three small guards, all in the capture path rather than in the game:
 The first full run after those fixes produced 46 in-game frames plus the UI and editor sets,
 and it is that run that `03a`/`03d`/`03g` above come from.
 
+## 4b. The bake, measured (added in Phase 5b.3)
+
+The bake was already the expensive part of entering a location; what was missing was any
+way to know how expensive. `LocationNavigation` now measures itself, once per bake:
+
+| Question | Answered by |
+|---|---|
+| how long did the bake take, and how much of that was geometry collection? | `get_bake_usec()`, `get_collect_usec()` |
+| how much geometry went in? | `get_geometry_face_count()` — collision faces parsed from every `StaticBody3D` on the world layer |
+| how much walkable surface came out? | `get_polygon_count()` — polygons in the baked mesh |
+| did the map take it? | `get_map_region_count()`, `is_routable()` |
+| why did it fail? | `get_bake_error()` |
+
+Nothing here runs per frame: the numbers are written once, inside `bake_region()`, and a
+debug build prints one line (`LocationNavigation: '<scene>' baked in X ms (collect Y), N
+faces -> M polygons, K region(s)`). Release builds print nothing.
+
+**One thing the measurement exposed.** The bake used to write into `navigation_mesh` as the
+scene had packed it. A `.tscn` shares its sub-resources between instances, so a location
+entered while another instance of the same scene was alive baked its floor into the *other*
+instance's mesh. It never showed in play only because the classroom is loaded once and the
+outdoor locations are never alive twice; the pressure test loads the room the player stands
+in and the classroom's map stopped answering any route at all — polygons present, region
+registered, `is_routable()` false. The bake now runs on a per-instance
+`NavigationMesh.duplicate()`, which is what a per-instance bake should always have done.
+
+**What the pressure test does with it** (`tests/location_pressure_test.gd`): enters all six
+locations, asserts for each that the navigation really baked (faces > 0, polygons > 0, a
+region on the map, a measured duration, and a non-zero share for collection), that the room
+around the spawn is walkable — eight directions at four metres, at least three arriving —
+and that spawn-to-spawn pairs which are *not* routable are reported rather than failed (the
+classroom's return marker sits behind the door the story has not opened yet). It then
+bounces between two rooms three times and asserts the node count and orphan count come back
+where they started, with one location, one player and one companion in the tree throughout.
+The per-location numbers it prints are quoted in
+[TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) (Phase 5b.3).
+
 ## 5. Not in this round
 
 - No dialogue-panel redesign, no NPC name labels, no new character models, no story or
