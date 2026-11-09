@@ -218,10 +218,6 @@ jobs:
           run_check hud_layout_720 180 godot --headless --resolution 1280x720 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_900 180 godot --headless --resolution 1600x900 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_1080 180 godot --headless --resolution 1920x1080 --path . --script res://tests/hud_layout_test.gd || status=1
-          # What the text corpus costs, and what it contains: every chapter, every language.
-          run_check content_load_report 240 godot --headless --path . --script res://tests/content_load_report_test.gd || status=1
-          # The pressure test: all six locations, three round trips, one room in the tree.
-          run_check location_pressure 420 godot --headless --path . --script res://tests/location_pressure_test.gd || status=1
           # The editor tool's data layer, driven headlessly against a user:// copy of the
           # real chapters: load, locate, edit, save, fail to save, and prove the files come
           # back byte-identical when nothing changed.
@@ -231,4 +227,29 @@ jobs:
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
 
           echo "overall status: ${status}"
+          exit "${status}"
+
+      - name: Measure the text corpus, the locations and the bake
+        shell: bash
+        run: |
+          # These two tests exist to report numbers as much as to assert them, and a runner
+          # keeps only the first handful of annotations from a step. They therefore get their
+          # own step, and their output is not redirected through `run_check`: the notices they
+          # print are the numbers this round is judged by, and they have to be readable from
+          # the run itself.
+          #
+          # What the text corpus costs, and what it contains: every chapter, every language.
+          set -uo pipefail
+          status=0
+          echo "=== content_load_report"
+          timeout 240 godot --headless --path . --script res://tests/content_load_report_test.gd
+          code=$?
+          echo "--- exit ${code}"
+          if [ "${code}" -ne 0 ]; then status=1; fi
+          # The pressure test: all six locations, three round trips, one room in the tree.
+          echo "=== location_pressure"
+          timeout 420 godot --headless --path . --script res://tests/location_pressure_test.gd
+          code=$?
+          echo "--- exit ${code}"
+          if [ "${code}" -ne 0 ]; then status=1; fi
           exit "${status}"
