@@ -13,6 +13,19 @@ Usage (from the repository root, after an export):
 `--exe` reads the pack embedded at the end of the executable, so it inspects the file that
 would be handed to a player rather than a sibling the export happened to leave behind.
 
+Two facts about a real Godot pack, learned by reading the engine (`core/io/pck_packer.cpp`,
+`core/io/file_access_pack.cpp`, 4.7.2-stable) after the first export contradicted the
+guesses this tool started with:
+
+- **paths are stored without the `res://` prefix** — `PCKPacker::add_file` does
+  `simplify_path().trim_prefix("res://")`. They are put back here, because every rule in
+  this file is written the way the game refers to a file.
+- **an imported resource is packed as a remap stub plus data under `.godot/exported/`**,
+  not under its own path. So the font is `res://assets/fonts/NotoSansSC-Regular.ttf.import`
+  pointing at `.godot/exported/<hash>/export-<name>`, and "is the font in the build" is a
+  question about a directory, a stub and the size of the data behind them — not about one
+  exact path.
+
 The Godot 4 pack format used here:
 
     u32 magic 'GDPC' | u32 pack_version | u32 major, minor, patch | u32 flags | u64 file_base
@@ -54,6 +67,8 @@ FORBIDDEN_PREFIXES = (
 )
 
 # Things whose absence means the build would start and immediately misbehave or crash.
+# Imported resources (the font, the audio) appear as a `.import` stub plus data under
+# `.godot/exported/`, so these are directory prefixes rather than exact paths.
 REQUIRED_PREFIXES = (
     "res://scenes/main/main.tscn",
     "res://assets/ui/app_theme.tres",
@@ -61,9 +76,14 @@ REQUIRED_PREFIXES = (
     "res://data/dialogue/zh-CN/",
     "res://data/inspections/en/",
     "res://assets/audio/",
+    "res://assets/fonts/",
 )
 
-MAX_FONT_BYTES = 1024 * 1024
+# No single file in a build of this game has any business being this big. The unsplit font
+# (10 MiB) and a packed screenshot (~380 KiB each, 65 of them) are the two things that
+# would. Sizes are read from the directory, so this catches them even when they land under
+# a `.godot/exported/` hash instead of the path they came from.
+MAX_ENTRY_BYTES = 2 * 1024 * 1024
 MAX_PACK_BYTES = 16 * 1024 * 1024
 
 
@@ -134,10 +154,11 @@ def _read_directory(blob: bytes, directory_offset: int) -> list[tuple[str, int]]
         size = cursor.u64()
         cursor.skip(16)  # the entry's md5
         cursor.u32()  # per-file flags: encrypted / removal / delta
-        path = raw.rstrip(b"\x00").decode("utf-8", "replace")
-        if not path.startswith("res://"):
-            raise PackError(f"entry {index} is not a res:// path ({path[:40]!r})")
-        entries.append((path, size))
+        stored = raw.rstrip(b"\x00").decode("utf-8", "replace")
+        # The packer strips the prefix, so a stored path is never empty and never absolute.
+        if not stored or stored.startswith("/"):
+            raise PackError(f"entry {index} is not a usable path ({stored[:40]!r})")
+        entries.append(("res://" + stored, size))
     return entries
 
 
@@ -221,13 +242,18 @@ def verify(entries: list[tuple[str, int]], header: dict[str, int]) -> list[str]:
         if not any(path.startswith(prefix) for path in paths):
             problems.append(f"nothing under {prefix} is in the build")
 
-    font = sizes.get("res://assets/fonts/NotoSansSC-Regular.ttf")
-    if font is None:
-        problems.append("the bundled font is not in the build")
-    elif font > MAX_FONT_BYTES:
+    font_stub = sizes.get("res://assets/fonts/NotoSansSC-Regular.ttf.import")
+    if font_stub is None:
         problems.append(
-            f"the bundled font is {font / 1048576:.2f} MiB — the subset is ~330 KiB, so "
-            "this is the unsplit source font (tools/subset_font.py)"
+            "the bundled font is not in the build (no "
+            "res://assets/fonts/NotoSansSC-Regular.ttf.import stub)"
+        )
+
+    oversized = [(name, size) for name, size in entries if size > MAX_ENTRY_BYTES]
+    for name, size in oversized[:5]:
+        problems.append(
+            f"{name} is {size / 1048576:.2f} MiB, over the {MAX_ENTRY_BYTES / 1048576:.0f} MiB "
+            "per-file budget: the unsplit font, a packed screenshot, or an untrimmed asset"
         )
 
     total = sum(size for _, size in entries)
