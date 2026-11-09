@@ -188,6 +188,14 @@ jobs:
           EVIDENCE="${RUNNER_TEMP}/evidence"
           capture_log="${EVIDENCE}/logs/capture.log"
           mkdir -p docs/screenshots
+          # Everything the script writes has to be newer than this stamp for the step to
+          # believe it: `docs/screenshots/` is also where the committed frames live, and
+          # the folder used to be copied wholesale into the evidence. That let a stale
+          # PLAYTHROUGH.log from an old run answer for this one — two runs fourteen
+          # minutes apart reported the same line, and the step passed on evidence it had
+          # not produced. The stamp is what separates "written now" from "committed".
+          stamp="${RUNNER_TEMP}/capture-stamp"
+          : > "${stamp}"
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
             --script res://tests/capture_playthrough.gd > "${capture_log}" 2>&1
@@ -195,13 +203,26 @@ jobs:
           echo "capture exit=${code}"
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" "${capture_log}" | tail -n 60 || true
           ls -l docs/screenshots || true
-          # The frames the script wrote into the project folder are staged, not moved:
-          # the working tree is never the thing that gets uploaded.
+          # The frames this run wrote into the project folder are staged, not moved: the
+          # working tree is never the thing that gets uploaded, and a file that was
+          # already there before this run is not this run's evidence.
+          written=0
           if [ -d docs/screenshots ]; then
-            cp -a docs/screenshots/. "${EVIDENCE}/docs/screenshots/" || true
+            written=$(find docs/screenshots -maxdepth 1 -type f -name '*.png' -newer "${stamp}" | wc -l)
+            find docs/screenshots -maxdepth 1 -type f -newer "${stamp}" \
+              -exec cp -a {} "${EVIDENCE}/docs/screenshots/" \; || true
           fi
           staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name '*.png' | wc -l)
-          echo "staged frames: ${staged}"
+          echo "staged frames: ${staged} (written by this run: ${written})"
+          if [ "${written}" -lt 4 ] || [ ! -f "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" ]; then
+            # No fresh frame and no fresh log: say what the engine said, rather than
+            # reading a verdict off a file that was committed weeks ago.
+            errors=$(grep -E "SCRIPT ERROR|ERROR:|Parse Error|error" "${capture_log}" 2>/dev/null \
+              | head -n 8 | tr '\n' '|' | cut -c-1200) || true
+            tail_lines=$(tail -n 3 "${capture_log}" 2>/dev/null | tr '\n' '|' | cut -c-600) || true
+            echo "::error title=playthrough capture wrote nothing (exit ${code})::${errors:-no error lines in the capture log} :: tail: ${tail_lines:-empty log}"
+            exit 1
+          fi
 
           summary=$(grep -E "FAILURE|RESULT" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
           # The script's own verdict decides, not the process exit code. `quit(0)` does
