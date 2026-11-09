@@ -863,8 +863,12 @@ func _unstick() -> void:
 			if clear:
 				_player.global_position = candidate
 				_player.velocity = Vector3.ZERO
-				await get_tree().physics_frame
-				await get_tree().physics_frame
+				# This script *is* the main loop (`extends SceneTree`): `physics_frame` is a
+				# signal on `self`, and `get_tree()` does not exist here. Calling it was a
+				# parse error, so the whole capture script failed to load and every capture
+				# run since wrote nothing at all.
+				await physics_frame
+				await physics_frame
 				_note("stepped the player to %s to start the mouse shots" % str(candidate))
 				return
 	_note("no clear spot within 2.2 m; the mouse shots start where the player stands")
