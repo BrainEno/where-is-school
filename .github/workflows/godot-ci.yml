@@ -37,7 +37,10 @@ jobs:
           set -uo pipefail
           python3 -m venv /tmp/lint >/dev/null 2>&1
           /tmp/lint/bin/pip install --quiet "gdtoolkit==4.5.0"
-          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' -not -path './addons/*' | sort)
+          # `addons/` is included: the repository's only addon is first-party code
+          # (`addons/narrative_editor`, the editor dock) and a broken file there is a
+          # broken editor for the author, not a third-party problem to ignore.
+          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' | sort)
           echo "checking ${#files[@]} GDScript file(s)"
           if ! /tmp/lint/bin/gdparse "${files[@]}"; then
             echo "PARSE_RESULT=failure"
@@ -183,6 +186,13 @@ jobs:
           run_check pointer_target_switch 300 godot --headless --resolution 1600x900 --path . --script res://tests/pointer_target_switch_test.gd || status=1
           run_check interaction_occlusion 300 godot --headless --resolution 1600x900 --path . --script res://tests/interaction_occlusion_test.gd || status=1
           run_check interaction_visibility_sweep 300 godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd || status=1
+          # The editor tool's data layer, driven headlessly against a user:// copy of the
+          # real chapters: load, locate, edit, save, fail to save, and prove the files come
+          # back byte-identical when nothing changed.
+          run_check narrative_editor 300 godot --headless --path . --script res://tests/narrative_editor_test.gd || status=1
+          # The strict field types and the per-field translation exception in the inner
+          # voice registry.
+          run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
 
           echo "overall status: ${status}"
           exit "${status}"

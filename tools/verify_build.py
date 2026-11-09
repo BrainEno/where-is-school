@@ -64,6 +64,9 @@ FORBIDDEN_PREFIXES = (
     "res://docs/",
     "res://art/",
     "res://.github/",
+    # The narrative editor is an EditorPlugin. The game never loads it, and a player's
+    # build has no business carrying the author's tooling.
+    "res://addons/",
 )
 
 # Things whose absence means the build would start and immediately misbehave or crash.

@@ -40,6 +40,8 @@ on:
       # model should produce the frames that show it (or prove it is out of shot).
       - "assets/**"
       - "project.godot"
+      - "addons/**"
+      - "tests/capture_editor_dock.gd"
   pull_request:
     branches: [main]
     paths:
@@ -54,6 +56,8 @@ on:
       # model should produce the frames that show it (or prove it is out of shot).
       - "assets/**"
       - "project.godot"
+      - "addons/**"
+      - "tests/capture_editor_dock.gd"
   workflow_dispatch:
 
 permissions:
@@ -99,7 +103,8 @@ jobs:
           set -uo pipefail
           python3 -m venv /tmp/lint >/dev/null 2>&1
           /tmp/lint/bin/pip install --quiet "gdtoolkit==4.5.0"
-          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' -not -path './addons/*' | sort)
+          # `addons/` is included: the editor dock is first-party code and has to parse.
+          mapfile -t files < <(find . -name '*.gd' -not -path './.godot/*' | sort)
           echo "checking ${#files[@]} GDScript file(s)"
           if ! /tmp/lint/bin/gdparse "${files[@]}"; then
             echo "PARSE_RESULT=failure"
@@ -265,6 +270,48 @@ jobs:
           fi
           echo "UI_CAPTURE_RESULT=success"
 
+      - name: Capture the narrative editor dock
+        id: editor_capture
+        shell: bash
+        run: |
+          # The third window run, and the only one that photographs a tool rather than the
+          # game: the editor dock instantiated in a plain window, showing the real content.
+          # It exists because the dock normally lives inside the editor, which no CI runner
+          # opens — this is the closest a headless pipeline gets to a screenshot of it, and
+          # the pull request needs one.
+          set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          editor_log="${EVIDENCE}/logs/editor-capture.log"
+          mkdir -p docs/screenshots
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            godot --path . --resolution 1600x1000 --rendering-driver opengl3 \
+            --script res://tests/capture_editor_dock.gd > "${editor_log}" 2>&1
+          code=$?
+          echo "editor capture exit=${code}"
+          grep -E "SHOT|FAILURE|PASS|SCRIPT ERROR|ERROR:" "${editor_log}" | tail -n 40 || true
+          if [ -d docs/screenshots ]; then
+            cp -a docs/screenshots/editor-dock-*.png "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
+            cp -a docs/screenshots/EDITOR_CAPTURE.log "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
+          fi
+          staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'editor-dock-*.png' | wc -l)
+          echo "staged editor frames = ${staged}"
+          if [ "${staged}" -lt 4 ]; then
+            echo "EDITOR_CAPTURE_RESULT=failure"
+            echo "::error title=narrative editor capture::only ${staged} frame(s) were produced"
+            exit 1
+          fi
+          if grep -qE "^FAILURE: " "${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log" 2>/dev/null; then
+            echo "EDITOR_CAPTURE_RESULT=failure"
+            echo "::error title=narrative editor capture::the script reported a failure"
+            exit 1
+          fi
+          if ! grep -qE "^RESULT: " "${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log" 2>/dev/null; then
+            echo "EDITOR_CAPTURE_RESULT=failure"
+            echo "::error title=narrative editor capture::the script wrote no result marker"
+            exit 1
+          fi
+          echo "EDITOR_CAPTURE_RESULT=success"
+
       - name: Stage the frame list
         if: always()
         shell: bash
@@ -294,6 +341,7 @@ jobs:
             echo "| import | ${IMPORT_OUTCOME:-unknown} |"
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
             echo "| dialogue frames | ${UI_CAPTURE_OUTCOME:-unknown} |"
+            echo "| editor dock frames | ${EDITOR_CAPTURE_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
             echo "Log: see the run log and the 'playthrough-evidence' artifact."
@@ -303,6 +351,7 @@ jobs:
           IMPORT_OUTCOME: ${{ steps.import.outcome }}
           CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
           UI_CAPTURE_OUTCOME: ${{ steps.ui_capture.outcome }}
+          EDITOR_CAPTURE_OUTCOME: ${{ steps.editor_capture.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
 
       - name: Upload the evidence

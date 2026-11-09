@@ -58,6 +58,13 @@ The author's literary manuscripts are private source material and may be intende
 - Keep autoload singletons few and cohesive.
 - Evaluate third-party addons before adoption. Record exact version/tag, license, maintenance state, and reason for adoption.
 - No mandatory network services, analytics, telemetry, paid APIs, or proprietary runtime dependencies.
+- `addons/` holds the narrative editor (`addons/narrative_editor/`), a first-party EditorPlugin.
+  It is editor-only: no autoload, no `class_name`, no preload from `scripts/`, `scenes/` or
+  `tests/`, excluded from the export preset, and `tools/verify_build.py` fails if anything under
+  `res://addons/` is packed. Keep it that way, keep its write surface to text fields (ids,
+  branches, conditions, effects, checks and numbers are read-only by construction), and keep the
+  file I/O in `core/` so it can be tested headlessly against `user://` fixtures. See
+  `docs/ARCHITECTURE.md` §5i and `addons/narrative_editor/README.md`.
 - Windows PC is the first target. Keep input, paths, and content portable for later Linux/Steam Deck evaluation.
 
 ## Art and asset constraints
@@ -95,6 +102,12 @@ For every code task:
 6. Distinguish verified behavior from assumptions and untested behavior.
 
 Never claim a test passed unless it was actually run.
+
+The narrative editor's data layer is tested headlessly (`tests/narrative_editor_test.gd`,
+`tests/ability_validation_test.gd`) against a `user://` copy of the shipped content. The
+dock itself needs a window: its frames come from `tests/capture_editor_dock.gd` under Xvfb,
+and anything the plugin adds to the editor shell needs a manual checklist in the pull
+request. Do not add a test that saves into `res://data/`.
 
 ## Git and collaboration
 

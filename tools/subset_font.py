@@ -44,11 +44,16 @@ DEFAULT_OUTPUT = Path("assets/fonts/NotoSansSC-Regular.ttf")
 
 # Text that can reach a Label. `tests/` is included even though it never ships: a test
 # that renders Chinese should not be the thing that discovers a missing glyph.
+#
+# `addons/` is the narrative editor. It never reaches a player's build either, but its dock
+# is labelled in Chinese and wears this project's theme, so the font has to be able to draw
+# every word in it — otherwise the author's own tool is the first thing that shows tofu.
 TEXT_SOURCES = (
     "data/**/*.json",
     "scenes/**/*.tscn",
     "scripts/**/*.gd",
     "tests/**/*.gd",
+    "addons/**/*.gd",
     "project.godot",
 )
 
