@@ -1,24 +1,136 @@
-# Godot editor/import cache
+# Godot 4 version control rules for where-is-school.
+#
+# Godot 4 splits "metadata that must be committed" from "cache that must not".
+# Getting this wrong is the usual reason an editor session dirties the tree with
+# dozens of files, so the two are kept in separate sections below.
+#
+# Rule of thumb: commit anything the engine cannot regenerate (source files,
+# assets, .import sidecars, .uid sidecars); ignore anything it regenerates from
+# those (everything under .godot/).
+#
+# A NOTE ON NEGATION PATTERNS
+# ---------------------------
+# This file deliberately contains NO `!` negations. Two reasons, both of which
+# this project's rule set has already run into:
+#
+#   1. Git evaluates every pattern in order and the LAST match wins. A blanket
+#      `!*.gd` or `!*.png` near the end of the file therefore also matches paths
+#      *inside* an ignored directory and re-includes the cache that the
+#      `.godot/` rule exists to exclude. Order alone cannot express "ignore this
+#      directory except these extensions" safely when the exception list is
+#      broad -- the negations have to be enumerated per extension, and every new
+#      asset type added later re-opens the hole.
+#   2. A negation cannot resurrect a file whose parent directory is excluded, so
+#      a broad negation block gives a false sense of safety anyway.
+#
+# The never-ignore list lives at the bottom of this file as an explicit,
+# human-readable inventory instead. Correctness comes from *not* writing a rule
+# that could catch source in the first place: notice that this file only ever
+# ignores caches, junk and build output, and never a Godot source or asset
+# extension. That is what keeps `*.import`, `*.uid`, `*.glb`, `*.wav`, `*.ttf`
+# and `project.godot` tracked -- not a negation, just the absence of a rule.
+
+# ---------------------------------------------------------------------------
+# 1. Godot import and editor cache -- regenerated on first open, never commit
+# ---------------------------------------------------------------------------
+
+# Godot 4's single cache directory: imported resources, the UID cache, editor
+# layout state, shader cache, script doc cache, filesystem scan cache. Roughly
+# 40 MB on this project, and it changes every time the editor opens it.
 .godot/
+
+# Godot 3's equivalent. Not used by a 4.x project, but a stale directory left
+# behind by an older toolchain must never be committed by accident.
 .import/
+
+# ---------------------------------------------------------------------------
+# 2. Compiled and generated build output
+# ---------------------------------------------------------------------------
+
+# Binary translation files produced by the export pipeline from the JSON
+# translation sources in data/locale/. Regenerated per export.
+*.translation
 
 # Export configuration may contain local paths or credentials.
 export.cfg
 export_presets.cfg
 
-# Local exports and build outputs
+# Local exports and build outputs.
 .export/
 builds/
 dist/
 
-# Temporary/editor files
+# ---------------------------------------------------------------------------
+# 3. Godot crash output written inside the project folder
+# ---------------------------------------------------------------------------
+# Note: a plain `*.log` rule is deliberately NOT used. The two capture logs in
+# docs/screenshots/ are committed CI evidence (see docs/TECHNICAL_ROADMAP.md),
+# and a blanket `*.log` would silently untrack them. Only the engine's own crash
+# and rotation artefacts are ignored, and `godot.log` is named exactly rather
+# than by pattern.
+godot.log
+*.log.old
+*.crash
+
+# ---------------------------------------------------------------------------
+# 4. Operating system and editor junk
+# ---------------------------------------------------------------------------
+
 *.tmp
 *.bak
 *.swp
 *~
 .DS_Store
+.Thumbs.db
 Thumbs.db
+desktop.ini
 
-# IDE / local environment
+# ---------------------------------------------------------------------------
+# 5. Local toolchain and personal environment
+# ---------------------------------------------------------------------------
+
 .vscode/
 .idea/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+
+# Blender autosave and crash files. The .blend sources themselves are committed;
+# these are throwaway recovery files written next to them.
+*.blend1
+*.blend2
+*.blend@
+
+# ---------------------------------------------------------------------------
+# 6. NEVER IGNORE -- the list this file is reviewed against
+# ---------------------------------------------------------------------------
+# Nothing below needs a rule of its own: no pattern above matches these
+# extensions or names, so Git tracks them by default. The list is recorded here
+# so a future edit can be checked against it, and so the two common mistakes are
+# named explicitly.
+#
+# Resource metadata a clone cannot be reconstructed without:
+#   *.import   Godot 4 per-asset import sidecar, e.g.
+#              assets/props/playground_bench/bench_playground.glb.import
+#              This is NOT the same thing as the Godot 3 `.import/` DIRECTORY
+#              ignored in section 1. Without the sidecar, Godot re-imports each
+#              asset with default settings on a fresh clone and the committed
+#              import options are lost. Do not add `*.import` as a rule.
+#   *.uid      Godot 4 resource UID sidecar, e.g. scripts/ui/hud.gd.uid.
+#              Pairs a path with a stable uid:// so that renaming or moving a
+#              file does not break references that cite the UID. Do not add
+#              `*.uid` as a rule.
+#
+# Project and source:
+#   project.godot, *.gd, *.gdshader, *.gdshaderinc, *.tscn, *.tres, *.res
+#
+# 3D, audio, font and image assets the game uses:
+#   *.glb, *.gltf, *.blend, *.fbx, *.obj, *.wav, *.ogg, *.mp3, *.flac,
+#   *.ttf, *.otf, *.png, *.jpg, *.jpeg, *.webp, *.svg, *.exr, *.hdr
+#
+# Authored data, tooling and documentation:
+#   *.json, *.csv, *.md, *.txt, *.yml, *.yaml, *.py
+#
+# Committed evidence (see section 3):
+#   docs/screenshots/PLAYTHROUGH.log, docs/screenshots/UI_CAPTURE.log
