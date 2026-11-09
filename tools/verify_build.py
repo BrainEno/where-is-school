@@ -33,6 +33,16 @@ from pathlib import Path
 
 MAGIC = b"GDPC"
 
+
+def annotate(level: str, title: str, message: str) -> None:
+    """Print a GitHub workflow command so the verdict is readable without the step log.
+
+    The web UI shows annotations, but the REST *logs* endpoint redirects to object storage
+    that a restricted client may not be allowed to read, which makes "the build failed the
+    contents check" a dead end when the only consumer is an API.
+    """
+    print(f"::{level} title={title}::{message}")
+
 # A release build has to carry the game and nothing else. Each of these is a directory that
 # exists in the repository but must never reach a player's disk.
 FORBIDDEN_PREFIXES = (
@@ -64,14 +74,19 @@ class PackError(Exception):
 def read_pack(blob: bytes, base: int) -> tuple[list[tuple[str, int]], dict[str, int]]:
     """Return (path, size) entries and the header, from a pack starting at `base`."""
     if blob[base : base + 4] != MAGIC:
-        raise PackError(f"no 'GDPC' magic at offset {base}")
+        raise PackError(
+            f"no 'GDPC' magic at offset {base}; the bytes there are {blob[base : base + 32].hex()}"
+        )
     if base + 32 > len(blob):
-        raise PackError("the pack header is truncated")
+        raise PackError(f"the pack header is truncated ({len(blob) - base} bytes from the magic)")
     pack_version, major, minor, patch, _flags, file_base = struct.unpack_from(
         "<IIIIIQ", blob, base + 4
     )
     if pack_version < 1:
-        raise PackError(f"unknown pack version {pack_version}")
+        raise PackError(
+            f"unknown pack version {pack_version}; header begins "
+            f"{blob[base : base + 32].hex()}"
+        )
     if base + file_base + 4 > len(blob):
         raise PackError(
             f"the directory offset points outside the file ({file_base} past {len(blob) - base} bytes)"
@@ -168,12 +183,14 @@ def main(argv: list[str]) -> int:
     path: Path = arguments.exe or arguments.pck
     if not path.is_file():
         print(f"FAIL: {path} does not exist", file=sys.stderr)
+        annotate("error", "build missing", f"{path} does not exist")
         return 1
 
     try:
         entries, header = load(path, embedded=arguments.exe is not None)
     except PackError as error:
         print(f"FAIL: {path}: {error}", file=sys.stderr)
+        annotate("error", "build unreadable", f"{path.name}: {error}")
         return 1
 
     entries.sort(key=lambda entry: entry[1], reverse=True)
@@ -184,12 +201,27 @@ def main(argv: list[str]) -> int:
         exe_size = path.stat().st_size / 1048576
         print(f"executable: {exe_size:.1f} MiB (pack included)")
         if not 10 <= exe_size <= 150:
-            print(f"FAIL: {exe_size:.1f} MiB is not a plausible size for this build", file=sys.stderr)
+            message = f"{exe_size:.1f} MiB is not a plausible size for this build"
+            print(f"FAIL: {message}", file=sys.stderr)
+            annotate("error", "build size", message)
             return 1
 
     print(f"\nlargest {arguments.largest} entries:")
     for name, size in entries[: arguments.largest]:
         print(f"  {size / 1024:8.0f} KiB  {name}")
+
+    prefixes: dict[str, int] = {}
+    for name, _ in entries:
+        top = "/".join(name.split("/")[:3])
+        prefixes[top] = prefixes.get(top, 0) + 1
+    print("\nby directory:")
+    for name, count in sorted(prefixes.items()):
+        print(f"  {count:5d}  {name}")
+    annotate(
+        "notice",
+        "packed directories",
+        ", ".join(f"{name} ({count})" for name, count in sorted(prefixes.items())),
+    )
 
     if arguments.list:
         print("\nall entries:")
@@ -204,17 +236,18 @@ def main(argv: list[str]) -> int:
             # The step log is not always reachable from the API (the logs endpoint is a
             # redirect to storage that a restricted client may not be able to read), so the
             # verdict has to be legible from the annotations alone.
-            print(f"::error title=build contents::{problem}")
+            annotate("error", "build contents", problem)
         if any("nothing under" in problem for problem in problems):
             # "The game is not in it" is only actionable next to what *is* in it.
             sample = ", ".join(path for path, _ in entries[:25])
-            print(f"::error title=packed paths (first 25)::{sample}")
+            annotate("error", "packed paths (first 25)", sample)
         return 1
     print("\nPASS: the build carries the game and nothing else")
-    print(
-        "::notice title=build contents::"
+    annotate(
+        "notice",
+        "build contents",
         f"{len(entries)} file(s), {total / 1048576:.2f} MiB packed; largest: "
-        + ", ".join(f"{name.rsplit('/', 1)[-1]} {size / 1024:.0f} KiB" for name, size in entries[:3])
+        + ", ".join(f"{name.rsplit('/', 1)[-1]} {size / 1024:.0f} KiB" for name, size in entries[:3]),
     )
     return 0
 
