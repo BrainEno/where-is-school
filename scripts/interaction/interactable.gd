@@ -12,6 +12,9 @@ extends Area3D
 signal activated(interactable: Interactable)
 
 const INTERACTION_LAYER := 2
+## The layer static world geometry lives on. The cue's own downward ray uses it to find
+## the floor under the object, and nothing else.
+const WORLD_LAYER := 1
 
 ## Stable id used by tests and routing tables.
 @export var interact_id: StringName = &""
@@ -40,8 +43,8 @@ const INTERACTION_LAYER := 2
 		if is_inside_tree():
 			_refresh_monitorable()
 
-## Height of the hover cue above the interaction point. Small on purpose: the cue
-## marks the object, it does not decorate it.
+## Height of the cue's ground ring above the surface under the object. Small on purpose —
+## the cue marks the object and the floor it stands on, it does not decorate either.
 @export var hover_cue_height: float = 0.06
 
 ## The bodies that belong to this object, or to the structure it is mounted on: the
@@ -56,7 +59,7 @@ const INTERACTION_LAYER := 2
 
 var _prompt_override: String = ""
 var _highlighted := false
-var _cue: MeshInstance3D = null
+var _cue: HoverCue = null
 ## Resolved `support_paths`, or an empty array while unresolved. Rebuilt lazily so the
 ## probe does not look up node paths on every frame of every target.
 var _support_rids: Array[RID] = []
@@ -114,16 +117,24 @@ func can_interact() -> bool:
 	return interaction_enabled
 
 
-## The controller marks exactly one interactable as highlighted: the one E would
-## use right now. The cue is built in code from a torus, so it needs no art asset
-## and no scene edit per prop.
+## The controller marks exactly one interactable as highlighted: the one E would use
+## right now, and the one a click would walk to.
+##
+## The cue itself lives in `scripts/interaction/hover_cue.gd` and is built the first time
+## the object is highlighted, so no prop needs a scene edit and no art asset is involved.
+## Highlighting starts and stops a short fade instead of switching a mesh on: a ring that
+## appears between two frames reads as a bug, one that arrives reads as a mark.
 func set_highlighted(value: bool) -> void:
 	if _highlighted == value:
 		return
 	_highlighted = value
 	_ensure_cue()
-	if _cue != null:
-		_cue.visible = value
+	if _cue == null:
+		return
+	if value:
+		_cue.reveal()
+	else:
+		_cue.conceal()
 
 
 func is_highlighted() -> bool:
@@ -133,26 +144,48 @@ func is_highlighted() -> bool:
 func _ensure_cue() -> void:
 	if _cue != null or not is_inside_tree():
 		return
-	_cue = MeshInstance3D.new()
+	_cue = HoverCue.new()
 	_cue.name = "HoverCue"
-	var ring := TorusMesh.new()
-	ring.inner_radius = maxf(radius * 0.5, 0.16)
-	ring.outer_radius = maxf(radius * 0.72, 0.26)
-	ring.rings = 24
-	ring.ring_segments = 8
-	_cue.mesh = ring
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.96, 0.87, 0.63, 0.9)
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.emission_enabled = true
-	material.emission = Color(1.0, 0.86, 0.55)
-	material.emission_energy_multiplier = 1.5
-	_cue.material_override = material
-	_cue.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_cue.position = Vector3(0.0, hover_cue_height, 0.0)
+	# The ring is sized from the interaction radius: the radius is where the player has to
+	# stand, and the ring's job is to say so — on the floor under the object, which is not
+	# where this node is.
+	_cue.setup(radius, _cue_ring_height())
 	add_child(_cue)
-	_cue.visible = false
+
+
+## How far below this node the ground under the object is, in the object's own frame.
+##
+## An interactable is authored at the middle of the prop — the timetable sheet sits at
+## 0.6 m, the schoolbag at 0.2 m — so a ring drawn at the node's own height hangs in the
+## air in front of a wall, or slices through a desk. The question the ring answers is
+## "where do I stand", which is about the floor. One downward ray on the world layer, cast
+## once, the first time the object is highlighted: the same kind of query `PointerNavigator`
+## casts from a click. No hit keeps the ring where the node is.
+func _cue_ring_height() -> float:
+	var world := get_world_3d()
+	if world == null:
+		return 0.0
+	var space := world.direct_space_state
+	if space == null:
+		return 0.0
+	var from := global_position + Vector3.UP * 0.05
+	var query := PhysicsRayQueryParameters3D.create(
+		from, from + Vector3.DOWN * 3.0, WORLD_LAYER
+	)
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return 0.0
+	var ground: Vector3 = hit.get("position", global_position)
+	return clampf(ground.y + hover_cue_height - global_position.y, -2.5, 0.0)
+
+
+## The cue this object draws while it is highlighted, or null before it has ever been
+## highlighted. Public so a test can assert the shape of what the player sees; it
+## deliberately does not build the cue, so asking the question costs nothing.
+func get_cue() -> HoverCue:
+	return _cue
 
 
 func get_prompt() -> String:

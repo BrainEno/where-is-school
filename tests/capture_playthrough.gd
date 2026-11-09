@@ -116,7 +116,18 @@ func _run() -> void:
 
 	# 4. The interaction prompt for the schoolbag, with the key it names.
 	await _wait_for_free(60.0)
-	_teleport(Vector3(0.55, 0, 1.7), 0.0)
+	# Stand where the schoolbag is actually offered, rather than at a coordinate that
+	# happened to face it when this was written: the room has been rebuilt since, and a
+	# hardcoded spot turns a moved prop into "the schoolbag was never offered".
+	var bag: Interactable = null
+	if _host.get_current() != null:
+		bag = _host.get_current().find_interactable(&"schoolbag")
+	if bag == null:
+		await _fail("The schoolbag is missing from the classroom.")
+		return
+	if not await _position_near(bag, 1.4):
+		_failures.append("Could not stand in front of the schoolbag.")
+		await _shot("FAIL_schoolbag_position", "No spot next to the schoolbag offered it as a target.")
 	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was never offered as an interaction target.")
 		await _shot("FAIL_schoolbag_prompt", "No prompt appeared for the schoolbag.")
@@ -139,7 +150,7 @@ func _run() -> void:
 		_failures.append("Pressing L did not switch the language.")
 	await _shot("06_chinese_world", "The same classroom after switching to simplified Chinese at runtime.")
 	await _wait_for_free(60.0)
-	_teleport(Vector3(0.55, 0, 1.7), 0.0)
+	await _position_near(bag, 1.4)
 	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was not prompted again after the language switch.")
 		await _shot("FAIL_prompt_chinese", "No prompt appeared after the language switch.")
@@ -732,6 +743,29 @@ func _capture_click_navigation() -> void:
 	await _wait_for_free(60.0)
 	if await _position_near(sheet, 1.5):
 		var sheet_screen := _screen_position_of(sheet)
+		# The cue itself, with the real cursor resting on the object. This is the picture
+		# of what this round changed: without it the pull request would be describing a
+		# cue it cannot show.
+		await _mouse_to_world(sheet.global_position)
+		if await _wait_for_target(sheet.interact_id, 6.0):
+			# Long enough for the fade to finish and for the ring to have turned: a frame
+			# taken in the first sixteenth of a second shows the cue at its dimmest.
+			await _wait(0.45)
+			await _shot(
+				"03d_hover_cue",
+				"The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, "
+				+ "and a shard floating above the object."
+			)
+			var cue := sheet.get_cue()
+			if cue != null:
+				_note(
+					"hover cue: revealed=%s opacity=%.2f parts=%s"
+					% [str(cue.is_revealed()), cue.get_opacity(), str(cue.get_parts().keys())]
+				)
+			else:
+				_note("hover cue: the object is highlighted but carries no cue")
+		else:
+			_note("the hover cue shot found no target under the cursor; the frame is missing")
 		if _interaction.get_target_at_screen_position(sheet_screen, false) == sheet:
 			await _click_at_screen(sheet_screen)
 			if await _wait_for_line(15.0):
@@ -744,6 +778,40 @@ func _capture_click_navigation() -> void:
 			_failures.append("The timetable sheet was not under the cursor for the click-to-inspect shot.")
 	else:
 		_failures.append("Could not stand in front of the timetable sheet.")
+
+	await _capture_refused_click(sheet)
+
+
+## A click the world refuses: the cue has to say "no" somewhere the player is looking, and
+## it has to look different from the cue that says "walk there". The click is aimed at the
+## wall the player is facing, at chest height, which is exactly where a player aims when
+## they expect a door to open.
+func _capture_refused_click(near: Interactable) -> void:
+	await _wait_for_free(30.0)
+	if near == null or not await _position_near(near, 1.2):
+		_note("the refused-click shot found nowhere to stand; the frame is missing")
+		return
+	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
+	var camera := _player.get_viewport().get_camera_3d()
+	if navigator == null or camera == null:
+		_note("the refused-click shot found no navigator or camera; the frame is missing")
+		return
+	var facing := -_player.global_transform.basis.z
+	var aim := _player.global_position + facing * 1.6 + Vector3.UP * 1.2
+	var screen := camera.unproject_position(aim)
+	await _click_at_screen(screen)
+	if navigator.was_last_click_accepted():
+		_note("the refused-click shot hit walkable ground instead of a wall; the frame is missing")
+		return
+	await _wait(0.12)
+	await _shot(
+		"03g_refused_click",
+		"A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts."
+	)
+	_note(
+		"refused click: role=%s, rejection=%s"
+		% [navigator.get_cue_role(), navigator.get_last_rejection()]
+	)
 
 
 ## A screen position whose click lands on floor 4-6.5 m away, found by asking the same
@@ -806,8 +874,12 @@ func _unstick() -> void:
 			if clear:
 				_player.global_position = candidate
 				_player.velocity = Vector3.ZERO
-				await get_tree().physics_frame
-				await get_tree().physics_frame
+				# This script *is* the main loop (`extends SceneTree`): `physics_frame` is a
+				# signal on `self`, and `get_tree()` does not exist here. Calling it was a
+				# parse error, so the whole capture script failed to load and every capture
+				# run since wrote nothing at all.
+				await physics_frame
+				await physics_frame
 				_note("stepped the player to %s to start the mouse shots" % str(candidate))
 				return
 	_note("no clear spot within 2.2 m; the mouse shots start where the player stands")

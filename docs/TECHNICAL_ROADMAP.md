@@ -247,6 +247,32 @@ branch.
   taken with real pointer events. Windows hands-on checks are listed in the pull
   request and are not yet performed.
 
+### Phase 5b.1 — Interaction cues: what the mouse draws (delivered in this round)
+- The two things the mouse draws in the world stopped being two hand-rolled tori. A
+  click on the floor, a click on an object and a refused click now share one visual
+  language (`scripts/interaction/world_cue.gd`): the same pen width, the same dash
+  rhythm, one unshaded alpha-only material per role, and a colour that means something —
+  bone for "walk there", amber for "walk there and use that", a duller rose for "no".
+- The destination cue (`scripts/interaction/destination_cue.gd`) is drawn where the click
+  lands, not on a fixed plane: the ground normal under the click orients it, so a kerb, a
+  ramp or a tilted floor plate gets a ring that lies on it. An accepted click ripples once
+  and leaves a quiet ring that turns and breathes while the character walks; a refused
+  click collapses inward instead of expanding, because an expanding ring promises a walk.
+- The hover cue (`scripts/interaction/hover_cue.gd`) became three parts that answer three
+  questions: a dashed ground ring sized from the object's interaction radius ("where do I
+  stand"), a wider halo breathing out of step with it ("this is a mark, not a decal"), and
+  a small tumbling shard above the object ("which thing" — still legible when the prop
+  stands on a shelf, in a doorway or behind a desk). Both cues fade in and out over a
+  fraction of a second instead of switching between two frames.
+- The contextual prompt follows the same rule: the text is set at once, the line fades in
+  over 0.12 s rather than appearing between two frames, and re-resolving the same target
+  no longer restarts anything.
+- Evidence: `tests/interaction_cue_test.gd` (parts, motion, roles, ground alignment,
+  self-dismissal, and that the ring follows the interaction radius) and three capture
+  frames — the destination cue after a floor click, the hover cue with the real cursor on
+  the timetable sheet, and a refused click against a wall. Windows hands-on checks are
+  listed in the pull request and are not yet performed.
+
 ### Phase 5c — The authored props in the world (delivered in this round)
 - The two owner-authored Blender props stopped being preview-only. The residential
   courtyard's three grey boxes by the planter became `playground_bench.tscn`, and the

@@ -10,17 +10,26 @@ extends Control
 @onready var _language_label: Label = %LanguageLabel
 
 var _objective_tween: Tween = null
+var _prompt_tween: Tween = null
 ## True while the dialogue panel is on screen. The panel carries its own key
 ## hints at the bottom right, so the HUD's language hint steps aside to keep the
 ## two from printing on top of each other.
 var _dialogue_open: bool = false
 ## Locale key of the current objective, so it can be re-translated in place.
 var _objective_key: String = ""
+## The contextual prompt arrives and leaves with a short fade. It is the one piece of
+## interface that appears while the player is moving the mouse around the world, so a line
+## that switches on and off between two frames reads as a glitch in the pointer code; a
+## line that arrives reads as the game answering. The fade is short (0.12 s) because the
+## prompt is also information the player is waiting for.
+const PROMPT_FADE_IN_SECONDS := 0.12
+const PROMPT_FADE_OUT_SECONDS := 0.1
 
 
 func _ready() -> void:
 	_prompt_label.hide()
 	_prompt_label.text = ""
+	_prompt_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	refresh_language_text()
 	var loc := _loc()
 	if loc != null:
@@ -56,12 +65,24 @@ func get_objective_key() -> String:
 
 
 ## The prompt text is already localized by the dialogue controller.
+##
+## The text is set synchronously — it is what `get_prompt_text()` reports and what the
+## tests and the capture run wait for — and only the fade is asynchronous. Re-showing the
+## same text is a no-op: the interaction controller re-resolves its target every physics
+## frame, and restarting the fade on every resolve would make the line stutter.
 func set_prompt_text(action: String) -> void:
 	if action.strip_edges().is_empty():
 		clear_prompt()
 		return
-	_prompt_label.text = "[%s] %s" % [_interact_key_label(), action]
+	var text := "[%s] %s" % [_interact_key_label(), action]
+	if _prompt_label.visible and _prompt_label.text == text:
+		return
+	_prompt_label.text = text
 	_prompt_label.show()
+	_kill_prompt_tween()
+	_prompt_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_prompt_tween = create_tween()
+	_prompt_tween.tween_property(_prompt_label, "modulate:a", 1.0, PROMPT_FADE_IN_SECONDS)
 
 
 func get_prompt_text() -> String:
@@ -72,9 +93,27 @@ func get_objective_text() -> String:
 	return _objective_label.text if _objective_label != null else ""
 
 
+## Empties the line at once and fades what is left of it out. The text is gone
+## immediately, so nothing can read a stale prompt; only the pixels linger for a tenth of
+## a second.
 func clear_prompt() -> void:
 	_prompt_label.text = ""
-	_prompt_label.hide()
+	_kill_prompt_tween()
+	if not _prompt_label.visible:
+		return
+	if _prompt_label.modulate.a <= 0.001:
+		_prompt_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		_prompt_label.hide()
+		return
+	_prompt_tween = create_tween()
+	_prompt_tween.tween_property(_prompt_label, "modulate:a", 0.0, PROMPT_FADE_OUT_SECONDS)
+	_prompt_tween.tween_callback(_prompt_label.hide)
+
+
+func _kill_prompt_tween() -> void:
+	if _prompt_tween != null and _prompt_tween.is_valid():
+		_prompt_tween.kill()
+	_prompt_tween = null
 
 
 func refresh_language_text() -> void:
