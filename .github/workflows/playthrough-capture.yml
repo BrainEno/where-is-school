@@ -114,13 +114,24 @@ jobs:
           # exactly what was checked.
           first_log="${EVIDENCE}/logs/import-1.log"
           second_log="${EVIDENCE}/logs/import-2.log"
+          # The first pass is `--import`, not `--editor --quit`: `--quit` returns after
+          # one frame while the first scan is still on its worker thread, and with the
+          # `.import` sidecars now tracked in the repository an asset that was not
+          # imported is not loadable from its source either (the sidecar routes it
+          # through `.godot/imported/...`). `--import` waits for the queue to drain.
+          run_blocking_import () {
+            local log="$1"
+            godot --headless --path . --import > "${log}" 2>&1
+            return $?
+          }
+
           run_import () {
             local log="$1"
             godot --headless --editor --path . --quit > "${log}" 2>&1
             return $?
           }
 
-          run_import "${first_log}"
+          run_blocking_import "${first_log}"
           first=$?
           grep -E "SCRIPT ERROR|Parse Error|ERROR:" "${first_log}" | head -n 20 || true
           if [ "${first}" -ne 0 ]; then
