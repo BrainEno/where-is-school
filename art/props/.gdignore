@@ -1,0 +1,12 @@
+# Godot must not look inside this folder.
+#
+# art/props/ holds the editable Blender sources for the authored props. Godot 4 ships a
+# .blend importer, but it drives the Blender executable, and nothing in this repository
+# (or in CI) has Blender installed. Without this file the editor scans
+# where_is_school_bench_bag.blend, fails to import it every single pass, and leaves a
+# permanently broken resource in the project — plus a .import sidecar that names an
+# imported file nothing can ever produce.
+#
+# The runtime exports live in assets/models/ and are what the game loads; the .blend is
+# the source they are re-exported from (docs/IMPLEMENTATION_NOTES_PROPS.md). Keeping the
+# source in the repository but out of the resource filesystem is what .gdignore is for.
