@@ -243,22 +243,35 @@ jobs:
         run: |
           # These two tests exist to report numbers as much as to assert them, and a runner
           # keeps only the first handful of annotations from a step. They therefore get their
-          # own step, and their output is not redirected through `run_check`: the notices they
-          # print are the numbers this round is judged by, and they have to be readable from
-          # the run itself.
+          # own step, and their output is echoed instead of redirected: the notices they print
+          # are the numbers this round is judged by, and they have to be readable from the run.
           #
-          # What the text corpus costs, and what it contains: every chapter, every language.
+          # The verdict is the test's own, not the process exit code. A windowed engine under
+          # Xvfb exits non-zero while tearing down its GL context after a finished run (the
+          # capture job learned this the hard way), and a headless engine can do the same after
+          # `quit()`. So: a run passes when it printed its `PASS:` line and no `TEST FAILURE`,
+          # `SCRIPT ERROR` or `Parse Error`. A run that died quietly printed neither and fails.
           set -uo pipefail
           status=0
-          echo "=== content_load_report"
-          timeout 240 godot --headless --path . --script res://tests/content_load_report_test.gd
-          code=$?
-          echo "--- exit ${code}"
-          if [ "${code}" -ne 0 ]; then status=1; fi
+          codes=""
+          measured () {
+            local name="$1"; shift
+            echo "=== ${name}"
+            timeout 420 "$@" > "ci-logs/${name}.log" 2>&1
+            local code=$?
+            cat "ci-logs/${name}.log"
+            codes="${codes}${name}=${code} "
+            echo "--- exit ${code}"
+            if grep -qE "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "ci-logs/${name}.log"; then
+              return 1
+            fi
+            grep -qE "^PASS: " "ci-logs/${name}.log" || return 1
+            return 0
+          }
+          # What the text corpus costs, and what it contains: every chapter, every language.
+          measured content_load_report godot --headless --path . --script res://tests/content_load_report_test.gd || status=1
           # The pressure test: all six locations, three round trips, one room in the tree.
-          echo "=== location_pressure"
-          timeout 420 godot --headless --path . --script res://tests/location_pressure_test.gd
-          code=$?
-          echo "--- exit ${code}"
-          if [ "${code}" -ne 0 ]; then status=1; fi
+          measured location_pressure godot --headless --path . --script res://tests/location_pressure_test.gd || status=1
+          echo "measured: ${codes}"
+          echo "::notice title=measurement step::exit codes ${codes}; status ${status}"
           exit "${status}"

@@ -291,6 +291,106 @@ branch.
   plus the cue-audio counts the capture run writes into `PLAYTHROUGH.log`, since a sound
   cannot be photographed.
 
+### Phase 5b.3 — A quieter mark, a window that fits, and the first growth boundaries (delivered in this round)
+
+Three things, and a measurement of each.
+
+**The ground mark stopped being a ring.** `DestinationCue` is now one small mark —
+four short strokes of unequal length with tapered ends, built by
+`WorldCue.destination_mark_mesh()` — instead of a 0.52 m ring with a ripple and a breathing
+turn. Its footprint is **14.6 cm** (`mark_footprint_radius()` reads it out of the mesh's own
+bounds, and `tests/interaction_cue_test.gd` fails it below 8 cm or above 26 cm wide), it
+does not turn, and its whole animation is 0.14 s of fade-and-settle in and 0.12 s out. The
+three roles and their sounds are unchanged — bone for a destination, amber for a target,
+rose for a refusal — and the refusal is the same small mark shrinking to 0.72× over 0.32 s
+rather than a red warning. It still lies on the normal of the floor the click was accepted
+on, so ramps, kerbs and tilted plates put it on the surface rather than through it.
+
+This supersedes the destination cue described under Phase 5b.1: the ring, the ripple and
+the breathing are gone, and `HoverCue` (unchanged) is now the only ring in the vocabulary.
+
+The three candidates compared, on the same floor from the same camera at the same click:
+
+| | Design | Ink on screen | Outcome |
+|---|---|---|---|
+| A | four uneven strokes around an offset centre — **shipped** | measured per run, see the capture annotation | a mark, not a decal; legible at 2.4 m without drawing attention |
+| B | two 70° arcs at r = 0.085 with a centre dash | — | reads as a broken ring, which is the thing being removed |
+| C | three commas at 4°/121°/247° with a centre dot | — | closest to handwriting, but the gaps made it read as three separate marks |
+
+Only A ships: B and C exist only inside `tests/capture_playthrough.gd` and are photographed
+by the capture run, so the comparison can be repeated without a debug switch in the game.
+
+**The window fits the screen it opens on.** `scripts/ui/display_mode.gd`, a node in the main
+scene so it survives every location swap: a **1600×900** design viewport and window,
+resizable, **1280×720 minimum**, centred and clamped to the usable desktop, and **F11**
+toggling fullscreen with the windowed rectangle remembered and restored (a second toggle
+inside 150 ms is ignored). It changes nothing else: `tests/display_mode_test.gd` presses F11
+mid-game and asserts the location, the player position, the flags and the child count are
+unchanged.
+
+| | Before | After |
+|---|---|---|
+| default window | 1280×720, not resizable | 1600×900, resizable, centred |
+| smallest window | 1280×720, fixed | 1280×720, enforced |
+| fullscreen | none | F11, restores the previous frame |
+
+The interface was checked at 1280×720, 1600×900 and 1920×1080: `tests/dialogue_layout_test.gd`
+(the reading surface, options, Chinese paragraphs, both languages) and
+`tests/hud_layout_test.gd` (objective, prompt and language hint inside the real `GameUI`,
+three sizes × two languages, unclipped and unshrunk).
+
+**Where the growth boundaries are.** Measured, not estimated; every number below comes from
+CI on this branch.
+
+| | Measured |
+|---|---|
+| a location's transition (load → instantiate → tree → place → commit) | **2.8 ms – 10.6 ms** total; load dominates (2.3–8.9 ms), placement 0.0 ms |
+| a location's navigation bake | **0.4 ms – 7.3 ms**, from 84 to 396 collision faces → 2 to 143 polygons |
+| nodes in a location | 77 (alley) to 203 (classroom) |
+| three round trips between two rooms | node count and orphan count end where they started; one room, one player, one companion throughout |
+| the whole text corpus, every chapter of every language | **9.8 ms** (dialogue 8.3 ms, inspections 1.5 ms) |
+| dialogue | 57.7 KB / 169 nodes / 25 conversations per language (en 57.7, zh-CN 56.8) |
+| inspections | 16.2 KB / 28 entries per language (en 16.2, zh-CN 15.3) |
+| the release pack | 256 files, **1.37 MiB**; model 347 KiB, font 252 KiB, audio 148 KiB, scene 250 KiB, text 154 KiB, other 257 KiB |
+
+The per-location numbers, from the round's own run:
+
+```
+classroom    6.9 ms (load 5.4, inst 1.1, tree 0.4, place 0.0)  bake 0.6 ms  168 faces →   7 polygons, 203 nodes
+corridor     4.2 ms (load 3.6, inst 0.3, tree 0.2, place 0.0)  bake 0.4 ms   84 faces →   2 polygons,  82 nodes
+street       4.5 ms (load 3.8, inst 0.3, tree 0.2, place 0.0)  bake 6.0 ms  336 faces →  56 polygons, 140 nodes
+residential  8.2 ms (load 7.2, inst 0.6, tree 0.2, place 0.0)  bake 4.9 ms  336 faces →  97 polygons, 192 nodes
+alley        2.8 ms (load 2.3, inst 0.2, tree 0.2, place 0.0)  bake 1.3 ms  168 faces →  20 polygons,  77 nodes
+playground  10.6 ms (load 8.9, inst 1.1, tree 0.3, place 0.0)  bake 7.3 ms  396 faces → 143 polygons, 196 nodes
+```
+
+Three findings worth keeping:
+
+- **Nothing here is slow yet.** Ten milliseconds for a location, eight for the entire text
+  corpus in two languages. The budget is not the problem; the *shape* of the growth is:
+  the corpus doubles with every language, and the load is synchronous and blocking, which
+  is fine at 25 conversations and will not be at 250.
+- **The loads are the cost, not the bakes.** Resource loading is 80–85% of a transition; the
+  navigation bake is under a tenth of it. Preloading the neighbouring location is therefore
+  worth more than any navigation optimisation, and is not done.
+- **Two spawn routes are genuinely blocked** and are now recorded rather than failed: the
+  corridor's `FromClassroom` cannot reach `FromStreet` or `FromSchoolyard`, and the
+  residential `FromStreet` cannot reach `FromStair`. Both are doors the story has not opened
+  or markers on the far side of one. They are printed by the pressure test every run.
+
+**The build has a budget per kind of asset.** `tools/verify_build.py` classifies every
+packed file as a model, font, texture, audio, scene, text or other, and measures it against
+that kind's warning line and hard limit; no hard limit is looser than the old flat 2 MiB, the
+pack total keeps its 16 MiB hard limit and gains an 8 MiB warning line. The tables and the
+reasoning are in [ASSET_PIPELINE.md](ASSET_PIPELINE.md) §9, and
+`tests/verify_build_test.py` (75 boundary checks, in CI) tests both sides of every limit and
+the pack reader itself.
+
+**Not done, and not to be described as done:** no async or per-language loading, no
+preloading of the next location, no save system, no streaming, no Windows hands-on pass
+(including F11), and no performance claim on real hardware — a CI runner's millisecond count
+is a relative number, not a frame budget.
+
 ### Phase 5c — The authored props in the world (delivered in this round)
 - The two owner-authored Blender props stopped being preview-only. The residential
   courtyard's three grey boxes by the planter became `playground_bench.tscn`, and the
