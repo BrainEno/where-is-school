@@ -201,8 +201,21 @@ def main(argv: list[str]) -> int:
         print("", file=sys.stderr)
         for problem in problems:
             print(f"FAIL: {problem}", file=sys.stderr)
+            # The step log is not always reachable from the API (the logs endpoint is a
+            # redirect to storage that a restricted client may not be able to read), so the
+            # verdict has to be legible from the annotations alone.
+            print(f"::error title=build contents::{problem}")
+        if any("nothing under" in problem for problem in problems):
+            # "The game is not in it" is only actionable next to what *is* in it.
+            sample = ", ".join(path for path, _ in entries[:25])
+            print(f"::error title=packed paths (first 25)::{sample}")
         return 1
     print("\nPASS: the build carries the game and nothing else")
+    print(
+        "::notice title=build contents::"
+        f"{len(entries)} file(s), {total / 1048576:.2f} MiB packed; largest: "
+        + ", ".join(f"{name.rsplit('/', 1)[-1]} {size / 1024:.0f} KiB" for name, size in entries[:3])
+    )
     return 0
 
 

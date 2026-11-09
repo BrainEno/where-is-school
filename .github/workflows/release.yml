@@ -109,10 +109,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # `--list` writes every packed path to the step log, which is where a failure is
+          # read in the web UI. The tool also emits the verdict as annotations, so the same
+          # failure is legible through the API.
           python3 tools/verify_build.py --exe build/windows/where-is-school.exe --list \
             | tee ci-logs/verify.log
           exe=$(stat -c %s build/windows/where-is-school.exe)
-          echo "::notice title=build size::exe $((exe / 1048576)) MiB — $(python3 tools/verify_build.py --exe build/windows/where-is-school.exe | head -n 1)"
+          echo "::notice title=build size::exe $((exe / 1048576)) MiB"
 
       - name: Package it with the licences a player needs
         shell: bash
