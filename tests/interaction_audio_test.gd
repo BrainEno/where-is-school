@@ -213,7 +213,7 @@ func _check_hover_limit() -> void:
 		"The wait before the second hover tick lasted only %d ms, under the %d ms interval."
 		% [waited, interval]
 	)
-	var played_again := _audio.play_hover()
+	var played_again: bool = _audio.play_hover()
 	_expect(
 		played_again,
 		"The hover tick never came back: waited %d ms, interval %d ms, count %d, silent %s."
