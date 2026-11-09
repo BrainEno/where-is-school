@@ -129,7 +129,9 @@ func load_location(
 	var target: Transform3D = spawn.global_transform
 	if not _place_player(player, target):
 		# Roll back: the rejected scene leaves the tree again and is freed now, so no
-		# frame ever sees it standing next to the old one.
+		# frame ever sees it standing next to the old one. `_current` and `_current_path`
+		# were not replaced yet; they are restated here so a later reordering of this
+		# function cannot quietly skip the restore.
 		remove_child(location)
 		_discard(location)
 		_current = previous
