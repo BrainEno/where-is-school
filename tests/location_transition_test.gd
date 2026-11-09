@@ -29,14 +29,6 @@ const LOCATIONS: Array[String] = [
 ]
 const FIXTURE_DIR := "user://location_fixtures"
 
-## Arrivals this test has measured as off the navigation mesh, with the reason. They
-## are a content gap in the residential scene, not a transition bug: `AlleyGround` and
-## `PathNorth` are mesh-only there, so the courtyard's north side beyond z = -22 has no
-## collider floor, and the alley's way back lands the player behind the north block
-## (issue #33). Listed explicitly so the gap stays loud; a listed arrival that comes
-## back onto the mesh fails the test until it is removed from this list.
-const KNOWN_OFF_MESH: Array[String] = ["alley/alley_back_to_courtyard"]
-
 ## How far an arrival point may sit from the navigation mesh. `navigation_test.gd`
 ## already holds each location's *primary* spawn to 1.2 m; this test covers every
 ## exit's own marker, where the question is whether the player is dropped into walkable
@@ -393,6 +385,7 @@ func _check_every_shipped_exit() -> void:
 		_failures.append(
 			"Only %d exit(s) were exercised; the game ships more than that." % checked
 		)
+	await _check_the_flats_and_the_lane_connect()
 	_report_arrival_geometry()
 
 
@@ -484,6 +477,62 @@ func _check_return_marker(
 	_return_distances[label] = distance
 
 
+## The courtyard and the lane behind the flats, walked between each other (issue #33).
+##
+## The pair used to be connected only in the story: the way out of the courtyard ran
+## across a mesh-only strip of asphalt with no collider under it, and the way back out of
+## the lane dropped the player on the same dead strip. Both directions are checked here
+## as routes, not as markers within tolerance of something: a route from the point the
+## player arrives on to the exit they leave through, long enough to be a route.
+func _check_the_flats_and_the_lane_connect() -> void:
+	# Through the mouth in the north block: the courtyard spawn is ~43 m from the exit,
+	# so a closed way shows up as a path that stops short of it.
+	await _check_one_route("residential", &"FromStreet", &"res_alley_end", 30.0)
+	# And back out of the lane, which is the direction that used to land off the mesh.
+	await _check_one_route("alley", &"FromCourtyard", &"alley_back_to_courtyard", 1.0)
+
+
+func _check_one_route(
+	location_name: String, spawn_id: StringName, exit_id: StringName, minimum: float
+) -> void:
+	var label := "%s/%s" % [location_name, String(exit_id)]
+	var scene := "res://scenes/locations/%s/%s.tscn" % [location_name, location_name]
+	if not _host.load_location(scene, spawn_id, _player, StringName(location_name)):
+		_failures.append("%s: could not enter the %s at '%s'." % [label, location_name, String(spawn_id)])
+		return
+	var location := _host.get_current()
+	if location == null:
+		_failures.append("%s: the %s did not become the current location." % [label, location_name])
+		return
+	var exit := _find_exit(location, exit_id)
+	if exit == null:
+		_failures.append("%s: the %s has no exit '%s'." % [label, location_name, String(exit_id)])
+		return
+	if not await _wait_for_navigation(location):
+		_failures.append("%s: the %s never baked a routable mesh." % [label, location_name])
+		return
+	var map := _player.navigation_agent.get_navigation_map()
+	var from := NavigationServer3D.map_get_closest_point(map, _player.global_position)
+	var to := NavigationServer3D.map_get_closest_point(map, exit.global_position)
+	var away := Vector2(to.x - exit.global_position.x, to.z - exit.global_position.z).length()
+	if away > 1.5:
+		_failures.append(
+			"%s: the exit sits %.2f m off the %s's navigation mesh." % [label, away, location_name]
+		)
+		return
+	var path := NavigationServer3D.map_get_path(map, from, to, true)
+	var length := 0.0
+	for index in range(1, path.size()):
+		length += path[index - 1].distance_to(path[index])
+	print("DIAG walk %s: %.2f m over %d point(s)" % [label, length, path.size()])
+	if path.size() < 2 or length < minimum:
+		_failures.append(
+			"%s: the route from the arrival point to that exit is %.2f m over %d point(s), "
+			% [label, length, path.size()]
+			+ "so the two spaces are not walkable between each other."
+		)
+
+
 ## One verdict for the whole sweep, with the numbers in it: a failure names every
 ## arrival that is too far off the mesh or too far from the way back.
 func _report_arrival_geometry() -> void:
@@ -491,24 +540,15 @@ func _report_arrival_geometry() -> void:
 	for label: String in _arrival_offsets:
 		lines.append("%s off-mesh %.2f m" % [label, float(_arrival_offsets[label])])
 	print("DIAG arrival geometry: %s" % "; ".join(lines))
-	for label: String in KNOWN_OFF_MESH:
-		if not _arrival_offsets.has(label):
-			_failures.append(
-				"KNOWN_OFF_MESH lists '%s', which this sweep no longer measures." % label
-			)
+	# No allowlist: an arrival that lands off the mesh fails here, whatever its reason.
+	# The one entry this test used to carry was the way back out of the alley, and it
+	# went away with the alley mouth itself (issue #33).
 	for label: String in _arrival_offsets:
 		var offset := float(_arrival_offsets[label])
-		var known := KNOWN_OFF_MESH.has(label)
-		if offset > ENTRY_TOLERANCE and not known:
+		if offset > ENTRY_TOLERANCE:
 			_failures.append(
 				"%s lands %.2f m off the navigation mesh (limit %.1f m); all arrivals: %s"
 				% [label, offset, ENTRY_TOLERANCE, "; ".join(lines)]
-			)
-		elif known and offset <= ENTRY_TOLERANCE:
-			_failures.append(
-				"%s is listed in KNOWN_OFF_MESH but now lands %.2f m from the mesh; "
-				% [label, offset]
-				+ "the gap is gone, so remove it from the list."
 			)
 	var farthest_label := ""
 	var farthest := 0.0

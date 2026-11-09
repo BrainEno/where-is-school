@@ -164,6 +164,7 @@ class Scene:
             if item.get('route'):
                 lines.append(f'conversation_route = &"{item["route"]}"')
             lines.append(f'radius = {item.get("radius", 1.1)}')
+            _support_lines(lines, item)
             lines.append('')
             if item.get('animal'):
                 lines.append(f'[node name="GreenAnimal" parent="Interactables/{item["name"]}" instance=ExtResource("{base + 4}_animal")]')
@@ -178,6 +179,7 @@ class Scene:
             if item.get('prompt'):
                 lines.append(f'prompt_text = "{item["prompt"]}"')
             lines.append(f'radius = {item.get("radius", 1.2)}')
+            _support_lines(lines, item)
             if item.get('scene'):
                 lines.append(f'destination_scene = "{item["scene"]}"')
                 lines.append(f'destination_spawn = &"{item["spawn"]}"')
@@ -263,7 +265,8 @@ def build_street():
         {"name": "SchoolWallLook", "pos": (-9.4, 1.2, 6.0), "id": "street_school_wall",
          "route": "street_wall", "prompt": "Look at the school wall", "radius": 1.4},
         {"name": "NoticeLook", "pos": (9.4, 1.2, 2.0), "id": "street_notice_pole",
-         "route": "street_notice", "prompt": "Read the notice", "radius": 1.2},
+         "route": "street_notice", "prompt": "Read the notice", "radius": 1.2,
+         "support": ("../../NoticePole",)},
         {"name": "GutterLook", "pos": (-9.2, 0.4, -22.0), "id": "street_gutter",
          "inspection": "street_gutter", "radius": 1.3},
         {"name": "ShutterLook", "pos": (9.8, 1.0, -24.0), "id": "street_shutter",
@@ -271,7 +274,7 @@ def build_street():
         {"name": "BinsLook", "pos": (11.3, 0.7, -2.0), "id": "street_bins",
          "inspection": "street_bin", "radius": 1.1},
         {"name": "LampLook", "pos": (10.6, 1.2, -18.0), "id": "street_lamp",
-         "inspection": "street_lamp", "radius": 1.2},
+         "inspection": "street_lamp", "radius": 1.2, "support": ("../../LampPost",)},
     ]
     s.exits = [
         {"name": "BackToSchool", "pos": (-9.6, 0.9, 16.0), "id": "street_back_to_school",
@@ -301,12 +304,18 @@ def build_residential():
     s.ambience = {'volume': -16.0, 'target': -24.0}
 
     s.box("Courtyard", (0, -0.1, -2), (34, 0.2, 40), "concrete")
-    s.box("PathNorth", (0, 0.02, -24), (6, 0.06, 12), "asphalt", None, False)
-    # three blocks around the courtyard
-    s.box("BlockNorth", (0, 8.5, -22), (34, 17, 10), "brick", ["camera_occluder"])
+    # Three blocks around the courtyard — but the north one is split, because the alley
+    # behind the flats is a passage the player walks through, not a painted strip on a
+    # solid wall (issue #33). The gap (x 2.8..9.2) matches the lane's own retaining walls,
+    # and the lintel keeps the facade in one piece above the first two metres of it: from
+    # the courtyard this reads as a 3.4 m arch, not as a missing wall.
+    s.box("BlockNorthWest", (-7.1, 8.5, -22), (19.8, 17, 10), "brick", ["camera_occluder"])
+    s.box("BlockNorthEast", (13.1, 8.5, -22), (7.8, 17, 10), "brick", ["camera_occluder"])
+    s.box("AlleyLintel", (6.0, 10.2, -18.0), (6.4, 13.6, 2.0), "brick", ["camera_occluder"])
     s.box("BlockWest", (-16, 7.0, -2), (10, 14, 26), "brick", ["camera_occluder"])
     s.box("BlockEast", (16, 7.5, 0), (10, 15, 22), "brick", ["camera_occluder"])
-    for i, x in enumerate((-10.0, -5.0, 0.0, 5.0, 10.0)):
+    # The north windows skip the mouth: x = 5 was the wall the alley now passes through.
+    for i, x in enumerate((-10.0, -5.0, 0.0, 11.0, 14.0)):
         for j, y in enumerate((3.5, 6.5, 9.5, 12.5)):
             s.box(f"WinN_{i}_{j}", (x, y, -16.9), (1.5, 1.3, 0.12), "glass", None, False)
     for i, z in enumerate((-11.0, -6.0, -1.0, 4.0, 9.0)):
@@ -315,7 +324,7 @@ def build_residential():
     for i, z in enumerate((-8.0, -3.0, 2.0, 7.0)):
         for j, y in enumerate((3.4, 6.4, 9.4)):
             s.box(f"WinE_{i}_{j}", (10.9, y, z), (0.12, 1.2, 1.4), "glass", None, False)
-    s.box("LitWindowN", (5.0, 6.5, -16.85), (1.5, 1.3, 0.14), "dusk", None, False)
+    s.box("LitWindowN", (1.0, 6.5, -16.85), (1.5, 1.3, 0.14), "dusk", None, False)
     # the stair between the west and north block: eleven steps and a landing
     for step in range(11):
         s.box(f"Step_{step}", (-13.6, 0.15 * (step + 1) - 0.075, -9.2 - 0.3 * step),
@@ -344,9 +353,16 @@ def build_residential():
     for name, z in (("StainA", 10.2), ("StainB", -11.8)):
         s.box(name, (8.4, 1.5, z), (0.06, 0.5, 0.35), "soil", None, False)
     # the alley the animal walks towards
-    s.box("AlleyWallWest", (3.0, 2.0, -28.0), (0.4, 4.0, 8.0), "brick", ["camera_occluder"])
-    s.box("AlleyWallEast", (9.0, 2.0, -28.0), (0.4, 4.0, 8.0), "brick", ["camera_occluder"])
-    s.box("AlleyGround", (6.0, 0.02, -30.0), (5.6, 0.04, 12.0), "asphalt", None, False)
+    # The lane runs from the courtyard's north edge to a back wall, and both retaining
+    # walls reach the courtyard edge: a wall that stopped short would leave a 0.4 m slot
+    # with no floor under it, and a player walking the edge would fall out of the world.
+    s.box("AlleyWallWest", (3.0, 2.0, -29.0), (0.4, 4.0, 14.0), "brick", ["camera_occluder"])
+    s.box("AlleyWallEast", (9.0, 2.0, -29.0), (0.4, 4.0, 14.0), "brick", ["camera_occluder"])
+    s.box("AlleyBackWall", (6.0, 2.0, -35.8), (6.4, 4.0, 0.4), "brick", ["camera_occluder"])
+    # Real ground, flush with the courtyard's top face (y = 0) and butted against its
+    # north edge at z = -22, so there is no step to fall off and nothing to fall through:
+    # the lane is walkable, and the navmesh can bake it (issue #33).
+    s.box("AlleyGround", (6.0, -0.05, -29.0), (6.4, 0.1, 14.0), "asphalt")
     s.box("Drain", (4.0, 0.03, 2.0), (1.2, 0.06, 0.6), "metal", None, False)
 
     s.interactables = [
@@ -625,6 +641,20 @@ def build_playground():
         ("FromSchool", (-3.0, 0, -17.4)),
     ]
     return s
+
+
+def _support_lines(lines, item):
+    """Emits `support_paths`, the props an interactable may be seen through.
+
+    The generated scenes used to be hand-edited for this, which meant the next run of
+    this script quietly deleted it: a notice on a pole would then be occluded by its own
+    pole. It belongs in the table like every other interaction property.
+    """
+    support = item.get('support')
+    if not support:
+        return
+    quoted = ", ".join(f'"{path}"' for path in support)
+    lines.append(f'support_paths = PackedStringArray({quoted})')
 
 
 def write(scene, path):
