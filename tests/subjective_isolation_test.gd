@@ -230,7 +230,8 @@ func _check_honest_subjective_still_works() -> void:
 
 func _new_runtime(graph: DialogueGraph) -> DialogueRuntime:
 	var runtime := DialogueRuntime.new(
-		_game_state, _narrative, CharacterDirectory.load_all(), _abilities, CheckResolver.new(11)
+		_game_state, _narrative, CharacterDirectory.load_all(_abilities), _abilities,
+		CheckResolver.new(11)
 	)
 	if not runtime.start(graph, &"fantasy"):
 		_failures.append("The subjective fixture conversation did not start.")

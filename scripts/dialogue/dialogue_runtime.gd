@@ -53,7 +53,9 @@ func _init(
 ) -> void:
 	_game_state = game_state if game_state != null else _find_autoload("GameState")
 	_narrative_state = narrative_state if narrative_state != null else _find_autoload("NarrativeState")
-	_characters = characters if characters != null else CharacterDirectory.load_all()
+	# The directory is built from the same registry the runtime rolls on, so an inner
+	# voice always resolves to its own profile and never to another speaker's.
+	_characters = characters if characters != null else CharacterDirectory.load_all(abilities)
 	if _characters != null and not _characters.errors.is_empty():
 		for message in _characters.errors:
 			push_error("DialogueRuntime: %s" % message)

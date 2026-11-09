@@ -116,7 +116,9 @@ func _initialize() -> void:
 func _run() -> void:
 	var game_state: Node = load(Harness.GAME_STATE_SCRIPT).new()
 	var narrative: Node = load(Harness.NARRATIVE_STATE_SCRIPT).new()
-	var characters := CharacterDirectory.load_all()
+	# With the registry, the directory also resolves the inner voices' profiles; without
+	# it a voice line would quietly fall back to a default colour.
+	var characters := CharacterDirectory.load_all(InnerAbilities.load_all())
 	if not characters.errors.is_empty():
 		_failures.append("\n".join(characters.errors))
 

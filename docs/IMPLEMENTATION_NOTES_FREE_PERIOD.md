@@ -154,8 +154,9 @@ real path.
 - `data/abilities/abilities.json`: one ability, `orientation`, value 3, speaker
   `voice_orientation`, three passive rules.
 - The four previous voices, their character profiles, and their dialogue are gone.
-  `data/characters/voice_orientation.tres` replaces them in
-  `CharacterDirectory.CHARACTER_PATHS`.
+  The remaining voice's profile is `data/characters/voice_orientation.tres`; it is
+  found from the `speaker` id the registry declares rather than from a hard-coded
+  list (see `docs/ARCHITECTURE.md` §5c).
 - `CheckResolver` is now `2d6 + value + modifier >= difficulty`, with `dice` (the two
   faces), `die` (their sum), `dice_count` and `die_faces` in the result.
 - Difficulties in shipped content: 7, 8, 9. With value 3 that is roughly

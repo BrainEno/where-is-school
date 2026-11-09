@@ -68,7 +68,8 @@ func _play_branch(locale: String, choice_id: StringName) -> void:
 	var line := "%s/%s" % [locale, choice_id]
 
 	var runtime := DialogueRuntime.new(
-		_game_state, _narrative, CharacterDirectory.load_all(), _abilities, CheckResolver.new(7)
+		_game_state, _narrative, CharacterDirectory.load_all(_abilities), _abilities,
+		CheckResolver.new(7)
 	)
 	var graph := _library.get_graph(&"n_class")
 	if graph == null:
