@@ -226,7 +226,9 @@ jobs:
 
           # "never appeared" carries the position, the target and the prompt the script
           # actually saw, which is the only place that says why a prompt shot is missing.
-          summary=$(grep -E "FAILURE|RESULT|never appeared" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
+          # `cue audio` carries the interaction cue counts. A sound cannot be photographed,
+          # so the numbers the run's real clicks produced are the evidence for it.
+          summary=$(grep -E "FAILURE|RESULT|never appeared|cue audio" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1500) || true
           # The script's own verdict decides, not the process exit code. `quit(0)` does
           # set it, but a windowed run under Xvfb also exits non-zero sometimes while
           # the engine tears down its window and GL context, after the playthrough has
