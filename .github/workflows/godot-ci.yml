@@ -168,6 +168,10 @@ jobs:
           run_check multi_voice 180 godot --headless --path . --script res://tests/multi_voice_test.gd || status=1
           run_check content_integrity 180 godot --headless --path . --script res://tests/content_integrity_test.gd || status=1
           run_check model_import 300 godot --headless --path . --script res://tests/model_import_test.gd || status=1
+          # The four production assets the two samples grew into: the Poly Haven desk and
+          # stationery, and the two characters. Same measurement, and the three places they
+          # deviate from the pipeline contract are pinned instead of relaxed.
+          run_check imported_assets 300 godot --headless --path . --script res://tests/imported_assets_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1

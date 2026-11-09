@@ -63,6 +63,10 @@ FORBIDDEN_PREFIXES = (
     "res://tools/",
     "res://docs/",
     "res://art/",
+    # Development-only preview scenes. They are useful to look at and are not part of the
+    # game; the export preset excludes them and this list keeps that honest, the same way
+    # it does for addons/.
+    "res://scenes/dev/",
     "res://.github/",
     # The narrative editor is an EditorPlugin. The game never loads it, and a player's
     # build has no business carrying the author's tooling.
