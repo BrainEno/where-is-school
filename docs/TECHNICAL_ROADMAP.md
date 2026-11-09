@@ -313,9 +313,12 @@ The three candidates compared, on the same floor from the same camera at the sam
 
 | | Design | Ink on screen | Outcome |
 |---|---|---|---|
-| A | four uneven strokes around an offset centre — **shipped** | **132 px** | a mark, not a decal; the most ink of the three, and still 3.5× smaller than the ring it replaced |
-| B | two 70° arcs at r = 0.085 with a centre dash | 115 px | the least ink, and it reads as a broken ring — which is the shape being removed |
-| C | three commas at 4°/121°/247° with a centre dot | 126 px | closest to handwriting, but the gaps read as three separate marks at camera distance |
+| A | four uneven strokes around an offset centre — **shipped** | **129 px** | a mark, not a decal; the most ink of the three, and still a fraction of the ring it replaced |
+| B | two 70° arcs at r = 0.085 with a centre dash | 118 px | the least ink, and it reads as a broken ring — which is the shape being removed |
+| C | three commas at 4°/121°/247° with a centre dot | 123 px | closest to handwriting, but the gaps read as three separate marks at camera distance |
+
+(A second run of the same commit measured 132 / 115 / 126: the ranking is stable, the absolute
+count moves by a few pixels with the renderer.)
 
 The ink is counted from the captured frames: pixels that changed within 90 px of the mark,
 against the same frame with the mark removed, on the same floor from the same camera at the
@@ -349,24 +352,25 @@ CI on this branch.
 
 | | Measured |
 |---|---|
-| a location's transition (load → instantiate → tree → place → commit) | **2.8 ms – 10.6 ms** total; load dominates (2.3–8.9 ms), placement 0.0 ms |
-| a location's navigation bake | **0.4 ms – 7.3 ms**, from 84 to 396 collision faces → 2 to 143 polygons |
+| a location's transition (load → instantiate → tree → place → commit) | **2.8 ms – 13.6 ms** total; loading is 75–85% of it, placement 0.0 ms |
+| a location's navigation bake | **0.4 ms – 11.4 ms**, from 84 to 396 collision faces → 2 to 143 polygons |
 | nodes in a location | 77 (alley) to 203 (classroom) |
 | three round trips between two rooms | node count and orphan count end where they started; one room, one player, one companion throughout |
-| the whole text corpus, every chapter of every language | **9.8 ms** (dialogue 8.3 ms, inspections 1.5 ms) |
+| the whole text corpus, every chapter of every language | **9.8 – 16.6 ms** (dialogue 8.3–14.6 ms, inspections 1.5–2.0 ms) |
 | dialogue | 57.7 KB / 169 nodes / 25 conversations per language (en 57.7, zh-CN 56.8) |
 | inspections | 16.2 KB / 28 entries per language (en 16.2, zh-CN 15.3) |
 | the release pack | 256 files, **1.37 MiB**; model 347 KiB, font 252 KiB, audio 148 KiB, scene 250 KiB, text 154 KiB, other 257 KiB |
 
-The per-location numbers, from the round's own run:
+Per location, from the green run this round ended on (a second run of the same commit
+measured 2.8–10.6 ms total; the order is stable, the absolute numbers follow the runner):
 
 ```
-classroom    6.9 ms (load 5.4, inst 1.1, tree 0.4, place 0.0)  bake 0.6 ms  168 faces →   7 polygons, 203 nodes
-corridor     4.2 ms (load 3.6, inst 0.3, tree 0.2, place 0.0)  bake 0.4 ms   84 faces →   2 polygons,  82 nodes
-street       4.5 ms (load 3.8, inst 0.3, tree 0.2, place 0.0)  bake 6.0 ms  336 faces →  56 polygons, 140 nodes
-residential  8.2 ms (load 7.2, inst 0.6, tree 0.2, place 0.0)  bake 4.9 ms  336 faces →  97 polygons, 192 nodes
-alley        2.8 ms (load 2.3, inst 0.2, tree 0.2, place 0.0)  bake 1.3 ms  168 faces →  20 polygons,  77 nodes
-playground  10.6 ms (load 8.9, inst 1.1, tree 0.3, place 0.0)  bake 7.3 ms  396 faces → 143 polygons, 196 nodes
+classroom   10.4 ms (load 7.8, inst 1.9, tree 0.7, place 0.0)   bake  0.9 ms  168 faces →   7 polygons, 203 nodes
+corridor     6.7 ms (load 5.5, inst 0.5, tree 0.4, place 0.0)   bake  0.6 ms   84 faces →   2 polygons,  82 nodes
+street       8.4 ms (load 6.8, inst 0.8, tree 0.4, place 0.0)   bake 10.4 ms  336 faces →  56 polygons, 140 nodes
+residential 13.4 ms (load 11.3, inst 1.2, tree 0.5, place 0.0)  bake  8.4 ms  336 faces →  97 polygons, 192 nodes
+alley        4.9 ms (load 3.7, inst 0.6, tree 0.3, place 0.0)   bake  1.9 ms  168 faces →  20 polygons,  77 nodes
+playground  13.6 ms (load 11.0, inst 1.6, tree 0.5, place 0.0)  bake 11.4 ms  396 faces → 143 polygons, 196 nodes
 ```
 
 Three findings worth keeping:
@@ -378,10 +382,20 @@ Three findings worth keeping:
 - **The loads are the cost, not the bakes.** Resource loading is 80–85% of a transition; the
   navigation bake is under a tenth of it. Preloading the neighbouring location is therefore
   worth more than any navigation optimisation, and is not done.
-- **Two spawn routes are genuinely blocked** and are now recorded rather than failed: the
-  corridor's `FromClassroom` cannot reach `FromStreet` or `FromSchoolyard`, and the
-  residential `FromStreet` cannot reach `FromStair`. Both are doors the story has not opened
-  or markers on the far side of one. They are printed by the pressure test every run.
+- **One spawn route is genuinely blocked** and is now recorded rather than failed: the
+  residential `FromStreet` cannot reach `FromStair`, which is a door the story has not opened
+  or a marker on the far side of one. The pressure test prints the pairs every run. The
+  corridor's pairs were in that list too until the map was fixed (below): they were not
+  blocked, the map was answering for the previous room.
+
+And the finding that mattered most, because it was invisible in play: a room's navigation
+could be correct in the mesh and absent from the *map* on the frame the player arrived. The
+server parses a region's mesh on its own schedule, and a map that has not rebuilt yet answers
+from the polygons it still holds — the room that has just been freed. `is_routable()` says
+yes about that floor, which is why the old health check could not see it. `LocationNavigation`
+now asks whether the map can answer for *its own* geometry (`map_knows_geometry()`), hands the
+mesh over again while it cannot, and records a bake error after six frames rather than
+pretending. See [IMPLEMENTATION_NOTES_NAVIGATION.md](IMPLEMENTATION_NOTES_NAVIGATION.md) §4b.
 
 **The build has a budget per kind of asset.** `tools/verify_build.py` classifies every
 packed file as a model, font, texture, audio, scene, text or other, and measures it against
