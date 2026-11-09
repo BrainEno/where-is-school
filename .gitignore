@@ -51,12 +51,21 @@
 # translation sources in data/locale/. Regenerated per export.
 *.translation
 
-# Export configuration may contain local paths or credentials.
+# A local export config, which is what `export.cfg` was for: machine-specific paths.
 export.cfg
-export_presets.cfg
 
-# Local exports and build outputs.
+# `export_presets.cfg` used to be ignored here, on the theory that an export preset is a
+# per-developer local file. It is not one any more: it is the definition of the release
+# build (which platform, what is excluded from the pack, whether the pack is embedded),
+# and CI exports from exactly this file. Ignoring it meant "the build works on my machine"
+# in the one place this repository cannot check. Same reversal, same reason, as tracking
+# the `*.import` sidecars in issue #37.
+
+# Local exports and build outputs. `build/` is where export_presets.cfg writes and where
+# tools/verify_build.py expects to find the result; `builds/` and `dist/` are older names
+# kept so a stale directory from before this change cannot be committed either.
 .export/
+build/
 builds/
 dist/
 
@@ -131,6 +140,9 @@ __pycache__/
 #
 # Authored data, tooling and documentation:
 #   *.json, *.csv, *.md, *.txt, *.yml, *.yaml, *.py
+#
+# Build definition:
+#   export_presets.cfg   the release build CI runs (section 2 explains the reversal).
 #
 # Committed evidence (see section 3):
 #   docs/screenshots/PLAYTHROUGH.log, docs/screenshots/UI_CAPTURE.log
