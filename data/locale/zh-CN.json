@@ -3,8 +3,8 @@
   "locale": "zh-CN",
   "name": "简体中文",
   "strings": {
-    "ui.dialogue_continue": "[空格] 继续    [Tab] 记录    [L] 语言",
-    "ui.dialogue_choose": "1-{count} 选择    [Tab] 记录    [L] 语言",
+    "ui.dialogue_continue": "[空格] 或点击此处继续    [Tab] 记录    [L] 语言",
+    "ui.dialogue_choose": "点击选项或按 1-{count}    [Tab] 记录    [L] 语言",
     "ui.log_title": "你记得的事",
     "ui.log_hint": "[Tab] 关闭",
     "ui.log_empty": "还没有记下什么。",

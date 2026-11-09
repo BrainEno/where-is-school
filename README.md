@@ -89,10 +89,14 @@ controls, architecture, and the older known limitations.
   when the cursor is over something in reach, and the player's facing otherwise; both
   always name the same object E would use. E remains the keyboard-only way to
   interact.
-- **Space / Enter** — continue dialogue.
+- **Space / Enter, or a left click inside the dialogue box** — continue the dialogue.
+  The first press or click finishes a line that is still typing. While the box is up, a
+  click anywhere else on screen does nothing: it never walks the character and never
+  uses what stands behind the box.
 - **Left click on a dialogue option** — take that option. Options are real buttons
   drawn as text lines, so a click selects exactly one, the same option cannot be taken
-  twice, and clicks on the panel never reach the world.
+  twice, and clicks on the panel never reach the world. While a choice is open an empty
+  spot in the box does nothing rather than skipping the question.
 - **1–9** — pick a dialogue choice by number.
 - **Tab** — open or close the dialogue log. Entries keep their identity and their order
   when the language changes; only their words do.

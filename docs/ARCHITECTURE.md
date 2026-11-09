@@ -332,7 +332,11 @@ Rules the layout keeps, and why:
    raises the line and draws a 2 px margin mark. They keep
    `mouse_filter = MOUSE_FILTER_STOP` and `focus_mode = FOCUS_NONE` so a left click
    selects exactly one option and never leaks to the world, and the 1-9 keys go through
-   the same `choice_selected(index)` signal.
+   the same `choice_selected(index)` signal. Everything else in the band is
+   `MOUSE_FILTER_IGNORE` and the band root is `MOUSE_FILTER_STOP`, so a click on the
+   reading surface itself continues the line (`_gui_input` → `_request_advance()`), a
+   click while a choice is open does nothing, and a click outside the band is swallowed
+   instead of continuing the line from the other side of the screen.
 5. **No portraits yet.** The layout leaves the left margin and the free space above the
    band for a future portrait; nothing renders one. (Portrait art is not in the
    repository and must not be faked with a placeholder silhouette.)

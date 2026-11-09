@@ -3,8 +3,8 @@
   "locale": "en",
   "name": "English",
   "strings": {
-    "ui.dialogue_continue": "[Space] continue    [Tab] log    [L] language",
-    "ui.dialogue_choose": "1-{count} select    [Tab] log    [L] language",
+    "ui.dialogue_continue": "[Space] or click here to continue    [Tab] log    [L] language",
+    "ui.dialogue_choose": "Click an option or press 1-{count}    [Tab] log    [L] language",
     "ui.log_title": "What you know",
     "ui.log_hint": "[Tab] close",
     "ui.log_empty": "Nothing recorded yet.",

@@ -29,7 +29,6 @@ offset_right = 1048.0
 offset_bottom = -38.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 2
 script = ExtResource("1_dialogue_panel")
 
 [node name="Wash" type="TextureRect" parent="."]
