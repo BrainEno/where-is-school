@@ -231,14 +231,33 @@ Nothing here runs per frame: the numbers are written once, inside `bake_region()
 debug build prints one line (`LocationNavigation: '<scene>' baked in X ms (collect Y), N
 faces -> M polygons, K region(s)`). Release builds print nothing.
 
-**One thing the measurement exposed.** The bake used to write into `navigation_mesh` as the
-scene had packed it. A `.tscn` shares its sub-resources between instances, so a location
-entered while another instance of the same scene was alive baked its floor into the *other*
-instance's mesh. It never showed in play only because the classroom is loaded once and the
-outdoor locations are never alive twice; the pressure test loads the room the player stands
-in and the classroom's map stopped answering any route at all — polygons present, region
-registered, `is_routable()` false. The bake now runs on a per-instance
-`NavigationMesh.duplicate()`, which is what a per-instance bake should always have done.
+**What the measurement exposed.** Not a slow bake — a *missing* one. The pressure test kept
+finding a room whose mesh was correct (`polygons` right, `faces` right, region on the map)
+and whose map could not answer a single route, and only sometimes: the corridor, on the
+frame the player arrived.
+
+The cause is the server's schedule, not the geometry. The navigation server parses a
+region's mesh and rebuilds its map on its own schedule. A map that has not rebuilt yet
+answers queries from the polygons it still holds, and right after a location swap what it
+holds is the room that has just been freed. So `is_routable()` said *yes* about a floor that
+was about to disappear, and once it had gone, the new room's polygons were in the mesh and
+not yet in the map. For a player that is a room where click-to-move quietly falls back to
+"the nearest point I can reach", which may be two metres away and in the previous room.
+
+Two changes, one diagnostic:
+
+- `map_knows_geometry()` answers the question `is_routable()` cannot: the closest walkable
+  point to a corner of *this* mesh has to be that corner. A map holding another room's floor
+  fails it by the distance between the two rooms.
+- `_verify_baked_geometry()` runs on the frames after a bake, hands the mesh over again while
+  the map still answers for something else, and stops after `ROUTE_RECHECK_FRAMES` (6) with
+  a recorded `_bake_error` rather than pretending. It costs nothing when the map keeps up,
+  which is almost always.
+- The bake also duplicates the authored `navigation_mesh` instead of writing into it, because
+  a `.tscn` shares its sub-resources between instances and a per-instance bake must not write
+  into a shared one. It is a safety measure today — none of the shipped location scenes
+  authors a mesh, so they all bake into a fresh `NavigationMesh` already — and it exists so
+  that the first scene that does author one cannot poison another instance.
 
 **What the pressure test does with it** (`tests/location_pressure_test.gd`): enters all six
 locations, asserts for each that the navigation really baked (faces > 0, polygons > 0, a
