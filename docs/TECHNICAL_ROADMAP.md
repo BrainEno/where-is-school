@@ -212,6 +212,11 @@ document.
 - The street's way back into the school is now `prompt.back_to_classroom`
   ("Return to classroom" / "回到教室"), and the story's dismissal rewrite only touches
   the classroom door.
+- The courtyard's way out to the lane behind the flats became a real passage: the north
+  block is split into two masses with a lintel over the gap, and the lane's asphalt is a
+  collider whose top face is flush with the courtyard, so the pair walks in both
+  directions and bakes into the mesh. The lane used to be mesh-only boxes with nothing to
+  stand on and no polygon to route over (issue #33).
 - Evidence: `tests/navigation_test.gd`, `tests/automatic_interaction_test.gd`,
   `tests/dialogue_pointer_test.gd`, `tests/street_prompt_test.gd`, and capture frames
   taken with real pointer events. Windows hands-on checks are listed in the pull

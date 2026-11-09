@@ -32,6 +32,9 @@ Conventions kept from the earlier outdoor work:
 - big masses are tagged `camera_occluder` so the 2.5D camera can fade them;
 - interactables and exits live under `Interactables`, spawn points under
   `SpawnPoints` in the `spawn_point` group;
+- an interactable's `support_paths` (the props it may be seen through, e.g. the pole a
+  notice is mounted on) is a `support` entry in the same table, never a hand edit: the
+  generator rewrites the four scenes and used to drop it;
 - the alley is deliberately one lane wide with a single bay, the yard deliberately
   open with an empty middle. Do not add content to fill the middle: it is reserved
   for people and events later.
@@ -89,8 +92,55 @@ Not verified:
 - Two of the inner voices that this note was written against (Ledger, Onlooker) are
   gone: the milestone now ships one provisional voice, so those two anchors are plain
   inspections.
+- The alley mouth is a 3.4 m-high arch in the north block and has no light of its own, so
+  it is darker than the courtyard. It is readable in the greybox, but it has not been lit
+  as a place yet.
+- The courtyard's stair sits inside `BlockWest` (x -15.3..-11.9 against a block face at
+  x = -11), so it, its `res_stair` interactable and the unused `FromStair` spawn marker
+  are buried in solid geometry. It is a coordinate error from before this round and it is
+  not fixed here; the slice never routes a player through it.
   each. That is content depth, not a system limit.
 
+
+## 6. The alley mouth (issue #33)
+
+The courtyard's way out to the lane behind the flats was painted, not built. `AlleyGround`
+and `PathNorth` were mesh-only boxes — no `StaticBody3D`, so no collider and no geometry
+for the navigation bake — and they also sat about three metres east of the courtyard side
+of the route. The result: the exit `res_alley_end` led into a strip the player could not
+stand on, and coming back out of the lane dropped the player (`FromAlley`) onto the same
+dead strip, 4.75 m from the nearest navigation polygon.
+
+Fixed in the geometry table, not in the runtime:
+
+| Was | Is |
+|---|---|
+| `BlockNorth`, one solid 34 m wall across the north side | split into `BlockNorthWest` (x -17..2.8) and `BlockNorthEast` (x 9.2..17), both 17 m tall; `AlleyLintel` fills y 3.4..17 over the first 2 m of the gap, so the courtyard sees a 6.4 m wide, 3.4 m high arch in one facade rather than two separate buildings |
+| `AlleyGround`, a 0.04 m mesh-only slab at y 0.02, x 3.2..8.8 | a 0.1 m `StaticBody3D` at x 2.8..9.2, z -36..-22, whose **top face is exactly y = 0** and whose south edge butts the courtyard's north edge at z = -22 |
+| `PathNorth`, a second mesh-only strip inside the old wall | removed: the lane's own floor is the path now |
+| the lane's retaining walls, z -32..-24 | lengthened to z -36..-22 so they reach the courtyard edge, and `AlleyBackWall` closes the far end: walls that stopped short left a 0.4 m slot with no floor under it, which a player walking the edge could fall into |
+
+The gap in the block matches the lane exactly: 6.4 m between the two masses, 5.6 m between
+the retaining walls, and no step at any of the joins. The navigation bake runs straight
+through it — agent radius 0.4 m still leaves ~4.8 m of walkable width in the narrowest
+part. `FromAlley` stands at y = 0 on a floor whose top face is y = 0, and the route from
+the courtyard spawn to `res_alley_end` is about 43 m long. The lane is closed on all four
+sides now, so there is no edge to walk off.
+
+Evidence in the test suite, both ends:
+
+- `tests/location_transition_test.gd` walks the pair as routes
+  (`_check_the_flats_and_the_lane_connect`) and prints the length, and its allowlist for
+  off-mesh arrivals (`KNOWN_OFF_MESH`) is gone: every arrival is held to 3.0 m again.
+- `tests/navigation_test.gd` now asks for a walkable route from the spawn to *every*
+  exit of every location instead of to one of them, so the courtyard's alley exit is
+  held to being reachable, not merely present.
+
+What this does not claim: nobody has walked the mouth with a human at the keyboard, the
+arch has no light of its own, and the courtyard's stair is still where it always was —
+inside `BlockWest`, with its `StairLook` interactable and the unused `FromStair` marker
+buried in the same block (the stair needs its own issue; nothing in the slice routes
+through it).
 
 ## Superseded in part
 

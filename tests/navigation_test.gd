@@ -6,8 +6,9 @@ extends SceneTree
 ## 1. every playable location bakes a navigation mesh from its own geometry, and the
 ##    player's spawn is standing on it — a location with an empty mesh cannot be
 ##    navigated at all and that is a content error, not a runtime accident;
-## 2. from the spawn you can actually reach a way out (a door or an exit), not just
-##    "some point": a mesh that only covers the corner you spawn in is useless;
+## 2. from the spawn you can actually reach *every* way out of the location, not just
+##    "some point" and not just one door: a mesh that only covers the corner you spawn in
+##    is useless, and an exit that stands off the mesh is a door painted on a wall;
 ## 3. an accepted destination is walked to with the real physics body, arrives, and
 ##    then stops — no drift and no oscillation once the character is there;
 ## 4. a point off the mesh is refused instead of being snapped or walked at;
@@ -144,11 +145,34 @@ func _check_every_location_has_a_usable_mesh() -> void:
 				"In the %s the spawn %s is %.2f m off the navigation mesh (closest %s) %s"
 				% [label, str(_player.global_position), offset, str(closest), _report(nav)]
 			)
-		if not _has_reachable_exit(location):
-			_failures.append(
-				"In the %s no exit is reachable from the spawn %s %s"
-				% [label, str(_player.global_position), _report(nav)]
+		# Every way out, not just one: a location whose only reachable exit is the way back
+		# is a room the player can get stuck in. This is also what holds the courtyard's
+		# alley exit to being walkable rather than merely present (issue #33).
+		for exit in _exits_of(location):
+			if exit.is_milestone_end:
+				continue
+			var snapped := _closest_point(exit.global_position)
+			var away := Vector2(
+				snapped.x - exit.global_position.x, snapped.z - exit.global_position.z
+			).length()
+			if away > 1.5:
+				_failures.append(
+					"In the %s the exit '%s' is %.2f m off the navigation mesh %s"
+					% [label, String(exit.interact_id), away, _report(nav)]
+				)
+				continue
+			var route := NavigationServer3D.map_get_path(
+				_player.navigation_agent.get_navigation_map(),
+				_closest_point(_player.global_position), snapped, true
 			)
+			if route.size() < 2:
+				_failures.append(
+					"In the %s the exit '%s' at %s cannot be walked to from the spawn %s %s"
+					% [
+						label, String(exit.interact_id), str(exit.global_position),
+						str(_player.global_position), _report(nav)
+					]
+				)
 
 
 ## The walk itself, in the classroom: pick the farthest reachable destination within
@@ -491,21 +515,14 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 	return null
 
 
-## At least one way out of the room has to be walkable from where the player stands.
-func _has_reachable_exit(location: LocationRoot) -> bool:
-	var map := _player.navigation_agent.get_navigation_map()
+## Every exit the location declares, in tree order.
+func _exits_of(location: LocationRoot) -> Array[LocationExit]:
+	var found: Array[LocationExit] = []
 	for node in location.get_tree().get_nodes_in_group("location_exit"):
-		var exit := node as Interactable
-		if exit == null or not location.is_ancestor_of(exit):
-			continue
-		var snapped := NavigationServer3D.map_get_closest_point(map, exit.global_position)
-		if Vector2(snapped.x - exit.global_position.x, snapped.z - exit.global_position.z).length() > 1.5:
-			continue
-		var player_point := NavigationServer3D.map_get_closest_point(map, _player.global_position)
-		var path := NavigationServer3D.map_get_path(map, snapped, player_point, true)
-		if path.size() >= 2:
-			return true
-	return false
+		var exit := node as LocationExit
+		if exit != null and location.is_ancestor_of(exit):
+			found.append(exit)
+	return found
 
 
 func _walk_until_settled(limit_seconds: float) -> bool:

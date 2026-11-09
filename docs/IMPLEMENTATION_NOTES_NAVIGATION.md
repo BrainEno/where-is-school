@@ -88,14 +88,21 @@ reasoning and the evidence.
 - No agent avoidance between moving bodies, no off-mesh links for stairs that are not
   ramps, no path smoothing, and no navigation-aware companion. Each mesh covers one
   location only, so nothing routes across a boundary.
+- Where a location's own geometry was the problem, the geometry was fixed rather than
+  the navigation: the courtyard's exit into the lane behind the flats ran across
+  mesh-only boxes with no collider, so it is now a real mouth in the north block with a
+  floor flush with the courtyard (issue #33). See
+  [IMPLEMENTATION_NOTES_PLAYGROUND.md](IMPLEMENTATION_NOTES_PLAYGROUND.md) §6.
 
 ## 5. Evidence, and what it is not
 
 Automated (headless, CI):
 
-- `tests/navigation_test.gd` — per-location bake, spawn coverage and spawn→exit
-  reachability; a real walk with the physics body (arrival, distance travelled, no
-  drift afterwards); refusal of off-mesh points; an unreachable island that is never
+- `tests/navigation_test.gd` — per-location bake, the spawn on the mesh, and spawn→exit
+  reachability for *every* exit rather than for one of them (an exit that only exists in
+  the file is a door painted on a wall); a real walk with the physics body (arrival,
+  distance travelled, no drift afterwards); refusal of off-mesh points; an unreachable
+  island that is never
   climbed; a wall added between the player and the destination that is walked around
   (waypoint count and clearance measured); manual cancellation; destination
   replacement; cancellation across a location swap.
