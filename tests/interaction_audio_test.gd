@@ -86,7 +86,7 @@ func _check_buffers() -> void:
 	Harness.stage = "cue audio buffers"
 	if _audio == null:
 		return
-	var bodies := {}
+	var bodies: Array[PackedByteArray] = []
 	for kind: StringName in _audio.KINDS:
 		var stream := _audio.stream_for(kind) as AudioStreamWAV
 		_expect(stream != null, "The '%s' cue has no stream." % String(kind))
@@ -114,11 +114,17 @@ func _check_buffers() -> void:
 			"The '%s' cue peaks at %.3f: too quiet to hear or loud enough to sit over the room."
 			% [String(kind), peak]
 		)
-		# Identity by content hash: two kinds that were given the same buffer would collide.
-		bodies[stream.data.hash()] = String(kind)
+		bodies.append(stream.data)
+	# `PackedByteArray` compares by content, so this is a real "are these the same sound"
+	# question rather than a hash that could collide.
+	var shared := ""
+	for first in bodies.size():
+		for second in range(first + 1, bodies.size()):
+			if bodies[first] == bodies[second]:
+				shared = " (kinds %d and %d)" % [first, second]
 	_expect(
-		bodies.size() == _audio.KINDS.size(),
-		"Two cue kinds share one buffer; the sounds are meant to be distinguishable."
+		shared.is_empty(),
+		"Two cue kinds share one buffer%s; the sounds are meant to be distinguishable." % shared
 	)
 	var hover := _audio.stream_for(&"hover") as AudioStreamWAV
 	var refused := _audio.stream_for(&"refused") as AudioStreamWAV
