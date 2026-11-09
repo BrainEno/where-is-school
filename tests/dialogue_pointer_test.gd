@@ -6,13 +6,16 @@ extends SceneTree
 ##
 ## 1. the options are ordinary `Button`s, so a left click selects exactly one of them,
 ##    once — never two, never none;
-## 2. a click that a `Control` consumed must not reach the world. The world counts the
+## 2. the reading band is the surface that continues the line: a click inside the box
+##    advances (or finishes a line still typing), a click outside it does neither, and
+##    neither of them reaches the world;
+## 3. a click that a `Control` consumed must not reach the world. The world counts the
 ##    mouse presses that arrive as unhandled input, and that counter is checked against
 ##    a control case (a click on nothing but the world) so a zero means something;
-## 3. the digit keys still pick an option by number;
-## 4. the panel stays above the HUD, and the option buttons carry hover styling, so
+## 4. the digit keys still pick an option by number;
+## 5. the panel stays above the HUD, and the option buttons carry hover styling, so
 ##    pointing at an option is visible feedback and not just a click target;
-## 5. switching language re-renders the options in the new language without losing
+## 6. switching language re-renders the options in the new language without losing
 ##    them: the same number of options, different text.
 ##
 ## The real conversation used here is the classroom's `n_class`, the same one the
@@ -87,12 +90,14 @@ func _run() -> void:
 	await _frames(3)
 
 	await _check_world_clicks_are_counted()
+	await _check_clicking_the_band()
 	await _check_real_conversation_click()
 	await _check_digit_keys()
 
 	Harness.finish(
 		self, _failures,
-		"a left click chooses exactly one option, never reaches the world, and the digits and the language switch still work."
+		"a left click inside the band continues the line, a click on an option chooses exactly one, "
+		+ "neither reaches the world, a click outside the band does nothing, and the digits and the language switch still work."
 	)
 
 
@@ -113,6 +118,102 @@ func _check_world_clicks_are_counted() -> void:
 	if _player.is_path_active():
 		_player.cancel_path()
 	await _frames(2)
+
+
+## The reading band, clicked. The rule used to be inverted: every click anywhere on
+## screen continued the line, and the box the reader is looking at — covered by its frame
+## panel — swallowed the click and did nothing.
+func _check_clicking_the_band() -> void:
+	_panel.close()
+	await _frames(2)
+	if _dialogue.is_busy():
+		await _close_conversation()
+	_check_band_rules()
+
+	var advances := [0]
+	var count_advance := func() -> void: advances[0] += 1
+	_panel.advance_requested.connect(count_advance)
+
+	# 1. A finished line: a click inside the box continues it, once.
+	_panel.show_line({
+		"speaker_name": "Q",
+		"text": "Probe line.",
+		"badge": "source.observed",
+		"source": NarrativeEntry.Source.OBSERVED,
+	})
+	_panel.complete_reveal()
+	await _frames(3)
+	var world_before := _navigator.get_world_click_event_count()
+	await _click_control(_panel)
+	await _frames(2)
+	if advances[0] != 1:
+		_failures.append(
+			"A click inside the dialogue band continued the conversation %d time(s)."
+			% advances[0]
+		)
+	if _navigator.get_world_click_event_count() != world_before:
+		_failures.append("A click inside the dialogue band also reached the world.")
+	if _player.is_path_active():
+		_failures.append("A click inside the dialogue band started the character walking.")
+
+	# 2. A click outside the band does neither. It must not continue the line, and it
+	#    must not become a walk while the reader is looking at the box.
+	advances[0] = 0
+	await _click_at(_world_screen_position())
+	await _frames(2)
+	if advances[0] != 0:
+		_failures.append("A click outside the dialogue band continued the conversation.")
+	if _navigator.get_world_click_event_count() != world_before:
+		_failures.append("A click outside the dialogue band reached the world while the panel was up.")
+	if _player.is_path_active():
+		_failures.append("A click outside the dialogue band started the character walking.")
+
+	# 3. A line still typing: the click finishes it and does not also advance. The rate is
+	#    set to zero so "still typing" is a fact and not a race with the frame clock.
+	_panel.characters_per_second = 0.0
+	_panel.show_line({
+		"speaker_name": "Q",
+		"text": "Probe line.",
+		"badge": "source.observed",
+		"source": NarrativeEntry.Source.OBSERVED,
+	})
+	await _frames(2)
+	if not _panel.is_revealing():
+		_failures.append("The probe line finished typing by itself; the reveal case cannot be tested.")
+	else:
+		advances[0] = 0
+		await _click_control(_panel)
+		await _frames(2)
+		if _panel.is_revealing():
+			_failures.append("A click inside the dialogue band did not finish the line that was typing.")
+		if advances[0] != 0:
+			_failures.append("A click that finished a line also advanced the conversation.")
+	_panel.characters_per_second = 55.0
+	_panel.advance_requested.disconnect(count_advance)
+	_panel.close()
+	await _frames(2)
+
+
+## The rule that makes the box clickable at all: everything in the band except the
+## options is transparent to the mouse, and the band itself takes the click. Without it
+## the frame panel and the body label each stop the event and the click dies there.
+func _check_band_rules() -> void:
+	if _panel.mouse_filter != Control.MOUSE_FILTER_STOP:
+		_failures.append(
+			"The dialogue band does not take the mouse, so a click on it cannot continue the line."
+		)
+	for node in _descendants(_panel):
+		var control := node as Control
+		if control == null:
+			continue
+		if control is Button:
+			if control.mouse_filter != Control.MOUSE_FILTER_STOP:
+				_failures.append("Option button '%s' does not stop the mouse." % control.name)
+		elif control.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+			_failures.append(
+				"'%s' inside the dialogue band stops the mouse, so a click on it would do nothing."
+				% control.name
+			)
 
 
 ## Real conversation, real buttons, real mouse events — including the language switch,
@@ -220,14 +321,20 @@ func _check_digit_keys() -> void:
 		_failures.append("Pressing 2 selected index %d." % _selected[0])
 	if _navigator.get_world_click_event_count() != world_before:
 		_failures.append("A digit key press also reached the world.")
-	# A click on the panel background is not an option and is not the world either.
+	# A click on the panel background is not an option, not the world, and — with a
+	# choice open — not a way to skip the question either.
 	_selected.clear()
+	var advances := [0]
+	var count_advance := func() -> void: advances[0] += 1
+	_panel.advance_requested.connect(count_advance)
 	var frame := _panel.get_node_or_null("Frame") as Control
 	if frame != null:
 		await _click_control(frame, Vector2(12.0, 12.0))
 		await _frames(3)
 		if not _selected.is_empty():
 			_failures.append("Clicking the panel background selected option %d." % _selected[0])
+		if advances[0] != 0:
+			_failures.append("Clicking the panel background skipped the open choice.")
 		if _navigator.get_world_click_event_count() != world_before:
 			_failures.append("Clicking the panel background reached the world.")
 		# And the buttons still work afterwards: the panel was not left half-open.
@@ -240,6 +347,7 @@ func _check_digit_keys() -> void:
 				"After a background click the third option selected %s (%s)."
 				% [str(_selected), _last_click_note]
 			)
+	_panel.advance_requested.disconnect(count_advance)
 	_panel.close()
 	await _frames(2)
 
@@ -284,6 +392,14 @@ func _close_conversation() -> void:
 		_failures.append("The conversation would not close.")
 	_panel.close()
 	await _frames(2)
+
+
+func _descendants(root_node: Node) -> Array[Node]:
+	var found: Array[Node] = []
+	for child in root_node.get_children():
+		found.append(child)
+		found.append_array(_descendants(child))
+	return found
 
 
 func _buttons() -> Array[Button]:

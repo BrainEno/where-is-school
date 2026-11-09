@@ -17,6 +17,12 @@ extends Control
 ## It still translates input into intents (`advance_requested`, `choice_selected`)
 ## and leaves story state to the DialogueController.
 ##
+## The band is also the surface that continues the line. A left click inside the box
+## advances (or finishes a line that is still typing); a left click anywhere else does
+## nothing while the panel is up. The old rule was the opposite — every unhandled click
+## anywhere on screen counted as "continue", while the box itself, covered by its frame
+## panel, swallowed the click and did nothing.
+##
 ## Layout is measured, not guessed. The band width, the text column and the height are
 ## computed from the viewport and from the text the panel is actually holding, so the
 ## same scene reads correctly at 1280x720, 1600x900 and 1920x1080, and a long line
@@ -103,7 +109,29 @@ func _ready() -> void:
 		get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
+	_make_band_clickable()
 	_queue_fit()
+
+
+## Everything in the band except the option buttons is transparent to the mouse, and
+## the band itself takes the click.
+##
+## Without this the frame, the containers and the body label each stopped the event on
+## their own, so the one part of the screen a reader is looking at was the one part that
+## ignored a click. Doing it in one pass also means a node added to the scene later
+## cannot quietly eat the click again.
+func _make_band_clickable() -> void:
+	for child in get_children():
+		_set_transparent_to_mouse(child)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _set_transparent_to_mouse(node: Node) -> void:
+	var control := node as Control
+	if control != null and not (control is Button):
+		control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_set_transparent_to_mouse(child)
 
 
 ## Type is set here rather than only in the scene so the panel has one source of truth
@@ -311,6 +339,21 @@ func _process(delta: float) -> void:
 		_revealing = false
 
 
+## A click on the band. The option buttons take their own clicks before this runs, so
+## what arrives here is a click on the reading surface: it continues the line, finishes
+## one that is still typing, or does nothing while a choice is open.
+func _gui_input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse == null or mouse.button_index != MOUSE_BUTTON_LEFT or not mouse.pressed:
+		return
+	# Swallowed either way: reading must never walk the character or use whatever
+	# stands behind the band.
+	accept_event()
+	if has_choices():
+		return
+	_request_advance()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -318,6 +361,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("backlog"):
 		get_viewport().set_input_as_handled()
 		backlog_requested.emit()
+		return
+
+	# A left click that reaches this point landed outside the band. With the panel up it
+	# is consumed and dropped: it is not an advance, and it is not a walk either.
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.button_index == MOUSE_BUTTON_LEFT and mouse.pressed:
+			get_viewport().set_input_as_handled()
 		return
 
 	if has_choices():
@@ -329,10 +380,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("dialogue_advance"):
 		get_viewport().set_input_as_handled()
-		if _revealing:
-			complete_reveal()
-			return
-		advance_requested.emit()
+		_request_advance()
+
+
+## One definition of "continue": finish the line if it is still typing, otherwise ask
+## for the next one. The click and the key both go through it so they cannot drift.
+func _request_advance() -> void:
+	if _revealing:
+		complete_reveal()
+		return
+	advance_requested.emit()
 
 
 func _on_choice_button_pressed(index: int) -> void:

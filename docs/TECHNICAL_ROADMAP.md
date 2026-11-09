@@ -219,6 +219,9 @@ document.
 - A left click on a dialogue option selects exactly one option and never reaches the
   world; the options keep their hover styling, their digits, and their text across a
   language switch.
+- The reading band is a click surface: a left click inside the dialogue box continues
+  the line (finishing it first if it is still typing), and while the box is up a click
+  outside it is swallowed — neither an advance nor a walk.
 - The street's way back into the school is now `prompt.back_to_classroom`
   ("Return to classroom" / "回到教室"), and the story's dismissal rewrite only touches
   the classroom door.
