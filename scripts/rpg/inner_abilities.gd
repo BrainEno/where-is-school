@@ -37,12 +37,26 @@ extends RefCounted
 ## is only the English string copied over are all content bugs that would otherwise
 ## surface as a silent no-op or as raw ids in the interface. Each one is reported with
 ## the file, the ability id and the speaker id.
+##
+## "Strict" includes types: a field the schema says is a string has to be a JSON string,
+## `once` has to be a JSON boolean, `requires` has to be an array of flag names, and a
+## localised `name` may not be rescued by `String()` on its way into the registry. A
+## wrong type is a content bug with a file and a line behind it, not a value to coerce.
 
 const DATA_DIR := "res://data/abilities"
 const STRUCTURE_FILE := "abilities.json"
 const FORMAT_VERSION := 1
 ## Kinds of event that can make a voice speak up without being asked.
 const TRIGGER_KINDS: Array[String] = ["inspection", "location", "conversation_end"]
+## The prose fields a voice has, and therefore the only fields a translation exception
+## may name.
+const TEXT_FIELDS: Array[String] = ["name", "description"]
+## Per-voice, per-field opt-out from the "identical text means an unfinished
+## translation" rule. It is declared in the *translated* file, next to the prose it
+## applies to: `"untranslated_fields": ["name"]`. There is deliberately no global switch:
+## one voice keeping one word in its original spelling must not silence the check for
+## every other voice or every other field.
+const EXCEPTION_KEY := "untranslated_fields"
 ## A voice that answers every prop is noise. The session cap is the blunt guard
 ## against that; per-rule `once` is the precise one.
 const DEFAULT_MAX_PASSIVE_PER_SESSION := 2
@@ -297,6 +311,15 @@ func _parse_structure() -> void:
 			_rules.append(rule)
 
 
+## Reads one passive rule, refusing anything whose type would otherwise be guessed.
+##
+## `String(value)` is not a type check: it turns a number into "7", an array into a
+## meaningless string and a boolean into "true", and every one of those mistakes would
+## then be reported — if at all — as "unknown ability" or "unknown flag" somewhere else.
+## `once` is the sharpest case: `"once": "false"` is a non-empty string, which is truthy,
+## so a rule the author meant to be repeatable would fire exactly once and nothing would
+## say why. Each field is therefore checked against the JSON type it is supposed to be,
+## and the message names the file, the rule id and the field.
 func _parse_rule(raw: Variant, index: int) -> PassiveRule:
 	var path := structure_path()
 	var context := "%s: passive #%d" % [path, index]
@@ -305,37 +328,98 @@ func _parse_rule(raw: Variant, index: int) -> PassiveRule:
 		return null
 	var data: Dictionary = raw
 	var rule := PassiveRule.new()
-	rule.rule_id = StringName(String(data.get("id", "")))
-	if String(rule.rule_id).is_empty():
-		errors.append("%s is missing 'id'." % context)
+	var raw_id: Variant = data.get("id", null)
+	if not (raw_id is String) or String(raw_id).strip_edges().is_empty():
+		errors.append(
+			"%s: 'id' must be a non-empty string (got %s)." % [context, JSON.stringify(raw_id)]
+		)
 		return null
+	rule.rule_id = StringName(String(raw_id).strip_edges())
 	context = "%s: passive '%s'" % [path, rule.rule_id]
-	rule.ability_id = StringName(String(data.get("ability", "")))
-	if not _abilities.has(rule.ability_id):
-		errors.append("%s names unknown ability '%s'." % [context, rule.ability_id])
-	var trigger: Variant = data.get("trigger")
+
+	var raw_ability: Variant = data.get("ability", null)
+	if not (raw_ability is String) or String(raw_ability).strip_edges().is_empty():
+		errors.append(
+			"%s: 'ability' must be a non-empty string (got %s)."
+			% [context, JSON.stringify(raw_ability)]
+		)
+	else:
+		rule.ability_id = StringName(String(raw_ability).strip_edges())
+		if not _abilities.has(rule.ability_id):
+			errors.append("%s names unknown ability '%s'." % [context, rule.ability_id])
+
+	var raw_conversation: Variant = data.get("conversation", null)
+	if not (raw_conversation is String) or String(raw_conversation).strip_edges().is_empty():
+		errors.append(
+			"%s: 'conversation' must be a non-empty string (got %s)."
+			% [context, JSON.stringify(raw_conversation)]
+		)
+	else:
+		rule.conversation_id = StringName(String(raw_conversation).strip_edges())
+
+	var trigger: Variant = data.get("trigger", null)
 	if not (trigger is Dictionary):
-		errors.append("%s needs a 'trigger' object." % context)
+		errors.append("%s needs a 'trigger' object (got %s)." % [context, JSON.stringify(trigger)])
 		return rule
 	var trigger_data: Dictionary = trigger
-	rule.trigger_kind = String(trigger_data.get("kind", ""))
-	if not TRIGGER_KINDS.has(rule.trigger_kind):
+	var raw_kind: Variant = trigger_data.get("kind", null)
+	if not (raw_kind is String) or String(raw_kind).strip_edges().is_empty():
 		errors.append(
-			"%s has trigger kind '%s'; use one of %s."
-			% [context, rule.trigger_kind, ", ".join(TRIGGER_KINDS)]
+			"%s: trigger.kind must be one of %s (got %s)."
+			% [context, ", ".join(TRIGGER_KINDS), JSON.stringify(raw_kind)]
 		)
-	rule.trigger_id = StringName(String(trigger_data.get("id", "")))
-	if String(rule.trigger_id).is_empty():
-		errors.append("%s needs a trigger 'id'." % context)
-	rule.conversation_id = StringName(String(data.get("conversation", "")))
-	if String(rule.conversation_id).is_empty():
-		errors.append("%s needs a 'conversation' id." % context)
-	rule.once = data.get("once", true) == true
-	for flag: Variant in data.get("requires", []):
-		rule.requires.append(StringName(String(flag)))
+	else:
+		rule.trigger_kind = String(raw_kind).strip_edges()
+		if not TRIGGER_KINDS.has(rule.trigger_kind):
+			errors.append(
+				"%s has trigger kind '%s'; use one of %s."
+				% [context, rule.trigger_kind, ", ".join(TRIGGER_KINDS)]
+			)
+	var raw_trigger_id: Variant = trigger_data.get("id", null)
+	if not (raw_trigger_id is String) or String(raw_trigger_id).strip_edges().is_empty():
+		errors.append(
+			"%s: trigger.id must be a non-empty string (got %s)."
+			% [context, JSON.stringify(raw_trigger_id)]
+		)
+	else:
+		rule.trigger_id = StringName(String(raw_trigger_id).strip_edges())
+
+	if data.has("once"):
+		var raw_once: Variant = data["once"]
+		if raw_once is bool:
+			rule.once = bool(raw_once)
+		else:
+			errors.append(
+				"%s: 'once' must be true or false, not %s. A quoted \"false\" would count as true."
+				% [context, JSON.stringify(raw_once)]
+			)
+			rule.once = true
+
+	if data.has("requires"):
+		var raw_requires: Variant = data["requires"]
+		if not (raw_requires is Array):
+			errors.append(
+				"%s: 'requires' must be an array of story flag names (got %s)."
+				% [context, JSON.stringify(raw_requires)]
+			)
+		else:
+			var requires_list: Array = raw_requires
+			for position in requires_list.size():
+				var flag: Variant = requires_list[position]
+				if not (flag is String) or String(flag).strip_edges().is_empty():
+					errors.append(
+						"%s: requires[%d] must be a non-empty flag name (got %s)."
+						% [context, position, JSON.stringify(flag)]
+					)
+					continue
+				rule.requires.append(StringName(String(flag).strip_edges()))
 	return rule
 
 
+## Reads one language's prose. `name` and `description` must be JSON strings: the
+## previous version ran every value through `String()`, so `"name": 7` became "7" and
+## `"name": {"zh": "路感"}` became a string nobody could predict — a translation bug that
+## would reach the dialogue panel instead of CI.
 func _parse_text(locale: String) -> void:
 	var path := text_path(locale)
 	_text[locale] = {}
@@ -349,13 +433,20 @@ func _parse_text(locale: String) -> void:
 			% [path, version, FORMAT_VERSION]
 		)
 		return
-	var declared := String(data.get("locale", ""))
-	if L10n.normalize(declared) != locale:
-		errors.append("%s: 'locale' is '%s' but the file sits in the '%s' tree." % [path, declared, locale])
+	var declared_raw: Variant = data.get("locale", "")
+	if not (declared_raw is String):
+		errors.append("%s: 'locale' must be a string (got %s)." % [path, JSON.stringify(declared_raw)])
+	else:
+		var declared := String(declared_raw)
+		if L10n.normalize(declared) != locale:
+			errors.append(
+				"%s: 'locale' is '%s' but the file sits in the '%s' tree." % [path, declared, locale]
+			)
 	var raw: Variant = data.get("abilities")
 	if not (raw is Dictionary):
 		errors.append("%s: 'abilities' must be an object." % path)
 		return
+	var is_reference := not L10n.LOCALES.is_empty() and locale == L10n.LOCALES[0]
 	for key: Variant in (raw as Dictionary).keys():
 		var ability_id := StringName(String(key))
 		var entry: Variant = (raw as Dictionary)[key]
@@ -363,14 +454,78 @@ func _parse_text(locale: String) -> void:
 			errors.append("%s: ability '%s' must be an object." % [path, ability_id])
 			continue
 		var text: Dictionary = entry
-		if String(text.get("name", "")).strip_edges().is_empty():
-			errors.append("%s: ability '%s' has no 'name'." % [path, ability_id])
-		if String(text.get("description", "")).strip_edges().is_empty():
-			errors.append("%s: ability '%s' has no 'description'." % [path, ability_id])
-		_text[locale][ability_id] = {
-			"name": String(text.get("name", "")).strip_edges(),
-			"description": String(text.get("description", "")).strip_edges(),
-		}
+		var values: Dictionary = {}
+		for field: String in TEXT_FIELDS:
+			var raw_value: Variant = text.get(field, null)
+			if not (raw_value is String):
+				errors.append(
+					"%s: ability '%s' has no '%s' string (got %s)."
+					% [path, ability_id, field, JSON.stringify(raw_value)]
+				)
+				values[field] = ""
+				continue
+			var value_text := String(raw_value).strip_edges()
+			if value_text.is_empty():
+				errors.append("%s: ability '%s' has no '%s'." % [path, ability_id, field])
+			values[field] = value_text
+		var exceptions := _parse_exceptions(text, path, ability_id, locale, is_reference)
+		values[EXCEPTION_KEY] = exceptions
+		_text[locale][ability_id] = values
+
+
+## Which fields of this voice may keep the source wording. Deliberately field by field:
+## an exception is a decision about one string, and a per-voice or per-file switch would
+## quietly excuse the next copied line too.
+func _parse_exceptions(
+	text: Dictionary, path: String, ability_id: StringName, locale: String, is_reference: bool
+) -> Array[String]:
+	var declared: Array[String] = []
+	if not text.has(EXCEPTION_KEY):
+		return declared
+	var raw: Variant = text[EXCEPTION_KEY]
+	if not (raw is Array):
+		errors.append(
+			"%s: ability '%s': '%s' must be an array of field names (got %s)."
+			% [path, ability_id, EXCEPTION_KEY, JSON.stringify(raw)]
+		)
+		return declared
+	if is_reference:
+		errors.append(
+			"%s: ability '%s': '%s' only makes sense in a translated language, not in the "
+			% [path, ability_id, EXCEPTION_KEY]
+			+ "reference one — its text is the source."
+		)
+		return declared
+	var entries: Array = raw
+	for position in entries.size():
+		var entry: Variant = entries[position]
+		if not (entry is String) or String(entry).strip_edges().is_empty():
+			errors.append(
+				"%s: ability '%s': %s[%d] must be a field name (got %s)."
+				% [path, ability_id, EXCEPTION_KEY, position, JSON.stringify(entry)]
+			)
+			continue
+		var field := String(entry).strip_edges()
+		if not TEXT_FIELDS.has(field):
+			errors.append(
+				"%s: ability '%s': %s names '%s', which is not translated text; use one of %s."
+				% [
+					path,
+					ability_id,
+					EXCEPTION_KEY,
+					field,
+					", ".join(TEXT_FIELDS),
+				]
+			)
+			continue
+		if declared.has(field):
+			errors.append(
+				"%s: ability '%s': '%s' is listed twice in %s."
+				% [path, ability_id, field, EXCEPTION_KEY]
+			)
+			continue
+		declared.append(field)
+	return declared
 
 
 ## Every language must name the same voices, and must actually name them: a missing
@@ -380,9 +535,15 @@ func _parse_text(locale: String) -> void:
 ##
 ## The copy check is deliberately blunt — identical text in two languages is treated as
 ## an unfinished translation. Every voice in this game is named in prose, not by a
-## proper noun that happens to be spelled the same way twice; if a future voice ever
-## needs a name that is genuinely identical in both languages, this rule has to be
-## relaxed on purpose rather than by accident.
+## proper noun that happens to be spelled the same way twice.
+##
+## It can be relaxed, but only on purpose and only by naming the field: a voice may list
+## `"untranslated_fields": ["name"]` in its *translated* entry, and that one field of that
+## one voice is then allowed — expected, even — to stay identical. There is no global
+## switch, an undeclared identical string is still an error, and a declaration that no
+## longer describes the file (the text was translated after all) is an error too, so the
+## exception cannot quietly outlive the reason it was added. `tests/ability_validation_test.gd`
+## covers all three cases.
 func _check_text_parity() -> void:
 	if L10n.LOCALES.is_empty():
 		return
@@ -420,15 +581,30 @@ func _check_text_parity() -> void:
 				continue
 			var translated: Dictionary = _text[locale][ability_id]
 			var original: Dictionary = _text[reference][ability_id]
-			for field: String in ["name", "description"]:
+			for field: String in TEXT_FIELDS:
 				var source_text := String(original.get(field, "")).strip_edges()
 				var target_text := String(translated.get(field, "")).strip_edges()
-				if source_text.is_empty() or target_text != source_text:
+				if source_text.is_empty() or target_text.is_empty():
+					# An empty or missing translation is already an error of its own.
 					continue
-				errors.append(
-					"%s: ability '%s' %s is identical to the %s text; it was not translated."
-					% [path, ability_id, field, reference]
-				)
+				var kept: bool = (translated.get(EXCEPTION_KEY, []) as Array).has(field)
+				if target_text == source_text:
+					if kept:
+						# Declared on purpose, field by field: a word that is spelled the same
+						# way in both languages is not a bug when the author says so.
+						continue
+					errors.append(
+						"%s: ability '%s' %s is identical to the %s text; it was not translated. "
+						% [path, ability_id, field, reference]
+						+ "If this field is meant to keep the source wording, add "
+						+ '\"%s\": [\"%s\"] to its %s entry.' % [EXCEPTION_KEY, field, locale]
+					)
+				elif kept:
+					errors.append(
+						"%s: ability '%s' declares %s in %s, but its %s text differs from %s. "
+						% [path, ability_id, field, EXCEPTION_KEY, locale, reference]
+						+ "Either translate the field or remove the declaration."
+					)
 	for ability_id: StringName in _abilities.keys():
 		if not _text.get(reference, {}).has(ability_id):
 			errors.append(

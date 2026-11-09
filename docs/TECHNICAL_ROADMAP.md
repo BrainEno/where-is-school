@@ -314,6 +314,39 @@ branch.
   hidden checks that ship today. The shipped `orientation` description still says "one
   voice", which becomes the owner's copy edit at that point.
 
+### Phase 6a.1 — Bilingual content editing in the editor (delivered in this round)
+- `addons/narrative_editor/` is an EditorPlugin dock: pick a chapter, pick a conversation
+  and node (or an inspection, or an inner voice), search by node id, speaker or text in
+  either language, and edit the English and the simplified-Chinese line side by side in
+  multi-line fields while the structure of the node — speaker, source, `next`, choices and
+  their targets, conditions, effects, check, subjective flag — stays on screen and
+  read-only.
+- Saving is deliberately narrow and deliberately careful. Only text can be written; the
+  edit is applied to the span of the string that changed, so the file keeps its formatting,
+  its field order and any field the tool does not know about, and the diff is one line.
+  Before writing, both languages are compared structurally and run through the loader the
+  game uses; then the two files are staged as temporaries, the current ones are moved
+  aside, and a failure restores what was already written and reports it. A save that
+  reports failure has not written half a conversation.
+- The chapter list is read from `data/dialogue/<locale>/` and `data/inspections/<locale>/`
+  and cross-checked against `DialogueLibrary.CHAPTERS` / `InspectionLibrary.CHAPTERS`,
+  rather than being copied into the tool.
+- The inner-voice validator is stricter than it was: `once` must be a JSON boolean,
+  `requires` must be an array of non-empty flag names, a rule's `id`/`ability`/
+  `conversation`/`trigger.kind`/`trigger.id` must be the type the schema says, and a
+  localised `name`/`description` must be a string rather than something `String()` can
+  rescue. The "identical text means an unfinished translation" rule now has a per-field
+  exception (`untranslated_fields`), declared on one voice in one language: no global
+  switch, no silently excused copy, and a stale declaration is an error.
+- Proven by `tests/narrative_editor_test.gd` (the data layer against a `user://` copy of the
+  real chapters, including both failure paths and a byte-identical rewrite of every content
+  file) and `tests/ability_validation_test.gd` (every rejected shape, and the three states
+  of a translation exception). The dock is photographed by `tests/capture_editor_dock.gd`
+  under Xvfb; the editor-only shell is covered by a manual checklist, because CI has no
+  editor.
+- Still open: which voice names, values and rules the cast will have, and every line of
+  prose. This round adds a way to edit text, not text.
+
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the
   shed, the container, the bench, the climbing frame, the notice board.
@@ -330,7 +363,8 @@ branch.
 - Versioned persistence, settings, accessibility.
 - Store-grade packaging: an icon, code signing, an installer, and the Linux/macOS presets
   the release workflow does not build.
-- Content authoring validation and reusable art pipeline.
+- Content authoring validation (the editor dock from 6a.1 covers text; what is still
+  missing is schema checking in the editor as you type) and a reusable art pipeline.
 - Performance budgets and profiling.
 - Steam build and platform compatibility checks.
 

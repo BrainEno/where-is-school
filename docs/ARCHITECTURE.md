@@ -35,7 +35,7 @@ assets/
   materials/
   audio/
   fonts/
-addons/                   # pinned third-party plugins only
+addons/                   # editor-only tooling; nothing here ships (see 5i)
 tests/
 docs/
 ~~~
@@ -133,7 +133,9 @@ Every line the game says is data, in two languages, loaded by chapter:
 persisted in `user://settings.cfg`) the interface strings. Both language trees must
 have identical structure; `DialogueParity` compares them node by node and reports
 any dropped node, choice or effect. Authors edit JSON, not GDScript; the schema and
-the editing rules are in `data/dialogue_schema/README.md`.
+the editing rules are in `data/dialogue_schema/README.md`. Since Phase 6a.1 they can also
+edit it from inside the editor, both languages at once, through the dock described in
+§5i — which is a convenience over the same files, not a second format.
 
 Nothing in `scripts/` may hold narrative text. The only literals left in scenes
 (`prompt_text`, `end_card_title`) are fallbacks used when content is missing, and
@@ -493,6 +495,53 @@ with a rotation does set the arrival facing, and the test pins that on a fixture
 authoring a rotation on a marker is what changes it. Which marker an exit names is
 checked by the test above: the marker must exist, must be the one the player lands on,
 must be walkable ground, and for a return trip must sit by the exit that leads back.
+
+## 5i. Editing text: the narrative editor (editor only, implemented contract)
+
+Writing one line in two languages by hand means opening two files, finding the same node
+twice and hoping the structures still match. `addons/narrative_editor/` is a Godot
+EditorPlugin that does it in one place, and this section is about the boundary rather than
+the buttons.
+
+**It is a tool, not a feature.** The plugin is registered in `project.godot` under
+`[editor_plugins]`, and that is the only way it is ever loaded. There is no autoload, no
+`class_name`, no preload from `scripts/`, `scenes/` or `tests/`, and `export_presets.cfg`
+excludes `addons/*` while `tools/verify_build.py` fails the release check if anything under
+`res://addons/` is packed. A player's build therefore cannot contain it, and no runtime
+behaviour can depend on it.
+
+**Text is the only thing it can write.** `core/narrative_store.gd` exposes a setter per
+text field — dialogue node text, choice text, six inspection fields, an inner voice's name
+and description — and no setter for anything else. The dock can only ask for the fields the
+store built, and the store refuses an address that is not one of those even when called
+directly, so node ids, speakers, branches, conditions, effects, checks, `once` flags and
+ability numbers are read-only twice over.
+
+**A save is staged, checked and minimal.** Edits are recorded as spans inside the original
+text (`core/narrative_json_text.gd`), so a save rewrites the strings that changed and
+nothing else: key order, indentation, unknown fields and the trailing newline survive, and
+the diff is the line the author edited. Before anything is written, both languages are
+re-parsed, compared structurally (`core/narrative_parity.gd` — ids, order, branches,
+effects, conditions, checks, `once`, speakers must match; only player-visible text may
+differ), checked against the field rules, and run through the loader the game itself uses
+(`DialogueGraph`, or `InnerAbilities` on a temporary registry). Then
+`core/narrative_file_writer.gd` writes both files to temporary siblings, moves the current
+ones aside, moves the new ones in and only then deletes the backups. A failure restores the
+language that was already written, names the file that refused, and reports a failed save;
+there is no state where one language is saved and the tool says it worked.
+
+**The chapter list is the directory.** `core/narrative_paths.gd` reads the chapter files
+instead of keeping a second copy of `DialogueLibrary.CHAPTERS` /
+`InspectionLibrary.CHAPTERS`; those constants are then cross-checked against the tree and a
+disagreement is reported in the dock, because the runtime iterates the constants and a
+chapter that only exists on disk would never load.
+
+**What holds it.** `tests/narrative_editor_test.gd` drives the real data layer against a
+`user://` copy of the shipped chapters: load, locate, edit, save, fail to save, and rewrite
+every content file byte for byte. The dock itself is a `Control` that needs a window, so its
+evidence is `tests/capture_editor_dock.gd`, which photographs it under Xvfb in CI. The
+editor-only surface — the plugin class, the bottom panel — is covered by the manual
+checklist in that test's section of the pull request, because no CI runner opens an editor.
 
 ## 6. Persistent identifiers and data
 

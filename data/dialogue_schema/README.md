@@ -8,12 +8,31 @@ change the story without opening the editor and without touching code.
 data/
   dialogue/<locale>/<chapter>.json     conversations: who says what, in order
   inspections/<locale>/<chapter>.json  descriptions of objects the player looks at
+  abilities/abilities.json             inner voices: value, speaker, passive rules
+  abilities/<locale>.json              inner voices: their name and description
   locale/<locale>.json                 interface strings (prompts, badges, HUD, cards)
   characters/<id>.tres                 speaker name, role, colour, portrait slot
 ```
 
-`<locale>` is `en` or `zh-CN`. `<chapter>` is the location group a conversation
-belongs to: `prologue`, `street`, `residential`.
+`<locale>` is `en` or `zh-CN`.
+
+`<chapter>` is the group the file belongs to. It is not one list: dialogue and
+inspections have different chapters because they cover different places.
+
+| Tree | Chapters that ship |
+|---|---|
+| `data/dialogue/<locale>/` | `prologue`, `corridor`, `street`, `residential`, `alley`, `playground`, `inner_voice` |
+| `data/inspections/<locale>/` | `classroom`, `corridor`, `street`, `residential`, `alley`, `playground` |
+
+`inner_voice` is not a place: it holds the lines an inner voice says without being
+asked, and keeping it separate makes it obvious how much of the game is the
+protagonist talking to himself. `prologue` has no inspections (classroom is the
+prologue's room) and `classroom` has no conversations.
+
+The runtime iterates `DialogueLibrary.CHAPTERS` and `InspectionLibrary.CHAPTERS`,
+so a chapter file that is not in those constants is never loaded. The editor dock
+reads the directory instead and warns when the two disagree — see “Editing in the
+editor” below.
 
 Two rules keep this maintainable:
 
@@ -30,9 +49,44 @@ Two rules keep this maintainable:
    makes `git diff` readable and what keeps translations aligned).
 3. Edit `text` only. Keep `id`, `speaker`, `next`, `choices`, `effects`,
    `conditions` exactly as they are.
-4. Make the identical edit in the other language file.
+4. Make the identical edit in the other language file — or make both edits at once in
+   the editor dock described below.
 5. Run the content checks (below). The game refuses to start a conversation whose
    structure is broken, and CI reports the file, the conversation and the node.
+
+## Editing in the editor
+
+Since Phase 6a.1 the same files can be edited inside Godot, in both languages at once,
+through the **剧情编辑** dock (`addons/narrative_editor/`; open it from the bottom panel
+if it is not on screen). Pick a content type — 剧情对话, 场景检视, 内心声音文案 — then a
+chapter, then a conversation and a node; or search by node id, speaker or text in
+either language.
+
+The two text boxes are the only editable things. Everything else about the node is
+shown read-only next to them: speaker, narrative source, `next`, the options and where
+they jump, conditions, effects, the check with its ability, difficulty, kind and both
+branches, and whether the conversation is subjective. Each option is a field of its
+own, and an inspection's `recall` and `record` text are edited separately from its body.
+
+Saving is one button and it is careful:
+
+- nothing is written until **保存** is pressed, and switching chapter, type or
+  selection with unsaved edits asks first (保存并继续 / 放弃修改并继续 / 取消);
+- before writing, both languages are compared — same conversations, same node ids in
+  the same order, same options in the same order, same branches, effects, conditions
+  and checks; only the text may differ. A mismatch is reported with its address, e.g.
+  `conversations/q_wake/nodes/3/id`, and nothing is written;
+- the candidate files are also run through the loaders the game uses, so a file that
+  would fail at start-up is refused before it reaches the disk;
+- both files are staged as temporaries and swapped in; if the second cannot be
+  written, the first is restored and the save reports a failure naming the file;
+- only the strings that changed are rewritten, so the file keeps its formatting, its
+  field order and any field the tool does not know about, and the diff is the line
+  that changed.
+
+The dock never writes on its own: no watcher, no save-on-blur, no “fix on open”. Its
+chapter list comes from the chapter files, and it warns if that disagrees with
+`DialogueLibrary.CHAPTERS` / `InspectionLibrary.CHAPTERS`.
 
 ## Conversation file
 
@@ -99,7 +153,7 @@ shows the line, and then continues to one of two branches. A check node never ha
 
 | Field | Required | Meaning |
 |---|---|---|
-| `ability` | yes | Inner-voice id from `data/abilities/abilities.json` (`ledger`, `boundary`, `echo`, `onlooker`). Its value is added to the die. |
+| `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. Shipping today: `orientation`. Its value is added to the die. |
 | `difficulty` | yes | 1..30. The total needed. Typical values are 8-12. |
 | `kind` | yes | `visible` = the player sees the voice, the die, the difficulty and the outcome. `hidden` = only the resulting line is shown. Use `visible` when the player chose the attempt, `hidden` when a voice speaks up on its own. |
 | `success` | yes | Node id to continue to on success. |
@@ -118,6 +172,10 @@ shows the line, and then continues to one of two branches. A check node never ha
   }
 }
 ```
+
+The `speaker` of a voice line is the voice's `speaker` from `abilities.json`
+(`voice_orientation` today), not its ability id. The two are separate on purpose: the
+ability id is what the dice read, the speaker id is who the reading surface draws.
 
 To stop an attempt being offered twice, gate the *choice* that leads to the check on
 its record:
@@ -144,6 +202,48 @@ node is a `hidden` check, plus a rule in `data/abilities/abilities.json`:
 `trigger.kind` is `inspection`, `location` or `conversation_end`. Rules are rationed
 by the director (once per rule, a per-voice session cap, and no two unprompted lines
 in a row); see ADR 0003.
+
+### Who a speaker is
+
+A node names a `speaker`; two different things can answer to that id.
+
+- An **ordinary character** (`protagonist`, `q`, `n`, `b`, and anyone added later)
+  comes from `CharacterDirectory.ORDINARY_CHARACTER_PATHS`, a short explicit list, so
+  that no exported build can be missing the resource. Adding one means adding a
+  `.tres` and one line to that list.
+- An **inner voice** is found from the ability registry: `abilities.json` gives the
+  voice a `speaker` id, and its profile must be `data/characters/<speaker_id>.tres`.
+  Nothing is listed twice, and a voice with a missing profile, a mismatched
+  `character_id` or a speaker id that collides with an ordinary character is a
+  start-up error.
+
+Neither lookup falls back to another profile. A line spoken with someone else's name
+and colour is worse than a line that does not appear.
+
+### Inner-voice text and translation exceptions
+
+`data/abilities/<locale>.json` holds one entry per voice, with a `name` and a
+`description`. Both are JSON **strings**; a number or an object is an error, not
+something to convert.
+
+Both languages must define the same voices, and a Chinese name that is the English
+name copied over is treated as an unfinished translation — with one exception,
+declared on purpose and only where it is needed:
+
+```json
+"orientation": {
+  "name": "Orientation",
+  "description": "……",
+  "untranslated_fields": ["name"]
+}
+```
+
+`untranslated_fields` lists the fields of *that* voice, in *that* language, that are
+allowed to keep the source wording. There is no global switch: an undeclared
+identical string is still an error, a declaration only covers the fields it names,
+and a declaration whose field was translated after all is an error again, so an
+exception cannot outlive the reason it was added. The reference language (`en`) may
+not declare anything — its text is the source.
 
 ### Effects
 
@@ -213,22 +313,36 @@ the content test check, in CI, that:
 - a subjective conversation writes no flags, no objective, and no observed or
   reported knowledge (this is refused while parsing, before any line is shown);
 - both languages define the same conversations, node ids, order, branches and
-  effects, and no inspection is left with an empty translation.
+  effects, and no inspection is left with an empty translation;
+- the inner-voice registry has the types it says it has: `once` is a JSON boolean,
+  `requires` is an array of non-empty flag names, a rule's `id`, `ability`,
+  `conversation`, `trigger.kind` and `trigger.id` are strings, and a localised
+  `name`/`description` is a string rather than something that happens to stringify;
+- a translation that is the source text copied over is rejected, except for the
+  fields a voice declares in `untranslated_fields` (see above).
 
 Every error names the file, the conversation and the node id, e.g.
 `res://data/dialogue/zh-CN/prologue.json: q_wake/interrupted: 'next' points at
 'missing_node', which does not exist.`
 
+The editor dock runs its own version of these checks before it saves (structure,
+field rules, and the same loaders), and `tests/narrative_editor_test.gd` proves it
+does; the tests above are still the authority, because a file can also be edited by
+hand.
+
 ## Adding a chapter or a language
 
-**Chapter:** create `data/dialogue/<locale>/<chapter>.json` for every locale, add
-the chapter name to `DialogueLibrary.CHAPTERS`, add matching
-`data/inspections/<locale>/<chapter>.json` files, and add the chapter to
-`InspectionLibrary.CHAPTERS`. Loading is by chapter file, so nothing else changes.
+**Chapter:** create `data/dialogue/<locale>/<chapter>.json` for every locale and add
+the chapter name to `DialogueLibrary.CHAPTERS`; if the chapter has inspectable
+objects, add `data/inspections/<locale>/<chapter>.json` for every locale and the
+chapter to `InspectionLibrary.CHAPTERS` as well. Loading is by chapter file, so nothing
+else changes — but the constants are the list the game loads, so a file without a
+constant is dead content. The editor dock reads the directory instead of the constants
+and warns when the two disagree, which is the cheapest way to notice a missing entry.
 
-**Language:** copy `data/locale/en.json` and the whole `data/dialogue/en/` and
-`data/inspections/en/` trees, translate the text, then add the locale code to
-`L10n.LOCALES` and to `project.godot` if it needs a different font. The switch key
+**Language:** copy `data/locale/en.json`, the whole `data/dialogue/en/` and
+`data/inspections/en/` trees and `data/abilities/en.json`, translate the text, then add
+the locale code to `L10n.LOCALES` and to `project.godot` if it needs a different font. The switch key
 (`L`) cycles through `L10n.LOCALES`, and the language name is read from the locale
 file's `name` field, so the hint is never hard-coded.
 
@@ -248,6 +362,10 @@ the repository depends on their content.
 | `prologue.json`, `q_wake` (whole conversation) | Q's register and how much the protagonist says out loud. |
 | `prologue.json`, `expected_b` | Which half-remembered details of the imagined confrontation are allowed to survive. |
 | All `zh-CN` files | Every simplified-Chinese line is a placeholder written for this build, pending the author's own voice. |
+
+Working through this list is what the editor dock is for: both languages of one line are
+in front of you, the structure they have to keep is shown read-only beside them, and a
+save refuses to write a file that breaks it.
 
 The character and story facts that must not change without the author: the
 protagonist is already a student when the scene opens; Q is an ordinary classmate,
