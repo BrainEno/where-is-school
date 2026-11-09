@@ -391,16 +391,17 @@ func _mesh_area(mesh: ArrayMesh) -> float:
 	for surface in mesh.get_surface_count():
 		var arrays := mesh.surface_get_arrays(surface)
 		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 		# `SurfaceTool.commit()` writes a plain triangle list unless `index()` was called,
-		# so both shapes have to be read here.
+		# so both shapes have to be read here — and the missing index array is `null`, not
+		# an empty array, which is why it is kept in a Variant first.
+		var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
 		var order: Array[int] = []
-		if indices.is_empty():
+		if raw_indices is PackedInt32Array:
+			for value: int in (raw_indices as PackedInt32Array):
+				order.append(value)
+		else:
 			for vertex in vertices.size():
 				order.append(vertex)
-		else:
-			for value in indices:
-				order.append(value)
 		var index := 0
 		while index + 2 < order.size():
 			var a := vertices[order[index]]
