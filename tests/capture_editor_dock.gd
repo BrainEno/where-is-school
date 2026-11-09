@@ -31,7 +31,10 @@ const SIZE := Vector2i(1600, 1000)
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
-var _dock: Control = null
+## Typed as the dock script, not as `Control`: the engine resolves `_dock.store`,
+## `_dock.show_kind()` and the rest against the declared type, so a `Control` here makes
+## the whole script fail to compile — which is what the first CI run did, one second in.
+var _dock: Dock = null
 
 
 func _initialize() -> void:

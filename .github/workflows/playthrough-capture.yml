@@ -296,13 +296,15 @@ jobs:
           staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'editor-dock-*.png' | wc -l)
           echo "staged editor frames = ${staged}"
           # The step log is not always reachable from where a failure is read — a
-          # restricted client only sees annotations — so every failure below carries the
-          # reason with it: what the script wrote in the log, and the end of the run's own
-          # output, which is where a SCRIPT ERROR from the engine would be.
+          # restricted client only sees annotations — so every result below carries the
+          # reason with it. Three parts, in the order they explain a failed capture:
+          # the exit code, the script's own markers and the engine's errors, and the end
+          # of the run's output.
           script_log="${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log"
-          reasons=$(grep -E "^FAILURE: " "${script_log}" 2>/dev/null | head -n 5 | tr '\n' '|' | cut -c1-900) || true
-          run_tail=$(tail -n 25 "${editor_log}" 2>/dev/null | tr '\n' '|' | cut -c1-900) || true
-          why="${reasons:-the script wrote no FAILURE line} :: run output: ${run_tail:-none}"
+          marks=$(grep -E "SHOT|^FAILURE|^PASS|^RESULT|SCRIPT ERROR|Parse Error" "${editor_log}" 2>/dev/null | head -n 12 | tr '\n' '|' | cut -c1-1200) || true
+          run_tail=$(tail -n 3 "${editor_log}" 2>/dev/null | tr '\n' '|' | cut -c1-400) || true
+          reasons=$(grep -E "^FAILURE: " "${script_log}" 2>/dev/null | head -n 5 | tr '\n' '|' | cut -c1-600) || true
+          why="exit=${code} :: markers: ${marks:-none} :: tail: ${run_tail:-none} :: script log: ${reasons:-absent}"
           if [ "${staged}" -lt 4 ]; then
             echo "EDITOR_CAPTURE_RESULT=failure"
             echo "::error title=narrative editor capture::only ${staged} frame(s) were produced :: ${why}"
