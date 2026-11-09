@@ -144,6 +144,28 @@ alignment, self-dismissal, radius follows the interaction radius) plus three cap
 cues *look* like; that is what the frames are for, and a human pass on Windows is still
 listed in the pull request.
 
+### The frames, and why there had been none
+
+Chasing the first frame list turned up something older than this round. `capture_playthrough.gd`
+extends `SceneTree`, so `get_tree()` does not exist inside it — and one helper called
+`await get_tree().physics_frame`. That is a parse error, so the script failed to *load*:
+every capture run produced nothing at all, while the workflow reported success, because the
+evidence folder was filled by copying `docs/screenshots/` wholesale and that folder still
+held the previous run's `PLAYTHROUGH.log` with its `RESULT:` line. Two runs fourteen minutes
+apart quoted the same log line, which is how it was finally caught.
+
+Three small guards, all in the capture path rather than in the game:
+
+- Files are staged only if they were written *after* a stamp taken at the start of the run;
+  a run that produced nothing has nothing to read a verdict from and fails.
+- The capture script is compiled by the test workflow (`--check-only`), so a script no test
+  loads cannot sit in the tree broken again.
+- The prompt shots stand where the prop actually is (`_position_near`) instead of at a
+  hardcoded coordinate that faced it when the shot was written.
+
+The first full run after those fixes produced 46 in-game frames plus the UI and editor sets,
+and it is that run that `03a`/`03d`/`03g` above come from.
+
 ## 5. Not in this round
 
 - No dialogue-panel redesign, no NPC name labels, no new character models, no story or

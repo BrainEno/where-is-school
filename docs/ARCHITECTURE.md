@@ -378,6 +378,13 @@ they claim to have, that they are animated, that a role decides the colour, that
 is laid on the ground normal it was given, that a refusal collapses and ends itself, that a
 cue hides when it is finished, and that the hover ring follows the interaction radius.
 
+The same workflow compiles `tests/capture_playthrough.gd` with `--check-only`. No test loads
+that script — only the window capture does — and a parse error in it once hid for weeks
+behind a workflow that read the previous run's log: `get_tree()` does not exist inside a
+`SceneTree`, and `await get_tree().physics_frame` therefore stopped the whole file from
+loading. See `docs/IMPLEMENTATION_NOTES_NAVIGATION.md` §4 for the other two guards that came
+out of the same failure.
+
 ## 5g. The reading surface: dialogue panel, history, name labels
 
 The dialogue is a **reading surface at the edge of the world**, not a chat window.
