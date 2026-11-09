@@ -20,7 +20,7 @@ in this repository.
 |---|---|
 | WASD / arrow keys | Camera-relative walking |
 | E | Contextual interact (inspect, talk, door, stair, exit) |
-| Space / Enter / left click | Continue dialogue; the first press completes a long line |
+| Space / Enter / left click inside the dialogue box | Continue dialogue; the first press completes a long line. A click outside the box does nothing while it is up |
 | 1–9 | Pick a dialogue choice |
 | Tab | Open/close the dialogue log |
 | L | Switch between English and simplified Chinese, at any time |
