@@ -28,6 +28,7 @@ const CLASSROOM_SCENE := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR_SCENE := "res://scenes/locations/corridor/corridor.tscn"
 const STREET_SCENE := "res://scenes/locations/street/street.tscn"
 const RESIDENTIAL_SCENE := "res://scenes/locations/residential/residential.tscn"
+const CLASSROOM_ID := &"classroom"
 const CLASSROOM_START := &"PlayerStart"
 const CORRIDOR_START := &"FromClassroom"
 ## The only exit whose prompt the director rewrites.
@@ -75,10 +76,15 @@ func _ready() -> void:
 	_player.set_camera_roll(_player.wake_camera_roll)
 	_sync_player_locks()
 
-	if not _locations.load_location(CLASSROOM_SCENE, CLASSROOM_START, _player):
+	# The expected id is part of the transaction: a classroom scene that declares a
+	# different location must fail here rather than put the player in one room and the
+	# story in another.
+	if not _locations.load_location(CLASSROOM_SCENE, CLASSROOM_START, _player, CLASSROOM_ID):
 		push_error("OpeningSequence: the classroom location failed to load.")
 		return
-	_game_state().set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
+	_game_state().set_flag(
+		StoryFlags.CURRENT_LOCATION, _locations.get_current().location_id
+	)
 	if autostart:
 		start()
 
@@ -299,17 +305,26 @@ func _transition_to(exit: LocationExit) -> void:
 	var exit_id := exit.interact_id
 	await _begin_beat()
 	await _ui.fade.fade_to_black(0.7)
-	var loaded := _locations.load_location(destination_scene, destination_spawn, _player)
+	# `destination_id` is passed as the expected id, so the load fails unless the scene
+	# really is the place the exit named.
+	var loaded := _locations.load_location(
+		destination_scene, destination_spawn, _player, destination_id
+	)
 	if not loaded:
+		# Nothing has moved: the old location is still current, the player is still
+		# standing in it, and CURRENT_LOCATION still describes it.
 		push_error(
-			"OpeningSequence: could not enter '%s' from exit '%s'." % [destination_scene, exit_id]
+			"OpeningSequence: could not enter '%s' from exit '%s'; staying put."
+			% [destination_scene, exit_id]
 		)
 		await _ui.fade.fade_from_black(0.5)
 		_end_beat()
 		return
 
-	if not String(destination_id).is_empty():
-		_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	var entered := _locations.get_current()
+	if entered != null:
+		destination_id = entered.location_id
+	_game_state().set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
 	# Leaving the room is what starts the companion, not the dialogue choice: a
 	# player who stays at the desk and walks out ten minutes later gets the same Q.
 	if _companion != null and not _companion.is_joined():

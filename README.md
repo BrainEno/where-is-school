@@ -102,6 +102,15 @@ While a conversation, a scripted beat or a location transition is running, the
 character does not move and world clicks are ignored (the walk in progress is
 cancelled rather than resumed afterwards).
 
+A transition **either completes or changes nothing**. Before a door swaps scenes it
+checks that the destination exists, that the scene declares the location the door
+names, and that the spawn marker the door names exists; only then does the new room
+replace the old one, with the player standing on that marker. If any of that is wrong
+the old room stays loaded, the player keeps their position, facing and the
+`CURRENT_LOCATION` story flag, and the door's prompt stays where it was. A spawn id must
+match a marker exactly — only an empty id means "this location's default". See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract).
+
 ## Navigation
 
 Six locations are playable — the classroom, the walkway, the street, the residential
