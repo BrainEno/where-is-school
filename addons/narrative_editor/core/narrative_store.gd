@@ -216,7 +216,13 @@ func node_entries(conversation_id: String) -> Array[Dictionary]:
 		var data: Dictionary = node
 		var node_id := String(data.get("id", ""))
 		var speaker := String(data.get("speaker", ""))
-		var text := _effective(["conversations", conversation_id, "nodes", index, "text"], "")
+		var text := _effective([
+			"conversations",
+			conversation_id,
+			"nodes",
+			index,
+			"text",
+		], reference_locale, "")
 		var choices: Variant = data.get("choices", [])
 		var has_choices := choices is Array and (choices as Array).size() > 0
 		var has_check := data.get("check") is Dictionary
@@ -635,7 +641,7 @@ func _make_field(
 ) -> Dictionary:
 	var values: Dictionary = {}
 	for locale: String in locales:
-		values[locale] = _effective(address, "")
+		values[locale] = _effective(address, locale, "")
 	var field := {
 		"field_id": field_id,
 		"label": label,
@@ -648,11 +654,16 @@ func _make_field(
 	return field
 
 
-## The text as the author currently sees it, which is the pending edit while there is one
-## and the file on disk otherwise. Lists and search read through this, so an unsaved line
-## is searchable and the node list does not lag behind the text box.
-func _effective(address: Array, fallback: String) -> String:
-	var doc: Variant = _docs.get(reference_locale, null)
+## The text as the author currently sees it in one language, which is the pending edit
+## while there is one and the file on disk otherwise. Lists and search read through this,
+## so an unsaved line is searchable and the node list does not lag behind the text box.
+##
+## The language is a parameter and not `reference_locale`, because the dock shows both
+## languages side by side: reading the reference document for every language put the
+## English line in the Chinese box, and the author would have been editing English text
+## that was labelled Chinese.
+func _effective(address: Array, locale: String, fallback: String) -> String:
+	var doc: Variant = _docs.get(locale, null)
 	if doc == null:
 		return fallback
 	return (doc as JsonText).effective_string(address, fallback)

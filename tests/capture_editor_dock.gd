@@ -43,8 +43,20 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	_dock = Dock.new()
 	root.add_child(_dock)
+	if _dock.store == null:
+		_finish(["The dock did not build a store; nothing below could be photographed."])
+		return
 	_dock.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	await _resize(SIZE)
+	print(
+		"DIAG kind=%s chapter=%s locales=%s errors=%s"
+		% [
+			_dock.store.kind,
+			_dock.store.chapter,
+			str(_dock.store.locales),
+			_dock.store.describe_errors(),
+		]
+	)
 
 	# --- the dialogue panel, on the node that has choices ---------------------
 	var dialogue_chapter := _first_chapter("dialogue")
@@ -108,7 +120,10 @@ func _edit_without_saving() -> void:
 func _first_chapter(kind: String) -> String:
 	var chapters: Array = _dock.store.available_chapters(kind)
 	if chapters.is_empty():
-		_failures.append("No %s chapter was found on disk." % kind)
+		_failures.append(
+			"No %s chapter was found on disk. Store errors: %s"
+			% [kind, _dock.store.describe_errors()]
+		)
 		return ""
 	return String(chapters[0])
 
@@ -119,7 +134,10 @@ func _first_conversation(chapter: String) -> String:
 	_dock.store.open("dialogue", chapter)
 	var ids: Array = _dock.store.list_ids()
 	if ids.is_empty():
-		_failures.append("Chapter %s has no conversations." % chapter)
+		_failures.append(
+			"Chapter %s has no conversations. Store errors: %s"
+			% [chapter, _dock.store.describe_errors()]
+		)
 		return ""
 	return String(ids[0])
 

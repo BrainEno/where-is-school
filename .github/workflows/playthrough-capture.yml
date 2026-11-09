@@ -295,22 +295,31 @@ jobs:
           fi
           staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'editor-dock-*.png' | wc -l)
           echo "staged editor frames = ${staged}"
+          # The step log is not always reachable from where a failure is read — a
+          # restricted client only sees annotations — so every failure below carries the
+          # reason with it: what the script wrote in the log, and the end of the run's own
+          # output, which is where a SCRIPT ERROR from the engine would be.
+          script_log="${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log"
+          reasons=$(grep -E "^FAILURE: " "${script_log}" 2>/dev/null | head -n 5 | tr '\n' '|' | cut -c1-900) || true
+          run_tail=$(tail -n 25 "${editor_log}" 2>/dev/null | tr '\n' '|' | cut -c1-900) || true
+          why="${reasons:-the script wrote no FAILURE line} :: run output: ${run_tail:-none}"
           if [ "${staged}" -lt 4 ]; then
             echo "EDITOR_CAPTURE_RESULT=failure"
-            echo "::error title=narrative editor capture::only ${staged} frame(s) were produced"
+            echo "::error title=narrative editor capture::only ${staged} frame(s) were produced :: ${why}"
             exit 1
           fi
-          if grep -qE "^FAILURE: " "${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log" 2>/dev/null; then
+          if grep -qE "^FAILURE: " "${script_log}" 2>/dev/null; then
             echo "EDITOR_CAPTURE_RESULT=failure"
-            echo "::error title=narrative editor capture::the script reported a failure"
+            echo "::error title=narrative editor capture::the script reported a failure :: ${why}"
             exit 1
           fi
-          if ! grep -qE "^RESULT: " "${EVIDENCE}/docs/screenshots/EDITOR_CAPTURE.log" 2>/dev/null; then
+          if ! grep -qE "^RESULT: " "${script_log}" 2>/dev/null; then
             echo "EDITOR_CAPTURE_RESULT=failure"
-            echo "::error title=narrative editor capture::the script wrote no result marker"
+            echo "::error title=narrative editor capture::the script wrote no result marker :: ${why}"
             exit 1
           fi
           echo "EDITOR_CAPTURE_RESULT=success"
+          echo "::notice title=narrative editor capture::${staged} frame(s) :: $(grep -E '^RESULT: ' "${script_log}" | tr '\n' '|')"
 
       - name: Stage the frame list
         if: always()
