@@ -62,19 +62,27 @@ func _run() -> void:
 		sequence.call("allow_player_control")
 	await _frames(2)
 
+	# The size this run measures. A headless display server does not honour `--resolution`,
+	# so the root window is sized here instead: measuring whatever size the runner happened
+	# to have would be a test that proves nothing about 1280x720.
+	var target := _expected_resolution()
+	if target == Vector2i.ZERO:
+		target = Vector2i(1600, 900)
+	root.min_size = Vector2i.ZERO
+	root.size = target
+	await _frames(3)
 	var viewport := root.get_visible_rect().size
 	print("hud layout: viewport %s, verified sizes %s" % [str(viewport), str(VERIFIED_SIZES)])
 	_expect(
 		VERIFIED_SIZES.has(Vector2i(viewport)),
 		"This run is not at one of the verified sizes: %s." % str(viewport)
 	)
-	var expected := _expected_resolution()
-	if expected != Vector2i.ZERO:
-		_expect(
-			Vector2i(viewport) == expected,
-			"The process was started at %s but the viewport is %s."
-			% [str(expected), str(viewport)]
-		)
+	_expect(
+		Vector2i(viewport) == target,
+		"The viewport is %s; it was set to %s and the labels would be measured at the "
+		% [str(viewport), str(target)]
+		+ "wrong size."
+	)
 
 	# The shipped strings, not invented ones: the objective key the story sets, and the
 	# longest inspection text the content has, used as the prompt so the measurement is the

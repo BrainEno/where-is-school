@@ -248,8 +248,15 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
+## Waits on the same clock the toggle guard reads. `create_timer` follows the frame delta,
+## and a headless run is free to tick it faster or slower than the wall clock the guard
+## compares against; waiting on `Time` itself is what makes this test mean what it says.
 func _wait(seconds: float) -> void:
-	await create_timer(seconds).timeout
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	var spins := 0
+	while Time.get_ticks_msec() < deadline and spins < 100000:
+		spins += 1
+		await process_frame
 	await process_frame
 
 
