@@ -142,6 +142,8 @@ func _check_content(main: Node) -> void:
 	elif not inspections.is_valid():
 		_failures.append(inspections.describe_errors())
 
-	var characters := CharacterDirectory.load_all()
+	# Built from the controller's own registry, so this covers the inner voices' profiles
+	# too: a voice with no `data/characters/<speaker>.tres` fails the smoke test.
+	var characters := CharacterDirectory.load_all(controller.get_abilities())
 	if not characters.errors.is_empty():
 		_failures.append("\n".join(characters.errors))

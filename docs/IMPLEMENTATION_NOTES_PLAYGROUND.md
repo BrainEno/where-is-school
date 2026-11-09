@@ -46,15 +46,25 @@ conversation route and its conversation) in **both** languages.
 
 ## 3. Adding an inner voice
 
-1. Add the ability to `data/abilities/abilities.json` (`value`, optional `speaker`,
-   `max_passive`) and its name/description to every `data/abilities/<locale>.json`.
-2. Add `data/characters/voice_<id>.tres` and register it in
-   `CharacterDirectory.CHARACTER_PATHS` (the list is explicit so exported builds
-   include it).
+The order matters, because each step validates the one before it.
+
+1. Add the ability to `data/abilities/abilities.json`: a `value`, a `speaker` id that
+   no other voice and no ordinary character uses, and a `max_passive` cap. Its name
+   and description go into every `data/abilities/<locale>.json`, translated (identical
+   text in two languages is rejected as an unfinished translation).
+2. Add the voice's presentation profile at `data/characters/<speaker>.tres`, with
+   `character_id` equal to that speaker id. Nothing else has to be edited: the
+   character directory resolves voices from the registry, so there is no second list
+   to keep in sync. A missing or mismatched profile is a start-up error, not a silent
+   fallback to another voice's name and colour.
 3. Use it in content: a `check` block on a node, or a passive rule plus a
-   conversation that opens with a hidden check.
+   conversation that opens with a hidden check. When two rules can answer one event,
+   the one earlier in `abilities.json` speaks; that order is the priority, so moving a
+   rule up the file is how you make it win.
 4. Run `inner_abilities_test` — it fails if a voice exists but nothing uses it, if a
    rule points at a missing conversation, or if the text was not translated.
+   `tests/multi_voice_test.gd` proves the multi-voice plumbing itself with fixtures
+   that never enter `data/`.
 
 ## 4. Verified, and how
 

@@ -6,6 +6,17 @@
 - Supersedes: nothing. Extends ADR 0002 (dialogue and narrative state).
 - Superseded by: nothing yet.
 
+> **Status update, Phase 6a (2026-11).** The owner has since decided that the one
+> provisional voice is to be **extended into several voices** (see
+> `docs/NARRATIVE_BIBLE.md` § Inner voices, `docs/TECHNICAL_ROADMAP.md` Phase 6a).
+> Read the roster statements below as the state of *this* proposal when it was
+> written: one ability ships, and the number of voices is still not a design this
+> document decides. The engineering half changed in Phase 6a without changing any
+> number: the registry, the profiles, the checks and the passive director now work
+> with any number of voices, so "one voice" is a content fact rather than an
+> assumption in the code. The formula, the difficulties and every value in the
+> tables are still provisional.
+
 ## How to read this document
 
 There are two kinds of statement below, and they are kept apart on purpose.

@@ -41,9 +41,11 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - Outdoor locations: the street, the residential courtyard, the alley behind the
   flats, and the open school yard (playground), with the green animal in the
   courtyard and the end of the slice at the far gap in the yard's fence.
-- The hybrid inner-voice system, reduced to **one provisional voice** with passive
-  triggers and active checks, and the single shared dice core behind both visible and
-  hidden checks (ADR 0003, which is a proposal awaiting the owner).
+- The hybrid inner-voice system with passive triggers and active checks, and the single
+  shared dice core behind both visible and hidden checks (ADR 0003, which is a proposal
+  awaiting the owner). One provisional voice ships; the plumbing is written for any
+  number of them and was proven with fixture voices in `tests/multi_voice_test.gd`
+  (Phase 6a).
 - Native navigation in every playable location, with mouse click-to-move and
   click-to-interact sharing the existing movement and activation paths (see
   `docs/ARCHITECTURE.md` §5f).
@@ -54,7 +56,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, thirty-four headless checks, a
+- CI: a static syntax gate over every `.gd` file, thirty-five headless checks, a
   blocking import pass with an audit that every tracked `.import` produced its file, and
   a read-only capture job whose artifacts are the visual evidence for a pull request.
   Failures produce artifacts as well, so a red run is diagnosable.
@@ -288,13 +290,38 @@ branch.
   `docs/IMPLEMENTATION_NOTES_BUILD.md` records the decisions and the limits — no icon, no
   signature, Windows only, no save/load or settings screen.
 
+### Phase 6a — Multi-voice foundation (delivered in this round)
+- The inner-voice plumbing now holds any number of voices instead of one, and the
+  number is data rather than code. Every voice keeps its own `ability_id`, its own
+  `speaker_id`, its own value and its own passive cap; a speaker id resolves to exactly
+  one voice and to exactly one profile at `data/characters/<speaker_id>.tres`, which the
+  character directory loads from the registry instead of from a hard-coded list.
+- The registry rejects what would otherwise fail silently: two voices claiming one
+  speaker, a non-numeric or out-of-range value, a negative passive cap, a missing
+  translation, a translation copied from English, and text for a voice that does not
+  exist. A missing, foreign or colliding character profile is a start-up error, never a
+  fallback to someone else's name and colour.
+- Active checks were already per-ability and stay that way, one record per check node;
+  passive lines now choose their voice at fire time, in `abilities.json` order, so two
+  voices matching one event are deterministic instead of racing, and an event is no
+  longer lost when the rule queued first could not speak.
+- Proven by `tests/multi_voice_test.gd`, which loads two fictional voices from a
+  `user://` fixture through the real loaders. No second voice, name, value or line was
+  added to `data/` — the cast is the owner's decision, and this round deliberately
+  writes none of it.
+- Still open, and deliberately not decided here: how many voices there will be, their
+  names, personalities, values, trigger rules, typography, and the prose of the three
+  hidden checks that ship today. The shipped `orientation` description still says "one
+  voice", which becomes the owner's copy edit at that point.
+
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the
   shed, the container, the bench, the climbing frame, the notice board.
 - The owner has decided (2026-11) that the one provisional voice is to be **extended into
-  several voices** rather than kept as it is. That is a content-and-rules round of its own —
-  new trigger rules, a way to tell the voices apart in the typography, and a rewrite of the
-  three hidden checks that ship now — and it is not started.
+  several voices** rather than kept as it is. The technical foundation for that is done
+  (Phase 6a); the cast itself is a content-and-rules round of its own — who the voices
+  are, new trigger rules, a way to tell them apart in the typography, and a rewrite of
+  the three hidden checks that ship now — and it is not started.
 - Retuning the dice against real playtest data.
 - A journal/notebook for what the protagonist knows, once there is enough of it
   to be worth reading.

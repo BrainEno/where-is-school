@@ -172,11 +172,14 @@ job:
 - `scripts/rpg/inner_abilities.gd` — reads `data/abilities/abilities.json`
   (values, speakers, passive rules) and `data/abilities/<locale>.json` (names and
   descriptions), validates them strictly, and reports every problem with a file
-  path.
+  path, an ability id and a speaker id.
 - `scripts/world/inner_voice_director.gd` — decides *when* a passive voice may
   speak: event triggers, `once` per rule, a per-voice session cap, no two
   unprompted lines in a row, and silence while an authored beat, a conversation or
   the end card owns the frame.
+- `scripts/dialogue/character_directory.gd` — the presentation side of every
+  speaker. Ordinary characters come from a short explicit list; inner voices come
+  from the registry (see below).
 
 A check itself is dialogue data, not a script: a node carries a `check` block with
 an ability id, a difficulty, `kind` (`visible`/`hidden`) and two branch targets.
@@ -193,9 +196,54 @@ Invariants that later work must keep:
 4. a failed check may never be the only route past a required beat;
 5. no gameplay script may contain a roll, a difficulty, or an ability name.
 
+### Several voices, kept apart without being rewritten
+
+The registry is a *list* of voices; how many entries it holds is content, not code.
+This milestone ships one (`orientation`) and the owner has decided the cast will
+grow, so the plumbing was separated from the prose in a dedicated pass. Three
+identities are never allowed to merge:
+
+| What | Where it lives | What must be true |
+| --- | --- | --- |
+| `ability_id` | key of the `abilities` object | unique; the id a `check` block names |
+| `speaker_id` | `speaker` field of that ability | unique across voices and ordinary characters; the only link to a profile |
+| `value`, `max_passive` | that ability's fields | read per voice; one voice's number or count can never be read, spent or overwritten by another |
+
+**Finding a voice's profile is a lookup, not a scan.** A voice's presentation lives
+at `data/characters/<speaker_id>.tres`, and the directory loads exactly the speaker
+ids the registry declares. There is no directory scan (which would only work in an
+editor checkout, not in a packed build) and no second list of voices to keep in
+sync — `CharacterDirectory.ORDINARY_CHARACTER_PATHS` stays explicit for people
+only. `DialogueController._ready()` therefore loads the registry *before* the
+directory. A missing profile, a profile whose `character_id` disagrees with the
+speaker it is loaded for, or a speaker id that collides with an ordinary character
+is a start-up error naming both ids and the file. There is deliberately **no
+fallback**: a voice that speaks with another voice's name and colour is worse than
+one that does not appear.
+
+**Active checks were already per-ability**; what this pass pins down is that nothing
+leaks between them. A check node names its `ability_id`, the runtime reads that
+voice's `value`, and the result is recorded under `check:<conversation>:<node>`, so
+two voices in one conversation keep two independent records and neither re-rolls.
+Visible and hidden checks still share one `CheckResolver`.
+
+**Passive lines resolve late, in file order.** Several voices may be able to answer
+one event, so the director queues the *event* and only picks the voice when the
+frame is free: `InnerAbilities.get_rules_for()` returns the rules that match in
+`data/abilities/abilities.json` order and the first one still allowed to fire wins.
+File order is the priority rule — deterministic, testable, and editable by moving a
+line in the file — so two voices can never race for one event. Resolving at fire
+time also fixes a state loss: a rule that was capped when the event happened but is
+free by the time the frame clears is still considered, and the event is never
+dropped in favour of a rule that could not speak. `once` stays per rule, the session
+cap stays per voice, one event may wait at a time, and one unprompted line still
+cannot chain into another.
+
 ADR 0003 records the reasoning, the formula, the frequency policy and the open
 design questions. It is a **proposal**: exactly one voice ships in this milestone
-(`orientation`), and every number in it is provisional.
+(`orientation`), and every number in it is provisional. The cast itself — how many
+voices, what they are called, what they are worth — is the owner's decision and is
+not decided by anything in `data/` today.
 
 ## 5d. The companion, and why it is not in a location
 

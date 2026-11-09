@@ -12,20 +12,38 @@ extends Node
 ##   conversation. It never speaks on a timer, so it cannot chatter while the
 ##   player is walking or thinking.
 ## - **It waits for the frame to be free.** A passive line never interrupts an
-##   authored beat or a conversation the player started; the request stays queued.
+##   authored beat or a conversation the player started; the event stays queued.
 ## - **It is rationed.** Each rule fires once unless content says otherwise, each
-##   voice has a per-session cap, and one unprompted line cannot chain straight
+##   voice has its own per-session cap, and one unprompted line cannot chain straight
 ##   into another: something else has to happen in between.
 ## - **It stays silent during the end card.** Once the slice is finished there is
 ##   nothing left to notice.
+##
+## Several voices may be able to react to the same event, so this node answers two
+## questions where one used to be enough: *whether* a line may be shown, and *which*
+## voice speaks. The answer to the second is data, not a race:
+##
+##   A queued event is resolved when the frame is free, by asking
+##   `InnerAbilities.get_rules_for()` — which returns rules in
+##   `data/abilities/abilities.json` order — and taking the first rule that is still
+##   allowed to fire. File order is therefore the priority, a writer changes the order
+##   by moving the rule up or down in the file, and two voices matching one event can
+##   never interleave or overwrite each other. `tests/multi_voice_test.gd` pins this
+##   down: the earlier rule wins, the later one stays unspent and speaks on the next
+##   event that matches it.
+##
+## Resolving at fire time instead of at request time is deliberate: a voice that was
+## still capped when the event happened but is free again by the time the frame
+## clears is exactly the case that used to lose the event silently.
 ##
 ## The rules themselves are data (`data/abilities/abilities.json`), and every rule
 ## points at a conversation whose first node is a *hidden* check, so the same dice
 ## core decides what the voice notices. That is why this script contains no
 ## randomness at all.
 
-## At most this many requests may wait; more than one would stack lines up and make
-## the pacing feel scripted.
+## At most this many events may wait for the frame to be free. More than one would
+## stack lines up and make the pacing feel scripted, so a second event that arrives
+## while one is waiting is dropped rather than queued behind it.
 const MAX_PENDING := 1
 
 @export var dialogue_path: NodePath = ^"../DialogueController"
@@ -37,7 +55,9 @@ var _sequence: Node = null
 var _location_host: Node = null
 var _abilities: InnerAbilities = null
 
-var _pending: Array[InnerAbilities.PassiveRule] = []
+## The one event waiting for the frame. Empty kind means "nothing queued".
+var _pending_kind: String = ""
+var _pending_id: StringName = &""
 ## How many presentations have happened since the last unprompted line.
 var _since_voice: int = 0
 ## True while the conversation this node started is running, so it does not count
@@ -65,7 +85,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	_pump()
+	pump()
 
 
 # --- triggers ---------------------------------------------------------------
@@ -93,18 +113,25 @@ func _on_conversation_finished(conversation_id: StringName) -> void:
 	request("conversation_end", conversation_id)
 
 
-## Queues whichever rules match this event and are still allowed to fire. Public
-## so a test can ask the same question the triggers ask, without a running scene.
+## Queues this event, unless one is already waiting or nothing could speak for it.
+## Public so a test can ask the same question the triggers ask, without a running
+## scene.
 func request(trigger_kind: String, trigger_id: StringName) -> void:
-	var fired := evaluate(trigger_kind, trigger_id)
-	for rule: InnerAbilities.PassiveRule in fired:
-		if _pending.size() >= MAX_PENDING:
-			break
-		_pending.append(rule)
+	if _abilities == null:
+		return
+	if pending_count() >= MAX_PENDING:
+		# One event at a time: the pacing rule outranks the event that arrived second.
+		return
+	if evaluate(trigger_kind, trigger_id).is_empty():
+		# Nothing may answer this right now; holding an empty slot would block the
+		# next event for no reason.
+		return
+	_pending_kind = trigger_kind
+	_pending_id = trigger_id
 
 
-## Every rule for this event that would be allowed to fire right now. No side
-## effects: nothing is marked as spent and nothing is played.
+## Every rule for this event that would be allowed to fire right now, in file order.
+## No side effects: nothing is marked as spent and nothing is played.
 func evaluate(trigger_kind: String, trigger_id: StringName) -> Array[InnerAbilities.PassiveRule]:
 	var result: Array[InnerAbilities.PassiveRule] = []
 	if _abilities == null:
@@ -113,6 +140,14 @@ func evaluate(trigger_kind: String, trigger_id: StringName) -> Array[InnerAbilit
 		if _can_fire(rule):
 			result.append(rule)
 	return result
+
+
+## Which voice would speak for this event if the frame were free: the first rule in
+## `abilities.json` order that is still allowed to fire. Exposed so a test can state
+## the priority rule instead of inferring it from what happened to play.
+func select_rule(trigger_kind: String, trigger_id: StringName) -> InnerAbilities.PassiveRule:
+	var candidates := evaluate(trigger_kind, trigger_id)
+	return candidates[0] if not candidates.is_empty() else null
 
 
 func _can_fire(rule: InnerAbilities.PassiveRule) -> bool:
@@ -130,6 +165,8 @@ func _can_fire(rule: InnerAbilities.PassiveRule) -> bool:
 		return false
 	if rule.once and _flag(StoryFlags.passive_fired_flag(rule.rule_id), false):
 		return false
+	# The count flag is per voice, so one voice reaching its cap can never spend
+	# another voice's allowance.
 	var count := int(_flag(StoryFlags.passive_count_flag(rule.ability_id), 0))
 	if count >= ability.max_passive:
 		return false
@@ -146,15 +183,23 @@ func _can_fire(rule: InnerAbilities.PassiveRule) -> bool:
 	return true
 
 
-func _pump() -> void:
-	if _pending.is_empty():
+## Takes the step `_process` takes, once. Public so a test can drive the director
+## frame by frame without waiting for the engine to tick.
+func pump() -> void:
+	if _pending_kind.is_empty():
+		return
+	if _dialogue == null:
 		return
 	if _dialogue.is_busy():
 		return
 	if _sequence != null and _sequence.call("is_beat_active") == true:
 		return
-	var rule: InnerAbilities.PassiveRule = _pending.pop_front()
-	if not _can_fire(rule):
+	var kind := _pending_kind
+	var trigger_id := _pending_id
+	_clear_pending()
+	var rule := select_rule(kind, trigger_id)
+	if rule == null:
+		# Nothing may speak for it any more (capped, spent, or the end card arrived).
 		return
 	_fire(rule)
 
@@ -168,6 +213,11 @@ func _fire(rule: InnerAbilities.PassiveRule) -> void:
 	_firing = true
 	if not _dialogue.play_conversation(rule.conversation_id):
 		_firing = false
+
+
+func _clear_pending() -> void:
+	_pending_kind = ""
+	_pending_id = &""
 
 
 func _is_slice_finished() -> bool:
@@ -193,7 +243,15 @@ func _set_flag(flag: StringName, value: Variant) -> void:
 
 
 func pending_count() -> int:
-	return _pending.size()
+	return 0 if _pending_kind.is_empty() else 1
+
+
+## The event waiting for the frame, as `{"kind": ..., "id": ...}`; empty when nothing
+## is queued. For diagnostics and tests.
+func get_pending_event() -> Dictionary:
+	if _pending_kind.is_empty():
+		return {}
+	return {"kind": _pending_kind, "id": _pending_id}
 
 
 func is_firing() -> bool:

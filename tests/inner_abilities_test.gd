@@ -3,7 +3,7 @@ extends SceneTree
 ##
 ## An ability is not "implemented" because a value exists. It is implemented when:
 ##
-## - it has a stable id, a value, and a speaker whose profile exists;
+## - it has a stable id, a value, and a speaker of its own, whose profile exists;
 ## - its name and description exist in every language and actually differ between
 ##   them (a copied English string in the Chinese table is a translation bug that no
 ##   structural check would catch);
@@ -37,7 +37,11 @@ func _run() -> void:
 	_library = DialogueLibrary.load_all(_abilities)
 	if not _library.is_valid():
 		_failures.append("shipped dialogue is invalid: %s" % _library.describe_errors())
-	_characters = CharacterDirectory.load_all()
+	# The directory resolves inner voices from this registry, so a voice with no profile
+	# (or with someone else's) shows up here instead of in a scene.
+	_characters = CharacterDirectory.load_all(_abilities)
+	for message in _characters.errors:
+		_failures.append("character directory: %s" % message)
 
 	_check_shape()
 	_check_bilingual()
@@ -53,20 +57,66 @@ func _run() -> void:
 
 func _check_shape() -> void:
 	var ids := _abilities.get_ability_ids()
-	# One provisional voice for this milestone. The number is asserted so adding a
-	# second one is a decision someone makes, not something that happens quietly.
-	if ids.size() != 1:
-		_failures.append("Expected exactly one inner voice, found %d." % ids.size())
+	# How many voices ship is a content decision, so this test does not pin the count:
+	# it pins that each registered voice is complete on its own. The multi-voice
+	# plumbing itself is exercised with fixture voices in tests/multi_voice_test.gd.
+	if ids.is_empty():
+		_failures.append("No inner voice is registered at all.")
+	var speakers: Dictionary = {}
 	for ability_id: StringName in ids:
 		var ability := _abilities.get_ability(ability_id)
 		if String(ability_id).is_empty():
 			_failures.append("An inner voice has an empty id.")
-		if ability.value < 0 or ability.value > 10:
-			_failures.append("Ability '%s' has a silly value %d." % [ability_id, ability.value])
-		if _characters != null and _characters.get_display_name(ability.speaker_id) == String(ability.speaker_id):
-			_failures.append("Ability '%s' has no character profile for '%s'." % [ability_id, ability.speaker_id])
+		if ability.value < InnerAbilities.MIN_VALUE or ability.value > InnerAbilities.MAX_VALUE:
+			_failures.append(
+				"Ability '%s' has a value (%d) outside %d..%d."
+				% [ability_id, ability.value, InnerAbilities.MIN_VALUE, InnerAbilities.MAX_VALUE]
+			)
+		if _abilities.get_value(ability_id) != ability.value:
+			_failures.append("Ability '%s' does not read back its own value." % ability_id)
+		# The speaker is the only link between a voice and its presentation, so it has
+		# to be unique and to point back at this exact ability.
+		if String(ability.speaker_id).is_empty():
+			_failures.append("Ability '%s' has an empty speaker id." % ability_id)
+		elif speakers.has(ability.speaker_id):
+			_failures.append(
+				"Abilities '%s' and '%s' claim the same speaker '%s'."
+				% [speakers[ability.speaker_id], ability_id, ability.speaker_id]
+			)
+		else:
+			speakers[ability.speaker_id] = ability_id
+		if _abilities.get_ability_for_speaker(ability.speaker_id) != ability:
+			_failures.append(
+				"Speaker '%s' does not resolve back to ability '%s'."
+				% [ability.speaker_id, ability_id]
+			)
+		if _characters != null:
+			var profile := _characters.get_profile(ability.speaker_id)
+			if profile == null:
+				_failures.append(
+					"Ability '%s' has no character profile for '%s'."
+					% [ability_id, ability.speaker_id]
+				)
+			elif profile.character_id != ability.speaker_id:
+				_failures.append(
+					"Ability '%s' resolved to a profile for '%s'."
+					% [ability_id, profile.character_id]
+				)
+			if not _characters.is_inner_voice(ability.speaker_id):
+				_failures.append(
+					"Speaker '%s' is a voice but the directory does not treat it as one."
+					% ability.speaker_id
+				)
 		if ability.max_passive < 1:
 			_failures.append("Ability '%s' can never speak passively." % ability_id)
+		# The display name is what the panel shows; an id or an empty string would leak
+		# the data model into the interface.
+		if ability.display_name.strip_edges().is_empty():
+			_failures.append("Ability '%s' displays no name." % ability_id)
+		elif ability.display_name == String(ability_id):
+			_failures.append("Ability '%s' displays its raw id instead of a name." % ability_id)
+	if _characters != null and _characters.is_inner_voice(&"q"):
+		_failures.append("An ordinary classmate was loaded as an inner voice.")
 
 
 ## Every language must carry the same voices, with text that is not just the English
@@ -75,15 +125,21 @@ func _check_shape() -> void:
 func _check_bilingual() -> void:
 	var ids := _abilities.get_ability_ids()
 	var english: Dictionary = {}
+	var english_descriptions: Dictionary = {}
+	var identity: Dictionary = {}
 	for ability_id: StringName in ids:
 		english[ability_id] = _abilities.get_ability(ability_id).display_name
+		english_descriptions[ability_id] = _abilities.get_ability(ability_id).description
 		if _abilities.get_ability(ability_id).description.strip_edges().is_empty():
 			_failures.append("Ability '%s' has no description in the active language." % ability_id)
+		# Numbers and speaker ids are not translated; only the prose is.
+		identity[ability_id] = _abilities.get_value(ability_id)
 	if not _abilities.set_locale("zh-CN"):
 		_failures.append("Switching the ability registry to zh-CN failed.")
 		return
 	for ability_id: StringName in ids:
-		var zh_name := _abilities.get_ability(ability_id).display_name
+		var ability := _abilities.get_ability(ability_id)
+		var zh_name := ability.display_name
 		if zh_name.strip_edges().is_empty():
 			_failures.append("Ability '%s' has no Chinese name." % ability_id)
 		if zh_name == String(english[ability_id]):
@@ -91,9 +147,22 @@ func _check_bilingual() -> void:
 				"Ability '%s' is called '%s' in both languages; the Chinese table was not translated."
 				% [ability_id, zh_name]
 			)
-		if _abilities.get_ability(ability_id).description.strip_edges().is_empty():
+		if ability.description.strip_edges().is_empty():
 			_failures.append("Ability '%s' has no Chinese description." % ability_id)
+		elif ability.description == String(english_descriptions.get(ability_id, "")):
+			_failures.append(
+				"Ability '%s' has the English description in the Chinese table." % ability_id
+			)
+		if _abilities.get_value(ability_id) != int(identity[ability_id]):
+			_failures.append("Switching language changed the value of '%s'." % ability_id)
+	if _abilities.get_name_for_speaker(&"q") != "":
+		_failures.append("An ordinary classmate was resolved as an inner voice in Chinese.")
 	_abilities.set_locale("en")
+	for ability_id: StringName in ids:
+		if _abilities.get_ability(ability_id).display_name != String(english[ability_id]):
+			_failures.append(
+				"Switching back to English did not restore the name of '%s'." % ability_id
+			)
 
 
 func _check_rules() -> void:
@@ -101,9 +170,9 @@ func _check_rules() -> void:
 		_failures.append("Passive rules cannot be checked without a loaded dialogue library.")
 		return
 	var rules := _abilities.get_rules()
-	# Three rules are enough to prove the mechanism with one voice: an inspection
-	# trigger, a second inspection trigger, and a location trigger. Fewer would mean
-	# a voice that never speaks unprompted.
+	# Three rules are enough to prove the mechanism with the voice that ships: an
+	# inspection trigger, a second inspection trigger, and a location trigger. Fewer
+	# would mean a voice that never speaks unprompted.
 	if rules.size() < 3:
 		_failures.append("Expected at least three passive rules, found %d." % rules.size())
 	var seen: Dictionary = {}
@@ -182,6 +251,11 @@ func _check_presentation_names() -> void:
 			_failures.append(
 				"Speaker '%s' does not resolve to its translated name ('%s')."
 				% [ability.speaker_id, ability.display_name]
+			)
+		var profile := _characters.get_profile(ability.speaker_id) if _characters != null else null
+		if profile != null and _characters.get_localized_name(ability.speaker_id).is_empty():
+			_failures.append(
+				"Speaker '%s' has a profile but no name to show." % ability.speaker_id
 			)
 	if not _abilities.get_name_for_speaker(&"q").is_empty():
 		_failures.append("An ordinary classmate was resolved as an inner voice.")

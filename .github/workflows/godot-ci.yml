@@ -162,6 +162,7 @@ jobs:
           run_check check_resolver 120 godot --headless --path . --script res://tests/check_resolver_test.gd || status=1
           run_check inner_abilities 120 godot --headless --path . --script res://tests/inner_abilities_test.gd || status=1
           run_check dialogue_check 180 godot --headless --path . --script res://tests/dialogue_check_test.gd || status=1
+          run_check multi_voice 180 godot --headless --path . --script res://tests/multi_voice_test.gd || status=1
           run_check content_integrity 180 godot --headless --path . --script res://tests/content_integrity_test.gd || status=1
           run_check model_import 300 godot --headless --path . --script res://tests/model_import_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1

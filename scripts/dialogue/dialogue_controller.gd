@@ -80,15 +80,17 @@ func _ready() -> void:
 	if _backlog == null:
 		push_error("DialogueController: backlog panel not found at '%s'." % backlog_path)
 
-	_characters = CharacterDirectory.load_all()
-	for message in _characters.errors:
-		push_error("DialogueController: %s" % message)
-
-	# Inner voices load before dialogue: the library refuses a check that names a
-	# voice nobody implemented, so the ids have to exist first.
+	# Inner voices load first, for two reasons: the character directory resolves every
+	# voice's profile from the speaker id the registry declares (so a voice cannot be
+	# added here in code), and the dialogue library refuses a check that names a voice
+	# nobody implemented.
 	_abilities = InnerAbilities.load_all()
 	if not _abilities.is_valid():
 		push_error("DialogueController: %s" % _abilities.describe_errors())
+
+	_characters = CharacterDirectory.load_all(_abilities)
+	for message in _characters.errors:
+		push_error("DialogueController: %s" % message)
 	# One resolver for the whole session. Its seed comes from the clock so two
 	# playthroughs differ, but within a run every check is fixed by its own key:
 	# leaving a scene and coming back cannot reroll anything.
