@@ -54,6 +54,21 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the bundled font covers the current text
+        shell: bash
+        run: |
+          # The font that ships is a 325 KiB subset of the 10 MB upstream one, rebuilt by
+          # tools/subset_font.py from every character the project can put on screen. Text
+          # that needs a character the subset does not carry would render as a tofu box in
+          # a *build*, where no test would ever see it. This step fails on exactly that,
+          # naming the characters, and tells you the command that fixes it.
+          #
+          # It also fails when a font bigger than 2 MiB sits under assets/, which is what
+          # the unsplit source font would look like if it were ever moved back.
+          set -uo pipefail
+          /tmp/lint/bin/pip install --quiet "fonttools==4.58.5"
+          /tmp/lint/bin/python tools/subset_font.py --check
+
       # Each command runs under `timeout` so a stalled test fails visibly instead of
       # consuming the job budget. Results are echoed to stdout and to the check
       # run's annotations, which makes failures readable from the API as well as

@@ -27,6 +27,51 @@ Everything the player reads is data, and the whole game can be switched between
 English and simplified Chinese while it runs — including the sentence on screen, the
 log behind it and the names over the people in the room.
 
+## Playing it
+
+There is a real build now, not only a project to open in the editor.
+
+**A build someone can run.** The release workflow (`.github/workflows/release.yml`)
+exports a single Windows executable and attaches it to the run — and to a GitHub release
+when a `v*` tag is pushed. Unzip it, double-click `where-is-school.exe`. It is unsigned, so
+Windows will warn about an unknown publisher; `packaging/HOW-TO-RUN.txt` ships in the zip
+and says so, along with the controls and the known cosmetic gaps.
+
+**What is in it.** The executable embeds its pack, so there is nothing to keep beside it.
+`tools/verify_build.py` reads that pack back and fails the build if the repository leaked
+into it: no `tests/`, no `docs/screenshots/`, no 10 MB source font — the shipped font is a
+325 KiB subset of the characters the game can actually draw, rebuilt by
+`tools/subset_font.py` whenever text changes. `docs/IMPLEMENTATION_NOTES_BUILD.md` records
+why each of those decisions was made and what the build still does not have (an icon, a
+signature, macOS and Linux).
+
+**From the editor.** Install Godot 4.7.2 (standard, non-.NET), open `project.godot`, press
+F5. On a fresh clone let the import pass finish before playing: the tracked `.import`
+sidecars mean the engine resolves assets through `.godot/imported/`, which a
+just-interrupted import has not written yet. From a shell:
+
+```sh
+godot --headless --path . --import          # blocking: waits for the queue to drain
+godot --path .                              # then play
+```
+
+**Building it yourself** (needs the export templates for 4.7.2):
+
+```sh
+python3 tools/subset_font.py --check                                  # font is current
+godot --headless --path . --import
+godot --headless --path . --export-release "Windows Desktop" \
+  build/windows/where-is-school.exe
+python3 tools/verify_build.py --exe build/windows/where-is-school.exe
+```
+
+`export_presets.cfg` is committed and is the definition of the release build; it used to be
+gitignored, which is the reason no build could be reproduced from this repository.
+
+**Playing it as a test.** `docs/PLAYTEST_CHECKLIST.md` is the ordered hands-on pass the
+build exists for: what to try in each room, what to write down, and the three questions the
+automated suite cannot answer.
+
 ## Reading the game
 
 The dialogue is a band of text at the lower left of the picture, not a window over it.
@@ -158,7 +203,17 @@ missing.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
 - docs/ASSET_PIPELINE.md — the import contract for 3D models (format, axes, scale,
   collision wrappers, regeneration).
-- tools/ — maintenance scripts (placeholder audio synthesis).
+- docs/IMPLEMENTATION_NOTES_BUILD.md — the export preset, the font subset, what the build
+  contains and what it still does not.
+- docs/PLAYTEST_CHECKLIST.md — the ordered hands-on pass for a build, and what to write
+  down.
+- export_presets.cfg — the release build definition CI exports from (Windows Desktop,
+  embedded pack). Not a local file; see `docs/IMPLEMENTATION_NOTES_BUILD.md`.
+- packaging/ — `HOW-TO-RUN.txt`, the read-me that ships inside the release zip.
+- art/ — source material the engine must not import (`art/props/*.blend`,
+  `art/fonts/` with the untrimmed font), each folder carrying its own `.gdignore`.
+- tools/ — maintenance scripts: outdoor location generation, the sample models, the audio
+  synthesiser, the font subsetter and the pack verifier.
 
 ## Creative material
 

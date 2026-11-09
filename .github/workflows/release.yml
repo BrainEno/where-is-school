@@ -1,0 +1,180 @@
+name: Release build
+
+# Produces the actual Windows build: one executable a player can double-click.
+#
+# Why this workflow exists at all: every milestone PR since the first vertical slice says
+# "Windows hands-on checks are listed in the pull request and are not yet performed",
+# because there was no build to perform them on — `export_presets.cfg` was gitignored and
+# nothing in the repository had ever been exported. The evidence pipeline (`godot-ci.yml`
+# and `playthrough-capture.yml`) proves the game runs *under the editor's runtime*; this
+# proves it packs.
+#
+# Three triggers, three purposes:
+# - `pull_request` on anything that can change what gets packed: the build is a check, and
+#   a green run means the pull request did not break the export. The zip is attached to the
+#   run so it can be played before review.
+# - `workflow_dispatch`: build on demand, with no release, for "does it still export" and
+#   for handing the artifact to someone.
+# - tags `v*`: the same build plus a GitHub release carrying it.
+#
+# The build is verified by `tools/verify_build.py`, which reads the pack back out of the
+# executable and checks that the game is in it and that the repository is not: no tests,
+# no docs/screenshots, no 10 MB source font. An export preset is a wish list; the pack is
+# the truth.
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "export_presets.cfg"
+      - "project.godot"
+      - "assets/**"
+      - "data/**"
+      - "scenes/**"
+      - "scripts/**"
+      - "tools/subset_font.py"
+      - "tools/verify_build.py"
+      - "packaging/**"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Export, verify, package
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+
+      # `include-templates` is what makes an export possible at all: it downloads the
+      # 1.2 GB export template bundle. The action caches it, so only the first run on a
+      # runner generation pays for it.
+      - name: Install Godot and its export templates
+        uses: chickensoft-games/setup-godot@v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+          cache: true
+
+      # The subset has to be current before the pack is built, or the build ships a font
+      # that cannot draw the text the same commit added.
+      - name: Verify the bundled font is the subset of the current text
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/font >/dev/null
+          /tmp/font/bin/pip install --quiet "fonttools==4.58.5"
+          /tmp/font/bin/python tools/subset_font.py --check
+
+      # Blocking import: `--editor --quit` returns after one frame while the first scan is
+      # still running, which leaves `.godot/imported/` empty and makes every tracked
+      # `.import` sidecar point at a file that does not exist yet. Same lesson as
+      # `godot-ci.yml`.
+      - name: Import the project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs build/windows
+          timeout 420 godot --headless --path . --import > ci-logs/import.log 2>&1 || true
+          tail -n 5 ci-logs/import.log
+
+      - name: Export the Windows build
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A failed export can still exit 0 in older engine versions, so the artifact is
+          # checked for existence and shape afterwards rather than trusting the exit code
+          # alone.
+          timeout 600 godot --headless --path . --export-release "Windows Desktop" \
+            build/windows/where-is-school.exe > ci-logs/export.log 2>&1 || {
+              echo "::error title=export failed::see the log below"
+              tail -n 60 ci-logs/export.log
+              exit 1
+            }
+          tail -n 20 ci-logs/export.log
+          ls -l build/windows/
+
+      - name: Verify what is inside the build
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `--list` writes every packed path to the step log, which is where a failure is
+          # read in the web UI. The tool also emits the verdict as annotations, so the same
+          # failure is legible through the API.
+          python3 tools/verify_build.py --exe build/windows/where-is-school.exe --list \
+            | tee ci-logs/verify.log
+          exe=$(stat -c %s build/windows/where-is-school.exe)
+          echo "::notice title=build size::exe $((exe / 1048576)) MiB"
+
+      - name: Package it with the licences a player needs
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then
+            version="dev-${GITHUB_SHA::7}"
+          fi
+          stage="dist/where-is-school-${version}-windows"
+          mkdir -p "${stage}/licences"
+          cp build/windows/where-is-school.exe "${stage}/"
+          cp packaging/HOW-TO-RUN.txt "${stage}/"
+          cp assets/fonts/OFL.txt "${stage}/licences/NotoSansSC-OFL.txt"
+          cp COPYRIGHT.md "${stage}/licences/"
+          ( cd dist && zip -q -r "where-is-school-${version}-windows.zip" "$(basename "${stage}")" )
+          unzip -l "dist/where-is-school-${version}-windows.zip" | tail -n 12
+          size=$(stat -c %s "dist/where-is-school-${version}-windows.zip")
+          echo "::notice title=package size::zip $((size / 1048576)) MiB, version ${version}"
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: where-is-school-windows
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  # Publishing is its own job with its own permissions, the same split the capture
+  # workflow uses: the build job runs on every pull request and can only read, and the only
+  # step in the repository that can write a release runs for a tag and nothing else. A
+  # half-finished branch therefore cannot become a download.
+  publish:
+    name: Publish the release (tags only)
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download the build
+        uses: actions/download-artifact@v4
+        with:
+          name: where-is-school-windows
+          path: dist
+
+      - name: Create or update the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          tag_sha="${GITHUB_SHA::7}"
+          notes="Windows build of the vertical slice, exported from ${tag_sha}."
+          notes="${notes}"$'\n\n'"Unzip it and run where-is-school.exe. Controls and the known gaps are in the zip's HOW-TO-RUN.txt."
+          notes="${notes}"$'\n\n'"The executable is unsigned, so Windows SmartScreen will warn about an unknown publisher."
+          ls -l dist
+          gh release create "${tag}" dist/*.zip --title "${tag}" --notes "${notes}" \
+            || gh release upload "${tag}" dist/*.zip --clobber

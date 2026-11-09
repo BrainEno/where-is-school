@@ -58,13 +58,21 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   blocking import pass with an audit that every tracked `.import` produced its file, and
   a read-only capture job whose artifacts are the visual evidence for a pull request.
   Failures produce artifacts as well, so a red run is diagnosable.
+- A reproducible Windows build: a committed `export_presets.cfg`, a release workflow that
+  exports with the engine's own export templates and attaches the zip to the run (and to a
+  GitHub release on a `v*` tag), and a pack verifier that reads the finished executable
+  back and refuses a build that carries the repository (tests, screenshots, the 10 MB
+  source font) or is missing the game (dialogue data, theme, audio). The bundled CJK font
+  ships as a 325 KiB subset of the text the game can draw, rebuilt by
+  `tools/subset_font.py` and verified in both CI workflows.
 
 ### Planned, but deliberately not implemented yet
 - Journal and unreliable route notebook.
 - Portrait presentation for dialogue.
 - Versioned save/load, slot management, and schema migration.
 - Accessibility settings, audio mixing, and input rebinding.
-- A bundled CJK font subset (the current font ships whole).
+- A code-signed, icon-carrying installer, and Linux/macOS presets. The Windows
+  executable exists (Phase 5d) but is unsigned and carries the default engine icon.
 - Populating the yard with people, events and further checks, now that the space
   and its interaction anchors exist.
 - Navigation features that click-to-move deliberately does **not** have yet: agent
@@ -149,9 +157,10 @@ Do not add Git LFS until large binary assets actually justify it. Decide file-si
 
 ## 5. Development phases
 
-Phases 0-3 are delivered. Phase 4 is the round this branch belongs to. Anything
-after that is intent, not a promise, and none of it is scheduled by this
-document.
+Phases 0-5d are delivered, each in its own round. Phase 6 and Phase 7 are intent, not
+a promise, and neither is scheduled by this document. The "delivered in this round" label
+on a phase records the round that shipped it; it is not a claim about the current
+branch.
 
 ### Phase 0 — Engineering foundation (delivered)
 - Launchable Godot project, agent instructions, architecture boundaries.
@@ -257,17 +266,43 @@ document.
   `tests/interaction_visibility_sweep_test.gd`. Windows hands-on checks are listed in the
   pull request and are not yet performed.
 
+### Phase 5d — The build (delivered in this round)
+- The slice became something that can be handed over: `export_presets.cfg` is committed
+  (it used to be gitignored, which is why no build had ever been produced), and
+  `.github/workflows/release.yml` exports a single embedded-pack Windows executable on
+  pull requests, on demand and on a `v*` tag, then verifies and packages it.
+- The build is verified by reading it back, not by trusting the preset:
+  `tools/verify_build.py` parses the pack out of the executable and fails when the game is
+  missing from it or the repository is in it. That is the check that caught the two things
+  "export all resources" would have shipped by default — 9.4 MB of committed screenshots
+  and the 10 MB source font.
+- The font is split: the untouched Noto Sans SC lives in `art/fonts/` (`.gdignore`d) and the
+  game loads a 325 KiB subset that `tools/subset_font.py` rebuilds from the project's own
+  text. Both CI workflows run `--check`, so text needing a character the subset lacks fails
+  with the characters named instead of shipping tofu boxes.
+- `packaging/HOW-TO-RUN.txt` travels in the zip (controls, the SmartScreen warning, the
+  known cosmetic gaps), the font licence travels beside the executable in `licences/`, and
+  `docs/PLAYTEST_CHECKLIST.md` is the ordered hands-on pass the build exists for.
+- Evidence: the release workflow's export, verify and package steps, plus the annotations
+  they publish (executable size, pack contents, zip size).
+  `docs/IMPLEMENTATION_NOTES_BUILD.md` records the decisions and the limits — no icon, no
+  signature, Windows only, no save/load or settings screen.
+
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the
   shed, the container, the bench, the climbing frame, the notice board.
-- A decision from the owner on whether the one provisional voice stays, changes, or
-  is joined by others; only then is more voice content worth writing.
+- The owner has decided (2026-11) that the one provisional voice is to be **extended into
+  several voices** rather than kept as it is. That is a content-and-rules round of its own —
+  new trigger rules, a way to tell the voices apart in the typography, and a rewrite of the
+  three hidden checks that ship now — and it is not started.
 - Retuning the dice against real playtest data.
 - A journal/notebook for what the protagonist knows, once there is enough of it
   to be worth reading.
 
 ### Phase 7 — Production readiness (planned, not started)
-- Versioned persistence, settings, accessibility, font subsetting.
+- Versioned persistence, settings, accessibility.
+- Store-grade packaging: an icon, code signing, an installer, and the Linux/macOS presets
+  the release workflow does not build.
 - Content authoring validation and reusable art pipeline.
 - Performance budgets and profiling.
 - Steam build and platform compatibility checks.

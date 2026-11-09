@@ -1,0 +1,10 @@
+# Godot must not look inside this folder.
+#
+# art/fonts/ holds the untrimmed upstream Noto Sans SC (10.6 MB, 30,890 characters). It is
+# the source the shipped subset is cut from by tools/subset_font.py, not an asset the game
+# loads: `assets/fonts/NotoSansSC-Regular.ttf` is the 330 KB subset the theme points at.
+#
+# Godot imports every `.ttf` under res:// as a FontFile and packs every imported resource
+# into the export, so leaving the full font next to the subset would have put 10.6 MB of
+# unused glyphs into every build — the reason this folder exists. Same arrangement as
+# art/props/ for the .blend sources (docs/ASSET_PIPELINE.md §5).

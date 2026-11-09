@@ -35,6 +35,11 @@ on:
       - "scenes/**"
       - "scripts/**"
       - "data/**"
+      # Assets belong in this list: the font subset and the authored props change what a
+      # frame looks like without touching a scene or a script, and a round that swaps a
+      # model should produce the frames that show it (or prove it is out of shot).
+      - "assets/**"
+      - "project.godot"
   pull_request:
     branches: [main]
     paths:
@@ -44,6 +49,11 @@ on:
       - "scenes/**"
       - "scripts/**"
       - "data/**"
+      # Assets belong in this list: the font subset and the authored props change what a
+      # frame looks like without touching a scene or a script, and a round that swaps a
+      # model should produce the frames that show it (or prove it is out of shot).
+      - "assets/**"
+      - "project.godot"
   workflow_dispatch:
 
 permissions:
