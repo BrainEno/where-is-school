@@ -72,7 +72,7 @@ class PackError(Exception):
 
 
 class _Cursor:
-    """A bounds-checked big-endian reader over the pack bytes."""
+    """A bounds-checked little-endian reader over the pack bytes."""
 
     def __init__(self, blob: bytes, offset: int) -> None:
         self.blob = blob
@@ -98,22 +98,42 @@ class _Cursor:
         self.read(size)
 
 
-def _read_directory(
-    blob: bytes, base: int, directory_offset: int, count: int, has_flags: bool
-) -> list[tuple[str, int]]:
+# Byte layout, from the engine's own readers and writers
+# (`core/io/pck_packer.cpp`, `core/io/file_access_pack.cpp`, tags 4.7.2-stable):
+#
+#   u32 magic 'GDPC' | u32 format | u32 major | u32 minor | u32 patch | u32 pack_flags
+#   u64 file_base                     offsets in the directory are relative to this
+#   -- format 3 and 4 only --
+#   u64 dir_offset                    where the directory starts, relative to the magic
+#   16 x u32 reserved                 (64 bytes)
+#   -- directory, at dir_offset --
+#   u32 file_count | per entry:
+#       u32 path_length (already padded) | path bytes
+#       u64 offset (relative to file_base) | u64 size | 16 byte md5 | u32 flags
+#
+# This was written from the v2/v3 layout and failed on the real export, which is v4: v4
+# moved the directory and stores its offset instead of leaving it after the data. Format 2
+# keeps the directory directly after the header's reserved words, and is handled so an old
+# pack still verifies.
+SUPPORTED_FORMATS = (2, 3, 4)
+RESERVED_WORDS = 16
+
+
+def _read_directory(blob: bytes, directory_offset: int) -> list[tuple[str, int]]:
     cursor = _Cursor(blob, directory_offset)
+    count = cursor.u32()
+    if count > 20000:
+        raise PackError(f"the directory at 0x{directory_offset:x} claims {count} files")
     entries: list[tuple[str, int]] = []
     for index in range(count):
         path_length = cursor.u32()
         if path_length == 0 or path_length > 4096:
             raise PackError(f"entry {index} has an implausible path length ({path_length})")
         raw = cursor.read(path_length)
-        cursor.skip((4 - path_length % 4) % 4)
-        cursor.u64()  # offset into the pack data
+        cursor.u64()  # data offset, relative to file_base
         size = cursor.u64()
         cursor.skip(16)  # the entry's md5
-        if has_flags:
-            cursor.u32()
+        cursor.u32()  # per-file flags: encrypted / removal / delta
         path = raw.rstrip(b"\x00").decode("utf-8", "replace")
         if not path.startswith("res://"):
             raise PackError(f"entry {index} is not a res:// path ({path[:40]!r})")
@@ -122,57 +142,30 @@ def _read_directory(
 
 
 def read_pack(blob: bytes, base: int) -> tuple[list[tuple[str, int]], dict[str, int]]:
-    """Return (path, size) entries and the header, from a pack starting at `base`.
-
-    Two things about the layout are not documented in one place and differ between an
-    embedded pack (appended to an executable) and a standalone one: whether `file_base` is
-    relative to the pack magic or absolute in the file, and whether the directory entries
-    carry the trailing `flags` word. Rather than assume, every combination is tried and the
-    first one that parses into a directory of `res://` paths wins. A structure that parses
-    into nonsense is rejected, so a wrong guess cannot masquerade as a short file list.
-    """
+    """Return (path, size) entries and the header, from a pack starting at `base`."""
     if blob[base : base + 4] != MAGIC:
         raise PackError(
             f"no 'GDPC' magic at offset {base}; the bytes there are {blob[base : base + 32].hex()}"
         )
     if base + 32 > len(blob):
         raise PackError(f"the pack header is truncated ({len(blob) - base} bytes from the magic)")
-    pack_version, major, minor, patch, flags, file_base = struct.unpack_from(
-        "<IIIIIQ", blob, base + 4
-    )
-    if pack_version < 1:
+    version, major, minor, patch, pack_flags = struct.unpack_from("<IIIII", blob, base + 4)
+    if version not in SUPPORTED_FORMATS:
         raise PackError(
-            f"unknown pack version {pack_version}; header begins {blob[base : base + 32].hex()}"
+            f"unsupported pack format {version}; header begins {blob[base : base + 32].hex()}"
         )
+    file_base = struct.unpack_from("<Q", blob, base + 24)[0]
     header = {
-        "version": pack_version,
+        "version": version,
         "engine": f"{major}.{minor}.{patch}",
-        "base": file_base,
+        "file_base": file_base,
+        "relative_offsets": bool(pack_flags & 0x2),
     }
-
-    problems: list[str] = []
-    for directory_base in (base + file_base, file_base):
-        if directory_base + 4 > len(blob):
-            problems.append(f"directory at 0x{directory_base:x} is past the end of the file")
-            continue
-        count = struct.unpack_from("<I", blob, directory_base)[0]
-        if count > 20000:
-            problems.append(f"directory at 0x{directory_base:x} claims {count} files")
-            continue
-        for has_flags in (pack_version >= 2, not pack_version >= 2):
-            try:
-                entries = _read_directory(blob, base, directory_base + 4, count, has_flags)
-            except PackError as error:
-                problems.append(
-                    f"directory at 0x{directory_base:x}, flags={'yes' if has_flags else 'no'}: {error}"
-                )
-                continue
-            header["base"] = directory_base - base
-            return entries, header
-    raise PackError(
-        "could not read the pack directory. Header "
-        f"{blob[base : base + 32].hex()}. Tried: " + "; ".join(problems)
-    )
+    if version >= 3:
+        directory_offset = struct.unpack_from("<Q", blob, base + 32)[0] + base
+    else:
+        directory_offset = base + 32 + RESERVED_WORDS * 4
+    return _read_directory(blob, directory_offset), header
 
 
 def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
@@ -181,10 +174,10 @@ def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, i
         return read_pack(blob, 0)
 
     # The pack is appended to the executable, so the magic is somewhere near the end — but
-    # "near the end" is not "the last occurrence": an executable can end with bytes that
-    # happen to spell GDPC (the first CI run of this tool found one four bytes from the end
-    # of the file and reported a truncated header). Every occurrence is therefore tried,
-    # newest first, and the first one that parses into a directory of res:// paths wins.
+    # "near the end" is not "the last occurrence": the exported executable ends with bytes
+    # that spell GDPC, and taking the last one reported a truncated header. Every occurrence
+    # is tried, newest first, and the first that parses into a directory of res:// paths
+    # wins; a candidate that parses into real paths is not a coincidence.
     starts: list[int] = []
     index = blob.rfind(MAGIC)
     while index != -1 and len(starts) < 64:
