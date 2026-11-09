@@ -405,11 +405,16 @@ func _enter(path: String) -> bool:
 ## later, so wait for a *routable* map rather than for a fixed number of frames: a query in
 ## that window answers with nothing, and a test that measures that window is measuring its
 ## own timing, not the game.
+##
+## The wait is about the *new room*, not about the map: right after the swap the map still
+## holds the previous room's polygons, so `is_routable()` answers yes about a floor that is
+## about to be freed. The condition that matters is the one a player would notice — the spot
+## the character was put on is walkable.
 func _await_routable(location: LocationRoot) -> void:
 	var guard := 0
 	while guard < 180:
 		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
-		if navigation != null and navigation.is_baked() and navigation.is_routable():
+		if navigation != null and navigation.is_baked() and _spawn_is_walkable(location, navigation):
 			return
 		await physics_frame
 		guard += 1
@@ -418,6 +423,17 @@ func _await_routable(location: LocationRoot) -> void:
 	var navigation := location.get_node_or_null("Navigation") as LocationNavigation
 	if navigation != null and not navigation.is_routable():
 		_notes.append("not routable: %s%s" % [String(location.location_id), _nav_report(navigation)])
+
+
+## True when the map the location's region lives in can answer the spawn: the room the
+## player was put in is the room the navigation knows about.
+func _spawn_is_walkable(location: LocationRoot, navigation: LocationNavigation) -> bool:
+	var marker := location.get_default_spawn()
+	var map := navigation.get_navigation_map()
+	if marker == null or not map.is_valid():
+		return false
+	var closest := NavigationServer3D.map_get_closest_point(map, marker.global_position)
+	return closest.distance_to(marker.global_position) < 1.0
 
 
 ## Everything needed to tell "no mesh", "mesh the map refused" and "map not synced" apart.
