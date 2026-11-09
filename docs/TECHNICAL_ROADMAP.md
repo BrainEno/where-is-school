@@ -273,6 +273,24 @@ branch.
   the timetable sheet, and a refused click against a wall. Windows hands-on checks are
   listed in the pull request and are not yet performed.
 
+### Phase 5b.2 — Interaction cues: what the mouse hears (delivered in this round)
+
+- The three click roles and the hover tick now each have a voice, synthesised in
+  `scripts/audio/cue_audio.gd` and loaded as the `CueAudio` autoload. Nothing is a file: the
+  four buffers are computed at startup from additive synthesis, so there is no sample
+  library, no import sidecar and no licensing question. The refusal's noise floor is a
+  seeded integer sequence, so the bytes are identical on every machine.
+- One vocabulary, two senses: `PointerNavigator` plays the sound that matches the role it is
+  drawing, from the same three `_mark_*` functions. `Interactable` ticks when it becomes the
+  highlighted object; `hover_cue_audio` can silence individual props and `marker_enabled`
+  silences the whole layer for a bare capture.
+- Levels are set in the code, under the room tone (−20 … −30 dB), and only the hover tick is
+  rate-limited (one per 0.12 s), because it is the only cue that can fire as fast as the
+  pointer moves.
+- Evidence: `tests/interaction_audio_test.gd` (buffers, levels, rate limit, silence, wiring)
+  plus the cue-audio counts the capture run writes into `PLAYTHROUGH.log`, since a sound
+  cannot be photographed.
+
 ### Phase 5c — The authored props in the world (delivered in this round)
 - The two owner-authored Blender props stopped being preview-only. The residential
   courtyard's three grey boxes by the planter became `playground_bench.tscn`, and the

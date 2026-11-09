@@ -647,6 +647,11 @@ func _capture_click_navigation() -> void:
 	var after_click := "not sampled"
 	var clicked := false
 	for _attempt in 3:
+		# Each attempt first asks whether the player can move at all. A capsule wedged
+		# between two desks makes `move_and_slide()` find nowhere to go, the walk watchdog
+		# cancels three times, and the retry that follows used to click the same floor from
+		# the same wedge and report "the click did not move the character".
+		await _unstick()
 		# A camera looking at the player only shows so much floor: widen the window
 		# before giving up, so "no point to click" is not reported as "the click did
 		# not move the character".
@@ -696,6 +701,11 @@ func _capture_click_navigation() -> void:
 		if walking and settled and walked > 1.5:
 			destination = "walked"
 			break
+		if walking and settled and walked < 0.2:
+			# Accepted, then cancelled without moving: a wedge, not a navigation refusal.
+			# Step clear of it and try again from somewhere the route can actually leave.
+			_note("the clicked walk was cancelled without travelling; stepping the player clear")
+			await _unstick(true)
 		if _dialogue.is_busy():
 			_note("a story beat interrupted the clicked walk; retrying once")
 			await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the interrupting beat")
@@ -719,6 +729,10 @@ func _capture_click_navigation() -> void:
 
 	# The keys take over mid-walk.
 	var second := _find_ground_click_screen(3.0, 6.0)
+	if second == Vector2.ZERO:
+		second = _find_ground_click_screen(2.0, 5.0)
+	if second == Vector2.ZERO:
+		second = _find_ground_click_screen(4.0, 8.0)
 	if second != Vector2.ZERO:
 		await _click_at_screen(second)
 		await _wait(0.25)
@@ -742,12 +756,12 @@ func _capture_click_navigation() -> void:
 		return
 	await _wait_for_free(60.0)
 	if await _position_near(sheet, 1.5):
-		var sheet_screen := _screen_position_of(sheet)
 		# The cue itself, with the real cursor resting on the object. This is the picture
 		# of what this round changed: without it the pull request would be describing a
-		# cue it cannot show.
-		await _mouse_to_world(sheet.global_position)
-		if await _wait_for_target(sheet.interact_id, 6.0):
+		# cue it cannot show. The cursor is placed by asking the controller which pixel
+		# resolves to the sheet, rather than by projecting its origin and hoping.
+		var sheet_screen: Vector2 = await _cursor_onto(sheet)
+		if sheet_screen != Vector2.ZERO and await _wait_for_target(sheet.interact_id, 6.0):
 			# Long enough for the fade to finish and for the ring to have turned: a frame
 			# taken in the first sixteenth of a second shows the cue at its dimmest.
 			await _wait(0.45)
@@ -766,7 +780,7 @@ func _capture_click_navigation() -> void:
 				_note("hover cue: the object is highlighted but carries no cue")
 		else:
 			_note("the hover cue shot found no target under the cursor; the frame is missing")
-		if _interaction.get_target_at_screen_position(sheet_screen, false) == sheet:
+		if sheet_screen != Vector2.ZERO:
 			await _click_at_screen(sheet_screen)
 			if await _wait_for_line(15.0):
 				await _shot("03f_click_inspect", "The timetable sheet opened by a click, with no key pressed.")
@@ -780,6 +794,14 @@ func _capture_click_navigation() -> void:
 		_failures.append("Could not stand in front of the timetable sheet.")
 
 	await _capture_refused_click(sheet)
+	# The cue is heard as well as seen, and a frame cannot show that. The counts are the
+	# only evidence a real run can carry for the sounds: three clicks through the real input
+	# system, so at least one accepted and one refused cue should have spoken.
+	var audio := root.get_node_or_null("CueAudio")
+	if audio != null and audio.has_method("get_counts"):
+		_note("cue audio after the mouse shots: %s" % str(audio.get_counts()))
+	else:
+		_note("cue audio: no CueAudio autoload in this run; the cues were silent")
 
 
 ## A click the world refuses: the cue has to say "no" somewhere the player is looking, and
@@ -822,12 +844,15 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 		return Vector2.ZERO
 	var rect := _player.get_viewport().get_visible_rect().size
 	for x_step in 12:
-		for y_step in 10:
-			# The dialogue panel is anchored to the bottom edge and would swallow a
-			# click aimed at the floor behind it, so the scan stays above it.
+		for y_step in 12:
+			# The dialogue panel is anchored to the bottom edge and would swallow a click
+			# aimed at the floor behind it, so the scan stays above it — but not far above:
+			# a narrow band tuned for one camera pitch left "no floor to click" behind
+			# whenever the camera settled a little differently, which turned into two
+			# different failures blaming navigation.
 			var screen := Vector2(
-				rect.x * (0.15 + 0.7 * float(x_step) / 11.0),
-				rect.y * (0.28 + 0.34 * float(y_step) / 9.0)
+				rect.x * (0.12 + 0.76 * float(x_step) / 11.0),
+				rect.y * (0.24 + 0.42 * float(y_step) / 11.0)
 			)
 			var point: Variant = navigator.get_ground_point_at(screen)
 			if point == null:
@@ -852,12 +877,17 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 ## `move_and_slide()` finds nowhere to go, and the stall watchdog cancels it three times
 ## in a row. That is a capture position problem, not a navigation one, so it is found
 ## and fixed here — and said out loud rather than silently corrected.
-func _unstick() -> void:
+## `force` skips the "can it move at all" question. It is used after a walk that was
+## accepted and then cancelled three times without travelling: `test_move()` says the capsule
+## can move (it slides along a desk), while `move_and_slide()` along the route finds nowhere
+## to go, so the unforced check returns early and the player stays wedged.
+func _unstick(force: bool = false) -> void:
 	var probe := 0.5
 	var directions := [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]
-	for direction in directions:
-		if not _player.test_move(_player.global_transform, direction * probe):
-			return
+	if not force:
+		for direction in directions:
+			if not _player.test_move(_player.global_transform, direction * probe):
+				return
 	_note("the player could not move in any direction from %s; stepping it clear" % str(_player.global_position))
 	for radius in [0.6, 1.0, 1.6, 2.2]:
 		for index in 16:
@@ -901,6 +931,40 @@ func _reaches(point: Vector3) -> bool:
 	return route[route.size() - 1].distance_to(point) <= 0.75
 
 
+## Puts the real cursor on a target, and returns the screen position that resolves to it.
+##
+## `_screen_position_of()` projects the object's *origin*, which for a prop authored at the
+## middle of its mesh can land a few pixels outside its own collision box — and the cursor
+## ray then hits the wall behind it. Instead of guessing a pixel, the same question the click
+## will ask is asked of a small ring of pixels around the projection, with a short poll
+## because the controller resolves targets on its own cadence.
+func _cursor_onto(target: Interactable) -> Vector2:
+	if target == null:
+		return Vector2.ZERO
+	var centre := _screen_position_of(target)
+	if centre == Vector2.ZERO:
+		return Vector2.ZERO
+	var rect := _player.get_viewport().get_visible_rect().size
+	var offsets := [
+		Vector2.ZERO, Vector2(0, -16), Vector2(0, 16), Vector2(-16, 0), Vector2(16, 0),
+		Vector2(0, -32), Vector2(0, 32), Vector2(-32, 0), Vector2(32, 0),
+	]
+	for offset: Vector2 in offsets:
+		var screen := Vector2(
+			clampf(centre.x + offset.x, 1.0, rect.x - 1.0),
+			clampf(centre.y + offset.y, 1.0, rect.y - 1.0)
+		)
+		Input.warp_mouse(screen)
+		await process_frame
+		if await _poll(
+			func() -> bool:
+				return _interaction.get_target_at_screen_position(screen, false) == target,
+			0.25
+		):
+			return screen
+	return Vector2.ZERO
+
+
 ## Stands the player near an object, facing it, at a spot the navigation mesh knows.
 func _position_near(target: Interactable, distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
@@ -915,7 +979,17 @@ func _position_near(target: Interactable, distance: float) -> bool:
 		var yaw := atan2(-to_target.x, -to_target.z)
 		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 		await _wait(0.2)
-		if _interaction.get_target_at_screen_position(_screen_position_of(target), false) == target:
+		# The camera trails the body and the visibility ray is cast from wherever it has got
+		# to, so a teleport needs a frame or two before the object is under the cursor. One
+		# check after a fixed sleep made this the flakiest step in the capture: give it half
+		# a second instead of one frame, and only then move on to the next angle.
+		if await _poll(
+			func() -> bool:
+				return _interaction.get_target_at_screen_position(
+					_screen_position_of(target), false
+				) == target,
+			0.5
+		):
 			return true
 	return false
 

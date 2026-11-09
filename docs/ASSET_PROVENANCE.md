@@ -29,6 +29,9 @@ synthesis script.
 
 - The audio files are regenerated deterministically by
   `python3 tools/generate_placeholder_audio.py`; the script is the provenance.
+- The four interaction cue sounds are not files at all: `scripts/audio/cue_audio.gd`
+  synthesises them at startup, in the same additive style, from constants in that script. The
+  script is therefore the whole provenance, and there is nothing to import, license or lose.
 - The one bundled third-party asset is the Noto Sans SC font above: Godot's
   built-in font has no CJK coverage, so simplified Chinese text cannot render
   without it. The license text travels with the file (`assets/fonts/OFL.txt`).
