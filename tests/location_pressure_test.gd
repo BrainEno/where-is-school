@@ -49,6 +49,8 @@ var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
 var _companion: CompanionController = null
+## One line per location, for the run's annotations: the numbers this test exists to know.
+var _notes: Array[String] = []
 
 
 func _initialize() -> void:
@@ -93,6 +95,9 @@ func _run() -> void:
 	_check_transition_log()
 
 	_print_report()
+	# A workflow annotation, because the step log is not readable from the API and these are
+	# the numbers the roadmap quotes.
+	print("::notice title=location cost::%s" % " | ".join(_notes))
 	Harness.finish(
 		self,
 		_failures,
@@ -142,6 +147,25 @@ func _check_every_location() -> void:
 		)
 		_expect(navigation.is_routable(), "%s: the navigation map cannot answer a route." % path)
 		_expect_location_route(path, location, navigation)
+		var transition := _host.get_last_transition()
+		_notes.append(
+			"%s: %.1f ms (load %.1f, inst %.1f, tree %.1f, place %.1f), bake %.1f ms, "
+			% [
+				String(location.location_id),
+				int(transition.get("total_usec", 0)) / 1000.0,
+				int(transition.get("load_usec", 0)) / 1000.0,
+				int(transition.get("instantiate_usec", 0)) / 1000.0,
+				int(transition.get("tree_usec", 0)) / 1000.0,
+				int(transition.get("placement_usec", 0)) / 1000.0,
+				navigation.get_bake_usec() / 1000.0,
+			]
+			+ "%d faces -> %d polygons, %d nodes"
+			% [
+				navigation.get_geometry_face_count(),
+				navigation.get_polygon_count(),
+				int(transition.get("scene_nodes", 0)),
+			]
+		)
 
 	print(
 		"pressure: %d location(s) entered, %d transition(s) logged."

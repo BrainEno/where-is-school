@@ -39,6 +39,14 @@ func _run() -> void:
 
 	print(dialogue.describe_load_report())
 	print(inspections.describe_load_report())
+	# The same numbers as annotations: a step log cannot be read back from the API, and the
+	# roadmap has to quote what CI actually measured.
+	print(
+		"::notice title=text corpus::%s"
+		% _summary("dialogue", dialogue.get_load_report(), "nodes", "conversations")
+		+ " | "
+		+ _summary("inspections", inspections.get_load_report(), "entries", "")
+	)
 
 	_check_dialogue(dialogue)
 	_check_inspections(inspections)
@@ -216,6 +224,21 @@ func _check_inspections(library: InspectionLibrary) -> void:
 	var text := library.describe_load_report()
 	for locale: String in L10n.LOCALES:
 		_expect(text.find(locale) >= 0, "The inspection report does not name %s." % locale)
+
+
+## "dialogue 812.4 ms; en 612.3 KB / 4318 nodes / 71 conversations; zh-CN ..." in one line.
+func _summary(label: String, report: Dictionary, unit: String, second_unit: String) -> String:
+	var parts: Array[String] = [
+		"%s %.1f ms" % [label, int(report.get("total_usec", 0)) / 1000.0]
+	]
+	var locales: Dictionary = report.get("locales", {})
+	for locale: String in locales.keys():
+		var entry: Dictionary = locales[locale]
+		var line := "%s %.1f KB / %d %s" % [locale, int(entry["bytes"]) / 1024.0, int(entry[unit]), unit]
+		if not second_unit.is_empty():
+			line += " / %d %s" % [int(entry[second_unit]), second_unit]
+		parts.append(line)
+	return ", ".join(parts)
 
 
 func _expect(condition: bool, message: String) -> void:
