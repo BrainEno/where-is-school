@@ -116,7 +116,18 @@ func _run() -> void:
 
 	# 4. The interaction prompt for the schoolbag, with the key it names.
 	await _wait_for_free(60.0)
-	_teleport(Vector3(0.55, 0, 1.7), 0.0)
+	# Stand where the schoolbag is actually offered, rather than at a coordinate that
+	# happened to face it when this was written: the room has been rebuilt since, and a
+	# hardcoded spot turns a moved prop into "the schoolbag was never offered".
+	var bag: Interactable = null
+	if _host.get_current() != null:
+		bag = _host.get_current().find_interactable(&"schoolbag")
+	if bag == null:
+		await _fail("The schoolbag is missing from the classroom.")
+		return
+	if not await _position_near(bag, 1.4):
+		_failures.append("Could not stand in front of the schoolbag.")
+		await _shot("FAIL_schoolbag_position", "No spot next to the schoolbag offered it as a target.")
 	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was never offered as an interaction target.")
 		await _shot("FAIL_schoolbag_prompt", "No prompt appeared for the schoolbag.")
@@ -139,7 +150,7 @@ func _run() -> void:
 		_failures.append("Pressing L did not switch the language.")
 	await _shot("06_chinese_world", "The same classroom after switching to simplified Chinese at runtime.")
 	await _wait_for_free(60.0)
-	_teleport(Vector3(0.55, 0, 1.7), 0.0)
+	await _position_near(bag, 1.4)
 	if not await _wait_for_target(&"schoolbag", 30.0):
 		_failures.append("The schoolbag was not prompted again after the language switch.")
 		await _shot("FAIL_prompt_chinese", "No prompt appeared after the language switch.")
