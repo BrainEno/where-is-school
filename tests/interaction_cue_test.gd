@@ -5,13 +5,14 @@ extends SceneTree
 ## These are not rendering tests — a headless run draws nothing. They pin down the things
 ## that made the old cues feel cheap and that a code reviewer can check without a picture:
 ##
-## 1. the cue has the parts it promises (`GroundRing`, `Halo`, `Shard`; ripple, dot, core,
-##    refusal), and the parts are meshes with the shared unshaded material rather than
-##    nothing or a placeholder;
-## 2. the cue is *animated*: it spins, it bobs, it breathes and it fades in and out over
-##    time instead of switching between two frames;
+## 1. the cue has the parts it promises (`GroundRing`, `Halo`, `Shard` for the object;
+##    one mark for the ground), and the parts are meshes with the shared unshaded material
+##    rather than nothing or a placeholder;
+## 2. the ground mark is *small and still*: its footprint is a fraction of the old ring's,
+##    it inks in once and then does not rotate, breathe or grow, because the walk is the
+##    animation; the object cue is the half that moves (it spins, bobs and breathes);
 ## 3. the role decides the colour, and a refused click is a different role from an
-##    accepted one — an expanding ring means "walk", a collapsing one means "no";
+##    accepted one — an accepted mark sits still, a refused one contracts and leaves;
 ## 4. the ring lies on the surface it was given (the ground normal), so a ramp gets a ring
 ##    on the ramp;
 ## 5. a cue hides itself when it is finished and does not linger, and the ring's radius
@@ -46,13 +47,14 @@ func _run() -> void:
 	await _check_interactable_wiring()
 	await _check_destination_roles()
 	await _check_destination_geometry()
+	await _check_mark_footprint()
 	await _check_refusal_collapses()
 	await _check_dismiss()
 	Harness.finish(
 		self,
 		_failures,
-		"both cues are built, animated, tied to a role, laid on the ground, and hide when "
-		+ "they are finished."
+		"the object cue is built and animated, the ground mark is small, still and laid on "
+		+ "the ground, both are tied to a role, and both hide when they are finished."
 	)
 
 
@@ -273,17 +275,20 @@ func _check_destination_roles() -> void:
 		(cue.global_position - Vector3(1.0, 0.0, 2.0)).length() < 0.1,
 		"The cue was not placed at the clicked point: %s." % str(cue.global_position)
 	)
-	var parts := cue.get_parts()
-	var ripple := parts["ripple"] as MeshInstance3D
-	var core := parts["core"] as MeshInstance3D
-	var refusal := parts["refusal"] as MeshInstance3D
-	_expect(ripple != null and ripple.visible, "An accepted click has no ripple.")
-	_expect(core != null and core.visible, "An accepted click leaves no ring to walk towards.")
-	_expect(refusal != null and not refusal.visible, "An accepted click also shows the refusal ring.")
+	var mark := cue.get_parts()["mark"] as MeshInstance3D
+	_expect(mark != null, "An accepted click draws nothing.")
+	if mark != null:
+		_expect(mark.visible, "The mark of an accepted click is not visible.")
+		_expect(
+			mark.material_override == WorldCue.material_for(WorldCue.ROLE_DESTINATION),
+			"A floor click is not drawn with the destination material."
+		)
+		_expect(mark.mesh != null, "The mark has no mesh.")
+	# One part, not four: the redesign replaced the ripple/dot/core/refusal set with a single
+	# mark, and a second part appearing again would mean the old vocabulary came back.
 	_expect(
-		(cue.get_parts()["ripple"] as MeshInstance3D).material_override
-			== WorldCue.material_for(WorldCue.ROLE_DESTINATION),
-		"A floor click is not drawn with the destination material."
+		cue.get_parts().size() == 1,
+		"The ground cue has %d parts; it is one mark now." % cue.get_parts().size()
 	)
 
 	cue.show_target(Vector3(1.0, 0.0, 2.0))
@@ -291,11 +296,11 @@ func _check_destination_roles() -> void:
 		cue.get_role() == WorldCue.ROLE_TARGET,
 		"A click on an object is drawn as '%s'." % cue.get_role()
 	)
-	_expect(
-		(cue.get_parts()["core"] as MeshInstance3D).material_override
-			== WorldCue.material_for(WorldCue.ROLE_TARGET),
-		"A click on an object is not drawn in the target colour."
-	)
+	if mark != null:
+		_expect(
+			mark.material_override == WorldCue.material_for(WorldCue.ROLE_TARGET),
+			"A click on an object is not drawn in the target colour."
+		)
 	cue.queue_free()
 	await process_frame
 
@@ -312,23 +317,35 @@ func _check_destination_geometry() -> void:
 	var up := cue.global_transform.basis.y.normalized()
 	_expect(
 		up.dot(slope) > 0.98,
-		"The ring was not laid on the ground normal (dot %.3f)." % up.dot(slope)
+		"The mark was not laid on the ground normal (dot %.3f)." % up.dot(slope)
 	)
-	var ripple := cue.get_parts()["ripple"] as MeshInstance3D
-	var start_scale := ripple.scale.x
-	await _wait(0.2)
+	var mark := cue.get_parts()["mark"] as MeshInstance3D
+	if mark == null:
+		_failures.append("The destination mark could not be inspected.")
+		return
+	# It inks in over a seventh of a second...
+	var scale_at_start := mark.scale.x
+	await _wait(0.25)
+	_expect(cue.get_opacity() > 0.95, "The mark never became visible (%.2f)." % cue.get_opacity())
 	_expect(
-		ripple.scale.x > start_scale * 1.15,
-		"The ripple does not expand (%.2f -> %.2f)." % [start_scale, ripple.scale.x]
+		mark.scale.x > scale_at_start,
+		"The mark did not settle into place (%.2f -> %.2f)." % [scale_at_start, mark.scale.x]
 	)
-	var core := cue.get_parts()["core"] as MeshInstance3D
-	var spin_before := core.rotation.y
-	await _wait(0.2)
-	_expect(spin_before != core.rotation.y, "The ring left for the player to walk towards does not turn.")
-	# The ripple is a gesture: it is over well before the walk is.
-	await _wait(0.5)
-	_expect(not ripple.visible, "The ripple is still drawn half a second after the click.")
-	_expect(core.visible, "The walk's own ring disappeared while the walk was still going.")
+	# ...and then it is still. The old cue spun and breathed for the whole walk, which is
+	# exactly what made it feel like a generic effect rather than a mark on the floor.
+	var rotation_before := mark.rotation.y
+	var scale_before := mark.scale.x
+	await _wait(0.6)
+	_expect(
+		is_equal_approx(mark.rotation.y, rotation_before),
+		"The ground mark turns after it was drawn; the walk is the animation."
+	)
+	_expect(
+		is_equal_approx(mark.scale.x, scale_before),
+		"The ground mark breathes after it was drawn (%.3f -> %.3f)."
+		% [scale_before, mark.scale.x]
+	)
+	_expect(cue.visible, "The mark disappeared while the walk was still going.")
 	cue.queue_free()
 	await process_frame
 
@@ -340,16 +357,19 @@ func _check_refusal_collapses() -> void:
 	await process_frame
 	cue.show_refused(Vector3.ZERO)
 	_expect(cue.get_role() == WorldCue.ROLE_REFUSED, "A refused click has role '%s'." % cue.get_role())
-	var parts := cue.get_parts()
-	var refusal := parts["refusal"] as MeshInstance3D
-	var ripple := parts["ripple"] as MeshInstance3D
-	_expect(refusal.visible, "A refused click draws nothing.")
-	_expect(not ripple.visible, "A refused click draws an expanding ring, which promises a walk.")
-	var start := refusal.scale.x
-	await _wait(0.18)
+	var mark := cue.get_parts()["mark"] as MeshInstance3D
+	_expect(mark != null and mark.visible, "A refused click draws nothing.")
+	if mark == null:
+		return
 	_expect(
-		refusal.scale.x < start * 0.92,
-		"The refused ring expands (%.2f -> %.2f) instead of collapsing." % [start, refusal.scale.x]
+		mark.material_override == WorldCue.material_for(WorldCue.ROLE_REFUSED),
+		"A refused click is not drawn in the refusal colour."
+	)
+	# Inward is the meaning: an outward gesture promises a walk, and here there is none.
+	await _wait(0.22)
+	_expect(
+		mark.scale.x < 1.0,
+		"The refusal does not contract (scale %.2f at 0.22 s)." % mark.scale.x
 	)
 	# It ends by itself: a refusal is not something the player has to dismiss.
 	await _wait(0.6)
@@ -357,6 +377,48 @@ func _check_refusal_collapses() -> void:
 	_expect(not cue.visible, "The refusal cue is still drawn after it ended.")
 	cue.queue_free()
 	await process_frame
+
+
+## The redesign's headline claim, measured rather than asserted in prose: the mark is a
+## fraction of the ring it replaced, and it still puts ink on the floor.
+func _check_mark_footprint() -> void:
+	Harness.stage = "mark footprint"
+	var mark := WorldCue.destination_mark_mesh()
+	_expect(mark.get_surface_count() > 0, "The destination mark has no surface.")
+	var box := mark.get_aabb()
+	var width := box.end.x - box.position.x
+	var depth := box.end.z - box.position.z
+	# 0.26 m was the radius of the old core ring, i.e. 0.52 m across. The mark has to be
+	# well under half of that, or the round did not actually make it smaller.
+	_expect(
+		maxf(width, depth) < 0.26,
+		"The mark is %.2f m across; the ring it replaced was 0.52 m." % maxf(width, depth)
+	)
+	_expect(
+		maxf(width, depth) > 0.08,
+		"The mark is only %.2f m across: small is not the same as invisible." % maxf(width, depth)
+	)
+	var radius := WorldCue.mark_footprint_radius()
+	_expect(
+		radius > 0.03 and radius < 0.13,
+		"The mark's footprint radius is %.3f m." % radius
+	)
+	# Open, not closed: the old cue was a ring, and a ring encloses an area. If the mark ever
+	# grows a closed outline again, its filled area would jump — this is the cheapest way to
+	# notice while still allowing any hand-drawn shape.
+	var area := _mesh_area(mark)
+	_expect(
+		area < 0.02,
+		"The mark covers %.3f m² of floor; it is meant to be strokes, not a filled shape." % area
+	)
+	var strokes := WorldCue.stroke_mesh(Vector2.ZERO, Vector2(0.1, 0.0), 0.02, 0.4)
+	_expect(strokes.get_surface_count() > 0, "A single stroke of the pen builds no surface.")
+	_expect(
+		_mesh_area(strokes) > 0.0,
+		"A single stroke of the pen covers no area; it would be invisible."
+	)
+	var arc := WorldCue.arc_mesh(0.08, 0.0, 70.0, 0.02)
+	_expect(arc.get_surface_count() > 0, "An arc of the pen builds no surface.")
 
 
 func _check_dismiss() -> void:
