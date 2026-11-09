@@ -318,6 +318,21 @@ def main(argv: list[str]) -> int:
         ", ".join(f"{name} ({count})" for name, count in sorted(prefixes.items())),
     )
 
+    # `.godot/` is the one directory whose purpose is not obvious from its name: it holds the
+    # exporter's converted copies of imported resources, addressed by hash. Breaking it down
+    # by extension answers "what is all this" without making anyone read a full listing.
+    imported: dict[str, int] = {}
+    for name, _ in entries:
+        if name.startswith("res://.godot/"):
+            suffix = name.rsplit(".", 1)[-1] if "." in name else "(none)"
+            imported[suffix] = imported.get(suffix, 0) + 1
+    if imported:
+        annotate(
+            "notice",
+            "imported data",
+            ", ".join(f".{suffix} {count}" for suffix, count in sorted(imported.items())),
+        )
+
     if arguments.list:
         print("\nall entries:")
         for name, size in sorted(entries):

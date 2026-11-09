@@ -101,6 +101,28 @@ then a directory of path/offset/size/md5/flags). If the engine changes the forma
 loudly with the header it saw rather than reporting a cheerful empty build. Both paths —
 `--exe` (embedded pack, the shipped artefact) and `--pck` (standalone) — are supported.
 
+## 4a. What the first real build weighed
+
+Numbers from the first successful export (CI run of this pull request), because "the build
+is small now" is worth nothing without them:
+
+| Part | Size | Note |
+|---|---|---|
+| The game (pack) | **1.31 MiB**, 246 files | Everything the engine loads: scenes, scripts, dialogue JSON, the subset font, three models, five sounds. |
+| Largest single entries | 225 KiB `.fontdata`, 206 KiB bench `.scn`, 134 KiB backpack `.scn` | The font's converted form is smaller than the 325 KiB `.ttf` it comes from, because the importer compresses it. |
+| Executable | **105 MiB** | Almost entirely the engine: the 4.7.2 release template. The game is 1% of it. |
+| Zip | **37 MiB** | What actually travels. |
+
+What is *not* in the pack, and was going to be: `docs/screenshots` (65 imported textures,
+9.4 MB of PNG), the 10 MiB source font, `tests/`, `tools/`, `art/`. The verifier checks the
+absence as firmly as the presence.
+
+The pack's layout is worth knowing when reading these numbers: an imported resource is
+stored as a `res://…​.import`-style stub plus the converted data under
+`.godot/exported/<hash>/`, and paths inside the pack carry no `res://` prefix (the packer
+strips it). That is why "is the font in the build" is answered by a per-file size budget
+rather than by looking up one exact path.
+
 ## 5. What a player downloads
 
 ```
