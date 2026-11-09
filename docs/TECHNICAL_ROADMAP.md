@@ -313,9 +313,14 @@ The three candidates compared, on the same floor from the same camera at the sam
 
 | | Design | Ink on screen | Outcome |
 |---|---|---|---|
-| A | four uneven strokes around an offset centre — **shipped** | measured per run, see the capture annotation | a mark, not a decal; legible at 2.4 m without drawing attention |
-| B | two 70° arcs at r = 0.085 with a centre dash | — | reads as a broken ring, which is the thing being removed |
-| C | three commas at 4°/121°/247° with a centre dot | — | closest to handwriting, but the gaps made it read as three separate marks |
+| A | four uneven strokes around an offset centre — **shipped** | **132 px** | a mark, not a decal; the most ink of the three, and still 3.5× smaller than the ring it replaced |
+| B | two 70° arcs at r = 0.085 with a centre dash | 115 px | the least ink, and it reads as a broken ring — which is the shape being removed |
+| C | three commas at 4°/121°/247° with a centre dot | 126 px | closest to handwriting, but the gaps read as three separate marks at camera distance |
+
+The ink is counted from the captured frames: pixels that changed within 90 px of the mark,
+against the same frame with the mark removed, on the same floor from the same camera at the
+same click. A wins on legibility and loses nothing on restraint; the comparison is
+reproducible because B and C are built by the capture script, not by a debug switch.
 
 Only A ships: B and C exist only inside `tests/capture_playthrough.gd` and are photographed
 by the capture run, so the comparison can be repeated without a debug switch in the game.
