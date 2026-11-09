@@ -1,0 +1,50 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/props/playground_bench.tscn" id="1_playground_bench"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/student_backpack.tscn" id="2_student_backpack"]
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 1
+background_color = Color(0.5, 0.515, 0.535, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.6, 0.62, 0.66, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_saturation = 0.95
+adjustment_contrast = 1.03
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(60, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.58, 0.59, 0.6, 1)
+roughness = 1.0
+
+[node name="PropAssetPreview" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_preview")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, -30, 0)
+light_color = Color(1, 0.95, 0.88, 1)
+light_energy = 0.9
+shadow_enabled = true
+directional_shadow_max_distance = 30.0
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_ground")
+material_override = SubResource("StandardMaterial3D_ground")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(3.4, 2.65, 3.8)
+rotation_degrees = Vector3(-22.86271, 41.82017, 0)
+current = true
+fov = 23.0
+far = 100.0
+
+[node name="PlaygroundBench" parent="." instance=ExtResource("1_playground_bench")]
+
+[node name="StudentBackpack" parent="." instance=ExtResource("2_student_backpack")]
+position = Vector3(0.37, 0.515, -0.06)
