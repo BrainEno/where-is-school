@@ -57,6 +57,15 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the build check itself
+        shell: bash
+        run: |
+          # `tools/verify_build.py` is the last thing standing between a release and a pack
+          # full of screenshots. Its category budgets, its limits and its pack reader are
+          # tested here, with packs this test writes, so the release job can be trusted to
+          # report what it reports.
+          python3 tests/verify_build_test.py
+
       - name: Check the bundled font covers the current text
         shell: bash
         run: |
