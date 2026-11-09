@@ -322,11 +322,24 @@ func _enter(path: String) -> bool:
 		not String(entered.location_id).is_empty(),
 		"%s entered without declaring a location_id." % path
 	)
+	var default_spawn := entered.get_default_spawn()
 	_expect(
-		_player.global_position.distance_to(entered.get_default_spawn().global_position) < 0.1,
+		default_spawn != null
+		and _player.global_position.distance_to(default_spawn.global_position) < 0.1,
 		"%s: the player was not placed on the default spawn." % path
 	)
-	await _frames(3)
+	# The bake is deferred and the region's polygons reach the navigation server a frame or
+	# two later, so wait for a *routable* map rather than for a fixed number of frames: a
+	# query in that window answers with nothing, and a test that measures that window is
+	# measuring its own timing, not the game.
+	var guard := 0
+	while guard < 120:
+		var navigation := entered.get_node_or_null("Navigation") as LocationNavigation
+		if navigation != null and navigation.is_baked() and navigation.is_routable():
+			break
+		await physics_frame
+		guard += 1
+	await _physics_frames(2)
 	return true
 
 
@@ -386,6 +399,11 @@ func _print_report() -> void:
 func _frames(count: int) -> void:
 	for _index in count:
 		await process_frame
+
+
+func _physics_frames(count: int) -> void:
+	for _index in count:
+		await physics_frame
 
 
 func _expect(condition: bool, message: String) -> void:
