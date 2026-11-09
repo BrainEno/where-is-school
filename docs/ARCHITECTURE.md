@@ -58,16 +58,30 @@ Use signals at clear boundaries. Do not create a global event bus by default; fi
 
 ## 3. Autoload policy
 
-The project contains two autoloads.
+The project contains **four** autoloads, and this list is the only place that number is
+written down.
 
-- **GameState** — runtime story flags and snapshot/restore of those flags. It is
-  not a dumping ground for quests, dialogue UI, scene transitions, audio,
-  inventory, settings, or save-file I/O.
-- **NarrativeState** — append-only narrative knowledge entries, each tagged
-  observed / reported / recalled / imagined, de-duplicated by id, with
-  snapshot/restore. It exists because knowledge categories are used by dialogue,
+| Autoload | Script | What it owns |
+|---|---|---|
+| `GameState` | `scripts/autoload/game_state.gd` | runtime story flags and snapshot/restore of those flags |
+| `NarrativeState` | `scripts/autoload/narrative_state.gd` | append-only narrative knowledge entries (observed / reported / recalled / imagined), de-duplicated by id, with snapshot/restore |
+| `Loc` | `scripts/i18n/loc.gd` | the current locale, the locale tables, and the `locale_changed` signal (see §5b) |
+| `CueAudio` | `scripts/audio/cue_audio.gd` | the four synthesised interaction cues, built once at startup (see §5e) |
+
+- **GameState** is not a dumping ground for quests, dialogue UI, scene transitions,
+  audio, inventory, settings, or save-file I/O.
+- **NarrativeState** exists because knowledge categories are used by dialogue,
   inspection, and presentation independently of gameplay flags; see
   `docs/adr/0002-dialogue-and-narrative-state.md`.
+- **Loc** is an autoload because two unrelated scenes (the HUD and the dialogue panel)
+  have to agree on the language within a frame, and because the settings that pick it
+  are read before any scene exists. It loads every language's table at startup; see §5k.
+- **CueAudio** is an autoload because the pointer, the props and the interactions all
+  make the same four sounds and must therefore be the same four buffers; it owns no
+  nodes beyond its four players.
+
+Earlier revisions of this section said "two autoloads" and did not mention `Loc` or
+`CueAudio`. That was wrong, not a plan: both had shipped in earlier rounds.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;
@@ -297,6 +311,14 @@ bakes a floor plate that paths run straight through. `get_polygon_count()` and
 `is_routable()` are the honest health checks — a baked mesh, and a map that can
 answer a route from it — and `tests/navigation_test.gd` fails a location that bakes
 nothing or whose polygons never reach the map.
+
+The bake also measures itself, once per bake rather than per frame:
+`get_bake_usec()` and `get_collect_usec()` time the whole bake and the geometry
+collection inside it, `get_geometry_face_count()` is the number of collision faces
+parsed and `get_polygon_count()` the number of walkable polygons produced, and
+`get_bake_error()` names the reason a bake failed. A debug build prints one line per
+bake; a release build prints none. The point is that "this door hitches" is a number
+(the bake, and the load that precedes it) rather than a feeling.
 
 **`PlayerController` — the only movement.** It has one `_apply_movement()` that writes
 velocity, applies gravity, calls `move_and_slide()` and turns the visual; manual input
@@ -538,6 +560,17 @@ emitted, and the return value is false. `OpeningSequence._transition_to()` fades
 and hands control back; nothing downstream (Q's placement, the objective line, the
 arrival beat) runs off a transition that did not happen.
 
+**What a transition costs, and how it is known.** `LocationHost` times its own
+transaction in debug builds and keeps the last 16 transitions in `transition_history`:
+resource load, instantiation, entering the tree (which is where the deferred bake runs),
+placing the player, committing the swap, the total, the node count of the room that was
+entered, and how many location scenes were alive at the swap — two is correct while the
+swap is in flight, more than two is a leak. The timing wraps the transaction instead of
+living inside it, so a *failed* transition is measured too, and a rollback still leaves the
+old room current. Release builds print nothing. `tests/location_pressure_test.gd` enters all
+six locations, asserts the numbers are real, and asserts that three round trips leave the
+node count and the orphan count where they started.
+
 **The story flag follows the verified scene.** `CURRENT_LOCATION` is written from the id
 of the location that was actually entered — after it was checked against the exit's
 claim — not from the exit's `destination_id` on its own. The exit and the scene can no
@@ -597,6 +630,91 @@ evidence is `tests/capture_editor_dock.gd`, which photographs it under Xvfb in C
 editor-only surface — the plugin class, the bottom panel — is covered by the manual
 checklist in that test's section of the pull request, because no CI runner opens an editor.
 
+## 5j. The ground mark: what a click leaves behind (implemented contract)
+
+The pointer draws three things in the world, and only one of them is new. `HoverCue`
+(`scripts/interaction/hover_cue.gd`) is unchanged: a dashed ring sized from the object's
+interaction radius, a wider halo, and a small shard above the prop. The *destination* cue is
+the one this round rewrote.
+
+**One part, one footprint.** `DestinationCue` (`scripts/interaction/destination_cue.gd`)
+is a single mesh, built by `WorldCue.destination_mark_mesh()` from four short strokes of
+unequal length (`MARK_STROKE` 0.019 m pen, `MARK_CENTRE` 0.011 m dot) placed off-centre,
+with tapered ends. It is **not** a ring: there are no concentric circles, no expanding
+ripple and no breathing. The old mark was a 0.52 m ring; this one's footprint is about
+14.6 cm across (`mark_footprint_radius()` reads it back out of the mesh's own bounds), and
+`tests/interaction_cue_test.gd` fails it if it grows past 0.26 m wide or shrinks under
+0.08 m — small enough to be a mark, large enough to see at the camera height the game
+actually plays at.
+
+**The three roles survive, and so do their sounds.** `show_destination()`,
+`show_target()` and `show_refused()` set `get_role()` to `destination`, `target` or
+`refused`; each role keeps the colour it had (bone / amber / rose), and `PointerNavigator`
+plays the matching `CueAudio` kind from the same `_mark_*` call that draws it, so the eye
+and the ear cannot disagree. The refusal is the same small mark shrinking and fading
+(0.72× over 0.32 s) rather than a red warning filling the screen.
+
+**It lies on the ground it was accepted on.** The click's floor hit supplies the normal;
+`WorldCue.ground_basis()` builds the basis and the mark is offset 0.02 m along it, which is
+what puts the mark on a ramp, a kerb or a tilted floor plate instead of through it.
+
+**Nothing rotates, nothing breathes.** The reveal is 0.14 s of fade-and-settle (scale from
+0.86), the dismissal is 0.12 s of fade. After that the mark is still, because a mark that
+moves while the character walks is a mark the player watches instead of the destination.
+
+## 5k. The window: size, centring and F11 (implemented contract)
+
+`scripts/ui/display_mode.gd`, as the `DisplayMode` node in `scenes/main/main.tscn`. It
+lives in the main scene, so it survives every location swap, and it does nothing else.
+
+- **1600×900 is the design size** — the viewport the interface is composed and measured at
+  (`project.godot` `[display]`, no smaller override), and the size the window opens at when
+  the screen can hold it. The window is **resizable**, with a **1280×720 minimum**: that is
+  the smallest size `tests/dialogue_layout_test.gd` and `tests/hud_layout_test.gd` verify the
+  interface at, so it is the smallest size the window may be dragged to.
+- **Centred, never off-screen.** `centred_rect()` clamps the requested size to the current
+  screen's usable area and centres what is left. It is public because the tests check the
+  arithmetic at several screen sizes rather than trusting the one laptop it was written on.
+- **F11 toggles fullscreen** (`toggle_fullscreen` action, physical keycode 4194342). The
+  windowed rectangle is remembered on the way in and restored on the way out, clamped back
+  into the usable area because the display may have changed while the game was fullscreen. A
+  second toggle inside 150 ms is ignored: a held key repeats, and a mode change costs a
+  frame. `is_fullscreen()` reports the state the node believes; `is_window_fullscreen()`
+  asks the display, because the OS shortcut exists too.
+- **It touches nothing else.** No scene is reloaded, no autoload is reset, the player does
+  not move and the dialogue is not interrupted. `tests/display_mode_test.gd` presses F11
+  mid-game and asserts exactly that: same location, same player position, same flags, same
+  child count.
+- **Headless is a real state.** Under `--headless` (every CI test) `DisplayServer` is a stub,
+  so the node still runs its state machine and the tests exercise the remembering and
+  restoring without a window; it simply never calls `DisplayServer` there.
+
+## 5l. Start-up text loading: what happens now, and what is only planned
+
+The game loads **every chapter of every language** at start-up, twice: once through
+`DialogueLibrary.load_all()` (all seven dialogue chapters × every locale), and once through
+`InspectionLibrary.load_all()` (all six inspection chapters × every locale). `L10n` also
+loads its table for every language. This is the implemented behaviour, and it is deliberate:
+parity between languages is checked at load, so a translator cannot drop a branch and have
+it discovered only when a player switches language mid-scene.
+
+What the round added is the **measurement** of that cost, not a change to it:
+
+- `DialogueLibrary` and `InspectionLibrary` each keep a `load_report` — total microseconds,
+  per-chapter JSON bytes, conversation/node/inspectable counts and per-chapter parse time,
+  per language — filled once inside `load_all()` and printed in debug builds only.
+- `DialogueController` prints one line for the whole corpus.
+- `tests/content_load_report_test.gd` cross-checks that report against the libraries
+  themselves (the counts must match `get_conversation_ids()` and `get_ids_for()`), so the
+  numbers cannot drift from the content they describe.
+
+**Not implemented, and not to be described as if it were:** lazy or per-locale loading,
+caching between runs, streaming chapters, or an async loader. The roadmap
+(`docs/TECHNICAL_ROADMAP.md`, Phase 5b.3) records the intended shape — load the active
+locale's chapters first, then the other language behind the first frame, keeping CI's
+all-languages/all-chapters validation — together with the constraint that CI must keep
+validating every language and every chapter however the runtime loads them.
+
 ## 6. Persistent identifiers and data
 
 - Use stable IDs for dialogue nodes, characters, items, locations, and story flags.
@@ -616,6 +734,25 @@ When implemented, saves should contain a schema version and explicit snapshots f
 - relevant dialogue state only if the design requires mid-dialogue continuation.
 
 Use user:// paths. Write to a temporary file, validate the result, then replace the prior save. Implement migrations before changing a released schema. Never save absolute machine paths or arbitrary Node references.
+
+## 7b. Build contents: baseline, budgets and what must not ship
+
+The release build is read back out of the pack by `tools/verify_build.py`; the numbers
+below are from that tool, and the per-category policy is written in
+[ASSET_PIPELINE.md](ASSET_PIPELINE.md) §9.
+
+- **Baseline (the release this round was measured against):** 256 files, **1.37 MiB
+  packed**, largest entries the subset font (252 KiB), the playground bench mesh (206 KiB)
+  and the student backpack mesh (134 KiB).
+- **Budgets are per kind of file** — model, font, texture, audio, scene, text, other — each
+  with a warning line and a hard limit. No category's hard limit is above the 2 MiB ceiling
+  every single file already had, so the table only tightens the rule. The pack total keeps
+  its 16 MiB hard limit and adds an 8 MiB warning line.
+- **Excluded from the build, and checked as excluded:** `docs/` (documents and captured
+  screenshots), `tests/` (the test suite and its capture scripts), `tools/` (build and
+  content scripts), `art/` (the editable `.blend` sources), `addons/` (the narrative editor
+  plugin) and `.github/`. The `.blend` files are additionally excluded from Godot's own
+  resource filesystem by `art/props/.gdignore`.
 
 ## 8. Testing boundaries
 

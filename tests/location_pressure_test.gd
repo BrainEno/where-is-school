@@ -364,6 +364,11 @@ func _check_transition_log() -> void:
 
 func _enter(path: String) -> bool:
 	var before := _host.get_current()
+	# Standing in the room the loop wants to visit next is not a reason to load a second copy
+	# of it: the opening sequence already put the classroom there, so this checks that one.
+	if _host.get_current_path() == path and before != null:
+		await _await_routable(before)
+		return true
 	var ok := _host.load_location(path, &"", _player)
 	_expect(ok, "%s could not be entered." % path)
 	if not ok:
@@ -386,19 +391,23 @@ func _enter(path: String) -> bool:
 		and _player.global_position.distance_to(default_spawn.global_position) < 0.1,
 		"%s: the player was not placed on the default spawn." % path
 	)
-	# The bake is deferred and the region's polygons reach the navigation server a frame or
-	# two later, so wait for a *routable* map rather than for a fixed number of frames: a
-	# query in that window answers with nothing, and a test that measures that window is
-	# measuring its own timing, not the game.
-	var guard := 0
-	while guard < 120:
-		var navigation := entered.get_node_or_null("Navigation") as LocationNavigation
-		if navigation != null and navigation.is_baked() and navigation.is_routable():
-			break
-		await physics_frame
-		guard += 1
+	await _await_routable(entered)
 	await _physics_frames(2)
 	return true
+
+
+## The bake is deferred and the region's polygons reach the navigation server a frame or two
+## later, so wait for a *routable* map rather than for a fixed number of frames: a query in
+## that window answers with nothing, and a test that measures that window is measuring its
+## own timing, not the game.
+func _await_routable(location: LocationRoot) -> void:
+	var guard := 0
+	while guard < 120:
+		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
+		if navigation != null and navigation.is_baked() and navigation.is_routable():
+			return
+		await physics_frame
+		guard += 1
 
 
 ## Lets the deferred bake and the physics settle before the node count is read.

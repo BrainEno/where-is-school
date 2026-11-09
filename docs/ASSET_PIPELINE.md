@@ -164,4 +164,72 @@ through `.godot/imported/…` and stop falling back to the source file:
 - **No performance budget.** A triangle budget for a prop, a character or a room needs
   a measurement on the target Windows machine, and none has been made. The numbers in
   this document are placeholder sanity limits for the graybox, not a performance claim.
+  The build-size budgets in §9 are about bytes on disk, which can be measured anywhere,
+  and are not a frame-time claim either.
 - No Windows hands-on pass over the placed chair.
+
+## 9. Build size: what a release may carry
+
+`tools/verify_build.py` reads the pack back out of the exported executable and checks it
+against the tables below. It is the only check that inspects what a player would actually
+receive: the export preset is a wish list, the pack is the truth.
+
+### 9.1 Categories and their limits
+
+Every packed file is classified by the kind of thing it is, and measured against that
+kind's budget. Classification reads the *source* extension out of the stored name, because
+an imported resource is packed as
+`.godot/exported/<hash>/<source name>-<hash>.<ext>` — so `student_backpack.glb-5817e7e.scn`
+is a model, not a scene.
+
+| Kind | Warning | Hard limit | Why those numbers |
+|---|---|---|---|
+| model | 384 KiB | 1.5 MiB | the two sample meshes pack at 206 KiB and 134 KiB; 1.5 MiB means an untrimmed Blender export or a texture baked into a mesh |
+| font | 384 KiB | 1 MiB | the subset covering every character the game can print is 252 KiB; 1 MiB means the full 10 MiB source font, or a subset without its glyph range, got packed |
+| texture | 512 KiB | 2 MiB | none ships yet; 512 KiB is a 1024×1024 RGBA image, 2 MiB is a photograph used as a wall |
+| audio | 512 KiB | 2 MiB | the placeholder cues are a few KiB each; past half a megabyte is a music track or an uncompressed recording |
+| scene | 192 KiB | 1 MiB | the largest location scene packs well under 100 KiB; a 1 MiB `.tscn` has embedded resources in it |
+| text | 128 KiB | 512 KiB | the largest dialogue or inspection chapter is about 10 KiB; 512 KiB is a whole corpus in one file |
+| other | 256 KiB | 2 MiB | project settings, pack stubs, imported banners; something over 256 KiB here is something nobody classified |
+
+**No hard limit is above 2 MiB.** That was the old flat per-file rule, so this table can
+only tighten it. The pack total keeps its **16 MiB hard limit** and gains an **8 MiB
+warning line**: the baseline is 1.37 MiB, so the hard limit leaves room for roughly eleven
+times today's content, while a release that doubles gets a warning before it doubles again.
+
+**A warning does not fail the release; a hard limit does.** Warnings are printed and
+attached to the workflow run as annotations, which is where a build that has grown should
+be visible while it is still cheap to fix.
+
+### 9.2 What the report looks like
+
+```
+by category (warn / hard):
+  model       2 file(s)   340 KiB  [384 KiB / 1.50 MiB]  ok  largest: bench_playground.glb-... 206 KiB
+  font        2 file(s)   252 KiB  [384 KiB / 1.00 MiB]  ok  largest: NotoSansSC-Regular.ttf-... 252 KiB
+  ...
+```
+
+One line per kind of asset, with the largest file of that kind next to it: a pack that
+doubled is either one heavy kind or a little of everything, and this answers which without
+reading a listing of 256 paths.
+
+### 9.3 What must not be in a build
+
+`docs/` (including the captured screenshots), `tests/`, `tools/`, `art/`, `addons/` and
+`.github/` are **forbidden prefixes**: a single file under any of them fails the release.
+The `.blend` sources under `art/` are additionally kept out of Godot's own resource
+filesystem by `art/props/.gdignore`, because the `.blend` importer needs a Blender binary
+that neither a clean checkout nor CI has. `scenes/main/main.tscn`, the theme, both
+languages of dialogue and inspections, the audio directory and the font stub are
+**required prefixes**: their absence fails the release too, because a build that starts
+without the game in it is worse than a big one.
+
+### 9.4 How it is tested
+
+`tests/verify_build_test.py` runs in CI on every pull request and needs no engine: 75
+boundary checks over the classification of the exporter's hashed names, **both sides of
+every warning line and every hard limit**, the pack total at its limit and one byte over,
+the forbidden and required folders, and the pack reader itself, against synthetic v2, v3
+and v4 packs — including an embedded pack with a decoy `GDPC` after it, which is the case
+that made the first version of the reader report a build with no files in it.

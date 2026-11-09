@@ -71,7 +71,15 @@ func bake_region() -> bool:
 		_report("")
 		navigation_baked.emit(false)
 		return false
-	var mesh: NavigationMesh = navigation_mesh
+	# Bake into a copy, never into the resource the scene was packed with. A `.tscn` shares
+	# its sub-resources between every instance of that scene, so baking in place writes one
+	# instance's floor into the mesh another instance is using — which happens the first time
+	# a location is entered while an instance of it is still loaded, and looks exactly like a
+	# room whose navigation silently stopped answering.
+	var packed_mesh := navigation_mesh
+	var mesh: NavigationMesh = null
+	if packed_mesh != null:
+		mesh = packed_mesh.duplicate() as NavigationMesh
 	if mesh == null:
 		mesh = NavigationMesh.new()
 	_configure(mesh)
