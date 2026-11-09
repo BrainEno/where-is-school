@@ -186,6 +186,12 @@ jobs:
           run_check pointer_target_switch 300 godot --headless --resolution 1600x900 --path . --script res://tests/pointer_target_switch_test.gd || status=1
           run_check interaction_occlusion 300 godot --headless --resolution 1600x900 --path . --script res://tests/interaction_occlusion_test.gd || status=1
           run_check interaction_visibility_sweep 300 godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd || status=1
+          # Compiles the window capture script. No test loads it — only the capture
+          # workflow does — so until now a parse error in it reached CI only as a capture
+          # run that quietly produced nothing and read a stale log instead. `--check-only`
+          # fails on the same errors the real run would, in a few seconds and without a
+          # display.
+          run_check capture_script 120 godot --headless --path . --check-only --script res://tests/capture_playthrough.gd || status=1
           # The two cues the mouse draws: their parts, their motion, their colour per
           # role, the ground they are laid on, and that they hide when finished.
           run_check interaction_cue 180 godot --headless --path . --script res://tests/interaction_cue_test.gd || status=1
