@@ -224,9 +224,9 @@ func _check_placement() -> void:
 	if packed == null:
 		_failures.append("The residential location could not be loaded.")
 		return
-	var location := packed.instantiate()
+	var location := packed.instantiate() as LocationRoot
 	if location == null:
-		_failures.append("The residential location could not be instantiated.")
+		_failures.append("The residential location could not be instantiated as a LocationRoot.")
 		return
 	root.add_child(location)
 
