@@ -414,7 +414,12 @@ func _await_routable(location: LocationRoot) -> void:
 	var guard := 0
 	while guard < 180:
 		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
-		if navigation != null and navigation.is_baked() and _spawn_is_walkable(location, navigation):
+		if (
+			navigation != null
+			and navigation.is_baked()
+			and navigation.map_knows_geometry()
+			and _spawn_is_walkable(location, navigation)
+		):
 			return
 		await physics_frame
 		guard += 1

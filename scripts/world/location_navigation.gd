@@ -51,6 +51,16 @@ var _source_face_count: int = 0
 var _bake_usec: int = 0
 var _collect_usec: int = 0
 
+## How many physics frames the region gives the navigation server to accept the mesh it just
+## baked. The server parses a region's mesh and rebuilds the map on its own schedule, and a
+## map that has not rebuilt yet answers queries from whatever it held before — which, right
+## after a location swap, is the room that was just freed. That is not a rare state: it is
+## the frame the player arrives on, so the region keeps handing the mesh over until the map
+## answers for *this* geometry, and says so if it never does.
+const ROUTE_RECHECK_FRAMES := 6
+
+var _route_checks_left: int = 0
+
 
 func _ready() -> void:
 	add_to_group("location_navigation")
@@ -97,13 +107,10 @@ func bake_region() -> bool:
 	# The map reads the region on its own schedule; force one update so the first
 	# path query after a load is answered instead of returning an empty path.
 	NavigationServer3D.map_force_update(get_navigation_map())
-	if _baked and not is_routable():
-		# Handing the mesh over again makes the region re-read it; on the first load
-		# of a session the map can be too new to have picked the polygons up yet.
-		navigation_mesh = null
-		navigation_mesh = mesh
-		NavigationServer3D.map_force_update(get_navigation_map())
 	_map_region_count = get_map_region_count()
+	if _baked:
+		_route_checks_left = ROUTE_RECHECK_FRAMES
+		call_deferred("_verify_baked_geometry")
 	if _baked and _map_region_count <= 0:
 		# A mesh with polygons that never reached the map is invisible to every path
 		# query. That is a wiring problem, and it must not look like an empty room.
@@ -116,6 +123,58 @@ func bake_region() -> bool:
 	_report(String(root.name))
 	navigation_baked.emit(_baked)
 	return _baked
+
+
+## True when the navigation map can answer for the geometry *this region* baked: the closest
+## walkable point to a corner of this mesh has to be that corner. A map that has not picked the
+## mesh up answers from another room's polygons (or from nothing), and the distance gives it
+## away. This is the difference between "a route exists somewhere on the map" and "a route
+## exists in the room the player is standing in".
+func map_knows_geometry() -> bool:
+	if not _baked:
+		return false
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return false
+	var probe := _mesh_probe_point()
+	var closest := NavigationServer3D.map_get_closest_point(map, probe)
+	return closest.distance_to(probe) < 1.0
+
+
+## A corner of the baked mesh, in world space. Vertices of a navigation mesh are on its
+## boundary, so the map's answer for one of them is that vertex — if the map has the mesh.
+func _mesh_probe_point() -> Vector3:
+	var mesh := navigation_mesh
+	if mesh == null:
+		return global_position
+	var points := mesh.get_vertices()
+	if points.is_empty():
+		return global_position
+	return global_transform * points[0]
+
+
+## Hands the mesh over again until the map answers for it, then gives up loudly. Runs on the
+## frames after a bake, not every frame: at most `ROUTE_RECHECK_FRAMES` times per bake.
+func _verify_baked_geometry() -> void:
+	if not is_inside_tree() or not _baked:
+		return
+	if map_knows_geometry():
+		return
+	if _route_checks_left <= 0:
+		_bake_error = (
+			"the navigation map never accepted the baked mesh (%d faces, %d polygons); "
+			% [_source_face_count, _polygon_count]
+			+ "it is still answering a different surface"
+		)
+		push_warning("LocationNavigation: %s" % _bake_error)
+		return
+	_route_checks_left -= 1
+	var mesh := navigation_mesh
+	navigation_mesh = null
+	navigation_mesh = mesh
+	NavigationServer3D.map_force_update(get_navigation_map())
+	await get_tree().physics_frame
+	_verify_baked_geometry()
 
 
 ## How long the last bake took, and how much of that was collecting geometry. Zero until a
