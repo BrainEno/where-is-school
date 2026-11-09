@@ -131,6 +131,23 @@ produce, whatever the version:
 `tools/build_sample_models.py --check` runs in CI as well: the committed binaries are
 reproducible from the script.
 
+### The import pass is part of the contract
+
+Asset metadata (`.import`, `.uid`) is tracked in this repository. That changes what an
+import pass has to do, because a tracked sidecar makes the engine resolve an asset
+through `.godot/imported/…` and stop falling back to the source file:
+
+- CI imports with `godot --headless --path . --import`, which waits for the import
+  queue to drain. `--editor --quit` returns after one frame, while the first scan is
+  still running on its worker thread, and with sidecars in the tree that leaves every
+  binary asset unresolvable even though the import "succeeded".
+- The `import audit` step in `.github/workflows/godot-ci.yml` then reads the
+  `res://.godot/imported/…` paths out of each `.import` and fails when one is missing,
+  so a silent gap fails at the import instead of as a confusing size check later.
+- `art/` holds the editable sources (`.blend`) and is excluded from the resource
+  filesystem with `art/props/.gdignore`: Godot's `.blend` importer needs a Blender
+  binary, and neither a clean checkout nor CI has one.
+
 ## 8. Not in this round
 
 - No real art, no textures, no animation, no LOD, no lightmap UVs.

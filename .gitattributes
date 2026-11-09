@@ -1,13 +1,56 @@
+# Normalise text to LF in the repository, on every platform.
+#
+# Without this, a Windows checkout commits CRLF and the next Linux (CI) or
+# macOS clone shows whole-file diffs. Godot's own text formats (.tscn, .tres,
+# .godot, .gd) are the files this matters for most.
 * text=auto eol=lf
+
+# --- Text formats that must stay LF and must never be "auto" --------------
+# Marked text explicitly so `text=auto`'s binary heuristic can never reclassify
+# them, and so diff/grep keep working.
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.gdshaderinc text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.uid text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.cfg text eol=lf
+*.py text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# --- Binary assets: never touched, never diffed as text -------------------
+# `-text` disables any line-ending translation. Without it Git can rewrite
+# bytes inside a binary file on checkout, which silently corrupts models,
+# audio, fonts and textures. `-diff` stops Git from trying to render a text
+# diff for them.
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.webp binary
+*.svg text eol=lf
+*.exr binary
+*.hdr binary
 *.ogg binary
 *.wav binary
 *.mp3 binary
+*.flac binary
 *.glb binary
-*.gltf text eol=lf
 *.blend binary
 *.ttf binary
 *.otf binary
+*.woff binary
+*.woff2 binary
+*.res binary
+
+# glTF is a JSON text format; the .bin sidecar it may reference is binary.
+*.gltf text eol=lf
+*.bin binary

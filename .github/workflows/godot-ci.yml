@@ -97,7 +97,44 @@ jobs:
           }
 
           status=0
-          run_check import 420 godot --headless --editor --path . --quit || status=1
+          # The import has to be *blocking*. `--editor --quit` returns after one frame,
+          # while the first filesystem scan is still running on its worker thread, so
+          # `.godot/imported/` stays empty. That was harmless while no `.import` sidecar
+          # was tracked: an asset without a sidecar is loaded from the source file by its
+          # own loader. With the sidecars committed it stops being harmless, because a
+          # sidecar makes the engine resolve the path through `.godot/imported/...` and
+          # never fall back to the source — so the font, the GLBs and the WAVs all
+          # became "non-existent" for the tests further down. `--import` is the engine's
+          # own "import, then quit" mode and it waits for the queue to drain.
+          # Its exit code is not the verdict: the project theme is loaded at start-up,
+          # before the font it points at has been imported, so a first-pass error there
+          # is expected. The audit right after is the verdict.
+          run_check import 420 godot --headless --path . --import || true
+
+          # Every committed `.import` names the file Godot must produce for it. A sidecar
+          # whose file is missing is exactly the state described above, and it is silent:
+          # the import log looks fine and the failure only shows up later, in whatever
+          # test happens to load that asset, pointing at the asset instead of the import.
+          echo "=== import audit: every committed .import must have its imported file"
+          missing=0
+          while IFS= read -r sidecar; do
+            while IFS= read -r dest; do
+              if [ -z "${dest}" ]; then
+                continue
+              fi
+              if [ ! -f "${dest#res://}" ]; then
+                echo "MISSING ${dest} (declared by ${sidecar})"
+                missing=1
+              fi
+            done < <(grep -o 'res://\.godot/imported/[^"]*' "${sidecar}" | sort -u)
+          done < <(find . -name '*.import' -not -path './.godot/*' | sort)
+          if [ "${missing}" -ne 0 ]; then
+            echo "IMPORT_AUDIT=failure"
+            echo "::error title=import audit::a committed .import sidecar has no imported file (see the MISSING lines)"
+            status=1
+          else
+            echo "IMPORT_AUDIT=success"
+          fi
           run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
           run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
@@ -112,6 +149,7 @@ jobs:
           run_check dialogue_check 180 godot --headless --path . --script res://tests/dialogue_check_test.gd || status=1
           run_check content_integrity 180 godot --headless --path . --script res://tests/content_integrity_test.gd || status=1
           run_check model_import 300 godot --headless --path . --script res://tests/model_import_test.gd || status=1
+          run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1
