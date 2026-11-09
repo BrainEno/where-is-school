@@ -14,6 +14,10 @@ reasoning and the evidence.
 - **Click a person, a prop or a door** and the character walks to a spot inside that
   object's interaction radius and uses it on arrival. Clicking something already
   within reach uses it immediately, without a step.
+- **Hear the click land.** Every one of those clicks answers in the ears as well as on the
+  floor: a soft tick where a walk was accepted, the same tick a little brighter on an object,
+  a closed thud when the world refuses, and a very quiet tick when the pointer finds something
+  it can use. The sounds are synthesised in the code and sit under the room tone.
 - **Keep using the keyboard.** WASD/arrows still walk, and holding any of them during
   an automatic walk takes over. **E** still activates the highlighted object without
   moving. The mouse is an addition, not a replacement.
@@ -138,11 +142,55 @@ Two things were deliberately *not* done:
   keeps its text and gains a 0.12 s fade; nothing was invented to fill the gap.
 
 Evidence: `tests/interaction_cue_test.gd` (headless: parts, motion, roles, ground
-alignment, self-dismissal, radius follows the interaction radius) plus three capture frames
+alignment, self-dismissal, radius follows the interaction radius) and
+`tests/interaction_audio_test.gd` (the same cues as sound: buffers, levels, the hover rate
+limit, silence, and that the drawing code asks for the matching cue) plus three capture frames
 — `03a_click_destination`, the new `03d_hover_cue` (real cursor on the timetable sheet) and
 `03g_refused_click` (a click on a wall). What a headless test cannot prove is what the
 cues *look* like; that is what the frames are for, and a human pass on Windows is still
 listed in the pull request.
+
+### The cue has a voice
+
+The shapes answer "did that register, and where"; they do not answer it when the player is
+looking somewhere else on the screen, which is most of the time. A click is now
+acknowledged in the ears as well:
+
+| cue | sound | level |
+|---|---|---|
+| destination (floor) | 430 Hz dry tick, 0.15 s | −20 dB |
+| target (object) | 575 Hz, the same tick a little brighter | −20 dB |
+| refused | 138 Hz closed thud with a noise floor, 0.24 s | −22 dB |
+| hover | 1180 Hz tick, 0.045 s | −30 dB |
+
+Choices worth writing down:
+
+- **Nothing is a file.** `scripts/audio/cue_audio.gd` computes the four buffers at startup
+  with the same additive synthesis `tools/generate_placeholder_audio.py` uses for the room
+  tones. No sample library, no `.import` sidecar, no licence row to maintain — the same
+  reason the cues are drawn with `SurfaceTool` instead of authored meshes. The refusal's noise
+  is a seeded integer sequence, so the bytes are identical on every machine, which is what
+  lets a test assert on peaks at all.
+- **The role decides both senses.** `PointerNavigator` calls `_announce(role)` before it draws
+  the shape of that role, and `Interactable` ticks when it becomes the highlighted object. No
+  third piece of code decides that a refusal is "bad", so the picture and the sound cannot
+  drift apart.
+- **Only the hover tick is rate-limited** (one per 0.12 s). It fires whenever the highlighted
+  object changes, which happens as the pointer sweeps a room; the three click sounds are not
+  limited, because a click is always worth hearing and a player cannot produce two in ten
+  milliseconds. Two voices per sound let a second click play beside the first instead of
+  cutting it off.
+- **The sounds sit under the room tone**, at −20 … −30 dB, with the refusal the quietest of
+  the three clicks. A cue is an acknowledgement, not an event; the school bell stays the
+  loudest thing in the scene.
+- **Silence is a first-class state.** `set_silent()` exists for the settings screen that does
+  not exist yet, and a muted cue is not counted, because the counter is meant to mean "heard".
+  A headless run that registered no autoloads finds no `CueAudio` node and plays nothing
+  rather than failing.
+
+A sound cannot be photographed, so the capture run writes the counts into its log
+(`cue audio after the mouse shots: {…}`) — a real click through the real input system has to
+move those numbers, and that is the only evidence a headless CI can carry for audio.
 
 ### The frames, and why there had been none
 

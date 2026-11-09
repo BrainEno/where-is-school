@@ -354,6 +354,15 @@ world. One click resolves to exactly one of three outcomes:
   hover cue's ground ring is projected the same way, downwards: an interactable is authored
   at the middle of its prop, so `Interactable` casts one ray to find the floor under it and
   draws the ring there rather than at the sheet's own height.
+- **The cue is heard as well as seen.** `scripts/audio/cue_audio.gd` (the `CueAudio`
+  autoload) owns four synthesised buffers — bone, amber, refusal and the hover tick — and the
+  role that decides the colour decides the sound: the navigator calls `_announce(role)`
+  before it draws, and the interaction controller's highlight makes the hover tick. The
+  buffers are computed at startup, not shipped: no file per sound, no import sidecar, no
+  licence. Levels live in the same file as the tones (−20 … −30 dB, under the room tone), and
+  only the hover tick is rate-limited, because it is the only one the pointer can machine-gun.
+  A headless run without autoloads looks the node up by path, finds nothing, and stays silent
+  rather than failing.
 - **Nothing here decides anything.** The navigator decides what a click meant and tells the
   cue; the cue knows no targets, routes or walks. The object's own highlight stays with
   `InteractionController` — exactly one interactable is ever lit, which is what makes "E
@@ -377,6 +386,11 @@ rewrite touching only the classroom door.
 they claim to have, that they are animated, that a role decides the colour, that the ring
 is laid on the ground normal it was given, that a refusal collapses and ends itself, that a
 cue hides when it is finished, and that the hover ring follows the interaction radius.
+
+`tests/interaction_audio_test.gd` — the same cues in the ears: four distinct 16-bit mono
+buffers, their peak levels, that an unknown kind plays nothing, that muting counts nothing,
+that twelve hover ticks in one frame produce one sound and the next interval produces another,
+and that `Interactable` and `PointerNavigator` ask for the sound that matches what they draw.
 
 The same workflow compiles `tests/capture_playthrough.gd` with `--check-only`. No test loads
 that script — only the window capture does — and a parse error in it once hid for weeks
