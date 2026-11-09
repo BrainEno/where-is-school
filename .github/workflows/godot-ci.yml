@@ -119,15 +119,21 @@ jobs:
             # here, which is how the per-location and per-corpus numbers become readable.
             grep -E "^::(notice|warning|error) " "ci-logs/${name}.log" | head -n 12 || true
             if [ "${code}" -eq 0 ]; then
-              echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
+              # One notice per *step*, not one per test: a runner keeps only the first
+              # handful of annotations from a step, and forty green notices push the one red
+              # one out of the report. Passed checks are counted and announced below.
+              passed="${passed}${name} "
             else
               echo "::error title=${name} failed (exit ${code})::${summary:-no summary captured}"
               echo "${summary}"
             fi
+            checks=$((checks + 1))
             return "${code}"
           }
 
           status=0
+          checks=0
+          passed=""
           # The import has to be *blocking*. `--editor --quit` returns after one frame,
           # while the first filesystem scan is still running on its worker thread, so
           # `.godot/imported/` stays empty. That was harmless while no `.import` sidecar
@@ -227,6 +233,9 @@ jobs:
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
 
           echo "overall status: ${status}"
+          echo "checks run: ${checks}"
+          printf 'passed: %s\n' "${passed}"
+          echo "::notice title=headless checks::${checks} check(s), status ${status}; passed: ${passed}"
           exit "${status}"
 
       - name: Measure the text corpus, the locations and the bake
