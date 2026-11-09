@@ -6,16 +6,16 @@ extends SceneTree
 ##
 ## 1. the options are ordinary `Button`s, so a left click selects exactly one of them,
 ##    once — never two, never none;
-## 1b. the reading band is the surface that continues the line: a click inside the box
+## 2. the reading band is the surface that continues the line: a click inside the box
 ##    advances (or finishes a line still typing), a click outside it does neither, and
 ##    neither of them reaches the world;
-## 2. a click that a `Control` consumed must not reach the world. The world counts the
+## 3. a click that a `Control` consumed must not reach the world. The world counts the
 ##    mouse presses that arrive as unhandled input, and that counter is checked against
 ##    a control case (a click on nothing but the world) so a zero means something;
-## 3. the digit keys still pick an option by number;
-## 4. the panel stays above the HUD, and the option buttons carry hover styling, so
+## 4. the digit keys still pick an option by number;
+## 5. the panel stays above the HUD, and the option buttons carry hover styling, so
 ##    pointing at an option is visible feedback and not just a click target;
-## 5. switching language re-renders the options in the new language without losing
+## 6. switching language re-renders the options in the new language without losing
 ##    them: the same number of options, different text.
 ##
 ## The real conversation used here is the classroom's `n_class`, the same one the
@@ -96,7 +96,8 @@ func _run() -> void:
 
 	Harness.finish(
 		self, _failures,
-		"a left click chooses exactly one option, never reaches the world, and the digits and the language switch still work."
+		"a left click inside the band continues the line, a click on an option chooses exactly one, "
+		+ "neither reaches the world, a click outside the band does nothing, and the digits and the language switch still work."
 	)
 
 
