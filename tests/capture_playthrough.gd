@@ -726,9 +726,6 @@ func _capture_cue_candidates() -> void:
 		holder.queue_free()
 		await process_frame
 	_note("cue candidates: ink on screen (px within 90 px of the mark) = %s" % str(inked))
-	# Also as a warning: the annotation is the only part of a capture run that can be read
-	# back from outside the artifact, and the point of the measurement is to be comparable.
-	push_warning("cue candidates: ink on screen = %s" % str(inked))
 
 	for index in designs.size():
 		var offset := ahead * (1.8 + 0.6 * float(index))

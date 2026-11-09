@@ -145,7 +145,11 @@ func _check_every_location() -> void:
 			navigation.get_bake_usec() >= navigation.get_collect_usec(),
 			"%s: collecting geometry took longer than the whole bake." % path
 		)
-		_expect(navigation.is_routable(), "%s: the navigation map cannot answer a route." % path)
+		_expect(
+			navigation.is_routable(),
+			"%s: the navigation map cannot answer a route.%s"
+			% [path, _nav_report(navigation)]
+		)
 		_check_walkable_around(path, location, navigation)
 		_note_spawn_pairs(path, location, navigation)
 		var transition := _host.get_last_transition()
@@ -194,7 +198,8 @@ func _check_walkable_around(
 	var snap := origin.distance_to(marker.global_position)
 	_expect(
 		snap < 1.5,
-		"%s: the default spawn is %.1f m from the nearest walkable point." % [path, snap]
+		"%s: the default spawn is %.1f m from the nearest walkable point.%s"
+		% [path, snap, _nav_report(navigation)]
 	)
 	var reached := 0
 	for index in RING_DIRECTIONS:
@@ -212,8 +217,8 @@ func _check_walkable_around(
 		reached += 1
 	_expect(
 		reached >= RING_MINIMUM_REACHED,
-		"%s: only %d of %d directions around the spawn are walkable for 4 m."
-		% [path, reached, RING_DIRECTIONS]
+		"%s: only %d of %d directions around the spawn are walkable for 4 m.%s"
+		% [path, reached, RING_DIRECTIONS, _nav_report(navigation)]
 	)
 
 

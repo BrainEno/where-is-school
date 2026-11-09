@@ -114,6 +114,10 @@ jobs:
                 | head -n 12 | tr '\n' '|' | cut -c1-4000)
             fi
             grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:" "ci-logs/${name}.log" | head -n 20 || true
+            # A test that prints `::notice …` is describing what it measured. The engine's
+            # output goes to a file above, so the runner never sees those lines; re-emit them
+            # here, which is how the per-location and per-corpus numbers become readable.
+            grep -E "^::(notice|warning|error) " "ci-logs/${name}.log" | head -n 12 || true
             if [ "${code}" -eq 0 ]; then
               echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
             else
