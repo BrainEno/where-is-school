@@ -335,6 +335,12 @@ func _expect_error(label: String, registry: InnerAbilities, needles: Array) -> v
 			)
 
 
+func _expect(condition: bool, message: String) -> void:
+	_checks += 1
+	if not condition:
+		_failures.append(message)
+
+
 # --- fixture ----------------------------------------------------------------
 
 

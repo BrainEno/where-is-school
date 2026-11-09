@@ -931,7 +931,7 @@ func _check_dialogue_rules() -> void:
 		var root: Variant = _parsed_candidates.get(locale, null)
 		if not (root is Dictionary):
 			continue
-		var path := _docs[locale].path if _docs.has(locale) else locale
+		var path: String = _docs[locale].path if _docs.has(locale) else locale
 		var conversations: Variant = (root as Dictionary).get("conversations", null)
 		if not (conversations is Dictionary):
 			continue
@@ -971,7 +971,7 @@ func _check_inspection_rules() -> void:
 		var root: Variant = _parsed_candidates.get(locale, null)
 		if not (root is Dictionary):
 			continue
-		var path := _docs[locale].path if _docs.has(locale) else locale
+		var path: String = _docs[locale].path if _docs.has(locale) else locale
 		var data: Dictionary = root
 		for key: Variant in data.keys():
 			if not _is_inspection_entry(key, data):
@@ -992,7 +992,7 @@ func _check_ability_rules() -> void:
 		var root: Variant = _parsed_candidates.get(locale, null)
 		if not (root is Dictionary):
 			continue
-		var path := _docs[locale].path if _docs.has(locale) else locale
+		var path: String = _docs[locale].path if _docs.has(locale) else locale
 		var abilities: Variant = (root as Dictionary).get("abilities", null)
 		if not (abilities is Dictionary):
 			continue
