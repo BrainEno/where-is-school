@@ -1693,8 +1693,13 @@ func _write_log() -> void:
 			continue
 		var file_part := line.get_slice("screenshot ", 1)
 		var shot_name := file_part.get_slice(":", 0).strip_edges()
-		var caption := file_part.get_slice(":", 1).strip_edges()
-		caption = caption.substr(0, caption.rfind(" ("))
+		# Everything after the first colon is the caption: reading the slice between the
+		# first and second colon cut every caption that had a colon of its own in half,
+		# which is most of the ones written as "what it is: what the frame shows".
+		var caption := file_part.substr(file_part.find(":") + 1).strip_edges()
+		var size_at := caption.rfind(" (")
+		if size_at > 0:
+			caption = caption.substr(0, size_at).strip_edges()
 		markdown.append("## %s" % shot_name)
 		markdown.append("")
 		markdown.append(caption)
