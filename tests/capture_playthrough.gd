@@ -30,6 +30,10 @@ var _loc: Node = null
 
 var _log_lines: Array[String] = []
 var _failures: Array[String] = []
+## Why the last `_find_ground_click_screen` calls found nothing. Filled whether or not
+## they succeed; a failure that says "no second floor point was clickable" without
+## saying which of the four ways it was rejected is a failure nobody can act on.
+var _ground_search_log: Array[String] = []
 var _shot_index: int = 0
 
 
@@ -1049,6 +1053,7 @@ func _capture_click_navigation() -> void:
 		)
 
 	# The keys take over mid-walk.
+	_ground_search_log.clear()
 	var second := _find_ground_click_screen(3.0, 6.0)
 	if second == Vector2.ZERO:
 		second = _find_ground_click_screen(2.0, 5.0)
@@ -1068,7 +1073,12 @@ func _capture_click_navigation() -> void:
 		if not was_walking or not stopped:
 			_failures.append("Holding a movement key did not take over from the automatic walk.")
 	else:
-		_failures.append("No second floor point was clickable for the interruption shot.")
+		# The three bands and their numbers travel with the failure: "nothing was
+		# clickable" is four different problems depending on which test rejected what.
+		_failures.append(
+			"No second floor point was clickable for the interruption shot (%s)."
+			% ("; ".join(_ground_search_log) if not _ground_search_log.is_empty() else "no search ran")
+		)
 
 	# A click on a prop: the inspection, reached by the mouse only.
 	var sheet := _host.get_current().find_interactable(&"timetable")
@@ -1162,8 +1172,14 @@ func _capture_refused_click(near: Interactable) -> void:
 func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vector2:
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	if navigator == null:
+		_ground_search_log.append("%.0f-%.0f m: no PointerNavigator" % [min_distance, max_distance])
 		return Vector2.ZERO
 	var rect := _player.get_viewport().get_visible_rect().size
+	var no_ground := 0
+	var out_of_range := 0
+	var on_a_target := 0
+	var unreachable := 0
+	var nearest := INF
 	for x_step in 12:
 		for y_step in 12:
 			# The dialogue panel is anchored to the bottom edge and would swallow a click
@@ -1177,17 +1193,31 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 			)
 			var point: Variant = navigator.get_ground_point_at(screen)
 			if point == null:
+				no_ground += 1
 				continue
 			var distance := Vector2(
 				point.x - _player.global_position.x, point.z - _player.global_position.z
 			).length()
+			nearest = minf(nearest, distance)
 			if distance < min_distance or distance > max_distance:
+				out_of_range += 1
 				continue
 			if _interaction.get_target_at_screen_position(screen, false) != null:
+				on_a_target += 1
 				continue
 			if not _reaches(point):
+				unreachable += 1
 				continue
 			return screen
+	# Nothing in this band. The counts, the closest floor the scan did see, and where the
+	# player stood: enough to tell a camera looking at a wall from a floor the navigation
+	# map refuses to reach.
+	_ground_search_log.append(
+		"%.0f-%.0f m: %d points, %d with no ground under them, %d out of range, "
+		% [min_distance, max_distance, 12 * 12, no_ground, out_of_range]
+		+ "%d on a target, %d unreachable, nearest %.1f m, player at %s"
+		% [on_a_target, unreachable, nearest, str(_player.global_position)]
+	)
 	return Vector2.ZERO
 
 
