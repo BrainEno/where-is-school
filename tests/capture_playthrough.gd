@@ -769,10 +769,12 @@ func _capture_imported_models() -> void:
 		facing = Vector3(0.0, 0.0, 1.0)
 	facing = facing.normalized()
 	await _shot_from_camera(
-		player_point + facing * 2.4 + Vector3(0.0, 1.25, 0.0),
-		player_point + Vector3(0.0, 0.85, 0.0),
+		player_point + facing * 2.4 + Vector3(0.0, 1.32, 0.0),
+		player_point + Vector3(0.0, 1.1, 0.0),
 		"03j_protagonist",
-		"The player's authored protagonist, standing on the classroom floor, head to feet."
+		"The player's authored protagonist, standing on the classroom floor, head to feet, "
+		+ "under the nameplate the game shows.",
+		_player.get_node_or_null(^"Nameplate") as Node3D
 	)
 
 	# 4. Q, from the side Q is looking at, in the same room.
@@ -785,10 +787,12 @@ func _capture_imported_models() -> void:
 		if q_forward.length() > 0.01:
 			q_forward = q_forward.normalized()
 		await _shot_from_camera(
-			q_actor.global_position + q_forward * 2.15 + Vector3(0.0, 1.2, 0.0),
-			q_actor.global_position + Vector3(0.0, 0.85, 0.0),
+			q_actor.global_position + q_forward * 2.5 + Vector3(0.0, 1.28, 0.0),
+			q_actor.global_position + Vector3(0.0, 1.1, 0.0),
 			"03k_q_in_the_classroom",
-			"Q in the classroom, wearing the authored model, from the side Q faces."
+			"Q in the classroom, wearing the authored model, from the side Q faces, under the "
+			+ "nameplate the game shows.",
+			q_actor.get_node_or_null(^"Nameplate") as Node3D
 		)
 
 	if player_camera != null:
@@ -815,7 +819,13 @@ func _subtree_aabb(node: Node) -> AABB:
 
 
 ## One frame from a camera placed for it, then the camera is gone again.
-func _shot_from_camera(eye: Vector3, look_at_point: Vector3, shot_name: String, caption: String) -> void:
+func _shot_from_camera(
+	eye: Vector3,
+	look_at_point: Vector3,
+	shot_name: String,
+	caption: String,
+	plate: Node3D = null
+) -> void:
 	var camera := Camera3D.new()
 	camera.name = "CaptureCamera"
 	camera.fov = 55.0
@@ -825,6 +835,28 @@ func _shot_from_camera(eye: Vector3, look_at_point: Vector3, shot_name: String, 
 	camera.look_at(look_at_point, Vector3.UP)
 	camera.current = true
 	await process_frame
+	# A character shot is framed for the character and the nameplate the game draws over
+	# it; the first run of these two put the character in the middle of the frame and cut
+	# the nameplate off the top. Whether the plate fits is measurable, so it is measured.
+	if plate != null:
+		var view := camera.get_viewport().get_visible_rect().size
+		if camera.is_position_behind(plate.global_position):
+			_failures.append("The nameplate in %s is behind the camera." % shot_name)
+		else:
+			var screen := camera.unproject_position(plate.global_position)
+			var margin := view.y * 0.10
+			_note("nameplate in %s: screen %s of %s" % [shot_name, str(screen), str(view)])
+			if (
+				screen.x < view.x * 0.04
+				or screen.x > view.x * 0.96
+				or screen.y < margin
+				or screen.y > view.y - margin
+			):
+				_failures.append(
+					"the nameplate in %s is at screen %s of %s, closer to the edge than the "
+					% [shot_name, str(screen), str(view)]
+					+ "character it belongs to, so the frame does not show it"
+				)
 	await _shot(shot_name, caption)
 	camera.queue_free()
 	await process_frame
