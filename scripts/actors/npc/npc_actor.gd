@@ -1,19 +1,38 @@
 class_name NpcActor
 extends Node3D
-## Graybox person blockout for Q and N.
+## A person in a location: Q, N, or the companion that follows the player.
 ##
 ## Silhouette and placement do the work: no facial animation, no collision. An
 ## actor can be hidden until an authored beat brings them in, and walk along
 ## markers the location provides.
+##
+## The graybox capsule and head are the default. An actor that has an authored
+## model names it in `visual_scene`; the model becomes a child called `Visual` and
+## the graybox parts are hidden rather than deleted, so the node paths every other
+## system knows keep existing. The model is a *visual*: the body that collides is
+## whatever parents the actor (a `CharacterBody3D`, for the companion), exactly as
+## `docs/ASSET_PIPELINE.md` §10 asks. N keeps the graybox by simply not setting it.
 
 @export var npc_id: StringName = &""
 ## Development label only; the UI gets names from CharacterProfile.
 @export var debug_name: String = ""
 @export var body_color: Color = Color(0.63, 0.6, 0.54, 1.0)
 @export var walk_speed: float = 1.5
+## An authored visual, instanced under this actor instead of the graybox capsule.
+## Leave empty for the blockout.
+@export var visual_scene: PackedScene = null
+## Yaw for the instanced visual, in degrees, around its own vertical axis.
+##
+## `face_towards()` follows the pipeline's convention that a model looks down −Z.
+## The authored characters look down +Z (`docs/ASSET_PIPELINE.md` §10.2), so their
+## visual is turned 180° here — at the placement, in one place, on the visual node
+## only. The GLB and this actor's own rotation stay untouched, which is what keeps
+## a re-export from having two corrections to undo. Set 0 for a −Z model.
+@export_range(-180.0, 180.0, 1.0) var visual_yaw_degrees: float = 180.0
 
 var _body: MeshInstance3D = null
 var _head: MeshInstance3D = null
+var _visual: Node3D = null
 var _nameplate: CharacterNameplate = null
 
 
@@ -26,6 +45,7 @@ func _ready() -> void:
 	if _body == null:
 		push_error("NpcActor '%s' needs a MeshInstance3D child named 'Body'." % debug_name)
 	_apply_color(body_color)
+	_build_visual()
 	# The label already exists in the actor scene; it only needs to know who it is
 	# labelling. Doing it here means a new actor instance gets a name by setting
 	# `npc_id`, with no extra node to wire up in the location scene.
@@ -33,6 +53,37 @@ func _ready() -> void:
 	if _nameplate != null and String(_nameplate.character_id).is_empty():
 		_nameplate.character_id = npc_id
 		_nameplate.refresh()
+
+
+## Instances the authored model, if this actor has one, and retires the graybox.
+##
+## The graybox parts are hidden, not freed: `Body` and `Head` are what the actor has
+## always exposed, and a scene or a test that looks them up should find them and be
+## able to ask why they are not drawn.
+func _build_visual() -> void:
+	if visual_scene == null:
+		return
+	var instance := visual_scene.instantiate()
+	if instance == null:
+		push_error("NpcActor '%s' could not instantiate its visual_scene." % debug_name)
+		return
+	_visual = instance as Node3D
+	if _visual == null:
+		push_error("NpcActor '%s' has a visual_scene whose root is not a Node3D." % debug_name)
+		instance.queue_free()
+		return
+	_visual.name = "Visual"
+	_visual.rotation_degrees.y = visual_yaw_degrees
+	add_child(_visual)
+	if _body != null:
+		_body.visible = false
+	if _head != null:
+		_head.visible = false
+
+
+## The authored visual, or null while this actor is still a graybox.
+func get_visual() -> Node3D:
+	return _visual
 
 
 func _apply_color(color: Color) -> void:

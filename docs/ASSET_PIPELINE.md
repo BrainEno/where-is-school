@@ -28,7 +28,7 @@ texture sources stay out of `assets/`; the runtime file is a build artefact.
 |---|---|
 | glTF 2.0 **binary** (`.glb`) | one file, no side-car `.bin` or `.gltf` to lose; Godot imports it as a scene without an add-on |
 | **1 unit = 1 metre** | every number in this project is metres: doors are 2.1 m, the agent is 1.8 m high, `agent_max_climb` is 0.3 m |
-| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards |
+| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards. The two authored characters in the tree do not meet this yet — see §10.2 |
 | **origin at the floor, on the model's centre line** | placement code writes a position on the ground and gets the object standing there; no per-instance offsets |
 | **no node scale**, no rotation baked into nodes | a 0.01-scaled export passes a size check in the viewport and then behaves like a different object in code |
 | **one material per mesh**, named after the asset | a placeholder material is easy to replace when its name is stable |
@@ -158,9 +158,7 @@ through `.godot/imported/…` and stop falling back to the source file:
 
 ## 8. Not in this round
 
-- No real art, no textures, no animation, no LOD, no lightmap UVs.
-- No import for skinned characters, animation libraries, or physics bodies beyond a
-  single box or capsule.
+- No animation, no LOD, no lightmap UVs.
 - **No performance budget.** A triangle budget for a prop, a character or a room needs
   a measurement on the target Windows machine, and none has been made. The numbers in
   this document are placeholder sanity limits for the graybox, not a performance claim.
@@ -233,3 +231,102 @@ every warning line and every hard limit**, the pack total at its limit and one b
 the forbidden and required folders, and the pack reader itself, against synthetic v2, v3
 and v4 packs — including an embedded pack with a decoy `GDPC` after it, which is the case
 that made the first version of the reader report a build with no files in it.
+
+## 10. The imported production assets
+
+Round two of the pipeline imported the four assets a scene is now allowed to be built
+from: two Poly Haven CC0 props and the owner's two characters. They follow the same
+shape as everything above — a `.glb` under `assets/models/<name>/`, a hand-authored
+wrapper under `scenes/environment/` — with the deviations in §10.2 written down instead of
+hidden. The companion record is
+[IMPLEMENTATION_NOTES_IMPORTED_MODELS.md](IMPLEMENTATION_NOTES_IMPORTED_MODELS.md), and
+`tests/imported_assets_test.gd` measures every number below.
+
+### 10.1 What is there
+
+| Asset | Runtime file | Wrapper | Size X × Y × Z (m) | Triangles | Wrapper root |
+|---|---|---|---|---|---|
+| School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
+| Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
+| Protagonist | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/protagonist.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D` + `InteractionAnchor` |
+| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.662 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor` |
+
+A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
+sized to the visual bounds, the model as the `Model` child. A character wrapper is a
+visual, not a body — the asset reports no collision, and whichever controller drives the
+character owns the capsule — so it is a `Node3D`, a `Model` child, and an
+`InteractionAnchor` at chest height so nobody re-derives that per character. A decoration
+wrapper carries no collision on purpose: desk dressing sits on furniture that already
+collides, and a 0.16 m prop with its own collider would carve a hole in the baked
+navigation mesh.
+
+### 10.2 Three deviations, recorded rather than hidden
+
+1. **The two characters face +Z, not −Z.** §1 asks for −Z forward, and the two
+   Blender-born characters — like the playground bench before them, whose back
+   `IMPLEMENTATION_NOTES_PROPS.md` records as sitting on its own −Z side — were authored
+   facing the other way: their eyes are on the +Z side. The wrapper deliberately does
+   **not** correct this with a baked 180° yaw, because a wrapper yaw is a second place
+   the facing is written and it breaks the moment the GLB is replaced. Placement yaws
+   180° instead, exactly as the bench is handled, and `imported_assets_test.gd` fails if
+   the eyes ever move to the other side. "At placement" is two different places, because
+   the two drivers were written against different conventions: `PlayerController` turns
+   the model with `atan2(facing.x, facing.z)`, which is a +Z model's angle and needs no
+   correction, while `NpcActor.face_towards()` adds PI for a −Z model, so an `NpcActor`
+   with a `visual_scene` turns the instantiated visual 180° (`visual_yaw_degrees`, default
+   180). Adding both would cancel out, and the character would walk backwards while every
+   size still measured right — `imported_placement_test.gd` checks where the model points,
+   not just which angles were written. §1 remains what a *new* export should produce; it
+   is not what these two files do. **Owner decision needed:** re-export the characters
+   facing −Z, or adopt "authored characters are yawed at placement" as the rule.
+2. **The stationery does not stand on a floor.** Its own origin is the middle of the
+   arrangement — its lowest point is 7.4 cm below it — so the raw GLB is not drop-in
+   placeable. `stationery_supplies.tscn` re-origins it to its base, which is why the
+   wrapper, not the model, is what a scene instantiates.
+3. **`q.glb` carries one authored non-uniform node scale** (`Q_Collar`, 1 × 0.7 × 0.9),
+   against §1's "no node scale". It is the collar mesh only, and the test records it by
+   node name so it cannot quietly become two. The protagonist's origin sitting 1.7 cm
+   above its sole is recorded the same way, at 5 mm tolerance, so a re-export that
+   silently moves either one fails the test rather than a placement.
+
+### 10.3 Textures are embedded, not extracted
+
+The engine's default for a `.glb` with embedded textures is `gltf/embedded_image_handling
+= Extract Textures`, which writes `<glb>_<texture>.jpg` and a matching `.import` next to
+the model. That would put derived files inside `assets/` and contradict §1's "one `.glb`
+file and nothing else", so the two textured assets set `gltf/embedded_image_handling = 2`
+(Embed as Basis Universal) in their committed `.import` sidecar: the maps live inside the
+imported scene, the model directory holds only the `.glb` and its sidecar, and
+`imported_assets_test.gd` fails if anything else appears there.
+
+Embedding is GPU-native but not free in bytes, and the imported scene is what the release
+build packs: `tools/verify_build.py` rejects any single packed entry over 2 MiB. So the
+Poly Haven 1K maps were resampled to 512 first. At 512 the two imported scenes are 0.7 MB
+and 0.9 MB; at 1024 they were 2.0 MB and 3.2 MB, which the release build would have
+rejected. The resample is recorded in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) and no
+geometry, UV or material was touched.
+
+### 10.4 `scenes/dev/` is not a resource
+
+`scenes/dev/` holds development-only previews, `imported_assets_preview.tscn` among them.
+`export_presets.cfg` excludes it from the export and `tools/verify_build.py` now fails if
+anything under `res://scenes/dev/` reaches a build, the same guard `res://addons/` has.
+
+### 10.5 Where the four are used
+
+A wrapper nobody instantiates is an asset with no screen time, so the library has a
+placement as well as a contract:
+
+| Wrapper | Instance | Notes |
+|---|---|---|
+| `props/school_desk.tscn` | `classroom_desk.tscn`'s `Desk` child | the six classroom desks. The old 1.2 × 0.8 × 0.6 blockout body — and its duplicate collider — is gone; the chair stays, moved to the desk's back edge. |
+| `props/stationery_supplies.tscn` | `classroom.tscn` → `Furniture/DeskB2/Stationery` | one instance, on the player's own desk, no collision. |
+| `characters/protagonist.tscn` | `player.tscn` → `VisualPivot/Visual/Model` | `Visual` is a `Node3D` pivot at y = 0.9; the model hangs at −0.917 so its 1.7 cm origin offset puts its sole on the floor. |
+| `characters/q.tscn` | `classroom.tscn` → `Actors/Q`, and `companion.tscn` → `Actor` | both name it as `NpcActor.visual_scene`, which hides the graybox and adds no collision. |
+
+The teacher's desk is deliberately not on that list: it is 1.9 m wide, and the student desk
+is not a substitute for a lectern. The room's layout, its interaction anchors and its
+navigation routes were not moved to fit the models. The numbers, the chair decision, the
+foot offsets and the two facing conventions are in
+[IMPLEMENTATION_NOTES_IMPORTED_MODELS.md](IMPLEMENTATION_NOTES_IMPORTED_MODELS.md) §5–6, and
+`tests/imported_placement_test.gd` measures them.

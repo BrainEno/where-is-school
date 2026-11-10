@@ -1,0 +1,243 @@
+# Implementation notes — imported production models (round two)
+
+Companion notes for the four models that landed after the two placeholder samples and the
+bench/backpack pair. They record where each asset came from, what it measures, how to use
+it, where it is now placed, and the parts that are still open. The contract is
+`docs/ASSET_PIPELINE.md`; the provenance ledger is `docs/ASSET_PROVENANCE.md`. This file is
+the engineering record.
+
+**Status: placed in the game.** The first half of this round imported the assets and left
+them in a preview scene, deliberately. This half puts them in the classroom the player
+starts in: the six student desks are the school desk model, the stationery sits on the
+player's own desk, the player and Q wear their authored characters. The teacher's desk is
+*not* replaced — it is 1.9 m wide, and a 0.712 m one-seat desk is not a lectern.
+
+Nothing about the layout, the story, the dialogue, the interaction nodes or the navigation
+contract was changed to make room for them. Two things moved inside a wrapper: the desk's
+inset chair, and the player's visual pivot, which went from a capsule mesh to a `Node3D`.
+
+## 1. What was added, and where it is used
+
+| Kind | Runtime model | Wrapper scene | Used by |
+|---|---|---|---|
+| Furniture | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | `classroom_desk.tscn` → the classroom's `DeskA1`–`DeskB3` |
+| Desk dressing | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | `classroom.tscn`, one instance under `Furniture/DeskB2` |
+| Character | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/protagonist.tscn` | `player.tscn`, under `VisualPivot/Visual/Model` |
+| Character | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | the classroom's `Actors/Q`, and `companion.tscn`'s `Actor` |
+
+`scenes/dev/imported_assets_preview.tscn` still composes all four under a camera and a
+light so they can be looked at without building a location. It is development-only, it is
+not referenced by anything in the game, and it is kept out of the export: the export preset
+excludes `scenes/dev/`, `tools/verify_build.py` treats the folder as forbidden, and
+`imported_assets_test.gd` fails if a build ever carries it.
+
+## 2. Sources and modifications
+
+| Asset | Source | Licence | What was done to it |
+|---|---|---|---|
+| School desk | Poly Haven, "School Desk 01", by Ethan Place — https://polyhaven.com/a/SchoolDesk_01 | CC0 1.0 | Repackaged the glTF download (`.gltf` + `.bin` + six 1K JPEG maps) into one `.glb` with the maps embedded, and resampled the three maps 1024 → 512. Geometry, UVs, materials and transforms untouched. |
+| Stationery supplies | Poly Haven, "Stationery Supplies", by Mateusz Sadek — https://polyhaven.com/a/stationery_supplies | CC0 1.0 | Same repackaging and same resample. No geometry or material change. |
+| Protagonist | Owner-authored, generated procedurally in Blender 5.2.3 LTS; the owner's generation report stays in the local asset folder | Project-owned | None — committed as supplied. |
+| Q | Owner-supplied local file with no accompanying report | Project-owned pending confirmation | None — committed as supplied. |
+
+No Blender was available on the machine that did this import, so the two Poly Haven
+sources were converted by repacking their glTF rather than re-exporting from Blender, and
+the one `.blend`-only asset (a dirty football) could not be converted at all — it is
+recorded under "Not imported" in the ledger.
+
+## 3. Asset facts
+
+Measured in Godot 4.7.2 after import, not read off a file listing.
+
+| | School desk | Stationery | Protagonist | Q |
+|---|---|---|---|---|
+| Size X × Y × Z (m) | 0.712 × 0.883 × 0.546 | 0.302 × 0.164 × 0.084 | 0.556 × 1.727 × 0.337 | 0.726 × 1.662 × 0.607 |
+| Triangles | 4,162 | 4,412 | 12,388 | 35,432 |
+| Mesh nodes | 1 | 9 | 78 | 7 |
+| Material surfaces | 1 | 9 (one shared material) | 78 (22 materials) | 15 |
+| Textures | 3 × 512² embedded | 3 × 512² embedded | none (flat colours) | none (flat colours) |
+| Rig | — | — | 16 joints, rigid-part weights, **no animation** | — |
+| GLB file | 254 KiB | 326 KiB | 514 KiB | 648 KiB |
+| Origin | on the floor, centred on X | wrapper re-origins it to its base | 1.7 cm above the sole | on the feet |
+| Facing | +Z | +Z | **+Z** | **+Z** |
+
+## 4. How to use each one
+
+- **School desk** — instance `scenes/environment/props/school_desk.tscn`. Its root is a
+  `StaticBody3D` on physics layer 1 with one box collider covering the whole desk, so it
+  collides, carves the navigation mesh, and blocks the interaction line-of-sight probe.
+  Place it where it does not cut walkable space in two (the agent radius is 0.4 m), and
+  put any look-anchor off its own collision. It is 0.88 m tall — the height a school desk
+  is — so a 1.2 m NPC anchor and a 1.7 m player both read correctly against it.
+- **Stationery supplies** — instance `scenes/environment/props/stationery_supplies.tscn`
+  and drop it on a desk top. Its own origin is its base, so the instance position *is* the
+  surface height. It carries **no collision on purpose**; the desk already collides. It is
+  a *display line-up* of nine separate objects, so a scene that wants a single pencil
+  should instance the individual node it wants out of the wrapper rather than the whole
+  set.
+- **Protagonist / Q** — instance the wrapper and parent it under whatever drives the
+  character: the player's `VisualPivot`, or an `NpcActor`. The wrapper is a `Node3D` with
+  the model and an `InteractionAnchor` at 1.2 m, and **no collision** — the driving
+  controller's `CharacterBody3D` owns the capsule. Both characters face **+Z**; §6 below
+  is the one thing that matters about that. The protagonist is a rigid-weighted rig with
+  no animation, so it reads as a static pose until one exists.
+
+## 5. Where they are now
+
+### 5.1 The six student desks
+
+`classroom_desk.tscn` is the classroom's desk wrapper and it now *composes* two things:
+the imported school desk as `Desk`, and the existing blockout `Chair` subtree beside it.
+The old graybox body — a `StaticBody3D` with a 1.2 × 0.8 × 0.6 collider, four legs and a
+0.05 m top — is gone, and with it the duplicate collision. What collides now is the
+imported wrapper's own single box: 0.712 × 0.883 × 0.546 m, centred at y = 0.441, layer 1.
+That is smaller than the box it replaced, so the navigation bake carves *less*, the
+approach-spot search has more room around a desk, and no route was cut.
+
+The chair stayed for this round: it is a blockout, it has never collided, and replacing it
+is a separate asset decision. It did have to move. The imported desk is 0.546 m deep where
+the old top was 0.6 m and the old body 0.8 m, so a chair left at z = 0.78 would have stood
+0.3 m behind the desk it belongs to. It is now at z = 0.58, which leaves 0.097 m between
+the desk's back edge and the seat's front edge; the seat plane (0.45 m) and the chair's
+shape are unchanged. `imported_placement_test.gd` pins that gap to 0.03–0.25 m, so a
+further desk swap that moves the chair out of reach fails there instead of in a screenshot.
+
+The six desks are still at exactly the positions they were (`DeskA1`–`A3` at z = −1.5,
+`DeskB1`–`B3` at z = 0.2, 2.5 m apart), and the teacher's `FrontDesk` is still
+`teacher_desk.tscn`.
+
+### 5.2 The stationery on the player's own desk
+
+One instance, and it hangs under the desk it dresses: `Furniture/DeskB2/Stationery`, at
+`(−0.12, 0.88, −0.16)` in the desk's own frame. `DeskB2` is the player's desk — the one
+`OwnDeskInspect` and `SchoolbagInspect` are about — so the desk the player can look at is
+the desk that has the pens on it. It sits on the top surface, in the far-left corner from
+the student's side: out of the middle of the desk, clear of the schoolbag on the floor
+beside it, and inside the 0.712 × 0.546 footprint with 8 cm to spare on every side.
+
+The 0.88 is measured, not guessed. The desk's bounding box ends at 0.882 — 2 mm of edge
+trim above the working surface — so dropping the set at the box height would have left it
+a few millimetres in the air. Reading the model's own triangles instead: the largest
+upward-facing plane is at **0.880 m** and covers 0.374 m², which is 96% of the desktop, and
+the top board spans the full 0.712 × 0.535 m footprint. A second, smaller shelf plane sits
+at 0.725. The set's base goes on the 0.880 plane, which is why the instance is at 0.88 and
+not at 0.883.
+
+It carries no collision, exactly as §4 says: a 0.16 m prop with a collider on a desk that
+already collides would carve a hole in the baked navigation mesh for nothing.
+
+### 5.3 The player
+
+`player.tscn` keeps everything that made it the player: the `CharacterBody3D`, its 0.35 ×
+1.8 m capsule, the `NavigationAgent3D`, the `Camera3D` and its occluder fader, the
+`InteractionSensor`, the `InteractionController`, the `PointerNavigator` and the
+nameplate at 1.95 m. What changed is `VisualPivot/Visual`: it was a `MeshInstance3D`
+carrying a capsule mesh, and it is now a `Node3D` at hip height (y = 0.9) with the imported
+wrapper as its child.
+
+The arithmetic in the scene is the whole trick, and all three numbers are needed:
+
+| | value | why |
+|---|---|---|
+| `Visual` (the pivot) | y = 0.9 | the wake beat writes this number; it is the hip the slump turns around |
+| `Model` (the wrapper) | y = −0.917 | `−(0.9 + 0.017)` |
+| the asset's own origin | 0.017 above its sole | measured on the GLB, not authored here |
+
+so the sole lands at 0.9 − 0.917 + 0.017 = 0. The model is 1.727 m tall against a 1.8 m
+capsule, its feet are on the floor, and nothing had to be scaled to make that true.
+
+`set_wake_pose()` and `settle_wake_pose()` were written against a mesh and now animate a
+pivot — the tilt (22°) and the 6 cm sink are unchanged, and everything under the pivot,
+model included, slumps with it. The pivot's `rotation.y` is the only yaw: `atan2` of the
+facing direction, no extra half turn (see §6). The capsule is not drawn anywhere.
+
+The protagonist has **no animation clips**. No `AnimationPlayer`, no `AnimationTree`, no
+walk cycle, no idle: the model is drawn in its authored pose and turned by the pivot. That
+is what the asset contains, and inventing a rig here would be inventing data.
+
+### 5.4 Q, in both places Q exists
+
+`NpcActor` grew one optional property, `visual_scene`. When it is set the actor instances
+that wrapper as a child called `Visual`, hides its own graybox `Body` and `Head`, and
+otherwise behaves exactly as before: same group, same `npc_id`, same nameplate, same
+`place_at()`, same `walk_along()`, same turn. When it is empty the actor is the blockout it
+always was — which is why `npc_actor.tscn` itself is *not* Q, and N is untouched.
+
+Both Q instances name `scenes/environment/characters/q.tscn`:
+
+- `classroom.tscn`'s `Actors/Q`, still at `(−1.32, 0, 0.82)` with 78° of yaw;
+- `companion.tscn`'s `Actor`, the Q the director spawns when the free period starts. This
+  is the one a model swap forgets, because nothing in the classroom proves it.
+
+The companion keeps its `CharacterBody3D` and its 0.34 × 1.6 m capsule; the model is a
+visual and adds no second collision. The nameplate stays where it was, 0.26 m above the
+1.662 m head.
+
+## 6. Facing: two conventions, one rule
+
+The pipeline asks for **−Z forward**; both authored characters look down **+Z**
+(`docs/ASSET_PIPELINE.md` §10.2). Each driver then has its own convention, and they are
+not the same:
+
+| Driver | What it does | Correction on the visual |
+|---|---|---|
+| `PlayerController` | `visual_pivot.rotation.y = atan2(facing.x, facing.z)` — written for a **+Z** model | **none**. A +Z model at that angle looks along the facing direction already. |
+| `NpcActor.face_towards()` | `rotation.y = atan2(offset.x, offset.z) + PI` — written for a **−Z** model | **180°**, on the instantiated visual only (`visual_yaw_degrees`, default 180). |
+
+Adding 180° to the player as well would cancel the controller's turn and the character
+would walk backwards; leaving it off Q would do the same. Both are pinned by
+`imported_placement_test.gd`, which turns the real controller and the real actor and
+checks where the model ends up pointing, not just what angles were written.
+
+The correction lives on the visual node of a *placement*, never in `q.tscn`, and never as
+a baked yaw inside the GLB: a wrapper that corrected it would break the moment the file is
+replaced, and a re-export would then have two corrections to find. The clean fix is still
+an owner decision — re-export the characters facing −Z, and the 180° goes away by itself.
+
+## 7. Verified
+
+Godot 4.7.2 Stable (standard build), Windows, NVIDIA RTX 5080:
+
+- `godot --headless --path . --import` imports all four models and every wrapper with no
+  parse or resource errors.
+- `godot --headless --path . --script res://tests/imported_assets_test.gd` passes: each
+  model loads and instantiates, its bounding box matches the size above, its origin is
+  where the table says, the scaled nodes are exactly the recorded set, the characters
+  still face +Z, each wrapper instances its model, the prop wrapper collides to the size
+  of the model, and the character and decoration wrappers carry no collision.
+- `godot --headless --path . --script res://tests/imported_placement_test.gd` passes: the
+  six desks are the imported model at their old positions, each with exactly one body and
+  one box collider of the right size on the world layer, and one inset chair that does not
+  collide and stands at the desk's back edge; the stationery is one instance, on the
+  player's own desk, on the top surface, inside the footprint, without collision; the
+  player's `Visual` is a pivot with the protagonist under it, feet on the floor and its
+  +Z pointing where the controller says it faces; Q wears the model in both the classroom
+  and the companion, the model is turned 180° on its own axis, the graybox behind it is
+  not drawn, and N is still a graybox.
+- `godot --headless --path . --script res://tests/model_import_test.gd`,
+  `tests/prop_asset_test.gd` and `tests/prop_placement_test.gd` still pass — the new
+  assets did not disturb the samples, the bench or the backpack.
+- The full headless suite in `.github/workflows/godot-ci.yml` passes, including
+  navigation, location transitions, interaction occlusion and visibility, the companion
+  route and obstacle tests, and the capture script's own compile check.
+- The playthrough capture produces the frames that show this in the running game:
+  `03h_classroom_desks`, `03i_own_desk_stationery`, `03j_protagonist`,
+  `03k_q_in_the_classroom`, and `13a_q_following` for Q walking with the player.
+
+## 8. Open, and what the next round still owns
+
+- **The chairs are still blockouts.** They are gray boxes next to an authored desk, and
+  they are now the only blockout furniture in the room.
+- **No animation** on either character, no walk cycle, no idle, no facial motion; the
+  protagonist's 16-joint rig is not a deformation rig. Nothing here pretends otherwise.
+- **The characters' +Z facing** is still the one place these assets break the pipeline
+  contract. §6 is a rule that works, not a fix. Either the owner re-exports them facing
+  −Z, or "authored characters are yawed at placement" becomes the written rule in
+  `docs/ASSET_PIPELINE.md` §1.
+- **Q's authorship is unconfirmed.** It is committed as the owner's own work on the
+  strength of its folder and tooling, and the ledger says so. Confirm before any public
+  release, or remove the file.
+- **The dirty football could not be imported** — no Blender on the machine, and 4K maps.
+  See the ledger's "Not imported" section for the two ways in.
+- **No LOD, no lightmap UVs, no performance budget** for any of these; the character
+  triangles (12k and 35k) have never been measured on the target machine.

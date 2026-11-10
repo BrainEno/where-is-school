@@ -30,6 +30,10 @@ var _loc: Node = null
 
 var _log_lines: Array[String] = []
 var _failures: Array[String] = []
+## Why the last `_find_ground_click_screen` calls found nothing. Filled whether or not
+## they succeed; a failure that says "no second floor point was clickable" without
+## saying which of the four ways it was rejected is a failure nobody can act on.
+var _ground_search_log: Array[String] = []
 var _shot_index: int = 0
 
 
@@ -109,6 +113,10 @@ func _run() -> void:
 			_failures.append("Holding the forward key did not move the player.")
 	await _shot("02_walking", "The player after holding the forward key.")
 	await _shot("03_world_after_opening", "The classroom with control returned and the objective set.")
+
+	# The four imported models, in this room. Taken here, at the first moment the player
+	# has control and before anything else moves them.
+	await _capture_imported_models()
 
 	# The three candidate marks for a floor click, photographed from one fixed viewpoint.
 	# The comparison is part of the evidence: this round chose between them, and the frames
@@ -689,6 +697,184 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 	return holder
 
 
+## The four imported models, in the room the player is standing in.
+##
+## The classroom's six student desks, the stationery on the player's own desk, the
+## player's own model and Q. These are frames of the running game — the same window, the
+## same light, the same baked navigation as every other frame in this run — from a camera
+## the capture places for the purpose, because the player's own camera is nailed to the
+## player's shoulder and a desk is 0.9 m tall. The camera is removed and the player's
+## camera made current again before anything else happens, so no other frame in this run
+## is affected.
+##
+## What is *not* done here: the models are not staged. Nothing is moved, spawned or
+## hidden for these frames; if the classroom does not contain them, the shot shows an
+## empty classroom and the log says so.
+func _capture_imported_models() -> void:
+	var classroom := _host.get_current()
+	if classroom == null:
+		_failures.append("The classroom was not loaded, so the imported models could not be photographed.")
+		return
+
+	# The scene the frames are supposed to show, checked before it is photographed: a
+	# missing model is a defect in the build, not a bad camera angle.
+	var furniture := classroom.get_node_or_null(^"Furniture")
+	var desk_names: Array[String] = ["DeskA1", "DeskA2", "DeskA3", "DeskB1", "DeskB2", "DeskB3"]
+	var with_models := 0
+	if furniture != null:
+		for desk_name: String in desk_names:
+			var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
+			if desk != null and desk.get_node_or_null(^"Desk") != null:
+				with_models += 1
+	_note("classroom desks with the imported model: %d of %d" % [with_models, desk_names.size()])
+	if with_models != desk_names.size():
+		_failures.append(
+			"Only %d of the classroom's %d desks have the school desk model."
+			% [with_models, desk_names.size()]
+		)
+	var stationery := classroom.get_node_or_null(^"Furniture/DeskB2/Stationery") as Node3D
+	if stationery == null:
+		_failures.append("The player's own desk carries no stationery.")
+	else:
+		var extent := _subtree_aabb(stationery)
+		_note(
+			"stationery on DeskB2: base y = %.3f m, %.3f x %.3f x %.3f m"
+			% [extent.position.y, extent.size.x, extent.size.y, extent.size.z]
+		)
+
+	var player_camera := _player.get_node_or_null(^"Camera3D") as Camera3D
+
+	# 1. The room from the back, over both rows: six desks, six chairs.
+	await _shot_from_camera(
+		Vector3(0.0, 2.7, 3.25), Vector3(0.0, 0.5, -0.85),
+		"03h_classroom_desks",
+		"The classroom from the back: six student desks with the imported model and their "
+		+ "chairs, at the positions the room has always had."
+	)
+
+	# 2. The player's own desk, close enough to see what is on it.
+	# From the front of the room looking back over the desk, so a player standing behind
+	# the desk cannot be between the camera and what it is photographing.
+	await _shot_from_camera(
+		Vector3(-0.55, 1.55, -1.15), Vector3(0.0, 0.95, 0.15),
+		"03i_own_desk_stationery",
+		"The player's own desk (DeskB2) from the sitting side: the stationery set on the top."
+	)
+
+	# 3. The player's own model, head to feet. Taken in the open floor in front of the
+	# class, because a player standing at a desk is behind it from every angle low enough
+	# to look like a photograph: the first two takes of this frame showed the torso and
+	# hid the feet behind the desk. Where the body stands is not what the frame is for -
+	# the model, its height, and the floor under its soles are - so the player is moved
+	# to where nothing stands in front of them and put back afterwards.
+	var before_position := _player.global_position
+	var before_yaw := rad_to_deg(_player.global_rotation.y)
+	_teleport(Vector3(0.0, 0.0, -3.3), 180.0)
+	await _wait(0.3)
+	var portrait_point := _player.global_position
+	var facing := _player.get_facing_direction()
+	facing.y = 0.0
+	if facing.length() < 0.01:
+		facing = Vector3(0.0, 0.0, 1.0)
+	facing = facing.normalized()
+	await _shot_from_camera(
+		portrait_point + facing * 2.4 + Vector3(0.0, 1.32, 0.0),
+		portrait_point + Vector3(0.0, 1.1, 0.0),
+		"03j_protagonist",
+		"The player's authored protagonist, standing on the classroom floor, head to feet, "
+		+ "under the nameplate the game shows.",
+		_player.get_node_or_null(^"Nameplate") as Node3D
+	)
+
+	# 4. Q, from the side Q is looking at, in the same room. Still while the player is out
+	# of the way, so Q is the only character this frame is about.
+	var q_actor := classroom.get_node_or_null(^"Actors/Q") as Node3D
+	if q_actor == null:
+		_failures.append("The classroom's Q is missing, so Q could not be photographed.")
+	else:
+		var q_forward := -q_actor.global_basis.z
+		q_forward.y = 0.0
+		if q_forward.length() > 0.01:
+			q_forward = q_forward.normalized()
+		await _shot_from_camera(
+			q_actor.global_position + q_forward * 2.3 + Vector3(0.0, 1.28, 0.0),
+			q_actor.global_position + Vector3(0.0, 1.04, 0.0),
+			"03k_q_in_the_classroom",
+			"Q in the classroom, wearing the authored model, from the side Q faces, under the "
+			+ "nameplate the game shows.",
+			q_actor.get_node_or_null(^"Nameplate") as Node3D
+		)
+
+	_teleport(before_position, before_yaw)
+	await _wait(0.2)
+
+	if player_camera != null:
+		player_camera.current = true
+	await _wait(0.2)
+
+
+## The world-space box around everything a node draws, for the logging above.
+func _subtree_aabb(node: Node) -> AABB:
+	var result := AABB()
+	var first := true
+	var pending: Array[Node] = [node]
+	while not pending.is_empty():
+		var current: Node = pending.pop_back()
+		for child in current.get_children():
+			pending.append(child)
+		var mesh_instance := current as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var box := mesh_instance.global_transform * mesh_instance.get_aabb()
+		result = box if first else result.merge(box)
+		first = false
+	return result
+
+
+## One frame from a camera placed for it, then the camera is gone again.
+func _shot_from_camera(
+	eye: Vector3,
+	look_at_point: Vector3,
+	shot_name: String,
+	caption: String,
+	plate: Node3D = null
+) -> void:
+	var camera := Camera3D.new()
+	camera.name = "CaptureCamera"
+	camera.fov = 55.0
+	camera.far = 120.0
+	_main.add_child(camera)
+	camera.global_position = eye
+	camera.look_at(look_at_point, Vector3.UP)
+	camera.current = true
+	await process_frame
+	# A character shot is framed for the character and the nameplate the game draws over
+	# it; the first run of these two put the character in the middle of the frame and cut
+	# the nameplate off the top. Whether the plate fits is measurable, so it is measured.
+	if plate != null:
+		var view := camera.get_viewport().get_visible_rect().size
+		if camera.is_position_behind(plate.global_position):
+			_failures.append("The nameplate in %s is behind the camera." % shot_name)
+		else:
+			var screen := camera.unproject_position(plate.global_position)
+			var margin := view.y * 0.10
+			_note("nameplate in %s: screen %s of %s" % [shot_name, str(screen), str(view)])
+			if (
+				screen.x < view.x * 0.04
+				or screen.x > view.x * 0.96
+				or screen.y < margin
+				or screen.y > view.y - margin
+			):
+				_failures.append(
+					"the nameplate in %s is at screen %s of %s, closer to the edge than the "
+					% [shot_name, str(screen), str(view)]
+					+ "character it belongs to, so the frame does not show it"
+				)
+	await _shot(shot_name, caption)
+	camera.queue_free()
+	await process_frame
+
+
 ## The three candidates, at the same point from the same camera, then all three together.
 ##
 ## "Small" is the whole point of the redesign, so the run measures the ink each candidate
@@ -912,15 +1098,67 @@ func _capture_click_navigation() -> void:
 		)
 
 	# The keys take over mid-walk.
+	_ground_search_log.clear()
 	var second := _find_ground_click_screen(3.0, 6.0)
 	if second == Vector2.ZERO:
 		second = _find_ground_click_screen(2.0, 5.0)
 	if second == Vector2.ZERO:
 		second = _find_ground_click_screen(4.0, 8.0)
+	if second == Vector2.ZERO:
+		# The first walk ends wherever the click sent it, and one of those places is a
+		# corner of the room. From there the camera has two walls in frame and a 0.4 m
+		# strip of floor, so no distance band can contain a click point - measured, not
+		# guessed: 123 of 144 screen points had no ground under them and the nearest floor
+		# was 0.4 m away. That is a fact about where the player stood, not about the keys
+		# taking over a walk, so the shot stands somewhere the room is in frame, says so,
+		# and gives the same three bands one more go. The assertion below is unchanged.
+		_note(
+			"the interruption shot had no floor in view from %s; stepping into the open"
+			% str(_player.global_position)
+		)
+		_teleport(Vector3(0.4, 0.0, 2.6), 0.0)
+		await _wait(0.5)
+		await _unstick()
+		_ground_search_log.clear()
+		second = _find_ground_click_screen(3.0, 6.0)
+		if second == Vector2.ZERO:
+			second = _find_ground_click_screen(2.0, 5.0)
+		if second == Vector2.ZERO:
+			second = _find_ground_click_screen(4.0, 8.0)
 	if second != Vector2.ZERO:
-		await _click_at_screen(second)
-		await _wait(0.25)
-		var was_walking := _player.is_path_active()
+		# The same two retries the first walk gets, for the same two reasons: a click can
+		# be swallowed by something on screen before the navigator sees it, and a click
+		# the navigator refuses starts no walk. Neither is "the keys did not take over",
+		# so neither should be reported as it.
+		var was_walking := false
+		var clicks_seen := 0
+		for _attempt in 2:
+			var clicks_before := navigator.get_click_count() if navigator != null else 0
+			await _click_at_screen(second)
+			# A click becomes a route on the controller's own cadence, and the route can
+			# start a third of a second after the press. Waiting a fixed 0.25 s measured
+			# that delay instead of the thing the shot is about: the key has to take over
+			# from a walk that is *already running*, so wait for it to run.
+			was_walking = await _poll(
+				func() -> bool: return _player.is_path_active(), 2.0
+			)
+			clicks_seen = (navigator.get_click_count() if navigator != null else 0) - clicks_before
+			if was_walking:
+				break
+			_note("the interruption click started no walk; %d click(s) were accepted" % clicks_seen)
+			if clicks_seen <= 0:
+				_note("the interruption click never reached the world; trying another point")
+				second = _find_ground_click_screen(3.0, 6.0)
+				if second == Vector2.ZERO:
+					second = _find_ground_click_screen(2.0, 5.0)
+				if second == Vector2.ZERO:
+					second = _find_ground_click_screen(4.0, 8.0)
+				if second == Vector2.ZERO:
+					break
+				continue
+			# The navigator saw the click and accepted no walk: another point would be a
+			# different question, so this is the moment to stop asking it.
+			break
 		Input.action_press("move_forward")
 		await _wait(0.4)
 		Input.action_release("move_forward")
@@ -929,9 +1167,24 @@ func _capture_click_navigation() -> void:
 		await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
 		_note("walk before WASD=%s, walk after WASD=%s" % [was_walking, stopped])
 		if not was_walking or not stopped:
-			_failures.append("Holding a movement key did not take over from the automatic walk.")
+			_failures.append(
+				"Holding a movement key did not take over from the automatic walk "
+				+ "(walk before=%s, walk after=%s, clicks accepted=%d, %s, control=%s, "
+				% [
+					was_walking, stopped, clicks_seen,
+					navigator.get_last_rejection() if navigator != null else "no navigator",
+					str(_player.is_control_enabled()),
+				]
+				+ "dialogue=%s, player at %s)."
+				% [str(_dialogue.is_busy()), str(_player.global_position)]
+			)
 	else:
-		_failures.append("No second floor point was clickable for the interruption shot.")
+		# The three bands and their numbers travel with the failure: "nothing was
+		# clickable" is four different problems depending on which test rejected what.
+		_failures.append(
+			"No second floor point was clickable for the interruption shot (%s)."
+			% ("; ".join(_ground_search_log) if not _ground_search_log.is_empty() else "no search ran")
+		)
 
 	# A click on a prop: the inspection, reached by the mouse only.
 	var sheet := _host.get_current().find_interactable(&"timetable")
@@ -1025,8 +1278,14 @@ func _capture_refused_click(near: Interactable) -> void:
 func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vector2:
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	if navigator == null:
+		_ground_search_log.append("%.0f-%.0f m: no PointerNavigator" % [min_distance, max_distance])
 		return Vector2.ZERO
 	var rect := _player.get_viewport().get_visible_rect().size
+	var no_ground := 0
+	var out_of_range := 0
+	var on_a_target := 0
+	var unreachable := 0
+	var nearest := INF
 	for x_step in 12:
 		for y_step in 12:
 			# The dialogue panel is anchored to the bottom edge and would swallow a click
@@ -1040,17 +1299,31 @@ func _find_ground_click_screen(min_distance: float, max_distance: float) -> Vect
 			)
 			var point: Variant = navigator.get_ground_point_at(screen)
 			if point == null:
+				no_ground += 1
 				continue
 			var distance := Vector2(
 				point.x - _player.global_position.x, point.z - _player.global_position.z
 			).length()
+			nearest = minf(nearest, distance)
 			if distance < min_distance or distance > max_distance:
+				out_of_range += 1
 				continue
 			if _interaction.get_target_at_screen_position(screen, false) != null:
+				on_a_target += 1
 				continue
 			if not _reaches(point):
+				unreachable += 1
 				continue
 			return screen
+	# Nothing in this band. The counts, the closest floor the scan did see, and where the
+	# player stood: enough to tell a camera looking at a wall from a floor the navigation
+	# map refuses to reach.
+	_ground_search_log.append(
+		"%.0f-%.0f m: %d points, %d with no ground under them, %d out of range, "
+		% [min_distance, max_distance, 12 * 12, no_ground, out_of_range]
+		+ "%d on a target, %d unreachable, nearest %.1f m, player at %s"
+		% [on_a_target, unreachable, nearest, str(_player.global_position)]
+	)
 	return Vector2.ZERO
 
 
@@ -1420,8 +1693,13 @@ func _write_log() -> void:
 			continue
 		var file_part := line.get_slice("screenshot ", 1)
 		var shot_name := file_part.get_slice(":", 0).strip_edges()
-		var caption := file_part.get_slice(":", 1).strip_edges()
-		caption = caption.substr(0, caption.rfind(" ("))
+		# Everything after the first colon is the caption: reading the slice between the
+		# first and second colon cut every caption that had a colon of its own in half,
+		# which is most of the ones written as "what it is: what the frame shows".
+		var caption := file_part.substr(file_part.find(":") + 1).strip_edges()
+		var size_at := caption.rfind(" (")
+		if size_at > 0:
+			caption = caption.substr(0, size_at).strip_edges()
 		markdown.append("## %s" % shot_name)
 		markdown.append("")
 		markdown.append(caption)

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/school_desk/school_desk.glb" id="1_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_school_desk"]
+size = Vector3(0.7118, 0.8826, 0.546)
+
+[node name="SchoolDesk" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4408, 0)
+shape = SubResource("BoxShape3D_school_desk")
