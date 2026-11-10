@@ -26,8 +26,11 @@ on:
   push:
     tags:
       - "v*"
+  # `pull_request` has no branch filter: a pull request whose base is another
+  # branch - a stacked one - is still a pull request, and until this was removed the
+  # only place it could be tested was the branch it was stacked on, or a manual
+  # dispatch. `push` stays `main`-only, so nothing runs twice.
   pull_request:
-    branches: [main]
     paths:
       - "export_presets.cfg"
       - "project.godot"

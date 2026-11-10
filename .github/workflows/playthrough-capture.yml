@@ -56,8 +56,11 @@ on:
       - "project.godot"
       - "addons/**"
       - "tests/capture_editor_dock.gd"
+  # `pull_request` has no branch filter: a pull request whose base is another
+  # branch - a stacked one - is still a pull request, and until this was removed the
+  # only place it could be tested was the branch it was stacked on, or a manual
+  # dispatch. `push` stays `main`-only, so nothing runs twice.
   pull_request:
-    branches: [main]
     paths:
       - "tests/capture_playthrough.gd"
       - ".github/workflows/playthrough-capture.yml"
