@@ -322,9 +322,23 @@ func _check_obstacle_is_walked_around() -> void:
 		_player.global_position.x - destination.x, _player.global_position.z - destination.z
 	).length()
 	if gap > 1.2:
+		# Two different faults look the same from here: a wall the bake sealed the route
+		# behind, and a body that could not follow a route the map is still happy to hand
+		# out. Asking the map for the same route now separates them, so the next run does
+		# not have to guess which half lied.
+		var map := _player.navigation_agent.get_navigation_map()
+		var from_now := NavigationServer3D.map_get_closest_point(map, _player.global_position)
+		var to_now := NavigationServer3D.map_get_closest_point(map, destination)
+		var now_path := NavigationServer3D.map_get_path(map, from_now, to_now, true)
+		var now_end := from_now
+		if not now_path.is_empty():
+			now_end = now_path[now_path.size() - 1]
+		var now_short := now_end.distance_to(destination)
 		_failures.append(
-			"The character did not reach the far side of the obstacle (%.2f m short) %s"
-			% [gap, _walk_state(nav)]
+			"The character did not reach the far side of the obstacle (%.2f m short, map "
+			% gap
+			+ "path now: %d point(s) ending %.2f m from the target) %s"
+			% [now_path.size(), now_short, _walk_state(nav)]
 		)
 	if closest < 0.45:
 		_failures.append("The character walked %.2f m from the wall's face instead of around it." % closest)
