@@ -23,8 +23,17 @@ signal path_cancelled
 @export_range(1.0, 30.0, 0.5) var turn_speed: float = 12.0
 ## How tall a step the body can walk up. `CharacterBody3D` treats every box as a wall,
 ## so without this a 15 cm kerb stops the character dead and a click across the street
-## walks into it and grinds. Kept equal to the navigation mesh's `agent_max_climb`.
+## walks into it and grinds. Kept equal to what the navigation mesh's `agent_max_climb`
+## actually bakes to, not to the property it is given: the baker floors that property to
+## whole voxels, and a mesh that promises a taller step than this produces routes the
+## character walks into and grinds against.
 @export_range(0.0, 0.6, 0.01) var max_step_height: float = 0.3
+## How far past the body's own radius the step probe looks for the surface it is about to
+## step onto. A capsule stops when its *edge* touches the step, so the step's face is one
+## radius away from the origin: a probe shorter than the radius always lands on the surface
+## the body is already standing on, and the step-up never fires. The old probe was a fixed
+## 0.30 m against a 0.35 m radius, which is why every kerb in the game was a wall.
+const STEP_PROBE_MARGIN := 0.15
 
 @export_category("Camera")
 @export var camera_offset: Vector3 = Vector3(3.4, 6.4, 3.4)
@@ -62,6 +71,8 @@ signal path_cancelled
 @export_range(0.1, 1.5, 0.05) var waypoint_radius: float = 0.35
 
 var _control_enabled: bool = true
+## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
+var _body_radius: float = 0.4
 var _camera_roll: float = 0.0
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
 var _path_active: bool = false
@@ -81,7 +92,21 @@ var _path_index: int = 0
 
 
 func _ready() -> void:
+	_body_radius = _measure_body_radius()
 	_apply_camera_transform()
+
+
+## The radius of the capsule the character is standing in, read once: it is what decides
+## where the step probe has to look, and it is a property of the scene, not of the frame.
+func _measure_body_radius() -> float:
+	for child in get_children():
+		var shape_node := child as CollisionShape3D
+		if shape_node == null or shape_node.disabled:
+			continue
+		var capsule := shape_node.shape as CapsuleShape3D
+		if capsule != null:
+			return capsule.radius
+	return 0.4
 
 
 func _apply_camera_transform() -> void:
@@ -161,7 +186,9 @@ func _try_step_up(motion: Vector3) -> void:
 	var raised := global_transform.translated(Vector3.UP * max_step_height)
 	if test_move(raised, motion):
 		return
-	var ahead := motion.normalized() * maxf(0.3, motion.length() + 0.15)
+	# Past the body's edge, not from the middle of it: see `STEP_PROBE_MARGIN`.
+	var reach := maxf(_body_radius + STEP_PROBE_MARGIN, motion.length() + STEP_PROBE_MARGIN)
+	var ahead := motion.normalized() * reach
 	var from := global_position + Vector3.UP * max_step_height + ahead
 	var query := PhysicsRayQueryParameters3D.create(
 		from, from - Vector3.UP * max_step_height * 2.0
