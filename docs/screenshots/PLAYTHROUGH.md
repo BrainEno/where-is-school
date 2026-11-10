@@ -25,29 +25,29 @@ The classroom with control returned and the objective set.
 
 ![03_world_after_opening](03_world_after_opening.png)
 
-## 03a_click_destination
+## cue_candidate_tick
 
-A left click on the floor
+Candidate tick
 
-![03a_click_destination](03a_click_destination.png)
+![cue_candidate_tick](cue_candidate_tick.png)
 
-## 03b_click_walking
+## cue_candidate_brackets
 
-Mid-walk, after one click on the floor
+Candidate brackets
 
-![03b_click_walking](03b_click_walking.png)
+![cue_candidate_brackets](cue_candidate_brackets.png)
 
-## 03a_click_destination
+## cue_candidate_commas
 
-A left click on the floor
+Candidate commas
 
-![03a_click_destination](03a_click_destination.png)
+![cue_candidate_commas](cue_candidate_commas.png)
 
-## 03b_click_walking
+## cue_candidates_abc
 
-Mid-walk, after one click on the floor
+The three candidates side by side on the same floor, from one camera
 
-![03b_click_walking](03b_click_walking.png)
+![cue_candidates_abc](cue_candidates_abc.png)
 
 ## 03a_click_destination
 
