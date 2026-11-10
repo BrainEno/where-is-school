@@ -67,6 +67,12 @@ var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
 var _path_active: bool = false
 var _path_target: Vector3 = Vector3.ZERO
 var _path_progress_elapsed: float = 0.0
+## How many times the current walk may ask the map for a fresh route after stalling before
+## it gives up. One: a body that catches on a corner it was routed too tightly around can
+## still walk the same destination from where it actually stands, and a route asked for
+## from the wall the body is pressed against is a different route. A body that stalls
+## twice has found something a second route does not fix.
+var _stall_repaths_left: int = 0
 var _path_last_position: Vector3 = Vector3.ZERO
 ## The route the navigation map returned for the current request, in order.
 var _path_legs := PackedVector3Array()
@@ -215,6 +221,7 @@ func request_path_to(destination: Vector3) -> bool:
 	# The first point is where the body already is.
 	_path_index = 1
 	_path_progress_elapsed = 0.0
+	_stall_repaths_left = 1
 	_path_last_position = global_position
 	navigation_agent.target_position = target
 	return true
@@ -235,6 +242,7 @@ func cancel_path() -> void:
 	_path_active = false
 	_path_legs = PackedVector3Array()
 	_path_index = 0
+	_stall_repaths_left = 0
 	if navigation_agent != null:
 		# Pointing the agent at the body clears the path it is holding.
 		navigation_agent.target_position = global_position
@@ -269,6 +277,19 @@ func _path_direction(delta: float) -> Vector3:
 	else:
 		_path_progress_elapsed += delta
 		if _path_progress_elapsed > stall_timeout:
+			# A route that rounds a corner more tightly than the body can follow presses
+			# the body into the wall it should have walked around, and the body stops
+			# without being anywhere it cannot go. Asking the map again from where the
+			# body actually is gives a route around *that* corner; if the fresh route
+			# stalls too, the walk ends as it always did.
+			if _stall_repaths_left > 0:
+				# Cleared before the fresh request: that request resets the budget for a
+				# walk somebody asked for, and a walk that keeps re-routing itself is a
+				# walk that never gives up.
+				_stall_repaths_left = 0
+				_path_progress_elapsed = 0.0
+				if request_path_to(_path_target):
+					return Vector3.ZERO
 			_abort_path()
 			return Vector3.ZERO
 
@@ -307,6 +328,7 @@ func _abort_path() -> void:
 	_path_active = false
 	_path_legs = PackedVector3Array()
 	_path_index = 0
+	_stall_repaths_left = 0
 	if navigation_agent != null:
 		navigation_agent.target_position = global_position
 	path_cancelled.emit()

@@ -455,11 +455,40 @@ func _check_walkable(label: String, location: LocationRoot, marker: Node3D) -> v
 		# missing mesh only makes this particular check impossible.
 		return
 	var map := _player.navigation_agent.get_navigation_map()
-	var closest := NavigationServer3D.map_get_closest_point(map, marker.global_position)
-	var offset := Vector2(
-		closest.x - marker.global_position.x, closest.z - marker.global_position.z
-	).length()
-	_arrival_offsets[label] = offset
+	_arrival_offsets[label] = await _settled_offset(map, marker.global_position)
+
+
+## How far a point sits off the map, measured once the server has stopped changing its
+## mind about what the map contains.
+##
+## The server rebuilds a map on its own schedule, and a query taken while it is rebuilding
+## answers from the surface that was there before the last change - right after a location
+## swap, the room that was just freed. Sampling that window produced arrivals reported 5,
+## 9 and 25 m off the mesh on runs where the same marker measured 0.00 m on the next one.
+##
+## This waits for the answer to stop moving, which is the same number a second later; it
+## does not wait for the answer to be *good*. A marker that really is off the mesh settles
+## at its real distance and fails, and the failure carries the distance it settled on.
+func _settled_offset(map: RID, point: Vector3) -> float:
+	var previous := -1.0
+	var stable := 0
+	var offset := _offset_of(map, point)
+	for _frame in 180:
+		if absf(offset - previous) < 0.001:
+			stable += 1
+			if stable >= 3:
+				return offset
+		else:
+			stable = 0
+		previous = offset
+		await physics_frame
+		offset = _offset_of(map, point)
+	return offset
+
+
+func _offset_of(map: RID, point: Vector3) -> float:
+	var closest := NavigationServer3D.map_get_closest_point(map, point)
+	return Vector2(closest.x - point.x, closest.z - point.z).length()
 
 
 ## Coming back has to put the player by the door they came back through, not across the
@@ -512,9 +541,9 @@ func _check_one_route(
 		_failures.append("%s: the %s never baked a routable mesh." % [label, location_name])
 		return
 	var map := _player.navigation_agent.get_navigation_map()
+	var away := await _settled_offset(map, exit.global_position)
 	var from := NavigationServer3D.map_get_closest_point(map, _player.global_position)
 	var to := NavigationServer3D.map_get_closest_point(map, exit.global_position)
-	var away := Vector2(to.x - exit.global_position.x, to.z - exit.global_position.z).length()
 	if away > 1.5:
 		_failures.append(
 			"%s: the exit sits %.2f m off the %s's navigation mesh." % [label, away, location_name]
@@ -739,11 +768,43 @@ func _wait_for_navigation(location: LocationRoot) -> bool:
 		return false
 	var budget := 0
 	while budget < 120:
-		if nav.is_baked() and nav.is_routable():
+		# `is_routable()` alone is not this question. On the frame a location swap happens
+		# the map still holds the room that was just freed, and it will happily answer
+		# "there is a route" about *that* floor: the route check then asked the map about
+		# an exit and got an answer 9 or 25 m away, in another room, and the exit looked
+		# broken. Counting the map's regions is the version of that question two overlapping
+		# greybox rooms cannot answer wrongly: the freed room's region is gone and this
+		# one is on the map.
+		if nav.is_baked() and nav.is_routable() and _map_holds_this_room(nav):
 			return true
 		await physics_frame
 		budget += 1
+	if nav.is_baked():
+		# Waiting is over and the map still answers for somewhere else: say so, because
+		# every measurement after this point would be about the previous room.
+		_failures.append(
+			"the %s's baked mesh never reached the navigation map (%d region(s), error: %s)"
+			% [String(location.location_id), nav.get_map_region_count(), nav.get_bake_error()]
+		)
 	return false
+
+
+## True when the navigation map describes exactly the room the player was put in: one
+## region on the map, and it is this location's own.
+##
+## `is_routable()` alone answers "is there a route somewhere on this map", and the frame
+## after a swap the map still holds the room that was just freed, so it says yes about a
+## floor 25 m from here. `map_knows_geometry()` narrows that to "the map answers for a
+## corner of this mesh", but every greybox location is built around its own origin, so two
+## rooms overlap in world space and a corner of one can be answered by the other. Counting
+## regions is the question with no overlap in it: the old region is gone from the map and
+## the new one is on it.
+func _map_holds_this_room(nav: LocationNavigation) -> bool:
+	var map := nav.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var regions := NavigationServer3D.map_get_regions(map)
+	return regions.size() == 1 and regions.has(nav.get_region_rid())
 
 
 func _describe_spawn(spawn: StringName) -> String:
