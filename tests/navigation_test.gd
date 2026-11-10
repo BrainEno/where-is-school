@@ -534,6 +534,10 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 		return null
 	var best: Vector3 = Vector3.ZERO
 	var best_distance := 0.0
+	# The mesh's own height where the player stands, so "the same floor" is measured in the
+	# mesh's terms rather than in the body's: a bake puts polygons a little above the
+	# collider they were made from, and that offset is the same everywhere in a room.
+	var floor_y := NavigationServer3D.map_get_closest_point(map, origin).y
 	for radius in [max_distance, max_distance * 0.75, max_distance * 0.5]:
 		for index in 24:
 			var angle := TAU * float(index) / 24.0
@@ -547,7 +551,7 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 			# claim from the one this file makes about walking around obstacles. Picking a
 			# destination on the ground the player already stands on keeps every walk here
 			# about the walk.
-			if absf(snapped.y - origin.y) > 0.1:
+			if absf(snapped.y - floor_y) > 0.15:
 				continue
 			if avoid != null and Vector2(snapped.x - avoid.x, snapped.z - avoid.z).length() < 1.5:
 				continue
