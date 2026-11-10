@@ -3,15 +3,15 @@
   "locale": "zh-CN",
   "res_planter": {
     "title": "花坛",
-    "prompt": "看花坛",
+    "prompt": "查看花坛",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "土是硬的，绿篱的顶剪得笔平，边上有一块湿掉的水泥地。湿的那块形状像有什么东西在这儿躺过。",
-    "repeat_text": "绿篱，硬土，湿水泥地上的那个形状。",
+    "text": "花坛是用瓷砖围起来的，里面的土是硬的，栽种着一株只剩枯枝的植物，你不认识它是什么品种。",
+    "repeat_text": "还是那株枯燥的植物。",
     "record": {
       "entry_id": "saw_res_planter",
       "source": "observed",
-      "text": "花坛边的水泥地湿了一块，形状像有什么东西躺在那儿。"
+      "text": "花坛是用瓷砖围起来的，里面的土是硬的，栽种着一株只剩枯枝的植物，你不认识它是什么品种。"
     }
   },
   "res_bench": {
@@ -19,8 +19,8 @@
     "prompt": "看长椅",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "长椅中间那条板子换成了另一种木头。有人把椅面扫干净了，扫出来的东西堆在椅子底下。",
-    "repeat_text": "换过的那条板子，干净的椅面，底下的那堆东西。"
+    "text": "木质长椅，中间那条板子被换成了另一种木头。有人扫过长椅周围的地面，扫出来的垃圾全堆在了椅子底下。",
+    "repeat_text": "长椅前面的地上现在又堆着一些枯叶。"
   },
   "res_washing": {
     "title": "晾衣绳",
