@@ -14,7 +14,7 @@ extends SceneTree
 ##
 ## 1. the two characters face **+Z**, not the -Z the pipeline asks for, and the wrapper
 ##    does not hide it (a yaw baked into the wrapper would break the moment the GLB is
-##    replaced) — see docs/ASSET_PIPELINE.md §9;
+##    replaced) — see docs/ASSET_PIPELINE.md §10;
 ## 2. the stationery is a *display line-up* of nine separate items centred on its own
 ##    origin, so the wrapper re-origins it to its base;
 ## 3. `q.glb` carries one authored non-uniform node scale (`Q_Collar`), which is recorded
@@ -229,7 +229,7 @@ func _check_scaled_nodes(label: String, instance: Node, asset: Dictionary) -> vo
 ## Both characters were authored facing +Z, which is the opposite of the pipeline's
 ## `-Z forward` rule. The wrapper does not correct it, so the fact is asserted instead:
 ## the eyes have to be in front, or every placement in the repository is suddenly a
-## guess. See docs/ASSET_PIPELINE.md §9.
+## guess. See docs/ASSET_PIPELINE.md §10.
 func _check_facing(label: String, meshes: Array[MeshInstance3D]) -> void:
 	var front := -INF
 	for mesh_instance: MeshInstance3D in meshes:
@@ -249,7 +249,7 @@ func _check_facing(label: String, meshes: Array[MeshInstance3D]) -> void:
 		_failures.append(
 			"%s no longer faces +Z: its eyes reach z=%.4f. Update the facing note in "
 			% [label, front]
-			+ "docs/ASSET_PIPELINE.md §9 and every placement that relies on it."
+			+ "docs/ASSET_PIPELINE.md §10 and every placement that relies on it."
 		)
 
 

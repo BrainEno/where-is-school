@@ -110,6 +110,10 @@ func _run() -> void:
 	await _shot("02_walking", "The player after holding the forward key.")
 	await _shot("03_world_after_opening", "The classroom with control returned and the objective set.")
 
+	# The four imported models, in this room. Taken here, at the first moment the player
+	# has control and before anything else moves them.
+	await _capture_imported_models()
+
 	# The three candidate marks for a floor click, photographed from one fixed viewpoint.
 	# The comparison is part of the evidence: this round chose between them, and the frames
 	# are the only way to look at that choice afterwards.
@@ -687,6 +691,139 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 	mark.transparency = 0.0
 	holder.add_child(mark)
 	return holder
+
+
+## The four imported models, in the room the player is standing in.
+##
+## The classroom's six student desks, the stationery on the player's own desk, the
+## player's own model and Q. These are frames of the running game — the same window, the
+## same light, the same baked navigation as every other frame in this run — from a camera
+## the capture places for the purpose, because the player's own camera is nailed to the
+## player's shoulder and a desk is 0.9 m tall. The camera is removed and the player's
+## camera made current again before anything else happens, so no other frame in this run
+## is affected.
+##
+## What is *not* done here: the models are not staged. Nothing is moved, spawned or
+## hidden for these frames; if the classroom does not contain them, the shot shows an
+## empty classroom and the log says so.
+func _capture_imported_models() -> void:
+	var classroom := _host.get_current()
+	if classroom == null:
+		_failures.append("The classroom was not loaded, so the imported models could not be photographed.")
+		return
+
+	# The scene the frames are supposed to show, checked before it is photographed: a
+	# missing model is a defect in the build, not a bad camera angle.
+	var furniture := classroom.get_node_or_null(^"Furniture")
+	var desk_names: Array[String] = ["DeskA1", "DeskA2", "DeskA3", "DeskB1", "DeskB2", "DeskB3"]
+	var with_models := 0
+	if furniture != null:
+		for desk_name: String in desk_names:
+			var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
+			if desk != null and desk.get_node_or_null(^"Desk") != null:
+				with_models += 1
+	_note("classroom desks with the imported model: %d of %d" % [with_models, desk_names.size()])
+	if with_models != desk_names.size():
+		_failures.append(
+			"Only %d of the classroom's %d desks have the school desk model."
+			% [with_models, desk_names.size()]
+		)
+	var stationery := classroom.get_node_or_null(^"Furniture/DeskB2/Stationery") as Node3D
+	if stationery == null:
+		_failures.append("The player's own desk carries no stationery.")
+	else:
+		var extent := _subtree_aabb(stationery)
+		_note(
+			"stationery on DeskB2: base y = %.3f m, %.3f x %.3f x %.3f m"
+			% [extent.position.y, extent.size.x, extent.size.y, extent.size.z]
+		)
+
+	var player_camera := _player.get_node_or_null(^"Camera3D") as Camera3D
+	var player_point := _player.global_position
+
+	# 1. The room from the back, over both rows: six desks, six chairs.
+	await _shot_from_camera(
+		Vector3(0.0, 2.7, 3.25), Vector3(0.0, 0.5, -0.85),
+		"03h_classroom_desks",
+		"The classroom from the back: six student desks with the imported model and their "
+		+ "chairs, at the positions the room has always had."
+	)
+
+	# 2. The player's own desk, close enough to see what is on it.
+	# From the front of the room looking back over the desk, so a player standing behind
+	# the desk cannot be between the camera and what it is photographing.
+	await _shot_from_camera(
+		Vector3(-0.55, 1.55, -1.15), Vector3(0.0, 0.95, 0.15),
+		"03i_own_desk_stationery",
+		"The player's own desk (DeskB2) from the sitting side: the stationery set on the top."
+	)
+
+	# 3. The player's own model, from the front, head to feet.
+	var facing := _player.get_facing_direction()
+	facing.y = 0.0
+	if facing.length() < 0.01:
+		facing = Vector3(0.0, 0.0, 1.0)
+	facing = facing.normalized()
+	await _shot_from_camera(
+		player_point + facing * 2.4 + Vector3(0.0, 1.25, 0.0),
+		player_point + Vector3(0.0, 0.85, 0.0),
+		"03j_protagonist",
+		"The player's authored protagonist, standing on the classroom floor, head to feet."
+	)
+
+	# 4. Q, from the side Q is looking at, in the same room.
+	var q_actor := classroom.get_node_or_null(^"Actors/Q") as Node3D
+	if q_actor == null:
+		_failures.append("The classroom's Q is missing, so Q could not be photographed.")
+	else:
+		var q_forward := -q_actor.global_basis.z
+		q_forward.y = 0.0
+		if q_forward.length() > 0.01:
+			q_forward = q_forward.normalized()
+		await _shot_from_camera(
+			q_actor.global_position + q_forward * 2.15 + Vector3(0.0, 1.2, 0.0),
+			q_actor.global_position + Vector3(0.0, 0.85, 0.0),
+			"03k_q_in_the_classroom",
+			"Q in the classroom, wearing the authored model, from the side Q faces."
+		)
+
+	if player_camera != null:
+		player_camera.current = true
+	await _wait(0.2)
+
+
+## The world-space box around everything a node draws, for the logging above.
+func _subtree_aabb(node: Node) -> AABB:
+	var result := AABB()
+	var first := true
+	var pending: Array[Node] = [node]
+	while not pending.is_empty():
+		var current: Node = pending.pop_back()
+		for child in current.get_children():
+			pending.append(child)
+		var mesh_instance := current as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var box := mesh_instance.global_transform * mesh_instance.get_aabb()
+		result = box if first else result.merge(box)
+		first = false
+	return result
+
+
+## One frame from a camera placed for it, then the camera is gone again.
+func _shot_from_camera(eye: Vector3, look_at_point: Vector3, shot_name: String, caption: String) -> void:
+	var camera := Camera3D.new()
+	camera.name = "CaptureCamera"
+	camera.fov = 55.0
+	camera.far = 120.0
+	_main.add_child(camera)
+	camera.global_position = eye
+	camera.look_at(look_at_point, Vector3.UP)
+	camera.current = true
+	await process_frame
+	await _shot(shot_name, caption)
+	camera.queue_free()
+	await process_frame
 
 
 ## The three candidates, at the same point from the same camera, then all three together.

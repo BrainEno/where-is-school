@@ -40,7 +40,11 @@ signal path_cancelled
 
 @onready var camera: Camera3D = %Camera3D
 @onready var visual_pivot: Node3D = %VisualPivot
-@onready var visual: MeshInstance3D = %Visual
+## The pivot the authored character model hangs from: a `Node3D` at hip height
+## (`player.tscn` puts it at y = 0.9), with the model as its child. The wake beat
+## tilts and lowers this node, so the model moves with it; it is not a mesh any
+## more, and the model inside it carries its own foot offset.
+@onready var visual: Node3D = %Visual
 @onready var navigation_agent: NavigationAgent3D = %NavigationAgent3D
 
 ## How close to the requested point counts as arrived.

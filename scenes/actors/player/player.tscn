@@ -1,24 +1,15 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/player/player_controller.gd" id="1_controller"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_controller.gd" id="2_interaction"]
 [ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="3_occluder"]
 [ext_resource type="Script" path="res://scripts/interaction/pointer_navigator.gd" id="4_navigator"]
 [ext_resource type="Script" path="res://scripts/actors/character_nameplate.gd" id="5_nameplate"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="6_protagonist"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.35
 height = 1.8
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
-radius = 0.32
-height = 1.7
-radial_segments = 12
-rings = 4
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
-albedo_color = Color(0.62, 0.6, 0.54, 1)
-roughness = 0.95
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_sensor"]
 radius = 2.2
@@ -34,11 +25,12 @@ shape = SubResource("CapsuleShape3D_player")
 [node name="VisualPivot" type="Node3D" parent="."]
 unique_name_in_owner = true
 
-[node name="Visual" type="MeshInstance3D" parent="VisualPivot"]
+[node name="Visual" type="Node3D" parent="VisualPivot"]
 unique_name_in_owner = true
-position = Vector3(0, 0.85, 0)
-mesh = SubResource("CapsuleMesh_player")
-material_override = SubResource("StandardMaterial3D_player")
+position = Vector3(0, 0.9, 0)
+
+[node name="Model" parent="VisualPivot/Visual" instance=ExtResource("6_protagonist")]
+position = Vector3(0, -0.917, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 unique_name_in_owner = true

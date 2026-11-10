@@ -28,7 +28,7 @@ texture sources stay out of `assets/`; the runtime file is a build artefact.
 |---|---|
 | glTF 2.0 **binary** (`.glb`) | one file, no side-car `.bin` or `.gltf` to lose; Godot imports it as a scene without an add-on |
 | **1 unit = 1 metre** | every number in this project is metres: doors are 2.1 m, the agent is 1.8 m high, `agent_max_climb` is 0.3 m |
-| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards. The two authored characters in the tree do not meet this yet — see §9.2 |
+| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards. The two authored characters in the tree do not meet this yet — see §10.2 |
 | **origin at the floor, on the model's centre line** | placement code writes a position on the ground and gets the object standing there; no per-instance offsets |
 | **no node scale**, no rotation baked into nodes | a 0.01-scaled export passes a size check in the viewport and then behaves like a different object in code |
 | **one material per mesh**, named after the asset | a placeholder material is easy to replace when its name is stable |
@@ -269,8 +269,15 @@ navigation mesh.
    **not** correct this with a baked 180° yaw, because a wrapper yaw is a second place
    the facing is written and it breaks the moment the GLB is replaced. Placement yaws
    180° instead, exactly as the bench is handled, and `imported_assets_test.gd` fails if
-   the eyes ever move to the other side. §1 remains what a *new* export should produce;
-   it is not what these two files do. **Owner decision needed:** re-export the characters
+   the eyes ever move to the other side. "At placement" is two different places, because
+   the two drivers were written against different conventions: `PlayerController` turns
+   the model with `atan2(facing.x, facing.z)`, which is a +Z model's angle and needs no
+   correction, while `NpcActor.face_towards()` adds PI for a −Z model, so an `NpcActor`
+   with a `visual_scene` turns the instantiated visual 180° (`visual_yaw_degrees`, default
+   180). Adding both would cancel out, and the character would walk backwards while every
+   size still measured right — `imported_placement_test.gd` checks where the model points,
+   not just which angles were written. §1 remains what a *new* export should produce; it
+   is not what these two files do. **Owner decision needed:** re-export the characters
    facing −Z, or adopt "authored characters are yawed at placement" as the rule.
 2. **The stationery does not stand on a floor.** Its own origin is the middle of the
    arrangement — its lowest point is 7.4 cm below it — so the raw GLB is not drop-in
@@ -304,3 +311,22 @@ geometry, UV or material was touched.
 `scenes/dev/` holds development-only previews, `imported_assets_preview.tscn` among them.
 `export_presets.cfg` excludes it from the export and `tools/verify_build.py` now fails if
 anything under `res://scenes/dev/` reaches a build, the same guard `res://addons/` has.
+
+### 10.5 Where the four are used
+
+A wrapper nobody instantiates is an asset with no screen time, so the library has a
+placement as well as a contract:
+
+| Wrapper | Instance | Notes |
+|---|---|---|
+| `props/school_desk.tscn` | `classroom_desk.tscn`'s `Desk` child | the six classroom desks. The old 1.2 × 0.8 × 0.6 blockout body — and its duplicate collider — is gone; the chair stays, moved to the desk's back edge. |
+| `props/stationery_supplies.tscn` | `classroom.tscn` → `Furniture/DeskB2/Stationery` | one instance, on the player's own desk, no collision. |
+| `characters/protagonist.tscn` | `player.tscn` → `VisualPivot/Visual/Model` | `Visual` is a `Node3D` pivot at y = 0.9; the model hangs at −0.917 so its 1.7 cm origin offset puts its sole on the floor. |
+| `characters/q.tscn` | `classroom.tscn` → `Actors/Q`, and `companion.tscn` → `Actor` | both name it as `NpcActor.visual_scene`, which hides the graybox and adds no collision. |
+
+The teacher's desk is deliberately not on that list: it is 1.9 m wide, and the student desk
+is not a substitute for a lectern. The room's layout, its interaction anchors and its
+navigation routes were not moved to fit the models. The numbers, the chair decision, the
+foot offsets and the two facing conventions are in
+[IMPLEMENTATION_NOTES_IMPORTED_MODELS.md](IMPLEMENTATION_NOTES_IMPORTED_MODELS.md) §5–6, and
+`tests/imported_placement_test.gd` measures them.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=3]
+[gd_scene load_steps=58 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -21,6 +21,8 @@
 [ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="18_location_exit"]
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_classroom.wav" id="19_room_tone_classroom"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="20_ambience_player"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/q.tscn" id="21_q_character"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/stationery_supplies.tscn" id="22_stationery_supplies"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -432,6 +434,9 @@ position = Vector3(-2.5, 0, 0.2)
 [node name="DeskB2" parent="Furniture" instance=ExtResource("11_classroom_desk")]
 position = Vector3(0, 0, 0.2)
 
+[node name="Stationery" parent="Furniture/DeskB2" instance=ExtResource("22_stationery_supplies")]
+position = Vector3(-0.12, 0.88, -0.16)
+
 [node name="DeskB3" parent="Furniture" instance=ExtResource("11_classroom_desk")]
 position = Vector3(2.5, 0, 0.2)
 
@@ -460,6 +465,8 @@ rotation_degrees = Vector3(0, 78, 0)
 npc_id = &"q"
 debug_name = "Q"
 body_color = Color(0.62, 0.55, 0.44, 1)
+visual_scene = ExtResource("21_q_character")
+visual_yaw_degrees = 180.0
 
 [node name="N" parent="Actors" instance=ExtResource("16_npc_actor")]
 position = Vector3(3.2, 0, 3.2)

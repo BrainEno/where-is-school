@@ -1,78 +1,41 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=7 format=3]
 
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="1_desk_wood"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="2_metal_dark"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/school_desk.tscn" id="1_school_desk"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="2_desk_wood"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="3_metal_dark"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
-size = Vector3(1.2, 0.8, 0.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_2"]
-size = Vector3(1.2, 0.05, 0.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_3"]
-size = Vector3(0.05, 0.76, 0.05)
-
-[sub_resource type="BoxMesh" id="BoxMesh_4"]
+[sub_resource type="BoxMesh" id="BoxMesh_seat"]
 size = Vector3(0.46, 0.05, 0.42)
 
-[sub_resource type="BoxMesh" id="BoxMesh_5"]
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
 size = Vector3(0.46, 0.34, 0.05)
 
-[sub_resource type="BoxMesh" id="BoxMesh_6"]
+[sub_resource type="BoxMesh" id="BoxMesh_post"]
 size = Vector3(0.04, 0.45, 0.36)
 
 [node name="ClassroomDesk" type="Node3D"]
 
-[node name="Body" type="StaticBody3D" parent="."]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
-position = Vector3(0, 0.4, 0)
-shape = SubResource("BoxShape3D_1")
-
-[node name="Top" type="MeshInstance3D" parent="Body"]
-position = Vector3(0, 0.755, 0)
-mesh = SubResource("BoxMesh_2")
-material_override = ExtResource("1_desk_wood")
-
-[node name="LegFL" type="MeshInstance3D" parent="Body"]
-position = Vector3(-0.55, 0.38, -0.25)
-mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("2_metal_dark")
-
-[node name="LegFR" type="MeshInstance3D" parent="Body"]
-position = Vector3(0.55, 0.38, -0.25)
-mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("2_metal_dark")
-
-[node name="LegBL" type="MeshInstance3D" parent="Body"]
-position = Vector3(-0.55, 0.38, 0.25)
-mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("2_metal_dark")
-
-[node name="LegBR" type="MeshInstance3D" parent="Body"]
-position = Vector3(0.55, 0.38, 0.25)
-mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("2_metal_dark")
+[node name="Desk" parent="." instance=ExtResource("1_school_desk")]
 
 [node name="Chair" type="Node3D" parent="."]
-position = Vector3(0, 0, 0.78)
+position = Vector3(0, 0, 0.58)
 
 [node name="Seat" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.45, 0)
-mesh = SubResource("BoxMesh_4")
-material_override = ExtResource("1_desk_wood")
+mesh = SubResource("BoxMesh_seat")
+material_override = ExtResource("2_desk_wood")
 
 [node name="Back" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.66, 0.2)
-mesh = SubResource("BoxMesh_5")
-material_override = ExtResource("1_desk_wood")
+mesh = SubResource("BoxMesh_back")
+material_override = ExtResource("2_desk_wood")
 
 [node name="SeatPostL" type="MeshInstance3D" parent="Chair"]
 position = Vector3(-0.2, 0.22, 0)
-mesh = SubResource("BoxMesh_6")
-material_override = ExtResource("2_metal_dark")
+mesh = SubResource("BoxMesh_post")
+material_override = ExtResource("3_metal_dark")
 
 [node name="SeatPostR" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0.2, 0.22, 0)
-mesh = SubResource("BoxMesh_6")
-material_override = ExtResource("2_metal_dark")
+mesh = SubResource("BoxMesh_post")
+material_override = ExtResource("3_metal_dark")
