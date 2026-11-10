@@ -25,6 +25,30 @@ The classroom with control returned and the objective set.
 
 ![03_world_after_opening](03_world_after_opening.png)
 
+## 03h_classroom_desks
+
+The classroom from the back
+
+![03h_classroom_desks](03h_classroom_desks.png)
+
+## 03i_own_desk_stationery
+
+The player's own desk
+
+![03i_own_desk_stationery](03i_own_desk_stationery.png)
+
+## 03j_protagonist
+
+The player's authored protagonist, standing on the classroom floor, head to feet.
+
+![03j_protagonist](03j_protagonist.png)
+
+## 03k_q_in_the_classroom
+
+Q in the classroom, wearing the authored model, from the side Q faces.
+
+![03k_q_in_the_classroom](03k_q_in_the_classroom.png)
+
 ## cue_candidate_tick
 
 Candidate tick
