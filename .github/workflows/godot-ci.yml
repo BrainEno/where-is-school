@@ -60,6 +60,16 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the CI verdict itself
+        shell: bash
+        run: |
+          # `tools/ci_run_check.sh` decides whether a headless check passed. It is the one
+          # piece of CI whose mistake is invisible - a broken verdict reads as a green run -
+          # so its behaviour is pinned here with fake commands and fake logs: pass, non-zero
+          # exit, unhandled script error, parse error, verdict-less run, and the two named
+          # exceptions (the import pass and the compile-only script check).
+          bash tests/run_check_test.sh
+
       - name: Check the build check itself
         shell: bash
         run: |
@@ -94,49 +104,14 @@ jobs:
           set -uo pipefail
           mkdir -p ci-logs
 
-          run_check () {
-            local name="$1"; shift
-            local limit="$1"; shift
-            echo "=== ${name}: $*"
-            timeout "${limit}" "$@" > "ci-logs/${name}.log" 2>&1
-            local code=$?
-            tail -n 30 "ci-logs/${name}.log"
-            echo "--- exit ${code}"
-            local summary
-            # Prefer the test's own verdict lines. Engine ERROR noise (a freed-node
-            # warning repeated every frame) can be hundreds of lines long and would
-            # otherwise push the real failure out of the check annotation.
-            # `SCRIPT ERROR` belongs in the summary: an uncaught runtime error kills
-            # the test's coroutine without printing a verdict, and the run then looks
-            # like a silent timeout. Without this line the only visible symptom is the
-            # watchdog, which says nothing about the cause.
-            summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|SCRIPT ERROR|Parse Error|PASS:" \
-              "ci-logs/${name}.log" | head -n 20 | tr '\n' '|' | cut -c1-4000)
-            if [ -z "${summary}" ]; then
-              summary=$(grep -E "SCRIPT ERROR|ERROR:" "ci-logs/${name}.log" \
-                | head -n 12 | tr '\n' '|' | cut -c1-4000)
-            fi
-            grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:" "ci-logs/${name}.log" | head -n 20 || true
-            # A test that prints `::notice …` is describing what it measured. The engine's
-            # output goes to a file above, so the runner never sees those lines; re-emit them
-            # here, which is how the per-location and per-corpus numbers become readable.
-            grep -E "^::(notice|warning|error) " "ci-logs/${name}.log" | head -n 12 || true
-            if [ "${code}" -eq 0 ]; then
-              # One notice per *step*, not one per test: a runner keeps only the first
-              # handful of annotations from a step, and forty green notices push the one red
-              # one out of the report. Passed checks are counted and announced below.
-              passed="${passed}${name} "
-            else
-              echo "::error title=${name} failed (exit ${code})::${summary:-no summary captured}"
-              echo "${summary}"
-            fi
-            checks=$((checks + 1))
-            return "${code}"
-          }
+          # The verdict for a single check lives in `tools/ci_run_check.sh`, so it can be
+          # tested without an engine (`tests/run_check_test.sh`, run a few steps up). It
+          # fails a check whose log carries a Parse Error or an unhandled SCRIPT ERROR even
+          # when the process exited 0: a runtime error inside a coroutine can leave the
+          # harness's `PASS:` line in the log and still let the engine exit cleanly, which
+          # is how a red test used to be reported green.
+          source tools/ci_run_check.sh
 
-          status=0
-          checks=0
-          passed=""
           # The import has to be *blocking*. `--editor --quit` returns after one frame,
           # while the first filesystem scan is still running on its worker thread, so
           # `.godot/imported/` stays empty. That was harmless while no `.import` sidecar
@@ -209,6 +184,12 @@ jobs:
           run_check interaction_hover 240 godot --headless --path . --script res://tests/interaction_hover_test.gd || status=1
           run_check navigation 420 godot --headless --path . --script res://tests/navigation_test.gd || status=1
           run_check location_transition 420 godot --headless --path . --script res://tests/location_transition_test.gd || status=1
+          # Ten rounds of switching between all six locations, measuring the navigation
+          # map after every single switch: the frames it took to synchronize, the map's
+          # iteration id either side, the regions on the map, and the offset of the spawn
+          # and of every exit from the room's own mesh. The flakes this file exists for
+          # were all about *when* a query is asked.
+          run_check navigation_sync_stress 600 godot --headless --path . --script res://tests/navigation_sync_stress_test.gd || status=1
           run_check automatic_interaction 420 godot --headless --path . --script res://tests/automatic_interaction_test.gd || status=1
           run_check dialogue_pointer 300 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_pointer_test.gd || status=1
           run_check dialogue_layout 240 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_layout_test.gd || status=1
@@ -244,11 +225,7 @@ jobs:
           # voice registry.
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
 
-          echo "overall status: ${status}"
-          echo "checks run: ${checks}"
-          printf 'passed: %s\n' "${passed}"
-          echo "::notice title=headless checks::${checks} check(s), status ${status}; passed: ${passed}"
-          exit "${status}"
+          run_check_summary
 
       - name: Measure the text corpus, the locations and the bake
         shell: bash
