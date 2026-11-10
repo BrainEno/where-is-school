@@ -227,6 +227,34 @@ jobs:
 
           run_check_summary
 
+      - name: Report the engine noise the checks left behind
+        if: always()
+        shell: bash
+        run: |
+          # What the verdict rule above does not cover: the engine's own `ERROR:` and
+          # `WARNING:` lines. They no longer decide a check - an unhandled `SCRIPT ERROR`
+          # does, and it fails the check - but "is the run clean?" is a question the next
+          # person will ask about this branch, and the answer should not need a log
+          # download. One notice per check that produced any, plus a total, so the number
+          # is in the run's annotations rather than in a file nobody reads.
+          #
+          # An `ERROR:` line is not automatically a bug: a test that checks how the game
+          # refuses something makes the engine print one on purpose. The line is reported,
+          # with the check it came from, and the judgement is left to a reader.
+          total=0
+          for log in $(ls ci-logs/*.log 2>/dev/null | sort); do
+            name=$(basename "${log}" .log)
+            errors=$(grep -c "ERROR:" "${log}" || true)
+            warnings=$(grep -c "WARNING:" "${log}" || true)
+            scripts=$(grep -c "SCRIPT ERROR" "${log}" || true)
+            if [ "${errors:-0}" -gt 0 ] || [ "${warnings:-0}" -gt 0 ]; then
+              first=$(grep -m1 -E "ERROR:|WARNING:" "${log}" | cut -c1-240)
+              echo "::notice title=engine noise (${name})::${errors:-0} ERROR, ${warnings:-0} WARNING, ${scripts:-0} SCRIPT ERROR - first: ${first}"
+              total=$((total + ${errors:-0} + ${warnings:-0}))
+            fi
+          done
+          echo "::notice title=engine noise::${total} ERROR/WARNING line(s) across the run"
+
       - name: Measure the text corpus, the locations and the bake
         shell: bash
         run: |
