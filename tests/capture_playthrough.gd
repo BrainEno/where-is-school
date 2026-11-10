@@ -110,6 +110,11 @@ func _run() -> void:
 	await _shot("02_walking", "The player after holding the forward key.")
 	await _shot("03_world_after_opening", "The classroom with control returned and the objective set.")
 
+	# The three candidate marks for a floor click, photographed from one fixed viewpoint.
+	# The comparison is part of the evidence: this round chose between them, and the frames
+	# are the only way to look at that choice afterwards.
+	await _capture_cue_candidates()
+
 	# 3b. The mouse, with real pointer events: a click on the floor, a click that the
 	# keys interrupt, a click on a person, and a click on a prop.
 	await _capture_click_navigation()
@@ -619,6 +624,185 @@ func _capture_yard_checks() -> void:
 		)
 	else:
 		_failures.append("Stepping through the far gap did not show the end card.")
+
+
+# --- the ground mark: candidate comparison ----------------------------------
+
+
+## Half of this is the shipped mark (candidate A); B and C are composed here, out of the same
+## pen, so that all three are real geometry drawn by the real material on the real floor. A
+## candidate that only exists in this file cannot leak into the game.
+func _candidate_mesh(design: String) -> ArrayMesh:
+	match design:
+		"tick":
+			return WorldCue.destination_mark_mesh()
+		"brackets":
+			var bracket := SurfaceTool.new()
+			bracket.begin(Mesh.PRIMITIVE_TRIANGLES)
+			bracket.set_normal(Vector3.UP)
+			bracket.append_from(WorldCue.arc_mesh(0.085, 25.0, 70.0, 0.02, 0.3), 0, Transform3D())
+			bracket.append_from(WorldCue.arc_mesh(0.085, 205.0, 70.0, 0.02, 0.3), 0, Transform3D())
+			bracket.append_from(
+				WorldCue.stroke_mesh(Vector2(-0.009, 0.0), Vector2(0.009, 0.0), 0.016), 0, Transform3D()
+			)
+			return bracket.commit()
+		_:
+			var commas := SurfaceTool.new()
+			commas.begin(Mesh.PRIMITIVE_TRIANGLES)
+			commas.set_normal(Vector3.UP)
+			var strokes: Array = [[4.0, 0.050], [121.0, 0.062], [247.0, 0.044]]
+			for stroke: Array in strokes:
+				var angle := deg_to_rad(float(stroke[0]))
+				var reach := float(stroke[1])
+				var direction := Vector2(cos(angle), sin(angle))
+				commas.append_from(
+					WorldCue.stroke_mesh(
+						direction * 0.022, direction * (0.022 + reach), 0.02, 0.55
+					),
+					0,
+					Transform3D()
+				)
+			commas.append_from(
+				WorldCue.stroke_mesh(Vector2(-0.006, 0.0), Vector2(0.006, 0.0), 0.015), 0, Transform3D()
+			)
+			return commas.commit()
+
+
+## Puts one candidate mark on the floor at `point`, laid on the real surface normal. Returns
+## the holder so the caller can free it again.
+func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D:
+	var holder := Node3D.new()
+	holder.name = "Candidate_%s" % design
+	var parent: Node = _host.get_current()
+	if parent == null:
+		parent = _main
+	parent.add_child(holder)
+	holder.global_transform = Transform3D(
+		WorldCue.ground_basis(normal), point + normal.normalized() * 0.02
+	)
+	var mark := MeshInstance3D.new()
+	mark.mesh = _candidate_mesh(design)
+	mark.material_override = WorldCue.material_for(WorldCue.ROLE_DESTINATION)
+	mark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mark.transparency = 0.0
+	holder.add_child(mark)
+	return holder
+
+
+## The three candidates, at the same point from the same camera, then all three together.
+##
+## "Small" is the whole point of the redesign, so the run measures the ink each candidate
+## actually puts on the floor: the frames are grabbed with and without the mark and the
+## changed pixels inside the mark's own area are counted. A candidate that turns out
+## invisible at gameplay distance would show up here as a number, not as an opinion.
+func _capture_cue_candidates() -> void:
+	if not await _wait_for_free(45.0):
+		_note("the candidate frames could not be taken: the player never got control back")
+		return
+	_teleport(Vector3(0.55, 0.0, 1.7), 0.0)
+	await _wait(0.4)
+	var ahead := -_player.global_transform.basis.z
+	var centre := _player.global_position + ahead * 2.4
+	var floor_hit := _floor_at(centre)
+	var point: Vector3 = floor_hit["point"]
+	var normal: Vector3 = floor_hit["normal"]
+	_note("cue candidates: mark at %s on normal %s" % [str(point), str(normal)])
+
+	var screen := _screen_position_of_point(point)
+	var designs: Array[String] = ["tick", "brackets", "commas"]
+	var inked := {}
+	for design: String in designs:
+		await _shot_free_frame()
+		var before: Image = await _grab_image()
+		var holder := _place_candidate(design, point, normal)
+		await _wait(0.3)
+		var after: Image = await _grab_image()
+		inked[design] = _ink_pixels(before, after, screen, 90)
+		await _shot(
+			"cue_candidate_%s" % design,
+			"Candidate %s: the floor-click mark, from the player's own camera at 2.4 m."
+			% design
+		)
+		holder.queue_free()
+		await process_frame
+	_note("cue candidates: ink on screen (px within 90 px of the mark) = %s" % str(inked))
+
+	for index in designs.size():
+		var offset := ahead * (1.8 + 0.6 * float(index))
+		var hit := _floor_at(_player.global_position + offset)
+		_place_candidate(designs[index], hit["point"], hit["normal"])
+	await _wait(0.3)
+	await _shot(
+		"cue_candidates_abc",
+		"The three candidates side by side on the same floor, from one camera: A tick, "
+		+ "B brackets, C commas. The shipped one is A."
+	)
+	var current := _host.get_current()
+	if current != null:
+		for child in current.get_children():
+			if String(child.name).begins_with("Candidate_"):
+				child.queue_free()
+	await process_frame
+
+
+## Hides every cue this run may have left on the floor, so a "before" frame is clean.
+func _shot_free_frame() -> void:
+	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
+	if navigator != null:
+		navigator.cancel()
+	await _wait(0.2)
+
+
+## The floor under a world point: position and normal, from one downward ray against the
+## world layer. Falls back to y = 0 when nothing is hit, which is the classroom floor.
+func _floor_at(point: Vector3) -> Dictionary:
+	var space := _player.get_world_3d().direct_space_state
+	if space != null:
+		var from := Vector3(point.x, point.y + 3.0, point.z)
+		var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 6.0, 1)
+		var hit := space.intersect_ray(query)
+		if not hit.is_empty():
+			return {
+				"point": hit.get("position", point),
+				"normal": hit.get("normal", Vector3.UP),
+			}
+	return {"point": Vector3(point.x, 0.0, point.z), "normal": Vector3.UP}
+
+
+func _screen_position_of_point(world: Vector3) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		return Vector2.ZERO
+	return camera.unproject_position(world)
+
+
+func _grab_image() -> Image:
+	RenderingServer.force_draw(true)
+	await process_frame
+	await process_frame
+	return root.get_texture().get_image()
+
+
+## How many pixels changed between two frames inside a square around `centre`. A mark that
+## draws nothing changes nothing; a mark that is a ring changes thousands.
+func _ink_pixels(before: Image, after: Image, centre: Vector2, half_box: int) -> int:
+	if before == null or after == null:
+		return -1
+	var left := maxi(int(centre.x) - half_box, 0)
+	var right := mini(int(centre.x) + half_box, mini(before.get_width(), after.get_width()) - 1)
+	var top := maxi(int(centre.y) - half_box, 0)
+	var bottom := mini(int(centre.y) + half_box, mini(before.get_height(), after.get_height()) - 1)
+	var changed := 0
+	for y in range(top, bottom):
+		for x in range(left, right):
+			var was: Color = before.get_pixel(x, y)
+			var now: Color = after.get_pixel(x, y)
+			var delta: float = maxf(
+				maxf(absf(was.r - now.r), absf(was.g - now.g)), absf(was.b - now.b)
+			)
+			if delta > 0.04:
+				changed += 1
+	return changed
 
 
 # --- mouse navigation -------------------------------------------------------

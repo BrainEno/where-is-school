@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import struct
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 MAGIC = b"GDPC"
@@ -82,12 +83,91 @@ REQUIRED_PREFIXES = (
     "res://assets/fonts/",
 )
 
-# No single file in a build of this game has any business being this big. The unsplit font
-# (10 MiB) and a packed screenshot (~380 KiB each, 65 of them) are the two things that
-# would. Sizes are read from the directory, so this catches them even when they land under
-# a `.godot/exported/` hash instead of the path they came from.
-MAX_ENTRY_BYTES = 2 * 1024 * 1024
-MAX_PACK_BYTES = 16 * 1024 * 1024
+KiB = 1024
+MiB = 1024 * 1024
+
+# Every single file is checked against the budget of the kind of thing it is, because the
+# kinds do not cost the same: a mesh, a texture, a font, a sound, a scene and a JSON chapter
+# have different reasons to grow and different sizes when they are healthy. A single global
+# "2 MiB per file" was either too generous for a JSON chapter or too strict for the one
+# texture the game will eventually ship.
+#
+# Each entry is: warning threshold, hard limit, and why those two numbers. A warning is an
+# annotation and does not fail the release; a hard limit does. `hard` is never above
+# HARD_CEILING, so no category is looser than the old flat limit was.
+@dataclass(frozen=True)
+class Category:
+    name: str
+    warn: int
+    hard: int
+    why: str
+
+
+# The ceiling that applies to every file whatever it is classified as: the old flat per-file
+# budget, kept so this table can only tighten it, never relax it.
+HARD_CEILING = 2 * MiB
+
+CATEGORIES = (
+    Category(
+        "model",
+        384 * KiB,
+        1536 * KiB,
+        "the two sample meshes ship at 206 and 134 KiB packed; 384 KiB warns, 1.5 MiB means "
+        "an untrimmed Blender export or a texture baked into a mesh",
+    ),
+    Category(
+        "font",
+        384 * KiB,
+        1 * MiB,
+        "the subset covering every character the game can print is 252 KiB; 1 MiB means the "
+        "full 10 MiB source font, or a subset without its glyph range, got packed",
+    ),
+    Category(
+        "texture",
+        512 * KiB,
+        2 * MiB,
+        "no textures ship yet, and none is needed: 512 KiB is a 1024x1024 RGBA image, 2 MiB "
+        "is the point where a photo is being used as a wall",
+    ),
+    Category(
+        "audio",
+        512 * KiB,
+        2 * MiB,
+        "the placeholder cues are a few KiB each; anything past half a megabyte is a music "
+        "track or an uncompressed recording, not a footstep",
+    ),
+    Category(
+        "scene",
+        192 * KiB,
+        1 * MiB,
+        "the largest location scene packs well under 100 KiB; a 1 MiB .tscn has embedded "
+        "resources in it, which belong in their own files",
+    ),
+    Category(
+        "text",
+        128 * KiB,
+        512 * KiB,
+        "the largest chapter of dialogue or inspections is about 10 KiB; 128 KiB warns and "
+        "512 KiB fails, which is a whole corpus in one file or a stray export under data/",
+    ),
+    Category(
+        "other",
+        256 * KiB,
+        HARD_CEILING,
+        "project settings, pack stubs and imported banners; anything here over 256 KiB is "
+        "something nobody classified yet, which is exactly what wants looking at",
+    ),
+)
+
+# The whole pack. The baseline is 1.37 MiB of 256 files, so the hard limit leaves room for
+# roughly eleven more times the content the game has today — several more locations with
+# furniture, textures and sound — while 8 MiB is an early signal that a release doubled.
+# The number the old check used (16 MiB) is kept as the hard limit: nothing is loosened, and
+# the warning is new.
+PACK_WARN_BYTES = 8 * MiB
+MAX_PACK_BYTES = 16 * MiB
+
+BY_NAME = {category.name: category for category in CATEGORIES}
 
 
 class PackError(Exception):
@@ -225,7 +305,63 @@ def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, i
     )
 
 
-def verify(entries: list[tuple[str, int]], header: dict[str, int]) -> list[str]:
+# Extensions that name the thing itself. An imported resource is packed as
+# `.godot/exported/<hash>/<source name>-<hash>.<ext>`, so the source's extension survives in
+# the stored name and can be used to classify it — that is what `classify` reads.
+_MODEL_SUFFIXES = (".glb", ".gltf", ".blend", ".obj", ".fbx")
+_AUDIO_SUFFIXES = (".wav", ".ogg", ".mp3", ".opus", ".flac", ".m4a")
+_TEXTURE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".svg", ".exr", ".hdr", ".bmp", ".tga")
+_FONT_SUFFIXES = (".ttf", ".otf", ".fontdata", ".woff", ".woff2")
+_SCENE_SUFFIXES = (".tscn", ".scn", ".scene", ".tres", ".res")
+_TEXT_SUFFIXES = (".json", ".csv", ".txt", ".md")
+
+
+def classify(path: str) -> Category:
+    """Which budget a packed file is measured against.
+
+    The extensions of the *source* resource are looked for anywhere in the stored name,
+    because an imported file keeps its original name inside `.godot/exported/`. Order
+    matters: `student_backpack.glb-5817e7e.scn` is a model, not a scene.
+    """
+    lowered = path.lower()
+    stored = lowered.rsplit("/", 1)[-1]
+    if any(suffix in stored for suffix in _MODEL_SUFFIXES):
+        return BY_NAME["model"]
+    if any(suffix in stored for suffix in _FONT_SUFFIXES):
+        return BY_NAME["font"]
+    if any(suffix in stored for suffix in _AUDIO_SUFFIXES):
+        return BY_NAME["audio"]
+    if any(suffix in stored for suffix in _TEXTURE_SUFFIXES):
+        return BY_NAME["texture"]
+    if stored.startswith("data/") or "/data/" in lowered:
+        if any(stored.endswith(suffix) for suffix in _TEXT_SUFFIXES):
+            return BY_NAME["text"]
+    if any(stored.endswith(suffix) for suffix in _SCENE_SUFFIXES):
+        return BY_NAME["scene"]
+    if any(stored.endswith(suffix) for suffix in _TEXT_SUFFIXES):
+        return BY_NAME["text"]
+    return BY_NAME["other"]
+
+
+def verify(
+    entries: list[tuple[str, int]], header: dict[str, int]
+) -> tuple[list[str], list[str]]:
+    """Return (problems, warnings) for the whole build.
+
+    Two separate questions, kept separate: what is in the pack (contents) and how big it is
+    (budgets). A contents problem is always a failure; a budget problem is a failure at the
+    hard limit and an annotation at the warning line. The tests call the two halves directly,
+    which is how the boundary cases stay testable without building a whole fake game.
+    """
+    problems = verify_contents(entries)
+    budget_problems, warnings = verify_budgets(entries)
+    problems.extend(budget_problems)
+    del header
+    return problems, warnings
+
+
+def verify_contents(entries: list[tuple[str, int]]) -> list[str]:
+    """Directories that must not ship, directories that must, and the font stub."""
     problems: list[str] = []
     paths = [path for path, _ in entries]
     sizes = dict(entries)
@@ -251,13 +387,35 @@ def verify(entries: list[tuple[str, int]], header: dict[str, int]) -> list[str]:
             "the bundled font is not in the build (no "
             "res://assets/fonts/NotoSansSC-Regular.ttf.import stub)"
         )
+    return problems
 
-    oversized = [(name, size) for name, size in entries if size > MAX_ENTRY_BYTES]
-    for name, size in oversized[:5]:
-        problems.append(
-            f"{name} is {size / 1048576:.2f} MiB, over the {MAX_ENTRY_BYTES / 1048576:.0f} MiB "
-            "per-file budget: the unsplit font, a packed screenshot, or an untrimmed asset"
-        )
+
+def verify_budgets(entries: list[tuple[str, int]]) -> tuple[list[str], list[str]]:
+    """Per-file category budgets and the pack total: (problems, warnings)."""
+    problems: list[str] = []
+    warnings: list[str] = []
+
+    for name, size in entries:
+        category = classify(name)
+        if size > category.hard:
+            problems.append(
+                f"{name} is {_human(size)}, over the {_human(category.hard)} hard limit for "
+                f"{category.name} files: {category.why}"
+            )
+            continue
+        if size > HARD_CEILING:
+            # Unreachable while every category hard limit is at or under the ceiling, and
+            # kept so that stays true.
+            problems.append(
+                f"{name} is {_human(size)}, over the {_human(HARD_CEILING)} ceiling for any "
+                "single file"
+            )
+            continue
+        if size > category.warn:
+            warnings.append(
+                f"{name} is {_human(size)}, past the {_human(category.warn)} warning line for "
+                f"{category.name} files (hard limit {_human(category.hard)}): {category.why}"
+            )
 
     total = sum(size for _, size in entries)
     if total > MAX_PACK_BYTES:
@@ -265,8 +423,36 @@ def verify(entries: list[tuple[str, int]], header: dict[str, int]) -> list[str]:
             f"the pack is {total / 1048576:.1f} MiB, over the {MAX_PACK_BYTES / 1048576:.0f} "
             "MiB budget: something large got packed (screenshots? models? an untrimmed asset?)"
         )
-    del header
-    return problems
+    elif total > PACK_WARN_BYTES:
+        warnings.append(
+            f"the pack is {total / 1048576:.1f} MiB, past the {PACK_WARN_BYTES / 1048576:.0f} "
+            "MiB warning line; the last release was 1.4 MiB, so something new is heavy"
+        )
+    return problems, warnings
+
+
+def _human(size: int) -> str:
+    if size >= MiB:
+        return f"{size / MiB:.2f} MiB"
+    return f"{size / KiB:.0f} KiB"
+
+
+def category_totals(entries: list[tuple[str, int]]) -> dict[str, dict]:
+    """Per-category count, total size, largest file and budget state.
+
+    This is the part that answers "where did the build grow": one line per kind of asset,
+    with the biggest file of that kind next to it, instead of a flat list of 256 paths.
+    """
+    totals: dict[str, dict] = {
+        category.name: {"count": 0, "bytes": 0, "largest": ("", 0)} for category in CATEGORIES
+    }
+    for name, size in entries:
+        bucket = totals[classify(name).name]
+        bucket["count"] += 1
+        bucket["bytes"] += size
+        if size > bucket["largest"][1]:
+            bucket["largest"] = (name, size)
+    return totals
 
 
 def main(argv: list[str]) -> int:
@@ -308,6 +494,32 @@ def main(argv: list[str]) -> int:
     for name, size in entries[: arguments.largest]:
         print(f"  {size / 1024:8.0f} KiB  {name}")
 
+    # The per-category view, which is where a build's growth is actually visible: a pack
+    # that doubled is either one heavy kind of asset or a little of everything, and this
+    # line says which without anyone reading the full listing.
+    totals = category_totals(entries)
+    print("\nby category (warn / hard):")
+    for category in CATEGORIES:
+        bucket = totals[category.name]
+        if not bucket["count"]:
+            continue
+        state = "over" if bucket["bytes"] > category.hard else "ok"
+        print(
+            f"  {category.name:8s} {bucket['count']:4d} file(s) {_human(bucket['bytes']):>9s}  "
+            f"[{_human(category.warn)} / {_human(category.hard)}]  {state}"
+            f"  largest: {bucket['largest'][0].rsplit('/', 1)[-1]} "
+            f"{_human(bucket['largest'][1])}"
+        )
+    annotate(
+        "notice",
+        "bytes by category",
+        ", ".join(
+            f"{category.name} {_human(totals[category.name]['bytes'])}"
+            for category in CATEGORIES
+            if totals[category.name]["count"]
+        ),
+    )
+
     prefixes: dict[str, int] = {}
     for name, _ in entries:
         top = "/".join(name.split("/")[:3])
@@ -341,7 +553,13 @@ def main(argv: list[str]) -> int:
         for name, size in sorted(entries):
             print(f"  {size:9d}  {name}")
 
-    problems = verify(entries, header)
+    problems, warnings = verify(entries, header)
+    for warning in warnings:
+        print(f"WARN: {warning}", file=sys.stderr)
+        # Warnings do not fail the release: they are what a release should say about itself
+        # while it is still affordable to fix. The annotation makes them visible without
+        # anyone opening the step log.
+        annotate("warning", "build budget", warning)
     if problems:
         print("", file=sys.stderr)
         for problem in problems:
@@ -356,6 +574,8 @@ def main(argv: list[str]) -> int:
             annotate("error", "packed paths (first 25)", sample)
         return 1
     print("\nPASS: the build carries the game and nothing else")
+    if warnings:
+        print(f"PASS with {len(warnings)} warning(s): inside every hard limit, worth a look")
     annotate(
         "notice",
         "build contents",

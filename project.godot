@@ -18,8 +18,11 @@ CueAudio="*res://scripts/audio/cue_audio.gd"
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
-window/size/window_width_override=1280
-window/size/window_height_override=720
+; The window opens at the design size: the override pair used to open it at 1280x720, a size
+; the UI is not designed at. Resizing is allowed, with a floor of 1280x720
+; (`scripts/ui/display_mode.gd` sets it and centres the frame at startup).
+window/size/resizable=true
+window/size/initial_position_type=1
 
 [editor_plugins]
 
@@ -61,6 +64,10 @@ backlog={
 cancel={
 "deadzone": 0.2,
 "events": [Object(InputEventKey, "physical_keycode": 4194305)]
+}
+toggle_fullscreen={
+"deadzone": 0.2,
+"events": [Object(InputEventKey, "physical_keycode": 4194342)]
 }
 toggle_language={
 "deadzone": 0.2,

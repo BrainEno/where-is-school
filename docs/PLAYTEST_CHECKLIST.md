@@ -33,7 +33,9 @@ GitHub release, if one exists). Record at the top:
 - [ ] Walk with WASD, then with the arrow keys. Neither feels like sliding; the camera
       keeps the same framing.
 - [ ] Click the floor: the character walks there, stops without jitter at the end, and a
-      ring marks the spot while walking.
+      small mark (a few uneven strokes, not a ring) sits on the spot the click was
+      accepted on. It does not turn or breathe while the character walks, and it fades
+      when the walk ends. Check it on the ramp and on a step: it lies on the surface.
 - [ ] Click a wall, a desk top and the doorway floor. The first two should refuse, the
       doorway should walk.
 - [ ] Hover the schoolbag, the bed, the door, the noticeboard: the cursor changes and the
@@ -97,6 +99,13 @@ GitHub release, if one exists). Record at the top:
 - [ ] Alt-Tab away for a minute and come back: the game is still running, not frozen.
 - [ ] Resize the window (or maximise) during a conversation: the reading band stays
       readable and the options stay clickable.
+- [ ] Press **F11** mid-conversation: the game goes fullscreen, the dialogue keeps its
+      place (same line, same typing progress), the character does not move and the room
+      does not reload. Press it again: the window comes back the same size and in the
+      same place it was. Hold F11 down: it must not flicker between the two.
+- [ ] Drag the window to 1280×720 (the smallest it goes): the objective line, the prompt
+      and the dialogue options are all still readable and clickable, and the type has not
+      shrunk to make them fit.
 - [ ] Click wildly during a transition (through a door): the game must not end up in two
       rooms, and the player must not end up outside the geometry.
 - [ ] Switch language, then inspect something with a long line: no missing characters

@@ -214,6 +214,62 @@ Three small guards, all in the capture path rather than in the game:
 The first full run after those fixes produced 46 in-game frames plus the UI and editor sets,
 and it is that run that `03a`/`03d`/`03g` above come from.
 
+## 4b. The bake, measured (added in Phase 5b.3)
+
+The bake was already the expensive part of entering a location; what was missing was any
+way to know how expensive. `LocationNavigation` now measures itself, once per bake:
+
+| Question | Answered by |
+|---|---|
+| how long did the bake take, and how much of that was geometry collection? | `get_bake_usec()`, `get_collect_usec()` |
+| how much geometry went in? | `get_geometry_face_count()` — collision faces parsed from every `StaticBody3D` on the world layer |
+| how much walkable surface came out? | `get_polygon_count()` — polygons in the baked mesh |
+| did the map take it? | `get_map_region_count()`, `is_routable()` |
+| why did it fail? | `get_bake_error()` |
+
+Nothing here runs per frame: the numbers are written once, inside `bake_region()`, and a
+debug build prints one line (`LocationNavigation: '<scene>' baked in X ms (collect Y), N
+faces -> M polygons, K region(s)`). Release builds print nothing.
+
+**What the measurement exposed.** Not a slow bake — a *missing* one. The pressure test kept
+finding a room whose mesh was correct (`polygons` right, `faces` right, region on the map)
+and whose map could not answer a single route, and only sometimes: the corridor, on the
+frame the player arrived.
+
+The cause is the server's schedule, not the geometry. The navigation server parses a
+region's mesh and rebuilds its map on its own schedule. A map that has not rebuilt yet
+answers queries from the polygons it still holds, and right after a location swap what it
+holds is the room that has just been freed. So `is_routable()` said *yes* about a floor that
+was about to disappear, and once it had gone, the new room's polygons were in the mesh and
+not yet in the map. For a player that is a room where click-to-move quietly falls back to
+"the nearest point I can reach", which may be two metres away and in the previous room.
+
+Two changes, one diagnostic:
+
+- `map_knows_geometry()` answers the question `is_routable()` cannot: the closest walkable
+  point to a corner of *this* mesh has to be that corner. A map holding another room's floor
+  fails it by the distance between the two rooms.
+- `_verify_baked_geometry()` runs on the frames after a bake, hands the mesh over again while
+  the map still answers for something else, and stops after `ROUTE_RECHECK_FRAMES` (6) with
+  a recorded `_bake_error` rather than pretending. It costs nothing when the map keeps up,
+  which is almost always.
+- The bake also duplicates the authored `navigation_mesh` instead of writing into it, because
+  a `.tscn` shares its sub-resources between instances and a per-instance bake must not write
+  into a shared one. It is a safety measure today — none of the shipped location scenes
+  authors a mesh, so they all bake into a fresh `NavigationMesh` already — and it exists so
+  that the first scene that does author one cannot poison another instance.
+
+**What the pressure test does with it** (`tests/location_pressure_test.gd`): enters all six
+locations, asserts for each that the navigation really baked (faces > 0, polygons > 0, a
+region on the map, a measured duration, and a non-zero share for collection), that the room
+around the spawn is walkable — eight directions at four metres, at least three arriving —
+and that spawn-to-spawn pairs which are *not* routable are reported rather than failed (the
+classroom's return marker sits behind the door the story has not opened yet). It then
+bounces between two rooms three times and asserts the node count and orphan count come back
+where they started, with one location, one player and one companion in the tree throughout.
+The per-location numbers it prints are quoted in
+[TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) (Phase 5b.3).
+
 ## 5. Not in this round
 
 - No dialogue-panel redesign, no NPC name labels, no new character models, no story or

@@ -103,6 +103,7 @@ func _ready() -> void:
 	_inspections = InspectionLibrary.load_all()
 	if not _inspections.is_valid():
 		push_error("DialogueController: %s" % _inspections.describe_errors())
+	_report_content_load()
 
 	_overlay = get_node_or_null(check_overlay_path) as CheckOverlay
 	if _overlay == null:
@@ -138,6 +139,31 @@ func is_busy() -> bool:
 
 func get_mode() -> Mode:
 	return _mode
+
+
+## One start-up line for the whole text corpus, in debug builds only: how long loading
+## every chapter in every language took, and what it produced. The libraries print their own
+## per-chapter breakdown; this is the number that explains a slow start.
+func _report_content_load() -> void:
+	if not OS.is_debug_build():
+		return
+	if _library == null or _inspections == null:
+		return
+	var dialogue_report: Dictionary = _library.get_load_report()
+	var inspection_report: Dictionary = _inspections.get_load_report()
+	var total := int(dialogue_report.get("total_usec", 0))
+	total += int(inspection_report.get("total_usec", 0))
+	print(
+		(
+			"DialogueController: text corpus loaded in %.1f ms "
+			+ "(%d dialogue language(s), %d inspection language(s))."
+		)
+		% [
+			total / 1000.0,
+			int(dialogue_report.get("locales", {}).size()),
+			int(inspection_report.get("locales", {}).size()),
+		]
+	)
 
 
 func get_dialogue_library() -> DialogueLibrary:

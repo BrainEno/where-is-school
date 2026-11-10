@@ -34,6 +34,15 @@ const ROLES: Array[String] = [ROLE_DESTINATION, ROLE_TARGET, ROLE_REFUSED]
 ## Ring stroke width in metres. Shared by every cue so the pen looks the same at the
 ## player's feet and on a door frame four metres away.
 const RING_THICKNESS := 0.035
+
+## The pen of the ground mark, in metres. It is *wider* than the ring stroke although the
+## mark is half the ring's size: at four metres a 3.5 cm ring stroke is about one pixel,
+## so shrinking the mark while keeping the pen would have made it disappear. What makes a
+## mark small is its footprint, not its line.
+const MARK_STROKE := 0.019
+## Clear space at the centre of the mark, so the strokes read as strokes and not as a
+## scribble.
+const MARK_CENTRE := 0.011
 ## How much of each arc is left empty, as a fraction of the arc. This is what makes a ring
 ## read as a mark someone drew rather than a glowing hoop.
 const RING_GAP_RATIO := 0.42
@@ -169,6 +178,134 @@ static func shard_mesh(size: float) -> ArrayMesh:
 		_add_triangle(tool, top, current, following)
 		_add_triangle(tool, bottom, following, current)
 	return tool.commit()
+
+
+## The mark drawn where a click lands.
+##
+## A ring — even a dashed, breathing one — is the most generic way to mark a point in a 3D
+## game, and it is also the *largest*: a ring has to be at least as wide as the thing it
+## encloses, so it covers the floor the player is reading. This is the opposite shape: four
+## short, unequal strokes around a small empty centre, like a mark scratched into the floor
+## with a piece of chalk. Nothing is closed, nothing repeats, and the differing lengths are
+## what stop it reading as a reticle.
+##
+## The footprint is about 13 cm across, roughly a quarter of the ring it replaces, which at
+## gameplay distance is a mark rather than an area. Nothing here animates: the caller fades
+## it in and out (see `destination_cue.gd`), and between those two fades it is still.
+static func destination_mark_mesh() -> ArrayMesh:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_normal(Vector3.UP)
+	# Angle in degrees, length in metres. The numbers are deliberately unequal and the
+	# angles are not spaced evenly: four equal strokes at 90° would be a crosshair.
+	var strokes: Array = [
+		[8.0, 0.052],
+		[97.0, 0.062],
+		[186.0, 0.045],
+		[281.0, 0.057],
+	]
+	for stroke: Array in strokes:
+		var angle := deg_to_rad(float(stroke[0]))
+		var reach := float(stroke[1])
+		var direction := Vector2(cos(angle), sin(angle))
+		_add_stroke(
+			tool,
+			direction * MARK_CENTRE,
+			direction * (MARK_CENTRE + reach),
+			MARK_STROKE,
+			0.35
+		)
+	return tool.commit()
+
+
+## How far the shipped mark reaches from its centre, in metres — the half-width of its
+## footprint. Read off the built mesh rather than restated as a constant, so a change to the
+## strokes above cannot leave the tests measuring the old size.
+static func mark_footprint_radius() -> float:
+	var box := destination_mark_mesh().get_aabb()
+	return maxf(maxf(absf(box.position.x), absf(box.position.z)),
+		maxf(box.end.x, box.end.z))
+
+
+## One stroke of the pen, as a quad lying in the XZ plane, from `from` to `to`.
+##
+## `taper` narrows the far end by that fraction of the width, which is the difference
+## between a line and a mark someone made: a stroke of constant width with a square end reads
+## as geometry, a stroke that thins out reads as pressure. Public so a test (or the capture
+## tool that compares candidate marks) can compose a shape without copying this file.
+static func stroke_mesh(from: Vector2, to: Vector2, width: float, taper: float = 0.0) -> ArrayMesh:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_normal(Vector3.UP)
+	_add_stroke(tool, from, to, width, taper)
+	return tool.commit()
+
+
+## A short arc of the same pen, in the XZ plane, centred on the origin.
+static func arc_mesh(
+	radius: float,
+	start_degrees: float,
+	span_degrees: float,
+	width: float,
+	taper: float = 0.0,
+	steps: int = 5
+) -> ArrayMesh:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_normal(Vector3.UP)
+	_add_arc(tool, radius, start_degrees, span_degrees, width, taper, steps)
+	return tool.commit()
+
+
+static func _add_stroke(
+	tool: SurfaceTool,
+	from: Vector2,
+	to: Vector2,
+	width: float,
+	taper: float
+) -> void:
+	var along := to - from
+	if along.length_squared() < 0.000001:
+		return
+	var direction := along.normalized()
+	var across := Vector2(-direction.y, direction.x)
+	var half := maxf(width, 0.001) * 0.5
+	var far_half := half * (1.0 - clampf(taper, 0.0, 0.9))
+	var start_left := from + across * half
+	var start_right := from - across * half
+	var end_left := to + across * far_half
+	var end_right := to - across * far_half
+	# Two triangles, wound so the face looks up in a Y-up space.
+	tool.add_vertex(Vector3(start_left.x, 0.0, start_left.y))
+	tool.add_vertex(Vector3(end_left.x, 0.0, end_left.y))
+	tool.add_vertex(Vector3(end_right.x, 0.0, end_right.y))
+	tool.add_vertex(Vector3(start_left.x, 0.0, start_left.y))
+	tool.add_vertex(Vector3(end_right.x, 0.0, end_right.y))
+	tool.add_vertex(Vector3(start_right.x, 0.0, start_right.y))
+
+
+static func _add_arc(
+	tool: SurfaceTool,
+	radius: float,
+	start_degrees: float,
+	span_degrees: float,
+	width: float,
+	taper: float,
+	steps: int
+) -> void:
+	var count := maxi(steps, 1)
+	var safe_radius := maxf(radius, 0.01)
+	for step in count:
+		var from_degrees := start_degrees + span_degrees * float(step) / float(count)
+		var to_degrees := start_degrees + span_degrees * float(step + 1) / float(count)
+		var from_angle := deg_to_rad(from_degrees)
+		var to_angle := deg_to_rad(to_degrees)
+		var from := Vector2(cos(from_angle), sin(from_angle)) * safe_radius
+		var to := Vector2(cos(to_angle), sin(to_angle)) * safe_radius
+		# Only the last segment carries the taper, so the arc thins towards its end
+		# instead of turning into a dotted line.
+		var segment_taper := taper if step == count - 1 else 0.0
+		_add_stroke(tool, from, to, width, segment_taper)
 
 
 ## A basis whose +Y axis is `normal`: the orientation a cue needs to lie on the surface it
