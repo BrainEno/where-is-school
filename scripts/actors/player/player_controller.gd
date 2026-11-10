@@ -22,12 +22,13 @@ signal path_cancelled
 ## How quickly the visual turns toward the movement direction.
 @export_range(1.0, 30.0, 0.5) var turn_speed: float = 12.0
 ## How tall a step the body can walk up. `CharacterBody3D` treats every box as a wall,
-## so without this a 15 cm kerb stops the character dead and a click across the street
-## walks into it and grinds. Kept equal to what the navigation mesh's `agent_max_climb`
-## actually bakes to, not to the property it is given: the baker floors that property to
-## whole voxels, and a mesh that promises a taller step than this produces routes the
-## character walks into and grinds against.
-@export_range(0.0, 0.6, 0.01) var max_step_height: float = 0.3
+## so without this a kerb stops the character dead and a click across the street walks
+## into it and grinds. Kept equal to the navigation mesh's `agent_max_climb`, because the
+## two have to agree: a mesh that promises a taller step than this produces routes the
+## character walks into and grinds against, and a mesh that promises less produces routes
+## around a kerb the player could have stepped over. The mesh bakes on a 0.25 m grid, so
+## the only values that survive the bake are multiples of it, and 0.25 m is one voxel.
+@export_range(0.0, 0.6, 0.01) var max_step_height: float = 0.25
 ## How far past the body's own radius the step probe looks for the surface it is about to
 ## step onto. A capsule stops when its *edge* touches the step, so the step's face is one
 ## radius away from the origin: a probe shorter than the radius always lands on the surface

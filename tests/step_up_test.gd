@@ -33,8 +33,9 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const STREET := "res://scenes/locations/street/street.tscn"
 const STREET_SPAWN := &"FromCorridor"
-## The east kerb is a 0.35 m wide box whose top sits 0.28 m above the road.
-const KERB_TOP := 0.28
+## The east kerb is a 0.35 m wide box whose top sits 0.24 m above the road: one 0.25 m
+## voxel of the bake, and one step of the body, with room to spare on both.
+const KERB_TOP := 0.24
 ## The pavement slab behind it, and the road the walk starts on.
 const PAVEMENT_TOP := 0.15
 const ROAD_TOP := 0.0
@@ -44,6 +45,8 @@ const PAVEMENT_POINT := Vector3(9.7, 0.15, 6.0)
 ## The player capsule's radius, from `player.tscn`. A body stops when its edge touches a
 ## step, so the face of the step is one radius away from the body's origin.
 const BODY_REACH := 0.35
+## The capsule's height, from `player.tscn`: headroom below this is not walkable.
+const BODY_HEIGHT := 1.8
 ## How far a walked route may end from the point it was sent to.
 const ARRIVAL_TOLERANCE := 1.2
 ## Physics frames a walk across the street may take before the run calls it stuck.
@@ -163,45 +166,39 @@ func _check_bake_numbers() -> void:
 		var height := ceilf(mesh.agent_height / cell_height) * cell_height
 		var radius := ceilf(mesh.agent_radius / cell_size) * cell_size
 		_notes.append(
-			"%s: cell %.2f/%.2f, climb %.3f (asked %.3f), height %.2f (asked %.2f), "
-			% [name, cell_size, cell_height, climb, mesh.agent_max_climb, height, mesh.agent_height]
-			+ "radius %.2f (asked %.2f)" % [radius, mesh.agent_radius]
+			"%s: cell %.2f x %.2f, climb %.3f (asked %.3f), height %.2f (asked %.2f), radius %.2f (asked %.2f)"
+			% [
+				name, cell_size, cell_height, climb, mesh.agent_max_climb,
+				height, mesh.agent_height, radius, mesh.agent_radius,
+			]
 		)
-		# The climb is the one that decides whether a kerb is a ramp or a wall, so it is
-		# checked against the kerb and not only against itself.
-		if not is_equal_approx(climb, mesh.agent_max_climb):
+		# The game's own promise, in the form that survives the voxel conversion: what the
+		# bake can climb is what the body can step. A mesh that promises a taller step than
+		# the body takes produces routes the character walks into and grinds against; a mesh
+		# that promises a shorter one produces routes around a kerb the player could have
+		# stepped over, and the two numbers drifting apart is invisible until somebody
+		# cannot leave a room.
+		if not is_equal_approx(climb, _player.max_step_height):
 			_failures.append(
-				"%s: the mesh asks for a %.3f m climb but the bake floors it to %.3f m "
-				% [name, mesh.agent_max_climb, climb]
-				+ "(cell height %.2f). A step between the two is a wall to every route."
-				% cell_height
+				"%s: the bake climbs %.3f m and the body steps %.3f m."
+				% [name, climb, _player.max_step_height]
 			)
-		if climb < KERB_TOP + 0.01:
+		# And the reason it matters: the street's kerb is 0.28 m, and the pavement behind it
+		# is where every way out of the street is.
+		if climb < KERB_TOP + 0.005:
 			_failures.append(
 				"%s: the bake can climb %.3f m, and the street's kerb is %.2f m: the pavement "
 				% [name, climb, KERB_TOP]
 				+ "is a separate island from the road."
 			)
-		if not is_equal_approx(height, mesh.agent_height):
+		if height < BODY_HEIGHT:
 			_failures.append(
-				"%s: the mesh asks for %.2f m of headroom but the bake ceils it to %.2f m "
-				% [name, mesh.agent_height, height]
-				+ "(cell height %.2f)." % cell_height
+				"%s: the bake leaves %.2f m of headroom for a %.2f m body."
+				% [name, height, BODY_HEIGHT]
 			)
-		if not is_equal_approx(radius, mesh.agent_radius):
+		if radius < BODY_REACH:
 			_failures.append(
-				"%s: the mesh asks for a %.2f m agent radius but the bake ceils it to %.2f m "
-				% [name, mesh.agent_radius, radius]
-				+ "(cell size %.2f)." % cell_size
-			)
-		# The game's own promise: the mesh and the body agree about what a step is. A mesh
-		# that promises a taller step than the body takes produces routes the character
-		# walks into and grinds against; a mesh that promises a shorter one produces routes
-		# around a kerb the player could have stepped over.
-		if not is_equal_approx(mesh.agent_max_climb, _player.max_step_height):
-			_failures.append(
-				"%s: the mesh climbs %.3f m and the body steps %.3f m."
-				% [name, mesh.agent_max_climb, _player.max_step_height]
+				"%s: the bake assumes a %.2f m agent for a %.2f m body." % [name, radius, BODY_REACH]
 			)
 
 

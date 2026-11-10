@@ -32,32 +32,26 @@ signal navigation_baked(success: bool)
 ## Every one of these numbers is converted to whole voxels before it is used, and the
 ## conversion is not the identity: `agent_height` and `agent_radius` are *ceiled*, and
 ## `agent_max_climb` is *floored* (`NavMeshGenerator3D`, which warns about each one). The
-## properties are therefore a wish, and asking for a value that does not land on the grid
-## silently buys something else. The values here are chosen so that what the bake uses is
-## what the game needs, and `tests/step_up_test.gd` measures the result rather than the
-## wish:
+## property is a wish; the bake uses the voxel it lands on. So the values here are the ones
+## that land exactly on the 0.25 m grid the bake uses, which is what the bake was already
+## buying: 0.40 m of radius was being used as 0.50, 1.80 m of headroom as 2.00, and
+## 0.30 m of climb as 0.25 — that last one is 3 cm below the street's kerb, and that is why
+## the pavement behind the kerb was a separate island from the road.
 ##
-##                  asked          voxels        used
-##   cell_size      0.25           1             0.25
-##   cell_height    0.10           -             0.10
-##   agent_radius   0.50           2 × 0.25      0.50   (capsule 0.35 + margin)
-##   agent_height   1.90           19 × 0.10     1.90   (capsule 1.80 + margin)
-##   agent_max_climb 0.35          3 × 0.10      0.30   (the body's step, floored)
+##                  asked    voxels (0.25 m)   used
+##   agent_radius   0.50     2                 0.50   (capsule 0.35 + margin)
+##   agent_height   2.00     8                 2.00   (capsule 1.80 + margin)
+##   agent_max_climb 0.25    1                 0.25   (the body's step)
+##
+## `tests/step_up_test.gd` measures what the bake used, not what was asked.
 @export var agent_radius: float = 0.5
-## Above the player's height, so low clearance is not marked walkable.
-@export var agent_height: float = 1.9
+## The player's height plus a margin, so low clearance is not marked walkable.
+@export var agent_height: float = 2.0
 ## Steps this tall count as walkable, so a kerb or a fire step is a ramp, not a wall.
-## Floored to 0.30 m by the bake — the body's step height, which is the number that matters:
-## a mesh that promises a taller step than the body can take produces routes the character
-## walks into and grinds against, and a mesh that promises less produces routes around a
-## kerb the player could have stepped over. The street's kerb is 0.28 m, so the difference
-## between 0.25 and 0.30 is the difference between an island and a pavement.
-@export var agent_max_climb: float = 0.35
-## Height of one voxel of the bake. 0.25 m (the default) cannot express a 0.30 m climb or
-## the 0.28 m kerb, only 0.25; 0.10 m can express both. Cell size, the horizontal voxel,
-## stays at the default: the geometry is boxy and the vertical resolution is what the steps
-## need.
-@export_range(0.02, 0.5, 0.01) var cell_height: float = 0.1
+## Equal to the body's `max_step_height`: a mesh that promises a taller step than the body
+## can take produces routes the character walks into and grinds against, and a mesh that
+## promises less produces routes around a kerb the player could have stepped over.
+@export var agent_max_climb: float = 0.25
 @export_range(1.0, 89.0, 1.0) var agent_max_slope: float = 45.0
 ## Which physics layer the walkable world lives on.
 @export_flags_3d_physics var geometry_collision_mask: int = 1
@@ -539,7 +533,6 @@ func _configure(mesh: NavigationMesh) -> void:
 	mesh.agent_height = agent_height
 	mesh.agent_max_climb = agent_max_climb
 	mesh.agent_max_slope = agent_max_slope
-	mesh.cell_height = cell_height
 	# A navigation map refuses a region whose mesh uses different cell dimensions, and
 	# a refused region looks exactly like a room with no floor. The map's values are
 	# copied onto the mesh, and the map is asked to use the mesh's values as well, so
