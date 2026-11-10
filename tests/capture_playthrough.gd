@@ -743,7 +743,6 @@ func _capture_imported_models() -> void:
 		)
 
 	var player_camera := _player.get_node_or_null(^"Camera3D") as Camera3D
-	var player_point := _player.global_position
 
 	# 1. The room from the back, over both rows: six desks, six chairs.
 	await _shot_from_camera(
@@ -762,22 +761,33 @@ func _capture_imported_models() -> void:
 		"The player's own desk (DeskB2) from the sitting side: the stationery set on the top."
 	)
 
-	# 3. The player's own model, from the front, head to feet.
+	# 3. The player's own model, head to feet. Taken in the open floor in front of the
+	# class, because a player standing at a desk is behind it from every angle low enough
+	# to look like a photograph: the first two takes of this frame showed the torso and
+	# hid the feet behind the desk. Where the body stands is not what the frame is for -
+	# the model, its height, and the floor under its soles are - so the player is moved
+	# to where nothing stands in front of them and put back afterwards.
+	var before_position := _player.global_position
+	var before_yaw := rad_to_deg(_player.global_rotation.y)
+	_teleport(Vector3(0.0, 0.0, -3.3), 180.0)
+	await _wait(0.3)
+	var portrait_point := _player.global_position
 	var facing := _player.get_facing_direction()
 	facing.y = 0.0
 	if facing.length() < 0.01:
 		facing = Vector3(0.0, 0.0, 1.0)
 	facing = facing.normalized()
 	await _shot_from_camera(
-		player_point + facing * 2.4 + Vector3(0.0, 1.32, 0.0),
-		player_point + Vector3(0.0, 1.1, 0.0),
+		portrait_point + facing * 2.4 + Vector3(0.0, 1.32, 0.0),
+		portrait_point + Vector3(0.0, 1.1, 0.0),
 		"03j_protagonist",
 		"The player's authored protagonist, standing on the classroom floor, head to feet, "
 		+ "under the nameplate the game shows.",
 		_player.get_node_or_null(^"Nameplate") as Node3D
 	)
 
-	# 4. Q, from the side Q is looking at, in the same room.
+	# 4. Q, from the side Q is looking at, in the same room. Still while the player is out
+	# of the way, so Q is the only character this frame is about.
 	var q_actor := classroom.get_node_or_null(^"Actors/Q") as Node3D
 	if q_actor == null:
 		_failures.append("The classroom's Q is missing, so Q could not be photographed.")
@@ -787,13 +797,16 @@ func _capture_imported_models() -> void:
 		if q_forward.length() > 0.01:
 			q_forward = q_forward.normalized()
 		await _shot_from_camera(
-			q_actor.global_position + q_forward * 2.5 + Vector3(0.0, 1.28, 0.0),
-			q_actor.global_position + Vector3(0.0, 1.1, 0.0),
+			q_actor.global_position + q_forward * 2.3 + Vector3(0.0, 1.28, 0.0),
+			q_actor.global_position + Vector3(0.0, 1.04, 0.0),
 			"03k_q_in_the_classroom",
 			"Q in the classroom, wearing the authored model, from the side Q faces, under the "
 			+ "nameplate the game shows.",
 			q_actor.get_node_or_null(^"Nameplate") as Node3D
 		)
+
+	_teleport(before_position, before_yaw)
+	await _wait(0.2)
 
 	if player_camera != null:
 		player_camera.current = true
