@@ -454,10 +454,15 @@ func _click_control(control: Control, local_point: Variant = null) -> void:
 	_last_click_note = "no control to click"
 	if control == null or not is_instance_valid(control):
 		return
+	# Everything this note says about the control is read *before* the click: a click can
+	# close the panel it was aimed at, and reading `control.name` afterwards is a read of a
+	# freed object - a SCRIPT ERROR in the log that the old check counted as a pass. The
+	# name and id are values, so they survive the click; the object does not have to.
+	var control_name := String(control.name)
+	var id_before := control.get_instance_id()
 	var point: Vector2 = control.size * 0.5 if local_point == null else local_point
 	var position := control.get_global_transform_with_canvas() * point
 	var rect := control.get_global_rect()
-	var id_before := control.get_instance_id()
 	await _click_at(position)
 	var hovered := root.gui_get_hovered_control()
 	var hovered_name := "nothing"
@@ -466,7 +471,7 @@ func _click_control(control: Control, local_point: Variant = null) -> void:
 	_last_click_note = (
 		"clicked %s (id %d) at %s, its rect is %s, viewport %s, hovered %s, alive %s"
 		% [
-			String(control.name), id_before, str(position), str(rect),
+			control_name, id_before, str(position), str(rect),
 			str(root.get_visible_rect().size), hovered_name, str(is_instance_valid(control))
 		]
 	)
