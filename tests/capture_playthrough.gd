@@ -1081,9 +1081,33 @@ func _capture_click_navigation() -> void:
 		if second == Vector2.ZERO:
 			second = _find_ground_click_screen(4.0, 8.0)
 	if second != Vector2.ZERO:
-		await _click_at_screen(second)
-		await _wait(0.25)
-		var was_walking := _player.is_path_active()
+		# The same two retries the first walk gets, for the same two reasons: a click can
+		# be swallowed by something on screen before the navigator sees it, and a click
+		# the navigator refuses starts no walk. Neither is "the keys did not take over",
+		# so neither should be reported as it.
+		var was_walking := false
+		var clicks_seen := 0
+		for _attempt in 2:
+			var clicks_before := navigator.get_click_count() if navigator != null else 0
+			await _click_at_screen(second)
+			await _wait(0.25)
+			was_walking = _player.is_path_active()
+			clicks_seen = (navigator.get_click_count() if navigator != null else 0) - clicks_before
+			if was_walking:
+				break
+			if clicks_seen <= 0:
+				_note("the interruption click never reached the world; trying another point")
+				second = _find_ground_click_screen(3.0, 6.0)
+				if second == Vector2.ZERO:
+					second = _find_ground_click_screen(2.0, 5.0)
+				if second == Vector2.ZERO:
+					second = _find_ground_click_screen(4.0, 8.0)
+				if second == Vector2.ZERO:
+					break
+				continue
+			# The navigator saw the click and accepted no walk: another point would be a
+			# different question, so this is the moment to stop asking it.
+			break
 		Input.action_press("move_forward")
 		await _wait(0.4)
 		Input.action_release("move_forward")
@@ -1092,7 +1116,17 @@ func _capture_click_navigation() -> void:
 		await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
 		_note("walk before WASD=%s, walk after WASD=%s" % [was_walking, stopped])
 		if not was_walking or not stopped:
-			_failures.append("Holding a movement key did not take over from the automatic walk.")
+			_failures.append(
+				"Holding a movement key did not take over from the automatic walk "
+				+ "(walk before=%s, walk after=%s, clicks accepted=%d, %s, control=%s, "
+				% [
+					was_walking, stopped, clicks_seen,
+					navigator.get_last_rejection() if navigator != null else "no navigator",
+					str(_player.is_control_enabled()),
+				]
+				+ "dialogue=%s, player at %s)."
+				% [str(_dialogue.is_busy()), str(_player.global_position)]
+			)
 	else:
 		# The three bands and their numbers travel with the failure: "nothing was
 		# clickable" is four different problems depending on which test rejected what.
