@@ -235,10 +235,22 @@ func _silence_authored(silence: bool) -> void:
 		_silenced.append(item)
 
 
+## Drops the probes this test built, one at a time.
+##
+## The four are freed individually rather than through a typed `Interactable` loop: a case
+## that failed halfway can leave one of them already freed, and casting a freed object into
+## a typed loop variable happens *before* any check inside the body - so the cleanup itself
+## was the thing reporting "previously freed instance". `as` on a freed object yields null,
+## which is checkable.
 func _free_probes() -> void:
-	for probe: Interactable in [_probe_a, _probe_b, _probe_c, _probe_d]:
+	for entry: Variant in [_probe_a, _probe_b, _probe_c, _probe_d]:
+		var probe := entry as Interactable
 		if probe != null and is_instance_valid(probe):
 			probe.queue_free()
+	_probe_a = null
+	_probe_b = null
+	_probe_c = null
+	_probe_d = null
 
 
 # --- case 1: NPC, then the floor --------------------------------------------

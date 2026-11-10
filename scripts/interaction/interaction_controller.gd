@@ -187,6 +187,23 @@ func has_line_of_sight(candidate: Interactable) -> bool:
 	return _has_line_of_sight(candidate)
 
 
+## True when `candidate` is something this controller may still ask about: the object
+## exists, it has not left the scene tree, and it can take interaction right now.
+##
+## A location swap frees the old room's props one frame and instantiates the new room's the
+## next. Between those two frames a sensor can still be holding an area that is on its way
+## out, and `global_position` on that object is exactly the read that produced
+## "previously freed instance" in the log - an unhandled GDScript error inside a test whose
+## assertions all passed. The fix is to drop the target, not to catch the error: a dead
+## prop cannot be reached, seen or highlighted, so every caller treats it as absent.
+static func is_live_target(candidate: Interactable) -> bool:
+	if candidate == null:
+		return false
+	if not is_instance_valid(candidate):
+		return false
+	return candidate.is_inside_tree()
+
+
 func _in_reach(candidate: Interactable) -> bool:
 	if _player == null:
 		return false
@@ -197,7 +214,7 @@ func _in_reach(candidate: Interactable) -> bool:
 ## somewhere to stand can ask "would this spot be close enough?" without moving the
 ## character to find out.
 func is_in_reach_at(from: Vector3, candidate: Interactable) -> bool:
-	if candidate == null:
+	if not is_live_target(candidate):
 		return false
 	var offset := candidate.global_position - from
 	offset.y = 0.0
@@ -207,9 +224,13 @@ func is_in_reach_at(from: Vector3, candidate: Interactable) -> bool:
 ## Pointer first, facing second, with one frame of hysteresis in between.
 func _resolve_target() -> Interactable:
 	var facing_target := _find_best_target()
+	if not is_live_target(facing_target):
+		facing_target = null
 	if not mouse_targeting:
 		return facing_target
 	var mouse_target := _find_mouse_target()
+	if not is_live_target(mouse_target):
+		mouse_target = null
 	if mouse_target == null:
 		_mouse_pending = null
 		_mouse_pending_frames = 0
@@ -269,8 +290,10 @@ func _find_best_target() -> Interactable:
 	facing = facing.normalized()
 
 	for area: Area3D in _sensor.get_overlapping_areas():
+		# The sensor's own list can name an area that was freed or has left the tree since
+		# the physics step that filled it; `as` on a freed object is null, which is the test.
 		var candidate := area as Interactable
-		if candidate == null or not candidate.can_interact():
+		if not is_live_target(candidate) or not candidate.can_interact():
 			continue
 		var offset := candidate.global_position - origin
 		offset.y = 0.0
@@ -314,6 +337,8 @@ func _actor_with_facing(start: Node) -> Node:
 
 
 func _has_line_of_sight(candidate: Interactable) -> bool:
+	if not is_live_target(candidate):
+		return false
 	return has_line_of_sight_from(_player.global_position + Vector3.UP * eye_height, candidate) \
 		if _player != null else true
 
@@ -321,6 +346,8 @@ func _has_line_of_sight(candidate: Interactable) -> bool:
 ## The same probe from an arbitrary eye position, so a caller choosing where to stand
 ## can ask "could I see it from there?" without walking there first.
 func has_line_of_sight_from(from: Vector3, candidate: Interactable) -> bool:
+	if not is_live_target(candidate):
+		return false
 	if _player == null or occluder_mask == 0:
 		return true
 	var world := _player.get_world_3d()
