@@ -739,10 +739,23 @@ func _wait_for_navigation(location: LocationRoot) -> bool:
 		return false
 	var budget := 0
 	while budget < 120:
-		if nav.is_baked() and nav.is_routable():
+		# `is_routable()` alone is not this question. On the frame a location swap happens
+		# the map still holds the room that was just freed, and it will happily answer
+		# "there is a route" about *that* floor: the route check then asked the map about
+		# an exit and got an answer 9 or 25 m away, in another room, and the exit looked
+		# broken. `map_knows_geometry()` asks the map about a vertex of *this* region's own
+		# mesh, so it only passes once the polygons under the player are this room's.
+		if nav.is_baked() and nav.is_routable() and nav.map_knows_geometry():
 			return true
 		await physics_frame
 		budget += 1
+	if nav.is_baked():
+		# Waiting is over and the map still answers for somewhere else: say so, because
+		# every measurement after this point would be about the previous room.
+		_failures.append(
+			"the %s's baked mesh never reached the navigation map (%d region(s), error: %s)"
+			% [String(location.location_id), nav.get_map_region_count(), nav.get_bake_error()]
+		)
 	return false
 
 

@@ -410,14 +410,25 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 	# The bake is deferred to the end of the load; wait for it rather than guessing.
 	# A baked mesh is not enough: the map answers queries only once it has taken the
 	# polygons, and a query in that window returns nothing at all.
+	# `is_routable()` answers about the map, and right after a swap the map still holds the
+	# room that was just freed: it says "routable" about a floor that is about to be
+	# thrown away, the walk ordered next is computed against the old room, and the
+	# character stops where the old room's wall used to be. `map_knows_geometry()` is the
+	# question that matters - does the map answer for a vertex of *this* region's mesh.
 	var guard := 0
 	while guard < 120:
 		var nav := _nav_of(_host.get_current())
-		if nav != null and nav.is_baked() and nav.is_routable():
+		if nav != null and nav.is_baked() and nav.is_routable() and nav.map_knows_geometry():
 			break
 		await physics_frame
 		guard += 1
 	_location = _host.get_current()
+	var settled := _nav_of(_location)
+	if settled != null and settled.is_baked() and not settled.map_knows_geometry():
+		_failures.append(
+			"the %s's baked mesh never reached the navigation map %s"
+			% [String(_location.location_id), _report(settled)]
+		)
 	return _location
 
 
@@ -437,7 +448,11 @@ func _rebake(nav: LocationNavigation) -> void:
 	while guard < limit:
 		await physics_frame
 		guard += 1
-		if nav.is_routable() and (not has_iteration or _iteration_id(map) > before):
+		if (
+			nav.is_routable()
+			and nav.map_knows_geometry()
+			and (not has_iteration or _iteration_id(map) > before)
+		):
 			break
 
 
