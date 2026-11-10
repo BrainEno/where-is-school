@@ -455,6 +455,10 @@ func _check_walkable(label: String, location: LocationRoot, marker: Node3D) -> v
 		# missing mesh only makes this particular check impossible.
 		return
 	var map := _player.navigation_agent.get_navigation_map()
+	# The server rebuilds a map on its own schedule; a query in the middle of that answers
+	# from the mesh before the last change. Forcing the update costs nothing here and makes
+	# the measurement about the room rather than about the frame it was taken on.
+	NavigationServer3D.map_force_update(map)
 	var closest := NavigationServer3D.map_get_closest_point(map, marker.global_position)
 	var offset := Vector2(
 		closest.x - marker.global_position.x, closest.z - marker.global_position.z

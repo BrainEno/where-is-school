@@ -541,6 +541,14 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.4:
 				continue
+			# Same floor: the navigation mesh is allowed to promise a 0.3 m climb (a kerb,
+			# a fire step), and the body has no step-up, so a destination behind a kerb is
+			# a route the character walks into and grinds against - which is a different
+			# claim from the one this file makes about walking around obstacles. Picking a
+			# destination on the ground the player already stands on keeps every walk here
+			# about the walk.
+			if absf(snapped.y - origin.y) > 0.1:
+				continue
 			if avoid != null and Vector2(snapped.x - avoid.x, snapped.z - avoid.z).length() < 1.5:
 				continue
 			var path := NavigationServer3D.map_get_path(map, origin, snapped, true)
