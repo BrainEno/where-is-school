@@ -1059,6 +1059,27 @@ func _capture_click_navigation() -> void:
 		second = _find_ground_click_screen(2.0, 5.0)
 	if second == Vector2.ZERO:
 		second = _find_ground_click_screen(4.0, 8.0)
+	if second == Vector2.ZERO:
+		# The first walk ends wherever the click sent it, and one of those places is a
+		# corner of the room. From there the camera has two walls in frame and a 0.4 m
+		# strip of floor, so no distance band can contain a click point - measured, not
+		# guessed: 123 of 144 screen points had no ground under them and the nearest floor
+		# was 0.4 m away. That is a fact about where the player stood, not about the keys
+		# taking over a walk, so the shot stands somewhere the room is in frame, says so,
+		# and gives the same three bands one more go. The assertion below is unchanged.
+		_note(
+			"the interruption shot had no floor in view from %s; stepping into the open"
+			% str(_player.global_position)
+		)
+		_teleport(Vector3(0.4, 0.0, 2.6), 0.0)
+		await _wait(0.5)
+		await _unstick()
+		_ground_search_log.clear()
+		second = _find_ground_click_screen(3.0, 6.0)
+		if second == Vector2.ZERO:
+			second = _find_ground_click_screen(2.0, 5.0)
+		if second == Vector2.ZERO:
+			second = _find_ground_click_screen(4.0, 8.0)
 	if second != Vector2.ZERO:
 		await _click_at_screen(second)
 		await _wait(0.25)
