@@ -182,6 +182,10 @@ jobs:
           run_check companion_route 300 godot --headless --path . --script res://tests/companion_route_test.gd || status=1
           run_check companion_obstacle 300 godot --headless --path . --script res://tests/companion_obstacle_test.gd || status=1
           run_check interaction_hover 240 godot --headless --path . --script res://tests/interaction_hover_test.gd || status=1
+          # The kerb: what the bake does to the step numbers it is given, whether the
+          # street's pavement is a walkable surface or an island, and whether the body
+          # still steps only what it says it steps.
+          run_check step_up 420 godot --headless --path . --script res://tests/step_up_test.gd || status=1
           run_check navigation 420 godot --headless --path . --script res://tests/navigation_test.gd || status=1
           run_check location_transition 420 godot --headless --path . --script res://tests/location_transition_test.gd || status=1
           # Ten rounds of switching between all six locations, measuring the navigation
@@ -190,10 +194,6 @@ jobs:
           # and of every exit from the room's own mesh. The flakes this file exists for
           # were all about *when* a query is asked.
           run_check navigation_sync_stress 600 godot --headless --path . --script res://tests/navigation_sync_stress_test.gd || status=1
-          # The kerb: what the bake does to the step numbers it is given, whether the
-          # street's pavement is a walkable surface or an island, and whether the body
-          # still steps only what it says it steps.
-          run_check step_up 420 godot --headless --path . --script res://tests/step_up_test.gd || status=1
           run_check automatic_interaction 420 godot --headless --path . --script res://tests/automatic_interaction_test.gd || status=1
           run_check dialogue_pointer 300 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_pointer_test.gd || status=1
           run_check dialogue_layout 240 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_layout_test.gd || status=1
