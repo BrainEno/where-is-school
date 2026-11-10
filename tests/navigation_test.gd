@@ -322,9 +322,23 @@ func _check_obstacle_is_walked_around() -> void:
 		_player.global_position.x - destination.x, _player.global_position.z - destination.z
 	).length()
 	if gap > 1.2:
+		# Two different faults look the same from here: a wall the bake sealed the route
+		# behind, and a body that could not follow a route the map is still happy to hand
+		# out. Asking the map for the same route now separates them, so the next run does
+		# not have to guess which half lied.
+		var map := _player.navigation_agent.get_navigation_map()
+		var from_now := NavigationServer3D.map_get_closest_point(map, _player.global_position)
+		var to_now := NavigationServer3D.map_get_closest_point(map, destination)
+		var now_path := NavigationServer3D.map_get_path(map, from_now, to_now, true)
+		var now_end := from_now
+		if not now_path.is_empty():
+			now_end = now_path[now_path.size() - 1]
+		var now_short := now_end.distance_to(destination)
 		_failures.append(
-			"The character did not reach the far side of the obstacle (%.2f m short) %s"
-			% [gap, _walk_state(nav)]
+			"The character did not reach the far side of the obstacle (%.2f m short, map "
+			% gap
+			+ "path now: %d point(s) ending %.2f m from the target) %s"
+			% [now_path.size(), now_short, _walk_state(nav)]
 		)
 	if closest < 0.45:
 		_failures.append("The character walked %.2f m from the wall's face instead of around it." % closest)
@@ -410,14 +424,25 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 	# The bake is deferred to the end of the load; wait for it rather than guessing.
 	# A baked mesh is not enough: the map answers queries only once it has taken the
 	# polygons, and a query in that window returns nothing at all.
+	# `is_routable()` answers about the map, and right after a swap the map still holds the
+	# room that was just freed: it says "routable" about a floor that is about to be
+	# thrown away, the walk ordered next is computed against the old room, and the
+	# character stops where the old room's wall used to be. `_map_holds_this_room()` asks
+	# the question with no overlap in it: the map holds one region, and it is this one.
 	var guard := 0
 	while guard < 120:
 		var nav := _nav_of(_host.get_current())
-		if nav != null and nav.is_baked() and nav.is_routable():
+		if nav != null and nav.is_baked() and nav.is_routable() and _map_holds_this_room(nav):
 			break
 		await physics_frame
 		guard += 1
 	_location = _host.get_current()
+	var settled := _nav_of(_location)
+	if settled != null and settled.is_baked() and not _map_holds_this_room(settled):
+		_failures.append(
+			"the %s's baked mesh never reached the navigation map %s"
+			% [String(_location.location_id), _report(settled)]
+		)
 	return _location
 
 
@@ -437,8 +462,23 @@ func _rebake(nav: LocationNavigation) -> void:
 	while guard < limit:
 		await physics_frame
 		guard += 1
-		if nav.is_routable() and (not has_iteration or _iteration_id(map) > before):
+		if (
+			nav.is_routable()
+			and nav.map_knows_geometry()
+			and (not has_iteration or _iteration_id(map) > before)
+		):
 			break
+
+
+## True when the navigation map describes exactly this room: one region on the map, and
+## it is this location's own. See `location_transition_test.gd` for why counting regions
+## is the only one of these questions two overlapping greybox rooms cannot answer wrongly.
+func _map_holds_this_room(nav: LocationNavigation) -> bool:
+	var map := nav.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var regions := NavigationServer3D.map_get_regions(map)
+	return regions.size() == 1 and regions.has(nav.get_region_rid())
 
 
 func _iteration_id(map: RID) -> int:
@@ -494,12 +534,24 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 		return null
 	var best: Vector3 = Vector3.ZERO
 	var best_distance := 0.0
+	# The mesh's own height where the player stands, so "the same floor" is measured in the
+	# mesh's terms rather than in the body's: a bake puts polygons a little above the
+	# collider they were made from, and that offset is the same everywhere in a room.
+	var floor_y := NavigationServer3D.map_get_closest_point(map, origin).y
 	for radius in [max_distance, max_distance * 0.75, max_distance * 0.5]:
 		for index in 24:
 			var angle := TAU * float(index) / 24.0
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.4:
+				continue
+			# Same floor: the navigation mesh is allowed to promise a 0.3 m climb (a kerb,
+			# a fire step), and the body has no step-up, so a destination behind a kerb is
+			# a route the character walks into and grinds against - which is a different
+			# claim from the one this file makes about walking around obstacles. Picking a
+			# destination on the ground the player already stands on keeps every walk here
+			# about the walk.
+			if absf(snapped.y - floor_y) > 0.15:
 				continue
 			if avoid != null and Vector2(snapped.x - avoid.x, snapped.z - avoid.z).length() < 1.5:
 				continue
