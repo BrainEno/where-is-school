@@ -335,7 +335,7 @@ func _check_stationery(location: Node3D) -> void:
 	var set_node := found[0] as Node3D
 	var parent := set_node.get_parent()
 	var parent_path := String(parent.get_path()) if parent != null else "<none>"
-	if parent_path.find("Furniture/%s/" % OWN_DESK) < 0:
+	if not parent_path.ends_with("Furniture/%s" % OWN_DESK):
 		_failures.append(
 			"The stationery hangs under '%s', not under the player's own desk (%s)."
 			% [parent_path, OWN_DESK]
@@ -569,19 +569,21 @@ func _check_q(holder: Node3D) -> void:
 			else:
 				_check_authored_actor("The companion's Q", actor, Q_CHARACTER)
 				_check_actor_turn("The companion's Q", actor)
-			# The model is a visual. The capsule is still the one thing that collides.
-			var shapes: Array[Node] = []
-			for node in _descendants(companion):
-				if node is CollisionShape3D:
-					shapes.append(node)
-			if shapes.size() != 1:
-				_failures.append(
-					"The companion has %d collision shapes; its body owns one capsule and "
-					% shapes.size()
-					+ "the character model owns none."
-				)
-			elif not ((shapes[0] as CollisionShape3D).shape is CapsuleShape3D):
-				_failures.append("The companion's collision shape is not its capsule.")
+			# The model is a visual: the body's capsule is still the only thing the
+			# companion collides with, and the Ask Along hotspot is its own Area3D, which
+			# is not part of either.
+			var body_shape := companion.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
+			if body_shape == null or not (body_shape.shape is CapsuleShape3D):
+				_failures.append("The companion's body has no capsule any more.")
+			if actor != null:
+				for node in _descendants(actor):
+					if node is CollisionObject3D or node is CollisionShape3D:
+						_failures.append(
+							"The companion's Q carries a collider (%s); the model is a "
+							% node.name
+							+ "visual and the body owns the capsule."
+						)
+						break
 			stub_root.remove_child(companion)
 			companion.free()
 	holder.remove_child(stub_root)
@@ -709,11 +711,18 @@ func _descendants(node: Node) -> Array[Node]:
 	return result
 
 
+## The world-space box around everything a node draws, **including the node itself**.
+## The chair's `Seat` is a mesh with no children, so a version that only walked the
+## children measured an empty box and reported a 1.2 m gap that was not there.
 func _subtree_aabb(node: Node) -> AABB:
 	var result := AABB()
 	var first := true
-	for child in _descendants(node):
-		var instance := child as MeshInstance3D
+	var pending: Array[Node] = [node]
+	while not pending.is_empty():
+		var current: Node = pending.pop_back()
+		for child in current.get_children():
+			pending.append(child)
+		var instance := current as MeshInstance3D
 		if instance == null or instance.mesh == null:
 			continue
 		var box := instance.global_transform * instance.get_aabb()

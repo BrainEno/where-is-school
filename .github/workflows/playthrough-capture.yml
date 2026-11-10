@@ -493,7 +493,33 @@ jobs:
         with:
           # By id, not by name: see the note at the top of this file.
           artifact-ids: ${{ needs.capture.outputs.evidence_artifact_id }}
-          path: ${{ runner.temp }}/evidence
+          # Downloaded beside the place the checks read, not into it: the next step
+          # accepts either shape this action can produce.
+          path: ${{ runner.temp }}/download
+
+      - name: Put the evidence where the checks look for it
+        shell: bash
+        env:
+          DOWNLOAD: ${{ runner.temp }}/download
+          EVIDENCE: ${{ runner.temp }}/evidence
+        run: |
+          set -uo pipefail
+          # A single artifact is documented to extract straight into `path`. A version of
+          # the action that nests it under the artifact's own name instead would leave the
+          # checks looking one directory too high - which is how a downloaded artifact can
+          # exist and still be "missing" - so both shapes are accepted, and the one that
+          # was found is printed.
+          root="${DOWNLOAD}"
+          if [ ! -d "${root}/docs/screenshots" ]; then
+            nested=$(find "${DOWNLOAD}" -maxdepth 3 -type d -name screenshots 2>/dev/null | head -n 1) || true
+            if [ -n "${nested:-}" ]; then
+              root=$(dirname "${nested}")
+              echo "the artifact was nested one level down: using ${root}"
+            fi
+          fi
+          mkdir -p "${EVIDENCE}"
+          cp -a "${root}/." "${EVIDENCE}/"
+          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
 
       - name: Verify the structure and the logs
         uses: ./.github/actions/evidence-check
@@ -525,7 +551,27 @@ jobs:
         with:
           # By id, not by name: see the note at the top of this file.
           artifact-ids: ${{ needs.capture.outputs.evidence_artifact_id }}
-          path: ${{ runner.temp }}/evidence
+          path: ${{ runner.temp }}/download
+
+      - name: Put the evidence where the checks look for it
+        shell: bash
+        env:
+          DOWNLOAD: ${{ runner.temp }}/download
+          EVIDENCE: ${{ runner.temp }}/evidence
+        run: |
+          set -uo pipefail
+          # The same two shapes as in `verify-publish`, for the same reason.
+          root="${DOWNLOAD}"
+          if [ ! -d "${root}/docs/screenshots" ]; then
+            nested=$(find "${DOWNLOAD}" -maxdepth 3 -type d -name screenshots 2>/dev/null | head -n 1) || true
+            if [ -n "${nested:-}" ]; then
+              root=$(dirname "${nested}")
+              echo "the artifact was nested one level down: using ${root}"
+            fi
+          fi
+          mkdir -p "${EVIDENCE}"
+          cp -a "${root}/." "${EVIDENCE}/"
+          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
 
       - name: Verify the structure, then publish
         uses: ./.github/actions/evidence-check
