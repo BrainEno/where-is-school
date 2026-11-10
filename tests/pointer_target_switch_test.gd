@@ -243,10 +243,13 @@ func _silence_authored(silence: bool) -> void:
 ## was the thing reporting "previously freed instance". `as` on a freed object yields null,
 ## which is checkable.
 func _free_probes() -> void:
+	# `is_instance_valid()` first and no cast before it. Casting a freed instance raises
+	# "Trying to cast a freed object" in this engine version, so `as Interactable` in front
+	# of the check is the very error this helper exists to avoid - it got here once already.
+	# Held untyped and called dynamically, nothing is converted and nothing is read.
 	for entry: Variant in [_probe_a, _probe_b, _probe_c, _probe_d]:
-		var probe := entry as Interactable
-		if probe != null and is_instance_valid(probe):
-			probe.queue_free()
+		if is_instance_valid(entry):
+			entry.queue_free()
 	_probe_a = null
 	_probe_b = null
 	_probe_c = null

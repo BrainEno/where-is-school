@@ -196,12 +196,17 @@ func has_line_of_sight(candidate: Interactable) -> bool:
 ## "previously freed instance" in the log - an unhandled GDScript error inside a test whose
 ## assertions all passed. The fix is to drop the target, not to catch the error: a dead
 ## prop cannot be reached, seen or highlighted, so every caller treats it as absent.
-static func is_live_target(candidate: Interactable) -> bool:
-	if candidate == null:
-		return false
+## Takes an untyped candidate on purpose: the callers hold a target across frames, and
+## passing an already-freed instance to a typed parameter would raise "Trying to cast a
+## freed object" before this function got the chance to say it is dead. `is_instance_valid()`
+## is the only test that is safe on a freed reference, so it comes first and the cast after.
+static func is_live_target(candidate: Variant) -> bool:
 	if not is_instance_valid(candidate):
 		return false
-	return candidate.is_inside_tree()
+	var interactable := candidate as Interactable
+	if interactable == null:
+		return false
+	return interactable.is_inside_tree()
 
 
 func _in_reach(candidate: Interactable) -> bool:
