@@ -503,29 +503,41 @@ jobs:
           DOWNLOAD: ${{ runner.temp }}/download
           EVIDENCE: ${{ runner.temp }}/evidence
         run: |
-          set -uo pipefail
-          # A single artifact is documented to extract straight into `path`, and it does
-          # not always: the first run of this shape downloaded an artifact that then read
-          # as "no screenshots directory", i.e. the evidence existed one or more
-          # directories below where the checks look. Rather than guess the depth, the log
-          # the checks insist on is the landmark: wherever PLAYTHROUGH.log landed, its
-          # `docs/screenshots` parent's parent is the evidence root. The tree is printed
-          # either way, so a shape nobody expected is visible in the log instead of
-          # turning into a check that fails for no stated reason.
-          echo "downloaded:"
-          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 | sort | sed 's/^/  /' | head -n 40
-          root="${DOWNLOAD}"
-          log=$(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log 2>/dev/null | head -n 1) || true
-          if [ -n "${log:-}" ]; then
-            root=$(dirname "$(dirname "$(dirname "${log}")")")
-            echo "evidence root: ${root}"
-          else
-            echo "no PLAYTHROUGH.log in the download; the checks will say what is missing"
+          set -o pipefail
+          # A downloaded artifact that is not where the checks look is the failure mode
+          # this step exists for, so every way it can go wrong says so in an annotation
+          # instead of ending as an exit code with no message.
+          echo "download directory: ${DOWNLOAD}"
+          if [ ! -d "${DOWNLOAD}" ]; then
+            echo "::error title=no download directory::${DOWNLOAD} does not exist"
+            exit 1
           fi
+          echo "downloaded tree:"
+          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
+          echo "end of downloaded tree"
+          log_path=""
+          while IFS= read -r candidate; do
+            log_path="${candidate}"
+            break
+          done < <(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log -print 2>/dev/null)
+          if [ -z "${log_path}" ]; then
+            echo "::error title=the artifact holds no playthrough log::no PLAYTHROUGH.log anywhere under ${DOWNLOAD}, so this is not the evidence this job is supposed to check"
+            exit 1
+          fi
+          # PLAYTHROUGH.log lives in <evidence>/docs/screenshots/, so its grandparent is
+          # the folder the checks were written against, whatever depth the download
+          # action chose.
+          root=$(dirname "$(dirname "$(dirname "${log_path}")")")
+          echo "evidence root: ${root}"
           mkdir -p "${EVIDENCE}"
-          cp -a "${root}/." "${EVIDENCE}/"
-          echo "evidence:"
-          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
+          if ! cp -a "${root}/." "${EVIDENCE}/"; then
+            echo "::error title=the evidence could not be staged::copying ${root} into ${EVIDENCE} failed"
+            exit 1
+          fi
+          echo "staged evidence:"
+          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
+          echo "end of staged evidence"
+          exit 0
 
       - name: Verify the structure and the logs
         uses: ./.github/actions/evidence-check
@@ -565,22 +577,41 @@ jobs:
           DOWNLOAD: ${{ runner.temp }}/download
           EVIDENCE: ${{ runner.temp }}/evidence
         run: |
-          set -uo pipefail
-          # The same landmark search as `verify-publish`, for the same reason.
-          echo "downloaded:"
-          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 | sort | sed 's/^/  /' | head -n 40
-          root="${DOWNLOAD}"
-          log=$(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log 2>/dev/null | head -n 1) || true
-          if [ -n "${log:-}" ]; then
-            root=$(dirname "$(dirname "$(dirname "${log}")")")
-            echo "evidence root: ${root}"
-          else
-            echo "no PLAYTHROUGH.log in the download; the checks will say what is missing"
+          set -o pipefail
+          # A downloaded artifact that is not where the checks look is the failure mode
+          # this step exists for, so every way it can go wrong says so in an annotation
+          # instead of ending as an exit code with no message.
+          echo "download directory: ${DOWNLOAD}"
+          if [ ! -d "${DOWNLOAD}" ]; then
+            echo "::error title=no download directory::${DOWNLOAD} does not exist"
+            exit 1
           fi
+          echo "downloaded tree:"
+          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
+          echo "end of downloaded tree"
+          log_path=""
+          while IFS= read -r candidate; do
+            log_path="${candidate}"
+            break
+          done < <(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log -print 2>/dev/null)
+          if [ -z "${log_path}" ]; then
+            echo "::error title=the artifact holds no playthrough log::no PLAYTHROUGH.log anywhere under ${DOWNLOAD}, so this is not the evidence this job is supposed to check"
+            exit 1
+          fi
+          # PLAYTHROUGH.log lives in <evidence>/docs/screenshots/, so its grandparent is
+          # the folder the checks were written against, whatever depth the download
+          # action chose.
+          root=$(dirname "$(dirname "$(dirname "${log_path}")")")
+          echo "evidence root: ${root}"
           mkdir -p "${EVIDENCE}"
-          cp -a "${root}/." "${EVIDENCE}/"
-          echo "evidence:"
-          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
+          if ! cp -a "${root}/." "${EVIDENCE}/"; then
+            echo "::error title=the evidence could not be staged::copying ${root} into ${EVIDENCE} failed"
+            exit 1
+          fi
+          echo "staged evidence:"
+          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
+          echo "end of staged evidence"
+          exit 0
 
       - name: Verify the structure, then publish
         uses: ./.github/actions/evidence-check
