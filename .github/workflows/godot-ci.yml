@@ -57,6 +57,15 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the build check itself
+        shell: bash
+        run: |
+          # `tools/verify_build.py` is the last thing standing between a release and a pack
+          # full of screenshots. Its category budgets, its limits and its pack reader are
+          # tested here, with packs this test writes, so the release job can be trusted to
+          # report what it reports.
+          python3 tests/verify_build_test.py
+
       - name: Check the bundled font covers the current text
         shell: bash
         run: |
@@ -105,16 +114,26 @@ jobs:
                 | head -n 12 | tr '\n' '|' | cut -c1-4000)
             fi
             grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:" "ci-logs/${name}.log" | head -n 20 || true
+            # A test that prints `::notice …` is describing what it measured. The engine's
+            # output goes to a file above, so the runner never sees those lines; re-emit them
+            # here, which is how the per-location and per-corpus numbers become readable.
+            grep -E "^::(notice|warning|error) " "ci-logs/${name}.log" | head -n 12 || true
             if [ "${code}" -eq 0 ]; then
-              echo "::notice title=${name} passed::$(tail -n 2 "ci-logs/${name}.log" | tr '\n' ' ' | cut -c1-500)"
+              # One notice per *step*, not one per test: a runner keeps only the first
+              # handful of annotations from a step, and forty green notices push the one red
+              # one out of the report. Passed checks are counted and announced below.
+              passed="${passed}${name} "
             else
               echo "::error title=${name} failed (exit ${code})::${summary:-no summary captured}"
               echo "${summary}"
             fi
+            checks=$((checks + 1))
             return "${code}"
           }
 
           status=0
+          checks=0
+          passed=""
           # The import has to be *blocking*. `--editor --quit` returns after one frame,
           # while the first filesystem scan is still running on its worker thread, so
           # `.godot/imported/` stays empty. That was harmless while no `.import` sidecar
@@ -202,6 +221,13 @@ jobs:
           # The same cues, in the ears: the four synthesised buffers, their levels, the
           # hover rate limit, and that the drawing code asks for the sound that matches.
           run_check interaction_audio 180 godot --headless --path . --script res://tests/interaction_audio_test.gd || status=1
+          # The window the game opens in, and the one F11 has to come back to.
+          run_check display_mode 180 godot --headless --path . --script res://tests/display_mode_test.gd || status=1
+          # The HUD at the three sizes the game is expected to run in. The dialogue panel is
+          # already measured at all three inside dialogue_layout; this is the other half.
+          run_check hud_layout_720 180 godot --headless --resolution 1280x720 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_900 180 godot --headless --resolution 1600x900 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_1080 180 godot --headless --resolution 1920x1080 --path . --script res://tests/hud_layout_test.gd || status=1
           # The editor tool's data layer, driven headlessly against a user:// copy of the
           # real chapters: load, locate, edit, save, fail to save, and prove the files come
           # back byte-identical when nothing changed.
@@ -211,4 +237,55 @@ jobs:
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
 
           echo "overall status: ${status}"
+          echo "checks run: ${checks}"
+          printf 'passed: %s\n' "${passed}"
+          echo "::notice title=headless checks::${checks} check(s), status ${status}; passed: ${passed}"
+          exit "${status}"
+
+      - name: Measure the text corpus, the locations and the bake
+        shell: bash
+        run: |
+          # These two tests exist to report numbers as much as to assert them, and a runner
+          # keeps only the first handful of annotations from a step. They therefore get their
+          # own step, and their output is echoed instead of redirected: the notices they print
+          # are the numbers this round is judged by, and they have to be readable from the run.
+          #
+          # The verdict is the test's own, not the process exit code. A windowed engine under
+          # Xvfb exits non-zero while tearing down its GL context after a finished run (the
+          # capture job learned this the hard way), and a headless engine can do the same after
+          # `quit()`. So: a run passes when it printed its `PASS:` line and no `TEST FAILURE`,
+          # `SCRIPT ERROR` or `Parse Error`. A run that died quietly printed neither and fails.
+          set -uo pipefail
+          status=0
+          codes=""
+          measured () {
+            local name="$1"; shift
+            echo "=== ${name}"
+            timeout 420 "$@" > "ci-logs/${name}.log" 2>&1
+            local code=$?
+            cat "ci-logs/${name}.log"
+            codes="${codes}${name}=${code} "
+            echo "--- exit ${code}"
+            # The verdict lines are the only thing the run report can carry, so they are
+            # re-emitted as an annotation: without this, a failing measurement is a step that
+            # says "exit code 1" and nothing else.
+            local why
+            why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" \
+              "ci-logs/${name}.log" | head -n 12 | tr '\n' '|' | cut -c1-3500)
+            if [ -n "${why}" ]; then
+              echo "::error title=${name} failed::${why}"
+              return 1
+            fi
+            if ! grep -qE "^PASS: " "ci-logs/${name}.log"; then
+              echo "::error title=${name} failed::the run printed no verdict at all (exit ${code})"
+              return 1
+            fi
+            return 0
+          }
+          # What the text corpus costs, and what it contains: every chapter, every language.
+          measured content_load_report godot --headless --path . --script res://tests/content_load_report_test.gd || status=1
+          # The pressure test: all six locations, three round trips, one room in the tree.
+          measured location_pressure godot --headless --path . --script res://tests/location_pressure_test.gd || status=1
+          echo "measured: ${codes}"
+          echo "::notice title=measurement step::exit codes ${codes}; status ${status}"
           exit "${status}"

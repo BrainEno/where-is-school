@@ -21,6 +21,20 @@ var _current_path: String = ""
 ## the transform, and committing the swap around it would hide that.
 const PLACEMENT_TOLERANCE := 0.05
 
+## Diagnostics, not a feature: a transition is timed and counted so the cost of a location
+## can be measured instead of guessed, and the numbers are printed only by debug builds and
+## tests. Release players are not given a console line per door.
+const PERF_HISTORY := 16
+
+## The last `PERF_HISTORY` transitions, oldest first. Read by the pressure test and by
+## anyone asking where a transition's time went; each entry is documented in `_record()`.
+var transition_history: Array[Dictionary] = []
+
+## Cumulative marks of the transition in flight, in microseconds since it started. Filled by
+## `_mark()` inside the transaction and consumed by `_record()` when it returns, whichever
+## way it returned.
+var _marks: Dictionary = {}
+
 
 func get_current() -> LocationRoot:
 	return _current
@@ -45,6 +59,23 @@ func load_location(
 	player: Node3D,
 	expected_location_id: StringName = &""
 ) -> bool:
+	# The wrapper exists so the timing covers every exit of the transaction, including the
+	# failures, without a single `return` inside the transaction having to know about it.
+	var started := Time.get_ticks_usec()
+	_marks = {}
+	var ok := _swap(scene_path, spawn_id, player, expected_location_id, started)
+	_record(scene_path, spawn_id, ok, started)
+	return ok
+
+
+## The transaction itself. Unchanged in what it does; it only marks the stages on the way.
+func _swap(
+	scene_path: String,
+	spawn_id: StringName,
+	player: Node3D,
+	expected_location_id: StringName,
+	started: int
+) -> bool:
 	# --- Stage 1: pre-flight. Nothing outside this function may change. ---------
 	if scene_path.is_empty():
 		push_error("LocationHost: empty scene path; keeping %s." % _describe_current())
@@ -56,6 +87,7 @@ func load_location(
 		)
 		return false
 	var packed := load(scene_path) as PackedScene
+	_mark("loaded", started)
 	if packed == null:
 		push_error(
 			"LocationHost: '%s' is not a PackedScene; keeping %s."
@@ -63,6 +95,7 @@ func load_location(
 		)
 		return false
 	var instance := packed.instantiate()
+	_mark("instantiated", started)
 	if instance == null:
 		push_error(
 			"LocationHost: '%s' could not be instantiated; keeping %s."
@@ -124,6 +157,7 @@ func load_location(
 	var previous := _current
 	var previous_path := _current_path
 	add_child(location)
+	_mark("in_tree", started)
 	# Read the marker now that the scene has a parent: its global transform is then the
 	# one the player will stand on, whatever transform the host itself carries.
 	var target: Transform3D = spawn.global_transform
@@ -141,11 +175,13 @@ func load_location(
 			% [scene_path, _describe_spawn(spawn_id), _describe_current()]
 		)
 		return false
+	_mark("placed", started)
 	_current = location
 	_current_path = scene_path
 	if previous != null:
 		remove_child(previous)
 		previous.queue_free()
+	_mark("committed", started)
 	location_entered.emit(location, spawn_id)
 	return true
 
@@ -167,6 +203,109 @@ func _place_player(player: Node3D, target: Transform3D) -> bool:
 func _discard(instance: Node) -> void:
 	if is_instance_valid(instance):
 		instance.free()
+
+
+## Records the cumulative time of a stage, in microseconds from the transition's start.
+func _mark(stage: String, started: int) -> void:
+	if not _perf_enabled():
+		return
+	_marks[stage] = Time.get_ticks_usec() - started
+
+
+## Adds one entry to `transition_history` and prints it. The entry is a plain Dictionary so
+## the pressure test can assert on it: which scene, how long each stage took, how many nodes
+## the incoming and outgoing scenes carried, and how many location scenes were alive at the
+## moment of the swap (two is correct in flight, more than two is a leak).
+func _record(scene_path: String, spawn_id: StringName, ok: bool, started: int) -> void:
+	if not _perf_enabled():
+		return
+	var total := Time.get_ticks_usec() - started
+	var entry := {
+		"scene": scene_path,
+		"spawn": String(spawn_id),
+		"ok": ok,
+		"stage": _last_stage(),
+		"load_usec": _span("loaded"),
+		"instantiate_usec": _span("instantiated") - _span("loaded"),
+		"tree_usec": _span("in_tree") - _span("instantiated"),
+		"placement_usec": _span("placed") - _span("in_tree"),
+		"commit_usec": _span("committed") - _span("placed"),
+		"total_usec": total,
+		"scene_nodes": _live_node_count(),
+		"live_locations": _location_child_count(),
+	}
+	transition_history.append(entry)
+	while transition_history.size() > PERF_HISTORY:
+		transition_history.pop_front()
+	if not ok:
+		print(
+			"LocationHost: %s FAILED at '%s' after %.1f ms (%d live location scene(s))."
+			% [scene_path, entry["stage"], total / 1000.0, entry["live_locations"]]
+		)
+		return
+	print(
+		(
+			"LocationHost: %s in %.1f ms "
+			+ "(load %.1f, instantiate %.1f, tree %.1f, place %.1f, commit %.1f), "
+			+ "%d nodes, %d live location(s)."
+		)
+		% [
+			scene_path,
+			total / 1000.0,
+			entry["load_usec"] / 1000.0,
+			entry["instantiate_usec"] / 1000.0,
+			entry["tree_usec"] / 1000.0,
+			entry["placement_usec"] / 1000.0,
+			entry["commit_usec"] / 1000.0,
+			entry["scene_nodes"],
+			entry["live_locations"],
+		]
+	)
+
+
+func _span(stage: String) -> int:
+	return int(_marks.get(stage, 0))
+
+
+func _last_stage() -> String:
+	var stages := ["loaded", "instantiated", "in_tree", "placed", "committed"]
+	var reached := "pre-flight"
+	for stage: String in stages:
+		if _marks.has(stage):
+			reached = stage
+	return reached
+
+
+## Nodes in the current scene, counted from the scene root down.
+func _live_node_count() -> int:
+	if _current == null:
+		return 0
+	return _count_nodes(_current)
+
+
+func _count_nodes(node: Node) -> int:
+	var total := 1
+	for child in node.get_children():
+		total += _count_nodes(child)
+	return total
+
+
+func _location_child_count() -> int:
+	var total := 0
+	for child in get_children():
+		if child is LocationRoot:
+			total += 1
+	return total
+
+
+func _perf_enabled() -> bool:
+	return OS.is_debug_build()
+
+
+func get_last_transition() -> Dictionary:
+	if transition_history.is_empty():
+		return {}
+	return transition_history[transition_history.size() - 1]
 
 
 func _describe_current() -> String:
