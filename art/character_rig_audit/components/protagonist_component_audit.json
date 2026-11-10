@@ -1,0 +1,4124 @@
+{
+  "schema_version": 1,
+  "label": "protagonist",
+  "source": "D:\\develop\\games\\where-is-school\\assets\\models\\protagonist\\protagonist.glb",
+  "blender_version": "5.2.3 LTS",
+  "summary": {
+    "mesh_object_count": 79,
+    "total_vertices": 7633,
+    "total_polygons": 12468,
+    "total_connected_components": 79,
+    "objects_with_multiple_components": 0,
+    "objects_with_single_component": 79
+  },
+  "meshes": [
+    {
+      "object_name": "Body_Cardigan_Torso",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 194,
+      "edge_count": 576,
+      "polygon_count": 384,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.18043,
+          -0.148799,
+          0.86
+        ],
+        "max": [
+          0.17957,
+          0.10755,
+          1.405
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 194,
+          "edge_connected_polygon_count": 384,
+          "world_bounds": {
+            "min": [
+              -0.18043,
+              -0.148799,
+              0.86
+            ],
+            "max": [
+              0.17957,
+              0.10755,
+              1.405
+            ],
+            "size": [
+              0.36,
+              0.256349,
+              0.545
+            ]
+          },
+          "world_centroid": [
+            -0.0,
+            -0.018129,
+            1.140747
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan": 384
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_Button_01",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.001,
+          -0.166,
+          1.181
+        ],
+        "max": [
+          0.019,
+          -0.158,
+          1.199
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 115,
+          "edge_connected_polygon_count": 168,
+          "world_bounds": {
+            "min": [
+              0.001,
+              -0.166,
+              1.181
+            ],
+            "max": [
+              0.019,
+              -0.158,
+              1.199
+            ],
+            "size": [
+              0.018,
+              0.008,
+              0.018
+            ]
+          },
+          "world_centroid": [
+            0.009607,
+            -0.162,
+            1.19
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Button": 168
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_Button_02",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.001,
+          -0.158,
+          1.096
+        ],
+        "max": [
+          0.019,
+          -0.15,
+          1.114
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 115,
+          "edge_connected_polygon_count": 168,
+          "world_bounds": {
+            "min": [
+              0.001,
+              -0.158,
+              1.096
+            ],
+            "max": [
+              0.019,
+              -0.15,
+              1.114
+            ],
+            "size": [
+              0.018,
+              0.008,
+              0.018
+            ]
+          },
+          "world_centroid": [
+            0.009607,
+            -0.154,
+            1.105
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Button": 168
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_Lapel_Left",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.119,
+          -0.166,
+          1.17
+        ],
+        "max": [
+          -0.025,
+          -0.147,
+          1.39
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.119,
+              -0.166,
+              1.17
+            ],
+            "max": [
+              -0.025,
+              -0.147,
+              1.39
+            ],
+            "size": [
+              0.094,
+              0.019,
+              0.22
+            ]
+          },
+          "world_centroid": [
+            -0.07025,
+            -0.1535,
+            1.279
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Light": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_Lapel_Right",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.025,
+          -0.166,
+          1.17
+        ],
+        "max": [
+          0.119,
+          -0.147,
+          1.39
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              0.025,
+              -0.166,
+              1.17
+            ],
+            "max": [
+              0.119,
+              -0.147,
+              1.39
+            ],
+            "size": [
+              0.094,
+              0.019,
+              0.22
+            ]
+          },
+          "world_centroid": [
+            0.07025,
+            -0.1535,
+            1.279
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Shadow": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_LowerSleeve_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.27797,
+          -0.142438,
+          0.906659
+        ],
+        "max": [
+          -0.170031,
+          -0.029267,
+          1.152632
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              -0.27797,
+              -0.142438,
+              0.906659
+            ],
+            "max": [
+              -0.170031,
+              -0.029267,
+              1.152632
+            ],
+            "size": [
+              0.107939,
+              0.113171,
+              0.245974
+            ]
+          },
+          "world_centroid": [
+            -0.22086,
+            -0.09264,
+            1.02838
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_LowerSleeve_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.170031,
+          -0.142438,
+          0.906659
+        ],
+        "max": [
+          0.27797,
+          -0.029267,
+          1.152632
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              0.170031,
+              -0.142438,
+              0.906659
+            ],
+            "max": [
+              0.27797,
+              -0.029267,
+              1.152632
+            ],
+            "size": [
+              0.107939,
+              0.113171,
+              0.245974
+            ]
+          },
+          "world_centroid": [
+            0.22086,
+            -0.09264,
+            1.02838
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_Pocket",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.122,
+          -0.149,
+          1.085
+        ],
+        "max": [
+          -0.071,
+          -0.131,
+          1.155
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.122,
+              -0.149,
+              1.085
+            ],
+            "max": [
+              -0.071,
+              -0.131,
+              1.155
+            ],
+            "size": [
+              0.051,
+              0.018,
+              0.07
+            ]
+          },
+          "world_centroid": [
+            -0.09625,
+            -0.13975,
+            1.1195
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Light": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_UpperSleeve_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.276951,
+          -0.120183,
+          1.113386
+        ],
+        "max": [
+          -0.094522,
+          0.018335,
+          1.388816
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              -0.276951,
+              -0.120183,
+              1.113386
+            ],
+            "max": [
+              -0.094522,
+              0.018335,
+              1.388816
+            ],
+            "size": [
+              0.18243,
+              0.138518,
+              0.27543
+            ]
+          },
+          "world_centroid": [
+            -0.1946,
+            -0.05864,
+            1.2482
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cardigan_UpperSleeve_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.094522,
+          -0.120183,
+          1.113386
+        ],
+        "max": [
+          0.276951,
+          0.018335,
+          1.388816
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              0.094522,
+              -0.120183,
+              1.113386
+            ],
+            "max": [
+              0.276951,
+              0.018335,
+              1.388816
+            ],
+            "size": [
+              0.18243,
+              0.138518,
+              0.27543
+            ]
+          },
+          "world_centroid": [
+            0.1946,
+            -0.05864,
+            1.2482
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cheek_Plane_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.085,
+          -0.118,
+          1.49448
+        ],
+        "max": [
+          -0.031,
+          -0.102,
+          1.53232
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 185,
+          "edge_connected_polygon_count": 288,
+          "world_bounds": {
+            "min": [
+              -0.085,
+              -0.118,
+              1.49448
+            ],
+            "max": [
+              -0.031,
+              -0.102,
+              1.53232
+            ],
+            "size": [
+              0.054,
+              0.016,
+              0.03784
+            ]
+          },
+          "world_centroid": [
+            -0.058921,
+            -0.11,
+            1.5134
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Light": 288
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Cheek_Plane_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.031,
+          -0.118,
+          1.49448
+        ],
+        "max": [
+          0.085,
+          -0.102,
+          1.53232
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 185,
+          "edge_connected_polygon_count": 288,
+          "world_bounds": {
+            "min": [
+              0.031,
+              -0.118,
+              1.49448
+            ],
+            "max": [
+              0.085,
+              -0.102,
+              1.53232
+            ],
+            "size": [
+              0.054,
+              0.016,
+              0.03784
+            ]
+          },
+          "world_centroid": [
+            0.057079,
+            -0.11,
+            1.5134
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Light": 288
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Ear_Inner_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.115,
+          -0.063,
+          1.5306
+        ],
+        "max": [
+          -0.097,
+          -0.051,
+          1.57188
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 115,
+          "edge_connected_polygon_count": 168,
+          "world_bounds": {
+            "min": [
+              -0.115,
+              -0.063,
+              1.5306
+            ],
+            "max": [
+              -0.097,
+              -0.051,
+              1.57188
+            ],
+            "size": [
+              0.018,
+              0.012,
+              0.04128
+            ]
+          },
+          "world_centroid": [
+            -0.106393,
+            -0.057,
+            1.55124
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 168
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Ear_Inner_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.097,
+          -0.063,
+          1.5306
+        ],
+        "max": [
+          0.115,
+          -0.051,
+          1.57188
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 115,
+          "edge_connected_polygon_count": 168,
+          "world_bounds": {
+            "min": [
+              0.097,
+              -0.063,
+              1.5306
+            ],
+            "max": [
+              0.115,
+              -0.051,
+              1.57188
+            ],
+            "size": [
+              0.018,
+              0.012,
+              0.04128
+            ]
+          },
+          "world_centroid": [
+            0.105607,
+            -0.057,
+            1.55124
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 168
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Ear_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.119,
+          -0.065,
+          1.51082
+        ],
+        "max": [
+          -0.069,
+          -0.005,
+          1.58994
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 219,
+          "edge_connected_polygon_count": 352,
+          "world_bounds": {
+            "min": [
+              -0.119,
+              -0.065,
+              1.51082
+            ],
+            "max": [
+              -0.069,
+              -0.005,
+              1.58994
+            ],
+            "size": [
+              0.05,
+              0.06,
+              0.07912
+            ]
+          },
+          "world_centroid": [
+            -0.094867,
+            -0.035,
+            1.55038
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 352
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Ear_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.069,
+          -0.065,
+          1.51082
+        ],
+        "max": [
+          0.119,
+          -0.005,
+          1.58994
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 219,
+          "edge_connected_polygon_count": 352,
+          "world_bounds": {
+            "min": [
+              0.069,
+              -0.065,
+              1.51082
+            ],
+            "max": [
+              0.119,
+              -0.005,
+              1.58994
+            ],
+            "size": [
+              0.05,
+              0.06,
+              0.07912
+            ]
+          },
+          "world_centroid": [
+            0.093133,
+            -0.035,
+            1.55038
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 352
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Glint_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.050043,
+          -0.1458,
+          1.58091
+        ],
+        "max": [
+          -0.043957,
+          -0.1422,
+          1.58865
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 97,
+          "edge_connected_polygon_count": 140,
+          "world_bounds": {
+            "min": [
+              -0.050043,
+              -0.1458,
+              1.58091
+            ],
+            "max": [
+              -0.043957,
+              -0.1422,
+              1.58865
+            ],
+            "size": [
+              0.006087,
+              0.0036,
+              0.00774
+            ]
+          },
+          "world_centroid": [
+            -0.047158,
+            -0.144029,
+            1.58478
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Eye_Glint": 140
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Glint_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.033957,
+          -0.1458,
+          1.58091
+        ],
+        "max": [
+          0.040043,
+          -0.1422,
+          1.58865
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 97,
+          "edge_connected_polygon_count": 140,
+          "world_bounds": {
+            "min": [
+              0.033957,
+              -0.1458,
+              1.58091
+            ],
+            "max": [
+              0.040043,
+              -0.1422,
+              1.58865
+            ],
+            "size": [
+              0.006087,
+              0.0036,
+              0.00774
+            ]
+          },
+          "world_centroid": [
+            0.036842,
+            -0.144029,
+            1.58478
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Eye_Glint": 140
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Iris_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.0605,
+          -0.1405,
+          1.55296
+        ],
+        "max": [
+          -0.0235,
+          -0.1235,
+          1.59768
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              -0.0605,
+              -0.1405,
+              1.55296
+            ],
+            "max": [
+              -0.0235,
+              -0.1235,
+              1.59768
+            ],
+            "size": [
+              0.037,
+              0.017,
+              0.04472
+            ]
+          },
+          "world_centroid": [
+            -0.042519,
+            -0.132,
+            1.57532
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Iris": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Iris_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.0235,
+          -0.1405,
+          1.55296
+        ],
+        "max": [
+          0.0605,
+          -0.1235,
+          1.59768
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              0.0235,
+              -0.1405,
+              1.55296
+            ],
+            "max": [
+              0.0605,
+              -0.1235,
+              1.59768
+            ],
+            "size": [
+              0.037,
+              0.017,
+              0.04472
+            ]
+          },
+          "world_centroid": [
+            0.041481,
+            -0.132,
+            1.57532
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Iris": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Pupil_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.0525,
+          -0.1445,
+          1.55898
+        ],
+        "max": [
+          -0.0315,
+          -0.1335,
+          1.58994
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 185,
+          "edge_connected_polygon_count": 288,
+          "world_bounds": {
+            "min": [
+              -0.0525,
+              -0.1445,
+              1.55898
+            ],
+            "max": [
+              -0.0315,
+              -0.1335,
+              1.58994
+            ],
+            "size": [
+              0.021,
+              0.011,
+              0.03096
+            ]
+          },
+          "world_centroid": [
+            -0.042358,
+            -0.139,
+            1.57446
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Pupil": 288
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Pupil_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.0315,
+          -0.1445,
+          1.55898
+        ],
+        "max": [
+          0.0525,
+          -0.1335,
+          1.58994
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 185,
+          "edge_connected_polygon_count": 288,
+          "world_bounds": {
+            "min": [
+              0.0315,
+              -0.1445,
+              1.55898
+            ],
+            "max": [
+              0.0525,
+              -0.1335,
+              1.58994
+            ],
+            "size": [
+              0.021,
+              0.011,
+              0.03096
+            ]
+          },
+          "world_centroid": [
+            0.041642,
+            -0.139,
+            1.57446
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Pupil": 288
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Sclera_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.078,
+          -0.133,
+          1.53834
+        ],
+        "max": [
+          -0.01,
+          -0.105,
+          1.61402
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              -0.078,
+              -0.133,
+              1.53834
+            ],
+            "max": [
+              -0.01,
+              -0.105,
+              1.61402
+            ],
+            "size": [
+              0.068,
+              0.028,
+              0.07568
+            ]
+          },
+          "world_centroid": [
+            -0.044953,
+            -0.119,
+            1.57618
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Eye_OffWhite": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eye_Sclera_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.01,
+          -0.133,
+          1.53834
+        ],
+        "max": [
+          0.078,
+          -0.105,
+          1.61402
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              0.01,
+              -0.133,
+              1.53834
+            ],
+            "max": [
+              0.078,
+              -0.105,
+              1.61402
+            ],
+            "size": [
+              0.068,
+              0.028,
+              0.07568
+            ]
+          },
+          "world_centroid": [
+            0.043047,
+            -0.119,
+            1.57618
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Eye_OffWhite": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eyebrow_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.083415,
+          -0.142846,
+          1.611562
+        ],
+        "max": [
+          -0.027517,
+          -0.114067,
+          1.627775
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              -0.083415,
+              -0.142846,
+              1.611562
+            ],
+            "max": [
+              -0.027517,
+              -0.114067,
+              1.627775
+            ],
+            "size": [
+              0.055898,
+              0.028779,
+              0.016212
+            ]
+          },
+          "world_centroid": [
+            -0.054233,
+            -0.129196,
+            1.619573
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Eyebrow_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.027518,
+          -0.142848,
+          1.611562
+        ],
+        "max": [
+          0.083405,
+          -0.11406,
+          1.627777
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              0.027518,
+              -0.142848,
+              1.611562
+            ],
+            "max": [
+              0.083405,
+              -0.11406,
+              1.627777
+            ],
+            "size": [
+              0.055887,
+              0.028788,
+              0.016214
+            ]
+          },
+          "world_centroid": [
+            0.054234,
+            -0.1292,
+            1.619576
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Back",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.086,
+          -0.032,
+          1.50652
+        ],
+        "max": [
+          0.086,
+          0.122,
+          1.68884
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              -0.086,
+              -0.032,
+              1.50652
+            ],
+            "max": [
+              0.086,
+              0.122,
+              1.68884
+            ],
+            "size": [
+              0.172,
+              0.154,
+              0.18232
+            ]
+          },
+          "world_centroid": [
+            -0.00241,
+            0.045,
+            1.59768
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Cap",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 423,
+      "edge_count": 1142,
+      "polygon_count": 720,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.092,
+          -0.099,
+          1.58392
+        ],
+        "max": [
+          0.092,
+          0.111,
+          1.74388
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 423,
+          "edge_connected_polygon_count": 720,
+          "world_bounds": {
+            "min": [
+              -0.092,
+              -0.099,
+              1.58392
+            ],
+            "max": [
+              0.092,
+              0.111,
+              1.74388
+            ],
+            "size": [
+              0.184,
+              0.21,
+              0.15996
+            ]
+          },
+          "world_centroid": [
+            -0.002208,
+            0.006,
+            1.6639
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 720
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Fringe_Lock_1",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.08997,
+          -0.118438,
+          1.596894
+        ],
+        "max": [
+          -0.05203,
+          -0.01257,
+          1.62831
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              -0.08997,
+              -0.118438,
+              1.596894
+            ],
+            "max": [
+              -0.05203,
+              -0.01257,
+              1.62831
+            ],
+            "size": [
+              0.03794,
+              0.105869,
+              0.031416
+            ]
+          },
+          "world_centroid": [
+            -0.0675,
+            -0.069125,
+            1.609452
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Fringe_Lock_2",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.055971,
+          -0.139622,
+          1.609885
+        ],
+        "max": [
+          -0.020029,
+          -0.031614,
+          1.66096
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              -0.055971,
+              -0.139622,
+              1.609885
+            ],
+            "max": [
+              -0.020029,
+              -0.031614,
+              1.66096
+            ],
+            "size": [
+              0.035943,
+              0.108008,
+              0.051076
+            ]
+          },
+          "world_centroid": [
+            -0.0345,
+            -0.090125,
+            1.632672
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair_Warm": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Fringe_Lock_3",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.019957,
+          -0.145694,
+          1.60305
+        ],
+        "max": [
+          0.019957,
+          -0.038187,
+          1.663522
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              -0.019957,
+              -0.145694,
+              1.60305
+            ],
+            "max": [
+              0.019957,
+              -0.038187,
+              1.663522
+            ],
+            "size": [
+              0.039914,
+              0.107506,
+              0.060473
+            ]
+          },
+          "world_centroid": [
+            0.004,
+            -0.097125,
+            1.630092
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Fringe_Lock_4",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.021039,
+          -0.132604,
+          1.613309
+        ],
+        "max": [
+          0.054961,
+          -0.031309,
+          1.657083
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              0.021039,
+              -0.132604,
+              1.613309
+            ],
+            "max": [
+              0.054961,
+              -0.031309,
+              1.657083
+            ],
+            "size": [
+              0.033922,
+              0.101294,
+              0.043774
+            ]
+          },
+          "world_centroid": [
+            0.042,
+            -0.086125,
+            1.632672
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair_Warm": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Fringe_Lock_5",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.055021,
+          -0.105533,
+          1.600375
+        ],
+        "max": [
+          0.084979,
+          -0.01053,
+          1.633723
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              0.055021,
+              -0.105533,
+              1.600375
+            ],
+            "max": [
+              0.084979,
+              -0.01053,
+              1.633723
+            ],
+            "size": [
+              0.029958,
+              0.095003,
+              0.033348
+            ]
+          },
+          "world_centroid": [
+            0.067,
+            -0.061625,
+            1.615042
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Side_Lock_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.105852,
+          -0.077402,
+          1.566996
+        ],
+        "max": [
+          -0.049647,
+          0.002836,
+          1.673003
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              -0.105852,
+              -0.077402,
+              1.566996
+            ],
+            "max": [
+              -0.049647,
+              0.002836,
+              1.673003
+            ],
+            "size": [
+              0.056205,
+              0.080238,
+              0.106007
+            ]
+          },
+          "world_centroid": [
+            -0.079063,
+            -0.045625,
+            1.616305
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair_Warm": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hair_Side_Lock_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.049647,
+          -0.077402,
+          1.566996
+        ],
+        "max": [
+          0.105852,
+          0.002836,
+          1.673003
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              0.049647,
+              -0.077402,
+              1.566996
+            ],
+            "max": [
+              0.105852,
+              0.002836,
+              1.673003
+            ],
+            "size": [
+              0.056205,
+              0.080238,
+              0.106007
+            ]
+          },
+          "world_centroid": [
+            0.079063,
+            -0.045625,
+            1.616305
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Hair_Warm": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_L_1",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.234,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          -0.216,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.234,
+              -0.13813,
+              0.803794
+            ],
+            "max": [
+              -0.216,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.038819
+            ]
+          },
+          "world_centroid": [
+            -0.224377,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_L_2",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.216,
+          -0.13813,
+          0.803823
+        ],
+        "max": [
+          -0.198,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.216,
+              -0.13813,
+              0.803823
+            ],
+            "max": [
+              -0.198,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.03879
+            ]
+          },
+          "world_centroid": [
+            -0.207,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_L_3",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.198,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          -0.18,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.198,
+              -0.13813,
+              0.803794
+            ],
+            "max": [
+              -0.18,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.038819
+            ]
+          },
+          "world_centroid": [
+            -0.189623,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_R_1",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.18,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          0.198,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              0.18,
+              -0.13813,
+              0.803794
+            ],
+            "max": [
+              0.198,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.038819
+            ]
+          },
+          "world_centroid": [
+            0.189623,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_R_2",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.198,
+          -0.13813,
+          0.803823
+        ],
+        "max": [
+          0.216,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              0.198,
+              -0.13813,
+              0.803823
+            ],
+            "max": [
+              0.216,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.03879
+            ]
+          },
+          "world_centroid": [
+            0.207,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Finger_R_3",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.216,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          0.234,
+          -0.122645,
+          0.842613
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              0.216,
+              -0.13813,
+              0.803794
+            ],
+            "max": [
+              0.234,
+              -0.122645,
+              0.842613
+            ],
+            "size": [
+              0.018,
+              0.015484,
+              0.038819
+            ]
+          },
+          "world_centroid": [
+            0.224377,
+            -0.129577,
+            0.821808
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Palm_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.245,
+          -0.142,
+          0.803
+        ],
+        "max": [
+          -0.169,
+          -0.08,
+          0.913
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 219,
+          "edge_connected_polygon_count": 352,
+          "world_bounds": {
+            "min": [
+              -0.245,
+              -0.142,
+              0.803
+            ],
+            "max": [
+              -0.169,
+              -0.08,
+              0.913
+            ],
+            "size": [
+              0.076,
+              0.062,
+              0.11
+            ]
+          },
+          "world_centroid": [
+            -0.208318,
+            -0.111,
+            0.858
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 352
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Palm_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.169,
+          -0.142,
+          0.803
+        ],
+        "max": [
+          0.245,
+          -0.08,
+          0.913
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 219,
+          "edge_connected_polygon_count": 352,
+          "world_bounds": {
+            "min": [
+              0.169,
+              -0.142,
+              0.803
+            ],
+            "max": [
+              0.245,
+              -0.08,
+              0.913
+            ],
+            "size": [
+              0.076,
+              0.062,
+              0.11
+            ]
+          },
+          "world_centroid": [
+            0.205682,
+            -0.111,
+            0.858
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 352
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Thumb_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.184176,
+          -0.135589,
+          0.832596
+        ],
+        "max": [
+          -0.155193,
+          -0.104054,
+          0.877
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.184176,
+              -0.135589,
+              0.832596
+            ],
+            "max": [
+              -0.155193,
+              -0.104054,
+              0.877
+            ],
+            "size": [
+              0.028983,
+              0.031535,
+              0.044404
+            ]
+          },
+          "world_centroid": [
+            -0.169539,
+            -0.1245,
+            0.851385
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Hand_Thumb_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.155193,
+          -0.135589,
+          0.832596
+        ],
+        "max": [
+          0.184176,
+          -0.104054,
+          0.877
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 26,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              0.155193,
+              -0.135589,
+              0.832596
+            ],
+            "max": [
+              0.184176,
+              -0.104054,
+              0.877
+            ],
+            "size": [
+              0.028983,
+              0.031535,
+              0.044404
+            ]
+          },
+          "world_centroid": [
+            0.169539,
+            -0.1245,
+            0.851385
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Head_Main_Mesh",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 290,
+      "edge_count": 864,
+      "polygon_count": 576,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.094162,
+          -0.145317,
+          1.4274
+        ],
+        "max": [
+          0.093838,
+          0.076915,
+          1.70174
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 290,
+          "edge_connected_polygon_count": 576,
+          "world_bounds": {
+            "min": [
+              -0.094162,
+              -0.145317,
+              1.4274
+            ],
+            "max": [
+              0.093838,
+              0.076915,
+              1.70174
+            ],
+            "size": [
+              0.188,
+              0.222232,
+              0.27434
+            ]
+          },
+          "world_centroid": [
+            0.0,
+            -0.035569,
+            1.569363
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 576
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Icosphere",
+      "parent_name": null,
+      "vertex_count": 42,
+      "edge_count": 120,
+      "polygon_count": 80,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.951058,
+          -1.0,
+          -1.0
+        ],
+        "max": [
+          0.951058,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 42,
+          "edge_connected_polygon_count": 80,
+          "world_bounds": {
+            "min": [
+              -0.951058,
+              -1.0,
+              -1.0
+            ],
+            "max": [
+              0.951058,
+              1.0,
+              1.0
+            ],
+            "size": [
+              1.902116,
+              2.0,
+              2.0
+            ]
+          },
+          "world_centroid": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "materials_by_polygon_count": {
+            "<no material>": 80
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Lower_Lip_Plane",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.013504,
+          -0.149186,
+          1.476253
+        ],
+        "max": [
+          0.018977,
+          -0.138026,
+          1.482576
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              -0.013504,
+              -0.149186,
+              1.476253
+            ],
+            "max": [
+              0.018977,
+              -0.138026,
+              1.482576
+            ],
+            "size": [
+              0.032481,
+              0.01116,
+              0.006323
+            ]
+          },
+          "world_centroid": [
+            0.00297,
+            -0.143172,
+            1.479432
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Light": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Mouth_Line",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.0286,
+          -0.150311,
+          1.482963
+        ],
+        "max": [
+          0.028654,
+          -0.133944,
+          1.494722
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 36,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.0286,
+              -0.150311,
+              1.482963
+            ],
+            "max": [
+              0.028654,
+              -0.133944,
+              1.494722
+            ],
+            "size": [
+              0.057254,
+              0.016367,
+              0.011758
+            ]
+          },
+          "world_centroid": [
+            -0.00126,
+            -0.142268,
+            1.488471
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Neck",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.055,
+          -0.103249,
+          1.335292
+        ],
+        "max": [
+          0.055,
+          0.002539,
+          1.468078
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              -0.055,
+              -0.103249,
+              1.335292
+            ],
+            "max": [
+              0.055,
+              0.002539,
+              1.468078
+            ],
+            "size": [
+              0.11,
+              0.105788,
+              0.132786
+            ]
+          },
+          "world_centroid": [
+            0.0,
+            -0.05494,
+            1.40534
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Nose_Bridge",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.019,
+          -0.168333,
+          1.539661
+        ],
+        "max": [
+          0.019,
+          -0.110448,
+          1.615569
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 32,
+          "edge_connected_polygon_count": 60,
+          "world_bounds": {
+            "min": [
+              -0.019,
+              -0.168333,
+              1.539661
+            ],
+            "max": [
+              0.019,
+              -0.110448,
+              1.615569
+            ],
+            "size": [
+              0.038,
+              0.057885,
+              0.075908
+            ]
+          },
+          "world_centroid": [
+            0.0,
+            -0.137625,
+            1.577148
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Light": 60
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Nose_Tip",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.021,
+          -0.169,
+          1.53318
+        ],
+        "max": [
+          0.021,
+          -0.133,
+          1.557261
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 185,
+          "edge_connected_polygon_count": 288,
+          "world_bounds": {
+            "min": [
+              -0.021,
+              -0.169,
+              1.53318
+            ],
+            "max": [
+              0.021,
+              -0.133,
+              1.557261
+            ],
+            "size": [
+              0.042,
+              0.036,
+              0.02408
+            ]
+          },
+          "world_centroid": [
+            -0.000717,
+            -0.151,
+            1.54522
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin": 288
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Nostril_Shadow_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.01628,
+          -0.1665,
+          1.53748
+        ],
+        "max": [
+          -0.00772,
+          -0.1615,
+          1.54264
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 97,
+          "edge_connected_polygon_count": 140,
+          "world_bounds": {
+            "min": [
+              -0.01628,
+              -0.1665,
+              1.53748
+            ],
+            "max": [
+              -0.00772,
+              -0.1615,
+              1.54264
+            ],
+            "size": [
+              0.00856,
+              0.005,
+              0.00516
+            ]
+          },
+          "world_centroid": [
+            -0.012222,
+            -0.16404,
+            1.54006
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 140
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Nostril_Shadow_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.00772,
+          -0.1665,
+          1.53748
+        ],
+        "max": [
+          0.01628,
+          -0.1615,
+          1.54264
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 97,
+          "edge_connected_polygon_count": 140,
+          "world_bounds": {
+            "min": [
+              0.00772,
+              -0.1665,
+              1.53748
+            ],
+            "max": [
+              0.01628,
+              -0.1615,
+              1.54264
+            ],
+            "size": [
+              0.00856,
+              0.005,
+              0.00516
+            ]
+          },
+          "world_centroid": [
+            0.011778,
+            -0.16404,
+            1.54006
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 140
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Paint_Mark_Left_Shoulder",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.176,
+          -0.111,
+          1.296
+        ],
+        "max": [
+          -0.136,
+          -0.095,
+          1.337
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.176,
+              -0.111,
+              1.296
+            ],
+            "max": [
+              -0.136,
+              -0.095,
+              1.337
+            ],
+            "size": [
+              0.04,
+              0.016,
+              0.041
+            ]
+          },
+          "world_centroid": [
+            -0.1545,
+            -0.104,
+            1.318
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Brush_Rust": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Paint_Mark_Lower_Cardigan",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.08,
+          -0.124,
+          0.954
+        ],
+        "max": [
+          0.116,
+          -0.119,
+          0.99
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              0.08,
+              -0.124,
+              0.954
+            ],
+            "max": [
+              0.116,
+              -0.119,
+              0.99
+            ],
+            "size": [
+              0.036,
+              0.005,
+              0.036
+            ]
+          },
+          "world_centroid": [
+            0.098,
+            -0.121,
+            0.97125
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Light": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Pocket_Stitch_Line",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.117895,
+          -0.15067,
+          1.137302
+        ],
+        "max": [
+          -0.074682,
+          -0.134555,
+          1.143687
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              -0.117895,
+              -0.15067,
+              1.137302
+            ],
+            "max": [
+              -0.074682,
+              -0.134555,
+              1.143687
+            ],
+            "size": [
+              0.043213,
+              0.016116,
+              0.006386
+            ]
+          },
+          "world_centroid": [
+            -0.095969,
+            -0.143215,
+            1.140137
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Stitch": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shirt_Collar_Left",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.084,
+          -0.171,
+          1.315
+        ],
+        "max": [
+          -0.006,
+          -0.147,
+          1.395
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.084,
+              -0.171,
+              1.315
+            ],
+            "max": [
+              -0.006,
+              -0.147,
+              1.395
+            ],
+            "size": [
+              0.078,
+              0.024,
+              0.08
+            ]
+          },
+          "world_centroid": [
+            -0.0465,
+            -0.158,
+            1.3525
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Shirt_Shadow": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shirt_Collar_Right",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.006,
+          -0.171,
+          1.315
+        ],
+        "max": [
+          0.084,
+          -0.147,
+          1.395
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              0.006,
+              -0.171,
+              1.315
+            ],
+            "max": [
+              0.084,
+              -0.147,
+              1.395
+            ],
+            "size": [
+              0.078,
+              0.024,
+              0.08
+            ]
+          },
+          "world_centroid": [
+            0.0465,
+            -0.158,
+            1.3525
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Shirt": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shirt_Front_Panel",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.06,
+          -0.16,
+          1.105
+        ],
+        "max": [
+          0.058,
+          -0.132,
+          1.365
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.06,
+              -0.16,
+              1.105
+            ],
+            "max": [
+              0.058,
+              -0.132,
+              1.365
+            ],
+            "size": [
+              0.118,
+              0.028,
+              0.26
+            ]
+          },
+          "world_centroid": [
+            -0.00025,
+            -0.146,
+            1.235
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Shirt": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.151,
+          -0.21,
+          0.033
+        ],
+        "max": [
+          -0.005,
+          0.08,
+          0.137
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              -0.151,
+              -0.21,
+              0.033
+            ],
+            "max": [
+              -0.005,
+              0.08,
+              0.137
+            ],
+            "size": [
+              0.146,
+              0.289999,
+              0.104
+            ]
+          },
+          "world_centroid": [
+            -0.080046,
+            -0.065,
+            0.085
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Shoes": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.005,
+          -0.21,
+          0.033
+        ],
+        "max": [
+          0.151,
+          0.08,
+          0.137
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 271,
+          "edge_connected_polygon_count": 440,
+          "world_bounds": {
+            "min": [
+              0.005,
+              -0.21,
+              0.033
+            ],
+            "max": [
+              0.151,
+              0.08,
+              0.137
+            ],
+            "size": [
+              0.146,
+              0.289999,
+              0.104
+            ]
+          },
+          "world_centroid": [
+            0.075954,
+            -0.065,
+            0.085
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Shoes": 440
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_Scuff_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.096,
+          -0.207,
+          0.101
+        ],
+        "max": [
+          -0.063,
+          -0.199,
+          0.108
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              -0.096,
+              -0.207,
+              0.101
+            ],
+            "max": [
+              -0.063,
+              -0.199,
+              0.108
+            ],
+            "size": [
+              0.033,
+              0.008,
+              0.007
+            ]
+          },
+          "world_centroid": [
+            -0.078,
+            -0.2035,
+            0.104
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers_Light": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_Scuff_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.06,
+          -0.207,
+          0.101
+        ],
+        "max": [
+          0.093,
+          -0.199,
+          0.108
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 4,
+          "edge_connected_polygon_count": 2,
+          "world_bounds": {
+            "min": [
+              0.06,
+              -0.207,
+              0.101
+            ],
+            "max": [
+              0.093,
+              -0.199,
+              0.108
+            ],
+            "size": [
+              0.033,
+              0.008,
+              0.007
+            ]
+          },
+          "world_centroid": [
+            0.078,
+            -0.2035,
+            0.104
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers_Light": 2
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_Sole_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 229,
+      "edge_count": 588,
+      "polygon_count": 360,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.151,
+          -0.215,
+          0.017
+        ],
+        "max": [
+          -0.005,
+          0.087,
+          0.071
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 229,
+          "edge_connected_polygon_count": 360,
+          "world_bounds": {
+            "min": [
+              -0.151,
+              -0.215,
+              0.017
+            ],
+            "max": [
+              -0.005,
+              0.087,
+              0.071
+            ],
+            "size": [
+              0.146,
+              0.301999,
+              0.054
+            ]
+          },
+          "world_centroid": [
+            -0.080013,
+            -0.064,
+            0.044
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Sole": 360
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Shoe_Sole_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 229,
+      "edge_count": 588,
+      "polygon_count": 360,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.005,
+          -0.215,
+          0.017
+        ],
+        "max": [
+          0.151,
+          0.087,
+          0.071
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 229,
+          "edge_connected_polygon_count": 360,
+          "world_bounds": {
+            "min": [
+              0.005,
+              -0.215,
+              0.017
+            ],
+            "max": [
+              0.151,
+              0.087,
+              0.071
+            ],
+            "size": [
+              0.146,
+              0.301999,
+              0.054
+            ]
+          },
+          "world_centroid": [
+            0.075987,
+            -0.064,
+            0.044
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Sole": 360
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Sleeve_Cuff_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 34,
+      "edge_count": 96,
+      "polygon_count": 64,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.250911,
+          -0.143742,
+          0.897188
+        ],
+        "max": [
+          -0.170087,
+          -0.076419,
+          0.932885
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 34,
+          "edge_connected_polygon_count": 64,
+          "world_bounds": {
+            "min": [
+              -0.250911,
+              -0.143742,
+              0.897188
+            ],
+            "max": [
+              -0.170087,
+              -0.076419,
+              0.932885
+            ],
+            "size": [
+              0.080825,
+              0.067323,
+              0.035697
+            ]
+          },
+          "world_centroid": [
+            -0.21,
+            -0.1105,
+            0.915
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Light": 64
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Sleeve_Cuff_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 34,
+      "edge_count": 96,
+      "polygon_count": 64,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.170087,
+          -0.143742,
+          0.897188
+        ],
+        "max": [
+          0.250911,
+          -0.076419,
+          0.932885
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 34,
+          "edge_connected_polygon_count": 64,
+          "world_bounds": {
+            "min": [
+              0.170087,
+              -0.143742,
+              0.897188
+            ],
+            "max": [
+              0.250911,
+              -0.076419,
+              0.932885
+            ],
+            "size": [
+              0.080825,
+              0.067323,
+              0.035697
+            ]
+          },
+          "world_centroid": [
+            0.21,
+            -0.1105,
+            0.915
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Cardigan_Light": 64
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Crease_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.091764,
+          -0.062764,
+          0.549819
+        ],
+        "max": [
+          -0.084234,
+          -0.051243,
+          0.700072
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              -0.091764,
+              -0.062764,
+              0.549819
+            ],
+            "max": [
+              -0.084234,
+              -0.051243,
+              0.700072
+            ],
+            "size": [
+              0.00753,
+              0.011521,
+              0.150254
+            ]
+          },
+          "world_centroid": [
+            -0.087628,
+            -0.057471,
+            0.620013
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers_Light": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Crease_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.064236,
+          -0.062764,
+          0.549819
+        ],
+        "max": [
+          0.071766,
+          -0.051243,
+          0.700072
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 27,
+          "edge_connected_polygon_count": 32,
+          "world_bounds": {
+            "min": [
+              0.064236,
+              -0.062764,
+              0.549819
+            ],
+            "max": [
+              0.071766,
+              -0.051243,
+              0.700072
+            ],
+            "size": [
+              0.00753,
+              0.011521,
+              0.150254
+            ]
+          },
+          "world_centroid": [
+            0.068372,
+            -0.057471,
+            0.620013
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers_Light": 32
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Shin_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.138997,
+          -0.053079,
+          0.158872
+        ],
+        "max": [
+          -0.029003,
+          0.037079,
+          0.526497
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              -0.138997,
+              -0.053079,
+              0.158872
+            ],
+            "max": [
+              -0.029003,
+              0.037079,
+              0.526497
+            ],
+            "size": [
+              0.109994,
+              0.090157,
+              0.367625
+            ]
+          },
+          "world_centroid": [
+            -0.08532,
+            -0.014,
+            0.3385
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Shin_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.029003,
+          -0.053079,
+          0.158872
+        ],
+        "max": [
+          0.138997,
+          0.037079,
+          0.526497
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              0.029003,
+              -0.053079,
+              0.158872
+            ],
+            "max": [
+              0.138997,
+              0.037079,
+              0.526497
+            ],
+            "size": [
+              0.109994,
+              0.090157,
+              0.367625
+            ]
+          },
+          "world_centroid": [
+            0.08532,
+            -0.014,
+            0.3385
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Thigh_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.154981,
+          -0.053849,
+          0.512409
+        ],
+        "max": [
+          -0.001019,
+          0.075043,
+          0.878889
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              -0.154981,
+              -0.053849,
+              0.512409
+            ],
+            "max": [
+              -0.001019,
+              0.075043,
+              0.878889
+            ],
+            "size": [
+              0.153962,
+              0.128892,
+              0.36648
+            ]
+          },
+          "world_centroid": [
+            -0.08132,
+            0.002,
+            0.695
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trouser_Thigh_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.001019,
+          -0.053849,
+          0.512409
+        ],
+        "max": [
+          0.154981,
+          0.075043,
+          0.878889
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 50,
+          "edge_connected_polygon_count": 96,
+          "world_bounds": {
+            "min": [
+              0.001019,
+              -0.053849,
+              0.512409
+            ],
+            "max": [
+              0.154981,
+              0.075043,
+              0.878889
+            ],
+            "size": [
+              0.153962,
+              0.128892,
+              0.36648
+            ]
+          },
+          "world_centroid": [
+            0.08132,
+            0.002,
+            0.695
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers": 96
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Trousers_Hip",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 86,
+      "edge_count": 252,
+      "polygon_count": 168,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.138489,
+          -0.080181,
+          0.755
+        ],
+        "max": [
+          0.139511,
+          0.103819,
+          0.92
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 86,
+          "edge_connected_polygon_count": 168,
+          "world_bounds": {
+            "min": [
+              -0.138489,
+              -0.080181,
+              0.755
+            ],
+            "max": [
+              0.139511,
+              0.103819,
+              0.92
+            ],
+            "size": [
+              0.278,
+              0.184,
+              0.165
+            ]
+          },
+          "world_centroid": [
+            0.0,
+            0.014023,
+            0.835058
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Trousers": 168
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "UnderEye_Shadow_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 151,
+      "edge_count": 374,
+      "polygon_count": 224,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.076,
+          -0.1245,
+          1.54178
+        ],
+        "max": [
+          -0.014,
+          -0.1135,
+          1.55898
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 151,
+          "edge_connected_polygon_count": 224,
+          "world_bounds": {
+            "min": [
+              -0.076,
+              -0.1245,
+              1.54178
+            ],
+            "max": [
+              -0.014,
+              -0.1135,
+              1.55898
+            ],
+            "size": [
+              0.062,
+              0.011,
+              0.0172
+            ]
+          },
+          "world_centroid": [
+            -0.046032,
+            -0.119,
+            1.55038
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_UnderEye": 224
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "UnderEye_Shadow_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 151,
+      "edge_count": 374,
+      "polygon_count": 224,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.014,
+          -0.1245,
+          1.54178
+        ],
+        "max": [
+          0.076,
+          -0.1135,
+          1.55898
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 151,
+          "edge_connected_polygon_count": 224,
+          "world_bounds": {
+            "min": [
+              0.014,
+              -0.1245,
+              1.54178
+            ],
+            "max": [
+              0.076,
+              -0.1135,
+              1.55898
+            ],
+            "size": [
+              0.062,
+              0.011,
+              0.0172
+            ]
+          },
+          "world_centroid": [
+            0.043968,
+            -0.119,
+            1.55038
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_UnderEye": 224
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Upper_Eyelid_L",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          -0.080396,
+          -0.141809,
+          1.577822
+        ],
+        "max": [
+          -0.010067,
+          -0.124398,
+          1.606141
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 36,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              -0.080396,
+              -0.141809,
+              1.577822
+            ],
+            "max": [
+              -0.010067,
+              -0.124398,
+              1.606141
+            ],
+            "size": [
+              0.070329,
+              0.017411,
+              0.028319
+            ]
+          },
+          "world_centroid": [
+            -0.045532,
+            -0.132711,
+            1.593736
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 48
+          }
+        }
+      ]
+    },
+    {
+      "object_name": "Upper_Eyelid_R",
+      "parent_name": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "connected_component_count": 1,
+      "world_bounds": {
+        "min": [
+          0.010067,
+          -0.141809,
+          1.577822
+        ],
+        "max": [
+          0.080396,
+          -0.124398,
+          1.606141
+        ]
+      },
+      "components": [
+        {
+          "component_index": 0,
+          "vertex_count": 36,
+          "edge_connected_polygon_count": 48,
+          "world_bounds": {
+            "min": [
+              0.010067,
+              -0.141809,
+              1.577822
+            ],
+            "max": [
+              0.080396,
+              -0.124398,
+              1.606141
+            ],
+            "size": [
+              0.070329,
+              0.017411,
+              0.028319
+            ]
+          },
+          "world_centroid": [
+            0.045532,
+            -0.133129,
+            1.593794
+          ],
+          "materials_by_polygon_count": {
+            "WIS_Protagonist_Skin_Shadow": 48
+          }
+        }
+      ]
+    }
+  ]
+}
