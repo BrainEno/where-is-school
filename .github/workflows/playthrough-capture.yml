@@ -504,21 +504,27 @@ jobs:
           EVIDENCE: ${{ runner.temp }}/evidence
         run: |
           set -uo pipefail
-          # A single artifact is documented to extract straight into `path`. A version of
-          # the action that nests it under the artifact's own name instead would leave the
-          # checks looking one directory too high - which is how a downloaded artifact can
-          # exist and still be "missing" - so both shapes are accepted, and the one that
-          # was found is printed.
+          # A single artifact is documented to extract straight into `path`, and it does
+          # not always: the first run of this shape downloaded an artifact that then read
+          # as "no screenshots directory", i.e. the evidence existed one or more
+          # directories below where the checks look. Rather than guess the depth, the log
+          # the checks insist on is the landmark: wherever PLAYTHROUGH.log landed, its
+          # `docs/screenshots` parent's parent is the evidence root. The tree is printed
+          # either way, so a shape nobody expected is visible in the log instead of
+          # turning into a check that fails for no stated reason.
+          echo "downloaded:"
+          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 | sort | sed 's/^/  /' | head -n 40
           root="${DOWNLOAD}"
-          if [ ! -d "${root}/docs/screenshots" ]; then
-            nested=$(find "${DOWNLOAD}" -maxdepth 3 -type d -name screenshots 2>/dev/null | head -n 1) || true
-            if [ -n "${nested:-}" ]; then
-              root=$(dirname "${nested}")
-              echo "the artifact was nested one level down: using ${root}"
-            fi
+          log=$(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log 2>/dev/null | head -n 1) || true
+          if [ -n "${log:-}" ]; then
+            root=$(dirname "$(dirname "$(dirname "${log}")")")
+            echo "evidence root: ${root}"
+          else
+            echo "no PLAYTHROUGH.log in the download; the checks will say what is missing"
           fi
           mkdir -p "${EVIDENCE}"
           cp -a "${root}/." "${EVIDENCE}/"
+          echo "evidence:"
           find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
 
       - name: Verify the structure and the logs
@@ -560,17 +566,20 @@ jobs:
           EVIDENCE: ${{ runner.temp }}/evidence
         run: |
           set -uo pipefail
-          # The same two shapes as in `verify-publish`, for the same reason.
+          # The same landmark search as `verify-publish`, for the same reason.
+          echo "downloaded:"
+          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 | sort | sed 's/^/  /' | head -n 40
           root="${DOWNLOAD}"
-          if [ ! -d "${root}/docs/screenshots" ]; then
-            nested=$(find "${DOWNLOAD}" -maxdepth 3 -type d -name screenshots 2>/dev/null | head -n 1) || true
-            if [ -n "${nested:-}" ]; then
-              root=$(dirname "${nested}")
-              echo "the artifact was nested one level down: using ${root}"
-            fi
+          log=$(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log 2>/dev/null | head -n 1) || true
+          if [ -n "${log:-}" ]; then
+            root=$(dirname "$(dirname "$(dirname "${log}")")")
+            echo "evidence root: ${root}"
+          else
+            echo "no PLAYTHROUGH.log in the download; the checks will say what is missing"
           fi
           mkdir -p "${EVIDENCE}"
           cp -a "${root}/." "${EVIDENCE}/"
+          echo "evidence:"
           find "${EVIDENCE}" -maxdepth 3 -mindepth 1 | sort | sed 's/^/  /'
 
       - name: Verify the structure, then publish
