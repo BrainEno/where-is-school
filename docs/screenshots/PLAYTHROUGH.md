@@ -25,51 +25,75 @@ The classroom with control returned and the objective set.
 
 ![03_world_after_opening](03_world_after_opening.png)
 
+## 03h_classroom_desks
+
+The classroom from the back: six student desks with the imported model and their chairs, at the positions the room has always had.
+
+![03h_classroom_desks](03h_classroom_desks.png)
+
+## 03i_own_desk_stationery
+
+The player's own desk (DeskB2) from the sitting side: the stationery set on the top.
+
+![03i_own_desk_stationery](03i_own_desk_stationery.png)
+
+## 03j_protagonist
+
+The player's authored protagonist, standing on the classroom floor, head to feet, under the nameplate the game shows.
+
+![03j_protagonist](03j_protagonist.png)
+
+## 03k_q_in_the_classroom
+
+Q in the classroom, wearing the authored model, from the side Q faces, under the nameplate the game shows.
+
+![03k_q_in_the_classroom](03k_q_in_the_classroom.png)
+
+## cue_candidate_tick
+
+Candidate tick: the floor-click mark, from the player's own camera at 2.4 m.
+
+![cue_candidate_tick](cue_candidate_tick.png)
+
+## cue_candidate_brackets
+
+Candidate brackets: the floor-click mark, from the player's own camera at 2.4 m.
+
+![cue_candidate_brackets](cue_candidate_brackets.png)
+
+## cue_candidate_commas
+
+Candidate commas: the floor-click mark, from the player's own camera at 2.4 m.
+
+![cue_candidate_commas](cue_candidate_commas.png)
+
+## cue_candidates_abc
+
+The three candidates side by side on the same floor, from one camera: A tick, B brackets, C commas. The shipped one is A.
+
+![cue_candidates_abc](cue_candidates_abc.png)
+
 ## 03a_click_destination
 
-A left click on the floor
+A left click on the floor: the destination ring and the walk starting.
 
 ![03a_click_destination](03a_click_destination.png)
 
 ## 03b_click_walking
 
-Mid-walk, after one click on the floor
-
-![03b_click_walking](03b_click_walking.png)
-
-## 03a_click_destination
-
-A left click on the floor
-
-![03a_click_destination](03a_click_destination.png)
-
-## 03b_click_walking
-
-Mid-walk, after one click on the floor
-
-![03b_click_walking](03b_click_walking.png)
-
-## 03a_click_destination
-
-A left click on the floor
-
-![03a_click_destination](03a_click_destination.png)
-
-## 03b_click_walking
-
-Mid-walk, after one click on the floor
+Mid-walk, after one click on the floor: no keys held.
 
 ![03b_click_walking](03b_click_walking.png)
 
 ## 03c_wasd_cancels
 
-Holding a movement key during an automatic walk
+Holding a movement key during an automatic walk: the keys take over.
 
 ![03c_wasd_cancels](03c_wasd_cancels.png)
 
 ## 03d_hover_cue
 
-The hover cue on the timetable sheet
+The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, and a shard floating above the object.
 
 ![03d_hover_cue](03d_hover_cue.png)
 
@@ -81,7 +105,7 @@ The timetable sheet opened by a click, with no key pressed.
 
 ## 03g_refused_click
 
-A click on a wall
+A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts.
 
 ![03g_refused_click](03g_refused_click.png)
 
@@ -105,7 +129,7 @@ The same classroom after switching to simplified Chinese at runtime.
 
 ## 07_prompt_chinese
 
-The interaction prompt after the switch
+The interaction prompt after the switch: the prompt text is translated.
 
 ![07_prompt_chinese](07_prompt_chinese.png)
 
@@ -123,7 +147,7 @@ The prompt for a conversation, in Chinese.
 
 ## 09b_click_person_approach
 
-Q clicked from out of reach
+Q clicked from out of reach: the character walks over to them.
 
 ![09b_click_person_approach](09b_click_person_approach.png)
 
@@ -141,13 +165,13 @@ The same scene after switching back to English.
 
 ## 12_door_prompt
 
-The classroom door is open
+The classroom door is open: its prompt changed with the story.
 
 ![12_door_prompt](12_door_prompt.png)
 
 ## 12b_click_door
 
-The door clicked with the mouse
+The door clicked with the mouse: the transition starts without a key.
 
 ![12b_click_door](12b_click_door.png)
 
@@ -165,7 +189,7 @@ Q walking with the player in the walkway, at a natural distance.
 
 ## 13b_hover_trolley
 
-The pointer resting on the cleaning trolley
+The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing.
 
 ![13b_hover_trolley](13b_hover_trolley.png)
 
@@ -177,7 +201,7 @@ Looking at the trolley, with Q's comment because Q is there.
 
 ## 13d_corridor_speaker
 
-The wall speaker
+The wall speaker: a short noise cue of its own, and a line about the class behind the wall.
 
 ![13d_corridor_speaker](13d_corridor_speaker.png)
 
@@ -225,7 +249,7 @@ The way up to the residential area.
 
 ## 17_residential
 
-The courtyard behind the school
+The courtyard behind the school: three blocks and the stair.
 
 ![17_residential](17_residential.png)
 
@@ -249,7 +273,7 @@ The green animal, with the prompt to look at it.
 
 ## 19_animal_conversation
 
-Meeting the animal
+Meeting the animal: the first line.
 
 ![19_animal_conversation](19_animal_conversation.png)
 
@@ -279,7 +303,7 @@ The estate gate at the end of the alley.
 
 ## 25_playground_wide
 
-The open yard from the gate
+The open yard from the gate: court, hoops, bench, climbing frame, shed.
 
 ![25_playground_wide](25_playground_wide.png)
 

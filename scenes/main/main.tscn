@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -9,6 +9,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/wake_thud.wav" id="7_wake"]
 [ext_resource type="Script" path="res://scripts/world/inner_voice_director.gd" id="8_inner_voice"]
 [ext_resource type="PackedScene" path="res://scenes/actors/npc/companion.tscn" id="9_companion"]
+[ext_resource type="Script" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
 
 [node name="Main" type="Node3D"]
 
@@ -38,3 +39,6 @@ script = ExtResource("5_opening_sequence")
 script = ExtResource("8_inner_voice")
 
 [node name="Companion" parent="." instance=ExtResource("9_companion")]
+
+[node name="DisplayMode" type="Node" parent="."]
+script = ExtResource("10_display_mode")

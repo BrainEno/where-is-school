@@ -45,6 +45,22 @@ var _bake_error: String = ""
 var _map_region_count: int = 0
 var _source_face_count: int = 0
 
+## Timing of the last bake, in microseconds: the whole bake and the geometry collection
+## inside it. Measured once per bake — a bake happens when a location enters the tree, not
+## per frame — so the numbers describe the load, never the running game.
+var _bake_usec: int = 0
+var _collect_usec: int = 0
+
+## How many physics frames the region gives the navigation server to accept the mesh it just
+## baked. The server parses a region's mesh and rebuilds the map on its own schedule, and a
+## map that has not rebuilt yet answers queries from whatever it held before — which, right
+## after a location swap, is the room that was just freed. That is not a rare state: it is
+## the frame the player arrives on, so the region keeps handing the mesh over until the map
+## answers for *this* geometry, and says so if it never does.
+const ROUTE_RECHECK_FRAMES := 6
+
+var _route_checks_left: int = 0
+
 
 func _ready() -> void:
 	add_to_group("location_navigation")
@@ -57,17 +73,30 @@ func _ready() -> void:
 ## Bakes the mesh now. Returns false when the geometry produced no walkable polygons,
 ## which is a content error, not a runtime hiccup.
 func bake_region() -> bool:
+	var started := Time.get_ticks_usec()
 	var root := get_parent()
 	if root == null:
 		_bake_error = "the region has no parent to bake from"
+		_bake_usec = Time.get_ticks_usec() - started
+		_report("")
 		navigation_baked.emit(false)
 		return false
-	var mesh: NavigationMesh = navigation_mesh
+	# Bake into a copy, never into the resource the scene was packed with. A `.tscn` shares
+	# its sub-resources between every instance of that scene, so baking in place writes one
+	# instance's floor into the mesh another instance is using — which happens the first time
+	# a location is entered while an instance of it is still loaded, and looks exactly like a
+	# room whose navigation silently stopped answering.
+	var packed_mesh := navigation_mesh
+	var mesh: NavigationMesh = null
+	if packed_mesh != null:
+		mesh = packed_mesh.duplicate() as NavigationMesh
 	if mesh == null:
 		mesh = NavigationMesh.new()
 	_configure(mesh)
 	var source := NavigationMeshSourceGeometryData3D.new()
+	var collect_started := Time.get_ticks_usec()
 	_source_face_count = _collect_geometry(root, source)
+	_collect_usec = Time.get_ticks_usec() - collect_started
 	NavigationServer3D.bake_from_source_geometry_data(mesh, source)
 	navigation_mesh = mesh
 	_polygon_count = mesh.get_polygon_count()
@@ -78,13 +107,10 @@ func bake_region() -> bool:
 	# The map reads the region on its own schedule; force one update so the first
 	# path query after a load is answered instead of returning an empty path.
 	NavigationServer3D.map_force_update(get_navigation_map())
-	if _baked and not is_routable():
-		# Handing the mesh over again makes the region re-read it; on the first load
-		# of a session the map can be too new to have picked the polygons up yet.
-		navigation_mesh = null
-		navigation_mesh = mesh
-		NavigationServer3D.map_force_update(get_navigation_map())
 	_map_region_count = get_map_region_count()
+	if _baked:
+		_route_checks_left = ROUTE_RECHECK_FRAMES
+		call_deferred("_verify_baked_geometry")
 	if _baked and _map_region_count <= 0:
 		# A mesh with polygons that never reached the map is invisible to every path
 		# query. That is a wiring problem, and it must not look like an empty room.
@@ -93,8 +119,98 @@ func bake_region() -> bool:
 			% _polygon_count
 		)
 		push_error("LocationNavigation: %s" % _bake_error)
+	_bake_usec = Time.get_ticks_usec() - started
+	_report(String(root.name))
 	navigation_baked.emit(_baked)
 	return _baked
+
+
+## True when the navigation map can answer for the geometry *this region* baked: the closest
+## walkable point to a corner of this mesh has to be that corner. A map that has not picked the
+## mesh up answers from another room's polygons (or from nothing), and the distance gives it
+## away. This is the difference between "a route exists somewhere on the map" and "a route
+## exists in the room the player is standing in".
+func map_knows_geometry() -> bool:
+	if not _baked:
+		return false
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return false
+	var probe := _mesh_probe_point()
+	var closest := NavigationServer3D.map_get_closest_point(map, probe)
+	return closest.distance_to(probe) < 1.0
+
+
+## A corner of the baked mesh, in world space. Vertices of a navigation mesh are on its
+## boundary, so the map's answer for one of them is that vertex — if the map has the mesh.
+func _mesh_probe_point() -> Vector3:
+	var mesh := navigation_mesh
+	if mesh == null:
+		return global_position
+	var points := mesh.get_vertices()
+	if points.is_empty():
+		return global_position
+	return global_transform * points[0]
+
+
+## Hands the mesh over again until the map answers for it, then gives up loudly. Runs on the
+## frames after a bake, not every frame: at most `ROUTE_RECHECK_FRAMES` times per bake.
+func _verify_baked_geometry() -> void:
+	if not is_inside_tree() or not _baked:
+		return
+	if map_knows_geometry():
+		return
+	if _route_checks_left <= 0:
+		_bake_error = (
+			"the navigation map never accepted the baked mesh (%d faces, %d polygons); "
+			% [_source_face_count, _polygon_count]
+			+ "it is still answering a different surface"
+		)
+		push_warning("LocationNavigation: %s" % _bake_error)
+		return
+	_route_checks_left -= 1
+	var mesh := navigation_mesh
+	navigation_mesh = null
+	navigation_mesh = mesh
+	NavigationServer3D.map_force_update(get_navigation_map())
+	await get_tree().physics_frame
+	_verify_baked_geometry()
+
+
+## How long the last bake took, and how much of that was collecting geometry. Zero until a
+## bake has run. Debug builds and tests print the same numbers; release builds stay quiet.
+func get_bake_usec() -> int:
+	return _bake_usec
+
+
+func get_collect_usec() -> int:
+	return _collect_usec
+
+
+## One line per bake for the console, only in debug builds: what was baked, how long it took,
+## how much geometry went in, how many polygons came out, and how many regions the map
+## actually registered. A location that takes a second to bake is a location that will hitch
+## on the door.
+func _report(location_name: String) -> void:
+	if not OS.is_debug_build():
+		return
+	if not _baked:
+		print(
+			"LocationNavigation: '%s' FAILED to bake in %.1f ms (%d faces parsed): %s"
+			% [location_name, _bake_usec / 1000.0, _source_face_count, _bake_error]
+		)
+		return
+	print(
+		"LocationNavigation: '%s' baked in %.1f ms (collect %.1f), %d faces -> %d polygons, %d region(s)."
+		% [
+			location_name,
+			_bake_usec / 1000.0,
+			_collect_usec / 1000.0,
+			_source_face_count,
+			_polygon_count,
+			_map_region_count,
+		]
+	)
 
 
 ## How many triangles went into the bake. A room with desks reports far more than a

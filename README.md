@@ -115,6 +115,7 @@ controls, architecture, and the older known limitations.
 - **Engine:** Godot 4.7.2 Stable (standard build).
 - **Language:** GDScript; no .NET/C# runtime.
 - **Presentation:** 3D environments with a controlled 2.5D camera.
+- **Window:** 1600×900 design size, resizable down to 1280×720, F11 for fullscreen.
 - **Target:** Windows PC first; keep the project portable for later Linux/Steam Deck evaluation.
 - **Dependencies:** no mandatory online services, paid APIs, analytics, or proprietary runtime dependencies.
 
@@ -123,9 +124,10 @@ controls, architecture, and the older known limitations.
 - **WASD / arrow keys** — walk (camera-relative). Holding any of them also stops an
   automatic walk in progress: the keys always win.
 - **Left click on the floor** — walk there. The route follows the location's
-  navigation mesh, so it goes around desks, walls and fences; a quiet ring marks the
-  spot and disappears when the walk ends. Clicking a wall, a desk top or anything else
-  that is not walkable is refused instead of being walked at.
+  navigation mesh, so it goes around desks, walls and fences; a small mark on the floor
+  — a few uneven strokes, not a ring — shows the spot and fades when the walk ends.
+  Clicking a wall, a desk top or anything else that is not walkable is refused instead
+  of being walked at, with the same small mark shrinking away.
 - **Left click on a person or an object** — walk to a suitable spot next to it and use
   it on arrival. A click on something already within reach uses it at once. This is
   the same activation the E key performs; the object decides what it does, so a
@@ -146,6 +148,9 @@ controls, architecture, and the older known limitations.
 - **Tab** — open or close the dialogue log. Entries keep their identity and their order
   when the language changes; only their words do.
 - **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
+- **F11** — switch between windowed and fullscreen. The game opens in a 1600×900
+  window, centred, and can be resized down to 1280×720. Leaving fullscreen puts the
+  window back where and how big it was; a held F11 does not flicker between the two.
 
 While a conversation, a scripted beat or a location transition is running, the
 character does not move and world clicks are ignored (the walk in progress is

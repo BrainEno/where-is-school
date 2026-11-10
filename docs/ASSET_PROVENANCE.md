@@ -67,7 +67,7 @@ being silently dropped.
   on a desk as a group.
 - The two characters carry no collision on purpose. They are visuals; the controller that
   drives them (the player's `CharacterBody3D`, an NPC actor) owns the capsule. See
-  `docs/ASSET_PIPELINE.md` §9 for the three places these four assets deviate from the
+  `docs/ASSET_PIPELINE.md` §10 for the three places these four assets deviate from the
   pipeline contract and how each is pinned by `tests/imported_assets_test.gd`.
 
 ## Not imported
