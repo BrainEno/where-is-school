@@ -1090,11 +1090,17 @@ func _capture_click_navigation() -> void:
 		for _attempt in 2:
 			var clicks_before := navigator.get_click_count() if navigator != null else 0
 			await _click_at_screen(second)
-			await _wait(0.25)
-			was_walking = _player.is_path_active()
+			# A click becomes a route on the controller's own cadence, and the route can
+			# start a third of a second after the press. Waiting a fixed 0.25 s measured
+			# that delay instead of the thing the shot is about: the key has to take over
+			# from a walk that is *already running*, so wait for it to run.
+			was_walking = await _poll(
+				func() -> bool: return _player.is_path_active(), 2.0
+			)
 			clicks_seen = (navigator.get_click_count() if navigator != null else 0) - clicks_before
 			if was_walking:
 				break
+			_note("the interruption click started no walk; %d click(s) were accepted" % clicks_seen)
 			if clicks_seen <= 0:
 				_note("the interruption click never reached the world; trying another point")
 				second = _find_ground_click_screen(3.0, 6.0)
