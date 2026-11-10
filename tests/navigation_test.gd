@@ -413,18 +413,18 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 	# `is_routable()` answers about the map, and right after a swap the map still holds the
 	# room that was just freed: it says "routable" about a floor that is about to be
 	# thrown away, the walk ordered next is computed against the old room, and the
-	# character stops where the old room's wall used to be. `map_knows_geometry()` is the
-	# question that matters - does the map answer for a vertex of *this* region's mesh.
+	# character stops where the old room's wall used to be. `_map_holds_this_room()` asks
+	# the question with no overlap in it: the map holds one region, and it is this one.
 	var guard := 0
 	while guard < 120:
 		var nav := _nav_of(_host.get_current())
-		if nav != null and nav.is_baked() and nav.is_routable() and nav.map_knows_geometry():
+		if nav != null and nav.is_baked() and nav.is_routable() and _map_holds_this_room(nav):
 			break
 		await physics_frame
 		guard += 1
 	_location = _host.get_current()
 	var settled := _nav_of(_location)
-	if settled != null and settled.is_baked() and not settled.map_knows_geometry():
+	if settled != null and settled.is_baked() and not _map_holds_this_room(settled):
 		_failures.append(
 			"the %s's baked mesh never reached the navigation map %s"
 			% [String(_location.location_id), _report(settled)]
@@ -454,6 +454,17 @@ func _rebake(nav: LocationNavigation) -> void:
 			and (not has_iteration or _iteration_id(map) > before)
 		):
 			break
+
+
+## True when the navigation map describes exactly this room: one region on the map, and
+## it is this location's own. See `location_transition_test.gd` for why counting regions
+## is the only one of these questions two overlapping greybox rooms cannot answer wrongly.
+func _map_holds_this_room(nav: LocationNavigation) -> bool:
+	var map := nav.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var regions := NavigationServer3D.map_get_regions(map)
+	return regions.size() == 1 and regions.has(nav.get_region_rid())
 
 
 func _iteration_id(map: RID) -> int:

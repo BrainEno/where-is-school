@@ -743,9 +743,10 @@ func _wait_for_navigation(location: LocationRoot) -> bool:
 		# the map still holds the room that was just freed, and it will happily answer
 		# "there is a route" about *that* floor: the route check then asked the map about
 		# an exit and got an answer 9 or 25 m away, in another room, and the exit looked
-		# broken. `map_knows_geometry()` asks the map about a vertex of *this* region's own
-		# mesh, so it only passes once the polygons under the player are this room's.
-		if nav.is_baked() and nav.is_routable() and nav.map_knows_geometry():
+		# broken. Counting the map's regions is the version of that question two overlapping
+		# greybox rooms cannot answer wrongly: the freed room's region is gone and this
+		# one is on the map.
+		if nav.is_baked() and nav.is_routable() and _map_holds_this_room(nav):
 			return true
 		await physics_frame
 		budget += 1
@@ -757,6 +758,24 @@ func _wait_for_navigation(location: LocationRoot) -> bool:
 			% [String(location.location_id), nav.get_map_region_count(), nav.get_bake_error()]
 		)
 	return false
+
+
+## True when the navigation map describes exactly the room the player was put in: one
+## region on the map, and it is this location's own.
+##
+## `is_routable()` alone answers "is there a route somewhere on this map", and the frame
+## after a swap the map still holds the room that was just freed, so it says yes about a
+## floor 25 m from here. `map_knows_geometry()` narrows that to "the map answers for a
+## corner of this mesh", but every greybox location is built around its own origin, so two
+## rooms overlap in world space and a corner of one can be answered by the other. Counting
+## regions is the question with no overlap in it: the old region is gone from the map and
+## the new one is on it.
+func _map_holds_this_room(nav: LocationNavigation) -> bool:
+	var map := nav.get_navigation_map()
+	if not map.is_valid():
+		return false
+	var regions := NavigationServer3D.map_get_regions(map)
+	return regions.size() == 1 and regions.has(nav.get_region_rid())
 
 
 func _describe_spawn(spawn: StringName) -> String:
