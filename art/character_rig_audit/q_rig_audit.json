@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "input": "D:\\develop\\games\\where-is-school\\assets\\models\\q\\q.glb",
+  "label": "q",
+  "blender_version": "5.2.3 LTS",
+  "classification": {
+    "rig": "UNRIGGED_NO_ARMATURE",
+    "animation": "NO_ACTIONS"
+  },
+  "summary": {
+    "armature_count": 0,
+    "bone_count": 0,
+    "deform_bone_count": 0,
+    "mesh_object_count": 7,
+    "total_vertices": 18031,
+    "total_polygons": 35432,
+    "weighted_vertices": 0,
+    "unweighted_vertices": 18031,
+    "single_influence_vertices": 0,
+    "armature_modifier_mesh_count": 0,
+    "action_count": 0,
+    "all_armature_targets_valid": true
+  },
+  "armatures": [],
+  "meshes": [
+    {
+      "name": "Q_Collar",
+      "parent": "Q_Root",
+      "vertex_count": 637,
+      "edge_count": 1788,
+      "polygon_count": 1152,
+      "material_slots": [
+        "Q_Mat_collar"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.101,
+          -0.1089,
+          1.3038
+        ],
+        "max": [
+          0.101,
+          0.0729,
+          1.3262
+        ],
+        "size": [
+          0.202,
+          0.1818,
+          0.0224
+        ]
+      },
+      "weights": {
+        "vertex_count": 637,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 637,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 637
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Hair",
+      "parent": "Q_Root",
+      "vertex_count": 3624,
+      "edge_count": 10661,
+      "polygon_count": 7064,
+      "material_slots": [
+        "Q_Mat_hair"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.142747,
+          -0.164704,
+          1.418921
+        ],
+        "max": [
+          0.149493,
+          0.113305,
+          1.661838
+        ],
+        "size": [
+          0.29224,
+          0.278008,
+          0.242917
+        ]
+      },
+      "weights": {
+        "vertex_count": 3624,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 3624,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 3624
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Head",
+      "parent": "Q_Root",
+      "vertex_count": 6956,
+      "edge_count": 20644,
+      "polygon_count": 13728,
+      "material_slots": [
+        "Q_Mat_skin",
+        "Q_Mat_eye",
+        "Q_Mat_iris",
+        "Q_Mat_pupil",
+        "Q_Mat_lip",
+        "Q_Mat_mouthdark",
+        "Q_Mat_brow",
+        "Q_Mat_teeth"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.145592,
+          -0.182944,
+          1.351289
+        ],
+        "max": [
+          0.141852,
+          0.096343,
+          1.641993
+        ],
+        "size": [
+          0.287444,
+          0.279286,
+          0.290704
+        ]
+      },
+      "weights": {
+        "vertex_count": 6956,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 6956,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 6956
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Neck_Hands",
+      "parent": "Q_Root",
+      "vertex_count": 1182,
+      "edge_count": 3492,
+      "polygon_count": 2328,
+      "material_slots": [
+        "Q_Mat_skin"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.328362,
+          -0.421906,
+          0.652509
+        ],
+        "max": [
+          0.300098,
+          0.056058,
+          1.498
+        ],
+        "size": [
+          0.628459,
+          0.477964,
+          0.845491
+        ]
+      },
+      "weights": {
+        "vertex_count": 1182,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 1182,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 1182
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Pants",
+      "parent": "Q_Root",
+      "vertex_count": 1718,
+      "edge_count": 5100,
+      "polygon_count": 3400,
+      "material_slots": [
+        "Q_Mat_pants"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.205,
+          -0.17,
+          0.034
+        ],
+        "max": [
+          0.205,
+          0.17,
+          1.05
+        ],
+        "size": [
+          0.41,
+          0.34,
+          1.016
+        ]
+      },
+      "weights": {
+        "vertex_count": 1718,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 1718,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 1718
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Shoes",
+      "parent": "Q_Root",
+      "vertex_count": 872,
+      "edge_count": 2592,
+      "polygon_count": 1728,
+      "material_slots": [
+        "Q_Mat_shoes",
+        "Q_Mat_sole"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.183,
+          -0.201,
+          0.0
+        ],
+        "max": [
+          0.183,
+          0.111,
+          0.11
+        ],
+        "size": [
+          0.366,
+          0.312,
+          0.11
+        ]
+      },
+      "weights": {
+        "vertex_count": 872,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 872,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 872
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    },
+    {
+      "name": "Q_Top",
+      "parent": "Q_Root",
+      "vertex_count": 3042,
+      "edge_count": 9048,
+      "polygon_count": 6032,
+      "material_slots": [
+        "Q_Mat_cloth"
+      ],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.365529,
+          -0.31924,
+          0.75
+        ],
+        "max": [
+          0.36,
+          0.185,
+          1.35
+        ],
+        "size": [
+          0.725529,
+          0.50424,
+          0.6
+        ]
+      },
+      "weights": {
+        "vertex_count": 3042,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 3042,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 3042
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    }
+  ],
+  "actions": [],
+  "warnings": [
+    "No Armature object was imported.",
+    "18031 mesh vertex/vertices have no vertex-group weights."
+  ]
+}

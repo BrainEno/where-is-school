@@ -1,0 +1,7462 @@
+{
+  "schema_version": 1,
+  "input": "D:\\develop\\games\\where-is-school\\assets\\models\\protagonist\\protagonist.glb",
+  "label": "protagonist",
+  "blender_version": "5.2.3 LTS",
+  "classification": {
+    "rig": "RIGID_PART_WEIGHTED",
+    "animation": "NO_ACTIONS"
+  },
+  "summary": {
+    "armature_count": 1,
+    "bone_count": 16,
+    "deform_bone_count": 16,
+    "mesh_object_count": 79,
+    "total_vertices": 7633,
+    "total_polygons": 12468,
+    "weighted_vertices": 7591,
+    "unweighted_vertices": 42,
+    "single_influence_vertices": 7591,
+    "armature_modifier_mesh_count": 78,
+    "action_count": 0,
+    "all_armature_targets_valid": true
+  },
+  "armatures": [
+    {
+      "name": "RIG_Protagonist_Blockout",
+      "bone_count": 16,
+      "deform_bone_count": 16,
+      "world_location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bones": [
+        {
+          "name": "Root",
+          "parent": null,
+          "use_deform": true,
+          "length": 0.84,
+          "head_world": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tail_world": [
+            0.0,
+            0.0,
+            0.84
+          ],
+          "collections": []
+        },
+        {
+          "name": "Spine",
+          "parent": "Root",
+          "use_deform": true,
+          "length": 0.526925,
+          "head_world": [
+            0.0,
+            0.0,
+            0.84
+          ],
+          "tail_world": [
+            0.0,
+            -0.04336,
+            1.365138
+          ],
+          "collections": []
+        },
+        {
+          "name": "Neck",
+          "parent": "Spine",
+          "use_deform": true,
+          "length": 0.081049,
+          "head_world": [
+            0.0,
+            -0.045,
+            1.365
+          ],
+          "tail_world": [
+            0.0,
+            -0.055448,
+            1.445373
+          ],
+          "collections": []
+        },
+        {
+          "name": "Head",
+          "parent": "Neck",
+          "use_deform": true,
+          "length": 0.08105,
+          "head_world": [
+            0.0,
+            -0.058,
+            1.445
+          ],
+          "tail_world": [
+            0.0,
+            -0.055507,
+            1.526011
+          ],
+          "collections": []
+        },
+        {
+          "name": "UpperArm.L",
+          "parent": "Spine",
+          "use_deform": true,
+          "length": 0.249936,
+          "head_world": [
+            -0.162,
+            -0.042,
+            1.365
+          ],
+          "tail_world": [
+            -0.224,
+            -0.074,
+            1.125
+          ],
+          "collections": []
+        },
+        {
+          "name": "LowerArm.L",
+          "parent": "UpperArm.L",
+          "use_deform": true,
+          "length": 0.214443,
+          "head_world": [
+            -0.224,
+            -0.074,
+            1.125
+          ],
+          "tail_world": [
+            -0.211,
+            -0.11,
+            0.914
+          ],
+          "collections": []
+        },
+        {
+          "name": "Hand.L",
+          "parent": "LowerArm.L",
+          "use_deform": true,
+          "length": 0.214443,
+          "head_world": [
+            -0.211,
+            -0.11,
+            0.914
+          ],
+          "tail_world": [
+            -0.202754,
+            -0.151231,
+            0.70372
+          ],
+          "collections": []
+        },
+        {
+          "name": "UpperArm.R",
+          "parent": "Spine",
+          "use_deform": true,
+          "length": 0.249936,
+          "head_world": [
+            0.162,
+            -0.042,
+            1.365
+          ],
+          "tail_world": [
+            0.224,
+            -0.074,
+            1.125
+          ],
+          "collections": []
+        },
+        {
+          "name": "LowerArm.R",
+          "parent": "UpperArm.R",
+          "use_deform": true,
+          "length": 0.214443,
+          "head_world": [
+            0.224,
+            -0.074,
+            1.125
+          ],
+          "tail_world": [
+            0.211,
+            -0.11,
+            0.914
+          ],
+          "collections": []
+        },
+        {
+          "name": "Hand.R",
+          "parent": "LowerArm.R",
+          "use_deform": true,
+          "length": 0.214443,
+          "head_world": [
+            0.211,
+            -0.11,
+            0.914
+          ],
+          "tail_world": [
+            0.202754,
+            -0.151231,
+            0.70372
+          ],
+          "collections": []
+        },
+        {
+          "name": "Thigh.L",
+          "parent": "Root",
+          "use_deform": true,
+          "length": 0.360605,
+          "head_world": [
+            -0.078,
+            0.012,
+            0.875
+          ],
+          "tail_world": [
+            -0.084,
+            -0.008,
+            0.515
+          ],
+          "collections": []
+        },
+        {
+          "name": "Shin.L",
+          "parent": "Thigh.L",
+          "use_deform": true,
+          "length": 0.355208,
+          "head_world": [
+            -0.084,
+            -0.008,
+            0.515
+          ],
+          "tail_world": [
+            -0.086,
+            -0.02,
+            0.16
+          ],
+          "collections": []
+        },
+        {
+          "name": "Foot.L",
+          "parent": "Shin.L",
+          "use_deform": true,
+          "length": 0.355208,
+          "head_world": [
+            -0.086,
+            -0.02,
+            0.16
+          ],
+          "tail_world": [
+            -0.086,
+            -0.331451,
+            -0.010796
+          ],
+          "collections": []
+        },
+        {
+          "name": "Thigh.R",
+          "parent": "Root",
+          "use_deform": true,
+          "length": 0.360605,
+          "head_world": [
+            0.078,
+            0.012,
+            0.875
+          ],
+          "tail_world": [
+            0.084,
+            -0.008,
+            0.515
+          ],
+          "collections": []
+        },
+        {
+          "name": "Shin.R",
+          "parent": "Thigh.R",
+          "use_deform": true,
+          "length": 0.355208,
+          "head_world": [
+            0.084,
+            -0.008,
+            0.515
+          ],
+          "tail_world": [
+            0.086,
+            -0.02,
+            0.16
+          ],
+          "collections": []
+        },
+        {
+          "name": "Foot.R",
+          "parent": "Shin.R",
+          "use_deform": true,
+          "length": 0.355208,
+          "head_world": [
+            0.086,
+            -0.02,
+            0.16
+          ],
+          "tail_world": [
+            0.086,
+            -0.331451,
+            -0.010796
+          ],
+          "collections": []
+        }
+      ],
+      "children": [
+        "Body_Cardigan_Torso",
+        "Cardigan_Button_01",
+        "Cardigan_Button_02",
+        "Cardigan_Lapel_Left",
+        "Cardigan_Lapel_Right",
+        "Cardigan_LowerSleeve_L",
+        "Cardigan_LowerSleeve_R",
+        "Cardigan_Pocket",
+        "Cardigan_UpperSleeve_L",
+        "Cardigan_UpperSleeve_R",
+        "Cheek_Plane_L",
+        "Cheek_Plane_R",
+        "Ear_Inner_L",
+        "Ear_Inner_R",
+        "Ear_L",
+        "Ear_R",
+        "Eye_Glint_L",
+        "Eye_Glint_R",
+        "Eye_Iris_L",
+        "Eye_Iris_R",
+        "Eye_Pupil_L",
+        "Eye_Pupil_R",
+        "Eye_Sclera_L",
+        "Eye_Sclera_R",
+        "Eyebrow_L",
+        "Eyebrow_R",
+        "Hair_Back",
+        "Hair_Cap",
+        "Hair_Fringe_Lock_1",
+        "Hair_Fringe_Lock_2",
+        "Hair_Fringe_Lock_3",
+        "Hair_Fringe_Lock_4",
+        "Hair_Fringe_Lock_5",
+        "Hair_Side_Lock_L",
+        "Hair_Side_Lock_R",
+        "Hand_Finger_L_1",
+        "Hand_Finger_L_2",
+        "Hand_Finger_L_3",
+        "Hand_Finger_R_1",
+        "Hand_Finger_R_2",
+        "Hand_Finger_R_3",
+        "Hand_Palm_L",
+        "Hand_Palm_R",
+        "Hand_Thumb_L",
+        "Hand_Thumb_R",
+        "Head_Main_Mesh",
+        "Lower_Lip_Plane",
+        "Mouth_Line",
+        "Neck",
+        "Nose_Bridge",
+        "Nose_Tip",
+        "Nostril_Shadow_L",
+        "Nostril_Shadow_R",
+        "Paint_Mark_Left_Shoulder",
+        "Paint_Mark_Lower_Cardigan",
+        "Pocket_Stitch_Line",
+        "Shirt_Collar_Left",
+        "Shirt_Collar_Right",
+        "Shirt_Front_Panel",
+        "Shoe_L",
+        "Shoe_R",
+        "Shoe_Scuff_L",
+        "Shoe_Scuff_R",
+        "Shoe_Sole_L",
+        "Shoe_Sole_R",
+        "Sleeve_Cuff_L",
+        "Sleeve_Cuff_R",
+        "Trouser_Crease_L",
+        "Trouser_Crease_R",
+        "Trouser_Shin_L",
+        "Trouser_Shin_R",
+        "Trouser_Thigh_L",
+        "Trouser_Thigh_R",
+        "Trousers_Hip",
+        "UnderEye_Shadow_L",
+        "UnderEye_Shadow_R",
+        "Upper_Eyelid_L",
+        "Upper_Eyelid_R"
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Body_Cardigan_Torso",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 194,
+      "edge_count": 576,
+      "polygon_count": 384,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.18043,
+          -0.148799,
+          0.86
+        ],
+        "max": [
+          0.17957,
+          0.10755,
+          1.405
+        ],
+        "size": [
+          0.36,
+          0.256349,
+          0.545
+        ]
+      },
+      "weights": {
+        "vertex_count": 194,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 194,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 194,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 194
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 194,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_Button_01",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "material_slots": [
+        "WIS_Protagonist_Button"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.001,
+          -0.166,
+          1.181
+        ],
+        "max": [
+          0.019,
+          -0.158,
+          1.199
+        ],
+        "size": [
+          0.018,
+          0.008,
+          0.018
+        ]
+      },
+      "weights": {
+        "vertex_count": 115,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 115,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 115,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 115
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 115,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_Button_02",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "material_slots": [
+        "WIS_Protagonist_Button"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.001,
+          -0.158,
+          1.096
+        ],
+        "max": [
+          0.019,
+          -0.15,
+          1.114
+        ],
+        "size": [
+          0.018,
+          0.008,
+          0.018
+        ]
+      },
+      "weights": {
+        "vertex_count": 115,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 115,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 115,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 115
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 115,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_Lapel_Left",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.119,
+          -0.166,
+          1.17
+        ],
+        "max": [
+          -0.025,
+          -0.147,
+          1.39
+        ],
+        "size": [
+          0.094,
+          0.019,
+          0.22
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_Lapel_Right",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.025,
+          -0.166,
+          1.17
+        ],
+        "max": [
+          0.119,
+          -0.147,
+          1.39
+        ],
+        "size": [
+          0.094,
+          0.019,
+          0.22
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_LowerSleeve_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.27797,
+          -0.142438,
+          0.906659
+        ],
+        "max": [
+          -0.17003,
+          -0.029267,
+          1.152632
+        ],
+        "size": [
+          0.107939,
+          0.113171,
+          0.245974
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 50,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_LowerSleeve_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.170031,
+          -0.142438,
+          0.906659
+        ],
+        "max": [
+          0.27797,
+          -0.029267,
+          1.152632
+        ],
+        "size": [
+          0.107939,
+          0.113171,
+          0.245974
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 50,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_Pocket",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.122,
+          -0.149,
+          1.085
+        ],
+        "max": [
+          -0.071,
+          -0.131,
+          1.155
+        ],
+        "size": [
+          0.051,
+          0.018,
+          0.07
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_UpperSleeve_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.276951,
+          -0.120183,
+          1.113386
+        ],
+        "max": [
+          -0.094522,
+          0.018335,
+          1.388816
+        ],
+        "size": [
+          0.18243,
+          0.138518,
+          0.27543
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 50,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cardigan_UpperSleeve_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.094522,
+          -0.120183,
+          1.113386
+        ],
+        "max": [
+          0.276951,
+          0.018335,
+          1.388816
+        ],
+        "size": [
+          0.18243,
+          0.138518,
+          0.27543
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 50,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cheek_Plane_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.085,
+          -0.118,
+          1.49448
+        ],
+        "max": [
+          -0.031,
+          -0.102,
+          1.53232
+        ],
+        "size": [
+          0.054,
+          0.016,
+          0.03784
+        ]
+      },
+      "weights": {
+        "vertex_count": 185,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 185,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 185,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 185
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 185,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Cheek_Plane_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.031,
+          -0.118,
+          1.49448
+        ],
+        "max": [
+          0.085,
+          -0.102,
+          1.53232
+        ],
+        "size": [
+          0.054,
+          0.016,
+          0.03784
+        ]
+      },
+      "weights": {
+        "vertex_count": 185,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 185,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 185,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 185
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 185,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Ear_Inner_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.115,
+          -0.063,
+          1.5306
+        ],
+        "max": [
+          -0.097,
+          -0.051,
+          1.57188
+        ],
+        "size": [
+          0.018,
+          0.012,
+          0.04128
+        ]
+      },
+      "weights": {
+        "vertex_count": 115,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 115,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 115,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 115
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 115,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Ear_Inner_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 115,
+      "edge_count": 282,
+      "polygon_count": 168,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.097,
+          -0.063,
+          1.5306
+        ],
+        "max": [
+          0.115,
+          -0.051,
+          1.57188
+        ],
+        "size": [
+          0.018,
+          0.012,
+          0.04128
+        ]
+      },
+      "weights": {
+        "vertex_count": 115,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 115,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 115,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 115
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 115,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Ear_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.119,
+          -0.065,
+          1.51082
+        ],
+        "max": [
+          -0.069,
+          -0.005,
+          1.58994
+        ],
+        "size": [
+          0.05,
+          0.06,
+          0.07912
+        ]
+      },
+      "weights": {
+        "vertex_count": 219,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 219,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 219,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 219
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 219,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Ear_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.069,
+          -0.065,
+          1.51082
+        ],
+        "max": [
+          0.119,
+          -0.005,
+          1.58994
+        ],
+        "size": [
+          0.05,
+          0.06,
+          0.07912
+        ]
+      },
+      "weights": {
+        "vertex_count": 219,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 219,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 219,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 219
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 219,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Glint_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "material_slots": [
+        "WIS_Protagonist_Eye_Glint"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.050043,
+          -0.1458,
+          1.58091
+        ],
+        "max": [
+          -0.043957,
+          -0.1422,
+          1.58865
+        ],
+        "size": [
+          0.006087,
+          0.0036,
+          0.00774
+        ]
+      },
+      "weights": {
+        "vertex_count": 97,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 97,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 97,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 97
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 97,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Glint_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "material_slots": [
+        "WIS_Protagonist_Eye_Glint"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.033957,
+          -0.1458,
+          1.58091
+        ],
+        "max": [
+          0.040043,
+          -0.1422,
+          1.58865
+        ],
+        "size": [
+          0.006087,
+          0.0036,
+          0.00774
+        ]
+      },
+      "weights": {
+        "vertex_count": 97,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 97,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 97,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 97
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 97,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Iris_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Iris"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.0605,
+          -0.1405,
+          1.55296
+        ],
+        "max": [
+          -0.0235,
+          -0.1235,
+          1.59768
+        ],
+        "size": [
+          0.037,
+          0.017,
+          0.04472
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 271,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Iris_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Iris"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.0235,
+          -0.1405,
+          1.55296
+        ],
+        "max": [
+          0.0605,
+          -0.1235,
+          1.59768
+        ],
+        "size": [
+          0.037,
+          0.017,
+          0.04472
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 271,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Pupil_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "material_slots": [
+        "WIS_Protagonist_Pupil"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.0525,
+          -0.1445,
+          1.55898
+        ],
+        "max": [
+          -0.0315,
+          -0.1335,
+          1.58994
+        ],
+        "size": [
+          0.021,
+          0.011,
+          0.03096
+        ]
+      },
+      "weights": {
+        "vertex_count": 185,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 185,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 185,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 185
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 185,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Pupil_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "material_slots": [
+        "WIS_Protagonist_Pupil"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.0315,
+          -0.1445,
+          1.55898
+        ],
+        "max": [
+          0.0525,
+          -0.1335,
+          1.58994
+        ],
+        "size": [
+          0.021,
+          0.011,
+          0.03096
+        ]
+      },
+      "weights": {
+        "vertex_count": 185,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 185,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 185,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 185
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 185,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Sclera_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Eye_OffWhite"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.078,
+          -0.133,
+          1.53834
+        ],
+        "max": [
+          -0.01,
+          -0.105,
+          1.61402
+        ],
+        "size": [
+          0.068,
+          0.028,
+          0.07568
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 271,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eye_Sclera_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Eye_OffWhite"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.01,
+          -0.133,
+          1.53834
+        ],
+        "max": [
+          0.078,
+          -0.105,
+          1.61402
+        ],
+        "size": [
+          0.068,
+          0.028,
+          0.07568
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 271,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eyebrow_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.083415,
+          -0.142846,
+          1.611562
+        ],
+        "max": [
+          -0.027517,
+          -0.114067,
+          1.627775
+        ],
+        "size": [
+          0.055898,
+          0.028779,
+          0.016212
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 27,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Eyebrow_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.027518,
+          -0.142848,
+          1.611562
+        ],
+        "max": [
+          0.083405,
+          -0.11406,
+          1.627777
+        ],
+        "size": [
+          0.055887,
+          0.028788,
+          0.016214
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 27,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Back",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.086,
+          -0.032,
+          1.50652
+        ],
+        "max": [
+          0.086,
+          0.122,
+          1.68884
+        ],
+        "size": [
+          0.172,
+          0.154,
+          0.18232
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 271,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Cap",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 423,
+      "edge_count": 1142,
+      "polygon_count": 720,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.092,
+          -0.099,
+          1.58392
+        ],
+        "max": [
+          0.092,
+          0.111,
+          1.74388
+        ],
+        "size": [
+          0.184,
+          0.21,
+          0.15996
+        ]
+      },
+      "weights": {
+        "vertex_count": 423,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 423,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 423,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 423
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 423,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Fringe_Lock_1",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.08997,
+          -0.118439,
+          1.596894
+        ],
+        "max": [
+          -0.05203,
+          -0.01257,
+          1.62831
+        ],
+        "size": [
+          0.03794,
+          0.105869,
+          0.031416
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Fringe_Lock_2",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair_Warm"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.055971,
+          -0.139622,
+          1.609885
+        ],
+        "max": [
+          -0.020029,
+          -0.031614,
+          1.66096
+        ],
+        "size": [
+          0.035943,
+          0.108008,
+          0.051076
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Fringe_Lock_3",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.019957,
+          -0.145694,
+          1.60305
+        ],
+        "max": [
+          0.019957,
+          -0.038188,
+          1.663522
+        ],
+        "size": [
+          0.039914,
+          0.107506,
+          0.060473
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Fringe_Lock_4",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair_Warm"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.021039,
+          -0.132604,
+          1.613309
+        ],
+        "max": [
+          0.054961,
+          -0.03131,
+          1.657083
+        ],
+        "size": [
+          0.033922,
+          0.101294,
+          0.043774
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Fringe_Lock_5",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.055021,
+          -0.105533,
+          1.600375
+        ],
+        "max": [
+          0.084979,
+          -0.01053,
+          1.633723
+        ],
+        "size": [
+          0.029958,
+          0.095003,
+          0.033348
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Side_Lock_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair_Warm"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.105852,
+          -0.077402,
+          1.566996
+        ],
+        "max": [
+          -0.049647,
+          0.002836,
+          1.673003
+        ],
+        "size": [
+          0.056205,
+          0.080238,
+          0.106007
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hair_Side_Lock_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Hair_Warm"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.049647,
+          -0.077402,
+          1.566996
+        ],
+        "max": [
+          0.105852,
+          0.002836,
+          1.673003
+        ],
+        "size": [
+          0.056205,
+          0.080238,
+          0.106007
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_L_1",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.234,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          -0.216,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.038819
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 26,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_L_2",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.216,
+          -0.13813,
+          0.803823
+        ],
+        "max": [
+          -0.198,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.03879
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 26,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_L_3",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.198,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          -0.18,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.038819
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 26,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_R_1",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.18,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          0.198,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.038819
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 26,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_R_2",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.198,
+          -0.13813,
+          0.803823
+        ],
+        "max": [
+          0.216,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.03879
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 26,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Finger_R_3",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.216,
+          -0.13813,
+          0.803794
+        ],
+        "max": [
+          0.234,
+          -0.122645,
+          0.842613
+        ],
+        "size": [
+          0.018,
+          0.015484,
+          0.038819
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 26,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Palm_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.245,
+          -0.142,
+          0.803
+        ],
+        "max": [
+          -0.169,
+          -0.08,
+          0.913
+        ],
+        "size": [
+          0.076,
+          0.062,
+          0.11
+        ]
+      },
+      "weights": {
+        "vertex_count": 219,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 219,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 219,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 219
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 219,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Palm_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 219,
+      "edge_count": 570,
+      "polygon_count": 352,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.169,
+          -0.142,
+          0.803
+        ],
+        "max": [
+          0.245,
+          -0.08,
+          0.913
+        ],
+        "size": [
+          0.076,
+          0.062,
+          0.11
+        ]
+      },
+      "weights": {
+        "vertex_count": 219,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 219,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 219,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 219
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 219,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Thumb_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.184176,
+          -0.135589,
+          0.832596
+        ],
+        "max": [
+          -0.155193,
+          -0.104054,
+          0.877
+        ],
+        "size": [
+          0.028983,
+          0.031535,
+          0.044404
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 26,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Hand_Thumb_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 26,
+      "edge_count": 72,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.155193,
+          -0.135589,
+          0.832596
+        ],
+        "max": [
+          0.184176,
+          -0.104054,
+          0.876999
+        ],
+        "size": [
+          0.028983,
+          0.031535,
+          0.044404
+        ]
+      },
+      "weights": {
+        "vertex_count": 26,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 26,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 26,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 26
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 26,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Head_Main_Mesh",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 290,
+      "edge_count": 864,
+      "polygon_count": 576,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.094162,
+          -0.145317,
+          1.4274
+        ],
+        "max": [
+          0.093838,
+          0.076915,
+          1.70174
+        ],
+        "size": [
+          0.188,
+          0.222232,
+          0.27434
+        ]
+      },
+      "weights": {
+        "vertex_count": 290,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 290,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 290,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 290
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 290,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Lower_Lip_Plane",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.013504,
+          -0.149186,
+          1.476253
+        ],
+        "max": [
+          0.018977,
+          -0.138026,
+          1.482576
+        ],
+        "size": [
+          0.032481,
+          0.01116,
+          0.006323
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 27,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Mouth_Line",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.0286,
+          -0.150311,
+          1.482963
+        ],
+        "max": [
+          0.028654,
+          -0.133945,
+          1.494722
+        ],
+        "size": [
+          0.057254,
+          0.016367,
+          0.011758
+        ]
+      },
+      "weights": {
+        "vertex_count": 36,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 36,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 36,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 36
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 36,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Neck",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.055,
+          -0.103249,
+          1.335292
+        ],
+        "max": [
+          0.055,
+          0.002539,
+          1.468078
+        ],
+        "size": [
+          0.11,
+          0.105788,
+          0.132786
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 50,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Nose_Bridge",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 32,
+      "edge_count": 90,
+      "polygon_count": 60,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.019,
+          -0.168333,
+          1.539661
+        ],
+        "max": [
+          0.019,
+          -0.110448,
+          1.615569
+        ],
+        "size": [
+          0.038,
+          0.057885,
+          0.075908
+        ]
+      },
+      "weights": {
+        "vertex_count": 32,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 32,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 32,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 32
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 32,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Nose_Tip",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 185,
+      "edge_count": 472,
+      "polygon_count": 288,
+      "material_slots": [
+        "WIS_Protagonist_Skin"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.021,
+          -0.169,
+          1.53318
+        ],
+        "max": [
+          0.021,
+          -0.133,
+          1.55726
+        ],
+        "size": [
+          0.042,
+          0.036,
+          0.02408
+        ]
+      },
+      "weights": {
+        "vertex_count": 185,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 185,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 185,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 185
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 185,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Nostril_Shadow_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.01628,
+          -0.1665,
+          1.53748
+        ],
+        "max": [
+          -0.00772,
+          -0.1615,
+          1.54264
+        ],
+        "size": [
+          0.00856,
+          0.005,
+          0.00516
+        ]
+      },
+      "weights": {
+        "vertex_count": 97,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 97,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 97,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 97
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 97,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Nostril_Shadow_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 97,
+      "edge_count": 236,
+      "polygon_count": 140,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.00772,
+          -0.1665,
+          1.53748
+        ],
+        "max": [
+          0.01628,
+          -0.1615,
+          1.54264
+        ],
+        "size": [
+          0.00856,
+          0.005,
+          0.00516
+        ]
+      },
+      "weights": {
+        "vertex_count": 97,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 97,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 97,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 97
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 97,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Paint_Mark_Left_Shoulder",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Brush_Rust"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.176,
+          -0.111,
+          1.296
+        ],
+        "max": [
+          -0.136,
+          -0.095,
+          1.337
+        ],
+        "size": [
+          0.04,
+          0.016,
+          0.041
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 4,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Paint_Mark_Lower_Cardigan",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.08,
+          -0.124,
+          0.954
+        ],
+        "max": [
+          0.116,
+          -0.119,
+          0.99
+        ],
+        "size": [
+          0.036,
+          0.005,
+          0.036
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Pocket_Stitch_Line",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Stitch"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.117895,
+          -0.15067,
+          1.137302
+        ],
+        "max": [
+          -0.074682,
+          -0.134555,
+          1.143687
+        ],
+        "size": [
+          0.043213,
+          0.016116,
+          0.006386
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 27,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shirt_Collar_Left",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Shirt_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.084,
+          -0.171,
+          1.315
+        ],
+        "max": [
+          -0.006,
+          -0.147,
+          1.395
+        ],
+        "size": [
+          0.078,
+          0.024,
+          0.08
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shirt_Collar_Right",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Shirt"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.006,
+          -0.171,
+          1.315
+        ],
+        "max": [
+          0.084,
+          -0.147,
+          1.395
+        ],
+        "size": [
+          0.078,
+          0.024,
+          0.08
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shirt_Front_Panel",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Shirt"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.06,
+          -0.16,
+          1.105
+        ],
+        "max": [
+          0.058,
+          -0.132,
+          1.365
+        ],
+        "size": [
+          0.118,
+          0.028,
+          0.26
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 4,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shoe_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Shoes"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.151,
+          -0.21,
+          0.033
+        ],
+        "max": [
+          -0.005,
+          0.08,
+          0.137
+        ],
+        "size": [
+          0.146,
+          0.29,
+          0.104
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 271,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shoe_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 271,
+      "edge_count": 710,
+      "polygon_count": 440,
+      "material_slots": [
+        "WIS_Protagonist_Shoes"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.005,
+          -0.21,
+          0.033
+        ],
+        "max": [
+          0.151,
+          0.08,
+          0.137
+        ],
+        "size": [
+          0.146,
+          0.29,
+          0.104
+        ]
+      },
+      "weights": {
+        "vertex_count": 271,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 271,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 271,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 271
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 271
+        }
+      }
+    },
+    {
+      "name": "Shoe_Scuff_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Trousers_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.096,
+          -0.207,
+          0.101
+        ],
+        "max": [
+          -0.063,
+          -0.199,
+          0.108
+        ],
+        "size": [
+          0.033,
+          0.008,
+          0.007
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 4,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shoe_Scuff_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 4,
+      "edge_count": 5,
+      "polygon_count": 2,
+      "material_slots": [
+        "WIS_Protagonist_Trousers_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.06,
+          -0.207,
+          0.101
+        ],
+        "max": [
+          0.093,
+          -0.199,
+          0.108
+        ],
+        "size": [
+          0.033,
+          0.008,
+          0.007
+        ]
+      },
+      "weights": {
+        "vertex_count": 4,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 4,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 4,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 4
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 4
+        }
+      }
+    },
+    {
+      "name": "Shoe_Sole_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 229,
+      "edge_count": 588,
+      "polygon_count": 360,
+      "material_slots": [
+        "WIS_Protagonist_Sole"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.151,
+          -0.215,
+          0.017
+        ],
+        "max": [
+          -0.005,
+          0.087,
+          0.071
+        ],
+        "size": [
+          0.146,
+          0.302,
+          0.054
+        ]
+      },
+      "weights": {
+        "vertex_count": 229,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 229,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 229,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 229
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 229,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Shoe_Sole_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 229,
+      "edge_count": 588,
+      "polygon_count": 360,
+      "material_slots": [
+        "WIS_Protagonist_Sole"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.005,
+          -0.215,
+          0.017
+        ],
+        "max": [
+          0.151,
+          0.087,
+          0.071
+        ],
+        "size": [
+          0.146,
+          0.302,
+          0.054
+        ]
+      },
+      "weights": {
+        "vertex_count": 229,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 229,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 229,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 229
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 229
+        }
+      }
+    },
+    {
+      "name": "Sleeve_Cuff_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 34,
+      "edge_count": 96,
+      "polygon_count": 64,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.250911,
+          -0.143742,
+          0.897188
+        ],
+        "max": [
+          -0.170086,
+          -0.076418,
+          0.932885
+        ],
+        "size": [
+          0.080825,
+          0.067323,
+          0.035697
+        ]
+      },
+      "weights": {
+        "vertex_count": 34,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 34,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 34,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 34
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 34,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Sleeve_Cuff_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 34,
+      "edge_count": 96,
+      "polygon_count": 64,
+      "material_slots": [
+        "WIS_Protagonist_Cardigan_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.170086,
+          -0.143742,
+          0.897188
+        ],
+        "max": [
+          0.250911,
+          -0.076418,
+          0.932885
+        ],
+        "size": [
+          0.080825,
+          0.067323,
+          0.035697
+        ]
+      },
+      "weights": {
+        "vertex_count": 34,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 34,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 34,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 34
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 34,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Crease_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Trousers_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.091764,
+          -0.062764,
+          0.549819
+        ],
+        "max": [
+          -0.084234,
+          -0.051243,
+          0.700072
+        ],
+        "size": [
+          0.00753,
+          0.011521,
+          0.150254
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 27,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Crease_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 27,
+      "edge_count": 58,
+      "polygon_count": 32,
+      "material_slots": [
+        "WIS_Protagonist_Trousers_Light"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.064236,
+          -0.062764,
+          0.549819
+        ],
+        "max": [
+          0.071766,
+          -0.051243,
+          0.700072
+        ],
+        "size": [
+          0.00753,
+          0.011521,
+          0.150254
+        ]
+      },
+      "weights": {
+        "vertex_count": 27,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 27,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 27,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 27
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 27,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Shin_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Trousers"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.138997,
+          -0.053079,
+          0.158872
+        ],
+        "max": [
+          -0.029003,
+          0.037079,
+          0.526497
+        ],
+        "size": [
+          0.109994,
+          0.090157,
+          0.367625
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 50,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Shin_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Trousers"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.029003,
+          -0.053079,
+          0.158872
+        ],
+        "max": [
+          0.138997,
+          0.037079,
+          0.526497
+        ],
+        "size": [
+          0.109994,
+          0.090157,
+          0.367625
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 50,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Thigh_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Trousers"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.154981,
+          -0.053849,
+          0.512409
+        ],
+        "max": [
+          -0.001019,
+          0.075043,
+          0.878889
+        ],
+        "size": [
+          0.153962,
+          0.128892,
+          0.36648
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 50,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trouser_Thigh_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 50,
+      "edge_count": 144,
+      "polygon_count": 96,
+      "material_slots": [
+        "WIS_Protagonist_Trousers"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.001019,
+          -0.053849,
+          0.512409
+        ],
+        "max": [
+          0.154981,
+          0.075043,
+          0.878889
+        ],
+        "size": [
+          0.153962,
+          0.128892,
+          0.36648
+        ]
+      },
+      "weights": {
+        "vertex_count": 50,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 50,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 50,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 50
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 50,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Trousers_Hip",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 86,
+      "edge_count": 252,
+      "polygon_count": 168,
+      "material_slots": [
+        "WIS_Protagonist_Trousers"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.138489,
+          -0.080181,
+          0.755
+        ],
+        "max": [
+          0.139511,
+          0.103819,
+          0.92
+        ],
+        "size": [
+          0.278,
+          0.184,
+          0.165
+        ]
+      },
+      "weights": {
+        "vertex_count": 86,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 86,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 86,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 86
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 86,
+          "Neck": 0,
+          "Head": 0,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "UnderEye_Shadow_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 151,
+      "edge_count": 374,
+      "polygon_count": 224,
+      "material_slots": [
+        "WIS_Protagonist_UnderEye"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.076,
+          -0.1245,
+          1.54178
+        ],
+        "max": [
+          -0.014,
+          -0.1135,
+          1.55898
+        ],
+        "size": [
+          0.062,
+          0.011,
+          0.0172
+        ]
+      },
+      "weights": {
+        "vertex_count": 151,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 151,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 151,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 151
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 151,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "UnderEye_Shadow_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 151,
+      "edge_count": 374,
+      "polygon_count": 224,
+      "material_slots": [
+        "WIS_Protagonist_UnderEye"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.014,
+          -0.1245,
+          1.54178
+        ],
+        "max": [
+          0.076,
+          -0.1135,
+          1.55898
+        ],
+        "size": [
+          0.062,
+          0.011,
+          0.0172
+        ]
+      },
+      "weights": {
+        "vertex_count": 151,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 151,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 151,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 151
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 151,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Upper_Eyelid_L",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          -0.080396,
+          -0.141809,
+          1.577822
+        ],
+        "max": [
+          -0.010067,
+          -0.124398,
+          1.606141
+        ],
+        "size": [
+          0.070329,
+          0.017411,
+          0.028319
+        ]
+      },
+      "weights": {
+        "vertex_count": 36,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 36,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 36,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 36
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 36,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Upper_Eyelid_R",
+      "parent": "RIG_Protagonist_Blockout",
+      "vertex_count": 36,
+      "edge_count": 83,
+      "polygon_count": 48,
+      "material_slots": [
+        "WIS_Protagonist_Skin_Shadow"
+      ],
+      "armature_modifiers": [
+        "RIG_Protagonist_Blockout"
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "type": "ARMATURE",
+          "target": "RIG_Protagonist_Blockout",
+          "use_vertex_groups": true,
+          "use_bone_envelopes": false
+        }
+      ],
+      "world_bounds": {
+        "min": [
+          0.010067,
+          -0.141809,
+          1.577822
+        ],
+        "max": [
+          0.080396,
+          -0.124398,
+          1.606141
+        ],
+        "size": [
+          0.070329,
+          0.017411,
+          0.028319
+        ]
+      },
+      "weights": {
+        "vertex_count": 36,
+        "vertex_group_count": 16,
+        "vertex_groups": [
+          "Root",
+          "Spine",
+          "Neck",
+          "Head",
+          "UpperArm.L",
+          "LowerArm.L",
+          "Hand.L",
+          "UpperArm.R",
+          "LowerArm.R",
+          "Hand.R",
+          "Thigh.L",
+          "Shin.L",
+          "Foot.L",
+          "Thigh.R",
+          "Shin.R",
+          "Foot.R"
+        ],
+        "weighted_vertices": 36,
+        "unweighted_vertices": 0,
+        "weighted_vertex_ratio": 1.0,
+        "single_influence_vertices": 36,
+        "single_influence_ratio_of_weighted": 1.0,
+        "max_influences_on_one_vertex": 1,
+        "influence_count_histogram": {
+          "1": 36
+        },
+        "mean_weight_sum_error": 0.0,
+        "max_weight_sum_error": 0.0,
+        "group_vertex_counts": {
+          "Root": 0,
+          "Spine": 0,
+          "Neck": 0,
+          "Head": 36,
+          "UpperArm.L": 0,
+          "LowerArm.L": 0,
+          "Hand.L": 0,
+          "UpperArm.R": 0,
+          "LowerArm.R": 0,
+          "Hand.R": 0,
+          "Thigh.L": 0,
+          "Shin.L": 0,
+          "Foot.L": 0,
+          "Thigh.R": 0,
+          "Shin.R": 0,
+          "Foot.R": 0
+        }
+      }
+    },
+    {
+      "name": "Icosphere",
+      "parent": null,
+      "vertex_count": 42,
+      "edge_count": 120,
+      "polygon_count": 80,
+      "material_slots": [],
+      "armature_modifiers": [],
+      "modifiers": [],
+      "world_bounds": {
+        "min": [
+          -0.951058,
+          -1.0,
+          -1.0
+        ],
+        "max": [
+          0.951058,
+          1.0,
+          1.0
+        ],
+        "size": [
+          1.902116,
+          2.0,
+          2.0
+        ]
+      },
+      "weights": {
+        "vertex_count": 42,
+        "vertex_group_count": 0,
+        "vertex_groups": [],
+        "weighted_vertices": 0,
+        "unweighted_vertices": 42,
+        "weighted_vertex_ratio": 0.0,
+        "single_influence_vertices": 0,
+        "single_influence_ratio_of_weighted": 0.0,
+        "max_influences_on_one_vertex": 0,
+        "influence_count_histogram": {
+          "0": 42
+        },
+        "mean_weight_sum_error": null,
+        "max_weight_sum_error": null,
+        "group_vertex_counts": {}
+      }
+    }
+  ],
+  "actions": [],
+  "warnings": [
+    "42 mesh vertex/vertices have no vertex-group weights.",
+    "At least 95% of weighted vertices have exactly one influence; this is a rigid-part bind, not smooth deformation skinning.",
+    "Armature exists but no Blender Actions were imported."
+  ]
+}
