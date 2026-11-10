@@ -39,13 +39,13 @@ The player's own desk
 
 ## 03j_protagonist
 
-The player's authored protagonist, standing on the classroom floor, head to feet.
+The player's authored protagonist, standing on the classroom floor, head to feet, under the nameplate the game shows.
 
 ![03j_protagonist](03j_protagonist.png)
 
 ## 03k_q_in_the_classroom
 
-Q in the classroom, wearing the authored model, from the side Q faces.
+Q in the classroom, wearing the authored model, from the side Q faces, under the nameplate the game shows.
 
 ![03k_q_in_the_classroom](03k_q_in_the_classroom.png)
 
