@@ -519,18 +519,10 @@ func _current_mesh_is_ready() -> bool:
 	var navigation := _current_navigation()
 	if navigation == null:
 		return _map_has_geometry(_navigation_map())
-	if not navigation.is_baked():
-		return false
-	# Baked is not enough: the question is whether *this* region is the one the map is
-	# answering from. Right after a swap the map can still hold the previous room, and
-	# `is_routable()` cannot tell — it asks the map, which is happy to answer from it.
-	var map := _navigation_map()
-	var region := navigation.get_rid()
-	if not map.is_valid() or not region.is_valid():
-		return navigation.is_routable()
-	if not NavigationServer3D.map_get_regions(map).has(region):
-		return false
-	return navigation.is_routable()
+	# Baked is not enough, and `is_routable()` cannot tell: the question is whether the map
+	# is answering from *this* room's mesh. `LocationNavigation.is_synchronized()` is that
+	# question in one place, so Q and the tests cannot drift apart on it.
+	return navigation.is_synchronized()
 
 
 func _map_has_geometry(map: RID) -> bool:

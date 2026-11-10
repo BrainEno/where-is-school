@@ -411,23 +411,26 @@ func _enter(path: String) -> bool:
 ## about to be freed. The condition that matters is the one a player would notice — the spot
 ## the character was put on is walkable.
 func _await_routable(location: LocationRoot) -> void:
-	var guard := 0
-	while guard < 180:
-		var navigation := location.get_node_or_null("Navigation") as LocationNavigation
-		if (
-			navigation != null
-			and navigation.is_baked()
-			and navigation.map_knows_geometry()
-			and _spawn_is_walkable(location, navigation)
-		):
+	var navigation := location.get_node_or_null("Navigation") as LocationNavigation
+	if navigation == null:
+		_notes.append("no navigation region: %s" % String(location.location_id))
+		return
+	var synchronized: bool = await navigation.wait_until_synchronized(180)
+	if synchronized:
+		# Synchronized: the map is answering from this room's mesh. The second half of the
+		# question is the one a player notices - is the spot they were put on walkable.
+		var guard := 0
+		while guard < 60 and not _spawn_is_walkable(location, navigation):
+			await physics_frame
+			guard += 1
+		if _spawn_is_walkable(location, navigation):
 			return
-		await physics_frame
-		guard += 1
 	# A map that never answers is the failure this test exists for, so say what the map
 	# looked like instead of only that it was empty: the next run should not need another run.
-	var navigation := location.get_node_or_null("Navigation") as LocationNavigation
-	if navigation != null and not navigation.is_routable():
-		_notes.append("not routable: %s%s" % [String(location.location_id), _nav_report(navigation)])
+	_notes.append(
+		"never synchronized: %s%s | %s"
+		% [String(location.location_id), _nav_report(navigation), navigation.describe_sync()]
+	)
 
 
 ## True when the map the location's region lives in can answer the spawn: the room the

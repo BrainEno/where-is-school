@@ -51,15 +51,32 @@ var _source_face_count: int = 0
 var _bake_usec: int = 0
 var _collect_usec: int = 0
 
-## How many physics frames the region gives the navigation server to accept the mesh it just
-## baked. The server parses a region's mesh and rebuilds the map on its own schedule, and a
-## map that has not rebuilt yet answers queries from whatever it held before — which, right
-## after a location swap, is the room that was just freed. That is not a rare state: it is
-## the frame the player arrives on, so the region keeps handing the mesh over until the map
-## answers for *this* geometry, and says so if it never does.
-const ROUTE_RECHECK_FRAMES := 6
+## How many physics frames a freshly baked region keeps handing its mesh over to the map
+## before it declares the map out of sync. The server parses a region's mesh and rebuilds
+## the map on its own schedule, and a map that has not rebuilt yet answers queries from
+## whatever it held before — which, right after a location swap, is the room that was just
+## freed. That is not a rare state: it is the frame the player arrives on.
+const SYNC_CHECK_FRAMES := 12
+## How far the map's answer for a vertex of this region's own mesh may sit from that vertex
+## before the map is answering from a different surface. A vertex is on the mesh, so the
+## only distance here is the bake's own offset from the collider it came from — millimetres.
+const SYNC_PROBE_TOLERANCE := 0.25
+## How many of the mesh's vertices are offered to the map as probes. One vertex is not
+## enough: every location is a greybox room built around its own origin, so two rooms
+## overlap in world space and a single corner can be answered by the room next door. A
+## spread of vertices is answered only by the mesh whose vertices they are.
+const SYNC_PROBES := 6
 
-var _route_checks_left: int = 0
+var _sync_checks_left: int = 0
+
+## The map's iteration id the last time this region handed its mesh over, and the id the
+## map is on now. Both are reported: the difference is the server's own account of whether
+## it has processed the change.
+var _iteration_at_handover: int = 0
+var _iteration_last_seen: int = 0
+## Set when the map never came back with this region's geometry. Not a bake error — the
+## mesh is fine and the wiring is fine; the *map* is the thing that never caught up.
+var _sync_error: String = ""
 
 
 func _ready() -> void:
@@ -109,8 +126,10 @@ func bake_region() -> bool:
 	NavigationServer3D.map_force_update(get_navigation_map())
 	_map_region_count = get_map_region_count()
 	if _baked:
-		_route_checks_left = ROUTE_RECHECK_FRAMES
-		call_deferred("_verify_baked_geometry")
+		_sync_error = ""
+		_iteration_at_handover = get_map_iteration_id()
+		_sync_checks_left = SYNC_CHECK_FRAMES
+		call_deferred("_watch_synchronization")
 	if _baked and _map_region_count <= 0:
 		# A mesh with polygons that never reached the map is invisible to every path
 		# query. That is a wiring problem, and it must not look like an empty room.
@@ -125,56 +144,195 @@ func bake_region() -> bool:
 	return _baked
 
 
-## True when the navigation map can answer for the geometry *this region* baked: the closest
-## walkable point to a corner of this mesh has to be that corner. A map that has not picked the
-## mesh up answers from another room's polygons (or from nothing), and the distance gives it
-## away. This is the difference between "a route exists somewhere on the map" and "a route
-## exists in the room the player is standing in".
+## The navigation map's iteration id, or 0 when there is no map to ask.
+##
+## The server bumps this every time it rebuilds a map. An id of zero means the map has not
+## been synchronized even once, and every query against it before that prints
+## "navigation map query failed because it was made before first map synchronization" and
+## answers with the zero vector — a room that looks empty rather than a room that is not
+## ready. Everything below checks this first, so that window never produces a query.
+func get_map_iteration_id() -> int:
+	if not is_inside_tree():
+		return 0
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return 0
+	if not NavigationServer3D.has_method("map_get_iteration_id"):
+		return 0
+	return NavigationServer3D.map_get_iteration_id(map)
+
+
+## The vertices this mesh offers the map as evidence, in world space, spread across the
+## whole mesh rather than taken from one corner.
+func _probe_points() -> PackedVector3Array:
+	var probes := PackedVector3Array()
+	var mesh := navigation_mesh
+	if mesh == null:
+		return probes
+	var vertices := mesh.get_vertices()
+	if vertices.is_empty():
+		return probes
+	var step := maxi(1, vertices.size() / SYNC_PROBES)
+	var index := 0
+	while index < vertices.size() and probes.size() < SYNC_PROBES:
+		probes.append(global_transform * vertices[index])
+		index += step
+	if probes.is_empty():
+		probes.append(global_transform * vertices[0])
+	return probes
+
+
+## How many probe points the map answers for, and the worst distance it answered with.
+##
+## `map_knows_geometry()` used to ask about one vertex and accept anything within a metre.
+## That is not a reliable question in this world: the locations are greybox rooms laid out
+## around their own origins, so the room that was just freed can cover a corner of the room
+## that replaced it, and the map answers "yes" about a floor that is not there. Six spread
+## vertices are answered only by the mesh they belong to.
+func _probe_map(worst: Array) -> int:
+	var probes := _probe_points()
+	if probes.is_empty():
+		return 0
+	var map := get_navigation_map()
+	if not map.is_valid():
+		return 0
+	var answered := 0
+	var worst_distance := 0.0
+	for probe: Vector3 in probes:
+		var closest := NavigationServer3D.map_get_closest_point(map, probe)
+		var distance := closest.distance_to(probe)
+		worst_distance = maxf(worst_distance, distance)
+		if distance <= SYNC_PROBE_TOLERANCE:
+			answered += 1
+	worst.append(worst_distance)
+	return answered
+
+
+## True when the map is answering from *this* region's mesh: every spread probe is answered
+## by a point on it.
 func map_knows_geometry() -> bool:
-	if not _baked:
+	if not _baked or get_map_iteration_id() <= 0:
+		return false
+	var worst: Array = []
+	var probes := _probe_points().size()
+	if probes == 0:
+		return false
+	return _probe_map(worst) == probes
+
+
+## The one readiness question every caller should ask before a query: the mesh is baked,
+## the map has been synchronized at least once, this region is registered on it, and the
+## map answers from this region's geometry. `is_routable()` cannot stand in for this — it
+## asks the map whether a route exists somewhere, and the map is happy to answer about the
+## room that was just freed.
+func is_synchronized() -> bool:
+	if not _baked or not is_inside_tree():
 		return false
 	var map := get_navigation_map()
 	if not map.is_valid():
 		return false
-	var probe := _mesh_probe_point()
-	var closest := NavigationServer3D.map_get_closest_point(map, probe)
-	return closest.distance_to(probe) < 1.0
+	_iteration_last_seen = get_map_iteration_id()
+	if _iteration_last_seen <= 0:
+		return false
+	var region := get_rid()
+	if not region.is_valid():
+		return false
+	if not NavigationServer3D.map_get_regions(map).has(region):
+		return false
+	return map_knows_geometry()
 
 
-## A corner of the baked mesh, in world space. Vertices of a navigation mesh are on its
-## boundary, so the map's answer for one of them is that vertex — if the map has the mesh.
-func _mesh_probe_point() -> Vector3:
-	var mesh := navigation_mesh
-	if mesh == null:
-		return global_position
-	var points := mesh.get_vertices()
-	if points.is_empty():
-		return global_position
-	return global_transform * points[0]
+## Awaits `is_synchronized()`, up to `max_frames` physics frames, and reports whether it
+## became true. This is a condition wait, not a fixed delay: the frame it returns on is the
+## first frame the map answers for this room, whether that is frame 1 or frame 11.
+func wait_until_synchronized(max_frames: int = SYNC_CHECK_FRAMES * 4) -> bool:
+	if is_synchronized():
+		return true
+	if not is_inside_tree():
+		return false
+	for _frame in max_frames:
+		await get_tree().physics_frame
+		if is_synchronized():
+			return true
+	return false
 
 
-## Hands the mesh over again until the map answers for it, then gives up loudly. Runs on the
-## frames after a bake, not every frame: at most `ROUTE_RECHECK_FRAMES` times per bake.
-func _verify_baked_geometry() -> void:
+## Hands the mesh over again until the map answers for it, then says so loudly.
+##
+## Re-handing is not a retry of a query: it is the region telling the server "this is the
+## mesh" a second time, which is what drops a map entry the server has already cached. It
+## runs on the frames after a bake, never every frame, and the budget is a fixed number of
+## frames rather than a wall-clock delay.
+func _watch_synchronization() -> void:
 	if not is_inside_tree() or not _baked:
 		return
-	if map_knows_geometry():
+	if is_synchronized():
 		return
-	if _route_checks_left <= 0:
-		_bake_error = (
-			"the navigation map never accepted the baked mesh (%d faces, %d polygons); "
+	if _sync_checks_left <= 0:
+		var worst: Array = []
+		_probe_map(worst)
+		_sync_error = (
+			"the navigation map never answered for the baked mesh (%d faces, %d polygons, "
 			% [_source_face_count, _polygon_count]
-			+ "it is still answering a different surface"
+			+ "map iteration %d, %d region(s), worst probe %.2f m; %s)"
+			% [
+				_iteration_last_seen, get_map_region_count(),
+				worst[0] if not worst.is_empty() else -1.0, describe_sync(),
+			]
 		)
-		push_warning("LocationNavigation: %s" % _bake_error)
+		push_warning("LocationNavigation: %s" % _sync_error)
 		return
-	_route_checks_left -= 1
+	_sync_checks_left -= 1
 	var mesh := navigation_mesh
 	navigation_mesh = null
 	navigation_mesh = mesh
 	NavigationServer3D.map_force_update(get_navigation_map())
 	await get_tree().physics_frame
-	_verify_baked_geometry()
+	_watch_synchronization()
+
+
+## Everything a failure report needs about the map, in one place: which room, which map,
+## how far the server got, how much geometry it was given, and where that geometry is.
+func describe_sync() -> String:
+	# Read the map's own id rather than the cached one: a failure report is written about
+	# the state at the moment it failed, not the last moment something was checked.
+	_iteration_last_seen = get_map_iteration_id()
+	_iteration_at_handover = _iteration_at_handover
+	var mesh := navigation_mesh
+	var vertices := 0
+	var bounds := "none"
+	if mesh != null:
+		var points: PackedVector3Array = mesh.get_vertices()
+		vertices = points.size()
+		if vertices > 0:
+			var box := AABB(points[0], Vector3.ZERO)
+			for point: Vector3 in points:
+				box = box.expand(point)
+			bounds = "%s..%s" % [str(box.position), str(box.end)]
+	var probes: Array = []
+	var answered := 0
+	if get_map_iteration_id() > 0:
+		answered = _probe_map(probes)
+	return (
+		"location=%s map=%s iteration=%d (handover %d) regions=%d polygons=%d vertices=%d "
+		% [
+			_location_id(), str(get_navigation_map()), _iteration_last_seen,
+			_iteration_at_handover, get_map_region_count(), _polygon_count, vertices,
+		]
+		+ "probes=%d/%d worst=%.2f m first_vertex=%s sync_error=%s"
+		% [
+			answered, _probe_points().size(),
+			probes[0] if not probes.is_empty() else -1.0, bounds,
+			"<none>" if _sync_error.is_empty() else _sync_error,
+		]
+	)
+
+
+func _location_id() -> String:
+	var root := get_parent() as LocationRoot
+	if root == null:
+		return "<no LocationRoot>"
+	return String(root.location_id)
 
 
 ## How long the last bake took, and how much of that was collecting geometry. Zero until a
@@ -236,11 +394,18 @@ func get_bake_error() -> String:
 ## polygons really reached the server. A region can exist on the map while its
 ## polygons are still queued, and a query in that window answers with nothing, which
 ## looks exactly like a room with no floor.
+##
+## The map is not asked anything before its first synchronization: that query is refused
+## by the server with "made before first map synchronization", prints an error, and answers
+## with the zero vector. A room that is not ready is reported as not routable, which is the
+## truth, without writing an error into the log on every frame of every load.
 func is_routable() -> bool:
 	if not _baked:
 		return false
 	var map := get_navigation_map()
 	if not map.is_valid():
+		return false
+	if get_map_iteration_id() <= 0:
 		return false
 	var from := NavigationServer3D.map_get_closest_point(map, global_position)
 	var to := NavigationServer3D.map_get_closest_point(map, from + Vector3(0.1, 0.0, 0.1))
@@ -259,11 +424,31 @@ func get_map_region_count() -> int:
 	return NavigationServer3D.map_get_regions(map).size()
 
 
-## A point on this region's navigation mesh, or `fallback` when the mesh is empty.
-func project_point(point: Vector3, fallback: Vector3 = Vector3.ZERO) -> Vector3:
+## The map's answer for a world point, or a refusal that says why there is none.
+##
+## Every query against a navigation map goes through here so that the three states a caller
+## can be in are named instead of guessed: the room is not synchronized yet, the point is
+## off the mesh, or the point projects onto it. A caller that gets `ok = false` has not been
+## handed a plausible-looking point from the room that was just freed, and no error was
+## written to the log while the server was still starting up.
+##
+## `{"ok": bool, "point": Vector3, "offset": float, "reason": String}`
+func project_point(point: Vector3) -> Dictionary:
 	if not _baked:
-		return fallback
-	return NavigationServer3D.map_get_closest_point(get_navigation_map(), point)
+		return {"ok": false, "point": point, "offset": 0.0, "reason": "not baked"}
+	if get_map_iteration_id() <= 0:
+		return {
+			"ok": false, "point": point, "offset": 0.0,
+			"reason": "the navigation map has not synchronized yet",
+		}
+	if not is_synchronized():
+		return {
+			"ok": false, "point": point, "offset": 0.0,
+			"reason": "the navigation map is not answering for this room (%s)" % describe_sync(),
+		}
+	var closest := NavigationServer3D.map_get_closest_point(get_navigation_map(), point)
+	var offset := Vector2(closest.x - point.x, closest.z - point.z).length()
+	return {"ok": true, "point": closest, "offset": offset, "reason": ""}
 
 
 ## Collects the solid geometry to bake from: every `StaticBody3D` under the location

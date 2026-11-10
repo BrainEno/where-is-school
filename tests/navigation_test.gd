@@ -421,70 +421,43 @@ func _enter(scene: String, spawn: StringName) -> LocationRoot:
 		return null
 	await _frames(3)
 	await _physics_frames(2)
-	# The bake is deferred to the end of the load; wait for it rather than guessing.
-	# A baked mesh is not enough: the map answers queries only once it has taken the
-	# polygons, and a query in that window returns nothing at all.
-	# `is_routable()` answers about the map, and right after a swap the map still holds the
-	# room that was just freed: it says "routable" about a floor that is about to be
-	# thrown away, the walk ordered next is computed against the old room, and the
-	# character stops where the old room's wall used to be. `_map_holds_this_room()` asks
-	# the question with no overlap in it: the map holds one region, and it is this one.
-	var guard := 0
-	while guard < 120:
-		var nav := _nav_of(_host.get_current())
-		if nav != null and nav.is_baked() and nav.is_routable() and _map_holds_this_room(nav):
-			break
-		await physics_frame
-		guard += 1
+	# The bake is deferred to the end of the load; wait for it rather than guessing. A baked
+	# mesh is not enough: the map has to be answering for *this* room's geometry, which is
+	# what `is_synchronized()` decides - baked, synchronized at least once, this region on
+	# the map, and every spread probe of the mesh answered by it.
 	_location = _host.get_current()
-	var settled := _nav_of(_location)
-	if settled != null and settled.is_baked() and not _map_holds_this_room(settled):
+	var nav := _nav_of(_location)
+	if nav == null:
+		return _location
+	if not await nav.wait_until_synchronized():
 		_failures.append(
-			"the %s's baked mesh never reached the navigation map %s"
-			% [String(_location.location_id), _report(settled)]
+			"the %s's navigation map never synchronized with its baked mesh: %s"
+			% [String(_location.location_id), nav.describe_sync()]
 		)
 	return _location
 
 
-## Bakes the region and waits until the map is routing on the new polygons. A bake that
-## has not reached the navigation server yet answers every query with an empty path,
-## so a walk asked for in that window quietly does not start and the character stands
-## still while the test blames the walk.
+## Bakes the region and waits until the map is answering from the *new* polygons.
+##
+## Two conditions, because they are two different facts: the map must have been rebuilt
+## since the bake (`map_get_iteration_id()` moved), and it must be answering for this
+## room's mesh (`is_synchronized()`). A re-bake changes the surface under the same region,
+## so an iteration that has not moved is the server still holding the wall-less mesh.
 func _rebake(nav: LocationNavigation) -> void:
 	if nav == null:
 		return
 	var map := _player.navigation_agent.get_navigation_map()
-	var has_iteration := map.is_valid() and NavigationServer3D.has_method("map_get_iteration_id")
-	var before := _iteration_id(map)
+	var before := nav.get_map_iteration_id()
 	nav.bake_region()
-	var limit := 60 if has_iteration else 12
-	var guard := 0
-	while guard < limit:
+	for _frame in 90:
 		await physics_frame
-		guard += 1
-		if (
-			nav.is_routable()
-			and nav.map_knows_geometry()
-			and (not has_iteration or _iteration_id(map) > before)
-		):
-			break
-
-
-## True when the navigation map describes exactly this room: one region on the map, and
-## it is this location's own. See `location_transition_test.gd` for why counting regions
-## is the only one of these questions two overlapping greybox rooms cannot answer wrongly.
-func _map_holds_this_room(nav: LocationNavigation) -> bool:
-	var map := nav.get_navigation_map()
-	if not map.is_valid():
-		return false
-	var regions := NavigationServer3D.map_get_regions(map)
-	return regions.size() == 1 and regions.has(nav.get_region_rid())
-
-
-func _iteration_id(map: RID) -> int:
-	if not map.is_valid() or not NavigationServer3D.has_method("map_get_iteration_id"):
-		return 0
-	return NavigationServer3D.map_get_iteration_id(map)
+		if nav.get_map_iteration_id() > before and nav.is_synchronized():
+			return
+	if not nav.is_synchronized():
+		_failures.append(
+			"the %s's re-baked mesh never became the map's surface: %s"
+			% [String(_location.location_id) if _location != null else "<none>", nav.describe_sync()]
+		)
 
 
 func _nav_of(location: LocationRoot) -> LocationNavigation:
