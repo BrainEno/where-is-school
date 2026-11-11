@@ -64,7 +64,7 @@ func validate(
 			"%s：改写后的文本不是合法 JSON（第 %d 行：%s）。没有写入任何文件。"
 			% [doc.path, json.get_error_line(), json.get_error_message()]
 		)
-		continue
+			continue
 		_candidate[locale] = text
 		_parsed_candidates[locale] = json.data
 	if not errors.is_empty():
