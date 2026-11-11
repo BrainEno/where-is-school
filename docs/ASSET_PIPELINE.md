@@ -39,6 +39,13 @@ The samples are built to a rounded-part box budget on purpose: under 500 triangl
 under 8 KB each. A placeholder that is expensive to look at is a placeholder nobody
 replaces.
 
+Half of this table is now checked mechanically: `tools/model_library.py --check` reads
+every `.glb` under `assets/models/` in CI and fails on a camera, a light, a scaled or
+matrix node, a file over the model budget of §9.1, embedded images over a texture budget,
+or a model whose `.import` sidecar is missing or stale. What it cannot judge — facing,
+triangle count, where the origin sits — is recorded per model in
+[MODEL_LIBRARY.md](MODEL_LIBRARY.md) instead.
+
 ## 2. What the model does *not* carry
 
 Collision, interaction and navigation are **not** part of the model. They live in a
@@ -67,6 +74,15 @@ the wrapper is the thing a designer drags into a room:
 A wrapper must never live under `scenes/locations/`: those four outdoor scenes are
 rewritten from a box table on every run of the generator, so a hand edit there is
 deleted without a diff.
+
+`<kind>` is the place a model is instanced — `classroom/`, `corridor/`, `playground/`,
+`protagonist/`, `q/` — so the model tree has one folder per location that draws from it,
+and the file name repeats the kind (`classroom_student_desk.glb`) so that a search for
+`classroom_` returns the model, its wrapper, its test and its provenance row together. A
+model has exactly one home; a second room instances the wrapper, not a copy of the file.
+[`MODEL_LIBRARY.md`](MODEL_LIBRARY.md) is the inventory: every model, its kind, its size,
+its triangles and where its origin sits, printed from the files themselves by
+`tools/model_library.py --report`.
 
 ## 4. Placing one
 
@@ -138,6 +154,12 @@ produce, whatever the version:
 
 `tools/build_sample_models.py --check` runs in CI as well: the committed binaries are
 reproducible from the script.
+
+`tools/model_library.py --check` covers the half of §1 that no engine test looks at: it
+parses every `.glb` under `assets/models/` and fails on a camera, a light, a scaled or
+matrix node, a file over the model budget, embedded images over the texture budget, or a
+missing/stale `.import` sidecar. `tests/model_library_test.py` checks the checker against
+files it writes itself, on both sides of every limit.
 
 ### The import pass is part of the contract
 
