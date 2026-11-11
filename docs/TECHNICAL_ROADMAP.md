@@ -57,7 +57,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, fifty-five headless checks (the list lives in
+- CI: a static syntax gate over every `.gd` file, sixty-one headless checks (the list lives in
   `.github/workflows/godot-ci.yml`), a blocking import pass with an audit that every
   tracked `.import` produced its file, and a read-only capture job whose artifacts are the
   visual evidence for a pull request.
@@ -130,7 +130,7 @@ held to, and each is covered by an automated check:
 |---|---|
 | Long Chinese text and readable typography | `tests/dialogue_layout_test.gd`, `tests/i18n_test.gd` |
 | Named speakers | `data/characters/`, `CharacterDirectory`, dialogue panel name row |
-| Optional 2D portraits (contract only, no art) | `CharacterProfile.portrait*` fields, `DialoguePanel` portrait layer and `get_portrait_report()`, `tests/dialogue_portrait_contract_test.gd` (not yet in the CI list) |
+| Optional 2D portraits (contract only, no art) | `CharacterProfile.portrait*` fields, `DialoguePanel` portrait layer and `get_portrait_report()`, `tests/dialogue_portrait_contract_test.gd` (run by Godot CI) |
 | Choices and conditional choices | `DialogueGraph` conditions, `tests/dialogue_runtime_test.gd` |
 | Story flags and explicit state changes | `StoryFlags`, effects, `tests/narrative_state_test.gd` |
 | History/backlog | `DialogueHistory`, `BacklogPanel`, `tests/language_switch_test.gd` |

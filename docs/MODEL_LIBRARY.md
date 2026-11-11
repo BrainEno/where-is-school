@@ -137,8 +137,11 @@ The classroom's blackboard, chart, clock and door were authored facing −Z, as 
 corridor noticeboard, the window handle and the extinguisher's gauge face the other way.
 Both conventions are in the set, so **a wrapper must check the item it wraps** rather than
 assume, and the round that writes the wrappers should pin each one with a test the way
-`tests/imported_placement_test.gd` pins the characters and the bench. Nobody has yet
-judged whether the noticeboard's side is the one the corridor shows to the player.
+`tests/imported_placement_test.gd` pins the characters and the bench. The corridor round
+decided the three corridor items: the notices, the gauge and the trolley's front panel all
+face the walkway, and `tests/corridor_props_test.gd` finds those nodes in the placed models
+and fails if any of them ends up facing the wall or the parapet
+([IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md)).
 
 ### 2.6 Materials: 55 names in three batches
 
@@ -162,14 +165,14 @@ that round has to cover.
 
 ### 2.7 What is not there yet
 
-These are model files. They have no wrapper, no collision shape and no placement, so
-**nothing instantiates them yet** — `scenes/locations/*` still builds its rooms out of
-greybox boxes. The replacement each one is meant to make, taking the existing greybox
+Apart from the three corridor models (placed, see the last rows), these are model files.
+They have no wrapper, no collision shape and no placement, so **nothing instantiates them
+yet** — `scenes/locations/*` still builds those rooms out of greybox boxes. The replacement each one is meant to make, taking the existing greybox
 wrappers as the target:
 
 | Model | Today's stand-in |
 |---|---|
-| `classroom_blackboard` | `scenes/environment/props/blackboard.tscn` (dressed by `classroom_art/back_board.tscn`), instanced in `classroom.tscn` and, oddly, in `corridor.tscn` |
+| `classroom_blackboard` | `scenes/environment/props/blackboard.tscn` (dressed by `classroom_art/back_board.tscn`), instanced in `classroom.tscn`. (`corridor.tscn` used to declare it as an external resource that no node used; the corridor round removed that line.) |
 | `classroom_student_desk`, `classroom_student_chair` | `scenes/environment/props/classroom_desk.tscn`, which is a desk with a chair modelled onto it |
 | `classroom_teacher_chair` | the chair half of `scenes/environment/props/teacher_desk.tscn` |
 | `classroom_teacher_lectern` | the desk half of `teacher_desk.tscn` (closest existing piece; a lectern is not a desk, so this is a design choice, not a swap) |
@@ -177,8 +180,8 @@ wrappers as the target:
 | `classroom_door_assembly` | nothing — `classroom.tscn` has a `door`/`door_try`/`door_blocked` trigger and no door geometry |
 | `classroom_window_module`, `classroom_window_curtains` | the `window_view_front`/`window_view_back` materials painted onto the classroom wall |
 | `classroom_ceiling_fan`, `classroom_wall_clock` | nothing |
-| `corridor_noticeboard` | `blackboard.tscn`, reused as the corridor's board |
-| `corridor_cleaning_trolley`, `corridor_fire_extinguisher` | nothing |
+| `corridor_noticeboard` | **placed**: `props/corridor_noticeboard.tscn` → `corridor.tscn` `CorridorNoticeboard`, replacing the `NoticeboardFrame`/`NoticeboardCork`/`NoticePaperA`/`NoticePaperB` boxes |
+| `corridor_cleaning_trolley`, `corridor_fire_extinguisher` | **placed**: `props/corridor_cleaning_trolley.tscn` → `CorridorTrolley` (replacing `TrolleyBody`/`TrolleyLid`/`TrolleyBucket`) and `props/corridor_fire_extinguisher.tscn` → `CorridorExtinguisher` (replacing `Extinguisher`/`ExtinguisherBracket`); numbers in [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) |
 | `playground_tyre_stack`, `playground_sports_duffel` | nothing (`playground.tscn` already uses the imported bench and backpack) |
 
 So the next round for any of these is the same three steps as pipeline §4: a hand-authored
@@ -188,23 +191,22 @@ placement in the location's table, and — if the prop is meant to be reachable 
 the location's interaction data. The box sizes above are what the collider is sized from,
 which is why they are recorded to the centimetre.
 
-## 3. The football: a source file, kept out of the runtime tree
+## 3. The football: a source file that is not in the repository
 
 PR #85 also carried `dirty_football_4k.glb` — Poly Haven's CC0 "Dirty Football", the one
 third-party file in the upload (`docs/ASSET_PROVENANCE.md` has the row, and records that the
-same asset had been left out of the repository while only its `.blend` existed). It is not in
-`assets/models/` and it should not be: 67.3 MiB in one file — 35,210 vertices and **three 4096² maps** (a 54.5 MiB PNG
-normal map, a 6.3 MiB PNG roughness map, a 5.3 MiB JPEG albedo) — against a model budget
-of 1.5 MiB and a whole-release budget of 16 MiB. While it sat under `assets/models/`, the
-`Export, verify, package` job failed on exactly that: *"151.9 MiB is not a plausible size
-for this build"*.
+same asset had been left out of the repository while only its `.blend` existed). It never
+belonged in `assets/models/`: 67.3 MiB in one file — 35,210 vertices and **three 4096²
+maps** (a 54.5 MiB PNG normal map, a 6.3 MiB PNG roughness map, a 5.3 MiB JPEG albedo) —
+against a model budget of 1.5 MiB and a whole-release budget of 16 MiB. While it sat there,
+`Export, verify, package` failed with *"151.9 MiB is not a plausible size for this build"*.
 
-It now lives in `art/props/dirty_football/`, which is `.gdignore`d and outside the exported
-pack, with the rest of the source art, and with a README that records what would have to
-change for it to ship: maps down to 512² (converting the normal map from PNG to JPEG),
-decimated geometry, a `playground_` name instead of the `dirty_` working prefix, and a
-passing `--check`. Nothing else about the file has been touched — the ball itself is 22 cm
-across and stands on its own origin.
+It sat under `art/` for one pull request and is now **removed from the tree entirely** (issue
+#97): at 5.6× the repository's per-file ceiling it was the reason `tools/repo_size.py
+--check` exists. `art/props/dirty_football/README.md` keeps the record — provenance, the
+measurements above, where a copy can be downloaded, and what an export that could ship would
+need. The blob is still in the history until someone rewrites it; that is a decision for the
+owner, written up in `docs/adr/0007-large-binaries-and-repository-size.md`.
 
 ## 4. How these numbers stay true
 
