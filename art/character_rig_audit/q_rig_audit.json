@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "input": "D:\\develop\\games\\where-is-school\\assets\\models\\q\\q.glb",
+  "input": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_unrigged_source.glb",
   "label": "q",
   "blender_version": "5.2.3 LTS",
   "classification": {
