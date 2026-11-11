@@ -11,6 +11,12 @@ class_name PlayerController
 ## (click-to-move) input both end up in `_apply_movement()`: same acceleration, same
 ## `move_and_slide()`, same facing. Automatic movement only decides which direction to
 ## ask for, by following the `NavigationAgent3D` path this body owns.
+##
+## Animation follows from that, not alongside it: the protagonist model carries a
+## `CharacterVisualAnimation`, and this body hands itself to it in `_ready()`. The animator
+## reads the velocity `_apply_movement()` leaves behind, so WASD and click-to-move walk with
+## the same clip for the same reason — the body moved — and the animator never writes a
+## transform, so the facing below stays this controller's alone.
 
 signal path_finished
 signal path_cancelled
@@ -103,10 +109,32 @@ var _path_last_position: Vector3 = Vector3.ZERO
 var _path_legs := PackedVector3Array()
 ## Which leg of that route the body is walking towards.
 var _path_index: int = 0
+## The protagonist model's idle/walk animator, found under `%Visual`.
+var _character_animator: CharacterVisualAnimation = null
 
 
 func _ready() -> void:
 	_body_radius = _measure_body_radius()
+	_character_animator = _find_character_animator()
+	if _character_animator != null:
+		_character_animator.bind_body(self)
+	elif visual != null:
+		push_warning("PlayerController: the model under %Visual has no CharacterVisualAnimation; the protagonist will not animate.")
+
+
+func _find_character_animator() -> CharacterVisualAnimation:
+	if visual == null:
+		return null
+	for node in visual.find_children("*", "Node3D", true, false):
+		var animator := node as CharacterVisualAnimation
+		if animator != null:
+			return animator
+	return null
+
+
+## The protagonist's idle/walk animator, or null if the model has none.
+func get_character_animator() -> CharacterVisualAnimation:
+	return _character_animator
 
 
 ## The radius of the capsule the character is standing in, read once: it is what decides

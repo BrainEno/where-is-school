@@ -177,7 +177,10 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 	var skeleton := skeletons[0]
 	_check_track_paths(label, player, skeleton)
 	for clip_name in CLIPS:
-		_check_clip(label, player, skeleton, resolved, clip_name, not TRANSITIONS.has(clip_name))
+		_check_clip(
+			label, player, skeleton, resolved, clip_name, not TRANSITIONS.has(clip_name),
+			report.get("posed", [])
+		)
 	_check_transition_poses(label, player, skeleton, resolved)
 	model.queue_free()
 	return report
@@ -218,7 +221,8 @@ func _check_clip(
 	skeleton: Skeleton3D,
 	resolved: Dictionary,
 	clip_name: String,
-	loops: bool
+	loops: bool,
+	posed: Array = []
 ) -> void:
 	var canonical: String = CLIPS[clip_name]
 	if not resolved.has(canonical):
@@ -249,7 +253,17 @@ func _check_clip(
 	_notes.append(
 		"%s/%s: %s turns %.1f° and returns to within %.2f°" % [label, clip_name, bone, widest, returned]
 	)
-	if widest < MOVED_DEGREES:
+	# A limb this rig does not model hanging down is held at its modelled pose on purpose
+	# (`CharacterAnimation.posed_limbs`): its axes are not the ones the clip was written for.
+	# Then the check is the opposite one: the hold has to actually hold.
+	if posed.has(canonical):
+		_notes.append("%s/%s: '%s' is held at its modelled pose on this rig" % [label, clip_name, bone])
+		if widest > MOVED_DEGREES:
+			_failures.append(
+				"%s: '%s' is listed as held at its modelled pose, but clip '%s' turned it %.2f°."
+				% [label, canonical, clip_name, widest]
+			)
+	elif widest < MOVED_DEGREES:
 		_failures.append(
 			"%s: clip '%s' moved '%s' by %.2f° at most; the track is not reaching the bone."
 			% [label, clip_name, bone, widest]
@@ -266,10 +280,13 @@ func _check_clip(
 			% [label, clip_name, returned]
 		)
 	if not loops:
-		# Bone poses are relative to the rest pose, so "standing up" is the identity
-		# quaternion, not the bone's rest rotation.
+		# A bone's pose rotation is its whole local rotation, so "standing up" is the bone's
+		# rest rotation. (It is not the identity: every limb on these rigs rests ~170–180°
+		# from its parent, and a clip that ended on the identity would end with the legs and
+		# arms thrown upwards, which is the bug rest-relative keys fixed.)
 		var last_pose: Quaternion = samples[samples.size() - 1]
-		var away_from_rest := rad_to_deg(last_pose.angle_to(Quaternion.IDENTITY))
+		var rest_pose := skeleton.get_bone_rest(index).basis.get_rotation_quaternion()
+		var away_from_rest := rad_to_deg(last_pose.angle_to(rest_pose))
 		_notes.append("%s/%s ends %.2f° from the rest pose" % [label, clip_name, away_from_rest])
 		if away_from_rest > 1.0:
 			_failures.append(
@@ -359,7 +376,10 @@ func _check_transition_poses(
 	# And the seated pose has to actually be seated: folding the legs is the whole clip, so a
 	# hip that barely leaves the rest pose would make `sit_idle` an idle with a different name.
 	if sitting.has("thigh.L"):
-		var hip := rad_to_deg((sitting["thigh.L"] as Quaternion).angle_to(Quaternion.IDENTITY))
+		var thigh_rest := skeleton.get_bone_rest(skeleton.find_bone(String(resolved["thigh.L"])))
+		var hip := rad_to_deg(
+			(sitting["thigh.L"] as Quaternion).angle_to(thigh_rest.basis.get_rotation_quaternion())
+		)
 		_notes.append("%s: the seated hip is %.1f° from rest" % [label, hip])
 		if hip < 30.0:
 			_failures.append(

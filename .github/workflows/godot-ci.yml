@@ -211,6 +211,9 @@ jobs:
           # the bone it is about, and the loop has to come back to where it started. The two
           # rigs name their bones differently, which is the thing being checked.
           run_check character_animation 240 godot --headless --path . --script res://tests/character_animation_test.gd || status=1
+          # The same clips in the shipping game: main.tscn's player (keys and clicks), the
+          # classroom Q and the following Q, measured off their skeletons.
+          run_check runtime_character_animation 300 godot --headless --path . --script res://tests/runtime_character_animation_test.gd || status=1
           # The animation library retargeted onto the protagonist: the bones pair up, the
           # baked clip actually moves the character, and the retarget is rest-relative (the
           # source's rotation change and the target's are the same rotation). Then the
