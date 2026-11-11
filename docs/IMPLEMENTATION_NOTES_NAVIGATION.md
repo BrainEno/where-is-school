@@ -71,7 +71,7 @@ reasoning and the evidence.
   ("Return to classroom" / "回到教室") on `street_back_to_school` only; the corridor's
   door keeps `prompt.back_inside` ("Go back inside" / "回到里面"). The destination,
   spawn and transition are untouched.
-- **The dismissal rewrite was narrowed.** `OpeningSequence._update_exit_prompt()` used
+- **The dismissal rewrite was narrowed.** `LocationFlow.update_exit_prompt()` used
   to rewrite every exit whose destination was the corridor. Once the street existed
   that also matched the street's return exit, so standing in the street at the school
   door showed "Leave the classroom". It now rewrites only the exit whose `interact_id`

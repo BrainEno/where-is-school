@@ -129,9 +129,10 @@ already collides would carve a hole in the baked navigation mesh for nothing.
 ### 5.3 The player
 
 `player.tscn` keeps everything that made it the player: the `CharacterBody3D`, its 0.35 ×
-1.8 m capsule, the `NavigationAgent3D`, the `Camera3D` and its occluder fader, the
-`InteractionSensor`, the `InteractionController`, the `PointerNavigator` and the
-nameplate at 1.95 m. What changed is `VisualPivot/Visual`: it was a `MeshInstance3D`
+1.8 m capsule, the `NavigationAgent3D`, the `InteractionSensor`, the
+`InteractionController`, the `PointerNavigator` and the nameplate at 1.95 m. (The
+`Camera3D` and its occluder fader are no longer part of it: they hang off `CameraRig` in
+`main.tscn` since #58, and the player only pushes the rig.) What changed is `VisualPivot/Visual`: it was a `MeshInstance3D`
 carrying a capsule mesh, and it is now a `Node3D` at hip height (y = 0.9) with the imported
 wrapper as its child.
 

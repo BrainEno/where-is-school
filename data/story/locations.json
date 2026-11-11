@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "_comment": "What a location declares about itself. The director reads this file instead of matching on ids, so adding a room is a scene, an entry here, and the exits that point at it.",
+  "locations": {
+    "classroom": {
+      "scene": "res://scenes/locations/classroom/classroom.tscn",
+      "spawn": "PlayerStart",
+      "start": true
+    },
+    "corridor": {
+      "scene": "res://scenes/locations/corridor/corridor.tscn",
+      "objective": "objective.schoolyard",
+      "arrival_flags": ["left_classroom"]
+    },
+    "street": {
+      "scene": "res://scenes/locations/street/street.tscn",
+      "objective": "objective.outside",
+      "arrival_flags": ["left_school"],
+      "arrival_conversation": "street_arrival",
+      "arrival_flag": "street_arrived"
+    },
+    "residential": {
+      "scene": "res://scenes/locations/residential/residential.tscn",
+      "objective": "objective.residential",
+      "arrival_conversation": "residential_arrival",
+      "arrival_flag": "residential_arrived"
+    },
+    "alley": {
+      "scene": "res://scenes/locations/alley/alley.tscn",
+      "objective": "objective.alley",
+      "arrival_conversation": "alley_arrival",
+      "arrival_flag": "alley_arrived"
+    },
+    "playground": {
+      "scene": "res://scenes/locations/playground/playground.tscn",
+      "objective": "objective.playground",
+      "arrival_conversation": "playground_arrival",
+      "arrival_flag": "playground_arrived"
+    }
+  }
+}

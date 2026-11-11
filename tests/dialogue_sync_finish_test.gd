@@ -7,9 +7,9 @@ extends SceneTree
 ## all three `conversation_finished` is emitted *before* `play_conversation()`
 ## returns to its caller.
 ##
-## The bug this test pins down: `OpeningSequence._play_conversation()` awaited that
+## The bug this test pins down: `OpeningSequence.play_conversation()` awaited that
 ## signal unconditionally. When the conversation had already ended, the await
-## waited forever, the beat that called it never reached `_end_beat()`, the player
+## waited forever, the beat that called it never reached `end_beat()`, the player
 ## lock stayed on, and the game was stuck with nothing on screen and no way out.
 ## Before the fix this test hangs at "the director waiting for a conversation that
 ## is already over" until the watchdog fails it; after the fix it passes.
@@ -87,11 +87,11 @@ func _run() -> void:
 	# the lock back. The only unusual thing is that this conversation has nothing
 	# left to say — which is a state content can reach without meaning to.
 	Harness.stage = "the director waiting for a conversation that is already over"
-	await _sequence._begin_beat()
+	await _sequence.begin_beat()
 	_expect(_player.is_control_enabled() == false, "The beat did not take the player lock.")
-	await _sequence._play_conversation(FIXTURE_ID)
+	await _sequence.play_conversation(FIXTURE_ID)
 	_expect(_dialogue.is_busy() == false, "The fixture conversation is still on screen.")
-	_sequence._end_beat()
+	_sequence.end_beat()
 	await _frames(2)
 	_expect(
 		_player.is_control_enabled(),
@@ -103,9 +103,9 @@ func _run() -> void:
 	# once is still a soft lock, but a director left in a half-finished state would
 	# show up here.
 	Harness.stage = "the second attempt"
-	await _sequence._begin_beat()
-	await _sequence._play_conversation(FIXTURE_ID)
-	_sequence._end_beat()
+	await _sequence.begin_beat()
+	await _sequence.play_conversation(FIXTURE_ID)
+	_sequence.end_beat()
 	await _frames(2)
 	_expect(_player.is_control_enabled(), "Control did not come back on the second attempt.")
 

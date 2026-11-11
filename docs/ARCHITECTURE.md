@@ -560,7 +560,7 @@ else (issue #19).
 **What a failure leaves behind.** The old scene remains loaded and current,
 `_current_path` is unchanged, the player keeps their position and facing,
 `CURRENT_LOCATION` still describes the room they are in, `location_entered` is not
-emitted, and the return value is false. `OpeningSequence._transition_to()` fades back in
+emitted, and the return value is false. `LocationFlow._transition_to()` fades back in
 and hands control back; nothing downstream (Q's placement, the objective line, the
 arrival beat) runs off a transition that did not happen.
 

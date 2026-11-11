@@ -31,9 +31,23 @@ The language choice is written to `user://settings.cfg` and survives a restart.
 
 ~~~text
 OpeningSequence (scripts/world/opening_sequence.gd)
-  Sequenced beats only: wake, Q, expectation, bell, substitute, exit, arrival
-  lines, the two ends of the slice. Holds a beat lock so two authored sequences
-  cannot overlap.
+  The prologue's steps: wake, Q, the bag wait, expectation, bell, substitute.
+  Each step names the story flag that proves it is done, and the director runs the
+  first step whose flag is not set — so starting and resuming are the same call.
+  Holds a beat lock so two authored sequences cannot overlap.
+
+LocationFlow (scripts/world/location_flow.gd)
+  Everything that happens because of a place: blocked exits, the fade and the load,
+  arrival bookkeeping, the first line a location says about itself, the end card,
+  and the one door whose prompt depends on the story. Borrows the beat lock from
+  the director rather than keeping a second copy of that state.
+
+LocationCatalog (scripts/world/location_catalog.gd) + data/story/locations.json
+  What a room declares about itself: its scene, the objective line on arrival, the
+  first-time conversation and the flag that proves it played. Adding a location is a
+  scene plus an entry here; no director code changes. `tests/location_catalog_test.gd`
+  fails if a room on disk is undescribed, a door points at an undescribed id, or a
+  key is missing from either language.
 
 DialogueController (scripts/dialogue/dialogue_controller.gd)
   Presentation owner: loads content, drives the runtime, mirrors it into the panel,
