@@ -350,7 +350,7 @@ func _run() -> void:
 				_failures.append("The courtyard has no way into the alley.")
 			else:
 				await _wait_for_free(60.0)
-				_teleport(Vector3(6.0, 0, -31.6), 0.0)
+				_teleport(Vector3(6.0, 0, -33.0), 0.0)
 				if not await _wait_for_target(&"res_alley_end", 30.0):
 					_failures.append("The alley was never offered from the courtyard.")
 				await _press(KEY_E)

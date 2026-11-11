@@ -157,8 +157,11 @@ func _check_every_location_has_a_usable_mesh() -> void:
 			).length()
 			if away > 1.5:
 				_failures.append(
-					"In the %s the exit '%s' is %.2f m off the navigation mesh %s"
-					% [label, String(exit.interact_id), away, _report(nav)]
+					"In the %s the exit '%s' at %s is %.2f m off the navigation mesh (closest %s) %s"
+					% [
+						label, String(exit.interact_id), str(exit.global_position), away,
+						str(snapped), _report(nav)
+					]
 				)
 				continue
 			var route := NavigationServer3D.map_get_path(

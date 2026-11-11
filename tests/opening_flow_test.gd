@@ -340,7 +340,7 @@ func _run() -> void:
 			var exit_node := alley_exit as LocationExit
 			if exit_node != null and exit_node.is_milestone_end:
 				_failures.append("The courtyard still ends the slice at its alley exit.")
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -33.0)))
 			await physics_frame
 			await physics_frame
 			await _activate(alley_exit)
