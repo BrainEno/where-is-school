@@ -508,7 +508,26 @@ func _wait_seconds(seconds: float) -> void:
 	await process_frame
 
 
+## GitHub cuts one annotation off at about 4 KB. Seven clips on four rigs is past that, and the
+## cut lands at the end — exactly where the speeds and the seated-hip numbers are. So the notes
+## go out in chunks: a notice that drops half the evidence is worse than two notices.
+const NOTICE_CHUNK_CHARS := 3000
+
+
 func _report() -> void:
 	for line in _notes:
 		print("note: %s" % line)
-	print("::notice title=character animation::%s" % "|".join(_notes))
+	var chunks: PackedStringArray = PackedStringArray()
+	var current := ""
+	for line in _notes:
+		if current != "" and current.length() + line.length() + 1 > NOTICE_CHUNK_CHARS:
+			chunks.append(current)
+			current = ""
+		current = line if current == "" else "%s|%s" % [current, line]
+	if current != "":
+		chunks.append(current)
+	for index in chunks.size():
+		print(
+			"::notice title=character animation (%d/%d)::%s"
+			% [index + 1, chunks.size(), chunks[index]]
+		)
