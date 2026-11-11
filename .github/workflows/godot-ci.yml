@@ -206,6 +206,8 @@ jobs:
           run_check imported_placement 300 godot --headless --path . --script res://tests/imported_placement_test.gd || status=1
           # Classroom visual acceptance: layout, collisions, material ownership, navigation, and real-camera visibility.
           run_check classroom_visual_slice 240 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || status=1
+          # 临时（#82 PR 内将回退）：操场美术切片验收测试。
+          run_check playground_art_slice 300 godot --headless --path . --script res://tests/playground_art_slice_test.gd || status=1
           # This lab is isolated from the shipping scene; still compile and assert its actual resources in CI.
           run_check painterly_rendering 240 godot --headless --path . --script res://tests/painterly_rendering_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
