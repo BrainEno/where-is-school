@@ -60,6 +60,16 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the model library against the pipeline contract
+        shell: bash
+        run: |
+          # Every `.glb` under assets/models/ is read here, before anything imports it. A
+          # model that carries a camera, a light, a 2x node scale, or 4K textures embedded
+          # in it used to be discovered by a red export job weeks later; the budgets this
+          # applies are `tools/verify_build.py`'s own (imported, not copied), so the number
+          # that fails a release now fails the commit that added the file.
+          python3 tools/model_library.py --check
+
       - name: Check the music loop is reproducible
         shell: bash
         run: |
@@ -88,6 +98,15 @@ jobs:
           # tested here, with packs this test writes, so the release job can be trusted to
           # report what it reports.
           python3 tests/verify_build_test.py
+
+      - name: Check the model library check itself
+        shell: bash
+        run: |
+          # `tools/model_library.py` is the only reader any `.glb` gets before the pack, so
+          # it is tested with files this test writes: a scaled node, a matrix node, a
+          # camera, a light, one byte either side of the size and texture limits, a missing
+          # sidecar, a sidecar left behind by a move, and a duplicated model name.
+          python3 tests/model_library_test.py
 
       - name: Check the bundled font covers the current text
         shell: bash
