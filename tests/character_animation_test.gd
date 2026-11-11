@@ -49,8 +49,10 @@ func _initialize() -> void:
 
 func _run() -> void:
 	Harness.stage = "the rigged characters"
-	var q_report := await _check_model("Q (rigged)", RIGGED_Q, true)
-	var protagonist_report := await _check_model(
+	# Typed by hand: `_check_model` returns Variant (a report, or null when a model will not
+	# load), and this project treats inferring a type from a Variant as an error.
+	var q_report: Variant = await _check_model("Q (rigged)", RIGGED_Q, true)
+	var protagonist_report: Variant = await _check_model(
 		"protagonist (retargeted)", RETARGETED_PROTAGONIST, true
 	)
 
@@ -139,9 +141,17 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 			% [label, resolved.size(), MIN_RESOLVED]
 			+ "fraction of a character."
 		)
+	# The blockout rigs have no chest and no clavicles. Any *other* canonical bone a rig cannot
+	# resolve is a clip that will quietly do less than it says, so the set is named rather than
+	# counted: a rig that loses, say, `shin.L` fails here instead of walking with one leg.
 	var missing: Array = report.get("missing", [])
-	if missing.size() > 2:
-		_failures.append("%s: %d canonical bones are not on this rig: %s" % [label, missing.size(), str(missing)])
+	var allowed_missing := ["chest", "shoulder.L", "shoulder.R"]
+	for canonical in missing:
+		if not allowed_missing.has(String(canonical)):
+			_failures.append(
+				"%s: '%s' is not a bone on this rig, and the clips expect it to be."
+				% [label, String(canonical)]
+			)
 
 	var skeleton := skeletons[0]
 	_check_track_paths(label, player, skeleton)
