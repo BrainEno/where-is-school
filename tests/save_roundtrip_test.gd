@@ -229,7 +229,7 @@ func _check_companion_restore() -> void:
 
 	# --- 1. The real way Q joins: the classroom door, and the arrival checkpoint.
 	Harness.stage = "companion: leaving the classroom with Q"
-	var first := await _enter_main()
+	var first := await _enter_settled()
 	if first == null:
 		return
 	var sequence := first.get_node_or_null("OpeningSequence") as OpeningSequence
@@ -273,11 +273,13 @@ func _check_companion_restore() -> void:
 		companion.is_with_player(),
 		"companion: Q is not with the player in the corridor the first time round."
 	)
+	await _settle_room(first)
+	print("::notice title=rt::c1 done")
 	await _tear_down(first)
 
 	# --- 2. Quit, come back in the corridor.
 	Harness.stage = "companion: restoring in the corridor"
-	var corridor_run := await _enter_main()
+	var corridor_run := await _enter_settled()
 	if corridor_run == null:
 		return
 	var restored := _expect_companion_restored(corridor_run, &"corridor")
@@ -286,6 +288,7 @@ func _check_companion_restore() -> void:
 
 	# --- 3. Into the yard with the restored Q, save there, come back there.
 	Harness.stage = "companion: saving in the yard"
+	print("::notice title=rt::c2 done")
 	var yard_save := await _save_in(
 		corridor_run, PLAYGROUND_SCENE, &"FromCorridor", &"playground", YARD_STANDING
 	)
@@ -297,7 +300,7 @@ func _check_companion_restore() -> void:
 		"companion: the yard save does not record that Q came along."
 	)
 	Harness.stage = "companion: restoring in the yard"
-	var yard_run := await _enter_main()
+	var yard_run := await _enter_settled()
 	if yard_run == null:
 		return
 	if _expect_companion_restored(yard_run, &"playground"):
@@ -305,6 +308,7 @@ func _check_companion_restore() -> void:
 
 	# --- 4. Back into the classroom, save there, come back there.
 	Harness.stage = "companion: saving in the classroom"
+	print("::notice title=rt::c3 done")
 	var classroom_save := await _save_in(
 		yard_run, CLASSROOM_SCENE, &"FromCorridor", &"classroom", Vector3.INF
 	)
@@ -316,10 +320,11 @@ func _check_companion_restore() -> void:
 		"companion: the classroom save lost the companion flag."
 	)
 	Harness.stage = "companion: restoring in the classroom"
-	var classroom_run := await _enter_main()
+	var classroom_run := await _enter_settled()
 	if classroom_run == null:
 		return
-	_expect_companion_hidden_by_authored_q(classroom_run)
+	await _expect_companion_hidden_by_authored_q(classroom_run)
+	print("::notice title=rt::c4 done")
 	await _tear_down(classroom_run)
 
 
@@ -329,7 +334,7 @@ func _check_companion_restore() -> void:
 func _check_save_without_companion() -> void:
 	_reset_session()
 	Harness.stage = "companion: a save without the flag"
-	var first := await _enter_main()
+	var first := await _enter_settled()
 	if first == null:
 		return
 	for flag in [
@@ -351,7 +356,7 @@ func _check_save_without_companion() -> void:
 	)
 
 	Harness.stage = "companion: restoring a save without the flag"
-	var again := await _enter_main()
+	var again := await _enter_settled()
 	if again == null:
 		return
 	print("::notice title=rt::l2 booted")
@@ -366,9 +371,8 @@ func _check_save_without_companion() -> void:
 		"companion: the flagless save came back in '%s'." % String(host.get_current().location_id)
 	)
 	print("::notice title=rt::l2 before physics")
-	for crumb in 6:
-		await _physics_frames(5)
-		print("::notice title=rt::l2 physics %d" % crumb)
+	await _physics_frames(30)
+	print("::notice title=rt::l2 after physics")
 	_expect(not companion.is_joined(), "companion: a save without Q's flag produced a joined Q.")
 	_expect(not companion.visible, "companion: a save without Q's flag shows the companion.")
 	_expect(
@@ -561,6 +565,7 @@ func _save_in(
 		_failures.append("companion: '%s' did not load." % location_id)
 		return {}
 	_game_state.set_flag(StoryFlags.CURRENT_LOCATION, location_id)
+	await _settle_room(main)
 	await _physics_until(
 		func() -> bool: return companion.is_navigation_ready(), NAVIGATION_WAIT_FRAMES
 	)
@@ -661,8 +666,39 @@ func _reset_session() -> void:
 func _tear_down(main: Node) -> void:
 	main.queue_free()
 	await _frames(3)
+	# The navigation server drops the freed room's region on its own schedule. Quitting
+	# the game ends the process; here the next session shares the world, so it is given
+	# the frames a restart would have given it.
+	await _physics_frames(10)
 	_game_state.clear()
 	_narrative.clear()
+
+
+## `_enter_main()`, then the frames a player spends looking at the room before doing
+## anything: the room's navigation answers for its own mesh.
+func _enter_settled() -> Node:
+	var main := await _enter_main()
+	if main != null:
+		await _settle_room(main)
+	return main
+
+
+## Waits until the current room's navigation answers from its own mesh. Swapping rooms,
+## or rebuilding the whole scene, faster than that is not something a player can do, and
+## doing it in a test measures the navigation server's hand-over instead of the save.
+func _settle_room(main: Node) -> void:
+	var host := main.get_node_or_null("LocationHost") as LocationHost
+	if host == null or host.get_current() == null:
+		return
+	var navigation := host.get_current().get_node_or_null("Navigation") as LocationNavigation
+	if navigation == null:
+		return
+	var synchronized: bool = await navigation.wait_until_synchronized(NAVIGATION_WAIT_FRAMES)
+	if not synchronized:
+		_failures.append(
+			"companion: the %s's navigation never synchronised: %s"
+			% [String(host.get_current().location_id), navigation.describe_sync()]
+		)
 
 
 func _physics_until(predicate: Callable, max_frames: int) -> bool:
