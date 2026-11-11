@@ -137,8 +137,11 @@ The classroom's blackboard, chart, clock and door were authored facing −Z, as 
 corridor noticeboard, the window handle and the extinguisher's gauge face the other way.
 Both conventions are in the set, so **a wrapper must check the item it wraps** rather than
 assume, and the round that writes the wrappers should pin each one with a test the way
-`tests/imported_placement_test.gd` pins the characters and the bench. Nobody has yet
-judged whether the noticeboard's side is the one the corridor shows to the player.
+`tests/imported_placement_test.gd` pins the characters and the bench. The corridor round
+decided the three corridor items: the notices, the gauge and the trolley's front panel all
+face the walkway, and `tests/corridor_props_test.gd` finds those nodes in the placed models
+and fails if any of them ends up facing the wall or the parapet
+([IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md)).
 
 ### 2.6 Materials: 55 names in three batches
 
@@ -162,14 +165,14 @@ that round has to cover.
 
 ### 2.7 What is not there yet
 
-These are model files. They have no wrapper, no collision shape and no placement, so
-**nothing instantiates them yet** — `scenes/locations/*` still builds its rooms out of
-greybox boxes. The replacement each one is meant to make, taking the existing greybox
+Apart from the three corridor models (placed, see the last rows), these are model files.
+They have no wrapper, no collision shape and no placement, so **nothing instantiates them
+yet** — `scenes/locations/*` still builds those rooms out of greybox boxes. The replacement each one is meant to make, taking the existing greybox
 wrappers as the target:
 
 | Model | Today's stand-in |
 |---|---|
-| `classroom_blackboard` | `scenes/environment/props/blackboard.tscn` (dressed by `classroom_art/back_board.tscn`), instanced in `classroom.tscn` and, oddly, in `corridor.tscn` |
+| `classroom_blackboard` | `scenes/environment/props/blackboard.tscn` (dressed by `classroom_art/back_board.tscn`), instanced in `classroom.tscn`. (`corridor.tscn` used to declare it as an external resource that no node used; the corridor round removed that line.) |
 | `classroom_student_desk`, `classroom_student_chair` | `scenes/environment/props/classroom_desk.tscn`, which is a desk with a chair modelled onto it |
 | `classroom_teacher_chair` | the chair half of `scenes/environment/props/teacher_desk.tscn` |
 | `classroom_teacher_lectern` | the desk half of `teacher_desk.tscn` (closest existing piece; a lectern is not a desk, so this is a design choice, not a swap) |
@@ -177,8 +180,8 @@ wrappers as the target:
 | `classroom_door_assembly` | nothing — `classroom.tscn` has a `door`/`door_try`/`door_blocked` trigger and no door geometry |
 | `classroom_window_module`, `classroom_window_curtains` | the `window_view_front`/`window_view_back` materials painted onto the classroom wall |
 | `classroom_ceiling_fan`, `classroom_wall_clock` | nothing |
-| `corridor_noticeboard` | `blackboard.tscn`, reused as the corridor's board |
-| `corridor_cleaning_trolley`, `corridor_fire_extinguisher` | nothing |
+| `corridor_noticeboard` | **placed**: `props/corridor_noticeboard.tscn` → `corridor.tscn` `CorridorNoticeboard`, replacing the `NoticeboardFrame`/`NoticeboardCork`/`NoticePaperA`/`NoticePaperB` boxes |
+| `corridor_cleaning_trolley`, `corridor_fire_extinguisher` | **placed**: `props/corridor_cleaning_trolley.tscn` → `CorridorTrolley` (replacing `TrolleyBody`/`TrolleyLid`/`TrolleyBucket`) and `props/corridor_fire_extinguisher.tscn` → `CorridorExtinguisher` (replacing `Extinguisher`/`ExtinguisherBracket`); numbers in [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) |
 | `playground_tyre_stack`, `playground_sports_duffel` | nothing (`playground.tscn` already uses the imported bench and backpack) |
 
 So the next round for any of these is the same three steps as pipeline §4: a hand-authored

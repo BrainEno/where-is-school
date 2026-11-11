@@ -252,6 +252,9 @@ jobs:
           run_check painterly_rendering 240 godot --headless --path . --script res://tests/painterly_rendering_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
+          # The corridor's three library models (#90): wrapper, wall/parapet contact,
+          # working face towards the walkway, anchors and routes with the colliders baked in.
+          run_check corridor_props 300 godot --headless --path . --script res://tests/corridor_props_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
           # has to point at a bone that exists on that rig, every clip has to actually move
           # the bone it is about, and the loop has to come back to where it started. The two
