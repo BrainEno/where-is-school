@@ -3,41 +3,23 @@ name: Playthrough capture
 # Runs the real game in a real window under Xvfb, drives it with simulated keys,
 # and saves what the player would see.
 #
-# Three jobs on purpose:
+# Two jobs on purpose:
 # - `capture` runs on pull requests, main and on demand, with **read-only**
-#   permissions. It is a verification job: it fails when the import fails, when the
-#   playthrough does not reach its end marker, or when the evidence it staged is not
-#   shaped the way the publishing step expects.
-# - `publish` only runs for a successful capture on `main`, and is the only place
-#   that is allowed to write. A failed or partial run can therefore never replace
-#   the screenshots that a good run produced. A `workflow_dispatch` run may ask for
-#   the same thing on the branch it was dispatched on (`publish_frames`), which is
-#   how a branch gets real frames to look at before it reaches `main`.
-# - `verify-publish` runs for pull requests against the same artifact and goes
-#   through the same checks with publishing switched off, so the publishing path is
-#   exercised before it is allowed to write anything. Without it, the only place the
-#   publishing step could be tried was `main` itself.
+#   permissions. It fails when the import fails, when the playthrough does not reach
+#   its end marker, or when the evidence it staged is malformed. The capture job always
+#   attempts to upload staged evidence as a downloadable artifact, including on failures.
+# - `verify-evidence` runs for pull requests against the exact artifact produced by
+#   `capture`. It downloads and checks that artifact without modifying the checkout.
+#
+# Captured frames are artifacts, not commits. The older screenshots already in
+# `docs/screenshots/` are left untouched; new runs do not write them back to Git.
 #
 # The artifact has **one** root: `${{ runner.temp }}/evidence`
 #   evidence/logs/import-1.log, import-2.log, capture.log
 #   evidence/docs/screenshots/*.png, PLAYTHROUGH.log, PLAYTHROUGH.md
-# Everything is uploaded from that one directory, so the paths inside the artifact
-# are the same on the way out as on the way in. The previous version uploaded three
-# files in /tmp and one directory in the workspace; the artifact's common root then
-# depended on where the runner keeps its work folder, and the publishing job looked
-# in a directory that was never there ("the capture produced no frames to publish").
-#
-# **The artifact is addressed by id, not by name.** The name used to be the fixed
-# `playthrough-evidence`, and a re-run therefore left two artifacts with that name in
-# one workflow run; `actions/download-artifact` with `name:` may hand back either of
-# them. That is what happened on run 42673597532, attempt 3: the capture job produced a
-# good artifact whose log ends with `RESULT: the playthrough reached the end of the
-# built content.`, and `verify-publish` verified the *previous* attempt's artifact, whose
-# log still held `FAILURE: No second floor point was clickable for the interruption shot`.
-# The upload now carries the attempt number in its name and its id is passed down as the
-# `capture` job's `evidence_artifact_id` output, so both consumers read exactly the
-# artifact this attempt produced — or nothing. The checks themselves are unchanged, and
-# a capture that produced no evidence still fails them.
+# Everything is uploaded from that one directory, so paths are stable when the artifact
+# is downloaded. The artifact is addressed by id, not name: each attempt has a distinct
+# name, and the exact id is passed to PR verification so it cannot read an older attempt.
 
 on:
   push:
@@ -76,13 +58,6 @@ on:
       - "addons/**"
       - "tests/capture_editor_dock.gd"
   workflow_dispatch:
-    inputs:
-      publish_frames:
-        description: >-
-          Commit the captured frames to the branch this run was dispatched on.
-          Ignored on push and pull_request runs.
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -95,9 +70,8 @@ jobs:
     permissions:
       contents: read
     outputs:
-      # The id of the artifact **this attempt** uploaded. Both consumers below download
-      # by id: two attempts of one run share a run id but not an artifact id, so this is
-      # the only handle that cannot resolve to an older attempt's evidence.
+      # The id of the artifact **this attempt** uploaded. PR verification downloads by id,
+      # so a re-run cannot resolve to an older attempt's evidence.
       evidence_artifact_id: ${{ steps.upload_evidence.outputs.artifact-id }}
       shot_count: ${{ steps.capture.outputs.shot_count }}
     steps:
@@ -283,7 +257,7 @@ jobs:
           echo "shot_count=${staged}" >> "$GITHUB_OUTPUT"
           echo "::notice title=playthrough::${summary:-capture finished}"
           # The names, not just the count: which frames a run produced is the first thing
-          # a reviewer asks, and the artifact itself is not readable from a pull request.
+          # a reviewer asks; both the images and the log can be downloaded from the run artifact.
           echo "::notice title=playthrough frames::$(grep -oE 'screenshot [a-z0-9_]+' \
             "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" | sed 's/screenshot //' \
             | tr '\n' ' ' | cut -c-1400)"
@@ -415,7 +389,7 @@ jobs:
             echo "| editor dock frames | ${EDITOR_CAPTURE_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
-            echo "Log: see the run log and the 'playthrough-evidence' artifact."
+            echo "Log and frames: download \`playthrough-evidence-${GITHUB_RUN_ATTEMPT}\` from this workflow run."
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           PARSE_OUTCOME: ${{ steps.parse.outcome }}
@@ -456,6 +430,9 @@ jobs:
             echo "| ${GITHUB_RUN_ID} | ${GITHUB_RUN_ATTEMPT} | ${ARTIFACT_ID:-none} |"
             echo ""
             echo "\`${record}\`"
+            if [ -n "${ARTIFACT_URL:-}" ]; then
+              echo "[Download playthrough evidence](${ARTIFACT_URL})"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
           echo "EVIDENCE_ARTIFACT=${record}"
           if [ -z "${ARTIFACT_ID:-}" ]; then
@@ -463,8 +440,8 @@ jobs:
           fi
           echo "::notice title=evidence artifact::${record} ${ARTIFACT_URL:-}"
 
-  verify-publish:
-    name: Check the publishing path (pull requests only, writes nothing)
+  verify-evidence:
+    name: Verify the playthrough artifact (pull requests only)
     needs: capture
     if: github.event_name == 'pull_request' && needs.capture.result == 'success'
     runs-on: ubuntu-latest
@@ -543,78 +520,3 @@ jobs:
         uses: ./.github/actions/evidence-check
         with:
           evidence: ${{ runner.temp }}/evidence
-          publish: "false"
-
-  publish:
-    name: Commit the frames (main, or a branch on demand)
-    needs: capture
-    # `main` publishes on its own; any other branch only when the run was dispatched with
-    # `publish_frames` set, so a pull request can never replace the committed frames by
-    # itself. In both cases the capture has to have succeeded.
-    if: >-
-      needs.capture.result == 'success'
-      && (github.ref == 'refs/heads/main'
-          || (github.event_name == 'workflow_dispatch' && inputs.publish_frames == true))
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
-
-      - name: Download the artifact
-        uses: actions/download-artifact@v4
-        with:
-          # By id, not by name: see the note at the top of this file.
-          artifact-ids: ${{ needs.capture.outputs.evidence_artifact_id }}
-          path: ${{ runner.temp }}/download
-
-      - name: Put the evidence where the checks look for it
-        shell: bash
-        env:
-          DOWNLOAD: ${{ runner.temp }}/download
-          EVIDENCE: ${{ runner.temp }}/evidence
-        run: |
-          set -o pipefail
-          # A downloaded artifact that is not where the checks look is the failure mode
-          # this step exists for, so every way it can go wrong says so in an annotation
-          # instead of ending as an exit code with no message.
-          echo "download directory: ${DOWNLOAD}"
-          if [ ! -d "${DOWNLOAD}" ]; then
-            echo "::error title=no download directory::${DOWNLOAD} does not exist"
-            exit 1
-          fi
-          echo "downloaded tree:"
-          find "${DOWNLOAD}" -maxdepth 4 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
-          echo "end of downloaded tree"
-          log_path=""
-          while IFS= read -r candidate; do
-            log_path="${candidate}"
-            break
-          done < <(find "${DOWNLOAD}" -type f -name PLAYTHROUGH.log -print 2>/dev/null)
-          if [ -z "${log_path}" ]; then
-            echo "::error title=the artifact holds no playthrough log::no PLAYTHROUGH.log anywhere under ${DOWNLOAD}, so this is not the evidence this job is supposed to check"
-            exit 1
-          fi
-          # PLAYTHROUGH.log lives in <evidence>/docs/screenshots/, so its grandparent is
-          # the folder the checks were written against, whatever depth the download
-          # action chose.
-          root=$(dirname "$(dirname "$(dirname "${log_path}")")")
-          echo "evidence root: ${root}"
-          mkdir -p "${EVIDENCE}"
-          if ! cp -a "${root}/." "${EVIDENCE}/"; then
-            echo "::error title=the evidence could not be staged::copying ${root} into ${EVIDENCE} failed"
-            exit 1
-          fi
-          echo "staged evidence:"
-          find "${EVIDENCE}" -maxdepth 3 -mindepth 1 -print 2>/dev/null | sort | head -n 60 || true
-          echo "end of staged evidence"
-          exit 0
-
-      - name: Verify the structure, then publish
-        uses: ./.github/actions/evidence-check
-        with:
-          evidence: ${{ runner.temp }}/evidence
-          publish: "true"
