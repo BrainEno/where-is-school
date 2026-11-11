@@ -87,16 +87,17 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Shed / roof / door | `#E2D6BC` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
-| Sky: blue / mauve / rose / glow / ground rows | `#647492` / `#847A98` / `#A48492` / `#BAA09E` / `#706C86` |
+| Sky: blue / mauve / rose / glow / ground rows | `#4E5A76` / `#665E7C` / `#7C6474` / `#92787A` / `#423E54` |
 
 Lighting (in `playground.tscn`):
 
 - Sun: same bearing as the graybox (from behind the camera), raised from 12° to 20°.
   The south estate block's dusk shadow is now a deliberate cool block over roughly the
-  gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.85.
+  gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.32
+  (measured from the CI frames: at 0.85 the sunlit ground clipped to white).
 - Ambient: cool `(0.66, 0.64, 0.74)` × 0.8, so shadows go mauve rather than brown.
 - Background: the sky blue.
-- Every sky band stays mid-to-dark, and the sunlit ground stays mid-value: the HUD line
+- The surroundings stay dim, as around a lit stage. Every sky band stays mid-to-dark, and the sunlit ground stays mid-value: the HUD line
   (top left) and the interaction prompts (bottom centre) are pale text and sit exactly
   over them.
 

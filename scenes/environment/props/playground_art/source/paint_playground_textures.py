@@ -51,11 +51,11 @@ RES_DIR = "res://scenes/environment/props/playground_art/textures"
 INK = (43, 38, 34)
 # Sky: the side of a dusk sky facing away from the sun - dusty blue overhead, a rose band
 # low down, a pale glow at the horizon. The sun is behind the camera; the yard looks away.
-SKY_HIGH = (100, 116, 146)
-SKY_MAUVE = (132, 122, 152)
-SKY_BELT = (164, 132, 146)
-SKY_GLOW = (186, 160, 158)
-DISTANT = (112, 108, 134)  # the ground-row silhouettes, one flat value
+SKY_HIGH = (78, 90, 118)
+SKY_MAUVE = (102, 94, 124)
+SKY_BELT = (124, 100, 116)
+SKY_GLOW = (146, 120, 122)
+DISTANT = (66, 62, 84)  # the ground-row silhouettes, one flat value
 # Ground: two pours of concrete, mid-value so a pale shirt and a dark coat both read on it.
 POUR_A = (172, 160, 138)
 POUR_A_LIGHT = (184, 172, 150)
@@ -530,8 +530,8 @@ def sky_floor() -> Image.Image:
         s = rng.uniform(0, SKY_SIZE)
         y = rng.uniform(0, SKY_SIZE)
         clouds.append(([(s, y), (s + rng.uniform(25, 60), y + rng.uniform(-2, 2))], rng.uniform(2.5, 6.0), {"bristles": 10, "dryness": 0.6, "wobble_m": 0.5}))
-    c.brush(rgb((116, 132, 160)), clouds[0::2], opacity=0.5)
-    c.brush(rgb((88, 104, 134)), clouds[1::2], opacity=0.45)
+    c.brush(rgb((92, 104, 132)), clouds[0::2], opacity=0.5)
+    c.brush(rgb((66, 78, 104)), clouds[1::2], opacity=0.45)
     # Clouds only out in the blue, never in the warm bands along the yard's edge.
     far = smoothstep(16.0, 28.0, d)[..., None]
     c.rgb = before * (1.0 - far) + c.rgb * far
