@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/character_pigment.gdshader" id="1_character"]
+
+[resource]
+resource_name = "Character Pigment Study — Preserve Authored Palette"
+shader = ExtResource("1_character")
+shader_parameter/base_color = Color(0.55, 0.46, 0.39, 1)
+shader_parameter/use_base_texture = false
+shader_parameter/pigment_wobble = 0.018
+shader_parameter/pigment_scale = 1.4

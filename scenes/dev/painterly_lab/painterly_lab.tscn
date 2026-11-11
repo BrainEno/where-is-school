@@ -1,0 +1,157 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/painterly_lab/painterly_lab.gd" id="1_lab_script"]
+[ext_resource type="PackedScene" path="res://scenes/dev/painterly_lab/environment_sample.tscn" id="2_sample"]
+[ext_resource type="PackedScene" path="res://assets/models/protagonist/protagonist.glb" id="3_protagonist"]
+
+[sub_resource type="Environment" id="Environment_lab"]
+background_mode = 1
+background_color = Color(0.37, 0.39, 0.4, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.73, 0.7, 0.63, 1)
+ambient_light_energy = 0.58
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_saturation = 0.92
+adjustment_contrast = 1.03
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(80, 80)
+
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.29, 0.31, 0.3, 1)
+roughness = 1.0
+
+[node name="PainterlyLab" type="Node3D"]
+script = ExtResource("1_lab_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_lab")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -30, 0)
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 0.9
+shadow_enabled = true
+directional_shadow_max_distance = 32.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(1.8, 6.6, 10.4)
+current = true
+fov = 60.0
+far = 120.0
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(1.5, -0.2, 0)
+mesh = SubResource("PlaneMesh_ground")
+material_override = SubResource("Material_ground")
+
+[node name="Samples" type="Node3D" parent="."]
+
+[node name="Standard" parent="Samples" instance=ExtResource("2_sample")]
+position = Vector3(-5, 0, 0)
+
+[node name="ColorFields" parent="Samples" instance=ExtResource("2_sample")]
+position = Vector3(0, 0, 0)
+
+[node name="FieldsMarksContour" parent="Samples" instance=ExtResource("2_sample")]
+position = Vector3(5, 0, 0)
+
+[node name="StandardLabel" type="Label3D" parent="Samples"]
+position = Vector3(-5, 3.0, 0)
+billboard = 1
+fixed_size = true
+font_size = 48
+outline_size = 5
+pixel_size = 0.004
+text = "01  Standard"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="FieldsLabel" type="Label3D" parent="Samples"]
+position = Vector3(0, 3.0, 0)
+billboard = 1
+fixed_size = true
+font_size = 48
+outline_size = 5
+pixel_size = 0.004
+text = "02  Color fields"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="InkedLabel" type="Label3D" parent="Samples"]
+position = Vector3(5, 3.0, 0)
+billboard = 1
+fixed_size = true
+font_size = 48
+outline_size = 5
+pixel_size = 0.004
+text = "03  Marks + contour"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="Characters" type="Node3D" parent="."]
+
+[node name="AuthoredPalette" parent="Characters" instance=ExtResource("3_protagonist")]
+position = Vector3(8.2, 0, 0.2)
+
+[node name="CharacterPigment" parent="Characters" instance=ExtResource("3_protagonist")]
+position = Vector3(10.15, 0, 0.2)
+
+[node name="AuthoredCharacterLabel" type="Label3D" parent="Characters"]
+position = Vector3(8.2, 2.35, 0.2)
+billboard = 1
+fixed_size = true
+font_size = 38
+outline_size = 4
+pixel_size = 0.004
+text = "Authored palette"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="PigmentCharacterLabel" type="Label3D" parent="Characters"]
+position = Vector3(10.15, 2.35, 0.2)
+billboard = 1
+fixed_size = true
+font_size = 38
+outline_size = 4
+pixel_size = 0.004
+text = "Subtle pigment"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="Benchmark" type="Node3D" parent="."]
+visible = false
+
+[node name="StressBatch" type="MultiMeshInstance3D" parent="Benchmark"]
+
+[node name="BenchmarkLabel" type="Label3D" parent="Benchmark"]
+position = Vector3(0, 5.0, 0)
+billboard = 1
+fixed_size = true
+font_size = 52
+outline_size = 5
+pixel_size = 0.004
+text = "144 identical instances — one material tier at a time"
+modulate = Color(0.96, 0.88, 0.72, 1)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="ColorRect" parent="HUD"]
+offset_right = 680.0
+offset_bottom = 166.0
+color = Color(0.035, 0.045, 0.045, 0.86)
+mouse_filter = 2
+
+[node name="Stats" type="Label" parent="HUD/Panel"]
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 662.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(0.94, 0.91, 0.82, 1)
+theme_override_font_sizes/font_size = 16
+text = "Painterly Lab — 1600 x 900\nFPS: --  |  process: -- ms  |  draw calls: --\nObjects: --  |  primitives: --"
+
+[node name="Help" type="Label" parent="HUD/Panel"]
+offset_left = 14.0
+offset_top = 112.0
+offset_right = 662.0
+offset_bottom = 158.0
+theme_override_colors/font_color = Color(0.78, 0.77, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "F11: fullscreen   B: benchmark   1/2/3: tier   Enter: timed A/B/C"
