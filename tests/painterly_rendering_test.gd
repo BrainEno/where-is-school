@@ -29,7 +29,7 @@ func _run() -> void:
 		await _finish("")
 		return
 
-	var packed_reference := weakref(packed)
+	var packed_reference: WeakRef = weakref(packed)
 	var lab: Node = packed.instantiate()
 	if lab == null:
 		_failures.append("The independent painterly lab scene could not be instantiated.")
@@ -49,7 +49,7 @@ func _run() -> void:
 	var migration_references := _check_material_migration(lab)
 	_check_benchmark_geometry(lab)
 
-	var lab_reference := weakref(lab)
+	var lab_reference: WeakRef = weakref(lab)
 	lab.queue_free()
 	await process_frame
 	await process_frame
@@ -346,8 +346,8 @@ func _check_outline_policy(lab: Node) -> void:
 		"A plate thinner than two world-space line widths should skip the contour pass."
 	)
 
-	var transformed_reference := weakref(transformed_probe)
-	var thin_reference := weakref(thin_probe)
+	var transformed_reference: WeakRef = weakref(transformed_probe)
+	var thin_reference: WeakRef = weakref(thin_probe)
 	transformed_probe.queue_free()
 	thin_probe.queue_free()
 	await process_frame
@@ -360,7 +360,7 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 	image.fill(Color(0.2, 0.55, 0.82, 1.0))
 	var texture := ImageTexture.create_from_image(image)
 	texture.resource_name = "Painterly material-migration fixture"
-	var texture_reference := weakref(texture)
+	var texture_reference: WeakRef = weakref(texture)
 
 	var environment_shader := ResourceLoader.load(ENVIRONMENT_SHADER_PATH) as Shader
 	var character_shader := ResourceLoader.load(CHARACTER_SHADER_PATH) as Shader
@@ -375,9 +375,9 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 	environment_destination.shader = environment_shader
 	var character_destination := ShaderMaterial.new()
 	character_destination.shader = character_shader
-	var source_reference := weakref(source)
-	var environment_reference := weakref(environment_destination)
-	var character_reference := weakref(character_destination)
+	var source_reference: WeakRef = weakref(source)
+	var environment_reference: WeakRef = weakref(environment_destination)
+	var character_reference: WeakRef = weakref(character_destination)
 
 	_expect(
 		bool(lab.call("_copy_base_material", source, environment_destination)),
@@ -420,7 +420,7 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 	var unsupported_shader_source := ShaderMaterial.new()
 	unsupported_shader_source.shader = environment_shader
 	unsupported_shader_source.resource_name = "Unsupported shader material fixture"
-	var unsupported_source_reference := weakref(unsupported_shader_source)
+	var unsupported_source_reference: WeakRef = weakref(unsupported_shader_source)
 	_expect(
 		not bool(
 			lab.call("_copy_base_material", unsupported_shader_source, unsupported_destination)
@@ -429,10 +429,10 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 	)
 	var unsupported_root := Node3D.new()
 	unsupported_root.visible = false
-	var unsupported_root_reference := weakref(unsupported_root)
+	var unsupported_root_reference: WeakRef = weakref(unsupported_root)
 	var unsupported_mesh := MeshInstance3D.new()
 	unsupported_mesh.name = "UnsupportedMaterialProbe"
-	var unsupported_mesh_reference := weakref(unsupported_mesh)
+	var unsupported_mesh_reference: WeakRef = weakref(unsupported_mesh)
 	unsupported_mesh.mesh = BoxMesh.new()
 	unsupported_mesh.material_override = unsupported_shader_source
 	unsupported_root.add_child(unsupported_mesh)
@@ -455,18 +455,18 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 	var second_surface_source := StandardMaterial3D.new()
 	second_surface_source.resource_name = "Second painterly surface fixture"
 	second_surface_source.albedo_color = Color(0.84, 0.26, 0.13, 1.0)
-	var second_surface_reference := weakref(second_surface_source)
+	var second_surface_reference: WeakRef = weakref(second_surface_source)
 	var multi_surface_mesh := ArrayMesh.new()
 	_add_triangle_surface(multi_surface_mesh, source)
 	_add_triangle_surface(multi_surface_mesh, second_surface_source)
-	var multi_surface_reference := weakref(multi_surface_mesh)
+	var multi_surface_reference: WeakRef = weakref(multi_surface_mesh)
 	var multi_surface_root := Node3D.new()
 	multi_surface_root.visible = false
-	var multi_surface_root_reference := weakref(multi_surface_root)
+	var multi_surface_root_reference: WeakRef = weakref(multi_surface_root)
 	var multi_surface_probe := MeshInstance3D.new()
 	multi_surface_probe.name = "MultiSurfaceMaterialProbe"
 	multi_surface_probe.mesh = multi_surface_mesh
-	var multi_surface_probe_reference := weakref(multi_surface_probe)
+	var multi_surface_probe_reference: WeakRef = weakref(multi_surface_probe)
 	multi_surface_root.add_child(multi_surface_probe)
 	lab.add_child(multi_surface_root)
 	lab.call("_apply_environment_style", multi_surface_root, environment_template, false)
@@ -538,7 +538,7 @@ func _check_material_migration(lab: Node) -> Array[WeakRef]:
 		"Transparent albedo was silently treated as opaque."
 	)
 
-	var unsupported_reference := weakref(unsupported_destination)
+	var unsupported_reference: WeakRef = weakref(unsupported_destination)
 	source.albedo_texture = null
 	triplanar_source.albedo_texture = null
 	filtered_source.albedo_texture = null
