@@ -158,7 +158,9 @@ through `.godot/imported/…` and stop falling back to the source file:
 
 ## 8. Not in this round
 
-- No animation, no LOD, no lightmap UVs.
+- Character locomotion is supplied by the project's code-authored idle/walk clips and
+  wrapper-level animation driver; the GLBs do not embed animation actions. No LOD or
+  lightmap UVs yet.
 - **No performance budget.** A triangle budget for a prop, a character or a room needs
   a measurement on the target Windows machine, and none has been made. The numbers in
   this document are placeholder sanity limits for the graybox, not a performance claim.
@@ -249,7 +251,7 @@ hidden. The companion record is
 | School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
 | Protagonist | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/protagonist.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D` + `InteractionAnchor` |
-| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.662 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor` |
+| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.662 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor`; 16-bone rig |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a
