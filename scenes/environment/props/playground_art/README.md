@@ -46,25 +46,26 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 - **Sky and distance.** The game camera looks down at about 53° from the south-east, so
   past the open west edge it sees *below* the horizon. The dusk sky is laid flat under
   the yard as a painted floor (`sky_floor.png`), in bands by distance from the yard edge:
-  pale glow, rose, mauve, then dusty blue. Four flat cut-out ground rows stand on it at
+  dim glow, rose, mauve, then dusty blue. Four flat cut-out ground rows stand on it at
   x ≤ −25 m:
   - flats
   - water tower
   - chimney
   - pylon and trees
   - All are unlit, cast no shadows and never sit between the camera and the player.
-- **Ground.** Two pours of mid-value concrete. The older pour is warm sand; the newer
+- **Ground.** Two pours of low-value concrete: the stage floor stays dark so the court,
+  the props and the pale HUD text carry the light. The older pour is warm sand; the newer
   pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up
   through the court paint. The near hoop stands in a cooler patch of newer concrete with
   four filled bolt holes.
 - **Court.** Oxide-red paint with hand-brushed bone lines and dusty-blue keys (one key
-  outline does not quite close). The far half is darker: it was painted later. In the
+  outline, in a dimmer bone, does not quite close). The far half is darker: it was painted later. In the
   graybox, `CourtFarHalf` sat 1 mm *under* the court surface; it now sits above it.
 - **A few isolated colour accents**, each on something the player is meant to find:
   - the yellow climbing frame and hoop rings
   - the green shed door, with its hasp and brass padlock
   - the red fire door (the way back into the school)
-  - the ochre block under the bench and the bag
+  - the deep ochre block under the bench and the bag (saturated rather than light)
   - Everything else is big quiet planes:
     - school wall: sage teal
     - shed: ivory
@@ -81,29 +82,50 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Role | Colour |
 | --- | --- |
 | Ink (lines, metal) | `#2B2622` / `#3A3430` |
-| Older pour / newer pour / hoop patch | `#ACA08A` / `#A09A8E` / `#8B8C88` |
-| Court / far half / keys / lines | `#985642` / darker ×0.84 / `#5C6C80` / `#DED6C0` |
+| Older pour / newer pour / hoop patch | `#6B6356` / `#635F58` / `#51514F` |
+| Court / far half / keys / key outline / lines | `#985642` / darker ×0.84 / `#505E72` / `#B0A896` / `#DED6C0` |
+| Block under the bench | `#846030` |
 | School wall / plinth | `#789694` / `#DCD0B4` |
 | Shed / roof / door | `#CCBEA4` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
-| Sky: blue / mauve / rose / glow / ground rows | `#4E5A76` / `#665E7C` / `#7C6474` / `#92787A` / `#423E54` |
+| Sky: blue / mauve / rose / glow / ground rows | `#404A64` / `#544C68` / `#64505E` / `#685456` / `#2C283A` |
 
 Lighting (in `playground.tscn`):
 
 - Sun: same bearing as the graybox (from behind the camera), raised from 12° to 20°.
   The south estate block's dusk shadow is now a deliberate cool block over roughly the
-  gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.32
-  (measured from the CI frames: at 0.85 the sunlit ground clipped to white).
+  gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.2.
 - Ambient: cool `(0.66, 0.64, 0.74)` × 0.8, so shadows go mauve rather than brown.
-- Filmic tonemap, exposure 0.62. Measured from the CI frames at exposure 1.0: the
-  shadowed ground sat at about sRGB 127 and the sunlit ground at 215 to 250, so the
-  pale albedos had no headroom. One exposure value scales everything evenly and keeps
-  the authored palette ratios intact.
-- Background: the sky blue.
-- The surroundings stay dim, as around a lit stage. Every sky band stays mid-to-dark,
-  and the sunlit ground stays mid-value: the HUD line (top left) and the interaction prompts (bottom centre) are pale text and sit exactly
-  over them.
+- Filmic tonemap, exposure 0.62. Background: the sky blue, dimmed.
+
+### HUD readability
+
+The top-left sentence (`ObjectiveLabel`, sRGB about `#C6BBA4`) and the interaction prompt
+(`PromptLabel`, `#DBD4BF`) are pale text with no outline, drawn by the global UI, which
+this slice may not change. The prompt sits over the ground just in front of the player,
+wherever the player is; the sentence sits over whatever lies about 15 m north-west of them.
+So the floor and the sky are kept dark enough for both:
+
+| Surface (sunlit, brightest tenth) | Estimated on screen | Prompt | Sentence |
+| --- | --- | --- | --- |
+| Ground / newer pour / hoop patch | L 0.077 / 0.068 / 0.061 | 5.6 / 6.0 / 6.4 | 4.4 / 4.7 / 5.0 |
+| Court / keys / bench block | L 0.094 / 0.095 / 0.089 | 4.9 / 4.9 / 5.1 | 3.8 / 3.8 / 4.0 |
+| Sky floor (unlit) | L 0.078 | 5.5 | 4.3 |
+
+Contrast is the WCAG ratio; the targets are 4.5 for the prompt and 3.5 for the sentence.
+The estimate is albedo × (ambient + toon-lit Sun) × exposure through Godot's Filmic curve.
+Against the CI frames of three lighting rounds it matched the measured ground within
+4 sRGB levels. `tests/playground_art_slice_test.gd` (claim 10) runs it from every standing
+spot with the real camera: it casts rays through the text positions, checks for shadow
+towards the Sun, and fails if the floor or the sky behind the text drops below the target.
+
+Not covered: the sunlit faces of the pale standing things. These are the ivory shed walls,
+the plinth and the south face of the school wall, at roughly 1.2–2.5 against the
+sentence. The test reports them but does not fail on them. Darkening them as well would
+put the whole yard in murk and lose the few lit objects the composition is built on. A text
+shadow or backing on the HUD would solve it everywhere, but that belongs to the UI, not to
+this slice.
 
 ## Triplanar conventions
 

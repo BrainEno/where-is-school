@@ -1,37 +1,32 @@
 extends SceneTree
 ## The schoolyard art slice: the painted yard is still the yard it was.
 ##
-## Issue #82 replaced the graybox schoolyard's look - a painted ground with two pours and
-## the seam between them, a hand-painted court, a local colour system, a flat painted
-## distance past the open west edge, ring tyres, hoop rings and the far hoop's net - and
-## none of it may cost the yard anything a player relies on. The claims under test:
+## Issue #82 repainted the graybox schoolyard (painted pours and seam, a hand-painted court,
+## a local colour system, a flat painted distance, ring tyres, hoop rings, the far net). None
+## of it may cost the yard anything a player relies on. The claims under test:
 ##
-## 1. **Same yard.** Every collision body stands where it stood at the slice's base commit
-##    with the same shape; every interactable, exit and spawn point keeps its id, its
-##    position and (for exits) its destination; Sun, WorldEnvironment and Navigation
-##    still exist.
-## 2. **No new solids.** The only collision bodies outside Interactables/ are the 33 the
-##    graybox has. Decoration that collided would carve the baked navigation mesh and
-##    block the interaction rays.
-## 3. **Its own colour system.** Every drawn surface of the yard (the imported bench and
-##    bag models aside) uses a material from `scenes/environment/props/playground_art/`,
-##    and nothing reaches into the shared `assets/materials/` or the Shader Agent's
-##    painterly folders.
-## 4. **Dressing fades with its wall.** The decals painted on the school wall and on the
-##    container are children of those occluder bodies, so the camera fades them together.
+## 1. **Same yard.** Every collision body, interactable, exit and spawn keeps its place, shape,
+##    id and destination from the base commit; Sun, WorldEnvironment and Navigation exist.
+## 2. **No new solids.** Only the graybox's 33 bodies collide outside Interactables/:
+##    colliding decoration would carve the navigation mesh and block interaction rays.
+## 3. **Its own colour system.** Every drawn surface (the imported bench and bag aside) uses a
+##    material from `playground_art/`; nothing reaches into `assets/materials/` or the Shader
+##    Agent's painterly folders.
+## 4. **Dressing fades with its wall.** Decals on the school wall and the container are
+##    children of those occluders, so the camera fades them together.
 ## 5. **Textures within budget**, all from the slice's own texture folder.
-## 6. **Hierarchy.** The broad planes (ground, school wall) stay quiet, and the things the
-##    player is meant to find separate from what stands behind them.
-## 7. **The texts are true.** What the inspections and conversations describe - a green
-##    shed door with a hasp and padlock, a newer concrete patch round the near hoop and no
-##    net on it, a net on the far hoop, the seam, the darker far half of the court, the
-##    pale strip under the hedge, the duty sheet in the shed window - is drawn.
-## 8. **The real camera.** From the game's own camera rig, nothing the slice added stands
-##    between the camera and the player anywhere on the walkable yard, nor between the
-##    camera and an interactable when the player walks up to it; the painted distance
-##    stays outside the walkable yard and casts no shadows.
-## 9. **Navigation.** The baked mesh has the polygon count it had at the base commit and
-##    reaches every interactable and exit from the gate.
+## 6. **Hierarchy.** Broad planes stay quiet; what the player looks for stands out.
+## 7. **The texts are true.** The green shed door with hasp and padlock, the newer concrete
+##    round the near hoop and its missing net, the far hoop's net, the seam, the darker far
+##    court half, the pale strip under the hedge, the duty sheet in the shed window: drawn.
+## 8. **The real camera.** From the game's camera rig, nothing the slice added stands between
+##    the camera and the player anywhere on the walkable yard, or between the camera and an
+##    interactable the player walks up to; the painted distance stays out and casts no shadow.
+## 9. **Navigation.** The baked mesh keeps the base polygon count and reaches every
+##    interactable and exit from the gate.
+## 10. **The HUD stays readable.** From every standing spot, rays through the pale HUD text
+##    find what lies behind it; its estimated luminance gives the prompt a WCAG contrast of
+##    4.5 and the top-left sentence 3.5 wherever that is the yard floor or the sky.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -89,14 +84,10 @@ const OCCLUDERS: Array[String] = [
 	"EstateBlockEast", "ShedBody", "ContainerBody",
 ]
 const INTERACTABLES := {
-	"pg_hoop_near": Vector3(-8.0, 1.4, 8.8),
-	"pg_court_middle": Vector3(0.0, 0.9, 2.0),
-	"pg_bench_look": Vector3(10.2, 1.0, 3.2),
-	"pg_frame_look": Vector3(17.0, 1.4, 9.0),
-	"pg_shed_door": Vector3(-13.2, 1.1, -4.0),
-	"pg_ball_look": Vector3(-14.2, 0.8, 0.6),
-	"pg_board_look": Vector3(13.2, 1.7, 3.2),
-	"pg_container_look": Vector3(12.0, 1.4, -13.9),
+	"pg_hoop_near": Vector3(-8.0, 1.4, 8.8), "pg_court_middle": Vector3(0.0, 0.9, 2.0),
+	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
+	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
+	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(12.0, 1.4, -13.9),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
 }
 ## [position, destination scene, destination spawn, milestone end].
@@ -111,8 +102,7 @@ const EXITS := {
 	"pg_gap_in_fence": [Vector3(-14.0, 0.9, -18.2), "", &"default", true],
 }
 const SPAWNS := {
-	"FromAlley": Vector3(0.0, 0.0, 16.0),
-	"FromCorridor": Vector3(-3.0, 0.0, -17.6),
+	"FromAlley": Vector3(0.0, 0.0, 16.0), "FromCorridor": Vector3(-3.0, 0.0, -17.6),
 	"FromSchool": Vector3(-3.0, 0.0, -17.4),
 }
 ## The baked navigation at base commit 359ed4a (Godot CI run 43014461771).
@@ -142,11 +132,21 @@ const SMALL_PIECE := 0.5
 const SCREEN_HEIGHT := 900.0
 const SCREEN_WIDTH := 1600.0
 
+## Where the text sits at 1600 x 900 (game_ui.tscn offsets; the project's base viewport).
+const HUD_SAMPLES := {"PromptLabel": [Vector2(640, 842), Vector2(800, 842), Vector2(960, 842)],
+	"ObjectiveLabel": [Vector2(70, 57), Vector2(240, 57), Vector2(410, 57)]}
+const HUD_MIN_CONTRAST := {"PromptLabel": 4.5, "ObjectiveLabel": 3.5}
+## The surfaces the yard floor is made of. Court lines and the seam are left out: they are
+## narrower than a letter. Lit walls and props are reported, not failed (see the README).
+const FLOOR_MATERIALS: Array[String] = ["ground", "pour_b", "hoop_patch", "bench_patch",
+	"court", "court_far", "court_key", "concrete", "concrete_patch"]
+
 var _failures: Array[String] = []
 var _notes: Array[String] = []
 var _main: Node = null
 var _player: PlayerController = null
 var _yard: Node3D = null
+var _albedo_cache := {}
 
 
 func _initialize() -> void:
@@ -717,10 +717,12 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 
 	var blocked: Array[String] = []
 	var grazed := {}
+	var hud := _hud_context()
 	for spot in spots:
 		_player.teleport(Transform3D(Basis(), spot))
 		rig.snap()
 		var eye := camera.global_position
+		_sample_hud(camera, spot, hud)
 		for height in BODY_HEIGHTS:
 			var what := "the player at %s (h %.1f)" % [str(spot), height]
 			_test_segment(boxes, eye, spot + Vector3(0.0, height, 0.0), what, blocked, grazed)
@@ -737,6 +739,7 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 		var label := "'%s'" % String(child.get("interact_id"))
 		_test_segment(boxes, camera.global_position, node.global_position, label, blocked, grazed)
 
+	_report_hud(hud)
 	for line in blocked.slice(0, 8):
 		_failures.append(line)
 	if blocked.size() > 8:
@@ -756,6 +759,175 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 		"%d standing spots, %d art pieces checked; small pieces crossing a sight line: %s; "
 		% [spots.size(), boxes.size(), ", ".join(grazed_names) if not grazed_names.is_empty() else "none"]
 		+ "player %.0f px at %dx%d" % [player_pixels, int(SCREEN_WIDTH), int(SCREEN_HEIGHT)]
+	)
+
+
+# --- 10. the HUD over the yard. Calibrated on the CI frames of rounds 2-4 (exposure 1.0 /
+# 0.62, Sun 0.85 / 0.32): it matched the measured ground, lit and shaded, within 4 sRGB levels.
+
+
+func _hud_context() -> Dictionary:
+	var env := (_yard.get_node(^"WorldEnvironment") as WorldEnvironment).environment
+	var sun := _yard.get_node(^"Sun") as DirectionalLight3D
+	if env.tonemap_mode != Environment.TONE_MAPPER_FILMIC or env.ambient_light_source != 2:
+		_failures.append("The HUD contrast estimate assumes Filmic and a flat ambient colour.")
+	var text := {}
+	for label_name: String in HUD_SAMPLES:
+		var label := _main.find_child(label_name, true, false) as Label
+		if label == null:
+			_failures.append("The HUD has no %s to check." % label_name)
+		else:
+			text[label_name] = _luminance(label.get_theme_color(&"font_color").srgb_to_linear())
+	var exclude: Array[RID] = []
+	for body in _main.find_children("*", "CharacterBody3D", true, false):
+		exclude.append((body as CharacterBody3D).get_rid())
+	var paints := []  # [floor box, material, brightness], for the decals lying on the yard
+	for node in _descendants(_yard):
+		var mesh := node as MeshInstance3D
+		var material := (mesh.material_override if mesh != null else null) as BaseMaterial3D
+		if material == null or not mesh.is_visible_in_tree() or not FLOOR_MATERIALS.has(_name(material)):
+			continue
+		var box := mesh.global_transform * mesh.get_aabb()
+		if box.end.y < 0.1 and box.position.y > -0.1:
+			paints.append([box, material, _luminance(_bright_albedo(material))])
+	return {
+		"ambient": env.ambient_light_color.srgb_to_linear() * env.ambient_light_energy,
+		"sun": sun.light_color.srgb_to_linear() * sun.light_energy * PI,
+		"to_sun": sun.global_basis.z.normalized(), "paints": paints,
+		"exposure": env.tonemap_exposure, "white": env.tonemap_white, "text": text,
+		"space": _yard.get_world_3d().direct_space_state, "exclude": exclude,
+		"worst": {}, "loose": {}, "samples": 0, "low_loose": 0,
+	}
+
+
+func _sample_hud(camera: Camera3D, spot: Vector3, hud: Dictionary) -> void:
+	var scale := (SCREEN_HEIGHT * 0.5) / tan(deg_to_rad(camera.fov) * 0.5)
+	for label_name: String in hud.text:
+		for pixel: Vector2 in HUD_SAMPLES[label_name]:
+			var local := Vector3(pixel.x - SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5 - pixel.y, -scale)
+			var hit := _hud_hit(hud, camera.global_position, camera.global_basis * local.normalized())
+			var contrast: float = (hud.text[label_name] + 0.05) / (hit[1] + 0.05)
+			var key := "%s over %s" % [label_name, hit[0]]
+			hud.samples += 1
+			if hit[0] == "sky" or FLOOR_MATERIALS.has(hit[0]):
+				if contrast < float(hud.worst.get(label_name, [99.0])[0]):
+					hud.worst[label_name] = [contrast, key, spot]
+				continue
+			if contrast < 3.0:  # lit walls and props: reported, not failed
+				hud.loose[key] = minf(contrast, float(hud.loose.get(key, 99.0)))
+				hud.low_loose += 1
+
+
+## [material name or "sky", estimated luminance] of what the ray first shows.
+func _hud_hit(hud: Dictionary, origin: Vector3, direction: Vector3) -> Array:
+	var exclude: Array[RID] = Array(hud.exclude, TYPE_RID, &"", null)
+	for _attempt in 6:
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 400.0)
+		query.exclude = exclude
+		var result: Dictionary = hud.space.intersect_ray(query)
+		if result.is_empty():
+			var sky := load(ART_MATERIALS + "sky_floor.tres") as BaseMaterial3D
+			return ["sky", _shade(hud, sky, Vector3.UP, false)]
+		var body := result.collider as CollisionObject3D
+		var material: BaseMaterial3D = null
+		for child in body.get_children():
+			var mesh := child as MeshInstance3D
+			if material == null and mesh != null and mesh.visible and mesh.mesh != null:
+				var own: Material = mesh.material_override
+				material = (own if own != null else mesh.mesh.surface_get_material(0)) as BaseMaterial3D
+		if material == null or material.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+			exclude.append(body.get_rid())  # an invisible blocker or a see-through fence
+			continue
+		var point: Vector3 = result.position
+		if body.name == &"YardGround":  # the brightest paint whose box covers the point
+			var best := _luminance(_bright_albedo(material))
+			for paint: Array in hud.paints:
+				var box: AABB = paint[0]
+				var inside := point.x >= box.position.x and point.x <= box.end.x
+				if inside and point.z >= box.position.z and point.z <= box.end.z and paint[2] > best:
+					material = paint[1]
+					best = paint[2]
+		var shadow := PhysicsRayQueryParameters3D.create(
+			point + result.normal * 0.05, point + hud.to_sun * 120.0
+		)
+		shadow.exclude = hud.exclude
+		var lit: bool = hud.space.intersect_ray(shadow).is_empty()
+		return [_name(material), _shade(hud, material, result.normal, lit)]
+	return ["sky", 0.0]
+
+
+func _name(material: Resource) -> String:
+	return material.resource_path.get_file().get_basename()
+
+
+## Relative luminance on screen: albedo x (ambient + toon-lit Sun) x exposure, Filmic.
+func _shade(hud: Dictionary, material: BaseMaterial3D, normal: Vector3, lit: bool) -> float:
+	var light := Color.WHITE
+	if material.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED:
+		light = hud.ambient
+		if lit:
+			var rough := maxf(material.roughness, 0.01)
+			light += hud.sun * smoothstep(-rough, rough, normal.dot(hud.to_sun))
+	var c := _bright_albedo(material) * light * float(hud.exposure)
+	var w: float = hud.white
+	return _luminance(Color(_filmic(c.r, w), _filmic(c.g, w), _filmic(c.b, w)))
+
+
+func _filmic(x: float, white: float) -> float:
+	var curve := func(v: float) -> float:
+		return (v * (0.88 * v + 0.06) + 0.002) / (v * (0.88 * v + 0.6) + 0.06) - 0.01 / 0.3
+	return clampf(curve.call(x) / curve.call(white), 0.0, 1.0)
+
+
+## Linear albedo of the material's brightest tenth, in patches about a letter high
+## (1/16 of the texture), so thin painted lines do not count as a light area.
+func _bright_albedo(material: BaseMaterial3D) -> Color:
+	if _albedo_cache.has(material.resource_path):
+		return _albedo_cache[material.resource_path]
+	var colour := material.albedo_color.srgb_to_linear()
+	var image := Image.new()
+	var texture := material.albedo_texture
+	if texture != null and image.load(ProjectSettings.globalize_path(texture.resource_path)) == OK:
+		image.convert(Image.FORMAT_RGBA8)
+		var block := maxi(1, image.get_width() / 16)
+		var patches: Array[Color] = []
+		for by in range(0, image.get_height() - block + 1, block):
+			for bx in range(0, image.get_width() - block + 1, block):
+				var sum := Color(0, 0, 0, 0)
+				var total := 0
+				for y in range(by, by + block, 2):
+					for x in range(bx, bx + block, 2):
+						total += 1
+						var pixel := image.get_pixel(x, y)
+						if pixel.a > 0.5:
+							sum += Color(pixel.srgb_to_linear(), 1.0)
+				if sum.a * 2.0 >= total:
+					patches.append(Color(sum.r / sum.a, sum.g / sum.a, sum.b / sum.a))
+		patches.sort_custom(func(a: Color, b: Color) -> bool: return _luminance(a) < _luminance(b))
+		if not patches.is_empty():
+			var bright := patches[int(0.9 * (patches.size() - 1))]
+			colour = Color(colour.r * bright.r, colour.g * bright.g, colour.b * bright.b)
+	_albedo_cache[material.resource_path] = colour
+	return colour
+
+
+func _report_hud(hud: Dictionary) -> void:
+	var parts: Array[String] = []
+	for label_name: String in HUD_MIN_CONTRAST:
+		var worst: Array = hud.worst.get(label_name, [0.0, label_name + " over nothing", Vector3.ZERO])
+		parts.append("%s %.2f" % [worst[1], worst[0]])
+		if worst[0] < HUD_MIN_CONTRAST[label_name]:
+			_failures.append(
+				"%s: contrast %.2f at %s (need %.1f)."
+				% [worst[1], worst[0], str(worst[2]), HUD_MIN_CONTRAST[label_name]]
+			)
+	var loose: Array[String] = []
+	for key: String in hud.loose:
+		loose.append("%s %.2f" % [key, hud.loose[key]])
+	_notes.append(
+		"HUD contrast estimate, worst over floor/sky: %s; lit walls/props under 3.0: %s (%d of %d)"
+		% [", ".join(parts), ", ".join(loose) if not loose.is_empty() else "none",
+			hud.low_loose, hud.samples]
 	)
 
 

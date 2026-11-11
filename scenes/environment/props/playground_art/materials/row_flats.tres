@@ -9,6 +9,6 @@ alpha_scissor_threshold = 0.5
 cull_mode = 2
 shading_mode = 0
 disable_receive_shadows = true
-albedo_color = Color(0.259, 0.243, 0.329, 1)
+albedo_color = Color(0.173, 0.157, 0.227, 1)
 albedo_texture = ExtResource("2_tex")
 texture_filter = 3

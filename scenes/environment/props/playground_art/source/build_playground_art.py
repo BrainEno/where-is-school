@@ -72,7 +72,7 @@ BRASS = (190, 150, 62)
 CONTAINER = (66, 86, 120)
 SHUTTER = (52, 68, 96)
 ESTATE = (128, 104, 116)
-DISTANT = (66, 62, 84)
+DISTANT = (44, 40, 58)
 PALE = (226, 216, 190)
 BALL = (240, 236, 226)
 
@@ -242,14 +242,14 @@ HIDE = re.compile(r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|T
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
-background_color = Color(0.306, 0.353, 0.463, 1)
+background_color = Color(0.239, 0.275, 0.361, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.66, 0.64, 0.74, 1)
 ambient_light_energy = 0.8
 tonemap_mode = 2
 tonemap_exposure = 0.62
 fog_enabled = true
-fog_light_color = Color(0.4, 0.38, 0.48, 1)
+fog_light_color = Color(0.32, 0.3, 0.38, 1)
 fog_density = 0.003
 adjustment_enabled = true
 adjustment_saturation = 0.98
@@ -259,7 +259,7 @@ adjustment_contrast = 1.04
 SUN = """[node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-20, 32, 0)
 light_color = Color(1, 0.8, 0.62, 1)
-light_energy = 0.32
+light_energy = 0.2
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 """

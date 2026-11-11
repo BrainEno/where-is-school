@@ -51,29 +51,34 @@ RES_DIR = "res://scenes/environment/props/playground_art/textures"
 INK = (43, 38, 34)
 # Sky: the side of a dusk sky facing away from the sun - dusty blue overhead, a rose band
 # low down, a pale glow at the horizon. The sun is behind the camera; the yard looks away.
-SKY_HIGH = (78, 90, 118)
-SKY_MAUVE = (102, 94, 124)
-SKY_BELT = (124, 100, 116)
-SKY_GLOW = (146, 120, 122)
-DISTANT = (66, 62, 84)  # the ground-row silhouettes, one flat value
-# Ground: two pours of concrete, mid-value so a pale shirt and a dark coat both read on it.
-POUR_A = (172, 160, 138)
-POUR_A_LIGHT = (184, 172, 150)
-POUR_A_DARK = (158, 146, 126)
-POUR_B = (160, 154, 142)
-POUR_B_LIGHT = (171, 165, 152)
-POUR_B_DARK = (147, 141, 130)
-PATCH = (139, 140, 136)  # the newer concrete the hoop poles stand in
+SKY_HIGH = (64, 74, 100)
+SKY_MAUVE = (84, 76, 104)
+SKY_BELT = (100, 80, 94)
+SKY_GLOW = (104, 84, 86)
+DISTANT = (44, 40, 58)  # the ground-row silhouettes, one flat value
+# Ground: two pours of concrete, kept low in value. The HUD sentence (top left) and the
+# interaction prompt (bottom centre) are pale text with no outline, and the bottom one
+# always sits over the ground just in front of the player; tests/playground_art_slice_test.gd
+# checks the contrast. The court and the props carry the light instead.
+POUR_A = (107, 99, 86)
+POUR_A_LIGHT = (114, 107, 93)
+POUR_A_DARK = (98, 91, 78)
+POUR_B = (99, 95, 88)
+POUR_B_LIGHT = (106, 102, 94)
+POUR_B_DARK = (91, 87, 81)
+PATCH = (81, 81, 79)  # the newer concrete the hoop poles stand in
 # The court: oxide red; its far half is the same paint a shade darker (inspection text).
 COURT = (152, 86, 66)
 COURT_LIGHT = (164, 98, 76)
 COURT_DARK = (136, 76, 60)
-KEY = (92, 108, 128)  # the keys: a piece of the sky colour put down on the ground
-KEY_LIGHT = (104, 120, 140)
+KEY = (80, 94, 114)  # the keys: a piece of the sky colour put down on the ground
+KEY_LIGHT = (90, 104, 124)
+KEY_DARK = (70, 82, 100)
+KEY_LINE = (176, 168, 150)  # a dimmer bone than the court lines: the keys sit under the prompt
 LINE = (222, 214, 192)
 # Things standing in the yard.
 IVORY = (220, 208, 180)
-OCHRE = (204, 172, 118)
+OCHRE = (132, 96, 48)  # the block under the bench: saturated rather than light
 TEAL = (78, 118, 124)  # the school colour, shared in spirit with the classroom dado
 DOOR_GREEN = (86, 112, 64)
 HEDGE = (58, 80, 56)
@@ -231,7 +236,7 @@ def key_area() -> Image.Image:
     c = Canvas(5.0, 3.2, 48.0, KEY, seed=2105, alpha=0.0)
     fill = c.rect_mask(0.08, 0.08, 4.92, 3.12, rough=0.35, cell_m=0.12, blur_m=0.02)
     c.paint_alpha(KEY, fill, 1.0)
-    planes(c, KEY_LIGHT, (82, 96, 116), 30, (1.0, 2.4), (0.25, 0.5), angle=0.0, opacity=0.4, bristles=10)
+    planes(c, KEY_LIGHT, KEY_DARK, 30, (1.0, 2.4), (0.25, 0.5), angle=0.0, opacity=0.4, bristles=10)
     c.a = np.minimum(c.a, fill)
     rng = c.rng
     corners = [(0.12, 0.1), (4.9, 0.12), (4.88, 3.1), (0.1, 3.08)]
@@ -240,7 +245,7 @@ def key_area() -> Image.Image:
         if i == 3:
             b = (b[0] + 0.02, b[1] + (a[1] - b[1]) * 0.18)  # the gap at one corner
         mid = ((a[0] + b[0]) / 2 + rng.uniform(-0.03, 0.03), (a[1] + b[1]) / 2 + rng.uniform(-0.03, 0.03))
-        c.ink_line([a, mid, b], width_m=0.1, wobble_m=0.015, color=LINE, opacity=1.0, taper=False, broken=0.2, alpha_canvas=True)
+        c.ink_line([a, mid, b], width_m=0.07, wobble_m=0.015, color=KEY_LINE, opacity=1.0, taper=False, broken=0.2, alpha_canvas=True)
     return c.image(10, alpha="cut")
 
 
@@ -471,7 +476,7 @@ def bench_patch() -> Image.Image:
         mask = c.stroke_mask(pts, width, mask=mask, **kw)
     m = np.asarray(mask, np.float32) / 255.0
     c.paint_alpha(OCHRE, smoothstep(0.25, 0.5, m), 1.0)
-    planes(c, (214, 184, 130), (190, 158, 106), 14, (1.0, 2.6), (0.2, 0.4), angle=0.0, opacity=0.4, bristles=10)
+    planes(c, (148, 110, 58), (118, 86, 42), 14, (1.0, 2.6), (0.2, 0.4), angle=0.0, opacity=0.4, bristles=10)
     c.a = np.where(m > 0.3, 1.0, 0.0).astype(np.float32)
     return c.image(8, alpha="cut")
 
@@ -530,8 +535,8 @@ def sky_floor() -> Image.Image:
         s = rng.uniform(0, SKY_SIZE)
         y = rng.uniform(0, SKY_SIZE)
         clouds.append(([(s, y), (s + rng.uniform(25, 60), y + rng.uniform(-2, 2))], rng.uniform(2.5, 6.0), {"bristles": 10, "dryness": 0.6, "wobble_m": 0.5}))
-    c.brush(rgb((92, 104, 132)), clouds[0::2], opacity=0.5)
-    c.brush(rgb((66, 78, 104)), clouds[1::2], opacity=0.45)
+    c.brush(rgb((76, 86, 112)), clouds[0::2], opacity=0.5)
+    c.brush(rgb((54, 64, 88)), clouds[1::2], opacity=0.45)
     # Clouds only out in the blue, never in the warm bands along the yard's edge.
     far = smoothstep(16.0, 28.0, d)[..., None]
     c.rgb = before * (1.0 - far) + c.rgb * far
