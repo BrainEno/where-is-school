@@ -65,6 +65,10 @@ var _counts: Dictionary = {}
 var _last_hover_msec: int = -1000000
 var _silent := false
 var _built := false
+## The player's sound-effects level (Settings > Sound), in dB, added to every kind's own
+## volume. The cues stay on `Master` (they own no bus, see above), so the SFX dial reaches
+## them here instead of through the `SFX` bus the room sounds use. 0 dB at 100 %.
+var _gain_db := 0.0
 
 
 func _ready() -> void:
@@ -88,7 +92,7 @@ func _build() -> void:
 			var player := AudioStreamPlayer.new()
 			player.name = "Voice%d" % index
 			player.stream = _streams[kind]
-			player.volume_db = float(VOLUME_DB[kind])
+			player.volume_db = float(VOLUME_DB[kind]) + _gain_db
 			player.bus = &"Master"
 			add_child(player)
 			voices.append(player)
@@ -198,7 +202,7 @@ func play_hover() -> bool:
 	return play(KIND_HOVER)
 
 
-## Mute switch, for the tests and for the settings screen that does not exist yet. Muting
+## Mute switch, for the tests. Muting
 ## stops what is playing as well: a cue that keeps ringing after being muted is a bug.
 func set_silent(value: bool) -> void:
 	_silent = value
@@ -211,6 +215,19 @@ func set_silent(value: bool) -> void:
 
 func is_silent() -> bool:
 	return _silent
+
+
+## The settings screen's sound-effects dial. Never louder than the kind's own volume: the
+## gain is clamped to 0 dB at the top, so "quiet by construction" survives any setting.
+func set_gain_db(value: float) -> void:
+	_gain_db = clampf(value, -80.0, 0.0)
+	for kind: StringName in KINDS:
+		for voice: AudioStreamPlayer in (_players.get(kind, []) as Array):
+			voice.volume_db = float(VOLUME_DB[kind]) + _gain_db
+
+
+func get_gain_db() -> float:
+	return _gain_db
 
 
 ## The buffer for a kind, or null. Public so a test can measure what is actually played:

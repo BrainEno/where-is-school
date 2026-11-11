@@ -48,6 +48,9 @@ signal backlog_requested
 @export var characters_per_second: float = 55.0
 ## Extra characters revealed per frame while holding the advance key.
 @export var skip_multiplier: float = 8.0
+## Show every line whole, without the typewriter (Settings > Text speed > Instant).
+## Separate from `characters_per_second`, where 0 means "paused" to the tests.
+@export var instant_reveal: bool = false
 
 @export_category("Band")
 ## Fraction of the viewport width the reading band may use at most.
@@ -132,13 +135,32 @@ var _portrait_side: String = ""
 var _portrait_source_size: Vector2 = Vector2.ZERO
 ## Each distinct problem is warned about once per panel, not once per line.
 var _portrait_warned: Dictionary = {}
+## The type sizes as authored, before the player's text size multiplies them.
+var _base_type: Dictionary = {}
+var _text_scale: float = 1.0
+## Larger type may use more of the band's budget, never more than the contract in
+## `tests/dialogue_layout_test.gd` (72% wide, 66% tall, 45% of the picture).
+const LARGE_TEXT_MAX_WIDTH_RATIO := 0.685
+const LARGE_TEXT_MAX_HEIGHT_RATIO := 0.65
+## When the options cannot all be shown under the line (large type, small window), a
+## contiguous range of them is: `_choice_window_count` options from `_choice_window_start`,
+## 0 meaning all of them. The cursor, the mouse wheel and the digit keys reach the rest.
+var _choice_window_start := 0
+var _choice_window_count := 0
+var _choice_window_target := -1
+## The option a controller or the arrow keys point at, or -1. The buttons themselves keep
+## FOCUS_NONE: the highlight is drawn here so a click and a digit still work unchanged.
+var _choice_cursor: int = -1
+var _stick_frame: int = -1
 
 
 func _ready() -> void:
 	hide()
 	_choices_container.hide()
 	_hint_label.hide()
+	_remember_base_type()
 	_apply_type()
+	_connect_settings()
 	refresh_static_text()
 	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
 		get_viewport().size_changed.connect(_on_viewport_resized)
@@ -186,6 +208,82 @@ func _apply_type() -> void:
 	_body_label.add_theme_font_size_override("normal_font_size", body_size)
 
 
+func _remember_base_type() -> void:
+	if not _base_type.is_empty():
+		return
+	_base_type = {
+		"speaker": speaker_size, "role": role_size, "badge": badge_size,
+		"title": title_size, "body": body_size, "choice": choice_size, "hint": hint_size,
+	}
+
+
+## The player's text size. Every type size is the authored one times `factor`; the band
+## then re-measures around the larger text (it scrolls the body rather than shrink it).
+func set_text_scale(factor: float) -> void:
+	_remember_base_type()
+	_text_scale = maxf(factor, 0.5)
+	speaker_size = UiTextScale.scaled(int(_base_type["speaker"]), _text_scale)
+	role_size = UiTextScale.scaled(int(_base_type["role"]), _text_scale)
+	badge_size = UiTextScale.scaled(int(_base_type["badge"]), _text_scale)
+	title_size = UiTextScale.scaled(int(_base_type["title"]), _text_scale)
+	body_size = UiTextScale.scaled(int(_base_type["body"]), _text_scale)
+	choice_size = UiTextScale.scaled(int(_base_type["choice"]), _text_scale)
+	hint_size = UiTextScale.scaled(int(_base_type["hint"]), _text_scale)
+	# Before _ready the labels do not exist yet; _ready applies the sizes itself.
+	if _speaker_label == null:
+		return
+	_apply_type()
+	for button in _choice_buttons:
+		if is_instance_valid(button):
+			button.add_theme_font_size_override("font_size", choice_size)
+			button.custom_minimum_size = Vector2(0.0, _choice_min_height())
+	_queue_fit()
+
+
+func get_text_scale() -> float:
+	return _text_scale
+
+
+## Characters per second from Settings; 0 there means "instant".
+func set_reveal_speed(cps: float) -> void:
+	instant_reveal = cps <= 0.0
+	if not instant_reveal:
+		characters_per_second = cps
+	if instant_reveal and _revealing:
+		complete_reveal()
+
+
+func _connect_settings() -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null:
+		return
+	if not settings.is_connected("setting_changed", _on_setting_changed):
+		settings.connect("setting_changed", _on_setting_changed)
+		settings.connect("bindings_changed", refresh_static_text)
+		settings.connect("input_device_changed", _on_input_device_changed)
+	_on_setting_changed(&"all")
+
+
+func _on_setting_changed(key: StringName) -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null:
+		return
+	if key == &"all" or key == &"text_size":
+		set_text_scale(float(settings.call("text_scale")))
+	if key == &"all" or key == &"text_speed":
+		set_reveal_speed(float(settings.call("reveal_characters_per_second")))
+
+
+func _on_input_device_changed(_device: StringName) -> void:
+	if has_choices() and _choice_cursor < 0 and MenuStyle.using_gamepad(self):
+		_set_choice_cursor(0)
+	refresh_static_text()
+
+
+func _choice_min_height() -> float:
+	return roundf(32.0 * maxf(_text_scale, 1.0))
+
+
 ## A `FontVariation` of the project font with extra letter spacing. The project ships
 ## one font; this widens it for the two short labels (name, source) instead of adding a
 ## second typeface.
@@ -231,6 +329,10 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 		_body_label.visible_characters = -1
 		_reveal_progress = float(_body_label.text.length())
 		_revealing = false
+	elif instant_reveal:
+		_body_label.visible_characters = -1
+		_reveal_progress = float(_body_label.text.length())
+		_revealing = false
 	else:
 		_body_label.visible_characters = 0
 		_reveal_progress = 0.0
@@ -248,6 +350,10 @@ func set_choices(choices: Array) -> void:
 			_choices_container.remove_child(button)
 			button.queue_free()
 	_choice_buttons.clear()
+	_choice_cursor = -1
+	_choice_window_start = 0
+	_choice_window_count = 0
+	_choice_window_target = -1
 	_choices_container.hide()
 	_choice_rule.visible = false
 	if choices.is_empty():
@@ -265,7 +371,7 @@ func set_choices(choices: Array) -> void:
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		button.add_theme_font_size_override("font_size", choice_size)
 		button.add_theme_constant_override("outline_size", 0)
-		button.custom_minimum_size = Vector2(0.0, 32.0)
+		button.custom_minimum_size = Vector2(0.0, _choice_min_height())
 		_apply_choice_colors(button)
 		button.add_theme_stylebox_override("normal", _style_normal)
 		button.add_theme_stylebox_override("hover", _style_hover)
@@ -278,6 +384,8 @@ func set_choices(choices: Array) -> void:
 		_choice_buttons.append(button)
 	_choices_container.show()
 	_choice_rule.visible = true
+	if MenuStyle.using_gamepad(self):
+		_set_choice_cursor(0)
 	if _revealing:
 		complete_reveal()
 	refresh_static_text()
@@ -322,6 +430,55 @@ func get_choice_buttons() -> Array[Button]:
 	return _choice_buttons.duplicate()
 
 
+## The option a controller or the arrow keys point at, or -1 when none is marked.
+func get_choice_cursor() -> int:
+	return _choice_cursor
+
+
+func _set_choice_cursor(index: int) -> void:
+	if _choice_buttons.is_empty():
+		_choice_cursor = -1
+		return
+	_choice_cursor = clampi(index, 0, _choice_buttons.size() - 1)
+	for i in _choice_buttons.size():
+		var button := _choice_buttons[i]
+		if not is_instance_valid(button):
+			continue
+		var marked := i == _choice_cursor
+		button.add_theme_stylebox_override("normal", _style_hover if marked else _style_normal)
+		var color := PAPER if marked else Color(0.807, 0.788, 0.741, 0.86)
+		button.add_theme_color_override("font_color", color)
+	if _choice_window_count > 0:
+		reveal_choice(_choice_cursor)
+
+
+## Brings option `index` into the shown range when only some options fit. A no-op when
+## all of them are shown.
+func reveal_choice(index: int) -> void:
+	if index < 0 or index >= _choice_buttons.size() or _choice_window_count <= 0:
+		return
+	_choice_window_target = index
+	if index < _choice_window_start:
+		_choice_window_start = index
+	elif index >= _choice_window_start + _choice_window_count:
+		_choice_window_start = index - _choice_window_count + 1
+	_queue_fit()
+
+
+## The options on screen as `Vector2i(first, count)`; count is the total when all fit.
+func get_choice_window() -> Vector2i:
+	if _choice_window_count <= 0:
+		return Vector2i(0, _choice_buttons.size())
+	return Vector2i(_choice_window_start, _choice_window_count)
+
+
+func _move_choice_cursor(step: int) -> void:
+	if _choice_cursor < 0:
+		_set_choice_cursor(0 if step > 0 else _choice_buttons.size() - 1)
+	else:
+		_set_choice_cursor(posmod(_choice_cursor + step, _choice_buttons.size()))
+
+
 func get_body_label() -> RichTextLabel:
 	return _body_label
 
@@ -339,10 +496,7 @@ func is_body_scrolling() -> bool:
 func refresh_static_text() -> void:
 	if _hint_label == null:
 		return
-	if has_choices():
-		_hint_label.text = L10n.t("ui.dialogue_choose", {"count": _choice_buttons.size()})
-	else:
-		_hint_label.text = L10n.t("ui.dialogue_continue")
+	_hint_label.text = _hint_text()
 	if _line.is_empty():
 		return
 	_badge_label.text = _badge_text(_line)
@@ -350,6 +504,28 @@ func refresh_static_text() -> void:
 	_speaker_label.text = _speaker_text(_line)
 	_choice_rule.visible = has_choices()
 	_queue_fit()
+
+
+## The hint names the keys or buttons actually bound, for the device in use.
+func _hint_text() -> String:
+	var keys := {
+		"log": MenuStyle.key(self, &"backlog"),
+		"language": MenuStyle.key(self, &"toggle_language"),
+		"advance": MenuStyle.key(self, &"dialogue_advance"),
+		"count": _choice_buttons.size(),
+	}
+	var pad := MenuStyle.using_gamepad(self)
+	if has_choices():
+		var text := L10n.t("ui.dialogue_choose_pad" if pad else "ui.dialogue_choose", keys)
+		if _choice_window_count > 0:
+			# Which options are on screen, so a partial list never reads as the whole one.
+			text += "    %d-%d / %d" % [
+				_choice_window_start + 1,
+				_choice_window_start + _choice_window_count,
+				_choice_buttons.size(),
+			]
+		return text
+	return L10n.t("ui.dialogue_continue_pad" if pad else "ui.dialogue_continue", keys)
 
 
 ## Redraws the line that is already on screen, used by a language switch. The reveal
@@ -381,6 +557,16 @@ func _process(delta: float) -> void:
 ## one that is still typing, or does nothing while a choice is open.
 func _gui_input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouseButton
+	if mouse != null and mouse.pressed and _choice_window_count > 0 and (
+		mouse.button_index == MOUSE_BUTTON_WHEEL_UP or mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN
+	):
+		# A partial list of options scrolls under the wheel.
+		accept_event()
+		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+			reveal_choice(_choice_window_start - 1)
+		else:
+			reveal_choice(_choice_window_start + _choice_window_count)
+		return
 	if mouse == null or mouse.button_index != MOUSE_BUTTON_LEFT or not mouse.pressed:
 		return
 	# Swallowed either way: reading must never walk the character or use whatever
@@ -413,11 +599,38 @@ func _unhandled_input(event: InputEvent) -> void:
 		if index >= 0 and index < _choice_buttons.size():
 			get_viewport().set_input_as_handled()
 			choice_selected.emit(index)
+		elif _is_pressed(event, [&"ui_up", &"move_forward"]):
+			get_viewport().set_input_as_handled()
+			_move_choice_cursor(-1)
+		elif _is_pressed(event, [&"ui_down", &"move_back"]):
+			get_viewport().set_input_as_handled()
+			_move_choice_cursor(1)
+		elif _choice_cursor >= 0 and _is_pressed(event, [&"dialogue_advance", &"ui_accept"]):
+			get_viewport().set_input_as_handled()
+			choice_selected.emit(_choice_cursor)
 		return
 
 	if event.is_action_pressed("dialogue_advance"):
 		get_viewport().set_input_as_handled()
 		_request_advance()
+
+
+## A fresh press of any of `actions` (a held stick or key does not repeat a move).
+func _is_pressed(event: InputEvent, actions: Array) -> bool:
+	if event is InputEventKey and (event as InputEventKey).echo:
+		return false
+	for action: StringName in actions:
+		if not InputMap.has_action(action) or not event.is_action_pressed(action):
+			continue
+		if event is InputEventJoypadMotion:
+			# A stick sends a stream of events past the deadzone; only the one that crosses
+			# it counts, and only once per frame.
+			var frame := Engine.get_process_frames()
+			if not Input.is_action_just_pressed(action) or frame == _stick_frame:
+				return false
+			_stick_frame = frame
+		return true
+	return false
 
 
 ## One definition of "continue": finish the line if it is still typing, otherwise ask
@@ -450,9 +663,21 @@ func _settle_layout() -> void:
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		return
 	var left := minf(viewport_size.x * side_margin_ratio, side_margin_max)
-	var width := clampf(viewport_size.x * band_width_ratio, band_min_width, band_max_width)
+	# Larger type gets a wider, taller band (within the contract), so a paragraph that fits
+	# at the standard size still fits instead of scrolling. At the standard size both
+	# ratios are exactly the authored ones.
+	var grow := maxf(_text_scale, 1.0)
+	var width_ratio := band_width_ratio
+	var height_ratio := max_height_ratio
+	if grow > 1.0:
+		width_ratio = maxf(band_width_ratio, minf(band_width_ratio * grow, LARGE_TEXT_MAX_WIDTH_RATIO))
+		height_ratio = maxf(
+			max_height_ratio,
+			minf(max_height_ratio * (1.0 + (grow - 1.0) * 0.5), LARGE_TEXT_MAX_HEIGHT_RATIO)
+		)
+	var width := clampf(viewport_size.x * width_ratio, band_min_width, band_max_width * grow)
 	width = minf(width, viewport_size.x - left * 2.0)
-	var max_height := viewport_size.y * max_height_ratio
+	var max_height := viewport_size.y * height_ratio
 	# Without a portrait the plan is empty and `left` / `width` are exactly what they
 	# were before portraits existed.
 	var portrait_plan := _plan_portrait(viewport_size, left, width)
@@ -471,6 +696,10 @@ func _settle_layout() -> void:
 		_body_label.fit_content = true
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+		# Measure with every option, then decide how many can be shown.
+		for button in _choice_buttons:
+			if is_instance_valid(button):
+				button.visible = true
 		_place_portrait(portrait_plan)
 		_layout_stage = 1
 		_layout_dirty = true
@@ -486,9 +715,75 @@ func _settle_layout() -> void:
 		_body_label.fit_content = false
 		_body_label.scroll_active = true
 	_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+	var was_windowed := _choice_window_count > 0
+	_choice_window_count = 0
+	if scrolling and not _choice_buttons.is_empty():
+		_fit_choice_window(needed, max_height)
+	if was_windowed or _choice_window_count > 0:
+		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
 	_layout_stage = 0
 	_layout_dirty = false
+
+
+## When the line and all of its options cannot share the band, the body keeps two lines
+## (scrolling) and the options show the longest run that fits, always including the one
+## the cursor or the wheel asked for. Nothing is shrunk and nothing is cut off.
+func _fit_choice_window(needed: float, max_height: float) -> void:
+	var choices_height := _choices_container.get_combined_minimum_size().y
+	var body_height := _body_label.get_combined_minimum_size().y
+	# One line of the paragraph always stays readable above the options.
+	var body_floor := roundf(float(body_size) * 1.45 + 10.0)
+	var other := needed - choices_height - body_height
+	var room := max_height - other - body_floor
+	if room >= choices_height:
+		return
+	var heights: Array[float] = []
+	for button in _choice_buttons:
+		heights.append(button.get_combined_minimum_size().y if is_instance_valid(button) else 0.0)
+	var gap := float(_choices_container.get_theme_constant(&"separation"))
+	var total := heights.size()
+	var start := clampi(_choice_window_start, 0, total - 1)
+	var target := _choice_window_target if _choice_window_target >= 0 else _choice_cursor
+	if target >= 0 and target < start:
+		start = target
+	var count := _window_count(heights, gap, start, room)
+	if target >= 0 and target >= start + count:
+		# Slide back from the target until the run is as long as fits.
+		start = target
+		var used := heights[target]
+		while start > 0 and used + gap + heights[start - 1] <= room:
+			start -= 1
+			used += gap + heights[start]
+		count = target - start + 1
+	_choice_window_start = start
+	_choice_window_count = count
+	var shown := 0.0
+	for index in total:
+		var inside := index >= start and index < start + count
+		if is_instance_valid(_choice_buttons[index]):
+			_choice_buttons[index].visible = inside
+		if inside:
+			shown += heights[index] + (gap if index > start else 0.0)
+	if body_height <= max_height - other - shown:
+		# With fewer options on screen the whole paragraph fits again: no scrolling.
+		_body_label.fit_content = true
+		_body_label.scroll_active = false
+		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+	else:
+		_body_label.custom_minimum_size = Vector2(0.0, body_floor)
+
+
+func _window_count(heights: Array[float], gap: float, start: int, room: float) -> int:
+	var used := 0.0
+	var count := 0
+	for index in range(start, heights.size()):
+		var extra := heights[index] + (gap if count > 0 else 0.0)
+		if count > 0 and used + extra > room:
+			break
+		used += extra
+		count += 1
+	return maxi(count, 1)
 
 
 ## Everything the layout produced, for the tests and for a screenshot caption.
@@ -504,6 +799,7 @@ func get_layout_report() -> Dictionary:
 		"body_font_size": _body_label.get_theme_font_size("normal_font_size"),
 		"speaker_font_size": _speaker_label.get_theme_font_size("font_size"),
 		"choice_count": _choice_buttons.size(),
+		"choices_windowed": _choice_window_count > 0,
 		"choice_font_size": choice_size,
 		"covers_width": rect.size.x / maxf(get_viewport_rect().size.x, 1.0),
 		"covers_height": rect.size.y / maxf(get_viewport_rect().size.y, 1.0),

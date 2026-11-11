@@ -17,6 +17,8 @@ var _prompt_tween: Tween = null
 var _dialogue_open: bool = false
 ## Locale key of the current objective, so it can be re-translated in place.
 var _objective_key: String = ""
+## The action text of the prompt on screen, so it can be re-drawn with another key name.
+var _prompt_action: String = ""
 ## The contextual prompt arrives and leaves with a short fade. It is the one piece of
 ## interface that appears while the player is moving the mouse around the world, so a line
 ## that switches on and off between two frames reads as a glitch in the pointer code; a
@@ -34,6 +36,29 @@ func _ready() -> void:
 	var loc := _loc()
 	if loc != null:
 		loc.locale_changed.connect(_on_locale_changed)
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings != null:
+		settings.connect("setting_changed", _on_setting_changed)
+		settings.connect("input_device_changed", _on_input_changed)
+		settings.connect("bindings_changed", _on_input_changed.bind(&""))
+	set_text_scale(UiTextScale.current(self))
+
+
+## The player's text size, applied to every line the HUD draws.
+func set_text_scale(factor: float) -> void:
+	UiTextScale.apply(self, factor)
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if UiTextScale.is_text_size_key(key):
+		set_text_scale(UiTextScale.current(self))
+
+
+## Another device or binding: the prompt and the language hint name the new key.
+func _on_input_changed(_device: StringName) -> void:
+	refresh_language_text()
+	if _prompt_label.visible and not _prompt_action.is_empty():
+		_prompt_label.text = "[%s] %s" % [_interact_key_label(), _prompt_action]
 
 
 func _loc() -> Node:
@@ -74,6 +99,7 @@ func set_prompt_text(action: String) -> void:
 	if action.strip_edges().is_empty():
 		clear_prompt()
 		return
+	_prompt_action = action
 	var text := "[%s] %s" % [_interact_key_label(), action]
 	if _prompt_label.visible and _prompt_label.text == text:
 		return
@@ -98,6 +124,7 @@ func get_objective_text() -> String:
 ## a second.
 func clear_prompt() -> void:
 	_prompt_label.text = ""
+	_prompt_action = ""
 	_kill_prompt_tween()
 	if not _prompt_label.visible:
 		return
@@ -119,7 +146,13 @@ func _kill_prompt_tween() -> void:
 func refresh_language_text() -> void:
 	if _language_label == null:
 		return
-	_language_label.text = L10n.t("ui.language_switch", {"name": L10n.locale_name(L10n.other_locale())})
+	_language_label.text = L10n.t(
+		"ui.language_switch",
+		{
+			"name": L10n.locale_name(L10n.other_locale()),
+			"key": MenuStyle.key(self, &"toggle_language"),
+		}
+	)
 	_language_label.visible = not _dialogue_open
 
 
@@ -130,8 +163,11 @@ func set_dialogue_open(open: bool) -> void:
 		_language_label.visible = not open
 
 
-## Reads the actual interact binding so the hint cannot drift from the input map.
+## Reads the actual interact binding so the hint cannot drift from the input map: the
+## key on a keyboard ("E"), the button on a controller ("A").
 func _interact_key_label() -> String:
+	if MenuStyle.using_gamepad(self):
+		return MenuStyle.key(self, &"interact")
 	for event: InputEvent in InputMap.action_get_events("interact"):
 		var key_event := event as InputEventKey
 		if key_event != null and key_event.physical_keycode != 0:
