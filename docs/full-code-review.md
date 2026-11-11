@@ -81,7 +81,12 @@ Structural findings, in the audit's own priority order:
    of the player and owns the offset, the field of view and the roll. ADR 0004 is the draft that
    decides what the rig should be pointed at and how wide.
 3. **#59 director recoverability and hard-coded location ids** — the prerequisite for both
-   saving and adding a location. The audit's sequencing: this before #60.
+   saving and adding a location. **Done**: the prologue is a list of steps, each identified by
+   the flag that proves it is done, so "start" and "resume" are the same call; exits,
+   transitions and arrival lines moved to `LocationFlow`; what a room declares about itself is
+   `data/story/locations.json`. `tests/opening_resume_test.gd` starts the director from four
+   flag snapshots, and `tests/location_catalog_test.gd` refuses a room, a door or a locale key
+   the data does not cover.
 4. **#60 save/load**, **#61 portraits**, **#62 settings and input**, **#63 artifacts in
    history**, **#64 asset provenance**, **#65 `narrative_store.gd` (1,216 lines, 63
    functions)**, **#66 release engineering**.

@@ -166,6 +166,13 @@ jobs:
           run_check i18n 120 godot --headless --path . --script res://tests/i18n_test.gd || status=1
           run_check language_switch 480 godot --headless --path . --script res://tests/language_switch_test.gd || status=1
           run_check opening_flow 520 godot --headless --path . --script res://tests/opening_flow_test.gd || status=1
+          # The prologue is a list of flag-gated steps, so it can be started from the
+          # middle. This feeds it four snapshots and refuses a replay of a beat that is
+          # already behind it.
+          run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          # Every room on disk is described by data/story/locations.json, every door
+          # points at a described room, and every key exists in both languages.
+          run_check location_catalog 180 godot --headless --path . --script res://tests/location_catalog_test.gd || status=1
           run_check check_resolver 120 godot --headless --path . --script res://tests/check_resolver_test.gd || status=1
           run_check inner_abilities 120 godot --headless --path . --script res://tests/inner_abilities_test.gd || status=1
           run_check dialogue_check 180 godot --headless --path . --script res://tests/dialogue_check_test.gd || status=1
