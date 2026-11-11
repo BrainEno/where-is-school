@@ -4,6 +4,8 @@ render_mode diffuse_toon, specular_disabled, cull_back;
 // Shared by environment meshes only. The scene-local base_color is copied from each
 // source StandardMaterial3D so one ShaderMaterial can preserve authored color blocks.
 uniform vec4 base_color : source_color = vec4(0.52, 0.45, 0.35, 1.0);
+uniform vec3 base_uv_scale = vec3(1.0);
+uniform vec3 base_uv_offset = vec3(0.0);
 uniform vec4 shadow_pigment : source_color = vec4(0.25, 0.29, 0.25, 1.0);
 uniform vec4 highlight_pigment : source_color = vec4(0.78, 0.61, 0.39, 1.0);
 uniform vec4 brush_pigment : source_color = vec4(0.37, 0.24, 0.21, 1.0);
@@ -45,7 +47,8 @@ void vertex() {
 void fragment() {
 	vec4 pigment = base_color;
 	if (use_base_texture) {
-		pigment *= texture(base_texture, UV);
+		vec2 base_uv = UV * base_uv_scale.xy + base_uv_offset.xy;
+		pigment *= texture(base_texture, base_uv);
 	}
 
 	vec3 color_mass = pigment.rgb;
