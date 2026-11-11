@@ -37,6 +37,11 @@ extends CharacterBody3D
 ## - **the location seam** — `_on_location_entered()` / `_settle_after_transition()`,
 ##   which place Q behind the player and check that the new scene's navigation is
 ##   answering before Q tries to walk on it.
+## - **restoring** - `_restore_from_story()`, which reads `joined_flag` once in `_ready()`.
+##   A save is restored, and its room loaded, before this node is ready (the director sits
+##   above it in `main.tscn`), so the `location_entered` that would have shown Q has already
+##   fired by then. The flag is the only thing a save keeps about Q; the node state is
+##   rebuilt from it here and is never serialised.
 
 signal joined()
 signal waiting_changed(waiting: bool)
@@ -162,6 +167,7 @@ func _ready() -> void:
 		_actor.get_character_animator().bind_body(self)
 	_last_body_position = global_position
 	_refresh_visibility(null)
+	_restore_from_story()
 
 
 ## Called by the director when the player has actually left the classroom during
@@ -177,6 +183,42 @@ func join() -> void:
 		game_state.set_flag(joined_flag, true)
 	_refresh_visibility(_host.get_current() if _host != null else null)
 	joined.emit()
+
+
+## Picks up a companion the story already has. A session that comes back from a save
+## (or any main scene built after Q joined) has `joined_flag` set while this node starts
+## with `_joined` false, and the arrival that normally calls `join()` only runs when the
+## player walks through a door. Without this, Q stayed missing until the next door.
+##
+## This is not a second `join()`: the flag is already written and nothing has just
+## happened, so `joined` is not emitted. What it shares with a location change is the
+## rest - the same visibility rule (hidden where the room has its own Q), the same
+## placement behind the player, and the same wait for the room's navigation before Q
+## walks on it.
+func _restore_from_story() -> void:
+	if _joined or not _story_says_joined():
+		return
+	_joined = true
+	_look_timer = 0.0
+	var location: LocationRoot = _host.get_current() if _host != null else null
+	if location == null:
+		# No room yet. `_on_location_entered()` shows and places Q when one arrives.
+		return
+	_refresh_visibility(location)
+	if visible:
+		# Deferred for the same reason as after a transition: the room may still be
+		# baking its navigation in this frame.
+		call_deferred("_settle_after_transition")
+
+
+func _story_says_joined() -> bool:
+	if String(joined_flag).is_empty():
+		return false
+	var game_state := get_node_or_null(^"/root/GameState")
+	if game_state == null:
+		return false
+	var value: Variant = game_state.get_flag(joined_flag, false)
+	return value is bool and value
 
 
 func is_joined() -> bool:
