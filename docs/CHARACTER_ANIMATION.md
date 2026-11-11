@@ -12,7 +12,7 @@ and how to do the same thing by hand in the Godot editor.
 | Source | `art/character_rigging/q/q_rigged_working.blend` | `art/character_rigging/protagonist_retarget/protagonist_retarget_ready.blend` |
 | Joints | 16 | 21 |
 | Bone naming | `Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, Hand.L, Thigh.L, Shin.L, Foot.L, …` | `Root, Hips, Spine, Chest, UpperChest, Neck, Head, LeftShoulder, LeftUpperArm, LeftLowerArm, LeftHand, LeftUpperLeg, LeftLowerLeg, LeftFoot, …` |
-| Clips | idle, walk, wave, talk | idle, walk, wave, talk |
+| Clips | idle, walk, wave, talk | idle, walk, wave, talk, + 42 retargeted from the library |
 
 `scripts/actors/character_animation.gd` authors those four clips against *canonical* names
 (`hips`, `spine`, `upper_arm.L`, `shin.R`, …) and resolves them against whichever rig it is
@@ -26,6 +26,11 @@ missing bone plays nothing and prints nothing.
 - **Check it:** `tests/character_animation_test.gd` runs headless in CI (`character_animation`
   in the check list). It seeks each clip and reads the skeleton's bone poses, so "the clip
   moves the character" is measured, not assumed.
+- **The animation library, retargeted.** `protagonist_ual.res` holds the Universal Animation
+  Library's 42 clips rewritten onto the protagonist's bones — see below. Open
+  `scenes/dev/animation_retarget_test/protagonist_ual_preview.tscn`, select
+  `Protagonist/UalPlayer`, and scrub any `ual/…` animation in the Animation panel: no engine
+  trickery at play time, just animation data with this character's bone names on it.
 - **Neither model is used by the game.** `assets/models/q/q.glb` has no skeleton at all and
   `assets/models/protagonist/protagonist.glb` has the older 16-bone rig; both are what the
   game loads, unchanged. Swapping them is the next step and it is deliberate (see the end).
@@ -57,11 +62,14 @@ Universal Animation Library names its 65 joints `upperarm_l`, `calf_l`, `spine_0
 translated it. The library was imported and connected to an `AnimationPlayer`, but no clip
 named a bone the character has.
 
-**4. The library was attached as the wrong resource type.** `scenes/main/main.tscn` gained
-`[ext_resource type="AnimationLibrary" … path="…/UAL1_Standard.glb"]`. A `.glb` imports as a
-scene, not as an animation library resource — the `AnimationPlayer` cannot take it — and the
-resulting parse error took the whole main scene with it: every gameplay check failed on
-`[ext_resource] referenced non-existent resource`.
+**4. The library was attached from inside the game's main scene, with nothing to attach it
+to.** `scenes/main/main.tscn` gained `[ext_resource type="AnimationLibrary" …
+path="…/UAL1_Standard.glb"]` and a `libraries = {"…": ExtResource(…)}` on a `Player`. The
+resource type was right — this engine can import a glTF as an `AnimationLibrary` — but the
+import had never run, so the path resolved to nothing and the parse error took the whole main
+scene down: every gameplay check failed on `[ext_resource] referenced non-existent resource`,
+which pointed at the assets rather than at the import that was missing. A library's tracks are
+also no closer to the character's bones for being attached; see 1–3.
 
 **5. The experiment was put inside the game's main scene.** A retarget rig, a duplicate
 protagonist model and a 7.6 MB animation library now loaded on every launch, including the
@@ -80,6 +88,41 @@ its own comments gone, `[physics]`, `rendering_method`, `window/size/resizable` 
 The fixes are in the history: `docs/.gdignore`, `art/character_rigging/.gdignore`, the editor
 rewrites reverted, one copy of each model, and the animation library deleted rather than
 licensed, documented and shipped.
+
+## The animation library, retargeted
+
+`AnimationRetarget` pairs the two rigs through the same canonical names
+`CharacterAnimation` uses — which are the humanoid profile's names, the ones the `BoneMap`s in
+both `.import` sidecars are written in — and then bakes:
+
+```
+for every clip, sampled at 30 fps:
+    change = source_rest_global⁻¹ · source_global        (what the library did to that bone)
+    target_global = target_rest_global · change          (what this bone should do instead)
+    local = parent_global⁻¹ · target_global              (what the pose actually stores)
+```
+
+Rest-relative, so a bone whose rest pose points a different way on the two rigs still lands
+where the animation puts it instead of inheriting the library's twist. Positions are not
+copied, the library's fingers are dropped (this character has none), and `_2`-suffixed bones
+are matched like any other.
+
+The result is committed as `scenes/dev/animation_retarget_test/protagonist_ual.res` (about
+1 MB). Regenerate it after changing the mapping or either model:
+
+~~~text
+godot --headless --path . --import
+godot --headless --path . --script res://tools/bake_animation_retarget.gd
+~~~
+
+The `bake-animation-retarget` workflow runs exactly those two commands and commits the result,
+for when there is no engine on the machine doing the editing.
+
+`tests/ual_retarget_test.gd` checks the three things that can be silently wrong: the bones pair
+up (19 of them, spot-checked by name), the baked clip moves the character (measured off the
+skeleton), and the retarget is rest-relative — at every sampled instant the source bone's
+rotation change and the target's are *the same rotation*, within half a degree. A bake that
+renamed tracks without recomposing the hierarchy passes the first two and fails the third.
 
 ## Doing it by hand in the editor
 
@@ -107,7 +150,9 @@ The `AnimationPlayer` must be a **child of the model** and its `root_node` must 
 model; track paths are `Skeleton3D:BoneName`, relative to that root. `describe()` prints what
 did not resolve, which is the half of this job that is otherwise silent.
 
-**Option C — Godot's own retargeting.** In the character's Advanced Import Settings, the
+**Option C — Godot's own retargeting.** This is what the library's `.import` sidecar is
+already configured for, and what `AnimationRetarget` does in code instead. In the character's
+Advanced Import Settings, the
 *Skeleton* section has a **Retarget** control that binds the rig to the humanoid bone profile
 (`SkeletonProfileHumanoid`). Import the animation library as a scene, then in the character's
 `AnimationPlayer` use *Animation → Manage Animations → Load Library* and pick the library
