@@ -12,9 +12,21 @@ extends Area3D
 signal activated(interactable: Interactable)
 
 const INTERACTION_LAYER := 2
-## The layer static world geometry lives on. The cue's own downward ray uses it to find
-## the floor under the object, and nothing else.
-const WORLD_LAYER := 1
+## Pick boxes are the outline meshes' bounds grown by this much on every side, so a pointer
+## on the edge of a thin pole or a sheet of paper still finds it.
+const PICK_PADDING := 0.05
+## No pick box is thinner than this: a notice sheet is 2 cm deep and a ray at a grazing
+## angle would slip past it.
+const PICK_MIN_THICKNESS := 0.12
+## Meshes larger than this along any axis get no pick box: the court markings run the
+## length of the yard, and a box around them would swallow every click on the court. The
+## longest outlined object that should still be pointable is the schoolyard's 11 m fence
+## run with the gap in it.
+const PICK_MAX_EXTENT := 12.0
+## A mesh thinner than this whose top is more than `FLOOR_PAINT_BELOW_ANCHOR` under the
+## anchor is paint on the floor (court markings, a puddle): see `gets_pick_box`.
+const FLOOR_PAINT_THICKNESS := 0.05
+const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 
 ## Stable id used by tests and routing tables.
 @export var interact_id: StringName = &""
@@ -43,13 +55,9 @@ const WORLD_LAYER := 1
 		if is_inside_tree():
 			_refresh_monitorable()
 
-## Height of the cue's ground ring above the surface under the object. Small on purpose —
-## the cue marks the object and the floor it stands on, it does not decorate either.
-@export var hover_cue_height: float = 0.06
-
 ## Whether being highlighted makes a sound. On for props, and left on: the tick is the one
 ## piece of feedback that says "the pointer found something" without the player having to
-## look at the ring. It is rate-limited in `scripts/audio/cue_audio.gd`, not here.
+## look for the outline. It is rate-limited in `scripts/audio/cue_audio.gd`, not here.
 @export var hover_cue_audio: bool = true
 
 ## The bodies that belong to this object, or to the structure it is mounted on: the
@@ -62,6 +70,16 @@ const WORLD_LAYER := 1
 ## the notice from the other side.
 @export var support_paths: PackedStringArray = []
 
+## The meshes the highlight outline traces: the object itself, as the player would point at
+## it. Paths are relative to this node and may name a mesh or any node above meshes (a prop
+## root, an actor), in which case every visible mesh under it is traced.
+##
+## Separate from `support_paths` on purpose. Support is what the line-of-sight probe may look
+## through, and that includes the wall a timetable is pinned to; the outline is what the
+## player is being told about, and that is the sheet, not the wall. When this is empty the
+## support paths are used, and meshes parented under this node are always included.
+@export var outline_paths: PackedStringArray = []
+
 var _prompt_override: String = ""
 var _highlighted := false
 var _cue: HoverCue = null
@@ -69,6 +87,8 @@ var _cue: HoverCue = null
 ## probe does not look up node paths on every frame of every target.
 var _support_rids: Array[RID] = []
 var _support_resolved := false
+## The extra collision shapes built from the outline meshes; see `_build_pick_shapes`.
+var _pick_shapes: Array[CollisionShape3D] = []
 
 
 
@@ -80,6 +100,68 @@ func _ready() -> void:
 	if prompt_text.is_empty():
 		push_error("Interactable '%s' has an empty prompt_text." % interact_id)
 	_refresh_monitorable()
+	# Deferred so every sibling of the location (the props, the schoolyard's art) has had
+	# its own _ready and its final transform before the boxes are measured.
+	_build_pick_shapes.call_deferred()
+
+
+## The pointer finds an object where the object is.
+##
+## An interactable's own shape is a sphere around its anchor, and the anchor of a door or a
+## notice is a point in front of it at chest height: the sphere is what the proximity
+## sensor and the reach test are about, and as a pointer target it was off to one side of
+## the thing on screen - the door's outline would light while the cursor was on the floor
+## beside it, and not while the cursor was on the door. So each outline mesh adds a box of
+## its own bounds to this area. The sphere stays (removing it would change what the
+## proximity sensor sees); the boxes only add the object itself to what can be pointed at.
+func _build_pick_shapes() -> void:
+	if not is_inside_tree():
+		return
+	for shape in _pick_shapes:
+		if is_instance_valid(shape):
+			shape.queue_free()
+	_pick_shapes.clear()
+	var to_local := global_transform.affine_inverse()
+	for mesh in get_outline_meshes():
+		if not gets_pick_box(mesh):
+			continue
+		var box := (to_local * mesh.global_transform) * mesh.get_aabb()
+		box = box.grow(PICK_PADDING)
+		var size := Vector3(
+			maxf(box.size.x, PICK_MIN_THICKNESS),
+			maxf(box.size.y, PICK_MIN_THICKNESS),
+			maxf(box.size.z, PICK_MIN_THICKNESS)
+		)
+		var shape := BoxShape3D.new()
+		shape.size = size
+		var node := CollisionShape3D.new()
+		node.name = "PickShape%d" % _pick_shapes.size()
+		node.shape = shape
+		node.position = box.get_center()
+		add_child(node)
+		_pick_shapes.append(node)
+
+
+## Whether an outline mesh adds a pick box: not when it is longer than `PICK_MAX_EXTENT`,
+## and not when it is paint on the floor (thinner than `FLOOR_PAINT_THICKNESS` and lying
+## below the object's anchor). A box around a painted key would turn a click meant to walk onto it into
+## an inspection; the object's anchor sphere still finds it.
+func gets_pick_box(mesh: GeometryInstance3D) -> bool:
+	if mesh == null or not mesh.is_inside_tree():
+		return false
+	var world_box := mesh.global_transform * mesh.get_aabb()
+	if world_box.size.x > PICK_MAX_EXTENT or world_box.size.y > PICK_MAX_EXTENT \
+			or world_box.size.z > PICK_MAX_EXTENT:
+		return false
+	var flat := world_box.size.y < FLOOR_PAINT_THICKNESS
+	var below_anchor := world_box.end.y < global_position.y - FLOOR_PAINT_BELOW_ANCHOR
+	return not (flat and below_anchor)
+
+
+## The boxes the pointer can find this object by, besides its anchor sphere. Public for
+## tests: every shipped object with an outline should also be pointable where it is drawn.
+func get_pick_shapes() -> Array[CollisionShape3D]:
+	return _pick_shapes
 
 
 ## The collision bodies the visibility probe may look through for this object.
@@ -125,10 +207,10 @@ func can_interact() -> bool:
 ## The controller marks exactly one interactable as highlighted: the one E would use
 ## right now, and the one a click would walk to.
 ##
-## The cue itself lives in `scripts/interaction/hover_cue.gd` and is built the first time
-## the object is highlighted, so no prop needs a scene edit and no art asset is involved.
-## Highlighting starts and stops a short fade instead of switching a mesh on: a ring that
-## appears between two frames reads as a bug, one that arrives reads as a mark.
+## The cue itself lives in `scripts/interaction/hover_cue.gd`: an outline traced around the
+## meshes `get_outline_meshes` returns. It is built the first time the object is
+## highlighted, and it fades in and out instead of switching: an outline that appears
+## between two frames reads as a flicker, one that arrives reads as attention.
 func set_highlighted(value: bool) -> void:
 	if _highlighted == value:
 		return
@@ -161,39 +243,45 @@ func _ensure_cue() -> void:
 		return
 	_cue = HoverCue.new()
 	_cue.name = "HoverCue"
-	# The ring is sized from the interaction radius: the radius is where the player has to
-	# stand, and the ring's job is to say so — on the floor under the object, which is not
-	# where this node is.
-	_cue.setup(radius, _cue_ring_height())
+	_cue.bind(self)
 	add_child(_cue)
 
 
-## How far below this node the ground under the object is, in the object's own frame.
+## Every visible mesh the highlight outline should trace, resolved now.
 ##
-## An interactable is authored at the middle of the prop — the timetable sheet sits at
-## 0.6 m, the schoolbag at 0.2 m — so a ring drawn at the node's own height hangs in the
-## air in front of a wall, or slices through a desk. The question the ring answers is
-## "where do I stand", which is about the floor. One downward ray on the world layer, cast
-## once, the first time the object is highlighted: the same kind of query `PointerNavigator`
-## casts from a click. No hit keeps the ring where the node is.
-func _cue_ring_height() -> float:
-	var world := get_world_3d()
-	if world == null:
-		return 0.0
-	var space := world.direct_space_state
-	if space == null:
-		return 0.0
-	var from := global_position + Vector3.UP * 0.05
-	var query := PhysicsRayQueryParameters3D.create(
-		from, from + Vector3.DOWN * 3.0, WORLD_LAYER
-	)
-	query.collide_with_bodies = true
-	query.collide_with_areas = false
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
-		return 0.0
-	var ground: Vector3 = hit.get("position", global_position)
-	return clampf(ground.y + hover_cue_height - global_position.y, -2.5, 0.0)
+## Resolved on each call rather than cached: an actor's model is instanced at runtime, the
+## schoolyard's art pass hides graybox meshes, and a mesh that was hidden when the room
+## loaded may be visible by the time the player points at it.
+func get_outline_meshes() -> Array[GeometryInstance3D]:
+	var meshes: Array[GeometryInstance3D] = []
+	var paths := outline_paths if not outline_paths.is_empty() else support_paths
+	for path in paths:
+		var node := get_node_or_null(NodePath(path))
+		if node == null:
+			push_error(
+				"Interactable '%s': outline path '%s' does not resolve." % [interact_id, path]
+			)
+			continue
+		_collect_meshes(node, meshes)
+	for child in get_children():
+		if child == _cue or child is CollisionShape3D:
+			continue
+		_collect_meshes(child, meshes)
+	return meshes
+
+
+func _collect_meshes(node: Node, meshes: Array[GeometryInstance3D]) -> void:
+	if node is HoverCue or node is DestinationCue:
+		return
+	var visual := node as VisualInstance3D
+	if visual != null and not visual.is_visible_in_tree():
+		# A hidden branch is hidden for everything under it as well.
+		return
+	var mesh := node as MeshInstance3D
+	if mesh != null and mesh.mesh != null and not meshes.has(mesh):
+		meshes.append(mesh)
+	for child in node.get_children():
+		_collect_meshes(child, meshes)
 
 
 ## The cue this object draws while it is highlighted, or null before it has ever been

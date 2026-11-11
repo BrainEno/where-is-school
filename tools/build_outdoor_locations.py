@@ -5,10 +5,12 @@ here instead of in a thousand-line .tscn. The green animal
 (`scenes/environment/fauna/green_animal.tscn`) is authored by hand, because its
 shape is a narrative decision, not a blockout.
 
-Run from the repository root: `python3 tools/build_outdoor_locations.py`
+Run from the repository root: `python3 tools/build_outdoor_locations.py [location ...]`
+(no argument rewrites every location; see `main()` for why naming one matters).
 """
 import math
 import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -183,6 +185,7 @@ class Scene:
                 lines.append(f'conversation_route = &"{item["route"]}"')
             lines.append(f'radius = {item.get("radius", 1.1)}')
             _support_lines(lines, item)
+            _outline_lines(lines, item)
             lines.append('')
             if item.get('animal'):
                 lines.append(f'[node name="GreenAnimal" parent="Interactables/{item["name"]}" instance=ExtResource("{base + 4}_animal")]')
@@ -198,6 +201,7 @@ class Scene:
                 lines.append(f'prompt_text = "{item["prompt"]}"')
             lines.append(f'radius = {item.get("radius", 1.2)}')
             _support_lines(lines, item)
+            _outline_lines(lines, item)
             if item.get('scene'):
                 lines.append(f'destination_scene = "{item["scene"]}"')
                 lines.append(f'destination_spawn = &"{item["spawn"]}"')
@@ -238,9 +242,9 @@ def build_street():
     # ground and pavements
     s.box("Road", (0, -0.1, -8), (22, 0.2, 56), "asphalt")
     s.box("PavementEast", (13, 0.075, -8), (8, 0.15, 56), "concrete")
-    s.box("KerbEast", (8.9, 0.14, -8), (0.35, 0.28, 56), "concrete")
+    s.box("KerbEast", (8.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
     s.box("PavementWest", (-13, 0.075, -8), (6, 0.15, 56), "concrete")
-    s.box("KerbWest", (-9.9, 0.14, -8), (0.35, 0.28, 56), "concrete")
+    s.box("KerbWest", (-9.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
     # school building along the west side
     s.box("SchoolBlock", (-16, 6.5, -6), (10, 13, 44), "wall", ["camera_occluder"])
     s.box("SchoolPlinth", (-16, 0.6, -6), (10.2, 1.2, 44), "concrete")
@@ -272,39 +276,73 @@ def build_street():
     s.box("BinsB", (11.8, 0.55, -2), (0.7, 1.1, 0.7), "metal")
     s.box("Gutter", (-9.2, 0.03, -8), (0.5, 0.06, 54), "metal", None, False)
     s.box("DrainCover", (-9.2, 0.08, -30), (0.9, 0.1, 0.9), "metal", None, False)
-    # the stair up to the residential area, at the north end
-    for step in range(9):
-        s.box(f"Step_{step}", (10.5, 0.16 * (step + 1) - 0.08, -32.0 - 0.34 * step), (4.0, 0.16, 0.34), "concrete")
-    s.box("StairLanding", (10.5, 1.5, -35.4), (4.0, 0.2, 1.6), "concrete")
-    s.box("StairRail", (12.4, 2.1, -34.0), (0.1, 1.0, 4.4), "metal", None, False)
-    s.box("AlleyWall", (10.5, 1.6, -37.0), (8.0, 3.2, 0.4), "brick", ["camera_occluder"])
+    # the standing water the gutter inspection is about: a short sheet on top of the gutter
+    s.box("GutterPool", (-9.2, 0.065, -22.0), (0.42, 0.01, 2.6), "glass", None, False)
+    # the camera on a bracket that the school wall conversation points out
+    s.box("WallCameraBracket", (-10.8, 3.4, 6.0), (0.4, 0.06, 0.06), "metal", None, False)
+    s.box("WallCamera", (-10.52, 3.32, 6.0), (0.3, 0.16, 0.18), "metal", None, False)
+    # The stair up to the residential area, at the north end, and where it goes.
+    #
+    # It used to climb nine slabs to a landing against a 3.2 m garden wall: a flight of
+    # steps up to the top of a wall, with the way on left to the player's imagination. Now
+    # the steps are solid, the landing runs up to the front of the flats, and the front has
+    # a doorway with a short passage behind it whose far end is lit - the courtyard.
+    street_steps = _stair(s, "Step", 9, 0.16, 0.34, (8.5, 12.5), None, "z", -1, -31.83, 0.0)
+    s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete")
+    for step in range(0, 9, 2):
+        s.box(f"StairPost_{step}", (12.42, 0.16 * (step + 1) + 0.45, -32.0 - 0.34 * step),
+              (0.06, 0.9, 0.06), "metal", None, False)
+    s.box("StairRail", (12.42, 2.5, -35.8), (0.06, 0.06, 2.4), "metal", None, False)
+    s.box("StairRailPost", (12.42, 2.05, -34.7), (0.06, 0.9, 0.06), "metal", None, False)
+    # the front of the flats, with the doorway at the head of the stair
+    s.box("FlatsFrontWest", (6.3, 3.75, -37.2), (4.6, 7.5, 0.4), "brick", ["camera_occluder"])
+    s.box("FlatsFrontEast", (14.7, 3.75, -37.2), (4.6, 7.5, 0.4), "brick", ["camera_occluder"])
+    s.box("FlatsFrontHeader", (10.5, 5.95, -37.2), (3.8, 3.1, 0.4), "brick", ["camera_occluder"])
+    s.box("FlatsFrontPlinth", (10.5, 0.8, -37.2), (3.8, 1.6, 0.4), "concrete")
+    s.box("DoorwayLintel", (10.5, 4.5, -36.96), (4.2, 0.2, 0.1), "concrete", None, False)
+    s.box("DoorwayJambWest", (8.5, 3.0, -36.96), (0.2, 2.8, 0.1), "concrete", None, False)
+    s.box("DoorwayJambEast", (12.5, 3.0, -36.96), (0.2, 2.8, 0.1), "concrete", None, False)
+    # the passage through the block: walkable, roofed, and lit at the far end
+    s.box("PassageFloor", (10.5, 0.8, -39.3), (3.8, 1.6, 4.2), "concrete")
+    s.box("PassageWallWest", (8.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
+    s.box("PassageWallEast", (12.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
+    s.box("PassageCeiling", (10.5, 4.5, -39.3), (4.2, 0.2, 4.2), "concrete", None, False)
+    s.box("PassageBack", (10.5, 3.0, -41.5), (4.2, 2.8, 0.2), "metal")
+    s.box("PassageLight", (10.5, 2.7, -41.38), (1.4, 2.2, 0.04), "dusk", None, False)
 
     s.interactables = [
         {"name": "SchoolWallLook", "pos": (-9.4, 1.2, 6.0), "id": "street_school_wall",
-         "route": "street_wall", "prompt": "Look at the school wall", "radius": 1.4},
+         "route": "street_wall", "prompt": "Look at the school wall", "radius": 1.4,
+         "outline": ("WallCamera", "WallCameraBracket")},
         {"name": "NoticeLook", "pos": (9.4, 1.2, 2.0), "id": "street_notice_pole",
          "route": "street_notice", "prompt": "Read the notice", "radius": 1.2,
-         "support": ("../../NoticePole",)},
+         "support": ("../../NoticePole",), "outline": ("NoticePole", "NoticeSheet")},
         {"name": "GutterLook", "pos": (-9.2, 0.4, -22.0), "id": "street_gutter",
-         "inspection": "street_gutter", "radius": 1.3},
+         "inspection": "street_gutter", "radius": 1.3, "outline": ("GutterPool",)},
         {"name": "ShutterLook", "pos": (9.8, 1.0, -24.0), "id": "street_shutter",
-         "inspection": "street_shutter", "radius": 1.4},
+         "inspection": "street_shutter", "radius": 1.4, "outline": ("ShopShutter",)},
         {"name": "BinsLook", "pos": (11.3, 0.7, -2.0), "id": "street_bins",
-         "inspection": "street_bin", "radius": 1.1},
+         "inspection": "street_bin", "radius": 1.1, "outline": ("BinsA", "BinsB")},
         {"name": "LampLook", "pos": (10.6, 1.2, -18.0), "id": "street_lamp",
-         "inspection": "street_lamp", "radius": 1.2, "support": ("../../LampPost",)},
+         "inspection": "street_lamp", "radius": 1.2, "support": ("../../LampPost",),
+         "outline": ("LampPost", "LampHead", "LampGlow")},
     ]
     s.exits = [
         {"name": "BackToSchool", "pos": (-9.6, 0.9, 16.0), "id": "street_back_to_school",
          "prompt_key": "prompt.back_to_classroom", "radius": 1.1,
+         "outline": ("SchoolExitRecess", "SchoolExitDark", "GatePillarSouth", "GatePillarNorth"),
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromStreet",
          "id_dest": "corridor"},
-        {"name": "ToResidential", "pos": (10.5, 1.0, -30.4), "id": "street_to_residential",
+        # The anchor stands in the doorway at the head of the stair, so a click on the stair
+        # walks the player up it and through the door instead of stopping at the bottom.
+        {"name": "ToResidential", "pos": (10.5, 2.5, -36.6), "id": "street_to_residential",
          "prompt_key": "prompt.stairs_up", "radius": 1.5,
+         "outline": tuple(street_steps) + ("StairLanding", "DoorwayLintel", "DoorwayJambWest",
+                                           "DoorwayJambEast", "PassageLight"),
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromStreet",
          "id_dest": "residential"},
     ]
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromResidential", (10.5, 1.6, -34.4))]
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromResidential", (10.5, 1.6, -35.4))]
     return s
 
 
@@ -343,12 +381,46 @@ def build_residential():
         for j, y in enumerate((3.4, 6.4, 9.4)):
             s.box(f"WinE_{i}_{j}", (10.9, y, z), (0.12, 1.2, 1.4), "glass", None, False)
     s.box("LitWindowN", (1.0, 6.5, -16.85), (1.5, 1.3, 0.14), "dusk", None, False)
-    # the stair between the west and north block: eleven steps and a landing
-    for step in range(11):
-        s.box(f"Step_{step}", (-13.6, 0.15 * (step + 1) - 0.075, -9.2 - 0.3 * step),
-              (3.4, 0.15, 0.3), "concrete")
-    s.box("StairLanding", (-13.6, 1.75, -13.6), (3.4, 0.2, 1.8), "concrete")
-    s.box("StairRail", (-15.2, 2.4, -11.0), (0.1, 1.0, 4.6), "metal", None, False)
+    # The stair up the west block: eleven steps, a landing and the door they lead to.
+    #
+    # It used to stand at x = -13.6, which is inside the west block (x -21..-11): the
+    # player was offered "Look up the stairs" in front of a blank wall, and the landing sat
+    # 35 cm past the top step, so the spawn on it could not be routed to. It now runs up the
+    # block's east face, every step solid, with the landing butted against the top step.
+    res_steps = _stair(s, "Step", 11, 0.15, 0.3, (-11.0, -8.8), None, "z", -1, -9.05, 0.0)
+    s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete")
+    for step in range(0, 11, 2):
+        s.box(f"StairPost_{step}", (-8.86, 0.15 * (step + 1) + 0.45, -9.2 - 0.3 * step),
+              (0.06, 0.9, 0.06), "metal", None, False)
+    s.box("StairRail", (-8.86, 2.7, -13.55), (0.06, 0.06, 2.4), "metal", None, False)
+    s.box("StairDoor", (-10.95, 2.85, -13.55), (0.1, 2.1, 1.1), "metal", None, False)
+    s.box("StairDoorLamp", (-10.9, 4.1, -13.55), (0.12, 0.15, 0.4), "lamp", None, False)
+
+    # The way down to the street, at the courtyard's south-west corner.
+    #
+    # "Back to the street" used to be a point on the open south edge of the courtyard with
+    # nothing there - and behind the camera, which looks north-west. It is now a stairwell
+    # the camera can see: a gate at the head, ten solid steps going down to the west, and a
+    # lit doorway at the bottom onto the street. The street's own stair comes up the same
+    # 1.6 m, so the two flights agree.
+    street_steps = _stair(s, "StreetStep", 10, -0.16, 0.32, None, (11.0, 14.6), "x", -1, -17.0, -1.8)
+    s.box("StreetStairFoot", (-21.8, -1.7, 12.8), (3.2, 0.2, 3.6), "concrete")
+    s.box("StairwellWallSouth", (-20.2, -0.9, 14.8), (6.4, 1.8, 0.4), "concrete")
+    s.box("StairwellBalustrade", (-20.2, 0.5, 14.8), (6.4, 1.0, 0.05), "metal")
+    s.box("StairwellWallNorth", (-22.2, 0.6, 10.8), (2.4, 4.8, 0.4), "brick")
+    # under the west block's south end: the flight is cut into the ground, so its north
+    # side is a retaining wall up to courtyard level, not an open drop under the block
+    s.box("StairwellRetainingNorth", (-19.0, -0.9, 10.8), (4.0, 1.8, 0.4), "concrete")
+    # and the courtyard's own west edge south of the stairwell gets a rail, not a drop
+    s.box("CourtyardWestRail", (-16.95, 0.5, 16.5), (0.1, 1.0, 3.0), "metal")
+    s.box("StairwellWallWestNorth", (-23.2, -0.4, 11.1), (0.4, 2.8, 1.0), "brick")
+    s.box("StairwellWallWestSouth", (-23.2, -0.4, 14.5), (0.4, 2.8, 1.0), "brick")
+    s.box("StreetDoorHeader", (-23.2, 0.8, 12.8), (0.4, 0.4, 2.4), "brick", None, False)
+    s.box("StreetDoorGlow", (-23.5, -0.5, 12.8), (0.2, 2.2, 2.4), "dusk")
+    s.box("StreetGatePostNorth", (-16.9, 1.3, 11.15), (0.3, 2.6, 0.3), "concrete")
+    s.box("StreetGatePostSouth", (-16.9, 1.3, 14.45), (0.3, 2.6, 0.3), "concrete")
+    s.box("StreetGateLintel", (-16.9, 2.7, 12.8), (0.3, 0.2, 3.6), "concrete", None, False)
+    s.box("StreetGateSign", (-16.72, 2.3, 12.8), (0.04, 0.4, 1.1), "paper", None, False)
     # courtyard furniture
     s.box("SlideRamp", (-6.0, 0.9, -8.0), (1.2, 0.2, 4.0), "metal", None, False)
     s.box("SlideLegs", (-6.0, 0.45, -6.2), (0.9, 0.9, 0.2), "metal")
@@ -376,7 +448,15 @@ def build_residential():
     # with no floor under it, and a player walking the edge would fall out of the world.
     s.box("AlleyWallWest", (3.0, 2.0, -29.0), (0.4, 4.0, 14.0), "brick", ["camera_occluder"])
     s.box("AlleyWallEast", (9.0, 2.0, -29.0), (0.4, 4.0, 14.0), "brick", ["camera_occluder"])
-    s.box("AlleyBackWall", (6.0, 2.0, -35.8), (6.4, 4.0, 0.4), "brick", ["camera_occluder"])
+    # The lane goes on: the back wall is two piers and a lintel with the lane's continuation
+    # behind them, lit at its far end, instead of a blank wall the exit was pinned to.
+    s.box("AlleyBackPierWest", (3.8, 2.0, -35.8), (2.0, 4.0, 0.4), "brick", ["camera_occluder"])
+    s.box("AlleyBackPierEast", (8.2, 2.0, -35.8), (2.0, 4.0, 0.4), "brick", ["camera_occluder"])
+    s.box("AlleyBackLintel", (6.0, 3.5, -35.8), (2.4, 1.0, 0.4), "brick", None, False)
+    s.box("AlleyBeyondGround", (6.0, -0.05, -37.6), (2.4, 0.1, 3.2), "asphalt")
+    s.box("AlleyBeyondWallWest", (4.7, 1.5, -37.6), (0.2, 3.0, 3.2), "brick")
+    s.box("AlleyBeyondWallEast", (7.3, 1.5, -37.6), (0.2, 3.0, 3.2), "brick")
+    s.box("AlleyBeyondLight", (6.0, 1.4, -39.15), (2.4, 2.8, 0.1), "dusk")
     # Real ground, flush with the courtyard's top face (y = 0) and butted against its
     # north edge at z = -22, so there is no step to fall off and nothing to fall through:
     # the lane is walkable, and the navmesh can bake it (issue #33).
@@ -399,36 +479,45 @@ def build_residential():
 
     s.interactables = [
         {"name": "PlanterLook", "pos": (6.0, 0.8, 0.6), "id": "res_planter",
-         "inspection": "res_planter", "radius": 1.4},
+         "inspection": "res_planter", "radius": 1.4,
+         "outline": ("PlanterWall", "PlanterSoil", "Hedge")},
         # The anchor sits just off the seat's front edge rather than in the middle of the
         # bench: a 1.04 m body owns its whole footprint, and an anchor inside it is hidden
         # from every standing position by the bench itself.
         {"name": "BenchLook", "pos": (-3.2, 0.63, 5.6), "id": "res_bench",
-         "inspection": "res_bench", "radius": 1.2},
+         "inspection": "res_bench", "radius": 1.2, "outline": ("CourtyardBench",)},
         {"name": "WashingLook", "pos": (-1.6, 3.4, -14.6), "id": "res_washing",
-         "inspection": "res_washing", "radius": 1.6},
+         "inspection": "res_washing", "radius": 1.6,
+         "outline": ("LineA", "Shirt_0", "Shirt_1", "Shirt_2", "Shirt_3", "Towel")},
         {"name": "StainLookA", "pos": (7.8, 1.4, 10.2), "id": "res_stain_a",
-         "inspection": "res_stain", "radius": 1.2},
+         "inspection": "res_stain", "radius": 1.2, "outline": ("StainA",)},
         {"name": "StainLookB", "pos": (7.8, 1.4, -11.8), "id": "res_stain_b",
-         "inspection": "res_stain", "radius": 1.2},
-        {"name": "StairLook", "pos": (-13.6, 1.0, -8.6), "id": "res_stair",
-         "route": "residential_stair", "prompt": "Look up the stairs", "radius": 1.5},
+         "inspection": "res_stain", "radius": 1.2, "outline": ("StainB",)},
+        {"name": "StairLook", "pos": (-9.9, 1.0, -8.6), "id": "res_stair",
+         "route": "residential_stair", "prompt": "Look up the stairs", "radius": 1.5,
+         "outline": tuple(res_steps) + ("StairLanding", "StairDoor")},
         {"name": "AnimalLook", "pos": (7.6, 0.9, -1.6), "id": "green_animal",
          "route": "green_animal", "prompt_key": "prompt.animal", "radius": 1.3, "animal": True},
     ]
     s.exits = [
-        {"name": "BackToStreet", "pos": (-6.0, 0.9, 15.0), "id": "res_back_to_street",
-         "prompt_key": "prompt.back_to_street", "radius": 1.3,
+        # On the flight itself, a few steps down: a click on the gate walks the player into
+        # the stairwell before the street loads, instead of fading out on the courtyard.
+        {"name": "BackToStreet", "pos": (-19.0, -0.3, 12.8), "id": "res_back_to_street",
+         "prompt_key": "prompt.back_to_street", "radius": 1.4,
+         "outline": tuple(street_steps) + ("StreetGatePostNorth", "StreetGatePostSouth",
+                                           "StreetGateLintel", "StreetGateSign"),
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromResidential",
          "id_dest": "street"},
-        {"name": "AlleyEnd", "pos": (6.0, 0.9, -33.0), "id": "res_alley_end",
+        {"name": "AlleyEnd", "pos": (6.0, 0.9, -34.6), "id": "res_alley_end",
          "prompt_key": "prompt.milestone", "radius": 1.6,
+         "outline": ("AlleyBackPierWest", "AlleyBackPierEast", "AlleyBackLintel", "AlleyBeyondLight"),
          "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromCourtyard",
          "id_dest": "alley"},
     ]
     s.spawns = [
-        ("FromStreet", (-4.0, 0, 10.0)),
-        ("FromStair", (-13.6, 1.8, -13.4)),
+        # Arrival from the street is at the head of the stairwell it comes up.
+        ("FromStreet", (-14.6, 0, 13.2)),
+        ("FromStair", (-9.9, 1.8, -13.6)),
         ("FromAlley", (6.0, 0, -31.0)),
     ]
     return s
@@ -484,22 +573,33 @@ def build_alley():
     s.box("GatePostWest", (-1.0, 1.2, -22.6), (0.2, 2.4, 0.2), "metal")
     s.box("GatePostEast", (1.0, 1.2, -22.6), (0.2, 2.4, 0.2), "metal")
     s.box("GateLeaf", (-0.55, 1.05, -22.4), (1.1, 2.1, 0.08), "metal", None, False)
+    # The way back: the arch out of the north block, seen from the lane side. The lane used
+    # to stop at a ground edge with nothing on it, and the exit there was a prompt in the air.
+    s.box("MouthPierWest", (-3.2, 2.0, 14.8), (1.6, 4.0, 0.5), "brick", ["camera_occluder"])
+    s.box("MouthPierEast", (3.2, 2.0, 14.8), (1.6, 4.0, 0.5), "brick", ["camera_occluder"])
+    s.box("MouthLintel", (0.0, 3.7, 14.8), (4.8, 0.6, 0.5), "brick", None, False)
+    s.box("MouthThreshold", (0.0, 0.02, 14.6), (4.8, 0.04, 0.3), "concrete", None, False)
+    s.box("MouthCourtyardLight", (0.0, 1.7, 15.3), (4.8, 3.4, 0.1), "dusk")
 
     s.interactables = [
         {"name": "NoticesLook", "pos": (3.2, 1.6, -1.9), "id": "alley_notice_wall",
-         "inspection": "alley_notices", "radius": 1.3},
+         "inspection": "alley_notices", "radius": 1.3,
+         "outline": tuple(f"Notice_{i}" for i in range(6))},
         {"name": "SkipLook", "pos": (-2.2, 1.0, -2.5), "id": "alley_skip",
-         "inspection": "alley_bins", "radius": 1.5},
+         "inspection": "alley_bins", "radius": 1.5,
+         "outline": ("SkipBody", "SkipRim", "ChairInSkip")},
         {"name": "ServiceDoorLook", "pos": (-7.4, 1.2, -12.0), "id": "alley_service_door",
-         "inspection": "alley_door", "radius": 1.4},
+         "inspection": "alley_door", "radius": 1.4, "outline": ("ServiceDoor", "ServicePlaque")},
     ]
     s.exits = [
         {"name": "BackToCourtyard", "pos": (0.0, 0.9, 12.5), "id": "alley_back_to_courtyard",
          "prompt_key": "prompt.back_to_street", "radius": 1.4,
+         "outline": ("MouthPierWest", "MouthPierEast", "MouthLintel", "MouthCourtyardLight"),
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromAlley",
          "id_dest": "residential"},
         {"name": "ToPlayground", "pos": (0.0, 0.9, -21.6), "id": "alley_to_playground",
          "prompt_key": "prompt.alley_gate", "radius": 1.6,
+         "outline": ("GateLeaf", "GatePostWest", "GatePostEast"),
          "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromAlley",
          "id_dest": "playground"},
     ]
@@ -559,6 +659,14 @@ def build_playground():
     s.box("SouthFenceWest", (-12.5, 1.1, 19.6), (21, 2.2, 0.16), "metal", ["camera_occluder"])
     s.box("SouthFenceEast", (12.5, 1.1, 19.6), (21, 2.2, 0.16), "metal", ["camera_occluder"])
     s.box("EstateBlockSouth", (0, 5.0, 26), (46, 10, 8), "brick", ["camera_occluder"])
+    # the estate gate the alley comes in through: posts, a bar over it, and the lane's light
+    # beyond, so the gap in the fence reads as a way through and not as a missing panel
+    # (decoration only: `tests/playground_art_slice_test.gd` pins the yard's solids and its
+    # baked navigation, and the fence ends already stop the body)
+    s.box("SouthGatePostWest", (-2.0, 1.25, 19.6), (0.2, 2.5, 0.2), "metal", None, False)
+    s.box("SouthGatePostEast", (2.0, 1.25, 19.6), (0.2, 2.5, 0.2), "metal", None, False)
+    s.box("SouthGateLintel", (0.0, 2.45, 19.6), (4.2, 0.12, 0.12), "metal", None, False)
+    s.box("SouthGateLight", (0.0, 1.6, 21.9), (3.6, 3.2, 0.1), "dusk", None, False)
     # east side: flats, and the hedge that hides what is under the shed
     s.box("EstateBlockEast", (24, 6.0, -2), (8, 12, 40), "brick", ["camera_occluder"])
 
@@ -642,35 +750,49 @@ def build_playground():
 
     s.interactables = [
         {"name": "HoopLook", "pos": (-8.0, 1.4, 8.8), "id": "pg_hoop_near",
-         "inspection": "pg_hoop", "radius": 1.5},
+         "inspection": "pg_hoop", "radius": 1.5,
+         "outline": ("HoopNearPole", "HoopNearBoard", "HoopNearRim", "PlaygroundArt/Equipment/HoopNearRing")},
         {"name": "CourtLook", "pos": (0.0, 0.9, 2.0), "id": "pg_court_middle",
-         "inspection": "pg_court", "radius": 1.8},
+         "inspection": "pg_court", "radius": 1.8,
+         # The painted court markings: what "the court" is, as opposed to the ground it is on.
+         "outline": ("PlaygroundArt/Court",)},
         {"name": "BenchLook", "pos": (10.2, 1.0, 3.2), "id": "pg_bench_look",
-         "inspection": "pg_bench", "radius": 1.4},
+         "inspection": "pg_bench", "radius": 1.4, "outline": ("YardBench", "YardBag")},
         {"name": "FrameLook", "pos": (17.0, 1.4, 9.0), "id": "pg_frame_look",
-         "inspection": "pg_frame", "radius": 1.5},
+         "inspection": "pg_frame", "radius": 1.5,
+         "outline": tuple(f"FramePost_{i}" for i in range(3)) + tuple(f"FrameRung_{i}" for i in range(4))
+                    + ("FrameTopBar",)},
         {"name": "ShedLook", "pos": (-13.2, 1.1, -4.0), "id": "pg_shed_door",
-         "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5},
+         "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5,
+         "outline": ("ShedDoor", "PlaygroundArt/Equipment/ShedHasp", "PlaygroundArt/Equipment/ShedPadlock")},
         {"name": "BallLook", "pos": (-14.2, 0.8, 0.6), "id": "pg_ball_look",
-         "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4},
+         "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4,
+         "outline": ("PingPongBall",)},
         {"name": "BoardLook", "pos": (13.2, 1.7, 3.2), "id": "pg_board_look",
-         "inspection": "pg_court", "radius": 1.2},
+         "inspection": "pg_court", "radius": 1.2,
+         "outline": ("BoardSheet", "BoardBacking", "BoardPostA", "BoardPostB")},
         {"name": "ContainerLook", "pos": (12.0, 1.4, -13.9), "id": "pg_container_look",
-         "inspection": "pg_container", "radius": 1.8},
+         "inspection": "pg_container", "radius": 1.8, "outline": ("ContainerDoorLine",)},
         {"name": "TyreLook", "pos": (-14.6, 0.7, 2.9), "id": "pg_tyre_look",
-         "inspection": "pg_tyres", "radius": 1.4},
+         "inspection": "pg_tyres", "radius": 1.4,
+         # The ring tyres the art pass adds; the graybox stack they replace is hidden, and
+         # hidden meshes are skipped, so listing both keeps the outline right either way.
+         "outline": tuple(f"PlaygroundArt/Equipment/Tyre_{i}" for i in range(3))
+                    + ("PlaygroundArt/Equipment/TyreLoose",)},
     ]
     s.exits = [
         {"name": "BackToAlley", "pos": (0.0, 0.9, 18.2), "id": "pg_back_to_alley",
          "prompt_key": "prompt.alley_gate", "radius": 1.8,
+         "outline": ("SouthGatePostWest", "SouthGatePostEast", "SouthGateLintel", "SouthGateLight"),
          "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromPlayground",
          "id_dest": "alley"},
         {"name": "BackToCorridor", "pos": (-3.0, 0.9, -19.2), "id": "pg_to_corridor",
-         "prompt_key": "prompt.yard_to_corridor", "radius": 1.6,
+         "prompt_key": "prompt.yard_to_corridor", "radius": 1.6, "outline": ("FireDoor", "FireStep"),
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromSchoolyard",
          "id_dest": "corridor"},
         {"name": "FarGap", "pos": (-14.0, 0.9, -18.2), "id": "pg_gap_in_fence",
-         "prompt_key": "prompt.gate_far", "radius": 1.8, "milestone": "end.slice"},
+         "prompt_key": "prompt.gate_far", "radius": 1.8, "milestone": "end.slice",
+         "outline": ("FenceRunGap",)},
     ]
     s.spawns = [
         ("FromAlley", (0.0, 0, 16.0)),
@@ -698,6 +820,65 @@ def _support_lines(lines, item):
     lines.append(f'support_paths = PackedStringArray({quoted})')
 
 
+def _outline_lines(lines, item):
+    """Emits `outline_paths`: the meshes the highlight outline traces for this object.
+
+    Names in the table are node paths under the location root, the same names the box
+    table uses; the interactable sits under `Interactables/`, hence the `../../`. The
+    schoolyard's art pass adds nodes under `PlaygroundArt/` after this script has run, and
+    an object can list both its graybox box and its art replacement: the outline skips
+    whichever one is hidden.
+    """
+    outline = item.get('outline')
+    if not outline:
+        return
+    quoted = ", ".join(f'"../../{path}"' for path in outline)
+    lines.append(f'outline_paths = PackedStringArray({quoted})')
+
+
+def _stair(s, prefix, steps, rise, run, x_range, z_range, axis, direction, start, base, mat="concrete", edge=True):
+    """A flight of solid steps, one box per step, each standing on `base`.
+
+    `axis` is "x" or "z", the direction the flight climbs or descends along; `direction`
+    is +1 or -1 along it; `start` is where the first step begins on that axis. `rise` is
+    signed: negative for a flight that goes down. Every step is a solid block down to
+    `base`, not a floating slab: seen from the side, a flight of slabs reads as a shelf.
+    Returns the names of the steps, for the outline tables.
+    """
+    names = []
+    for step in range(steps):
+        top = rise * (step + 1)
+        near = start + direction * run * step
+        far = start + direction * run * (step + 1)
+        centre = (near + far) / 2.0
+        height = top - base
+        y = base + height / 2.0
+        if axis == "x":
+            pos = (round(centre, 3), round(y, 3), round((z_range[0] + z_range[1]) / 2.0, 3))
+            size = (run, round(height, 3), round(z_range[1] - z_range[0], 3))
+        else:
+            pos = (round((x_range[0] + x_range[1]) / 2.0, 3), round(y, 3), round(centre, 3))
+            size = (round(x_range[1] - x_range[0], 3), round(height, 3), run)
+        name = f"{prefix}_{step}"
+        s.box(name, pos, size, mat)
+        names.append(name)
+        if edge:
+            # A pale strip along the nosing of every tread, as on real outdoor steps. Seen
+            # from the camera's height, flat-lit treads of one colour merge into a ramp; the
+            # strips are what make a flight read as steps at a glance.
+            # Going up, the edge a tread drops off is the one nearer the start; going down,
+            # it is the far one. The strip sits on the tread, 3 cm in from that edge.
+            inset = near + direction * 0.03 if rise > 0 else far - direction * 0.03
+            if axis == "x":
+                strip_pos = (round(inset, 3), round(top + 0.006, 3), pos[2])
+                strip_size = (0.06, 0.012, size[2])
+            else:
+                strip_pos = (pos[0], round(top + 0.006, 3), round(inset, 3))
+                strip_size = (size[0], 0.012, 0.06)
+            s.box(f"{prefix}Edge_{step}", strip_pos, strip_size, "paper", None, False)
+    return names
+
+
 def write(scene, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
@@ -705,7 +886,27 @@ def write(scene, path):
     print("wrote", path.replace(ROOT + "/", ""))
 
 
-write(build_street(), f"{ROOT}/scenes/locations/street/street.tscn")
-write(build_residential(), f"{ROOT}/scenes/locations/residential/residential.tscn")
-write(build_alley(), f"{ROOT}/scenes/locations/alley/alley.tscn")
-write(build_playground(), f"{ROOT}/scenes/locations/playground/playground.tscn")
+BUILDERS = {
+    "street": build_street,
+    "residential": build_residential,
+    "alley": build_alley,
+    "playground": build_playground,
+}
+
+
+def main(names):
+    """Writes the named locations, or every location when none is named.
+
+    The playground carries an art pass on top of the graybox
+    (`scenes/environment/props/playground_art/README.md`), so rewriting it without
+    re-applying that pass loses the art. Naming only the locations that changed avoids it.
+    """
+    unknown = [name for name in names if name not in BUILDERS]
+    if unknown:
+        raise SystemExit("unknown location(s): %s (known: %s)" % (", ".join(unknown), ", ".join(BUILDERS)))
+    for name in names or list(BUILDERS):
+        write(BUILDERS[name](), f"{ROOT}/scenes/locations/{name}/{name}.tscn")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

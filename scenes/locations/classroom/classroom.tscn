@@ -595,6 +595,7 @@ position = Vector3(1.7, 0, -2.05)
 [node name="BlackboardInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(0.2, 0.6, -3)
 interact_id = &"blackboard"
+outline_paths = PackedStringArray("../../Props/Blackboard")
 prompt_text = "Read the blackboard"
 inspection_id = &"classroom_blackboard"
 radius = 1.5
@@ -602,6 +603,7 @@ radius = 1.5
 [node name="SetSquareInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(1.35, 0.6, -2.5)
 interact_id = &"set_square"
+outline_paths = PackedStringArray("../../Props/SetSquare")
 prompt_text = "Look at the set square"
 inspection_id = &"classroom_set_square"
 radius = 0.8
@@ -609,6 +611,7 @@ radius = 0.8
 [node name="FrontDeskInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(2.4, 0.5, -2.5)
 interact_id = &"front_desk"
+outline_paths = PackedStringArray("../../Furniture/FrontDesk")
 prompt_text = "Look at the front desk"
 inspection_id = &"classroom_teacher_desk"
 radius = 1.3
@@ -616,6 +619,7 @@ radius = 1.3
 [node name="WindowInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(-3.9, 0.6, -0.2)
 interact_id = &"window"
+outline_paths = PackedStringArray("../../WindowGlass0", "../../WindowFrameTop0", "../../WindowFrameBottom0", "../../WindowFrameLeft0", "../../WindowFrameRight0", "../../WindowMullion0", "../../WindowGlass1", "../../WindowFrameTop1", "../../WindowFrameBottom1", "../../WindowFrameLeft1", "../../WindowFrameRight1", "../../WindowMullion1")
 prompt_text = "Look out of the window"
 inspection_id = &"classroom_window"
 radius = 1.2
@@ -623,6 +627,7 @@ radius = 1.2
 [node name="OwnDeskInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(0, 0.4, 0.25)
 interact_id = &"own_desk"
+outline_paths = PackedStringArray("../../Furniture/DeskB2")
 prompt_text = "Look at your desk"
 inspection_id = &"classroom_own_desk"
 radius = 0.9
@@ -630,6 +635,7 @@ radius = 0.9
 [node name="SchoolbagInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(0.62, 0.2, 1.02)
 interact_id = &"schoolbag"
+outline_paths = PackedStringArray("../../Props/Schoolbag")
 prompt_text = "Search the schoolbag"
 inspection_id = &"classroom_schoolbag"
 radius = 0.8
@@ -637,6 +643,7 @@ radius = 0.8
 [node name="TimetableInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(1.6, 0.6, 3.15)
 interact_id = &"timetable"
+outline_paths = PackedStringArray("../../TimetableSheet", "../../TimetableClip")
 prompt_text = "Read the timetable"
 inspection_id = &"classroom_timetable_sheet"
 radius = 0.9
@@ -644,6 +651,7 @@ radius = 0.9
 [node name="QTalk" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(-1.32, 0.8, 0.82)
 interact_id = &"q_talk"
+outline_paths = PackedStringArray("../../Actors/Q")
 prompt_text = "Talk to Q"
 prompt_key = "prompt.talk"
 speaker_id = &"q"
@@ -653,6 +661,7 @@ radius = 1.1
 [node name="ClassroomDoor" parent="Interactables" instance=ExtResource("18_location_exit")]
 position = Vector3(3.2, 0.6, 3.3)
 interact_id = &"classroom_door"
+outline_paths = PackedStringArray("../../DoorFrameLeft", "../../DoorFrameRight", "../../DoorFrameHead", "../../Threshold")
 prompt_text = "Try the door"
 prompt_key = "prompt.door_try"
 radius = 1.15

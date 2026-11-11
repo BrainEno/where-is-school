@@ -104,11 +104,12 @@ Not verified:
   inspections.
 - The alley mouth is a 3.4 m-high arch in the north block and has no light of its own, so
   it is darker than the courtyard. It is readable in the greybox, but it has not been lit
-  as a place yet.
-- The courtyard's stair sits inside `BlockWest` (x -15.3..-11.9 against a block face at
+  as a place yet. (The outline round added `MouthCourtyardLight` on the alley side.)
+- ~~The courtyard's stair sits inside `BlockWest` (x -15.3..-11.9 against a block face at
   x = -11), so it, its `res_stair` interactable and the unused `FromStair` spawn marker
-  are buried in solid geometry. It is a coordinate error from before this round and it is
-  not fixed here; the slice never routes a player through it.
+  are buried in solid geometry.~~ Resolved in the outline round: the stair was rebuilt in
+  front of the block face (eleven steps, a rail, a landing and a lit door), `StairLook`
+  stands at (-9.9, 1.0, -8.6) and `FromStair` on the landing.
   each. That is content depth, not a system limit.
 
 
@@ -128,7 +129,7 @@ Fixed in the geometry table, not in the runtime:
 | `BlockNorth`, one solid 34 m wall across the north side | split into `BlockNorthWest` (x -17..2.8) and `BlockNorthEast` (x 9.2..17), both 17 m tall; `AlleyLintel` fills y 3.4..17 over the first 2 m of the gap, so the courtyard sees a 6.4 m wide, 3.4 m high arch in one facade rather than two separate buildings |
 | `AlleyGround`, a 0.04 m mesh-only slab at y 0.02, x 3.2..8.8 | a 0.1 m `StaticBody3D` at x 2.8..9.2, z -36..-22, whose **top face is exactly y = 0** and whose south edge butts the courtyard's north edge at z = -22 |
 | `PathNorth`, a second mesh-only strip inside the old wall | removed: the lane's own floor is the path now |
-| the lane's retaining walls, z -32..-24 | lengthened to z -36..-22 so they reach the courtyard edge, and `AlleyBackWall` closes the far end: walls that stopped short left a 0.4 m slot with no floor under it, which a player walking the edge could fall into |
+| the lane's retaining walls, z -32..-24 | lengthened to z -36..-22 so they reach the courtyard edge, and `AlleyBackWall` closes the far end: walls that stopped short left a 0.4 m slot with no floor under it, which a player walking the edge could fall into (the outline round opened `AlleyBackWall` into two piers and a lintel over a floored, walled recess with a light at its back, so the lane end reads as a way through and still has no edge) |
 
 The gap in the block matches the lane exactly: 6.4 m between the two masses, 5.6 m between
 the retaining walls, and no step at any of the joins. The navigation bake runs straight

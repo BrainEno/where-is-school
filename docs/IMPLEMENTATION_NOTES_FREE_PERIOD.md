@@ -214,5 +214,7 @@ the real cursor with `Input.warp_mouse`.
   one-shot guard.
 - The companion's "ask along" prompt appears only when Q has been left more than 11 m
   behind. A player who never wanders far will never see it.
-- The hover cue ring is drawn at `hover_cue_height` above the interaction point, so on
-  a wall-mounted prop it floats rather than hugging the object.
+- ~~The hover cue ring is drawn at `hover_cue_height` above the interaction point, so on
+  a wall-mounted prop it floats rather than hugging the object.~~ Resolved in the outline
+  round: there is no ring any more; the object's own meshes are outlined, and the pointer
+  finds the object where they are drawn (`docs/ARCHITECTURE.md` 5f).

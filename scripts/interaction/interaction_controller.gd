@@ -300,6 +300,8 @@ func _find_best_target() -> Interactable:
 		var candidate := area as Interactable
 		if not is_live_target(candidate) or not candidate.can_interact():
 			continue
+		if not _sensor_reaches_anchor(candidate):
+			continue
 		var offset := candidate.global_position - origin
 		offset.y = 0.0
 		var distance := offset.length()
@@ -313,6 +315,25 @@ func _find_best_target() -> Interactable:
 			best_score = score
 			best = candidate
 	return best
+
+
+## Proximity is about the object's anchor sphere, as it always was.
+##
+## An interactable's area also carries pick boxes around the meshes its outline traces
+## (`Interactable._build_pick_shapes`), so the pointer finds a door where the door is drawn.
+## Those boxes make the area larger, and the sensor overlaps it from farther away; without
+## this gate a long fence or a wide shutter would join the facing candidates from where its
+## anchor was never in reach of the sensor. The test is the sphere-against-sphere overlap the
+## sensor used to report on its own.
+func _sensor_reaches_anchor(candidate: Interactable) -> bool:
+	var sensor_shape := _sensor.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
+	if sensor_shape == null:
+		return true
+	var sphere := sensor_shape.shape as SphereShape3D
+	if sphere == null:
+		return true
+	var reach := sphere.radius + maxf(candidate.radius, 0.0)
+	return sensor_shape.global_position.distance_to(candidate.global_position) <= reach + 0.01
 
 
 ## You cannot read a notice through a wall. Three probes are cast (upper body, knee

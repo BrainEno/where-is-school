@@ -31,6 +31,7 @@ visual_yaw_degrees = 180.0
 [node name="AskAlong" parent="." instance=ExtResource("3_interactable")]
 position = Vector3(0, 0.9, 0)
 interact_id = &"q_ask_along"
+outline_paths = PackedStringArray("../Actor")
 prompt_text = "Ask Q to come along"
 prompt_key = "prompt.ask_along"
 speaker_id = &"q"

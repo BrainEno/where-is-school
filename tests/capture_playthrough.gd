@@ -284,7 +284,8 @@ func _run() -> void:
 		var stairs := street.find_interactable(&"street_to_residential")
 		if stairs != null:
 			await _wait_for_free(60.0)
-			_teleport(Vector3(10.5, 0, -28.6), 0.0)
+			# On the landing at the head of the stair, facing the doorway into the flats.
+			_teleport(Vector3(10.5, 1.6, -35.0), 0.0)
 			if not await _wait_for_target(&"street_to_residential", 30.0):
 				_failures.append("The way to the residential area was never offered.")
 			await _shot("15b_stair_prompt", "The way up to the residential area.")
@@ -440,7 +441,7 @@ func _capture_free_period() -> void:
 		_note("hover prompt: '%s'" % prompt)
 		await _shot(
 			"13b_hover_trolley",
-			"The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing."
+			"The pointer resting on the cleaning trolley: its outline, the prompt, and the object E would use are the same thing."
 		)
 		await _press(KEY_E)
 		if await _wait_for_line(6.0):
@@ -637,12 +638,12 @@ func _capture_yard_checks() -> void:
 # --- the ground mark: candidate comparison ----------------------------------
 
 
-## Half of this is the shipped mark (candidate A); B and C are composed here, out of the same
+## Candidate A is the shipped mark (a thin ring and a dot); B and C are composed here, out of the same
 ## pen, so that all three are real geometry drawn by the real material on the real floor. A
 ## candidate that only exists in this file cannot leak into the game.
 func _candidate_mesh(design: String) -> ArrayMesh:
 	match design:
-		"tick":
+		"ring":
 			return WorldCue.destination_mark_mesh()
 		"brackets":
 			var bracket := SurfaceTool.new()
@@ -895,7 +896,7 @@ func _capture_cue_candidates() -> void:
 	_note("cue candidates: mark at %s on normal %s" % [str(point), str(normal)])
 
 	var screen := _screen_position_of_point(point)
-	var designs: Array[String] = ["tick", "brackets", "commas"]
+	var designs: Array[String] = ["ring", "brackets", "commas"]
 	var inked := {}
 	for design: String in designs:
 		await _shot_free_frame()
@@ -920,8 +921,8 @@ func _capture_cue_candidates() -> void:
 	await _wait(0.3)
 	await _shot(
 		"cue_candidates_abc",
-		"The three candidates side by side on the same floor, from one camera: A tick, "
-		+ "B brackets, C commas. The shipped one is A."
+		"The three candidates side by side on the same floor, from one camera: A ring with a "
+		+ "dot, B brackets, C commas. The shipped one is A."
 	)
 	var current := _host.get_current()
 	if current != null:
@@ -1199,19 +1200,22 @@ func _capture_click_navigation() -> void:
 		# resolves to the sheet, rather than by projecting its origin and hoping.
 		var sheet_screen: Vector2 = await _cursor_onto(sheet)
 		if sheet_screen != Vector2.ZERO and await _wait_for_target(sheet.interact_id, 6.0):
-			# Long enough for the fade to finish and for the ring to have turned: a frame
-			# taken in the first sixteenth of a second shows the cue at its dimmest.
+			# Long enough for the outline to finish fading in: a frame taken in the first
+			# tenth of a second shows the cue at its dimmest.
 			await _wait(0.45)
 			await _shot(
 				"03d_hover_cue",
-				"The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, "
-				+ "and a shard floating above the object."
+				"The hover cue on the timetable sheet: a warm outline traced around the sheet "
+				+ "and its clip, and nothing on the floor."
 			)
 			var cue := sheet.get_cue()
 			if cue != null:
 				_note(
-					"hover cue: revealed=%s opacity=%.2f parts=%s"
-					% [str(cue.is_revealed()), cue.get_opacity(), str(cue.get_parts().keys())]
+					"hover cue: revealed=%s opacity=%.2f outlining=%s meshes=%d"
+					% [
+						str(cue.is_revealed()), cue.get_opacity(), str(cue.is_outlining()),
+						cue.get_outline_meshes().size()
+					]
 				)
 			else:
 				_note("hover cue: the object is highlighted but carries no cue")
@@ -1265,7 +1269,7 @@ func _capture_refused_click(near: Interactable) -> void:
 	await _wait(0.12)
 	await _shot(
 		"03g_refused_click",
-		"A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts."
+		"A click on a wall: the ring contracts in the refusal colour and fades, with no dot and no echo, and no walk starts."
 	)
 	_note(
 		"refused click: role=%s, rejection=%s"

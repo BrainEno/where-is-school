@@ -109,6 +109,8 @@ MATERIALS: dict[str, dict] = {
     "fence_panel_tall": {"texture": tex("fence_panel"), "triplanar": "world", "scale": (1 / 3, 1 / 2.2, 1 / 3), "cut": 0.35, "cull_off": True},
     # The gap run spans x -19.5..-8.5: u = (x + 19.5) / 11 puts the cut at x = -14.
     "fence_gap": {"texture": tex("fence_gap"), "triplanar": "world", "scale": (1 / 11, 0.5, 1 / 11), "offset": (19.5 / 11, 0.0, 0.0), "cut": 0.35, "cull_off": True},
+    # the lit lane seen through the estate gate: unshaded, so it reads as light beyond
+    "lane_light": {"color": (232, 172, 112), "unshaded": True},
     "estate": {"color": ESTATE, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.2, 0.2, 0.2), "outline": True},
     # equipment
     "hoop_pole": {"color": IVORY, "outline": True},
@@ -212,6 +214,7 @@ REPOINT: list[tuple[str, str]] = [
     (r"FenceRunGap", "fence_gap"),
     (r"SouthFence(West|East)/MeshInstance3D", "fence_panel_tall"),
     (r"EstateBlock(South|East)/MeshInstance3D", "estate"),
+    (r"SouthGateLight", "lane_light"),
     (r"Hoop(Near|Far)Pole/MeshInstance3D", "hoop_pole"),
     (r"Hoop(Near|Far)Board", "backboard"),
     (r"Hoop(Near|Far)Rim/MeshInstance3D", "hoop_rim"),
@@ -232,7 +235,8 @@ REPOINT: list[tuple[str, str]] = [
     (
         r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking|ContainerBar"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
-        r"|Bird_\d|BirdWire|TapPost/MeshInstance3D|TapSpout|TapDrain",
+        r"|Bird_\d|BirdWire|TapPost/MeshInstance3D|TapSpout|TapDrain"
+        r"|SouthGatePost(West|East)|SouthGateLintel",
         "metal_ink",
     ),
 ]

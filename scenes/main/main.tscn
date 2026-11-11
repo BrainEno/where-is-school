@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
 [ext_resource type="Script" path="res://scripts/world/camera_rig.gd" id="11_camera_rig"]
 [ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="12_occluder"]
+[ext_resource type="Script" path="res://scripts/interaction/outline_overlay.gd" id="13_outline"]
 
 [node name="Main" type="Node3D"]
 
@@ -33,6 +34,9 @@ far = 120.0
 
 [node name="OcclusionFader" type="Node3D" parent="CameraRig/Camera3D"]
 script = ExtResource("12_occluder")
+
+[node name="OutlineOverlay" type="CanvasLayer" parent="."]
+script = ExtResource("13_outline")
 
 [node name="BellAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bell")

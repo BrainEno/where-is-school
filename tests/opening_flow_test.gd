@@ -251,7 +251,7 @@ func _run() -> void:
 		if to_residential == null:
 			_failures.append("The street has no way on to the residential area.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(10.5, 0, -28.6)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(10.5, 1.6, -35.0)))
 			await physics_frame
 			await physics_frame
 			_interaction.request_activation(to_residential)
