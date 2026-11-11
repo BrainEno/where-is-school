@@ -11,12 +11,22 @@ class_name PlayerController
 ## (click-to-move) input both end up in `_apply_movement()`: same acceleration, same
 ## `move_and_slide()`, same facing. Automatic movement only decides which direction to
 ## ask for, by following the `NavigationAgent3D` path this body owns.
+##
+## Animation follows from that, not alongside it: the protagonist model carries a
+## `CharacterVisualAnimation`, and this body hands itself to it in `_ready()`. The animator
+## reads the velocity `_apply_movement()` leaves behind, so WASD and click-to-move walk with
+## the same clip for the same reason — the body moved — and the animator never writes a
+## transform, so the facing below stays this controller's alone.
 
 signal path_finished
 signal path_cancelled
 
 @export_category("Movement")
 @export_range(0.5, 12.0, 0.1) var move_speed: float = 3.6
+## Speed while the sprint input is held. The model picks it up on its own: above
+## `character_visual_animation.gd`'s `jog_speed_threshold` (4.4 m/s) the walk clip becomes
+## the jog clip, so the legs follow the body instead of being told separately.
+@export_range(1.0, 12.0, 0.1) var jog_speed: float = 5.6
 @export_range(1.0, 40.0, 0.5) var acceleration: float = 18.0
 @export_range(1.0, 30.0, 0.5) var gravity: float = 9.8
 ## How quickly the visual turns toward the movement direction.
@@ -49,6 +59,11 @@ const STEP_PROBE_MARGIN := 0.15
 @export_category("Wake pose")
 ## Forward slump of the body mesh while the protagonist is still coming to.
 @export_range(0.0, 45.0, 1.0) var wake_tilt_degrees: float = 22.0
+## Slump above which the model is *sitting* rather than standing: the protagonist wakes at a
+## desk, so the fade-in happens in the seated pose and the settle is the get-up.
+const SEATED_WAKE_POSE := 0.5
+## The input action that asks for `jog_speed`.
+const SPRINT_ACTION := &"sprint"
 
 @onready var camera_rig: CameraRig = get_node_or_null(camera_rig_path) as CameraRig
 @onready var visual_pivot: Node3D = %VisualPivot
@@ -74,6 +89,9 @@ const STEP_PROBE_MARGIN := 0.15
 @export_range(0.1, 1.5, 0.05) var waypoint_radius: float = 0.35
 
 var _control_enabled: bool = true
+## Whether the wake beat currently has the model seated. Mirrors the model's own state so a
+## repeated `set_wake_pose(1.0)` does not restart the sit or the get-up.
+var _wake_seated: bool = false
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -91,10 +109,32 @@ var _path_last_position: Vector3 = Vector3.ZERO
 var _path_legs := PackedVector3Array()
 ## Which leg of that route the body is walking towards.
 var _path_index: int = 0
+## The protagonist model's idle/walk animator, found under `%Visual`.
+var _character_animator: CharacterVisualAnimation = null
 
 
 func _ready() -> void:
 	_body_radius = _measure_body_radius()
+	_character_animator = _find_character_animator()
+	if _character_animator != null:
+		_character_animator.bind_body(self)
+	elif visual != null:
+		push_warning("PlayerController: the model under %Visual has no CharacterVisualAnimation; the protagonist will not animate.")
+
+
+func _find_character_animator() -> CharacterVisualAnimation:
+	if visual == null:
+		return null
+	for node in visual.find_children("*", "Node3D", true, false):
+		var animator := node as CharacterVisualAnimation
+		if animator != null:
+			return animator
+	return null
+
+
+## The protagonist's idle/walk animator, or null if the model has none.
+func get_character_animator() -> CharacterVisualAnimation:
+	return _character_animator
 
 
 ## The radius of the capsule the character is standing in, read once: it is what decides
@@ -128,6 +168,12 @@ func _physics_process(delta: float) -> void:
 	_apply_movement(move_direction, delta)
 
 
+## The speed `_apply_movement()` aims for right now: `move_speed`, or `jog_speed` while the
+## sprint input is held. Public so the difference can be asserted without a floor to run on.
+func target_speed() -> float:
+	return jog_speed if Input.is_action_pressed(SPRINT_ACTION) else move_speed
+
+
 ## Turns stick input into a camera-relative world direction.
 func _camera_relative(input_vector: Vector2) -> Vector3:
 	var camera_right := camera_rig.planar_right() if camera_rig != null else Vector3.RIGHT
@@ -145,8 +191,9 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 	if direction.length_squared() > 0.0001:
 		_facing_direction = direction
 
-	var target_x := direction.x * move_speed
-	var target_z := direction.z * move_speed
+	var speed := target_speed()
+	var target_x := direction.x * speed
+	var target_z := direction.z * speed
 
 	velocity.x = move_toward(velocity.x, target_x, acceleration * delta)
 	velocity.z = move_toward(velocity.z, target_z, acceleration * delta)
@@ -381,22 +428,55 @@ func get_facing_direction() -> Vector3:
 
 
 ## Zero-based slump used by the wake beat. 0 = upright.
+##
+## The pivot tilt and sink are the *whole* body moving; the model's own clips are what the
+## body is doing. Above `SEATED_WAKE_POSE` the protagonist is sitting at the desk (the take
+## opens asleep over it), and coming back to 0 is the get-up, so the two halves happen
+## together instead of the model standing in the seated pose while the pivot straightens.
 func set_wake_pose(amount: float) -> void:
 	if visual == null:
 		return
 	var clamped := clampf(amount, 0.0, 1.0)
 	visual.rotation_degrees.x = wake_tilt_degrees * clamped
 	visual.position.y = 0.9 - 0.06 * clamped
+	_set_wake_seated(clamped >= SEATED_WAKE_POSE)
 
 
 func settle_wake_pose(duration: float) -> void:
 	if visual == null:
 		return
+	_set_wake_seated(false)
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(visual, "rotation_degrees:x", 0.0, duration)
 	tween.tween_property(visual, "position:y", 0.9, duration)
 	await tween.finished
+
+
+## Moves the model between the seated pose and the get-up. Ignored on a model that has no
+## animation driver (a placement test's capsule, or a rigless preview), so the wake beat
+## never depends on the character assets being there.
+func _set_wake_seated(seated: bool) -> void:
+	if seated == _wake_seated:
+		return
+	_wake_seated = seated
+	var wrapper := _animation_wrapper()
+	if wrapper == null:
+		return
+	wrapper.call("set_seated", seated)
+	if not seated:
+		wrapper.call("play_action", "get_up")
+
+
+## The model's animation driver, if the visual has one. Found by what it can do rather than
+## by node name, because `player.tscn` names it `Model` and a test may not.
+func _animation_wrapper() -> Node:
+	if visual == null:
+		return null
+	for child in visual.get_children():
+		if child.has_method("set_seated") and child.has_method("play_action"):
+			return child
+	return null
 
 
 ## The wake beat rolls the view. The rig owns the roll; the player keeps the two

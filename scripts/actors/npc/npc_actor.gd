@@ -117,26 +117,52 @@ func face_towards(target_point: Vector3) -> void:
 	rotation.y = atan2(offset.x, offset.z) + PI
 
 
+## Turns towards `target_point` by at most a share of the way this frame, instead of
+## snapping. Same convention as `face_towards()` (the half turn for a −Z model); used by the
+## companion while it walks, so a corner of its route is a turn and not a jump.
+func turn_towards(target_point: Vector3, delta: float, turn_speed: float) -> void:
+	var offset := target_point - global_position
+	offset.y = 0.0
+	if offset.length_squared() < 0.0001:
+		return
+	var target_angle := atan2(offset.x, offset.z) + PI
+	rotation.y = lerp_angle(rotation.y, target_angle, clampf(turn_speed * delta, 0.0, 1.0))
+
+
+## The locomotion animator of the authored visual, or null for a graybox actor.
+func get_character_animator() -> CharacterVisualAnimation:
+	return _visual as CharacterVisualAnimation
+
+
 ## Walks through the given points in order, turning at each one. Awaiting this
 ## function resolves when the actor reaches the last point.
+##
+## A tween has no physics velocity, so each leg reports the velocity it is actually moving at
+## to the visual's animator — the same idle/walk rule the player and the companion use, fed
+## the same kind of number.
 func walk_along(points: Array) -> void:
 	if points.is_empty():
 		return
-	_set_visual_walking(true)
 	for point: Vector3 in points:
 		var distance := global_position.distance_to(point)
 		if distance <= 0.01:
 			continue
 		face_towards(point)
 		var duration := maxf(distance / maxf(walk_speed, 0.01), 0.05)
+		_report_visual_velocity((point - global_position) / duration)
 		var tween := create_tween()
 		tween.tween_property(self, "global_position", point, duration)
 		await tween.finished
-	_set_visual_walking(false)
+	_end_visual_report()
 
 
-## Tween-driven actors have no CharacterBody3D velocity for the visual animation
-## driver to inspect, so their movement is forwarded explicitly.
-func _set_visual_walking(walking: bool) -> void:
-	if _visual != null and _visual.has_method("set_walking"):
-		_visual.call("set_walking", walking)
+func _report_visual_velocity(velocity: Vector3) -> void:
+	var animator := get_character_animator()
+	if animator != null:
+		animator.report_velocity(velocity)
+
+
+func _end_visual_report() -> void:
+	var animator := get_character_animator()
+	if animator != null:
+		animator.clear_reported_velocity()

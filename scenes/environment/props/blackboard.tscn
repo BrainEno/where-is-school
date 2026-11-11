@@ -1,8 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=16 format=3]
 
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="1_wall_trim"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/board_slate.tres" id="2_board_slate"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="3_paper_pale"]
+[ext_resource type="Material" path="res://assets/materials/classroom/lacquer_oxblood.tres" id="1_frame"]
+[ext_resource type="Material" path="res://assets/materials/classroom/board_slate.tres" id="2_slate"]
+[ext_resource type="Material" path="res://assets/materials/classroom/board_face.tres" id="3_face"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_honey.tres" id="4_tray"]
+[ext_resource type="Material" path="res://assets/materials/classroom/chalk.tres" id="5_chalk"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="6_clip"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 size = Vector3(5, 1.45, 0.06)
@@ -10,31 +13,77 @@ size = Vector3(5, 1.45, 0.06)
 [sub_resource type="BoxMesh" id="BoxMesh_2"]
 size = Vector3(4.84, 1.3, 0.02)
 
+[sub_resource type="QuadMesh" id="QuadMesh_face"]
+size = Vector2(4.84, 1.3)
+
 [sub_resource type="BoxMesh" id="BoxMesh_3"]
 size = Vector3(4.84, 0.05, 0.16)
 
 [sub_resource type="BoxMesh" id="BoxMesh_4"]
 size = Vector3(0.01, 0.09, 0.01)
 
+[sub_resource type="BoxMesh" id="BoxMesh_stub"]
+size = Vector3(0.012, 0.035, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_clip_plate"]
+size = Vector3(0.1, 0.006, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_clip_jaw"]
+size = Vector3(0.1, 0.022, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dust"]
+size = Vector3(0.62, 0.004, 0.11)
+
 [node name="Blackboard" type="Node3D"]
 
 [node name="Frame" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.7, 0)
 mesh = SubResource("BoxMesh_1")
-material_override = ExtResource("1_wall_trim")
+material_override = ExtResource("1_frame")
 
 [node name="Board" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.7, 0.045)
 mesh = SubResource("BoxMesh_2")
-material_override = ExtResource("2_board_slate")
+material_override = ExtResource("2_slate")
+
+[node name="Face" type="MeshInstance3D" parent="Board"]
+position = Vector3(0, 0, 0.0105)
+mesh = SubResource("QuadMesh_face")
+material_override = ExtResource("3_face")
 
 [node name="ChalkTray" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1, 0.1)
 mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("1_wall_trim")
+material_override = ExtResource("4_tray")
+
+[node name="ChalkDust" type="MeshInstance3D" parent="ChalkTray"]
+position = Vector3(-0.85, 0.027, 0.01)
+mesh = SubResource("BoxMesh_dust")
+material_override = ExtResource("5_chalk")
+transparency = 0.55
 
 [node name="Chalk" type="MeshInstance3D" parent="."]
 position = Vector3(-1.1, 1.03, 0.1)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("BoxMesh_4")
-material_override = ExtResource("3_paper_pale")
+material_override = ExtResource("5_chalk")
+
+[node name="ChalkBrokenEnd" type="MeshInstance3D" parent="."]
+position = Vector3(-1.012, 1.031, 0.118)
+rotation_degrees = Vector3(0, 34, 90)
+mesh = SubResource("BoxMesh_stub")
+material_override = ExtResource("5_chalk")
+
+[node name="Clip" type="Node3D" parent="."]
+position = Vector3(1.3, 1.028, 0.1)
+rotation_degrees = Vector3(0, -11, 0)
+
+[node name="Plate" type="MeshInstance3D" parent="Clip"]
+mesh = SubResource("BoxMesh_clip_plate")
+material_override = ExtResource("6_clip")
+
+[node name="Jaw" type="MeshInstance3D" parent="Clip"]
+position = Vector3(0, 0.011, -0.018)
+rotation_degrees = Vector3(-24, 0, 0)
+mesh = SubResource("BoxMesh_clip_jaw")
+material_override = ExtResource("6_clip")

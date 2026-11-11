@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/materials/classroom/textures/wood_honey.png" id="1_tex"]
+[ext_resource type="Material" path="res://assets/materials/classroom/ink_outline.tres" id="2_ink"]
+
+[resource]
+resource_name = "wood_honey"
+next_pass = ExtResource("2_ink")
+diffuse_mode = 3
+specular_mode = 2
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+uv1_triplanar = true
+uv1_scale = Vector3(1.4, 1.4, 1.4)
+texture_filter = 3
+albedo_texture = ExtResource("1_tex")

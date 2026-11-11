@@ -1,6 +1,6 @@
 extends SceneTree
-## The four clips in `CharacterAnimation` drive every rigged character in the repository, and
-## each one is authored against canonical bone names rather than a rig's own.
+## The seven clips in `CharacterAnimation` drive every rigged character in the repository,
+## and each one is authored against canonical bone names rather than a rig's own.
 ##
 ## That is the claim this file checks, and it is the claim the retarget experiment failed:
 ## the two rigs name their bones differently (the rigged Q says `UpperArm.L`, the retargeted
@@ -13,10 +13,13 @@ extends SceneTree
 ##   2. every track in every built clip points at a bone that exists on that rig;
 ##   3. each clip actually moves the bones it claims to move, measured by seeking the
 ##      animation and reading the skeleton's bone poses;
-##   4. both rigs get the same four clip names despite naming their bones differently;
+##   4. both rigs get the same seven clip names despite naming their bones differently;
 ##   5. both production models have skeletons and bind;
-##   6. the actual protagonist and Q wrapper scenes create their runtime AnimationPlayers
-##      and switch between idle and walk when their movement state changes.
+##   6. a transition does not loop: `get_up` is built with `LOOP_NONE`, ends on the rest pose,
+##      and starts from *exactly* the pose `sit_idle` holds, so the two cannot drift apart;
+##   7. the actual protagonist and Q wrapper scenes create their runtime AnimationPlayers and
+##      switch between idle, walk and jog by the body's speed, hold `sit_idle` while seated,
+##      and hand back to locomotion when a one-shot action finishes.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -35,9 +38,19 @@ const MIN_RESOLVED := 16
 const CLIPS := {
 	"idle": "spine",
 	"walk": "thigh.L",
+	"jog": "thigh.L",
+	"sit_idle": "thigh.L",
 	"wave": "upper_arm.R",
 	"talk": "head",
+	"get_up": "thigh.L",
 }
+
+## The one clip that is a transition rather than a state. It is checked differently: it ends
+## on the rest pose instead of returning to its first key.
+const TRANSITIONS := ["get_up"]
+
+## Degrees two keys of the same bone may differ by and still count as the same pose.
+const POSE_TOLERANCE_DEGREES := 0.5
 
 var _failures: Array[String] = []
 var _notes: Array[String] = []
@@ -86,6 +99,9 @@ func _run() -> void:
 	await _check_model("protagonist (production)", PRODUCTION_PROTAGONIST, true)
 	await _check_model("Q (production)", PRODUCTION_Q, true)
 
+	Harness.stage = "the sprint the jog clip exists for"
+	_check_jog_threshold()
+
 	Harness.stage = "the production wrapper scenes"
 	await _check_runtime_wrapper("protagonist", "res://scenes/environment/characters/protagonist.tscn")
 	await _check_runtime_wrapper("Q", "res://scenes/environment/characters/q.tscn")
@@ -93,8 +109,8 @@ func _run() -> void:
 	_report()
 	Harness.finish(
 		self, _failures,
-		"both rigged characters play the same four clips, and every track points at a bone "
-		+ "that exists."
+		"both rigged characters play the same seven clips, every track points at a bone that "
+		+ "exists, the transition does not loop, and the seats and speeds are wired."
 	)
 
 
@@ -161,7 +177,11 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 	var skeleton := skeletons[0]
 	_check_track_paths(label, player, skeleton)
 	for clip_name in CLIPS:
-		_check_clip(label, player, skeleton, resolved, clip_name)
+		_check_clip(
+			label, player, skeleton, resolved, clip_name, not TRANSITIONS.has(clip_name),
+			report.get("posed", [])
+		)
+	_check_transition_poses(label, player, skeleton, resolved)
 	model.queue_free()
 	return report
 
@@ -196,7 +216,13 @@ func _check_track_paths(label: String, player: AnimationPlayer, skeleton: Skelet
 ## Seeks the clip and reads the bone poses: the clip has to move the bone it is about, and
 ## it has to move it back before it loops.
 func _check_clip(
-	label: String, player: AnimationPlayer, skeleton: Skeleton3D, resolved: Dictionary, clip_name: String
+	label: String,
+	player: AnimationPlayer,
+	skeleton: Skeleton3D,
+	resolved: Dictionary,
+	clip_name: String,
+	loops: bool,
+	posed: Array = []
 ) -> void:
 	var canonical: String = CLIPS[clip_name]
 	if not resolved.has(canonical):
@@ -221,22 +247,170 @@ func _check_clip(
 	for step in range(1, samples.size()):
 		var angle := rad_to_deg(samples[0].angle_to(samples[step]))
 		widest = maxf(widest, angle)
-	# The bone has to return to where it started, or a looping clip limps.
+	# A looping clip has to return to where it started, or the loop limps. A transition is
+	# supposed to *arrive*: it ends on the rest pose, so the check is that it ends at zero.
 	var returned := rad_to_deg(samples[0].angle_to(samples[samples.size() - 1]))
 	_notes.append(
 		"%s/%s: %s turns %.1f° and returns to within %.2f°" % [label, clip_name, bone, widest, returned]
 	)
-	if widest < MOVED_DEGREES:
+	# A limb this rig does not model hanging down is held at its modelled pose on purpose
+	# (`CharacterAnimation.posed_limbs`): its axes are not the ones the clip was written for.
+	# Then the check is the opposite one: the hold has to actually hold.
+	if posed.has(canonical):
+		_notes.append("%s/%s: '%s' is held at its modelled pose on this rig" % [label, clip_name, bone])
+		if widest > MOVED_DEGREES:
+			_failures.append(
+				"%s: '%s' is listed as held at its modelled pose, but clip '%s' turned it %.2f°."
+				% [label, canonical, clip_name, widest]
+			)
+	elif widest < MOVED_DEGREES:
 		_failures.append(
 			"%s: clip '%s' moved '%s' by %.2f° at most; the track is not reaching the bone."
 			% [label, clip_name, bone, widest]
 		)
-	if returned > MOVED_DEGREES:
+	var expected_loop_mode := Animation.LOOP_LINEAR if loops else Animation.LOOP_NONE
+	if animation.loop_mode != expected_loop_mode:
+		_failures.append(
+			"%s: clip '%s' has loop mode %d; %s"
+			% [label, clip_name, animation.loop_mode, "it loops" if loops else "it is a transition"]
+		)
+	if loops and returned > MOVED_DEGREES:
 		_failures.append(
 			"%s: clip '%s' ends %.2f° away from where it starts, so the loop jumps."
 			% [label, clip_name, returned]
 		)
+	if not loops:
+		# A bone's pose rotation is its whole local rotation, so "standing up" is the bone's
+		# rest rotation. (It is not the identity: every limb on these rigs rests ~170–180°
+		# from its parent, and a clip that ended on the identity would end with the legs and
+		# arms thrown upwards, which is the bug rest-relative keys fixed.)
+		var last_pose: Quaternion = samples[samples.size() - 1]
+		var rest_pose := skeleton.get_bone_rest(index).basis.get_rotation_quaternion()
+		var away_from_rest := rad_to_deg(last_pose.angle_to(rest_pose))
+		_notes.append("%s/%s ends %.2f° from the rest pose" % [label, clip_name, away_from_rest])
+		if away_from_rest > 1.0:
+			_failures.append(
+				"%s: clip '%s' ends %.2f° away from the rest pose, so the body would snap when "
+				% [label, clip_name, away_from_rest]
+				+ "the next clip starts."
+			)
 	player.stop()
+
+
+## A jog clip nobody can reach is a clip that will rot. The controller has two speeds and the
+## driver has one threshold, and the threshold has to sit between them or the jog either never
+## plays or plays while the body is still walking.
+func _check_jog_threshold() -> void:
+	var controller := PlayerController.new()
+	# Untyped on purpose: the driver is reached through its script, and a statically typed
+	# `Node` would make `jog_speed_threshold` a compile error rather than a property read.
+	var wrapper: Node = preload("res://scripts/actors/character_visual_animation.gd").new()
+	var walk := controller.move_speed
+	var jog := controller.jog_speed
+	var threshold := float(wrapper.get("jog_speed_threshold"))
+	_notes.append(
+		"speeds: walk %.1f, jog %.1f, clip threshold %.1f m/s" % [walk, jog, threshold]
+	)
+	if jog <= walk:
+		_failures.append(
+			"jog_speed (%.1f) is not faster than move_speed (%.1f), so the jog clip has no speed "
+			% [jog, walk]
+			+ "that reaches it."
+		)
+	elif threshold <= walk or threshold >= jog:
+		_failures.append(
+			"the jog threshold (%.1f) is not between move_speed (%.1f) and jog_speed (%.1f)."
+			% [threshold, walk, jog]
+		)
+	# The sprint input has to exist and has to move `target_speed()`, or `jog_speed` is dead.
+	if not InputMap.has_action(PlayerController.SPRINT_ACTION):
+		_failures.append("the '%s' input action is not defined." % String(PlayerController.SPRINT_ACTION))
+		wrapper.free()
+		controller.free()
+		return
+	Input.action_press(PlayerController.SPRINT_ACTION)
+	var sprinting := controller.target_speed()
+	Input.action_release(PlayerController.SPRINT_ACTION)
+	var standing := controller.target_speed()
+	_expect_hold("sprint", sprinting, jog, standing, walk)
+	wrapper.free()
+	controller.free()
+
+
+func _expect_hold(label: String, sprinting: float, jog: float, standing: float, walk: float) -> void:
+	if not is_equal_approx(sprinting, jog):
+		_failures.append(
+			"%s: holding the action aims for %.1f m/s, not the jog speed %.1f." % [label, sprinting, jog]
+		)
+	if not is_equal_approx(standing, walk):
+		_failures.append(
+			"%s: releasing the action still aims for %.1f m/s, not the walk speed %.1f."
+			% [label, standing, walk]
+		)
+
+
+## `sit_idle` and `get_up` are two halves of one movement: the clip the protagonist holds at
+## the desk and the clip that stands them up. If the first key of one stops matching the first
+## key of the other, the body jumps at the moment the wake beat starts, which is exactly the
+## frame nobody is looking at because black is still fading.
+func _check_transition_poses(
+	label: String, player: AnimationPlayer, skeleton: Skeleton3D, resolved: Dictionary
+) -> void:
+	var sitting := _first_pose(label, player, skeleton, resolved, "sit_idle")
+	var rising := _first_pose(label, player, skeleton, resolved, "get_up")
+	if sitting.is_empty() or rising.is_empty():
+		return
+	var worst := 0.0
+	var worst_bone := ""
+	for canonical in sitting:
+		if not rising.has(canonical):
+			continue
+		var difference: float = rad_to_deg((sitting[canonical] as Quaternion).angle_to(rising[canonical]))
+		if difference > worst:
+			worst = difference
+			worst_bone = String(canonical)
+	_notes.append(
+		"%s: sit_idle and get_up agree on the seated pose to within %.2f° (worst: %s)"
+		% [label, worst, worst_bone]
+	)
+	# And the seated pose has to actually be seated: folding the legs is the whole clip, so a
+	# hip that barely leaves the rest pose would make `sit_idle` an idle with a different name.
+	if sitting.has("thigh.L"):
+		var thigh_rest := skeleton.get_bone_rest(skeleton.find_bone(String(resolved["thigh.L"])))
+		var hip := rad_to_deg(
+			(sitting["thigh.L"] as Quaternion).angle_to(thigh_rest.basis.get_rotation_quaternion())
+		)
+		_notes.append("%s: the seated hip is %.1f° from rest" % [label, hip])
+		if hip < 30.0:
+			_failures.append(
+				"%s: sit_idle bends the hip only %.1f°, so the character is standing."
+				% [label, hip]
+			)
+	if worst > POSE_TOLERANCE_DEGREES:
+		_failures.append(
+			"%s: sit_idle and get_up disagree about the seated pose by %.2f° on '%s'; the wake "
+			% [label, worst, worst_bone]
+			+ "beat would jump when the get-up starts."
+		)
+
+
+## The pose a clip is in at time zero, per canonical bone, as the skeleton ends up holding it.
+## Keyed canonically so two clips and two differently-named rigs can be compared.
+func _first_pose(
+	label: String, player: AnimationPlayer, skeleton: Skeleton3D, resolved: Dictionary, clip_name: String
+) -> Dictionary:
+	if not CharacterAnimation.play(player, clip_name):
+		_failures.append("%s: '%s' would not play." % [label, clip_name])
+		return {}
+	player.seek(0.0, true)
+	var poses := {}
+	for canonical in resolved:
+		var index := skeleton.find_bone(String(resolved[canonical]))
+		if index < 0:
+			continue
+		poses[canonical] = skeleton.get_bone_pose_rotation(index)
+	player.stop()
+	return poses
 
 
 ## The real wrapper scene must bind its own visual and switch clips, not just the
@@ -272,6 +446,13 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	await process_frame
 	if String(visual.call("get_current_clip")) != "walk":
 		_failures.append("%s wrapper did not switch to walk from ancestor movement velocity." % label)
+	body.velocity = Vector3(0.0, 0.0, 5.0)
+	await process_frame
+	if String(visual.call("get_current_clip")) != "jog":
+		_failures.append(
+			"%s wrapper stayed on '%s' at 5.0 m/s; above the jog threshold it has to jog."
+			% [label, String(visual.call("get_current_clip"))]
+		)
 	body.velocity = Vector3.ZERO
 	await process_frame
 	if String(visual.call("get_current_clip")) != "idle":
@@ -285,7 +466,47 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	visual.call("set_walking", false)
 	if String(visual.call("get_current_clip")) != "idle":
 		_failures.append("%s wrapper did not return to idle after set_walking(false)." % label)
-	_notes.append("%s runtime wrapper binds four clips and responds to physics and tween movement." % label)
+
+	# Seated holds the seated clip and outranks the body: a character at a desk is not walking
+	# whatever its capsule is doing.
+	visual.call("set_seated", true)
+	body.velocity = Vector3(0.0, 0.0, 2.0)
+	await process_frame
+	if String(visual.call("get_current_clip")) != "sit_idle":
+		_failures.append(
+			"%s wrapper played '%s' while seated; the body's velocity must not outrank sitting."
+			% [label, String(visual.call("get_current_clip"))]
+		)
+	visual.call("set_seated", false)
+	await process_frame
+	if String(visual.call("get_current_clip")) != "walk":
+		_failures.append("%s wrapper did not go back to locomotion when it stood up." % label)
+
+	# The transition: it plays once, it is not a loop, and it hands back by itself.
+	body.velocity = Vector3.ZERO
+	await process_frame
+	if not bool(visual.call("play_action", "get_up")):
+		_failures.append("%s wrapper would not play the get-up transition." % label)
+	elif String(visual.call("get_current_clip")) != "get_up":
+		_failures.append(
+			"%s wrapper reports '%s' during the get-up." % [label, String(visual.call("get_current_clip"))]
+		)
+	if not bool(visual.call("is_playing_action")):
+		_failures.append("%s wrapper does not admit it is playing a transition." % label)
+	var action_length := player.get_animation("char/get_up").length
+	await _wait_seconds(action_length + 0.4)
+	if bool(visual.call("is_playing_action")):
+		_failures.append("%s wrapper never finished the get-up; it is stuck in the transition." % label)
+	if String(visual.call("get_current_clip")) != "idle":
+		_failures.append(
+			"%s wrapper ended the get-up on '%s' instead of idle."
+			% [label, String(visual.call("get_current_clip"))]
+		)
+	_notes.append(
+		"%s runtime wrapper plays seven clips: locomotion by speed, seated, and a one-shot "
+		% label
+		+ "get-up that hands back."
+	)
 	body.queue_free()
 	await process_frame
 
@@ -300,7 +521,33 @@ func _player_for(model: Node3D) -> AnimationPlayer:
 	return player
 
 
+## Real seconds, not frames: the animation player advances on the clock, and a transition has
+## to be seen to finish rather than be assumed to.
+func _wait_seconds(seconds: float) -> void:
+	await create_timer(seconds).timeout
+	await process_frame
+
+
+## GitHub cuts one annotation off at about 4 KB. Seven clips on four rigs is past that, and the
+## cut lands at the end — exactly where the speeds and the seated-hip numbers are. So the notes
+## go out in chunks: a notice that drops half the evidence is worse than two notices.
+const NOTICE_CHUNK_CHARS := 3000
+
+
 func _report() -> void:
 	for line in _notes:
 		print("note: %s" % line)
-	print("::notice title=character animation::%s" % "|".join(_notes))
+	var chunks: PackedStringArray = PackedStringArray()
+	var current := ""
+	for line in _notes:
+		if current != "" and current.length() + line.length() + 1 > NOTICE_CHUNK_CHARS:
+			chunks.append(current)
+			current = ""
+		current = line if current == "" else "%s|%s" % [current, line]
+	if current != "":
+		chunks.append(current)
+	for index in chunks.size():
+		print(
+			"::notice title=character animation (%d/%d)::%s"
+			% [index + 1, chunks.size(), chunks[index]]
+		)
