@@ -123,5 +123,7 @@ and points at the trolley's anchor, which is frame `13b_hover_trolley`.
 - **The notices are geometry, not text.** The inspection text names fixtures, a fire drill
   notice and a photograph. The board's papers are blank shapes with ink marks. That is
   consistent, and no texture was added.
-- **No authorship confirmation yet.** The models are still "pending owner confirmation"
-  in `docs/ASSET_PROVENANCE.md`. Placing them does not change that.
+- **Authorship is confirmed; art review is not.** The owner confirmed on 2026-11-11 that
+  they made the library models in Blender, and `docs/ASSET_PROVENANCE.md` records it. The
+  row's review column still reads "Pending owner art review", as every authored asset's
+  does.
