@@ -114,7 +114,7 @@ func _run() -> void:
 	protagonist.add_child(player)
 	player.root_node = player.get_path_to(protagonist)
 	player.add_animation_library(&"baked", library)
-	_diagnose(protagonist, target_skeleton, source_skeleton, player, library, clip_name, skeleton_path)
+	_diagnose(target_skeleton, source_skeleton, player, library, clip_name)
 	_check_motion(player, "%s/%s" % ["baked", clip_name], target_skeleton, clip_name)
 	_check_rest_relative(
 		source_player, source_skeleton, target_skeleton, player, clip_name, pairs
@@ -126,29 +126,18 @@ func _run() -> void:
 	_finish()
 
 
-## Everything a silent retarget can hinge on, printed because the log is not readable from
-## where this runs: which node the track paths address, whether the player says it is playing,
-## and whether the source skeleton moves at all when it is seeked.
+## Whether either skeleton moves when its player is seeked. Both halves are here because a
+## retarget that does nothing and an animation that never arrives look identical from the
+## outside, and the difference between them cost two runs of this test to find.
 func _diagnose(
-	protagonist: Node,
 	target_skeleton: Skeleton3D,
 	source_skeleton: Skeleton3D,
 	player: AnimationPlayer,
 	library: AnimationLibrary,
-	clip_name: String,
-	skeleton_path: NodePath
+	clip_name: String
 ) -> void:
 	var animation := library.get_animation(clip_name)
 	var first_track := animation.track_get_path(0) if animation.get_track_count() > 0 else NodePath()
-	var addressed := player.get_node_or_null(String(first_track).get_slice(":", 0))
-	_notes.append(
-		"diag: %d skeleton(s), target '%s' at '%s', track 0 '%s', addressed node %s, root_node '%s'"
-		% [
-			protagonist.find_children("*", "Skeleton3D", true, false).size(),
-			String(target_skeleton.name), String(skeleton_path), String(first_track),
-			"ok" if addressed != null else "NULL", String(player.root_node),
-		]
-	)
 	player.play("%s/%s" % ["baked", clip_name])
 	var angles: PackedStringArray = []
 	var index := target_skeleton.find_bone(first_track.get_concatenated_subnames())
@@ -158,33 +147,16 @@ func _diagnose(
 			"%.1f" % _degrees(target_skeleton.get_bone_pose_rotation(index).angle_to(Quaternion.IDENTITY))
 		)
 	_notes.append(
-		"diag: baked '%s' on the character: pose %s, playing %s, anim '%s'"
-		% [String(first_track), ", ".join(angles), str(player.is_playing()), player.current_animation]
+		"the baked clip on the character: %s, pose %s, playing %s"
+		% [String(first_track), ", ".join(angles), str(player.is_playing())]
 	)
 	player.stop()
-	# What do the library's own track paths look like, and does the skeleton answer to them?
-	var own := source_skeleton.get_parent().get_parent()
-	var own_player: AnimationPlayer = null
-	if own != null:
-		own_player = _first(own, "AnimationPlayer") as AnimationPlayer
-	if own_player != null:
-		var own_animation := own_player.get_animation(clip_name)
-		var paths: PackedStringArray = []
-		var unresolved := 0
-		for track in mini(3, own_animation.get_track_count()):
-			var path := own_animation.track_get_path(track)
-			paths.append(String(path))
-			var bone := path.get_concatenated_subnames()
-			if source_skeleton.find_bone(bone) < 0:
-				unresolved += 1
-		_notes.append(
-			"diag: library tracks %s, %d/%d not a bone here, root_node '%s'"
-			% [", ".join(paths), unresolved, mini(3, own_animation.get_track_count()), String(own_player.root_node)]
-		)
-	# And the source: does the library's own skeleton move when its player is seeked?
+	# And the source: does the library's own skeleton move when its player is seeked? An
+	# animation that is imported but does not resolve its own track paths looks exactly like a
+	# retarget that does nothing, and this line is which one it is.
 	var source_player := _first(source_skeleton.get_parent().get_parent(), "AnimationPlayer") as AnimationPlayer
 	if source_player == null:
-		_notes.append("diag: no source player above the library's skeleton")
+		_notes.append("no player above the library's skeleton to sample")
 		return
 	var source_animation := source_player.get_animation(clip_name)
 	var hips := source_skeleton.find_bone("pelvis")
@@ -196,7 +168,7 @@ func _diagnose(
 			"%.1f" % _degrees(source_skeleton.get_bone_pose_rotation(hips).angle_to(Quaternion.IDENTITY))
 		)
 	_notes.append(
-		"diag: library '%s' on its own rig: pose %s, playing %s"
+		"the library '%s' on its own rig: pose %s, playing %s"
 		% [clip_name, ", ".join(source_angles), str(source_player.is_playing())]
 	)
 	source_player.stop()
@@ -238,17 +210,19 @@ func _check_motion(
 		var index := skeleton.find_bone(bone)
 		if index < 0:
 			continue
-		var lowest := INF
-		var highest := -INF
+		var first := Quaternion.IDENTITY
+		var spread := 0.0
 		for step in 5:
 			player.seek(animation.length * float(step) / 4.0, true)
-			var angle := _degrees(skeleton.get_bone_pose_rotation(index).angle_to(Quaternion.IDENTITY))
-			lowest = minf(lowest, angle)
-			highest = maxf(highest, angle)
-		if highest - lowest > 0.001:
+			var pose := skeleton.get_bone_pose_rotation(index)
+			if step == 0:
+				first = pose
+				continue
+			spread = maxf(spread, _degrees(pose.angle_to(first)))
+		if spread > 0.001:
 			moved += 1
-		if highest - lowest > widest:
-			widest = highest - lowest
+		if spread > widest:
+			widest = spread
 			widest_bone = String(bone)
 	player.stop()
 	_notes.append(
@@ -279,8 +253,12 @@ func _check_rest_relative(
 	var worst := 0.0
 	var worst_bone := ""
 	var per_bone := {}
+	# Sample on the grid the bake used. Anywhere else the character is interpolating between
+	# two keys while the source is being evaluated exactly, and the difference between those
+	# two is resampling error — worth reporting, not worth failing on.
+	var frames := maxi(2, roundi(source_animation.length * 30.0) + 1)
 	for step in 4:
-		var moment := source_animation.length * float(step) / 3.0
+		var moment := source_animation.length * float(roundi(float(step) * float(frames - 1) / 3.0)) / float(frames - 1)
 		source_player.play(clip_name)
 		source_player.seek(moment, true)
 		target_player.play("%s/%s" % ["baked", clip_name])

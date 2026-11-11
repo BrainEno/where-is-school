@@ -152,9 +152,12 @@ static func bake(
 					value = Quaternion(-value.x, -value.y, -value.z, -value.w)
 				previous = value
 				animation.rotation_track_insert_key(track, float(index) * step, value)
-				var deviation := _degrees(value.angle_to(Quaternion.IDENTITY))
-				if deviation > widest:
-					widest = deviation
+				# How far this bone travels during the clip, from its first sample. Measured
+				# against the first sample rather than against identity, because a bone whose
+				# rest points the other way is 180° from identity while standing still.
+				var spread := _degrees(value.angle_to(values[0]))
+				if spread > widest:
+					widest = spread
 					widest_bone = String(bone_name)
 		library.add_animation(clip_name, animation)
 		clip_report[clip_name] = {
@@ -193,7 +196,7 @@ static func describe(report: Dictionary) -> String:
 			parts.append("%s: %s" % [String(clip_name), String(info["error"])])
 			continue
 		parts.append(
-			"%s %.2fs %d tracks, %s turns %.1f°"
+			"%s %.2fs %d tracks, %s moves %.1f°"
 			% [
 				String(clip_name),
 				float(info["length"]),
