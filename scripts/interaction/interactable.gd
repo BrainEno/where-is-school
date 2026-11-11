@@ -89,6 +89,7 @@ var _support_rids: Array[RID] = []
 var _support_resolved := false
 ## The extra collision shapes built from the outline meshes; see `_build_pick_shapes`.
 var _pick_shapes: Array[CollisionShape3D] = []
+var _pick_rebuild_queued := false
 
 
 
@@ -102,6 +103,27 @@ func _ready() -> void:
 	_refresh_monitorable()
 	# Deferred so every sibling of the location (the props, the schoolyard's art) has had
 	# its own _ready and its final transform before the boxes are measured.
+	_queue_pick_rebuild()
+	# Only visible meshes are traced, so the boxes are measured again whenever what is
+	# visible changes: the companion is hidden until Q joins, and a hidden branch has no
+	# box. `visibility_changed` reaches this node from any ancestor that is shown or hidden.
+	_watch_visibility(self)
+	var paths := outline_paths if not outline_paths.is_empty() else support_paths
+	for path in paths:
+		_watch_visibility(get_node_or_null(NodePath(path)))
+
+
+func _watch_visibility(node: Node) -> void:
+	var spatial := node as Node3D
+	if spatial == null or spatial.visibility_changed.is_connected(_queue_pick_rebuild):
+		return
+	spatial.visibility_changed.connect(_queue_pick_rebuild)
+
+
+func _queue_pick_rebuild() -> void:
+	if _pick_rebuild_queued:
+		return
+	_pick_rebuild_queued = true
 	_build_pick_shapes.call_deferred()
 
 
@@ -115,6 +137,7 @@ func _ready() -> void:
 ## its own bounds to this area. The sphere stays (removing it would change what the
 ## proximity sensor sees); the boxes only add the object itself to what can be pointed at.
 func _build_pick_shapes() -> void:
+	_pick_rebuild_queued = false
 	if not is_inside_tree():
 		return
 	for shape in _pick_shapes:

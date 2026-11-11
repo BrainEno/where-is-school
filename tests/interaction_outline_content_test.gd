@@ -63,7 +63,19 @@ func _run() -> void:
 	if ask_along == null:
 		_failures.append("main: the companion's AskAlong interactable is missing.")
 	else:
+		# Q has not joined at boot, so the companion is hidden and has nothing visible to
+		# trace. Shown, it must trace its model, and its pick boxes must follow the change
+		# of visibility rather than staying as they were measured at boot.
+		var companion := _main.get_node_or_null("Companion") as Node3D
+		var was_visible := companion.visible if companion != null else true
+		if companion != null:
+			companion.visible = true
+		await process_frame
+		await process_frame
 		_check_interactable(ask_along, "main")
+		if companion != null:
+			companion.visible = was_visible
+		await process_frame
 
 	var container := Node3D.new()
 	container.name = "OutlineContent"

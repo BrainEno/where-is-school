@@ -397,7 +397,9 @@ together:
   As a pointer target that sphere was off to one side of the thing on screen: the door's
   cue lit while the cursor was on the floor beside it. `Interactable._build_pick_shapes`
   adds a box (the mesh's bounds, grown by 5 cm, at least 12 cm thick) for each outline mesh
-  to the same area, deferred until the room has its final transforms. Meshes longer than
+  to the same area, deferred until the room has its final transforms and measured again
+  whenever the visibility of the interactable or of an outlined branch changes (the
+  companion is hidden until Q joins, and a hidden branch gets no box). Meshes longer than
   12 m and paint on the floor (thinner than 5 cm, lying more than 0.25 m under the anchor)
   get no box, so a click on the court still walks. Proximity is unchanged:
   `InteractionController` still ranks facing candidates by their anchor, and only those
@@ -715,14 +717,23 @@ names through `OutlineOverlay`, and the same meshes give the interactable its pi
 the sheet, and the wall stays in `support_paths` for the line-of-sight probe only.
 
 **Exits look like ways out.** The way up to the flats from the street ("go on to the
-flats") is a flight of nine steps with a rail to a landing and a lit doorway into a short
-passage; the courtyard's stair up ("look up the stairs") is eleven steps with a rail to a
+flats") is a flight of twelve steps with a rail to a landing and a lit doorway into a short
+passage; the courtyard's stair up ("look up the stairs") is fourteen steps with a rail to a
 landing, a door and a lamp over it; the courtyard's way back to the street is a gate (posts,
-lintel, sign) over ten steps cut down into the ground under the west block, between a
+lintel, sign) over thirteen steps cut down into the ground under the west block, between a
 retaining wall and a balustrade; the courtyard's lane end is an arch with a lit recess behind it, and the
 schoolyard's way back to the alley is a gate with posts, a lintel and a lamp. The schoolyard's
 gate pieces draw only (no collision), because `tests/playground_art_slice_test.gd` pins the
 yard's solids and its baked navigation.
+
+**Every flight is a slope to the navigation bake.** The bake voxelises at 0.25 m and climbs
+one voxel; Recast's ledge filter drops any cell whose neighbours sit one voxel above *and*
+one below it, so a real flight (16 cm risers on 34 cm treads) was drawn but never baked, and
+the street's exit at the head of its stair sat 2.8 m off the mesh. `_ramp` in the generator
+lays an invisible `StaticBody3D` slope over each flight, through the front edge of every
+tread, ending level with the landing; the body and the bake both stand on it. The flights
+are kept under 0.4 m of rise per metre (12.3 cm and 12 cm risers), because a slope of half a
+voxel per cell or more trips the same filter.
 
 ## 5k. The window: size, centring and F11 (implemented contract)
 

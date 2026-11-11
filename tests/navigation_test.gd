@@ -267,8 +267,13 @@ func _check_isolated_island_is_not_reached() -> void:
 			"The character climbed onto an island it cannot reach (y = %.2f)." % _player.global_position.y
 		)
 	if _player.is_path_active():
+		var legs := _player.get_path_legs()
+		var stuck_at := _player.global_position
 		_player.cancel_path()
-		_failures.append("The walk to an unreachable island never stopped.")
+		_failures.append(
+			"The walk to an unreachable island never stopped: island at %s, body at %s, route %s."
+			% [str(island_center), str(stuck_at), str(legs)]
+		)
 	_remove_node(location, "IslandSlab")
 	await _rebake(nav)
 

@@ -108,8 +108,8 @@ Not verified:
 - ~~The courtyard's stair sits inside `BlockWest` (x -15.3..-11.9 against a block face at
   x = -11), so it, its `res_stair` interactable and the unused `FromStair` spawn marker
   are buried in solid geometry.~~ Resolved in the outline round: the stair was rebuilt in
-  front of the block face (eleven steps, a rail, a landing and a lit door), `StairLook`
-  stands at (-9.9, 1.0, -8.6) and `FromStair` on the landing.
+  front of the block face (fourteen steps, a rail, a landing and a lit door), `StairLook`
+  stands at (-9.9, 1.0, -7.0) and `FromStair` on the landing.
   each. That is content depth, not a system limit.
 
 

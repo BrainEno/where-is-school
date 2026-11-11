@@ -45,9 +45,14 @@ class Scene:
         self.exits = []
         self.spawns = []
         self.ambience = None
+        self.ramps = []      # (name, pos, size, rotation radians) - collision only, see _ramp
+
 
     def box(self, name, pos, size, mat, group=None, body=True):
         self.boxes.append((name, pos, size, mat, group, body))
+
+    def ramp(self, name, pos, size, rotation):
+        self.ramps.append((name, pos, size, rotation))
 
     def extra(self, text):
         self.extras.append(text)
@@ -97,6 +102,8 @@ class Scene:
                 subs.append((shape_id, 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
             subs.append((mesh_id, 'BoxMesh', 'size = Vector3(%s, %s, %s)' % tuple(size)))
             sub_ids.append((shape_id, mesh_id))
+        for index, (name, pos, size, rotation) in enumerate(self.ramps):
+            subs.append((f'RampShape_{index}', 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
 
         lines.append('[gd_scene load_steps=%d format=3]\n' % (len(ext) + len(subs) + 2))
         for kind, path, rid in ext:
@@ -159,6 +166,15 @@ class Scene:
                 lines.append('position = %s' % v3(pos))
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
+            lines.append('')
+
+        for index, (name, pos, size, rotation) in enumerate(self.ramps):
+            lines.append(f'[node name="{name}" type="StaticBody3D" parent="."]')
+            lines.append('position = %s' % v3(pos))
+            lines.append('rotation = %s' % v3(rotation))
+            lines.append('')
+            lines.append(f'[node name="CollisionShape3D" type="CollisionShape3D" parent="{name}"]')
+            lines.append(f'shape = SubResource("RampShape_{index}")')
             lines.append('')
 
         for name, scene_path, pos, degrees in self.props:
@@ -287,10 +303,18 @@ def build_street():
     # steps up to the top of a wall, with the way on left to the player's imagination. Now
     # the steps are solid, the landing runs up to the front of the flats, and the front has
     # a doorway with a short passage behind it whose far end is lit - the courtyard.
-    street_steps = _stair(s, "Step", 9, 0.16, 0.34, (8.5, 12.5), None, "z", -1, -31.83, 0.0)
+    # Twelve risers of 12.3 cm to a landing one riser higher: gentle enough for the
+    # navigation bake to climb (see `_ramp`), and still clearly a flight from the street.
+    flight = {"steps": 12, "rise": 1.6 / 13, "run": 0.34, "start": -34.6 + 12 * 0.34}
+    street_steps = _stair(s, "Step", flight["steps"], flight["rise"], flight["run"], (8.5, 12.5),
+                          None, "z", -1, flight["start"], 0.0)
+    _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (8.5, 12.5), None, "z",
+          -1, flight["start"], 0.0)
     s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete")
-    for step in range(0, 9, 2):
-        s.box(f"StairPost_{step}", (12.42, 0.16 * (step + 1) + 0.45, -32.0 - 0.34 * step),
+    for step in range(0, flight["steps"], 3):
+        s.box(f"StairPost_{step}",
+              (12.42, round(flight["rise"] * (step + 1) + 0.45, 3),
+               round(flight["start"] - flight["run"] * (step + 0.5), 3)),
               (0.06, 0.9, 0.06), "metal", None, False)
     s.box("StairRail", (12.42, 2.5, -35.8), (0.06, 0.06, 2.4), "metal", None, False)
     s.box("StairRailPost", (12.42, 2.05, -34.7), (0.06, 0.9, 0.06), "metal", None, False)
@@ -381,16 +405,24 @@ def build_residential():
         for j, y in enumerate((3.4, 6.4, 9.4)):
             s.box(f"WinE_{i}_{j}", (10.9, y, z), (0.12, 1.2, 1.4), "glass", None, False)
     s.box("LitWindowN", (1.0, 6.5, -16.85), (1.5, 1.3, 0.14), "dusk", None, False)
-    # The stair up the west block: eleven steps, a landing and the door they lead to.
+    # The stair up the west block: fourteen steps, a landing and the door they lead to.
     #
     # It used to stand at x = -13.6, which is inside the west block (x -21..-11): the
     # player was offered "Look up the stairs" in front of a blank wall, and the landing sat
     # 35 cm past the top step, so the spawn on it could not be routed to. It now runs up the
     # block's east face, every step solid, with the landing butted against the top step.
-    res_steps = _stair(s, "Step", 11, 0.15, 0.3, (-11.0, -8.8), None, "z", -1, -9.05, 0.0)
+    # Fourteen risers of 12 cm to a landing one riser higher (see `_ramp` for why not
+    # fewer, steeper ones).
+    flight = {"steps": 14, "rise": 1.8 / 15, "run": 0.32, "start": -12.35 + 14 * 0.32}
+    res_steps = _stair(s, "Step", flight["steps"], flight["rise"], flight["run"], (-11.0, -8.8),
+                       None, "z", -1, flight["start"], 0.0)
+    _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (-11.0, -8.8), None,
+          "z", -1, flight["start"], 0.0)
     s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete")
-    for step in range(0, 11, 2):
-        s.box(f"StairPost_{step}", (-8.86, 0.15 * (step + 1) + 0.45, -9.2 - 0.3 * step),
+    for step in range(0, flight["steps"], 3):
+        s.box(f"StairPost_{step}",
+              (-8.86, round(flight["rise"] * (step + 1) + 0.45, 3),
+               round(flight["start"] - flight["run"] * (step + 0.5), 3)),
               (0.06, 0.9, 0.06), "metal", None, False)
     s.box("StairRail", (-8.86, 2.7, -13.55), (0.06, 0.06, 2.4), "metal", None, False)
     s.box("StairDoor", (-10.95, 2.85, -13.55), (0.1, 2.1, 1.1), "metal", None, False)
@@ -400,10 +432,12 @@ def build_residential():
     #
     # "Back to the street" used to be a point on the open south edge of the courtyard with
     # nothing there - and behind the camera, which looks north-west. It is now a stairwell
-    # the camera can see: a gate at the head, ten solid steps going down to the west, and a
+    # the camera can see: a gate at the head, thirteen solid steps going down to the west, and a
     # lit doorway at the bottom onto the street. The street's own stair comes up the same
     # 1.6 m, so the two flights agree.
-    street_steps = _stair(s, "StreetStep", 10, -0.16, 0.32, None, (11.0, 14.6), "x", -1, -17.0, -1.8)
+    street_steps = _stair(s, "StreetStep", 13, -1.6 / 13, 0.32, None, (11.0, 14.6), "x", -1,
+                          -17.0, -1.8)
+    _ramp(s, "StreetStairRamp", 13, -1.6 / 13, 0.32, None, (11.0, 14.6), "x", -1, -17.0, -1.8)
     s.box("StreetStairFoot", (-21.8, -1.7, 12.8), (3.2, 0.2, 3.6), "concrete")
     s.box("StairwellWallSouth", (-20.2, -0.9, 14.8), (6.4, 1.8, 0.4), "concrete")
     s.box("StairwellBalustrade", (-20.2, 0.5, 14.8), (6.4, 1.0, 0.05), "metal")
@@ -493,7 +527,7 @@ def build_residential():
          "inspection": "res_stain", "radius": 1.2, "outline": ("StainA",)},
         {"name": "StainLookB", "pos": (7.8, 1.4, -11.8), "id": "res_stain_b",
          "inspection": "res_stain", "radius": 1.2, "outline": ("StainB",)},
-        {"name": "StairLook", "pos": (-9.9, 1.0, -8.6), "id": "res_stair",
+        {"name": "StairLook", "pos": (-9.9, 1.0, -7.0), "id": "res_stair",
          "route": "residential_stair", "prompt": "Look up the stairs", "radius": 1.5,
          "outline": tuple(res_steps) + ("StairLanding", "StairDoor")},
         {"name": "AnimalLook", "pos": (7.6, 0.9, -1.6), "id": "green_animal",
@@ -877,6 +911,51 @@ def _stair(s, prefix, steps, rise, run, x_range, z_range, axis, direction, start
                 strip_size = (size[0], 0.012, 0.06)
             s.box(f"{prefix}Edge_{step}", strip_pos, strip_size, "paper", None, False)
     return names
+
+
+def _ramp(s, name, steps, rise, run, x_range, z_range, axis, direction, start, base):
+    """An invisible slope over a flight built by `_stair`, through its nosings.
+
+    The navigation bake voxelises at 0.25 m and may climb one voxel. On a real flight two
+    neighbouring cells can sit one voxel above and one below a third, and Recast's ledge
+    filter then drops the whole flight from the mesh: the stair is drawn but cannot be
+    routed up, and an exit at its head sits metres off the mesh. A slope the body and the
+    bake both stand on is the usual answer. Its top surface runs through the front edge of
+    every tread (for a flight that goes down, through the edge each tread drops off), so it
+    is never below a step and the feet stay at most one riser above a tread. It ends level
+    with the top of the flight, which `_stair` callers put one riser above the last step
+    (the landing or the floor the flight leads to).
+    """
+    thickness = 0.1
+    if rise > 0:
+        # up: from the floor one run before the first nosing to the landing's front edge
+        a0, h0 = start - direction * run, base
+        a1, h1 = start + direction * run * steps, rise * (steps + 1)
+    else:
+        # down: from the edge of the floor above to the floor at the foot
+        a0, h0 = start, 0.0
+        a1, h1 = start + direction * run * steps, rise * steps
+    if a1 < a0:
+        a0, h0, a1, h1 = a1, h1, a0, h0
+    da, dh = a1 - a0, h1 - h0
+    length = math.hypot(da, dh)
+    # the box hangs under the line: its centre is half a thickness below it, on the normal
+    na, nh = -dh / length, da / length
+    ca = (a0 + a1) / 2.0 - na * thickness / 2.0
+    ch = (h0 + h1) / 2.0 - nh * thickness / 2.0
+    if axis == "z":
+        width = x_range[1] - x_range[0]
+        pos = (round((x_range[0] + x_range[1]) / 2.0, 4), round(ch, 4), round(ca, 4))
+        size = (round(width, 3), thickness, round(length, 4))
+        # local +Z onto (0, dh, da): a rotation about X of atan2(-dh, da)
+        rotation = (round(math.atan2(-dh, da), 6), 0, 0)
+    else:
+        width = z_range[1] - z_range[0]
+        pos = (round(ca, 4), round(ch, 4), round((z_range[0] + z_range[1]) / 2.0, 4))
+        size = (round(length, 4), thickness, round(width, 3))
+        # local +X onto (da, dh, 0): a rotation about Z of atan2(dh, da)
+        rotation = (0, 0, round(math.atan2(dh, da), 6))
+    s.ramp(name, pos, size, rotation)
 
 
 def write(scene, path):
