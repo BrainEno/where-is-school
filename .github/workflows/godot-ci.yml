@@ -155,6 +155,12 @@ jobs:
           # half of this is the regression for the occluder bug in #58.
           run_check camera_rig 240 godot --headless --path . --script res://tests/camera_rig_test.gd || status=1
           run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
+          # The save file: what it refuses, and that a refused file changes nothing. No
+          # scene here, so it is the fast place to look when saving breaks.
+          run_check save_validation 180 godot --headless --path . --script res://tests/save_validation_test.gd || status=1
+          # A real run is saved, the scene is freed, and a second main.tscn has to come
+          # back in the same room, on the same marker, with the same knowledge and dice.
+          run_check save_roundtrip 300 godot --headless --path . --script res://tests/save_roundtrip_test.gd || status=1
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
           run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
           # A conversation can finish inside the call that started it; the director must

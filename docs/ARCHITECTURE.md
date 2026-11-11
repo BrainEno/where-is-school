@@ -728,16 +728,28 @@ validating every language and every chapter however the runtime loads them.
 - Keep presentation text out of movement and world simulation scripts.
 - Prefer typed Godot Resources for structured authoring; use JSON only where it materially improves localization, external editing, or automated validation. (Dialogue and inspection text use JSON for exactly that reason; see section 5b.)
 
-## 7. Save/load design (future requirement)
+## 7. Save/load (implemented, ADR 0005)
 
-When implemented, saves should contain a schema version and explicit snapshots for:
-- current location and safe spawn identifier;
-- story/world flags;
-- journal discoveries;
-- player progression and inventory, if later approved;
-- relevant dialogue state only if the design requires mid-dialogue continuation.
+One versioned file, `user://save.json`, written by the `Save` autoload
+(`scripts/autoload/save_manager.gd`) and encoded by `SaveCodec`
+(`scripts/save/save_codec.gd`). It contains:
 
-Use user:// paths. Write to a temporary file, validate the result, then replace the prior save. Implement migrations before changing a released schema. Never save absolute machine paths or arbitrary Node references.
+- the story flag table, with each value's type (`int` stays an `int`; JSON would
+  have made every counter a float);
+- the narrative knowledge log, whose entries are re-validated on the way in by the
+  same rules `record()` uses — an unknown source is rejected, never downgraded to
+  `observed`;
+- the session's dice seed, so a check re-entered after a load shows the same faces;
+- the current location, the spawn marker it was entered through, and the player's
+  position and facing.
+
+Saves are taken at **beat boundaries** — after a prologue step, after a location is
+entered, when the slice ends — because that is when nothing is mid-flight. Validation
+runs before anything is applied, so a refused file leaves the session untouched; the
+file is copied to `user://save.broken.json` and the player is told on the end card.
+The game resumes at boot when a readable save exists, because the build has no menu
+(ADR 0005 §7 records when to revisit that). Migrations are registered per version
+step and a newer-versioned file is refused with a message rather than guessed at.
 
 ## 7b. Build contents: baseline, budgets and what must not ship
 

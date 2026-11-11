@@ -38,6 +38,10 @@ func _initialize() -> void:
 
 func _run() -> void:
 	Harness.ensure_state_autoloads(self)
+	# A save left behind by an earlier check in this job would be resumed at boot and
+	# this layout would be measured in whatever room that run ended in (ADR 0005 §7).
+	# After the autoloads, so the node that owns the file exists.
+	Harness.clear_session_state(self)
 	Harness.ensure_autoload(self, "Loc", "res://scripts/i18n/loc.gd")
 	L10n.load_tables()
 	L10n.set_locale("en")

@@ -13,6 +13,11 @@ extends Node
 ## call, and a headless test can ask "what would happen if the player already knew the
 ## textbook was missing?" without simulating the ten minutes before it.
 ##
+## A save is a snapshot of this same data plus the place the player is standing in
+## (ADR 0005): the director is what captures it, and what restores it at boot before
+## the first step is chosen. Because the steps are flag-gated, "restore then start" is
+## all a resume needs.
+##
 ## It deliberately does not own: movement (PlayerController), dialogue content or
 ## graph walking (DialogueController/DialogueRuntime), knowledge categories
 ## (NarrativeState), location contents (LocationRoot scenes), or anything that
@@ -43,6 +48,13 @@ const BAG_REMINDER_SECONDS := 40.0
 ## Hard fallback so a player who never opens the bag still reaches the lesson.
 const BAG_WAIT_LIMIT := 95.0
 
+## The card that reports an unreadable save. It is the only surface this build has for
+## a message that is not dialogue, and it goes away by itself.
+const SAVE_NOTICE_SECONDS := 9.0
+const SAVE_ERROR_TITLE_KEY := "save.error.title"
+const SAVE_ERROR_ADVICE_KEY := "save.error.advice"
+const SAVE_ERROR_QUARANTINE_KEY := "save.error.quarantined"
+
 var _player: PlayerController = null
 var _interaction: InteractionController = null
 var _ui: GameUI = null
@@ -60,6 +72,15 @@ var _control_allowed := false
 var _catalog: LocationCatalog = null
 ## Exits, transitions, arrival lines and the end card.
 var _flow: LocationFlow = null
+## The save file (autoload `Save`), when the host has one.
+var _save: Node = null
+## Autosave is on by default: the game has no menu, so a checkpoint the player did not
+## ask for is the only thing standing between them and losing the session (ADR 0005).
+var autosave_enabled: bool = true
+## True when this session came out of a save file rather than a new game.
+var _restored_from_save := false
+## What the save reader said when it refused the file, kept for the on-screen report.
+var _save_problem: Dictionary = {}
 
 ## The prologue, in order. Each step is identified by the flag that proves it is
 ## done; see `next_step()`.
@@ -90,6 +111,19 @@ func _ready() -> void:
 		self, _locations, _catalog, _game_state(), _ui, _player, _dialogue, _companion
 	)
 
+	_bind_save()
+
+	# A save, if the host has one, is applied *before* anything is asked about the
+	# story: `next_step()` reads flags, so restoring after it would resume from the
+	# wrong step. A file that cannot be trusted is refused loudly and the run starts
+	# from the beginning - the file itself is kept (ADR 0005 §6).
+	var restored := _restore_save()
+	if _restored_from_save:
+		# A save with no `world` block still restored the flags; `_start_from_save` puts
+		# the player at the start marker because there is no place to put them back in.
+		_start_from_save(restored)
+		return
+
 	# The wake is only a *pending* step, not a fact. A game that resumes with the
 	# prologue already behind it must not start black, slumped and rolled, which is
 	# exactly what happened when the director always ran the wake first.
@@ -101,10 +135,21 @@ func _ready() -> void:
 		_prepare_resume()
 	sync_player_locks()
 
+	if not _load_start_location():
+		return
+	if not _save_problem.is_empty():
+		_announce_save_problem()
+	if autostart:
+		start()
+
+
+## Loads the room the catalog declares as the start of the game. Shared by a new game
+## and by a save that has no `world` block (nothing to place).
+func _load_start_location() -> bool:
 	var start_entry := _catalog.get_start()
 	if start_entry == null:
 		push_error("OpeningSequence: the location catalog declares no start location.")
-		return
+		return false
 	# The expected id is part of the transaction: a scene that declares a different
 	# location must fail here rather than put the player in one room and the story in
 	# another.
@@ -114,12 +159,11 @@ func _ready() -> void:
 		push_error(
 			"OpeningSequence: the start location '%s' failed to load." % start_entry.location_id
 		)
-		return
+		return false
 	_game_state().set_flag(
 		StoryFlags.CURRENT_LOCATION, _locations.get_current().location_id
 	)
-	if autostart:
-		start()
+	return true
 
 
 ## Starts the authored prologue. Safe to call once, after `_ready`.
@@ -135,8 +179,15 @@ func start() -> void:
 ## game that resumes after it. Everything here is derived from "the wake is done",
 ## not remembered separately.
 func _prepare_resume() -> void:
-	_control_allowed = true
+	_restore_resume_look()
 	_ui.fade.set_clear()
+
+
+## The visible half of a resume: stand up, un-roll the view, hand over control and put
+## the saved objective back on the HUD. Separate from the fade because a save being
+## restored at boot fades in *after* the room is placed.
+func _restore_resume_look() -> void:
+	_control_allowed = true
 	_player.set_wake_pose(0.0)
 	_player.set_camera_roll(0.0)
 	# The HUD shows whatever the saved objective says. A flag that is already set
@@ -144,6 +195,140 @@ func _prepare_resume() -> void:
 	var objective := String(_game_state().get_flag(StoryFlags.OBJECTIVE_KEY, ""))
 	if _hud != null and not objective.is_empty():
 		_hud.set_objective(objective)
+
+
+# --- Saving and restoring ---------------------------------------------------
+#
+# What a save contains and why is ADR 0005; what lives here is the half only the
+# director can do - deciding that the world is at a checkpoint, and putting a restored
+# room back on screen. The bytes are `SaveManager`'s business.
+
+
+## Connects to the save autoload, if this host has one. A test that never creates it
+## gets a director that simply does not save.
+func _bind_save() -> void:
+	var save := get_node_or_null(^"/root/Save")
+	if save == null:
+		return
+	_save = save
+	if _save.has_method("bind_world"):
+		# The room, the player and the dialogue controller are children of the same
+		# node the director is on; that node is what a save describes.
+		_save.bind_world(get_parent())
+
+
+func can_save() -> bool:
+	return _save != null
+
+
+## Writes a checkpoint. Only called at beat boundaries - after a step finished, after a
+## location was entered, when the prologue handed over - so nothing mid-flight ever
+## has to be serialisable.
+func autosave(why: String = "") -> Dictionary:
+	if not autosave_enabled or _save == null or not _save.has_method("save_game"):
+		return {}
+	var result: Dictionary = _save.save_game()
+	if result.get("ok", false) != true:
+		push_error(
+			"OpeningSequence: the checkpoint after '%s' was not written: %s"
+			% [why, String(result.get("detail", ""))]
+		)
+	return result
+
+
+## Reads the save and applies it, if there is one. Returns the `world` block (which may
+## be empty) and sets `_restored_from_save`. A file that cannot be trusted is refused
+## with the reason kept for `_announce_save_problem()`; the session is untouched.
+func _restore_save() -> Dictionary:
+	_restored_from_save = false
+	if _save == null or not _save.has_method("load_game") or not _save.has_save():
+		return {}
+	var result: Dictionary = _save.load_game()
+	if result.get("ok", false) != true:
+		_save_problem = result
+		push_error(
+			"OpeningSequence: the save was refused (%s): %s"
+			% [String(result.get("reason", "")), String(result.get("detail", ""))]
+		)
+		return {}
+	_restored_from_save = true
+	var world: Variant = result.get("world", {})
+	return world if world is Dictionary else {}
+
+
+## Puts a restored session on screen: the room the save names, the player where they
+## stood, then a fade in and the first pending step.
+func _start_from_save(world: Dictionary) -> void:
+	_ui.fade.set_opaque()
+	_restore_resume_look()
+	if not _load_saved_world(world):
+		_load_start_location()
+	sync_player_locks()
+	if autostart:
+		_fade_in_and_start()
+
+
+func _load_saved_world(world: Dictionary) -> bool:
+	if world.is_empty():
+		return false
+	var location_id := StringName(String(world.get("location_id", "")))
+	var entry := _catalog.get_entry(location_id) if _catalog != null else null
+	if entry == null:
+		push_error(
+			"OpeningSequence: the save names location '%s', which the catalog does not describe."
+			% location_id
+		)
+		return false
+	var spawn := StringName(String(world.get("spawn", "")))
+	if not _locations.load_location(entry.scene, spawn, _player, location_id):
+		push_error(
+			"OpeningSequence: the save's location '%s' (spawn '%s') could not be entered."
+			% [location_id, spawn]
+		)
+		return false
+	_game_state().set_flag(StoryFlags.CURRENT_LOCATION, location_id)
+	if world.has("position"):
+		_player.teleport(_saved_transform(world))
+	return true
+
+
+## Position and facing as a transform. `teleport()` reads the facing off the basis, so
+## the player comes back looking where they were looking.
+func _saved_transform(world: Dictionary) -> Transform3D:
+	var position := _vec3(world.get("position", null))
+	var basis := Basis.IDENTITY
+	var facing := _vec3(world.get("facing", null))
+	if facing.length_squared() > 0.0001:
+		basis = Basis.looking_at(facing, Vector3.UP)
+	return Transform3D(basis, position)
+
+
+func _vec3(value: Variant) -> Vector3:
+	if not (value is Array) or (value as Array).size() != 3:
+		return Vector3.ZERO
+	var items: Array = value
+	return Vector3(float(items[0]), float(items[1]), float(items[2]))
+
+
+func _fade_in_and_start() -> void:
+	await _ui.fade.fade_from_black(0.6)
+	start()
+
+
+## Tells the player, on screen, that their save could not be read and what happened to
+## it. A silent reset is the failure mode ADR 0005 exists to prevent.
+func _announce_save_problem() -> void:
+	if _ui == null or _ui.end_card == null:
+		return
+	var detail := String(_save_problem.get("detail", ""))
+	var body := "%s\n%s" % [detail, L10n.t(SAVE_ERROR_ADVICE_KEY)]
+	var hint := ""
+	var quarantined_to := String(_save_problem.get("quarantined_to", ""))
+	if not quarantined_to.is_empty():
+		hint = L10n.t(SAVE_ERROR_QUARANTINE_KEY, {"path": quarantined_to})
+	_ui.end_card.present(L10n.t(SAVE_ERROR_TITLE_KEY), body, hint)
+	await get_tree().create_timer(SAVE_NOTICE_SECONDS).timeout
+	_ui.end_card.dismiss()
 
 
 ## Hands control to the player without running the authored beats.
@@ -203,6 +388,10 @@ func _run_opening() -> void:
 	var index := _first_pending_step()
 	while index < STEPS.size():
 		await _run_step(STEPS[index])
+		# A step boundary is the one moment where nothing is mid-flight, which is what
+		# makes it a legal save point (ADR 0005 §4). It is also what makes quitting in
+		# the middle of the prologue cost the player one beat instead of the run.
+		autosave(String(STEPS[index]))
 		index += 1
 	_after_opening()
 
@@ -277,6 +466,7 @@ func _run_step(step: StringName) -> void:
 func _after_opening() -> void:
 	if _flow != null:
 		_flow.update_exit_prompt()
+	autosave(&"opening_done")
 
 
 ## Beat A: wake up. Slow fade in, camera roll settling, body straightening.

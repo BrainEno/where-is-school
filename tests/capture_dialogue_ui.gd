@@ -37,6 +37,11 @@ func _initialize() -> void:
 
 func _run() -> void:
 	Harness.ensure_state_autoloads(self)
+	# The game resumes from a save at boot (ADR 0005), and this script is a second run in
+	# a job whose first run already made one: without this the capture would photograph
+	# the end of the slice instead of the opening conversation. After the autoloads, so
+	# the node that owns the file exists when it is asked to forget it.
+	Harness.clear_session_state(self)
 	var loc := Harness.ensure_autoload(self, "Loc", "res://scripts/i18n/loc.gd")
 	L10n.load_tables()
 	loc.set_locale("en")
