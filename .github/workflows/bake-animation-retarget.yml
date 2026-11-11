@@ -15,7 +15,7 @@ on:
     branches: [arena/94f7330e-where-is-school]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   bake:
@@ -43,6 +43,22 @@ jobs:
 
       - name: Show the result
         run: ls -l scenes/dev/animation_retarget_test/protagonist_ual.res
+
+      # The file is a tracked, derived asset, so the job that can produce it commits it. A
+      # person can also run the same tool locally; the artifact below is for looking at it
+      # without running anything.
+      - name: Commit the result
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- scenes/dev/animation_retarget_test/protagonist_ual.res; then
+            echo "unchanged since the last bake"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scenes/dev/animation_retarget_test/protagonist_ual.res
+          git commit -m "Re-bake the retargeted animation library"
+          git push origin "HEAD:refs/heads/${{ github.ref_name }}"
 
       - name: Upload the baked library
         uses: actions/upload-artifact@v4

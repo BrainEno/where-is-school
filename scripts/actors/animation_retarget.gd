@@ -122,9 +122,10 @@ static func bake(
 
 		var animation := Animation.new()
 		animation.length = length
-		animation.loop_mode = (
-			Animation.LOOP_LINEAR if clip_name.to_lower().contains("loop") else Animation.LOOP_NONE
-		)
+		# Copy the source's own loop setting rather than guessing from the name: the glTF
+		# importer strips the `_Loop` suffix and records looping in the animation, so a clip
+		# called `Walk` is the looping one and `Jump_Land` is not.
+		animation.loop_mode = source_animation.loop_mode
 		var widest := 0.0
 		var widest_bone := ""
 		for pair: Dictionary in pairs:
