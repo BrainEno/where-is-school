@@ -282,8 +282,15 @@ func capture() -> Dictionary:
 ## Validates the payload's shape without applying it. Returns `""` when it can be
 ## used, or a sentence naming the first problem.
 func validate_payload(payload: Dictionary) -> String:
-	if not (payload.get("flags", {}) is Dictionary):
+	var flags: Variant = payload.get("flags", {})
+	if not (flags is Dictionary):
 		return "'flags' is not an object"
+	# Value-level validation, not just the shape: a flag whose type tag nobody knows is a
+	# payload error, and knowing that before anything is applied is what keeps
+	# `load_game()` from ever having to undo a half-applied session.
+	var decoded := SaveCodec.decode_flags(flags)
+	if decoded["ok"] != true:
+		return String(decoded["detail"])
 	if not (payload.get("entries", []) is Array):
 		return "'entries' is not an array"
 	var seed_value: Variant = payload.get("check_seed", 0)

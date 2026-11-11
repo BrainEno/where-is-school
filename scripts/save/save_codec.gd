@@ -160,13 +160,30 @@ static func decode_value(raw: Variant, path: String) -> Dictionary:
 	match tag:
 		TAG_NULL:
 			return {"ok": true, "value": null, "detail": ""}
-		TAG_BOOL, TAG_INT, TAG_FLOAT, TAG_STRING:
-			if not tagged.has("v"):
-				return _bad_value(path, "'%s' has no value" % tag)
+		# The tag is what restores the type JSON threw away: a number in the file is
+		# always a float, so an `int` has to be converted back and a non-number has to be
+		# refused rather than coerced.
+		TAG_BOOL:
+			if not (tagged.get("v", null) is bool):
+				return _bad_value(path, "'b' does not hold a bool")
+			return {"ok": true, "value": tagged["v"], "detail": ""}
+		TAG_INT:
+			var int_value: Variant = tagged.get("v", null)
+			if not (int_value is int or int_value is float):
+				return _bad_value(path, "'i' does not hold a number")
+			return {"ok": true, "value": int(int_value), "detail": ""}
+		TAG_FLOAT:
+			var float_value: Variant = tagged.get("v", null)
+			if not (float_value is int or float_value is float):
+				return _bad_value(path, "'f' does not hold a number")
+			return {"ok": true, "value": float(float_value), "detail": ""}
+		TAG_STRING:
+			if not (tagged.get("v", null) is String):
+				return _bad_value(path, "'s' does not hold a string")
 			return {"ok": true, "value": tagged["v"], "detail": ""}
 		TAG_STRING_NAME:
-			if not tagged.has("v"):
-				return _bad_value(path, "'sn' has no value")
+			if not (tagged.get("v", null) is String):
+				return _bad_value(path, "'sn' does not hold a string")
 			return {"ok": true, "value": StringName(String(tagged["v"])), "detail": ""}
 		TAG_ARRAY:
 			var items: Variant = tagged.get("v", [])
