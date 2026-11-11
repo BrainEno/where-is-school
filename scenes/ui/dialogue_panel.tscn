@@ -31,6 +31,13 @@ grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("1_dialogue_panel")
 
+[node name="Portrait" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
 [node name="Wash" type="TextureRect" parent="."]
 unique_name_in_owner = true
 anchor_right = 1.0
