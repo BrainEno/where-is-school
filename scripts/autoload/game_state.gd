@@ -1,6 +1,10 @@
 extends Node
 ## Runtime story flags shared by the active game session.
-## Persistence is intentionally handled by a future SaveManager, not this node.
+##
+## This node holds them and emits changes; it does not know about files. `Save`
+## (autoload `SaveManager`) captures `get_snapshot()` and restores it through
+## `replace_snapshot()`; the encoding that keeps an `int` an `int` lives in
+## `SaveCodec` (ADR 0005).
 
 signal story_flag_changed(flag: StringName, previous_value: Variant, new_value: Variant)
 signal story_state_replaced

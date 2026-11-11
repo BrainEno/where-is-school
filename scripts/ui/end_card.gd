@@ -34,3 +34,15 @@ func present(title: String, body: String, hint: String = "") -> void:
 	modulate = Color(1, 1, 1, 0)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 1.0, 0.9)
+
+
+## Fades the card out and hides it. The end of the slice leaves its card up on purpose;
+## a card that is only reporting something - a save that could not be read - has to be
+## able to leave again without the player doing anything.
+func dismiss(duration: float = 0.6) -> void:
+	if not visible:
+		return
+	var tween := create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, duration)
+	await tween.finished
+	hide()

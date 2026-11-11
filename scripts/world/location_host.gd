@@ -15,6 +15,9 @@ signal location_entered(location: LocationRoot, spawn_id: StringName)
 ## Kept for error messages and for tests that assert the old scene survived.
 var _current: LocationRoot = null
 var _current_path: String = ""
+## The marker the player was placed on when the current location was entered. A save
+## needs it: the room says where the player *may* arrive, this says where they did.
+var _current_spawn: StringName = &""
 
 ## How far the body may end up from the marker before the placement counts as failed.
 ## A teleport assigns the position exactly; anything larger means the player refused
@@ -42,6 +45,11 @@ func get_current() -> LocationRoot:
 
 func get_current_path() -> String:
 	return _current_path
+
+
+## The spawn marker the current location was entered through.
+func get_current_spawn() -> StringName:
+	return _current_spawn
 
 
 ## Loads `scene_path` and places `player` at the marker named `spawn_id`.
@@ -178,6 +186,7 @@ func _swap(
 	_mark("placed", started)
 	_current = location
 	_current_path = scene_path
+	_current_spawn = spawn_id
 	if previous != null:
 		remove_child(previous)
 		previous.queue_free()

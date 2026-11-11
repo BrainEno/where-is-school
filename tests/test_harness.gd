@@ -13,6 +13,7 @@ static var stage: String = ""
 
 const GAME_STATE_SCRIPT := "res://scripts/autoload/game_state.gd"
 const NARRATIVE_STATE_SCRIPT := "res://scripts/autoload/narrative_state.gd"
+const SAVE_SCRIPT := "res://scripts/autoload/save_manager.gd"
 
 
 static func ensure_autoload(tree: SceneTree, node_name: String, script_path: String) -> Node:
@@ -39,6 +40,7 @@ static func ensure_state_autoloads(tree: SceneTree) -> Dictionary:
 	return {
 		"game_state": ensure_autoload(tree, "GameState", GAME_STATE_SCRIPT),
 		"narrative_state": ensure_autoload(tree, "NarrativeState", NARRATIVE_STATE_SCRIPT),
+		"save": ensure_autoload(tree, "Save", SAVE_SCRIPT),
 	}
 
 
@@ -77,6 +79,12 @@ static func clear_session_state(tree: SceneTree) -> void:
 	var narrative_state := tree.root.get_node_or_null(^"NarrativeState")
 	if narrative_state != null:
 		narrative_state.clear()
+	# The save file is shared by every check in the CI job (`user://` is one directory
+	# per project, not per test), and the game resumes from it at boot. A check that
+	# left one behind would start the next one in a different room.
+	var save := tree.root.get_node_or_null(^"Save")
+	if save != null and save.has_method("forget_all"):
+		save.forget_all()
 
 
 ## Prints a single summary line and exits with the right code. Tests never call

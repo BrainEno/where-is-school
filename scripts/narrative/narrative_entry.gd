@@ -89,18 +89,42 @@ func to_dict() -> Dictionary:
 	}
 
 
-static func from_dict(data: Dictionary) -> NarrativeEntry:
-	var source_name := String(data.get("source", "observed"))
-	var source_value := source_from_id(source_name)
-	if source_value < 0:
-		push_error(
-			"NarrativeEntry.from_dict: unknown source '%s' in entry '%s'."
-			% [source_name, String(data.get("entry_id", ""))]
-		)
-		source_value = int(Source.OBSERVED)
-	return NarrativeEntry.new(
-		StringName(data.get("entry_id", "")),
-		source_value,
-		StringName(data.get("speaker_id", "")),
-		String(data.get("text", ""))
-	)
+## The rules `NarrativeState.record()` applies to live data, applied to stored data.
+## Returns `""` when the entry can be trusted, or a sentence naming what is wrong.
+##
+## This is a *shared* function on purpose: a save must not be a second, more
+## permissive way to write knowledge into the log. `record()` refuses these too.
+static func validate_dict(data: Dictionary) -> String:
+	var entry_id := String(data.get("entry_id", ""))
+	if entry_id.strip_edges().is_empty():
+		return "an entry has no identifier"
+	var text := String(data.get("text", ""))
+	if text.strip_edges().is_empty():
+		return "entry '%s' has no text" % entry_id
+	var source_name := String(data.get("source", ""))
+	if source_from_id(source_name) < 0:
+		return "entry '%s' has unknown source '%s'" % [entry_id, source_name]
+	return ""
+
+
+## Parses a stored entry. Returns `{ok, entry, detail}`; `entry` is null when the
+## data cannot be trusted.
+##
+## An unknown source is refused rather than downgraded to `observed`: that
+## downgrade is the one transformation the whole knowledge model exists to prevent
+## (ADR 0002), and it is exactly what this function used to do.
+static func parse_dict(data: Dictionary) -> Dictionary:
+	var problem := validate_dict(data)
+	if not problem.is_empty():
+		return {"ok": false, "entry": null, "detail": problem}
+	return {
+		"ok": true,
+		"entry":
+		NarrativeEntry.new(
+			StringName(data.get("entry_id", "")),
+			source_from_id(String(data.get("source", ""))),
+			StringName(data.get("speaker_id", "")),
+			String(data.get("text", ""))
+		),
+		"detail": "",
+	}

@@ -67,8 +67,8 @@ Confirmed defects first — these are bugs, not gaps:
 | The director awaits a conversation-finished signal that `start()` may already have emitted, so the player lock never clears | #57 (duplicate #56) | **Fixed** in PR #68, with a regression check (`tests/dialogue_sync_finish_test.gd`) and a content rule that refuses a conditional start node |
 | `camera_fov` in `PlayerController` (60) silently overrides the scene's `fov` (58) | #58 | **Fixed**: `CameraRig` owns the only field of view; the player has none |
 | `camera_occluder_fader` only clears its faded state on a frame with no occluder, so a fade can outlive the wall | #58 | **Fixed**: the fader rebuilds its set every frame; `camera_rig_test` walks blocker A to blocker B to nothing |
-| `NarrativeState.restore_snapshot()` bypasses every check `record()` performs, and an unknown source degrades to `OBSERVED` | #60 | Open |
-| Check seeds come from `Time.get_unix_time_from_system()` and never enter a save | #60 | Open |
+| `NarrativeState.restore_snapshot()` bypasses every check `record()` performs, and an unknown source degrades to `OBSERVED` | #60 | **Fixed**: the restore validates with the same rules and rejects a bad entry instead of downgrading it; `narrative_state` and `save_validation` cover both |
+| Check seeds come from `Time.get_unix_time_from_system()` and never enter a save | #60 | **Fixed**: the seed is part of the session payload, and `save_validation` proves a check falls the same way after a round trip |
 
 Structural findings, in the audit's own priority order:
 
@@ -87,10 +87,16 @@ Structural findings, in the audit's own priority order:
    `data/story/locations.json`. `tests/opening_resume_test.gd` starts the director from four
    flag snapshots, and `tests/location_catalog_test.gd` refuses a room, a door or a locale key
    the data does not cover.
-4. **#60 save/load**, **#61 portraits**, **#62 settings and input**, **#63 artifacts in
-   history**, **#64 asset provenance**, **#65 `narrative_store.gd` (1,216 lines, 63
-   functions)**, **#66 release engineering**.
-5. **#54 art pipeline** (blocked on ADR 0004) and **#55 animation into the game** — the
+4. **#60 save/load** — **Done**: one versioned slot (ADR 0005) holding the flags, the
+   knowledge log, the dice seed and the place; written at beat boundaries and when a
+   location is entered, resumed at boot because there is no menu, and a file that cannot
+   be read is kept aside and reported on screen instead of being silently replaced.
+   `tests/save_roundtrip_test.gd` saves a real run, frees the scene, and rebuilds it from
+   the file; `tests/save_validation_test.gd` covers the refusals.
+5. **#61 portraits**, **#62 settings and input**, **#63 artifacts in history**, **#64 asset
+   provenance**, **#65 `narrative_store.gd` (1,216 lines, 63 functions)**, **#66 release
+   engineering**.
+6. **#54 art pipeline** (blocked on ADR 0004) and **#55 animation into the game** — the
    animation *assets* now exist on `main`; what is missing is the state machine that picks a
    clip from movement and presentation state, and that is #55's remaining half.
 

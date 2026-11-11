@@ -57,7 +57,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, fifty-three headless checks (the list lives in
+- CI: a static syntax gate over every `.gd` file, fifty-five headless checks (the list lives in
   `.github/workflows/godot-ci.yml`), a blocking import pass with an audit that every
   tracked `.import` produced its file, and a read-only capture job whose artifacts are the
   visual evidence for a pull request.
@@ -408,9 +408,10 @@ reasoning are in [ASSET_PIPELINE.md](ASSET_PIPELINE.md) §9, and
 the pack reader itself.
 
 **Not done, and not to be described as done:** no async or per-language loading, no
-preloading of the next location, no save system, no streaming, no Windows hands-on pass
-(including F11), and no performance claim on real hardware — a CI runner's millisecond count
-is a relative number, not a frame budget.
+preloading of the next location, no streaming, no Windows hands-on pass (including F11),
+and no performance claim on real hardware — a CI runner's millisecond count is a relative
+number, not a frame budget. (The save system this paragraph used to list is in, as one
+versioned slot: see ADR 0005.)
 
 ### Phase 5c — The authored props in the world (delivered in this round)
 - The two owner-authored Blender props stopped being preview-only. The residential

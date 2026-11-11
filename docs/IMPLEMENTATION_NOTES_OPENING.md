@@ -288,9 +288,11 @@ never shows half a sentence.
   sparse (`docs/screenshots/17_residential.png`).
 - Following `docs/ARCHITECTURE.md` §5, the dialogue technology spike was not run
   and no addon is installed; this milestone uses the small project-owned layer.
-- Only one save-less session exists: GameState/NarrativeState are session
-  runtime state. The versioned SaveManager is still a future task, with
-  `to_snapshot()`/`restore_snapshot()` kept as its data shape.
+- One session save exists (#60, ADR 0005): `user://save.json` holds the flags, the
+  knowledge log, the dice seed and the room the player stands in. It is written at
+  beat boundaries and when a location is entered, and it is resumed at boot because
+  the build has no menu. A file that cannot be read is kept, copied aside and
+  reported on the end card instead of being silently replaced.
 - No settings UI yet: no text size, text speed, or skip control. The language
   toggle is the first setting and it is bound to a key, not to a menu.
 - Chairs are non-colliding decoration so the aisles stay readable in a graybox.
@@ -313,7 +315,8 @@ never shows half a sentence.
 
 1. Author review of both language trees, starting with the pending-review table.
 2. Add the settings pass: text size, text speed, skip, and a language menu entry.
-3. Introduce a versioned SaveManager on top of the existing snapshots.
+3. Add the menu that makes "continue" and "new game" a player choice instead of a
+   boot rule (ADR 0005 §7 says when to revisit this).
 4. Build the alley, the estate gate and the courtyard the animal walks towards,
    keeping the same interaction, dialogue and narrative-state boundaries.
 5. An art pass on the outdoor blocks (materials, lighting, the animal) once the

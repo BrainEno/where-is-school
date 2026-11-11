@@ -14,9 +14,10 @@ extends RefCounted
 ## id. What is left here is genuinely generic: blocked exits, fade, load, arrival
 ## bookkeeping, the end card.
 ##
-## Known limitation, unchanged by the split: a transition is a coroutine and its
-## progress is not saved. A save taken mid-fade would reload into the room it was
-## leaving. Fixing that needs the save system (#60), which needs this.
+## A finished transition and a finished arrival line are **save points**: the player
+## is standing in a room, no beat holds the lock, and nothing is mid-flight. The file
+## itself is `SaveManager`'s business; this only says when the moment is right, by
+## asking the host for a checkpoint (ADR 0005 §4).
 
 ## The only exit whose prompt is rewritten by the story.
 const COMPLETION_DOOR_ID := &"classroom_door"
@@ -149,14 +150,25 @@ func _apply_arrival(location_id: StringName) -> void:
 
 ## The first line a location says about itself, once.
 func _play_arrival_beat(location_id: StringName) -> void:
+	# The checkpoint comes last in every branch: after the line that this room had to
+	# say, so the flags it set are in the file, and outside the beat, so nothing that
+	# owns the lock is serialised half-applied.
 	var entry := _catalog.get_entry(location_id) if _catalog != null else null
 	if entry == null or String(entry.arrival_conversation).is_empty():
+		_checkpoint(location_id)
 		return
 	if String(entry.arrival_flag).is_empty() or _has_flag(entry.arrival_flag):
+		_checkpoint(location_id)
 		return
 	await _host.begin_beat()
 	await _host.play_conversation(entry.arrival_conversation)
 	_host.end_beat()
+	_checkpoint(location_id)
+
+
+func _checkpoint(location_id: StringName) -> void:
+	if _host != null and _host.has_method("autosave"):
+		_host.autosave("arrival:%s" % String(location_id))
 
 
 # --- The end of the implemented slice --------------------------------------
@@ -165,6 +177,10 @@ func _play_arrival_beat(location_id: StringName) -> void:
 func _finish_slice(exit: LocationExit) -> void:
 	_finished = true
 	_host.sync_player_locks()
+	# The last checkpoint of the build: everything the ending decided is in the file
+	# before the card goes up.
+	if _host.has_method("autosave"):
+		_host.autosave(&"slice_end")
 	await _ui.fade.fade_to_black(1.0)
 	var title := exit.end_card_title
 	var body := exit.end_card_body

@@ -110,8 +110,12 @@ GitHub release, if one exists). Record at the top:
       rooms, and the player must not end up outside the geometry.
 - [ ] Switch language, then inspect something with a long line: no missing characters
       (boxes), no clipped final punctuation.
-- [ ] Quit with Alt+F4 and relaunch: no crash, no leftover window, and the game starts from
-      the beginning (there is no save system yet).
+- [ ] Quit with Alt+F4 and relaunch: no crash, no leftover window, and the game comes back
+      in the room you left, on the marker you came in through, at the spot you stood
+      (the save is written when a location is entered and when a beat finishes).
+- [ ] Corrupt the save on purpose (`user://save.json`, one character deleted) and relaunch:
+      the card says what is wrong, the run starts from the prologue, and
+      `user://save.broken.json` exists afterwards.
 
 ## 7. Frame rate
 

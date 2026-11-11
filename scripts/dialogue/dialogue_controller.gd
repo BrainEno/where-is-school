@@ -194,6 +194,23 @@ func set_check_resolver(resolver: CheckResolver) -> void:
 		_runtime.set_resolver(_resolver)
 
 
+## The seed every check in this run is derived from. A save carries it, so a check
+## re-entered after a load shows the same faces instead of pretending the dice are
+## fresh (ADR 0005 §3). The per-check *result* is already a flag, so both the roll
+## and the branch it chose survive.
+func get_session_seed() -> int:
+	return _resolver.get_session_seed() if _resolver != null else 0
+
+
+func set_session_seed(seed_value: int) -> void:
+	if _resolver == null:
+		_resolver = CheckResolver.new(seed_value)
+		if _runtime != null:
+			_runtime.set_resolver(_resolver)
+		return
+	_resolver.set_session_seed(seed_value)
+
+
 ## True while the current presentation is waiting for the player to pick a choice.
 func has_pending_choices() -> bool:
 	return _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_awaiting_choice()
