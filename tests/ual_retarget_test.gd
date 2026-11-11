@@ -162,8 +162,27 @@ func _diagnose(
 		% [String(first_track), ", ".join(angles), str(player.is_playing()), player.current_animation]
 	)
 	player.stop()
+	# What do the library's own track paths look like, and does the skeleton answer to them?
+	var own := source_skeleton.get_parent().get_parent()
+	var own_player: AnimationPlayer = null
+	if own != null:
+		own_player = _first(own, "AnimationPlayer") as AnimationPlayer
+	if own_player != null:
+		var own_animation := own_player.get_animation(clip_name)
+		var paths: PackedStringArray = []
+		var unresolved := 0
+		for track in mini(3, own_animation.get_track_count()):
+			var path := own_animation.track_get_path(track)
+			paths.append(String(path))
+			var bone := path.get_concatenated_subnames()
+			if source_skeleton.find_bone(bone) < 0:
+				unresolved += 1
+		_notes.append(
+			"diag: library tracks %s, %d/%d not a bone here, root_node '%s'"
+			% [", ".join(paths), unresolved, mini(3, own_animation.get_track_count()), String(own_player.root_node)]
+		)
 	# And the source: does the library's own skeleton move when its player is seeked?
-	var source_player := _first(source_skeleton.get_parent(), "AnimationPlayer") as AnimationPlayer
+	var source_player := _first(source_skeleton.get_parent().get_parent(), "AnimationPlayer") as AnimationPlayer
 	if source_player == null:
 		_notes.append("diag: no source player above the library's skeleton")
 		return

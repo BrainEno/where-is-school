@@ -116,8 +116,13 @@ static func bake(
 				var parent_global := Quaternion.IDENTITY
 				if parent >= 0:
 					parent_global = target_global[parent]
+				# A bone's pose is applied *after* its rest: `global = parent_global · rest_local ·
+				# pose`, so the pose is what is left once the rest has been taken out. Dropping
+				# the `rest_local` term here is the mistake that bakes a character that stands
+				# still in the right pose but never moves.
+				var rest_local := target.get_bone_rest(target_index).basis.get_rotation_quaternion()
 				(keys[target_index] as Array).append(
-					(parent_global.inverse() * target_global[target_index]).normalized()
+					((parent_global * rest_local).inverse() * target_global[target_index]).normalized()
 				)
 
 		var animation := Animation.new()
