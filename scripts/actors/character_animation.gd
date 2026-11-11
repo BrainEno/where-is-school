@@ -270,17 +270,19 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 static func pose_frame(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
 	var resolved: Dictionary = rig["resolved"]
 	var side := Vector3.RIGHT
-	var left: Variant = rest_origin(skeleton, resolved, "thigh.L")
-	var right: Variant = rest_origin(skeleton, resolved, "thigh.R")
-	if left != null and right != null:
-		var across: Vector3 = right - left
+	if has_bone(skeleton, resolved, "thigh.L") and has_bone(skeleton, resolved, "thigh.R"):
+		var across := (
+			bone_rest_origin(skeleton, resolved, "thigh.R")
+			- bone_rest_origin(skeleton, resolved, "thigh.L")
+		)
 		if across.length() > 0.001:
 			side = across.normalized()
 	var up := Vector3.UP
-	var hips: Variant = rest_origin(skeleton, resolved, "hips")
-	var head: Variant = rest_origin(skeleton, resolved, "head")
-	if hips != null and head != null:
-		var spine: Vector3 = head - hips
+	if has_bone(skeleton, resolved, "hips") and has_bone(skeleton, resolved, "head"):
+		var spine := (
+			bone_rest_origin(skeleton, resolved, "head")
+			- bone_rest_origin(skeleton, resolved, "hips")
+		)
 		if spine.length() > 0.001:
 			up = spine.normalized()
 	# `up` has to be perpendicular to `side`, or `forward` is not perpendicular to either.
@@ -290,14 +292,18 @@ static func pose_frame(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
 	return {"side": side, "up": up, "forward": side.cross(up).normalized()}
 
 
-## Where a canonical bone sits in the rest pose, or null when the rig does not have it.
-static func rest_origin(skeleton: Skeleton3D, resolved: Dictionary, canonical: String) -> Variant:
-	var name: Variant = resolved.get(canonical)
-	if name == null:
-		return null
-	var index := skeleton.find_bone(String(name))
+## Whether this rig resolved a canonical bone to a bone it actually has.
+static func has_bone(skeleton: Skeleton3D, resolved: Dictionary, canonical: String) -> bool:
+	if not resolved.has(canonical):
+		return false
+	return skeleton.find_bone(String(resolved[canonical])) >= 0
+
+
+## Where a canonical bone sits in the rest pose. Only call it after `has_bone()`.
+static func bone_rest_origin(skeleton: Skeleton3D, resolved: Dictionary, canonical: String) -> Vector3:
+	var index := skeleton.find_bone(String(resolved[canonical]))
 	if index < 0:
-		return null
+		return Vector3.ZERO
 	return skeleton.get_bone_global_rest(index).origin
 
 
@@ -314,12 +320,10 @@ static func x_signs(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
 	var resolved: Dictionary = rig["resolved"]
 	var signs := {}
 	for canonical: String in X_MEANING:
-		var name: Variant = resolved.get(canonical)
-		if name == null:
+		if not has_bone(skeleton, resolved, canonical):
 			continue
-		var index := skeleton.find_bone(String(name))
-		if index < 0:
-			continue
+		var name := String(resolved[canonical])
+		var index := skeleton.find_bone(name)
 		var basis := skeleton.get_bone_global_rest(index).basis
 		var axis := basis.x.normalized()
 		var along := basis.y.normalized()

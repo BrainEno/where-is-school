@@ -597,6 +597,106 @@ func _check_step_pose(
 		)
 
 
+## The bone poses of a clip at one moment, keyed by bone index.
+func _pose_at(skeleton: Skeleton3D, animation: Animation, time: float) -> Dictionary:
+	var poses := {}
+	for track in animation.get_track_count():
+		if animation.track_get_type(track) != Animation.TYPE_ROTATION_3D:
+			continue
+		var bone := String(animation.track_get_path(track).get_concatenated_subnames())
+		var index := skeleton.find_bone(bone)
+		if index < 0:
+			continue
+		poses[index] = _rotation_at(animation, track, time)
+	return poses
+
+
+## Linear between keys, which is what a rotation track with the default interpolation does.
+func _rotation_at(animation: Animation, track: int, time: float) -> Quaternion:
+	var count := animation.track_get_key_count(track)
+	if count == 0:
+		return Quaternion.IDENTITY
+	if time <= animation.track_get_key_time(track, 0):
+		return animation.track_get_key_value(track, 0) as Quaternion
+	if time >= animation.track_get_key_time(track, count - 1):
+		return animation.track_get_key_value(track, count - 1) as Quaternion
+	for key in range(count - 1):
+		var start := animation.track_get_key_time(track, key)
+		var end := animation.track_get_key_time(track, key + 1)
+		if time >= start and time <= end:
+			var span := end - start
+			var blend := 0.0 if is_zero_approx(span) else (time - start) / span
+			var before: Quaternion = animation.track_get_key_value(track, key)
+			var after: Quaternion = animation.track_get_key_value(track, key + 1)
+			return before.slerp(after, blend)
+	return animation.track_get_key_value(track, count - 1) as Quaternion
+
+
+## Every bone's transform in the skeleton's own space, from a set of pose rotations.
+## A Skeleton3D composes them as `global = parent_global * rest_local * pose`.
+func _global_poses(skeleton: Skeleton3D, poses: Dictionary) -> Dictionary:
+	var memo := {}
+	for index in skeleton.get_bone_count():
+		_global_pose(skeleton, index, poses, memo)
+	return memo
+
+
+func _global_pose(
+	skeleton: Skeleton3D, index: int, poses: Dictionary, memo: Dictionary
+) -> Transform3D:
+	if memo.has(index):
+		return memo[index]
+	var local := skeleton.get_bone_rest(index)
+	if poses.has(index):
+		local = local * Transform3D(Basis(poses[index] as Quaternion), Vector3.ZERO)
+	var parent := skeleton.get_bone_parent(index)
+	if parent >= 0:
+		local = _global_pose(skeleton, parent, poses, memo) * local
+	memo[index] = local
+	return local
+
+
+## Where a canonical bone's origin ended up. Zero when the rig does not have the bone.
+func _origin(
+	poses: Dictionary, skeleton: Skeleton3D, resolved: Dictionary, canonical: String
+) -> Vector3:
+	var name: Variant = resolved.get(canonical)
+	if name == null:
+		return Vector3.ZERO
+	var index := skeleton.find_bone(String(name))
+	if index < 0 or not poses.has(index):
+		return Vector3.ZERO
+	var placed: Transform3D = poses[index]
+	return placed.origin
+
+
+## How far a limb is swung towards the front of the body, in degrees.
+func _forward_tilt(hip: Vector3, knee: Vector3, forward: Vector3) -> float:
+	var along := knee - hip
+	if along.length() < 0.0001:
+		return 0.0
+	return rad_to_deg(asin(clampf(along.normalized().dot(forward), -1.0, 1.0)))
+
+
+## How far a knee is folded, in degrees; zero is a straight leg.
+func _knee_closure(hip: Vector3, knee: Vector3, ankle: Vector3) -> float:
+	var thigh_dir := knee - hip
+	var shin_dir := ankle - knee
+	if thigh_dir.length() < 0.0001 or shin_dir.length() < 0.0001:
+		return 0.0
+	return rad_to_deg(thigh_dir.normalized().angle_to(shin_dir.normalized()))
+
+
+## Positive when the shin points further forward than the thigh, which is a knee bending the
+## wrong way. Subtracted from the rest pose, because two of the rigs stand slightly bent.
+func _shin_overhang(hip: Vector3, knee: Vector3, ankle: Vector3, forward: Vector3) -> float:
+	var thigh_dir := knee - hip
+	var shin_dir := ankle - knee
+	if thigh_dir.length() < 0.0001 or shin_dir.length() < 0.0001:
+		return 0.0
+	return shin_dir.normalized().dot(forward) - thigh_dir.normalized().dot(forward)
+
+
 ## The pose a clip is in at time zero, per canonical bone, as the skeleton ends up holding it.
 ## Keyed canonically so two clips and two differently-named rigs can be compared.
 func _first_pose(
