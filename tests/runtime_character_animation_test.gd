@@ -104,6 +104,7 @@ func _run() -> void:
 		_failures.append("The protagonist's animator is not driven by the player's own body.")
 	_check_tracks_are_bones_only("protagonist", player_animator)
 	_notes.append("protagonist bind: %s" % CharacterAnimation.describe(player_animator.get_bind_report()))
+	_check_walking_limbs_free("protagonist", player_animator)
 
 	Harness.stage = "wake"
 	await _check_wake(player_animator)
@@ -258,6 +259,7 @@ func _check_classroom_q() -> void:
 		return
 	_check_tracks_are_bones_only("classroom Q", animator)
 	_notes.append("Q bind: %s" % CharacterAnimation.describe(animator.get_bind_report()))
+	_check_walking_limbs_free("Q", animator)
 	if animator.get_locomotion_body() != null:
 		_failures.append("The classroom Q is not under a body, but its animator found one: %s." % animator.get_locomotion_body())
 	await _check_idle_pose("the classroom Q, standing", animator, IDLE_REST_DEGREES)
@@ -526,6 +528,20 @@ func _check_idle_pose(
 			if leg < 0.5:
 				_failures.append("%s's %s foot is %.2f m below the hip: the leg is not under the body." % [label, side, leg])
 	_notes.append("%s: idle, worst bone %s %.1f° from rest" % [label, worst_bone, worst])
+
+
+## A limb the rig does not model hanging down is held at its modelled pose
+## (`CharacterAnimation.posed_limbs`). That is right for Q's carried forearm, and would be a
+## silent failure for the limbs a walk is made of: a re-import that changed their rest would
+## freeze the legs or the arm swing without an error anywhere.
+func _check_walking_limbs_free(label: String, animator: CharacterVisualAnimation) -> void:
+	var posed: Array = animator.get_bind_report().get("posed", [])
+	for canonical in ["thigh.L", "thigh.R", "shin.L", "shin.R", "upper_arm.L", "upper_arm.R"]:
+		if posed.has(canonical):
+			_failures.append(
+				"%s's '%s' is held at its modelled pose, so it does not walk: its rest no longer hangs down."
+				% [label, canonical]
+			)
 
 
 ## The clips are allowed to touch bone rotations and nothing else.
