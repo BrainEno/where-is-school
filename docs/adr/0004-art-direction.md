@@ -1,112 +1,83 @@
-# ADR 0004 — Art direction: environment route, camera projection, character shading
+# ADR 0004 — Art direction, spatial logic, and camera
 
-- **Status:** Proposed — **the owner has to sign this**. It is written as a draft with a
-  recommendation for each of the three decisions, so the decision can be made by editing this
-  file rather than by starting from a blank page.
-- **Date:** 2026-11-12
+- **Status:** Proposed — owner-confirmed artistic direction; camera and implementation details remain open.
+- **Date:** 2026-11-11
 - **Depends on:** ADR 0001 (engine and renderer)
-- **Blocks:** #54 (the rendering pipeline is zero), #55's remaining half (animation into the
-  game), the classroom vertical slice, and every later asset decision.
+- **Blocks:** #54 (rendering pipeline), the classroom vertical slice, and later environment / character asset decisions.
 
 ## Context
 
-The audit that produced #54 measured the rendering side of the project and found it empty of
-decisions rather than empty of effort:
+The project is a literary 2.5D narrative exploration game. Its world is not required to obey ordinary physical geography or realistic perspective. The school is experienced from within: play begins in a classroom, and exploration gradually moves outward through spaces whose relationships may become increasingly unstable.
 
-- 0 `.gdshader` files. Every material is one of 20 flat colours.
-- 386 `MeshInstance3D`, of which 347 are `BoxMesh`. Grey boxes are the level.
-- The two character meshes have 0 tangents and almost no UV coverage (38/78 and 1/15), which
-  means neither of them can carry a normal map, a detail texture or an atlas today.
+The visual target is not clean flat shading, a generic cartoon look, or a photographic PBR presentation. The owner selected the painterly character-portrait direction in *Disco Elysium* as the closest reference among the references reviewed. The intention is to carry a related painterly language across both character imagery and environments, while developing an identity specific to this game rather than copying another game's assets or compositions.
 
-That is a fine prototype, and it is not a look. Three decisions are load-bearing: everything
-downstream — prop silhouettes, lighting rigs, UV work, the screenshot evidence set — inherits
-them, and two of the three are cheap now and expensive later. The audit's ordering is the one
-that matters here: **projection first**, because it decides what a silhouette even is.
+This ADR separates owner-confirmed artistic intent from technical choices that still need a playable comparison. A visual direction can be accepted before the exact Godot rendering pipeline is known.
 
-The three decisions are recorded together because they are chosen together: a long lens and a
-grey-box-plus-light environment route and a stylised character treatment are one coherent look,
-and picking them from three separate menus is how projects end up with a photoreal corridor and
-a cartoon protagonist.
+## Decision 1 — Spatial logic and exploration
 
-## Decision 1 — Camera projection (decide first)
+**Owner-confirmed direction:** the game begins inside the school, in a classroom. Exploration proceeds from the inside toward other school spaces; it is not structured around entering the school from the street.
 
-**Recommendation: perspective, 18° field of view, on the rig, with orthographic kept as a
-one-line switch until the first vertical slice is judged.**
+The geography is allowed to become progressively dreamlike and unreliable:
 
-| | Orthographic | Perspective, 15–20° | Today |
-| --- | --- | --- | --- |
-| Reads as | a diorama / isometric board | a photograph from far away | a 3/4 view with visible distortion |
-| Depth cues | only occlusion, scale and lighting | occlusion, scale, lighting and mild convergence | strong convergence; near walls distort |
-| Props | need one good silhouette plane; the cheapest art route | need to read from a narrow cone; slightly more work | read differently depending on where you stand |
-| Level layout | must be designed to read flat; walls hide less | tolerates the existing room proportions | walls constantly cover the player |
-| Pointer aiming | uniform accuracy across the screen | accuracy falls towards the edges | worst at the edges |
-| Change from today | large: re-frame every room | small: one number on the rig plus a further offset | — |
+- A route need not form a consistent, physically plausible floor plan.
+- Corridors, stairs, rooms, and thresholds may connect in spatially contradictory ways.
+- The same door or entrance may lead to different places at different story moments.
+- Loops, discontinuities, and changes in spatial adjacency are valid narrative devices.
+- The player should still be able to understand the immediate playable space and operate the controls; local legibility is not the same as globally realistic geography.
 
-The recommendation is the long lens, for one reason that outranks taste: it is the version the
-project can judge **this month**. `CameraRig` already owns the field of view and the offset, so
-18° is one exported number, the capture job re-shoots the same frames, and the owner can put the
-old and the new screenshot side by side and decide with their eyes instead of from a table. If
-that comparison says the diorama reads better, orthographic is a `projection` switch on the same
-rig plus a re-framing pass — and by then the rig exists, so it is a day, not a rewrite.
+**Not decided here:** the exact level graph, transition rules, trigger conditions, scene-loading architecture, and whether any particular spatial contradiction is authored as a one-off event or driven by reusable data. Those belong to implementation design and later level-specific decisions.
 
-What the long lens costs, stated plainly: at 18° the camera has to sit much further from the
-player than it does now (roughly three times the distance for the same coverage), so the level's
-near walls are no longer the thing that ruins the view — the far wall and the ceiling of the
-room become the constraint instead. Rooms will need checking against the framing, and the
-occluder fader becomes less important, not more.
+## Decision 2 — Camera and perspective
 
-## Decision 2 — Environment route
+**Owner-confirmed constraint:** camera composition does not have to reproduce realistic human vision or obey consistent real-world perspective. The dream framework permits deliberate distortion and visual misalignment.
 
-**Recommendation: route B (grey box + a real light rig + a material pass) with route C (one
-classroom taken to finished quality) as the pilot, and nothing else.**
+**Provisional direction:** investigate an orthographic or orthographic-like camera first, because it may support authored compositions and spatial ambiguity. This is a preference for the first visual experiment, not a final commitment to orthographic projection.
 
-- **Route A — art pass per room, in order.** Every room gets props, textures and lighting now.
-  Rejected: seven locations, one artist, and the risk of throwing all of it away when Decision 1
-  or 3 changes.
-- **Route B — grey box, then light and materials only.** Keep the boxes, give them a palette, a
-  sun, a bounce, fog and a colour grade. Cheapest possible step that makes the game *look like
-  something*, and it is reversible.
-- **Route C — one room, finished.** Take the classroom end to end: props modelled, materials
-  authored, lighting designed, and it becomes the reference every other room is measured
-  against.
+The classroom vertical slice must compare at least:
+- an orthographic composition; and
+- a perspective composition with restrained convergence / a long-lens feel.
 
-B first, then C on the classroom, because B is what makes C's judgement possible: choosing
-materials under no lighting is guessing. The classroom is the right pilot — it is the room the
-opening fifteen minutes happen in, it already has the most authored props (desks, chairs, the
-bag, the blackboard), and it is the one the screenshot evidence already covers.
+Judge the comparison in motion and in representative gameplay views, not from a technical table alone. Evaluate character readability, room depth, occlusion, navigation, and whether the result supports the intended dreamlike space. The final projection, field of view, camera distance, offset, and framing values remain open until that comparison is reviewed.
 
-## Decision 3 — Character shading
+Do not choose perspective merely to preserve realism, and do not choose orthographic merely because the game is dreamlike. The image and play experience decide.
 
-**Recommendation: stylised, three-tone ramp, no normal maps, authored palette; re-UV only what
-the camera actually sees.**
+## Decision 3 — Painterly visual language for characters and environments
 
-The meshes have 0 tangents and no usable UVs, so anything that needs a normal map or a detail
-texture is off the table without a modelling pass. That constraint points at the option that is
-also the right look for a school story told at a distance: a ramp-shaded, flat-coloured
-character whose readability comes from silhouette, palette and a rim light, not from surface
-detail.
+**Owner-confirmed direction:** both character imagery and environments should pursue a painterly visual language broadly comparable to the character portraits and environments of *Disco Elysium*. This is the clearest decision made in this discussion.
 
-Two consequences worth writing down now:
+The target is painterly color construction rather than clean, uniform flat shading:
 
-- A `ShaderMaterial` with a 3-tone ramp is the first `.gdshader` in the project. That is
-  Decision 3's real deliverable, and it is also what makes the grey boxes and the characters
-  look like they belong to the same game.
-- Faces are simplified on purpose (see `ART_BIBLE.md`): at the framing Decision 1 chooses, a
-  face is a few pixels. Expression belongs to portraits (#61), not to the mesh.
+- Forms are built from expressive color masses, layered color relationships, and deliberate light / shadow.
+- Brushwork, uneven edges, softened transitions, and visible surface character may remain present.
+- Color can be emotionally motivated rather than physically accurate.
+- The image may feel dense, muddy, atmospheric, and hand-worked rather than polished, sterile, or plastic.
+- Character portraits and environment imagery should belong to the same broad visual world, while retaining different compositional needs.
+- The reference is a starting point for visual principles, not a request to reproduce *Disco Elysium* literally.
+
+This must not be reduced to placing a generic oil-paint filter or noise texture over otherwise conventional assets. The painterly quality should come from the organization of shape, color, value, edges, lighting, and marks.
+
+**Scope clarification:** the owner explicitly confirmed character portraits and environments. The exact treatment of in-game 3D character meshes, including shader model, texture workflow, UV requirements, and how closely they should match the portraits, remains a technical and art-production question for the classroom / character prototype.
 
 ## Consequences
 
-- `CameraRig` is where Decision 1 lands. It exists now; its `fov`, `offset` and `projection` are
-  the three numbers this ADR is about, and nothing else in the project may write them.
-- The occluder fader stays, but Decision 1 changes how often it fires. It was fixed in the same
-  change as the rig because a fade that never clears is worse in a long lens than in a steep one.
-- The screenshot evidence set changes when Decision 1 changes. That is expected and it is the
-  point: the capture job is how the decision gets looked at.
-- Nothing in this ADR authorises buying, downloading or generating a texture library. Palette,
-  ramp and lighting first.
+- Art reviews should assess portraits and environment images against the same painterly intent, rather than approving clean flat-shaded characters beside unrelated environment treatments.
+- The art team may use non-naturalistic color, deliberate perspective shifts, irregular contours, and atmospheric transitions when they strengthen the image.
+- Gameplay readability remains mandatory: interactive objects, exits, walkable surfaces, and character silhouettes must remain understandable at the actual camera distance.
+- A rendering implementation must be tested against representative assets. This ADR does not mandate a specific shader, post-processing stack, texture library, or 3D-to-paintover workflow.
+- The classroom is the first useful comparison space because it can test the camera, the painterly environment treatment, and character readability together.
+- Do not start a broad asset-production pass or lock model UV / normal-map requirements solely on the basis of an untested shader recommendation.
+
+## Open questions intentionally left unresolved
+
+1. Final camera projection and numeric camera settings.
+2. The technical method for painterly rendering of in-game 3D characters and environments.
+3. How portrait assets are produced and integrated with the dialogue UI.
+4. The reusable implementation model for changing door destinations and other non-Euclidean transitions.
+5. The exact palette and the balance between painterly density and readable negative space.
 
 ## Revisit when
 
-- The classroom vertical slice is judged and Decision 1 no longer reads well in motion.
-- The art route starts costing more than one room per two weeks.
-- A character needs facial close-ups outside portraits, which would retire Decision 3's premise.
+- The classroom vertical slice can be judged in motion with representative character and environment assets.
+- The chosen camera makes navigation, occlusion, or character readability worse than the alternative.
+- A rendering prototype looks like a generic filter or loses the intended painterly character.
+- The spatial-transition implementation begins constraining narrative design rather than enabling it.
