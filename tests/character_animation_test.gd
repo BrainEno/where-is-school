@@ -14,8 +14,9 @@ extends SceneTree
 ##   3. each clip actually moves the bones it claims to move, measured by seeking the
 ##      animation and reading the skeleton's bone poses;
 ##   4. both rigs get the same four clip names despite naming their bones differently;
-##   5. the production models behave as the repository says they do: the protagonist has a
-##      skeleton and binds, Q does not and says so instead of pretending.
+##   5. both production models have skeletons and bind;
+##   6. the actual protagonist and Q wrapper scenes create their runtime AnimationPlayers
+##      and switch between idle and walk when their movement state changes.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -83,7 +84,11 @@ func _run() -> void:
 
 	Harness.stage = "the production models"
 	await _check_model("protagonist (production)", PRODUCTION_PROTAGONIST, true)
-	await _check_model("Q (production)", PRODUCTION_Q, false)
+	await _check_model("Q (production)", PRODUCTION_Q, true)
+
+	Harness.stage = "the production wrapper scenes"
+	await _check_runtime_wrapper("protagonist", "res://scenes/environment/characters/protagonist.tscn")
+	await _check_runtime_wrapper("Q", "res://scenes/environment/characters/q.tscn")
 
 	_report()
 	Harness.finish(
@@ -232,6 +237,44 @@ func _check_clip(
 			% [label, clip_name, returned]
 		)
 	player.stop()
+
+
+## The real wrapper scene must bind its own visual and switch clips, not just the
+## standalone GLB preview used during rig development.
+func _check_runtime_wrapper(label: String, path: String) -> void:
+	var packed := load(path) as PackedScene
+	if packed == null:
+		_failures.append("%s wrapper could not be loaded at %s." % [label, path])
+		return
+	var visual := packed.instantiate() as Node3D
+	if visual == null:
+		_failures.append("%s wrapper is not a Node3D." % label)
+		return
+	root.add_child(visual)
+	await process_frame
+
+	if not visual.has_method("is_bound") or not bool(visual.call("is_bound")):
+		_failures.append("%s wrapper did not bind its runtime animation driver." % label)
+		visual.queue_free()
+		return
+	var player := visual.get_node_or_null(^"BoundAnimationPlayer") as AnimationPlayer
+	if player == null:
+		_failures.append("%s wrapper has no runtime AnimationPlayer." % label)
+		visual.queue_free()
+		return
+	for clip_name in CLIPS:
+		if not player.has_animation("%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name]):
+			_failures.append("%s wrapper is missing the '%s' clip." % [label, clip_name])
+
+	visual.call("set_walking", true)
+	if String(visual.call("get_current_clip")) != "walk":
+		_failures.append("%s wrapper did not switch to walk when movement began." % label)
+	visual.call("set_walking", false)
+	if String(visual.call("get_current_clip")) != "idle":
+		_failures.append("%s wrapper did not return to idle when movement stopped." % label)
+	_notes.append("%s runtime wrapper binds idle/walk/wave/talk and switches locomotion." % label)
+	visual.queue_free()
+	await process_frame
 
 
 ## An AnimationPlayer that is a child of the model, which is what makes a track path of
