@@ -105,6 +105,9 @@ func _run() -> void:
 	_check_tracks_are_bones_only("protagonist", player_animator)
 	_notes.append("protagonist bind: %s" % CharacterAnimation.describe(player_animator.get_bind_report()))
 
+	Harness.stage = "wake"
+	await _check_wake(player_animator)
+
 	Harness.stage = "player idle"
 	await _seconds(0.6)
 	await _check_idle_pose("the player, standing at the start", player_animator, IDLE_REST_DEGREES)
@@ -131,6 +134,46 @@ func _run() -> void:
 
 
 # --- the player -------------------------------------------------------------
+
+
+## A new game opens asleep at the desk: the director's `set_wake_pose(1.0)` seats the
+## model, and the settle back to 0 is the get-up. Measured, so a seated pose that folded the
+## legs backwards (the wrong hip sign) fails here rather than in a screenshot.
+func _check_wake(animator: CharacterVisualAnimation) -> void:
+	await _frames(2)
+	if not animator.is_seated() or animator.get_current_clip() != CharacterVisualAnimation.SEATED_CLIP:
+		_failures.append(
+			"A new game should open with the protagonist seated (wake pending), but the model is on '%s'."
+			% animator.get_current_clip()
+		)
+	else:
+		var hip := _bone(animator, "thigh.L")
+		var knee := _bone(animator, "shin.L")
+		var foot := _bone(animator, "foot.L")
+		if hip >= 0 and knee >= 0 and foot >= 0:
+			var thigh := _joint(animator, knee) - _joint(animator, hip)
+			var shin := _joint(animator, foot) - _joint(animator, knee)
+			_notes.append("seated: knee %+.2f m ahead of the hip, foot %.2f m below the knee" % [thigh.z, -shin.y])
+			if thigh.z < 0.2:
+				_failures.append(
+					"Seated, the protagonist's knee is %+.2f m ahead of the hip: the thighs are not forward."
+					% thigh.z
+				)
+			if -shin.y < 0.2:
+				_failures.append("Seated, the protagonist's shin does not hang down (foot %.2f m below the knee)." % -shin.y)
+	_player.set_wake_pose(0.0)
+	_player.set_camera_roll(0.0)
+	await _frames(1)
+	if not animator.is_playing_action() or animator.get_current_clip() != "get_up":
+		_failures.append("Settling the wake pose did not play the get-up (clip '%s')." % animator.get_current_clip())
+	var waited := 0.0
+	while animator.is_playing_action() and waited < 4.0:
+		await _seconds(0.1)
+		waited += 0.1
+	if animator.is_playing_action():
+		_failures.append("The get-up never finished.")
+	elif animator.is_seated() or animator.get_current_clip() != String(CharacterVisualAnimation.STATE_IDLE):
+		_failures.append("After the get-up the protagonist is on '%s', not idle." % animator.get_current_clip())
 
 
 func _check_keyboard_walk(animator: CharacterVisualAnimation) -> void:
@@ -280,12 +323,14 @@ func _check_companion() -> void:
 		elapsed += _frame_seconds()
 		var velocity := Vector3(_companion.velocity.x, 0.0, _companion.velocity.z)
 		var state := animator.get_locomotion_state()
-		if state == CharacterVisualAnimation.STATE_WALK:
+		# Q catches up at 4.4 m/s, the jog threshold: walking or jogging are both moving.
+		var moving_clip := state == CharacterVisualAnimation.STATE_WALK or state == CharacterVisualAnimation.STATE_JOG
+		if moving_clip:
 			walk_frames += 1
 			if thigh >= 0:
 				thigh_angles.append(_angle_from_rest(animator.get_skeleton(), thigh))
 		# The rule, checked against the body directly: clearly moving is walk, still is idle.
-		if velocity.length() > animator.walk_enter_speed + 0.3 and state != CharacterVisualAnimation.STATE_WALK:
+		if velocity.length() > animator.walk_enter_speed + 0.3 and not moving_clip:
 			mismatched += 1
 		if velocity.length() > 1.0:
 			facing_checked += 1
@@ -301,13 +346,13 @@ func _check_companion() -> void:
 		% [walk_frames, facing_checked, facing_wrong, mismatched, _companion.get_last_chase_note()]
 	)
 	if walk_frames == 0:
-		_failures.append("Q never played walk while following a player who walked %.1f m away." % 7.0)
+		_failures.append("Q never walked while following a player who walked %.1f m away." % 7.0)
 		return
 	# The animator decides in its own _process, which runs after this coroutine resumes on
 	# `process_frame`: each start of a walk can be one frame behind the body. More than that
 	# is the rule not being followed.
 	if mismatched * 10 > walk_frames + 10:
-		_failures.append("Q moved faster than %.2f m/s on %d frame(s) without playing walk." % [animator.walk_enter_speed + 0.3, mismatched])
+		_failures.append("Q moved faster than %.2f m/s on %d frame(s) without walking." % [animator.walk_enter_speed + 0.3, mismatched])
 	if facing_checked > 0 and facing_wrong * 4 > facing_checked:
 		_failures.append("Q walked facing away from its direction of travel on %d of %d frames." % [facing_wrong, facing_checked])
 	if not thigh_angles.is_empty():

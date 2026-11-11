@@ -56,7 +56,7 @@ Measured in Godot 4.7.2 after import, not read off a file listing.
 | Mesh nodes | 1 | 9 | 78 | 7 |
 | Material surfaces | 1 | 9 (one shared material) | 78 (22 materials) | 15 |
 | Textures | 3 × 512² embedded | 3 × 512² embedded | none (flat colours) | none (flat colours) |
-| Rig | — | — | 16 joints, rigid-part weights; runtime idle/walk/wave/talk clips | 16 joints, mostly rigid-part weights (598 of 18,031 vertices blend two); runtime idle/walk/wave/talk clips |
+| Rig | — | — | 16 joints, rigid-part weights; runtime idle/walk/jog/sit_idle/wave/talk/get_up clips | 16 joints, mostly rigid-part weights (598 of 18,031 vertices blend two); the same seven runtime clips |
 | GLB file | 254 KiB | 326 KiB | 514 KiB | 1009 KiB (658 KiB before the rig) |
 | Origin | on the floor, centred on X | wrapper re-origins it to its base | 1.7 cm above the sole | on the feet |
 | Facing | +Z | +Z | **+Z** | **+Z** |
@@ -81,9 +81,10 @@ Measured in Godot 4.7.2 after import, not read off a file listing.
   controller's `CharacterBody3D` owns the capsule. Both characters face **+Z**; §6 below
   is the one thing that matters about that. Q is 1.5 cm shorter than its unrigged input
   because the rig bake dropped the small authored tilt on the head and hair nodes; nothing
-  else about either silhouette moved. Both wrappers now bind the four code-authored
+  else about either silhouette moved. Both wrappers now bind the seven code-authored
   clips through `CharacterVisualAnimation`: idle while standing, walk while moving, with
-  wave and talk available for later dialogue/interaction beats.
+  jog above the player's sprint speed, sit_idle and the get_up transition for the wake
+  beat, and wave and talk available for later dialogue/interaction beats.
 
 ## 5. Where they are now
 
@@ -234,7 +235,8 @@ Godot 4.7.2 Stable (standard build), Windows, NVIDIA RTX 5080:
 - **The chairs are still blockouts.** They are gray boxes next to an authored desk, and
   they are now the only blockout furniture in the room.
 - **Animation remains prototype quality.** Both characters have code-authored idle,
-  walk, wave and talk clips, but no facial motion, lip sync, foot IK, root motion or
+  walk, jog, sit and get-up clips, but no facial motion, lip sync, foot IK (so the seated
+  pose folds the legs without lowering the body), root motion or
   AnimationTree blending. The rigs are still primarily rigid-part rigs; review joints and
   silhouette in motion before treating them as final.
 - **The characters' +Z facing** is still the one place these assets break the pipeline

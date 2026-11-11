@@ -83,6 +83,10 @@ toggle_language={
 "deadzone": 0.2,
 "events": [Object(InputEventKey, "physical_keycode": 76)]
 }
+sprint={
+"deadzone": 0.2,
+"events": [Object(InputEventKey, "physical_keycode": 4194325)]
+}
 
 [gui]
 

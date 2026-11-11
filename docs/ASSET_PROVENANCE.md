@@ -80,7 +80,7 @@ import, is recorded under "Not imported" instead of being silently dropped.
   the export). `protagonist_ual.res` in the same directory is derived from it — those clips
   resampled onto the protagonist's bones by `tools/bake_animation_retarget.gd` — and also does
   not ship.
-- The four clips the game's characters actually use are authored in code
+- The seven clips the game's characters use are authored in code
   (`scripts/actors/character_animation.gd`), not taken from the library; see
   `docs/CHARACTER_ANIMATION.md`.
 - Every placeholder above is expected to be replaced by owner-approved art,
