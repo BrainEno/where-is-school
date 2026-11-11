@@ -1120,6 +1120,10 @@ def main(argv: list[str]) -> int:
         print(f"{arguments.package.name}: {package.platform or 'unknown platform'} package")
         for note in package.notes:
             print(f"  {note}")
+        if not package.problems:
+            # The verdict is legible through the API as well as in the step log: an archive
+            # that passes says what it contains, not only that it passed.
+            annotate("notice", f"{package.platform} package", "; ".join(package.notes))
         for problem in package.problems:
             print(f"FAIL: {problem}", file=sys.stderr)
             annotate("error", "package layout", problem)
@@ -1156,6 +1160,8 @@ def main(argv: list[str]) -> int:
             metadata_problems, metadata_notes = verify_windows_metadata(blob, arguments.expect_version)
         for note in metadata_notes:
             print(f"  {note}")
+        if metadata_notes and not metadata_problems:
+            annotate("notice", "executable metadata", "; ".join(metadata_notes))
         for problem in metadata_problems:
             print(f"FAIL: {problem}", file=sys.stderr)
             annotate("error", "build metadata", problem)
