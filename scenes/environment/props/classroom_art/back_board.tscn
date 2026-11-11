@@ -3,8 +3,8 @@
 [ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="1_frame"]
 [ext_resource type="Material" path="res://assets/materials/classroom/board_back.tres" id="2_board"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_frame"]
-size = Vector3(3.12, 1.5, 0.03)
+[sub_resource type="QuadMesh" id="QuadMesh_frame"]
+size = Vector2(3.12, 1.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_board"]
 size = Vector2(3, 1.38)
@@ -12,12 +12,13 @@ size = Vector2(3, 1.38)
 [node name="BackBoard" type="Node3D"]
 
 [node name="Frame" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0, 0.015)
-mesh = SubResource("BoxMesh_frame")
+position = Vector3(0, 0, 0.012)
+mesh = SubResource("QuadMesh_frame")
+cast_shadow = 0
 material_override = ExtResource("1_frame")
 
 [node name="Board" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0, 0.0315)
+position = Vector3(0, 0, 0.018)
 mesh = SubResource("QuadMesh_board")
 material_override = ExtResource("2_board")
 cast_shadow = 0

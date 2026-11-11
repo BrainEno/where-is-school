@@ -42,10 +42,10 @@ background_mode = 1
 background_color = Color(0.129, 0.106, 0.106, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.58, 0.53, 0.6, 1)
-ambient_light_energy = 0.62
+ambient_light_energy = 0.42
 tonemap_mode = 2
 adjustment_enabled = true
-adjustment_saturation = 1.0
+adjustment_saturation = 0.94
 adjustment_contrast = 1.04
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
@@ -184,7 +184,7 @@ environment = SubResource("Environment_1")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-56, -24, 0)
 light_color = Color(1, 0.8, 0.6, 1)
-light_energy = 0.9
+light_energy = 0.6
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 
@@ -489,7 +489,7 @@ material_override = ExtResource("9_light_panel")
 [node name="FittingLight0" type="OmniLight3D" parent="."]
 position = Vector3(-1.7, 2.86, -2.9)
 light_color = Color(1, 0.94, 0.86, 1)
-light_energy = 1.5
+light_energy = 0.7
 omni_range = 7.0
 shadow_enabled = false
 
@@ -501,14 +501,14 @@ material_override = ExtResource("9_light_panel")
 [node name="FittingLight1" type="OmniLight3D" parent="."]
 position = Vector3(1.7, 2.86, -2.9)
 light_color = Color(1, 0.94, 0.86, 1)
-light_energy = 1.5
+light_energy = 0.7
 omni_range = 7.0
 shadow_enabled = false
 
 [node name="BackFill" type="OmniLight3D" parent="."]
 position = Vector3(0, 2.9, 2.4)
 light_color = Color(0.95, 0.91, 0.86, 1)
-light_energy = 0.9
+light_energy = 0.4
 omni_range = 7.5
 shadow_enabled = false
 

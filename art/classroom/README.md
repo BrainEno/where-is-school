@@ -29,7 +29,7 @@ lies in what is painted, not in a shader effect. The classroom does not depend o
 | Role | Colour | Used for |
 |---|---|---|
 | Ink | `#2B2622` | Contours (inverted-hull outline, 1.6 cm), wall seams, room corners, floor edge |
-| Section | `#3A302E` | Wall tops and outer faces: the room reads as a cut-away model |
+| Section | `#604842` | Wall tops and outer faces: the room reads as a cut-away model |
 | Plaster | `#E2D8BE` / light `#EDE5CF` / shade `#CDC1A6` | Upper walls: broad vertical brush planes |
 | Wainscot | `#4E767C` / dark `#395B62` | The band under 1.05 m, skirting, window frames |
 | Floor | `#9E9482` | Plank strokes; the aisles are worn paler |
