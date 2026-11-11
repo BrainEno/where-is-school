@@ -17,8 +17,14 @@ extends SceneTree
 ##
 ## The text it uses is read from the shipped content, so the sizes measured are the
 ## sizes the game really has to draw.
+##
+## Every case runs twice: at the standard text size and at the **largest** one the
+## settings offer (issue #62), set through the real `Settings` node so the panel's own
+## wiring is what scales the type. The ceilings above do not move for the larger type:
+## the band still has to stay a band, and what no longer fits scrolls instead of shrinking.
 
 const Harness = preload("res://tests/test_harness.gd")
+const SETTINGS_SCRIPT := "res://scripts/autoload/settings_manager.gd"
 
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 
@@ -44,6 +50,10 @@ func _run() -> void:
 	if not L10n.errors().is_empty():
 		_failures.append("Locale tables reported errors: %s" % " | ".join(L10n.errors()))
 	L10n.set_locale("en")
+	# Before the panel, so it connects to the text size the way it does in the game.
+	var settings := Harness.ensure_autoload(self, "Settings", SETTINGS_SCRIPT)
+	if settings != null:
+		settings.call("reset_to_defaults")
 
 	var packed: PackedScene = load("res://scenes/ui/dialogue_panel.tscn")
 	if packed == null:
@@ -80,18 +90,43 @@ func _run() -> void:
 		await process_frame
 		await process_frame
 		await process_frame
-		await _run_cases(size, samples)
+		await _run_cases(size, samples, "")
 
 	# A visible check (`CheckOverlay`) shares the screen with the band; it must stay a
 	# small frame at the top and never overlap the dialogue at the smallest size.
 	await _check_overlay(size_smallest())
+
+	# The same again at the largest text size.
+	if settings == null:
+		_failures.append("The Settings autoload could not be created.")
+	else:
+		var standard_body := _panel.body_size
+		settings.call("set_text_size", &"largest")
+		await process_frame
+		var factor := float(settings.call("text_scale"))
+		if _panel.body_size != UiTextScale.scaled(standard_body, factor) or factor < 1.25:
+			_failures.append(
+				"The largest text size left the body at %d px (standard %d px, factor %.2f)."
+				% [_panel.body_size, standard_body, factor]
+			)
+		for size in RESOLUTIONS:
+			root.size = size
+			await process_frame
+			await process_frame
+			await process_frame
+			await _run_cases(size, samples, "largest text, ")
+		await _check_overlay(size_smallest())
+		await _check_backlog(size_smallest(), samples)
+		settings.call("reset_to_defaults")
+		await process_frame
 
 	Engine.time_scale = 1.0
 	root.size = Vector2i(1600, 900)
 	Harness.finish(
 		self,
 		_failures,
-		"the dialogue panel keeps its hierarchy and its type at 1280x720, 1600x900 and 1920x1080."
+		"the dialogue panel keeps its hierarchy and its type at 1280x720, 1600x900 and 1920x1080, "
+		+ "at the standard and the largest text size."
 	)
 
 
@@ -99,8 +134,8 @@ func size_smallest() -> Vector2i:
 	return RESOLUTIONS[0]
 
 
-func _run_cases(size: Vector2i, samples: Dictionary) -> void:
-	var tag := "%dx%d" % [size.x, size.y]
+func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
+	var tag := "%s%dx%d" % [prefix, size.x, size.y]
 	var prose_en := String(samples["prose_en"])
 	var prose_zh := String(samples["prose_zh"])
 	var beat_zh := String(samples["beat_zh"])
@@ -349,6 +384,59 @@ func _check_overlay(size: Vector2i) -> void:
 		# visible frame here the layout claim is vacuous, so say so instead of passing.
 		_failures.append("The check overlay produced no measurable frame.")
 	overlay.queue_free()
+	await process_frame
+
+
+## The log (Tab / Y) at the smallest size and the largest type: every row has its
+## header and its text, and stays inside the list's width. A row with no text at all is
+## the regression this guards: the rows once came out empty.
+func _check_backlog(size: Vector2i, samples: Dictionary) -> void:
+	root.size = size
+	await process_frame
+	var packed: PackedScene = load("res://scenes/ui/backlog_panel.tscn")
+	if packed == null:
+		_failures.append("backlog_panel.tscn could not be loaded.")
+		return
+	var backlog: BacklogPanel = packed.instantiate()
+	root.add_child(backlog)
+	await process_frame
+	for locale: String in ["en", "zh-CN"]:
+		L10n.set_locale(locale)
+		var prose := String(samples["prose_zh" if locale == "zh-CN" else "prose_en"])
+		var line := _line(prose, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
+		line["node_id"] = StringName("probe_%s" % locale)
+		backlog.add_entry(line)
+	backlog.open()
+	for _index in 4:
+		await process_frame
+	var tag := "largest text, %dx%d log" % [size.x, size.y]
+	var list := backlog.get_node_or_null("%BacklogList") as Control
+	var scroll := backlog.get_node_or_null("%BacklogScroll") as Control
+	if list == null or scroll == null:
+		_failures.append("%s: the list is missing." % tag)
+	else:
+		var area := scroll.get_global_rect()
+		if area.end.x > float(size.x) + 0.5 or area.end.y > float(size.y) + 0.5:
+			_failures.append("%s: the list runs off the screen (%s)." % [tag, area])
+		if list.get_child_count() != 2:
+			_failures.append("%s: %d rows for 2 entries." % [tag, list.get_child_count()])
+		for row in list.get_children():
+			var header := row.get_node_or_null("Header") as Label
+			var body := row.get_node_or_null("Body") as Label
+			if header == null or body == null:
+				_failures.append("%s: a row has no header or no text label." % tag)
+				continue
+			if header.text.strip_edges().is_empty() or body.text.strip_edges().is_empty():
+				_failures.append("%s: a row is empty ('%s' / '%s')." % [tag, header.text, body.text])
+			var box := body.get_global_rect()
+			if box.size.x <= 0.0 or box.size.y < float(body.get_line_height()):
+				_failures.append("%s: a row's text has no room (%s)." % [tag, box.size])
+			if box.position.x < area.position.x - 0.5 or box.end.x > area.end.x + 0.5:
+				_failures.append("%s: a row spills out of the list sideways (%s)." % [tag, box])
+			if body.get_visible_line_count() < body.get_line_count():
+				_failures.append("%s: a row is clipped." % tag)
+	backlog.close()
+	backlog.queue_free()
 	await process_frame
 
 

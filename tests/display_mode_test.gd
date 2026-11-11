@@ -45,7 +45,8 @@ func _run() -> void:
 		self,
 		_failures,
 		"the window opens at the design size, cannot be dragged below 1280x720, is centred "
-		+ "and fitted to the screen, toggles on F11, and comes back where it was without "
+		+ "and fitted to the screen, toggles on F11 and the right stick click, and comes back "
+		+ "where it was without "
 		+ "touching the game."
 	)
 
@@ -85,6 +86,16 @@ func _check_project_settings() -> void:
 	)
 	# One key, so the manual checklist can say "press F11" and mean it.
 	_expect(keys.size() == 1, "The fullscreen toggle has %d keys bound, not one." % keys.size())
+	# And one controller button (issue #62): the right stick click.
+	var buttons: Array[int] = []
+	for event: InputEvent in action:
+		var joy := event as InputEventJoypadButton
+		if joy != null:
+			buttons.append(int(joy.button_index))
+	_expect(
+		buttons == [int(JOY_BUTTON_RIGHT_STICK)],
+		"The fullscreen toggle's controller binding is %s, not the right stick click." % str(buttons)
+	)
 
 
 func _check_centring() -> void:
@@ -153,8 +164,29 @@ func _check_toggle() -> void:
 		% str(mode.get_windowed_rect().size)
 	)
 	_expect(not mode.is_fullscreen(), "An even number of toggles left the window fullscreen.")
+	# The controller's button goes through the same toggle, as a real event.
+	await _wait(0.2)
+	await _push_pad(JOY_BUTTON_RIGHT_STICK)
+	_expect(mode.is_fullscreen(), "The right stick click did not enter fullscreen.")
+	await _wait(0.2)
+	await _push_pad(JOY_BUTTON_RIGHT_STICK)
+	_expect(not mode.is_fullscreen(), "The right stick click did not leave fullscreen.")
+	# Another button does nothing to the window.
+	await _wait(0.2)
+	await _push_pad(JOY_BUTTON_A)
+	_expect(not mode.is_fullscreen(), "A button that is not the toggle changed the window.")
 	mode.queue_free()
 	await process_frame
+
+
+func _push_pad(button: JoyButton) -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventJoypadButton.new()
+		event.device = 0
+		event.button_index = button
+		event.pressed = pressed
+		root.push_input(event)
+		await process_frame
 
 
 ## The requirement that matters most to a player: pressing F11 mid-conversation must not
