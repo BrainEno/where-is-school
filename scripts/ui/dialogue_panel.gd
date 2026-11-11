@@ -138,6 +138,16 @@ var _portrait_warned: Dictionary = {}
 ## The type sizes as authored, before the player's text size multiplies them.
 var _base_type: Dictionary = {}
 var _text_scale: float = 1.0
+## Larger type may use more of the band's budget, never more than the contract in
+## `tests/dialogue_layout_test.gd` (72% wide, 66% tall, 45% of the picture).
+const LARGE_TEXT_MAX_WIDTH_RATIO := 0.685
+const LARGE_TEXT_MAX_HEIGHT_RATIO := 0.65
+## When the options cannot all be shown under the line (large type, small window), a
+## contiguous range of them is: `_choice_window_count` options from `_choice_window_start`,
+## 0 meaning all of them. The cursor, the mouse wheel and the digit keys reach the rest.
+var _choice_window_start := 0
+var _choice_window_count := 0
+var _choice_window_target := -1
 ## The option a controller or the arrow keys point at, or -1. The buttons themselves keep
 ## FOCUS_NONE: the highlight is drawn here so a click and a digit still work unchanged.
 var _choice_cursor: int = -1
@@ -341,6 +351,9 @@ func set_choices(choices: Array) -> void:
 			button.queue_free()
 	_choice_buttons.clear()
 	_choice_cursor = -1
+	_choice_window_start = 0
+	_choice_window_count = 0
+	_choice_window_target = -1
 	_choices_container.hide()
 	_choice_rule.visible = false
 	if choices.is_empty():
@@ -435,6 +448,28 @@ func _set_choice_cursor(index: int) -> void:
 		button.add_theme_stylebox_override("normal", _style_hover if marked else _style_normal)
 		var color := PAPER if marked else Color(0.807, 0.788, 0.741, 0.86)
 		button.add_theme_color_override("font_color", color)
+	if _choice_window_count > 0:
+		reveal_choice(_choice_cursor)
+
+
+## Brings option `index` into the shown range when only some options fit. A no-op when
+## all of them are shown.
+func reveal_choice(index: int) -> void:
+	if index < 0 or index >= _choice_buttons.size() or _choice_window_count <= 0:
+		return
+	_choice_window_target = index
+	if index < _choice_window_start:
+		_choice_window_start = index
+	elif index >= _choice_window_start + _choice_window_count:
+		_choice_window_start = index - _choice_window_count + 1
+	_queue_fit()
+
+
+## The options on screen as `Vector2i(first, count)`; count is the total when all fit.
+func get_choice_window() -> Vector2i:
+	if _choice_window_count <= 0:
+		return Vector2i(0, _choice_buttons.size())
+	return Vector2i(_choice_window_start, _choice_window_count)
 
 
 func _move_choice_cursor(step: int) -> void:
@@ -481,7 +516,15 @@ func _hint_text() -> String:
 	}
 	var pad := MenuStyle.using_gamepad(self)
 	if has_choices():
-		return L10n.t("ui.dialogue_choose_pad" if pad else "ui.dialogue_choose", keys)
+		var text := L10n.t("ui.dialogue_choose_pad" if pad else "ui.dialogue_choose", keys)
+		if _choice_window_count > 0:
+			# Which options are on screen, so a partial list never reads as the whole one.
+			text += "    %d-%d / %d" % [
+				_choice_window_start + 1,
+				_choice_window_start + _choice_window_count,
+				_choice_buttons.size(),
+			]
+		return text
 	return L10n.t("ui.dialogue_continue_pad" if pad else "ui.dialogue_continue", keys)
 
 
@@ -514,6 +557,16 @@ func _process(delta: float) -> void:
 ## one that is still typing, or does nothing while a choice is open.
 func _gui_input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouseButton
+	if mouse != null and mouse.pressed and _choice_window_count > 0 and (
+		mouse.button_index == MOUSE_BUTTON_WHEEL_UP or mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN
+	):
+		# A partial list of options scrolls under the wheel.
+		accept_event()
+		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+			reveal_choice(_choice_window_start - 1)
+		else:
+			reveal_choice(_choice_window_start + _choice_window_count)
+		return
 	if mouse == null or mouse.button_index != MOUSE_BUTTON_LEFT or not mouse.pressed:
 		return
 	# Swallowed either way: reading must never walk the character or use whatever
@@ -610,9 +663,21 @@ func _settle_layout() -> void:
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		return
 	var left := minf(viewport_size.x * side_margin_ratio, side_margin_max)
-	var width := clampf(viewport_size.x * band_width_ratio, band_min_width, band_max_width)
+	# Larger type gets a wider, taller band (within the contract), so a paragraph that fits
+	# at the standard size still fits instead of scrolling. At the standard size both
+	# ratios are exactly the authored ones.
+	var grow := maxf(_text_scale, 1.0)
+	var width_ratio := band_width_ratio
+	var height_ratio := max_height_ratio
+	if grow > 1.0:
+		width_ratio = maxf(band_width_ratio, minf(band_width_ratio * grow, LARGE_TEXT_MAX_WIDTH_RATIO))
+		height_ratio = maxf(
+			max_height_ratio,
+			minf(max_height_ratio * (1.0 + (grow - 1.0) * 0.5), LARGE_TEXT_MAX_HEIGHT_RATIO)
+		)
+	var width := clampf(viewport_size.x * width_ratio, band_min_width, band_max_width * grow)
 	width = minf(width, viewport_size.x - left * 2.0)
-	var max_height := viewport_size.y * max_height_ratio
+	var max_height := viewport_size.y * height_ratio
 	# Without a portrait the plan is empty and `left` / `width` are exactly what they
 	# were before portraits existed.
 	var portrait_plan := _plan_portrait(viewport_size, left, width)
@@ -631,6 +696,10 @@ func _settle_layout() -> void:
 		_body_label.fit_content = true
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+		# Measure with every option, then decide how many can be shown.
+		for button in _choice_buttons:
+			if is_instance_valid(button):
+				button.visible = true
 		_place_portrait(portrait_plan)
 		_layout_stage = 1
 		_layout_dirty = true
@@ -646,9 +715,63 @@ func _settle_layout() -> void:
 		_body_label.fit_content = false
 		_body_label.scroll_active = true
 	_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+	var was_windowed := _choice_window_count > 0
+	_choice_window_count = 0
+	if scrolling and not _choice_buttons.is_empty():
+		_fit_choice_window(needed, max_height)
+	if was_windowed or _choice_window_count > 0:
+		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
 	_layout_stage = 0
 	_layout_dirty = false
+
+
+## When the line and all of its options cannot share the band, the body keeps two lines
+## (scrolling) and the options show the longest run that fits, always including the one
+## the cursor or the wheel asked for. Nothing is shrunk and nothing is cut off.
+func _fit_choice_window(needed: float, max_height: float) -> void:
+	var choices_height := _choices_container.get_combined_minimum_size().y
+	var body_height := _body_label.get_combined_minimum_size().y
+	var body_floor := roundf((float(body_size) * 1.45 + 10.0) * 2.0)
+	var room := max_height - (needed - choices_height - body_height) - body_floor
+	if room >= choices_height:
+		return
+	var heights: Array[float] = []
+	for button in _choice_buttons:
+		heights.append(button.get_combined_minimum_size().y if is_instance_valid(button) else 0.0)
+	var gap := float(_choices_container.get_theme_constant(&"separation"))
+	var total := heights.size()
+	var start := clampi(_choice_window_start, 0, total - 1)
+	var target := _choice_window_target if _choice_window_target >= 0 else _choice_cursor
+	if target >= 0 and target < start:
+		start = target
+	var count := _window_count(heights, gap, start, room)
+	if target >= 0 and target >= start + count:
+		# Slide back from the target until the run is as long as fits.
+		start = target
+		var used := heights[target]
+		while start > 0 and used + gap + heights[start - 1] <= room:
+			start -= 1
+			used += gap + heights[start]
+		count = target - start + 1
+	_choice_window_start = start
+	_choice_window_count = count
+	for index in total:
+		if is_instance_valid(_choice_buttons[index]):
+			_choice_buttons[index].visible = index >= start and index < start + count
+	_body_label.custom_minimum_size = Vector2(0.0, body_floor)
+
+
+func _window_count(heights: Array[float], gap: float, start: int, room: float) -> int:
+	var used := 0.0
+	var count := 0
+	for index in range(start, heights.size()):
+		var extra := heights[index] + (gap if count > 0 else 0.0)
+		if count > 0 and used + extra > room:
+			break
+		used += extra
+		count += 1
+	return maxi(count, 1)
 
 
 ## Everything the layout produced, for the tests and for a screenshot caption.
@@ -664,6 +787,7 @@ func get_layout_report() -> Dictionary:
 		"body_font_size": _body_label.get_theme_font_size("normal_font_size"),
 		"speaker_font_size": _speaker_label.get_theme_font_size("font_size"),
 		"choice_count": _choice_buttons.size(),
+		"choices_windowed": _choice_window_count > 0,
 		"choice_font_size": choice_size,
 		"covers_width": rect.size.x / maxf(get_viewport_rect().size.x, 1.0),
 		"covers_height": rect.size.y / maxf(get_viewport_rect().size.y, 1.0),

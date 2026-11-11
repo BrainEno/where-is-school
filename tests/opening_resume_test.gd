@@ -367,6 +367,26 @@ func _focused() -> Control:
 	return root.gui_get_focus_owner()
 
 
+func _focus_name() -> String:
+	var focused := _focused()
+	return "focus on %s" % (String(focused.name) if focused != null else "nothing")
+
+
+## A with the focus on `button`: if the navigation before it went somewhere else, that is
+## a failure, and the press goes to the intended button rather than wherever focus is.
+func _accept_on(button: Control) -> void:
+	if button == null:
+		_failures.append("%s: nothing to press." % _case_label)
+		return
+	if _focused() != button:
+		_failures.append("%s: expected the focus on %s before A (%s)." % [
+			_case_label, button.name, _focus_name()
+		])
+		button.grab_focus()
+		await process_frame
+	await _press_pad(JOY_BUTTON_A)
+
+
 func _check_title_menu() -> void:
 	_case_label = "title menu"
 	Harness.stage = _case_label
@@ -388,12 +408,20 @@ func _check_title_menu() -> void:
 	_expect(_focused() == start, "%s: the first entry does not have the focus." % _case_label)
 	# Keyboard and controller move through the same list.
 	await _press_key(KEY_DOWN)
-	_expect(_focused() == title.get_entry(&"settings"), "%s: Down did not reach Settings." % _case_label)
+	_expect(_focused() == title.get_entry(&"settings"), "%s: Down did not reach Settings (%s)." % [
+		_case_label, _focus_name()
+	])
 	await _press_pad(JOY_BUTTON_DPAD_DOWN)
-	_expect(_focused() == title.get_entry(&"quit"), "%s: D-pad down did not reach Quit." % _case_label)
+	_expect(_focused() == title.get_entry(&"quit"), "%s: D-pad down did not reach Quit (%s)." % [
+		_case_label, _focus_name()
+	])
 	await _press_pad(JOY_BUTTON_DPAD_UP)
-	# Settings opens from the title, takes the focus, and B closes it again.
-	await _press_pad(JOY_BUTTON_A)
+	_expect(_focused() == title.get_entry(&"settings"), "%s: D-pad up did not reach Settings (%s)." % [
+		_case_label, _focus_name()
+	])
+	# Settings opens from the title, takes the focus, and B closes it again. A press of A
+	# with Quit focused would end this process, so the focus is put right first.
+	await _accept_on(title.get_entry(&"settings"))
 	await _frames(2)
 	var panel := title.get_settings_panel()
 	_expect(panel.is_open(), "%s: A on Settings did not open the settings screen." % _case_label)
@@ -450,7 +478,7 @@ func _check_cancel_keeps_save() -> void:
 			"B":
 				await _press_pad(JOY_BUTTON_B)
 			_:
-				await _press_pad(JOY_BUTTON_A)
+				await _accept_on(confirm.get_cancel_button())
 		await _frames(2)
 		_expect(not confirm.visible, "%s (%s): the question did not close." % [_case_label, how])
 		_expect(save.has_save(), "%s (%s): cancelling deleted the save." % [_case_label, how])
@@ -486,9 +514,9 @@ func _check_new_game_from_title() -> void:
 	await _press_pad(JOY_BUTTON_DPAD_RIGHT)
 	_expect(
 		_focused() == title.get_confirm().get_confirm_button(),
-		"%s: D-pad right did not reach the confirm answer." % _case_label
+		"%s: D-pad right did not reach the confirm answer (%s)." % [_case_label, _focus_name()]
 	)
-	await _press_pad(JOY_BUTTON_A)
+	await _accept_on(title.get_confirm().get_confirm_button())
 	var world := await _wait_for_world(reports)
 	session.disconnect("new_game_started", on_started)
 	await _expect_fresh_boot(world, reports)
@@ -520,6 +548,9 @@ func _check_new_game_from_pause() -> void:
 	await _frames(2)
 	_expect(menu.is_open(), "%s: Esc did not open the pause menu." % _case_label)
 	menu.focus_entry(&"new_game")
+	if _focused() != menu.get_entry(&"new_game"):
+		_failures.append("%s: New game could not take the focus (%s)." % [_case_label, _focus_name()])
+		menu.get_entry(&"new_game").grab_focus()
 	await _press_key(KEY_ENTER)
 	await _frames(2)
 	_expect(menu.get_confirm().visible, "%s: New game did not ask first." % _case_label)

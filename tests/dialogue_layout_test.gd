@@ -191,7 +191,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	await process_frame
 	await process_frame
 	_measure("%s four long options" % tag, size, false)
-	_measure_options("%s four long options" % tag, size)
+	await _measure_options("%s four long options" % tag, size)
 
 	# 6. A name and a role that are both too long, plus a title.
 	var long_name := "名字非常非常长的一个人物名称"
@@ -322,26 +322,51 @@ func _measure_options(label: String, size: Vector2i) -> void:
 	if int(report["choice_count"]) != 4:
 		_failures.append("%s: %d options were built." % [label, int(report["choice_count"])])
 		return
-	var panel_rect: Rect2 = report["panel_rect"]
 	var buttons := _panel.get_choice_buttons()
+	if not bool(report.get("choices_windowed", false)):
+		for index in buttons.size():
+			_measure_option(label, size, index)
+		return
+	# Large type on a small screen: the options are shown a run at a time. Every one of
+	# them must still be reachable, and once brought into view it must fit the band like
+	# any other - nothing is clipped, it is only further down the list.
+	print("%s: options shown %s at a time" % [label, str(_panel.get_choice_window())])
+	if not _panel.get_node("Frame/Content/HintLabel").text.contains("/ 4"):
+		_failures.append("%s: a partial list of options does not say so on the hint line." % label)
 	for index in buttons.size():
-		var button := buttons[index]
-		var button_rect := button.get_global_rect()
-		if button_rect.size.y < 24.0:
-			_failures.append("%s: option %d is %.0f px tall." % [label, index + 1, button_rect.size.y])
-		if button_rect.position.x < panel_rect.position.x - 0.5 \
-				or button_rect.end.x > panel_rect.end.x + 0.5:
-			_failures.append(
-				"%s: option %d spills out horizontally (%s)." % [label, index + 1, button_rect]
-			)
-		if button_rect.end.y > panel_rect.end.y + 0.5:
-			_failures.append(
-				"%s: option %d hangs below the band (%s)." % [label, index + 1, button_rect]
-			)
-		if button_rect.end.y > float(size.y):
-			_failures.append("%s: option %d is off screen." % [label, index + 1])
-		if button.mouse_filter != Control.MOUSE_FILTER_STOP:
-			_failures.append("%s: option %d does not accept the mouse." % [label, index + 1])
+		_panel.reveal_choice(index)
+		for _frame in 4:
+			await process_frame
+		var window := _panel.get_choice_window()
+		if index < window.x or index >= window.x + window.y:
+			_failures.append("%s: option %d could not be brought into view (%s)." % [label, index + 1, window])
+			continue
+		_measure(label + " (option %d in view)" % (index + 1), size, false)
+		_measure_option(label, size, index)
+
+
+func _measure_option(label: String, size: Vector2i, index: int) -> void:
+	var panel_rect: Rect2 = _panel.get_layout_report()["panel_rect"]
+	var button := _panel.get_choice_buttons()[index]
+	if not button.is_visible_in_tree():
+		_failures.append("%s: option %d is not shown." % [label, index + 1])
+		return
+	var button_rect := button.get_global_rect()
+	if button_rect.size.y < 24.0:
+		_failures.append("%s: option %d is %.0f px tall." % [label, index + 1, button_rect.size.y])
+	if button_rect.position.x < panel_rect.position.x - 0.5 \
+			or button_rect.end.x > panel_rect.end.x + 0.5:
+		_failures.append(
+			"%s: option %d spills out horizontally (%s)." % [label, index + 1, button_rect]
+		)
+	if button_rect.end.y > panel_rect.end.y + 0.5:
+		_failures.append(
+			"%s: option %d hangs below the band (%s)." % [label, index + 1, button_rect]
+		)
+	if button_rect.end.y > float(size.y):
+		_failures.append("%s: option %d is off screen." % [label, index + 1])
+	if button.mouse_filter != Control.MOUSE_FILTER_STOP:
+		_failures.append("%s: option %d does not accept the mouse." % [label, index + 1])
 
 
 ## A visible check is a small frame near the top. It must stay clear of the dialogue
