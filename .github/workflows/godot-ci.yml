@@ -60,6 +60,16 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check the music loop is reproducible
+        shell: bash
+        run: |
+          # The background music ships as a derived file: the owner's recording lives under
+          # `art/` and `tools/build_music_loop.py` trims and crossfades it into the loop the
+          # game imports. If the two drift, the shipped loop is a file nobody can rebuild and
+          # nobody can hear the provenance of. The check also re-reads the recording's sha256,
+          # so replacing the source without re-deriving it fails here.
+          python3 tools/build_music_loop.py --check
+
       - name: Check the CI verdict itself
         shell: bash
         run: |
@@ -244,6 +254,10 @@ jobs:
           # The same cues, in the ears: the four synthesised buffers, their levels, the
           # hover rate limit, and that the drawing code asks for the sound that matches.
           run_check interaction_audio 180 godot --headless --path . --script res://tests/interaction_audio_test.gd || status=1
+          # The background music: the WAV has to be imported *as a loop* (loop points in the
+          # sidecar, not a runtime flag), one player has to own it, a scene change must not
+          # restart it, and the music dial must not move a cue.
+          run_check music 240 godot --headless --path . --script res://tests/music_test.gd || status=1
           # The window the game opens in, and the one F11 has to come back to.
           run_check display_mode 180 godot --headless --path . --script res://tests/display_mode_test.gd || status=1
           # The HUD at the three sizes the game is expected to run in. The dialogue panel is

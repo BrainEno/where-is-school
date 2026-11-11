@@ -17,8 +17,10 @@ extends SceneTree
 ##    replaced) — see docs/ASSET_PIPELINE.md §10;
 ## 2. the stationery is a *display line-up* of nine separate items centred on its own
 ##    origin, so the wrapper re-origins it to its base;
-## 3. `q.glb` carries one authored non-uniform node scale (`Q_Collar`), which is recorded
-##    here by name rather than waved through by a relaxed rule.
+## 3. no asset carries a non-unit node scale. `q.glb` used to be the one exception
+##    (`Q_Collar`, 1 × 0.7 × 0.9, recorded here by name); the rigging re-export baked that
+##    scale into the collar's vertices, which is what §1 asks for, so the record is empty
+##    and the rule now holds for all four assets. A new scale still fails this test.
 ##
 ## What this does not test: how the assets look (that is the preview scene's job) or any
 ## performance budget.
@@ -81,15 +83,21 @@ const ASSETS: Array[Dictionary] = [
 		"name": "q",
 		"file": "res://assets/models/q/q.glb",
 		"wrapper": "res://scenes/environment/characters/q.tscn",
-		"size": Vector3(0.7255, 1.6618, 0.6069),
+		# 1.6466 and not 1.6618: the rig bake dropped the ~9° authored tilt on Q's head and
+		# hair nodes instead of applying it to the vertices, which lowers the crown by 1.5 cm
+		# and leaves the rest of the silhouette where it was. See the note below.
+		"size": Vector3(0.7255, 1.6466, 0.6069),
 		"meshes": 7,
 		"surfaces": 15,
 		"model_base": 0.0,
-		"scaled_nodes": {"Q_Collar": Vector3(1.0, 0.7, 0.9)},
+		# Baked into the vertices by the rigging pass; the collar occupies the same world box
+		# as before, so the baked scale is not a size change anywhere but in the file.
+		"scaled_nodes": {},
 		"kind": "character",
 		"shape": "",
 		"anchor_height": 1.2,
-		"note": "the classmate Q, flat-colour materials, no textures",
+		"note": "the classmate Q, flat-colour materials, no textures; rigged, and its head/hair "
+			+ "node tilt was dropped by the rig bake (crown 1.5 cm lower than the unrigged file)",
 	},
 ]
 
