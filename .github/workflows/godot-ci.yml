@@ -194,6 +194,8 @@ jobs:
           # the companion the director spawns). It fails on a graybox left behind, a second
           # collider on a desk, a model that hovers, or a character that faces backwards.
           run_check imported_placement 300 godot --headless --path . --script res://tests/imported_placement_test.gd || status=1
+          # TEMPORARY (classroom visual slice PR): run the new slice test in CI; reverted before merge.
+          run_check classroom_visual_slice 240 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
