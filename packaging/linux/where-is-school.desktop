@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=where-is-school
+GenericName=Narrative Adventure
+Comment=A short first-person story set in a school that cannot remember you.
+Exec=sh -c 'cd "$(dirname "$1")" && exec ./where-is-school' sh %k
+Icon=where-is-school
+Terminal=false
+Categories=Game;AdventureGame;
+Keywords=school;story;dialog;walking;
+StartupNotify=true
+StartupWMClass=where-is-school

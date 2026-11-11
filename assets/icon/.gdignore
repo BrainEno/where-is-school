@@ -1,0 +1,5 @@
+# Godot skips this folder: the icons here are build inputs, not game assets.
+# `export_presets.cfg` points the Windows export at app_icon.ico and the packaging step
+# copies app_icon_256.png next to the Linux launcher; neither is loaded at run time, so
+# importing them would only add converted copies to the pack and sidecars to the tree.
+# tools/build_app_icon.py owns these files. See docs/RELEASE.md, "The icon".
