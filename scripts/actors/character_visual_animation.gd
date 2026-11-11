@@ -14,10 +14,12 @@ extends Node3D
 ##   3. *locomotion*: `idle`, `walk` or `jog`, from the planar velocity the character's own
 ##      controller already produces. It is the same decision for everyone:
 ##
-##   the player, WASD          `PlayerController._apply_movement()` → body velocity ┐
-##   the player, click-to-move `PlayerController._path_direction()` → body velocity ┤
-##   Q following               `CompanionController._apply_movement()` → body velocity ┼→ _update_locomotion()
-##   an NPC walking a route    `NpcActor.walk_along()` → reported velocity ─────────────┘
+##   the player, WASD           PlayerController._apply_movement()    -> body velocity
+##   the player, click-to-move  PlayerController._path_direction()    -> body velocity
+##   Q following                CompanionController._apply_movement() -> body velocity
+##   an NPC walking a route     NpcActor.walk_along()                 -> reported velocity
+##
+##   all four                   -> _update_locomotion()
 ##
 ## No controller has a second, animation-only notion of "moving". A `CharacterBody3D` reports
 ## its velocity *after* `move_and_slide()`, so a body pressed against a wall reads as still
