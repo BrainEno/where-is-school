@@ -372,49 +372,6 @@ jobs:
             echo "--- frames: $(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name '*.png' | wc -l) ---"
           } | tee "${EVIDENCE}/logs/staged-files.txt"
 
-      # 临时（#82 PR 内将回退）：在真实截图上测量操场 HUD 文字背后的亮度与对比度，只读，不写入证据目录。
-      - name: Measure the schoolyard HUD contrast (temporary, #82)
-        if: always()
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -uo pipefail
-          python3 -m pip install --quiet pillow || exit 0
-          python3 - <<'PY'
-          import base64, io, os
-          from PIL import Image
-          d = os.path.join(os.environ["RUNNER_TEMP"], "evidence", "docs", "screenshots")
-          def lin(v):
-              v = v / 255.0
-              return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
-          def lum(p):
-              return 0.2126 * lin(p[0]) + 0.7152 * lin(p[1]) + 0.0722 * lin(p[2])
-          def band(im, box):
-              px = sorted(lum(p) for p in im.crop(box).getdata())
-              return px[len(px) // 2]
-          names = ["13f_schoolyard_from_corridor", "25_playground_wide", "26_hoop_prompt",
-                   "27_hoop_inspection", "28_shed_prompt", "32_far_gap_prompt"]
-          rows = []
-          for n in names:
-              f = os.path.join(d, n + ".png")
-              if not os.path.exists(f):
-                  rows.append(n + " missing")
-                  continue
-              im = Image.open(f).convert("RGB")
-              o = band(im, (54, 40, 560, 74))
-              p = band(im, (500, 826, 1100, 860))
-              rows.append("%s sentence bg L %.3f CR %.2f / prompt bg L %.3f CR %.2f"
-                          % (n[:3], o, (0.502 + 0.05) / (o + 0.05), p, (0.659 + 0.05) / (p + 0.05)))
-          print("::notice title=schoolyard HUD contrast (measured)::" + " | ".join(rows))
-          for n in names[1:2] + names[4:6] + names[0:1]:
-              f = os.path.join(d, n + ".png")
-              if os.path.exists(f):
-                  im = Image.open(f).convert("RGB").resize((400, 225))
-                  b = io.BytesIO()
-                  im.save(b, "JPEG", quality=60)
-                  print("::notice title=thumb %s::%s" % (n, base64.b64encode(b.getvalue()).decode()))
-          PY
-
       - name: Summarise the result
         if: always()
         shell: bash
