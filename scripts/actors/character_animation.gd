@@ -17,8 +17,22 @@ extends RefCounted
 ## nothing is silently dropped and nothing is played on a bone that is not there.
 ##
 ## Nothing here needs a third-party animation library, an external `.glb`, or a retarget pass
-## in the editor: an `Animation` is a resource, its track paths are
-## `"<skeleton path>:<bone name>"`, and its keys are quaternions relative to the rest pose.
+## in the editor: an `Animation` is a resource and its track paths are
+## `"<skeleton path>:<bone name>"`.
+##
+## **The keys in `CLIPS` are offsets from the rest pose, and `bind()` composes them onto it.**
+## A Godot 4 rotation track does not add to the rest: it *replaces* the bone's local rotation.
+## Both rigs hang their arms and legs from the body with a local rest rotation of 170–180°, so
+## a key of "3° about X" written as-is turned every arm and leg to point straight up — which is
+## what the first runtime wiring shipped (both characters stood with their arms raised). Each
+## key is therefore written as `rest * offset`: the offset turns the bone about its *own* rest
+## axes, which on both rigs means local X swings a limb forward and back and local Z moves it
+## out to the side.
+##
+## Every clip also carries a track for every bone *any* clip animates. A bone that one clip
+## moves and the next one does not would otherwise keep the last pose the first clip gave it —
+## a character that stops walking would stand with one leg still mid-stride. Bones a clip does
+## not author are held at rest.
 
 ## Bones the clips talk about, in the order the resolver prefers them. The first name that
 ## exists on a rig wins, so a rig that has both `Hips` and `Root` binds the hips to `Hips`.
@@ -46,9 +60,11 @@ const BONE_ALIASES := {
 
 ## The clips, authored in canonical names. Each key is `[time in seconds, degrees about the
 ## bone's own axes]`; the last key repeats the first so a looping clip closes the cycle.
-## Rotations are about the bone's local X for swing (forward and back) and local Z for
-## reaching out, which is what the rest poses of both rigs want: every bone in them points
-## up or down its own Y.
+## Rotations are offsets from the rest pose, about the bone's own axes: local X swings a
+## limb (positive = the far end moves *backward*, which is how a knee bends and the wrong way
+## for an elbow, so forearm keys are negative) and local Z reaches out to the side. Both rigs
+## agree on those axes — every limb hangs down its own Y with X pointing sideways — which is
+## measured, not assumed, in `tests/runtime_character_animation_test.gd`.
 const CLIPS := {
 	"idle": {
 		"length": 2.0,
@@ -58,23 +74,26 @@ const CLIPS := {
 			"head": [[0.0, Vector3(0.0, 0.0, 1.0)], [1.0, Vector3(-1.5, 0.0, -1.0)], [2.0, Vector3(0.0, 0.0, 1.0)]],
 			"upper_arm.L": [[0.0, Vector3(3.0, 0.0, 3.0)], [1.0, Vector3(5.0, 0.0, 4.0)], [2.0, Vector3(3.0, 0.0, 3.0)]],
 			"upper_arm.R": [[0.0, Vector3(3.0, 0.0, -3.0)], [1.0, Vector3(5.0, 0.0, -4.0)], [2.0, Vector3(3.0, 0.0, -3.0)]],
-			"fore_arm.L": [[0.0, Vector3(6.0, 0.0, 0.0)], [1.0, Vector3(8.0, 0.0, 0.0)], [2.0, Vector3(6.0, 0.0, 0.0)]],
-			"fore_arm.R": [[0.0, Vector3(6.0, 0.0, 0.0)], [1.0, Vector3(8.0, 0.0, 0.0)], [2.0, Vector3(6.0, 0.0, 0.0)]],
+			"fore_arm.L": [[0.0, Vector3(-6.0, 0.0, 0.0)], [1.0, Vector3(-8.0, 0.0, 0.0)], [2.0, Vector3(-6.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(-6.0, 0.0, 0.0)], [1.0, Vector3(-8.0, 0.0, 0.0)], [2.0, Vector3(-6.0, 0.0, 0.0)]],
 		},
 	},
 	"walk": {
 		"length": 1.0,
+		# Four phases per leg: toe-off (thigh back, foot pointed), swing (knee bent most),
+		# heel strike (thigh forward, knee nearly straight, toe up), stance. The right leg is
+		# the left leg half a cycle later, and each arm swings against the leg on its side.
 		"tracks": {
-			"thigh.L": [[0.0, Vector3(22.0, 0.0, 0.0)], [0.5, Vector3(-22.0, 0.0, 0.0)], [1.0, Vector3(22.0, 0.0, 0.0)]],
-			"thigh.R": [[0.0, Vector3(-22.0, 0.0, 0.0)], [0.5, Vector3(22.0, 0.0, 0.0)], [1.0, Vector3(-22.0, 0.0, 0.0)]],
-			"shin.L": [[0.0, Vector3(4.0, 0.0, 0.0)], [0.5, Vector3(30.0, 0.0, 0.0)], [1.0, Vector3(4.0, 0.0, 0.0)]],
-			"shin.R": [[0.0, Vector3(30.0, 0.0, 0.0)], [0.5, Vector3(4.0, 0.0, 0.0)], [1.0, Vector3(30.0, 0.0, 0.0)]],
-			"foot.L": [[0.0, Vector3(-8.0, 0.0, 0.0)], [0.5, Vector3(6.0, 0.0, 0.0)], [1.0, Vector3(-8.0, 0.0, 0.0)]],
-			"foot.R": [[0.0, Vector3(6.0, 0.0, 0.0)], [0.5, Vector3(-8.0, 0.0, 0.0)], [1.0, Vector3(6.0, 0.0, 0.0)]],
-			"upper_arm.L": [[0.0, Vector3(-18.0, 0.0, 3.0)], [0.5, Vector3(18.0, 0.0, 3.0)], [1.0, Vector3(-18.0, 0.0, 3.0)]],
-			"upper_arm.R": [[0.0, Vector3(18.0, 0.0, -3.0)], [0.5, Vector3(-18.0, 0.0, -3.0)], [1.0, Vector3(18.0, 0.0, -3.0)]],
-			"fore_arm.L": [[0.0, Vector3(14.0, 0.0, 0.0)], [0.5, Vector3(24.0, 0.0, 0.0)], [1.0, Vector3(14.0, 0.0, 0.0)]],
-			"fore_arm.R": [[0.0, Vector3(24.0, 0.0, 0.0)], [0.5, Vector3(14.0, 0.0, 0.0)], [1.0, Vector3(24.0, 0.0, 0.0)]],
+			"thigh.L": [[0.0, Vector3(20.0, 0.0, 0.0)], [0.25, Vector3(0.0, 0.0, 0.0)], [0.5, Vector3(-22.0, 0.0, 0.0)], [0.75, Vector3(0.0, 0.0, 0.0)], [1.0, Vector3(20.0, 0.0, 0.0)]],
+			"thigh.R": [[0.0, Vector3(-22.0, 0.0, 0.0)], [0.25, Vector3(0.0, 0.0, 0.0)], [0.5, Vector3(20.0, 0.0, 0.0)], [0.75, Vector3(0.0, 0.0, 0.0)], [1.0, Vector3(-22.0, 0.0, 0.0)]],
+			"shin.L": [[0.0, Vector3(10.0, 0.0, 0.0)], [0.25, Vector3(38.0, 0.0, 0.0)], [0.5, Vector3(4.0, 0.0, 0.0)], [0.75, Vector3(8.0, 0.0, 0.0)], [1.0, Vector3(10.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(4.0, 0.0, 0.0)], [0.25, Vector3(8.0, 0.0, 0.0)], [0.5, Vector3(10.0, 0.0, 0.0)], [0.75, Vector3(38.0, 0.0, 0.0)], [1.0, Vector3(4.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(12.0, 0.0, 0.0)], [0.25, Vector3(4.0, 0.0, 0.0)], [0.5, Vector3(-8.0, 0.0, 0.0)], [0.75, Vector3(0.0, 0.0, 0.0)], [1.0, Vector3(12.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(-8.0, 0.0, 0.0)], [0.25, Vector3(0.0, 0.0, 0.0)], [0.5, Vector3(12.0, 0.0, 0.0)], [0.75, Vector3(4.0, 0.0, 0.0)], [1.0, Vector3(-8.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(-16.0, 0.0, 3.0)], [0.5, Vector3(16.0, 0.0, 3.0)], [1.0, Vector3(-16.0, 0.0, 3.0)]],
+			"upper_arm.R": [[0.0, Vector3(16.0, 0.0, -3.0)], [0.5, Vector3(-16.0, 0.0, -3.0)], [1.0, Vector3(16.0, 0.0, -3.0)]],
+			"fore_arm.L": [[0.0, Vector3(-22.0, 0.0, 0.0)], [0.5, Vector3(-12.0, 0.0, 0.0)], [1.0, Vector3(-22.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(-12.0, 0.0, 0.0)], [0.5, Vector3(-22.0, 0.0, 0.0)], [1.0, Vector3(-12.0, 0.0, 0.0)]],
 			"spine": [[0.0, Vector3(2.0, 0.0, 1.5)], [0.5, Vector3(2.0, 0.0, -1.5)], [1.0, Vector3(2.0, 0.0, 1.5)]],
 			"head": [[0.0, Vector3(-2.0, 0.0, -1.0)], [0.5, Vector3(-2.0, 0.0, 1.0)], [1.0, Vector3(-2.0, 0.0, -1.0)]],
 		},
@@ -95,11 +114,24 @@ const CLIPS := {
 			"head": [[0.0, Vector3(3.0, 0.0, 0.0)], [0.4, Vector3(-3.0, 0.0, 2.0)], [0.8, Vector3(2.0, 0.0, -2.0)], [1.2, Vector3(3.0, 0.0, 0.0)]],
 			"neck": [[0.0, Vector3(0.0, 0.0, 0.0)], [0.6, Vector3(1.5, 0.0, 0.0)], [1.2, Vector3(0.0, 0.0, 0.0)]],
 			"chest": [[0.0, Vector3(0.0, 0.0, 0.0)], [0.6, Vector3(-2.0, 0.0, 1.5)], [1.2, Vector3(0.0, 0.0, 0.0)]],
-			"fore_arm.R": [[0.0, Vector3(20.0, 0.0, 0.0)], [0.4, Vector3(40.0, 0.0, -10.0)], [0.8, Vector3(25.0, 0.0, 0.0)], [1.2, Vector3(20.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(-20.0, 0.0, 0.0)], [0.4, Vector3(-40.0, 0.0, -10.0)], [0.8, Vector3(-25.0, 0.0, 0.0)], [1.2, Vector3(-20.0, 0.0, 0.0)]],
 			"upper_arm.R": [[0.0, Vector3(6.0, 0.0, -4.0)], [0.6, Vector3(14.0, 0.0, -8.0)], [1.2, Vector3(6.0, 0.0, -4.0)]],
 		},
 	},
 }
+
+## The bones the `CLIPS` swing about their own X, on the assumption that they hang down their
+## own Y. `bind()` checks that assumption on each rig rather than trusting it: a limb modelled
+## in another pose (rigged Q carries its right forearm held out in front, so `LowerArm.R` and
+## `Hand.R` point forward) has a different axis under the same name, and a swing about it
+## would lift the hand towards the shoulder. Such a bone is held at its modelled pose in every
+## clip and listed under `posed` in the report.
+const HANGING_LIMBS: Array[String] = [
+	"upper_arm.L", "upper_arm.R", "fore_arm.L", "fore_arm.R", "hand.L", "hand.R",
+	"thigh.L", "thigh.R", "shin.L", "shin.R",
+]
+## How closely a hanging limb's rest direction has to follow skeleton −Y (cosine).
+const HANGING_MIN_COS := 0.7
 
 ## Name the built library is registered under, so clips play as `char/idle`.
 const LIBRARY_NAME := &"char"
@@ -182,6 +214,11 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		push_warning("AnimationPlayer should be a child of the model root; binding anyway.")
 	var rig := resolve_rig(skeleton)
 	var skeleton_path := model_root.get_path_to(skeleton)
+	var resolved: Dictionary = rig["resolved"]
+	# Every canonical bone any clip animates, resolved on this rig: each clip writes all of
+	# them, so switching clips never leaves a bone where the previous clip put it.
+	var animated := _animated_bones(resolved)
+	var posed := posed_limbs(skeleton, resolved)
 	var library := AnimationLibrary.new()
 	var clip_report := {}
 	for clip_name in CLIPS:
@@ -191,27 +228,29 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		animation.loop_mode = Animation.LOOP_LINEAR
 		var tracks: Dictionary = spec["tracks"]
 		var used := 0
-		for canonical in tracks:
-			var bone: Variant = rig["resolved"].get(canonical)
-			if bone == null:
-				continue
-			var path := NodePath("%s:%s" % [String(skeleton_path), String(bone)])
+		var held := 0
+		for canonical: String in animated:
+			var bone := String(resolved[canonical])
+			var rest := skeleton.get_bone_rest(skeleton.find_bone(bone)).basis.get_rotation_quaternion()
+			var path := NodePath("%s:%s" % [String(skeleton_path), bone])
 			var track := animation.add_track(Animation.TYPE_ROTATION_3D)
 			animation.track_set_path(track, path)
+			if not tracks.has(canonical) or posed.has(canonical):
+				animation.rotation_track_insert_key(track, 0.0, rest)
+				animation.rotation_track_insert_key(track, animation.length, rest)
+				held += 1
+				continue
 			for key: Array in tracks[canonical]:
-				var degrees: Vector3 = key[1]
 				animation.rotation_track_insert_key(
-					track,
-					float(key[0]),
-					Quaternion.from_euler(
-						Vector3(deg_to_rad(degrees.x), deg_to_rad(degrees.y), deg_to_rad(degrees.z))
-					)
+					track, float(key[0]), (rest * offset_rotation(key[1])).normalized()
 				)
 			used += 1
 		library.add_animation(clip_name, animation)
 		clip_report[clip_name] = {
+			# Tracks that move a bone; `held` tracks pin the rest of the animated set at rest.
 			"tracks": used,
 			"requested": tracks.size(),
+			"held": held,
 			"length": animation.length,
 		}
 	if player.has_animation_library(LIBRARY_NAME):
@@ -223,19 +262,61 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		"bones": rig["bones"],
 		"resolved": rig["resolved"],
 		"missing": rig["missing"],
+		"posed": posed,
 		"clips": clip_report,
 		"library": library,
 	}
 
 
+## The rotation a `CLIPS` key describes, as an offset from the bone's rest: degrees about
+## the bone's own X, Y and Z. `bind()` writes `rest * offset_rotation(key)`.
+static func offset_rotation(degrees: Vector3) -> Quaternion:
+	return Quaternion.from_euler(
+		Vector3(deg_to_rad(degrees.x), deg_to_rad(degrees.y), deg_to_rad(degrees.z))
+	)
+
+
+## The `HANGING_LIMBS` this rig resolves but does not model hanging down: their rest Y, in
+## skeleton space, is more than ~45° away from straight down. Both shipped models stand on an
+## unrotated glTF root, so skeleton space is the character's own space (+Y up, +Z forward).
+static func posed_limbs(skeleton: Skeleton3D, resolved: Dictionary) -> Array[String]:
+	var posed: Array[String] = []
+	for canonical: String in HANGING_LIMBS:
+		if not resolved.has(canonical):
+			continue
+		var index := skeleton.find_bone(String(resolved[canonical]))
+		var along := skeleton.get_bone_global_rest(index).basis.y.normalized()
+		if along.dot(Vector3.DOWN) < HANGING_MIN_COS:
+			posed.append(canonical)
+	return posed
+
+
+## Canonical bones that at least one clip animates and that this rig resolves, in a stable
+## order (the order of `BONE_ALIASES`).
+static func _animated_bones(resolved: Dictionary) -> Array[String]:
+	var wanted := {}
+	for clip_name in CLIPS:
+		var tracks: Dictionary = CLIPS[clip_name]["tracks"]
+		for canonical in tracks:
+			wanted[canonical] = true
+	var ordered: Array[String] = []
+	for canonical: String in BONE_ALIASES:
+		if wanted.has(canonical) and resolved.has(canonical):
+			ordered.append(canonical)
+	return ordered
+
+
 ## Plays `clip_name` on a bound player. Returns false (and says why) rather than leaving a
 ## character in whatever pose the last clip stopped at.
-static func play(player: AnimationPlayer, clip_name: String) -> bool:
+##
+## `blend` is the cross-fade from the clip that was playing, in seconds; -1 uses the player's
+## default (no cross-fade unless one was configured).
+static func play(player: AnimationPlayer, clip_name: String, blend: float = -1.0) -> bool:
 	var full := "%s/%s" % [String(LIBRARY_NAME), clip_name]
 	if not player.has_animation(full):
 		push_error("CharacterAnimation: '%s' is not bound on this player." % full)
 		return false
-	player.play(full)
+	player.play(full, blend)
 	return true
 
 
@@ -252,9 +333,11 @@ static func describe(report: Dictionary) -> String:
 		parts.append(
 			"%s %d/%d tracks %.1fs" % [clip_name, int(info["tracks"]), int(info["requested"]), float(info["length"])]
 		)
-	return "%d bone(s) resolved, %d not on this rig (%s) | %s" % [
+	var posed: Array = report.get("posed", [])
+	return "%d bone(s) resolved, %d not on this rig (%s), held at their modelled pose: %s | %s" % [
 		resolved.size(),
 		missing.size(),
 		", ".join(PackedStringArray(missing)) if not missing.is_empty() else "none",
+		", ".join(PackedStringArray(posed)) if not posed.is_empty() else "none",
 		" | ".join(parts),
 	]
