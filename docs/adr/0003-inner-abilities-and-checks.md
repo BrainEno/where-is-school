@@ -51,6 +51,37 @@ and a d10. Both were withdrawn after review: four voices could not be demonstrat
 in the content that exists, and the d10's flat distribution made a single die decide
 more of the scene than the fiction could justify. What follows replaces both.
 
+## Owner-confirmed narrative direction (2026-11-11)
+
+The owner has confirmed the following design direction. These are narrative
+constraints, not a claim that all six voices or their progression are implemented:
+
+1. The intended core roster has six inner voices:
+   - **路感 (Orientation):** spatial relations, direction and spatial intuition.
+   - **细察 (Scrutiny):** observation, details and evidence.
+   - **回声 (Echo):** memory, experience and associative recollection.
+   - **臆想 (Imagination):** imagination, subconscious associations and speculative
+     connections.
+   - **推演 (Inference):** logical analysis, deduction and causal reasoning.
+   - **共鸣 (Resonance):** emotional attunement, empathy and interpersonal signals.
+2. Voices volunteer automatically when relevant scene details, events or
+   interactions activate them. They are not primarily a player-operated skill menu.
+3. The player's dialogue choices, behavior and responses to a voice's suggestions
+   gradually influence that voice's strength and its cognitive bias or disposition.
+4. The protagonist's broader thoughts and convictions are mainly shaped gradually
+   through accumulated interactions and experiences, rather than selected from a
+   complete menu at the outset. Those thoughts can in turn influence how the voices
+   interpret later events and speak.
+5. Voices remain partial, fallible and capable of contradicting one another. Growth
+   must not turn them into objective oracles.
+
+The six names and their broad domains are confirmed design direction. The exact
+personality, prose, progression model, numerical values, thresholds, check frequency,
+and the rules by which thoughts emerge or feed back into voices remain open for
+design and playtesting. This section does not change the provisional engineering
+proposal below: the current implementation still ships one voice, and the check
+formula and numeric values remain provisional.
+
 ## Decision (proposal)
 
 ### 1. One voice, and it is provisional
