@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3 load_steps=2]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/painterly_env.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "painterly_env_medium"
+shader = ExtResource("1_shader")
+shader_parameter/albedo_color = Color(0.74, 0.7, 0.6, 1)
+shader_parameter/irregularity = 0.35
+shader_parameter/poster_levels = 6.0
+shader_parameter/contour_color = Color(0.13, 0.12, 0.11, 1)
+shader_parameter/contour_strength = 0.38
+shader_parameter/contour_sharpness = 3.2
+shader_parameter/shadow_strength = 0.55

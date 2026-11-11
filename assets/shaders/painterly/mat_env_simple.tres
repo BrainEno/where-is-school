@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3 load_steps=2]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/painterly_env_simple.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "painterly_env_simple"
+shader = ExtResource("1_shader")
+shader_parameter/albedo_color = Color(0.72, 0.68, 0.58, 1)
+shader_parameter/poster_levels = 5.0
+shader_parameter/edge_softness = 0.0
+shader_parameter/shadow_strength = 0.65

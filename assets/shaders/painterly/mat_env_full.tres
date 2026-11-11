@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3 load_steps=4]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/painterly_env_full.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://assets/shaders/painterly/brush_paper.png" id="2_tex"]
+
+[resource]
+resource_name = "painterly_env_full"
+shader = ExtResource("1_shader")
+shader_parameter/albedo_color = Color(0.72, 0.68, 0.58, 1)
+shader_parameter/brush_paper = ExtResource("2_tex")
+shader_parameter/irregularity = 0.45
+shader_parameter/poster_levels = 6.0
+shader_parameter/contour_color = Color(0.12, 0.11, 0.1, 1)
+shader_parameter/contour_strength = 0.48
+shader_parameter/contour_sharpness = 3.0
+shader_parameter/brush_strength = 0.28
+shader_parameter/hue_jitter = 0.04
+shader_parameter/shadow_strength = 0.6

@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 load_steps=2]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/painterly_outline.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "painterly_outline"
+shader = ExtResource("1_shader")
+shader_parameter/outline_color = Color(0.1, 0.09, 0.08, 1)
+shader_parameter/outline_width = 0.022
+shader_parameter/outline_feather = 0.18

@@ -1,0 +1,162 @@
+[gd_scene load_steps=22 format=3 uid="uid://painterly_lab_001"]
+
+[ext_resource type="Script" path="res://scenes/dev/painterly_lab/painterly_lab.gd" id="1_lab_script"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_env_simple.tres" id="2_simple"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_env_medium.tres" id="3_medium"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_env_full.tres" id="4_full"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_character_skin.tres" id="5_skin"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_character_cloth.tres" id="6_cloth"]
+[ext_resource type="ShaderMaterial" path="res://assets/shaders/painterly/mat_character_outline.tres" id="7_outline"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/floor_concrete.tres" id="8_floor_std"]
+
+[sub_resource type="Environment" id="Environment_lab"]
+background_mode = 1
+background_color = Color(0.68, 0.66, 0.60, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.82, 0.78, 0.70, 1)
+ambient_light_energy = 0.65
+tonemap_mode = 2
+fog_enabled = false
+adjustment_enabled = true
+adjustment_saturation = 0.92
+adjustment_contrast = 1.06
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+size = Vector3(12, 0.2, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(6, 3.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_prop"]
+size = Vector3(1.2, 1.2, 1.2)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.32
+height = 1.25
+radial_segments = 16
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.28
+height = 0.56
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_label_back"]
+size = Vector3(1.6, 0.2, 0.02)
+
+[node name="PainterlyLab" type="Node3D"]
+script = ExtResource("1_lab_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_lab")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.5, 0, 0, 0.5, 0.866, 0.5, -0.433, 0.75, 0, 8, 0)
+light_color = Color(1, 0.92, 0.78, 1)
+light_energy = 0.95
+shadow_enabled = true
+directional_shadow_max_distance = 40.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866, 0.5, 0, -0.5, 0.866, 3.4, 6.4, 3.4)
+current = true
+fov = 60.0
+far = 60.0
+projection = 0
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxMesh_ground")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_ground")
+material_override = ExtResource("8_floor_std")
+
+[node name="WallBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -5.5)
+mesh = SubResource("BoxMesh_wall")
+material_override = ExtResource("3_medium")
+
+[node name="WallSide" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -5.5, 1.6, 0)
+mesh = SubResource("BoxMesh_wall")
+material_override = ExtResource("2_simple")
+
+[node name="Props" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="PropSimple" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.0, 0.6, 0)
+mesh = SubResource("BoxMesh_prop")
+material_override = ExtResource("2_simple")
+
+[node name="LabelSimple" type="Label3D" parent="Props/PropSimple"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+billboard = 1
+text = "Simple: poster only"
+font_size = 28
+modulate = Color(0.18, 0.17, 0.16, 1)
+outline_size = 2
+outline_modulate = Color(0.95, 0.94, 0.90, 1)
+
+[node name="PropMedium" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("BoxMesh_prop")
+material_override = ExtResource("3_medium")
+
+[node name="LabelMedium" type="Label3D" parent="Props/PropMedium"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+billboard = 1
+text = "Medium: warp + contour"
+font_size = 28
+modulate = Color(0.18, 0.17, 0.16, 1)
+outline_size = 2
+outline_modulate = Color(0.95, 0.94, 0.90, 1)
+
+[node name="PropFull" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.0, 0.6, 0)
+mesh = SubResource("BoxMesh_prop")
+material_override = ExtResource("4_full")
+
+[node name="LabelFull" type="Label3D" parent="Props/PropFull"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+billboard = 1
+text = "Full: brush + warp + contour"
+font_size = 28
+modulate = Color(0.18, 0.17, 0.16, 1)
+outline_size = 2
+outline_modulate = Color(0.95, 0.94, 0.90, 1)
+
+[node name="CharacterProxy" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.5)
+
+[node name="Body" type="MeshInstance3D" parent="CharacterProxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+mesh = SubResource("CapsuleMesh_body")
+material_override = ExtResource("6_cloth")
+
+[node name="Head" type="MeshInstance3D" parent="CharacterProxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+mesh = SubResource("SphereMesh_head")
+material_override = ExtResource("5_skin")
+
+[node name="LabelCharacter" type="Label3D" parent="CharacterProxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+billboard = 1
+text = "Character: wrap + hue-shift (O: outline)"
+font_size = 26
+modulate = Color(0.22, 0.18, 0.16, 1)
+outline_size = 2
+outline_modulate = Color(0.95, 0.94, 0.90, 1)
+
+[node name="Info" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8, -4.8)
+billboard = 1
+text = "Painterly Lab — 1/2/3: highlight  O: outline  C: persp/ortho  [1600x900 / 1920x1080]"
+font_size = 20
+modulate = Color(0.18, 0.17, 0.16, 1)
+outline_size = 2
+outline_modulate = Color(0.95, 0.94, 0.90, 1)
