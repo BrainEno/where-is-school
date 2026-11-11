@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ink_outline.tres" id="1_ink"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/tyre.png" id="2_tex"]
+
+[resource]
+resource_name = "tyre"
+next_pass = ExtResource("1_ink")
+diffuse_mode = 3
+specular_mode = 2
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("2_tex")
+roughness = 1.0
+texture_filter = 3
