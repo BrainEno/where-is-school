@@ -1,6 +1,6 @@
 # Mesh Component Audit — q
 
-- Source: `D:\develop\games\where-is-school\assets\models\q\q.glb`
+- Source: `D:\develop\games\where-is-school\art\character_rigging\q\q_unrigged_source.glb`
 - Blender: `5.2.3 LTS`
 
 ## Summary
