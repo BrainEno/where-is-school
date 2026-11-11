@@ -42,24 +42,33 @@ Mixamo-style set. So the two characters cannot play one clip file: every bone in
 would have to be renamed per character. Its own report says the same thing in a warning:
 "No animation is retargeted by this script."
 
-**2. The animation library used a third convention and was never mapped.** Quaternius'
+**2. The names in Blender are not the names in the scene.** Q's neck is `Neck`; the
+protagonist's neck bone is `Neck_2`. Godot renames a glTF node whose name is already taken to
+`Name_2`, and the protagonist export contains more than one node called `Neck` — Blender is
+happy with that, glTF is happy with that, Godot is not. So a per-character mapping written
+from the Blender outliner is wrong for the bone that happened to be renamed, and a retarget
+done by matching names in Blender (which is the obvious way to do it) breaks on exactly one
+bone, silently. `CharacterAnimation` tries the plain name first and the `_2` form second for
+this reason, and `describe()` prints which bone each canonical name landed on.
+
+**3. The animation library used a third convention and was never mapped.** Quaternius'
 Universal Animation Library names its 65 joints `upperarm_l`, `calf_l`, `spine_01`,
 `clavicle_l`, `ball_leaf_l`. That is a third spelling of the same skeleton, and nothing
 translated it. The library was imported and connected to an `AnimationPlayer`, but no clip
 named a bone the character has.
 
-**3. The library was attached as the wrong resource type.** `scenes/main/main.tscn` gained
+**4. The library was attached as the wrong resource type.** `scenes/main/main.tscn` gained
 `[ext_resource type="AnimationLibrary" … path="…/UAL1_Standard.glb"]`. A `.glb` imports as a
 scene, not as an animation library resource — the `AnimationPlayer` cannot take it — and the
 resulting parse error took the whole main scene with it: every gameplay check failed on
 `[ext_resource] referenced non-existent resource`.
 
-**4. The experiment was put inside the game's main scene.** A retarget rig, a duplicate
+**5. The experiment was put inside the game's main scene.** A retarget rig, a duplicate
 protagonist model and a 7.6 MB animation library now loaded on every launch, including the
 release build's playthrough capture. A dev scene is a dev scene; `scenes/dev/` is already
 excluded from the export.
 
-**5. The commit contained the editor's cache and its own machine state.** 69
+**6. The commit contained the editor's cache and its own machine state.** 69
 `docs/screenshots/*.png.import` sidecars (screenshots are documentation, not assets), five
 `*.import` sidecars for `.blend` files under `art/` (sources, and importing a `.blend` needs a
 Blender install that CI does not have), a duplicate copy of the retargeted `.glb`, an
@@ -110,7 +119,8 @@ rename the bones, or do it in code.
 **If a clip plays but nothing moves,** the track path is wrong. Open the Animation panel, look
 at a track's name (`Skeleton3D:UpperArm.L`) and compare it with the bone list in the scene's
 `Skeleton3D` node. A path naming a bone that is not there is not an error in Godot; it is
-silence.
+silence. The bone list in the *scene* is the truth, not the one in Blender: the production
+protagonist's neck is `Neck_2` there.
 
 **To ship it, in this order:** replace the exported model under `assets/models/` (keeping the
 wrapper scene's collision, origin correction and interaction anchor), run the full check list

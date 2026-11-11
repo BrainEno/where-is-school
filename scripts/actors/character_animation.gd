@@ -127,14 +127,31 @@ static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
 	var resolved := {}
 	var missing: Array[String] = []
 	for canonical in BONE_ALIASES:
-		for alias: String in BONE_ALIASES[canonical]:
-			var hit: Variant = by_lower.get(alias.to_lower())
-			if hit != null:
-				resolved[canonical] = String(hit)
-				break
-		if not resolved.has(canonical):
+		var bone := _match(by_lower, canonical)
+		if bone.is_empty():
 			missing.append(canonical)
+		else:
+			resolved[canonical] = bone
 	return {"skeleton": skeleton, "bones": bones, "resolved": resolved, "missing": missing}
+
+
+## The bone name on this rig for a canonical name, or "" when the rig does not have it.
+## Exact names win. Failing that, Godot's `_2` suffix is tried: a glTF node whose name is
+## already taken becomes `Name_2`, which is why the production protagonist's neck answers to
+## `Neck_2` here and `Neck` in Blender, while rigged Q answers to `Neck` — Q was exported from
+## a scene with nothing else called Neck in it.
+static func _match(by_lower: Dictionary, canonical: String) -> String:
+	var aliases: Array = BONE_ALIASES[canonical]
+	for alias: String in aliases:
+		var hit: Variant = by_lower.get(alias.to_lower())
+		if hit != null:
+			return String(hit)
+	for alias: String in aliases:
+		for suffix in range(2, 5):
+			var hit: Variant = by_lower.get("%s_%d" % [alias.to_lower(), suffix])
+			if hit != null:
+				return String(hit)
+	return ""
 
 
 ## Builds the four clips for one rig and registers them on `player` as `char/…`.
