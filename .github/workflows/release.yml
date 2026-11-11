@@ -1,26 +1,38 @@
 name: Release build
 
-# Produces the actual Windows build: one executable a player can double-click.
+# Produces the actual builds a player can run: a Windows executable they double-click, and a
+# Linux binary they run from a terminal or a menu entry.
 #
 # Why this workflow exists at all: every milestone PR since the first vertical slice says
 # "Windows hands-on checks are listed in the pull request and are not yet performed",
 # because there was no build to perform them on — `export_presets.cfg` was gitignored and
 # nothing in the repository had ever been exported. The evidence pipeline (`godot-ci.yml`
 # and `playthrough-capture.yml`) proves the game runs *under the editor's runtime*; this
-# proves it packs.
+# proves it packs, on two platforms, into something with the right icon and the right
+# version on it.
 #
 # Three triggers, three purposes:
 # - `pull_request` on anything that can change what gets packed: the build is a check, and
-#   a green run means the pull request did not break the export. The zip is attached to the
-#   run so it can be played before review.
-# - `workflow_dispatch`: build on demand, with no release, for "does it still export" and
-#   for handing the artifact to someone.
-# - tags `v*`: the same build plus a GitHub release carrying it.
+#   a green run means the pull request did not break either export. Both zips are attached
+#   to the run so the change can be played before review.
+# - `workflow_dispatch`: build both platforms on demand, with no release, for "does it still
+#   export" and for handing an artifact to someone. Two artifacts, one per platform, and no
+#   release is created — a release is a decision, and this trigger is not one.
+# - tags `v*`: the same two builds plus one GitHub release carrying both. A tag with a dash
+#   in it (`v0.1.0-rc.1`) is published as a prerelease, because GitHub's "prerelease" mark is
+#   what a test build needs and what `latest` must not point at.
 #
-# The build is verified by `tools/verify_build.py`, which reads the pack back out of the
-# executable and checks that the game is in it and that the repository is not: no tests,
-# no docs/screenshots, no 10 MB source font. An export preset is a wish list; the pack is
-# the truth.
+# What is verified, and where: `tools/verify_build.py` reads the finished archives, not the
+# export presets. `--preset` runs before the export and fails in a second if the presets
+# cannot produce the build this workflow describes; `--package` runs afterwards and reads
+# the zip a player would download — its layout, the executable's icon and version resources
+# on Windows, the ELF header and launcher on Linux, and the pack inside either, so "the game
+# is in it and the repository is not" is a fact about the artifact and not about the preset.
+#
+# Every action is pinned to a commit, with the tag it was resolved from in a comment, because
+# a tag is a moving target: `v4` today is not the `v4` that ran last month. The hashes were
+# read from the GitHub API (`repos/<owner>/<repo>/commits/<tag>`) rather than copied from a
+# blog post, and they are the commit each tag pointed at when this file was written.
 
 on:
   push:
@@ -29,7 +41,7 @@ on:
   # `pull_request` has no branch filter: a pull request whose base is another
   # branch - a stacked one - is still a pull request, and until this was removed the
   # only place it could be tested was the branch it was stacked on, or a manual
-  # dispatch. `push` stays `main`-only, so nothing runs twice.
+  # dispatch. `push` stays tag-only, so nothing runs twice.
   pull_request:
     paths:
       - "export_presets.cfg"
@@ -38,9 +50,13 @@ on:
       - "data/**"
       - "scenes/**"
       - "scripts/**"
+      - "packaging/**"
       - "tools/subset_font.py"
       - "tools/verify_build.py"
-      - "packaging/**"
+      - "tools/export_presets.py"
+      - "tools/stamp_release_version.py"
+      - "tools/build_app_icon.py"
+      - "tests/verify_build_test.py"
       - ".github/workflows/release.yml"
   workflow_dispatch:
 
@@ -51,24 +67,72 @@ concurrency:
   group: release-build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Bumped with `godot-ci.yml`, so the evidence runs and the release build are the same
+  # engine; a release built by a different engine than the tests ran on is not evidence of
+  # anything.
+  GODOT_VERSION: 4.7.2
+
 jobs:
   build:
-    name: Export, verify, package
+    name: Export, verify, package both platforms
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.version.outputs.label }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      resource_version: ${{ steps.version.outputs.resource }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       # `include-templates` is what makes an export possible at all: it downloads the
-      # 1.2 GB export template bundle. The action caches it, so only the first run on a
-      # runner generation pays for it.
+      # 1.2 GB export template bundle, which carries the Windows *and* the Linux template.
+      # The action caches it, so only the first run on a runner generation pays for it.
       - name: Install Godot and its export templates
-        uses: chickensoft-games/setup-godot@v2.4.3
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
-          version: 4.7.2
+          version: ${{ env.GODOT_VERSION }}
           use-dotnet: false
           include-templates: true
           cache: true
+
+      # The version has three forms and this step is the only place that derives them:
+      # - `label`     what the zip is called and what the release is called: `0.1.0`,
+      #               `0.1.0-rc.1`, or `0.1.0-dev-1a2b3c4` for a branch build;
+      # - `resource`  the four integers a Windows version resource can hold, `0.1.0.0`:
+      #               a prerelease tail cannot go into it, which is why the two are separate;
+      # - `prerelease` whether the release should be marked as one. Anything without a tag
+      #               is a build and never a release, so the flag only matters on a tag.
+      - name: Resolve the version this build carries
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            label="${GITHUB_REF_NAME#v}"
+            if [ "${GITHUB_REF_NAME}" = "${label}" ]; then
+              echo "::error title=tag name::the tag is ${GITHUB_REF_NAME}; tags are v<version>, e.g. v0.1.0-rc.1"
+              exit 1
+            fi
+          else
+            # A branch build is a build of the version the repository claims, marked so that
+            # two dispatches of the same branch can both be downloaded and told apart.
+            label="$(head -n 1 packaging/version.txt)-dev-${GITHUB_SHA::7}"
+          fi
+          core="${label%%-*}"
+          if ! printf '%s' "${core}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error title=version::'${label}' does not start with MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          resource="${core}.0"
+          prerelease=false
+          if [ "${label}" != "${core}" ]; then
+            prerelease=true
+          fi
+          echo "label=${label}" >> "${GITHUB_OUTPUT}"
+          echo "resource=${resource}" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=${prerelease}" >> "${GITHUB_OUTPUT}"
+          echo "::notice title=version::${label} (executable version ${resource}, prerelease ${prerelease})"
 
       # The subset has to be current before the pack is built, or the build ships a font
       # that cannot draw the text the same commit added.
@@ -80,6 +144,20 @@ jobs:
           /tmp/font/bin/pip install --quiet "fonttools==4.58.5"
           /tmp/font/bin/python tools/subset_font.py --check
 
+      # Three checks that cost a second each and catch the mistakes an export would only
+      # reveal after twenty minutes: the icon is still the one the shape table draws, the
+      # committed preset still carries the version the repository claims, and the preset
+      # would actually produce an icon-bearing, version-bearing, Linux-capable build.
+      - name: Check the icon, the version and the presets before exporting
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/build_app_icon.py --check
+          python3 tools/stamp_release_version.py --check
+          python3 tests/verify_build_test.py
+          python3 tools/verify_build.py --preset export_presets.cfg --expect-version \
+            "${{ steps.version.outputs.label }}"
+
       # Blocking import: `--editor --quit` returns after one frame while the first scan is
       # still running, which leaves `.godot/imported/` empty and makes every tracked
       # `.import` sidecar point at a file that does not exist yet. Same lesson as
@@ -88,62 +166,120 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ci-logs build/windows
+          mkdir -p ci-logs build/windows build/linux
           timeout 420 godot --headless --path . --import > ci-logs/import.log 2>&1 || true
           tail -n 5 ci-logs/import.log
 
-      - name: Export the Windows build
+      # The version is stamped after the import, not before: an import starts an editor, and
+      # an editor is allowed to rewrite the preset file it read.
+      - name: Stamp the version into the Windows preset
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/stamp_release_version.py --version "${{ steps.version.outputs.label }}"
+          python3 tools/verify_build.py --preset export_presets.cfg \
+            --expect-version "${{ steps.version.outputs.label }}"
+
+      - name: Export Windows and Linux
         shell: bash
         run: |
           set -euo pipefail
           # A failed export can still exit 0 in older engine versions, so the artifact is
           # checked for existence and shape afterwards rather than trusting the exit code
-          # alone.
-          timeout 600 godot --headless --path . --export-release "Windows Desktop" \
-            build/windows/where-is-school.exe > ci-logs/export.log 2>&1 || {
-              echo "::error title=export failed::see the log below"
-              tail -n 60 ci-logs/export.log
-              exit 1
-            }
-          tail -n 20 ci-logs/export.log
-          ls -l build/windows/
+          # alone. The output path is given on the command line even though the preset has
+          # one: the CLI is what decides where the binary lands, and saying it twice is
+          # cheaper than discovering the two disagreed.
+          for pair in "Windows Desktop:build/windows/where-is-school.exe" "Linux:build/linux/where-is-school.x86_64"; do
+            preset="${pair%%:*}"
+            output="${pair#*:}"
+            log="ci-logs/export-$(basename "${output}").log"
+            echo "::group::export ${preset} -> ${output}"
+            timeout 900 godot --headless --path . --export-release "${preset}" "${output}" \
+              > "${log}" 2>&1 || {
+                echo "::error title=export failed::the ${preset} export failed; see the log below"
+                tail -n 60 "${log}"
+                exit 1
+              }
+            tail -n 20 "${log}"
+            echo "::endgroup::"
+          done
+          ls -l build/windows build/linux
+          # The export is only worth verifying if it actually produced both files.
+          test -s build/windows/where-is-school.exe
+          test -s build/linux/where-is-school.x86_64
 
-      - name: Verify what is inside the build
+      # Both platforms are packed by one step rather than by a matrix job, because the two
+      # archives have to agree: same version in the name, same licences, same run notes.
+      # A matrix would duplicate that agreement four times over.
+      - name: Package both platforms with the licences a player needs
         shell: bash
         run: |
           set -euo pipefail
-          # `--list` writes every packed path to the step log, which is where a failure is
-          # read in the web UI. The tool also emits the verdict as annotations, so the same
-          # failure is legible through the API.
-          python3 tools/verify_build.py --exe build/windows/where-is-school.exe --list \
-            | tee ci-logs/verify.log
-          exe=$(stat -c %s build/windows/where-is-school.exe)
-          echo "::notice title=build size::exe $((exe / 1048576)) MiB"
+          version="${{ steps.version.outputs.label }}"
+          windows="dist/where-is-school-${version}-windows"
+          linux="dist/where-is-school-${version}-linux"
 
-      - name: Package it with the licences a player needs
+          mkdir -p "${windows}/licences" "${linux}/licences"
+          cp build/windows/where-is-school.exe "${windows}/"
+          cp packaging/HOW-TO-RUN.txt "${windows}/"
+          cp assets/fonts/OFL.txt "${windows}/licences/NotoSansSC-OFL.txt"
+          cp COPYRIGHT.md "${windows}/licences/"
+
+          # The Linux folder carries the same run notes plus the Linux half: how to launch
+          # it, how to make a menu entry out of it, and what a Steam Deck does with it.
+          cp build/linux/where-is-school.x86_64 "${linux}/where-is-school"
+          chmod 755 "${linux}/where-is-school"
+          cp assets/icon/app_icon_256.png "${linux}/where-is-school.png"
+          cp packaging/linux/where-is-school.desktop "${linux}/where-is-school.desktop"
+          chmod 755 "${linux}/where-is-school.desktop"
+          cp packaging/linux/README.txt "${linux}/README.txt"
+          cp packaging/HOW-TO-RUN.txt "${linux}/"
+          cp assets/fonts/OFL.txt "${linux}/licences/NotoSansSC-OFL.txt"
+          cp COPYRIGHT.md "${linux}/licences/"
+
+          # `zip` keeps the permission bits of what it is given, which is how the Linux
+          # executable arrives with its execute bit; the verifier fails the build if it does
+          # not, so this is checked rather than assumed.
+          ( cd dist && zip -q -r "where-is-school-${version}-windows.zip" "where-is-school-${version}-windows" )
+          ( cd dist && zip -q -r "where-is-school-${version}-linux.zip" "where-is-school-${version}-linux" )
+          for archive in dist/*.zip; do
+            echo "::group::${archive}"
+            unzip -l "${archive}"
+            echo "::endgroup::"
+            echo "::notice title=package::$(basename "${archive}") $(( $(stat -c %s "${archive}") / 1048576 )) MiB"
+          done
+
+      # The release check. This reads the finished zip: the folder inside it, the licences
+      # in it, the executable's icon and version resources, the ELF header, the launcher and
+      # the icon next to it, and the pack inside the executable. `--list` writes every packed
+      # path to the step log, which is where a failure is read in the web UI, and every
+      # verdict is also emitted as an annotation, which is readable through the API.
+      - name: Verify both packages
         shell: bash
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then
-            version="dev-${GITHUB_SHA::7}"
-          fi
-          stage="dist/where-is-school-${version}-windows"
-          mkdir -p "${stage}/licences"
-          cp build/windows/where-is-school.exe "${stage}/"
-          cp packaging/HOW-TO-RUN.txt "${stage}/"
-          cp assets/fonts/OFL.txt "${stage}/licences/NotoSansSC-OFL.txt"
-          cp COPYRIGHT.md "${stage}/licences/"
-          ( cd dist && zip -q -r "where-is-school-${version}-windows.zip" "$(basename "${stage}")" )
-          unzip -l "dist/where-is-school-${version}-windows.zip" | tail -n 12
-          size=$(stat -c %s "dist/where-is-school-${version}-windows.zip")
-          echo "::notice title=package size::zip $((size / 1048576)) MiB, version ${version}"
+          version="${{ steps.version.outputs.label }}"
+          for platform in windows linux; do
+            echo "::group::verify ${platform}"
+            python3 tools/verify_build.py \
+              --package "dist/where-is-school-${version}-${platform}.zip" \
+              --expect-version "${version}" --list | tee "ci-logs/verify-${platform}.log"
+            echo "::endgroup::"
+          done
 
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
+      - name: Upload the Windows build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: where-is-school-windows
-          path: dist/*.zip
+          path: dist/*-windows.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload the Linux build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: where-is-school-linux
+          path: dist/*-linux.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -156,28 +292,58 @@ jobs:
     needs: build
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
-      - name: Download the build
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Download both builds
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: where-is-school-windows
+          pattern: where-is-school-*
           path: dist
+          merge-multiple: true
+
+      # The artifacts come back from storage, not from the job that made them, so the
+      # published files are checked again here: what is uploaded is what is shipped.
+      - name: Verify what is about to be published
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.build.outputs.version }}"
+          ls -l dist
+          for platform in windows linux; do
+            python3 tools/verify_build.py \
+              --package "dist/where-is-school-${version}-${platform}.zip" \
+              --expect-version "${version}"
+          done
 
       - name: Create or update the release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+          RESOURCE_VERSION: ${{ needs.build.outputs.resource_version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
-          tag_sha="${GITHUB_SHA::7}"
-          notes="Windows build of the vertical slice, exported from ${tag_sha}."
-          notes="${notes}"$'\n\n'"Unzip it and run where-is-school.exe. Controls and the known gaps are in the zip's HOW-TO-RUN.txt."
-          notes="${notes}"$'\n\n'"The executable is unsigned, so Windows SmartScreen will warn about an unknown publisher."
-          ls -l dist
-          gh release create "${tag}" dist/*.zip --title "${tag}" --notes "${notes}" \
-            || gh release upload "${tag}" dist/*.zip --clobber
+          run="$(printf '\n\n### How this was built\n\nExported by the [release build](%s) from `%s`, Godot %s, on two platforms. `tools/verify_build.py` read both archives back: the pack inside each executable, the icon and version resources of the Windows one, the ELF header and launcher of the Linux one, and confirmed that no tests, tools, docs or art are in either.' "${RUN_URL}" "${GITHUB_SHA::7}" "${GODOT_VERSION}")"
+          preamble="$(printf 'where-is-school %s, for Windows x86_64 and Linux x86_64.\n\n- **Windows:** download `where-is-school-%s-windows.zip`, unzip it, run `where-is-school.exe`.\n- **Linux:** download `where-is-school-%s-linux.zip`, unzip it, run `./where-is-school` (or `where-is-school.desktop` for a menu entry).' "${VERSION}" "${VERSION}" "${VERSION}")"
+          signing="$(printf '\n\n### Signing\n\nThese builds are **unsigned**. Windows SmartScreen will show "Windows protected your PC" the first time: choose "More info", then "Run anyway". Linux shows no warning but also gives you no signature to check. The Windows executable carries version %s in its version resource and an icon of 16 to 256 px; neither is a claim about who built it. `docs/RELEASE.md` in the source repository records why there is no certificate and what would change that.' "${RESOURCE_VERSION}")"
+          notes="${preamble}${run}${signing}"
+
+          flags=(--title "${tag}" --notes "${notes}")
+          if [ "${PRERELEASE}" = "true" ]; then
+            flags+=(--prerelease)
+            echo "::notice title=prerelease::${tag} is marked as a prerelease"
+          fi
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            gh release edit "${tag}" "${flags[@]}"
+            gh release upload "${tag}" dist/*.zip --clobber
+          else
+            gh release create "${tag}" dist/*.zip "${flags[@]}"
+          fi
