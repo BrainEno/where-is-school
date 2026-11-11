@@ -5,17 +5,22 @@ extends Node3D
 ## The two characters are rigged differently — Q says `UpperArm.L`, the retargeted
 ## protagonist says `LeftUpperArm` — and neither matches the animation library that was tried
 ## first (`upperarm_l`). `CharacterAnimation` resolves canonical bone names against whichever
-## rig it is handed, so both characters play the same four clips; this scene is the visual
+## rig it is handed, so both characters play the same seven clips; this scene is the visual
 ## proof, and `tests/character_animation_test.gd` is the headless one.
 ##
-## Keys: 1 idle, 2 walk, 3 wave, 4 talk. Space pauses. R re-binds (after re-importing a
-## model in the editor, which reloads it without restarting the scene).
+## Keys: 1 idle, 2 walk, 3 jog, 4 sit_idle, 5 get_up, 6 wave, 7 talk. Space pauses. R
+## re-binds (after re-importing a model in the editor, which reloads it without restarting
+## the scene). `get_up` is a transition, so it plays once and stops on its last frame here —
+## use `sit_idle` before it to see the movement it belongs to.
 
 const CLIP_KEYS := {
 	KEY_1: "idle",
 	KEY_2: "walk",
-	KEY_3: "wave",
-	KEY_4: "talk",
+	KEY_3: "jog",
+	KEY_4: "sit_idle",
+	KEY_5: "get_up",
+	KEY_6: "wave",
+	KEY_7: "talk",
 }
 
 const MODELS := [
@@ -99,7 +104,9 @@ func _update_status() -> void:
 				int(tracks.get("tracks", 0)),
 			]
 		)
-	lines.append("1 idle  2 walk  3 wave  4 talk    space pause   R re-bind")
+	lines.append(
+		"1 idle  2 walk  3 jog  4 sit_idle  5 get_up  6 wave  7 talk    space pause   R re-bind"
+	)
 	_status.text = "\n".join(lines)
 
 

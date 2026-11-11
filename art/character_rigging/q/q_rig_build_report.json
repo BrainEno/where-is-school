@@ -2,7 +2,7 @@
   "schema_version": 1,
   "script_version": "1.0.0",
   "created_utc": "2026-11-10T14:11:23.994865+00:00",
-  "source": "D:\\develop\\games\\where-is-school\\assets\\models\\q\\q.glb",
+  "source": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_unrigged_source.glb",
   "blender_version": "5.2.3 LTS",
   "outputs": {
     "blend": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_rigged_working.blend",

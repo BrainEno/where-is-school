@@ -1,183 +1,179 @@
 # Character animation
 
-Two rigged characters exist in this repository, neither is wired into the game yet, and
-their clips are built in code. This page says what runs, what the first attempt got wrong,
-and how to do the same thing by hand in the Godot editor.
+The protagonist and Q use the same seven code-authored clips, built in
+`scripts/actors/character_animation.gd` and resolved against each rig's own bone names at
+bind time. Their production wrapper scenes bind them when instantiated. In the game, every
+authored character goes through one state machine, `CharacterVisualAnimation`, fed by the
+velocity its own controller already produces.
 
-## What runs today
+| Clip | Length | Loops | What holds it |
+|---|---|---|---|
+| `idle` | 2.0 s | yes | standing still: breathing, a little sway |
+| `walk` | 1.0 s | yes | the body moving: enters above 0.2 m/s, leaves below 0.08 m/s |
+| `jog` | 0.72 s | yes | the body moving faster than 4.4 m/s (leaves below 4.0): the player's sprint input |
+| `sit_idle` | 2.4 s | yes | `set_seated(true)`: the protagonist at the desk during the wake beat |
+| `wave` | 1.6 s | yes | a beat for an interaction, played by hand for now |
+| `talk` | 1.2 s | yes | a beat for dialogue, played by hand for now |
+| `get_up` | 1.5 s | **no** | a transition: `play_action("get_up")` stands the body up from `sit_idle` |
 
-| | Q | Protagonist |
+## How a clip becomes a pose
+
+Each key in `CLIPS` is `[time, Vector3 of degrees]`, and those degrees are an **offset from
+the bone's rest rotation**, about the bone's own axes. `CharacterAnimation.bind()` writes
+`rest * offset_rotation(key)` into each rotation track.
+
+That composition matters. A Godot `TYPE_ROTATION_3D` track *replaces* a bone's local
+rotation; it does not add to the rest, and `Skeleton3D.get_bone_pose_rotation()` at rest
+returns the rest rotation, not identity. On both rigs every limb hangs down its own −Y with
+a rest rotation of roughly 170–180° from its parent. A key of "3° about X" written as an
+absolute rotation therefore throws the arm straight up. The first runtime wiring did exactly
+that, and both characters idled with their arms raised (`docs/screenshots/03j_protagonist.png`
+and `03k_q_in_the_classroom.png` from before this fix).
+
+The sign convention, measured from the GLB joints and checked by the runtime test, is that
+**+X moves the far end of a hanging limb backward**:
+
+| Joint | Flexion | Note |
 |---|---|---|
-| Model | `scenes/dev/animation_retarget_test/q_rigged.glb` | `scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb` |
-| Source | `art/character_rigging/q/q_rigged_working.blend` | `art/character_rigging/protagonist_retarget/protagonist_retarget_ready.blend` |
-| Joints | 16 | 21 |
-| Bone naming | `Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, Hand.L, Thigh.L, Shin.L, Foot.L, …` | `Root, Hips, Spine, Chest, UpperChest, Neck, Head, LeftShoulder, LeftUpperArm, LeftLowerArm, LeftHand, LeftUpperLeg, LeftLowerLeg, LeftFoot, …` |
-| Clips | idle, walk, wave, talk | idle, walk, wave, talk, + 42 retargeted from the library |
+| hip (`thigh`) | −X | the leg comes forward; sitting is `thigh −82` |
+| knee (`shin`) | +X | the shin folds back; sitting is `shin +84` |
+| shoulder (`upper_arm`) | −X | the arm comes forward |
+| elbow (`fore_arm`) | −X | the hand comes forward |
+| foot | +X points the toe | −X lifts it |
+| spine, neck, head | +X leans and nods forward | rest is close to identity |
+| any limb | ±Z reaches out to the side | +Z on `.L`, −Z on `.R` |
 
-`scripts/actors/character_animation.gd` authors those four clips against *canonical* names
-(`hips`, `spine`, `upper_arm.L`, `shin.R`, …) and resolves them against whichever rig it is
-handed. A canonical bone a rig does not have is reported and its track left out; a track is
-never written for a bone that is not there, because an `Animation` whose track path names a
-missing bone plays nothing and prints nothing.
+`jog`, `sit_idle` and `get_up` were first authored under an "+X is flexion everywhere"
+reading, which came from the absolute-key bug. Their hip, shoulder and elbow keys were
+negated when the keys became rest-relative; knees, feet, spine, neck and head were already
+right.
 
-- **See it:** open `scenes/dev/animation_retarget_test/animation_preview.tscn` and press
-  **F6**. Keys **1** idle, **2** walk, **3** wave, **4** talk, **space** pause, **R** re-bind
-  after re-importing a model.
-- **Check it:** `tests/character_animation_test.gd` runs headless in CI (`character_animation`
-  in the check list). It seeks each clip and reads the skeleton's bone poses, so "the clip
-  moves the character" is measured, not assumed.
-- **The animation library, retargeted.** `protagonist_ual.res` holds the Universal Animation
-  Library's 42 clips rewritten onto the protagonist's bones — see below. Open
-  `scenes/dev/animation_retarget_test/protagonist_ual_preview.tscn`, select
-  `Protagonist/UalPlayer`, and scrub any `ual/…` animation in the Animation panel: no engine
-  trickery at play time, just animation data with this character's bone names on it.
-- **Neither model is used by the game.** `assets/models/q/q.glb` has no skeleton at all and
-  `assets/models/protagonist/protagonist.glb` has the older 16-bone rig; both are what the
-  game loads, unchanged. Swapping them is the next step and it is deliberate (see the end).
+`bind()` checks the "hanging" assumption per rig instead of trusting it
+(`CharacterAnimation.posed_limbs()`). A limb whose rest direction is more than ~45° from
+straight down has a different axis under the same name, so the clips hold it at its
+modelled pose and the bind report lists it under `posed`. Rigged Q is modelled with its
+right forearm held out in front, so on Q `fore_arm.R`, `hand.L` and `hand.R` are held, and
+the right arm swings only from the shoulder. The protagonist has no posed limbs.
 
-## What the first attempt got wrong
+Every clip keys every bone that any clip animates. Bones a clip does not author are held at
+rest, so a cross-fade always has a full pose to fade to and no bone is left where the
+previous clip put it.
 
-The `protagonist retarget test` branch did the hard part — it rigged Q and it produced a
-humanoid skeleton for the protagonist — and then stopped one step short, in five ways.
+## Runtime wiring
 
-**1. Two rigs, two naming conventions, and no map between them.** Q was rigged with
-`UpperArm.L`, `Thigh.L`, `Shin.L` — the production protagonist's names, which is right. The
-protagonist was *retargeted* to `LeftUpperArm`, `LeftUpperLeg`, `LeftLowerLeg` — a
-Mixamo-style set. So the two characters cannot play one clip file: every bone in every clip
-would have to be renamed per character. Its own report says the same thing in a warning:
-"No animation is retargeted by this script."
+- `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb` each have a
+  16-bone rigid-part skeleton. Q's unrigged input is preserved at
+  `art/character_rigging/q/q_unrigged_source.glb`.
+- `scenes/environment/characters/protagonist.tscn` and `q.tscn` attach
+  `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
+  `AnimationPlayer`, binds the clips and logs the bind report.
+- Three things can hold a clip, in this order: a **one-shot action** (nothing else takes over
+  until it reports `animation_finished`), then **seated** (`sit_idle`, which outranks the
+  body's velocity), then **locomotion**. The locomotion decision keeps running underneath, so
+  a character comes out of either into what its body is doing now.
+- Locomotion is one rule for everyone:
 
-**2. The names in Blender are not the names in the scene.** Q's neck is `Neck`; the
-protagonist's neck bone is `Neck_2`. Godot renames a glTF node whose name is already taken to
-`Name_2`, and the protagonist export contains more than one node called `Neck` — Blender is
-happy with that, glTF is happy with that, Godot is not. So a per-character mapping written
-from the Blender outliner is wrong for the bone that happened to be renamed, and a retarget
-done by matching names in Blender (which is the obvious way to do it) breaks on exactly one
-bone, silently. `CharacterAnimation` tries the plain name first and the `_2` form second for
-this reason, and `describe()` prints which bone each canonical name landed on.
+  ```
+  player, WASD           PlayerController._apply_movement()     → body velocity ┐
+  player, click-to-move  PlayerController._path_direction()     → body velocity ┤
+  Q following            CompanionController._apply_movement()  → body velocity ┼→ idle / walk / jog
+  NPC on a route         NpcActor.walk_along()                  → reported velocity ┘
+  ```
 
-**3. The animation library used a third convention and was never mapped.** Quaternius'
-Universal Animation Library names its 65 joints `upperarm_l`, `calf_l`, `spine_01`,
-`clavicle_l`, `ball_leaf_l`. That is a third spelling of the same skeleton, and nothing
-translated it. The library was imported and connected to an `AnimationPlayer`, but no clip
-named a bone the character has.
+  - **Hysteresis.** Walk enters above 0.2 m/s and leaves below 0.08 m/s. Jog enters above
+    4.4 m/s and leaves below 4.0 m/s. Q catching up runs at exactly 4.4 m/s, so without the
+    gap it would flicker between walk and jog. Locomotion changes cross-fade over 0.18 s;
+    actions and the seated pose cut, because `get_up` starts on exactly the pose `sit_idle`
+    holds.
+  - **Stride.** Walk plays at `speed / 1.6`, clamped to 0.7–1.9×; jog at `speed / 5.0`,
+    clamped to 0.8–1.4×. Actions, idle and sitting play at 1×.
+  - **Bodies.** `PlayerController` and `CompanionController` hand themselves to their
+    model's animator with `bind_body()` in `_ready()`; a wrapper with no call falls back to
+    its nearest `CharacterBody3D` ancestor. A body reads its velocity after
+    `move_and_slide()`, so walking into a wall reads as standing.
+  - **Tweens.** `NpcActor.walk_along()` has no physics velocity, so it reports each leg's
+    real velocity, `(point − position) / duration`, with `report_velocity()`, and hands back
+    with `clear_reported_velocity()`. `set_walking(bool)` is kept for older callers.
+- **Facing stays with the controllers.** Every track is a bone rotation: no root motion, no
+  position, no yaw. The player's facing remains `VisualPivot` (rotated by `atan2(facing)` in
+  `_update_visual_facing`), and the wake beat owns `%Visual`'s tilt and sink. While Q walks
+  it now turns towards its route (`NpcActor.turn_towards`, `walk_turn_speed`) instead of
+  staring at the player. A leg swing seen side-on would otherwise read as stepping sideways.
+  It turns back to the player when it stops, as before.
 
-**4. The library was attached from inside the game's main scene, with nothing to attach it
-to.** `scenes/main/main.tscn` gained `[ext_resource type="AnimationLibrary" …
-path="…/UAL1_Standard.glb"]` and a `libraries = {"…": ExtResource(…)}` on a `Player`. The
-resource type was right — this engine can import a glTF as an `AnimationLibrary` — but the
-import had never run, so the path resolved to nothing and the parse error took the whole main
-scene down: every gameplay check failed on `[ext_resource] referenced non-existent resource`,
-which pointed at the assets rather than at the import that was missing. A library's tracks are
-also no closer to the character's bones for being attached; see 1–3.
+Accessors for tests and debugging: `get_character_animator()` on `PlayerController`,
+`NpcActor` and `CompanionController`. On the animator: `get_locomotion_state()`,
+`get_current_clip()`, `get_planar_speed()`, `get_bind_report()`, `get_animation_player()`,
+`get_skeleton()`, `is_seated()`, `is_playing_action()` and the `locomotion_changed` signal.
 
-**5. The experiment was put inside the game's main scene.** A retarget rig, a duplicate
-protagonist model and a 7.6 MB animation library now loaded on every launch, including the
-release build's playthrough capture. A dev scene is a dev scene; `scenes/dev/` is already
-excluded from the export.
+## The wake beat: sitting, then getting up
 
-**6. The commit contained the editor's cache and its own machine state.** 69
-`docs/screenshots/*.png.import` sidecars (screenshots are documentation, not assets), five
-`*.import` sidecars for `.blend` files under `art/` (sources, and importing a `.blend` needs a
-Blender install that CI does not have), a duplicate copy of the retargeted `.glb`, an
-undocumented second copy of the Q `.blend`, and a `project.godot` rewritten by the editor:
-its own comments gone, `[physics]`, `rendering_method`, `window/size/resizable` and
-`window/size/initial_position_type` dropped, and every input action given `"device":16` or
-`"device":32` — the device numbers of whatever was plugged into the machine that saved it.
+The take opens asleep over a desk, so the prologue's slump is not only the pivot tilt: while
+black is still coming up the model holds `sit_idle`, and the settle that straightens the
+pivot is also `get_up`. `PlayerController.set_wake_pose()` above `SEATED_WAKE_POSE` (0.5)
+seats the model, and coming back to 0 plays the transition, so the two halves of "waking up"
+happen together. A resume from a save calls `set_wake_pose(0.0)` from an already-upright
+state, which is why no get-up plays there.
 
-The fixes are in the history: `docs/.gdignore`, `art/character_rigging/.gdignore`, the editor
-rewrites reverted, one copy of each model, and the animation library deleted rather than
-licensed, documented and shipped.
+## Sprinting
 
-## The animation library, retargeted
+`PlayerController` has two speeds: `move_speed` 3.6 m/s, and `jog_speed` 5.6 m/s while the
+`sprint` action (Shift) is held. Nothing tells the model which one is in use. The driver
+reads the body's horizontal velocity, so acceleration through 4.4 m/s turns the walk into
+the jog mid-stride. `target_speed()` is public so the difference can be asserted without a
+floor to run on.
 
-`AnimationRetarget` pairs the two rigs through the same canonical names
-`CharacterAnimation` uses — which are the humanoid profile's names, the ones the `BoneMap`s in
-both `.import` sidecars are written in — and then bakes:
+## See it
 
-```
-for every clip, sampled at 30 fps:
-    change = source_rest_global⁻¹ · source_global        (what the library did to that bone)
-    target_global = target_rest_global · change          (what this bone should do instead)
-    local = parent_global⁻¹ · target_global              (what the pose actually stores)
-```
+Open `scenes/dev/animation_retarget_test/animation_preview.tscn` and press **F6**.
+Keys **1** idle, **2** walk, **3** jog, **4** sit_idle, **5** get_up, **6** wave, **7** talk,
+**space** pause, **R** re-bind after re-importing a model. Press **4** before **5** to see
+the movement the two halves make. In the game, walk around the classroom with WASD or a
+click, then leave the classroom during the free period with Q along.
 
-Rest-relative, so a bone whose rest pose points a different way on the two rigs still lands
-where the animation puts it instead of inheriting the library's twist. The two chains differ in
-length — the library spends a spine over `spine_01..03`, the character over `Spine`, `Chest`,
-`UpperChest`, and only two of those three pair up — so the chest chain disagrees by about 3°
-while everything else agrees to within one. That is the size of the difference `_2`-suffix
-matching and a three-bone spine buy you; it is also why the tolerance in the test is 5° and not
-0.5°. Positions are not
-copied, the library's fingers are dropped (this character has none), and `_2`-suffixed bones
-are matched like any other.
+## Check it
 
-The result is committed as `scenes/dev/animation_retarget_test/protagonist_ual.res` (about
-1 MB). Regenerate it after changing the mapping or either model:
+- `tests/character_animation_test.gd` binds the clips to the development rigs, the
+  production GLBs and the wrapper scenes. It checks that every track names a real bone, that
+  each clip moves its bone and closes its loop, and that `get_up` is `LOOP_NONE`, ends on the
+  rest pose and starts on the pose `sit_idle` holds. It also checks that a wrapper switches
+  idle/walk/jog by speed, holds `sit_idle` against a moving body, and hands back after the
+  get-up.
+- `tests/runtime_character_animation_test.gd` runs against `main.tscn`: the real player,
+  the real classroom, the real companion. It measures the skeletons rather than trusting a
+  state name:
+  - the new game boots seated (the hip folded), and `set_wake_pose(0.0)` plays `get_up` once
+    and stands the protagonist in idle;
+  - idle limbs are within 20° of rest, hands are below the shoulders (against each rig's own
+    modelled arm), and feet are below the hips;
+  - holding a movement key plays walk. The thigh swings, the foot travels forward and back
+    along the facing (not sideways), knees fold only backwards and elbows only forwards (the
+    sign convention above), and no hand rises to the shoulder. Releasing the key returns to
+    idle with the legs back under the body;
+  - a click on the floor through `PointerNavigator` walks and stops the same way;
+  - the classroom Q's `walk_along()` walks, faces its path, and returns to idle;
+  - Q following the player walks while its body moves, faces the way it walks, and idles
+    when it stops;
+  - the clips hold only bone-rotation tracks, the player's pivot stays at the controller's
+    facing, and the model under it never moves.
 
-~~~text
-godot --headless --path . --import
-godot --headless --path . --script res://tools/bake_animation_retarget.gd
-~~~
+The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
+baked onto the development protagonist. That library and its baked resource remain
+development-only; the game uses the seven project-authored clips above.
 
-The `bake-animation-retarget` workflow runs exactly those two commands and commits the result,
-for when there is no engine on the machine doing the editing. Dispatch it from the Actions tab;
-it is deliberately not part of the check list, because a build that rewrites a tracked file on
-every push is a build that fails on a dirty tree for reasons nobody reads twice.
+## Remaining limitations
 
-`tests/ual_retarget_test.gd` checks the three things that can be silently wrong: the bones pair
-up (19 of them, spot-checked by name), the baked clip moves the character (measured off the
-skeleton), and the retarget is rest-relative — at every sampled instant the source bone's
-rotation change and the target's are *the same rotation*, within half a degree. A bake that
-renamed tracks without recomposing the hierarchy passes the first two and fails the third.
-
-## Doing it by hand in the editor
-
-The code route above is not the only one. What follows is the same job by hand, which is what
-to reach for when a rig has to come from an external library.
-
-**Before anything: confirm the model is actually rigged.** Open the `.glb`, and in the
-Advanced Import Settings dialog look for a `Skeleton3D` and, under *Skeleton*, a bone list. If
-there is none — Q as supplied had none — no amount of animation work will move it. The GLB's
-own JSON answers the same question without a renderer (`art/character_rig_audit/README.md`).
-
-**Option A — rename the bones so every rig agrees (what this repository does).** In Blender,
-give the characters the same bone names in the same hierarchy, then export. That is why Q was
-rigged to `UpperArm.L`: it matches the production protagonist, so one clip set fits both.
-Cheap, and the failure mode is visible — a bone you did not rename simply does not move.
-
-**Option B — map the names (what `CharacterAnimation` does in code).**
-
-```gdscript
-var report := CharacterAnimation.bind(model_root, animation_player)
-print(CharacterAnimation.describe(report))   # resolved bones, missing bones, track counts
-CharacterAnimation.play(animation_player, "walk")
-```
-The `AnimationPlayer` must be a **child of the model** and its `root_node` must point at the
-model; track paths are `Skeleton3D:BoneName`, relative to that root. `describe()` prints what
-did not resolve, which is the half of this job that is otherwise silent.
-
-**Option C — Godot's own retargeting.** This is what the library's `.import` sidecar is
-already configured for, and what `AnimationRetarget` does in code instead. In the character's
-Advanced Import Settings, the
-*Skeleton* section has a **Retarget** control that binds the rig to the humanoid bone profile
-(`SkeletonProfileHumanoid`). Import the animation library as a scene, then in the character's
-`AnimationPlayer` use *Animation → Manage Animations → Load Library* and pick the library
-scene's clips. This only works when both skeletons are described by the same profile, which
-is exactly the step that was skipped: a 21-joint Mixamo-style rig cannot be matched to a
-65-joint UE-style library by a profile neither side declares. Map the profile on both, or
-rename the bones, or do it in code.
-
-**If a clip plays but nothing moves,** the track path is wrong. Open the Animation panel, look
-at a track's name (`Skeleton3D:UpperArm.L`) and compare it with the bone list in the scene's
-`Skeleton3D` node. A path naming a bone that is not there is not an error in Godot; it is
-silence. The bone list in the *scene* is the truth, not the one in Blender: the production
-protagonist's neck is `Neck_2` there.
-
-**To ship it, in this order:** replace the exported model under `assets/models/` (keeping the
-wrapper scene's collision, origin correction and interaction anchor), run the full check list
-plus the playthrough capture, and only then add an `AnimationPlayer` and
-`CharacterAnimation.bind()` to `scenes/actors/player/player.tscn` and
-`scenes/actors/npc/companion.tscn`. The wrapper scene is what the game knows; the `.glb`
-behind it can be swapped without touching gameplay code, and that is the reason to do it in
-that order.
+- The clips are procedural prototypes, not captured or hand-animated motion, and there is
+  no foot planting: at the playback ceilings the feet still slide. They need an eye in the
+  editor and a pass once proportions settle.
+- **The seated pose folds the legs; it does not lower the body.** No clip translates the
+  hips, because clip-driven translation is root motion and the controllers are the only thing
+  that moves a body. What lowers the protagonist at the desk is the pivot's 6 cm sink, so
+  `sit_idle` on its own sits in the air at standing height. A real seated animation needs an
+  authored hip offset (and a decision about who owns it) or a seat marker.
+- Q's right forearm is held at its modelled pose in every clip, so `wave` on Q raises the
+  upper arm with a rigid forearm. `wave` and `talk` are not triggered by anything in the game.
+- The rigs use mostly rigid-part weights. Q's trousers blend at the joints, but neither model
+  is a full deformation rig; knees, elbows and hands crease in motion.
+- No facial animation, lip sync, foot IK, root motion or AnimationTree; cross-fades are the
+  `AnimationPlayer`'s own.

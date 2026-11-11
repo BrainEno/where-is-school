@@ -72,6 +72,11 @@ signal waiting_changed(waiting: bool)
 @export var detour_slack: float = 0.75
 ## How often Q looks somewhere else while standing still.
 @export var idle_look_interval: float = 5.0
+## How quickly Q turns towards the way it is walking. Q faces its route while it walks — the
+## walk cycle swings the legs forward and back, so a Q that kept staring at the player while
+## its route bent round a desk would be seen stepping sideways — and turns back to the player
+## when it stops.
+@export_range(1.0, 30.0, 0.5) var walk_turn_speed: float = 10.0
 
 @export_category("Navigation")
 ## The route to the player is rebuilt at most this often. Walking does not need a new
@@ -152,6 +157,9 @@ func _ready() -> void:
 	_ask = get_node_or_null(ask_along_path) as Interactable
 	if _actor == null:
 		push_error("CompanionController: actor_path did not resolve to an NpcActor.")
+	elif _actor.get_character_animator() != null:
+		# Q's walk and idle come from this body's velocity, exactly as the player's do.
+		_actor.get_character_animator().bind_body(self)
 	_last_body_position = global_position
 	_refresh_visibility(null)
 
@@ -191,6 +199,11 @@ func can_ask_along() -> bool:
 ## True while Q is walking a route rather than standing.
 func is_walking_route() -> bool:
 	return not _route.is_empty()
+
+
+## Q's locomotion animator (idle/walk), or null while the actor is a graybox.
+func get_character_animator() -> CharacterVisualAnimation:
+	return _actor.get_character_animator() if _actor != null else null
 
 
 ## Diagnostics for tests and logs.
@@ -350,7 +363,7 @@ func _follow_direction(delta: float) -> Vector3:
 	_moving = true
 	var direction := _route_direction()
 	if direction.length_squared() > 0.0001:
-		_actor.face_towards(_player.global_position)
+		_actor.turn_towards(global_position + direction, delta, walk_turn_speed)
 		_look_timer = 0.0
 		_look_aside = false
 	return direction
