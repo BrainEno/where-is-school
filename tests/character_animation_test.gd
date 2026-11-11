@@ -19,7 +19,17 @@ extends SceneTree
 ##      and starts from *exactly* the pose `sit_idle` holds, so the two cannot drift apart;
 ##   7. the actual protagonist and Q wrapper scenes create their runtime AnimationPlayers and
 ##      switch between idle, walk and jog by the body's speed, hold `sit_idle` while seated,
-##      and hand back to locomotion when a one-shot action finishes.
+##      and hand back to locomotion when a one-shot action finishes;
+##   8. the poses are the poses those clips are *about*: the walk holds its knees straight in
+##      front and folds them behind, the seated clip puts the thighs forward and the shins
+##      down instead of folding both legs backwards, and no clip lifts an ankle above a hip.
+##
+## Check 8 exists because check 3 was not enough. A rotation about a bone's local axis turns
+## by the same number of degrees whichever way it is signed, so every clip in this file passed
+## while the walk sent its knees the wrong way round: the character walked in a seated pose,
+## with the thigh forward and the shin hanging under it, and `sit_idle` folded both legs
+## behind its hips so the ankles ended up above the hips. Angles cannot see that; the geometry
+## of the resulting pose can, so these checks are in metres, in the rig's own frame.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -51,6 +61,32 @@ const TRANSITIONS := ["get_up"]
 
 ## Degrees two keys of the same bone may differ by and still count as the same pose.
 const POSE_TOLERANCE_DEGREES := 0.5
+
+## How many times each clip is sampled when its pose is measured in the world. Fine enough
+## that the knee is caught near the moment it is most folded.
+const POSE_SAMPLES := 24
+## How far a hip may flex in a step before the clip is sitting rather than walking. A seated
+## thigh is ~82°; a walking one is under 20° at the extremes and 30° in a jog.
+const STEP_HIP_FLEX_LIMIT := {"walk": 40.0, "jog": 46.0}
+## When a knee is at its most closed, the thigh may be at most this far forward. A knee that
+## folds while the thigh is swung forward is a leg held out from a seat — the shape the
+## shipped walk had, in both legs, at every instant.
+const SEATED_THIGH_LIMIT_DEGREES := 12.0
+## A knee has to close at least this much somewhere in a step, or it never bends at all.
+const MIN_KNEE_CLOSURE_DEGREES := 25.0
+## How far a foot has to leave its rest height during a step, in metres.
+const MIN_FOOT_LIFT := 0.03
+## How far apart the two ankles have to be along forward at the start of a step, in metres.
+const MIN_STRIDE := 0.15
+## A knee may not extend past the straight line its rest pose defines by more than this much
+## of the shin's own direction. Measured against the rest pose, because two of the rigs stand
+## with a knee that is already a few hundredths bent.
+const MAX_HYPEREXTENSION := 0.03
+## A seated pose, measured the same way: thighs forward, shins down under the knees.
+const SEATED_HIP_FLEX_MIN := 60.0
+const SEATED_KNEE_CLOSURE_MIN := 60.0
+const SEATED_KNEE_AHEAD_MIN := 0.18
+const SEATED_ANKLE_DROP_MIN := 0.20
 
 var _failures: Array[String] = []
 var _notes: Array[String] = []
@@ -179,6 +215,7 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 	for clip_name in CLIPS:
 		_check_clip(label, player, skeleton, resolved, clip_name, not TRANSITIONS.has(clip_name))
 	_check_transition_poses(label, player, skeleton, resolved)
+	_check_pose_geometry(label, player, skeleton, resolved)
 	model.queue_free()
 	return report
 
@@ -371,6 +408,192 @@ func _check_transition_poses(
 			"%s: sit_idle and get_up disagree about the seated pose by %.2f° on '%s'; the wake "
 			% [label, worst, worst_bone]
 			+ "beat would jump when the get-up starts."
+		)
+
+
+## Measures the pose each clip produces, in metres, in the rig's own frame.
+##
+## The other checks ask whether a bone turned; this one asks what the body did with it. It is
+## the check that would have caught the shipped walk, which folded every knee while its thigh
+## was swung forward — a walk performed in a seat — and a `sit_idle` that folded both legs
+## behind the hips, leaving the ankles above them. None of that is visible in an angle, because
+## a rotation signed the wrong way is the same number of degrees.
+func _check_pose_geometry(
+	label: String, player: AnimationPlayer, skeleton: Skeleton3D, resolved: Dictionary
+) -> void:
+	var frame := CharacterAnimation.pose_frame(skeleton, {"resolved": resolved})
+	var forward: Vector3 = frame["forward"]
+	_notes.append("%s: the body faces (%.2f, %.2f, %.2f)" % [label, forward.x, forward.y, forward.z])
+	var rest := _global_poses(skeleton, {})
+	var rest_ankle := {}
+	var rest_flex := {}
+	var rest_closure := {}
+	var rest_overhang := {}
+	for side in ["L", "R"]:
+		var hip := _origin(rest, skeleton, resolved, "thigh." + side)
+		var knee := _origin(rest, skeleton, resolved, "shin." + side)
+		var ankle := _origin(rest, skeleton, resolved, "foot." + side)
+		rest_ankle[side] = ankle
+		rest_flex[side] = _forward_tilt(hip, knee, forward)
+		rest_closure[side] = _knee_closure(hip, knee, ankle)
+		rest_overhang[side] = _shin_overhang(hip, knee, ankle, forward)
+
+	for clip_name in ["walk", "jog", "sit_idle", "get_up"]:
+		var animation: Animation = player.get_animation(
+			"%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name]
+		)
+		if animation == null:
+			continue
+		var flex_max := {"L": 0.0, "R": 0.0}
+		var closure_max := {"L": 0.0, "R": 0.0}
+		# The thigh tilt at the instant the knee is most folded: this is the number that says
+		# "seated" rather than "stepping".
+		var thigh_at_closure := {"L": 0.0, "R": 0.0}
+		var closure_there := {"L": 0.0, "R": 0.0}
+		var lift := {"L": -1.0, "R": -1.0}
+		var posed := false
+		for step in POSE_SAMPLES:
+			var time := animation.length * float(step) / float(POSE_SAMPLES)
+			var glob := _global_poses(skeleton, _pose_at(skeleton, animation, time))
+			if glob.is_empty():
+				continue
+			posed = true
+			var hip_height := _origin(glob, skeleton, resolved, "thigh.L").y
+			for side in ["L", "R"]:
+				var hip := _origin(glob, skeleton, resolved, "thigh." + side)
+				var knee := _origin(glob, skeleton, resolved, "shin." + side)
+				var ankle := _origin(glob, skeleton, resolved, "foot." + side)
+				if ankle == Vector3.ZERO:
+					continue
+				if ankle.y > hip_height + 0.02:
+					_failures.append(
+						"%s: at %.2f s in '%s' the %s ankle is at %.2f m, above the hip at %.2f m;"
+						% [label, time, clip_name, side, ankle.y, hip_height]
+						+ " the clip folds the leg up over the body instead of under it."
+					)
+				var overhang: float = _shin_overhang(hip, knee, ankle, forward) - float(rest_overhang[side])
+				if overhang > MAX_HYPEREXTENSION:
+					_failures.append(
+						"%s: at %.2f s in '%s' the %s knee is %.2f bent the wrong way; a knee only"
+						% [label, time, clip_name, side, overhang]
+						+ " folds one way."
+					)
+				var flex: float = _forward_tilt(hip, knee, forward) - float(rest_flex[side])
+				var closure: float = _knee_closure(hip, knee, ankle) - float(rest_closure[side])
+				flex_max[side] = maxf(float(flex_max[side]), flex)
+				if closure >= float(closure_max[side]):
+					closure_max[side] = closure
+					thigh_at_closure[side] = flex
+					closure_there[side] = closure
+				lift[side] = maxf(float(lift[side]), ankle.y - float(rest_ankle[side]))
+		if not posed:
+			continue
+		_notes.append(
+			"%s/%s: hip %.0f° forward, knee %.0f° closed, foot %.3f m off the ground"
+			% [label, clip_name, float(flex_max["L"]), float(closure_max["L"]), float(lift["L"])]
+		)
+		if STEP_HIP_FLEX_LIMIT.has(clip_name):
+			var limit := float(STEP_HIP_FLEX_LIMIT[clip_name])
+			for side in ["L", "R"]:
+				if float(flex_max[side]) > limit:
+					_failures.append(
+						"%s: '%s' flexes the %s hip %.0f° at most, past the %.0f° a step gets; that"
+						% [label, clip_name, side, float(flex_max[side]), limit]
+						+ " is a thigh held out in front of a seated body."
+					)
+				if float(closure_max[side]) < MIN_KNEE_CLOSURE_DEGREES:
+					_failures.append(
+						"%s: '%s' never closes the %s knee past %.0f°, so the leg swings stiff."
+						% [label, clip_name, side, float(closure_max[side])]
+					)
+				if float(lift[side]) < MIN_FOOT_LIFT:
+					_failures.append(
+						"%s: '%s' lifts the %s foot %.3f m at most; the leg never leaves the floor."
+						% [label, clip_name, side, float(lift[side])]
+					)
+				if float(thigh_at_closure[side]) > SEATED_THIGH_LIMIT_DEGREES:
+					_failures.append(
+						"%s: '%s' folds the %s knee to %.0f° while the thigh is %.0f° forward — the"
+						% [label, clip_name, side, float(closure_there[side]), float(thigh_at_closure[side])]
+						+ " shin hangs under a seat, which is what the walk looked like."
+					)
+			_check_step_pose(label, clip_name, skeleton, resolved, animation, forward)
+		elif clip_name == "sit_idle":
+			_check_seated_pose(label, skeleton, resolved, animation, forward, flex_max, closure_max)
+
+
+## A seated pose, measured where it matters: the knees are out in front of the body and the
+## shins hang under them. Folding both legs backwards folds the character into itself.
+func _check_seated_pose(
+	label: String,
+	skeleton: Skeleton3D,
+	resolved: Dictionary,
+	animation: Animation,
+	forward: Vector3,
+	flex_max: Dictionary,
+	closure_max: Dictionary
+) -> void:
+	if float(flex_max["L"]) < SEATED_HIP_FLEX_MIN or float(closure_max["L"]) < SEATED_KNEE_CLOSURE_MIN:
+		_failures.append(
+			"%s: sit_idle flexes the hip %.0f° and closes the knee %.0f°; sitting is 60° of each."
+			% [label, float(flex_max["L"]), float(closure_max["L"])]
+		)
+		return
+	var glob := _global_poses(skeleton, _pose_at(skeleton, animation, 0.0))
+	var hip := _origin(glob, skeleton, resolved, "thigh.L")
+	var knee := _origin(glob, skeleton, resolved, "shin.L")
+	var ankle := _origin(glob, skeleton, resolved, "foot.L")
+	var ahead := (knee - hip).dot(forward)
+	var drop := knee.y - ankle.y
+	_notes.append(
+		"%s/sit_idle: knees %.2f m in front of the hips, ankles %.2f m under them"
+		% [label, ahead, drop]
+	)
+	if ahead < SEATED_KNEE_AHEAD_MIN:
+		_failures.append(
+			"%s: sit_idle puts the knees %.2f m in front of the hips; a seated thigh is forward of"
+			% [label, ahead]
+			+ " the body, not behind it."
+		)
+	if drop < SEATED_ANKLE_DROP_MIN:
+		_failures.append(
+			"%s: sit_idle holds the ankles %.2f m below the knees; the shins are not hanging down."
+			% [label, drop]
+		)
+
+
+## The two things a step has that a single pose does not: the feet are apart, and the arm on one
+## side swings with the leg on the other.
+func _check_step_pose(
+	label: String,
+	clip_name: String,
+	skeleton: Skeleton3D,
+	resolved: Dictionary,
+	animation: Animation,
+	forward: Vector3
+) -> void:
+	var glob := _global_poses(skeleton, _pose_at(skeleton, animation, 0.0))
+	var hips := _origin(glob, skeleton, resolved, "hips")
+	var left_foot := _origin(glob, skeleton, resolved, "foot.L")
+	var right_foot := _origin(glob, skeleton, resolved, "foot.R")
+	var left_hand := _origin(glob, skeleton, resolved, "hand.L")
+	var stride := (left_foot - right_foot).dot(forward)
+	var hand_side := (left_hand - hips).dot(forward)
+	var foot_side := (left_foot - hips).dot(forward)
+	_notes.append(
+		"%s/%s: ankles %.2f m apart, left hand %+.2f m, left foot %+.2f m"
+		% [label, clip_name, stride, hand_side, foot_side]
+	)
+	if absf(stride) < MIN_STRIDE:
+		_failures.append(
+			"%s: '%s' starts with the ankles %.3f m apart along forward; a step needs %.2f m."
+			% [label, clip_name, stride, MIN_STRIDE]
+		)
+	if hand_side * foot_side > 0.0:
+		_failures.append(
+			"%s: '%s' swings the left arm with the left leg (hand %+.2f m, foot %+.2f m); arms"
+			% [label, clip_name, hand_side, foot_side]
+			+ " counterbalance the opposite leg."
 		)
 
 
