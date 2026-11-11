@@ -48,17 +48,54 @@ const BONE_ALIASES := {
 	"foot.R": ["Foot.R", "RightFoot", "foot_r"],
 }
 
+## What a positive X angle means, per canonical bone. `x_signs()` turns each of these into the
+## ±1 that makes the rig's own local X axis do it; the clips never mention the sign.
+const X_MEANING := {
+	"hips": "forward",
+	"spine": "forward",
+	"chest": "forward",
+	"neck": "forward",
+	"head": "forward",
+	"shoulder.L": "forward",
+	"shoulder.R": "forward",
+	"upper_arm.L": "forward",
+	"upper_arm.R": "forward",
+	"fore_arm.L": "close",
+	"fore_arm.R": "close",
+	"hand.L": "forward",
+	"hand.R": "forward",
+	"thigh.L": "forward",
+	"thigh.R": "forward",
+	"shin.L": "close",
+	"shin.R": "close",
+	"foot.L": "toes_down",
+	"foot.R": "toes_down",
+}
+
 ## The clips, authored in canonical names. Each key is `[time in seconds, degrees about the
 ## bone's own axes]`; the last key repeats the first so a looping clip closes the cycle.
-## Rotations are about the bone's local X for swing (forward and back) and local Z for
-## reaching out, which is what the rest poses of both rigs want: every bone in them points
-## up or down its own Y.
 ##
-## The sign that matters, because it is the one a new clip gets wrong: **+X is flexion** for
-## hips, knees, shoulders and elbows. `walk` reads as a walk only with that reading — the
-## front leg is `thigh +22` with a straight `shin +4`, and the back leg is `thigh -22` with
-## the knee folded to `shin +30`. So a seated pose is `thigh +82, shin +84`: legs forward,
-## shins down, which is exactly the symbol every clip below is a variation of.
+## The X angle is authored in *meaning*, not in the rig's raw axis, because on every rig here
+## the rig's local X points backwards: the limb bones point down their own local +Y and their
+## local +X points to the character's right, so a positive rotation about it swings the limb
+## towards the model's back (`X × (−Y) = −forward`, measured on all four rigs). An earlier
+## version of this file believed the opposite and shipped a walk whose knee folded while the
+## thigh was still forward — a character walking in a seated pose, hanging its shins under
+## itself — and a `sit_idle` whose ankles ended up *above* its hips. A rotation turned the
+## wrong way is the same number of degrees, so nothing that measured angles could see it.
+##
+## So `X_MEANING` says what a positive angle is supposed to do, and `x_signs()` measures the
+## skeleton's rest pose at bind time to find the sign that makes it do that:
+##
+##   "forward"    the limb swings towards the front of the body — hips, spine, shoulders
+##   "close"      the joint folds and its far end goes behind — knees and elbows
+##   "toes_down"  the ankle points the toes down
+##
+## Everything else stays literal: Y twists about the bone, Z swings a limb out to the side,
+## and the ±Z signs in the clips are mirrored between left and right. With that reading `walk`
+## is a walk — the front leg is `thigh +18` with a nearly straight `shin +5`, the leg behind
+## it carries the bent knee (`shin +44` as it swings through) — and a seated pose is
+## `thigh +82, shin +84`: thighs forward, shins down, ankles under the knees.
 ##
 ## A clip may set `"loop": false`. Such a clip is a *transition*: it is played once and hands
 ## back to whatever was there before (see `CharacterView` / the wrapper's `play_action()`),
@@ -81,35 +118,35 @@ const CLIPS := {
 	"walk": {
 		"length": 1.0,
 		"tracks": {
-			"thigh.L": [[0.0, Vector3(22.0, 0.0, 0.0)], [0.5, Vector3(-22.0, 0.0, 0.0)], [1.0, Vector3(22.0, 0.0, 0.0)]],
-			"thigh.R": [[0.0, Vector3(-22.0, 0.0, 0.0)], [0.5, Vector3(22.0, 0.0, 0.0)], [1.0, Vector3(-22.0, 0.0, 0.0)]],
-			"shin.L": [[0.0, Vector3(4.0, 0.0, 0.0)], [0.5, Vector3(30.0, 0.0, 0.0)], [1.0, Vector3(4.0, 0.0, 0.0)]],
-			"shin.R": [[0.0, Vector3(30.0, 0.0, 0.0)], [0.5, Vector3(4.0, 0.0, 0.0)], [1.0, Vector3(30.0, 0.0, 0.0)]],
-			"foot.L": [[0.0, Vector3(-8.0, 0.0, 0.0)], [0.5, Vector3(6.0, 0.0, 0.0)], [1.0, Vector3(-8.0, 0.0, 0.0)]],
-			"foot.R": [[0.0, Vector3(6.0, 0.0, 0.0)], [0.5, Vector3(-8.0, 0.0, 0.0)], [1.0, Vector3(6.0, 0.0, 0.0)]],
-			"upper_arm.L": [[0.0, Vector3(-18.0, 0.0, 3.0)], [0.5, Vector3(18.0, 0.0, 3.0)], [1.0, Vector3(-18.0, 0.0, 3.0)]],
-			"upper_arm.R": [[0.0, Vector3(18.0, 0.0, -3.0)], [0.5, Vector3(-18.0, 0.0, -3.0)], [1.0, Vector3(18.0, 0.0, -3.0)]],
-			"fore_arm.L": [[0.0, Vector3(14.0, 0.0, 0.0)], [0.5, Vector3(24.0, 0.0, 0.0)], [1.0, Vector3(14.0, 0.0, 0.0)]],
-			"fore_arm.R": [[0.0, Vector3(24.0, 0.0, 0.0)], [0.5, Vector3(14.0, 0.0, 0.0)], [1.0, Vector3(24.0, 0.0, 0.0)]],
-			"spine": [[0.0, Vector3(2.0, 0.0, 1.5)], [0.5, Vector3(2.0, 0.0, -1.5)], [1.0, Vector3(2.0, 0.0, 1.5)]],
-			"head": [[0.0, Vector3(-2.0, 0.0, -1.0)], [0.5, Vector3(-2.0, 0.0, 1.0)], [1.0, Vector3(-2.0, 0.0, -1.0)]],
+			"thigh.L": [[0.0, Vector3(18.0, 0.0, 0.0)], [0.25, Vector3(2.0, 0.0, 0.0)], [0.5, Vector3(-17.0, 0.0, 0.0)], [0.75, Vector3(2.0, 0.0, 0.0)], [1.0, Vector3(18.0, 0.0, 0.0)]],
+			"shin.L": [[0.0, Vector3(5.0, 0.0, 0.0)], [0.25, Vector3(6.0, 0.0, 0.0)], [0.5, Vector3(14.0, 0.0, 0.0)], [0.75, Vector3(44.0, 0.0, 0.0)], [1.0, Vector3(5.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(-7.0, 0.0, 0.0)], [0.25, Vector3(2.0, 0.0, 0.0)], [0.5, Vector3(12.0, 0.0, 0.0)], [0.75, Vector3(-10.0, 0.0, 0.0)], [1.0, Vector3(-7.0, 0.0, 0.0)]],
+			"thigh.R": [[0.0, Vector3(-17.0, 0.0, 0.0)], [0.25, Vector3(2.0, 0.0, 0.0)], [0.5, Vector3(18.0, 0.0, 0.0)], [0.75, Vector3(2.0, 0.0, 0.0)], [1.0, Vector3(-17.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(14.0, 0.0, 0.0)], [0.25, Vector3(44.0, 0.0, 0.0)], [0.5, Vector3(5.0, 0.0, 0.0)], [0.75, Vector3(6.0, 0.0, 0.0)], [1.0, Vector3(14.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(12.0, 0.0, 0.0)], [0.25, Vector3(-10.0, 0.0, 0.0)], [0.5, Vector3(-7.0, 0.0, 0.0)], [0.75, Vector3(2.0, 0.0, 0.0)], [1.0, Vector3(12.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(-14.0, 0.0, 3.0)], [0.25, Vector3(-1.0, 0.0, 3.0)], [0.5, Vector3(14.0, 0.0, 3.0)], [0.75, Vector3(1.0, 0.0, 3.0)], [1.0, Vector3(-14.0, 0.0, 3.0)]],
+			"upper_arm.R": [[0.0, Vector3(14.0, 0.0, -3.0)], [0.25, Vector3(1.0, 0.0, -3.0)], [0.5, Vector3(-14.0, 0.0, -3.0)], [0.75, Vector3(-1.0, 0.0, -3.0)], [1.0, Vector3(14.0, 0.0, -3.0)]],
+			"fore_arm.L": [[0.0, Vector3(16.0, 0.0, 0.0)], [0.25, Vector3(12.0, 0.0, 0.0)], [0.5, Vector3(10.0, 0.0, 0.0)], [1.0, Vector3(16.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(10.0, 0.0, 0.0)], [0.25, Vector3(12.0, 0.0, 0.0)], [0.5, Vector3(16.0, 0.0, 0.0)], [1.0, Vector3(10.0, 0.0, 0.0)]],
+			"spine": [[0.0, Vector3(2.0, 0.0, 1.2)], [0.5, Vector3(2.0, 0.0, -1.2)], [1.0, Vector3(2.0, 0.0, 1.2)]],
+			"head": [[0.0, Vector3(-1.0, 0.0, -0.8)], [0.5, Vector3(-1.0, 0.0, 0.8)], [1.0, Vector3(-1.0, 0.0, -0.8)]],
 		},
 	},
 	"jog": {
 		"length": 0.72,
 		"tracks": {
-			"thigh.L": [[0.0, Vector3(34.0, 0.0, 0.0)], [0.36, Vector3(-34.0, 0.0, 0.0)], [0.72, Vector3(34.0, 0.0, 0.0)]],
-			"thigh.R": [[0.0, Vector3(-34.0, 0.0, 0.0)], [0.36, Vector3(34.0, 0.0, 0.0)], [0.72, Vector3(-34.0, 0.0, 0.0)]],
-			"shin.L": [[0.0, Vector3(6.0, 0.0, 0.0)], [0.36, Vector3(46.0, 0.0, 0.0)], [0.72, Vector3(6.0, 0.0, 0.0)]],
-			"shin.R": [[0.0, Vector3(46.0, 0.0, 0.0)], [0.36, Vector3(6.0, 0.0, 0.0)], [0.72, Vector3(46.0, 0.0, 0.0)]],
-			"foot.L": [[0.0, Vector3(-10.0, 0.0, 0.0)], [0.36, Vector3(8.0, 0.0, 0.0)], [0.72, Vector3(-10.0, 0.0, 0.0)]],
-			"foot.R": [[0.0, Vector3(8.0, 0.0, 0.0)], [0.36, Vector3(-10.0, 0.0, 0.0)], [0.72, Vector3(8.0, 0.0, 0.0)]],
-			"upper_arm.L": [[0.0, Vector3(-26.0, 0.0, 5.0)], [0.36, Vector3(26.0, 0.0, 5.0)], [0.72, Vector3(-26.0, 0.0, 5.0)]],
-			"upper_arm.R": [[0.0, Vector3(26.0, 0.0, -5.0)], [0.36, Vector3(-26.0, 0.0, -5.0)], [0.72, Vector3(26.0, 0.0, -5.0)]],
-			"fore_arm.L": [[0.0, Vector3(30.0, 0.0, 0.0)], [0.36, Vector3(44.0, 0.0, 0.0)], [0.72, Vector3(30.0, 0.0, 0.0)]],
-			"fore_arm.R": [[0.0, Vector3(44.0, 0.0, 0.0)], [0.36, Vector3(30.0, 0.0, 0.0)], [0.72, Vector3(44.0, 0.0, 0.0)]],
-			"spine": [[0.0, Vector3(4.0, 0.0, 2.0)], [0.36, Vector3(4.0, 0.0, -2.0)], [0.72, Vector3(4.0, 0.0, 2.0)]],
-			"head": [[0.0, Vector3(-3.0, 0.0, -1.5)], [0.36, Vector3(-3.0, 0.0, 1.5)], [0.72, Vector3(-3.0, 0.0, -1.5)]],
+			"thigh.L": [[0.0, Vector3(30.0, 0.0, 0.0)], [0.18, Vector3(6.0, 0.0, 0.0)], [0.36, Vector3(-22.0, 0.0, 0.0)], [0.54, Vector3(6.0, 0.0, 0.0)], [0.72, Vector3(30.0, 0.0, 0.0)]],
+			"shin.L": [[0.0, Vector3(12.0, 0.0, 0.0)], [0.18, Vector3(20.0, 0.0, 0.0)], [0.36, Vector3(34.0, 0.0, 0.0)], [0.54, Vector3(74.0, 0.0, 0.0)], [0.72, Vector3(12.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(-10.0, 0.0, 0.0)], [0.18, Vector3(6.0, 0.0, 0.0)], [0.36, Vector3(16.0, 0.0, 0.0)], [0.54, Vector3(-14.0, 0.0, 0.0)], [0.72, Vector3(-10.0, 0.0, 0.0)]],
+			"thigh.R": [[0.0, Vector3(-22.0, 0.0, 0.0)], [0.18, Vector3(6.0, 0.0, 0.0)], [0.36, Vector3(30.0, 0.0, 0.0)], [0.54, Vector3(6.0, 0.0, 0.0)], [0.72, Vector3(-22.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(34.0, 0.0, 0.0)], [0.18, Vector3(74.0, 0.0, 0.0)], [0.36, Vector3(12.0, 0.0, 0.0)], [0.54, Vector3(20.0, 0.0, 0.0)], [0.72, Vector3(34.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(16.0, 0.0, 0.0)], [0.18, Vector3(-14.0, 0.0, 0.0)], [0.36, Vector3(-10.0, 0.0, 0.0)], [0.54, Vector3(6.0, 0.0, 0.0)], [0.72, Vector3(16.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(-24.0, 0.0, 5.0)], [0.36, Vector3(24.0, 0.0, 5.0)], [0.72, Vector3(-24.0, 0.0, 5.0)]],
+			"upper_arm.R": [[0.0, Vector3(24.0, 0.0, -5.0)], [0.36, Vector3(-24.0, 0.0, -5.0)], [0.72, Vector3(24.0, 0.0, -5.0)]],
+			"fore_arm.L": [[0.0, Vector3(34.0, 0.0, 0.0)], [0.36, Vector3(26.0, 0.0, 0.0)], [0.72, Vector3(34.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(26.0, 0.0, 0.0)], [0.36, Vector3(34.0, 0.0, 0.0)], [0.72, Vector3(26.0, 0.0, 0.0)]],
+			"spine": [[0.0, Vector3(5.0, 0.0, 2.0)], [0.36, Vector3(5.0, 0.0, -2.0)], [0.72, Vector3(5.0, 0.0, 2.0)]],
+			"head": [[0.0, Vector3(-2.0, 0.0, -1.2)], [0.36, Vector3(-2.0, 0.0, 1.2)], [0.72, Vector3(-2.0, 0.0, -1.2)]],
 		},
 	},
 	"sit_idle": {
@@ -224,6 +261,115 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 	return ""
 
 
+## The rig's own frame, measured from its rest pose rather than assumed.
+##
+## `side` points from the left thigh to the right one, `up` from the hips to the head, and
+## `forward` is `side × up` — which lands on +Z for both production rigs, the same side the
+## protagonist's eyes and the toes of both shoes are on. A rig that faces the other way would
+## report the other sign instead of silently animating backwards.
+static func pose_frame(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
+	var resolved: Dictionary = rig["resolved"]
+	var side := Vector3.RIGHT
+	var left: Variant = rest_origin(skeleton, resolved, "thigh.L")
+	var right: Variant = rest_origin(skeleton, resolved, "thigh.R")
+	if left != null and right != null:
+		var across: Vector3 = right - left
+		if across.length() > 0.001:
+			side = across.normalized()
+	var up := Vector3.UP
+	var hips: Variant = rest_origin(skeleton, resolved, "hips")
+	var head: Variant = rest_origin(skeleton, resolved, "head")
+	if hips != null and head != null:
+		var spine: Vector3 = head - hips
+		if spine.length() > 0.001:
+			up = spine.normalized()
+	# `up` has to be perpendicular to `side`, or `forward` is not perpendicular to either.
+	var flat := up - side * up.dot(side)
+	if flat.length() > 0.001:
+		up = flat.normalized()
+	return {"side": side, "up": up, "forward": side.cross(up).normalized()}
+
+
+## Where a canonical bone sits in the rest pose, or null when the rig does not have it.
+static func rest_origin(skeleton: Skeleton3D, resolved: Dictionary, canonical: String) -> Variant:
+	var name: Variant = resolved.get(canonical)
+	if name == null:
+		return null
+	var index := skeleton.find_bone(String(name))
+	if index < 0:
+		return null
+	return skeleton.get_bone_global_rest(index).origin
+
+
+## The ±1 per canonical bone that turns "degrees of meaning" into the rig's own local X axis.
+##
+## The axis comes from the skeleton and the *meaning* from `X_MEANING`: a bone whose local X
+## rotation swings its far end towards the model's back needs -1 for +18 to mean "forward", and
+## a knee needs the opposite of whatever the thigh needed, because closing a joint sends its
+## far end backwards. Nothing here is a table of rigs — a new rig measures itself.
+static func x_signs(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
+	var frame := pose_frame(skeleton, rig)
+	var forward: Vector3 = frame["forward"]
+	var up: Vector3 = frame["up"]
+	var resolved: Dictionary = rig["resolved"]
+	var signs := {}
+	for canonical: String in X_MEANING:
+		var name: Variant = resolved.get(canonical)
+		if name == null:
+			continue
+		var index := skeleton.find_bone(String(name))
+		if index < 0:
+			continue
+		var basis := skeleton.get_bone_global_rest(index).basis
+		var axis := basis.x.normalized()
+		var along := basis.y.normalized()
+		# Where the far end of the bone goes for a small positive rotation about its own X.
+		var swing := axis.cross(along).normalized()
+		var towards_forward := swing.dot(forward)
+		var meaning: String = X_MEANING[canonical]
+		var sign := 1.0
+		match meaning:
+			"forward":
+				sign = 1.0 if towards_forward > 0.0 else -1.0
+			"close":
+				sign = 1.0 if towards_forward < 0.0 else -1.0
+			"toes_down":
+				sign = 1.0 if swing.dot(up) < 0.0 else -1.0
+		# A bone whose X axis is nearly parallel to `forward` has no swing in it at all: the
+		# clip's angle would twist the limb instead, which no angle check can see.
+		if absf(towards_forward) < 0.5:
+			push_warning(
+				"%s: the local X axis of '%s' is %.2f aligned with the body's forward axis, so the"
+				% [String(name), canonical, towards_forward]
+				+ " clips would twist it instead of swinging it."
+			)
+		signs[canonical] = sign
+	return signs
+
+
+## One entry per joint family, so a log can show what was measured without printing 19 numbers.
+## A family whose left and right disagree is printed as `mixed`, which is a rig to look at.
+static func signs_summary(report: Dictionary) -> String:
+	var signs: Dictionary = report.get("x_signs", {})
+	if signs.is_empty():
+		return "no signs"
+	var families := {}
+	for canonical: String in signs:
+		var family := canonical
+		if family.ends_with(".L") or family.ends_with(".R"):
+			family = family.substr(0, family.length() - 2)
+		var value := float(signs[canonical])
+		if not families.has(family):
+			families[family] = value
+		elif not is_equal_approx(float(families[family]), value):
+			families[family] = 0.0
+	var parts: PackedStringArray = []
+	for family: String in families:
+		var value := float(families[family])
+		parts.append("%s %s" % [family, "+" if value > 0.0 else ("-" if value < 0.0 else "mixed")])
+	return ", ".join(parts)
+
+
 ## Builds the four clips for one rig and registers them on `player` as `char/…`.
 ##
 ## `player.root_node` must be the model root, so that a track path of `"Skeleton3D:Spine"`
@@ -239,6 +385,8 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		"missing": [],
 		"bones": [],
 		"clips": {},
+		"frame": {},
+		"x_signs": {},
 	}
 	var skeleton := skeletons[0]
 	if skeletons.size() > 1:
@@ -251,6 +399,8 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		# inside the model for `..` to be the model and the skeleton path to be relative to it.
 		push_warning("AnimationPlayer should be a child of the model root; binding anyway.")
 	var rig := resolve_rig(skeleton)
+	var signs := x_signs(skeleton, rig)
+	var frame := pose_frame(skeleton, rig)
 	var skeleton_path := model_root.get_path_to(skeleton)
 	var library := AnimationLibrary.new()
 	var clip_report := {}
@@ -271,13 +421,19 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 			var path := NodePath("%s:%s" % [String(skeleton_path), String(bone)])
 			var track := animation.add_track(Animation.TYPE_ROTATION_3D)
 			animation.track_set_path(track, path)
+			# The X angle is authored in meaning; the sign is what the rig measured.
+			var x_sign := float(signs.get(canonical, 1.0))
 			for key: Array in tracks[canonical]:
 				var degrees: Vector3 = key[1]
 				animation.rotation_track_insert_key(
 					track,
 					float(key[0]),
 					Quaternion.from_euler(
-						Vector3(deg_to_rad(degrees.x), deg_to_rad(degrees.y), deg_to_rad(degrees.z))
+						Vector3(
+							deg_to_rad(degrees.x * x_sign),
+							deg_to_rad(degrees.y),
+							deg_to_rad(degrees.z)
+						)
 					)
 				)
 			used += 1
@@ -299,6 +455,8 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		"missing": rig["missing"],
 		"clips": clip_report,
 		"library": library,
+		"frame": frame,
+		"x_signs": signs,
 	}
 
 
@@ -333,9 +491,10 @@ static func describe(report: Dictionary) -> String:
 				"" if bool(info.get("loops", true)) else " once",
 			]
 		)
-	return "%d bone(s) resolved, %d not on this rig (%s) | %s" % [
+	return "%d bone(s) resolved, %d not on this rig (%s) | %s | x signs: %s" % [
 		resolved.size(),
 		missing.size(),
 		", ".join(PackedStringArray(missing)) if not missing.is_empty() else "none",
 		" | ".join(parts),
+		signs_summary(report),
 	]
