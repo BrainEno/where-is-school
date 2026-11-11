@@ -26,15 +26,32 @@ signal navigation_baked(success: bool)
 ## Bake as soon as the location is in the tree. Turn off for a scene whose geometry is
 ## added later by gameplay code.
 @export var bake_on_ready: bool = true
-## The player's capsule radius plus a margin. A navmesh narrower than the body makes
-## the character grind along walls.
-@export var agent_radius: float = 0.4
-## Kept just under the player's height so low clearance is not marked walkable.
-@export var agent_height: float = 1.8
+## The player's capsule radius (0.35 m) plus a margin. A navmesh narrower than the body
+## makes the character grind along walls.
+##
+## Every one of these numbers is converted to whole voxels before it is used, and the
+## conversion is not the identity: `agent_height` and `agent_radius` are *ceiled*, and
+## `agent_max_climb` is *floored* (`NavMeshGenerator3D`, which warns about each one). The
+## property is a wish; the bake uses the voxel it lands on. So the values here are the ones
+## that land exactly on the 0.25 m grid the bake uses, which is what the bake was already
+## buying: 0.40 m of radius was being used as 0.50, 1.80 m of headroom as 2.00, and
+## 0.30 m of climb as 0.25 — that last one is 3 cm below the street's kerb, and that is why
+## the pavement behind the kerb was a separate island from the road.
+##
+##                  asked    voxels (0.25 m)   used
+##   agent_radius   0.50     2                 0.50   (capsule 0.35 + margin)
+##   agent_height   2.00     8                 2.00   (capsule 1.80 + margin)
+##   agent_max_climb 0.25    1                 0.25   (the body's step)
+##
+## `tests/step_up_test.gd` measures what the bake used, not what was asked.
+@export var agent_radius: float = 0.5
+## The player's height plus a margin, so low clearance is not marked walkable.
+@export var agent_height: float = 2.0
 ## Steps this tall count as walkable, so a kerb or a fire step is a ramp, not a wall.
-## Kept at the player's step height: a mesh that promises a taller step than the body
-## can take produces routes the character walks into and grinds against.
-@export var agent_max_climb: float = 0.3
+## Equal to the body's `max_step_height`: a mesh that promises a taller step than the body
+## can take produces routes the character walks into and grinds against, and a mesh that
+## promises less produces routes around a kerb the player could have stepped over.
+@export var agent_max_climb: float = 0.25
 @export_range(1.0, 89.0, 1.0) var agent_max_slope: float = 45.0
 ## Which physics layer the walkable world lives on.
 @export_flags_3d_physics var geometry_collision_mask: int = 1

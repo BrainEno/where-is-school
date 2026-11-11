@@ -47,6 +47,17 @@ being silently dropped.
   game loads a subset built from the project's own text by `tools/subset_font.py`,
   which is the provenance of that modification, and CI fails when the committed
   subset and the current text disagree.
+- The two characters have been audited structurally, and the audits are committed:
+  `art/character_rig_audit/` holds a rig and a component audit for each, with a
+  `README.md` that reads them. The short version: the protagonist has a 16-bone
+  rigid-part rig (7 591 of 7 633 vertices follow exactly one bone) and Q has no rig at
+  all — no armature, no vertex groups, no modifiers. Neither has an Action, so no
+  animation exists yet for either character. The audits were run on the owner's local
+  Blender scenes rather than on the committed exports: each scene carries one leftover
+  two-metre `Icosphere` with no material that the export leaves out, which is the whole
+  difference between the audits' counts and the files above. Q's authorship is still
+  recorded as "owner to confirm" for the same reason as before — the file arrived
+  without a generation report.
 - No generated imagery, marketplace packs, shader libraries, or other fonts are
   used. The outdoor blockouts are authored by an in-repo script
   (`tools/build_outdoor_locations.py`), which is the provenance.
