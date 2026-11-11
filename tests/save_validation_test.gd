@@ -177,7 +177,8 @@ func _expect_payload_refusals() -> void:
 			{"format": SaveCodec.FORMAT, "version": 1, "payload": {"flags": "nope"}}
 		)
 	)
-	var read := _save.read_save()
+	# Typed explicitly: `_save` is a Node, so a call on it has no static type to infer.
+	var read: Dictionary = _save.read_save()
 	_expect(read["ok"] != true, "A payload with a non-object flag table was accepted.")
 	_expect(String(read["reason"]) == "payload", "The refusal does not blame the payload: %s" % String(read["reason"]))
 
@@ -191,7 +192,7 @@ func _expect_payload_refusals() -> void:
 			}
 		)
 	)
-	var typed := _save.read_save()
+	var typed: Dictionary = _save.read_save()
 	_expect(typed["ok"] != true, "A file with an unknown value type was accepted.")
 	_expect(
 		String(typed["detail"]).contains("flags.bad"),
@@ -199,7 +200,7 @@ func _expect_payload_refusals() -> void:
 	)
 
 	# Loading that file must apply nothing at all.
-	var loaded := _save.load_game()
+	var loaded: Dictionary = _save.load_game()
 	_expect(loaded["ok"] != true, "load_game accepted a file read_save refused.")
 	_expect(
 		int(_game_state.get_flag(&"fine", 0)) == 0,
@@ -293,7 +294,7 @@ func _expect_knowledge_rules() -> void:
 	_expect(_narrative.has_entry(&"d") == true, "A valid entry after a bad one was dropped.")
 
 	# A structurally wrong snapshot changes nothing.
-	var before := _narrative.get_entries().size()
+	var before: int = _narrative.get_entries().size()
 	var broken: Dictionary = _narrative.restore_snapshot({"entries": "not an array"})
 	_expect(broken["ok"] != true, "A snapshot whose entries are not an array was accepted.")
 	_expect(
@@ -314,7 +315,7 @@ func _expect_seed_round_trip() -> void:
 
 	Harness.clear_session_state(self)
 	_save.write_payload({"flags": {}, "entries": [], "check_seed": 4242})
-	var read := _save.read_save()
+	var read: Dictionary = _save.read_save()
 	_expect(read["ok"] == true, "A payload holding only a seed was refused.")
 	if read["ok"] != true:
 		return
@@ -323,11 +324,16 @@ func _expect_seed_round_trip() -> void:
 	var actual := CheckResolver.describe(after.roll(&"orientation", 3, 9, 0, key))
 	_expect(actual == expected, "The same check differs after a round trip:\n  %s\n  %s" % [expected, actual])
 
+	# ...and the assertion above is only meaningful if the seed actually moves the dice.
+	# Eight different keys, because any single key can coincide between two seeds (a
+	# 1-in-36 chance with 2d6) and a test that fails 3% of the time is worse than none.
 	var other := CheckResolver.new(int(payload.get("check_seed", 0)) + 1)
-	_expect(
-		CheckResolver.describe(other.roll(&"orientation", 3, 9, 0, key)) != expected,
-		"The check does not depend on the seed, so this test proves nothing."
-	)
+	var differs := false
+	for index in 8:
+		if other.faces_for("gate:%d" % index) != before.faces_for("gate:%d" % index):
+			differs = true
+			break
+	_expect(differs, "The dice do not depend on the seed, so this test proves nothing.")
 
 
 # --- Helpers ----------------------------------------------------------------
