@@ -1,89 +1,88 @@
-[13:27:23] capture started: 2026-11-10T13:27:23
-[13:27:27] viewport: 1600x900, locale=en
-[13:27:36] screenshot 01_opening_line: The first line of the opening conversation, in English. (1600x900)
-[13:27:45] objective after the opening conversation: objective.check_bag
-[13:27:47] held move_forward for 0.8 s: player moved 2.55 m
-[13:27:47] screenshot 02_walking: The player after holding the forward key. (1600x900)
-[13:27:48] screenshot 03_world_after_opening: The classroom with control returned and the objective set. (1600x900)
-[13:27:48] classroom desks with the imported model: 6 of 6
-[13:27:48] stationery on DeskB2: base y = 0.880 m, 0.302 x 0.164 x 0.084 m
-[13:27:50] screenshot 03h_classroom_desks: The classroom from the back: six student desks with the imported model and their chairs, at the positions the room has always had. (1600x900)
-[13:27:51] screenshot 03i_own_desk_stationery: The player's own desk (DeskB2) from the sitting side: the stationery set on the top. (1600x900)
-[13:27:52] nameplate in 03j_protagonist: screen (800.0, 136.2949) of (1600.0, 900.0)
-[13:27:52] screenshot 03j_protagonist: The player's authored protagonist, standing on the classroom floor, head to feet, under the nameplate the game shows. (1600x900)
-[13:27:53] nameplate in 03k_q_in_the_classroom: screen (800.0001, 109.3663) of (1600.0, 900.0)
-[13:27:54] screenshot 03k_q_in_the_classroom: Q in the classroom, wearing the authored model, from the side Q faces, under the nameplate the game shows. (1600x900)
-[13:27:55] cue candidates: mark at (0.55, -0.0, -0.7) on normal (0.0, 1.0, 0.0)
-[13:27:57] screenshot cue_candidate_tick: Candidate tick: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
-[13:28:00] screenshot cue_candidate_brackets: Candidate brackets: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
-[13:28:02] screenshot cue_candidate_commas: Candidate commas: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
-[13:28:02] cue candidates: ink on screen (px within 90 px of the mark) = { "tick": 165, "brackets": 138, "commas": 131 }
-[13:28:03] screenshot cue_candidates_abc: The three candidates side by side on the same floor, from one camera: A tick, B brackets, C commas. The shipped one is A. (1600x900)
-[13:28:03] mouse shots: scripted left clicks pushed through the input system, not a human playtest
-[13:28:04] clicked route: 7 waypoints, 6.08 m of path for a 5.44 m straight line
-[13:28:05] screenshot 03a_click_destination: A left click on the floor: the destination ring and the walk starting. (1600x900)
-[13:28:06] screenshot 03b_click_walking: Mid-walk, after one click on the floor: no keys held. (1600x900)
-[13:28:06] floor click: walking=true arrived=true walked 5.26 metres
-[13:28:06] the interruption shot had no floor in view from (-2.534895, 0.0, -2.556338); stepping into the open
-[13:28:09] screenshot 03c_wasd_cancels: Holding a movement key during an automatic walk: the keys take over. (1600x900)
-[13:28:09] walk before WASD=true, walk after WASD=true
-[13:28:10] screenshot 03d_hover_cue: The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, and a shard floating above the object. (1600x900)
-[13:28:10] hover cue: revealed=true opacity=1.00 parts=["ring", "halo", "shard"]
-[13:28:13] screenshot 03f_click_inspect: The timetable sheet opened by a click, with no key pressed. (1600x900)
-[13:28:13] click-to-inspect: the sheet opened from a click
-[13:28:14] screenshot 03g_refused_click: A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts. (1600x900)
-[13:28:14] refused click: role=, rejection=no walkable ground under the click
-[13:28:14] cue audio after the mouse shots: { "destination": 2, "target": 1, "refused": 1, "hover": 20 }
-[13:28:15] screenshot 04_prompt_schoolbag: The interaction prompt with the key that is bound in the input map. (1600x900)
-[13:28:21] screenshot 05_inspection_text: The schoolbag description, reached by pressing E. (1600x900)
-[13:28:22] locale after pressing L: zh-CN
-[13:28:23] screenshot 06_chinese_world: The same classroom after switching to simplified Chinese at runtime. (1600x900)
-[13:28:29] screenshot 07_prompt_chinese: The interaction prompt after the switch: the prompt text is translated. (1600x900)
-[13:28:31] screenshot 08_repeat_read_chinese: The second read of the same object, in Chinese. (1600x900)
-[13:28:32] screenshot 09_prompt_talk_chinese: The prompt for a conversation, in Chinese. (1600x900)
-[13:28:34] screenshot 09b_click_person_approach: Q clicked from out of reach: the character walks over to them. (1600x900)
-[13:28:35] screenshot 10_conversation_chinese: A conversation line in Chinese, started by clicking Q from a distance. (1600x900)
-[13:28:35] click-to-talk: the walk and the conversation both came from one click
-[13:28:38] locale after pressing L again: en
-[13:28:39] screenshot 11_back_to_english: The same scene after switching back to English. (1600x900)
-[13:28:56] screenshot 12_door_prompt: The classroom door is open: its prompt changed with the story. (1600x900)
-[13:28:57] screenshot 12b_click_door: The door clicked with the mouse: the transition starts without a key. (1600x900)
-[13:28:57] left-clicked the classroom door
-[13:28:58] screenshot 13_corridor: The walkway outside the classroom. (1600x900)
-[13:29:01] walked 3.22 m with Q; Q is 2.22 m behind
-[13:29:01] screenshot 13a_q_following: Q walking with the player in the walkway, at a natural distance. (1600x900)
-[13:29:01] hover prompt: '[E] Look at the cleaning trolley'
-[13:29:02] screenshot 13b_hover_trolley: The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing. (1600x900)
-[13:29:04] screenshot 13c_trolley_line: Looking at the trolley, with Q's comment because Q is there. (1600x900)
-[13:29:09] screenshot 13d_corridor_speaker: The wall speaker: a short noise cue of its own, and a line about the class behind the wall. (1600x900)
-[13:29:12] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-0.806102, 0.0, -5.006104) busy=false control=true
-[13:29:14] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-1.569778, 0.0, -5.769782) busy=false control=true
-[13:29:16] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-1.749058, 0.00094, -6.491033) busy=false control=true
-[13:29:16] screenshot 13e_yard_door_prompt: The end door of the walkway, reached on foot. (1600x900)
-[13:29:20] screenshot 13f_schoolyard_from_corridor: The yard entered from the school side, with Q arriving beside the player. (1600x900)
-[13:29:25] screenshot 13g_back_in_the_walkway: Back inside the walkway through the fire door. (1600x900)
-[13:29:28] screenshot 14_street: The street outside the school gate, with the arrival line finished. (1600x900)
-[13:29:29] screenshot 15_street_prompt: A street object with its prompt. (1600x900)
-[13:29:33] screenshot 16_street_inspection: The street object's description. (1600x900)
-[13:29:34] screenshot 15b_stair_prompt: The way up to the residential area. (1600x900)
-[13:29:36] screenshot 17_residential: The courtyard behind the school: three blocks and the stair. (1600x900)
-[13:29:41] screenshot 17b_mouse_choice_prompt: The stair conversation with its two options, opened by a mouse click. (1600x900)
-[13:29:42] screenshot 17c_mouse_choice_taken: The second option taken with the mouse; the panel shows the line it leads to. (1600x900)
-[13:29:42] dialogue option 2 selected with a left click
-[13:29:43] screenshot 18_animal_prompt: The green animal, with the prompt to look at it. (1600x900)
-[13:29:46] screenshot 19_animal_conversation: Meeting the animal: the first line. (1600x900)
-[13:29:50] screenshot 20_alley: The lane behind the flats, with its arrival line finished. (1600x900)
-[13:29:52] screenshot 21_alley_notices_prompt: The notice wall in the alley, with its prompt. (1600x900)
-[13:29:56] screenshot 22_alley_notice_line: Reading the alley notices. (1600x900)
-[13:30:10] screenshot 24_gate_prompt: The estate gate at the end of the alley. (1600x900)
-[13:30:13] screenshot 25_playground_wide: The open yard from the gate: court, hoops, bench, climbing frame, shed. (1600x900)
-[13:30:14] screenshot 26_hoop_prompt: The near hoop, with its prompt. (1600x900)
-[13:30:17] screenshot 27_hoop_inspection: The hoop's description. (1600x900)
-[13:30:18] screenshot 28_shed_prompt: The equipment shed, with its prompt. (1600x900)
-[13:30:42] screenshot 32_far_gap_prompt: The gap in the fence at the far end of the yard. (1600x900)
-[13:30:44] screenshot 33_end_card: The end-of-slice card, now at the far end of the yard instead of the alley mouth. (1600x900)
-[13:30:44] current location: playground
-[13:30:44] locale: en, objective: objective.playground
-[13:30:44] recorded knowledge entries: 21
-[13:30:44] screenshots written: 55
-[13:30:44] RESULT: the playthrough reached the end of the built content.
+[01:59:09] capture started: 2026-11-11T01:59:09
+[01:59:12] viewport: 1600x900, locale=en
+[01:59:19] screenshot 01_opening_line: The first line of the opening conversation, in English. (1600x900)
+[01:59:27] objective after the opening conversation: objective.check_bag
+[01:59:28] held move_forward for 0.8 s: player moved 2.86 m
+[01:59:29] screenshot 02_walking: The player after holding the forward key. (1600x900)
+[01:59:29] screenshot 03_world_after_opening: The classroom with control returned and the objective set. (1600x900)
+[01:59:29] classroom desks with the imported model: 6 of 6
+[01:59:29] stationery on DeskB2: base y = 0.880 m, 0.302 x 0.164 x 0.084 m
+[01:59:30] screenshot 03h_classroom_desks: The classroom from the back: six student desks with the imported model and their chairs, at the positions the room has always had. (1600x900)
+[01:59:31] screenshot 03i_own_desk_stationery: The player's own desk (DeskB2) from the sitting side: the stationery set on the top. (1600x900)
+[01:59:32] nameplate in 03j_protagonist: screen (800.0, 136.2949) of (1600.0, 900.0)
+[01:59:33] screenshot 03j_protagonist: The player's authored protagonist, standing on the classroom floor, head to feet, under the nameplate the game shows. (1600x900)
+[01:59:33] nameplate in 03k_q_in_the_classroom: screen (800.0001, 109.3663) of (1600.0, 900.0)
+[01:59:34] screenshot 03k_q_in_the_classroom: Q in the classroom, wearing the authored model, from the side Q faces, under the nameplate the game shows. (1600x900)
+[01:59:35] cue candidates: mark at (0.55, -0.0, -0.7) on normal (0.0, 1.0, 0.0)
+[01:59:37] screenshot cue_candidate_tick: Candidate tick: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
+[01:59:39] screenshot cue_candidate_brackets: Candidate brackets: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
+[01:59:40] screenshot cue_candidate_commas: Candidate commas: the floor-click mark, from the player's own camera at 2.4 m. (1600x900)
+[01:59:40] cue candidates: ink on screen (px within 90 px of the mark) = { "tick": 131, "brackets": 118, "commas": 123 }
+[01:59:41] screenshot cue_candidates_abc: The three candidates side by side on the same floor, from one camera: A tick, B brackets, C commas. The shipped one is A. (1600x900)
+[01:59:41] mouse shots: scripted left clicks pushed through the input system, not a human playtest
+[01:59:42] clicked route: 7 waypoints, 6.08 m of path for a 5.44 m straight line
+[01:59:43] screenshot 03a_click_destination: A left click on the floor: the destination ring and the walk starting. (1600x900)
+[01:59:44] screenshot 03b_click_walking: Mid-walk, after one click on the floor: no keys held. (1600x900)
+[01:59:44] floor click: walking=true arrived=true walked 5.12 metres
+[01:59:45] screenshot 03c_wasd_cancels: Holding a movement key during an automatic walk: the keys take over. (1600x900)
+[01:59:45] walk before WASD=true, walk after WASD=true
+[01:59:46] screenshot 03d_hover_cue: The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, and a shard floating above the object. (1600x900)
+[01:59:46] hover cue: revealed=true opacity=1.00 parts=["ring", "halo", "shard"]
+[01:59:49] screenshot 03f_click_inspect: The timetable sheet opened by a click, with no key pressed. (1600x900)
+[01:59:49] click-to-inspect: the sheet opened from a click
+[01:59:50] screenshot 03g_refused_click: A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts. (1600x900)
+[01:59:50] refused click: role=, rejection=no walkable ground under the click
+[01:59:50] cue audio after the mouse shots: { "destination": 2, "target": 1, "refused": 1, "hover": 14 }
+[01:59:51] screenshot 04_prompt_schoolbag: The interaction prompt with the key that is bound in the input map. (1600x900)
+[01:59:57] screenshot 05_inspection_text: The schoolbag description, reached by pressing E. (1600x900)
+[01:59:58] locale after pressing L: zh-CN
+[01:59:58] screenshot 06_chinese_world: The same classroom after switching to simplified Chinese at runtime. (1600x900)
+[02:00:04] screenshot 07_prompt_chinese: The interaction prompt after the switch: the prompt text is translated. (1600x900)
+[02:00:06] screenshot 08_repeat_read_chinese: The second read of the same object, in Chinese. (1600x900)
+[02:00:07] screenshot 09_prompt_talk_chinese: The prompt for a conversation, in Chinese. (1600x900)
+[02:00:08] screenshot 09b_click_person_approach: Q clicked from out of reach: the character walks over to them. (1600x900)
+[02:00:09] screenshot 10_conversation_chinese: A conversation line in Chinese, started by clicking Q from a distance. (1600x900)
+[02:00:09] click-to-talk: the walk and the conversation both came from one click
+[02:00:12] locale after pressing L again: en
+[02:00:12] screenshot 11_back_to_english: The same scene after switching back to English. (1600x900)
+[02:00:26] screenshot 12_door_prompt: The classroom door is open: its prompt changed with the story. (1600x900)
+[02:00:27] screenshot 12b_click_door: The door clicked with the mouse: the transition starts without a key. (1600x900)
+[02:00:27] left-clicked the classroom door
+[02:00:28] screenshot 13_corridor: The walkway outside the classroom. (1600x900)
+[02:00:31] walked 3.03 m with Q; Q is 2.01 m behind
+[02:00:31] screenshot 13a_q_following: Q walking with the player in the walkway, at a natural distance. (1600x900)
+[02:00:31] hover prompt: '[E] Look at the cleaning trolley'
+[02:00:32] screenshot 13b_hover_trolley: The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing. (1600x900)
+[02:00:34] screenshot 13c_trolley_line: Looking at the trolley, with Q's comment because Q is there. (1600x900)
+[02:00:38] screenshot 13d_corridor_speaker: The wall speaker: a short noise cue of its own, and a line about the class behind the wall. (1600x900)
+[02:00:41] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-0.678823, 0.0, -4.878824) busy=false control=true
+[02:00:43] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-1.527351, 0.0, -5.727355) busy=false control=true
+[02:00:44] prompt for 'to_schoolyard' never appeared: target=<none> prompt='' position=(-1.749058, 0.000942, -6.533459) busy=false control=true
+[02:00:45] screenshot 13e_yard_door_prompt: The end door of the walkway, reached on foot. (1600x900)
+[02:00:48] screenshot 13f_schoolyard_from_corridor: The yard entered from the school side, with Q arriving beside the player. (1600x900)
+[02:00:53] screenshot 13g_back_in_the_walkway: Back inside the walkway through the fire door. (1600x900)
+[02:00:55] screenshot 14_street: The street outside the school gate, with the arrival line finished. (1600x900)
+[02:00:57] screenshot 15_street_prompt: A street object with its prompt. (1600x900)
+[02:01:00] screenshot 16_street_inspection: The street object's description. (1600x900)
+[02:01:01] screenshot 15b_stair_prompt: The way up to the residential area. (1600x900)
+[02:01:03] screenshot 17_residential: The courtyard behind the school: three blocks and the stair. (1600x900)
+[02:01:08] screenshot 17b_mouse_choice_prompt: The stair conversation with its two options, opened by a mouse click. (1600x900)
+[02:01:09] screenshot 17c_mouse_choice_taken: The second option taken with the mouse; the panel shows the line it leads to. (1600x900)
+[02:01:09] dialogue option 2 selected with a left click
+[02:01:10] screenshot 18_animal_prompt: The green animal, with the prompt to look at it. (1600x900)
+[02:01:12] screenshot 19_animal_conversation: Meeting the animal: the first line. (1600x900)
+[02:01:17] screenshot 20_alley: The lane behind the flats, with its arrival line finished. (1600x900)
+[02:01:19] screenshot 21_alley_notices_prompt: The notice wall in the alley, with its prompt. (1600x900)
+[02:01:23] screenshot 22_alley_notice_line: Reading the alley notices. (1600x900)
+[02:01:37] screenshot 24_gate_prompt: The estate gate at the end of the alley. (1600x900)
+[02:01:39] screenshot 25_playground_wide: The open yard from the gate: court, hoops, bench, climbing frame, shed. (1600x900)
+[02:01:40] screenshot 26_hoop_prompt: The near hoop, with its prompt. (1600x900)
+[02:01:43] screenshot 27_hoop_inspection: The hoop's description. (1600x900)
+[02:01:44] screenshot 28_shed_prompt: The equipment shed, with its prompt. (1600x900)
+[02:02:07] screenshot 32_far_gap_prompt: The gap in the fence at the far end of the yard. (1600x900)
+[02:02:09] screenshot 33_end_card: The end-of-slice card, now at the far end of the yard instead of the alley mouth. (1600x900)
+[02:02:09] current location: playground
+[02:02:09] locale: en, objective: objective.playground
+[02:02:09] recorded knowledge entries: 21
+[02:02:09] screenshots written: 55
+[02:02:09] RESULT: the playthrough reached the end of the built content.
