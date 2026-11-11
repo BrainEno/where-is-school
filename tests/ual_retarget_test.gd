@@ -322,7 +322,7 @@ func _check_committed() -> void:
 			"%s is missing. Run `godot --headless --path . --script "
 			% BAKED
 			+ "res://tools/bake_animation_retarget.gd`, or dispatch the bake-animation-retarget "
-			+ "workflow, and commit the result."
+			+ "workflow and download its artifact; review and commit the result locally."
 		)
 		return
 	var library := resource as AnimationLibrary

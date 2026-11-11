@@ -1,9 +1,5 @@
 name: Check the capture evidence
-description: >-
-  Verifies the staged playthrough evidence and, when asked to publish, replaces the
-  committed screenshots with it. The current screenshots are never deleted before
-  the replacement has been verified, and a run with nothing new is a success.
-
+description: Verifies the staged playthrough evidence without modifying the repository.
 
 inputs:
   evidence:
@@ -11,10 +7,6 @@ inputs:
       Directory holding the capture output: `docs/screenshots/` (frames,
       PLAYTHROUGH.log, PLAYTHROUGH.md) and `logs/` (capture and import logs).
     required: true
-  publish:
-    description: "'true' replaces the committed screenshots; 'false' only verifies."
-    required: false
-    default: "false"
 
 runs:
   using: composite
@@ -62,53 +54,3 @@ runs:
           exit 1
         fi
         echo "::notice title=evidence verified::${count} frame(s), result marker present, no failures"
-
-    - name: Publish the frames
-      if: inputs.publish == 'true'
-      shell: bash
-      env:
-        EVIDENCE: ${{ inputs.evidence }}
-      run: |
-        set -euo pipefail
-        shots="${EVIDENCE}/docs/screenshots"
-        # Compare first: a run that changed nothing must end successfully, not fail on
-        # an empty commit.
-        if [ -d docs/screenshots ] && diff -rq docs/screenshots "${shots}" > /dev/null 2>&1; then
-          echo "no screenshot changes; nothing to commit"
-          exit 0
-        fi
-        # Build the replacement beside the live folder and keep the old one until the
-        # new one has been counted. The repository must never be left without its
-        # previous, valid screenshots.
-        incoming="$(mktemp -d)/screenshots"
-        previous="$(mktemp -d)/screenshots"
-        cp -a "${shots}" "${incoming}"
-        if [ -d docs/screenshots ]; then
-          cp -a docs/screenshots "${previous}"
-        fi
-        incoming_count=$(find "${incoming}" -maxdepth 1 -name '*.png' | wc -l)
-        if [ "${incoming_count}" -lt 1 ]; then
-          echo "::error title=nothing to publish::the new folder holds no frames; the old screenshots are untouched"
-          exit 1
-        fi
-        rm -rf docs/screenshots
-        cp -a "${incoming}" docs/screenshots
-        final_count=$(find docs/screenshots -maxdepth 1 -name '*.png' | wc -l)
-        if [ "${final_count}" -lt 1 ]; then
-          echo "::error title=swap failed::restoring the previous screenshots"
-          rm -rf docs/screenshots
-          if [ -d "${previous}" ]; then cp -a "${previous}" docs/screenshots; fi
-          exit 1
-        fi
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add docs/screenshots
-        if git diff --cached --quiet; then
-          echo "no screenshot changes; nothing to commit"
-          exit 0
-        fi
-        # [skip ci]: the frames are evidence of a run that already happened, not a
-        # change that needs its own full CI pass.
-        git commit -m "Playthrough capture: update screenshots from a successful run [skip ci]"
-        git push origin "HEAD:${GITHUB_REF_NAME}"
-        echo "::notice title=screenshots published::${final_count} frame(s) committed to ${GITHUB_REF_NAME}"

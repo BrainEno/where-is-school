@@ -198,9 +198,11 @@ missing.
 - AGENTS.md — authoritative coding-agent instructions.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
-- docs/screenshots/ — frames captured from a real, running window by
-  `tests/capture_playthrough.gd`, plus the dialogue layout frames written by
+- docs/screenshots/ — existing frames captured from a real, running window by
+  `tests/capture_playthrough.gd`, plus dialogue layout frames written by
   `tests/capture_dialogue_ui.gd` at 1280x720, 1600x900 and 1920x1080 in both languages.
+  New CI captures are uploaded as downloadable workflow artifacts; Actions does not
+  commit them back into this directory.
 - assets/ — placeholder materials, generated audio and the two sample models, all
   tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.

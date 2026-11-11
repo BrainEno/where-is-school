@@ -266,10 +266,12 @@ mistake in the Chinese tree fails the same tests as a mistake in the English one
 That run is engine-verified logic, not a look at the game. To close that gap,
 `.github/workflows/playthrough-capture.yml` runs the real build in a real window
 under Xvfb (`--rendering-driver opengl3`, 1600×900), drives it with simulated key
-events, saves 21 PNGs and a log into `docs/screenshots/`, and commits them back
-with `[skip ci]`. `tests/capture_playthrough.gd` is that script; it waits for a
-line's typewriter reveal to finish before it photographs the screen, so a frame
-never shows half a sentence.
+events, and uploads the resulting frames and logs as a downloadable workflow
+artifact. Pull requests verify that same artifact without writing to Git. The
+older snapshots already in `docs/screenshots/` remain in place and are not updated
+by Actions. `tests/capture_playthrough.gd` is the driver; it waits for a line's
+typewriter reveal to finish before it photographs the screen, so a frame never
+shows half a sentence.
 
 ## 9. Known limitations
 
@@ -300,8 +302,6 @@ never shows half a sentence.
 - The capture drives the slice with teleports between scenes so it fits in CI;
   nobody has played the build with a mouse and keyboard end to end yet, so camera
   comfort and walking feel are unverified.
-- Screenshot commits carry `[skip ci]`, so the newest commit on a screenshot
-  branch has no checks of its own; the checks belong to the code commit before it.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
 - The tests that build the main scene print Godot's "2 ObjectDB instances were
