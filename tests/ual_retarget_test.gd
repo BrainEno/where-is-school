@@ -155,7 +155,7 @@ func _diagnose(
 	for step in 3:
 		player.seek(animation.length * float(step) / 2.0, true)
 		angles.append(
-			"%.1f" % rad_to_deg(target_skeleton.get_bone_pose_rotation(index).get_angle())
+			"%.1f" % _degrees(target_skeleton.get_bone_pose_rotation(index).angle_to(Quaternion.IDENTITY))
 		)
 	_notes.append(
 		"diag: baked '%s' on the character: pose %s, playing %s, anim '%s'"
@@ -193,7 +193,7 @@ func _diagnose(
 	for step in 3:
 		source_player.seek(source_animation.length * float(step) / 2.0, true)
 		source_angles.append(
-			"%.1f" % rad_to_deg(source_skeleton.get_bone_pose_rotation(hips).get_angle())
+			"%.1f" % _degrees(source_skeleton.get_bone_pose_rotation(hips).angle_to(Quaternion.IDENTITY))
 		)
 	_notes.append(
 		"diag: library '%s' on its own rig: pose %s, playing %s"
@@ -242,7 +242,7 @@ func _check_motion(
 		var highest := -INF
 		for step in 5:
 			player.seek(animation.length * float(step) / 4.0, true)
-			var angle := rad_to_deg(skeleton.get_bone_pose_rotation(index).get_angle())
+			var angle := _degrees(skeleton.get_bone_pose_rotation(index).angle_to(Quaternion.IDENTITY))
 			lowest = minf(lowest, angle)
 			highest = maxf(highest, angle)
 		if highest - lowest > 0.001:
@@ -278,6 +278,7 @@ func _check_rest_relative(
 		return
 	var worst := 0.0
 	var worst_bone := ""
+	var per_bone := {}
 	for step in 4:
 		var moment := source_animation.length * float(step) / 3.0
 		source_player.play(clip_name)
@@ -301,13 +302,22 @@ func _check_rest_relative(
 				rad_to_deg(source_change.normalized().angle_to(target_change.normalized()))
 			)
 			difference = minf(difference, 360.0 - difference)
+			per_bone[String(pair["canonical"])] = maxf(
+				float(per_bone.get(String(pair["canonical"]), 0.0)), difference
+			)
 			if difference > worst:
 				worst = difference
 				worst_bone = String(pair["canonical"])
 	source_player.stop()
 	target_player.stop()
+	var ranked: Array = per_bone.keys()
+	ranked.sort_custom(func(a, b): return float(per_bone[a]) > float(per_bone[b]))
+	var worst_three: PackedStringArray = []
+	for index in mini(4, ranked.size()):
+		worst_three.append("%s %.1f°" % [String(ranked[index]), float(per_bone[ranked[index]])])
 	_notes.append(
-		"rest-relative check: worst disagreement %.2f° on '%s'" % [worst, worst_bone]
+		"rest-relative check: worst %.2f° on '%s'; by bone: %s"
+		% [worst, worst_bone, ", ".join(worst_three)]
 	)
 	if worst > REST_TOLERANCE_DEGREES:
 		_failures.append(
@@ -379,6 +389,12 @@ func _check_committed() -> void:
 		_failures.append("the committed library has no walk clip.")
 		return
 	_check_motion(player, "ual/%s" % walk, skeleton, "committed %s" % walk)
+
+
+## Degrees the short way round, because `get_angle()` reports up to 360°.
+func _degrees(radians: float) -> float:
+	var degrees := absf(rad_to_deg(radians))
+	return minf(degrees, 360.0 - degrees)
 
 
 func _clip_containing(player: AnimationPlayer, fragment: String) -> String:

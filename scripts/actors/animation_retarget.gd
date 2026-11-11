@@ -150,7 +150,7 @@ static func bake(
 					value = Quaternion(-value.x, -value.y, -value.z, -value.w)
 				previous = value
 				animation.rotation_track_insert_key(track, float(index) * step, value)
-				var deviation := absf(rad_to_deg(value.get_angle()))
+				var deviation := _degrees(value.angle_to(Quaternion.IDENTITY))
 				if deviation > widest:
 					widest = deviation
 					widest_bone = String(bone_name)
@@ -169,6 +169,13 @@ static func bake(
 		"pairs": pairs,
 		"missing": mapping["missing"],
 	}
+
+
+## How far a quaternion turns, in degrees, the short way round: `get_angle()` reports up to
+## 360°, so a bone that leans 3° the other way would otherwise read as 357°.
+static func _degrees(radians: float) -> float:
+	var degrees := absf(rad_to_deg(radians))
+	return minf(degrees, 360.0 - degrees)
 
 
 ## One line per clip, for a notice or a log: every clip in the library, and how far it moves
