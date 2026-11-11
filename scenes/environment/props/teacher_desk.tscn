@@ -1,9 +1,12 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=22 format=3]
 
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="1_desk_wood"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="2_metal_dark"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="3_paper_pale"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/door_blue.tres" id="4_door_blue"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_honey.tres" id="1_wood"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="2_metal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="3_paper"]
+[ext_resource type="Material" path="res://assets/materials/classroom/register_cover.tres" id="4_register"]
+[ext_resource type="Material" path="res://assets/materials/classroom/lacquer_oxblood.tres" id="5_lacquer"]
+[ext_resource type="Material" path="res://assets/materials/classroom/chalk.tres" id="6_chalk"]
+[ext_resource type="Material" path="res://assets/materials/classroom/plaster_ivory.tres" id="7_sheet"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(1.9, 0.8, 0.85)
@@ -32,6 +35,24 @@ radial_segments = 16
 [sub_resource type="BoxMesh" id="BoxMesh_8"]
 size = Vector3(0.02, 0.16, 0.02)
 
+[sub_resource type="BoxMesh" id="BoxMesh_band"]
+size = Vector3(1.7, 0.035, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_papers"]
+size = Vector3(0.22, 0.03, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_label"]
+size = Vector3(0.14, 0.002, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_seat"]
+size = Vector3(0.44, 0.05, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
+size = Vector3(0.44, 0.36, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leg"]
+size = Vector3(0.035, 0.45, 0.035)
+
 [node name="TeacherDesk" type="Node3D"]
 
 [node name="Body" type="StaticBody3D" parent="."]
@@ -43,41 +64,102 @@ shape = SubResource("BoxShape3D_1")
 [node name="Top" type="MeshInstance3D" parent="Body"]
 position = Vector3(0, 0.78, 0)
 mesh = SubResource("BoxMesh_2")
-material_override = ExtResource("1_desk_wood")
+material_override = ExtResource("1_wood")
 
 [node name="PanelLeft" type="MeshInstance3D" parent="Body"]
 position = Vector3(-0.9, 0.38, 0)
 mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("1_desk_wood")
+material_override = ExtResource("5_lacquer")
 
 [node name="PanelRight" type="MeshInstance3D" parent="Body"]
 position = Vector3(0.9, 0.38, 0)
 mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("1_desk_wood")
+material_override = ExtResource("5_lacquer")
 
 [node name="BackPanel" type="MeshInstance3D" parent="Body"]
 position = Vector3(0, 0.55, 0.4)
 mesh = SubResource("BoxMesh_4")
-material_override = ExtResource("1_desk_wood")
+material_override = ExtResource("5_lacquer")
+
+[node name="PanelBand" type="MeshInstance3D" parent="Body/BackPanel"]
+position = Vector3(0, 0.17, 0.031)
+mesh = SubResource("BoxMesh_band")
+material_override = ExtResource("1_wood")
 
 [node name="Register" type="MeshInstance3D" parent="Body"]
 position = Vector3(-0.55, 0.83, 0.05)
 rotation_degrees = Vector3(0, 8, 0)
 mesh = SubResource("BoxMesh_5")
-material_override = ExtResource("4_door_blue")
+material_override = ExtResource("4_register")
+
+[node name="Label" type="MeshInstance3D" parent="Body/Register"]
+position = Vector3(0, 0.0155, -0.06)
+mesh = SubResource("BoxMesh_label")
+material_override = ExtResource("7_sheet")
+
+[node name="Papers" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.2, 0.825, -0.12)
+mesh = SubResource("BoxMesh_papers")
+material_override = ExtResource("3_paper")
 
 [node name="Stapler" type="MeshInstance3D" parent="Body"]
 position = Vector3(-0.1, 0.84, 0.2)
 mesh = SubResource("BoxMesh_6")
-material_override = ExtResource("2_metal_dark")
+material_override = ExtResource("2_metal")
 
 [node name="Mug" type="MeshInstance3D" parent="Body"]
 position = Vector3(0.62, 0.87, 0.12)
 mesh = SubResource("CylinderMesh_7")
-material_override = ExtResource("3_paper_pale")
+material_override = ExtResource("3_paper")
 
 [node name="ChalkInMug" type="MeshInstance3D" parent="Body"]
 position = Vector3(0.6, 0.96, 0.1)
 rotation_degrees = Vector3(0, 0, 18)
 mesh = SubResource("BoxMesh_8")
-material_override = ExtResource("3_paper_pale")
+material_override = ExtResource("6_chalk")
+
+[node name="ChalkInMug2" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.635, 0.95, 0.135)
+rotation_degrees = Vector3(14, 0, -9)
+mesh = SubResource("BoxMesh_8")
+material_override = ExtResource("6_chalk")
+
+[node name="ChalkInMug3" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.62, 0.945, 0.095)
+rotation_degrees = Vector3(-12, 0, 4)
+mesh = SubResource("BoxMesh_8")
+material_override = ExtResource("6_chalk")
+
+[node name="Chair" type="Node3D" parent="."]
+position = Vector3(0.38, 0, -0.33)
+rotation_degrees = Vector3(0, 21, 0)
+
+[node name="Seat" type="MeshInstance3D" parent="Chair"]
+position = Vector3(0, 0.45, 0)
+mesh = SubResource("BoxMesh_seat")
+material_override = ExtResource("1_wood")
+
+[node name="Back" type="MeshInstance3D" parent="Chair"]
+position = Vector3(0, 0.72, -0.2)
+mesh = SubResource("BoxMesh_back")
+material_override = ExtResource("1_wood")
+
+[node name="LegFL" type="MeshInstance3D" parent="Chair"]
+position = Vector3(-0.19, 0.225, 0.18)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_metal")
+
+[node name="LegFR" type="MeshInstance3D" parent="Chair"]
+position = Vector3(0.19, 0.225, 0.18)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_metal")
+
+[node name="LegBL" type="MeshInstance3D" parent="Chair"]
+position = Vector3(-0.19, 0.225, -0.18)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_metal")
+
+[node name="LegBR" type="MeshInstance3D" parent="Chair"]
+position = Vector3(0.19, 0.225, -0.18)
+mesh = SubResource("BoxMesh_leg")
+material_override = ExtResource("2_metal")

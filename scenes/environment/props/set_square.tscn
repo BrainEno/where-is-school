@@ -1,14 +1,21 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/desk_wood.tres" id="1_desk_wood"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="2_paper_pale"]
+[ext_resource type="Material" path="res://assets/materials/classroom/varnish_pale.tres" id="1_varnish"]
+[ext_resource type="Material" path="res://assets/materials/classroom/tape_browned.tres" id="2_tape"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="3_ink"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_1"]
-size = Vector3(0.55, 0.038, 0.42)
+size = Vector3(0.55, 0.42, 0.038)
 left_to_right = 0.45
 
 [sub_resource type="BoxMesh" id="BoxMesh_2"]
 size = Vector3(0.09, 0.006, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tick"]
+size = Vector3(0.004, 0.002, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tick_long"]
+size = Vector3(0.004, 0.002, 0.04)
 
 [node name="SetSquare" type="Node3D"]
 
@@ -16,10 +23,48 @@ size = Vector3(0.09, 0.006, 0.05)
 position = Vector3(0, 0.019, 0)
 rotation_degrees = Vector3(-90, 0, 0)
 mesh = SubResource("PrismMesh_1")
-material_override = ExtResource("1_desk_wood")
+material_override = ExtResource("1_varnish")
 
 [node name="TapeRepair" type="MeshInstance3D" parent="."]
 position = Vector3(-0.19, 0.039, 0.12)
 rotation_degrees = Vector3(0, 26, 0)
 mesh = SubResource("BoxMesh_2")
-material_override = ExtResource("2_paper_pale")
+material_override = ExtResource("2_tape")
+
+[node name="Ticks" type="Node3D" parent="."]
+position = Vector3(0, 0.0392, 0.2)
+
+[node name="Tick0" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(-0.2, 0, -0.012)
+mesh = SubResource("BoxMesh_tick_long")
+material_override = ExtResource("3_ink")
+
+[node name="Tick1" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(-0.15, 0, -0.003)
+mesh = SubResource("BoxMesh_tick")
+material_override = ExtResource("3_ink")
+
+[node name="Tick2" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(-0.1, 0, -0.012)
+mesh = SubResource("BoxMesh_tick_long")
+material_override = ExtResource("3_ink")
+
+[node name="Tick3" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(-0.05, 0, -0.003)
+mesh = SubResource("BoxMesh_tick")
+material_override = ExtResource("3_ink")
+
+[node name="Tick4" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(0, 0, -0.012)
+mesh = SubResource("BoxMesh_tick_long")
+material_override = ExtResource("3_ink")
+
+[node name="Tick5" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(0.05, 0, -0.003)
+mesh = SubResource("BoxMesh_tick")
+material_override = ExtResource("3_ink")
+
+[node name="Tick6" type="MeshInstance3D" parent="Ticks"]
+position = Vector3(0.1, 0, -0.012)
+mesh = SubResource("BoxMesh_tick_long")
+material_override = ExtResource("3_ink")

@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/materials/classroom/textures/window_view.png" id="1_tex"]
+
+[resource]
+resource_name = "window_view_back"
+shading_mode = 0
+albedo_color = Color(1, 1, 1, 1)
+uv1_scale = Vector3(0.3333, 1, 1)
+uv1_offset = Vector3(0.0, 0, 0)
+texture_filter = 3
+albedo_texture = ExtResource("1_tex")

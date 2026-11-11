@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=1 format=3]
+
+[resource]
+resource_name = "wall_section"
+diffuse_mode = 3
+specular_mode = 2
+albedo_color = Color(0.227, 0.188, 0.180, 1)
+roughness = 1.0
