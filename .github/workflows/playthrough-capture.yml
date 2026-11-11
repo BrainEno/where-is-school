@@ -406,13 +406,14 @@ jobs:
               rows.append("%s sentence bg L %.3f CR %.2f / prompt bg L %.3f CR %.2f"
                           % (n[:3], o, (0.502 + 0.05) / (o + 0.05), p, (0.659 + 0.05) / (p + 0.05)))
           print("::notice title=schoolyard HUD contrast (measured)::" + " | ".join(rows))
-          for n in names[1:2] + names[4:6] + names[0:1]:
+          for n in ["25_playground_wide", "28_shed_prompt", "32_far_gap_prompt"]:
               f = os.path.join(d, n + ".png")
               if os.path.exists(f):
-                  im = Image.open(f).convert("RGB").resize((400, 225))
-                  b = io.BytesIO()
-                  im.save(b, "JPEG", quality=60)
-                  print("::notice title=thumb %s::%s" % (n, base64.b64encode(b.getvalue()).decode()))
+                  im = Image.open(f).convert("RGB").resize((320, 180))
+                  for k in range(3):
+                      b = io.BytesIO()
+                      im.crop((0, 60 * k, 320, 60 * k + 60)).save(b, "JPEG", quality=55)
+                      print("::notice title=strip %s %d::%s" % (n, k, base64.b64encode(b.getvalue()).decode()))
           PY
 
       - name: Summarise the result
