@@ -64,6 +64,16 @@ being silently dropped.
 - The two sample models are not third-party art and are not AI-generated: they are
   boxes written by `tools/build_sample_models.py`, which is their provenance. The
   import contract they prove is `docs/ASSET_PIPELINE.md`.
+- Two development-only derivatives of the characters exist under
+  `scenes/dev/animation_retarget_test/`: `q_rigged.glb` (the owner's Q, rigged to the
+  protagonist's 16-bone hierarchy) and `protagonist_retarget_ready.glb` (the owner's
+  protagonist, re-exported on a humanoid skeleton). Both are derived from owner-supplied
+  files by the scripts that wrote the reports next to their `.blend` sources under
+  `art/character_rigging/`, they are excluded from the export, and neither replaces the
+  production models. The animation library that was tried with them (Quaternius' Universal
+  Animation Library) is **not** in this repository: it was removed rather than licensed,
+  because the clips these two characters need are authored in code
+  (`scripts/actors/character_animation.gd`, see `docs/CHARACTER_ANIMATION.md`).
 - Every placeholder above is expected to be replaced by owner-approved art,
   audio, and writing. Record replacement assets in this ledger as they land.
 - The two Poly Haven models are the only third-party content in the repository. They are

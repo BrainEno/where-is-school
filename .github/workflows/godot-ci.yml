@@ -176,6 +176,11 @@ jobs:
           run_check imported_placement 300 godot --headless --path . --script res://tests/imported_placement_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
+          # The four clips in `CharacterAnimation`, on both rigged characters: every track
+          # has to point at a bone that exists on that rig, every clip has to actually move
+          # the bone it is about, and the loop has to come back to where it started. The two
+          # rigs name their bones differently, which is the thing being checked.
+          run_check character_animation 240 godot --headless --path . --script res://tests/character_animation_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1
