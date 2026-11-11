@@ -122,6 +122,7 @@ func face_towards(target_point: Vector3) -> void:
 func walk_along(points: Array) -> void:
 	if points.is_empty():
 		return
+	_set_visual_walking(true)
 	for point: Vector3 in points:
 		var distance := global_position.distance_to(point)
 		if distance <= 0.01:
@@ -131,3 +132,11 @@ func walk_along(points: Array) -> void:
 		var tween := create_tween()
 		tween.tween_property(self, "global_position", point, duration)
 		await tween.finished
+	_set_visual_walking(false)
+
+
+## Tween-driven actors have no CharacterBody3D velocity for the visual animation
+## driver to inspect, so their movement is forwarded explicitly.
+func _set_visual_walking(walking: bool) -> void:
+	if _visual != null and _visual.has_method("set_walking"):
+		_visual.call("set_walking", walking)
