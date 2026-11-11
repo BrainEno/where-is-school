@@ -149,8 +149,8 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 	for canonical in missing:
 		if not allowed_missing.has(String(canonical)):
 			_failures.append(
-				"%s: '%s' is not a bone on this rig, and the clips expect it to be."
-				% [label, String(canonical)]
+				"%s: '%s' is not a bone on this rig, and the clips expect it to be. Bones: %s"
+				% [label, String(canonical), str(report.get("bones", []))]
 			)
 
 	var skeleton := skeletons[0]
