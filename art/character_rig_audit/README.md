@@ -1,8 +1,10 @@
 # Character rig audit
 
-Structural audits of the two characters, produced in Blender 5.2.3 LTS from the owner's
-local source files. They are records, not build steps: nothing here is imported by the
-game, and the `.glb`s under `assets/models/` are unchanged by them.
+Historical structural audits of the original character source files, produced in Blender
+5.2.3 LTS. The Q audit describes the unrigged source now preserved at
+`art/character_rigging/q/q_unrigged_source.glb`, not the current runtime model
+`assets/models/q/q.glb`, which is its rigged derivative. These audits are records, not
+build steps; nothing here is imported by the game.
 
 | File | What it holds |
 |---|---|
@@ -48,8 +50,11 @@ line. The same holds for the protagonist, 79 objects and 12 468 triangles agains
 
 So the audits describe the owner's **Blender scene**, and the committed `.glb`s are that
 scene minus the icosphere: it is a leftover new-scene primitive, hidden from the export.
-Nothing in the repository contains it — `assets/models/q/q.glb` has seven meshes, no skins
-and no animations; `protagonist.glb` has 78 meshes, one 16-joint skin and no animations.
+The original source is preserved without that icosphere at
+`art/character_rigging/q/q_unrigged_source.glb`. The current runtime
+`assets/models/q/q.glb` is a separate 16-joint rigged derivative; this historical audit
+must not be used to infer that the runtime Q model is unrigged. The protagonist source
+still has 78 meshes, one 16-joint skin and no embedded animations.
 
 It is worth knowing before the next export: if the leftover is ever visible at export time
 it becomes a two-metre untextured ball around whichever character was exported, and the
@@ -61,7 +66,7 @@ The counts above come from the GLB's own JSON chunk, not from a renderer:
 
 ```python
 import json, struct
-data = open("assets/models/q/q.glb", "rb").read()
+data = open("art/character_rigging/q/q_unrigged_source.glb", "rb").read()
 offset = 12
 length, _ = struct.unpack("<II", data[offset:offset + 8])
 doc = json.loads(data[offset + 8:offset + 8 + length].decode("utf-8"))
