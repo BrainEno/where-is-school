@@ -117,6 +117,10 @@ request. Do not add a test that saves into `res://data/`.
 - Before editing, inspect branch, working tree, project structure, and relevant code.
 - Do not overwrite another agent's work.
 - Do not force-push, rewrite history, merge your own PR, or change repository protections.
+- Do not commit a file over 12 MiB, and do not add an exception to the check that says
+  so (`python3 tools/repo_size.py --check`). Sources belong in `art/` or outside the
+  repository; runtime weight is judged as shipped by `tools/verify_build.py`. The rule
+  and its reasons are `docs/adr/0007-large-binaries-and-repository-size.md`.
 - PR descriptions must include purpose, implementation summary, files changed, exact validation commands/results, and known limitations.
 - If blocked, report the blocker and the smallest decision needed.
 

@@ -70,6 +70,20 @@ jobs:
           # that fails a release now fails the commit that added the file.
           python3 tools/model_library.py --check
 
+      - name: Check the repository stays small
+        shell: bash
+        run: |
+          # Issue #97: 169 MB -> 433 MB in ten hours, most of it binaries committed at full
+          # size on every change. The pack budget in tools/verify_build.py only sees what
+          # ships, and a source file never does, so nothing stopped a 70.6 MB model. This
+          # reads `git ls-files` and fails on any tracked file over 12 MiB, with no
+          # exception list; docs/adr/0007-large-binaries-and-repository-size.md is the rule.
+          python3 tools/repo_size.py --check
+          # The numbers go into every job log, so a week of growth can be explained from
+          # the logs instead of guessed at: largest tracked files, largest blobs in history,
+          # and the commit that added each one.
+          python3 tools/repo_size.py --report
+
       - name: Check the music loop is reproducible
         shell: bash
         run: |
@@ -98,6 +112,15 @@ jobs:
           # tested here, with packs this test writes, so the release job can be trusted to
           # report what it reports.
           python3 tests/verify_build_test.py
+
+      - name: Check the repository size check itself
+        shell: bash
+        run: |
+          # The size check runs in a shallow checkout, where half of what it reports on is
+          # invisible, so it is tested against repositories the test builds: either side of
+          # the ceiling, an untracked large file (which must NOT fail), an ignored one, and
+          # a blob a later commit deleted (which the history report must still find).
+          python3 tests/repo_size_test.py
 
       - name: Check the model library check itself
         shell: bash

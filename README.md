@@ -212,6 +212,10 @@ missing.
   collision wrappers, regeneration).
 - docs/MODEL_LIBRARY.md — every model under assets/models/: which kind it belongs to, what
   it measures in metres, where its origin sits, and which greybox scene it replaces.
+- Cloning: the history carries the screenshot archive and one 4K model that was removed
+  after it was committed, so a full clone is several hundred megabytes. `git clone
+  --filter=blob:none` gives a complete working tree without fetching old file contents;
+  what may be committed, and why, is in docs/adr/0007-large-binaries-and-repository-size.md.
 - docs/IMPLEMENTATION_NOTES_BUILD.md — the export preset, the font subset, what the build
   contains and what it still does not.
 - docs/PLAYTEST_CHECKLIST.md — the ordered hands-on pass for a build, and what to write
