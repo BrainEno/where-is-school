@@ -433,7 +433,9 @@ func _check_pose_geometry(
 		var hip := _origin(rest, skeleton, resolved, "thigh." + side)
 		var knee := _origin(rest, skeleton, resolved, "shin." + side)
 		var ankle := _origin(rest, skeleton, resolved, "foot." + side)
-		rest_ankle[side] = ankle
+		# The height only: `float()` on a Vector3 is an invalid call, and the check it feeds
+		# would then measure nothing and pass.
+		rest_ankle[side] = ankle.y
 		rest_flex[side] = _forward_tilt(hip, knee, forward)
 		rest_closure[side] = _knee_closure(hip, knee, ankle)
 		rest_overhang[side] = _shin_overhang(hip, knee, ankle, forward)
