@@ -250,30 +250,43 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	if visual == null:
 		_failures.append("%s wrapper is not a Node3D." % label)
 		return
-	root.add_child(visual)
+	var body := CharacterBody3D.new()
+	root.add_child(body)
+	body.add_child(visual)
 	await process_frame
 
 	if not visual.has_method("is_bound") or not bool(visual.call("is_bound")):
 		_failures.append("%s wrapper did not bind its runtime animation driver." % label)
-		visual.queue_free()
+		body.queue_free()
 		return
 	var player := visual.get_node_or_null(^"BoundAnimationPlayer") as AnimationPlayer
 	if player == null:
 		_failures.append("%s wrapper has no runtime AnimationPlayer." % label)
-		visual.queue_free()
+		body.queue_free()
 		return
 	for clip_name in CLIPS:
 		if not player.has_animation("%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name]):
 			_failures.append("%s wrapper is missing the '%s' clip." % [label, clip_name])
 
+	body.velocity = Vector3(0.0, 0.0, 1.0)
+	await process_frame
+	if String(visual.call("get_current_clip")) != "walk":
+		_failures.append("%s wrapper did not switch to walk from ancestor movement velocity." % label)
+	body.velocity = Vector3.ZERO
+	await process_frame
+	if String(visual.call("get_current_clip")) != "idle":
+		_failures.append("%s wrapper did not return to idle when ancestor movement stopped." % label)
+
+	# Tween-driven location NPCs have no CharacterBody3D velocity; verify their explicit
+	# movement signal uses the same state machine.
 	visual.call("set_walking", true)
 	if String(visual.call("get_current_clip")) != "walk":
-		_failures.append("%s wrapper did not switch to walk when movement began." % label)
+		_failures.append("%s wrapper did not switch to walk when set_walking(true) was called." % label)
 	visual.call("set_walking", false)
 	if String(visual.call("get_current_clip")) != "idle":
-		_failures.append("%s wrapper did not return to idle when movement stopped." % label)
-	_notes.append("%s runtime wrapper binds idle/walk/wave/talk and switches locomotion." % label)
-	visual.queue_free()
+		_failures.append("%s wrapper did not return to idle after set_walking(false)." % label)
+	_notes.append("%s runtime wrapper binds four clips and responds to physics and tween movement." % label)
+	body.queue_free()
 	await process_frame
 
 
