@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "label": "q",
-  "source": "D:\\develop\\games\\where-is-school\\assets\\models\\q\\q.glb",
+  "source": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_unrigged_source.glb",
   "blender_version": "5.2.3 LTS",
   "summary": {
     "mesh_object_count": 8,

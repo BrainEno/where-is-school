@@ -158,7 +158,9 @@ through `.godot/imported/…` and stop falling back to the source file:
 
 ## 8. Not in this round
 
-- No animation, no LOD, no lightmap UVs.
+- Character locomotion is supplied by the project's code-authored idle/walk clips and
+  wrapper-level animation driver; the GLBs do not embed animation actions. No LOD or
+  lightmap UVs yet.
 - **No performance budget.** A triangle budget for a prop, a character or a room needs
   a measurement on the target Windows machine, and none has been made. The numbers in
   this document are placeholder sanity limits for the graybox, not a performance claim.
@@ -249,7 +251,7 @@ hidden. The companion record is
 | School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
 | Protagonist | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/protagonist.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D` + `InteractionAnchor` |
-| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.662 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor` |
+| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.647 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor`; 16-bone rig |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a
@@ -283,11 +285,14 @@ navigation mesh.
    arrangement — its lowest point is 7.4 cm below it — so the raw GLB is not drop-in
    placeable. `stationery_supplies.tscn` re-origins it to its base, which is why the
    wrapper, not the model, is what a scene instantiates.
-3. **`q.glb` carries one authored non-uniform node scale** (`Q_Collar`, 1 × 0.7 × 0.9),
-   against §1's "no node scale". It is the collar mesh only, and the test records it by
-   node name so it cannot quietly become two. The protagonist's origin sitting 1.7 cm
-   above its sole is recorded the same way, at 5 mm tolerance, so a re-export that
-   silently moves either one fails the test rather than a placement.
+3. **`q.glb` no longer carries a node scale.** It used to: the collar was authored at
+   1 × 0.7 × 0.9 on its node, the one exception to §1's "no node scale", and the test
+   recorded it by node name so a second one could not appear unnoticed. The rigging pass
+   that gave Q its 16-bone armature baked that scale into the collar's vertices, so the
+   exception is gone and the record is empty — the size, base and facing assertions above
+   did not move, which is the evidence that the bake changed nothing on screen. The
+   protagonist's origin sitting 1.7 cm above its sole is still recorded at 5 mm
+   tolerance, so a re-export that moves it fails the test rather than a placement.
 
 ### 10.3 Textures are embedded, not extracted
 
