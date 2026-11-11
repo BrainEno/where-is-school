@@ -283,6 +283,16 @@ func _check_rest_relative(
 			per_bone[String(pair["canonical"])] = maxf(
 				float(per_bone.get(String(pair["canonical"]), 0.0)), difference
 			)
+			if String(pair["canonical"]) == "shoulder.L":
+				_notes.append(
+					"shoulder.L at %.2fs: library %.1f°, character %.1f°, apart %.1f°"
+					% [
+						moment,
+						_degrees(source_change.angle_to(Quaternion.IDENTITY)),
+						_degrees(target_change.angle_to(Quaternion.IDENTITY)),
+						difference,
+					]
+				)
 			if difference > worst:
 				worst = difference
 				worst_bone = String(pair["canonical"])
