@@ -1,6 +1,6 @@
 # ADR 0006 — Painterly Rendering Prototype
 
-- **Status:** Proposed — isolated prototype and measurement harness implemented; Windows visual/performance review is still required.
+- **Status:** Proposed — Issue #81 transform/material/test hardening implemented; Godot 4.7.2 CI import audit and headless suite pass at `0529092`; Windows visual review and Owner adoption decision remain pending.
 - **Date:** 2026-11-11
 - **Depends on:** ADR 0001 (Godot 4.7.2 / Forward+), ADR 0004 (art direction, spatial logic, and camera)
 - **Scope:** environment surfaces, environment contours, and a separate in-game character shading study.
@@ -62,7 +62,7 @@ The timed runner temporarily disables VSync so the measured frame rate is not ca
 
 ### Results
 
-No results are recorded yet. This checkout has no Godot executable or Windows graphics session, so shader compilation, visual acceptance, and GPU-backed measurements could not be performed in this environment. Do not interpret this blank table as a pass.
+The Godot 4.7.2 Stable GitHub Actions run [43030799925](https://github.com/BrainEno/where-is-school/actions/runs/43030799925) completed successfully at commit `0529092be4317a59baa94b870c06b279b1cb03c7`: its import audit and headless suite passed, including `tests/painterly_rendering_test.gd`. This validates the CI headless path, not the Windows interactive renderer or visual acceptance. No Windows graphics session or GPU profiler was used, so the benchmark table remains unmeasured; do not interpret blank rows as performance results.
 
 | Resolution | Tier | Average FPS | Average frame ms | Average process ms | Average draw calls | Device / notes |
 |---|---|---:|---:|---:|---:|---|
@@ -80,6 +80,46 @@ No results are recorded yet. This checkout has no Godot executable or Windows gr
 3. Press **B**, then **Enter**. Keep the window focused and copy the three `PAINTERLY_BENCHMARK` result lines, which include the measured window width and height.
 4. Set the window to exactly **1920×1080** and repeat without changing display scaling, driver, or power mode. The timed benchmark disables and restores VSync on its own. If the monitor can only show 1920×1080 in fullscreen, use **F11** in the lab; its HUD and benchmark log should report the actual window size.
 5. Append the six measured rows plus GPU/driver and a short visual verdict to this ADR. If the Windows build reports shader errors or the style obscures shape/readability, do not accept the current preset values.
+
+## Issue #81 — transform, contour, material, and test boundaries
+
+The Issue #81 hardening is scoped to this lab and does not apply either shader globally or change production scenes, `CameraRig`, project render settings, or imported/shared production materials. It is based on the `359ed4ad1d57f02490a09048ed4536405a82e6a6` mainline base.
+
+### Transform contract
+
+- Environment color fields and brush coordinates use `MODEL_MATRIX * vec4(VERTEX, 1.0)`, so those fields are evaluated in world space rather than swimming with object-local coordinates.
+- Surface orientation uses `MODEL_NORMAL_MATRIX * NORMAL`; the interpolated normal is normalized again where it is consumed. This is the inverse-transpose normal transform required for rotated, non-uniformly scaled transforms.
+- The inverted-hull pass now computes a world-space normal offset and maps that displacement back to model space with `transpose(MODEL_NORMAL_MATRIX)`. Its `line_width` is a world-unit distance, not a screen-pixel width; perspective makes the apparent stroke narrower with distance.
+- The headless test checks the transform algebra for rotated positive and mirrored/non-uniform bases, including normal/tangent perpendicularity and the resulting world-space outline offset. It also instantiates temporary rotated, non-uniform and negative-scale mesh probes for the lab's contour eligibility policy. This validates the equations and policy, not rasterized culling or the final appearance of a negative-scale mesh.
+- Singular/zero-scale transforms are not supported. The general world-space shader pattern does not make a singular normal matrix invertible.
+
+### Contour selection and remaining geometry risk
+
+The lab now uses a positive list of reviewed, broad sample forms and requires a conservative lower bound on each candidate's world-space thickness to exceed twice the outline shader's maximum wobble-expanded line width. The bound uses the inverse global basis and rejects singular/nearly singular transforms, so parent-induced shear does not make a thin feature look safer than it is. The floor, door handle, book, desk legs, unknown meshes, and sufficiently thin plates therefore do not receive the outline pass. This is a conservative lab policy, not a general topology-aware outline solution.
+
+An inverted hull can still show seams or double lines on hard-normal splits, concave/self-overlapping geometry, and separate meshes whose outlines meet or intersect (for example, a frame next to a panel). No generic shader-only rule can infer which of those authored edges should be retained. Windows visual review must inspect those cases; if a candidate shows a double line, remove it from the lab's allowlist rather than widening or globally applying the pass.
+
+### Albedo migration contract
+
+Painterly migration accepts `BaseMaterial3D` albedo color, albedo texture, and UV1 scale/offset when the source is opaque, uses ordinary UVs, and matches the painterly sampler's linear-mipmap/repeat settings. Environment meshes with per-surface source materials are styled per surface; a mesh-level `material_override` remains a mesh-level source. Character surfaces use the same migration path.
+
+Unsupported material types and albedo features that the shader does not reproduce—UV1 triplanar mapping, vertex-color albedo, detail albedo, transparency, MSDF or forced-sRGB albedo, a source `next_pass`, and non-matching texture filter/repeat settings—are **left on the source material and reported with a warning**. They are not silently replaced with the preset's fallback color. Other lighting properties such as metallic/roughness maps are intentionally outside this painterly albedo study and are not migrated.
+
+The test uses a generated texture fixture and non-default UV transform, verifies both environment and character shader parameters, and checks that unsupported sources are rejected without mutating the destination. It also retains the original imported-color comparison.
+
+### Test teardown and evidence status
+
+The test loads the isolated scene without retaining a deep ResourceLoader cache entry. The lab owns its loaded material templates as instance fields rather than script-level `preload` constants. The test queues the instantiated lab and transform probes for deletion, waits for process-frame cleanup, synchronizes pending rendering-server work, releases its generated texture/material fixture, checks weak references, and removes its watchdog before requesting exit. These assertions cover test-owned references; they do not suppress engine diagnostics or equate a passing assertion with a clean renderer shutdown.
+
+The first Godot 4.7.2 CI attempt exposed 16 warnings-as-errors: the weak references returned by `weakref()` had been inferred with `:=`. All 16 locals now declare `WeakRef` explicitly. The subsequent run [43030799925](https://github.com/BrainEno/where-is-school/actions/runs/43030799925) passed the import audit and headless test suite, including `painterly_rendering_test.gd`; the CI engine-noise audit emitted no `painterly_rendering` error/warning notice. Thus the previously reported `2 ObjectDB leak / 1 resource still in use` diagnostic was **not reproduced by that CI run**, but this does not identify the cause of the earlier report or attribute it to renderer teardown. No checks were disabled and no errors were suppressed. The CI run was not a verbose per-object reference trace; if the diagnostic returns on Windows or another renderer, preserve the complete `--verbose` exit log and compare a minimal lab-only run against the test.
+
+### Windows manual checklist for Issue #81
+
+1. The Godot 4.7.2 CI import audit and headless suite passed at `0529092`. On Windows, open `scenes/dev/painterly_lab/painterly_lab.tscn` in the standard editor, run the current scene (F6), wait for shader compilation, and confirm there are no renderer/shader errors. This interactive check is for the Owner's adoption decision; CI does not replace it.
+2. At **1600×900** and **1920×1080**, inspect the three tiers and character treatment. Use a temporary lab-only mesh probe with rotation plus non-uniform positive scale, then mirror one axis with negative scale; check contour orientation, constant world-space extrusion, and visible thickness. Do not save the probe into a production scene.
+3. Inspect the back/side-wall junction, door frame/panel, plant pot/crown, desk top/legs, book, handle, and a thin plate. Record any shell intersection, hard-edge seam, or double line; confirm excluded details stay unoutlined.
+4. `godot --headless --path . --script res://tests/painterly_rendering_test.gd` passed in the linked Godot 4.7.2 CI run. If you re-run it on Windows, retain the complete log through process exit (use `--verbose` when investigating references), including any `ObjectDB` or resource-in-use diagnostics; a PASS verdict alone does not establish that those warnings are absent.
+5. Performance `TIME_PROCESS` remains CPU-side engine process time. No GPU time or performance result is recorded without an external GPU profiler.
 
 ## Consequences
 

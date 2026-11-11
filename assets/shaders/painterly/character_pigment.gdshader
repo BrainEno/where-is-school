@@ -4,6 +4,8 @@ render_mode diffuse_burley, specular_disabled, cull_back;
 // Character model colors are authored per surface in the GLB. This material preserves
 // those colors, adds only restrained pigment wobble, and intentionally has no outline pass.
 uniform vec4 base_color : source_color = vec4(0.55, 0.46, 0.39, 1.0);
+uniform vec3 base_uv_scale = vec3(1.0);
+uniform vec3 base_uv_offset = vec3(0.0);
 uniform sampler2D base_texture : source_color, filter_linear_mipmap, repeat_enable;
 uniform bool use_base_texture = false;
 uniform float pigment_wobble : hint_range(0.0, 0.12, 0.001) = 0.018;
@@ -36,7 +38,8 @@ void vertex() {
 void fragment() {
 	vec4 pigment = base_color;
 	if (use_base_texture) {
-		pigment *= texture(base_texture, UV);
+		vec2 base_uv = UV * base_uv_scale.xy + base_uv_offset.xy;
+		pigment *= texture(base_texture, base_uv);
 	}
 	float variation = (value_noise(world_position * pigment_scale) - 0.5) * 2.0;
 	ALBEDO = pigment.rgb * (1.0 + variation * pigment_wobble);
