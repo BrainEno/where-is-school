@@ -1,44 +1,56 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://58m2t05meudt"]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
-[ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
+[ext_resource type="Script" uid="uid://ddj70lbok3wwq" path="res://scripts/world/location_host.gd" id="2_location_host"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_game_ui"]
-[ext_resource type="Script" path="res://scripts/dialogue/dialogue_controller.gd" id="4_dialogue_controller"]
-[ext_resource type="Script" path="res://scripts/world/opening_sequence.gd" id="5_opening_sequence"]
-[ext_resource type="AudioStream" path="res://assets/audio/bell_second.wav" id="6_bell"]
-[ext_resource type="AudioStream" path="res://assets/audio/wake_thud.wav" id="7_wake"]
-[ext_resource type="Script" path="res://scripts/world/inner_voice_director.gd" id="8_inner_voice"]
+[ext_resource type="Script" uid="uid://0hwmojqh5ntw" path="res://scripts/dialogue/dialogue_controller.gd" id="4_dialogue_controller"]
+[ext_resource type="Script" uid="uid://d1knid7s7gpd4" path="res://scripts/world/opening_sequence.gd" id="5_opening_sequence"]
+[ext_resource type="AudioStream" uid="uid://chsy3jvykthpl" path="res://assets/audio/bell_second.wav" id="6_bell"]
+[ext_resource type="AudioStream" uid="uid://hwaj8pgsxwgi" path="res://assets/audio/wake_thud.wav" id="7_wake"]
+[ext_resource type="Script" uid="uid://o1icq4k1kewy" path="res://scripts/world/inner_voice_director.gd" id="8_inner_voice"]
 [ext_resource type="PackedScene" path="res://scenes/actors/npc/companion.tscn" id="9_companion"]
-[ext_resource type="Script" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
+[ext_resource type="Script" uid="uid://m455ce54e6dl" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
+[ext_resource type="PackedScene" uid="uid://uxfs2dwvpkyg" path="res://scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb" id="11_blune"]
+[ext_resource type="AnimationLibrary" uid="uid://b5dcybjxcp6g7" path="res://scenes/dev/animation_retarget_test/UAL1_Standard.glb" id="12_th5th"]
 
-[node name="Main" type="Node3D"]
+[node name="Main" type="Node3D" unique_id=241961703]
 
-[node name="LocationHost" type="Node3D" parent="."]
+[node name="LocationHost" type="Node3D" parent="." unique_id=787173916]
 script = ExtResource("2_location_host")
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
-position = Vector3(0, 0, 0.85)
+[node name="Player" parent="." unique_id=748211925 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)
 
-[node name="BellAudio" type="AudioStreamPlayer" parent="."]
+[node name="BellAudio" type="AudioStreamPlayer" parent="." unique_id=723093363]
 stream = ExtResource("6_bell")
 volume_db = -9.0
 
-[node name="WakeAudio" type="AudioStreamPlayer" parent="."]
+[node name="WakeAudio" type="AudioStreamPlayer" parent="." unique_id=512388799]
 stream = ExtResource("7_wake")
 volume_db = -13.0
 
-[node name="GameUI" parent="." instance=ExtResource("3_game_ui")]
+[node name="GameUI" parent="." unique_id=167202241 instance=ExtResource("3_game_ui")]
 
-[node name="DialogueController" type="Node" parent="."]
+[node name="DialogueController" type="Node" parent="." unique_id=195601031]
 script = ExtResource("4_dialogue_controller")
 
-[node name="OpeningSequence" type="Node" parent="."]
+[node name="OpeningSequence" type="Node" parent="." unique_id=1014575770]
 script = ExtResource("5_opening_sequence")
 
-[node name="InnerVoiceDirector" type="Node" parent="."]
+[node name="InnerVoiceDirector" type="Node" parent="." unique_id=1569113504]
 script = ExtResource("8_inner_voice")
 
-[node name="Companion" parent="." instance=ExtResource("9_companion")]
+[node name="Companion" parent="." unique_id=1803948979 instance=ExtResource("9_companion")]
 
-[node name="DisplayMode" type="Node" parent="."]
+[node name="DisplayMode" type="Node" parent="." unique_id=881760197]
 script = ExtResource("10_display_mode")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=81567577]
+
+[node name="ProtagonistRetargetTest" type="Node3D" parent="." unique_id=897118931]
+
+[node name="protagonist_retarget_ready" parent="ProtagonistRetargetTest" unique_id=1113317427 instance=ExtResource("11_blune")]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ProtagonistRetargetTest" unique_id=1853854369]
+root_node = NodePath("../protagonist_retarget_ready")
+libraries/UAL1_Standard = ExtResource("12_th5th")

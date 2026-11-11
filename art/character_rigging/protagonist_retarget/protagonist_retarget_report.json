@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "script_version": "1.0.0",
+  "created_utc": "2026-11-10T14:28:47.950149+00:00",
+  "source": "D:\\develop\\games\\where-is-school\\assets\\models\\protagonist\\protagonist.glb",
+  "blender_version": "5.2.3 LTS",
+  "outputs": {
+    "blend": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\protagonist_retarget\\protagonist_retarget_ready.blend",
+    "glb": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\protagonist_retarget\\protagonist_retarget_ready.glb"
+  },
+  "skeleton": {
+    "armature": "RIG_Protagonist_Blockout",
+    "bone_names": [
+      "Chest",
+      "Head",
+      "Hips",
+      "LeftFoot",
+      "LeftHand",
+      "LeftLowerArm",
+      "LeftLowerLeg",
+      "LeftShoulder",
+      "LeftUpperArm",
+      "LeftUpperLeg",
+      "Neck",
+      "RightFoot",
+      "RightHand",
+      "RightLowerArm",
+      "RightLowerLeg",
+      "RightShoulder",
+      "RightUpperArm",
+      "RightUpperLeg",
+      "Root",
+      "Spine",
+      "UpperChest"
+    ],
+    "bone_count": 21,
+    "deform_bone_count": 15,
+    "profile_target": "Godot SkeletonProfileHumanoid",
+    "hierarchy": {
+      "Root": [
+        "Hips"
+      ],
+      "Hips": [
+        "Spine",
+        "LeftUpperLeg",
+        "RightUpperLeg"
+      ],
+      "Spine": [
+        "Chest"
+      ],
+      "Chest": [
+        "UpperChest"
+      ],
+      "UpperChest": [
+        "Neck",
+        "LeftShoulder",
+        "RightShoulder"
+      ]
+    },
+    "added_non_deform_bones": [
+      "Hips",
+      "Chest",
+      "UpperChest",
+      "LeftShoulder",
+      "RightShoulder"
+    ]
+  },
+  "summary": {
+    "weighted_mesh_objects": 78,
+    "rest_bounds_preserved_within_2mm": true,
+    "rest_bounds_before": {
+      "min": [
+        -0.27796950936317444,
+        -0.2149999439716339,
+        0.01699998416006565
+      ],
+      "max": [
+        0.2779695391654968,
+        0.12199993431568146,
+        1.743880271911621
+      ],
+      "size": [
+        0.5559390485286713,
+        0.33699987828731537,
+        1.7268802877515554
+      ]
+    },
+    "rest_bounds_after": {
+      "min": [
+        -0.2779695391654968,
+        -0.2149999588727951,
+        0.017000064253807068
+      ],
+      "max": [
+        0.2779695391654968,
+        0.12199994176626205,
+        1.743880271911621
+      ],
+      "size": [
+        0.5559390783309937,
+        0.33699990063905716,
+        1.726880207657814
+      ]
+    },
+    "excluded_helper_meshes": [
+      "Icosphere"
+    ],
+    "animations_created": 0
+  },
+  "warnings": [
+    "No animation is retargeted by this script.",
+    "The target is A-pose-like; enable Fix Silhouette in Godot only after reviewing its import preview.",
+    "Hands/fingers and toes remain single rigid hand/foot parts; optional finger/toe profile bones are not added.",
+    "Keep the original protagonist.glb. Test this output before changing the production wrapper."
+  ]
+}
