@@ -520,6 +520,23 @@ func _validate_conversation(conversation: Conversation, path: String) -> void:
 		conversation.start_id = conversation.order[0]
 	elif not conversation.nodes.has(conversation.start_id):
 		errors.append("%s start node '%s' does not exist." % [label, conversation.start_id])
+	else:
+		# Whatever starts a conversation has to be able to say something. A start
+		# node with conditions is skipped like any other silent node, and when
+		# nothing follows it the conversation ends inside the call that started it:
+		# no line is ever presented, and a caller that waits for the end signal
+		# after starting it waits forever. Keeping the first node unconditional
+		# makes the invariant local and checkable; the condition belongs on the
+		# second node.
+		var first: DialogueNode = conversation.nodes[conversation.start_id]
+		if not (first.requires.is_empty() and first.all_flags.is_empty()
+				and first.not_flags.is_empty()):
+			errors.append(
+				("%s: the start node '%s' is conditional, so the conversation can "
+				+ "begin by showing nothing. Move the conditions to the second node "
+				+ "and let the first one always present a line.")
+				% [label, conversation.start_id]
+			)
 
 	for node_id in conversation.order:
 		var node: DialogueNode = conversation.nodes[node_id]

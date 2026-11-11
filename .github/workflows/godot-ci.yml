@@ -154,6 +154,10 @@ jobs:
           run_check narrative_state 180 godot --headless --path . --script res://tests/narrative_state_test.gd || status=1
           run_check content 180 godot --headless --path . --script res://tests/dialogue_content_test.gd || status=1
           run_check dialogue_runtime 180 godot --headless --path . --script res://tests/dialogue_runtime_test.gd || status=1
+          # A conversation can finish inside the call that started it; the director must
+          # not then wait for a signal that was already sent. This check hangs (and the
+          # watchdog fails it) if that regresses, which is the point of it.
+          run_check dialogue_sync_finish 180 godot --headless --path . --script res://tests/dialogue_sync_finish_test.gd || status=1
           run_check dialogue_validation 180 godot --headless --path . --script res://tests/dialogue_validation_test.gd || status=1
           run_check dialogue_parity 180 godot --headless --path . --script res://tests/dialogue_parity_test.gd || status=1
           run_check i18n 120 godot --headless --path . --script res://tests/i18n_test.gd || status=1

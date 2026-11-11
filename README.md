@@ -40,7 +40,7 @@ and says so, along with the controls and the known cosmetic gaps.
 **What is in it.** The executable embeds its pack, so there is nothing to keep beside it.
 `tools/verify_build.py` reads that pack back and fails the build if the repository leaked
 into it: no `tests/`, no `docs/screenshots/`, no 10 MB source font — the shipped font is a
-325 KiB subset of the characters the game can actually draw, rebuilt by
+376 KiB subset of the characters the game can actually draw (385,416 bytes), rebuilt by
 `tools/subset_font.py` whenever text changes. `docs/IMPLEMENTATION_NOTES_BUILD.md` records
 why each of those decisions was made and what the build still does not have (an icon, a
 signature, macOS and Linux).

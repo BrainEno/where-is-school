@@ -109,7 +109,7 @@ is small now" is worth nothing without them:
 | Part | Size | Note |
 |---|---|---|
 | The game (pack) | **1.31 MiB**, 246 files | Everything the engine loads: scenes, scripts, dialogue JSON, the subset font, three models, five sounds. |
-| Largest single entries | 225 KiB `.fontdata`, 206 KiB bench `.scn`, 134 KiB backpack `.scn` | The font's converted form is smaller than the 325 KiB `.ttf` it comes from, because the importer compresses it. |
+| Largest single entries | 225 KiB `.fontdata`, 206 KiB bench `.scn`, 134 KiB backpack `.scn` | The font's converted form is smaller than the 385,416-byte `.ttf` it comes from, because the importer compresses it. |
 | Executable | **105 MiB** | Almost entirely the engine: the 4.7.2 release template. The game is 1% of it. |
 | Zip | **37 MiB** | What actually travels. |
 
