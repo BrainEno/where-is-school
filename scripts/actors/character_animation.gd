@@ -352,26 +352,45 @@ static func x_signs(skeleton: Skeleton3D, rig: Dictionary) -> Dictionary:
 
 
 ## One entry per joint family, so a log can show what was measured without printing 19 numbers.
-## A family whose left and right disagree is printed as `mixed`, which is a rig to look at.
+## Mirrored bones legitimately measure mirrored signs, so a family whose two sides disagree
+## prints both: `fore_arm L+ R-` says the rig was measured, `mixed` would say nothing.
 static func signs_summary(report: Dictionary) -> String:
 	var signs: Dictionary = report.get("x_signs", {})
 	if signs.is_empty():
 		return "no signs"
-	var families := {}
+	var by_family := {}
 	for canonical: String in signs:
 		var family := canonical
-		if family.ends_with(".L") or family.ends_with(".R"):
+		var side := ""
+		if family.ends_with(".L"):
 			family = family.substr(0, family.length() - 2)
-		var value := float(signs[canonical])
-		if not families.has(family):
-			families[family] = value
-		elif not is_equal_approx(float(families[family]), value):
-			families[family] = 0.0
+			side = "L"
+		elif family.ends_with(".R"):
+			family = family.substr(0, family.length() - 2)
+			side = "R"
+		if not by_family.has(family):
+			by_family[family] = {}
+		var sides: Dictionary = by_family[family]
+		sides[side] = float(signs[canonical])
 	var parts: PackedStringArray = []
-	for family: String in families:
-		var value := float(families[family])
-		parts.append("%s %s" % [family, "+" if value > 0.0 else ("-" if value < 0.0 else "mixed")])
+	for family: String in by_family:
+		var sides: Dictionary = by_family[family]
+		var left := float(sides.get("L", sides.get("", 1.0)))
+		var right := float(sides.get("R", left))
+		if is_equal_approx(left, right):
+			parts.append("%s %s" % [family, sign_text(left)])
+		else:
+			parts.append("%s L%s R%s" % [family, sign_text(left), sign_text(right)])
 	return ", ".join(parts)
+
+
+## `+`, `-` or `0`, for the summaries above.
+static func sign_text(value: float) -> String:
+	if value > 0.0:
+		return "+"
+	if value < 0.0:
+		return "-"
+	return "0"
 
 
 ## Builds the four clips for one rig and registers them on `player` as `char/…`.
