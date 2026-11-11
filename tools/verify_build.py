@@ -9,6 +9,15 @@ Usage (from the repository root, after an export):
 
     python3 tools/verify_build.py --exe build/windows/where-is-school.exe
     python3 tools/verify_build.py --pck build/windows/where-is-school.pck
+    python3 tools/verify_build.py --package dist/where-is-school-0.1.0-windows.zip --expect-version 0.1.0
+    python3 tools/verify_build.py --preset export_presets.cfg --expect-version 0.1.0
+
+`--package` is what a release is checked with: it reads the zip a player downloads, checks
+its layout and naming, then reads the executable out of it and checks that too — the icon
+and version resources Windows will show, the ELF header Linux needs, and the pack inside
+either. `--preset` is the cheap pre-flight: the same claims, read from the preset file,
+before an export that takes twenty minutes. Neither replaces the other; the preset says what
+should have happened and the file says what did.
 
 `--exe` reads the pack embedded at the end of the executable, so it inspects the file that
 would be handed to a player rather than a sibling the export happened to leave behind.
@@ -42,7 +51,8 @@ from __future__ import annotations
 import argparse
 import struct
 import sys
-from dataclasses import dataclass
+import zipfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
 MAGIC = b"GDPC"
@@ -276,8 +286,8 @@ def read_pack(blob: bytes, base: int) -> tuple[list[tuple[str, int]], dict[str, 
     return _read_directory(blob, directory_offset), header
 
 
-def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
-    blob = path.read_bytes()
+def load_blob(blob: bytes, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
+    """Read a pack from bytes, so a caller can hand over an executable from inside a zip."""
     if not embedded:
         return read_pack(blob, 0)
 
@@ -307,6 +317,10 @@ def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, i
         f"no readable pack among {len(starts)} candidate('GDPC') offset(s): "
         + "; ".join(problems[:4])
     )
+
+
+def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
+    return load_blob(path.read_bytes(), embedded)
 
 
 # Extensions that name the thing itself. An imported resource is packed as
@@ -459,34 +473,701 @@ def category_totals(entries: list[tuple[str, int]]) -> dict[str, dict]:
     return totals
 
 
+# ---------------------------------------------------------------------------------------
+# The executable's own metadata: what Explorer and a file manager will show
+# ---------------------------------------------------------------------------------------
+#
+# "The preset has an icon path" is not the same claim as "the executable carries an icon".
+# Godot patches the Windows template's resource section during the export (natively since
+# 4.x, `platform/windows/export/template_modifier.cpp`: no `rcedit`, no Wine), and everything
+# it writes can be read back out of the finished file. So this section reads the PE resource
+# directory — RT_ICON, RT_GROUP_ICON, RT_VERSION — and checks the resource, not the wish.
+#
+# Linux has no such thing: an ELF has no icon and no version resource, and the launcher file
+# plays that role. So the Linux check is about the package: the desktop entry, the icon next
+# to it, and an executable the file manager is allowed to run.
+
+PE_SIGNATURE = b"PE\x00\x00"
+ELF_MAGIC = b"\x7fELF"
+RT_ICON = 3
+RT_GROUP_ICON = 14
+RT_VERSION = 16
+VS_FIXEDFILEINFO_SIGNATURE = 0xFEEF04BD
+# A resource directory entry's high bit means "this field is an offset, not an id".
+RESOURCE_OFFSET_FLAG = 0x80000000
+# What a version resource has to say about the product, beyond the numbers.
+VERSION_STRINGS = ("FileVersion", "ProductVersion", "ProductName", "CompanyName", "FileDescription")
+
+
+class PeError(Exception):
+    """An executable whose resource section cannot be read."""
+
+
+@dataclass
+class Section:
+    virtual_address: int
+    virtual_size: int
+    raw_size: int
+    raw_pointer: int
+
+
+def _pe_sections(blob: bytes) -> list[Section]:
+    if len(blob) < 0x40 or blob[:2] != b"MZ":
+        raise PeError("no MZ header: not a Windows executable")
+    (pe_offset,) = struct.unpack_from("<I", blob, 0x3C)
+    if blob[pe_offset : pe_offset + 4] != PE_SIGNATURE:
+        raise PeError(f"no PE signature at 0x{pe_offset:x}")
+    (section_count,) = struct.unpack_from("<H", blob, pe_offset + 6)
+    (optional_size,) = struct.unpack_from("<H", blob, pe_offset + 20)
+    sections = []
+    table = pe_offset + 24 + optional_size
+    for index in range(section_count):
+        entry = table + 40 * index
+        if entry + 40 > len(blob):
+            raise PeError(f"section header {index} runs past the end of the file")
+        virtual_size, virtual_address, raw_size, raw_pointer = struct.unpack_from("<IIII", blob, entry + 8)
+        sections.append(Section(virtual_address, virtual_size, raw_size, raw_pointer))
+    if not sections:
+        raise PeError("no sections: not a linked executable")
+    return sections
+
+
+def _offset_for_rva(sections: list[Section], rva: int) -> int:
+    for section in sections:
+        span = max(section.virtual_size, section.raw_size)
+        if section.virtual_address <= rva < section.virtual_address + span:
+            return section.raw_pointer + (rva - section.virtual_address)
+    raise PeError(f"address 0x{rva:x} is in no section")
+
+
+def _resource_name(blob: bytes, base: int, offset: int) -> str:
+    (length,) = struct.unpack_from("<H", blob, base + offset)
+    return blob[base + offset + 2 : base + offset + 2 + 2 * length].decode("utf-16-le", "replace")
+
+
+def _walk_resources(
+    blob: bytes, base: int, offset: int, chain: tuple, found: list[tuple[tuple, int, int]]
+) -> None:
+    if len(chain) > 3:
+        # Deeper than type/name/language: nothing in a Windows resource section goes there.
+        return
+    header = base + offset
+    _characteristics, _stamp, _major, _minor, named, ids = struct.unpack_from("<IIHHHH", blob, header)
+    for index in range(named + ids):
+        name_field, data_field = struct.unpack_from("<II", blob, header + 16 + 8 * index)
+        name: object = _resource_name(blob, base, name_field & ~RESOURCE_OFFSET_FLAG) if name_field & RESOURCE_OFFSET_FLAG else name_field
+        if data_field & RESOURCE_OFFSET_FLAG:
+            _walk_resources(blob, base, data_field & ~RESOURCE_OFFSET_FLAG, chain + (name,), found)
+        else:
+            data_rva, size = struct.unpack_from("<II", blob, base + data_field)
+            found.append((chain + (name,), data_rva, size))
+
+
+def read_pe_resources(blob: bytes) -> dict[int, dict[object, bytes]]:
+    """`{type id: {name id: bytes}}` for every resource in a Windows executable."""
+    sections = _pe_sections(blob)
+    (pe_offset,) = struct.unpack_from("<I", blob, 0x3C)
+    (optional_size,) = struct.unpack_from("<H", blob, pe_offset + 20)
+    optional = pe_offset + 24
+    (magic,) = struct.unpack_from("<H", blob, optional)
+    directories = optional + (96 if magic == 0x10B else 112 if magic == 0x20B else 0)
+    if not directories:
+        raise PeError(f"unknown optional header magic 0x{magic:x}")
+    resource_rva, resource_size = struct.unpack_from("<II", blob, directories + 16)
+    if not resource_rva or not resource_size:
+        raise PeError("the executable has no resource directory")
+    base = _offset_for_rva(sections, resource_rva)
+    found: list[tuple[tuple, int, int]] = []
+    _walk_resources(blob, base, 0, (), found)
+    resources: dict[int, dict[object, bytes]] = {}
+    for chain, rva, size in found:
+        if len(chain) != 3:
+            continue
+        kind, name, _language = chain
+        if not isinstance(kind, int):
+            continue
+        offset = _offset_for_rva(sections, rva)
+        resources.setdefault(kind, {})[name] = blob[offset : offset + size]
+    return resources
+
+
+def _version_block(blob: bytes, offset: int) -> dict:
+    """One VS_VERSIONINFO-ish block: length, key, value and children."""
+    length, value_length, kind = struct.unpack_from("<HHH", blob, offset)
+    position = offset + 6
+    end_of_key = position
+    while end_of_key + 2 <= len(blob) and blob[end_of_key : end_of_key + 2] != b"\x00\x00":
+        end_of_key += 2
+    key = blob[position:end_of_key].decode("utf-16-le", "replace")
+    # Alignment is relative to the block's own start, not to the file's.
+    position = end_of_key + 2 + ((-(end_of_key + 2 - offset)) % 4)
+    if kind == 1:
+        value = blob[position : position + 2 * value_length]
+        position += 2 * value_length
+    elif value_length:
+        value = blob[position : position + value_length]
+        position += value_length
+    else:
+        value = b""
+    position += (-(position - offset)) % 4
+    limit = min(offset + length, len(blob))
+    children = []
+    while position + 6 <= limit:
+        (child_length,) = struct.unpack_from("<H", blob, position)
+        if child_length == 0:
+            break
+        children.append(_version_block(blob, position))
+        position = (position + child_length + 3) & ~3
+    return {"key": key, "value": value, "children": children}
+
+
+def read_version_info(payload: bytes) -> tuple[dict[str, str], dict[str, int]]:
+    """The `StringFileInfo` strings and the `VS_FIXEDFILEINFO` numbers of a version resource."""
+    root = _version_block(payload, 0)
+    if root["key"] != "VS_VERSION_INFO":
+        raise PeError(f'the version resource starts with {root["key"]!r}, not "VS_VERSION_INFO"')
+    strings: dict[str, str] = {}
+    for child in root["children"]:
+        if child["key"] != "StringFileInfo":
+            continue
+        for table in child["children"]:
+            for entry in table["children"]:
+                strings[entry["key"]] = entry["value"].decode("utf-16-le", "replace").rstrip("\x00")
+    fixed: dict[str, int] = {}
+    value = root["value"]
+    if len(value) >= 24:
+        signature, _structure = struct.unpack_from("<II", value, 0)
+        file_ms, file_ls, product_ms, product_ls = struct.unpack_from("<IIII", value, 8)
+        fixed = {
+            "signature": signature,
+            "file_ms": file_ms,
+            "file_ls": file_ls,
+            "product_ms": product_ms,
+            "product_ls": product_ls,
+        }
+    return strings, fixed
+
+
+def resource_version_of(version: str) -> tuple[str, str]:
+    """`("0.1.0-rc.1")` -> the four-part resource form `("0.1.0.0", "0.1.0")`.
+
+    A version resource holds four integers, so the prerelease tail of a tag cannot survive
+    into it; the package name carries the full string and the executable carries the numbers.
+    """
+    core = version.split("-", 1)[0]
+    parts = core.split(".")
+    if len(parts) != 3:
+        raise ValueError(f"{version!r} is not MAJOR.MINOR.PATCH")
+    for part in parts:
+        if not part.isdigit() or int(part) > 65535:
+            raise ValueError(f"{version!r} does not fit in a version resource")
+    return ".".join(parts + ["0"]), ".".join(parts)
+
+
+def _pack_words(number: int) -> tuple[int, int]:
+    return (number >> 16) & 0xFFFF, number & 0xFFFF
+
+
+def verify_windows_metadata(blob: bytes, expect_version: str | None) -> tuple[list[str], list[str]]:
+    """Check the icon and version resources of a finished Windows executable."""
+    problems: list[str] = []
+    notes: list[str] = []
+    try:
+        resources = read_pe_resources(blob)
+    except PeError as error:
+        return [f"{error}"], notes
+
+    groups = resources.get(RT_GROUP_ICON) or {}
+    icons = resources.get(RT_ICON) or {}
+    if not groups:
+        problems.append(
+            "the executable has no icon resource (RT_GROUP_ICON), so it would show the "
+            "engine's default icon; application/modify_resources and application/icon "
+            "have to be set for the export to patch it in"
+        )
+    else:
+        group = next(iter(groups.values()))
+        if len(group) < 6:
+            problems.append("the icon group is too short to be an icon directory")
+        else:
+            reserved, kind, count = struct.unpack_from("<HHH", group, 0)
+            if (reserved, kind) != (0, 1):
+                problems.append(f"the icon group is not an icon directory (reserved {reserved}, type {kind})")
+            else:
+                sizes, named = [], []
+                for index in range(min(count, (len(group) - 6) // 14)):
+                    width, _height, _colours, _res, _planes, _bits, _length, ident = struct.unpack_from(
+                        "<BBBBHHIH", group, 6 + 14 * index
+                    )
+                    sizes.append(width or 256)
+                    named.append(ident)
+                notes.append("icon " + "/".join(str(size) for size in sorted(sizes)) + " px")
+                if len(sizes) < 2:
+                    problems.append(
+                        f"the executable carries a single {sizes[0] if sizes else 0} px icon; "
+                        "Windows wants small and large sizes in one file"
+                    )
+                if sizes and max(sizes) < 48:
+                    problems.append(
+                        f"the largest icon is {max(sizes)} px; a taskbar and an alt-tab entry need 48 or more"
+                    )
+                missing = [ident for ident in named if ident not in icons]
+                if missing:
+                    problems.append(
+                        f"the icon group names image(s) {missing[:4]} that are not in the file "
+                        f"(RT_ICON holds {sorted(icons)[:8]})"
+                    )
+
+    versions = resources.get(RT_VERSION) or {}
+    if not versions:
+        problems.append(
+            "the executable has no version resource (RT_VERSION): Explorer would show no "
+            "version and no publisher"
+        )
+    else:
+        payload = next(iter(versions.values()))
+        try:
+            strings, fixed = read_version_info(payload)
+        except (PeError, struct.error) as error:
+            problems.append(f"the version resource cannot be read: {error}")
+            strings, fixed = {}, {}
+        if strings:
+            missing = [key for key in VERSION_STRINGS if not strings.get(key, "").strip()]
+            if missing:
+                problems.append("the version resource leaves " + ", ".join(missing) + " empty")
+            notes.append(
+                f'version {strings.get("FileVersion", "?")}, '
+                f'{strings.get("ProductName", "?")} by {strings.get("CompanyName", "?")}'
+            )
+        if fixed:
+            if fixed.get("signature") != VS_FIXEDFILEINFO_SIGNATURE:
+                problems.append(
+                    f'the fixed version block has signature 0x{fixed.get("signature", 0):08X}, '
+                    f"expected 0x{VS_FIXEDFILEINFO_SIGNATURE:08X}"
+                )
+            if fixed.get("file_ms") != fixed.get("product_ms") or fixed.get("file_ls") != fixed.get("product_ls"):
+                problems.append(
+                    "the file version and the product version differ in the executable; a "
+                    "release build should carry the same version in both"
+                )
+            if expect_version:
+                try:
+                    expected, _core = resource_version_of(expect_version)
+                except ValueError as error:
+                    problems.append(str(error))
+                else:
+                    want = [int(part) for part in expected.split(".")]
+                    have = _pack_words(fixed.get("file_ms", 0)) + _pack_words(fixed.get("file_ls", 0))
+                    if tuple(want) != have:
+                        problems.append(
+                            f"the executable says version {'.'.join(str(part) for part in have)}, "
+                            f"the release is {expected}"
+                        )
+                    if strings and strings.get("FileVersion", "") != expected:
+                        problems.append(
+                            f'the version resource string FileVersion is {strings.get("FileVersion")!r}, '
+                            f"expected {expected!r}"
+                        )
+    return problems, notes
+
+
+def verify_linux_executable(blob: bytes) -> tuple[list[str], list[str]]:
+    """The Linux half of the same question, which is mostly about being the right thing at all."""
+    problems: list[str] = []
+    notes: list[str] = []
+    if len(blob) < 64 or not blob.startswith(ELF_MAGIC):
+        return ["the file players run is not an ELF binary"], notes
+    elf_class, elf_data = blob[4], blob[5]
+    (kind,) = struct.unpack_from("<H", blob, 16)
+    (machine,) = struct.unpack_from("<H", blob, 18)
+    if (elf_class, elf_data) != (2, 1):
+        problems.append(f"the ELF is class {elf_class}, data {elf_data}; a release is 64-bit little-endian")
+    if machine != 0x3E:
+        problems.append(f"the ELF targets machine 0x{machine:x}, not x86-64 (0x3e)")
+    if kind not in (2, 3):
+        problems.append(f"the ELF is type {kind}; expected an executable or a position-independent one")
+    machine_name = {0x3E: "x86-64", 0x03: "x86", 0xB7: "arm64", 0x28: "arm", 0xF3: "riscv"}.get(machine, "unknown")
+    notes.append(
+        f"ELF {'64-bit' if elf_class == 2 else '32-bit'} type {kind}, machine 0x{machine:02x} ({machine_name})"
+    )
+    return problems, notes
+
+
+# ---------------------------------------------------------------------------------------
+# The package: what a player receives
+# ---------------------------------------------------------------------------------------
+
+# Directories that must never appear in a package, whatever platform it is for. The pack
+# check already keeps them out of the data; this keeps them out of the archive around it,
+# which is where a stray `export.log` or a copied `docs/` folder actually lands.
+PACKAGE_FORBIDDEN_PREFIXES = (
+    "tests/",
+    "tools/",
+    "docs/",
+    "art/",
+    "addons/",
+    ".github/",
+    "scenes/dev/",
+    "scripts/dev/",
+)
+PACKAGE_FORBIDDEN_NAMES = (
+    ".DS_Store",
+    "Thumbs.db",
+    ".gitignore",
+    ".gitattributes",
+)
+PACKAGE_FORBIDDEN_SUFFIXES = (".log", ".pdb", ".tmp", ".import", ".pck", ".md5", ".uid")
+
+# What each platform's package must contain, relative to the folder inside the zip. `{stem}`
+# is the executable's name on that platform. Godot emits `where-is-school.exe` on Windows and
+# `where-is-school.x86_64` on Linux; both are copied in under a name a player can type.
+PACKAGE_REQUIRED = {
+    "windows": ("where-is-school.exe", "HOW-TO-RUN.txt", "licences/COPYRIGHT.md", "licences/NotoSansSC-OFL.txt"),
+    "linux": (
+        "where-is-school",
+        "where-is-school.desktop",
+        "where-is-school.png",
+        "README.txt",
+        "HOW-TO-RUN.txt",
+        "licences/COPYRIGHT.md",
+        "licences/NotoSansSC-OFL.txt",
+    ),
+}
+PACKAGE_EXECUTABLE = {"windows": "where-is-school.exe", "linux": "where-is-school"}
+PACKAGE_SUFFIX = {"windows": "-windows", "linux": "-linux"}
+
+
+@dataclass
+class Package:
+    """A built archive, read into memory, with what the checks found wrong with it."""
+
+    path: Path
+    platform: str
+    folder: str
+    version: str
+    executable: str | None = None
+    blob: bytes = b""
+    problems: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+
+
+def inspect_package(path: Path, expect_version: str | None) -> Package:
+    """Open a release archive and check its layout, naming and executable."""
+    package = Package(path=path, platform="", folder="", version="")
+    try:
+        archive = zipfile.ZipFile(path)
+    except (OSError, zipfile.BadZipFile) as error:
+        package.problems.append(f"{path.name} is not a readable zip: {error}")
+        return package
+
+    with archive:
+        infos = {info.filename: info for info in archive.infolist()}
+        names = list(infos)
+        if not names:
+            package.problems.append(f"{path.name} is empty")
+            return package
+
+        tops = {name.split("/", 1)[0] for name in names}
+        if len(tops) != 1:
+            package.problems.append(
+                f"{path.name} has {len(tops)} top-level entries ({sorted(tops)[:4]}); a package "
+                "is one folder, so that unzipping it cannot scatter files"
+            )
+            return package
+        folder = tops.pop()
+        package.folder = folder
+        if any(not name.startswith(folder + "/") for name in names):
+            package.problems.append(f"{path.name} has entries outside its {folder}/ folder")
+        if any(name.startswith("/") or ".." in name.split("/") for name in names):
+            package.problems.append(f"{path.name} contains an absolute or escaping path")
+
+        # `where-is-school-0.1.0-rc.1-linux.zip` -> version `0.1.0-rc.1`, platform `linux`.
+        stem = path.name[: -len(".zip")] if path.name.endswith(".zip") else path.name
+        platform = next((name for name, suffix in PACKAGE_SUFFIX.items() if stem.endswith(suffix)), "")
+        if not platform:
+            package.problems.append(
+                f"{path.name} does not end with one of {sorted(PACKAGE_SUFFIX.values())}; "
+                "a download has to say which platform it is for"
+            )
+            return package
+        package.platform = platform
+        version = stem[len("where-is-school-") : -len(PACKAGE_SUFFIX[platform])] if stem.startswith("where-is-school-") else ""
+        package.version = version
+        if not version:
+            package.problems.append(f"{path.name} does not carry a version in its name")
+        elif expect_version and version != expect_version:
+            package.problems.append(f"{path.name} is version {version!r}, the build is {expect_version!r}")
+        if folder != stem:
+            package.problems.append(
+                f"the folder inside {path.name} is {folder!r}; it should be {stem!r} so the "
+                "two never disagree about the version"
+            )
+
+        relative = [name[len(folder) + 1 :] for name in names if name.startswith(folder + "/")]
+        present = {name for name in relative if name and not name.endswith("/")}
+        for required in PACKAGE_REQUIRED[platform]:
+            if required not in present:
+                package.problems.append(f"{path.name} is missing {required}")
+
+        for name in sorted(present):
+            if name.startswith(PACKAGE_FORBIDDEN_PREFIXES):
+                package.problems.append(f"{path.name} carries {name}, which is not part of a release")
+            elif name.rsplit("/", 1)[-1] in PACKAGE_FORBIDDEN_NAMES:
+                package.problems.append(f"{path.name} carries {name}, a leftover from a working tree")
+            elif name.endswith(PACKAGE_FORBIDDEN_SUFFIXES):
+                package.problems.append(f"{path.name} carries {name}, which is build output or a log")
+
+        executable = PACKAGE_EXECUTABLE[platform]
+        package.executable = executable
+        if executable not in present:
+            return package
+        package.blob = archive.read(f"{folder}/{executable}")
+        package.notes.append(f"{executable}: {_human(len(package.blob))}")
+
+        if platform == "windows":
+            problems, notes = verify_windows_metadata(package.blob, expect_version or version or None)
+            package.problems.extend(problems)
+            package.notes.extend(notes)
+        else:
+            problems, notes = verify_linux_executable(package.blob)
+            package.problems.extend(problems)
+            package.notes.extend(notes)
+            info = infos[f"{folder}/{executable}"]
+            mode = (info.external_attr >> 16) & 0o777
+            if not mode & 0o111:
+                package.problems.append(
+                    f"{executable} is stored with mode {mode:o} in the zip; without the "
+                    "executable bit the extracted game cannot be run"
+                )
+            launcher_problems, launcher_notes = _check_desktop_entry(archive, f"{folder}/", present)
+            package.problems.extend(launcher_problems)
+            package.notes.extend(launcher_notes)
+    return package
+
+
+def _check_desktop_entry(
+    archive: zipfile.ZipFile, prefix: str, present: set[str]
+) -> tuple[list[str], list[str]]:
+    """The launcher and the icon it names, which is the Linux half of "the exe has an icon"."""
+    problems: list[str] = []
+    notes: list[str] = []
+    try:
+        text = archive.read(prefix + "where-is-school.desktop").decode("utf-8", "replace")
+    except KeyError:
+        return problems, notes
+    fields = {}
+    for line in text.splitlines():
+        key, separator, value = line.partition("=")
+        if separator and not key.startswith("#"):
+            fields[key.strip()] = value.strip()
+    for key in ("Type", "Name", "Exec", "Icon", "Categories"):
+        if not fields.get(key):
+            problems.append(f"where-is-school.desktop has no {key}= line")
+    if fields.get("Type") != "Application":
+        problems.append(f"where-is-school.desktop is type {fields.get('Type')!r}, not Application")
+    icon = fields.get("Icon", "")
+    if icon and f"{icon}.png" not in present:
+        problems.append(
+            f"where-is-school.desktop names icon {icon!r}, but the package has no {icon}.png "
+            "next to it, so a menu entry would show a blank square"
+        )
+    if icon:
+        try:
+            png = archive.read(prefix + f"{icon}.png")
+        except KeyError:
+            png = b""
+        width = height = 0
+        if png[:8] == b"\x89PNG\r\n\x1a\n" and len(png) > 24:
+            width, height = struct.unpack_from(">II", png, 16)
+        if width < 128 or height < 128:
+            problems.append(f"{icon}.png is {width}x{height}; a menu icon should be at least 128 px")
+        else:
+            notes.append(f"icon {width}x{height} px")
+    if "where-is-school" not in fields.get("Exec", ""):
+        problems.append(f"where-is-school.desktop runs {fields.get('Exec')!r}, not the game")
+    notes.append(f"launcher {fields.get('Name', '?')}, {fields.get('Categories', '?')}")
+    return problems, notes
+
+
+# ---------------------------------------------------------------------------------------
+# The preset: the cheap check, before the expensive export
+# ---------------------------------------------------------------------------------------
+
+
+def verify_presets(path: Path, expect_version: str | None) -> tuple[list[str], list[str]]:
+    """What the preset file claims, checked before twenty minutes of exporting.
+
+    This is not a substitute for reading the finished executable — it is the reason a broken
+    preset fails in seconds instead of after an export, and it is why the two checks exist
+    side by side: the preset says what should happen, the resource section says what did.
+    """
+    from export_presets import PresetError, read
+
+    problems: list[str] = []
+    notes: list[str] = []
+    try:
+        presets = read(path)
+    except PresetError as error:
+        return [f"{error}"], notes
+
+    windows = presets.get("Windows Desktop")
+    if not windows:
+        problems.append("export_presets.cfg has no 'Windows Desktop' preset")
+    else:
+        options = windows.options
+        if options.get("application/modify_resources") != "true":
+            problems.append(
+                "the Windows preset has application/modify_resources off, so the export would "
+                "not write an icon or a version into the executable at all"
+            )
+        icon = options.get("application/icon", "")
+        if not icon:
+            problems.append("the Windows preset has no application/icon")
+        else:
+            relative = icon[len("res://") :] if icon.startswith("res://") else icon
+            if not (path.parent / relative).is_file():
+                problems.append(f"the Windows preset's icon {icon} does not exist")
+            elif not relative.lower().endswith((".ico", ".png", ".svg", ".webp")):
+                problems.append(f"the Windows preset's icon {icon} is not an image Godot can convert")
+            else:
+                notes.append(f"icon {relative}")
+        if options.get("binary_format/embed_pck") != "true":
+            problems.append(
+                "the Windows preset does not embed the pack, so the zip would need a .pck next to the exe"
+            )
+        for key in ("application/product_name", "application/company_name", "application/file_description", "application/copyright"):
+            if not options.get(key, "").strip():
+                problems.append(f"the Windows preset leaves {key} empty, so the version resource would too")
+        for key in ("application/file_version", "application/product_version"):
+            value = options.get(key, "")
+            if not value:
+                problems.append(f"the Windows preset leaves {key} empty")
+            elif expect_version:
+                try:
+                    expected, _core = resource_version_of(expect_version)
+                except ValueError as error:
+                    problems.append(str(error))
+                    break
+                if value != expected:
+                    problems.append(f"the Windows preset says {key}={value!r}, the build is {expected!r}")
+        if not problems:
+            notes.append(f"Windows: version {options.get('application/file_version')}, metadata on")
+
+    linux = presets.get("Linux")
+    if not linux:
+        problems.append("export_presets.cfg has no 'Linux' preset, so there is no Linux build to publish")
+    else:
+        if linux.options.get("binary_format/embed_pck") != "true":
+            problems.append("the Linux preset does not embed the pack")
+        architecture = linux.options.get("binary_format/architecture", "")
+        if architecture != "x86_64":
+            problems.append(f"the Linux preset builds for {architecture!r}, not x86_64")
+        if not linux.export_path:
+            problems.append("the Linux preset has no export_path")
+        else:
+            notes.append(f"Linux: {linux.export_path}, {architecture}, pack embedded")
+
+    for preset in (windows, linux):
+        if not preset:
+            continue
+        excluded = preset.exclude_filter
+        for where in ("tests/", "tools/", "docs/", "art/"):
+            if where.rstrip("/") not in excluded:
+                problems.append(f"the {preset.name} preset does not exclude {where} from the pack")
+    return problems, notes
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--exe", type=Path, help="executable with the pack embedded")
     source.add_argument("--pck", type=Path, help="standalone pack file")
+    source.add_argument("--package", type=Path, help="a release zip: layout, executable and pack")
+    source.add_argument("--preset", type=Path, help="export_presets.cfg, checked without exporting")
+    parser.add_argument(
+        "--expect-version",
+        help="the version this build claims to be, 0.1.0 or 0.1.0-rc.1; the executable gets "
+        "the four-part form of it and the package name keeps the whole string",
+    )
     parser.add_argument("--list", action="store_true", help="print every packed path")
     parser.add_argument("--largest", type=int, default=8, help="how many big files to show")
     arguments = parser.parse_args(argv)
 
-    path: Path = arguments.exe or arguments.pck
-    if not path.is_file():
-        print(f"FAIL: {path} does not exist", file=sys.stderr)
-        annotate("error", "build missing", f"{path} does not exist")
-        return 1
+    # The cheap check first: a preset that says the wrong thing costs a second, and an
+    # export costs twenty minutes.
+    if arguments.preset is not None:
+        problems, notes = verify_presets(arguments.preset, arguments.expect_version)
+        for note in notes:
+            print(f"  {note}")
+        for problem in problems:
+            print(f"FAIL: {problem}", file=sys.stderr)
+            annotate("error", "export preset", problem)
+        if problems:
+            return 1
+        print("PASS: the presets describe the build this workflow expects")
+        annotate("notice", "export presets", "; ".join(notes) or "presets checked")
+        return 0
+
+    metadata_problems: list[str] = []
+    metadata_notes: list[str] = []
+    blob = b""
+
+    if arguments.package is not None:
+        if not arguments.package.is_file():
+            print(f"FAIL: {arguments.package} does not exist", file=sys.stderr)
+            annotate("error", "package missing", f"{arguments.package} does not exist")
+            return 1
+        package = inspect_package(arguments.package, arguments.expect_version)
+        print(f"{arguments.package.name}: {package.platform or 'unknown platform'} package")
+        for note in package.notes:
+            print(f"  {note}")
+        for problem in package.problems:
+            print(f"FAIL: {problem}", file=sys.stderr)
+            annotate("error", "package layout", problem)
+        if package.problems:
+            return 1
+        blob = package.blob
+        path = arguments.package
+        # `inspect_package` has already checked this executable's icon, version or ELF
+        # header; the notes it printed above are the record of that.
+        label = f"{arguments.package.name}: {package.executable}"
+    else:
+        path: Path = arguments.exe or arguments.pck
+        if not path.is_file():
+            print(f"FAIL: {path} does not exist", file=sys.stderr)
+            annotate("error", "build missing", f"{path} does not exist")
+            return 1
+        blob = path.read_bytes()
+        label = str(path)
 
     try:
-        entries, header = load(path, embedded=arguments.exe is not None)
+        entries, header = load_blob(blob, embedded=arguments.pck is None)
     except PackError as error:
         print(f"FAIL: {path}: {error}", file=sys.stderr)
         annotate("error", "build unreadable", f"{path.name}: {error}")
         return 1
 
+    # The metadata check answers "what will Explorer or a file manager show", which the pack
+    # cannot answer. A package has already been through it in `inspect_package`; a bare
+    # executable gets the same treatment here so that a local run is not weaker than CI.
+    if arguments.package is None and (arguments.exe is not None):
+        if blob.startswith(ELF_MAGIC):
+            metadata_problems, metadata_notes = verify_linux_executable(blob)
+        else:
+            metadata_problems, metadata_notes = verify_windows_metadata(blob, arguments.expect_version)
+        for note in metadata_notes:
+            print(f"  {note}")
+        for problem in metadata_problems:
+            print(f"FAIL: {problem}", file=sys.stderr)
+            annotate("error", "build metadata", problem)
+        if metadata_problems:
+            return 1
+
     entries.sort(key=lambda entry: entry[1], reverse=True)
     total = sum(size for _, size in entries)
-    print(f"{path}: {len(entries)} file(s), {total / 1048576:.2f} MiB packed")
+    print(f"{label}: {len(entries)} file(s), {total / 1048576:.2f} MiB packed")
     print(f"pack format {header['version']}, written by Godot {header['engine']}")
-    if arguments.exe is not None:
-        exe_size = path.stat().st_size / 1048576
+    if arguments.pck is None:
+        exe_size = len(blob) / 1048576
         print(f"executable: {exe_size:.1f} MiB (pack included)")
         if not 10 <= exe_size <= 150:
             message = f"{exe_size:.1f} MiB is not a plausible size for this build"
