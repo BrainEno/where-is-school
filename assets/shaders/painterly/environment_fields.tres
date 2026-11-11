@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/environment_surface.gdshader" id="1_environment"]
+
+[resource]
+resource_name = "Painterly Environment — Color Fields"
+shader = ExtResource("1_environment")
+shader_parameter/base_color = Color(0.52, 0.45, 0.35, 1)
+shader_parameter/shadow_pigment = Color(0.25, 0.29, 0.25, 1)
+shader_parameter/highlight_pigment = Color(0.78, 0.61, 0.39, 1)
+shader_parameter/brush_pigment = Color(0.37, 0.24, 0.21, 1)
+shader_parameter/use_base_texture = false
+shader_parameter/style_level = 1
+shader_parameter/patch_scale = 0.72
+shader_parameter/patch_strength = 0.24
+shader_parameter/brush_scale = 2.4
+shader_parameter/brush_strength = 0.0

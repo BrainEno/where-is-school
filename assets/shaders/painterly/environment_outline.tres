@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/environment_outline.gdshader" id="1_outline"]
+
+[resource]
+resource_name = "Painterly Environment Outline"
+shader = ExtResource("1_outline")
+shader_parameter/ink_color = Color(0.11, 0.12, 0.11, 1)
+shader_parameter/line_width = 0.018
+shader_parameter/edge_wobble = 0.28
