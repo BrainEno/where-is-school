@@ -97,6 +97,10 @@ static func bake(
 		player.play(clip_name)
 		for frame in frames:
 			player.seek(float(frame) * step, true)
+			# `seek()` writes the poses; the skeleton's cached global transforms are refreshed
+			# on its own update, which is a frame later, so ask for them now instead of reading
+			# the previous frame's.
+			source.force_update_all_bone_transforms()
 			# Global rotations this character should have at this instant, in hierarchy order
 			# is not needed: each is the target's own rest rotation with the source's change
 			# applied, so the bones are independent of each other here.

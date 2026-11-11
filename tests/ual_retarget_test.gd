@@ -261,8 +261,10 @@ func _check_rest_relative(
 		var moment := source_animation.length * float(roundi(float(step) * float(frames - 1) / 3.0)) / float(frames - 1)
 		source_player.play(clip_name)
 		source_player.seek(moment, true)
+		source_skeleton.force_update_all_bone_transforms()
 		target_player.play("%s/%s" % ["baked", clip_name])
 		target_player.seek(moment, true)
+		target_skeleton.force_update_all_bone_transforms()
 		for pair: Dictionary in pairs:
 			var source_index := int(pair["source"])
 			var target_index := int(pair["target"])
