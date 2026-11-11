@@ -319,7 +319,11 @@ func _capture_world() -> Dictionary:
 	var location_host := _world_child("LocationHost")
 	if location_host == null:
 		return {}
-	var location := location_host.get_current() if location_host.has_method("get_current") else null
+	if not location_host.has_method("get_current"):
+		return {}
+	# Typed, not inferred: `get_current()` is a dynamic call on a Node, so a ternary
+	# that can also yield null has no type for the compiler to pick.
+	var location: LocationRoot = location_host.get_current()
 	if location == null:
 		return {}
 	var world: Dictionary = {

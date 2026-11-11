@@ -14,6 +14,8 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN_SCENE := "res://scenes/main/main.tscn"
+const SAVE_PATH := "user://save.json"
+const BROKEN_PATH := "user://save.broken.json"
 
 var _failures: Array[String] = []
 
@@ -195,7 +197,7 @@ func _check_refusal_at_boot() -> void:
 	_game_state.clear()
 	_narrative.clear()
 
-	var file := FileAccess.open(_save.SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
 		_failures.append("Could not write a broken save fixture.")
 		return
@@ -213,7 +215,7 @@ func _check_refusal_at_boot() -> void:
 		"The refusal does not say anything actionable."
 	)
 	_expect(
-		FileAccess.file_exists(_save.BROKEN_PATH),
+		FileAccess.file_exists(BROKEN_PATH),
 		"The unreadable save was not copied aside before the new run started."
 	)
 	_expect(

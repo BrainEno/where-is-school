@@ -12,6 +12,8 @@ extends SceneTree
 ## runs in a second and is the first place to look when a save stops loading.
 
 const Harness = preload("res://tests/test_harness.gd")
+const SAVE_PATH := "user://save.json"
+const BROKEN_PATH := "user://save.broken.json"
 
 var _failures: Array[String] = []
 
@@ -210,11 +212,11 @@ func _expect_payload_refusals() -> void:
 
 	# The refused file is copied, never destroyed.
 	_expect(
-		FileAccess.file_exists(_save.BROKEN_PATH),
-		"The unreadable save was not kept as %s." % _save.BROKEN_PATH
+		FileAccess.file_exists(BROKEN_PATH),
+		"The unreadable save was not kept as %s." % BROKEN_PATH
 	)
 	_expect(
-		FileAccess.file_exists(_save.SAVE_PATH),
+		FileAccess.file_exists(SAVE_PATH),
 		"The unreadable save was deleted from its own path."
 	)
 
@@ -332,9 +334,9 @@ func _expect_seed_round_trip() -> void:
 
 
 func _write_raw(text: String) -> void:
-	var file := FileAccess.open(_save.SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
-		_failures.append("Could not write a fixture save at %s." % _save.SAVE_PATH)
+		_failures.append("Could not write a fixture save at %s." % SAVE_PATH)
 		return
 	file.store_string(text)
 	file.close()
