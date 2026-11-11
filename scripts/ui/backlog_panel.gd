@@ -24,12 +24,54 @@ var _rendered: Array[Dictionary] = []
 ## Supplied by the controller: (descriptor) -> display dictionary in the current
 ## locale. Without it the panel can only re-localise the labels it owns.
 var _resolver: Callable = Callable()
+var _text_scale: float = 1.0
 
 
 func _ready() -> void:
 	hide()
 	_empty_label.visible = true
 	_empty_label.text = L10n.t("ui.log_empty")
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings != null:
+		settings.connect("setting_changed", _on_setting_changed)
+		settings.connect("input_device_changed", _on_input_changed)
+		settings.connect("bindings_changed", _on_input_changed.bind(&""))
+	var loc := get_node_or_null(^"/root/Loc")
+	if loc != null:
+		loc.connect("locale_changed", _on_locale_changed)
+	_refresh_footer()
+	set_text_scale(UiTextScale.current(self))
+
+
+## The player's text size, for the title, the footer and every row.
+func set_text_scale(factor: float) -> void:
+	_text_scale = factor
+	UiTextScale.apply(self, factor)
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if UiTextScale.is_text_size_key(key):
+		set_text_scale(UiTextScale.current(self))
+
+
+func _on_input_changed(_device: StringName) -> void:
+	_refresh_footer()
+
+
+func _on_locale_changed(_locale: String) -> void:
+	_refresh_footer()
+	_empty_label.text = L10n.t("ui.log_empty")
+
+
+## The title and footer come from the locale tables (they were fixed English in the
+## scene); the footer names the key or button that closes the log on the device in use.
+func _refresh_footer() -> void:
+	var title := get_node_or_null(^"Margin/Layout/Title") as Label
+	if title != null:
+		title.text = L10n.t("ui.log_title")
+	var footer := get_node_or_null(^"Margin/Layout/Footer") as Label
+	if footer != null:
+		footer.text = L10n.t("ui.log_hint", {"key": MenuStyle.key(self, &"backlog")})
 
 
 ## The controller hands over the re-render function once, in _ready.
@@ -167,6 +209,19 @@ func _add_rows(lines: Array) -> void:
 		var line: Dictionary = line_variant
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 2)
+		# A row is a header (speaker and source) over the text. The labels were lost in
+		# the descriptor rewrite, which left every row empty; they are made here again.
+		var header := Label.new()
+		header.name = "Header"
+		header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		UiTextScale.set_base(header, 16, _text_scale)
+		var body := Label.new()
+		body.name = "Body"
+		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		body.add_theme_color_override("font_color", Color(0.776, 0.733, 0.643, 1.0))
+		UiTextScale.set_base(body, 20, _text_scale)
+		row.add_child(header)
+		row.add_child(body)
 		_list.add_child(row)
 		_fill_row(row, line)
 
@@ -189,7 +244,6 @@ func _fill_row(row: Node, line: Dictionary) -> void:
 	if not title.is_empty():
 		speaker = title
 	header.text = "%s  ·  %s" % [speaker, badge] if not badge.is_empty() else speaker
-	header.add_theme_font_size_override("font_size", 16)
 	header.add_theme_color_override("font_color", line.get("accent_color", Color.WHITE))
 	body.text = String(line.get("text", ""))
 

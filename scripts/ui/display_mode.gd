@@ -36,22 +36,32 @@ var _windowed_position := Vector2i.ZERO
 var _fullscreen := false
 var _last_toggle_msec := -1000000
 var _applied_min_size := false
+## The window is opened at the design size once per run. The title screen and the game
+## scene each carry one of these nodes; the second must adopt the window as the player left
+## it (resized, or fullscreen) instead of snapping it back to the middle of the screen.
+static var _window_opened := false
 
 
 func _ready() -> void:
 	# The window is the game's, not the scene's: it has to survive a location swap and it
 	# must not be reset when one happens, so this node lives in main.tscn and never reloads.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group(&"display_mode")
 	_open_at_the_design_size()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventKey):
+	# A key (no repeats) or a controller button; nothing else toggles the window.
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if not key.pressed or key.echo:
+			return
+	elif event is InputEventJoypadButton:
+		if not (event as InputEventJoypadButton).pressed:
+			return
+	else:
 		return
-	var key := event as InputEventKey
-	if not key.pressed or key.echo:
-		return
-	if not key.is_action_pressed(&"toggle_fullscreen"):
+	if not event.is_action_pressed(&"toggle_fullscreen"):
 		return
 	get_viewport().set_input_as_handled()
 	toggle_fullscreen()
@@ -136,7 +146,17 @@ func _open_at_the_design_size() -> void:
 	if not _applied_min_size:
 		window.min_size = MIN_WINDOW_SIZE
 		_applied_min_size = true
-	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+	var mode := DisplayServer.window_get_mode()
+	if _window_opened:
+		_fullscreen = (
+			mode == DisplayServer.WINDOW_MODE_FULLSCREEN
+			or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
+		)
+		# The windowed rectangle is remembered when the player enters fullscreen, as on
+		# the first node; nothing is recorded before a toggle has happened.
+		return
+	_window_opened = true
+	if mode != DisplayServer.WINDOW_MODE_WINDOWED:
 		return
 	var rect := centred_rect(DESIGN_WINDOW_SIZE)
 	DisplayServer.window_set_size(rect.size)

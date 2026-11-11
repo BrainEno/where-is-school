@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
 [ext_resource type="Script" path="res://scripts/world/camera_rig.gd" id="11_camera_rig"]
 [ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="12_occluder"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="13_pause_menu"]
 
 [node name="Main" type="Node3D"]
 
@@ -37,10 +38,12 @@ script = ExtResource("12_occluder")
 [node name="BellAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bell")
 volume_db = -9.0
+bus = &"SFX"
 
 [node name="WakeAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_wake")
 volume_db = -13.0
+bus = &"SFX"
 
 [node name="GameUI" parent="." instance=ExtResource("3_game_ui")]
 
@@ -57,3 +60,5 @@ script = ExtResource("8_inner_voice")
 
 [node name="DisplayMode" type="Node" parent="."]
 script = ExtResource("10_display_mode")
+
+[node name="PauseMenu" parent="." instance=ExtResource("13_pause_menu")]
