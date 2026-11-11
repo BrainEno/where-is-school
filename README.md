@@ -198,16 +198,24 @@ missing.
 - AGENTS.md — authoritative coding-agent instructions.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
-- docs/screenshots/ — frames captured from a real, running window by
-  `tests/capture_playthrough.gd`, plus the dialogue layout frames written by
+- docs/screenshots/ — existing frames captured from a real, running window by
+  `tests/capture_playthrough.gd`, plus dialogue layout frames written by
   `tests/capture_dialogue_ui.gd` at 1280x720, 1600x900 and 1920x1080 in both languages.
-- assets/ — placeholder materials, generated audio and the two sample models, all
-  tracked in docs/ASSET_PROVENANCE.md.
+  New CI captures are uploaded as downloadable workflow artifacts; Actions does not
+  commit them back into this directory.
+- assets/ — materials, generated audio, the imported production models and the classroom,
+  corridor and playground model sets, all tracked in docs/ASSET_PROVENANCE.md.
 - tests/ — headless smoke, content, unit, and end-to-end flow tests run by CI.
 - docs/ — concise, implementation-facing product, architecture, technical, narrative, art, prototype, and agent-evaluation references.
 - docs/ASSET_PROVENANCE.md — asset rights and attribution ledger.
 - docs/ASSET_PIPELINE.md — the import contract for 3D models (format, axes, scale,
   collision wrappers, regeneration).
+- docs/MODEL_LIBRARY.md — every model under assets/models/: which kind it belongs to, what
+  it measures in metres, where its origin sits, and which greybox scene it replaces.
+- Cloning: the history carries the screenshot archive and one 4K model that was removed
+  after it was committed, so a full clone is several hundred megabytes. `git clone
+  --filter=blob:none` gives a complete working tree without fetching old file contents;
+  what may be committed, and why, is in docs/adr/0007-large-binaries-and-repository-size.md.
 - docs/IMPLEMENTATION_NOTES_BUILD.md — the export preset, the font subset, what the build
   contains and what it still does not.
 - docs/PLAYTEST_CHECKLIST.md — the ordered hands-on pass for a build, and what to write
