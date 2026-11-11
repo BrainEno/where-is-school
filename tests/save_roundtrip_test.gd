@@ -229,6 +229,7 @@ func _check_companion_restore() -> void:
 
 	# --- 1. The real way Q joins: the classroom door, and the arrival checkpoint.
 	Harness.stage = "companion: leaving the classroom with Q"
+	print("::notice title=rt::c1 start")
 	var first := await _enter_main()
 	if first == null:
 		return
@@ -260,6 +261,7 @@ func _check_companion_restore() -> void:
 		first.free()
 		return
 	interaction.request_activation(door)
+	print("::notice title=rt::c1 door requested")
 	var corridor_save := await _wait_for_checkpoint(&"corridor", 20.0)
 	if corridor_save.is_empty():
 		first.queue_free()
@@ -273,13 +275,16 @@ func _check_companion_restore() -> void:
 		companion.is_with_player(),
 		"companion: Q is not with the player in the corridor the first time round."
 	)
+	print("::notice title=rt::c1 checkpoint ok")
 	await _tear_down(first)
+	print("::notice title=rt::c1 torn down")
 
 	# --- 2. Quit, come back in the corridor.
 	Harness.stage = "companion: restoring in the corridor"
 	var corridor_run := await _enter_main()
 	if corridor_run == null:
 		return
+	print("::notice title=rt::c2 booted")
 	var restored := _expect_companion_restored(corridor_run, &"corridor")
 	if restored:
 		await _expect_companion_follows(corridor_run, "corridor")
@@ -289,6 +294,7 @@ func _check_companion_restore() -> void:
 	var yard_save := await _save_in(
 		corridor_run, PLAYGROUND_SCENE, &"FromCorridor", &"playground", YARD_STANDING
 	)
+	print("::notice title=rt::c2 yard saved")
 	await _tear_down(corridor_run)
 	if yard_save.is_empty():
 		return
@@ -300,6 +306,7 @@ func _check_companion_restore() -> void:
 	var yard_run := await _enter_main()
 	if yard_run == null:
 		return
+	print("::notice title=rt::c3 booted")
 	if _expect_companion_restored(yard_run, &"playground"):
 		await _expect_companion_follows(yard_run, "yard")
 
@@ -308,6 +315,7 @@ func _check_companion_restore() -> void:
 	var classroom_save := await _save_in(
 		yard_run, CLASSROOM_SCENE, &"FromCorridor", &"classroom", Vector3.INF
 	)
+	print("::notice title=rt::c3 classroom saved")
 	await _tear_down(yard_run)
 	if classroom_save.is_empty():
 		return
@@ -319,6 +327,7 @@ func _check_companion_restore() -> void:
 	var classroom_run := await _enter_main()
 	if classroom_run == null:
 		return
+	print("::notice title=rt::c4 booted")
 	_expect_companion_hidden_by_authored_q(classroom_run)
 	await _tear_down(classroom_run)
 
@@ -341,6 +350,7 @@ func _check_save_without_companion() -> void:
 		StoryFlags.CLASS_DISMISSED,
 	]:
 		_game_state.set_flag(flag, true)
+	print("::notice title=rt::l1 booted")
 	var saved := await _save_in(first, CORRIDOR_SCENE, &"FromClassroom", &"corridor", Vector3.INF)
 	await _tear_down(first)
 	if saved.is_empty():
@@ -354,6 +364,7 @@ func _check_save_without_companion() -> void:
 	var again := await _enter_main()
 	if again == null:
 		return
+	print("::notice title=rt::l2 booted")
 	var host := again.get_node_or_null("LocationHost") as LocationHost
 	var companion := again.get_node_or_null("Companion") as CompanionController
 	if host == null or companion == null or host.get_current() == null:
