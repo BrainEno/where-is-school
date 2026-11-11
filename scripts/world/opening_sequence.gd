@@ -425,10 +425,12 @@ func _on_target_changed(interactable: Interactable) -> void:
 	_hud.set_prompt_text(_dialogue.get_interact_prompt(interactable))
 
 
+## Awaits the whole visit: the caller is done when the player is standing in the new
+## room (or back where they were, if the load was refused).
 func _handle_exit(exit: LocationExit) -> void:
-	# Exits are a place's business, not the prologue's: `LocationFlow` owns the fade,
-	# the load, the arrival line and the end card.
-	_flow.handle_exit(exit)
+	if _flow == null:
+		return
+	await _flow.handle_exit(exit)
 
 
 # --- Presentation plumbing --------------------------------------------------

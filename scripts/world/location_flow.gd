@@ -67,6 +67,10 @@ func is_finished() -> bool:
 
 ## Routes one activated exit. Closed doors show their blocked text; milestone ends
 ## show the card; everything else is a transition.
+##
+## The returned coroutine is the whole visit: awaiting it means the player is
+## standing in the room the exit named, or back where they started if the load was
+## refused. Callers that do not care (the interaction handler) simply drop it.
 func handle_exit(exit: LocationExit) -> void:
 	if not String(exit.blocked_inspection_id).is_empty() and not exit.is_open():
 		_dialogue.present_inspection(exit.blocked_inspection_id)
@@ -77,9 +81,9 @@ func handle_exit(exit: LocationExit) -> void:
 		)
 		return
 	if exit.is_milestone_end:
-		_finish_slice(exit)
+		await _finish_slice(exit)
 		return
-	_transition_to(exit)
+	await _transition_to(exit)
 
 
 func _transition_to(exit: LocationExit) -> void:
