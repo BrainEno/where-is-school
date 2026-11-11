@@ -145,7 +145,14 @@ static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
 static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 	var skeletons := skeletons_in(model_root)
 	if skeletons.is_empty():
-		return {"ok": false, "reason": "the model has no Skeleton3D", "resolved": {}, "missing": [], "clips": {}}
+		return {
+		"ok": false,
+		"reason": "the model has no Skeleton3D",
+		"resolved": {},
+		"missing": [],
+		"bones": [],
+		"clips": {},
+	}
 	var skeleton := skeletons[0]
 	if skeletons.size() > 1:
 		push_warning(
@@ -195,6 +202,8 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 	player.add_animation_library(LIBRARY_NAME, library)
 	return {
 		"ok": true,
+		"skeleton": skeleton.name,
+		"bones": rig["bones"],
 		"resolved": rig["resolved"],
 		"missing": rig["missing"],
 		"clips": clip_report,
