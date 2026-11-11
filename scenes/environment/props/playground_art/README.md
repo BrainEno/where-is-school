@@ -84,7 +84,7 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Older pour / newer pour / hoop patch | `#ACA08A` / `#A09A8E` / `#8B8C88` |
 | Court / far half / keys / lines | `#985642` / darker ×0.84 / `#5C6C80` / `#DED6C0` |
 | School wall / plinth | `#789694` / `#DCD0B4` |
-| Shed / roof / door | `#E2D6BC` / `#684E5A` / `#567040` |
+| Shed / roof / door | `#CCBEA4` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
 | Sky: blue / mauve / rose / glow / ground rows | `#4E5A76` / `#665E7C` / `#7C6474` / `#92787A` / `#423E54` |
@@ -96,9 +96,13 @@ Lighting (in `playground.tscn`):
   gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.32
   (measured from the CI frames: at 0.85 the sunlit ground clipped to white).
 - Ambient: cool `(0.66, 0.64, 0.74)` × 0.8, so shadows go mauve rather than brown.
+- Filmic tonemap, exposure 0.62. Measured from the CI frames at exposure 1.0: the
+  shadowed ground sat at about sRGB 127 and the sunlit ground at 215 to 250, so the
+  pale albedos had no headroom. One exposure value scales everything evenly and keeps
+  the authored palette ratios intact.
 - Background: the sky blue.
-- The surroundings stay dim, as around a lit stage. Every sky band stays mid-to-dark, and the sunlit ground stays mid-value: the HUD line
-  (top left) and the interaction prompts (bottom centre) are pale text and sit exactly
+- The surroundings stay dim, as around a lit stage. Every sky band stays mid-to-dark,
+  and the sunlit ground stays mid-value: the HUD line (top left) and the interaction prompts (bottom centre) are pale text and sit exactly
   over them.
 
 ## Triplanar conventions
