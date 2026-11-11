@@ -16,6 +16,30 @@ place animation works.
 | `talk` | 1.2 s | yes | a beat for dialogue, played by hand for now |
 | `get_up` | 1.5 s | **no** | a transition: `play_action("get_up")` stands the body up from `sit_idle` |
 
+`walk` and `jog` are four keys per cycle — contact, passing, contact, passing — because two
+keys made the legs scissor through a straight line and left the swing foot dragging.
+
+## Which way a rotation turns
+
+Each key's X angle is authored in *meaning*: swing the limb forward, close the joint, point the
+toes down. `CharacterAnimation.x_signs()` measures the skeleton's rest pose at bind time to
+find the sign that makes the rig's own local X axis do that, and `bind()` applies it. It has to
+be derived, because on all four rigs here a **positive** X rotation swings a limb *backwards*:
+the limb bones point down their own local +Y and their local X points to the character's right,
+so `X × (−Y)` lands on `−forward`.
+
+That was wrong until it was measured, and the wrongness was invisible. An earlier version of
+this file assumed +X was flexion. It shipped a `walk` whose knees closed while the thighs were
+swung forward — the character walked in a seated pose with its shins hanging under it — and a
+`sit_idle` that folded both legs *behind* the hips, so the ankles ended up 27 cm above them. A
+rotation signed the wrong way turns a bone by exactly the same number of degrees, so every
+check that measured angles passed, and the picture on screen was the first thing to notice.
+
+The frame is measured rather than assumed too: forward is `side × up`, `side` runs from the
+left thigh to the right one, `up` from the hips to the head. On both production rigs that lands
+on +Z — the side the protagonist's eyes and the toes of both shoes are on. A rig that faced the
+other way would report the other sign instead of quietly animating backwards.
+
 ## Runtime wiring
 
 - `assets/models/protagonist/protagonist.glb` has a 16-bone rigid-part skeleton.
@@ -78,7 +102,12 @@ Q rig and the retarget-ready protagonist side by side, and it plays a transition
    clips, switch between idle, walk and jog by speed, hold the seated clip against a moving
    body, and hand back to locomotion when the one-shot get-up finishes;
 5. `get_up` is built with `LOOP_NONE`, ends on the rest pose, and starts from the pose
-   `sit_idle` holds.
+   `sit_idle` holds;
+6. the pose each clip actually produces, measured in metres in the rig's own frame: no ankle
+   above a hip, no knee bending backwards, a step whose knees close only while that thigh is
+   *not* forward, feet that leave the ground, ankles that come apart with the arms
+   counterbalancing, and a seated clip whose knees are in front of the hips with the shins
+   hanging under them.
 
 The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
 baked onto the development protagonist. That library and its baked resource remain
@@ -98,6 +127,9 @@ development-only; the game uses the seven project-authored clips above.
 - The rigs use mostly rigid-part weights. Q's trouser sections have blended weights at
   joints, but the model is not a full expressive deformation rig; inspect knees, elbows,
   hands and silhouette in motion before treating the rig as final.
+- The step clips are rotation-only, so a swinging foot rises a few centimetres instead of
+  staying planted (`walk` lifts it 8 cm, `jog` 22 cm): keeping the sole on the floor wants a
+  hips height track or foot IK, and both need a decision about who owns translation.
 - There is no facial animation, lip sync, foot IK, root motion, or AnimationTree blend
   graph yet. Since these are bone-rotation clips cut against each other, a walk-to-jog
   change is a hard cut rather than a blend; the speed thresholds hide it, an `AnimationTree`
