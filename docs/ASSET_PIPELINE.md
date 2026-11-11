@@ -158,7 +158,7 @@ through `.godot/imported/…` and stop falling back to the source file:
 
 ## 8. Not in this round
 
-- Character locomotion is supplied by the project's code-authored idle/walk clips and
+- Character locomotion is supplied by the project's code-authored idle/walk/jog clips and
   wrapper-level animation driver; the GLBs do not embed animation actions. No LOD or
   lightmap UVs yet.
 - **No performance budget.** A triangle budget for a prop, a character or a room needs

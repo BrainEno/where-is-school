@@ -16,6 +16,10 @@ extends RefCounted
 ## bone names at bind time. A bone a rig does not have is reported and its track is left out;
 ## nothing is silently dropped and nothing is played on a bone that is not there.
 ##
+## The set is seven clips: four that loop a state (`idle`, `walk`, `jog`, `sit_idle`), two
+## that are beats (`wave`, `talk`), and one transition (`get_up`) that is played once and
+## hands back. What selects them is the character's own driver, not this file.
+##
 ## Nothing here needs a third-party animation library, an external `.glb`, or a retarget pass
 ## in the editor: an `Animation` is a resource, its track paths are
 ## `"<skeleton path>:<bone name>"`, and its keys are quaternions relative to the rest pose.
@@ -49,6 +53,18 @@ const BONE_ALIASES := {
 ## Rotations are about the bone's local X for swing (forward and back) and local Z for
 ## reaching out, which is what the rest poses of both rigs want: every bone in them points
 ## up or down its own Y.
+##
+## The sign that matters, because it is the one a new clip gets wrong: **+X is flexion** for
+## hips, knees, shoulders and elbows. `walk` reads as a walk only with that reading — the
+## front leg is `thigh +22` with a straight `shin +4`, and the back leg is `thigh -22` with
+## the knee folded to `shin +30`. So a seated pose is `thigh +82, shin +84`: legs forward,
+## shins down, which is exactly the symbol every clip below is a variation of.
+##
+## A clip may set `"loop": false`. Such a clip is a *transition*: it is played once and hands
+## back to whatever was there before (see `CharacterView` / the wrapper's `play_action()`),
+## and its last key is the rest pose rather than its first, because arriving is the point.
+## `get_up` is the only one, and the test checks that its first key is the seated pose that
+## `sit_idle` holds, so the two cannot drift apart.
 const CLIPS := {
 	"idle": {
 		"length": 2.0,
@@ -77,6 +93,60 @@ const CLIPS := {
 			"fore_arm.R": [[0.0, Vector3(24.0, 0.0, 0.0)], [0.5, Vector3(14.0, 0.0, 0.0)], [1.0, Vector3(24.0, 0.0, 0.0)]],
 			"spine": [[0.0, Vector3(2.0, 0.0, 1.5)], [0.5, Vector3(2.0, 0.0, -1.5)], [1.0, Vector3(2.0, 0.0, 1.5)]],
 			"head": [[0.0, Vector3(-2.0, 0.0, -1.0)], [0.5, Vector3(-2.0, 0.0, 1.0)], [1.0, Vector3(-2.0, 0.0, -1.0)]],
+		},
+	},
+	"jog": {
+		"length": 0.72,
+		"tracks": {
+			"thigh.L": [[0.0, Vector3(34.0, 0.0, 0.0)], [0.36, Vector3(-34.0, 0.0, 0.0)], [0.72, Vector3(34.0, 0.0, 0.0)]],
+			"thigh.R": [[0.0, Vector3(-34.0, 0.0, 0.0)], [0.36, Vector3(34.0, 0.0, 0.0)], [0.72, Vector3(-34.0, 0.0, 0.0)]],
+			"shin.L": [[0.0, Vector3(6.0, 0.0, 0.0)], [0.36, Vector3(46.0, 0.0, 0.0)], [0.72, Vector3(6.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(46.0, 0.0, 0.0)], [0.36, Vector3(6.0, 0.0, 0.0)], [0.72, Vector3(46.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(-10.0, 0.0, 0.0)], [0.36, Vector3(8.0, 0.0, 0.0)], [0.72, Vector3(-10.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(8.0, 0.0, 0.0)], [0.36, Vector3(-10.0, 0.0, 0.0)], [0.72, Vector3(8.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(-26.0, 0.0, 5.0)], [0.36, Vector3(26.0, 0.0, 5.0)], [0.72, Vector3(-26.0, 0.0, 5.0)]],
+			"upper_arm.R": [[0.0, Vector3(26.0, 0.0, -5.0)], [0.36, Vector3(-26.0, 0.0, -5.0)], [0.72, Vector3(26.0, 0.0, -5.0)]],
+			"fore_arm.L": [[0.0, Vector3(30.0, 0.0, 0.0)], [0.36, Vector3(44.0, 0.0, 0.0)], [0.72, Vector3(30.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(44.0, 0.0, 0.0)], [0.36, Vector3(30.0, 0.0, 0.0)], [0.72, Vector3(44.0, 0.0, 0.0)]],
+			"spine": [[0.0, Vector3(4.0, 0.0, 2.0)], [0.36, Vector3(4.0, 0.0, -2.0)], [0.72, Vector3(4.0, 0.0, 2.0)]],
+			"head": [[0.0, Vector3(-3.0, 0.0, -1.5)], [0.36, Vector3(-3.0, 0.0, 1.5)], [0.72, Vector3(-3.0, 0.0, -1.5)]],
+		},
+	},
+	"sit_idle": {
+		"length": 2.4,
+		"tracks": {
+			"thigh.L": [[0.0, Vector3(82.0, 0.0, 2.0)], [1.2, Vector3(82.0, 0.0, 3.0)], [2.4, Vector3(82.0, 0.0, 2.0)]],
+			"thigh.R": [[0.0, Vector3(82.0, 0.0, -2.0)], [1.2, Vector3(82.0, 0.0, -3.0)], [2.4, Vector3(82.0, 0.0, -2.0)]],
+			"shin.L": [[0.0, Vector3(84.0, 0.0, 0.0)], [1.2, Vector3(84.0, 0.0, 0.0)], [2.4, Vector3(84.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(84.0, 0.0, 0.0)], [1.2, Vector3(84.0, 0.0, 0.0)], [2.4, Vector3(84.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(-6.0, 0.0, 0.0)], [1.2, Vector3(-6.0, 0.0, 0.0)], [2.4, Vector3(-6.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(-6.0, 0.0, 0.0)], [1.2, Vector3(-6.0, 0.0, 0.0)], [2.4, Vector3(-6.0, 0.0, 0.0)]],
+			"spine": [[0.0, Vector3(10.0, 0.0, 0.0)], [1.2, Vector3(12.0, 0.0, 0.0)], [2.4, Vector3(10.0, 0.0, 0.0)]],
+			"neck": [[0.0, Vector3(4.0, 0.0, 0.0)], [1.2, Vector3(5.0, 0.0, 0.0)], [2.4, Vector3(4.0, 0.0, 0.0)]],
+			"head": [[0.0, Vector3(8.0, 0.0, 0.0)], [1.2, Vector3(10.0, 0.0, 0.0)], [2.4, Vector3(8.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(26.0, 0.0, 8.0)], [1.2, Vector3(28.0, 0.0, 8.0)], [2.4, Vector3(26.0, 0.0, 8.0)]],
+			"upper_arm.R": [[0.0, Vector3(26.0, 0.0, -8.0)], [1.2, Vector3(28.0, 0.0, -8.0)], [2.4, Vector3(26.0, 0.0, -8.0)]],
+			"fore_arm.L": [[0.0, Vector3(48.0, 0.0, 0.0)], [1.2, Vector3(50.0, 0.0, 0.0)], [2.4, Vector3(48.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(48.0, 0.0, 0.0)], [1.2, Vector3(50.0, 0.0, 0.0)], [2.4, Vector3(48.0, 0.0, 0.0)]],
+		},
+	},
+	"get_up": {
+		"length": 1.5,
+		"loop": false,
+		"tracks": {
+			"thigh.L": [[0.0, Vector3(82.0, 0.0, 2.0)], [0.7, Vector3(40.0, 0.0, 1.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"thigh.R": [[0.0, Vector3(82.0, 0.0, -2.0)], [0.7, Vector3(40.0, 0.0, -1.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"shin.L": [[0.0, Vector3(84.0, 0.0, 0.0)], [0.7, Vector3(44.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"shin.R": [[0.0, Vector3(84.0, 0.0, 0.0)], [0.7, Vector3(44.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"foot.L": [[0.0, Vector3(-6.0, 0.0, 0.0)], [0.7, Vector3(-4.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"foot.R": [[0.0, Vector3(-6.0, 0.0, 0.0)], [0.7, Vector3(-4.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"spine": [[0.0, Vector3(10.0, 0.0, 0.0)], [0.7, Vector3(6.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"neck": [[0.0, Vector3(4.0, 0.0, 0.0)], [0.7, Vector3(2.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"head": [[0.0, Vector3(8.0, 0.0, 0.0)], [0.7, Vector3(4.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"upper_arm.L": [[0.0, Vector3(26.0, 0.0, 8.0)], [0.7, Vector3(14.0, 0.0, 4.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"upper_arm.R": [[0.0, Vector3(26.0, 0.0, -8.0)], [0.7, Vector3(14.0, 0.0, -4.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"fore_arm.L": [[0.0, Vector3(48.0, 0.0, 0.0)], [0.7, Vector3(22.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
+			"fore_arm.R": [[0.0, Vector3(48.0, 0.0, 0.0)], [0.7, Vector3(22.0, 0.0, 0.0)], [1.5, Vector3(0.0, 0.0, 0.0)]],
 		},
 	},
 	"wave": {
@@ -188,7 +258,10 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		var spec: Dictionary = CLIPS[clip_name]
 		var animation := Animation.new()
 		animation.length = float(spec["length"])
-		animation.loop_mode = Animation.LOOP_LINEAR
+		# A transition is played once and stops on its last key; everything else closes
+		# its cycle, so the last key repeats the first.
+		var loops := bool(spec.get("loop", true))
+		animation.loop_mode = Animation.LOOP_LINEAR if loops else Animation.LOOP_NONE
 		var tracks: Dictionary = spec["tracks"]
 		var used := 0
 		for canonical in tracks:
@@ -213,6 +286,7 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 			"tracks": used,
 			"requested": tracks.size(),
 			"length": animation.length,
+			"loops": loops,
 		}
 	if player.has_animation_library(LIBRARY_NAME):
 		player.remove_animation_library(LIBRARY_NAME)
@@ -250,7 +324,14 @@ static func describe(report: Dictionary) -> String:
 	for clip_name in clips:
 		var info: Dictionary = clips[clip_name]
 		parts.append(
-			"%s %d/%d tracks %.1fs" % [clip_name, int(info["tracks"]), int(info["requested"]), float(info["length"])]
+			"%s %d/%d tracks %.1fs%s"
+			% [
+				clip_name,
+				int(info["tracks"]),
+				int(info["requested"]),
+				float(info["length"]),
+				"" if bool(info.get("loops", true)) else " once",
+			]
 		)
 	return "%d bone(s) resolved, %d not on this rig (%s) | %s" % [
 		resolved.size(),
