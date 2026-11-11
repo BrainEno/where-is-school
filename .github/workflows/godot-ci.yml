@@ -407,3 +407,41 @@ jobs:
           echo "measured: ${codes}"
           echo "::notice title=measurement step::exit codes ${codes}; status ${status}"
           exit "${status}"
+
+      - name: Report the headless check count and playground verdict
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          mapfile -t check_names < <(
+            grep -E '^[[:space:]]+run_check [[:alnum:]_]+ ' .github/workflows/godot-ci.yml | awk '{ print $2 }'
+          )
+          expected=62
+          if [ "${#check_names[@]}" -ne "${expected}" ]; then
+            echo "::error title=headless check count::workflow lists ${#check_names[@]} run_check entries; expected ${expected}"
+            exit 1
+          fi
+          missing=0
+          for name in "${check_names[@]}"; do
+            if [ ! -f "ci-logs/${name}.log" ]; then
+              echo "::error title=missing headless log::ci-logs/${name}.log was not produced"
+              missing=1
+            fi
+          done
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+          portrait_log="ci-logs/playground_art_slice.log"
+          pass_line=$(grep -m1 '^PASS: ' "${portrait_log}" || true)
+          if [ -z "${pass_line}" ]; then
+            echo "::error title=playground art slice verdict::${portrait_log} has no PASS line"
+            tail -n 30 "${portrait_log}" || true
+            exit 1
+          fi
+          echo "playground_art_slice: ${pass_line}"
+          echo "::notice title=playground_art_slice PASS::${pass_line}"
+          {
+            echo "### Godot headless check evidence"
+            echo "- ${#check_names[@]}/${expected} run_check logs were produced."
+            echo "- playground_art_slice verdict: ${pass_line}"
+          } >> "$GITHUB_STEP_SUMMARY"
