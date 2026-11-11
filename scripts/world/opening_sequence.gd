@@ -237,6 +237,14 @@ func is_step_done(step: StringName) -> bool:
 	return true
 
 
+## Re-applies the one exit prompt the story rewrites. The work lives in
+## `LocationFlow`, but the director is the node a test (and any future debug tool)
+## already holds, so this stays as the entry point it always was.
+func update_exit_prompt() -> void:
+	if _flow != null:
+		_flow.update_exit_prompt()
+
+
 ## The step that comes next, or `&""` when the prologue is over. Public because it
 ## is the question a save system, a debug overlay, and a test all want to ask.
 func next_step() -> StringName:

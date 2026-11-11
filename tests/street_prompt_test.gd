@@ -156,7 +156,7 @@ func _check_dismissal_does_not_rewrite_the_street() -> void:
 	if street == null:
 		return
 	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
-	_sequence.call("_update_exit_prompt")
+	_sequence.call("update_exit_prompt")
 	await _frames(2)
 	var street_exit := street.get_node_or_null("Interactables/BackToSchool") as LocationExit
 	if street_exit == null:
@@ -178,7 +178,7 @@ func _check_dismissal_does_not_rewrite_the_street() -> void:
 	var classroom := await _enter(CLASSROOM, &"FromCorridor")
 	if classroom == null:
 		return
-	_sequence.call("_update_exit_prompt")
+	_sequence.call("update_exit_prompt")
 	await _frames(2)
 	var door := classroom.find_interactable(&"classroom_door")
 	if door == null:
