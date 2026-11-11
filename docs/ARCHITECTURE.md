@@ -58,7 +58,7 @@ Use signals at clear boundaries. Do not create a global event bus by default; fi
 
 ## 3. Autoload policy
 
-The project contains **four** autoloads, and this list is the only place that number is
+The project contains **five** autoloads, and this list is the only place that number is
 written down.
 
 | Autoload | Script | What it owns |
@@ -67,6 +67,7 @@ written down.
 | `NarrativeState` | `scripts/autoload/narrative_state.gd` | append-only narrative knowledge entries (observed / reported / recalled / imagined), de-duplicated by id, with snapshot/restore |
 | `Loc` | `scripts/i18n/loc.gd` | the current locale, the locale tables, and the `locale_changed` signal (see §5b) |
 | `CueAudio` | `scripts/audio/cue_audio.gd` | the four synthesised interaction cues, built once at startup (see §5e) |
+| `Music` | `scripts/autoload/music_player.gd` | the one background-music player, on its own `Music` bus, for the whole session (see §5m) |
 
 - **GameState** is not a dumping ground for quests, dialogue UI, scene transitions,
   audio, inventory, settings, or save-file I/O.
@@ -79,9 +80,15 @@ written down.
 - **CueAudio** is an autoload because the pointer, the props and the interactions all
   make the same four sounds and must therefore be the same four buffers; it owns no
   nodes beyond its four players.
+- **Music** is an autoload because the background music must *not* belong to a room: a
+  player inside a location restarts with the location, so every doorway would restart the
+  take, and a player per room would overlap for a frame during a transition. It owns one
+  `AudioStreamPlayer` and one stream, and it refuses to restart what is already playing.
 
 Earlier revisions of this section said "two autoloads" and did not mention `Loc` or
-`CueAudio`. That was wrong, not a plan: both had shipped in earlier rounds.
+`CueAudio`. That was wrong, not a plan: both had shipped in earlier rounds. `Music` is the
+first autoload added since, and this list moved with it in the same change rather than
+afterwards.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;
@@ -718,6 +725,66 @@ caching between runs, streaming chapters, or an async loader. The roadmap
 locale's chapters first, then the other language behind the first frame, keeping CI's
 all-languages/all-chapters validation — together with the constraint that CI must keep
 validating every language and every chapter however the runtime loads them.
+
+## 5m. The background music (implemented contract)
+
+One recorded guitar take, one player, one bus. The recording is the owner's own: a solo
+fingerpicked improvisation, 46.738 s, mono, 48 kHz, 16-bit, peak −8.7 dBFS, no clipping and
+no DC offset. It is not a sample library and not a stock track, and it is not synthesised
+like the room tones and the cues — it is a performance, and the pipeline is built to leave
+it alone.
+
+**The source is kept, and kept out of the build.** The recording as delivered lives at
+`art/audio/Guitar_loop_01.wav`, byte-identical (`art/audio/.gdignore` keeps the engine from
+importing it, and the export preset excludes `art/`). The game ships a derived file,
+`assets/audio/music/guitar_ambient_loop_01.wav`, and nothing in `assets/` is the only copy
+of the music.
+
+**The loop is made by a script, not by hand.** `tools/build_music_loop.py` drops the
+0.396 s of room noise the take opens with, keeping the 0.30 s nearest the first note inside
+the loop; keeps the 0.07 s the take has after its last note rather than padding silence onto
+the end; and crossfades the tail into the material immediately before the loop start, so the
+last sample of the file continues into its first the way the take did one loop earlier. The
+seam measures −72 dBFS, i.e. eight 16-bit LSB, rather than a click.
+`python3 tools/build_music_loop.py --check` runs in CI and fails if the committed WAV drifts
+from a fresh build, exactly as the sample models do. No normalisation, limiting, EQ, reverb
+or noise reduction is applied: the take's own dynamics and room are the point, and
+"improving" them would be a second authorship of someone else's performance.
+
+**Looping is an import setting.** The sidecar
+`assets/audio/music/guitar_ambient_loop_01.wav.import` carries `edit/loop_mode=2`,
+`edit/loop_begin=0` and `edit/loop_end=2224446`, so the stream that loads in the game *is*
+a loop. Nothing duplicates the stream and sets `loop_mode` at runtime — that pattern exists
+in `scripts/world/ambience_player.gd` for the generated room tones, and it is deliberately
+not copied here. `tests/music_test.gd` reads the sidecar and asserts the loaded stream
+carries the points, so a lost import setting fails a test instead of producing music that
+stops after 46 seconds in someone's playthrough.
+
+**The player is an autoload, and it is the only one.** `Music`
+(`scripts/autoload/music_player.gd`) creates a single `AudioStreamPlayer` in `_ready()`,
+starts the track with a 3 s fade-in, and survives scene changes because autoloads outlive
+`change_scene_*()`. `play_track()` returns `false` when the requested track is already
+playing, so a scene that calls it on entry cannot restart the music, and there is no second
+player to overlap with. `stop()` fades out; `stop(true)` cuts.
+
+**It cannot drown the game and cannot be turned down by accident.** The player sits on a
+`Music` bus defined in `default_bus_layout.tres` (trimmed −6 dB), and the player's own
+`volume_db` starts at −12 dB, so the music sits about 18 dB below the recording's −8.7 dBFS
+peak — under the room tone's own peak. Every other sound (`CueAudio`'s cues, the ambience
+beds, dialogue blips) is on `Master`, so `Music.set_volume_db()` moves the guitar and
+changes nothing else. `tests/music_test.gd` asserts both halves of that: the cue volumes do
+not move, and the cue players are not on the music bus.
+
+**What it does not do yet.** There is no playlist, no per-room music, and no ducking during
+dialogue — the game's dialogue is text, there is no voice track to talk over, and a ducking
+path with nothing to duck for would be untested machinery. There is also no settings screen;
+`set_volume_db()` is the dial such a screen would call. Music does not pause with the tree
+(`process_mode = ALWAYS`), because a silent pause is a decision nobody has made yet.
+
+`tests/music_test.gd` covers the import settings, the stream's format and length, the single
+player, the scene change, the independent dial, and that seeking past the loop end wraps
+instead of stopping. It cannot hear the result: whether the loop is seamless to an ear, and
+whether −18 dB is the right level in a real room, are reviews for the owner.
 
 ## 6. Persistent identifiers and data
 
