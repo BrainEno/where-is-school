@@ -341,11 +341,8 @@ func _check_save_without_companion() -> void:
 		StoryFlags.CLASS_DISMISSED,
 	]:
 		_game_state.set_flag(flag, true)
-	print("::notice title=rt::l1 booted")
 	var saved := await _save_in(first, CORRIDOR_SCENE, &"FromClassroom", &"corridor", Vector3.INF)
-	print("::notice title=rt::l1 save_in returned")
 	await _tear_down(first)
-	print("::notice title=rt::l1 torn down")
 	if saved.is_empty():
 		return
 	_expect(
@@ -357,6 +354,7 @@ func _check_save_without_companion() -> void:
 	var again := await _enter_main()
 	if again == null:
 		return
+	print("::notice title=rt::l2 booted")
 	var host := again.get_node_or_null("LocationHost") as LocationHost
 	var companion := again.get_node_or_null("Companion") as CompanionController
 	if host == null or companion == null or host.get_current() == null:
@@ -367,7 +365,10 @@ func _check_save_without_companion() -> void:
 		host.get_current().location_id == &"corridor",
 		"companion: the flagless save came back in '%s'." % String(host.get_current().location_id)
 	)
-	await _physics_frames(30)
+	print("::notice title=rt::l2 before physics")
+	for crumb in 6:
+		await _physics_frames(5)
+		print("::notice title=rt::l2 physics %d" % crumb)
 	_expect(not companion.is_joined(), "companion: a save without Q's flag produced a joined Q.")
 	_expect(not companion.visible, "companion: a save without Q's flag shows the companion.")
 	_expect(
@@ -379,7 +380,9 @@ func _check_save_without_companion() -> void:
 		"companion: Q is on screen in a corridor Q never came to (%s)." % ", ".join(_visible_qs())
 	)
 	_companion_notes.append("no flag: corridor restored without Q")
+	print("::notice title=rt::l2 asserted")
 	await _tear_down(again)
+	print("::notice title=rt::l2 torn down")
 
 
 ## The restored session, on the frames right after `_ready()`: no door has been used, so
@@ -554,12 +557,9 @@ func _save_in(
 	if sequence == null or host == null or player == null or companion == null:
 		_failures.append("companion: cannot save in '%s'; main is missing nodes." % location_id)
 		return {}
-	var trace := location_id == &"corridor"
 	if not host.load_location(scene, spawn, player, location_id):
 		_failures.append("companion: '%s' did not load." % location_id)
 		return {}
-	if trace:
-		print("::notice title=rt::s loaded")
 	_game_state.set_flag(StoryFlags.CURRENT_LOCATION, location_id)
 	await _physics_until(
 		func() -> bool: return companion.is_navigation_ready(), NAVIGATION_WAIT_FRAMES
@@ -568,12 +568,8 @@ func _save_in(
 		var map := player.get_world_3d().navigation_map
 		var onto := NavigationServer3D.map_get_closest_point(map, standing)
 		player.teleport(Transform3D(Basis.IDENTITY, Vector3(onto.x, standing.y, onto.z)))
-	if trace:
-		print("::notice title=rt::s nav waited")
 	await _physics_frames(3)
 	var written: Dictionary = sequence.autosave("companion_%s" % location_id)
-	if trace:
-		print("::notice title=rt::s autosaved")
 	if written.get("ok", false) != true:
 		_failures.append("companion: the save in '%s' was not written: %s" % [location_id, str(written)])
 		return {}
@@ -747,16 +743,12 @@ func _enter_main() -> Node:
 		_failures.append("main.tscn could not be loaded.")
 		return null
 	var main := packed.instantiate()
-	if trace:
-		print("::notice title=rt::m instantiated")
 	var sequence := main.get_node_or_null("OpeningSequence")
 	if sequence != null:
 		# The beats are not what this test is about: the save system must work with the
 		# director holding still.
 		sequence.set("autostart", false)
 	root.add_child(main)
-	if trace:
-		print("::notice title=rt::m in tree")
 	await _frames(3)
 	if trace:
 		print("::notice title=rt::m settled")
