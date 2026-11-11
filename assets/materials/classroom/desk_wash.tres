@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/classroom/ink_outline.tres" id="2_ink"]
+
+[resource]
+resource_name = "desk_wash"
+next_pass = ExtResource("2_ink")
+transparency = 1
+shading_mode = 0
+specular_mode = 2
+disable_receive_shadows = true
+albedo_color = Color(0.753, 0.541, 0.322, 0.26)
