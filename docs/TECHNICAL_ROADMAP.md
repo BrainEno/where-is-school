@@ -20,7 +20,8 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 ### Implemented
 - Godot project configuration and a launchable main scene.
 - Basic CharacterBody3D movement using WASD/arrow-key input.
-- Fixed 2.5D camera attached to the player scene, with occluder fading.
+- Fixed 2.5D framing on a `CameraRig` that follows the player (one field of view, in the
+  scene), with occluder fading.
 - GameState autoload for named runtime story flags, plus the NarrativeState
   knowledge log (ADR 0002).
 - Interaction targeting, interactable contract, and location exits.
@@ -56,7 +57,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, fifty headless checks (the list lives in
+- CI: a static syntax gate over every `.gd` file, fifty-one headless checks (the list lives in
   `.github/workflows/godot-ci.yml`), a blocking import pass with an audit that every
   tracked `.import` produced its file, and a read-only capture job whose artifacts are the
   visual evidence for a pull request.

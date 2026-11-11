@@ -43,10 +43,16 @@ func _physics_process(delta: float) -> void:
 	if not hit.is_empty():
 		blocker = _find_occluder_root(hit.get("collider") as Node)
 
-	if blocker != null and not _faded.has(blocker):
+	# Rebuild the set every frame instead of appending to it. There is one ray, so
+	# there is at most one blocker, and "what blocks the view now" is the whole
+	# truth. Appending made the set a history: when the blocker changed from one wall
+	# to another with no unobstructed frame in between - the normal case in a
+	# corridor, or when the player walks along a wall - the first wall stayed in the
+	# set, was never restored, and stayed dithered after the player had walked away
+	# from it.
+	_faded.clear()
+	if blocker != null:
 		_faded.append(blocker)
-	elif blocker == null and not _faded.is_empty():
-		_faded.clear()
 
 	_update_materials(delta)
 

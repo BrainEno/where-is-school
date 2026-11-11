@@ -96,7 +96,11 @@ A future save manager should call explicit serializers and use a versioned save 
 - The main scene composes the active location and persistent application-level nodes.
 - Location scenes own their local geometry, navigation affordances, lighting, and location-specific interactive props.
 - Reusable architecture/prop scenes belong under scenes/environment/.
-- The player scene owns its controller and local camera rig. A later camera system may extract the rig if multiple actor modes require it.
+- The player scene owns its controller and nothing about the camera. A `CameraRig` sibling in
+  the main scene owns the camera, its offset, its field of view and its roll, and follows the
+  player's position once per physics frame (ADR 0004 decides what that framing looks like).
+  The player keeps `set_camera_roll`/`settle_camera_roll` as thin entry points because the
+  sequence director already speaks that vocabulary.
 - UI scenes should be replaceable without rewriting narrative data.
 
 Avoid hard-coded NodePaths that reach across unrelated scene ownership. Prefer exported Node references, signals, groups used for a documented purpose, or explicit service APIs.

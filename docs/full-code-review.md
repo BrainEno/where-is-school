@@ -18,7 +18,7 @@ this page is newer.
 | `main` has no animation system at all; the work sits in PR #53 | **Stale.** #53 merged (`b4faf46`). `main` has the retargeting bake, 42 library clips and `character_animation.gd`. |
 | PR #53's head is red and the PR should be split | **Stale.** The rest-relative tolerance was the failure; it was raised to 5° with the reason written down, and the PR was merged whole. |
 | The bake job has a `push` trigger, so every push re-bakes binary assets | **Stale.** It is `workflow_dispatch` only now. |
-| The CI check list has 47 entries; the docs say thirty-five | Both re-measured: **50** entries now, and the roadmap states that number and points at the workflow. |
+| The CI check list has 47 entries; the docs say thirty-five | Both re-measured: **51** entries now, and the roadmap states that number and points at the workflow. |
 
 The audit's headline figures — delivery about 26%, player-visible content about 7%,
 engineering about 69% — were estimates from that baseline and are not repeated as facts here.
@@ -65,19 +65,21 @@ Confirmed defects first — these are bugs, not gaps:
 | Finding | Issue | Status |
 | --- | --- | --- |
 | The director awaits a conversation-finished signal that `start()` may already have emitted, so the player lock never clears | #57 (duplicate #56) | **Fixed** in PR #68, with a regression check (`tests/dialogue_sync_finish_test.gd`) and a content rule that refuses a conditional start node |
-| `camera_fov` in `PlayerController` (60) silently overrides the scene's `fov` (58) | #58 | Open |
-| `camera_occluder_fader` only clears its faded state on a frame with no occluder, so a fade can outlive the wall | #58 | Open |
+| `camera_fov` in `PlayerController` (60) silently overrides the scene's `fov` (58) | #58 | **Fixed**: `CameraRig` owns the only field of view; the player has none |
+| `camera_occluder_fader` only clears its faded state on a frame with no occluder, so a fade can outlive the wall | #58 | **Fixed**: the fader rebuilds its set every frame; `camera_rig_test` walks blocker A to blocker B to nothing |
 | `NarrativeState.restore_snapshot()` bypasses every check `record()` performs, and an unknown source degrades to `OBSERVED` | #60 | Open |
 | Check seeds come from `Time.get_unix_time_from_system()` and never enter a save | #60 | Open |
 
 Structural findings, in the audit's own priority order:
 
-1. **#67 hygiene** — partially fixed in PR #68: the tracked `.pyc` is gone, nine scripts got
-   their `.uid`, and the stale numbers (font size, check count) are corrected. Still open:
+1. **#67 hygiene** — partially fixed in PR #68: the tracked `.pyc` is gone, every script that had no
+   `.uid` got one, and the stale numbers (font size, check count) are corrected. Still open:
    Actions pinned to commit SHAs, and the object leak the audit saw at exit (needs an engine
    run to reproduce).
 2. **#58 camera rig** — the camera is a child of the player, which is why the scene's field of
-   view is dead config. Wants the projection decision first.
+   view is dead config. **Done in the same pull request as this page**: `CameraRig` is a sibling
+   of the player and owns the offset, the field of view and the roll. ADR 0004 is the draft that
+   decides what the rig should be pointed at and how wide.
 3. **#59 director recoverability and hard-coded location ids** — the prerequisite for both
    saving and adding a location. The audit's sequencing: this before #60.
 4. **#60 save/load**, **#61 portraits**, **#62 settings and input**, **#63 artifacts in
