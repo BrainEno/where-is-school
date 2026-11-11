@@ -80,60 +80,41 @@ An initial choice may influence scene order and which evidence appears first. It
 
 ## Inner voices
 
-Three separate statements, kept apart because they are at three different stages.
+The owner has confirmed the intended design roster and broad behavior (2026-11-11).
+The six core voices are:
 
-**1. What exists now.** **One provisional voice is implemented**, not a cast. It
-speaks in the protagonist's own register and is presented as an inner voice, not as a
-character or an NPC:
+- **路感 (Orientation):** spatial relations, direction and spatial intuition.
+- **细察 (Scrutiny):** observation, details and evidence.
+- **回声 (Echo):** memory, experience and associative recollection.
+- **臆想 (Imagination):** imagination, subconscious associations and speculative
+  connections.
+- **推演 (Inference):** logical analysis, deduction and causal reasoning.
+- **共鸣 (Resonance):** emotional attunement, empathy and interpersonal signals.
 
-> **Orientation** (路感) — a sense of where things are in relation to each other:
-> heights, seams, what lines up and what does not. Confident about shapes, silent
-> about people.
+This is a narrative design decision, not an implementation claim. **Only one
+provisional voice is currently implemented**: Orientation (路感), in
+`data/abilities/`. The ability registry, character profiles, dialogue runtime,
+dice core and passive director support multiple voices, but the other five are not
+yet shipped as content.
 
-That voice ships in `data/abilities/` and is described in ADR 0003, which is a
-**proposal**, not an accepted decision. Its name, its value (3), the 2d6 formula and
-every difficulty in the content are provisional and expected to change after
-playtesting. It is still the only voice in the game, and this document describes no
-other.
+Voices volunteer automatically when relevant scene details, events or interactions
+activate them. They are not primarily a player-operated skill menu. The player's
+dialogue choices, behavior and responses to a voice's suggestions gradually
+influence that voice's strength and cognitive bias or disposition. The protagonist's
+broader thoughts and convictions are mainly shaped through accumulated interactions
+and experiences, rather than selected from a complete menu at the outset. Those
+thoughts can in turn influence how the voices interpret later events and speak.
 
-**2. What has been decided.** The owner has decided (2026-11) that the one provisional
-voice is to be **extended into several voices** rather than kept as it is. That
-decision is about direction, and the technical foundation for it now exists: the
-ability registry, the character profiles, the dialogue runtime, the dice core and the
-passive director all work with any number of voices, each with its own id, speaker,
-value, passive cap and two-language prose (see `docs/ARCHITECTURE.md` §5c). Adding a
-voice is a data change plus its prose, not a code change.
+A voice is partial and biased, never an oracle. Voices may misjudge, insist, or
+contradict one another; growth must not make them objectively correct. They do not
+explain the school, identify the animal, diagnose the protagonist, or settle whether
+a memory happened. A voice must not state another character's interior life as fact;
+it may offer an interpretation, but the narrative must preserve uncertainty.
 
-**3. What is not decided.** Everything about the voices themselves:
-
-- how many there are;
-- their names, in either language;
-- their personalities, values, biases and what each is good at;
-- which events make each of them speak unprompted;
-- every line any of them says.
-
-None of that is written, implied or reserved here. The multi-voice work in Phase 6a
-was technical: it ships no second voice, no placeholder name and no draft dialogue, so
-nothing in the game or in this document anticipates a design the owner has not made.
-
-Nothing in this section records a decision the owner has not made.
-
-Rules for writing them:
-
-- A voice is **partial and biased**, never an oracle. It may misjudge, insist, or
-  contradict another voice, and the prose should let the player notice.
-- A voice's failure is written as its own mistake, not as the world withholding
-  information: the line still leaves one concrete thing to look at.
-- No voice explains the school, identifies the animal, diagnoses the protagonist,
-  or settles whether a memory happened.
-- A voice never states a fact about another character's interior life as fact. This
-  is why the implemented voice is about space rather than about people, and the rule
-  applies unchanged to any voice added later.
-- Voices speak unprompted only on events, are capped per session, and never
-  chatter while the player is walking or thinking (ADR 0003 §6).
-- The player choosing a voice to attempt something is a decision about *how to
-  look*, expressed in the fiction ("try the frame", "read the sheet"), not a skill
-  menu.
+The exact personalities, dialogue, progression model, numerical values, thresholds,
+check frequency, and the rules by which thoughts emerge or feed back into voices
+remain open for design and playtesting. The existing one-voice implementation and
+the provisional mechanics in ADR 0003 must not be mistaken for the final design.
 
 ## The open yard
 
