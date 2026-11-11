@@ -51,7 +51,22 @@ func _ready() -> void:
 	_confirm.add_theme_color_override(&"font_color", MenuStyle.WARN)
 	_confirm.pressed.connect(_answer.bind(true))
 	row.add_child(_confirm)
+	# The focus stays on the two answers: arrows, the D-pad and Tab move between them and
+	# never to whatever menu is behind the question.
+	_trap_focus(_cancel, _confirm)
+	_trap_focus(_confirm, _cancel)
 	get_viewport().size_changed.connect(_fit)
+
+
+static func _trap_focus(button: Button, other: Button) -> void:
+	var own := button.get_path_to(button)
+	var to_other := button.get_path_to(other)
+	button.focus_neighbor_left = to_other
+	button.focus_neighbor_right = to_other
+	button.focus_neighbor_top = own
+	button.focus_neighbor_bottom = own
+	button.focus_next = to_other
+	button.focus_previous = to_other
 
 
 ## Shows the question. Focus goes to "cancel".

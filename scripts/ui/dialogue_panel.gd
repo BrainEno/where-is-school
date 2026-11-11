@@ -732,8 +732,10 @@ func _settle_layout() -> void:
 func _fit_choice_window(needed: float, max_height: float) -> void:
 	var choices_height := _choices_container.get_combined_minimum_size().y
 	var body_height := _body_label.get_combined_minimum_size().y
-	var body_floor := roundf((float(body_size) * 1.45 + 10.0) * 2.0)
-	var room := max_height - (needed - choices_height - body_height) - body_floor
+	# One line of the paragraph always stays readable above the options.
+	var body_floor := roundf(float(body_size) * 1.45 + 10.0)
+	var other := needed - choices_height - body_height
+	var room := max_height - other - body_floor
 	if room >= choices_height:
 		return
 	var heights: Array[float] = []
@@ -756,10 +758,20 @@ func _fit_choice_window(needed: float, max_height: float) -> void:
 		count = target - start + 1
 	_choice_window_start = start
 	_choice_window_count = count
+	var shown := 0.0
 	for index in total:
+		var inside := index >= start and index < start + count
 		if is_instance_valid(_choice_buttons[index]):
-			_choice_buttons[index].visible = index >= start and index < start + count
-	_body_label.custom_minimum_size = Vector2(0.0, body_floor)
+			_choice_buttons[index].visible = inside
+		if inside:
+			shown += heights[index] + (gap if index > start else 0.0)
+	if body_height <= max_height - other - shown:
+		# With fewer options on screen the whole paragraph fits again: no scrolling.
+		_body_label.fit_content = true
+		_body_label.scroll_active = false
+		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
+	else:
+		_body_label.custom_minimum_size = Vector2(0.0, body_floor)
 
 
 func _window_count(heights: Array[float], gap: float, start: int, room: float) -> int:

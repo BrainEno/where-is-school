@@ -54,6 +54,17 @@ func _build_actions() -> void:
 	_title_button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_title_button.pressed.connect(_on_title_pressed)
 	_actions.add_child(_title_button)
+	# The two buttons are the only things on the card that take the focus.
+	for pair: Array in [[_restart, _title_button], [_title_button, _restart]]:
+		var button: Button = pair[0]
+		var other := button.get_path_to(pair[1])
+		var own := button.get_path_to(button)
+		button.focus_neighbor_left = other
+		button.focus_neighbor_right = other
+		button.focus_neighbor_top = own
+		button.focus_neighbor_bottom = own
+		button.focus_next = other
+		button.focus_previous = other
 	_confirm = ConfirmPrompt.new()
 	add_child(_confirm)
 	_confirm.confirmed.connect(_on_restart_confirmed)
