@@ -1,0 +1,68 @@
+name: Bake the retargeted animation
+
+# `scenes/dev/animation_retarget_test/protagonist_ual.res` is a derived asset: 43 third-party
+# clips resampled onto this character's bones. Producing it needs an engine, and the machine
+# that edits the game does not have one on the path, so this dispatch-only job does it and
+# hands back the file. Re-run it after changing the mapping in `AnimationRetarget` or after
+# re-importing either model, then commit the result.
+#
+# It is not part of `godot-ci.yml` on purpose: a build that rewrites a tracked file on every
+# push is a build that fails on a dirty tree for reasons nobody looks at twice.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bake:
+    name: Bake UAL onto the protagonist
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      # The tool loads both models as scenes, which needs their import to have run first.
+      # `--import` waits for the queue to drain; its exit code is not the verdict, because
+      # the project theme is loaded before the font it points at has been imported.
+      - name: Import
+        run: godot --headless --path . --import || true
+
+      - name: Bake
+        run: godot --headless --path . --script res://tools/bake_animation_retarget.gd
+
+      - name: Show the result
+        run: ls -l scenes/dev/animation_retarget_test/protagonist_ual.res
+
+      # The file is a tracked, derived asset, so the job that can produce it commits it. A
+      # person can also run the same tool locally; the artifact below is for looking at it
+      # without running anything.
+      - name: Commit the result
+        run: |
+          set -euo pipefail
+          # `git diff` says nothing about an untracked file, which is exactly what the first
+          # bake produces, so ask `git status` instead.
+          if [ -z "$(git status --porcelain -- scenes/dev/animation_retarget_test/protagonist_ual.res)" ]; then
+            echo "unchanged since the last bake"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scenes/dev/animation_retarget_test/protagonist_ual.res
+          git commit -m "Re-bake the retargeted animation library"
+          git push origin "HEAD:refs/heads/${{ github.ref_name }}"
+
+      - name: Upload the baked library
+        uses: actions/upload-artifact@v4
+        with:
+          name: protagonist-ual
+          path: scenes/dev/animation_retarget_test/protagonist_ual.res
+          if-no-files-found: error

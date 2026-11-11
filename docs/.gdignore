@@ -1,0 +1,4 @@
+Documentation, not a Godot resource tree.
+Godot skips any directory holding this file: without it, opening the project imports
+every screenshot in docs/screenshots/ and writes a .import sidecar next to it, which is
+69 files of import metadata for images the game never loads.

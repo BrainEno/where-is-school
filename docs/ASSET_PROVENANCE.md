@@ -64,9 +64,28 @@ being silently dropped.
 - The two sample models are not third-party art and are not AI-generated: they are
   boxes written by `tools/build_sample_models.py`, which is their provenance. The
   import contract they prove is `docs/ASSET_PIPELINE.md`.
+- Two development-only derivatives of the characters exist under
+  `scenes/dev/animation_retarget_test/`: `q_rigged.glb` (the owner's Q, rigged to the
+  protagonist's 16-bone hierarchy) and `protagonist_retarget_ready.glb` (the owner's
+  protagonist, re-exported on a humanoid skeleton). Both are derived from owner-supplied
+  files by the scripts that wrote the reports next to their `.blend` sources under
+  `art/character_rigging/`, they are excluded from the export, and neither replaces the
+  production models.
+- `scenes/dev/animation_retarget_test/UAL1_Standard.glb` is the Universal Animation Library,
+  supplied by the project owner and kept as an animation *source*: 43 clips on a 65-joint
+  skeleton. It is third-party work, so its license belongs in this ledger and needs the owner
+  to name it — Quaternius publishes these libraries as CC0, which is why it is usable at all,
+  but that should be recorded rather than assumed. It does not ship (`scenes/dev/` is outside
+  the export). `protagonist_ual.res` in the same directory is derived from it — those clips
+  resampled onto the protagonist's bones by `tools/bake_animation_retarget.gd` — and also does
+  not ship.
+- The four clips the game's characters actually use are authored in code
+  (`scripts/actors/character_animation.gd`), not taken from the library; see
+  `docs/CHARACTER_ANIMATION.md`.
 - Every placeholder above is expected to be replaced by owner-approved art,
   audio, and writing. Record replacement assets in this ledger as they land.
-- The two Poly Haven models are the only third-party content in the repository. They are
+- The two Poly Haven models and the animation library above are the third-party content in
+  the repository. They are
   CC0, which is why they could be committed without a purchase or an attribution
   obligation, but they are still recorded here with their source page and licence rather
   than treated as project-owned. Their licence needs no file to travel with them; if a

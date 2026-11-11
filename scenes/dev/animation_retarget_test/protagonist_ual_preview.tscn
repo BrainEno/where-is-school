@@ -1,0 +1,56 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/dev/ual_preview.gd" id="1_preview"]
+[ext_resource type="PackedScene" path="res://scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb" id="2_protagonist"]
+[ext_resource type="AnimationLibrary" path="res://scenes/dev/animation_retarget_test/protagonist_ual.res" id="3_ual"]
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 1
+background_color = Color(0.44, 0.47, 0.52, 1)
+ambient_light_source = 4
+ambient_light_color = Color(0.62, 0.64, 0.68, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(20, 20)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.55, 0.56, 0.58, 1)
+roughness = 1.0
+
+[node name="UalRetargetPreview" type="Node3D"]
+script = ExtResource("1_preview")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_preview")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-46, -32, 0)
+light_color = Color(1, 0.96, 0.9, 1)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_max_distance = 20.0
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-18, 148, 0)
+light_color = Color(0.78, 0.84, 1, 1)
+light_energy = 0.35
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_ground")
+material_override = SubResource("StandardMaterial3D_ground")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 1.35, 3.6)
+rotation_degrees = Vector3(-8, 0, 0)
+current = true
+fov = 42.0
+far = 100.0
+
+[node name="Protagonist" parent="." instance=ExtResource("2_protagonist")]
+
+[node name="UalPlayer" type="AnimationPlayer" parent="Protagonist"]
+libraries = {
+"ual": ExtResource("3_ual")
+}

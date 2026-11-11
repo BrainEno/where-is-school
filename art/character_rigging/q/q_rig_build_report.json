@@ -1,0 +1,1764 @@
+{
+  "schema_version": 1,
+  "script_version": "1.0.0",
+  "created_utc": "2026-11-10T14:11:23.994865+00:00",
+  "source": "D:\\develop\\games\\where-is-school\\assets\\models\\q\\q.glb",
+  "blender_version": "5.2.3 LTS",
+  "outputs": {
+    "blend": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_rigged_working.blend",
+    "glb": "D:\\develop\\games\\where-is-school\\art\\character_rigging\\q\\q_rigged_test.glb"
+  },
+  "skeleton": {
+    "name": "Q_Humanoid_Skeleton",
+    "bone_names": [
+      "Root",
+      "Spine",
+      "Neck",
+      "Head",
+      "UpperArm.L",
+      "LowerArm.L",
+      "Hand.L",
+      "UpperArm.R",
+      "LowerArm.R",
+      "Hand.R",
+      "Thigh.L",
+      "Shin.L",
+      "Foot.L",
+      "Thigh.R",
+      "Shin.R",
+      "Foot.R"
+    ],
+    "bone_count": 16,
+    "hierarchy_matches_protagonist_names_and_parentage": true,
+    "animation_actions_created": 0
+  },
+  "summary": {
+    "rigged_mesh_objects": 7,
+    "connected_components": 72,
+    "weighted_vertex_count": 18031,
+    "vertex_group_totals_nonexclusive": {
+      "Spine": 1861,
+      "Head": 10580,
+      "Neck": 454,
+      "Hand.L": 528,
+      "Hand.R": 528,
+      "Root": 632,
+      "Thigh.L": 472,
+      "Shin.L": 472,
+      "Thigh.R": 472,
+      "Shin.R": 472,
+      "Foot.L": 436,
+      "Foot.R": 436,
+      "UpperArm.L": 308,
+      "LowerArm.L": 326,
+      "UpperArm.R": 326,
+      "LowerArm.R": 326
+    },
+    "rest_bounds_preserved": true,
+    "rest_bounds_before": {
+      "min": [
+        -0.36552903056144714,
+        -0.42190563678741455,
+        0.0
+      ],
+      "max": [
+        0.36000001430511475,
+        0.1849999874830246,
+        1.6466456651687622
+      ],
+      "size": [
+        0.7255290448665619,
+        0.6069056242704391,
+        1.6466456651687622
+      ]
+    },
+    "rest_bounds_after": {
+      "min": [
+        -0.36552897095680237,
+        -0.42190563678741455,
+        5.820764426012204e-10
+      ],
+      "max": [
+        0.3600001335144043,
+        0.1849999874830246,
+        1.6466456651687622
+      ],
+      "size": [
+        0.7255291044712067,
+        0.6069056242704391,
+        1.6466456645866858
+      ]
+    }
+  },
+  "component_assignments": [
+    {
+      "mesh": "Q_Collar",
+      "component": 0,
+      "vertices": 637,
+      "center": [
+        -0.00171,
+        -0.018,
+        1.315
+      ],
+      "size": [
+        0.202,
+        0.1818,
+        0.0224
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Spine": 1.0
+      },
+      "group_vertex_counts": {
+        "Spine": 637
+      },
+      "note": "collar sits at the base of the neck"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 0,
+      "vertices": 2324,
+      "center": [
+        0.008113,
+        -0.00806,
+        1.57884
+      ],
+      "size": [
+        0.246746,
+        0.217702,
+        0.216235
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 2324
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 1,
+      "vertices": 100,
+      "center": [
+        0.067059,
+        0.063206,
+        1.49451
+      ],
+      "size": [
+        0.035291,
+        0.024922,
+        0.087987
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 2,
+      "vertices": 100,
+      "center": [
+        -0.042743,
+        0.076688,
+        1.502246
+      ],
+      "size": [
+        0.037662,
+        0.018849,
+        0.087784
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 3,
+      "vertices": 100,
+      "center": [
+        0.013443,
+        0.082681,
+        1.49816
+      ],
+      "size": [
+        0.039747,
+        0.014656,
+        0.088068
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 4,
+      "vertices": 100,
+      "center": [
+        -0.025403,
+        0.021481,
+        1.616376
+      ],
+      "size": [
+        0.094694,
+        0.042813,
+        0.026068
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 5,
+      "vertices": 100,
+      "center": [
+        0.046921,
+        0.018832,
+        1.610295
+      ],
+      "size": [
+        0.087388,
+        0.054402,
+        0.031561
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 6,
+      "vertices": 100,
+      "center": [
+        0.112635,
+        -0.046566,
+        1.543561
+      ],
+      "size": [
+        0.027594,
+        0.033606,
+        0.066404
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 7,
+      "vertices": 100,
+      "center": [
+        -0.10618,
+        -0.019699,
+        1.558977
+      ],
+      "size": [
+        0.032546,
+        0.03617,
+        0.062657
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 8,
+      "vertices": 100,
+      "center": [
+        0.018825,
+        -0.110159,
+        1.594804
+      ],
+      "size": [
+        0.060959,
+        0.048824,
+        0.059177
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 9,
+      "vertices": 100,
+      "center": [
+        0.063556,
+        -0.105294,
+        1.567509
+      ],
+      "size": [
+        0.035079,
+        0.026367,
+        0.060125
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 10,
+      "vertices": 100,
+      "center": [
+        0.026801,
+        -0.125598,
+        1.572536
+      ],
+      "size": [
+        0.036851,
+        0.035693,
+        0.053904
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 11,
+      "vertices": 100,
+      "center": [
+        -0.006527,
+        -0.12688,
+        1.574408
+      ],
+      "size": [
+        0.047497,
+        0.028836,
+        0.049605
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 12,
+      "vertices": 100,
+      "center": [
+        -0.038753,
+        -0.117532,
+        1.577137
+      ],
+      "size": [
+        0.047413,
+        0.029428,
+        0.048789
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Hair",
+      "component": 13,
+      "vertices": 100,
+      "center": [
+        -0.069864,
+        -0.088914,
+        1.576895
+      ],
+      "size": [
+        0.039415,
+        0.026924,
+        0.056653
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 0,
+      "vertices": 4514,
+      "center": [
+        -0.000278,
+        -0.031512,
+        1.498184
+      ],
+      "size": [
+        0.225503,
+        0.235875,
+        0.256963
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 4514
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 1,
+      "vertices": 222,
+      "center": [
+        -0.049115,
+        -0.117813,
+        1.523017
+      ],
+      "size": [
+        0.024753,
+        0.024768,
+        0.024878
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 222
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 2,
+      "vertices": 222,
+      "center": [
+        0.028817,
+        -0.129694,
+        1.515658
+      ],
+      "size": [
+        0.024753,
+        0.024768,
+        0.024878
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 222
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 3,
+      "vertices": 200,
+      "center": [
+        -0.015451,
+        -0.132839,
+        1.453815
+      ],
+      "size": [
+        0.082481,
+        0.018567,
+        0.019997
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 200
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 4,
+      "vertices": 200,
+      "center": [
+        -0.01503,
+        -0.127311,
+        1.44828
+      ],
+      "size": [
+        0.083485,
+        0.018782,
+        0.020459
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 200
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 5,
+      "vertices": 152,
+      "center": [
+        -0.015858,
+        -0.128293,
+        1.437945
+      ],
+      "size": [
+        0.062285,
+        0.016033,
+        0.015785
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 152
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 6,
+      "vertices": 152,
+      "center": [
+        -0.045037,
+        -0.115117,
+        1.562063
+      ],
+      "size": [
+        0.037375,
+        0.026003,
+        0.012726
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 152
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 7,
+      "vertices": 152,
+      "center": [
+        0.031906,
+        -0.127781,
+        1.549681
+      ],
+      "size": [
+        0.043019,
+        0.016272,
+        0.014744
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 152
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 8,
+      "vertices": 152,
+      "center": [
+        -0.013161,
+        -0.129061,
+        1.44887
+      ],
+      "size": [
+        0.050005,
+        0.01122,
+        0.010761
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 152
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 9,
+      "vertices": 146,
+      "center": [
+        -0.109748,
+        -0.012786,
+        1.503484
+      ],
+      "size": [
+        0.022607,
+        0.034784,
+        0.051747
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 146
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 10,
+      "vertices": 146,
+      "center": [
+        0.110061,
+        -0.039775,
+        1.487998
+      ],
+      "size": [
+        0.019257,
+        0.037331,
+        0.051747
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 146
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 11,
+      "vertices": 100,
+      "center": [
+        -0.049575,
+        -0.129525,
+        1.522562
+      ],
+      "size": [
+        0.013466,
+        0.007129,
+        0.013534
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 12,
+      "vertices": 100,
+      "center": [
+        0.028357,
+        -0.141405,
+        1.515203
+      ],
+      "size": [
+        0.013466,
+        0.007129,
+        0.013534
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 100
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 13,
+      "vertices": 75,
+      "center": [
+        -0.048728,
+        -0.120267,
+        1.532784
+      ],
+      "size": [
+        0.026301,
+        0.01876,
+        0.011308
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 75
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 14,
+      "vertices": 75,
+      "center": [
+        0.029203,
+        -0.132148,
+        1.525425
+      ],
+      "size": [
+        0.026301,
+        0.01876,
+        0.011308
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 75
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 15,
+      "vertices": 52,
+      "center": [
+        -0.049785,
+        -0.131308,
+        1.522687
+      ],
+      "size": [
+        0.006733,
+        0.005155,
+        0.006767
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 52
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 16,
+      "vertices": 52,
+      "center": [
+        0.028146,
+        -0.143189,
+        1.515328
+      ],
+      "size": [
+        0.006733,
+        0.005155,
+        0.006767
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 52
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 17,
+      "vertices": 52,
+      "center": [
+        -0.024557,
+        -0.15258,
+        1.486929
+      ],
+      "size": [
+        0.007129,
+        0.005924,
+        0.005971
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 52
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 18,
+      "vertices": 52,
+      "center": [
+        -0.00777,
+        -0.155033,
+        1.48577
+      ],
+      "size": [
+        0.007129,
+        0.005924,
+        0.005971
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 52
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 19,
+      "vertices": 49,
+      "center": [
+        -0.050225,
+        -0.120241,
+        1.511485
+      ],
+      "size": [
+        0.018903,
+        0.013922,
+        0.004864
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 49
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 20,
+      "vertices": 49,
+      "center": [
+        0.027706,
+        -0.132121,
+        1.504126
+      ],
+      "size": [
+        0.018903,
+        0.013922,
+        0.004864
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 49
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Head",
+      "component": 21,
+      "vertices": 42,
+      "center": [
+        0.02917,
+        -0.141366,
+        1.460883
+      ],
+      "size": [
+        0.005419,
+        0.004809,
+        0.006415
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Head": 1.0
+      },
+      "group_vertex_counts": {
+        "Head": 42
+      },
+      "note": "head and facial/hair islands follow the head"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 0,
+      "vertices": 164,
+      "center": [
+        0.0,
+        -0.005,
+        1.27
+      ],
+      "size": [
+        0.124,
+        0.122116,
+        0.124
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Neck": 1.0
+      },
+      "group_vertex_counts": {
+        "Neck": 164
+      },
+      "note": "central neck component"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 1,
+      "vertices": 164,
+      "center": [
+        0.0,
+        -0.03,
+        1.44
+      ],
+      "size": [
+        0.116,
+        0.114238,
+        0.116
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Neck": 1.0
+      },
+      "group_vertex_counts": {
+        "Neck": 164
+      },
+      "note": "central neck component"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 2,
+      "vertices": 164,
+      "center": [
+        -0.306368,
+        -0.154615,
+        0.745299
+      ],
+      "size": [
+        0.043989,
+        0.076511,
+        0.103607
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.L": 164
+      },
+      "note": "distal hand component on side L"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 3,
+      "vertices": 164,
+      "center": [
+        0.255506,
+        -0.326965,
+        1.096276
+      ],
+      "size": [
+        0.068983,
+        0.10479,
+        0.051534
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.R": 164
+      },
+      "note": "distal hand component on side R"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 4,
+      "vertices": 126,
+      "center": [
+        0.0,
+        -0.0175,
+        1.355
+      ],
+      "size": [
+        0.124,
+        0.141919,
+        0.187194
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Neck": 1.0
+      },
+      "group_vertex_counts": {
+        "Neck": 126
+      },
+      "note": "central neck component"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 5,
+      "vertices": 114,
+      "center": [
+        -0.307735,
+        -0.179231,
+        0.690598
+      ],
+      "size": [
+        0.031992,
+        0.05974,
+        0.076177
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.L": 114
+      },
+      "note": "distal hand component on side L"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 6,
+      "vertices": 114,
+      "center": [
+        0.246012,
+        -0.383929,
+        1.112551
+      ],
+      "size": [
+        0.055878,
+        0.075953,
+        0.037124
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.R": 114
+      },
+      "note": "distal hand component on side R"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 7,
+      "vertices": 86,
+      "center": [
+        -0.306595,
+        -0.190718,
+        0.736182
+      ],
+      "size": [
+        0.027993,
+        0.034421,
+        0.054701
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.L": 86
+      },
+      "note": "distal hand component on side L"
+    },
+    {
+      "mesh": "Q_Neck_Hands",
+      "component": 8,
+      "vertices": 86,
+      "center": [
+        0.285765,
+        -0.336459,
+        1.102172
+      ],
+      "size": [
+        0.028666,
+        0.056965,
+        0.031127
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.R": 86
+      },
+      "note": "distal hand component on side R"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 0,
+      "vertices": 266,
+      "center": [
+        -0.0,
+        0.0,
+        0.92
+      ],
+      "size": [
+        0.4,
+        0.34,
+        0.26
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Root": 1.0
+      },
+      "group_vertex_counts": {
+        "Root": 266
+      },
+      "note": "central pelvis/seat of the trousers"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 1,
+      "vertices": 234,
+      "center": [
+        -0.103747,
+        -0.004989,
+        0.48
+      ],
+      "size": [
+        0.209978,
+        0.206704,
+        0.765754
+      ],
+      "kind": "leg_blend",
+      "weights": {
+        "Thigh.L": "height-blended",
+        "Shin.L": "height-blended"
+      },
+      "group_vertex_counts": {
+        "Thigh.L": 144,
+        "Shin.L": 144
+      },
+      "note": "continuous full-length trouser leg: blend thigh to shin by height"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 2,
+      "vertices": 234,
+      "center": [
+        0.103747,
+        -0.004989,
+        0.48
+      ],
+      "size": [
+        0.209978,
+        0.206704,
+        0.765754
+      ],
+      "kind": "leg_blend",
+      "weights": {
+        "Thigh.R": "height-blended",
+        "Shin.R": "height-blended"
+      },
+      "group_vertex_counts": {
+        "Thigh.R": 144,
+        "Shin.R": 144
+      },
+      "note": "continuous full-length trouser leg: blend thigh to shin by height"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 3,
+      "vertices": 164,
+      "center": [
+        -0.1,
+        0.0,
+        0.86
+      ],
+      "size": [
+        0.21,
+        0.20681,
+        0.21
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Thigh.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Thigh.L": 164
+      },
+      "note": "upper-leg/knee cap component"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 4,
+      "vertices": 164,
+      "center": [
+        -0.105,
+        -0.01,
+        0.48
+      ],
+      "size": [
+        0.176,
+        0.173326,
+        0.176
+      ],
+      "kind": "knee_blend",
+      "weights": {
+        "Thigh.L": 0.5,
+        "Shin.L": 0.5
+      },
+      "group_vertex_counts": {
+        "Thigh.L": 164,
+        "Shin.L": 164
+      },
+      "note": "small knee joint component bridges thigh and shin"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 5,
+      "vertices": 164,
+      "center": [
+        -0.105,
+        0.0,
+        0.1
+      ],
+      "size": [
+        0.132,
+        0.129995,
+        0.132
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Shin.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Shin.L": 164
+      },
+      "note": "ankle/lower-leg component"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 6,
+      "vertices": 164,
+      "center": [
+        0.1,
+        0.0,
+        0.86
+      ],
+      "size": [
+        0.21,
+        0.20681,
+        0.21
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Thigh.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Thigh.R": 164
+      },
+      "note": "upper-leg/knee cap component"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 7,
+      "vertices": 164,
+      "center": [
+        0.105,
+        -0.01,
+        0.48
+      ],
+      "size": [
+        0.176,
+        0.173326,
+        0.176
+      ],
+      "kind": "knee_blend",
+      "weights": {
+        "Thigh.R": 0.5,
+        "Shin.R": 0.5
+      },
+      "group_vertex_counts": {
+        "Thigh.R": 164,
+        "Shin.R": 164
+      },
+      "note": "small knee joint component bridges thigh and shin"
+    },
+    {
+      "mesh": "Q_Pants",
+      "component": 8,
+      "vertices": 164,
+      "center": [
+        0.105,
+        0.0,
+        0.1
+      ],
+      "size": [
+        0.132,
+        0.129995,
+        0.132
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Shin.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Shin.R": 164
+      },
+      "note": "ankle/lower-leg component"
+    },
+    {
+      "mesh": "Q_Shoes",
+      "component": 0,
+      "vertices": 266,
+      "center": [
+        -0.105,
+        -0.045,
+        0.055
+      ],
+      "size": [
+        0.15,
+        0.3,
+        0.11
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Foot.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Foot.L": 266
+      },
+      "note": "shoe/sole component on side L"
+    },
+    {
+      "mesh": "Q_Shoes",
+      "component": 1,
+      "vertices": 266,
+      "center": [
+        0.105,
+        -0.045,
+        0.055
+      ],
+      "size": [
+        0.15,
+        0.3,
+        0.11
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Foot.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Foot.R": 266
+      },
+      "note": "shoe/sole component on side R"
+    },
+    {
+      "mesh": "Q_Shoes",
+      "component": 2,
+      "vertices": 170,
+      "center": [
+        -0.105,
+        -0.045,
+        0.016
+      ],
+      "size": [
+        0.156,
+        0.312,
+        0.032
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Foot.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Foot.L": 170
+      },
+      "note": "shoe/sole component on side L"
+    },
+    {
+      "mesh": "Q_Shoes",
+      "component": 3,
+      "vertices": 170,
+      "center": [
+        0.105,
+        -0.045,
+        0.016
+      ],
+      "size": [
+        0.156,
+        0.312,
+        0.032
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Foot.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Foot.R": 170
+      },
+      "note": "shoe/sole component on side R"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 0,
+      "vertices": 366,
+      "center": [
+        -0.0,
+        -0.01,
+        0.93
+      ],
+      "size": [
+        0.45,
+        0.39,
+        0.28
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Root": 1.0
+      },
+      "group_vertex_counts": {
+        "Root": 366
+      },
+      "note": "lower torso component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 1,
+      "vertices": 366,
+      "center": [
+        -0.0,
+        -0.035,
+        1.02
+      ],
+      "size": [
+        0.5,
+        0.43,
+        0.4
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Spine": 1.0
+      },
+      "group_vertex_counts": {
+        "Spine": 366
+      },
+      "note": "central upper torso component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 2,
+      "vertices": 366,
+      "center": [
+        -0.0,
+        -0.01,
+        1.19
+      ],
+      "size": [
+        0.45,
+        0.33,
+        0.32
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Spine": 1.0
+      },
+      "group_vertex_counts": {
+        "Spine": 366
+      },
+      "note": "central upper torso component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 3,
+      "vertices": 310,
+      "center": [
+        -0.0,
+        -0.005,
+        1.255
+      ],
+      "size": [
+        0.43,
+        0.24,
+        0.15
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Spine": 1.0
+      },
+      "group_vertex_counts": {
+        "Spine": 310
+      },
+      "note": "central upper torso component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 4,
+      "vertices": 234,
+      "center": [
+        -0.276199,
+        -0.053779,
+        1.013779
+      ],
+      "size": [
+        0.230019,
+        0.23773,
+        0.504852
+      ],
+      "kind": "arm_blend",
+      "weights": {
+        "UpperArm.L": "path-blended",
+        "LowerArm.L": "path-blended"
+      },
+      "group_vertex_counts": {
+        "UpperArm.L": 144,
+        "LowerArm.L": 162
+      },
+      "note": "long arm island: blend upper/lower arm along its measured path"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 5,
+      "vertices": 234,
+      "center": [
+        0.266178,
+        -0.098833,
+        1.093908
+      ],
+      "size": [
+        0.224099,
+        0.353861,
+        0.328106
+      ],
+      "kind": "arm_blend",
+      "weights": {
+        "UpperArm.R": "path-blended",
+        "LowerArm.R": "path-blended"
+      },
+      "group_vertex_counts": {
+        "UpperArm.R": 162,
+        "LowerArm.R": 162
+      },
+      "note": "long arm island: blend upper/lower arm along its measured path"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 6,
+      "vertices": 182,
+      "center": [
+        -0.0,
+        -0.015,
+        1.29
+      ],
+      "size": [
+        0.22,
+        0.2,
+        0.1
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Spine": 1.0
+      },
+      "group_vertex_counts": {
+        "Spine": 182
+      },
+      "note": "central upper torso component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 7,
+      "vertices": 164,
+      "center": [
+        -0.2,
+        -0.005,
+        1.255
+      ],
+      "size": [
+        0.14,
+        0.137873,
+        0.14
+      ],
+      "kind": "rigid",
+      "weights": {
+        "UpperArm.L": 1.0
+      },
+      "group_vertex_counts": {
+        "UpperArm.L": 164
+      },
+      "note": "shoulder/upper-arm joint component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 8,
+      "vertices": 164,
+      "center": [
+        -0.3,
+        -0.04,
+        1.0
+      ],
+      "size": [
+        0.12,
+        0.118177,
+        0.12
+      ],
+      "kind": "rigid",
+      "weights": {
+        "LowerArm.L": 1.0
+      },
+      "group_vertex_counts": {
+        "LowerArm.L": 164
+      },
+      "note": "elbow/forearm joint component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 9,
+      "vertices": 164,
+      "center": [
+        -0.305,
+        -0.13,
+        0.8
+      ],
+      "size": [
+        0.1,
+        0.098481,
+        0.1
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.L": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.L": 164
+      },
+      "note": "wrist/hand-end component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 10,
+      "vertices": 164,
+      "center": [
+        0.2,
+        -0.005,
+        1.255
+      ],
+      "size": [
+        0.14,
+        0.137873,
+        0.14
+      ],
+      "kind": "rigid",
+      "weights": {
+        "UpperArm.R": 1.0
+      },
+      "group_vertex_counts": {
+        "UpperArm.R": 164
+      },
+      "note": "shoulder/upper-arm joint component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 11,
+      "vertices": 164,
+      "center": [
+        0.3,
+        -0.06,
+        1.02
+      ],
+      "size": [
+        0.12,
+        0.118177,
+        0.12
+      ],
+      "kind": "rigid",
+      "weights": {
+        "LowerArm.R": 1.0
+      },
+      "group_vertex_counts": {
+        "LowerArm.R": 164
+      },
+      "note": "elbow/forearm joint component"
+    },
+    {
+      "mesh": "Q_Top",
+      "component": 12,
+      "vertices": 164,
+      "center": [
+        0.265,
+        -0.27,
+        1.08
+      ],
+      "size": [
+        0.1,
+        0.098481,
+        0.1
+      ],
+      "kind": "rigid",
+      "weights": {
+        "Hand.R": 1.0
+      },
+      "group_vertex_counts": {
+        "Hand.R": 164
+      },
+      "note": "wrist/hand-end component"
+    }
+  ],
+  "warnings": []
+}

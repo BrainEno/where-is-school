@@ -1,0 +1,4 @@
+Blender sources and their reports, not runtime assets.
+Godot skips any directory holding this file. Without it a .blend in here is an import
+candidate, and importing one needs a Blender install: on CI that fails, and next to the
+failure every mesh in the project stops importing.
