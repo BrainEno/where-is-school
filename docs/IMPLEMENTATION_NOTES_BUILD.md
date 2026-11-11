@@ -123,6 +123,34 @@ stored as a `res://…​.import`-style stub plus the converted data under
 strips it). That is why "is the font in the build" is answered by a per-file size budget
 rather than by looking up one exact path.
 
+## 4b. What the repository weighs
+
+The build is small (§4a). The *repository* is a different budget, and it is the one every
+clone, every CI job and every agent workspace pays: a binary is stored in full on every
+change, so a 4K source model or an uncompressed recording costs its whole size again the
+moment it is edited. Issue #97 measured 169 MB → 433 MB of growth in ten hours; PR #88
+stopped the largest source of it (screenshots were being committed by a workflow, and are
+now workflow artifacts), and this section is the rule for the rest.
+
+| Where | What it may hold | Ceiling | Checked by |
+|---|---|---|---|
+| `assets/**` | what the engine imports | 2 MiB per shipped file, 16 MiB per pack | `tools/verify_build.py`, on the export |
+| `art/**`, `scenes/dev/**`, `docs/**` | sources, scratch, evidence | 12 MiB per file | `tools/repo_size.py --check` |
+| anywhere | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
+
+No exception list: a file that needs one needs a change to
+`docs/adr/0007-large-binaries-and-repository-size.md`, in a commit someone can read. The
+check also prints a report (`--report`) of the largest tracked files and the largest blobs
+in history with the commit that added each one, which is how a week of growth is explained
+rather than guessed at. A file a checked-in script can rebuild is still committed — the
+engine has to import it — but it is never edited by hand, and its `--check` fails on drift.
+
+At the commit that added this section the tree was 668 files and 70.3 MiB, the largest file
+being the 10.1 MiB OFL source font. A full clone is still several hundred megabytes because
+history is not rewritten when a file is removed; use `git clone --filter=blob:none`. The
+remaining known offenders — the runtime music being a 4.2 MiB WAV, and the 67 MiB 4K model
+that was removed from the tree — are recorded in the ADR under "Not fixed here".
+
 ## 5. What a player downloads
 
 ```
