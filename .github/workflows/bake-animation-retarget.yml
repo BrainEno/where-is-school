@@ -11,8 +11,6 @@ name: Bake the retargeted animation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [arena/94f7330e-where-is-school]
 
 permissions:
   contents: write

@@ -103,7 +103,12 @@ for every clip, sampled at 30 fps:
 ```
 
 Rest-relative, so a bone whose rest pose points a different way on the two rigs still lands
-where the animation puts it instead of inheriting the library's twist. Positions are not
+where the animation puts it instead of inheriting the library's twist. The two chains differ in
+length — the library spends a spine over `spine_01..03`, the character over `Spine`, `Chest`,
+`UpperChest`, and only two of those three pair up — so the chest chain disagrees by about 3°
+while everything else agrees to within one. That is the size of the difference `_2`-suffix
+matching and a three-bone spine buy you; it is also why the tolerance in the test is 5° and not
+0.5°. Positions are not
 copied, the library's fingers are dropped (this character has none), and `_2`-suffixed bones
 are matched like any other.
 
@@ -116,7 +121,9 @@ godot --headless --path . --script res://tools/bake_animation_retarget.gd
 ~~~
 
 The `bake-animation-retarget` workflow runs exactly those two commands and commits the result,
-for when there is no engine on the machine doing the editing.
+for when there is no engine on the machine doing the editing. Dispatch it from the Actions tab;
+it is deliberately not part of the check list, because a build that rewrites a tracked file on
+every push is a build that fails on a dirty tree for reasons nobody reads twice.
 
 `tests/ual_retarget_test.gd` checks the three things that can be silently wrong: the bones pair
 up (19 of them, spot-checked by name), the baked clip moves the character (measured off the
