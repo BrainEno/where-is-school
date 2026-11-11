@@ -768,8 +768,11 @@ func _test_segment(
 	grazed: Dictionary,
 ) -> void:
 	for entry: Array in boxes:
+		# Tested in the mesh's own space: a rotated ring's world-space box is up to 40 %
+		# wider than the ring, and would "hide" the very thing it stands next to.
 		var box: AABB = entry[1]
-		if not box.intersects_segment(eye, target):
+		var to_local: Transform3D = entry[2]
+		if not box.intersects_segment(to_local * eye, to_local * target):
 			continue
 		if maxf(box.size.x, box.size.z) < SMALL_PIECE:
 			grazed[entry[0]] = int(grazed.get(entry[0], 0)) + 1
@@ -777,8 +780,8 @@ func _test_segment(
 			blocked.append("%s hides %s" % [entry[0], what])
 
 
-## Every drawn mesh the art pass added, one box each (the occluder decals fade with their
-## wall and are left out).
+## Every drawn mesh the art pass added, as [path, local box, world-to-local transform]
+## (the occluder decals fade with their wall and are left out).
 func _art_boxes() -> Array:
 	var boxes := []
 	var art := _yard.get_node_or_null(^"PlaygroundArt")
@@ -788,8 +791,7 @@ func _art_boxes() -> Array:
 		var mesh := node as MeshInstance3D
 		if mesh == null or mesh.mesh == null or not mesh.is_visible_in_tree():
 			continue
-		var box := mesh.global_transform * mesh.get_aabb()
-		boxes.append([_relative(mesh), box])
+		boxes.append([_relative(mesh), mesh.get_aabb(), mesh.global_transform.affine_inverse()])
 	return boxes
 
 

@@ -84,17 +84,21 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Older pour / newer pour / hoop patch | `#ACA08A` / `#A09A8E` / `#8B8C88` |
 | Court / far half / keys / lines | `#985642` / darker ×0.84 / `#5C6C80` / `#DED6C0` |
 | School wall / plinth | `#789694` / `#DCD0B4` |
-| Shed / roof / door | `#E2D6BC` / `#58404C` / `#567040` |
+| Shed / roof / door | `#E2D6BC` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
-| Sky: blue / mauve / rose / glow / ground rows | `#8498B0` / `#A89EB6` / `#CCA4AA` / `#E6D0C2` / `#706C86` |
+| Sky: blue / mauve / rose / glow / ground rows | `#647492` / `#847A98` / `#A48492` / `#BAA09E` / `#706C86` |
 
 Lighting (in `playground.tscn`):
 
-- Sun: unchanged direction (low, from behind the camera), colour `(1, 0.8, 0.62)`,
-  energy 1.5.
-- Ambient: cool `(0.62, 0.6, 0.7)` × 0.62, so shadows go mauve rather than brown.
+- Sun: same bearing as the graybox (from behind the camera), raised from 12° to 20°.
+  The south estate block's dusk shadow is now a deliberate cool block over roughly the
+  gate half of the yard instead of all of it. Colour `(1, 0.8, 0.62)`, energy 0.85.
+- Ambient: cool `(0.66, 0.64, 0.74)` × 0.8, so shadows go mauve rather than brown.
 - Background: the sky blue.
+- Every sky band stays mid-to-dark, and the sunlit ground stays mid-value: the HUD line
+  (top left) and the interaction prompts (bottom centre) are pale text and sit exactly
+  over them.
 
 ## Triplanar conventions
 

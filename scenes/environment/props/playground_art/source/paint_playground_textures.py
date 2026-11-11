@@ -51,10 +51,10 @@ RES_DIR = "res://scenes/environment/props/playground_art/textures"
 INK = (43, 38, 34)
 # Sky: the side of a dusk sky facing away from the sun - dusty blue overhead, a rose band
 # low down, a pale glow at the horizon. The sun is behind the camera; the yard looks away.
-SKY_HIGH = (132, 152, 176)
-SKY_MAUVE = (168, 158, 182)
-SKY_BELT = (204, 164, 170)
-SKY_GLOW = (230, 208, 194)
+SKY_HIGH = (100, 116, 146)
+SKY_MAUVE = (132, 122, 152)
+SKY_BELT = (164, 132, 146)
+SKY_GLOW = (186, 160, 158)
 DISTANT = (112, 108, 134)  # the ground-row silhouettes, one flat value
 # Ground: two pours of concrete, mid-value so a pale shirt and a dark coat both read on it.
 POUR_A = (172, 160, 138)
@@ -180,8 +180,8 @@ def seam() -> Image.Image:
     w_m, h_m = POUR_B_X1 - POUR_B_X0, POUR_B_Z1 - POUR_B_Z0
     c = Canvas(w_m, h_m, POUR_B_PPM * 2, INK, seed=2122, alpha=0.0)
     line = [(x - POUR_B_X0, POUR_B_Z1 - z) for x, z in SEAM]
-    c.ink_line(line, width_m=0.11, wobble_m=0.05, color=(118, 104, 92), opacity=1.0, taper=False, broken=0.12, alpha_canvas=True)
-    c.ink_line(line, width_m=0.05, wobble_m=0.03, color=INK, opacity=1.0, taper=False, broken=0.3, alpha_canvas=True)
+    c.ink_line(line, width_m=0.06, wobble_m=0.04, color=(132, 122, 110), opacity=1.0, taper=False, broken=0.2, alpha_canvas=True)
+    c.ink_line(line, width_m=0.028, wobble_m=0.02, color=(84, 76, 68), opacity=1.0, taper=False, broken=0.45, alpha_canvas=True)
     return c.image(4, alpha="cut")
 
 
@@ -297,7 +297,7 @@ def chain_link(width_m: float, height_m: float, seed: int, gap: tuple[float, flo
         lines.append(([(s0 + height_m, 0.0), (s0, height_m)]))
         k += 1
     for pts in lines:
-        c.ink_line(pts, width_m=0.03, wobble_m=0.014, color=INK, opacity=1.0, taper=False, broken=0.05, alpha_canvas=True)
+        c.ink_line(pts, width_m=0.02, wobble_m=0.014, color=INK, opacity=1.0, taper=False, broken=0.08, alpha_canvas=True)
     if gap is not None:
         gs, ghw, gh = gap
         mask, draw = c.blank_mask()
@@ -530,8 +530,8 @@ def sky_floor() -> Image.Image:
         s = rng.uniform(0, SKY_SIZE)
         y = rng.uniform(0, SKY_SIZE)
         clouds.append(([(s, y), (s + rng.uniform(25, 60), y + rng.uniform(-2, 2))], rng.uniform(2.5, 6.0), {"bristles": 10, "dryness": 0.6, "wobble_m": 0.5}))
-    c.brush(rgb((150, 166, 188)), clouds[0::2], opacity=0.5)
-    c.brush(rgb((120, 138, 164)), clouds[1::2], opacity=0.45)
+    c.brush(rgb((116, 132, 160)), clouds[0::2], opacity=0.5)
+    c.brush(rgb((88, 104, 134)), clouds[1::2], opacity=0.45)
     # Clouds only out in the blue, never in the warm bands along the yard's edge.
     far = smoothstep(16.0, 28.0, d)[..., None]
     c.rgb = before * (1.0 - far) + c.rgb * far

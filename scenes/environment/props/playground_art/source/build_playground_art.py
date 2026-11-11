@@ -61,7 +61,7 @@ SCHOOL_TEAL = (120, 150, 148)
 WALL_FRESH = (130, 162, 158)
 IVORY = (220, 208, 180)
 SHED_IVORY = (226, 214, 188)
-ROOF_PLUM = (88, 64, 76)
+ROOF_PLUM = (104, 78, 90)
 DOOR_GREEN = (86, 112, 64)
 HEDGE = (58, 80, 56)
 CROWN = (76, 102, 66)
@@ -242,13 +242,13 @@ HIDE = re.compile(r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|T
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
-background_color = Color(0.518, 0.596, 0.69, 1)
+background_color = Color(0.392, 0.455, 0.573, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.62, 0.6, 0.7, 1)
-ambient_light_energy = 0.62
+ambient_light_color = Color(0.66, 0.64, 0.74, 1)
+ambient_light_energy = 0.8
 tonemap_mode = 2
 fog_enabled = true
-fog_light_color = Color(0.68, 0.64, 0.72, 1)
+fog_light_color = Color(0.52, 0.5, 0.6, 1)
 fog_density = 0.003
 adjustment_enabled = true
 adjustment_saturation = 0.98
@@ -256,9 +256,9 @@ adjustment_contrast = 1.04
 """
 
 SUN = """[node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-12, 32, 0)
+rotation_degrees = Vector3(-20, 32, 0)
 light_color = Color(1, 0.8, 0.62, 1)
-light_energy = 1.5
+light_energy = 0.85
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 """
