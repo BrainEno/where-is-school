@@ -20,7 +20,8 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 ### Implemented
 - Godot project configuration and a launchable main scene.
 - Basic CharacterBody3D movement using WASD/arrow-key input.
-- Fixed 2.5D camera attached to the player scene, with occluder fading.
+- Fixed 2.5D framing on a `CameraRig` that follows the player (one field of view, in the
+  scene), with occluder fading.
 - GameState autoload for named runtime story flags, plus the NarrativeState
   knowledge log (ADR 0002).
 - Interaction targeting, interactable contract, and location exits.
@@ -56,16 +57,17 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   instead of tuned for one screen (`tests/dialogue_layout_test.gd`).
 - Development-only name labels over the grey-box people, translated with the rest of
   the interface and switched off in release builds (`tests/nameplate_test.gd`).
-- CI: a static syntax gate over every `.gd` file, thirty-five headless checks, a
-  blocking import pass with an audit that every tracked `.import` produced its file, and
-  a read-only capture job whose artifacts are the visual evidence for a pull request.
+- CI: a static syntax gate over every `.gd` file, fifty-one headless checks (the list lives in
+  `.github/workflows/godot-ci.yml`), a blocking import pass with an audit that every
+  tracked `.import` produced its file, and a read-only capture job whose artifacts are the
+  visual evidence for a pull request.
   Failures produce artifacts as well, so a red run is diagnosable.
 - A reproducible Windows build: a committed `export_presets.cfg`, a release workflow that
   exports with the engine's own export templates and attaches the zip to the run (and to a
   GitHub release on a `v*` tag), and a pack verifier that reads the finished executable
   back and refuses a build that carries the repository (tests, screenshots, the 10 MB
   source font) or is missing the game (dialogue data, theme, audio). The bundled CJK font
-  ships as a 325 KiB subset of the text the game can draw, rebuilt by
+  ships as a 376 KiB subset of the text the game can draw, rebuilt by
   `tools/subset_font.py` and verified in both CI workflows.
 
 ### Planned, but deliberately not implemented yet
@@ -442,7 +444,8 @@ is a relative number, not a frame budget.
   "export all resources" would have shipped by default — 9.4 MB of committed screenshots
   and the 10 MB source font.
 - The font is split: the untouched Noto Sans SC lives in `art/fonts/` (`.gdignore`d) and the
-  game loads a 325 KiB subset that `tools/subset_font.py` rebuilds from the project's own
+  game loads a 376 KiB subset (385,416 bytes) that `tools/subset_font.py` rebuilds from the
+  project's own
   text. Both CI workflows run `--check`, so text needing a character the subset lacks fails
   with the characters named instead of shipping tofu boxes.
 - `packaging/HOW-TO-RUN.txt` travels in the zip (controls, the SmartScreen warning, the

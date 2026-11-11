@@ -63,11 +63,19 @@ func _check_player(main: Node) -> void:
 	var controller := player as PlayerController
 	if controller == null:
 		_failures.append("Player does not use PlayerController.")
-	var camera := player.get_node_or_null("Camera3D")
-	if not (camera is Camera3D):
-		_failures.append("Expected a Camera3D under Player.")
-	elif not (camera as Camera3D).current:
-		_failures.append("Player camera is not current.")
+	var rig := main.get_node_or_null("CameraRig")
+	if not (rig is CameraRig):
+		_failures.append("Expected a CameraRig under Main; the camera is not the player's child.")
+	else:
+		var camera := rig.get_node_or_null("Camera3D")
+		if not (camera is Camera3D):
+			_failures.append("Expected a Camera3D under the CameraRig.")
+		elif not (camera as Camera3D).current:
+			_failures.append("The rig's camera is not current.")
+		elif not is_equal_approx((camera as Camera3D).fov, (rig as CameraRig).fov):
+			_failures.append("The camera's fov does not match the rig's; there are two sources.")
+		if (player as Node3D).global_position.distance_to((rig as Node3D).global_position) > 0.01:
+			_failures.append("The rig is not following the player.")
 	var sensor := player.get_node_or_null("InteractionSensor")
 	if not (sensor is Area3D):
 		_failures.append("Expected an InteractionSensor Area3D under Player.")

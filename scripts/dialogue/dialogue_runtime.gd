@@ -29,6 +29,9 @@ var _node: DialogueGraph.DialogueNode = null
 var _active: bool = false
 var _awaiting_choice: bool = false
 var _steps: int = 0
+## How many lines this conversation actually put on screen. A conversation that
+## shows none ended before the caller could see it start (see `start()`).
+var _lines_presented: int = 0
 
 var _game_state: Node = null
 var _narrative_state: Node = null
@@ -138,8 +141,21 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	_conversation = conversation
 	_active = true
 	_steps = 0
+	_lines_presented = 0
 	conversation_started.emit(conversation_id)
 	_enter_node(conversation.start_id)
+	if not _active and _lines_presented == 0:
+		# The graph ended during this call: the first node was skipped (or did not
+		# exist) and nothing followed it. `conversation_finished` has already been
+		# emitted, so a caller that starts a conversation and then waits for it to
+		# end has to check `is_active()`/`is_busy()` after this returns. Say so
+		# here, where the cause is still visible, instead of leaving the caller to
+		# hang with no explanation.
+		push_warning(
+			("DialogueRuntime: conversation '%s' started and finished without showing "
+			+ "a line; its first node was skipped or missing. Callers must check that "
+			+ "it is still active before waiting for it to end.") % conversation_id
+		)
 	return true
 
 
@@ -241,6 +257,7 @@ func _enter_node(node_id: StringName) -> void:
 	_awaiting_choice = not available.is_empty()
 
 	if not node.text.is_empty():
+		_lines_presented += 1
 		line_changed.emit(get_current_line())
 	if _awaiting_choice:
 		choices_changed.emit(get_current_choices())

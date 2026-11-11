@@ -37,10 +37,12 @@ signal path_cancelled
 const STEP_PROBE_MARGIN := 0.15
 
 @export_category("Camera")
-@export var camera_offset: Vector3 = Vector3(3.4, 6.4, 3.4)
-@export_range(30.0, 90.0, 1.0) var camera_fov: float = 60.0
-## Height above the player's origin the camera looks at.
-@export var camera_target_height: float = 0.9
+## The rig that frames this body. The offset, the field of view and the aim angle
+## live there, not here: the player used to own them, which is why `player.tscn`'s
+## `fov` was silently overwritten and why the camera could not move independently
+## of the body. A player instantiated without a rig (a placement test, say) still
+## walks, on world axes.
+@export var camera_rig_path: NodePath = ^"../CameraRig"
 ## Small roll applied while waking up, in degrees.
 @export_range(0.0, 20.0, 0.5) var wake_camera_roll: float = 3.5
 
@@ -48,7 +50,7 @@ const STEP_PROBE_MARGIN := 0.15
 ## Forward slump of the body mesh while the protagonist is still coming to.
 @export_range(0.0, 45.0, 1.0) var wake_tilt_degrees: float = 22.0
 
-@onready var camera: Camera3D = %Camera3D
+@onready var camera_rig: CameraRig = get_node_or_null(camera_rig_path) as CameraRig
 @onready var visual_pivot: Node3D = %VisualPivot
 ## The pivot the authored character model hangs from: a `Node3D` at hip height
 ## (`player.tscn` puts it at y = 0.9), with the model as its child. The wake beat
@@ -74,7 +76,6 @@ const STEP_PROBE_MARGIN := 0.15
 var _control_enabled: bool = true
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
-var _camera_roll: float = 0.0
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
 var _path_active: bool = false
 var _path_target: Vector3 = Vector3.ZERO
@@ -94,7 +95,6 @@ var _path_index: int = 0
 
 func _ready() -> void:
 	_body_radius = _measure_body_radius()
-	_apply_camera_transform()
 
 
 ## The radius of the capsule the character is standing in, read once: it is what decides
@@ -108,14 +108,6 @@ func _measure_body_radius() -> float:
 		if capsule != null:
 			return capsule.radius
 	return 0.4
-
-
-func _apply_camera_transform() -> void:
-	camera.position = camera_offset
-	camera.fov = camera_fov
-	camera.look_at(global_position + Vector3(0.0, camera_target_height, 0.0), Vector3.UP)
-	if not is_zero_approx(_camera_roll):
-		camera.rotate_object_local(Vector3(0.0, 0.0, 1.0), deg_to_rad(_camera_roll))
 
 
 func _physics_process(delta: float) -> void:
@@ -138,13 +130,8 @@ func _physics_process(delta: float) -> void:
 
 ## Turns stick input into a camera-relative world direction.
 func _camera_relative(input_vector: Vector2) -> Vector3:
-	var camera_right := camera.global_basis.x
-	camera_right.y = 0.0
-	camera_right = camera_right.normalized()
-
-	var camera_forward := -camera.global_basis.z
-	camera_forward.y = 0.0
-	camera_forward = camera_forward.normalized()
+	var camera_right := camera_rig.planar_right() if camera_rig != null else Vector3.RIGHT
+	var camera_forward := camera_rig.planar_forward() if camera_rig != null else Vector3.FORWARD
 
 	var direction := (camera_right * input_vector.x + camera_forward * -input_vector.y)
 	if direction.length_squared() > 0.0001:
@@ -412,19 +399,18 @@ func settle_wake_pose(duration: float) -> void:
 	await tween.finished
 
 
+## The wake beat rolls the view. The rig owns the roll; the player keeps the two
+## entry points the director already calls, so the sequencing code did not have to
+## learn a second node name.
 func set_camera_roll(degrees: float) -> void:
-	_camera_roll = degrees
-	_apply_camera_transform()
+	if camera_rig != null:
+		camera_rig.set_roll(degrees)
 
 
 func settle_camera_roll(duration: float) -> void:
-	var tween := create_tween()
-	tween.tween_method(_set_camera_roll_degrees, _camera_roll, 0.0, duration)
-	await tween.finished
-
-
-func _set_camera_roll_degrees(value: float) -> void:
-	set_camera_roll(value)
+	if camera_rig == null:
+		return
+	await camera_rig.settle_roll(duration)
 
 
 func teleport(target: Transform3D) -> void:
@@ -435,4 +421,7 @@ func teleport(target: Transform3D) -> void:
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):
 		_facing_direction = -target.basis.z
-	_apply_camera_transform()
+	# Snap the view in the same frame as the body: a camera that arrives a frame
+	# late is a camera that spends a frame inside the wall the player just left.
+	if camera_rig != null:
+		camera_rig.snap()

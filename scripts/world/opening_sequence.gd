@@ -403,6 +403,16 @@ func _finish_slice(exit: LocationExit) -> void:
 func _play_conversation(conversation_id: StringName) -> void:
 	if not _dialogue.play_conversation(conversation_id):
 		return
+	# `DialogueRuntime.start()` walks the graph before it returns, and three of its
+	# exits finish the conversation inside that walk: a node id that does not exist,
+	# a first node whose conditions are not met with nothing left after it, and the
+	# step limit. In all three `conversation_finished` is emitted *before*
+	# `play_conversation()` returns, so awaiting it here would wait forever — and
+	# every caller awaits this inside a beat, so the player lock would never clear.
+	# Ask the controller what is on screen instead of trusting the signal to be
+	# ahead of us.
+	if not _dialogue.is_busy():
+		return
 	await _dialogue.conversation_finished
 
 

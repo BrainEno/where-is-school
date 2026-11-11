@@ -47,11 +47,15 @@ func _run() -> void:
 		{}, {},
 		["allow", "not_flags"]
 	)
-	_expect_problem(
+	# The gate goes on the second node on purpose. A conversation whose *start* node
+	# is conditional is refused as content now - it can finish inside the call that
+	# started it, which is what tests/dialogue_sync_finish_test.gd pins down - and
+	# these fixtures have to be valid before "a clean comparison" means anything.
+	_expect_problem_fixtures(
 		"a node gated on a different flag",
-		{"conditions": {"not_flags": ["met_q"]}}, {},
-		{"conditions": {"not_flags": []}}, {},
-		["start", "not_flags"]
+		_fixture({}, {}, {"conditions": {"not_flags": ["met_q"]}}),
+		_fixture({}, {}, {"conditions": {"not_flags": []}}),
+		["done", "not_flags"]
 	)
 
 	_check_shipped_content()
@@ -61,9 +65,13 @@ func _run() -> void:
 # --- fixtures ---------------------------------------------------------------
 
 
-## One node with one choice. `node_overrides` are merged into the node, `choice`
-## is the condition block of its single choice.
-func _fixture(node_overrides: Dictionary, choice: Dictionary) -> Dictionary:
+## One node with one choice. `node_overrides` are merged into the first node,
+## `choice` is the condition block of its single choice, and `done_overrides` are
+## merged into the second node - which is where a node-level gate belongs, since
+## the first node of a conversation may not be conditional.
+func _fixture(
+	node_overrides: Dictionary, choice: Dictionary, done_overrides: Dictionary = {}
+) -> Dictionary:
 	var node := {
 		"id": "start",
 		"speaker": "q",
@@ -71,6 +79,8 @@ func _fixture(node_overrides: Dictionary, choice: Dictionary) -> Dictionary:
 		"choices": [_choice(choice)],
 	}
 	node.merge(node_overrides, true)
+	var done := {"id": "done", "speaker": "q", "text": "Done.", "next": null}
+	done.merge(done_overrides, true)
 	return {
 		"format_version": 2,
 		"locale": "en",
@@ -79,7 +89,7 @@ func _fixture(node_overrides: Dictionary, choice: Dictionary) -> Dictionary:
 			"c": {
 				"default_source": "observed",
 				"start": "start",
-				"nodes": [node, {"id": "done", "speaker": "q", "text": "Done.", "next": null}],
+				"nodes": [node, done],
 			}
 		},
 	}
@@ -148,10 +158,23 @@ func _expect_problem(
 	other_choice: Dictionary,
 	fragments: Array
 ) -> void:
+	_expect_problem_fixtures(
+		label,
+		_fixture(reference_node, reference_choice),
+		_fixture(other_node, other_choice),
+		fragments
+	)
+
+
+## The same assertion for a case that has to describe more of its fixture than the
+## first node and that node's single choice.
+func _expect_problem_fixtures(
+	label: String, reference: Dictionary, translation: Dictionary, fragments: Array
+) -> void:
 	var pair := _load_pair(
 		label.replace(" ", "_").replace(",", ""),
-		_fixture(reference_node, reference_choice),
-		_fixture(other_node, other_choice)
+		reference,
+		translation
 	)
 	if pair.is_empty():
 		return

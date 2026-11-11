@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" path="res://scripts/world/inner_voice_director.gd" id="8_inner_voice"]
 [ext_resource type="PackedScene" path="res://scenes/actors/npc/companion.tscn" id="9_companion"]
 [ext_resource type="Script" path="res://scripts/ui/display_mode.gd" id="10_display_mode"]
+[ext_resource type="Script" path="res://scripts/world/camera_rig.gd" id="11_camera_rig"]
+[ext_resource type="Script" path="res://scripts/world/camera_occluder_fader.gd" id="12_occluder"]
 
 [node name="Main" type="Node3D"]
 
@@ -18,6 +20,19 @@ script = ExtResource("2_location_host")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0, 0.85)
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("11_camera_rig")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+unique_name_in_owner = true
+position = Vector3(3.4, 6.4, 3.4)
+current = true
+fov = 60.0
+far = 120.0
+
+[node name="OcclusionFader" type="Node3D" parent="CameraRig/Camera3D"]
+script = ExtResource("12_occluder")
 
 [node name="BellAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bell")

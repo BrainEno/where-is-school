@@ -742,7 +742,7 @@ func _capture_imported_models() -> void:
 			% [extent.position.y, extent.size.x, extent.size.y, extent.size.z]
 		)
 
-	var player_camera := _player.get_node_or_null(^"Camera3D") as Camera3D
+	var player_camera := _main.get_node_or_null(^"CameraRig/Camera3D") as Camera3D
 
 	# 1. The room from the back, over both rows: six desks, six chairs.
 	await _shot_from_camera(
