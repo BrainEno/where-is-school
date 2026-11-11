@@ -1,6 +1,6 @@
 # ADR 0006 — Painterly Rendering Prototype
 
-- **Status:** Proposed — isolated preview and Issue #81 transform/material/test hardening implemented; Godot runtime/leak verification and Windows review remain pending.
+- **Status:** Proposed — Issue #81 transform/material/test hardening implemented; Godot 4.7.2 CI import audit and headless suite pass at `0529092`; Windows visual review and Owner adoption decision remain pending.
 - **Date:** 2026-11-11
 - **Depends on:** ADR 0001 (Godot 4.7.2 / Forward+), ADR 0004 (art direction, spatial logic, and camera)
 - **Scope:** environment surfaces, environment contours, and a separate in-game character shading study.
@@ -62,7 +62,7 @@ The timed runner temporarily disables VSync so the measured frame rate is not ca
 
 ### Results
 
-No results are recorded yet. This checkout has no Godot executable or Windows graphics session, so shader compilation, visual acceptance, and GPU-backed measurements could not be performed in this environment. Do not interpret this blank table as a pass.
+The Godot 4.7.2 Stable GitHub Actions run [43030799925](https://github.com/BrainEno/where-is-school/actions/runs/43030799925) completed successfully at commit `0529092be4317a59baa94b870c06b279b1cb03c7`: its import audit and headless suite passed, including `tests/painterly_rendering_test.gd`. This validates the CI headless path, not the Windows interactive renderer or visual acceptance. No Windows graphics session or GPU profiler was used, so the benchmark table remains unmeasured; do not interpret blank rows as performance results.
 
 | Resolution | Tier | Average FPS | Average frame ms | Average process ms | Average draw calls | Device / notes |
 |---|---|---:|---:|---:|---:|---|
@@ -111,14 +111,14 @@ The test uses a generated texture fixture and non-default UV transform, verifies
 
 The test loads the isolated scene without retaining a deep ResourceLoader cache entry. The lab owns its loaded material templates as instance fields rather than script-level `preload` constants. The test queues the instantiated lab and transform probes for deletion, waits for process-frame cleanup, synchronizes pending rendering-server work, releases its generated texture/material fixture, checks weak references, and removes its watchdog before requesting exit. These assertions cover test-owned references; they do not suppress engine diagnostics or equate a passing assertion with a clean renderer shutdown.
 
-The previously reported `2 ObjectDB leak / 1 resource still in use` exit warning has **not** been reproduced in this checkout: Godot 4.7.2 is not installed in the current execution environment. Therefore it is not attributed to renderer teardown noise, and no clean-import/headless verdict is claimed here. Re-run the exact Godot 4.7.2 command below and preserve the complete verbose exit log; if warnings remain, compare a minimal lab-only run against the test and investigate the remaining referenced object rather than hiding the warning.
+The first Godot 4.7.2 CI attempt exposed 16 warnings-as-errors: the weak references returned by `weakref()` had been inferred with `:=`. All 16 locals now declare `WeakRef` explicitly. The subsequent run [43030799925](https://github.com/BrainEno/where-is-school/actions/runs/43030799925) passed the import audit and headless test suite, including `painterly_rendering_test.gd`; the CI engine-noise audit emitted no `painterly_rendering` error/warning notice. Thus the previously reported `2 ObjectDB leak / 1 resource still in use` diagnostic was **not reproduced by that CI run**, but this does not identify the cause of the earlier report or attribute it to renderer teardown. No checks were disabled and no errors were suppressed. The CI run was not a verbose per-object reference trace; if the diagnostic returns on Windows or another renderer, preserve the complete `--verbose` exit log and compare a minimal lab-only run against the test.
 
 ### Windows manual checklist for Issue #81
 
-1. Run `godot --headless --path . --import`; require a clean Godot 4.7.2 Stable import, then open `scenes/dev/painterly_lab/painterly_lab.tscn` and confirm shader compilation without errors.
+1. The Godot 4.7.2 CI import audit and headless suite passed at `0529092`. On Windows, open `scenes/dev/painterly_lab/painterly_lab.tscn` in the standard editor, run the current scene (F6), wait for shader compilation, and confirm there are no renderer/shader errors. This interactive check is for the Owner's adoption decision; CI does not replace it.
 2. At **1600×900** and **1920×1080**, inspect the three tiers and character treatment. Use a temporary lab-only mesh probe with rotation plus non-uniform positive scale, then mirror one axis with negative scale; check contour orientation, constant world-space extrusion, and visible thickness. Do not save the probe into a production scene.
 3. Inspect the back/side-wall junction, door frame/panel, plant pot/crown, desk top/legs, book, handle, and a thin plate. Record any shell intersection, hard-edge seam, or double line; confirm excluded details stay unoutlined.
-4. Run `godot --headless --path . --script res://tests/painterly_rendering_test.gd` and retain the full log through process exit, including any `ObjectDB` or resource-in-use diagnostics. A PASS verdict alone does not establish that those warnings are absent.
+4. `godot --headless --path . --script res://tests/painterly_rendering_test.gd` passed in the linked Godot 4.7.2 CI run. If you re-run it on Windows, retain the complete log through process exit (use `--verbose` when investigating references), including any `ObjectDB` or resource-in-use diagnostics; a PASS verdict alone does not establish that those warnings are absent.
 5. Performance `TIME_PROCESS` remains CPU-side engine process time. No GPU time or performance result is recorded without an external GPU profiler.
 
 ## Consequences
