@@ -295,9 +295,12 @@ func _check_rest_relative(
 				target_skeleton.get_bone_global_rest(target_index).basis.get_rotation_quaternion().inverse()
 				* target_skeleton.get_bone_global_pose(target_index).basis.get_rotation_quaternion()
 			)
+			# `q` and `-q` are the same rotation, so the disagreement is measured the short
+			# way round whichever convention `angle_to` uses.
 			var difference := absf(
 				rad_to_deg(source_change.normalized().angle_to(target_change.normalized()))
 			)
+			difference = minf(difference, 360.0 - difference)
 			if difference > worst:
 				worst = difference
 				worst_bone = String(pair["canonical"])
