@@ -114,6 +114,7 @@ func _run() -> void:
 	protagonist.add_child(player)
 	player.root_node = player.get_path_to(protagonist)
 	player.add_animation_library(&"baked", library)
+	_diagnose(protagonist, target_skeleton, source_skeleton, player, library, clip_name, skeleton_path)
 	_check_motion(player, "%s/%s" % ["baked", clip_name], target_skeleton, clip_name)
 	_check_rest_relative(
 		source_player, source_skeleton, target_skeleton, player, clip_name, pairs
@@ -123,6 +124,63 @@ func _run() -> void:
 	_check_committed()
 
 	_finish()
+
+
+## Everything a silent retarget can hinge on, printed because the log is not readable from
+## where this runs: which node the track paths address, whether the player says it is playing,
+## and whether the source skeleton moves at all when it is seeked.
+func _diagnose(
+	protagonist: Node,
+	target_skeleton: Skeleton3D,
+	source_skeleton: Skeleton3D,
+	player: AnimationPlayer,
+	library: AnimationLibrary,
+	clip_name: String,
+	skeleton_path: NodePath
+) -> void:
+	var animation := library.get_animation(clip_name)
+	var first_track := animation.track_get_path(0) if animation.get_track_count() > 0 else NodePath()
+	var addressed := player.get_node_or_null(String(first_track).get_slice(":", 0))
+	_notes.append(
+		"diag: %d skeleton(s), target '%s' at '%s', track 0 '%s', addressed node %s, root_node '%s'"
+		% [
+			protagonist.find_children("*", "Skeleton3D", true, false).size(),
+			String(target_skeleton.name), String(skeleton_path), String(first_track),
+			"ok" if addressed != null else "NULL", String(player.root_node),
+		]
+	)
+	player.play("%s/%s" % ["baked", clip_name])
+	var angles: PackedStringArray = []
+	var index := target_skeleton.find_bone(first_track.get_concatenated_subnames())
+	for step in 3:
+		player.seek(animation.length * float(step) / 2.0, true)
+		angles.append(
+			"%.1f" % rad_to_deg(target_skeleton.get_bone_pose_rotation(index).get_angle())
+		)
+	_notes.append(
+		"diag: baked '%s' on the character: pose %s, playing %s, anim '%s'"
+		% [String(first_track), ", ".join(angles), str(player.is_playing()), player.current_animation]
+	)
+	player.stop()
+	# And the source: does the library's own skeleton move when its player is seeked?
+	var source_player := _first(source_skeleton.get_parent(), "AnimationPlayer") as AnimationPlayer
+	if source_player == null:
+		_notes.append("diag: no source player above the library's skeleton")
+		return
+	var source_animation := source_player.get_animation(clip_name)
+	var hips := source_skeleton.find_bone("pelvis")
+	source_player.play(clip_name)
+	var source_angles: PackedStringArray = []
+	for step in 3:
+		source_player.seek(source_animation.length * float(step) / 2.0, true)
+		source_angles.append(
+			"%.1f" % rad_to_deg(source_skeleton.get_bone_pose_rotation(hips).get_angle())
+		)
+	_notes.append(
+		"diag: library '%s' on its own rig: pose %s, playing %s"
+		% [clip_name, ", ".join(source_angles), str(source_player.is_playing())]
+	)
+	source_player.stop()
 
 
 ## Every track path has to name a bone that exists, or the clip plays in silence.
@@ -175,7 +233,7 @@ func _check_motion(
 			widest_bone = String(bone)
 	player.stop()
 	_notes.append(
-		"%s: %d of %d bone(s) move, %s by %.1°" % [label, moved, animation.get_track_count(), widest_bone, widest]
+		"%s: %d of %d bone(s) move, %s by %.1f°" % [label, moved, animation.get_track_count(), widest_bone, widest]
 	)
 	if widest < MOVED_DEGREES:
 		_failures.append(
