@@ -36,11 +36,19 @@ static func ensure_autoload(tree: SceneTree, node_name: String, script_path: Str
 	return instance
 
 
+## Creates the state nodes a headless run needs. Every test that boots `main.tscn` gets
+## a session that starts from nothing: the game resumes from a save at boot (ADR 0005),
+## and `user://` is one directory for the whole CI job, so a file an earlier check wrote
+## would otherwise put this one in a different room. A test that wants a file writes one
+## after this call.
 static func ensure_state_autoloads(tree: SceneTree) -> Dictionary:
+	var save := ensure_autoload(tree, "Save", SAVE_SCRIPT)
+	if save != null and save.has_method("forget_all"):
+		save.forget_all()
 	return {
 		"game_state": ensure_autoload(tree, "GameState", GAME_STATE_SCRIPT),
 		"narrative_state": ensure_autoload(tree, "NarrativeState", NARRATIVE_STATE_SCRIPT),
-		"save": ensure_autoload(tree, "Save", SAVE_SCRIPT),
+		"save": save,
 	}
 
 
