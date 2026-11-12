@@ -23,7 +23,8 @@ draws from:
 | `classroom/` | 11 | `scenes/locations/classroom/classroom.tscn` |
 | `corridor/` | 3 | `scenes/locations/corridor/corridor.tscn` |
 | `playground/` | 2 | `scenes/locations/playground/playground.tscn` |
-| `protagonist/`, `q/` | 1 each | the player and NPC controllers, via `scenes/environment/characters/` |
+| `protagonist/` | 2 | `Protagonist_Character.glb`, the player (`player.tscn`, via `scenes/environment/characters/protagonist.tscn`); `protagonist.glb`, the former protagonist, seated in the classroom (`classroom_student.tscn`) |
+| `q/` | 1 | the NPC and companion controllers, via `scenes/environment/characters/q.tscn` |
 | `school_desk/`, `stationery_supplies/`, `playground_bench/`, `student_backpack/` | 1 each | the wrappers in `scenes/environment/props/` |
 | `sample/` | 2 | test fixtures, built by `tools/build_sample_models.py` |
 
@@ -229,12 +230,13 @@ instead of passing it.
 
 ## 5. The runtime character manifest
 
-The two models the game instantiates at run time —
-`assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb` — are also checked
-against a written-down structure,
-`art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py --check`
-reads it on every run and fails when a registered model does not match it; the other 22
-models in the library keep the checks in §4 and are not registered.
+The three rigged models the game instantiates at run time —
+`assets/models/protagonist/Protagonist_Character.glb` (the player since PR #118),
+`assets/models/protagonist/protagonist.glb` (the former protagonist, now the seated
+classroom student) and `assets/models/q/q.glb` — are also checked against a written-down
+structure, `art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py
+--check` reads it on every run and fails when a registered model does not match it; the
+other 22 models in the library keep the checks in §4 and are not registered.
 
 The rest of this library is judged by rules (no scale, no camera, inside the budget). A rig
 cannot be: a character whose hand bone was renamed, whose mesh was split, whose joint list
@@ -247,17 +249,17 @@ a bug found while playing.
 Measured from the committed `.glb` files, not from the Blender sources and not from
 `art/character_rig_audit/*_rig_audit.json`:
 
-| | `protagonist.glb` | `q.glb` |
-|---|---|---|
-| nodes | 96 | 25 |
-| scene root → armature | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` |
-| skin joints (bones) | 16 | 16 |
-| mesh nodes, all bound to skin 0 | 78 | 7 |
-| meshes / primitives | 78 / 78 | 7 / 15 |
-| materials | 22 | 14 |
-| embedded animations | 0 | 0 |
-| triangles | 12,388 | 35,432 |
-| file | 513.6 KiB | 1008.8 KiB |
+| | `Protagonist_Character.glb` | `protagonist.glb` | `q.glb` |
+|---|---|---|---|
+| nodes | 70 | 96 | 25 |
+| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` |
+| skin joints (bones) | 60 | 16 | 16 |
+| mesh nodes, all bound to skin 0 | 9 | 78 | 7 |
+| meshes / primitives | 9 / 15 | 78 / 78 | 7 / 15 |
+| materials | 12 | 22 | 14 |
+| embedded animations | 5 (721 channels; not played by the game) | 0 | 0 |
+| triangles | 15,782 | 12,388 | 35,432 |
+| file | 851.9 KiB | 513.6 KiB | 1008.8 KiB |
 
 The two skeletons carry the **same joint names in the same parentage** — `Root`, `Spine`,
 `Neck`, `Head`, `UpperArm.L`/`LowerArm.L`/`Hand.L`, the same on the right, and
@@ -333,15 +335,23 @@ whole point of writing the structure down. If the manifest itself is malformed, 
 refuses to run and leaves the file alone (§5.5) — a broken manifest is fixed by hand, never
 by overwriting it with whatever a run happened to generate.
 
+`--update-manifest` only rewrites entries that exist. Adding a *new* runtime character is
+two reviewed edits: add its path to `REQUIRED_RUNTIME_MODELS` in `tools/model_library.py`,
+and add its entry, whose structural fields are exactly what `describe_model()` reads from
+the committed `.glb` (with a human-written `wrapper` and `note`). That is how
+`Protagonist_Character.glb` was registered in PR #118; the `--check` that follows compares
+the file against that entry like any other.
+
 ### 5.5 What the manifest itself has to be
 
 A snapshot check is only as strong as the document it reads, so the manifest is validated as
 a document before any `.glb` is opened (`validate_manifest` in `tools/model_library.py`,
 called by both `--check` and `--update-manifest`):
 
-- **Both runtime characters, once each, and nothing else.** The manifest registers
-  `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb`. A missing entry, a
-  duplicated entry, a third model entry and an empty `models` are all failures. "At least one
+- **Every runtime character, once each, and nothing else.** The manifest registers
+  `assets/models/protagonist/protagonist.glb`, `assets/models/q/q.glb` and
+  `assets/models/protagonist/Protagonist_Character.glb`. A missing entry, a duplicated
+  entry, an entry for any other model and an empty `models` are all failures. "At least one
   model" was the old rule and it was not enough: deleting Q's entry used to leave a file that
   was valid, plausible and had quietly stopped checking Q.
 - **Every structural field, with the right shape.** `counts`, `scene_roots`, `nodes`,

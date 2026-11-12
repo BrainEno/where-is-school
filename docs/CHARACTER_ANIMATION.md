@@ -1,6 +1,7 @@
 # Character animation
 
-The protagonist and Q use the same seven code-authored clips, built in
+The protagonist (`Protagonist_Character.glb` since PR #118), the former protagonist (now a
+seated classroom student) and Q use the same seven code-authored clips, built in
 `scripts/actors/character_animation.gd` and resolved against each rig's own bone names at
 bind time. Their production wrapper scenes bind them when instantiated. In the game, every
 authored character goes through one state machine, `CharacterVisualAnimation`, fed by the
@@ -19,8 +20,9 @@ velocity its own controller already produces.
 ## How a clip becomes a pose
 
 Each key in `CLIPS` is `[time, Vector3 of degrees]`, and those degrees are an **offset from
-the bone's rest rotation**, about the bone's own axes. `CharacterAnimation.bind()` writes
-`rest * offset_rotation(key)` into each rotation track.
+the bone's rest rotation**, about the bone's *semantic* axes (below).
+`CharacterAnimation.bind()` writes `rest * F * offset_rotation(key) * F⁻¹` into each
+rotation track, where F is the bone's `semantic_frame()`.
 
 That composition matters. A Godot `TYPE_ROTATION_3D` track *replaces* a bone's local
 rotation; it does not add to the rest, and `Skeleton3D.get_bone_pose_rotation()` at rest
@@ -53,7 +55,62 @@ right.
 straight down has a different axis under the same name, so the clips hold it at its
 modelled pose and the bind report lists it under `posed`. Rigged Q is modelled with its
 right forearm held out in front, so on Q `fore_arm.R`, `hand.L` and `hand.R` are held, and
-the right arm swings only from the shoulder. The protagonist has no posed limbs.
+the right arm swings only from the shoulder. Neither protagonist has posed limbs.
+
+### Semantic frames and positional sides (PR #118)
+
+The keys were written against the first two rigs, whose limbs' local X is (nearly) the
+character's side axis. `Protagonist_Character.glb` is not like that: measured on the
+imported skeleton, its upper arms are twisted −34.8° about their own length, forearms and
+hands −38.9°, feet −18.8° and clavicles −68.6°. A swing about such a bone's local X goes
+partly sideways and partly round the bone, which is how arms rise and hands twist. So
+`bind()` composes each key in a **semantic frame**: Y along the bone (unchanged), X the
+skeleton's +X made perpendicular to the bone, Z = X × Y. F is a pure twist about the bone's
+length, so it never changes where a bone points at rest; it only decides which way a key
+swings it. On the legs and spines of all three rigs F is within 1° of identity, so those
+keys are what they always were.
+
+The new rig also names its limbs anatomically: `UpperArm_L` is the character's own left,
+at skeleton **+X**, while the clips' `.L` has always meant the −X side (the side `Thigh.L`
+is on in the first two rigs). `resolve_rig()` therefore assigns each pair by rest position,
+not by name: whichever of the two resolved bones is at −X is `.L`. On the new rig all seven
+pairs swap (`shoulder`, `upper_arm`, `fore_arm`, `hand`, `thigh`, `shin`, `foot`) and the
+bind report lists them under `mirrored`; on the other two rigs nothing swaps.
+
+Applying the frame changes what the first two rigs' arms do, by up to 0.16 m at the hand
+(the arm swing is now in the sagittal plane instead of 16–25° off it). Their legs, spine
+and head are unchanged, and the runtime and model tests measure all three rigs with the
+same limits.
+
+### The protagonist's rig
+
+`Protagonist_Armature/Skeleton3D`, 60 bones (the skin has 60 joints, not 61), all bound by
+every one of the 9 meshes. Canonical → bone, as `bind()` resolves it:
+
+| canonical | bone | | canonical | bone |
+|---|---|---|---|---|
+| hips | `Pelvis` | | thigh.L / .R | `Thigh_R` / `Thigh_L` |
+| spine | `Spine` | | shin.L / .R | `Shin_R` / `Shin_L` |
+| chest | `Chest` | | foot.L / .R | `Foot_R` / `Foot_L` |
+| neck | `Neck` | | shoulder.L / .R | `Clavicle_R` / `Clavicle_L` |
+| head | `Head` | | upper_arm.L / .R | `UpperArm_R` / `UpperArm_L` |
+| | | | fore_arm.L / .R | `Forearm_R` / `Forearm_L` |
+| | | | hand.L / .R | `Hand_R` / `Hand_L` |
+
+**15 joints animate**: `Spine`, `Chest`, `Neck`, `Head`, `UpperArm_L/R`, `Forearm_L/R`,
+`Hand_L` (the +X hand, keyed by `wave` only), `Thigh_L/R`, `Shin_L/R`, `Foot_L/R`.
+**45 stay at rest** in every clip: `Root`, the four `IK_*` targets (nothing solves IK),
+`Pelvis` (no root motion, see below), `Spine_01`, `Spine_02`, both `Clavicle_*` (resolved,
+but no clip keys a shoulder), `Hand_R`, the 30 finger joints (`Index/Middle/Ring/Little/
+Thumb_01–03_L/R`), both `Eye_*` and both `Toe_*`. `tests/protagonist_model_test.gd` holds
+the test to exactly this list.
+
+The GLB also embeds five clips (`Idle_Breathing` 2.5 s, `Protagonist_Idle_Breathing`
+4.04 s, `Slight_Posture_Shift` 3.75 s, `Subtle_Head_Movement` 3.0 s, `Protagonist_Face_Test`
+4.04 s; none loops). Every one of their tracks resolves, but they are **not played**: the
+imported `AnimationPlayer` has no autoplay and the wrapper drives the model with its own
+`BoundAnimationPlayer`, so the two never fight over a bone. Using them (the breathing as
+the idle, the face test's 9 blend shapes for expressions) is a later decision.
 
 Every clip keys every bone that any clip animates. Bones a clip does not author are held at
 rest, so a cross-fade always has a full pose to fade to and no bone is left where the
@@ -61,9 +118,13 @@ previous clip put it.
 
 ## Runtime wiring
 
-- `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb` each have a
-  16-bone rigid-part skeleton. Q's unrigged input is preserved at
-  `art/character_rigging/q/q_unrigged_source.glb`.
+- `assets/models/protagonist/Protagonist_Character.glb` (the player) has the 60-bone rig
+  above. `assets/models/protagonist/protagonist.glb` (the classroom student) and
+  `assets/models/q/q.glb` each have a 16-bone rigid-part skeleton. Q's unrigged input is
+  preserved at `art/character_rigging/q/q_unrigged_source.glb`.
+- `scenes/environment/characters/classroom_student.tscn` is the former protagonist as
+  scenery: `start_seated = true` opens it on `sit_idle` with no body, and its `Model` is
+  lowered 0.347 m so the seated soles are on the floor.
 - `scenes/environment/characters/protagonist.tscn` and `q.tscn` attach
   `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
   `AnimationPlayer`, binds the clips and logs the bind report.
@@ -151,11 +212,21 @@ click, then leave the classroom during the free period with Q along.
     sign convention above), and no hand rises to the shoulder. Releasing the key returns to
     idle with the legs back under the body;
   - a click on the floor through `PointerNavigator` walks and stops the same way;
+  - Shift with a movement key jogs, with the same limb checks, and stopping returns to idle;
   - the classroom Q's `walk_along()` walks, faces its path, and returns to idle;
   - Q following the player walks while its body moves, faces the way it walks, and idles
     when it stops;
   - the clips hold only bone-rotation tracks, the player's pivot stays at the controller's
     facing, and the model under it never moves.
+
+- `tests/protagonist_model_test.gd` is about the model swap: the new GLB's skeleton,
+  hierarchy, skinning and embedded clips; the exact bone mapping and mirrored pairs on all
+  three rigs, and which of the 60 joints animate; every clip track pointing at a real bone;
+  each clip's limbs measured on all three rigs (seated knees forward, walking and jogging
+  feet travelling along the facing, knees never backwards, elbows never backwards, hands
+  below the shoulders and on their own side, no twist about a hand's or foot's length); the
+  player scene showing the new model in idle; and the classroom student seated on its chair
+  with no controller, collision or interaction.
 
 The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
 baked onto the development protagonist (the library ships 43; `A_TPose` is a rest pose and
@@ -174,7 +245,11 @@ every build.
   hips, because clip-driven translation is root motion and the controllers are the only thing
   that moves a body. What lowers the protagonist at the desk is the pivot's 6 cm sink, so
   `sit_idle` on its own sits in the air at standing height. A real seated animation needs an
-  authored hip offset (and a decision about who owns it) or a seat marker.
+  authored hip offset (and a decision about who owns it) or a seat marker. The classroom
+  student, which never stands, gets its height from its wrapper instead (`Model` at
+  y = −0.347).
+- The new protagonist's fingers, eyes, toes, clavicles and two of its four spine bones never
+  move, and its five embedded clips and 9 blend shapes are unused (see above).
 - Q's right forearm is held at its modelled pose in every clip, so `wave` on Q raises the
   upper arm with a rigid forearm. `wave` and `talk` are not triggered by anything in the game.
 - The rigs use mostly rigid-part weights. Q's trousers blend at the joints, but neither model
