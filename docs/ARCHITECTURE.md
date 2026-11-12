@@ -415,10 +415,13 @@ together:
   - *Compatibility renderer.* Everything used (overlay materials, `CAMERA_VISIBLE_LAYERS`,
     `POSITION`, render priority, depth test in the transparent pass) exists in Godot's
     Compatibility renderer, and `tests/interaction_outline_occlusion_test.gd` proves the
-    behaviour there on rendered pixels: CI runs it under Xvfb with `--rendering-driver
-    opengl3`, checks an open, a fully hidden and a half-hidden box plus switching, release
-    during a fade and a moving camera, and uploads the frames as the
-    `outline-occlusion-evidence` artifact.
+    behaviour there on rendered pixels: the playthrough-capture workflow runs it under Xvfb
+    with `--rendering-driver opengl3`, checks an open, a fully hidden and a half-hidden box
+    (with a negative control that shows the outline through the wall when the mask is cut
+    back to the outline layer) plus switching, release during a fade and a moving camera,
+    and stores the frames under `outline-occlusion/` in the playthrough evidence artifact.
+    The playthrough itself checks the real classroom too: the timetable sheet, a thin sheet
+    flat on a wall, still gets its warm line with the depth-tested mask.
   - *Known limits.* Only surfaces that write depth hide the outline. A wall the occlusion
     fader has turned see-through (`transparency` 0.82, drawn in the transparent pass) does
     not, which matches what the player sees through it; nor does other alpha-blended

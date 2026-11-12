@@ -970,6 +970,53 @@ func _grab_image() -> Image:
 	return root.get_texture().get_image()
 
 
+## The outline is depth-tested now (`OutlineOverlay`): it is drawn only where the object is
+## the nearest surface. The timetable sheet is a thin sheet pinned flat to a wall, which is
+## the case where a depth test is most likely to lose the object to the surface behind it -
+## and the room's real geometry is not what `tests/interaction_outline_occlusion_test.gd`
+## builds. So, in the real classroom: the same frame with and without the outline (the
+## overlay's opacity taken to zero for one frame by the cue that owns it), and the warm line
+## has to be there around the visible sheet.
+func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
+	var overlay := cue.get_overlay()
+	if overlay == null or not overlay.is_owned_by(cue):
+		_note("outline in the classroom: the sheet's cue does not own the overlay; not measured")
+		return
+	var with_outline := await _grab_image()
+	var opacity := overlay.get_opacity()
+	overlay.set_opacity(cue, 0.0)
+	var without := await _grab_image()
+	overlay.set_opacity(cue, opacity)
+	var line_pixels := 0
+	var changed := 0
+	if with_outline != null and without != null:
+		var half := 180
+		var left := maxi(int(centre.x) - half, 0)
+		var right := mini(int(centre.x) + half, with_outline.get_width() - 1)
+		var top := maxi(int(centre.y) - half, 0)
+		var bottom := mini(int(centre.y) + half, with_outline.get_height() - 1)
+		for y in range(top, bottom):
+			for x in range(left, right):
+				var now: Color = with_outline.get_pixel(x, y)
+				var was: Color = without.get_pixel(x, y)
+				var delta := maxf(maxf(absf(now.r - was.r), absf(now.g - was.g)), absf(now.b - was.b))
+				if delta > 0.04:
+					changed += 1
+					# The line colour (warm and light) where the frame without it was not.
+					if now.r > 0.7 and now.g > 0.55 and now.r - now.b > 0.15 and now.r > was.r + 0.05:
+						line_pixels += 1
+	_note(
+		"outline in the classroom: %d warm line pixel(s), %d changed pixel(s) around the sheet"
+		% [line_pixels, changed]
+	)
+	if line_pixels < 30:
+		_failures.append(
+			"The hover cue drew no outline around the visible timetable sheet (%d line pixels, %d changed): "
+			% [line_pixels, changed]
+			+ "the depth-tested mask lost the sheet to the wall behind it."
+		)
+
+
 ## How many pixels changed between two frames inside a square around `centre`. A mark that
 ## draws nothing changes nothing; a mark that is a ring changes thousands.
 func _ink_pixels(before: Image, after: Image, centre: Vector2, half_box: int) -> int:
@@ -1210,6 +1257,7 @@ func _capture_click_navigation() -> void:
 			)
 			var cue := sheet.get_cue()
 			if cue != null:
+				await _check_outline_drawn(cue, sheet_screen)
 				_note(
 					"hover cue: revealed=%s opacity=%.2f outlining=%s meshes=%d"
 					% [

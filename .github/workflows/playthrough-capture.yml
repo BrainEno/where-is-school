@@ -15,8 +15,9 @@ name: Playthrough capture
 # `docs/screenshots/` are left untouched; new runs do not write them back to Git.
 #
 # The artifact has **one** root: `${{ runner.temp }}/evidence`
-#   evidence/logs/import-1.log, import-2.log, capture.log
+#   evidence/logs/import-1.log, import-2.log, capture.log, outline-occlusion.log
 #   evidence/docs/screenshots/*.png, PLAYTHROUGH.log, PLAYTHROUGH.md
+#   evidence/outline-occlusion/*.png (the depth-aware outline check's frames)
 # Everything is uploaded from that one directory, so paths are stable when the artifact
 # is downloaded. The artifact is addressed by id, not name: each attempt has a distinct
 # name, and the exact id is passed to PR verification so it cannot read an older attempt.
@@ -38,6 +39,7 @@ on:
       - "project.godot"
       - "addons/**"
       - "tests/capture_editor_dock.gd"
+      - "tests/interaction_outline_occlusion_test.gd"
   # `pull_request` has no branch filter: a pull request whose base is another
   # branch - a stacked one - is still a pull request, and until this was removed the
   # only place it could be tested was the branch it was stacked on, or a manual
@@ -57,6 +59,7 @@ on:
       - "project.godot"
       - "addons/**"
       - "tests/capture_editor_dock.gd"
+      - "tests/interaction_outline_occlusion_test.gd"
   workflow_dispatch:
 
 permissions:
@@ -357,6 +360,64 @@ jobs:
           echo "EDITOR_CAPTURE_RESULT=success"
           echo "::notice title=narrative editor capture::${staged} frame(s) :: $(grep -E '^RESULT: ' "${script_log}" | tr '\n' '|')"
 
+      - name: Check the interaction outline against scene depth
+        id: outline_occlusion
+        if: always() && steps.import.outcome == 'success'
+        shell: bash
+        run: |
+          # A window run on the Compatibility renderer that reads its own frames back:
+          # an unobstructed object is outlined all round, one behind a wall draws nothing
+          # (and does draw through it when the mask is cut back to the outline layer - the
+          # negative control), one half behind a post is outlined only where it shows, and
+          # switching, releasing during a fade and a moving camera leave nothing behind.
+          # See tests/interaction_outline_occlusion_test.gd. Its frames go into the
+          # evidence artifact under outline-occlusion/.
+          #
+          # The verdict is the test's own `PASS:` line and the absence of failure lines,
+          # not the exit code: a windowed engine can exit non-zero while tearing down GL.
+          set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          frames="${EVIDENCE}/outline-occlusion"
+          log="${EVIDENCE}/logs/outline-occlusion.log"
+          mkdir -p "${frames}"
+          OUTLINE_EVIDENCE_DIR="${frames}" OUTLINE_REQUIRE_RENDERER=gl_compatibility \
+            OUTLINE_PRINT_CROPS=1 \
+            timeout 300 xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-method gl_compatibility \
+            --rendering-driver opengl3 \
+            --script res://tests/interaction_outline_occlusion_test.gd > "${log}.raw" 2>&1
+          code=$?
+          # The inline crops are for the annotations below; the PNG files are the evidence.
+          grep -v "^CROP: " "${log}.raw" > "${log}"
+          cat "${log}"
+          echo "--- exit ${code}"
+          # Annotation text has `%` escaped: the runner drops a command whose `%xx` it cannot
+          # decode, and the test's messages are full of percentages.
+          escape () { local text="$1"; text="${text//\%/%25}"; printf '%s' "${text}"; }
+          grep -E "^CROP: " "${log}.raw" | head -n 6 | while read -r _ file data; do
+            echo "::notice title=outline frame ${file} (base64 PNG crop)::${data}"
+          done
+          rm -f "${log}.raw"
+          measures=$(grep -E '^(renderer|frame|NOTE|PASS):' "${log}" | tr '\n' '|' | cut -c1-1500)
+          echo "::notice title=outline occlusion (exit ${code})::$(escape "${measures:-no measurements}")"
+          echo "::notice title=outline occlusion frames::$(ls "${frames}" | tr '\n' ' ')"
+          why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "${log}" \
+            | head -n 12 | tr '\n' '|' | cut -c1-3500)
+          if [ -n "${why}" ]; then
+            echo "::error title=outline occlusion failed::$(escape "${why}")"
+            exit 1
+          fi
+          if ! grep -qE "^PASS: " "${log}"; then
+            tail_lines=$(tail -n 8 "${log}" | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=outline occlusion failed::no verdict (exit ${code}) - tail: $(escape "${tail_lines}")"
+            exit 1
+          fi
+          staged=$(find "${frames}" -maxdepth 1 -name 'case*.png' | wc -l)
+          if [ "${staged}" -lt 3 ]; then
+            echo "::error title=outline occlusion failed::only ${staged} evidence frame(s) were written"
+            exit 1
+          fi
+
       - name: Stage the frame list
         if: always()
         shell: bash
@@ -387,6 +448,7 @@ jobs:
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
             echo "| dialogue frames | ${UI_CAPTURE_OUTCOME:-unknown} |"
             echo "| editor dock frames | ${EDITOR_CAPTURE_OUTCOME:-unknown} |"
+            echo "| outline depth check | ${OUTLINE_OCCLUSION_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
             echo "Log and frames: download \`playthrough-evidence-${GITHUB_RUN_ATTEMPT}\` from this workflow run."
@@ -397,6 +459,7 @@ jobs:
           CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
           UI_CAPTURE_OUTCOME: ${{ steps.ui_capture.outcome }}
           EDITOR_CAPTURE_OUTCOME: ${{ steps.editor_capture.outcome }}
+          OUTLINE_OCCLUSION_OUTCOME: ${{ steps.outline_occlusion.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
 
       - name: Upload the evidence
