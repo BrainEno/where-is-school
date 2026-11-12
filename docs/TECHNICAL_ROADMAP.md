@@ -314,6 +314,7 @@ on, so ramps, kerbs and tilted plates put it on the surface rather than through 
 
 This supersedes the destination cue described under Phase 5b.1: the ring, the ripple and
 the breathing are gone, and `HoverCue` (unchanged) is now the only ring in the vocabulary.
+(Itself superseded by Phase 6a.2: the object is outlined and the mark is a small ring.)
 
 The three candidates compared, on the same floor from the same camera at the same click:
 
@@ -517,6 +518,36 @@ versioned slot: see ADR 0005.)
   editor.
 - Still open: which voice names, values and rules the cast will have, and every line of
   prose. This round adds a way to edit text, not text.
+
+### Phase 6a.2 — The outline round: the object traced, the mark redrawn, exits built (delivered in this round)
+
+The owner rejected both pointer cues: the object cue was a large ring on the floor beside
+the object rather than the object, the floor mark from 5b.3 read as a scribble, and some
+cues (a door's above all) were drawn off to one side of the thing they meant. The
+reference is Disco Elysium: the usable object's own contour is outlined.
+
+- **The outline.** `scripts/interaction/outline_overlay.gd` (a `CanvasLayer` at layer 0 in
+  `scenes/main/main.tscn`) renders the highlighted object's meshes into a silhouette mask
+  through a dedicated visual layer and draws a thin warm line around it with
+  `assets/shaders/interaction/highlight_outline.gdshader`. `HoverCue` drives it; an object
+  with nothing to trace falls back to a small diamond. Every interactable names its meshes
+  in `outline_paths` (generator key `"outline"` for the outdoor locations; by hand in the
+  classroom, corridor and companion scenes).
+- **The offset.** The pointer used to find an object only by the sphere around its anchor,
+  a point in front of a door at chest height, so the cue lit with the cursor beside the door.
+  Each outline mesh now adds a pick box to the interactable's area; walk-to marks are put on
+  the floor at the approach spot and refused marks on the floor under the click. Facing
+  proximity is gated on the anchor sphere as before.
+- **The mark.** A 0.3 m ring and a dot that lands, echoes once and holds; a refusal is the
+  ring contracting in rose. This supersedes the 5b.3 strokes.
+- **The exits.** The street's way to the flats is a stair, landing and lit doorway; the
+  courtyard's stair up was rebuilt out of `BlockWest`; the way back to the street is a gate
+  over steps down; the lane end and the schoolyard's south gate are openings with a light.
+- Evidence: `tests/interaction_cue_test.gd` (rewritten) and the new
+  `tests/interaction_outline_content_test.gd`, both in CI; the capture run's
+  `03d_hover_cue` and `13b_hover_trolley` frames now show the outline. Not proven by a
+  headless run: how the outline looks, which is what the capture frames and a human pass are
+  for.
 
 ### Phase 6 — Filling the yard (planned, not started)
 - People and events in the yard, using the anchors that exist now: the court, the

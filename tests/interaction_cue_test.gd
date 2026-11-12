@@ -1,34 +1,33 @@
 extends SceneTree
-## The two cues the mouse draws: the one on the object you can use, and the one where a
+## The two cues the mouse draws: the outline on the object you can use, and the mark where a
 ## click lands.
 ##
-## These are not rendering tests — a headless run draws nothing. They pin down the things
-## that made the old cues feel cheap and that a code reviewer can check without a picture:
+## These are not rendering tests - a headless run draws nothing. They pin down what a code
+## reviewer can check without a picture:
 ##
-## 1. the cue has the parts it promises (`GroundRing`, `Halo`, `Shard` for the object;
-##    one mark for the ground), and the parts are meshes with the shared unshaded material
-##    rather than nothing or a placeholder;
-## 2. the ground mark is *small and still*: its footprint is a fraction of the old ring's,
-##    it inks in once and then does not rotate, breathe or grow, because the walk is the
-##    animation; the object cue is the half that moves (it spins, bobs and breathes);
-## 3. the role decides the colour, and a refused click is a different role from an
-##    accepted one — an accepted mark sits still, a refused one contracts and leaves;
-## 4. the ring lies on the surface it was given (the ground normal), so a ramp gets a ring
-##    on the ramp;
-## 5. a cue hides itself when it is finished and does not linger, and the ring's radius
-##    follows the interaction radius instead of being one fixed size for every prop.
+## 1. the ground mark is a thin ring with a dot, not a filled disc: small, open, and in the
+##    shared unshaded material; it lands (contracts onto its radius), sends one echo outwards,
+##    and is then still, because the walk is the animation;
+## 2. the role decides the colour, and a refused click is a different gesture from an
+##    accepted one - no dot, no echo, a contraction, and it ends by itself;
+## 3. the mark lies on the surface it was given (the ground normal);
+## 4. the object cue is an *outline of the object*: highlighting a prop marks that prop's own
+##    meshes for `OutlineOverlay`, un-highlighting gives the meshes back exactly the layers
+##    they had, a second object takes the outline over without the first one's late fade
+##    erasing it, and an object with no mesh falls back to a small diamond rather than to
+##    nothing;
+## 5. the pointer finds an object where its outline is drawn: each outline mesh adds a pick
+##    box to the object's area, and a ray at the mesh hits the object.
 ##
-## `Interactable` and `PointerNavigator` are exercised at their seams — `set_highlighted`
-## and the cue's own API — because a navigation mesh and a camera are not needed to ask
-## whether the cue is drawn, and making the test depend on them would test the room.
+## Shipped content (every interactable resolves meshes; nothing authored sits on the outline
+## overlay's visual layer) is `tests/interaction_outline_content_test.gd`.
 
 const Harness = preload("res://tests/test_harness.gd")
 const InteractableScene := preload("res://scenes/interaction/interactable.tscn")
 
-const TIMEOUT_SECONDS := 60.0
-## Long enough for every fade in this file to finish, short enough that three of them do
-## not dominate the run.
-const FADE_WAIT := 0.32
+const TIMEOUT_SECONDS := 90.0
+## Long enough for every fade in this file to finish.
+const FADE_WAIT := 0.4
 
 var _failures: Array[String] = []
 var _checks: int = 0
@@ -42,19 +41,22 @@ func _initialize() -> void:
 func _run() -> void:
 	Engine.time_scale = 1.0
 	await _check_world_cue_geometry()
-	await _check_hover_cue_shape()
-	await _check_hover_cue_animates()
-	await _check_interactable_wiring()
 	await _check_destination_roles()
+	await _check_destination_lands_then_holds()
 	await _check_destination_geometry()
-	await _check_mark_footprint()
-	await _check_refusal_collapses()
+	await _check_refusal_contracts()
 	await _check_dismiss()
+	await _check_outline_of_the_object()
+	await _check_outline_hand_over()
+	await _check_outline_fallback()
+	await _check_pick_where_drawn()
 	Harness.finish(
 		self,
 		_failures,
-		"the object cue is built and animated, the ground mark is small, still and laid on "
-		+ "the ground, both are tied to a role, and both hide when they are finished."
+		"%d checks: the ground mark is a small ring that lands, echoes once and holds; the "
+		% _checks
+		+ "object cue outlines the object's own meshes, hands over cleanly, restores what it "
+		+ "marked, falls back when there is nothing to trace, and is pointable where drawn."
 	)
 
 
@@ -63,24 +65,36 @@ func _run() -> void:
 
 func _check_world_cue_geometry() -> void:
 	Harness.stage = "world cue geometry"
-	var ring := WorldCue.dashed_ring_mesh(0.3)
-	_expect(ring != null and ring.get_surface_count() > 0, "The dashed ring mesh has no surface.")
+	var ring := WorldCue.ring_mesh(0.3, 0.02)
+	_expect(ring != null and ring.get_surface_count() > 0, "The ring mesh has no surface.")
 	if ring != null and ring.get_surface_count() > 0:
 		var aabb := ring.get_aabb()
 		_expect(
-			absf(aabb.size.x - 0.6) < 0.08 and absf(aabb.size.z - 0.6) < 0.08,
-			"The dashed ring's footprint is %.3f x %.3f, not the 0.6 m it was asked for."
+			absf(aabb.size.x - 0.62) < 0.03 and absf(aabb.size.z - 0.62) < 0.03,
+			"A 0.3 m ring with a 2 cm pen is %.3f x %.3f across, not 0.62 m."
 			% [aabb.size.x, aabb.size.z]
 		)
+		# Open, not filled: a ring covers its pen's width times its circumference, a small
+		# fraction of the disc it encloses.
+		var disc := WorldCue.disc_mesh(0.31, 40)
+		_expect(
+			_mesh_area(ring) < _mesh_area(disc) * 0.25,
+			"The ring covers %.4f m2 against %.4f for the disc it encloses; it is filled."
+			% [_mesh_area(ring), _mesh_area(disc)]
+		)
 
-	# Real dashes, not a solid hoop: a ring with gaps covers well under the full
-	# circumference, and the gaps are what make its rotation visible at all.
-	var solid := WorldCue.dashed_ring_mesh(0.3, WorldCue.RING_ARCS, 0.0)
-	var dashed := WorldCue.dashed_ring_mesh(0.3, WorldCue.RING_ARCS, 0.5)
+	var mark := WorldCue.destination_mark_mesh()
+	_expect(mark.get_surface_count() > 0, "The destination mark has no surface.")
+	var radius := WorldCue.mark_footprint_radius()
+	# About 30 cm across: big enough to read at the camera's distance, a fraction of the
+	# 0.52 m rings of the first design.
 	_expect(
-		_mesh_area(solid) > _mesh_area(dashed) * 1.5,
-		"A ring with 50%% gaps covers about as much as a solid one (%.4f vs %.4f)."
-		% [_mesh_area(dashed), _mesh_area(solid)]
+		radius > 0.12 and radius < 0.2,
+		"The mark's footprint radius is %.3f m; it should be about 0.16." % radius
+	)
+	_expect(
+		_mesh_area(mark) < 0.035,
+		"The mark covers %.3f m2 of floor; it is a ring and a dot, not a decal." % _mesh_area(mark)
 	)
 
 	for role: String in WorldCue.ROLES:
@@ -108,8 +122,6 @@ func _check_world_cue_geometry() -> void:
 			material.albedo_color.a > 0.0 and material.albedo_color.a < 1.0,
 			"Role '%s' is drawn at alpha %.2f." % [role, material.albedo_color.a]
 		)
-
-	# The roles must be tellable apart, or the colour is decoration.
 	_expect(
 		WorldCue.color_for(WorldCue.ROLE_TARGET) != WorldCue.color_for(WorldCue.ROLE_DESTINATION),
 		"A click on an object and a click on the floor are drawn in the same colour."
@@ -122,131 +134,7 @@ func _check_world_cue_geometry() -> void:
 		WorldCue.is_known_role(WorldCue.ROLE_TARGET) and not WorldCue.is_known_role("nonsense"),
 		"Role validation does not tell a role from a typo."
 	)
-	_expect(WorldCue.disc_mesh(0.05).get_surface_count() > 0, "The dot mesh has no surface.")
-	_expect(WorldCue.shard_mesh(0.05).get_surface_count() > 0, "The shard mesh has no surface.")
-	await process_frame
-
-
-# --- hover cue --------------------------------------------------------------
-
-
-func _check_hover_cue_shape() -> void:
-	Harness.stage = "hover cue shape"
-	var cue := HoverCue.new()
-	cue.setup(1.0, 0.0)
-	root.add_child(cue)
-	await process_frame
-
-	var parts := cue.get_parts()
-	for part_name: String in ["ring", "halo", "shard"]:
-		var part: Variant = parts.get(part_name, null)
-		_expect(part is MeshInstance3D, "The hover cue has no '%s' part." % part_name)
-		var mesh_part := part as MeshInstance3D
-		if mesh_part == null:
-			continue
-		_expect(mesh_part.mesh != null, "The hover cue's '%s' has no mesh." % part_name)
-		var material := mesh_part.material_override as StandardMaterial3D
-		_expect(material != null, "The hover cue's '%s' has no material." % part_name)
-		_expect(
-			mesh_part.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
-			"The hover cue's '%s' casts a shadow." % part_name
-		)
-	_expect(not cue.visible, "The hover cue is visible before it was revealed.")
-	_expect(not cue.is_revealed(), "The hover cue reports itself revealed before it was.")
-
-	# The ring follows the interaction radius: the same cue on a wide prop and on a narrow
-	# one must not be the same size, because the ring marks where the player stands.
-	var narrow := HoverCue.new()
-	narrow.setup(0.5, 0.0)
-	root.add_child(narrow)
-	var wide := HoverCue.new()
-	wide.setup(2.0, 0.0)
-	root.add_child(wide)
-	await process_frame
-	var narrow_ring := (narrow.get_parts()["ring"] as MeshInstance3D).mesh
-	var wide_ring := (wide.get_parts()["ring"] as MeshInstance3D).mesh
-	_expect(
-		wide_ring.get_aabb().size.x > narrow_ring.get_aabb().size.x * 1.4,
-		"The hover ring is the same size for a 0.5 m prop and a 2.0 m one (%.3f vs %.3f)."
-		% [wide_ring.get_aabb().size.x, narrow_ring.get_aabb().size.x]
-	)
-	narrow.queue_free()
-	wide.queue_free()
-	await process_frame
-
-	cue.queue_free()
-	await process_frame
-
-
-func _check_hover_cue_animates() -> void:
-	Harness.stage = "hover cue animation"
-	var cue := HoverCue.new()
-	cue.setup(1.0, 0.0)
-	root.add_child(cue)
-	await process_frame
-	await _wait(FADE_WAIT)
-	_expect(cue.get_opacity() < 0.05, "An unrevealed hover cue is not fully transparent.")
-
-	cue.reveal()
-	await process_frame
-	_expect(cue.visible, "The hover cue is not visible after reveal().")
-	_expect(cue.is_revealed(), "The hover cue does not report itself revealed.")
-	await _wait(FADE_WAIT)
-	_expect(
-		cue.get_opacity() > 0.95,
-		"The hover cue never finished fading in (opacity %.2f)." % cue.get_opacity()
-	)
-	var ring := cue.get_parts()["ring"] as MeshInstance3D
-	var shard := cue.get_parts()["shard"] as MeshInstance3D
-	_expect(
-		ring.transparency < 0.05,
-		"The revealed ring is drawn at transparency %.2f." % ring.transparency
-	)
-	var spin_before := ring.rotation.y
-	var bob_before := shard.position.y
-	var tumble_before := shard.rotation.y
-	await _wait(0.25)
-	_expect(spin_before != ring.rotation.y, "The hover ring does not turn.")
-	_expect(bob_before != shard.position.y, "The shard above the object does not bob.")
-	_expect(tumble_before != shard.rotation.y, "The shard does not tumble.")
-
-	cue.conceal()
-	await _wait(FADE_WAIT)
-	_expect(not cue.is_revealed(), "The hover cue still reports itself revealed after conceal().")
-	_expect(cue.get_opacity() < 0.05, "The concealed hover cue is still drawn.")
-	_expect(not cue.visible, "The concealed hover cue is still visible.")
-	cue.queue_free()
-	await process_frame
-
-
-## The object's side of the same promise: highlighting the prop draws the cue, and only
-## then. The controller owns *which* object is highlighted; this test owns the wiring.
-func _check_interactable_wiring() -> void:
-	Harness.stage = "interactable wiring"
-	var probe := InteractableScene.instantiate() as Interactable
-	_expect(probe != null, "The interactable scene did not instantiate as an Interactable.")
-	if probe == null:
-		return
-	probe.interact_id = &"cue_probe"
-	probe.radius = 1.0
-	root.add_child(probe)
-	await process_frame
-	_expect(probe.get_cue() == null or not probe.is_highlighted(), "A fresh prop is already lit.")
-	probe.set_highlighted(true)
-	_expect(probe.is_highlighted(), "set_highlighted(true) did not take.")
-	var cue := probe.get_cue()
-	_expect(cue != null, "The highlighted prop has no cue.")
-	if cue != null:
-		_expect(cue.is_revealed(), "The highlighted prop's cue was not revealed.")
-		await _wait(FADE_WAIT)
-		_expect(cue.get_opacity() > 0.95, "The prop's cue never became visible.")
-	probe.set_highlighted(false)
-	_expect(not probe.is_highlighted(), "set_highlighted(false) did not take.")
-	if cue != null:
-		_expect(not cue.is_revealed(), "The cue stayed lit after the prop was un-highlighted.")
-		await _wait(FADE_WAIT)
-		_expect(not cue.visible, "The cue is still drawn after the prop was un-highlighted.")
-	probe.queue_free()
+	_expect(WorldCue.shard_mesh(0.05).get_surface_count() > 0, "The fallback shard has no surface.")
 	await process_frame
 
 
@@ -260,47 +148,90 @@ func _check_destination_roles() -> void:
 	await process_frame
 	_expect(not cue.is_shown(), "A fresh destination cue claims to be shown.")
 	_expect(cue.get_role() == "", "A fresh destination cue already has a role: '%s'." % cue.get_role())
-	# Dismissing something that was never shown must be a no-op, not an error.
 	cue.dismiss()
 	cue.dismiss(true)
 	await process_frame
 
 	cue.show_destination(Vector3(1.0, 0.0, 2.0))
 	_expect(cue.is_shown(), "show_destination() did not show the cue.")
-	_expect(
-		cue.get_role() == WorldCue.ROLE_DESTINATION,
-		"A floor click is drawn as '%s'." % cue.get_role()
-	)
+	_expect(cue.get_role() == WorldCue.ROLE_DESTINATION, "A floor click is drawn as '%s'." % cue.get_role())
 	_expect(
 		(cue.global_position - Vector3(1.0, 0.0, 2.0)).length() < 0.1,
 		"The cue was not placed at the clicked point: %s." % str(cue.global_position)
 	)
-	var mark := cue.get_parts()["mark"] as MeshInstance3D
-	_expect(mark != null, "An accepted click draws nothing.")
-	if mark != null:
-		_expect(mark.visible, "The mark of an accepted click is not visible.")
+	var parts := cue.get_parts()
+	for part_name: String in ["ring", "dot", "echo"]:
+		var part := parts.get(part_name, null) as MeshInstance3D
+		_expect(part != null, "The ground mark has no '%s'." % part_name)
+		if part == null:
+			continue
+		_expect(part.mesh != null, "The ground mark's '%s' has no mesh." % part_name)
+		_expect(part.visible, "The '%s' of an accepted click is hidden." % part_name)
 		_expect(
-			mark.material_override == WorldCue.material_for(WorldCue.ROLE_DESTINATION),
-			"A floor click is not drawn with the destination material."
+			part.material_override == WorldCue.material_for(WorldCue.ROLE_DESTINATION),
+			"The '%s' of a floor click is not in the destination material." % part_name
 		)
-		_expect(mark.mesh != null, "The mark has no mesh.")
-	# One part, not four: the redesign replaced the ripple/dot/core/refusal set with a single
-	# mark, and a second part appearing again would mean the old vocabulary came back.
+		_expect(
+			part.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
+			"The ground mark's '%s' casts a shadow." % part_name
+		)
 	_expect(
-		cue.get_parts().size() == 1,
-		"The ground cue has %d parts; it is one mark now." % cue.get_parts().size()
+		absf(cue.get_footprint_radius() - WorldCue.mark_footprint_radius()) < 0.03,
+		"The cue's ring (%.3f m) is not the shipped mark (%.3f m)."
+		% [cue.get_footprint_radius(), WorldCue.mark_footprint_radius()]
 	)
 
 	cue.show_target(Vector3(1.0, 0.0, 2.0))
-	_expect(
-		cue.get_role() == WorldCue.ROLE_TARGET,
-		"A click on an object is drawn as '%s'." % cue.get_role()
-	)
-	if mark != null:
+	_expect(cue.get_role() == WorldCue.ROLE_TARGET, "A click on an object is drawn as '%s'." % cue.get_role())
+	var ring := cue.get_parts()["ring"] as MeshInstance3D
+	if ring != null:
 		_expect(
-			mark.material_override == WorldCue.material_for(WorldCue.ROLE_TARGET),
+			ring.material_override == WorldCue.material_for(WorldCue.ROLE_TARGET),
 			"A click on an object is not drawn in the target colour."
 		)
+	cue.queue_free()
+	await process_frame
+
+
+func _check_destination_lands_then_holds() -> void:
+	Harness.stage = "destination lands"
+	var cue := DestinationCue.new()
+	root.add_child(cue)
+	await process_frame
+	cue.show_destination(Vector3.ZERO)
+	var ring := cue.get_parts()["ring"] as MeshInstance3D
+	var dot := cue.get_parts()["dot"] as MeshInstance3D
+	if ring == null or dot == null:
+		_failures.append("The ground mark's parts could not be inspected.")
+		cue.queue_free()
+		return
+	# It lands: wide first, onto its radius after a fifth of a second.
+	_expect(
+		ring.scale.x > 1.4,
+		"The ring does not start wide (scale %.2f); it should land, not appear." % ring.scale.x
+	)
+	_expect(dot.scale.x < 0.2, "The dot is already full size before the ring has landed.")
+	var echo_seen := 0.0
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 450:
+		await process_frame
+		echo_seen = maxf(echo_seen, cue.get_echo_opacity())
+	_expect(
+		absf(ring.scale.x - 1.0) < 0.02,
+		"The ring did not settle on its radius (scale %.3f)." % ring.scale.x
+	)
+	_expect(absf(dot.scale.x - 1.0) < 0.05, "The dot never reached full size (%.3f)." % dot.scale.x)
+	_expect(cue.get_opacity() > 0.95, "The mark never became fully visible (%.2f)." % cue.get_opacity())
+	_expect(echo_seen > 0.2, "The echo never went out (peak opacity %.2f)." % echo_seen)
+	# The echo goes once and is gone; the mark then holds still for the rest of the walk.
+	await _wait(0.6)
+	_expect(cue.get_echo_opacity() < 0.02, "The echo is still drawn (%.2f)." % cue.get_echo_opacity())
+	var scale_before := ring.scale.x
+	var rotation_before := ring.rotation.y
+	await _wait(0.4)
+	_expect(is_equal_approx(ring.scale.x, scale_before), "The ring breathes after it landed.")
+	_expect(is_equal_approx(ring.rotation.y, rotation_before), "The ring turns after it landed.")
+	_expect(cue.visible and cue.is_shown(), "The mark disappeared while the walk was still going.")
 	cue.queue_free()
 	await process_frame
 
@@ -310,115 +241,46 @@ func _check_destination_geometry() -> void:
 	var cue := DestinationCue.new()
 	root.add_child(cue)
 	await process_frame
-	# A tilted surface: the ring has to lie on it, not cut through it.
 	var slope := Vector3(0.35, 0.92, 0.0).normalized()
 	cue.show_destination(Vector3.ZERO, slope)
 	await process_frame
 	var up := cue.global_transform.basis.y.normalized()
+	_expect(up.dot(slope) > 0.98, "The mark was not laid on the ground normal (dot %.3f)." % up.dot(slope))
 	_expect(
-		up.dot(slope) > 0.98,
-		"The mark was not laid on the ground normal (dot %.3f)." % up.dot(slope)
+		cue.global_position.dot(slope) > 0.0 and cue.global_position.length() < 0.05,
+		"The mark is not lifted just off the surface it lies on: %s." % str(cue.global_position)
 	)
-	var mark := cue.get_parts()["mark"] as MeshInstance3D
-	if mark == null:
-		_failures.append("The destination mark could not be inspected.")
-		return
-	# It inks in over a seventh of a second...
-	var scale_at_start := mark.scale.x
-	await _wait(0.25)
-	_expect(cue.get_opacity() > 0.95, "The mark never became visible (%.2f)." % cue.get_opacity())
-	_expect(
-		mark.scale.x > scale_at_start,
-		"The mark did not settle into place (%.2f -> %.2f)." % [scale_at_start, mark.scale.x]
-	)
-	# ...and then it is still. The old cue spun and breathed for the whole walk, which is
-	# exactly what made it feel like a generic effect rather than a mark on the floor.
-	var rotation_before := mark.rotation.y
-	var scale_before := mark.scale.x
-	await _wait(0.6)
-	_expect(
-		is_equal_approx(mark.rotation.y, rotation_before),
-		"The ground mark turns after it was drawn; the walk is the animation."
-	)
-	_expect(
-		is_equal_approx(mark.scale.x, scale_before),
-		"The ground mark breathes after it was drawn (%.3f -> %.3f)."
-		% [scale_before, mark.scale.x]
-	)
-	_expect(cue.visible, "The mark disappeared while the walk was still going.")
 	cue.queue_free()
 	await process_frame
 
 
-func _check_refusal_collapses() -> void:
+func _check_refusal_contracts() -> void:
 	Harness.stage = "refusal"
 	var cue := DestinationCue.new()
 	root.add_child(cue)
 	await process_frame
 	cue.show_refused(Vector3.ZERO)
 	_expect(cue.get_role() == WorldCue.ROLE_REFUSED, "A refused click has role '%s'." % cue.get_role())
-	var mark := cue.get_parts()["mark"] as MeshInstance3D
-	_expect(mark != null and mark.visible, "A refused click draws nothing.")
-	if mark == null:
+	var ring := cue.get_parts()["ring"] as MeshInstance3D
+	var dot := cue.get_parts()["dot"] as MeshInstance3D
+	var echo := cue.get_parts()["echo"] as MeshInstance3D
+	_expect(ring != null and ring.visible, "A refused click draws nothing.")
+	if ring == null:
+		cue.queue_free()
 		return
 	_expect(
-		mark.material_override == WorldCue.material_for(WorldCue.ROLE_REFUSED),
+		ring.material_override == WorldCue.material_for(WorldCue.ROLE_REFUSED),
 		"A refused click is not drawn in the refusal colour."
 	)
-	# Inward is the meaning: an outward gesture promises a walk, and here there is none.
-	await _wait(0.22)
-	_expect(
-		mark.scale.x < 1.0,
-		"The refusal does not contract (scale %.2f at 0.22 s)." % mark.scale.x
-	)
-	# It ends by itself: a refusal is not something the player has to dismiss.
-	await _wait(0.6)
+	_expect(dot != null and not dot.visible, "A refused click draws the dot of an accepted one.")
+	_expect(echo != null and not echo.visible, "A refused click sends the echo of an accepted one.")
+	await _wait(0.25)
+	_expect(ring.scale.x < 0.95, "The refusal does not contract (scale %.2f at 0.25 s)." % ring.scale.x)
+	await _wait(0.5)
 	_expect(not cue.is_shown(), "The refusal cue did not end itself.")
 	_expect(not cue.visible, "The refusal cue is still drawn after it ended.")
 	cue.queue_free()
 	await process_frame
-
-
-## The redesign's headline claim, measured rather than asserted in prose: the mark is a
-## fraction of the ring it replaced, and it still puts ink on the floor.
-func _check_mark_footprint() -> void:
-	Harness.stage = "mark footprint"
-	var mark := WorldCue.destination_mark_mesh()
-	_expect(mark.get_surface_count() > 0, "The destination mark has no surface.")
-	var box := mark.get_aabb()
-	var width := box.end.x - box.position.x
-	var depth := box.end.z - box.position.z
-	# 0.26 m was the radius of the old core ring, i.e. 0.52 m across. The mark has to be
-	# well under half of that, or the round did not actually make it smaller.
-	_expect(
-		maxf(width, depth) < 0.26,
-		"The mark is %.2f m across; the ring it replaced was 0.52 m." % maxf(width, depth)
-	)
-	_expect(
-		maxf(width, depth) > 0.08,
-		"The mark is only %.2f m across: small is not the same as invisible." % maxf(width, depth)
-	)
-	var radius := WorldCue.mark_footprint_radius()
-	_expect(
-		radius > 0.03 and radius < 0.13,
-		"The mark's footprint radius is %.3f m." % radius
-	)
-	# Open, not closed: the old cue was a ring, and a ring encloses an area. If the mark ever
-	# grows a closed outline again, its filled area would jump — this is the cheapest way to
-	# notice while still allowing any hand-drawn shape.
-	var area := _mesh_area(mark)
-	_expect(
-		area < 0.02,
-		"The mark covers %.3f m² of floor; it is meant to be strokes, not a filled shape." % area
-	)
-	var strokes := WorldCue.stroke_mesh(Vector2.ZERO, Vector2(0.1, 0.0), 0.02, 0.4)
-	_expect(strokes.get_surface_count() > 0, "A single stroke of the pen builds no surface.")
-	_expect(
-		_mesh_area(strokes) > 0.0,
-		"A single stroke of the pen covers no area; it would be invisible."
-	)
-	var arc := WorldCue.arc_mesh(0.08, 0.0, 70.0, 0.02)
-	_expect(arc.get_surface_count() > 0, "An arc of the pen builds no surface.")
 
 
 func _check_dismiss() -> void:
@@ -433,7 +295,6 @@ func _check_dismiss() -> void:
 	await _wait(FADE_WAIT)
 	_expect(not cue.visible, "The dismissed cue is still visible.")
 	_expect(cue.get_opacity() < 0.05, "The dismissed cue is still drawn at opacity %.2f." % cue.get_opacity())
-
 	cue.show_destination(Vector3.ZERO)
 	await process_frame
 	_expect(cue.visible, "The cue cannot be shown again after being dismissed.")
@@ -443,19 +304,221 @@ func _check_dismiss() -> void:
 	await process_frame
 
 
+# --- the object outline -----------------------------------------------------
+
+
+## A prop with a mesh of its own beside it, named through `outline_paths`, and a second
+## mesh parented under the interactable, which is always included.
+func _make_prop(id: StringName, at: Vector3) -> Dictionary:
+	var holder := Node3D.new()
+	holder.name = "Prop_%s" % String(id)
+	holder.position = at
+	root.add_child(holder)
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var box := BoxMesh.new()
+	box.size = Vector3(0.6, 1.2, 0.4)
+	body.mesh = box
+	body.position = Vector3(0.0, 0.6, -1.2)
+	body.layers = 1 | 4
+	holder.add_child(body)
+	var probe := InteractableScene.instantiate() as Interactable
+	probe.interact_id = id
+	probe.radius = 0.8
+	probe.position = Vector3(0.0, 0.9, 0.0)
+	probe.outline_paths = PackedStringArray(["../Body"])
+	var tag := MeshInstance3D.new()
+	tag.name = "Tag"
+	var tag_mesh := BoxMesh.new()
+	tag_mesh.size = Vector3(0.1, 0.1, 0.1)
+	tag.mesh = tag_mesh
+	probe.add_child(tag)
+	holder.add_child(probe)
+	return {"holder": holder, "probe": probe, "body": body, "tag": tag}
+
+
+func _check_outline_of_the_object() -> void:
+	Harness.stage = "outline of the object"
+	var prop := _make_prop(&"outline_probe", Vector3(0.0, 0.0, 0.0))
+	var probe := prop["probe"] as Interactable
+	var body := prop["body"] as MeshInstance3D
+	var tag := prop["tag"] as MeshInstance3D
+	await process_frame
+	await process_frame
+	var meshes := probe.get_outline_meshes()
+	_expect(meshes.has(body), "The mesh named in outline_paths is not traced.")
+	_expect(meshes.has(tag), "A mesh parented under the interactable is not traced.")
+
+	probe.set_highlighted(true)
+	var cue := probe.get_cue()
+	_expect(cue != null, "The highlighted prop has no cue.")
+	if cue == null:
+		(prop["holder"] as Node).queue_free()
+		return
+	_expect(cue.is_revealed(), "The highlighted prop's cue was not revealed.")
+	_expect(cue.is_outlining(), "The prop has meshes but the cue fell back instead of outlining.")
+	var shard := cue.get_parts().get("shard", null) as MeshInstance3D
+	_expect(shard == null or not shard.visible, "An outlined prop also draws the fallback shard.")
+	var overlay := cue.get_overlay()
+	_expect(overlay != null, "The outline has no overlay to draw it.")
+	await _wait(FADE_WAIT)
+	if overlay != null:
+		_expect(overlay.is_owned_by(cue), "The overlay is not drawing this prop's outline.")
+		_expect(overlay.is_active(), "The overlay is not active while the prop is highlighted.")
+		_expect(overlay.get_opacity() > 0.95, "The outline never faded in (%.2f)." % overlay.get_opacity())
+		var viewport := overlay.get_mask_viewport()
+		_expect(
+			viewport != null and viewport.render_target_update_mode == SubViewport.UPDATE_ALWAYS,
+			"The silhouette mask is not being rendered while an outline is shown."
+		)
+	_expect(
+		body.layers & OutlineOverlay.MASK_LAYER != 0,
+		"The traced mesh is not on the outline layer while highlighted."
+	)
+	_expect(body.layers & 1 != 0 and body.layers & 4 != 0, "Marking the mesh removed its own layers.")
+
+	probe.set_highlighted(false)
+	_expect(not cue.is_revealed(), "The cue stayed revealed after the prop was un-highlighted.")
+	await _wait(FADE_WAIT)
+	_expect(body.layers == (1 | 4), "Releasing the outline did not restore the mesh's layers (%d)." % body.layers)
+	_expect(tag.layers == 1, "Releasing the outline did not restore the child mesh's layers (%d)." % tag.layers)
+	if overlay != null:
+		_expect(not overlay.is_active(), "The overlay is still drawing after the outline was released.")
+		var viewport := overlay.get_mask_viewport()
+		_expect(
+			viewport == null or viewport.render_target_update_mode == SubViewport.UPDATE_DISABLED,
+			"The silhouette mask keeps rendering with nothing to outline."
+		)
+	_expect(not cue.visible, "The cue is still drawn after the prop was un-highlighted.")
+	(prop["holder"] as Node).queue_free()
+	await process_frame
+
+
+## The controller moves the highlight from one object to the next in a single frame: the
+## first object's fade-out is still running when the second one takes the overlay. That
+## late fade must not dim or erase the second outline.
+func _check_outline_hand_over() -> void:
+	Harness.stage = "outline hand-over"
+	var first := _make_prop(&"outline_first", Vector3(-2.0, 0.0, 0.0))
+	var second := _make_prop(&"outline_second", Vector3(2.0, 0.0, 0.0))
+	var first_probe := first["probe"] as Interactable
+	var second_probe := second["probe"] as Interactable
+	await process_frame
+	first_probe.set_highlighted(true)
+	await _wait(FADE_WAIT)
+	first_probe.set_highlighted(false)
+	second_probe.set_highlighted(true)
+	await _wait(FADE_WAIT)
+	var overlay := second_probe.get_cue().get_overlay() if second_probe.get_cue() != null else null
+	_expect(overlay != null, "The second object has no overlay.")
+	if overlay != null:
+		_expect(overlay.is_owned_by(second_probe.get_cue()), "The overlay did not pass to the second object.")
+		_expect(overlay.is_active(), "The first object's fade-out erased the second object's outline.")
+		_expect(overlay.get_opacity() > 0.95, "The first object's fade-out dimmed the second outline.")
+	var first_body := first["body"] as MeshInstance3D
+	var second_body := second["body"] as MeshInstance3D
+	_expect(
+		first_body.layers & OutlineOverlay.MASK_LAYER == 0,
+		"The first object is still marked after the highlight moved on."
+	)
+	_expect(
+		second_body.layers & OutlineOverlay.MASK_LAYER != 0,
+		"The second object is not marked while it holds the highlight."
+	)
+	second_probe.set_highlighted(false)
+	await _wait(FADE_WAIT)
+	# Freeing a highlighted object hands its meshes back as well.
+	first_probe.set_highlighted(true)
+	await process_frame
+	(first["holder"] as Node).queue_free()
+	await process_frame
+	await process_frame
+	if overlay != null:
+		_expect(not overlay.is_active(), "The overlay kept drawing a prop that was freed.")
+	(second["holder"] as Node).queue_free()
+	await process_frame
+
+
+func _check_outline_fallback() -> void:
+	Harness.stage = "outline fallback"
+	var probe := InteractableScene.instantiate() as Interactable
+	probe.interact_id = &"bare_probe"
+	probe.radius = 0.8
+	root.add_child(probe)
+	await process_frame
+	_expect(probe.get_outline_meshes().is_empty(), "A bare interactable claims meshes to outline.")
+	probe.set_highlighted(true)
+	var cue := probe.get_cue()
+	_expect(cue != null and cue.is_revealed(), "A bare interactable cannot be highlighted.")
+	if cue != null:
+		_expect(not cue.is_outlining(), "A bare interactable reports an outline with nothing to trace.")
+		var shard := cue.get_parts().get("shard", null) as MeshInstance3D
+		_expect(shard != null and shard.visible, "A bare interactable is highlighted by nothing at all.")
+		await _wait(FADE_WAIT)
+		_expect(cue.get_opacity() > 0.95, "The fallback never faded in (%.2f)." % cue.get_opacity())
+		if shard != null:
+			var tumble_before := shard.rotation.y
+			await _wait(0.2)
+			_expect(tumble_before != shard.rotation.y, "The fallback shard does not move.")
+		probe.set_highlighted(false)
+		await _wait(FADE_WAIT)
+		_expect(not cue.visible, "The fallback is still drawn after the highlight ended.")
+	probe.queue_free()
+	await process_frame
+
+
+# --- picking where the outline is -------------------------------------------
+
+
+func _check_pick_where_drawn() -> void:
+	Harness.stage = "pick where drawn"
+	var prop := _make_prop(&"pick_probe", Vector3(0.0, 0.0, 6.0))
+	var probe := prop["probe"] as Interactable
+	var body := prop["body"] as MeshInstance3D
+	await process_frame
+	await process_frame
+	await physics_frame
+	await physics_frame
+	var shapes := probe.get_pick_shapes()
+	_expect(shapes.size() == 2, "Two outline meshes built %d pick boxes, not 2." % shapes.size())
+	var centre := body.global_transform * body.get_aabb().get_center()
+	var covering := false
+	for shape in shapes:
+		var box := shape.shape as BoxShape3D
+		if box == null:
+			continue
+		var local := shape.global_transform.affine_inverse() * centre
+		if absf(local.x) <= box.size.x * 0.5 and absf(local.y) <= box.size.y * 0.5 \
+				and absf(local.z) <= box.size.z * 0.5:
+			covering = true
+	_expect(covering, "No pick box covers the centre of the outlined mesh.")
+	# A ray at the middle of the body, from the side away from the anchor, finds the object:
+	# the anchor sphere (0.8 m radius, 1.2 m in front of the body) does not reach there.
+	var space := probe.get_world_3d().direct_space_state
+	var from := centre + Vector3(2.5, 0.0, -0.1)
+	var query := PhysicsRayQueryParameters3D.create(from, centre + Vector3(-0.1, 0.0, 0.0), Interactable.INTERACTION_LAYER)
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var hit := space.intersect_ray(query)
+	_expect(
+		not hit.is_empty() and hit.get("collider") == probe,
+		"A ray at the outlined mesh does not find the object (hit: %s)." % str(hit.get("collider", null))
+	)
+	(prop["holder"] as Node).queue_free()
+	await process_frame
+
+
 # --- helpers ----------------------------------------------------------------
 
 
-## Total area of a mesh's triangles, in the XZ plane. Used to prove a dashed ring has
-## gaps instead of trusting the parameter that was passed in.
+## Total area of a mesh's triangles in the XZ plane.
 func _mesh_area(mesh: ArrayMesh) -> float:
 	var total := 0.0
 	for surface in mesh.get_surface_count():
 		var arrays := mesh.surface_get_arrays(surface)
 		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-		# `SurfaceTool.commit()` writes a plain triangle list unless `index()` was called,
-		# so both shapes have to be read here — and the missing index array is `null`, not
-		# an empty array, which is why it is kept in a Variant first.
+		# `SurfaceTool.commit()` writes a plain triangle list unless `index()` was called, and
+		# a missing index array is `null`, not an empty one.
 		var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
 		var order: Array[int] = []
 		if raw_indices is PackedInt32Array:
@@ -469,7 +532,6 @@ func _mesh_area(mesh: ArrayMesh) -> float:
 			var a := vertices[order[index]]
 			var b := vertices[order[index + 1]]
 			var c := vertices[order[index + 2]]
-			# The meshes lie in XZ, so the area is half the 2D cross product.
 			total += absf((b.x - a.x) * (c.z - a.z) - (c.x - a.x) * (b.z - a.z)) * 0.5
 			index += 3
 	return total

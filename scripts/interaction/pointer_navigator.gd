@@ -34,6 +34,9 @@ signal approach_activated(interactable: Interactable)
 ## unreachable, or cancelled by the player.
 signal approach_abandoned(interactable: Interactable)
 
+## How far below an object's anchor `_ground_point_under` looks for the floor.
+const GROUND_PROBE_DEPTH := 4.0
+
 @export var player_path: NodePath = ^".."
 @export var interaction_path: NodePath = ^"../InteractionController"
 ## Physics layers that can be walked on.
@@ -329,12 +332,12 @@ func _begin_approach(target: Interactable) -> void:
 		# same quiet ring a refused ground click gets, and stay put.
 		_last_rejection = "no walkable spot with a clear view next to %s" % String(target.interact_id)
 		_abandon_pending()
-		_mark_refused(target.global_position)
+		_mark_refused(_ground_point_under(target.global_position))
 		return
 	if not _player.request_path_to(spot):
 		_last_rejection = "no route to the spot next to %s" % String(target.interact_id)
 		_abandon_pending()
-		_mark_refused(target.global_position)
+		_mark_refused(_ground_point_under(target.global_position))
 		return
 	_approaching = true
 	_last_click_accepted = true
@@ -370,13 +373,19 @@ func _find_approach_spot(target: Interactable) -> Variant:
 			if to_player_flat < 0.35:
 				# Standing on top of the target is not an approach.
 				continue
+			# Everything below is measured from the floor the character would stand on, not
+			# from the object's anchor. The anchor of a door or a notice is at chest height,
+			# and using its height here drew the amber ring floating in the air beside the
+			# door - in perspective, a ring a metre up reads as a ring in the wrong place -
+			# and put the line-of-sight eye a metre above the character's real eyes.
+			var floor_y := snapped.y
 			var path := NavigationServer3D.map_get_path(
-				map, _player.global_position, Vector3(snapped.x, candidate.y + 0.05, snapped.z), true
+				map, _player.global_position, Vector3(snapped.x, floor_y + 0.05, snapped.z), true
 			)
 			if path.size() < 2:
 				continue
 			if not _interaction.has_line_of_sight_from(
-				Vector3(snapped.x, candidate.y + _interaction.eye_height, snapped.z), target
+				Vector3(snapped.x, floor_y + _interaction.eye_height, snapped.z), target
 			):
 				# Standing there would put a wall or a desk between the character and
 				# the thing they meant to use.
@@ -384,7 +393,7 @@ func _find_approach_spot(target: Interactable) -> Variant:
 			var cost := _path_length(path)
 			if cost < best_cost:
 				best_cost = cost
-				best = Vector3(snapped.x, candidate.y + 0.05, snapped.z)
+				best = Vector3(snapped.x, floor_y, snapped.z)
 	return null if best_cost == INF else best
 
 
@@ -548,6 +557,27 @@ func get_cue_role() -> String:
 
 ## How the ground under a point is tilted, so the ring lies on it instead of cutting into
 ## it. One short ray, only on an accepted or refused click — never per frame.
+## The floor directly under `point`: where a cue about an object belongs when the object
+## itself is in the air (a door's anchor, a notice on a pole). Falls back to `point` when
+## there is nothing under it within reach, so a cue is never lost, only left unsnapped.
+func _ground_point_under(point: Vector3) -> Vector3:
+	if _player == null:
+		return point
+	var world := _player.get_world_3d()
+	if world == null or world.direct_space_state == null:
+		return point
+	var query := PhysicsRayQueryParameters3D.create(
+		point + Vector3.UP * 0.3, point + Vector3.DOWN * GROUND_PROBE_DEPTH, ground_mask
+	)
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.exclude = [_player.get_rid()]
+	var hit := world.direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return point
+	return hit.get("position", point)
+
+
 func _ground_normal_at(point: Vector3) -> Vector3:
 	if _player == null:
 		return Vector3.UP

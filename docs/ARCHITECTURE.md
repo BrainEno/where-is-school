@@ -362,31 +362,61 @@ world. One click resolves to exactly one of three outcomes:
 2. otherwise, walkable ground under the cursor is a destination: the ray only tests
    the world layer with bodies (never areas), the surface normal must face up, and the
    hit point must be within `max_snap_distance` of the navigation mesh;
-3. everything else is refused: the cue collapses inward in the refusal colour and the
+3. everything else is refused: the ring contracts in the refusal colour and the
    character stays where they are. No walk, no dialogue, nothing to dismiss.
 
 **The cues the mouse draws** (`scripts/interaction/world_cue.gd`,
-`hover_cue.gd`, `destination_cue.gd`). Three decisions hold them together:
+`hover_cue.gd`, `destination_cue.gd`, `outline_overlay.gd`). Three decisions hold them
+together:
 
 - **One palette, one pen.** `WorldCue` owns the colours (bone = where you clicked, amber =
-  the thing you clicked or can use, a duller rose = refused), the stroke width, the dash
-  rhythm and one cached unshaded alpha-only material per role. A cue is a mark, not a
+  the thing you clicked or can use, a duller rose = refused), the outline colour, the pen
+  widths and one cached unshaded alpha-only material per role. A cue is a mark, not a
   light: unshaded, no depth write, back faces drawn, so it reads on any surface without
   being lit by the room or punching a hole in what is behind it. Every mesh is built in
   code (`SurfaceTool`), so no prop, scene or camera distance needs new art.
-- **Motion is the interface.** The destination ripple expands once and fades; the ring
-  left behind turns and breathes while the character walks; the hover cue's ground ring
-  spins, its halo breathes out of step, and its shard bobs and tumbles; both cues fade in
-  and out over ~0.15 s instead of switching between frames. The motion is slow on purpose
-  (a full turn in about forty seconds) so a cue never competes with the character or the
-  reading band. The refused cue is the exception that proves the rule: it *collapses*,
-  because an expanding ring is a promise of a walk.
+- **The object is outlined, not circled.** The owner asked for the usable object to be
+  shown the way Disco Elysium shows it: its own contour, traced. `HoverCue` asks the
+  interactable for `get_outline_meshes()` (the nodes named in `outline_paths`, plus any mesh
+  parented under the interactable) and hands them to `OutlineOverlay`, a `CanvasLayer` in
+  `scenes/main/main.tscn` (layer 0, under every UI layer). The overlay adds visual layer 20
+  (`MASK_LAYER`) to those meshes, renders only that layer into a `SubViewport` from a camera
+  that copies the player's camera every frame, and runs
+  `assets/shaders/interaction/highlight_outline.gdshader` over the silhouette: a 2 px warm
+  line just outside it (scaled with the window height), a dark rim outside that, and a faint
+  wash over the object. The mask viewport renders only while something is outlined. One
+  object is outlined at a time; a new owner replaces the old one at once, and a late fade
+  from the old owner is ignored, so a hand-over never dims the new outline. Releasing gives
+  every mesh back exactly the layers it had. An interactable with no mesh to trace (an exit
+  that is only an opening) falls back to a small amber diamond above its anchor. An inverted
+  hull was rejected because it tears open at box corners; the `BaseMaterial3D` stencil
+  outline was rejected because it needs a material change on every surface and does not
+  exist in the Compatibility renderer the capture run uses.
+- **The pointer finds the object where the outline is.** An interactable's own shape is a
+  sphere around its anchor, and the anchor of a door or a notice is a point in front of it.
+  As a pointer target that sphere was off to one side of the thing on screen: the door's
+  cue lit while the cursor was on the floor beside it. `Interactable._build_pick_shapes`
+  adds a box (the mesh's bounds, grown by 5 cm, at least 12 cm thick) for each outline mesh
+  to the same area, deferred until the room has its final transforms and measured again
+  whenever the visibility of the interactable or of an outlined branch changes (the
+  companion is hidden until Q joins, and a hidden branch gets no box). Meshes longer than
+  12 m and paint on the floor (thinner than 5 cm, lying more than 0.25 m under the anchor)
+  get no box, so a click on the court still walks. Proximity is unchanged:
+  `InteractionController` still ranks facing candidates by their anchor, and only those
+  whose anchor sphere the sensor sphere overlaps (`_sensor_reaches_anchor`).
+- **Motion is the interface, then stillness.** The ground mark lands (contracts from 1.9x
+  onto its radius in 0.2 s, the dot popping in after it), sends one thin echo outwards
+  (to 2.6x over 0.5 s), and then holds still for the rest of the walk: a mark that moves
+  while the character walks is a mark the player watches instead of the destination. The
+  outline fades in over 0.12 s and out over 0.16 s instead of switching between frames. The
+  refused cue is the exception that proves the rule: its ring *contracts* with no dot and no
+  echo, because an outward motion is a promise of a walk.
 - **The cue is laid on the world, not on a plane.** The navigator passes the ground normal
   under the click (one short ray, only on a click) and the cue's basis puts its +Y on that
-  normal, so a kerb, a ramp or a tilted floor plate gets a ring that lies flat on it. The
-  hover cue's ground ring is projected the same way, downwards: an interactable is authored
-  at the middle of its prop, so `Interactable` casts one ray to find the floor under it and
-  draws the ring there rather than at the sheet's own height.
+  normal, so a kerb, a ramp or a tilted floor plate gets a ring that lies flat on it. A
+  click on an object walks to an approach spot that `PointerNavigator` puts on the floor
+  (not at the anchor's chest height), and a refused click is marked on the ground under
+  the point that was clicked, so neither mark floats in the air beside a door.
 - **The cue is heard as well as seen.** `scripts/audio/cue_audio.gd` (the `CueAudio`
   autoload) owns four synthesised buffers — bone, amber, refusal and the hover tick — and the
   role that decides the colour decides the sound: the navigator calls `_announce(role)`
@@ -415,10 +445,17 @@ mid-walk, E still working, and ground clicks never activating anything.
 digits, hover styling, layer order, and a language switch that re-renders the options.
 `tests/street_prompt_test.gd` — the street's own prompt key, and the story's door
 rewrite touching only the classroom door.
-`tests/interaction_cue_test.gd` — the two cues as objects rather than as pixels: the parts
-they claim to have, that they are animated, that a role decides the colour, that the ring
-is laid on the ground normal it was given, that a refusal collapses and ends itself, that a
-cue hides when it is finished, and that the hover ring follows the interaction radius.
+`tests/interaction_cue_test.gd` — the two cues as objects rather than as pixels: the ground
+mark is a thin ring and a dot of about 0.3 m that lands, echoes once and then holds still;
+a role decides the colour; it is laid on the ground normal it was given; a refusal contracts
+and ends itself; a dismissed cue hides. The outline marks the object's own meshes and gives
+them back their layers, hands over between objects without the old fade erasing the new
+outline, is released when a highlighted prop is freed, falls back to the diamond when there
+is nothing to trace, and a ray at an outlined mesh finds the object.
+`tests/interaction_outline_content_test.gd` — the same on shipped content: every
+interactable in the classroom, corridor, street, residential area, alley and schoolyard, and
+the companion's, resolves meshes to trace and has a pick box for each one that should have
+one; the overlay sits under every other `CanvasLayer`; nothing authored uses layer 20.
 
 `tests/interaction_audio_test.gd` — the same cues in the ears: four distinct 16-bit mono
 buffers, their peak levels, that an unknown kind plays nothing, that muting counts nothing,
@@ -641,37 +678,70 @@ evidence is `tests/capture_editor_dock.gd`, which photographs it under Xvfb in C
 editor-only surface — the plugin class, the bottom panel — is covered by the manual
 checklist in that test's section of the pull request, because no CI runner opens an editor.
 
-## 5j. The ground mark: what a click leaves behind (implemented contract)
+## 5j. The ground mark and the outline (implemented contract)
 
-The pointer draws three things in the world, and only one of them is new. `HoverCue`
-(`scripts/interaction/hover_cue.gd`) is unchanged: a dashed ring sized from the object's
-interaction radius, a wider halo, and a small shard above the prop. The *destination* cue is
-the one this round rewrote.
+This round replaced both pointer cues after the owner rejected them: the floor-click mark
+read as a scribble, and the object cue was a large ring on the floor next to the object
+rather than the object itself. The owner's reference was Disco Elysium's highlighting.
 
-**One part, one footprint.** `DestinationCue` (`scripts/interaction/destination_cue.gd`)
-is a single mesh, built by `WorldCue.destination_mark_mesh()` from four short strokes of
-unequal length (`MARK_STROKE` 0.019 m pen, `MARK_CENTRE` 0.011 m dot) placed off-centre,
-with tapered ends. It is **not** a ring: there are no concentric circles, no expanding
-ripple and no breathing. The old mark was a 0.52 m ring; this one's footprint is about
-14.6 cm across (`mark_footprint_radius()` reads it back out of the mesh's own bounds), and
-`tests/interaction_cue_test.gd` fails it if it grows past 0.26 m wide or shrinks under
-0.08 m — small enough to be a mark, large enough to see at the camera height the game
-actually plays at.
+**The ground mark: a ring and a dot.** `DestinationCue`
+(`scripts/interaction/destination_cue.gd`) has three parts, `Ring`, `Dot` and `Echo`
+(`get_parts()`), built by `WorldCue.destination_ring_mesh()`, `destination_dot_mesh()` and
+`destination_echo_mesh()`: a ring of radius `MARK_RADIUS` 0.15 m drawn with a 0.022 m pen
+(`MARK_RING_WIDTH`), a 0.024 m dot (`MARK_DOT_RADIUS`), and a 0.012 m echo ring. The footprint
+is about 0.32 m across (`mark_footprint_radius()` reads it back from the mesh), and
+`tests/interaction_cue_test.gd` fails it outside 0.12-0.2 m radius or above 0.035 m2 of ink.
+
+**It lands, echoes once, and holds.** The ring arrives at 1.9x and contracts onto its radius
+in 0.2 s (`LAND_SECONDS`, `LAND_SCALE_FROM`), the dot pops in 0.06 s later, and one echo
+leaves from where the ring landed, growing to 2.6x while it fades over 0.5 s. After that
+nothing moves until the walk ends or another click replaces it. Dismissal is a 0.14 s fade.
 
 **The three roles survive, and so do their sounds.** `show_destination()`,
 `show_target()` and `show_refused()` set `get_role()` to `destination`, `target` or
-`refused`; each role keeps the colour it had (bone / amber / rose), and `PointerNavigator`
-plays the matching `CueAudio` kind from the same `_mark_*` call that draws it, so the eye
-and the ear cannot disagree. The refusal is the same small mark shrinking and fading
-(0.72× over 0.32 s) rather than a red warning filling the screen.
+`refused`; each role keeps its colour (bone / amber / rose), and `PointerNavigator` plays the
+matching `CueAudio` kind from the same call that draws it. A refusal draws the ring only, no
+dot and no echo, contracting to 0.4x while it fades over 0.32 s, and ends itself.
 
-**It lies on the ground it was accepted on.** The click's floor hit supplies the normal;
-`WorldCue.ground_basis()` builds the basis and the mark is offset 0.02 m along it, which is
-what puts the mark on a ramp, a kerb or a tilted floor plate instead of through it.
+**It lies on the ground.** The floor hit supplies the normal; `WorldCue.ground_basis()`
+builds the basis and the mark is offset 0.02 m along it. A click on an object is marked at
+the approach spot on the floor, and a refused click on a wall at the floor under the point
+that was clicked (`PointerNavigator._ground_point_under`), never at the anchor's height.
 
-**Nothing rotates, nothing breathes.** The reveal is 0.14 s of fade-and-settle (scale from
-0.86), the dismissal is 0.12 s of fade. After that the mark is still, because a mark that
-moves while the character walks is a mark the player watches instead of the destination.
+**The outline.** See section 5f: `HoverCue` traces the meshes `Interactable.outline_paths`
+names through `OutlineOverlay`, and the same meshes give the interactable its pick boxes.
+`outline_paths` is authored per object: in `tools/build_outdoor_locations.py` as the
+`"outline"` key of each interactable for the four generated outdoor locations, and by hand in
+`classroom.tscn`, `corridor.tscn` and `companion.tscn` (the companion's `AskAlong` traces
+`../Actor`). The outline traces the object, not its support: a notice pinned to a wall traces
+the sheet, and the wall stays in `support_paths` for the line-of-sight probe only.
+
+**Exits look like ways out.** The way up to the flats from the street ("go on to the
+flats") is a flight of twelve steps with a rail to a landing and a lit doorway into a short
+passage; the courtyard's stair up ("look up the stairs") is fourteen steps with a rail to a
+landing, a door and a lamp over it; the courtyard's way back to the street is a gate (posts,
+lintel, sign) over thirteen steps cut down into the ground under the west block, between a
+retaining wall and a balustrade; the courtyard's lane end is an arch with a lit recess behind it, and the
+schoolyard's way back to the alley is a gate with posts, a lintel and a lamp. The schoolyard's
+gate pieces draw only (no collision), because `tests/playground_art_slice_test.gd` pins the
+yard's solids and its baked navigation.
+
+**What the navigation bake counts as floor: thin boxes only.** `LocationNavigation._add_shape`
+hands Recast each collision box's faces wound so that the box's *underside* is the face that
+points up; the top points down. A box therefore bakes as floor only when it is thinner than one
+climb voxel (0.25 m), so that its top and bottom fall in the same span and merge: the road,
+pavements, kerbs and slab floors. A solid box (a step, a 1.6 m landing, a passage floor on a
+plinth) is never floor. This was found by reproducing the bake outside Godot with the same
+Recast settings: the flipped winding reproduces CI's mesh bounds and its closest point at the
+head of the street stair exactly; the correct winding bakes the landing (and building roofs).
+Changing the winding would change what every room bakes (roofs, tables and walls become
+islands, and `tests/playground_art_slice_test.gd` pins the yard's polygons), so it is left as
+a proposed follow-up, not done here. Instead the generator gives every walked-on solid box a
+thin invisible slab at its top (`_tread`: the street's landing and passage, the courtyard
+stair's landing) and every flight a thin invisible slope (`_ramp`: through the front edge of
+each tread, ending level with the landing). The body stands on the boxes as before; only the
+bake sees the slabs. The flights are kept gentle (12.3 cm and 12 cm risers) so the body walks
+the slope without bumping the nosings.
 
 ## 5k. The window: size, centring and F11 (implemented contract)
 

@@ -246,7 +246,10 @@ func _check_real_prop() -> void:
 	if _interaction.get_current_target() != door:
 		_failures.append("Facing the door did not target it (got '%s')." % _name_of(_interaction.get_current_target()))
 		return
-	_interaction.set_mouse_override(_screen_position_of(sheet))
+	# At the sheet as it is drawn, not at its anchor: the anchor is a point in the air in
+	# front of the wall under the sheet, and from the camera the door frame (pickable since
+	# the outline round) stands in front of that point. A player points at the paper.
+	_interaction.set_mouse_override(_screen_position_of_drawn(sheet))
 	await _physics_frames(4)
 	var target := _interaction.get_current_target()
 	if target != sheet:
@@ -265,6 +268,21 @@ func _screen_position_of(interactable: Interactable) -> Vector2:
 		_failures.append("There is no current camera to project through.")
 		return Vector2.ZERO
 	return camera.unproject_position(interactable.global_position)
+
+
+## The middle of what the object's outline traces, on screen: where a player points.
+func _screen_position_of_drawn(interactable: Interactable) -> Vector2:
+	var meshes := interactable.get_outline_meshes()
+	if meshes.is_empty():
+		return _screen_position_of(interactable)
+	var bounds := meshes[0].global_transform * meshes[0].get_aabb()
+	for mesh in meshes:
+		bounds = bounds.merge(mesh.global_transform * mesh.get_aabb())
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		_failures.append("There is no current camera to project through.")
+		return Vector2.ZERO
+	return camera.unproject_position(bounds.get_center())
 
 
 func _count_highlighted() -> int:

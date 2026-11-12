@@ -2,23 +2,23 @@ class_name WorldCue
 extends RefCounted
 ## The visual language of the cues the mouse draws in the world.
 ##
-## Two things get drawn: the cue on the object the player would use, and the cue where a
-## click lands. They live in one place — the palette, the pen width, the dash rhythm and
-## the material rules — because two cues that disagree about thickness and colour read as
-## two different tools rather than one instrument.
+## Two things get drawn: the outline around the object the player would use, and the mark
+## where a click lands. They live in one place - the palette, the pen widths and the
+## material rules - because two cues that disagree about thickness and colour read as two
+## different tools rather than one instrument.
 ##
-## Everything here is unshaded, untextured and alpha-only, and every mesh is built from
-## code. No art asset, no shader, no import step, and nothing that has to be re-authored
-## when a scene, a prop or a camera distance changes.
+## The ground mark is unshaded, untextured and alpha-only, and every mesh is built from
+## code. The object outline is drawn in screen space by `OutlineOverlay`
+## (`scripts/interaction/outline_overlay.gd`) and takes its colour from here.
 ##
 ## The palette, in the language of `docs/ART_BIBLE.md` (restrained: no gloss, no
 ## gradients, no ornamental frames):
 ##
-## * **bone** — where you clicked. Paper-coloured and quiet; a destination is information,
+## * **bone** - where you clicked. Paper-coloured and quiet; a destination is information,
 ##   not an event.
-## * **amber** — the thing you clicked or the thing you can use. The one warm accent the
-##   world already carries, kept to a single hue so the two cues feel related.
-## * **rose** — refused. Duller than either, and never a bright red: a refusal, not an
+## * **amber** - the thing you clicked or the thing you can use. The one warm accent the
+##   world already carries, kept to a single hue so the outline and the mark feel related.
+## * **rose** - refused. Duller than either, and never a bright red: a refusal, not an
 ##   alarm. The player learns it in one click and it never competes with the scene.
 ##
 ## Motion is what separates a cue from a decal: the callers animate their own parts (see
@@ -31,30 +31,32 @@ const ROLE_TARGET := "target"
 const ROLE_REFUSED := "refused"
 const ROLES: Array[String] = [ROLE_DESTINATION, ROLE_TARGET, ROLE_REFUSED]
 
-## Ring stroke width in metres. Shared by every cue so the pen looks the same at the
-## player's feet and on a door frame four metres away.
-const RING_THICKNESS := 0.035
+## The ground mark: a thin ring with a dot in the middle, the shape a click leaves in
+## Disco Elysium and in most isometric games that are read rather than played fast. It is
+## small (`MARK_RADIUS`), its pen is thin (`MARK_RING_WIDTH`), and the dot is what keeps it
+## readable as a point when the ring is foreshortened at a low camera angle.
+const MARK_RADIUS := 0.15
+const MARK_RING_WIDTH := 0.022
+const MARK_DOT_RADIUS := 0.024
+## Segments around the ring. Forty is round at the closest camera distance and still only
+## eighty triangles.
+const MARK_SEGMENTS := 40
+## The echo is the same ring drawn once more, thinner, and sent outwards when the mark
+## lands. It is the "the floor heard you" half of the gesture and it plays once.
+const ECHO_RING_WIDTH := 0.012
 
-## The pen of the ground mark, in metres. It is *wider* than the ring stroke although the
-## mark is half the ring's size: at four metres a 3.5 cm ring stroke is about one pixel,
-## so shrinking the mark while keeping the pen would have made it disappear. What makes a
-## mark small is its footprint, not its line.
-const MARK_STROKE := 0.019
-## Clear space at the centre of the mark, so the strokes read as strokes and not as a
-## scribble.
-const MARK_CENTRE := 0.011
-## How much of each arc is left empty, as a fraction of the arc. This is what makes a ring
-## read as a mark someone drew rather than a glowing hoop.
-const RING_GAP_RATIO := 0.42
-const RING_ARCS := 8
-## Vertices per drawn arc. Six is enough that the arc looks curved at gameplay distance
-## and keeps the mesh a few hundred triangles.
-const ARC_STEPS := 6
+## The colour of the outline drawn around the object the pointer or E would use. A warm,
+## nearly white amber: it has to read on the dusk-lit brick of the street and on the pale
+## walls of the classroom alike, which a saturated hue does not.
+const OUTLINE_COLOR := Color(1.0, 0.87, 0.62, 1.0)
+## The dark rim drawn just outside the outline, so it still separates from a pale wall.
+const OUTLINE_RIM_COLOR := Color(0.1, 0.075, 0.06, 0.55)
 
-## Opacity per role. The refused cue is dimmer than the other two on purpose.
-const ALPHA_DESTINATION := 0.62
-const ALPHA_TARGET := 0.58
-const ALPHA_REFUSED := 0.42
+## Opacity per role. The refused cue is dimmer than the other two on purpose. The accepted
+## roles are nearly opaque: a two-centimetre pen at 0.6 alpha disappears into a pale floor.
+const ALPHA_DESTINATION := 0.86
+const ALPHA_TARGET := 0.86
+const ALPHA_REFUSED := 0.62
 ## Emission, kept low: the cue has to survive a dusk-lit room without glowing in it.
 const EMISSION_ENERGY := 0.75
 
@@ -112,36 +114,24 @@ static func material_for(role: String) -> StandardMaterial3D:
 	return material
 
 
-## A ring drawn as `arcs` dashes lying in the XZ plane, centred on the origin.
-##
-## Solid tori were tried first and read as machine UI: a perfect glowing hoop is the
-## single most generic way to mark a point in a 3D game. Gaps give the eye something to
-## argue with, and they also make the ring's slow rotation visible — a solid torus can
-## spin forever and nobody can tell.
-static func dashed_ring_mesh(
-	radius: float,
-	arcs: int = RING_ARCS,
-	gap_ratio: float = RING_GAP_RATIO
-) -> ArrayMesh:
+## A solid thin ring lying in the XZ plane, centred on the origin. `width` is the pen,
+## measured across the ring.
+static func ring_mesh(radius: float, width: float, segments: int = MARK_SEGMENTS) -> ArrayMesh:
 	var safe_radius := maxf(radius, 0.02)
-	var inner := maxf(safe_radius - RING_THICKNESS * 0.5, 0.005)
-	var outer := safe_radius + RING_THICKNESS * 0.5
-	var count := maxi(arcs, 1)
-	var span := TAU / float(count)
-	var drawn := span * (1.0 - clampf(gap_ratio, 0.0, 0.9))
+	var inner := maxf(safe_radius - width * 0.5, 0.002)
+	var outer := safe_radius + width * 0.5
+	var count := maxi(segments, 8)
 	var tool := SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tool.set_normal(Vector3.UP)
-	for arc in count:
-		var start := span * float(arc)
-		for step in ARC_STEPS:
-			var from_angle := start + drawn * float(step) / float(ARC_STEPS)
-			var to_angle := start + drawn * float(step + 1) / float(ARC_STEPS)
-			_add_annulus_quad(tool, inner, outer, from_angle, to_angle)
+	for index in count:
+		var from_angle := TAU * float(index) / float(count)
+		var to_angle := TAU * float(index + 1) / float(count)
+		_add_annulus_quad(tool, inner, outer, from_angle, to_angle)
 	return tool.commit()
 
 
-## A flat disc in the XZ plane: the quiet centre point of a destination ring.
+## A flat disc in the XZ plane: the centre point of the ground mark.
 static func disc_mesh(radius: float, segments: int = 20) -> ArrayMesh:
 	var safe_radius := maxf(radius, 0.01)
 	var count := maxi(segments, 3)
@@ -157,9 +147,9 @@ static func disc_mesh(radius: float, segments: int = 20) -> ArrayMesh:
 	return tool.commit()
 
 
-## A small octahedron: the mark that floats over the object you can use. It reads as a
-## diamond from every angle the camera can put it at, and it tumbles, which is the whole
-## point — a static dot over a prop looks like a bug in the prop.
+## A small octahedron. Only drawn by `HoverCue` for an interactable that has no visible mesh
+## to outline (content still being built): it reads as a diamond from every camera angle,
+## and a tumbling diamond over an empty spot still says "something is here".
 static func shard_mesh(size: float) -> ArrayMesh:
 	var reach := maxf(size, 0.005)
 	var top := Vector3(0.0, reach, 0.0)
@@ -180,41 +170,37 @@ static func shard_mesh(size: float) -> ArrayMesh:
 	return tool.commit()
 
 
-## The mark drawn where a click lands.
+## The ring of the ground mark, on its own, so `DestinationCue` can animate it apart from
+## the dot.
+static func destination_ring_mesh() -> ArrayMesh:
+	return ring_mesh(MARK_RADIUS, MARK_RING_WIDTH)
+
+
+## The dot at the centre of the ground mark.
+static func destination_dot_mesh() -> ArrayMesh:
+	return disc_mesh(MARK_DOT_RADIUS, 16)
+
+
+## The thinner ring the mark sends outwards once, as it lands.
+static func destination_echo_mesh() -> ArrayMesh:
+	return ring_mesh(MARK_RADIUS, ECHO_RING_WIDTH)
+
+
+## The whole mark drawn where a click lands, ring and dot in one mesh.
 ##
-## A ring — even a dashed, breathing one — is the most generic way to mark a point in a 3D
-## game, and it is also the *largest*: a ring has to be at least as wide as the thing it
-## encloses, so it covers the floor the player is reading. This is the opposite shape: four
-## short, unequal strokes around a small empty centre, like a mark scratched into the floor
-## with a piece of chalk. Nothing is closed, nothing repeats, and the differing lengths are
-## what stop it reading as a reticle.
-##
-## The footprint is about 13 cm across, roughly a quarter of the ring it replaces, which at
-## gameplay distance is a mark rather than an area. Nothing here animates: the caller fades
-## it in and out (see `destination_cue.gd`), and between those two fades it is still.
+## The previous mark was four chalk strokes. It was small, but it read as a scribble rather
+## than as a place, and the owner asked for the language of Disco Elysium instead: a thin
+## ring that lands on the floor with a dot at its centre. The ring is about 30 cm across,
+## its pen is two centimetres, and nothing in it is filled except the dot - so it is a
+## mark on the floor, not a decal covering it. `DestinationCue` draws the two parts
+## separately to animate them; this combined mesh is what the tests and the capture run
+## measure.
 static func destination_mark_mesh() -> ArrayMesh:
 	var tool := SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tool.set_normal(Vector3.UP)
-	# Angle in degrees, length in metres. The numbers are deliberately unequal and the
-	# angles are not spaced evenly: four equal strokes at 90° would be a crosshair.
-	var strokes: Array = [
-		[8.0, 0.052],
-		[97.0, 0.062],
-		[186.0, 0.045],
-		[281.0, 0.057],
-	]
-	for stroke: Array in strokes:
-		var angle := deg_to_rad(float(stroke[0]))
-		var reach := float(stroke[1])
-		var direction := Vector2(cos(angle), sin(angle))
-		_add_stroke(
-			tool,
-			direction * MARK_CENTRE,
-			direction * (MARK_CENTRE + reach),
-			MARK_STROKE,
-			0.35
-		)
+	tool.append_from(destination_ring_mesh(), 0, Transform3D())
+	tool.append_from(destination_dot_mesh(), 0, Transform3D())
 	return tool.commit()
 
 
