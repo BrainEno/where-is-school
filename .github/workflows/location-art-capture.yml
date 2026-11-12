@@ -20,6 +20,7 @@ on:
   pull_request:
     paths:
       - "tests/capture_locations.gd"
+      - "tests/location_art_test.gd"
       - ".github/workflows/location-art-capture.yml"
       - "scenes/locations/corridor/**"
       - "scenes/locations/street/**"
