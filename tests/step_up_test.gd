@@ -27,7 +27,8 @@ extends SceneTree
 ##   3. a route exists from the road spawn to that pavement, and walking it ends on the
 ##      pavement rather than against the kerb;
 ##   4. visible stair blocks and thin bake-only treads are in the navigation bake, the
-##      player rides continuous ramps, and only visible stair blocks occlude interaction rays;
+##      player rides continuous ramps and thin landing tops, and only visible stair blocks
+##      occlude interaction rays;
 ##   5. the body still steps only what it says it steps: a 0.28 m box is a step, a 0.75 m one
 ##      is a wall, and a step taller than `max_step_height` is not taken.
 
@@ -38,11 +39,13 @@ const RESIDENTIAL := "res://scenes/locations/residential/residential.tscn"
 const STREET_SPAWN := &"FromCorridor"
 const NAVIGATION_ONLY_LAYER := 1 << 3
 const BAKE_ONLY_LAYER := 1 << 4
+const PLAYER_ONLY_LAYER := 1 << 2
 const OUTDOOR_STAIR_CONTRACTS: Array[Dictionary] = [
 	{
 		"scene": STREET,
 		"step_sets": [{"prefix": "Step", "count": 12}],
 		"ramps": ["StairRamp"],
+		"landing_surfaces": [{"name": "StairLandingSurface", "top": 1.6}],
 		"treads": ["StairLandingTread", "PassageTread"],
 	},
 	{
@@ -52,6 +55,7 @@ const OUTDOOR_STAIR_CONTRACTS: Array[Dictionary] = [
 			{"prefix": "StreetStep", "count": 13},
 		],
 		"ramps": ["StairRamp", "StreetStairRamp"],
+		"landing_surfaces": [{"name": "StairLandingSurface", "top": 1.8}],
 		"treads": ["StairLandingTread"],
 	},
 ]
@@ -233,8 +237,8 @@ func _check_bake_numbers() -> void:
 
 
 ## Visible stair blocks remain rendered and parsed by Recast; thin landing treads exist only
-## for the bake. Only the continuous walking ramps are on a layer the CharacterBody3D
-## collides with. Check packed scenes, not generator data, to catch stale generated files.
+## for the bake. The player collides with the continuous ramps and with thin landing tops,
+## never with the tall decorative plinths. Check packed scenes to catch stale generated files.
 func _check_outdoor_stair_collision_contract() -> void:
 	if (_player.collision_mask & NAVIGATION_ONLY_LAYER) != 0:
 		_failures.append("The player collision mask includes the navigation-only stair layer.")
@@ -260,6 +264,9 @@ func _check_outdoor_stair_collision_contract() -> void:
 		if location == null:
 			_failures.append("The stair scene '%s' is not a LocationRoot." % scene_path)
 			continue
+		var landing_mesh := location.get_node_or_null("StairLanding") as MeshInstance3D
+		if landing_mesh == null:
+			_failures.append("The stair scene '%s' has no non-colliding landing plinth mesh." % scene_path)
 		var nav := location.get_node_or_null("Navigation") as LocationNavigation
 		if nav == null:
 			_failures.append("The stair scene '%s' has no LocationNavigation." % scene_path)
@@ -305,6 +312,40 @@ func _check_outdoor_stair_collision_contract() -> void:
 						"The navigation bake cannot see ramp '%s' in %s."
 						% [ramp_name, scene_path]
 					)
+		for surface_contract: Dictionary in contract["landing_surfaces"]:
+			var surface_name := String(surface_contract["name"])
+			var surface := location.get_node_or_null(NodePath(surface_name)) as StaticBody3D
+			if surface == null:
+				_failures.append("%s is missing player landing surface '%s'." % [scene_path, surface_name])
+				continue
+			if (surface.collision_layer & _player.collision_mask) == 0:
+				_failures.append("The player cannot stand on '%s' in %s." % [surface_name, scene_path])
+			if surface.collision_layer != PLAYER_ONLY_LAYER:
+				_failures.append(
+					"Landing surface '%s' in %s is not isolated on the player-only layer."
+					% [surface_name, scene_path]
+				)
+			if nav != null and (surface.collision_layer & nav.geometry_collision_mask) != 0:
+				_failures.append(
+					"Landing surface '%s' duplicates navigation geometry in %s."
+					% [surface_name, scene_path]
+				)
+			if interaction != null and (surface.collision_layer & interaction.occluder_mask) != 0:
+				_failures.append(
+					"Landing surface '%s' occludes interaction sight in %s."
+					% [surface_name, scene_path]
+				)
+			var shape_node := surface.get_node_or_null("CollisionShape3D") as CollisionShape3D
+			var shape := shape_node.shape as BoxShape3D if shape_node != null else null
+			if shape == null:
+				_failures.append("Landing surface '%s' in %s has no box collider." % [surface_name, scene_path])
+			elif shape.size.y > 0.051 or absf(
+				surface.global_position.y + shape.size.y * 0.5 - float(surface_contract["top"])
+			) > 0.001:
+				_failures.append(
+					"Landing surface '%s' in %s is not a thin collider at the landing top."
+					% [surface_name, scene_path]
+				)
 		for tread_name: String in contract["treads"]:
 			var tread := location.get_node_or_null(NodePath(tread_name)) as StaticBody3D
 			if tread == null:
@@ -445,11 +486,24 @@ func _check_walk_up_street_stair() -> void:
 		return
 	var previous_y := _player.global_position.y
 	var largest_vertical_frame := 0.0
+	var largest_vertical_from := _player.global_position
+	var largest_vertical_to := _player.global_position
+	var largest_vertical_frame_index := 0
+	var largest_vertical_floor := false
+	var largest_vertical_velocity := Vector3.ZERO
 	var frames := 0
 	while _player.is_path_active() and frames < STAIR_WALK_FRAME_LIMIT:
+		var frame_start := _player.global_position
 		await physics_frame
 		var current_y := _player.global_position.y
-		largest_vertical_frame = maxf(largest_vertical_frame, absf(current_y - previous_y))
+		var frame_change := absf(current_y - previous_y)
+		if frame_change > largest_vertical_frame:
+			largest_vertical_frame = frame_change
+			largest_vertical_from = frame_start
+			largest_vertical_to = _player.global_position
+			largest_vertical_frame_index = frames + 1
+			largest_vertical_floor = _player.is_on_floor()
+			largest_vertical_velocity = _player.velocity
 		previous_y = current_y
 		frames += 1
 	Engine.time_scale = saved_time_scale
@@ -467,8 +521,13 @@ func _check_walk_up_street_stair() -> void:
 		)
 	if largest_vertical_frame > 0.1:
 		_failures.append(
-			"The stair walk changed height by %.3f m in one physics frame; the ramp ride is not smooth."
-			% largest_vertical_frame
+			"The stair walk changed height by %.3f m in one physics frame (%d: %s -> %s, "
+			% [
+				largest_vertical_frame, largest_vertical_frame_index,
+				str(largest_vertical_from), str(largest_vertical_to),
+			]
+			+ "floor=%s, velocity=%s); the ramp ride is not smooth."
+			% [str(largest_vertical_floor), str(largest_vertical_velocity)]
 		)
 
 

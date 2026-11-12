@@ -21,6 +21,9 @@ NAVIGATION_ONLY_LAYER = 1 << 3
 # Layer 5 is for invisible bake-only treads: they complete navigation over tall landings
 # without colliding with the player or blocking interaction line-of-sight.
 BAKE_ONLY_LAYER = 1 << 4
+# Layer 3 is in the player's collision mask but not the navigation or interaction-occluder
+# masks. Thin top-only landing colliders use it so their visible plinths have no blocking riser.
+PLAYER_ONLY_LAYER = 1 << 2
 
 MATS = {
     "asphalt": "res://assets/materials/outdoor_asphalt.tres",
@@ -322,7 +325,11 @@ def build_street():
                           None, "z", -1, flight["start"], 0.0)
     _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (8.5, 12.5), None, "z",
           -1, flight["start"], 0.0)
-    s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete")
+    # Keep the solid plinth visible, but do not make its full-height front face a wall
+    # to the player. A 5 cm top collider lets the ramp meet the landing without the
+    # step-up helper popping the capsule up the remaining ~12 cm at the last frame.
+    s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete", body=False)
+    _landing_surface(s, "StairLandingSurface", (8.5, 12.5), (-37.0, -34.6), 1.6)
     _tread(s, "StairLandingTread", (8.5, 12.5), (-37.0, -34.6), 1.6)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
@@ -378,7 +385,7 @@ def build_street():
         {"name": "ToResidential", "pos": (10.5, 2.5, -36.6), "id": "street_to_residential",
          "prompt_key": "prompt.stairs_up", "radius": 1.5,
          "support": tuple(f"../../{name}" for name in street_steps) + (
-             "../../StairRamp", "../../StairLanding",
+             "../../StairRamp", "../../StairLanding", "../../StairLandingSurface",
          ),
          "outline": tuple(street_steps) + ("StairLanding", "DoorwayLintel", "DoorwayJambWest",
                                            "DoorwayJambEast", "PassageLight"),
@@ -437,7 +444,8 @@ def build_residential():
                        None, "z", -1, flight["start"], 0.0)
     _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (-11.0, -8.8), None,
           "z", -1, flight["start"], 0.0)
-    s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete")
+    s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete", body=False)
+    _landing_surface(s, "StairLandingSurface", (-11.0, -8.8), (-14.75, -12.35), 1.8)
     _tread(s, "StairLandingTread", (-11.0, -8.8), (-14.75, -12.35), 1.8)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
@@ -958,6 +966,19 @@ def _tread(s, name, x_range, z_range, top):
            round((z_range[0] + z_range[1]) / 2.0, 4))
     size = (round(x_range[1] - x_range[0], 3), thickness, round(z_range[1] - z_range[0], 3))
     s.ramp(name, pos, size, (0, 0, 0), BAKE_ONLY_LAYER)
+
+
+def _landing_surface(s, name, x_range, z_range, top):
+    """A thin physical top at a landing, without the tall plinth's blocking front face.
+
+    The visual plinth remains a mesh. This 5 cm collider is in the player's layer only:
+    navigation uses `_tread`, and interaction rays do not see the support surface.
+    """
+    thickness = 0.05
+    pos = (round((x_range[0] + x_range[1]) / 2.0, 4), round(top - thickness / 2.0, 4),
+           round((z_range[0] + z_range[1]) / 2.0, 4))
+    size = (round(x_range[1] - x_range[0], 3), thickness, round(z_range[1] - z_range[0], 3))
+    s.ramp(name, pos, size, (0, 0, 0), PLAYER_ONLY_LAYER)
 
 
 def _ramp(s, name, steps, rise, run, x_range, z_range, axis, direction, start, base):
