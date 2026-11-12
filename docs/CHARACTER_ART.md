@@ -107,7 +107,10 @@ colour families as the models and portraits, no part recoloured into another ide
   where the light hits square on; across the band N·L averages about 0.75. The first capture
   used a flat 1.0, and the warm key light of the classroom burned the protagonist's pale
   face to cream, so the eyes and the bruise under them stopped reading. The protagonist's
-  skin also moves its `light_edge` to 0.55, so most of his face sits in the half-tone.
+  skin also moves its `light_edge` to 0.55, so most of his face sits in the half-tone. That
+  half-tone is darker on him (0.5 against 0.62), and his skin's pigment blocks are coarser
+  (scale 15, value 0.14), so the cheekbone, nose and brow ridge keep their planes. With the
+  defaults, the second capture showed one flat pale value from brow to chin.
 - **A painted shadow colour.** The shadow side keeps `shadow_fill` of the light, tinted by
   `shade_tint`: cool violet-grey on the protagonist, olive on Q. It never goes dead black
   under one lamp, and it gives each character a colour of his own in shadow.
@@ -145,7 +148,7 @@ a mid-green sweater on a ruddy face) and in shadow colour.
 
 | Part | Protagonist | Q |
 |---|---|---|
-| Skin | #B4A58C (body #A99A83), pale and sallow (pigments #9FA28A / #C0A890), shadow #9AA6C6 | #CE9A70, ruddy, shadow olive #B5B88E |
+| Skin | #B4A58C (body #A99A83), pale and sallow (pigments #98A088 / #C2A68E), shadow #9AA6C6 | #CE9A70, ruddy, shadow olive #B5B88E |
 | Face patches | under-eyes #665570 (bruised), cheek hollows #98997F | cheeks #C9634C (flushed) |
 | Hair | #221E21, near-black | #18151B, near-black |
 | Top | slate jacket #37414A (towards the portrait's gakuran, kept apart from the dark board by the ink and the lighter shadow fill) | moss sweater #516F4C (the model's own green, not the portrait's jacket: the model is the identity in play) |

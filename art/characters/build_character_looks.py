@@ -59,15 +59,20 @@ PART_DEFAULTS = {
 # warm charcoal trousers so jacket and legs separate, near-black hair.
 PROTAGONIST_SKIN = {
     "albedo": "#B4A58C",
-    "pigment_a": "#9FA28A",
-    "pigment_b": "#C0A890",
-    "pigment_mix": 0.38,
-    "pigment_value": 0.09,
-    "pigment_scale": 24.0,
+    "pigment_a": "#98A088",
+    "pigment_b": "#C2A68E",
+    # Coarse enough to be seen as blocks at the gameplay camera's distance; at 24 the face
+    # read as smooth.
+    "pigment_mix": 0.46,
+    "pigment_value": 0.14,
+    "pigment_scale": 15.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
     "shade_tint": "#9AA6C6",
     "light_tint": "#F4EADC",
-    "shadow_fill": 0.36,
+    "shadow_fill": 0.32,
+    # A darker half-tone so the cheekbone, nose and brow ridge keep their planes.
+    "half_tone": 0.5,
+    "edge_break": 0.24,
     # Less of the face in the full light: the tired face is mostly half-tone.
     "light_edge": 0.55,
     "light_strength": 0.7,
