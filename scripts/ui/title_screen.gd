@@ -234,18 +234,31 @@ func _start_new_game() -> void:
 		if error != OK:
 			_show_start_error("Could not open the game scene (error %d)." % error)
 		return
-	# Keep this menu alive until Session's report is checked. Passing Session itself as
-	# the transaction target prevents its title-scene fallback from freeing this screen;
-	# only a successful report is allowed to hand off to the opening.
-	var report: Dictionary = await session.call("start_new_game", session, false)
+	# Session owns the whole new game, including the hand-off to the opening (step 8 of
+	# its transaction in game_session.gd): the old save stays staged until the opening is
+	# really on screen, and only then is it discarded and are writes released. Entering
+	# the opening from here, after Session had already committed, skipped that step and
+	# left a failed hand-off with nothing to roll back to.
+	#
+	# No world is passed: on the title screen Session finds none (the title is not a
+	# world), so nothing here is freed by the transaction, and a failure stays on this
+	# screen (Session's rollback keeps the title as the current scene). The success path
+	# frees this screen with the scene change, so the call is not awaited: the outcome
+	# arrives as `new_game_failed`, the same way the pause menu and the end card hear it.
+	if not session.is_connected("new_game_failed", _on_new_game_failed):
+		session.connect("new_game_failed", _on_new_game_failed, CONNECT_ONE_SHOT)
+	var immediate: Variant = session.call("start_new_game")
+	if immediate is Dictionary and String((immediate as Dictionary).get("reason", "")) == "busy":
+		# Refused before it started, so no signal follows.
+		if session.is_connected("new_game_failed", _on_new_game_failed):
+			session.disconnect("new_game_failed", _on_new_game_failed)
+		_show_start_error(String((immediate as Dictionary).get("detail", "")))
+
+
+func _on_new_game_failed(report: Dictionary) -> void:
 	if not is_inside_tree():
 		return
-	if not bool(report.get("ok", false)):
-		_show_start_error(String(report.get("detail", report.get("reason", "Unknown error."))))
-		return
-	var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
-	if error != OK:
-		_show_start_error("Could not open the game scene (error %d)." % error)
+	_show_start_error(String(report.get("detail", report.get("reason", "Unknown error."))))
 
 
 func _show_start_error(detail: String) -> void:
