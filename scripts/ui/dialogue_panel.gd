@@ -930,9 +930,11 @@ func _portrait_profile_for(line: Dictionary) -> CharacterProfile:
 
 ## Where the portrait goes and where that leaves the band, or {} for no portrait.
 ##
-## The band keeps its own width whenever the screen has room for both; otherwise it
-## gives up width down to `band_min_width`, and past that the portrait is scaled down
-## instead. The type is never touched.
+## The band keeps its own width: when the screen has no room for both, the portrait is
+## scaled down instead, and below `portrait_min_width` it is left out. The type is never
+## touched. (The band used to give up width down to `band_min_width` first; with the
+## larger dialogue type that turned a paragraph that fits into one that scrolls, at the
+## largest text size in a 1280x720 window, so the text now wins outright.)
 func _plan_portrait(viewport_size: Vector2, left: float, width: float) -> Dictionary:
 	if _portrait_texture == null or _portrait_profile == null:
 		return {}
@@ -942,9 +944,9 @@ func _plan_portrait(viewport_size: Vector2, left: float, width: float) -> Dictio
 	var aspect := texture_size.x / texture_size.y
 	var height := viewport_size.y * _portrait_profile.get_portrait_height_ratio()
 	var portrait_width := height * aspect
-	# The band may narrow to `band_min_width` (or stay narrower if it already is) and
-	# keeps its outer margin on the far side: whatever is left is the portrait's.
-	var keep_width := minf(width, band_min_width)
+	# The band keeps its width and its outer margin on the far side: whatever is left is
+	# the portrait's.
+	var keep_width := width
 	var max_width := minf(
 		viewport_size.x * portrait_max_width_ratio,
 		viewport_size.x - left - keep_width + portrait_overlap
