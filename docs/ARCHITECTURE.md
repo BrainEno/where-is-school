@@ -379,19 +379,67 @@ together:
   shown the way Disco Elysium shows it: its own contour, traced. `HoverCue` asks the
   interactable for `get_outline_meshes()` (the nodes named in `outline_paths`, plus any mesh
   parented under the interactable) and hands them to `OutlineOverlay`, a `CanvasLayer` in
-  `scenes/main/main.tscn` (layer 0, under every UI layer). The overlay adds visual layer 20
-  (`MASK_LAYER`) to those meshes, renders only that layer into a `SubViewport` from a camera
-  that copies the player's camera every frame, and runs
-  `assets/shaders/interaction/highlight_outline.gdshader` over the silhouette: a 2 px warm
-  line just outside it (scaled with the window height), a dark rim outside that, and a faint
-  wash over the object. The mask viewport renders only while something is outlined. One
-  object is outlined at a time; a new owner replaces the old one at once, and a late fade
-  from the old owner is ignored, so a hand-over never dims the new outline. Releasing gives
-  every mesh back exactly the layers it had. An interactable with no mesh to trace (an exit
-  that is only an opening) falls back to a small amber diamond above its anchor. An inverted
-  hull was rejected because it tears open at box corners; the `BaseMaterial3D` stencil
-  outline was rejected because it needs a material change on every surface and does not
-  exist in the Compatibility renderer the capture run uses.
+  `scenes/main/main.tscn` (layer 0, under every UI layer). The overlay renders a silhouette
+  mask into a `SubViewport` from a camera that copies the player's camera every frame, and
+  runs `assets/shaders/interaction/highlight_outline.gdshader` over it: a 2 px warm line just
+  outside the silhouette (scaled with the window height), a dark rim outside that, and a
+  faint wash over the object. The mask viewport renders only while something is outlined.
+  One object is outlined at a time; a new owner replaces the old one at once, and a late
+  fade from the old owner is ignored, so a hand-over never dims the new outline. An
+  interactable with no mesh to trace (an exit that is only an opening) falls back to a small
+  amber diamond above its anchor. An inverted hull was rejected because it tears open at box
+  corners; the `BaseMaterial3D` stencil outline because it needs a material change on every
+  surface.
+- **The outline is depth-aware: it traces what the player can see of the object.** An
+  object behind a wall has no outline, and one half behind a post is outlined only along its
+  visible part (and along the post's edge where the post cuts it). The mask is depth-tested,
+  in three steps inside the one mask render: (1) the mask camera draws the whole scene
+  (the player's camera's layers plus `MASK_LAYER`), unshaded and with its far plane just past
+  the farthest highlighted mesh, so its depth buffer holds everything in front of the
+  object; (2) a full-screen quad on `MASK_LAYER` paints the colour black without testing or
+  writing depth; (3) each highlighted mesh gets a twin - an internal child drawing the same
+  mesh (same skeleton and skin) on `MASK_LAYER` only, with a key material - which draws
+  white in the transparent pass with the ordinary depth test, so it lands only where the
+  mesh is the nearest surface. The mask's red channel is the visible
+  silhouette, and the ink shader reads that channel. Both mask shaders are built in
+  `outline_overlay.gd` and collapse themselves for any camera without `MASK_LAYER` in
+  `CAMERA_VISIBLE_LAYERS`; the overlay clears that bit from the player's camera, so the
+  frame the player sees is unchanged. The mesh's own materials and overlay (the classroom
+  desks' shared ink overlay) are never touched; releasing frees the twins and gives every
+  mesh back exactly the layers it had.
+  - *Why a second scene pass rather than the frame's depth.* The outline is composited in
+    2D over the tonemapped frame so its colours are exact; a canvas shader cannot read the 3D
+    depth buffer, and a 3D full-screen quad that could (`hint_depth_texture`) would be
+    tonemapped and glowed with the room. The mask pass costs a second, unlit, shadowless draw
+    of what lies between the camera and the object, only while an outline is shown.
+  - *Compatibility renderer.* Everything used (overlay materials, `CAMERA_VISIBLE_LAYERS`,
+    `POSITION`, render priority, depth test in the transparent pass) exists in Godot's
+    Compatibility renderer, and `tests/interaction_outline_occlusion_test.gd` proves the
+    behaviour there on rendered pixels: the playthrough-capture workflow runs it under Xvfb
+    with `--rendering-driver opengl3`, checks an open, a fully hidden and a half-hidden box
+    (with a negative control that shows the outline through the wall when the mask is cut
+    back to the outline layer) plus switching, release during a fade and a moving camera,
+    and stores the frames under `outline-occlusion/` in the playthrough evidence artifact.
+    The playthrough checks the real classroom too, at the moment the player hovers the
+    timetable sheet: with the outline as shipped, without any outline, and with the mask cut
+    back to the outline layer (the negative control, `03e_outline_without_depth.png`). It
+    fails if a target whose sampled points are all behind opaque geometry changes a single
+    pixel, or if one in plain view loses more than half its line.
+  - *A visible consequence.* From the classroom's fixed camera the timetable sheet hangs on
+    the inside of the south wall, which the camera sees from outside: the sheet is hidden.
+    The pointer still reaches it (its pick box is not behind anything the pick ray tests),
+    so hovering that spot of wall shows the prompt and, now, no outline - before this the
+    outline was drawn through the wall. Whether such targets should stay usable from there
+    is a level and camera question, not an outline one.
+  - *Known limits.* Only surfaces that write depth hide the outline. A wall the occlusion
+    fader has turned see-through (`transparency` 0.82, drawn in the transparent pass) does
+    not, which matches what the player sees through it; nor does other alpha-blended
+    geometry. The key is pulled 2 mm + 1 mm per metre towards the camera so it never loses
+    the depth test to its own surface; something closer than that in front of the object
+    does not hide it. The environment's inverted-hull ink lines (`environment_outline.gdshader`)
+    do not write depth, so they never hide an outline. A twin copies the mesh, skeleton,
+    skin, LOD bias and visibility range, not blend-shape weights (no outlined mesh uses
+    them).
 - **The pointer finds the object where the outline is.** An interactable's own shape is a
   sphere around its anchor, and the anchor of a door or a notice is a point in front of it.
   As a pointer target that sphere was off to one side of the thing on screen: the door's
