@@ -581,7 +581,8 @@ func _check_new_game_from_title() -> void:
 	await _accept_on(title.get_confirm().get_confirm_button())
 	var world := await _wait_for_world(reports)
 	session.disconnect("new_game_started", on_started)
-	await _expect_fresh_boot(world, reports)
+	# The title screen checks the session transaction, then owns the scene hand-off itself.
+	await _expect_fresh_boot(world, reports, false)
 	await _free_current_scene()
 
 
@@ -975,7 +976,9 @@ func _save_strays() -> PackedStringArray:
 
 
 ## The proof that nothing came back: the report, the file, and the booted world.
-func _expect_fresh_boot(world: Node, reports: Array) -> void:
+func _expect_fresh_boot(
+	world: Node, reports: Array, session_enters_world: bool = true
+) -> void:
 	if not reports.is_empty():
 		var report: Dictionary = reports[0]
 		_expect(bool(report.get("ok", false)), "%s: the report is not ok: %s" % [_case_label, str(report)])
@@ -985,9 +988,10 @@ func _expect_fresh_boot(world: Node, reports: Array) -> void:
 		expected += "save_staged," if bool(report.get("had_save", false)) else "no_save,"
 		if bool(report.get("had_world", false)):
 			expected += "world_freed,"
-		expected += (
-			"state_cleared,verified,scene_entered,staged_discarded,writes_released,committed"
-		)
+		expected += "state_cleared,verified,"
+		if session_enters_world:
+			expected += "scene_entered,"
+		expected += "staged_discarded,writes_released,committed"
 		var steps := ",".join(report.get("steps", PackedStringArray()))
 		_expect(
 			steps == expected,
