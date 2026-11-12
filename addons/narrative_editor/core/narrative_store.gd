@@ -11,10 +11,13 @@ extends RefCounted
 ##    anything else — node ids, speakers, branches, conditions, effects, checks, `once`
 ##    flags and the ability numbers are read out of the parsed file and never written. A
 ##    tool that cannot express an edit cannot make one by accident.
-## 2. **A save is all or nothing.** Both languages are validated (JSON, structure, field
-##    rules, then the runtime's own loader) before either file is staged, and the writer
-##    rolls back if the second file refuses. A save that reports failure has written
-##    nothing.
+## 2. **A save is a bilingual transaction.** Both languages are validated (JSON, structure,
+##    field rules, then the runtime's own loader) before either target is staged. The writer
+##    checks the original snapshots before staging and before each replacement, then isolates
+##    cleanup candidates in uniquely reserved sibling directories and inspects the moved bytes.
+##    On conflict it keeps the available targets, backups and isolation copies for recovery.
+##    保存失败时编辑器中的未保存修改仍保留；普通文件检查、重命名和删除并非原子
+##    compare-and-swap，仍有明确报告的最后检查至文件操作竞争窗口。
 ## 3. **A save is minimal.** Edits are applied to the spans of the strings that changed,
 ##    so the file keeps its formatting, its field order and every field the tool does not
 ##    know about, and the diff is the line the author edited.
@@ -153,6 +156,8 @@ func _recover_incomplete_save() -> void:
 		targets.append(_file_for(locale))
 	for recovered: String in writer.recover_missing(targets):
 		warnings.append("上次保存没有完成，已经把备份还原成 %s。" % recovered)
+	for message: String in writer.warnings:
+		warnings.append(message)
 	for leftover: String in writer.leftovers(targets):
 		warnings.append("上次保存留下了 %s；它不属于内容，确认后可以删除。" % leftover)
 
@@ -365,27 +370,51 @@ func validate() -> bool:
 	var validation_errors: Array = result["errors"]
 	for message: Variant in validation_errors:
 		errors.append(String(message))
+	var validation_warnings: Array = result.get("warnings", [])
+	for message: Variant in validation_warnings:
+		var warning := String(message)
+		if not warnings.has(warning):
+			warnings.append(warning)
 	_candidate = result["candidate"]
 	_parsed_candidates = result["parsed_candidates"]
 	return errors.is_empty()
 
 
 func save() -> bool:
-	if not validate():
+	errors.clear()
+	if not _loaded:
+		errors.append("还没有打开任何内容。")
 		return false
 	if not is_dirty():
 		return true
+
 	var targets: Array[String] = []
 	var texts: Array[String] = []
 	var originals: Array[String] = []
 	for locale: String in locales:
 		var doc: JsonText = _docs[locale]
 		targets.append(doc.path)
-		texts.append(String(_candidate[locale]))
 		originals.append(String(_saved_text.get(locale, "")))
-	var failure := writer.save_pair(targets, texts, originals)
+	# Check before validate(): dialogue/ability validation writes its own user:// temporary
+	# files. save_pair checks again after validation and immediately before each replacement.
+	var failure := writer.check_pair(targets, originals)
 	if not failure.is_empty():
-		errors.append("保存失败，两个语言文件都保持原样：%s" % failure)
+		var conflict_guidance := "编辑器中的未保存修改仍保留；请先记录或比对，"
+		conflict_guidance += "再决定是否重新加载（重新加载会放弃这些修改）或手动处理。"
+		errors.append("保存失败：%s\n%s" % [failure, conflict_guidance])
+		return false
+	if not validate():
+		return false
+
+	for locale: String in locales:
+		texts.append(String(_candidate[locale]))
+	failure = writer.save_pair(targets, texts, originals)
+	for message: String in writer.warnings:
+		warnings.append(message)
+	if not failure.is_empty():
+		errors.append(
+			"保存失败：%s\n编辑器中的未保存修改仍保留。" % failure
+		)
 		return false
 	for index in locales.size():
 		var locale := locales[index]

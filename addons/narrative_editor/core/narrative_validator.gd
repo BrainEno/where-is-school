@@ -21,6 +21,7 @@ var chapter: String = ""
 var locales: Array[String] = []
 var reference_locale: String = "en"
 var errors: Array[String] = []
+var warnings: Array[String] = []
 var paths: NarrativePaths = null
 var writer: FileWriter = null
 
@@ -53,6 +54,7 @@ func validate(
 	_dialogue_text_leaves = dialogue_text_leaves
 	_ability_text_leaves = ability_text_leaves
 	errors.clear()
+	warnings.clear()
 	_candidate.clear()
 	_parsed_candidates.clear()
 	for locale: String in locales:
@@ -78,9 +80,16 @@ func validate(
 func _result() -> Dictionary:
 	return {
 		"errors": errors.duplicate(),
+		"warnings": warnings.duplicate(),
 		"candidate": _candidate,
 		"parsed_candidates": _parsed_candidates,
 	}
+
+
+func _capture_writer_warnings() -> void:
+	for message: String in writer.warnings:
+		if not warnings.has(message):
+			warnings.append(message)
 
 
 # --- validation -------------------------------------------------------------
@@ -232,6 +241,7 @@ func _check_with_dialogue_graph() -> void:
 		var temp := "%s/%s-%s.json" % [VALIDATION_DIR, locale, chapter]
 		var doc: JsonText = _docs[locale]
 		var failure := writer.write_atomic(temp, String(_candidate[locale]))
+		_capture_writer_warnings()
 		if not failure.is_empty():
 			errors.append("无法写校验用的临时文件：%s" % failure)
 			continue
@@ -250,6 +260,7 @@ func _check_with_inner_abilities() -> void:
 	var structure_failure := writer.write_atomic(
 		"%s/abilities.json" % folder, _read_file_text(structure)
 	)
+	_capture_writer_warnings()
 	if not structure_failure.is_empty():
 		errors.append("无法写校验用的临时文件：%s" % structure_failure)
 		return
@@ -258,6 +269,7 @@ func _check_with_inner_abilities() -> void:
 			continue
 		var temp := "%s/%s.json" % [folder, locale]
 		var failure := writer.write_atomic(temp, String(_candidate[locale]))
+		_capture_writer_warnings()
 		if not failure.is_empty():
 			errors.append("无法写校验用的临时文件：%s" % failure)
 			return
