@@ -23,6 +23,9 @@
 
 ## 本次运行记录
 
-- Godot 可执行文件未安装在当前 Arena 工作区，且 GitHub release 文件下载主机不在本环境的出站许可列表内。因此本地没有伪报 Godot 4.7.2 运行结果，也没有伪造分辨率截图。
-- 已用 `gdtoolkit 4.5.0` 的 `gdparse` 对 `scripts/` 和 `tests/` 全部 GDScript 文件做语法解析：通过；`git diff --check`：通过；两份 locale JSON：解析通过。
-- Godot 运行时测试和 5 个尺寸的真实 PNG 截图由 PR 的 Godot 4.7.2 CI / Playthrough capture 工作流执行。PR 报告应以这些工作流的实际结果和上传的 screenshot artifact 为准；若工作流未运行或失败，显示/设备切换的运行时验证仍未完成。
+- 当前 Arena 工作区没有 Godot 可执行文件，所以没有本地 Godot 运行；PR CI 使用仓库工作流安装的 Godot 4.7.2 Stable。
+- 本地：`gdparse` 解析 `scripts/`、`tests/` 全部 GDScript 通过；`git diff --check`、locale JSON 和两个修改 workflow 的 YAML 解析通过；`bash tests/run_check_test.sh` 为 10 cases / 0 failures。
+- PR head `23bf15f4e090de162bc26a092608dcac92a5d3f3` 的独立 `Display scaling and input device tests` 通过：9/9（display_mode、display_resolution、input_device、dialogue_layout 与 1280×720、1600×900、1920×1080、2560×1440、3840×2160 HUD 布局）。Run：<https://github.com/BrainEno/where-is-school/actions/runs/43241808857>。
+- 同一 head 的 Playthrough capture 全部步骤通过，游戏流程到达已实现内容结尾；UI capture 作业成功报告 15 张 PNG（五种分辨率的中英文对话画面、一张手柄提示画面及四种额外界面）。Artifact：<https://github.com/BrainEno/where-is-school/actions/runs/43241808246/artifacts/13956451048>。Workflow：<https://github.com/BrainEno/where-is-school/actions/runs/43241808246>。
+- 仓库完整 Godot CI 与 Release build 检查仍失败于未修改的 `teacher-n.glb` 导入产物 2.85 MiB 超过 1.50 MiB 模型硬限制；Release build 同样在 package content 检查处失败，12.8 MiB pack 还触发既有 8 MiB 警告。本任务不修改 Agent 01/02/03 的模型资源，未绕过或弱化这些检查。完整 gameplay suite 因该前置资源检查停止；本任务有关的目标自动测试已由独立 CI job 执行通过。
+- 真实显示器的 F11 / 无边框全屏与多屏位置，以及真实控制器热插拔仍需人工验收；CI 使用 Xvfb 和合成输入，不能替代硬件验证。
