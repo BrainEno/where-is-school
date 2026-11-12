@@ -1734,10 +1734,35 @@ func _copy(source: String, target: String) -> bool:
 
 
 func _clear_dir(path: String) -> void:
-	if not DirAccess.dir_exists_absolute(path):
+	var absolute := ProjectSettings.globalize_path(path)
+	if not DirAccess.dir_exists_absolute(absolute):
 		return
-	for name: String in DirAccess.get_files_at(path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s" % [path, name]))
-	for name: String in DirAccess.get_directories_at(path):
-		_clear_dir("%s/%s" % [path, name])
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var directory := DirAccess.open(path)
+	if directory == null:
+		_failures.append("fixture cleanup: cannot open %s" % path)
+		return
+	directory.include_hidden = true
+	directory.include_navigational = false
+	var begin_error := directory.list_dir_begin()
+	if begin_error != OK:
+		_failures.append("fixture cleanup: cannot list %s (error %d)" % [path, begin_error])
+		return
+	var name := directory.get_next()
+	while not name.is_empty():
+		var child := path.path_join(name)
+		if directory.current_is_dir() and not directory.is_link(name):
+			_clear_dir(child)
+		else:
+			var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(child))
+			if remove_error != OK:
+				_failures.append(
+					"fixture cleanup: cannot remove %s (error %d)" % [child, remove_error]
+				)
+		name = directory.get_next()
+	directory.list_dir_end()
+	var remove_directory_error := DirAccess.remove_absolute(absolute)
+	if remove_directory_error != OK:
+		_failures.append(
+			"fixture cleanup: cannot remove directory %s (error %d)"
+			% [path, remove_directory_error]
+		)
