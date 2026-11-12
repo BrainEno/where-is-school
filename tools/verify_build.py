@@ -1071,7 +1071,11 @@ def verify_presets(path: Path, expect_version: str | None) -> tuple[list[str], l
         if not preset:
             continue
         excluded = preset.exclude_filter
-        for where in ("tests/", "tools/", "docs/", "art/"):
+        # tests/, tools/, docs/ and art/ are development material. scenes/dev/ and
+        # scripts/dev/ additionally carry third-party development-only assets (the
+        # animation library in docs/ASSET_PROVENANCE.md), so a preset that stops
+        # excluding them would ship someone else's work.
+        for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/"):
             if where.rstrip("/") not in excluded:
                 problems.append(f"the {preset.name} preset does not exclude {where} from the pack")
     return problems, notes
