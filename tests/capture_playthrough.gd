@@ -982,21 +982,38 @@ func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
 	if overlay == null or not overlay.is_owned_by(cue):
 		_note("outline in the classroom: the sheet's cue does not own the overlay; not measured")
 		return
+	var camera := _player.get_viewport().get_camera_3d()
+	# Where the outlined meshes are on screen: the union of their projected bounds.
+	var area := Rect2()
+	var first := true
+	for mesh in overlay.get_meshes():
+		var box := mesh.get_aabb()
+		for corner in 8:
+			var point := camera.unproject_position(mesh.global_transform * box.get_endpoint(corner))
+			if first:
+				area = Rect2(point, Vector2.ZERO)
+				first = false
+			else:
+				area = area.expand(point)
+	if first:
+		area = Rect2(centre, Vector2.ZERO)
+	var frame_rect := Rect2(Vector2.ZERO, root.get_visible_rect().size)
+	var probe := area.grow(24.0).intersection(frame_rect)
 	var with_outline := await _grab_image()
+	var mask_image: Image = null
+	var mask_viewport := overlay.get_mask_viewport()
+	if mask_viewport != null:
+		mask_image = mask_viewport.get_texture().get_image()
 	var opacity := overlay.get_opacity()
 	overlay.set_opacity(cue, 0.0)
 	var without := await _grab_image()
 	overlay.set_opacity(cue, opacity)
 	var line_pixels := 0
 	var changed := 0
+	var mask_pixels := 0
 	if with_outline != null and without != null:
-		var half := 180
-		var left := maxi(int(centre.x) - half, 0)
-		var right := mini(int(centre.x) + half, with_outline.get_width() - 1)
-		var top := maxi(int(centre.y) - half, 0)
-		var bottom := mini(int(centre.y) + half, with_outline.get_height() - 1)
-		for y in range(top, bottom):
-			for x in range(left, right):
+		for y in range(int(probe.position.y), int(probe.end.y)):
+			for x in range(int(probe.position.x), int(probe.end.x)):
 				var now: Color = with_outline.get_pixel(x, y)
 				var was: Color = without.get_pixel(x, y)
 				var delta := maxf(maxf(absf(now.r - was.r), absf(now.g - was.g)), absf(now.b - was.b))
@@ -1005,15 +1022,36 @@ func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
 					# The line colour (warm and light) where the frame without it was not.
 					if now.r > 0.7 and now.g > 0.55 and now.r - now.b > 0.15 and now.r > was.r + 0.05:
 						line_pixels += 1
+				if mask_image != null and x < mask_image.get_width() and y < mask_image.get_height():
+					if mask_image.get_pixel(x, y).r > 0.5:
+						mask_pixels += 1
 	_note(
-		"outline in the classroom: %d warm line pixel(s), %d changed pixel(s) around the sheet"
-		% [line_pixels, changed]
+		(
+			"outline in the classroom: meshes %d on screen at %s (%.0f px2), mask %d px, %d warm "
+			+ "line pixel(s), %d changed pixel(s), opacity %.2f, camera %s, player %s"
+		)
+		% [
+			overlay.get_meshes().size(), str(area), area.get_area(), mask_pixels, line_pixels,
+			changed, opacity, str(camera.global_position), str(_player.global_position)
+		]
 	)
+	# Evidence that can be read from the run's annotations: the frame with and without the
+	# outline, and the mask, around the sheet.
+	var crop_rect := Rect2i(probe.grow(40.0).intersection(frame_rect))
+	for entry: Array in [["with", with_outline], ["without", without], ["mask", mask_image]]:
+		var image := entry[1] as Image
+		if image == null:
+			continue
+		var crop := image.get_region(crop_rect)
+		crop.convert(Image.FORMAT_RGB8)
+		print("CROP: classroom_outline_%s.jpg %s" % [
+			entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.85))
+		])
 	if line_pixels < 30:
 		_failures.append(
-			"The hover cue drew no outline around the visible timetable sheet (%d line pixels, %d changed): "
-			% [line_pixels, changed]
-			+ "the depth-tested mask lost the sheet to the wall behind it."
+			"The hover cue drew no outline around the visible timetable sheet (%d line pixels, %d changed, mask %d px): "
+			% [line_pixels, changed, mask_pixels]
+			+ "the depth-tested mask lost the sheet."
 		)
 
 

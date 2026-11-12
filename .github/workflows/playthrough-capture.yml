@@ -209,6 +209,11 @@ jobs:
           code=$?
           echo "capture exit=${code}"
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" "${capture_log}" | tail -n 60 || true
+          # Small inline crops the script printed (base64 images), one notice each, so a
+          # frame can be looked at from the run report without the artifact.
+          grep -E "^CROP: " "${capture_log}" | head -n 4 | while read -r _ file data; do
+            echo "::notice title=capture crop ${file} (base64)::${data}"
+          done
           ls -l docs/screenshots || true
           # The frames this run wrote into the project folder are staged, not moved: the
           # working tree is never the thing that gets uploaded, and a file that was
