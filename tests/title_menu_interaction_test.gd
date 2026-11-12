@@ -70,6 +70,10 @@ func _run() -> void:
 	title = current_scene as TitleScreen
 	title.get_entry(&"new_game").grab_focus()
 	await _push_pad(JOY_BUTTON_A)
+	for _i in 90:
+		if title.get_confirm().visible or current_scene != title:
+			break
+		await process_frame
 	_check(title.get_confirm().visible or current_scene != title, "Gamepad A did not activate the focused entry.")
 
 	Harness.clear_session_state(self)
@@ -86,41 +90,51 @@ func _click(button: Button) -> void:
 		_check(false, "A required Button was not present.")
 		return
 	await process_frame
-	var point := button.get_global_rect().get_center()
+	var point := button.get_global_transform_with_canvas() * (button.size * 0.5)
 	var motion := InputEventMouseMotion.new()
 	motion.position = point
-	root.get_viewport().push_input(motion, true)
+	motion.global_position = point
+	motion.button_mask = 0
+	root.push_input(motion, true)
 	var down := InputEventMouseButton.new()
 	down.button_index = MOUSE_BUTTON_LEFT
 	down.pressed = true
+	down.button_mask = MOUSE_BUTTON_MASK_LEFT
 	down.position = point
-	root.get_viewport().push_input(down, true)
+	down.global_position = point
+	root.push_input(down, true)
 	await process_frame
-	var up := down.duplicate() as InputEventMouseButton
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
 	up.pressed = false
-	root.get_viewport().push_input(up, true)
+	up.button_mask = 0
+	up.position = point
+	up.global_position = point
+	root.push_input(up, true)
 	await process_frame
 
 func _push_key(code: Key) -> void:
 	var event := InputEventKey.new()
 	event.keycode = code
+	event.physical_keycode = code
 	event.pressed = true
-	root.get_viewport().push_input(event, true)
+	root.push_input(event)
 	await process_frame
 	event = event.duplicate() as InputEventKey
 	event.pressed = false
-	root.get_viewport().push_input(event, true)
+	root.push_input(event)
 	await process_frame
 
 func _push_pad(button: JoyButton) -> void:
 	var event := InputEventJoypadButton.new()
 	event.button_index = button
 	event.pressed = true
-	root.get_viewport().push_input(event, true)
+	root.push_input(event)
 	await process_frame
 	event = event.duplicate() as InputEventJoypadButton
+	event.device = 0
 	event.pressed = false
-	root.get_viewport().push_input(event, true)
+	root.push_input(event)
 	await process_frame
 
 func _open_title() -> void:
