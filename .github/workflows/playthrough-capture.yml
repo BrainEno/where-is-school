@@ -78,9 +78,9 @@ jobs:
       evidence_artifact_id: ${{ steps.upload_evidence.outputs.artifact-id }}
       shot_count: ${{ steps.capture.outputs.shot_count }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - uses: chickensoft-games/setup-godot@v2.4.3
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
@@ -494,7 +494,7 @@ jobs:
       - name: Upload the evidence
         id: upload_evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           # The attempt number belongs in the name: a re-run must not look like the run
           # before it, and a name that repeats inside one run is a name that cannot be
@@ -541,7 +541,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -558,7 +558,7 @@ jobs:
           echo "verifying artifact ${ARTIFACT_ID} from attempt ${{ github.run_attempt }}"
 
       - name: Download the artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           # By id, not by name: see the note at the top of this file.
           artifact-ids: ${{ needs.capture.outputs.evidence_artifact_id }}

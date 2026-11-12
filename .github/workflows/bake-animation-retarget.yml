@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Install Godot
-        uses: chickensoft-games/setup-godot@v2.4.3
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
@@ -41,7 +41,7 @@ jobs:
         run: ls -l scenes/dev/animation_retarget_test/protagonist_ual.res
 
       - name: Upload the baked library
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           # Keep artifacts from re-runs distinct; each run attempt remains downloadable.
           name: protagonist-ual-${{ github.run_attempt }}

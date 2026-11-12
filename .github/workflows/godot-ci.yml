@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Install Godot
-        uses: chickensoft-games/setup-godot@v2.4.3
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
@@ -130,6 +130,18 @@ jobs:
           # camera, a light, one byte either side of the size and texture limits, a missing
           # sidecar, a sidecar left behind by a move, and a duplicated model name.
           python3 tests/model_library_test.py
+
+      - name: Check the workflow actions are pinned by commit
+        shell: bash
+        run: |
+          # Issue #116: a tag like `actions/checkout@v6` can be moved upstream, so what CI ran
+          # would be decided by somebody else. Every external `uses:` in every workflow (and in
+          # our composite actions) must name a full 40-character commit SHA with a `# vX.Y.Z`
+          # comment, one pin per action across files; `./` local actions are allowed as they
+          # are. The checker reads YAML structure, not strings, and its test proves both
+          # directions: tags, branches and short SHAs fail; local actions and scripts don't.
+          python3 tools/check_workflow_action_pins.py
+          python3 tests/workflow_action_pins_test.py
 
       - name: Check the bundled font covers the current text
         shell: bash
