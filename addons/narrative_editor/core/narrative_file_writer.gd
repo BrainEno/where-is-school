@@ -409,13 +409,12 @@ func _read_text(target: String) -> Dictionary:
 		return {"ok": false, "reason": "无法打开（错误码 %d）" % FileAccess.get_open_error()}
 	var initial_length := file.get_length()
 	var text := file.get_as_text()
-	var position := file.get_position()
 	var final_length := file.get_length()
 	var read_error := file.get_error()
 	file.close()
 	if read_error != OK and read_error != ERR_FILE_EOF:
 		return {"ok": false, "reason": "读取失败（错误码 %d）" % read_error}
-	if final_length != initial_length or position < initial_length:
+	if final_length != initial_length:
 		return {"ok": false, "reason": "读取期间文件长度发生变化"}
 	return {"ok": true, "text": text}
 
