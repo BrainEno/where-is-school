@@ -693,7 +693,7 @@ size = Vector3(1.2, 0.06, 0.6)
 size = Vector3(2.2, 0.1, 5.1264)
 
 [sub_resource type="BoxShape3D" id="RampShape_1"]
-size = Vector3(2.2, 0.05, 2.4)
+size = Vector3(2.2, 0.05, 2.1)
 
 [sub_resource type="BoxShape3D" id="RampShape_2"]
 size = Vector3(2.2, 0.1, 2.4)
@@ -1859,7 +1859,7 @@ rotation = Vector3(0.358771, 0, 0)
 shape = SubResource("RampShape_0")
 
 [node name="StairLandingSurface" type="StaticBody3D" parent="."]
-position = Vector3(-9.9, 1.775, -13.55)
+position = Vector3(-9.9, 1.775, -13.7)
 rotation = Vector3(0, 0, 0)
 collision_layer = 4
 

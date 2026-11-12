@@ -22,7 +22,7 @@ NAVIGATION_ONLY_LAYER = 1 << 3
 # without colliding with the player or blocking interaction line-of-sight.
 BAKE_ONLY_LAYER = 1 << 4
 # Layer 3 is in the player's collision mask but not the navigation or interaction-occluder
-# masks. Thin top-only landing colliders use it so their visible plinths have no blocking riser.
+# masks. Thin landing-top colliders use it instead of making the tall visible plinths solid.
 PLAYER_ONLY_LAYER = 1 << 2
 
 MATS = {
@@ -329,7 +329,9 @@ def build_street():
     # to the player. A 5 cm top collider lets the ramp meet the landing without the
     # step-up helper popping the capsule up the remaining ~12 cm at the last frame.
     s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete", body=False)
-    _landing_surface(s, "StairLandingSurface", (8.5, 12.5), (-37.0, -34.6), 1.6)
+    # The player collider starts 30 cm behind the visible lip: the capsule reaches the
+    # landing height before its radius finds this edge; the bake tread still reaches the lip.
+    _landing_surface(s, "StairLandingSurface", (8.5, 12.5), (-37.0, -34.9), 1.6)
     _tread(s, "StairLandingTread", (8.5, 12.5), (-37.0, -34.6), 1.6)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
@@ -445,7 +447,7 @@ def build_residential():
     _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (-11.0, -8.8), None,
           "z", -1, flight["start"], 0.0)
     s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete", body=False)
-    _landing_surface(s, "StairLandingSurface", (-11.0, -8.8), (-14.75, -12.35), 1.8)
+    _landing_surface(s, "StairLandingSurface", (-11.0, -8.8), (-14.75, -12.65), 1.8)
     _tread(s, "StairLandingTread", (-11.0, -8.8), (-14.75, -12.35), 1.8)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
@@ -971,8 +973,9 @@ def _tread(s, name, x_range, z_range, top):
 def _landing_surface(s, name, x_range, z_range, top):
     """A thin physical top at a landing, without the tall plinth's blocking front face.
 
-    The visual plinth remains a mesh. This 5 cm collider is in the player's layer only:
-    navigation uses `_tread`, and interaction rays do not see the support surface.
+    The visual plinth remains a mesh. This 5 cm collider is in the player's layer only,
+    inset behind the stair-side lip so the capsule reaches landing height before touching
+    its edge. Navigation uses `_tread`, and interaction rays do not see the support surface.
     """
     thickness = 0.05
     pos = (round((x_range[0] + x_range[1]) / 2.0, 4), round(top - thickness / 2.0, 4),

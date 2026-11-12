@@ -340,7 +340,7 @@ func _check_outdoor_stair_collision_contract() -> void:
 			if shape == null:
 				_failures.append("Landing surface '%s' in %s has no box collider." % [surface_name, scene_path])
 			elif shape.size.y > 0.051 or absf(
-				surface.global_position.y + shape.size.y * 0.5 - float(surface_contract["top"])
+				surface.position.y + shape.size.y * 0.5 - float(surface_contract["top"])
 			) > 0.001:
 				_failures.append(
 					"Landing surface '%s' in %s is not a thin collider at the landing top."
