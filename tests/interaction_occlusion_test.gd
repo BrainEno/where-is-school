@@ -17,10 +17,30 @@ extends SceneTree
 ##  4. a schoolbag on a desk the bag declares → visible and usable;
 ##  5. three eye heights                  → a low wall is seen over, a tall one is not;
 ##  6. the approach-spot search refuses to stand where a wall is in the way;
-##  7. every interactable in every authored location is visible from somewhere.
+##  7. the camera's view (issue #115): a drawn canopy the player's eye sees under, but the
+##     camera cannot see past, hides the object from the pointer - declared or not - and the
+##     same canopy made see-through (faded) does not;
+##  8. a partly covered object is pointable on its uncovered part only, the same answer
+##     every time it is asked;
+##  9. a target that is freed or switched off leaves no target and no highlight behind;
+## 10. the real classroom's timetable sheet from four viewpoints - where the #111 capture
+##     stood (camera outside the opaque south wall), a spot where the wall is faded, behind
+##     the wall, and a sweep across the edge where the wall's fade switches - then switched
+##     off and left behind by a scene swap.
+##
+## "Every interactable in every authored location is visible from somewhere" is
+## `tests/interaction_visibility_sweep_test.gd`.
+##
+## These are physics and script checks: a headless run draws nothing. Where a case says
+## "drawn" or "hidden" it means the body the camera ray meets has a visible mesh with no
+## transparency - the condition under which the outline mask's depth pass hides what is
+## behind it - not that a frame was looked at.
 
 const Harness = preload("res://tests/test_harness.gd")
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
+## Where the #111 capture stood in the classroom (case 10a); see `_check_classroom_timetable`.
+const SHEET_SPOT_111 := Vector3(3.10, 0.0, 3.04)
+const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -38,7 +58,7 @@ var _silenced: Array[Interactable] = []
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 260.0, "interaction_occlusion_test.gd")
+	Harness.arm_watchdog(self, 290.0, "interaction_occlusion_test.gd")
 	call_deferred("_run")
 
 
@@ -94,11 +114,19 @@ func _run() -> void:
 	await _check_bag_on_a_desk()
 	await _check_eye_heights()
 	await _check_approach_spot_refuses_a_blocked_view()
+	await _check_canopy_hides_from_the_camera()
+	await _check_partial_cover_is_per_pixel()
+	await _check_dropped_targets_leave_nothing()
 	_clean_up()
+	# The real room from here on: its own props answer the pointer again.
+	_silence_authored(false)
+	await _physics_frames(2)
+	await _check_classroom_timetable()
 
 	Harness.finish(
 		self, _failures,
-		"only declared support structure is looked through; walls block from either side."
+		"only declared support structure is looked through; walls block from either side; "
+		+ "the pointer picks only where the camera sees the object drawn (#115)."
 	)
 
 
@@ -365,7 +393,23 @@ func _make_probe(interact_id: StringName, position: Vector3, radius: float = 0.7
 	return probe
 
 
-func _make_wall(position: Vector3, size: Vector3) -> StaticBody3D:
+## A probe with something to draw: a box mesh under it, which its outline traces and its
+## pick box is built around (`Interactable._build_pick_shapes`, deferred to the frame's end).
+func _make_drawn_probe(interact_id: StringName, position: Vector3, size: Vector3) -> Interactable:
+	var probe := _make_probe(interact_id, position, 0.7)
+	var mesh := MeshInstance3D.new()
+	mesh.name = "Drawn"
+	var box := BoxMesh.new()
+	box.size = size
+	mesh.mesh = box
+	probe.add_child(mesh)
+	return probe
+
+
+## `drawn` gives the wall a visible mesh of the same size, so the camera - and the outline
+## mask - sees it as an opaque surface. Without it the wall is a collider only: it blocks
+## the player's eye and hides nothing from the camera, which is what cases 1-6 are about.
+func _make_wall(position: Vector3, size: Vector3, drawn: bool = false) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = "TestWall"
 	body.collision_layer = 1
@@ -375,6 +419,13 @@ func _make_wall(position: Vector3, size: Vector3) -> StaticBody3D:
 	box.size = size
 	shape.shape = box
 	body.add_child(shape)
+	if drawn:
+		var mesh := MeshInstance3D.new()
+		mesh.name = "MeshInstance3D"
+		var visual := BoxMesh.new()
+		visual.size = size
+		mesh.mesh = visual
+		body.add_child(mesh)
 	_location.add_child(body)
 	body.global_position = position
 	_walls.append(body)
@@ -439,6 +490,445 @@ func _what_the_centre_of_the_screen_hits() -> String:
 	if item == null:
 		return node.name
 	return "%s(usable=%s)" % [node.name, str(item.can_interact())]
+
+
+# --- case 7: what the camera can see -----------------------------------------
+
+
+## A canopy over the target: the player's eye looks under it, the fixed camera looks down
+## through it. The eye-level rule is satisfied, so before #115 the pointer found the object
+## through a surface that hides it from the camera - and from the depth-tested outline.
+func _check_canopy_hides_from_the_camera() -> void:
+	await _reset()
+	var target := _make_drawn_probe(&"occlusion_canopy", Vector3(0.0, 0.9, -1.6), Vector3(0.4, 0.4, 0.4))
+	var canopy := _make_wall(Vector3(0.6, 2.2, -0.9), Vector3(2.6, 0.1, 2.8), true)
+	await _physics_frames(4)
+	var eye := _player.global_position + Vector3.UP * _interaction.eye_height
+	if not _interaction.has_line_of_sight_from(eye, target):
+		_failures.append("Case 7 setup: the canopy hid the target from the eye as well. %s" % _explain(target))
+		return
+	var centre := _box_centre(target)
+	var blocker := _first_drawn_body(centre)
+	if blocker != canopy:
+		_failures.append(
+			"Case 7 setup: the camera ray to the target meets '%s', not the canopy." % _node_name(blocker)
+		)
+		return
+	var picked := _find_target_on_screen(target)
+	print("[#115] canopy: eye sees the target, camera ray meets the canopy; pointer pick at %s" % str(picked))
+	if picked != Vector2.ZERO:
+		_failures.append(
+			"The pointer selected a target the camera cannot see past a drawn canopy (at %s)." % str(picked)
+		)
+	# Facing is about the character, not the camera: report what it does, so the limit of
+	# this fix is measured rather than assumed.
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	_player.teleport(Transform3D(_yaw_towards(_player.global_position, target.global_position), _player.global_position))
+	await _physics_frames(4)
+	print(
+		"[#115] canopy, facing path (camera not consulted by design): current=%s highlight=%s"
+		% [_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted())]
+	)
+	_interaction.clear_mouse_override()
+	# Declaring the canopy as support changes the eye's probe, not what the camera sees.
+	target.support_paths = PackedStringArray([target.get_path_to(canopy)])
+	await _physics_frames(2)
+	if _find_target_on_screen(target) != Vector2.ZERO:
+		_failures.append("Declaring a canopy as support let the pointer see through it from the camera.")
+	target.support_paths = PackedStringArray()
+	# The same canopy, faded the way CameraOccluderFader fades a wall: see-through, so it no
+	# longer hides the object, and the pointer finds it again.
+	for mesh: Node in canopy.find_children("*", "MeshInstance3D", true, false):
+		(mesh as MeshInstance3D).transparency = 0.82
+	await _physics_frames(2)
+	if _find_target_on_screen(target) == Vector2.ZERO:
+		_failures.append("A faded (see-through) canopy still hid the target from the pointer. %s" % _explain(target))
+	_clean_up()
+
+
+# --- case 8: partly covered ---------------------------------------------------
+
+
+## The rule for an object a surface covers in part is the outline mask's rule, per pixel:
+## the object is pointable where its own surface is the nearest drawn one. A canopy over the
+## left half of a wide box: a pixel on the right half picks it, a pixel on the left half
+## does not, and asking again gives the same answer.
+func _check_partial_cover_is_per_pixel() -> void:
+	await _reset()
+	var target := _make_drawn_probe(&"occlusion_partial", Vector3(0.0, 0.9, -1.6), Vector3(1.2, 0.6, 0.1))
+	var canopy := _make_wall(Vector3(-0.2, 2.2, -0.9), Vector3(2.0, 0.1, 2.6), true)
+	await _physics_frames(4)
+	var left := Vector3(-0.45, 0.9, -1.6)
+	var right := Vector3(0.45, 0.9, -1.6)
+	if _first_drawn_body(left) != canopy or _first_drawn_body(right) != null:
+		_failures.append(
+			"Case 8 setup: expected the canopy over the left half only (left meets '%s', right meets '%s')."
+			% [_node_name(_first_drawn_body(left)), _node_name(_first_drawn_body(right))]
+		)
+		return
+	var on_left := _pointer_at(left, false)
+	var on_right := _pointer_at(right, false)
+	print("[#115] partial cover: left (covered) -> %s, right (open) -> %s" % [_name_of(on_left), _name_of(on_right)])
+	if on_left == target:
+		_failures.append("The pointer picked the covered half of a partly covered object.")
+	if on_right != target:
+		_failures.append("The pointer missed the open half of a partly covered object (got %s)." % _name_of(on_right))
+	for _repeat in 3:
+		if _pointer_at(left, false) != on_left or _pointer_at(right, false) != on_right:
+			_failures.append("The partial-cover answer changed between identical asks.")
+			break
+	# Pointing at the open half makes it the target and lights it; pointing at the covered
+	# half lets it go: the prompt and the cue follow the same per-pixel answer.
+	_interaction.set_mouse_override(_screen_of(right))
+	await _physics_frames(4)
+	if _interaction.get_current_target() != target or _interaction.get_highlighted() != target:
+		_failures.append(
+			"The open half was pointed at but not adopted (current %s, highlight %s)."
+			% [_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted())]
+		)
+	# The hover path asks with reach required; the covered half must answer the same there.
+	if _pointer_at(left, true) == target:
+		_failures.append("The hover question (reach required) picked the covered half.")
+	_interaction.clear_mouse_override()
+	_clean_up()
+
+
+# --- case 9: a target that goes away -----------------------------------------
+
+
+func _check_dropped_targets_leave_nothing() -> void:
+	await _reset()
+	var target := _make_drawn_probe(&"occlusion_dropped", Vector3(0.0, 0.9, -1.2), Vector3(0.4, 0.4, 0.4))
+	await _physics_frames(4)
+	_interaction.set_mouse_override(_screen_of(_box_centre(target)))
+	await _physics_frames(4)
+	if _interaction.get_current_target() != target:
+		_failures.append("Case 9 setup: the pointer did not adopt the probe. %s" % _explain(target))
+	target.interaction_enabled = false
+	await _physics_frames(4)
+	if _interaction.get_current_target() == target or _interaction.get_highlighted() == target \
+			or target.is_highlighted():
+		_failures.append("A switched-off target kept the target or its cue.")
+	_activated.clear()
+	await _push_e()
+	if _activated.has(&"occlusion_dropped"):
+		_failures.append("E used a switched-off target.")
+	target.interaction_enabled = true
+	await _physics_frames(4)
+	if _interaction.get_current_target() != target:
+		_failures.append("A target switched back on was not adopted again.")
+	await _free_probe(target)
+	await _physics_frames(2)
+	if _interaction.get_current_target() != null or _interaction.get_highlighted() != null:
+		_failures.append(
+			"A freed target left something behind (current %s, highlight %s)."
+			% [_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted())]
+		)
+	_interaction.clear_mouse_override()
+
+
+# --- case 10: the real classroom ------------------------------------------------
+
+
+## The timetable sheet is a thin sheet on the inside of the south wall (`WallSouthLeft`,
+## opaque until the camera's fader dims it). The fixed camera sits south of the player, so
+## it always looks at that wall from outside: the sheet is on screen only through the wall
+## while the wall is faded. The #111 capture stood at SHEET_SPOT_111, where the fader's ray
+## passes through the door and the wall stays opaque: the depth-tested outline drew nothing
+## (27 of 27 points behind the wall) while the pointer still selected the sheet.
+
+
+func _check_classroom_timetable() -> void:
+	var sheet := _location.find_interactable(&"timetable")
+	var wall := _location.get_node_or_null("WallSouthLeft") as StaticBody3D
+	if sheet == null or wall == null:
+		_failures.append("Case 10: the classroom lost the timetable or WallSouthLeft.")
+		return
+	print(
+		"[#115] classroom: sheet anchor %s, outline %s, wall %s"
+		% [str(sheet.global_position), str(_box_centre(sheet)), str(wall.global_position)]
+	)
+
+	# (a) Where the #111 capture stood. The door is right beside the player, so facing picks
+	# the door; the question is what the pointer does on the sheet's pixels.
+	var a := await _measure_sheet_view("a #111 spot", sheet, wall, SHEET_SPOT_111, SHEET_SPOT_111 + Vector3.RIGHT)
+	if int(a["hidden"]) == 0:
+		_failures.append("Case 10a: the sheet was expected to be behind the opaque wall from here. %s" % str(a))
+	if int(a["contradictions"]) > 0:
+		_failures.append(
+			"Case 10a: the pointer selected the sheet at %d of %d points the camera sees only through the opaque wall. %s"
+			% [int(a["contradictions"]), int(a["points"]), str(a)]
+		)
+	if a["current"] == "timetable" or a["highlight"] == "timetable":
+		_failures.append("Case 10a: the hidden sheet became the target or was lit. %s" % str(a))
+	if bool(a["e_used"]) or bool(a["click_used"]) or bool(a["click_walks"]):
+		_failures.append("Case 10a: E or a click reached the hidden sheet. %s" % str(a))
+
+	# (b) The legitimate view: a spot in front of the sheet where the fader has dimmed the
+	# wall, so the camera sees the sheet through it.
+	var spot := await _find_faded_spot(sheet, wall)
+	if spot == Vector3.INF:
+		_failures.append("Case 10b: no standing spot in front of the sheet dims WallSouthLeft.")
+	else:
+		var b := await _measure_sheet_view("b faded wall", sheet, wall, spot, sheet.global_position)
+		if int(b["contradictions"]) > 0 or int(b["picked"]) == 0:
+			_failures.append("Case 10b: the visible sheet was not pointable consistently. %s" % str(b))
+		if b["current"] != "timetable" or b["highlight"] != "timetable":
+			_failures.append("Case 10b: the visible sheet under the pointer was not the lit target. %s" % str(b))
+		if not bool(b["e_used"]) or not bool(b["click_used"]):
+			_failures.append("Case 10b: E or a click could not use the visible sheet. %s" % str(b))
+		await _check_sheet_switched_off(sheet, spot)
+
+	# (c) Behind the wall: the player outside, looking at its back.
+	var back := Vector3(1.6, 0.0, 4.3)
+	# The classroom floor ends under the wall. A collider-only slab (nothing drawn, so the
+	# camera's view is unchanged) keeps the player standing at eye height out there.
+	_make_wall(Vector3(1.6, -0.1, 4.6), Vector3(3.0, 0.2, 1.6))
+	await _physics_frames(2)
+	var c := await _measure_sheet_view("c behind the wall", sheet, wall, back, sheet.global_position)
+	if bool(c["eye"]):
+		_failures.append("Case 10c: the player's eye saw the sheet through the back of the wall. %s" % str(c))
+	if int(c["picked"]) > 0 or c["current"] == "timetable" or bool(c["e_used"]) or bool(c["click_used"]):
+		_failures.append("Case 10c: the sheet was reachable from behind its wall. %s" % str(c))
+	_clean_up()
+
+	# (d) The edge: a walk along the room past the end of the wall, where the fader's ray
+	# leaves WallSouthLeft and the wall turns opaque again. The pointer must follow the
+	# wall's drawn state step by step: never a pick through an opaque wall.
+	var lines: Array[String] = []
+	var flips := 0
+	var last := ""
+	for step in 9:
+		var at := Vector3(0.9 + 0.2 * float(step), 0.0, 2.75)
+		var d := await _measure_sheet_view("d edge x=%.1f" % at.x, sheet, wall, at, sheet.global_position, false)
+		lines.append("x=%.1f t=%.2f hidden=%d picked=%d" % [at.x, float(d["wall"]), int(d["hidden"]), int(d["picked"])])
+		if int(d["contradictions"]) > 0:
+			_failures.append("Case 10d: a pick through the opaque wall at x=%.1f. %s" % [at.x, str(d)])
+		var state := "seen" if int(d["picked"]) > 0 else "not"
+		if not last.is_empty() and state != last:
+			flips += 1
+		last = state
+	print("[#115] edge sweep (z=2.75): %s; flips=%d" % ["; ".join(lines), flips])
+
+	await _check_scene_swap_leaves_nothing(sheet, spot)
+
+
+## Stands at `spot` facing `look_at`, lets the camera and its fader settle, then asks every
+## question #115 lists: the camera's view of the sheet's points, the pointer on each, and -
+## with the pointer on the sheet's middle - the current target, the cue, the prompt, E and a
+## click. With `act` false only the per-point view is measured.
+func _measure_sheet_view(
+	label: String, sheet: Interactable, wall: StaticBody3D, spot: Vector3, look_at: Vector3,
+	act: bool = true
+) -> Dictionary:
+	_navigator.cancel()
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	_player.teleport(Transform3D(_yaw_towards(spot, look_at), spot))
+	await _physics_frames(8)
+	var result := {
+		"view": label, "player": spot, "camera": _camera_position(),
+		"wall": _wall_transparency(wall), "eye": _interaction.has_line_of_sight(sheet),
+		"reach": _interaction.is_in_reach(sheet), "points": 0, "hidden": 0, "picked": 0,
+		"contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "",
+		"e_used": false, "click_used": false, "click_walks": false,
+	}
+	var points := _sheet_points(sheet)
+	for point in points:
+		if _behind_camera(point):
+			continue
+		result["points"] = int(result["points"]) + 1
+		var blocker := _first_drawn_body(point)
+		var picked := _pointer_at(point, false) == sheet
+		if blocker != null:
+			result["hidden"] = int(result["hidden"]) + 1
+			result["blocker"] = _node_name(blocker)
+			if picked:
+				result["contradictions"] = int(result["contradictions"]) + 1
+		if picked:
+			result["picked"] = int(result["picked"]) + 1
+	if act and not _behind_camera(_box_centre(sheet)):
+		var screen := _screen_of(_box_centre(sheet))
+		_interaction.set_mouse_override(screen)
+		await _physics_frames(4)
+		var current := _interaction.get_current_target()
+		result["current"] = _name_of(current)
+		result["highlight"] = _name_of(_interaction.get_highlighted())
+		result["prompt"] = current.get_prompt() if current != null else ""
+		_activated.clear()
+		await _push_e()
+		result["e_used"] = _activated.has(&"timetable")
+		await _settle_dialogue()
+		_activated.clear()
+		_navigator.click_at_screen_position(screen)
+		await _physics_frames(2)
+		result["click_used"] = _activated.has(&"timetable")
+		result["click_walks"] = _navigator.is_approaching() and _navigator.get_pending_target() == sheet
+		_navigator.cancel()
+		await _settle_dialogue()
+		_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	print("[#115] view %s" % str(result))
+	return result
+
+
+## A spot in front of the sheet from which the camera's fader dims WallSouthLeft, and from
+## which the sheet is in reach and in the player's sight. Vector3.INF if there is none.
+func _find_faded_spot(sheet: Interactable, wall: StaticBody3D) -> Vector3:
+	for z in [2.7, 2.5, 2.9]:
+		for x in [1.6, 1.2, 0.8, 2.0, 0.4]:
+			var at := Vector3(x, 0.0, z)
+			_player.teleport(Transform3D(_yaw_towards(at, sheet.global_position), at))
+			await _physics_frames(8)
+			if _wall_transparency(wall) > 0.0 and _interaction.is_in_reach(sheet) \
+					and _interaction.has_line_of_sight(sheet):
+				return at
+	return Vector3.INF
+
+
+func _check_sheet_switched_off(sheet: Interactable, spot: Vector3) -> void:
+	_player.teleport(Transform3D(_yaw_towards(spot, sheet.global_position), spot))
+	_interaction.set_mouse_override(_screen_of(_box_centre(sheet)))
+	await _physics_frames(6)
+	if _interaction.get_current_target() != sheet:
+		_failures.append("Case 10b: the sheet was not the target before it was switched off.")
+	sheet.interaction_enabled = false
+	await _physics_frames(4)
+	if _interaction.get_current_target() == sheet or sheet.is_highlighted():
+		_failures.append("Case 10b: the switched-off sheet stayed the target or stayed lit.")
+	_activated.clear()
+	await _push_e()
+	if _activated.has(&"timetable"):
+		_failures.append("Case 10b: E used the switched-off sheet.")
+	sheet.interaction_enabled = true
+	await _physics_frames(2)
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+
+
+## With the sheet the lit target, the room is swapped for the corridor: whatever the
+## controller holds afterwards is alive and in the new room, never the freed sheet.
+func _check_scene_swap_leaves_nothing(sheet: Interactable, spot: Vector3) -> void:
+	if spot != Vector3.INF:
+		_player.teleport(Transform3D(_yaw_towards(spot, sheet.global_position), spot))
+		_interaction.set_mouse_override(_screen_of(_box_centre(sheet)))
+		await _physics_frames(6)
+	var before := _name_of(_interaction.get_current_target())
+	if not _host.load_location(CORRIDOR, &"FromClassroom", _player, &"corridor"):
+		_failures.append("Case 10: the corridor did not load for the scene-swap check.")
+		return
+	await _physics_frames(6)
+	var current := _interaction.get_current_target()
+	var lit := _interaction.get_highlighted()
+	print("[#115] scene swap: before=%s after=%s highlight=%s" % [before, _name_of(current), _name_of(lit)])
+	if current != null and (not InteractionController.is_live_target(current) or current == sheet):
+		_failures.append("After a scene swap the controller still held the old room's target.")
+	if lit != null and (not InteractionController.is_live_target(lit) or lit == sheet):
+		_failures.append("After a scene swap the old room's object was still lit.")
+	if is_instance_valid(sheet) and sheet.is_inside_tree():
+		_failures.append("The scene swap left the classroom's sheet in the tree.")
+	_interaction.clear_mouse_override()
+
+
+# --- camera helpers ----------------------------------------------------------
+
+
+## The first body the camera ray to `point` meets that the camera draws opaque: a visible
+## mesh, on a layer the camera renders, with no transparency. Bodies with nothing drawn and
+## faded walls are passed. Measured independently of the controller on purpose.
+func _first_drawn_body(point: Vector3) -> Node:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		return null
+	var from := camera.global_position
+	var space := _player.get_world_3d().direct_space_state
+	var excluded: Array[RID] = []
+	for _attempt in 12:
+		var query := PhysicsRayQueryParameters3D.create(from, point, 1)
+		query.collide_with_areas = false
+		query.collide_with_bodies = true
+		query.exclude = excluded
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return null
+		var body := hit.get("collider") as CollisionObject3D
+		if body == null:
+			return null
+		if (hit.get("position") as Vector3).distance_to(point) <= 0.06:
+			# The object's own surface, or something coplanar with it within the pick padding.
+			return null
+		if _drawn_opaque(body, camera.cull_mask):
+			return body
+		excluded.append(body.get_rid())
+	return null
+
+
+func _drawn_opaque(body: Node, cull_mask: int) -> bool:
+	var nodes: Array[Node] = [body]
+	nodes.append_array(body.find_children("*", "GeometryInstance3D", true, false))
+	for node in nodes:
+		var geometry := node as GeometryInstance3D
+		if geometry == null or not geometry.is_visible_in_tree():
+			continue
+		if (geometry.layers & cull_mask) == 0 or geometry.transparency > 0.0:
+			continue
+		return true
+	return false
+
+
+## Points across the sheet's outline meshes: a 3x3 grid over each mesh's box, at its middle.
+func _sheet_points(target: Interactable) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	for mesh in target.get_outline_meshes():
+		var box := mesh.get_aabb()
+		for ix in 3:
+			for iy in 3:
+				var local := box.position + Vector3(
+					box.size.x * (0.2 + 0.3 * float(ix)), box.size.y * (0.2 + 0.3 * float(iy)), box.size.z * 0.5
+				)
+				points.append(mesh.global_transform * local)
+	return points
+
+
+## The middle of everything the object's outline traces, or its anchor when it traces nothing.
+func _box_centre(target: Interactable) -> Vector3:
+	var meshes := target.get_outline_meshes()
+	if meshes.is_empty():
+		return target.global_position
+	var bounds := meshes[0].global_transform * meshes[0].get_aabb()
+	for mesh in meshes:
+		bounds = bounds.merge(mesh.global_transform * mesh.get_aabb())
+	return bounds.get_center()
+
+
+func _pointer_at(point: Vector3, require_reach: bool) -> Interactable:
+	return _interaction.get_target_at_screen_position(_screen_of(point), require_reach)
+
+
+func _behind_camera(point: Vector3) -> bool:
+	var camera := _player.get_viewport().get_camera_3d()
+	return camera == null or camera.is_position_behind(point)
+
+
+func _camera_position() -> Vector3:
+	var camera := _player.get_viewport().get_camera_3d()
+	return camera.global_position if camera != null else Vector3.ZERO
+
+
+func _wall_transparency(wall: StaticBody3D) -> float:
+	var mesh := wall.get_node_or_null("MeshInstance3D") as GeometryInstance3D
+	return mesh.transparency if mesh != null else -1.0
+
+
+## A basis that faces the player from `from` towards `to` (never the identity, which
+## `PlayerController.teleport` reads as "keep the current facing").
+func _yaw_towards(from: Vector3, to: Vector3) -> Basis:
+	var offset := to - from
+	var yaw := atan2(-offset.x, -offset.z)
+	if is_zero_approx(yaw):
+		yaw = 0.0001
+	return Basis(Vector3.UP, yaw)
+
+
+func _node_name(node: Node) -> String:
+	return String(node.name) if node != null else "<nothing>"
 
 
 func _name_of(interactable: Interactable) -> String:
