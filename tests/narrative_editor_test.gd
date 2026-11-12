@@ -1001,8 +1001,8 @@ func _case_validation_warning_reaches_dock() -> void:
 	for message: String in store.warnings:
 		warning_visible = warning_visible or message.contains("暂存目录无法安全移除")
 	_expect(warning_visible, "validator 未把 writer 的清理警告传递给 store：%s" % str(store.warnings))
-	_expect(status_label != null, "dock 没有建立状态标题控件。")
-	_expect(status_text != null, "dock 没有建立状态详情控件。")
+	_expect(status_label != null, "dock 状态标题节点没有建立。")
+	_expect(status_text != null, "dock 状态信息节点没有建立。")
 	if status_label != null:
 		_expect(
 			status_label.text == "校验通过，另有警告需要检查",
