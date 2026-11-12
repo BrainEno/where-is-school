@@ -2,12 +2,12 @@ class_name CharacterAnimation
 extends RefCounted
 ## Clips for the game's characters, built in code against *semantic* bone names.
 ##
-## The two rigged characters in `scenes/dev/animation_retarget_test/` do not name their bones
-## the same way, and neither does the production protagonist:
+## The rigged characters do not name their bones the same way:
 ##
-##   production protagonist   Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, Thigh.L, …
-##   rigged Q                 Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, Thigh.L, …
-##   retargeted protagonist   Root, Hips, Spine, Chest, UpperChest, LeftUpperArm, …
+##   protagonist (Protagonist_Character.glb)  Root, Pelvis, Spine, Chest, UpperArm_L, Shin_L, …
+##   former protagonist (protagonist.glb)     Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
+##   rigged Q                                 Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
+##   retargeted protagonist (dev test)        Root, Hips, Spine, Chest, UpperChest, …
 ##
 ## and the animation library that was attempted first used a third convention
 ## (`root, pelvis, spine_01, upperarm_l, calf_l, …`). A clip authored against one set of names
@@ -29,9 +29,17 @@ extends RefCounted
 ## Both rigs hang their arms and legs from the body with a local rest rotation of 170–180°, so
 ## a key of "3° about X" written as-is turned every arm and leg to point straight up — which is
 ## what the first runtime wiring shipped (both characters stood with their arms raised). Each
-## key is therefore written as `rest * offset`: the offset turns the bone about its *own* rest
-## axes, which on both rigs means local X swings a limb forward and back and local Z moves it
-## out to the side.
+## key is therefore written as `rest * offset`, with the offset expressed in the bone's
+## *semantic* frame (see `semantic_frame()`): X is the character's side axis, so X swings a
+## limb forward and back and Z moves it out to the side, on every rig. A rig's own local axes
+## are not trusted for that: the new protagonist's arms are twisted ~35–39° about their length
+## and its feet ~19°, so the same local offset would swing an arm diagonally across the body.
+##
+## Sides are positional, not nominal: the clips' `.L` is the limb on the skeleton's −X side
+## (the convention the clips were authored and measured in), whatever the rig calls it. The
+## former protagonist and Q name that side `.L`; the new protagonist names its limbs
+## anatomically and puts `UpperArm_L` at +X, so on that rig `upper_arm.L` binds to
+## `UpperArm_R`. `resolve_rig()` decides this from the rest positions and reports it.
 ##
 ## Every clip also carries a track for every bone *any* clip animates. A bone that one clip
 ## moves and the next one does not would otherwise keep the last pose the first clip gave it —
@@ -48,25 +56,27 @@ const BONE_ALIASES := {
 	"head": ["Head", "head"],
 	"shoulder.L": ["LeftShoulder", "Shoulder.L", "clavicle_l", "Shoulder_L"],
 	"shoulder.R": ["RightShoulder", "Shoulder.R", "clavicle_r", "Shoulder_R"],
-	"upper_arm.L": ["UpperArm.L", "LeftUpperArm", "LeftArm", "upperarm_l"],
-	"upper_arm.R": ["UpperArm.R", "RightUpperArm", "RightArm", "upperarm_r"],
+	"upper_arm.L": ["UpperArm.L", "UpperArm_L", "LeftUpperArm", "LeftArm", "upperarm_l"],
+	"upper_arm.R": ["UpperArm.R", "UpperArm_R", "RightUpperArm", "RightArm", "upperarm_r"],
 	"fore_arm.L": ["LowerArm.L", "LeftLowerArm", "LeftForeArm", "lowerarm_l", "forearm_l"],
 	"fore_arm.R": ["LowerArm.R", "RightLowerArm", "RightForeArm", "lowerarm_r", "forearm_r"],
 	"hand.L": ["Hand.L", "LeftHand", "hand_l"],
 	"hand.R": ["Hand.R", "RightHand", "hand_r"],
 	"thigh.L": ["Thigh.L", "LeftUpperLeg", "LeftUpLeg", "thigh_l", "upleg_l"],
 	"thigh.R": ["Thigh.R", "RightUpperLeg", "RightUpLeg", "thigh_r", "upleg_r"],
-	"shin.L": ["Shin.L", "LeftLowerLeg", "LeftLeg", "calf_l", "lowerleg_l"],
-	"shin.R": ["Shin.R", "RightLowerLeg", "RightLeg", "calf_r", "lowerleg_r"],
+	"shin.L": ["Shin.L", "Shin_L", "LeftLowerLeg", "LeftLeg", "calf_l", "lowerleg_l"],
+	"shin.R": ["Shin.R", "Shin_R", "RightLowerLeg", "RightLeg", "calf_r", "lowerleg_r"],
 	"foot.L": ["Foot.L", "LeftFoot", "foot_l"],
 	"foot.R": ["Foot.R", "RightFoot", "foot_r"],
 }
 
 ## The clips, authored in canonical names. Each key is `[time in seconds, degrees about the
 ## bone's own axes]`; the last key repeats the first so a looping clip closes the cycle.
-## Rotations are offsets from the rest pose, about the bone's own axes: local X swings a
-## limb and local Z reaches out to the side. Both rigs agree on those axes, because every limb
-## hangs down its own Y with X pointing sideways.
+## Rotations are offsets from the rest pose, about the bone's semantic axes
+## (`semantic_frame()`): Y runs along the bone, X is the character's side axis (skeleton +X)
+## made perpendicular to it, and Z = X × Y. X swings a limb and Z reaches out to the side.
+## On a hanging limb Z points backwards, so +Z moves the far end towards −X: outwards for a
+## `.L` limb, which is why the `.R` keys carry the opposite Z sign.
 ##
 ## The sign that matters, because it is the one a new clip gets wrong, was measured from the
 ## GLB joints and is checked by `tests/runtime_character_animation_test.gd`: **+X moves the
@@ -211,6 +221,16 @@ const HANGING_LIMBS: Array[String] = [
 ## How closely a hanging limb's rest direction has to follow skeleton −Y (cosine).
 const HANGING_MIN_COS := 0.7
 
+## The canonical bones that come in a left/right pair, by their stem (`upper_arm` is
+## `upper_arm.L` and `upper_arm.R`). Their sides are decided by position (see `resolve_rig()`).
+const SIDE_PAIRS: Array[String] = [
+	"shoulder", "upper_arm", "fore_arm", "hand", "thigh", "shin", "foot",
+]
+## Below this length, a bone's side axis made perpendicular to the bone is too short to define
+## a frame (the bone runs along the side axis, like a T-pose clavicle); such a bone keeps its
+## own axes. No clip animates one.
+const SEMANTIC_MIN_SIDE := 0.2
+
 ## Name the built library is registered under, so clips play as `char/idle`.
 const LIBRARY_NAME := &"char"
 
@@ -227,6 +247,11 @@ static func skeletons_in(model_root: Node) -> Array[Skeleton3D]:
 
 ## Which of a rig's bones each canonical name resolved to, and which canonical names the rig
 ## cannot express. `resolved` maps canonical → the rig's own bone name.
+##
+## A canonical pair is then put on the right sides by where the two bones *are*: `.L` is the
+## bone on the skeleton's −X side. A rig whose names say the opposite (the new protagonist,
+## named anatomically, has `UpperArm_L` at +X) gets the pair swapped, and the stem is listed in
+## `mirrored`, so a reader of the report sees `upper_arm.L → UpperArm_R` and why.
 static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
 	var by_lower := {}
 	var bones: Array[String] = []
@@ -242,7 +267,23 @@ static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
 			missing.append(canonical)
 		else:
 			resolved[canonical] = bone
-	return {"skeleton": skeleton, "bones": bones, "resolved": resolved, "missing": missing}
+	var mirrored: Array[String] = []
+	for stem: String in SIDE_PAIRS:
+		var left := "%s.L" % stem
+		var right := "%s.R" % stem
+		if not resolved.has(left) or not resolved.has(right):
+			continue
+		var left_x := skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[left]))).origin.x
+		var right_x := skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[right]))).origin.x
+		if left_x > right_x:
+			var swap: String = resolved[left]
+			resolved[left] = resolved[right]
+			resolved[right] = swap
+			mirrored.append(stem)
+	return {
+		"skeleton": skeleton, "bones": bones, "resolved": resolved, "missing": missing,
+		"mirrored": mirrored,
+	}
 
 
 ## The bone name on this rig for a canonical name, or "" when the rig does not have it.
@@ -297,6 +338,14 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 	# them, so switching clips never leaves a bone where the previous clip put it.
 	var animated := _animated_bones(resolved)
 	var posed := posed_limbs(skeleton, resolved)
+	# Each animated bone's semantic frame, as a turn about its own length (see
+	# `semantic_frame()`), and how far that turn is: the twist the rig's local axes carry.
+	var frames := {}
+	var twists := {}
+	for canonical: String in animated:
+		var frame := semantic_frame(skeleton, skeleton.find_bone(String(resolved[canonical])))
+		frames[canonical] = frame
+		twists[canonical] = snappedf(rad_to_deg(frame.get_angle()), 0.1)
 	var library := AnimationLibrary.new()
 	var clip_report := {}
 	for clip_name in CLIPS:
@@ -321,10 +370,10 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 				animation.rotation_track_insert_key(track, animation.length, rest)
 				held += 1
 				continue
+			var frame: Quaternion = frames[canonical]
 			for key: Array in tracks[canonical]:
-				animation.rotation_track_insert_key(
-					track, float(key[0]), (rest * offset_rotation(key[1])).normalized()
-				)
+				var offset := frame * offset_rotation(key[1]) * frame.inverse()
+				animation.rotation_track_insert_key(track, float(key[0]), (rest * offset).normalized())
 			used += 1
 		library.add_animation(clip_name, animation)
 		clip_report[clip_name] = {
@@ -344,18 +393,41 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		"bones": rig["bones"],
 		"resolved": rig["resolved"],
 		"missing": rig["missing"],
+		"mirrored": rig["mirrored"],
 		"posed": posed,
+		"twist_degrees": twists,
 		"clips": clip_report,
 		"library": library,
 	}
 
 
 ## The rotation a `CLIPS` key describes, as an offset from the bone's rest: degrees about
-## the bone's own X, Y and Z. `bind()` writes `rest * offset_rotation(key)`.
+## the bone's semantic X, Y and Z. `bind()` writes `rest * F * offset_rotation(key) * F⁻¹`,
+## with F the bone's `semantic_frame()`.
 static func offset_rotation(degrees: Vector3) -> Quaternion:
 	return Quaternion.from_euler(
 		Vector3(deg_to_rad(degrees.x), deg_to_rad(degrees.y), deg_to_rad(degrees.z))
 	)
+
+
+## The turn, in the bone's own local space, from its local axes to its semantic ones:
+## Y along the bone (unchanged), X the skeleton's +X made perpendicular to it, Z = X × Y.
+##
+## Both frames share Y, so this is always a pure twist about the bone's length: it re-aims
+## which way X swings and Z reaches, and never changes where the bone points. For a bone whose
+## local X already is the side axis it is the identity — the legs and spines of all three rigs
+## are within 1° — so those keys are exactly the `rest * offset` they always were. It is what
+## makes the same key mean the same movement on a rig whose arms are twisted 35° about their
+## length (the new protagonist) and one whose arms are twisted 16° (the former protagonist).
+static func semantic_frame(skeleton: Skeleton3D, index: int) -> Quaternion:
+	var global := skeleton.get_bone_global_rest(index).basis.orthonormalized()
+	var along := global.y.normalized()
+	var side := Vector3.RIGHT - along * along.dot(Vector3.RIGHT)
+	if side.length() < SEMANTIC_MIN_SIDE:
+		return Quaternion.IDENTITY
+	side = side.normalized()
+	var semantic := Basis(side, along, side.cross(along))
+	return (global.inverse() * semantic).get_rotation_quaternion().normalized()
 
 
 ## The `HANGING_LIMBS` this rig resolves but does not model hanging down: their rest Y, in
@@ -423,10 +495,22 @@ static func describe(report: Dictionary) -> String:
 			]
 		)
 	var posed: Array = report.get("posed", [])
-	return "%d bone(s) resolved, %d not on this rig (%s), held at their modelled pose: %s | %s" % [
-		resolved.size(),
-		missing.size(),
-		", ".join(PackedStringArray(missing)) if not missing.is_empty() else "none",
-		", ".join(PackedStringArray(posed)) if not posed.is_empty() else "none",
-		" | ".join(parts),
-	]
+	var mirrored: Array = report.get("mirrored", [])
+	var twists: Dictionary = report.get("twist_degrees", {})
+	var widest := 0.0
+	for canonical in twists:
+		widest = maxf(widest, absf(float(twists[canonical])))
+	return (
+		"%d bone(s) resolved, %d not on this rig (%s), held at their modelled pose: %s, "
+		% [
+			resolved.size(),
+			missing.size(),
+			", ".join(PackedStringArray(missing)) if not missing.is_empty() else "none",
+			", ".join(PackedStringArray(posed)) if not posed.is_empty() else "none",
+		]
+		+ "sides mirrored: %s, local axes twisted up to %.1f° | %s" % [
+			", ".join(PackedStringArray(mirrored)) if not mirrored.is_empty() else "none",
+			widest,
+			" | ".join(parts),
+		]
+	)
