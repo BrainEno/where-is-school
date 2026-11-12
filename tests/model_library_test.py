@@ -291,12 +291,15 @@ class ManifestLibrary(Library):
         self.add(rel[len(self.PREFIX):] if rel.startswith(self.PREFIX) else rel, make_glb(document))
 
 
-def two_character_library(project_root: str) -> ManifestLibrary:
-    """Both runtime characters, registered under the paths the production manifest uses."""
+def runtime_character_library(project_root: str) -> ManifestLibrary:
+    """Every runtime character, registered under the paths the production manifest uses:
+    the former protagonist, Q and the protagonist, in `REQUIRED_RUNTIME_MODELS` order."""
     library = ManifestLibrary(project_root)
     library.register(ml.REQUIRED_RUNTIME_MODELS[0],
                      character_document(root_name="CHR_Protagonist_Test"))
     library.register(ml.REQUIRED_RUNTIME_MODELS[1], character_document(root_name="CHR_Q_Test"))
+    library.register(ml.REQUIRED_RUNTIME_MODELS[2],
+                     character_document(root_name="Protagonist_Character_Test"))
     return library
 
 
@@ -497,7 +500,7 @@ def test_manifest_format_errors() -> None:
 
         # A registered model that is not on disk, in a manifest whose shape is otherwise
         # exactly right: the file has to be named as the missing thing.
-        missing = two_character_library(tmp)
+        missing = runtime_character_library(tmp)
         os.remove(os.path.join(missing.root, ml.REQUIRED_RUNTIME_MODELS[1].replace("/", os.sep)))
         problems, _ = missing.check_manifest()
         check(any("does not exist" in problem and "q.glb" in problem for problem in problems),
@@ -554,7 +557,7 @@ def test_manifest_update_accepts_a_reviewed_change() -> None:
 
 def test_manifest_is_wired_into_check() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         rel = ml.REQUIRED_RUNTIME_MODELS[0]
         saved = ml.LIBRARY
         try:
@@ -596,23 +599,25 @@ def document_with(library: ManifestLibrary, mutate) -> dict:
 
 def test_manifest_requires_every_runtime_character() -> None:
     check(ml.REQUIRED_RUNTIME_MODELS == ("assets/models/protagonist/protagonist.glb",
-                                         "assets/models/q/q.glb"),
-          "the required set is the two runtime characters, got: %r" % (ml.REQUIRED_RUNTIME_MODELS,))
+                                         "assets/models/q/q.glb",
+                                         "assets/models/protagonist/Protagonist_Character.glb"),
+          "the required set is the three runtime characters, got: %r" % (ml.REQUIRED_RUNTIME_MODELS,))
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         problems, notes = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
-        check(problems == [], "both characters registered must pass, got: %s" % problems)
-        check(len(notes) == 2, "both characters must be described, got: %s" % notes)
+        check(problems == [], "all three characters registered must pass, got: %s" % problems)
+        check(len(notes) == 3, "all three characters must be described, got: %s" % notes)
 
-        for index, rel in ((1, ml.REQUIRED_RUNTIME_MODELS[1]), (0, ml.REQUIRED_RUNTIME_MODELS[0])):
+        for index in (2, 1, 0):
+            rel = ml.REQUIRED_RUNTIME_MODELS[index]
             library.write_manifest(document_with(library, lambda d, i=index: d["models"].pop(i)))
             problems, notes = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
             check(any(rel in problem and "has no entry" in problem for problem in problems),
                   "a manifest without %s must be refused by name, got: %s" % (rel, problems))
             check(notes == [],
-                  "a manifest that lost an entry must not go on to describe the other one: %s" % notes)
+                  "a manifest that lost an entry must not go on to describe the others: %s" % notes)
 
-        # A whole manifest is not "at least one of them": the check runs on both characters
+        # A whole manifest is not "at least one of them": the check runs on every character
         # or it does not run.
         library.write_manifest(document_with(library, lambda d: d["models"].pop(0)))
         problems, _ = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
@@ -622,8 +627,8 @@ def test_manifest_requires_every_runtime_character() -> None:
 
 def test_manifest_rejects_duplicate_and_extra_entries() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
-        for index, rel in ((0, ml.REQUIRED_RUNTIME_MODELS[0]), (1, ml.REQUIRED_RUNTIME_MODELS[1])):
+        library = runtime_character_library(tmp)
+        for index, rel in enumerate(ml.REQUIRED_RUNTIME_MODELS):
             library.write_manifest(document_with(
                 library, lambda d, i=index: d["models"].append(copy.deepcopy(d["models"][i]))))
             problems, _ = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
@@ -650,7 +655,7 @@ def test_manifest_rejects_duplicate_and_extra_entries() -> None:
 
 def test_manifest_rejects_a_broken_entry_shape() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         for field in ("counts", "scene_roots", "nodes", "meshes", "materials", "skins", "animations"):
             library.write_manifest(document_with(library, lambda d, f=field: d["models"][0].pop(f)))
             problems, _ = library.check_manifest()
@@ -697,7 +702,8 @@ def test_manifest_rejects_a_broken_entry_shape() -> None:
 
         library.write_manifest(document_with(library, lambda d: d["models"].append("/tmp/x")))
         problems, _ = library.check_manifest()
-        check(any("models[2] is" in problem and "not an object" in problem for problem in problems),
+        appended = "models[%d] is" % len(ml.REQUIRED_RUNTIME_MODELS)
+        check(any(appended in problem and "not an object" in problem for problem in problems),
               "an entry that is not an object must be refused, got: %s" % problems)
 
         for misplaced, expected in (("assets/other/x.glb", "only covers runtime models"),
@@ -712,7 +718,7 @@ def test_manifest_rejects_a_broken_entry_shape() -> None:
 
 def test_manifest_rejects_a_broken_entry_element() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
 
         def case(mutate, needle, message: str) -> None:
             library.write_manifest(document_with(library, mutate))
@@ -746,7 +752,7 @@ def test_manifest_rejects_a_broken_entry_element() -> None:
 
 def test_manifest_rejects_duplicate_resource_names() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
 
         # Manifest side: the entry is the one that is malformed, so it is refused before any
         # model is opened.
@@ -771,7 +777,7 @@ def test_manifest_rejects_duplicate_resource_names() -> None:
     # Model side: two resources in the .glb that share a name. The counts are unchanged, so
     # only the identity of the resources can see it.
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         rel = ml.REQUIRED_RUNTIME_MODELS[1]
         problems, _ = library.check_manifest()
         check(problems == [], "the pair must pass before the model is changed, got: %s" % problems)
@@ -822,7 +828,7 @@ def test_manifest_rejects_duplicate_resource_names() -> None:
 
 def test_manifest_update_refuses_a_malformed_manifest() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         good = library.read_manifest()
         library.write_manifest(document_with(library, lambda d: d["models"][0].pop("nodes")))
         broken = library.read_manifest()
@@ -982,9 +988,9 @@ def main() -> int:
     # is a project whose runtime characters are not structurally checked, and that is a
     # failure rather than a pass (the check below on a manifest-less tree pins it).
     with tempfile.TemporaryDirectory() as tmp:
-        library = two_character_library(tmp)
+        library = runtime_character_library(tmp)
         # The desk is in the library but not in the manifest: the runtime manifest lists the
-        # two characters and nothing else, which is now a rule rather than a convention.
+        # three characters and nothing else, which is now a rule rather than a convention.
         library.add("classroom/classroom_desk.glb", make_glb(simple_model()))
         saved = ml.LIBRARY
         try:
