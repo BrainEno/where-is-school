@@ -133,18 +133,18 @@ func _push_key(code: Key) -> void:
 	await process_frame
 
 func _push_pad(button: JoyButton) -> void:
-	# A synthetic pad event belongs to the Input singleton, not a physical device.
-	# Parse both halves through the same path so Xvfb does not receive a half-open pad.
+	# Inject at the SceneTree root so focused Controls receive the synthetic device event
+	# through their normal GUI navigation path, even though Xvfb has no physical pad.
 	var event := InputEventJoypadButton.new()
 	event.device = 0
 	event.button_index = button
 	event.pressed = true
-	Input.parse_input_event(event)
+	root.push_input(event)
 	await process_frame
 	var release := event.duplicate() as InputEventJoypadButton
 	release.device = 0
 	release.pressed = false
-	Input.parse_input_event(release)
+	root.push_input(release)
 	await process_frame
 
 func _open_title() -> void:
