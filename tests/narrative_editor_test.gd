@@ -40,7 +40,7 @@ class UnreadableWriter extends "res://addons/narrative_editor/core/narrative_fil
 
 	func _read_text(target: String) -> Dictionary:
 		if target == unreadable_path:
-			return {"ok": false, "reason": "测试模拟的读取错误"}
+			return {"ok": false, "reason": "测试设定的读取错误"}
 		return super._read_text(target)
 
 
@@ -492,7 +492,7 @@ func _case_failed_save_keeps_both_languages() -> void:
 		var saved := store.save()
 		var label := String(scenario["label"])
 		_expect(not saved, "%s：save() 竟然返回成功。" % label)
-		_expect(store.describe_errors().contains("保存失败"), "%s：没有明确报出保存失败。" % label)
+		_expect(store.describe_errors().contains("保存失败"), "%s：没有明确说明保存失败。" % label)
 		_expect(_read(en_path) == before_en, "%s：英文文件被写坏了。" % label)
 		_expect(_read(zh_path) == before_zh, "%s：中文文件被写坏了。" % label)
 		_expect(store.is_dirty(), "%s：保存失败之后 dirty 状态丢了。" % label)
@@ -512,37 +512,37 @@ func _case_external_edits_are_conflicts() -> void:
 		var before_zh := _read(zh_path)
 		var store := Store.new(ROOT)
 		if not _prepare_bilingual_edit(
-			store, "Pending English edit.", "尚未保存的中文修改。", "外部修改 %s" % locale
+			store, "Pending English edit.", "未保存的中文修改。", "外部修改 %s" % locale
 		):
 			continue
 		var conflict_path := en_path if locale == "en" else zh_path
 		var external_text := (before_en if locale == "en" else before_zh) + " \n"
 		_write(conflict_path, external_text)
 
-		_expect(not store.save(), "%s 文件被外部修改后竟然保存成功。" % locale)
+		_expect(not store.save(), "%s 文件被磁盘内容变更后竟然保存成功。" % locale)
 		var errors := store.describe_errors()
-		_expect(errors.contains("保存冲突"), "%s：没有明确报出保存冲突：%s" % [locale, errors])
-		_expect(errors.contains(conflict_path), "%s：错误没有点出冲突文件：%s" % [locale, errors])
-		_expect(_read(conflict_path) == external_text, "%s：外部版本被覆盖。" % locale)
+		_expect(errors.contains("保存已停止"), "%s：没有明确说明保存已停止：%s" % [locale, errors])
+		_expect(errors.contains(conflict_path), "%s：错误没有点出变化的文件：%s" % [locale, errors])
+		_expect(_read(conflict_path) == external_text, "%s：外部版本被改写。" % locale)
 		_expect(
 			_read(zh_path if locale == "en" else en_path)
 			== (before_zh if locale == "en" else before_en),
-			"%s 冲突时另一种语言的文件被部分保存。" % locale
+			"%s 文件变化时另一种语言的文件被部分保存。" % locale
 		)
-		_expect(store.is_dirty(), "%s 冲突后编辑器里的未保存修改丢失。" % locale)
+		_expect(store.is_dirty(), "%s 文件变化后编辑器里的未保存修改丢失。" % locale)
 		var conversation_id := String(store.list_ids()[0])
 		var node_index := _first_node_with_text(store, conversation_id)
 		var pending := _field(store.node_model(conversation_id, node_index), "text")
 		var pending_values: Dictionary = pending.get("values", {})
 		_expect(
 			String(pending_values.get("en", "")) == "Pending English edit."
-				and String(pending_values.get("zh-CN", "")) == "尚未保存的中文修改。",
-			"%s 冲突后内存中的双语编辑没有保留。" % locale
+				and String(pending_values.get("zh-CN", "")) == "未保存的中文修改。",
+			"%s 文件变化后内存中的双语编辑没有保留。" % locale
 		)
 		_expect(
 			not FileAccess.file_exists(en_path + ".saving")
 				and not FileAccess.file_exists(zh_path + ".saving"),
-			"%s 的预检冲突不应创建 .saving 文件。" % locale
+			"%s 的预检检测不应新建 .saving 文件。" % locale
 		)
 
 
@@ -556,22 +556,22 @@ func _case_deleted_target_is_a_conflict() -> void:
 		var other_before := _read(other_path)
 		var store := Store.new(ROOT)
 		if not _prepare_bilingual_edit(
-			store, "Pending English edit.", "尚未保存的中文修改。", "删除文件 %s" % locale
+			store, "Pending English edit.", "未保存的中文修改。", "删除文件 %s" % locale
 		):
 			continue
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(missing_path))
 
 		_expect(not store.save(), "%s 目标文件被删除后竟然保存成功。" % locale)
 		var errors := store.describe_errors()
-		_expect(errors.contains("保存冲突"), "%s 删除后没有明确报出冲突：%s" % [locale, errors])
-		_expect(errors.contains(missing_path), "%s 删除后的错误没有点出路径：%s" % [locale, errors])
-		_expect(not FileAccess.file_exists(missing_path), "保存尝试重新创建了已删除的 %s 文件。" % locale)
+		_expect(errors.contains("保存已停止"), "%s 删除后没有明确说明保存已停止：%s" % [locale, errors])
+		_expect(errors.contains(missing_path), "%s 删除后的错误没有点出文件：%s" % [locale, errors])
+		_expect(not FileAccess.file_exists(missing_path), "保存尝试新建了已删除的 %s 文件。" % locale)
 		_expect(_read(other_path) == other_before, "%s 删除时另一语言不应部分保存。" % locale)
-		_expect(store.is_dirty(), "%s 删除冲突后编辑器里的未保存修改丢失。" % locale)
+		_expect(store.is_dirty(), "%s 删除文件变化后编辑器里的未保存修改丢失。" % locale)
 		_expect(
 			not FileAccess.file_exists(en_path + ".saving")
 				and not FileAccess.file_exists(zh_path + ".saving"),
-			"%s 删除冲突不应创建 .saving 文件。" % locale
+			"%s 删除后不应新建 .saving 文件。" % locale
 		)
 
 
@@ -584,16 +584,16 @@ func _case_unreadable_target_is_a_conflict() -> void:
 	var writer := UnreadableWriter.new()
 	writer.unreadable_path = zh_path
 	var store := Store.new(ROOT, writer)
-	if not _prepare_bilingual_edit(store, "Pending English edit.", "尚未保存的中文修改。", "不可读文件"):
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "不可读文件"):
 		return
 
 	_expect(not store.save(), "无法读取中文文件时竟然保存成功。")
 	var errors := store.describe_errors()
-	_expect(errors.contains("保存冲突"), "无法读取目标后没有明确报出冲突：%s" % errors)
-	_expect(errors.contains(zh_path), "无法读取目标的错误没有点出路径：%s" % errors)
+	_expect(errors.contains("保存已停止"), "无法读取目标后没有明确说明保存已停止：%s" % errors)
+	_expect(errors.contains(zh_path), "无法读取目标的错误没有点出文件名：%s" % errors)
 	_expect(errors.contains("无法读取"), "无法读取目标的错误原因不明确：%s" % errors)
 	_expect(_read(en_path) == before_en, "中文目标不可读时英文文件不应部分保存。")
-	_expect(_read(zh_path) == before_zh, "模拟读取失败不应改动中文磁盘内容。")
+	_expect(_read(zh_path) == before_zh, "测试设定的读取失败不应改动中文磁盘内容。")
 	_expect(store.is_dirty(), "目标不可读后编辑器里的未保存修改丢失。")
 
 
@@ -608,21 +608,21 @@ func _case_rechecks_after_staging() -> void:
 	writer.external_path = en_path
 	writer.external_text = before_en + " \n"
 	var store := Store.new(ROOT, writer)
-	if not _prepare_bilingual_edit(store, "Pending English edit.", "尚未保存的中文修改。", "暂存期间修改"):
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "暂存期间修改"):
 		return
 
-	_expect(not store.save(), "暂存期间英文文件被外部修改后竟然保存成功。")
+	_expect(not store.save(), "暂存期间英文文件被磁盘内容变更后竟然保存成功。")
 	_expect(writer.mutated, "测试没有在暂存阶段注入外部修改。")
 	var errors := store.describe_errors()
-	_expect(errors.contains(en_path), "替换前复检没有点出英文冲突路径：%s" % errors)
-	_expect(_read(en_path) == writer.external_text, "替换前复检仍覆盖了暂存期间的外部修改。")
-	_expect(_read(zh_path) == before_zh, "暂存期间的冲突不应让中文文件部分保存。")
-	_expect(store.is_dirty(), "替换前冲突后未保存编辑没有保留。")
+	_expect(errors.contains(en_path), "替换前复检没有点出英文目标文件名：%s" % errors)
+	_expect(_read(en_path) == writer.external_text, "替换前复检仍改写了暂存期间的外部修改。")
+	_expect(_read(zh_path) == before_zh, "暂存期间的变化后不应让中文文件部分保存。")
+	_expect(store.is_dirty(), "替换前文件变化后未保存编辑没有保留。")
 	for suffix: String in [".saving", ".backup"]:
 		_expect(
 			not FileAccess.file_exists(en_path + suffix)
 				and not FileAccess.file_exists(zh_path + suffix),
-			"替换前冲突后不应残留 %s。" % suffix
+			"替换前文件变化后不应留下 %s。" % suffix
 		)
 
 
@@ -639,26 +639,26 @@ func _case_external_edit_survives_rollback() -> void:
 	writer.external_path = first_path
 	writer.external_text = before_first + " \n"
 	var store := Store.new(ROOT, writer)
-	if not _prepare_bilingual_edit(store, "Pending English edit.", "尚未保存的中文修改。", "事务回滚冲突"):
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "事务恢复期间修改"):
 		return
 
-	_expect(not store.save(), "回滚期间发生外部修改后竟然保存成功。")
+	_expect(not store.save(), "恢复期间发生磁盘内容变更后竟然保存成功。")
 	_expect(writer.mutated, "测试没有在事务后半段注入外部修改。")
 	var errors := store.describe_errors()
-	_expect(errors.contains("回滚检测到外部变化"), "错误没有报告安全回滚冲突：%s" % errors)
-	_expect(errors.contains(first_path), "回滚诊断没有指出被外部修改的目标：%s" % errors)
-	_expect(errors.contains(first_path + ".backup"), "回滚诊断没有指出保留的备份：%s" % errors)
-	_expect(errors.contains("手工比对恢复"), "回滚诊断缺少人工恢复指引：%s" % errors)
-	_expect(_read(first_path) == writer.external_text, "回滚覆盖了事务期间第三方写入的内容。")
-	_expect(_read(first_path + ".backup") == before_first, "安全回滚没有保留原始备份。")
+	_expect(errors.contains("恢复时检测到外部变化"), "错误没有报告安全恢复中的外部修改：%s" % errors)
+	_expect(errors.contains(first_path), "恢复说明没有指出被外部修改的目标：%s" % errors)
+	_expect(errors.contains(first_path + ".backup"), "恢复说明没有指出保留的备份：%s" % errors)
+	_expect(errors.contains("手工比对恢复"), "恢复说明缺少人工恢复指引：%s" % errors)
+	_expect(_read(first_path) == writer.external_text, "恢复改写了事务期间第三方写入的内容。")
+	_expect(_read(first_path + ".backup") == before_first, "安全恢复没有保留原始备份。")
 	_expect(_read(second_path) == before_second, "第二种语言应安全恢复成原文。")
-	_expect(not FileAccess.file_exists(second_path + ".backup"), "已安全恢复的第二种语言不应残留备份。")
-	_expect(store.is_dirty(), "发生回滚冲突后编辑器里的未保存修改丢失。")
+	_expect(not FileAccess.file_exists(second_path + ".backup"), "已安全恢复的第二种语言不应留下备份。")
+	_expect(store.is_dirty(), "发生恢复文件变化后编辑器里的未保存修改丢失。")
 	for suffix: String in [".saving"]:
 		_expect(
 			not FileAccess.file_exists(first_path + suffix)
 				and not FileAccess.file_exists(second_path + suffix),
-			"安全回滚后不应残留本次临时文件。"
+			"安全恢复后不应留下本次临时文件。"
 		)
 
 
@@ -675,13 +675,13 @@ func _case_crash_artifacts_are_preserved_or_recovered() -> void:
 
 	var store := Store.new(ROOT)
 	var opened := store.open("dialogue", "alley")
-	_expect(opened, "存在崩溃遗留文件时，能恢复的内容仍应可打开：%s" % store.describe_errors())
+	_expect(opened, "存在中断保存留下的文件时，能恢复的内容仍应可打开：%s" % store.describe_errors())
 	if not opened:
 		return
 	_expect(_read(en_path) == before_en, "目标缺失时没有从 .backup 恢复英文原文。")
 	_expect(not FileAccess.file_exists(en_path + ".backup"), "已恢复的英文 .backup 应被移回目标。")
-	_expect(FileAccess.file_exists(en_path + ".saving"), "打开时不应擅自删除遗留 .saving。")
-	_expect(FileAccess.file_exists(zh_path + ".backup"), "目标仍存在时不应擅自删除含糊的 .backup。")
+	_expect(FileAccess.file_exists(en_path + ".saving"), "打开时不应擅自删除旧的 .saving。")
+	_expect(FileAccess.file_exists(zh_path + ".backup"), "目标仍存在时不应擅自删除不确定的 .backup。")
 	var warned_saving := false
 	var warned_backup := false
 	var warned_recovery := false
@@ -689,7 +689,7 @@ func _case_crash_artifacts_are_preserved_or_recovered() -> void:
 		warned_saving = warned_saving or warning.contains(en_path + ".saving")
 		warned_backup = warned_backup or warning.contains(zh_path + ".backup")
 		warned_recovery = warned_recovery or warning.contains("已经把备份还原")
-	_expect(warned_saving, "打开时没有警告遗留 .saving。")
+	_expect(warned_saving, "打开时没有警告旧的 .saving。")
 	_expect(warned_backup, "打开时没有警告目标仍存在的 .backup。")
 	_expect(warned_recovery, "打开时没有报告自动恢复的 .backup。")
 
@@ -698,14 +698,14 @@ func _case_crash_artifacts_are_preserved_or_recovered() -> void:
 	var field := _field(store.node_model(conversation_id, node_index), "text")
 	store.set_field(field, "en", "This remains an unsaved edit.")
 	store.set_field(field, "zh-CN", "这条修改仍然留在内存中。")
-	_expect(not store.save(), "遗留 .saving 存在时不应开始新保存。")
-	_expect(store.describe_errors().contains(en_path + ".saving"), "保存没有指出遗留 .saving。")
-	_expect(FileAccess.file_exists(en_path + ".saving"), "保存删除了遗留 .saving。")
+	_expect(not store.save(), "旧的 .saving 存在时不应开始新保存。")
+	_expect(store.describe_errors().contains(en_path + ".saving"), "保存没有指出旧的 .saving。")
+	_expect(FileAccess.file_exists(en_path + ".saving"), "保存删除了旧的 .saving。")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(en_path + ".saving"))
-	_expect(not store.save(), "目标存在且有含糊 .backup 时不应开始新保存。")
-	_expect(store.describe_errors().contains(zh_path + ".backup"), "保存没有指出含糊的 .backup。")
+	_expect(not store.save(), "目标存在且有不确定的 .backup 时不应开始新保存。")
+	_expect(store.describe_errors().contains(zh_path + ".backup"), "保存没有指出不确定的 .backup。")
 	_expect(FileAccess.file_exists(zh_path + ".backup"), "保存删除了目标仍存在时的 .backup。")
-	_expect(store.is_dirty(), "遗留事务文件冲突后编辑器里的修改丢失。")
+	_expect(store.is_dirty(), "旧的事务文件存在时，编辑器里的修改仍应保留。")
 
 
 func _prepare_bilingual_edit(

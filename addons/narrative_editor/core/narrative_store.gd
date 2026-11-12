@@ -16,8 +16,8 @@ extends RefCounted
 ##    checks the original snapshots before staging and before each replacement; on failure it
 ##    restores targets that still contain its own write. An external edit is never
 ##    overwritten; during rollback, the conflict file and any available backup are left for
-##    manual recovery. Filesystem checks and renames are not an atomic compare-and-swap, so a
-##    narrow race remains.
+##    manual recovery. 保存失败时也保持编辑器里的未保存修改；文件检查和重命名并非原子
+##    compare-and-swap。
 ## 3. **A save is minimal.** Edits are applied to the spans of the strings that changed,
 ##    so the file keeps its formatting, its field order and every field the tool does not
 ##    know about, and the diff is the line the author edited.

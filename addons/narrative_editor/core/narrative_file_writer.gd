@@ -25,9 +25,9 @@ func write_atomic(target: String, text: String) -> String:
 	var temp := target + TEMP_SUFFIX
 	var backup := target + BACKUP_SUFFIX
 	if FileAccess.file_exists(temp):
-		return "发现未处理的临时文件 %s；未覆盖它，请先检查并手工处理。" % temp
+		return "发现未处理的临时文件 %s；未改写它，请先检查并手工处理。" % temp
 	if FileAccess.file_exists(backup):
-		return "发现未处理的备份文件 %s；未覆盖它，请先检查并手工处理。" % backup
+		return "发现未处理的备份文件 %s；未改写它，请先检查并手工处理。" % backup
 
 	var expected_exists := FileAccess.file_exists(target)
 	var expected_text := ""
@@ -51,7 +51,7 @@ func write_atomic(target: String, text: String) -> String:
 	var installed := _read_text(target)
 	if not bool(installed["ok"]) or String(installed["text"]) != text:
 		var conflict := (
-			"保存冲突：%s 在替换期间已被修改、删除或无法读取；未覆盖当前内容。"
+			"保存已停止：%s 在替换期间已被修改、删除或无法读取；未改写当前内容。"
 			% target
 		)
 		if expected_exists:
@@ -78,7 +78,7 @@ func check_pair(targets: Array[String], originals: Array[String]) -> String:
 		for suffix: String in [TEMP_SUFFIX, BACKUP_SUFFIX]:
 			var artifact := target + suffix
 			if FileAccess.file_exists(artifact):
-				return "保存冲突：发现未处理的文件 %s；未覆盖它，请先检查并手工处理。" % artifact
+				return "保存已停止：发现未处理的文件 %s；未改写它，请先检查并手工处理。" % artifact
 	return ""
 
 
@@ -103,7 +103,7 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 			staged_paths.append(temp)
 			staged_texts.append(texts[index])
 			return _with_temp_cleanup(
-				"保存冲突：保存期间出现临时文件 %s；未覆盖它。" % temp,
+				"保存已停止：保存期间出现临时文件 %s；未改写它。" % temp,
 				staged_paths,
 				staged_texts
 			)
@@ -119,7 +119,7 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 		var staged := _read_text(temp)
 		if not bool(staged["ok"]) or String(staged["text"]) != texts[index]:
 			return _with_temp_cleanup(
-				"保存冲突：临时文件 %s 在写入期间被修改或无法读取；未用它替换内容。"
+				"保存已停止：临时文件 %s 在写入期间被修改或无法读取；未用它替换内容。"
 				% temp,
 				staged_paths,
 				staged_texts
@@ -148,7 +148,7 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 				texts,
 				originals,
 				replaced,
-				"保存冲突：保存期间检测到目标文件变化。%s" % failure
+				"保存已停止：保存期间检测到目标文件变化。%s" % failure
 			)
 			return _with_temp_cleanup(rollback, staged_paths, staged_texts)
 
@@ -159,7 +159,7 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 		var state := _read_text(backup)
 		if not bool(state["ok"]) or String(state["text"]) != originals[index]:
 			var backup_conflict := (
-				"保存冲突：备份 %s 在事务期间丢失、被修改或无法读取；未删除其他备份。"
+				"保存已停止：备份 %s 在事务期间丢失、被修改或无法读取；未删除其他备份。"
 				+ "请保留双语目标文件和现存备份，手工比对恢复。"
 			)
 			return backup_conflict % backup
@@ -167,7 +167,7 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 		failure = _snapshot_conflict(targets[index], true, texts[index])
 		if not failure.is_empty():
 			return (
-				"保存冲突：清理备份前检测到目标变化。%s 请保留目标文件和现存备份，手工比对恢复。"
+				"保存已停止：清理备份前检测到目标变化。%s 请保留目标文件和现存备份，手工比对恢复。"
 				% failure
 			)
 		failure = _discard_backup_if_matches(targets[index], originals[index], true)
@@ -195,7 +195,7 @@ func _rollback(
 	if unrestored.is_empty():
 		return "%s 已还原本次替换的文件。" % failure
 	return (
-		"%s 回滚检测到外部变化，未覆盖冲突内容。请保留以下目标文件和备份，手工比对恢复：\n%s"
+		"%s 恢复时检测到外部变化，未改写相关内容。请保留以下目标文件和备份，手工比对恢复：\n%s"
 		% [failure, "\n".join(PackedStringArray(unrestored))]
 	)
 
@@ -212,12 +212,12 @@ func _replace(
 ) -> String:
 	var backup := target + BACKUP_SUFFIX
 	if FileAccess.file_exists(backup):
-		return "保存冲突：发现未处理的备份文件 %s；未覆盖它。" % backup
+		return "保存已停止：发现未处理的备份文件 %s；未改写它。" % backup
 	var staged := _read_text(temp)
 	if not bool(staged["ok"]):
 		return "无法读取临时文件 %s：%s。" % [temp, String(staged["reason"])]
 	if String(staged["text"]) != new_text:
-		return "保存冲突：临时文件 %s 在替换前已被修改；未用它覆盖目标。" % temp
+		return "保存已停止：临时文件 %s 在替换前已被修改；未用它改写目标。" % temp
 	var conflict := _snapshot_conflict(target, expected_exists, expected_text)
 	if not conflict.is_empty():
 		return conflict
@@ -231,7 +231,7 @@ func _replace(
 		var moved := _read_text(backup)
 		if not bool(moved["ok"]) or String(moved["text"]) != expected_text:
 			var restore_failure := _restore_displaced_target(target)
-			var message := "保存冲突：%s 在替换期间发生变化；没有继续写入。" % target
+			var message := "保存已停止：%s 在替换期间发生变化；没有继续写入。" % target
 			if not restore_failure.is_empty():
 				message += " " + restore_failure
 			return message
@@ -239,7 +239,7 @@ func _replace(
 	# The first rename leaves the target path vacant. If another process creates it in the
 	# meantime, do not rely on platform-specific rename-overwrite behavior.
 	if FileAccess.file_exists(target):
-		var message := "保存冲突：%s 在暂存文件换入前重新出现；未覆盖它。" % target
+		var message := "保存已停止：%s 在暂存文件换入前重新出现；未改写它。" % target
 		if expected_exists:
 			var restore_failure := _restore_displaced_target(target)
 			if not restore_failure.is_empty():
@@ -247,7 +247,7 @@ func _replace(
 		return message
 	staged = _read_text(temp)
 	if not bool(staged["ok"]) or String(staged["text"]) != new_text:
-		var message := "保存冲突：临时文件 %s 在换入前已被修改或无法读取。" % temp
+		var message := "保存已停止：临时文件 %s 在换入前已被修改或无法读取。" % temp
 		if expected_exists:
 			var restore_failure := _restore_displaced_target(target)
 			if not restore_failure.is_empty():
@@ -273,7 +273,7 @@ func _restore_displaced_target(target: String) -> String:
 	if not FileAccess.file_exists(backup):
 		return "备份 %s 不存在，无法自动还原。" % backup
 	if FileAccess.file_exists(target):
-		return "目标 %s 已重新出现，未覆盖它；备份保留在 %s。" % [target, backup]
+		return "目标 %s 已重新出现，未改写它；备份保留在 %s。" % [target, backup]
 	var code := _rename(backup, target)
 	if code != OK:
 		return "无法自动还原 %s（错误码 %d）；原文保留在 %s。" % [target, code, backup]
@@ -291,12 +291,12 @@ func _restore_written_target(target: String, new_text: String, original_text: St
 	if not bool(saved_original["ok"]):
 		return "无法读取备份 %s；目标 %s 未动，备份请手工检查。" % [backup, target]
 	if String(saved_original["text"]) != original_text:
-		return "备份 %s 在事务期间被修改；目标 %s 未动，两个文件均保留。" % [backup, target]
+		return "备份 %s 在事务期间被修改；目标 %s 未动，两个文件都保留。" % [backup, target]
 	var current := _read_text(target)
 	if not bool(current["ok"]):
-		return "目标 %s 已被删除或无法读取；未自动覆盖，备份保留在 %s。" % [target, backup]
+		return "目标 %s 已被删除或无法读取；未自动改写，备份保留在 %s。" % [target, backup]
 	if String(current["text"]) != new_text:
-		return "目标 %s 在事务期间被外部修改；未覆盖它，备份保留在 %s。" % [target, backup]
+		return "目标 %s 在事务期间被外部修改；未改写它，备份保留在 %s。" % [target, backup]
 	if not _discard(target):
 		return "无法安全移除本次写入的目标 %s；备份保留在 %s。" % [target, backup]
 	var code := _rename(backup, target)
@@ -308,18 +308,18 @@ func _restore_written_target(target: String, new_text: String, original_text: St
 func _snapshot_conflict(target: String, expected_exists: bool, expected_text: String) -> String:
 	var exists := FileAccess.file_exists(target)
 	if expected_exists and not exists:
-		return "保存冲突：文件在打开后已被删除或移走：%s。" % target
+		return "保存已停止：文件在打开后已被删除或移走：%s。" % target
 	if not expected_exists and exists:
-		return "保存冲突：目标文件在保存期间被创建：%s。" % target
+		return "保存已停止：目标文件在保存期间新建：%s。" % target
 	if not exists:
 		return ""
 	var current := _read_text(target)
 	if not bool(current["ok"]):
 		if not FileAccess.file_exists(target):
-			return "保存冲突：文件在检查时已被删除或移走：%s。" % target
-		return "保存冲突：无法读取文件 %s：%s。" % [target, String(current["reason"])]
+			return "保存已停止：文件在检查时已被删除或移走：%s。" % target
+		return "保存已停止：无法读取文件 %s：%s。" % [target, String(current["reason"])]
 	if String(current["text"]) != expected_text:
-		return "保存冲突：文件在打开后已被外部修改：%s。" % target
+		return "保存已停止：文件在打开后已被外部修改：%s。" % target
 	return ""
 
 
@@ -327,11 +327,11 @@ func _discard_backup_if_matches(target: String, expected_text: String, required:
 	var backup := target + BACKUP_SUFFIX
 	if not FileAccess.file_exists(backup):
 		if required:
-			return "保存冲突：备份文件在清理前丢失：%s。" % backup
+			return "保存已停止：备份文件在清理前丢失：%s。" % backup
 		return ""
 	var state := _read_text(backup)
 	if not bool(state["ok"]) or String(state["text"]) != expected_text:
-		return "保存冲突：备份 %s 已变化或无法读取，未删除它；请手工检查。" % backup
+		return "保存已停止：备份 %s 已变化或无法读取，未删除它；请手工检查。" % backup
 	if not _discard(backup):
 		return "无法清理备份 %s；请手工检查。" % backup
 	return ""
