@@ -22,6 +22,7 @@ extends SceneTree
 ##   the late writer, while rollback-time rewrites and target recreation retain recovery bytes;
 ## - backup and staged-file cleanup inspect an isolated batch before deleting any member;
 ##   injected late conflicts retain both bilingual backups and cleanup warnings reach the store;
+## - validation-time cleanup warnings pass through the validator and appear in the dock status;
 ## - a colliding stage path is never truncated, and rollback cleanup leaves a late .backup intact;
 ## - stale .saving/.backup files are kept or recovered only when the target is missing;
 ## - a late .saving with candidate-identical content is never mistaken for this save's file;
@@ -39,6 +40,7 @@ const FileWriter = preload("res://addons/narrative_editor/core/narrative_file_wr
 const JsonText = preload("res://addons/narrative_editor/core/narrative_json_text.gd")
 const Parity = preload("res://addons/narrative_editor/core/narrative_parity.gd")
 const FailWriter = preload("res://tests/narrative_editor_fail_writer.gd")
+const Dock = preload("res://addons/narrative_editor/ui/narrative_editor_dock.gd")
 
 
 ## Simulates a read error without relying on chmod, which is not effective for every CI user.
@@ -268,6 +270,28 @@ class StageCreationCollisionWriter extends "res://addons/narrative_editor/core/n
 		return true
 
 
+## Leaves the final validation stage directory behind so its warning can be checked end to end.
+class ValidationWarningWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var stage_directory: String = ""
+	var warning_injected: bool = false
+
+	func _write_bytes(target: String, text: String) -> String:
+		var failure := super._write_bytes(target, text)
+		if (
+			failure.is_empty()
+			and target.get_file().begins_with("zh-CN-")
+			and target.get_base_dir().get_file().begins_with(".ne-stage-")
+		):
+			stage_directory = target.get_base_dir()
+		return failure
+
+	func _remove_empty_directory(path: String) -> bool:
+		if not warning_injected and path == stage_directory and not path.is_empty():
+			warning_injected = true
+			return false
+		return super._remove_empty_directory(path)
+
+
 ## A `user://` copy of real content: the editor is pointed at it, so a bug in the tool can
 ## never touch `res://data/` from a test run.
 const ROOT := "user://narrative_editor_fixture"
@@ -326,6 +350,8 @@ func _run() -> void:
 	_case_normal_pair_save_bytes()
 	Harness.stage = "cleanup warning surfaced"
 	_case_cleanup_warning_is_presented()
+	Harness.stage = "validation warning reaches dock"
+	_case_validation_warning_reaches_dock()
 	Harness.stage = "recheck before replace"
 	_case_rechecks_after_staging()
 	Harness.stage = "late .saving artifact"
@@ -950,6 +976,54 @@ func _case_cleanup_warning_is_presented() -> void:
 		"清理失败时未保留任何一份原文备份。"
 	)
 	_expect(not writer.leftovers([en_path, zh_path]).is_empty(), "失败的备份清理没有留下可见恢复材料。")
+
+
+func _case_validation_warning_reaches_dock() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := ValidationWarningWriter.new()
+	var store := Store.new(ROOT, writer)
+	var dock := Dock.new()
+	dock.store = store
+	root.add_child(dock)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "校验警告呈现"):
+		dock.free()
+		return
+
+	dock.call("_on_validate_pressed")
+	var status_label := dock.get("_status_label") as Label
+	var status_text := dock.get("_status_text") as TextEdit
+	_expect(writer.warning_injected, "校验没有触发暂存目录清理警告。")
+	var warning_visible := false
+	for message: String in store.warnings:
+		warning_visible = warning_visible or message.contains("暂存目录无法安全移除")
+	_expect(warning_visible, "validator 未把 writer 的清理警告传递给 store：%s" % str(store.warnings))
+	_expect(status_label != null, "dock 没有建立状态标题控件。")
+	_expect(status_text != null, "dock 没有建立状态详情控件。")
+	if status_label != null:
+		_expect(
+			status_label.text == "校验通过，另有警告需要检查",
+			"dock 没有以警告状态呈现校验结果：%s" % status_label.text
+		)
+	if status_text != null:
+		_expect(
+			status_text.text.contains("暂存目录无法安全移除"),
+			"dock 没有显示 validator 传来的恢复警告：%s" % status_text.text
+		)
+	_expect(store.is_dirty(), "校验不应清除编辑器中的未保存内容。")
+	_expect_bytes(en_path, before_en, "校验写入了英文内容文件。")
+	_expect_bytes(zh_path, before_zh, "校验写入了中文内容文件。")
+	var validation_temp := "user://narrative_editor_validation/zh-CN-alley.json"
+	_expect(not FileAccess.file_exists(validation_temp), "校验留下了中文运行时临时文件。")
+	if not writer.stage_directory.is_empty():
+		var remove_error := DirAccess.remove_absolute(
+			ProjectSettings.globalize_path(writer.stage_directory)
+		)
+		_expect(remove_error == OK, "测试没有清理故意留下的暂存目录（错误码 %d）。" % remove_error)
+	dock.free()
 
 
 func _case_rechecks_after_staging() -> void:
