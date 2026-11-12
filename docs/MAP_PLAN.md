@@ -108,6 +108,9 @@ flowchart TB
   ground --> gym["gym"]
   ground --> playground
   stairs -. "unfinished flight" .-> unfinished["unfinished stairwell"]
+  upper --> bio["biology classroom (art-bible study)"]
+  bio -. "curtain: fall" .-> playground
+  bio -. "rear door: suspended staircase" .-> stairs
 ```
 
 | Space | Narrative function | Exploration purpose | Scene or zone | Status |
@@ -119,6 +122,20 @@ flowchart TB
 | Laboratory, toilets, gym | Named in the narrative bible as candidate spaces; order not fixed | Each a single-room scene | Separate scenes | 已确定但未实现 (as candidates); order 尚待作者决定 |
 | Unfinished stairwell | Named as a candidate space | A flight that stops; a view out | Zone of the stairwell scene | 已确定但未实现 (candidate) |
 | Ground-floor connector | Joins stairs, rooms and the yard's `FromSchool` spawn | Gives `FromSchool` a use | Separate scene or zone of the stairwell | 建议新增 |
+
+### Location studies approved in the art bible
+
+`docs/ART_BIBLE.md` ("Postmodern spatial language and visual plurality", merged to main
+after this plan was started) lists approved creative directions. They are directions for
+exploration, not implemented content; this plan places them only as far as the bible does.
+
+| Study | Map consequence | Scene or zone | Status |
+|---|---|---|---|
+| Biology classroom: the curtained window opens onto absence; the protagonist falls and arrives in the schoolyard | A one-way link from an upper classroom to `playground` (needs its own spawn in the yard, e.g. the unused `FromSchool` or a new one) | Separate scene (`biology_classroom`); the fall is an exit, inside the transition transaction | 已确定但未实现 (approved direction); which floor and when: 尚待作者决定 |
+| Biology classroom: the rear door opens onto a staircase suspended in the room | A vertical link that does not fit the building | Zone of the biology classroom | 已确定但未实现; traversal and function: 尚待作者决定 (the bible leaves it open) |
+| Mirror-lined crawlspace or pipe | A narrow connector between two places | Short separate scene | 已确定但未实现; what it connects: 尚待作者决定 |
+| The schoolyard's impossible animals (a crocodile or a lion, as examples) | Occupants of the yard, calm, not combat | Inside `playground` (the yard's middle is reserved for events) | 已确定但未实现; relation to the green animal: 尚待作者决定 |
+| A laboratory with its own medium | One of the candidate rooms of the table above | Separate scene | 已确定但未实现 |
 
 ## 6. Expansions around the campus
 
@@ -139,6 +156,7 @@ These are proposals for *how* links could misbehave, not decisions that they do.
 | The yard door leads to a yard that is not the same yard | Exit with a flag-conditioned `destination_scene` | 建议新增 |
 | The stairwell has one floor more going down than going up | Two stairwell scenes whose exits point at each other asymmetrically | 建议新增 |
 | Returning to the corridor from the street after a flag shows a changed walkway | Scene variant or state-driven visibility in the corridor | 建议新增 |
+| The biology classroom's curtain: a fall from an upper floor that lands in the yard | Exit from the classroom scene to `playground`, its own spawn, a fall beat in the transition | 已确定但未实现 (art-bible study) |
 | The elliptical building as the place where versions of the school meet | — | 已确定但未实现 as a later structure; placement, entry and rules 尚待作者决定 |
 
 All of these must stay inside the existing scene-transition transaction and keep one
