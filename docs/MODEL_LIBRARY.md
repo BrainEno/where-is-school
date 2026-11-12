@@ -329,11 +329,55 @@ git diff art/character_rig_audit/runtime_model_manifest.json
 
 The diff is the review: it shows, node by node, what the character gained or lost. A change
 that was not meant to be structural shows up there before it reaches a release, which is the
-whole point of writing the structure down.
+whole point of writing the structure down. If the manifest itself is malformed, the update
+refuses to run and leaves the file alone (§5.5) — a broken manifest is fixed by hand, never
+by overwriting it with whatever a run happened to generate.
+
+### 5.5 What the manifest itself has to be
+
+A snapshot check is only as strong as the document it reads, so the manifest is validated as
+a document before any `.glb` is opened (`validate_manifest` in `tools/model_library.py`,
+called by both `--check` and `--update-manifest`):
+
+- **Both runtime characters, once each, and nothing else.** The manifest registers
+  `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb`. A missing entry, a
+  duplicated entry, a third model entry and an empty `models` are all failures. "At least one
+  model" was the old rule and it was not enough: deleting Q's entry used to leave a file that
+  was valid, plausible and had quietly stopped checking Q.
+- **Every structural field, with the right shape.** `counts`, `scene_roots`, `nodes`,
+  `meshes`, `materials`, `skins` and `animations` must all be present and of the right type,
+  and every element inside them is checked too — a node without a `path`, a primitive whose
+  `skinned` is not a boolean, a `joints` list that is a string, a counter that is not a whole
+  number. A field that is missing or `null` is a *problem*, never a section the comparison
+  skips.
+- **The counters must agree with the lists they count** — `counts.nodes` against `len(nodes)`
+  and so on. A truncated entry with a stale counter would otherwise report one difference
+  when what happened is that the entry lost data.
+- **Names are identity, so names must be unique.** `compare_model` pairs resources by name
+  (and nodes by path); two meshes called `Q_Hair_mesh.001` would fold into one entry and make
+  one of them invisible. Duplicates are therefore refused on *both* sides — in the manifest
+  and in the `.glb` — and the structure is not compared while a name is ambiguous. The same
+  rule covers skins and embedded animations. Node *paths* are unique by construction (`Neck`
+  legitimately appears twice in each rig, so the second occurrence is recorded as `…/Neck#2`).
+
+Every one of those is reported as a `MODEL_LIBRARY_PROBLEM` line naming the manifest, the
+entry (and its model path) and the field, and `--check` exits non-zero. Nothing in this path
+raises: a malformed manifest is a diagnosis, not a traceback.
+
+`--update-manifest` runs the same validation **before** it reads a single model, and refuses
+a malformed manifest instead of "repairing" it: the file is left byte-for-byte as it was, the
+run exits non-zero, and the reason is printed. When the manifest is well-formed it also
+validates the text it is about to write, and the write itself is atomic (a temporary file
+replaced into place), so an interrupted or buggy update cannot leave a half-written manifest
+behind.
 
 `tests/model_library_test.py` tests the checker against a synthetic rig it writes itself —
 an added node, a removed node, a re-parented node, a split primitive, a reassigned material,
 a primitive that lost its weights, a reordered joint list, a lost joint, a lost skin, an
-animation that appeared, a lost animation, a changed channel target, and each of the
-manifest's own failure modes — so the snapshot cannot rot into a check that always passes.
+animation that appeared, a lost animation, a changed channel target — and against a manifest
+it writes itself: a missing character, a duplicated one, a stray third entry, an empty
+`models`, each structural field removed or set to the wrong type, a malformed element inside
+each list, duplicate mesh/skin/animation names on both sides, a resource replaced by a copy
+of another, and an update run against a malformed file that must leave it untouched. 140
+checks, so the snapshot cannot rot into a check that always passes.
 
