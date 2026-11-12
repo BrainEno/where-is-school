@@ -1047,11 +1047,46 @@ func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
 		print("CROP: classroom_outline_%s.jpg %s" % [
 			entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.85))
 		])
+	# What stands between the camera and the sheet, by the meshes' world bounds: the name of
+	# whatever hides it, if anything does.
+	var blockers: Array[String] = []
+	var sheet_centre := Vector3.ZERO
+	var meshes := overlay.get_meshes()
+	for mesh in meshes:
+		sheet_centre += mesh.global_transform * mesh.get_aabb().get_center()
+	if not meshes.is_empty():
+		sheet_centre /= float(meshes.size())
+		var eye := camera.global_position
+		for node in _host.get_current().find_children("*", "GeometryInstance3D", true, false):
+			var geometry := node as GeometryInstance3D
+			if geometry == null or not geometry.is_visible_in_tree() or meshes.has(geometry):
+				continue
+			var bounds := geometry.global_transform * geometry.get_aabb()
+			var hit: Variant = bounds.intersects_segment(eye, sheet_centre)
+			if hit != null:
+				blockers.append(
+					"%s (transparency %.2f, %.2f m)"
+					% [
+						_host.get_current().get_path_to(geometry), geometry.transparency,
+						eye.distance_to(hit as Vector3)
+					]
+				)
+	_note("outline in the classroom: between the camera and the sheet: %s" % ", ".join(blockers))
+	if without != null:
+		var small := without.duplicate() as Image
+		small.convert(Image.FORMAT_RGB8)
+		small.resize(480, 270, Image.INTERPOLATE_BILINEAR)
+		print("CROP: classroom_frame_small.jpg %s" % Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.8)))
 	if line_pixels < 30:
 		_failures.append(
-			"The hover cue drew no outline around the visible timetable sheet (%d line pixels, %d changed, mask %d px): "
-			% [line_pixels, changed, mask_pixels]
-			+ "the depth-tested mask lost the sheet."
+			(
+				"The hover cue drew no outline around the timetable sheet (%d line pixels, %d changed, "
+				+ "mask %d px; camera %s, player %s, sheet %s on screen at %s; in between: %s)."
+			)
+			% [
+				line_pixels, changed, mask_pixels, str(camera.global_position),
+				str(_player.global_position), str(sheet_centre), str(area), ", ".join(blockers)
+			]
 		)
 
 
