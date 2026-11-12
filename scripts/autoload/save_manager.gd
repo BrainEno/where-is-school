@@ -509,6 +509,22 @@ func discard_staged(staged_path: String) -> Dictionary:
 	return {"ok": true, "removed": true, "detail": ""}
 
 
+## Removes every temporary, backup and staged file beside the save, and says which could
+## not be removed. Only a committed new game calls this, while writes are still suspended:
+## the player has just confirmed that the run those files belong to is to be discarded, and
+## a leftover from it must not be "recovered" as the save of the run that replaces it
+## (`recover_pending_swap()` would do exactly that the first time the save path is empty).
+## Returns `{ok, removed, leftovers}`.
+func discard_strays() -> Dictionary:
+	var before := _stray_paths()
+	var leftovers := _cleanup_strays([], [".tmp", ".bak", ".staged"])
+	var removed: Array = []
+	for path: String in before:
+		if not leftovers.has(path):
+			removed.append(path)
+	return {"ok": leftovers.is_empty(), "removed": removed, "leftovers": leftovers}
+
+
 ## Refuses writes until `false`. A new game holds this while it moves the save away and
 ## clears the session, so the world it is replacing cannot put a checkpoint back.
 func suspend_writes(suspended: bool) -> void:
@@ -564,9 +580,38 @@ func read_save() -> Dictionary:
 		"reason": "",
 		"detail": "",
 		"version": int(envelope["version"]),
+		"saved_at_unix": int(envelope.get("saved_at_unix", 0)),
 		"rejected": [],
 		"quarantined_to": "",
 	}
+
+
+## What a menu shows about the save, read without side effects: no recovery of an
+## interrupted swap, no quarantine, nothing applied. Returns `{exists, ok, saved_at_unix,
+## location_id}`; `ok` is false for a file this build cannot read (the title screen's
+## `read_save()` is what reports and quarantines it).
+##
+## The pause menu asks this while a run is live. `read_save()` would be wrong there: with no
+## save on disk yet (a new run before its first checkpoint) its recovery pass could put an
+## older run's leftover back under the save path.
+func peek_save() -> Dictionary:
+	var info := {"exists": false, "ok": false, "saved_at_unix": 0, "location_id": ""}
+	if not _fs().exists(SAVE_PATH):
+		return info
+	info["exists"] = true
+	var bytes: PackedByteArray = _fs().read_bytes(SAVE_PATH)
+	var envelope := SaveCodec.unwrap(bytes.get_string_from_utf8())
+	if envelope["ok"] != true:
+		return info
+	var payload: Dictionary = envelope["payload"]
+	if not validate_payload(payload).is_empty():
+		return info
+	info["ok"] = true
+	info["saved_at_unix"] = int(envelope.get("saved_at_unix", 0))
+	var world: Variant = payload.get("world", {})
+	if world is Dictionary:
+		info["location_id"] = String((world as Dictionary).get("location_id", ""))
+	return info
 
 
 ## Reads the file, applies what it describes to the session singletons and returns

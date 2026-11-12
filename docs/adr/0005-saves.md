@@ -86,6 +86,17 @@ no "save anywhere" button: it would need every in-flight system to be
 serialisable, and the player loses nothing today because the two checkpoints above
 are exactly the moments where progress is meaningful.
 
+*Amended for Save and quit:* the pause menu's **Save and quit** writes a save on request,
+but only where the same condition holds — `Session.is_at_rest()`: the prologue is behind
+the player (`next_step()` is empty), no beat holds the lock, no conversation is open, the
+slice is not over, and the player has control. Such a moment has nothing in flight, so the
+file is the same kind of file a checkpoint writes (flags, knowledge, seed, room and the
+exact position). Anywhere else the menu does not write: it says that the next Continue
+will load the last save (naming its room and time) or that there is none, and asks before
+leaving, with the focus on *Cancel*. A write that fails is reported the same way and never
+leaves silently. Leaving switches the world's autosave off first, so the frame before the
+scene changes cannot put a different checkpoint on disk.
+
 ### 5. Loading is all-or-nothing, except per-entry knowledge
 
 Reading happens in two tiers:
@@ -166,7 +177,12 @@ which runs these steps in this order, returns a report naming them, and emits
    code *and* whether `current_scene` actually changed. Writes stay suspended through
    this step, because the new world's `_ready` asks `has_save()` and a recovery pass at
    that moment would put the staged copy back and resume the run being replaced.
-9. **Commit**: discard the staged copy (proved gone), then release writes.
+9. **Commit**: discard the staged copy (proved gone), then every other `.tmp`/`.bak`/
+   `.staged` file beside the save (`Save.discard_strays()`; anything that will not go is
+   named in `leftovers`), then release writes. Those files belong to the run the player
+   just chose to end; left behind, the first moment the save path is empty — the new run
+   quit before its first checkpoint — would *recover* one of them, and the title would
+   offer to continue the old run.
 
 With no save at all, step 4 is `no_save` and the rest is the same.
 

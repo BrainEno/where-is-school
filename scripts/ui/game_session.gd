@@ -39,6 +39,12 @@ extends Node
 ## The old save is therefore never deleted to make room for the new run: it is moved aside,
 ## proved, and either put back or discarded. `SaveManager` makes the same promise one level
 ## down for ordinary writes (see the header of `save_manager.gd`).
+##
+## **Save and quit** (the pause menu) is the other way out of a run: `save_and_quit()` saves
+## where the player stands when `is_at_rest()` says a save can describe everything there
+## (ADR 0005 §4), and only a written save lets the menu leave without asking. The menu reads
+## what it shows about the file through `get_save_status()`, which never recovers or
+## quarantines anything while a run is live.
 
 ## Emitted once a new game has actually started: everything cleared, the opening entered.
 signal new_game_started(report: Dictionary)
@@ -73,16 +79,26 @@ func _ready() -> void:
 
 
 ## What the save file looks like, without applying anything: `{state, detail,
-## quarantined_to}` where `state` is `SAVE_NONE`, `SAVE_VALID` or `SAVE_BROKEN`. Reading an
-## unreadable file copies it to `save.broken.json`, exactly as the boot path always did.
+## quarantined_to, saved_at_unix, location_id}` where `state` is `SAVE_NONE`, `SAVE_VALID`
+## or `SAVE_BROKEN`. Reading an unreadable file copies it to `save.broken.json`, exactly as
+## the boot path always did. The time and the room are what the title screen prints under
+## Continue; they are 0 and "" when the file does not say.
 func inspect_save() -> Dictionary:
-	var report := {"state": SAVE_NONE, "detail": "", "quarantined_to": ""}
+	var report := {
+		"state": SAVE_NONE, "detail": "", "quarantined_to": "", "saved_at_unix": 0,
+		"location_id": "",
+	}
 	var save := _save()
 	if save == null or not save.has_method("has_save") or not bool(save.call("has_save")):
 		return report
 	var read: Dictionary = save.call("read_save")
 	if read.get("ok", false) == true:
 		report["state"] = SAVE_VALID
+		report["saved_at_unix"] = int(read.get("saved_at_unix", 0))
+		var payload: Dictionary = read.get("payload", {})
+		var world: Variant = payload.get("world", {})
+		if world is Dictionary:
+			report["location_id"] = String((world as Dictionary).get("location_id", ""))
 		return report
 	report["state"] = SAVE_BROKEN
 	report["detail"] = String(read.get("detail", ""))
@@ -99,6 +115,94 @@ func continue_game() -> Dictionary:
 	if error != OK:
 		push_error("Session: could not enter %s (error %d)." % [MAIN_SCENE, error])
 	return {"ok": error == OK, "error": error, "scene": MAIN_SCENE}
+
+
+## What the pause menu needs before it offers Save and quit: `{has_world, at_rest,
+## can_save_now, exists, ok, saved_at_unix, location_id}`. The file half comes from
+## `Save.peek_save()`, which reads without recovering or quarantining anything.
+func get_save_status(world: Node = null) -> Dictionary:
+	var target: Node = world if world != null else _find_world()
+	var save := _save()
+	var status: Dictionary = {"exists": false, "ok": false, "saved_at_unix": 0, "location_id": ""}
+	if save != null and save.has_method("peek_save"):
+		status = save.call("peek_save")
+	status["has_world"] = target != null and is_instance_valid(target)
+	status["at_rest"] = is_at_rest(target)
+	var suspended := save != null and save.has_method("writes_suspended") \
+		and bool(save.call("writes_suspended"))
+	status["can_save_now"] = bool(status["at_rest"]) and save != null and not suspended \
+		and not _starting
+	return status
+
+
+## True when the world is at a point a save can describe completely (ADR 0005 §4): the
+## prologue is behind the player, no beat holds the lock, no conversation is open, the
+## slice is not over, and the player has control. Anywhere else a save would have to
+## describe something half-done, so Save and quit keeps the last checkpoint instead.
+func is_at_rest(world: Node) -> bool:
+	if world == null or not is_instance_valid(world) or not _is_world(world):
+		return false
+	var director := world.get_node(^"OpeningSequence")
+	var dialogue := world.get_node_or_null(^"DialogueController")
+	var player := world.get_node_or_null(^"Player")
+	var in_prologue := director.has_method("next_step") \
+		and not String(director.call("next_step")).is_empty()
+	var in_beat := director.has_method("is_beat_active") and bool(director.call("is_beat_active"))
+	var finished := director.has_method("is_slice_finished") \
+		and bool(director.call("is_slice_finished"))
+	var talking := dialogue != null and dialogue.has_method("is_busy") \
+		and bool(dialogue.call("is_busy"))
+	var held := player != null and player.has_method("is_control_enabled") \
+		and not bool(player.call("is_control_enabled"))
+	return not (in_prologue or in_beat or finished or talking or held)
+
+
+## Save and quit, from the pause menu. With `write` the session is saved first, and only a
+## save that was written lets the player leave: a refusal (`not_at_rest`) or a failed write
+## (`save_failed`) returns with the world untouched, so the menu can say why and ask.
+## Without `write` nothing is written and the last checkpoint stays the save — the answer
+## to that question. Either way the world's autosave is switched off before the scene
+## changes, so the frame in between cannot put a different checkpoint on disk.
+##
+## Returns `{ok, saved, reason, detail, path, scene}`.
+func save_and_quit(write: bool = true, world: Node = null) -> Dictionary:
+	var report := {
+		"ok": false, "saved": false, "reason": "", "detail": "", "path": "", "scene": TITLE_SCENE,
+	}
+	if _starting:
+		report["reason"] = "busy"
+		report["detail"] = "a new game is being started"
+		return report
+	var target: Node = world if world != null else _find_world()
+	var save := _save()
+	if write:
+		if not is_at_rest(target):
+			report["reason"] = "not_at_rest"
+			report["detail"] = "a conversation, a beat or the prologue is in progress"
+			return report
+		if save == null or not save.has_method("save_game"):
+			report["reason"] = "no_save"
+			report["detail"] = "the save system is not available"
+			return report
+		var written: Dictionary = save.call("save_game")
+		if not bool(written.get("ok", false)):
+			report["reason"] = "save_failed"
+			report["detail"] = String(written.get("detail", written.get("reason", "")))
+			push_error("Session: Save and quit could not save: %s" % report["detail"])
+			return report
+		report["saved"] = true
+		report["path"] = String(written.get("path", ""))
+	_silence_world(target)
+	get_tree().paused = false
+	var left := go_to_title()
+	if not bool(left.get("ok", false)):
+		# Still in the world: give it its autosave back rather than leave it mute.
+		_restore_world(target)
+		report["reason"] = "scene_change_failed"
+		report["detail"] = "could not enter the title screen (error %d)" % int(left.get("error", 0))
+		return report
+	report["ok"] = true
+	return report
 
 
 func go_to_title() -> Dictionary:
@@ -257,6 +361,19 @@ func start_new_game(world: Node = null, enter_world: bool = true) -> Dictionary:
 		)
 	steps.append("staged_discarded")
 
+	# Anything else beside the save belongs to the run that was just discarded: a backup a
+	# crash left, a staged copy from an earlier attempt. Left there, the first moment the
+	# save path is empty (this run quit before its first checkpoint) would "recover" one of
+	# them, and the title would offer to continue the run the player chose to end. Writes
+	# are still suspended, so nothing can be recovered while this runs.
+	if save != null and save.has_method("discard_strays"):
+		var strays: Dictionary = save.call("discard_strays")
+		report["strays_removed"] = strays.get("removed", [])
+		if not bool(strays.get("ok", true)):
+			push_warning("Session: %d leftover save file(s) could not be removed: %s"
+				% [(strays.get("leftovers", []) as Array).size(), str(strays.get("leftovers", []))])
+			(report["leftovers"] as Array).append_array(strays.get("leftovers", []))
+
 	if save != null and save.has_method("suspend_writes"):
 		save.call("suspend_writes", false)
 	steps.append("writes_released")
@@ -366,6 +483,7 @@ func _blank_report() -> Dictionary:
 		"leftover_entries": 0,
 		"kept_quarantine": false,
 		"quarantine_lost": false,
+		"strays_removed": [],
 	}
 
 

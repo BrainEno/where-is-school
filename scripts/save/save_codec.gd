@@ -45,8 +45,9 @@ static func wrap(payload: Dictionary, saved_at_unix: int) -> String:
 
 
 ## Reads the envelope. Returns
-## `{ok, payload, reason, detail, version}`; on failure `payload` is empty and
-## `reason` is one of `not_json`, `format`, `version`.
+## `{ok, payload, reason, detail, version, saved_at_unix}`; on failure `payload` is empty
+## and `reason` is one of `not_json`, `format`, `version`. `saved_at_unix` is 0 when the
+## envelope does not carry a usable time; it is shown to the player, never branched on.
 static func unwrap(text: String) -> Dictionary:
 	if text.strip_edges().is_empty():
 		return _refuse("not_json", "the file is empty")
@@ -75,7 +76,15 @@ static func unwrap(text: String) -> Dictionary:
 	var payload: Variant = envelope.get("payload", null)
 	if not (payload is Dictionary):
 		return _refuse("payload", "the file has no payload object")
-	return {"ok": true, "payload": payload, "reason": "", "detail": "", "version": version}
+	var saved_at: Variant = envelope.get("saved_at_unix", 0)
+	return {
+		"ok": true,
+		"payload": payload,
+		"reason": "",
+		"detail": "",
+		"version": version,
+		"saved_at_unix": int(saved_at) if (saved_at is float or saved_at is int) else 0,
+	}
 
 
 # --- Flags ------------------------------------------------------------------

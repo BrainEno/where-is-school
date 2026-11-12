@@ -240,6 +240,10 @@ jobs:
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          # Save and quit from the pause menu saves only where a save can describe everything,
+          # asks instead of leaving anywhere else, and Continue puts the body back where it
+          # stood; a new game from the title leaves no leftover of the old run to recover.
+          run_check save_quit 300 godot --headless --path . --script res://tests/save_quit_test.gd || status=1
           # Synthetic pointer events need a real GUI viewport; run this standalone test under Xvfb.
           run_check title_menu_interaction 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd || status=1
           # The settings themselves (#105, #106): every preference survives a restart without

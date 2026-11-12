@@ -4,6 +4,9 @@ extends Control
 ##
 ## The safe answer has the focus when it opens, so a stray Enter, Space or A press keeps the
 ## progress. Esc, B (`ui_cancel`) and clicking outside the panel all mean "cancel".
+##
+## It is set like the menus that ask it: the question in the serif on a dark box with the
+## ember rule down its left edge, the two answers as page entries.
 
 signal confirmed
 signal cancelled
@@ -24,7 +27,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	_factor = UiTextScale.current(self)
-	var shade := MenuStyle.backdrop(Color(0.02, 0.025, 0.025, 0.7))
+	var shade := MenuStyle.backdrop(Color(0.02, 0.025, 0.025, 0.74))
 	shade.gui_input.connect(_on_shade_input)
 	add_child(shade)
 	var center := CenterContainer.new()
@@ -32,21 +35,25 @@ func _ready() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override(&"panel", MenuStyle.panel_style())
+	_panel.add_theme_stylebox_override(&"panel", MenuStyle.prompt_panel_style())
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override(&"separation", 18)
 	_panel.add_child(column)
 	_message = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.PAPER)
+	var serif := MenuStyle.serif()
+	if serif != null:
+		_message.add_theme_font_override(&"font", serif)
+	_message.add_theme_constant_override(&"line_spacing", 6)
 	column.add_child(_message)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 18)
 	column.add_child(row)
-	_cancel = MenuStyle.entry_button("", MenuStyle.ENTRY_SIZE, _factor)
+	_cancel = MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 	_cancel.name = "Cancel"
 	_cancel.pressed.connect(_answer.bind(false))
 	row.add_child(_cancel)
-	_confirm = MenuStyle.entry_button("", MenuStyle.ENTRY_SIZE, _factor)
+	_confirm = MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 	_confirm.name = "Confirm"
 	_confirm.add_theme_color_override(&"font_color", MenuStyle.WARN)
 	_confirm.pressed.connect(_answer.bind(true))
