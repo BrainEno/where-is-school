@@ -1,0 +1,195 @@
+name: Location art capture
+
+# Photographs the five non-classroom locations before and after an environment change,
+# from the game's own camera, so an art round can be judged on frames rather than on
+# descriptions. `tests/capture_locations.gd` takes the frames; see its header.
+#
+# One job per (location, side). "before" is the pull request's base commit (or the
+# `base` input of a manual run) with this branch's capture script copied in, so both
+# sides stand the player on the same derived spots; "after" is the commit under test.
+#
+# Like `Playthrough capture`, the frames are not committed by Actions. Each job uploads
+# them as an artifact and also publishes them inline as small JPEGs through notice
+# annotations (an annotation holds about 4 KB, so each image is base64 split into
+# numbered parts: concatenate the parts of one file in order and decode them). That
+# second route exists because annotations can be read through the REST API from places
+# that cannot reach the artifact store. Reviewed frames are committed by a person, under
+# `docs/screenshots/map_art/`, as evidence for the round that made them.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_locations.gd"
+      - "tests/location_art_test.gd"
+      - ".github/workflows/location-art-capture.yml"
+      - "scenes/locations/corridor/**"
+      - "scenes/locations/street/**"
+      - "scenes/locations/residential/**"
+      - "scenes/locations/alley/**"
+      - "scenes/locations/playground/**"
+      - "scenes/environment/props/**"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Commit or ref photographed as 'before'"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: ${{ matrix.location }} (${{ matrix.side }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        location: [corridor, street, residential, alley, playground]
+        side: [before, after]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Check out the "before" commit, keeping this branch's capture script
+        if: matrix.side == 'before'
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base }}
+        run: |
+          set -euo pipefail
+          cp tests/capture_locations.gd "${RUNNER_TEMP}/capture_locations.gd"
+          git fetch --no-tags origin "${BASE_SHA}" || true
+          git checkout --detach "${BASE_SHA}" 2>/dev/null || git checkout --detach "origin/${BASE_SHA}"
+          cp "${RUNNER_TEMP}/capture_locations.gd" tests/capture_locations.gd
+          echo "before = $(git rev-parse HEAD)"
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          # `--import` waits for the queue to drain; its exit code is not the verdict (the
+          # project theme can load before its font is imported). The second pass is.
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          LOCATION: ${{ matrix.location }}
+          SIDE: ${{ matrix.side }}
+        run: |
+          set +e -uo pipefail
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_locations.gd -- \
+            "label=${SIDE}" "only=${LOCATION}" spots=3 width=800 quality=0.7 \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "LOCATION_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
+          out="docs/screenshots/map_art/${SIDE}"
+          ls -l "${out}" || true
+          frames=$(find "${out}" -maxdepth 1 -name "${LOCATION}_*.jpg" | wc -l)
+          echo "frames=${frames} exit=${code}"
+          if [ "${frames}" -lt 2 ]; then
+            echo "::error title=location capture::${LOCATION} (${SIDE}) wrote ${frames} frame(s), exit ${code}"
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}/${LOCATION}"_*.jpg "${RUNNER_TEMP}/frames/"
+          # The wide view first, then the spots: if the annotation budget runs out, the
+          # frame that shows the whole composition is the one that survives.
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls "${RUNNER_TEMP}/frames" | sort -r); do
+            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${SIDE}/${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+
+      # GitHub keeps at most 10 notices per step and 50 annotations per job, so the parts
+      # are spread over four steps of ten. A frame whose parts do not all fit is
+      # incomplete in the annotations; the artifact still has it.
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: location-frames-${{ matrix.location }}-${{ matrix.side }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
+
+  # `tests/location_art_test.gd` is not in `godot-ci.yml` yet (another open pull request
+  # is changing that file), so this workflow runs it until it is registered there.
+  art-test:
+    name: location art test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Location art test
+        shell: bash
+        run: |
+          # No `set -u`: the sourced helper reads optional variables.
+          set +e
+          source tools/ci_run_check.sh
+          status=0
+          run_check location_art 540 godot --headless --path . --script res://tests/location_art_test.gd || status=$?
+          touch ci-logs/location_art.log
+          # The verdict lines as annotations, readable through the REST API.
+          grep -E "TEST FAILURE|SCRIPT ERROR|Parse Error" ci-logs/location_art.log | head -n 9 \
+            | while IFS= read -r line; do echo "::error title=location art::${line}"; done
+          grep -E "PASS:|FAIL:|location art:|spots, " ci-logs/location_art.log | head -n 9 \
+            | while IFS= read -r line; do echo "::notice title=location art::${line}"; done
+          if [ "${status}" -ne 0 ]; then
+            echo "::warning title=location art::exit ${status}; $(wc -l < ci-logs/location_art.log) log lines"
+            tail -n 12 ci-logs/location_art.log | cut -c1-300 \
+              | while IFS= read -r line; do echo "::warning title=location art tail::${line}"; done
+          fi
+          exit "${status}"
