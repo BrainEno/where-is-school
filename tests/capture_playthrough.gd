@@ -900,6 +900,45 @@ func _capture_n_at_the_front(n_actor: NpcActor) -> void:
 		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_face", 180, true)
 	)
 	await _restore_player_camera()
+	# The entry walk usually plays while the capture is still busy with Q, so the walk is
+	# photographed here as well: the same `walk_along()` the opening drives, two metres along
+	# the front of the room, then N is put back exactly where the story left it.
+	await _capture_n_walk_at_the_front(n_actor)
+
+
+## N walking, driven through its own `walk_along()` after the story has finished with it.
+func _capture_n_walk_at_the_front(n_actor: NpcActor) -> void:
+	var start := n_actor.global_transform
+	var target := n_actor.global_position + Vector3(-2.0, 0.0, 0.0)
+	n_actor.walk_along([target])
+	await _wait(0.55)
+	var animator := n_actor.get_character_animator()
+	var state := animator.get_locomotion_state() if animator != null else &"none"
+	_note("N walking at the front: state %s, clip %s" % [
+		state, animator.get_current_clip() if animator != null else "none"
+	])
+	if state != CharacterVisualAnimation.STATE_WALK:
+		_failures.append("N's walk_along() at the front did not play walk (state %s)." % state)
+	var at := n_actor.global_position
+	var forward := _planar_forward(n_actor)
+	await _shot_from_camera(
+		at + forward * 2.6 + Vector3(0.0, 0.0, 1.2) + Vector3(0.0, 1.3, 0.0),
+		at + Vector3(0.0, 0.95, 0.0),
+		"11f_n_walking",
+		"N mid-stride, walking along the front of the classroom through its own walk_along(), "
+		+ "seen three-quarter on from ahead and to the class side.",
+		n_actor.get_node_or_null(^"Nameplate") as Node3D,
+		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_walking", 220)
+	)
+	await _restore_player_camera()
+	var waited := 0.0
+	while n_actor.global_position.distance_to(target) > 0.01 and waited < 4.0:
+		await _wait(0.1)
+		waited += 0.1
+	n_actor.global_transform = start
+	await _wait(0.3)
+	if animator != null and animator.get_locomotion_state() != CharacterVisualAnimation.STATE_IDLE:
+		_failures.append("N did not return to idle after its walk at the front.")
 
 
 func _planar_forward(actor: Node3D) -> Vector3:

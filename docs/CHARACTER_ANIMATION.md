@@ -222,11 +222,13 @@ the movement the two halves make. In the game, walk around the classroom with WA
 click, then leave the classroom during the free period with Q along.
 
 N is seen in the running game by `tests/capture_playthrough.gd` (the *Playthrough capture*
-workflow): `11c_n_walks_in` photographs N mid-walk along `NEntryPath` during the substitute
-beat, `11d_n_at_the_front` head to feet after the class is dismissed, and `11e_n_face` the
-face at one metre. Each frame is rendered a second time with N's model hidden; the share of
+workflow): `11d_n_at_the_front` head to feet after the class is dismissed, `11e_n_face` the
+face at one metre, and `11f_n_walking` N mid-stride, walked two metres along the front of the
+room through its own `walk_along()` and put back. `11c_n_walks_in` photographs the entry walk
+along `NEntryPath` itself, but only when the capture reaches it in time: the beat usually
+plays while the capture is still busy with Q, and the log then says N had already arrived. Each frame is rendered a second time with N's model hidden; the share of
 N's screen box that changes is logged and has to clear a floor, so a model that imported
-invisible or black fails the run. Small JPEG crops of the three are published as the
+invisible or black fails the run. Small JPEG crops of the frames are published as the
 run's *teacher N crop* annotations (base64, in numbered parts).
 
 ## Check it
