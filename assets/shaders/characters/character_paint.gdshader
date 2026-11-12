@@ -36,6 +36,10 @@ uniform float half_tone : hint_range(0.0, 1.0) = 0.62;
 // Where the bands change, in N·L. Lower moves the light further round the form.
 uniform float shadow_edge : hint_range(-1.0, 1.0) = -0.05;
 uniform float light_edge : hint_range(-1.0, 1.0) = 0.42;
+// The light band's level. A flat band at 1.0 holds every lit surface at the brightness
+// Lambert gives only where the light hits square on (N·L = 1); across the band N·L
+// averages about 0.75, so 1.0 burns pale skin to cream under the warm rooms' key light.
+uniform float light_strength : hint_range(0.3, 1.2) = 0.76;
 uniform float edge_softness : hint_range(0.001, 0.4) = 0.05;
 // How far the pigment breaks the band edges, in N·L.
 uniform float edge_break : hint_range(0.0, 0.6) = 0.18;
@@ -132,7 +136,7 @@ void light() {
 	float half_band = smoothstep(shadow_edge - edge_softness, shadow_edge + edge_softness, ndl);
 	float light_band = smoothstep(light_edge - edge_softness, light_edge + edge_softness, ndl);
 	float lit = mix(0.0, half_tone, half_band);
-	lit = mix(lit, 1.0, light_band);
+	lit = mix(lit, 1.0, light_band) * light_strength;
 	vec3 tint = mix(shade_tint * shadow_fill, light_tint, lit);
 	DIFFUSE_LIGHT += tint * ATTENUATION * LIGHT_COLOR / PI;
 }

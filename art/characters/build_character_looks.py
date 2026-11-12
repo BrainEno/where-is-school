@@ -41,6 +41,7 @@ PART_DEFAULTS = {
     "light_tint": "#FFF3E2",
     "shadow_fill": 0.30,
     "half_tone": 0.62,
+    "light_strength": 0.76,
     "shadow_edge": -0.05,
     "light_edge": 0.42,
     "edge_softness": 0.05,
@@ -57,16 +58,19 @@ PART_DEFAULTS = {
 # make the eyes the first thing read in the face, a slate-black gakuran (the portrait's),
 # warm charcoal trousers so jacket and legs separate, near-black hair.
 PROTAGONIST_SKIN = {
-    "albedo": "#C8B9A0",
-    "pigment_a": "#B3B39A",
-    "pigment_b": "#D5BDA4",
+    "albedo": "#B4A58C",
+    "pigment_a": "#9FA28A",
+    "pigment_b": "#C0A890",
     "pigment_mix": 0.38,
     "pigment_value": 0.09,
     "pigment_scale": 24.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
     "shade_tint": "#9AA6C6",
-    "light_tint": "#FFF1DE",
+    "light_tint": "#F4EADC",
     "shadow_fill": 0.36,
+    # Less of the face in the full light: the tired face is mostly half-tone.
+    "light_edge": 0.55,
+    "light_strength": 0.7,
 }
 PROTAGONIST = {
     "label": "protagonist: painted (option C)",
@@ -75,10 +79,10 @@ PROTAGONIST = {
         "protagonist_mat_skin": dict(
             PROTAGONIST_SKIN,
             # Under the eyes: a violet-grey bruise of tiredness (the portrait's).
-            patch_center=(0.034, 1.563, 0.104),
-            patch_radius=(0.027, 0.016, 0.03),
-            patch_color="#6F5F7A",
-            patch_strength=0.6,
+            patch_center=(0.034, 1.565, 0.104),
+            patch_radius=(0.03, 0.02, 0.034),
+            patch_color="#665570",
+            patch_strength=0.75,
             # The hollow under the cheekbone, greened.
             patch2_center=(0.052, 1.528, 0.088),
             patch2_radius=(0.022, 0.03, 0.04),
@@ -86,7 +90,7 @@ PROTAGONIST = {
             patch2_strength=0.4,
             outline=True,
         ),
-        "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#BCAC94", outline=True),
+        "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#A99A83", outline=True),
         "protagonist_mat_hair": {
             "albedo": "#221E21",
             "pigment_a": "#2E2B3A",
@@ -213,6 +217,7 @@ Q_SKIN = {
     "shade_tint": "#B5B88E",
     "light_tint": "#FFEFD8",
     "shadow_fill": 0.36,
+    "light_strength": 0.72,
 }
 Q = {
     "label": "Q: painted (option C)",

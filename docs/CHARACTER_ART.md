@@ -102,6 +102,12 @@ colour families as the models and portraits, no part recoloured into another ide
   (`shadow_edge`, `light_edge`, `edge_softness`). The pigment noise shifts N·L by up to
   `edge_break` before the bands are cut, so a band edge wanders like a brush edge instead of
   following the mesh's facets.
+- **The light band is held below full.** The full-light band is `light_strength` (0.76 by
+  default, 0.70 on the protagonist's skin and 0.72 on Q's), not 1.0. Lambert reaches 1.0 only
+  where the light hits square on; across the band N·L averages about 0.75. The first capture
+  used a flat 1.0, and the warm key light of the classroom burned the protagonist's pale
+  face to cream, so the eyes and the bruise under them stopped reading. The protagonist's
+  skin also moves its `light_edge` to 0.55, so most of his face sits in the half-tone.
 - **A painted shadow colour.** The shadow side keeps `shadow_fill` of the light, tinted by
   `shade_tint`: cool violet-grey on the protagonist, olive on Q. It never goes dead black
   under one lamp, and it gives each character a colour of his own in shadow.
@@ -139,8 +145,8 @@ a mid-green sweater on a ruddy face) and in shadow colour.
 
 | Part | Protagonist | Q |
 |---|---|---|
-| Skin | #C8B9A0, pale and sallow (pigments #B3B39A / #D5BDA4), shadow #9AA6C6 | #CE9A70, ruddy, shadow olive #B5B88E |
-| Face patches | under-eyes #6F5F7A (bruised), cheek hollows #98997F | cheeks #C9634C (flushed) |
+| Skin | #B4A58C (body #A99A83), pale and sallow (pigments #9FA28A / #C0A890), shadow #9AA6C6 | #CE9A70, ruddy, shadow olive #B5B88E |
+| Face patches | under-eyes #665570 (bruised), cheek hollows #98997F | cheeks #C9634C (flushed) |
 | Hair | #221E21, near-black | #18151B, near-black |
 | Top | slate jacket #37414A (towards the portrait's gakuran, kept apart from the dark board by the ink and the lighter shadow fill) | moss sweater #516F4C (the model's own green, not the portrait's jacket: the model is the identity in play) |
 | Trousers | warm charcoal #3B3836, so jacket and legs separate | navy #313D52 |
