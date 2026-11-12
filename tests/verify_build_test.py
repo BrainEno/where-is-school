@@ -677,7 +677,7 @@ def test_preset_checks() -> None:
     def preset_text(modify_resources: str = "true", icon: str = "res://assets/icon/app_icon.ico") -> str:
         return (
             "[preset.0]\n\nname=\"Windows Desktop\"\nplatform=\"Windows Desktop\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*"\n'
             'export_path="build/windows/where-is-school.exe"\n\n'
             "[preset.0.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -690,7 +690,7 @@ def test_preset_checks() -> None:
             'application/file_version="0.1.0.0"\n'
             'application/product_version="0.1.0.0"\n\n'
             "[preset.1]\n\nname=\"Linux\"\nplatform=\"Linux\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*"\n'
             'export_path="build/linux/where-is-school.x86_64"\n\n'
             "[preset.1.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -723,6 +723,14 @@ def test_preset_checks() -> None:
         config.write_text(preset_text().replace('name="Linux"', 'name="Linux Server"'))
         problems, _ = vb.verify_presets(config, "0.1.0")
         expect_problem(problems, "no 'Linux' preset", "a preset file without Linux passed")
+
+        config.write_text(preset_text().replace("scenes/dev/*, ", ""))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        expect_problem(
+            problems,
+            "does not exclude scenes/dev/",
+            "a preset that would ship the development-only third-party assets passed",
+        )
 
 
 def test_preset_writer_keeps_the_rest_of_the_file() -> None:
