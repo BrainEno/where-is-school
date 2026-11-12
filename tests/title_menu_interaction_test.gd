@@ -136,13 +136,13 @@ func _push_pad(button: JoyButton) -> void:
 	# Inject at the SceneTree root so focused Controls receive the synthetic device event
 	# through their normal GUI navigation path, even though Xvfb has no physical pad.
 	var event := InputEventJoypadButton.new()
-	event.device = 0
+	event.device = -1
 	event.button_index = button
 	event.pressed = true
 	root.push_input(event)
 	await process_frame
 	var release := event.duplicate() as InputEventJoypadButton
-	release.device = 0
+	release.device = -1
 	release.pressed = false
 	root.push_input(release)
 	await process_frame
