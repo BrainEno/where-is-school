@@ -434,13 +434,19 @@ jobs:
           mkdir -p "${evidence}"
           log="ci-logs/interaction_outline_occlusion.log"
           OUTLINE_EVIDENCE_DIR="${evidence}" OUTLINE_REQUIRE_RENDERER=gl_compatibility \
+            OUTLINE_PRINT_CROPS=1 \
             timeout 300 xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-method gl_compatibility \
             --rendering-driver opengl3 \
             --script res://tests/interaction_outline_occlusion_test.gd > "${log}" 2>&1
           code=$?
-          cat "${log}"
+          grep -v "^CROP: " "${log}"
           cp "${log}" "${evidence}/" || true
+          # The crops around each target, one notice each, so the frames can be looked at
+          # from the run report alone (decode the base64 to get the PNG).
+          grep -E "^CROP: " "${log}" | head -n 6 | while read -r _ file data; do
+            echo "::notice title=outline frame ${file} (base64 PNG crop)::${data}"
+          done
           echo "--- exit ${code}"
           # Annotation text has `%` escaped: the runner treats `%xx` as an escape and drops a
           # command it cannot decode, and the test's messages are full of percentages.

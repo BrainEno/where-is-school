@@ -271,7 +271,7 @@ func _check_open() -> void:
 	var owner := Owner.new("open")
 	_show(owner, _open, 1.0)
 	var frame := await _grab_after(3)
-	_save(frame, "case1_open.png")
+	_save(frame, "case1_open.png", _open)
 	var hull := _hull(_open)
 	var found := _line_coverage(frame, _outward_samples(hull))
 	_expect(found >= FULL_COVERAGE,
@@ -293,7 +293,7 @@ func _check_hidden() -> void:
 	var owner := Owner.new("hidden")
 	_show(owner, _hidden, 1.0)
 	var frame := await _grab_after(3)
-	_save(frame, "case2_hidden.png")
+	_save(frame, "case2_hidden.png", _hidden)
 	var change := _max_change(baseline, frame, area)
 	_expect(change <= SAME_PIXEL,
 		"Fully hidden: the frame changed behind the wall (largest change %.3f, %d px differ): the "
@@ -314,7 +314,7 @@ func _check_hidden() -> void:
 	_overlay.process_mode = Node.PROCESS_MODE_DISABLED
 	mask_camera.cull_mask = OutlineOverlay.MASK_LAYER
 	var through := await _grab_after(3)
-	_save(through, "case2_hidden_negative_control_no_depth.png")
+	_save(through, "case2_hidden_negative_control_no_depth.png", _hidden)
 	var through_found := _line_coverage(through, _outward_samples(_hull(_hidden)))
 	_expect(through_found >= FULL_COVERAGE,
 		"Negative control: without the scene in the mask the outline should show through the "
@@ -345,7 +345,7 @@ func _check_partial() -> void:
 	var owner := Owner.new("partial")
 	_show(owner, _partial, 1.0)
 	var frame := await _grab_after(3)
-	_save(frame, "case3_partial.png")
+	_save(frame, "case3_partial.png", _partial)
 	var hull := _hull(_partial)
 	var post := _hull(_post)
 
@@ -546,7 +546,7 @@ func _mask_at(mask: Image, point: Vector2) -> float:
 	return mask.get_pixel(x, y).r
 
 
-func _save(image: Image, file_name: String) -> void:
+func _save(image: Image, file_name: String, around: MeshInstance3D = null) -> void:
 	if image == null:
 		return
 	var path := _evidence_dir.path_join(file_name)
@@ -555,6 +555,12 @@ func _save(image: Image, file_name: String) -> void:
 		print("EVIDENCE: %s" % path)
 	else:
 		print("EVIDENCE: could not write %s (error %d)" % [path, error])
+	# A full-resolution crop around the target, printed inline, so the evidence can be read
+	# from the run's own output where artifacts are out of reach.
+	if around != null and not OS.get_environment("OUTLINE_PRINT_CROPS").is_empty():
+		var crop := image.get_region(_bounds(_hull(around), 48.0))
+		crop.convert(Image.FORMAT_RGB8)
+		print("CROP: %s %s" % [file_name, Marshalls.raw_to_base64(crop.save_png_to_buffer())])
 
 
 # --- pixel classification -------------------------------------------------------
