@@ -105,7 +105,9 @@ untouched — starting a new game is then a decision, not a fallback.
 ### 6. A file we cannot read is kept, not deleted
 
 An unreadable or unknown-version save is copied to `user://save.broken.json`
-(the original is left in place until the next successful save overwrites it) and
+(the copy is proved by reading it back before it is named as one; a copy of the same
+bytes is left alone rather than rewritten, and the original is left in place until the
+next successful save overwrites it) and
 the reason is shown to the player on the end-of-slice card, in both languages,
 including what to do about it. "Silently starting fresh" is the failure mode this
 ADR exists to prevent: the audit's second acceptance criterion.
@@ -135,35 +137,87 @@ The same New game is offered in the **pause menu** (Esc / Start during play) and
 *Cancel*; cancelling (Esc, B, the Cancel button, a click outside) changes nothing — not
 the file, not the flags, not the knowledge.
 
-### 8. Starting a new game: one ordered path
+### 8. Starting a new game: one ordered transaction
 
 All three entry points call `Session.start_new_game()` (`scripts/ui/game_session.gd`),
-which runs these steps in this order and returns a report of them:
+which runs these steps in this order, returns a report naming them, and emits
+`new_game_failed` with that report when it could not finish:
 
-1. **Silence the old world**: its `OpeningSequence.autosave_enabled = false`, then
-   `Save.unbind_world()`. Unbinding alone is not enough — a save with no world bound
-   still writes the flags — so the director's own switch comes first.
+1. **Writes stop**: `Save.suspend_writes(true)` *first*, then the old director's
+   `autosave_enabled = false` and `Save.unbind_world()`. Unbinding alone is not enough —
+   a save with no world bound still writes the flags — and neither is the director's
+   switch: a node that is no longer the world can still hold a reference. The writer
+   itself refuses now.
 2. **Unpause** (the pause menu may have paused the tree).
-3. **Free the old world** and wait two frames, so nothing in it can run a checkpoint
-   after the file is gone.
-4. **Delete the save** with `Save.delete_save()`. Because that call also removes
-   `save.broken.json`, its bytes are read first and written back: a quarantined copy
-   is the player's, and starting over does not silently discard it (6).
-5. **Clear the session**: `GameState.clear()`, `NarrativeState.clear()`, and release
-   any held input actions. Location, objective and every story flag live in
-   `GameState`, so they go with it.
-6. **Verify**: no save file, no flags, no knowledge entries — otherwise the report is
-   not `ok` and an error is logged.
-7. **Enter the opening**: `main.tscn` is loaded fresh. Its `DialogueController` takes a
-   new dice seed from the clock, and with no file the director starts at the wake.
+3. **Copy the session to memory**: every flag and every knowledge entry. This is the
+   second way back, for the case where the file is fine but the hand-off is not.
+4. **Stage the save, never delete it**: `Save.stage_save()` moves the file to a unique
+   `save.json.<nonce>.staged` and proves the bytes arrived. The save path is now empty,
+   which is what a new run means, and the previous run is still on disk under a name the
+   transaction remembers.
+5. **Free the old world** and wait two frames, so nothing in it can run a checkpoint.
+6. **Clear the session**: `GameState.clear()`, `NarrativeState.clear()`, and release any
+   held input actions. Location, objective and every story flag live in `GameState`, so
+   they go with it.
+7. **Verify**: no save at the save path, no flags, no knowledge entries — and the
+   quarantined copy of an unreadable save, if there was one, still the same bytes (6).
+   Recovery is deliberately impossible here: it is suppressed while writes are suspended.
+8. **Enter the opening** and check the hand-off twice: `change_scene_to_file()`'s return
+   code *and* whether `current_scene` actually changed. Writes stay suspended through
+   this step, because the new world's `_ready` asks `has_save()` and a recovery pass at
+   that moment would put the staged copy back and resume the run being replaced.
+9. **Commit**: discard the staged copy (proved gone), then release writes.
+
+With no save at all, step 4 is `no_save` and the rest is the same.
+
+**If anything fails before 9, nothing is half-done.** Steps 1–3 are reversible, so a
+failure at 4 puts the world and its autosave back and leaves the player in the run they
+were in. A failure after 5 restores the session from the memory copy *and* puts the
+staged save back where the game reads it, and takes the player to the title screen — the
+one screen that is always safe to be on — with the progress on disk and Continue
+offered. The report says which step failed (`reason`: `busy`, `save_stage_failed`,
+`state_left`, `scene_change_failed`), why (`detail`), where the save is (`save_path`,
+`staged_path`, `recovery_path`), what was put back (`rollback`), and what could not be
+cleaned up (`leftovers`). A second press while the first transaction is between two
+awaits is refused with `busy` and runs none of the steps again.
 
 Tests: `tests/opening_resume_test.gd` (title menu by save state, cancel keeps
-everything, confirm from the title and from the pause menu, an unreadable save, and
-the next boot carrying no old flag, entry, room or seed) and
-`tests/opening_flow_test.gd` (Start again from the end card after the whole slice,
-on the controller).
+everything, confirm from the title and from the pause menu, an unreadable save, the next
+boot carrying no old flag, entry, room or seed, a save that cannot be moved, an opening
+that cannot load, and a second click) and `tests/opening_flow_test.gd` (Start again from
+the end card after the whole slice, on the controller).
 
-### 9. Preferences are not progress
+### 9. Writing a save is a swap, and it is proved
+
+The write path (`SaveManager.write_payload()`) never rewrites the file in place:
+
+1. The new save is written to `save.json.<nonce>.tmp` with a name nothing else in this
+   run will pick, then **read back and compared byte for byte**. `store_string()`
+   returning is not evidence that the bytes are there — a full disk, a truncated write
+   and a directory that lies all look like success at that call.
+2. It is renamed onto `save.json`. Some platforms refuse to rename onto a file that
+   exists; then the fallback **moves the old save aside** to `save.json.<nonce>.bak`,
+   proves that copy, installs the new save, and removes the backup. If the install
+   fails, the backup is renamed back. `SAVE_PATH` is never passed to `remove()` during a
+   write: the player's only copy is not deleted to make room for a better one.
+3. Files a crash left behind (`.tmp`, `.bak`, `.staged`) are cleaned up, and any that
+   could not be removed are named in the result's `leftovers` and logged, not ignored.
+   A `.bak`/`.staged` may be *restored* on the next read, but only when there is no save
+   at all, and never while a new game holds the files (8).
+
+`delete_save()` returns `{ok, removed, leftovers}` and reports a filesystem refusal
+instead of silently doing nothing. It does not remove `save.broken.json` unless the
+caller asks with `{"broken": true}`.
+
+**What this is not.** Godot's ordinary file API — `FileAccess`, `DirAccess` — offers no
+compare-and-swap, no atomic multi-file transaction, no `fsync` and no locking. This
+design therefore does not claim to be safe against two processes writing the same
+`user://` file at the same time, nor against power loss between a rename and the
+directory entry reaching the disk. What it does claim, and what the tests check, is
+narrower and true: a write whose own calls fail, or whose bytes do not come back, never
+destroys the save that was already there, and the result says so.
+
+### 10. Preferences are not progress
 
 `user://settings.cfg` holds the preferences, owned by `Settings`
 (`scripts/autoload/settings_manager.gd`): `[text]` size and speed, `[audio]` master,
@@ -191,5 +245,7 @@ action is never left half-bound or unbound.
 - The seed is part of the session, not of the resolver: `DialogueController` owns it
   and gives it to the file.
 - Tests: `tests/save_roundtrip_test.gd` (a real scene is saved, torn down and
-  rebuilt from the file) and `tests/save_validation_test.gd` (bad envelopes,
-  versions, flag types and knowledge sources).
+  rebuilt from the file, and a write that cannot land leaves that file untouched) and
+  `tests/save_validation_test.gd` (bad envelopes, versions, flag types and knowledge
+  sources, plus every failure of a write, a rename, a backup and a delete, injected
+  deterministically).

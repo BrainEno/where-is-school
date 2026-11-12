@@ -64,6 +64,7 @@ func _run() -> void:
 	Harness.clear_session_state(self)
 
 	await _check_round_trip()
+	await _check_failed_write_keeps_the_run()
 	await _check_companion_restore()
 	await _check_save_without_companion()
 	if not _companion_notes.is_empty():
@@ -73,8 +74,9 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"a saved run comes back whole, Q comes back with it in the corridor, the yard and"
-		+ " the classroom, and a broken save is refused out loud."
+		"a saved run comes back whole, a write that cannot land costs nothing, Q comes back"
+		+ " with it in the corridor, the yard and the classroom, and a broken save is refused"
+		+ " out loud."
 	)
 
 
@@ -216,6 +218,166 @@ func _check_round_trip() -> void:
 
 	again.queue_free()
 	await _frames(3)
+
+
+# --- A write that cannot land (#122) -------------------------------------------
+
+
+## The other half of "never lose a save": a write that cannot be installed must cost
+## nothing. The run on disk stays exactly as it was, byte for byte, and the next boot
+## resumes *it* — not an empty game, and not half of a new one.
+##
+## The failure is injected rather than provoked: a real disk will not refuse a rename on
+## request, and the window this has to survive is the middle of a replacement.
+func _check_failed_write_keeps_the_run() -> void:
+	_reset_session()
+	Harness.stage = "a write that cannot land"
+	var main := await _enter_main()
+	if main == null:
+		return
+	var sequence := main.get_node_or_null("OpeningSequence")
+	var host := main.get_node_or_null("LocationHost") as LocationHost
+	if sequence == null or host == null or host.get_current() == null:
+		_failures.append("main.tscn is missing a node the save system needs.")
+		main.free()
+		return
+	_game_state.set_flag(StoryFlags.MET_Q, true)
+	_game_state.set_flag(StoryFlags.OBJECTIVE_KEY, "objective.check_bag")
+	_narrative.record(
+		&"kept_entry", NarrativeEntry.Source.OBSERVED, &"", "A line a failed write must not lose."
+	)
+	var first: Dictionary = sequence.call("autosave", "before")
+	_expect(first.get("ok", false) == true, "the first autosave did not write a file: %s" % str(first))
+	var before := FileAccess.get_file_as_bytes(SAVE_PATH)
+	var location := host.get_current().location_id
+	_expect(not before.is_empty(), "the first autosave left no bytes on disk.")
+
+	# Every rename fails, so nothing can be installed: this is the replacement giving up.
+	var faults := FaultyIO.new()
+	faults.fail_renames = [0, 1, 2, 3, 4, 5]
+	_save.set("io", faults)
+	var refused: Dictionary = sequence.call("autosave", "after")
+	_save.set("io", null)
+
+	_expect(
+		refused.get("ok", true) == false,
+		"a write that could not be installed was reported as written: %s" % str(refused)
+	)
+	_expect(
+		String(refused.get("reason", "")) == "write",
+		"the failed write was reported as '%s'." % refused.get("reason")
+	)
+	_expect(
+		not String(refused.get("detail", "")).is_empty(),
+		"the failed write does not say what happened."
+	)
+	_expect(
+		not String(refused.get("recovery_path", "")).is_empty(),
+		"the failed write names no recovery path."
+	)
+	_expect(
+		FileAccess.get_file_as_bytes(SAVE_PATH) == before,
+		"a write that could not be installed changed the save on disk."
+	)
+	_expect(_read_back_flags().has(&"kept_entry"), "the knowledge entry vanished from the file.")
+	_expect(_strays().is_empty(), "the failed write left %s behind." % str(_strays()))
+
+	# Now the boot that matters: the world is gone, the state is wiped, and only the file
+	# can bring the run back. It has to be the run that was there before the failure.
+	main.queue_free()
+	await _frames(3)
+	_game_state.clear()
+	_narrative.clear()
+	var again := await _enter_main()
+	if again == null:
+		return
+	var host_again := again.get_node_or_null("LocationHost") as LocationHost
+	_expect(
+		_game_state.get_flag(StoryFlags.MET_Q, false) == true,
+		"the run that survived the failed write did not come back."
+	)
+	_expect(
+		String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) == "objective.check_bag",
+		"the objective did not come back after a failed write."
+	)
+	_expect(
+		_narrative.get_entry(&"kept_entry") != null,
+		"the knowledge entry did not come back after a failed write."
+	)
+	_expect(
+		host_again != null and host_again.get_current() != null
+		and host_again.get_current().location_id == location,
+		"the restored session is not in the room it was saved in."
+	)
+	again.queue_free()
+	await _frames(3)
+
+
+## The real file layer, with every rename refused: the replacement cannot be installed
+## and cannot fall back either.
+class FaultyIO:
+	var fail_renames: Array = []
+	var renames := 0
+
+	func exists(path: String) -> bool:
+		return FileAccess.file_exists(path)
+
+	func read_bytes(path: String) -> PackedByteArray:
+		return FileAccess.get_file_as_bytes(path)
+
+	func write_bytes(path: String, data: PackedByteArray) -> int:
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file == null:
+			return FileAccess.get_open_error()
+		file.store_buffer(data)
+		var error := file.get_error()
+		file.close()
+		return error
+
+	func rename(from: String, to: String) -> int:
+		var index := renames
+		renames += 1
+		if fail_renames.has(index):
+			return ERR_FILE_CANT_WRITE
+		var dir := DirAccess.open("user://")
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.rename(from, to)
+
+	func remove(path: String) -> int:
+		var dir := DirAccess.open("user://")
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.remove(path)
+
+	func list() -> PackedStringArray:
+		var dir := DirAccess.open("user://")
+		if dir == null:
+			return PackedStringArray()
+		return dir.get_files()
+
+
+## The flags the save on disk holds, read without touching the session.
+func _read_back_flags() -> Dictionary:
+	var read: Dictionary = _save.read_save()
+	if read.get("ok", false) != true:
+		_failures.append("the save on disk cannot be read: %s" % str(read))
+		return {}
+	var decoded: Dictionary = SaveCodec.decode_flags(read["payload"].get("flags", {}))
+	return decoded.get("flags", {})
+
+
+## Every file the save system may leave beside the save, by name.
+func _strays() -> PackedStringArray:
+	var found := PackedStringArray()
+	var dir := DirAccess.open("user://")
+	if dir == null:
+		return found
+	for name: String in dir.get_files():
+		if name.begins_with("save.json."):
+			found.append(name)
+	found.sort()
+	return found
 
 
 # --- Q after a restore (#94) --------------------------------------------------
