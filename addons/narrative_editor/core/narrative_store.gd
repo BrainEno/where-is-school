@@ -11,10 +11,13 @@ extends RefCounted
 ##    anything else — node ids, speakers, branches, conditions, effects, checks, `once`
 ##    flags and the ability numbers are read out of the parsed file and never written. A
 ##    tool that cannot express an edit cannot make one by accident.
-## 2. **A save is all or nothing.** Both languages are validated (JSON, structure, field
-##    rules, then the runtime's own loader) before either file is staged, and the writer
-##    rolls back if the second file refuses. A save that reports failure has written
-##    nothing.
+## 2. **A save is a bilingual transaction.** Both languages are validated (JSON, structure,
+##    field rules, then the runtime's own loader) before either target is staged. The writer
+##    checks the original snapshots before staging and before each replacement; on failure it
+##    restores targets that still contain its own write. An external edit is never
+##    overwritten; during rollback, the conflict file and any available backup are left for
+##    manual recovery. Filesystem checks and renames are not an atomic compare-and-swap, so a
+##    narrow race remains.
 ## 3. **A save is minimal.** Edits are applied to the spans of the strings that changed,
 ##    so the file keeps its formatting, its field order and every field the tool does not
 ##    know about, and the diff is the line the author edited.
@@ -371,21 +374,38 @@ func validate() -> bool:
 
 
 func save() -> bool:
-	if not validate():
+	errors.clear()
+	if not _loaded:
+		errors.append("还没有打开任何内容。")
 		return false
 	if not is_dirty():
 		return true
+
 	var targets: Array[String] = []
 	var texts: Array[String] = []
 	var originals: Array[String] = []
 	for locale: String in locales:
 		var doc: JsonText = _docs[locale]
 		targets.append(doc.path)
-		texts.append(String(_candidate[locale]))
 		originals.append(String(_saved_text.get(locale, "")))
-	var failure := writer.save_pair(targets, texts, originals)
+	# Check before validate(): dialogue/ability validation writes its own user:// temporary
+	# files. save_pair checks again after validation and immediately before each replacement.
+	var failure := writer.check_pair(targets, originals)
 	if not failure.is_empty():
-		errors.append("保存失败，两个语言文件都保持原样：%s" % failure)
+		var conflict_guidance := "编辑器中的未保存修改仍保留；请先记录或比对，"
+		conflict_guidance += "再决定是否重新加载（重新加载会放弃这些修改）或手动处理。"
+		errors.append("保存失败：%s\n%s" % [failure, conflict_guidance])
+		return false
+	if not validate():
+		return false
+
+	for locale: String in locales:
+		texts.append(String(_candidate[locale]))
+	failure = writer.save_pair(targets, texts, originals)
+	if not failure.is_empty():
+		errors.append(
+			"保存失败：%s\n编辑器中的未保存修改仍保留。" % failure
+		)
 		return false
 	for index in locales.size():
 		var locale := locales[index]
