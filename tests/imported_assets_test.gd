@@ -28,6 +28,20 @@ extends SceneTree
 ## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
+## The painted looks and motion profiles the protagonist's and Q's wrappers carry
+## (docs/CHARACTER_ART.md), by asset name. N and the classroom student have neither.
+const CHARACTER_LOOKS := {
+	"protagonist": {
+		"look": "res://assets/characters/protagonist/protagonist_look.tres",
+		"motion": "res://assets/characters/protagonist/protagonist_motion.tres",
+	},
+	"q": {
+		"look": "res://assets/characters/q/q_look.tres",
+		"motion": "res://assets/characters/q/q_motion.tres",
+	},
+}
+const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
+const PIGMENT_SHADER_PATH := "res://assets/shaders/painterly/character_pigment.gdshader"
 
 const PIPELINE_DOC := "res://docs/ASSET_PIPELINE.md"
 const PROVENANCE_DOC := "res://docs/ASSET_PROVENANCE.md"
@@ -559,6 +573,116 @@ func _check_character_wrapper(
 			_failures.append(
 				"The interaction anchor for %s is above the character's head." % label
 			)
+	if CHARACTER_LOOKS.has(label):
+		_check_character_look(label, wrapper, asset)
+
+
+## The protagonist's and Q's painted look: the wrapper carries its motion profile and a
+## `Look` applier, and the applier repaints every surface of the GLB — none left in its
+## smooth PBR material — with the painted shader, without touching what the model *is*:
+## the same meshes, surfaces, vertex counts, skins and skeleton. The other two treatments
+## (the GLB's own materials, the pigment shader) are reachable and reversible, because the
+## character art capture photographs all three.
+func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) -> void:
+	var paths: Dictionary = CHARACTER_LOOKS[label]
+	var animator := wrapper as CharacterVisualAnimation
+	if animator == null:
+		_failures.append("The wrapper for %s is not driven by CharacterVisualAnimation." % label)
+	elif animator.motion_profile == null or animator.motion_profile.resource_path != String(paths["motion"]):
+		_failures.append("The wrapper for %s does not carry its motion profile %s." % [label, String(paths["motion"])])
+	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
+	if applier == null:
+		_failures.append("The wrapper for %s has no Look applier." % label)
+		return
+	if applier.look == null or applier.look.resource_path != String(paths["look"]):
+		_failures.append("The Look applier for %s does not use %s." % [label, String(paths["look"])])
+		return
+	var model := applier.get_model()
+	if model == null or model.scene_file_path != String(asset["file"]):
+		_failures.append("The Look applier for %s is not pointed at the GLB instance." % label)
+		return
+	var report := applier.get_report()
+	var expected_surfaces := int(asset["surfaces"])
+	if String(report.get("treatment", "")) != "PAINTED":
+		_failures.append("%s starts in the %s treatment, not PAINTED." % [label, String(report.get("treatment", "?"))])
+	if int(report.get("surfaces", 0)) != expected_surfaces or int(report.get("replaced", 0)) != expected_surfaces:
+		_failures.append(
+			"%s's look replaced %d of %d surfaces (the GLB has %d); kept %s."
+			% [label, int(report.get("replaced", 0)), int(report.get("surfaces", 0)), expected_surfaces, str(report.get("kept", []))]
+		)
+	var meshes := _meshes_under(model)
+	var outlined := 0
+	for mesh_instance: MeshInstance3D in meshes:
+		for index in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.get_surface_override_material(index) as ShaderMaterial
+			if material == null or material.shader == null or material.shader.resource_path != PAINT_SHADER_PATH:
+				_failures.append(
+					"%s's %s surface %d is not painted with %s." % [label, mesh_instance.name, index, PAINT_SHADER_PATH]
+				)
+				continue
+			if material.next_pass != null:
+				outlined += 1
+	if outlined == 0 or outlined == expected_surfaces:
+		_failures.append(
+			"%s has %d of %d surfaces outlined; the ink line belongs on the outer forms only, not the eyes and mouth."
+			% [label, outlined, expected_surfaces]
+		)
+	# The mesh a surface is drawn from may be the rest-coordinate rebuild; it is the same
+	# geometry, skinned the same way.
+	var skeletons := model.find_children("*", "Skeleton3D", true, false)
+	var bone_count := (skeletons[0] as Skeleton3D).get_bone_count() if not skeletons.is_empty() else -1
+	var original_meshes := {}
+	applier.apply_treatment(CharacterLookApplier.Treatment.ORIGINAL)
+	for mesh_instance: MeshInstance3D in meshes:
+		original_meshes[mesh_instance] = mesh_instance.mesh
+		for index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.get_surface_override_material(index) != null:
+				_failures.append("%s's ORIGINAL treatment left an override on %s." % [label, mesh_instance.name])
+			var authored := mesh_instance.get_active_material(index) as StandardMaterial3D
+			if authored == null:
+				_failures.append("%s's ORIGINAL treatment does not show the GLB's own material on %s." % [label, mesh_instance.name])
+	applier.apply_treatment(CharacterLookApplier.Treatment.PIGMENT)
+	for mesh_instance: MeshInstance3D in meshes:
+		for index in mesh_instance.mesh.get_surface_count():
+			var pigment := mesh_instance.get_surface_override_material(index) as ShaderMaterial
+			if pigment == null or pigment.shader == null or pigment.shader.resource_path != PIGMENT_SHADER_PATH:
+				_failures.append("%s's PIGMENT treatment did not use %s on %s." % [label, PIGMENT_SHADER_PATH, mesh_instance.name])
+	var painted := applier.apply_treatment(CharacterLookApplier.Treatment.PAINTED)
+	if int(painted.get("replaced", 0)) != expected_surfaces:
+		_failures.append("%s did not come back to PAINTED on every surface." % label)
+	var rebuilt := 0
+	for mesh_instance: MeshInstance3D in meshes:
+		var source: Mesh = original_meshes[mesh_instance]
+		var mesh := mesh_instance.mesh
+		if mesh != source:
+			rebuilt += 1
+			if mesh.get_surface_count() != source.get_surface_count():
+				_failures.append("%s's rebuilt %s has %d surfaces, the GLB %d." % [label, mesh_instance.name, mesh.get_surface_count(), source.get_surface_count()])
+				continue
+			for index in source.get_surface_count():
+				var before: Array = source.surface_get_arrays(index)
+				var after: Array = mesh.surface_get_arrays(index)
+				for slot in [Mesh.ARRAY_VERTEX, Mesh.ARRAY_INDEX, Mesh.ARRAY_BONES, Mesh.ARRAY_WEIGHTS]:
+					if before[slot] != after[slot]:
+						_failures.append(
+							"%s's rebuilt %s surface %d changed array %d; only CUSTOM0 may be added."
+							% [label, mesh_instance.name, index, slot]
+						)
+				var custom: Variant = after[Mesh.ARRAY_CUSTOM0]
+				var vertices: PackedVector3Array = before[Mesh.ARRAY_VERTEX]
+				if not (custom is PackedFloat32Array) or (custom as PackedFloat32Array).size() != vertices.size() * 4:
+					_failures.append("%s's rebuilt %s surface %d carries no rest coordinates." % [label, mesh_instance.name, index])
+		if mesh.get_aabb().size.distance_to(source.get_aabb().size) > 0.001:
+			_failures.append("%s's %s changed size when it was painted." % [label, mesh_instance.name])
+	if rebuilt == 0:
+		_failures.append("%s's look rebuilt no mesh with rest-pose paint coordinates." % label)
+	var after_bones := (skeletons[0] as Skeleton3D).get_bone_count() if not skeletons.is_empty() else -1
+	if after_bones != bone_count or bone_count <= 0:
+		_failures.append("%s's skeleton has %d bones after painting, %d before." % [label, after_bones, bone_count])
+	if label == "protagonist":
+		var expression: Dictionary = painted.get("expression", {})
+		if expression.is_empty():
+			_failures.append("The protagonist's painted look set no resting expression on the head's blend shapes.")
 
 
 ## A seated character is scenery that happens to be a person: the classroom student. It has

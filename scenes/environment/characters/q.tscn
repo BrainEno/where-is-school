@@ -1,12 +1,20 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://assets/models/q/q.glb" id="1_model"]
 [ext_resource type="Script" path="res://scripts/actors/character_visual_animation.gd" id="2_animation"]
+[ext_resource type="Resource" path="res://assets/characters/q/q_motion.tres" id="3_motion"]
+[ext_resource type="Script" path="res://scripts/actors/character_look_applier.gd" id="4_look_applier"]
+[ext_resource type="Resource" path="res://assets/characters/q/q_look.tres" id="5_look"]
 
 [node name="Q" type="Node3D"]
 script = ExtResource("2_animation")
+motion_profile = ExtResource("3_motion")
 
 [node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Look" type="Node" parent="."]
+script = ExtResource("4_look_applier")
+look = ExtResource("5_look")
 
 [node name="InteractionAnchor" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)

@@ -708,8 +708,35 @@ func _check_player_scene() -> void:
 		var embedded := wrapper.get_node_or_null(^"Model/AnimationPlayer") as AnimationPlayer
 		if embedded != null and embedded.is_playing():
 			_failures.append("The model's own embedded clips are playing under the game's clips.")
+		_check_painted_skinning(wrapper)
 	player.queue_free()
 	await process_frame
+
+
+## The painted look swaps materials and, for most meshes, the mesh itself (the same geometry
+## with rest-pose paint coordinates). Every mesh has to stay skinned to the same 60-bone
+## skeleton through that, and the head has to keep the blend shapes the face is made of.
+func _check_painted_skinning(wrapper: CharacterVisualAnimation) -> void:
+	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
+	if applier == null:
+		_failures.append("The player's protagonist has no Look applier.")
+		return
+	var skeleton := wrapper.get_skeleton()
+	var swapped := 0
+	for node in wrapper.get_node(^"Model").find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.skin == null or mesh_instance.get_node_or_null(mesh_instance.skeleton) != skeleton:
+			_failures.append("The painted protagonist's %s is no longer skinned to the skeleton." % mesh_instance.name)
+		if mesh_instance.mesh != null and mesh_instance.mesh.resource_name != "" and mesh_instance.mesh.resource_path.is_empty():
+			swapped += 1
+		if String(mesh_instance.name) == "Protagonist_Head":
+			var shapes := mesh_instance.mesh.get_blend_shape_count() if mesh_instance.mesh != null else 0
+			if shapes != 9:
+				_failures.append("The painted protagonist's head has %d blend shapes, the model 9." % shapes)
+	_notes.append(
+		"painted protagonist: %s; %d mesh instance(s) drawn from a runtime mesh"
+		% [str(applier.get_report().get("rebuilt_meshes", [])), swapped]
+	)
 
 
 func _check_classroom_student() -> void:

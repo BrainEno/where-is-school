@@ -108,6 +108,7 @@ func _run() -> void:
 	_check_tracks_are_bones_only("protagonist", player_animator)
 	_notes.append("protagonist bind: %s" % CharacterAnimation.describe(player_animator.get_bind_report()))
 	_check_walking_limbs_free("protagonist", player_animator)
+	_check_in_game_look("protagonist", player_animator)
 
 	Harness.stage = "wake"
 	await _check_wake(player_animator)
@@ -293,6 +294,8 @@ func _check_classroom_q() -> void:
 	_check_tracks_are_bones_only("classroom Q", animator)
 	_notes.append("Q bind: %s" % CharacterAnimation.describe(animator.get_bind_report()))
 	_check_walking_limbs_free("Q", animator)
+	_check_in_game_look("Q", animator)
+	_check_distinct_rhythm(_player.get_character_animator(), animator)
 	if animator.get_locomotion_body() != null:
 		_failures.append("The classroom Q is not under a body, but its animator found one: %s." % animator.get_locomotion_body())
 	await _check_idle_pose("the classroom Q, standing", animator, IDLE_REST_DEGREES)
@@ -609,6 +612,54 @@ func _check_returns_to_idle(label: String, animator: CharacterVisualAnimation) -
 	# Past the cross-fade, then the legs have to be under the body again.
 	await _seconds(animator.blend_time + 0.3)
 	await _check_idle_pose(label, animator, SETTLED_REST_DEGREES, true)
+
+
+## In the running game, the character is the painted one with its own motion profile: the
+## wrapper's profile was bound (and named nothing the rig cannot move), and its Look applier
+## is on PAINTED with no surface left in the GLB's material.
+func _check_in_game_look(label: String, animator: CharacterVisualAnimation) -> void:
+	var report := animator.get_bind_report()
+	if animator.motion_profile == null or String(report.get("profile", "")).is_empty():
+		_failures.append("The in-game %s was bound without its motion profile." % label)
+	elif not (report.get("profile_ignored", []) as Array).is_empty():
+		_failures.append("The in-game %s's profile names bones it cannot move: %s" % [label, str(report["profile_ignored"])])
+	var applier := animator.get_node_or_null(^"Look") as CharacterLookApplier
+	if applier == null:
+		_failures.append("The in-game %s has no Look applier." % label)
+		return
+	var look := applier.get_report()
+	if String(look.get("treatment", "")) != "PAINTED" or not (look.get("kept", []) as Array).is_empty():
+		_failures.append(
+			"The in-game %s is drawn %s and kept %s; it should be painted throughout."
+			% [label, String(look.get("treatment", "?")), str(look.get("kept", []))]
+		)
+	_notes.append(
+		"%s look: %s, %d/%d surfaces painted, %d outlined, %d mesh(es) with rest coordinates"
+		% [
+			label, String(look.get("look", "")), int(look.get("replaced", 0)), int(look.get("surfaces", 0)),
+			(look.get("outlined", []) as Array).size(), (look.get("rebuilt_meshes", []) as Array).size(),
+		]
+	)
+
+
+## The protagonist and Q, as the game built them, do not share one body rhythm.
+func _check_distinct_rhythm(protagonist: CharacterVisualAnimation, q: CharacterVisualAnimation) -> void:
+	if protagonist == null or q == null:
+		return
+	var library := String(CharacterAnimation.LIBRARY_NAME)
+	var parts: PackedStringArray = []
+	var same: Array[String] = []
+	for clip_name: String in ["idle", "walk", "talk", "wave"]:
+		var mine := protagonist.get_animation_player().get_animation("%s/%s" % [library, clip_name])
+		var theirs := q.get_animation_player().get_animation("%s/%s" % [library, clip_name])
+		if mine == null or theirs == null:
+			continue
+		parts.append("%s %.2f/%.2f s" % [clip_name, mine.length, theirs.length])
+		if is_equal_approx(mine.length, theirs.length):
+			same.append(clip_name)
+	_notes.append("clip lengths in game, protagonist / Q: %s" % ", ".join(parts))
+	if same.size() > 1:
+		_failures.append("The protagonist and Q play %s at the same tempo in game." % str(same))
 
 
 ## Idle means the character is standing the way it was modelled: limbs near rest, hands below
