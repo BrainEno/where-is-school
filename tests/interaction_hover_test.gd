@@ -232,11 +232,15 @@ func _check_out_of_reach_is_not_a_target() -> void:
 		_failures.append("The pointer selected a probe %.1f m away, beyond the reach limit." % _probe_far.global_position.distance_to(_player.global_position))
 
 
-## The same rule against real content: stand at the classroom door, face it, and put
-## the pointer on the timetable sheet on the other side of the room's corner.
+## The same rule against real content: stand beside the timetable sheet facing the
+## classroom door, and put the pointer on the sheet. Since #115 an object is only targeted
+## while the camera sees it, and from the door itself the sheet is behind WallSouthLeft,
+## opaque. At (1.98, 3.15) the fader's ray to the player's eye still crosses that wall
+## (at x 2.53 of its 2.6 end), so the sheet is drawn, and the door ahead (1.23 m) still
+## outscores the sheet just behind (0.38 m + the facing penalty 0.9).
 func _check_real_prop() -> void:
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(3.2, 0, 2.55)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-97.0)), Vector3(1.98, 0, 3.15)))
 	await _physics_frames(4)
 	var door := _location.find_interactable(&"classroom_door")
 	var sheet := _location.find_interactable(&"timetable")
@@ -244,7 +248,13 @@ func _check_real_prop() -> void:
 		_failures.append("The classroom lost the door or the timetable.")
 		return
 	if _interaction.get_current_target() != door:
-		_failures.append("Facing the door did not target it (got '%s')." % _name_of(_interaction.get_current_target()))
+		_failures.append(
+			"Facing the door did not target it (got '%s'; player at %s, door seen by the camera: %s)."
+			% [
+				_name_of(_interaction.get_current_target()), str(_player.global_position),
+				str(_interaction.is_seen_by_camera(door))
+			]
+		)
 		return
 	# At the sheet as it is drawn, not at its anchor: the anchor is a point in the air in
 	# front of the wall under the sheet, and from the camera the door frame (pickable since
