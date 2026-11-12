@@ -232,11 +232,13 @@ func _check_out_of_reach_is_not_a_target() -> void:
 		_failures.append("The pointer selected a probe %.1f m away, beyond the reach limit." % _probe_far.global_position.distance_to(_player.global_position))
 
 
-## The same rule against real content: stand at the classroom door, face it, and put
-## the pointer on the timetable sheet on the other side of the room's corner.
+## The same rule against real content: stand beside the timetable sheet facing the
+## classroom door, and put the pointer on the sheet. The spot is one where the camera's
+## fader dims WallSouthLeft, so the camera sees the sheet: since #115 the pointer only picks
+## what is drawn, and from the door itself the sheet is behind that wall, opaque.
 func _check_real_prop() -> void:
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(3.2, 0, 2.55)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(1.9, 0, 3.1)))
 	await _physics_frames(4)
 	var door := _location.find_interactable(&"classroom_door")
 	var sheet := _location.find_interactable(&"timetable")

@@ -523,15 +523,25 @@ func _check_canopy_hides_from_the_camera() -> void:
 		_failures.append(
 			"The pointer selected a target the camera cannot see past a drawn canopy (at %s)." % str(picked)
 		)
-	# Facing is about the character, not the camera: report what it does, so the limit of
-	# this fix is measured rather than assumed.
+	# Facing it, in reach and in the eye's sight: the camera still cannot see it, so it
+	# is not the target either - no prompt, no cue, no E for what has no outline.
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
-	_player.teleport(Transform3D(_yaw_towards(_player.global_position, target.global_position), _player.global_position))
+	var here := _player.global_position
+	_player.teleport(Transform3D(_yaw_towards(here, target.global_position), here))
 	await _physics_frames(4)
 	print(
-		"[#115] canopy, facing path (camera not consulted by design): current=%s highlight=%s"
-		% [_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted())]
+		"[#115] canopy, facing: current=%s highlight=%s seen_by_camera=%s"
+		% [
+			_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted()),
+			str(_interaction.is_seen_by_camera(target))
+		]
 	)
+	if _interaction.get_current_target() == target or target.is_highlighted():
+		_failures.append("Facing chose a target the camera cannot see past a drawn canopy.")
+	_activated.clear()
+	await _push_e()
+	if _activated.has(&"occlusion_canopy"):
+		_failures.append("E used a target the camera cannot see past a drawn canopy.")
 	_interaction.clear_mouse_override()
 	# Declaring the canopy as support changes the eye's probe, not what the camera sees.
 	target.support_paths = PackedStringArray([target.get_path_to(canopy)])
@@ -539,13 +549,31 @@ func _check_canopy_hides_from_the_camera() -> void:
 	if _find_target_on_screen(target) != Vector2.ZERO:
 		_failures.append("Declaring a canopy as support let the pointer see through it from the camera.")
 	target.support_paths = PackedStringArray()
-	# The same canopy, faded the way CameraOccluderFader fades a wall: see-through, so it no
-	# longer hides the object, and the pointer finds it again.
-	for mesh: Node in canopy.find_children("*", "MeshInstance3D", true, false):
-		(mesh as MeshInstance3D).transparency = 0.82
+	# `transparency` alone is not drawn on Compatibility (Godot ignores it outside Forward+),
+	# so a canopy with only that set is still opaque, and still hides the object.
+	var canopy_mesh := canopy.get_node("MeshInstance3D") as MeshInstance3D
+	canopy_mesh.transparency = 0.82
+	await _physics_frames(2)
+	if RenderingServer.get_current_rendering_method() != "forward_plus" \
+			and _find_target_on_screen(target) != Vector2.ZERO:
+		_failures.append("Instance transparency alone (not drawn on this renderer) let the pointer through.")
+	# The same canopy drawn the way CameraOccluderFader now draws a faded wall - an
+	# alpha-blended material - is see-through: the pointer finds the object again.
+	var faded := StandardMaterial3D.new()
+	faded.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	faded.albedo_color = Color(1.0, 1.0, 1.0, 0.18)
+	canopy_mesh.material_override = faded
 	await _physics_frames(2)
 	if _find_target_on_screen(target) == Vector2.ZERO:
 		_failures.append("A faded (see-through) canopy still hid the target from the pointer. %s" % _explain(target))
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	await _physics_frames(4)
+	if _interaction.get_current_target() != target:
+		_failures.append(
+			"Facing a target under a faded canopy did not choose it (current %s)."
+			% _name_of(_interaction.get_current_target())
+		)
+	_interaction.clear_mouse_override()
 	_clean_up()
 
 
@@ -676,7 +704,15 @@ func _check_classroom_timetable() -> void:
 	if spot == Vector3.INF:
 		_failures.append("Case 10b: no standing spot in front of the sheet dims WallSouthLeft.")
 	else:
+		var authored := _wall_material(wall)
 		var b := await _measure_sheet_view("b faded wall", sheet, wall, spot, sheet.global_position)
+		var drawn := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override as BaseMaterial3D
+		print("[#115] fader: authored %s, while faded %s" % [str(authored), str(drawn)])
+		if drawn == null or drawn.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA or drawn.albedo_color.a > 0.5:
+			_failures.append(
+				"Case 10b: the faded wall is not drawn with an alpha-blended material, so it would"
+				+ " stay opaque on Compatibility (material %s)." % str(drawn)
+			)
 		if int(b["contradictions"]) > 0 or int(b["picked"]) == 0:
 			_failures.append("Case 10b: the visible sheet was not pointable consistently. %s" % str(b))
 		if b["current"] != "timetable" or b["highlight"] != "timetable":
@@ -684,6 +720,17 @@ func _check_classroom_timetable() -> void:
 		if not bool(b["e_used"]) or not bool(b["click_used"]):
 			_failures.append("Case 10b: E or a click could not use the visible sheet. %s" % str(b))
 		await _check_sheet_switched_off(sheet, spot)
+
+	# Away from the wall, the fader gives the authored material back - the same resource.
+	var away := Vector3(1.2, 0.0, 1.2)
+	_player.teleport(Transform3D(_yaw_towards(away, away + Vector3.FORWARD), away))
+	await _physics_frames(12)
+	var rest := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override
+	if _wall_transparency(wall) > 0.0 or rest == null or rest.resource_path.is_empty():
+		_failures.append(
+			"WallSouthLeft did not get its authored material back after the fade (%s, transparency %.2f)."
+			% [str(rest), _wall_transparency(wall)]
+		)
 
 	# (c) Behind the wall: the player outside, looking at its back.
 	var back := Vector3(1.6, 0.0, 4.3)
@@ -716,7 +763,50 @@ func _check_classroom_timetable() -> void:
 		last = state
 	print("[#115] edge sweep (z=2.75): %s; flips=%d" % ["; ".join(lines), flips])
 
+	# (e) Facing, with the pointer parked: in front of the sheet, in reach and in the eye's
+	# sight, but far enough back that the fader's ray clears the wall top and leaves it
+	# opaque - the sheet is not the target. From the faded spot it is.
+	var e := await _measure_facing(sheet, wall, Vector3(1.6, 0.0, 1.9))
+	if bool(e["eye"]) and bool(e["reach"]) and int(e["hidden"]) == int(e["points"]) \
+			and int(e["points"]) > 0:
+		if e["current"] == "timetable" or bool(e["e_used"]):
+			_failures.append("Case 10e: facing chose the sheet the camera sees only through the opaque wall. %s" % str(e))
+	else:
+		print("[#115] case 10e precondition not met, facing not judged: %s" % str(e))
+	if spot != Vector3.INF:
+		var f := await _measure_facing(sheet, wall, spot)
+		if f["current"] != "timetable" or not bool(f["e_used"]):
+			_failures.append("Case 10e: facing the sheet through the faded wall did not choose and use it. %s" % str(f))
+
 	await _check_scene_swap_leaves_nothing(sheet, spot)
+
+
+## Facing only (pointer parked off everything): what the controller chooses at `spot`
+## facing the sheet, and whether E uses it, next to the camera's view of the sheet.
+func _measure_facing(sheet: Interactable, wall: StaticBody3D, spot: Vector3) -> Dictionary:
+	_navigator.cancel()
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	_player.teleport(Transform3D(_yaw_towards(spot, sheet.global_position), spot))
+	await _physics_frames(8)
+	var result := {
+		"view": "facing", "player": spot, "wall": _wall_transparency(wall),
+		"eye": _interaction.has_line_of_sight(sheet), "reach": _interaction.is_in_reach(sheet),
+		"seen": _interaction.is_seen_by_camera(sheet), "points": 0, "hidden": 0,
+		"current": _name_of(_interaction.get_current_target()),
+		"highlight": _name_of(_interaction.get_highlighted()), "e_used": false,
+	}
+	for point in _sheet_points(sheet):
+		if _behind_camera(point):
+			continue
+		result["points"] = int(result["points"]) + 1
+		if _first_drawn_body(point) != null:
+			result["hidden"] = int(result["hidden"]) + 1
+	_activated.clear()
+	await _push_e()
+	result["e_used"] = _activated.has(&"timetable")
+	await _settle_dialogue()
+	print("[#115] facing %s" % str(result))
+	return result
 
 
 ## Stands at `spot` facing `look_at`, lets the camera and its fader settle, then asks every
@@ -866,16 +956,31 @@ func _first_drawn_body(point: Vector3) -> Node:
 	return null
 
 
+## A piece hides what is behind it when it writes depth: it is visible, on a camera layer,
+## and drawn with at least one material that is not alpha-blended. Instance transparency
+## is not drawn on Compatibility, so it does not count here.
 func _drawn_opaque(body: Node, cull_mask: int) -> bool:
 	var nodes: Array[Node] = [body]
 	nodes.append_array(body.find_children("*", "GeometryInstance3D", true, false))
 	for node in nodes:
 		var geometry := node as GeometryInstance3D
-		if geometry == null or not geometry.is_visible_in_tree():
+		if geometry == null or not geometry.is_visible_in_tree() or geometry.name == "OutlineKey":
 			continue
-		if (geometry.layers & cull_mask) == 0 or geometry.transparency > 0.0:
+		if (geometry.layers & cull_mask) == 0:
 			continue
-		return true
+		var materials: Array[Material] = []
+		if geometry.material_override != null:
+			materials.append(geometry.material_override)
+		elif geometry is MeshInstance3D and (geometry as MeshInstance3D).mesh != null:
+			var mesh := geometry as MeshInstance3D
+			for surface in mesh.get_surface_override_material_count():
+				materials.append(mesh.get_active_material(surface))
+		if materials.is_empty():
+			return true
+		for material in materials:
+			var base := material as BaseMaterial3D
+			if base == null or base.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA:
+				return true
 	return false
 
 
@@ -916,6 +1021,11 @@ func _behind_camera(point: Vector3) -> bool:
 func _camera_position() -> Vector3:
 	var camera := _player.get_viewport().get_camera_3d()
 	return camera.global_position if camera != null else Vector3.ZERO
+
+
+func _wall_material(wall: StaticBody3D) -> Material:
+	var mesh := wall.get_node_or_null("MeshInstance3D") as GeometryInstance3D
+	return mesh.material_override if mesh != null else null
 
 
 func _wall_transparency(wall: StaticBody3D) -> float:
