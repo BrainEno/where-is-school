@@ -33,6 +33,11 @@ const PRODUCTION_Q := "res://assets/models/q/q.glb"
 const PRODUCTION_N := "res://assets/models/teacher-n/teacher-n.glb"
 ## How far, in metres, a thigh raised for sitting has to carry the knee along the facing axis.
 const SEATED_KNEE_TRAVEL := 0.2
+## The four loops N's author made, the same list `teacher_n.tscn` hands its animator.
+const N_IDLE_LAYERS: Array[String] = [
+	"ST_Idle_Breathing", "ST_Nervous_Posture_Shift", "ST_Slight_Hand_Movement",
+	"ST_Subtle_Head_Movement",
+]
 
 ## Degrees a bone has to turn between two samples of a clip before the clip counts as moving
 ## it. Small enough for the idle sway, large enough that floating point noise cannot pass.
@@ -109,6 +114,9 @@ func _run() -> void:
 
 	Harness.stage = "a model that faces -Z"
 	await _check_negative_z_binding()
+
+	Harness.stage = "a model's own clips as the idle"
+	await _check_authored_idle()
 
 	Harness.stage = "the sprint the jog clip exists for"
 	_check_jog_threshold()
@@ -462,6 +470,69 @@ func _check_negative_z_binding() -> void:
 		player.free()
 	model.queue_free()
 	await process_frame
+
+
+## `adopt_authored_layers()` either replaces the idle with the model's own loops or leaves the
+## procedural idle exactly as it was. Three cases: N's four loops (replaced, looping, every
+## track applied); a list naming a clip N does not have (refused, idle untouched); Q, which
+## carries no clips of its own (refused, idle untouched). A half-built idle is the failure
+## this guards against.
+func _check_authored_idle() -> void:
+	var cases := [
+		["N, its four loops", PRODUCTION_N, true, PackedStringArray(N_IDLE_LAYERS), true],
+		["N, a clip it does not have", PRODUCTION_N, true,
+			PackedStringArray(["ST_Idle_Breathing", "No_Such_Clip"]), false],
+		["Q, no clips of its own", PRODUCTION_Q, false, PackedStringArray(N_IDLE_LAYERS), false],
+	]
+	for case: Array in cases:
+		var label := String(case[0])
+		var packed := load(String(case[1])) as PackedScene
+		if packed == null:
+			_failures.append("%s: %s could not be loaded." % [label, case[1]])
+			continue
+		var model := packed.instantiate() as Node3D
+		root.add_child(model)
+		await process_frame
+		var player := _player_for(model)
+		var report := CharacterAnimation.bind(model, player, bool(case[2]))
+		if not bool(report.get("ok", false)):
+			_failures.append("%s: bind failed: %s" % [label, report.get("reason", "?")])
+			model.queue_free()
+			await process_frame
+			continue
+		var library := player.get_animation_library(CharacterAnimation.LIBRARY_NAME)
+		var before := library.get_animation("idle")
+		var adopted := CharacterAnimation.adopt_authored_layers(
+			model, player, "idle", case[3] as PackedStringArray
+		)
+		var after := library.get_animation("idle")
+		var expect_ok := bool(case[4])
+		_notes.append("%s: adopt ok %s (%s)" % [label, adopted.get("ok"), adopted.get("reason", "replaced")])
+		if bool(adopted.get("ok", false)) != expect_ok:
+			_failures.append(
+				"%s: adopt_authored_layers returned ok %s, expected %s (%s)."
+				% [label, adopted.get("ok"), expect_ok, adopted.get("reason", "")]
+			)
+		elif expect_ok:
+			if after == before:
+				_failures.append("%s: the idle was reported replaced but is the same clip." % label)
+			elif after.loop_mode != Animation.LOOP_LINEAR:
+				_failures.append("%s: the adopted idle does not loop." % label)
+			if int(adopted.get("ignored_tracks", -1)) != 0:
+				_failures.append("%s: %s track(s) of the model's clips were not applied." % [label, adopted.get("ignored_tracks")])
+			if (adopted.get("layers", PackedStringArray()) as PackedStringArray).size() != 4:
+				_failures.append("%s: the adopted idle does not combine all four loops." % label)
+			for track in after.get_track_count():
+				if after.track_get_type(track) != Animation.TYPE_ROTATION_3D:
+					_failures.append("%s: the adopted idle has a non-rotation track." % label)
+					break
+		else:
+			if after != before:
+				_failures.append("%s: a refused adopt still replaced the procedural idle." % label)
+			if String(adopted.get("reason", "")).is_empty():
+				_failures.append("%s: a refused adopt gave no reason." % label)
+		model.queue_free()
+		await process_frame
 
 
 ## The pose a clip is in at time zero, per canonical bone, as the skeleton ends up holding it.
