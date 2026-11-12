@@ -444,3 +444,44 @@ jobs:
           echo "measured: ${codes}"
           echo "::notice title=measurement step::exit codes ${codes}; status ${status}"
           exit "${status}"
+
+  display-input:
+    name: Display scaling and input device tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import project resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import
+          godot --headless --editor --path . --quit
+
+      - name: Run display and device checks
+        shell: bash
+        env:
+          CI_LOG_DIR: ${{ runner.temp }}/display-input-logs
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          status=0
+          run_check display_mode 180 godot --headless --path . --script res://tests/display_mode_test.gd || status=1
+          run_check display_resolution 120 godot --headless --path . --script res://tests/display_resolution_test.gd || status=1
+          run_check input_device 90 godot --headless --path . --script res://tests/input_device_test.gd || status=1
+          run_check dialogue_layout 300 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_layout_test.gd || status=1
+          run_check hud_layout_720 180 godot --headless --resolution 1280x720 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_900 180 godot --headless --resolution 1600x900 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_1080 180 godot --headless --resolution 1920x1080 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_1440 180 godot --headless --resolution 2560x1440 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_4k 240 godot --headless --resolution 3840x2160 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check_summary
+          exit "${status}"
