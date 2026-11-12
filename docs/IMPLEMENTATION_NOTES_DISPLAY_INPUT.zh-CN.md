@@ -25,7 +25,7 @@
 
 - 当前 Arena 工作区没有 Godot 可执行文件，所以没有本地 Godot 运行；PR CI 使用仓库工作流安装的 Godot 4.7.2 Stable。
 - 本地：`gdparse` 解析 `scripts/`、`tests/` 全部 GDScript 通过；`git diff --check`、locale JSON 和两个修改 workflow 的 YAML 解析通过；`bash tests/run_check_test.sh` 为 10 cases / 0 failures。
-- PR head `23bf15f4e090de162bc26a092608dcac92a5d3f3` 的独立 `Display scaling and input device tests` 通过：9/9（display_mode、display_resolution、input_device、dialogue_layout 与 1280×720、1600×900、1920×1080、2560×1440、3840×2160 HUD 布局）。Run：<https://github.com/BrainEno/where-is-school/actions/runs/43241808857>。
-- 同一 head 的 Playthrough capture 全部步骤通过，游戏流程到达已实现内容结尾；UI capture 作业成功报告 15 张 PNG（五种分辨率的中英文对话画面、一张手柄提示画面及四种额外界面）。Artifact：<https://github.com/BrainEno/where-is-school/actions/runs/43241808246/artifacts/13956451048>。Workflow：<https://github.com/BrainEno/where-is-school/actions/runs/43241808246>。
-- 仓库完整 Godot CI 与 Release build 检查仍失败于未修改的 `teacher-n.glb` 导入产物 2.85 MiB 超过 1.50 MiB 模型硬限制；Release build 同样在 package content 检查处失败，12.8 MiB pack 还触发既有 8 MiB 警告。本任务不修改 Agent 01/02/03 的模型资源，未绕过或弱化这些检查。完整 gameplay suite 因该前置资源检查停止；本任务有关的目标自动测试已由独立 CI job 执行通过。
-- 真实显示器的 F11 / 无边框全屏与多屏位置，以及真实控制器热插拔仍需人工验收；CI 使用 Xvfb 和合成输入，不能替代硬件验证。
+- 当前 PR head `c30c75e905c829698df53732874167586a8cd183` 的 Godot CI 全部通过，Godot 4.7.2 Stable：完整 gameplay job 与独立 `Display scaling and input device tests` 均成功；独立 job 为 9/9（display_mode、display_resolution、input_device、dialogue_layout，以及 1280×720、1600×900、1920×1080、2560×1440、3840×2160 HUD 布局）。Run：<https://github.com/BrainEno/where-is-school/actions/runs/43243355769>。
+- 同一 head 的 Playthrough capture 全步骤通过，流程抵达已实现内容结尾，截图证据已上传：<https://github.com/BrainEno/where-is-school/actions/runs/43243355881/artifacts/13955353073>。工作流：<https://github.com/BrainEno/where-is-school/actions/runs/43243355881>。CI 记录的 `to_schoolyard` 提示未出现情况仍存在，但脚本继续完成流程；需人工核对相应提示时序。
+- Release build 的双平台导出、验证和打包均通过：<https://github.com/BrainEno/where-is-school/actions/runs/43243355849>。此前同一改动在另一轮 CI 出现模型库契约与 teacher 导入资源体积失败；当前 head 的重新运行通过完整 Godot CI 和 Release 检查，未修改或绕过 Agent 01/02/03 资源约束。
+- PR 全部必需 checks 当前通过，PR #131 状态 CLEAN，保持开放且未合并：<https://github.com/BrainEno/where-is-school/pull/131>。真实显示器的 F11 / 无边框全屏与多屏位置，以及真实控制器热插拔仍需人工验收；CI 使用 Xvfb 和合成输入，不能替代硬件验证。
