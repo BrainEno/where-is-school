@@ -249,7 +249,7 @@ func _write_verified(path: String, bytes: PackedByteArray) -> Dictionary:
 ## that is already there. Returns `{ok, reason, detail, backup_path, recovery_path,
 ## leftovers}`.
 func _replace_verified(temp_path: String, nonce: String, intended: PackedByteArray) -> Dictionary:
-	var fs := _fs()
+	var fs: Variant = _fs()
 	var had_save: bool = fs.exists(SAVE_PATH)
 	var previous := PackedByteArray()
 	if had_save:
@@ -414,7 +414,7 @@ func _cleanup_strays(protected: Array = [], kinds: Array = [".tmp", ".bak"]) -> 
 ## Only runs when there is no save at all: a save that is there is the truth, and this
 ## never overwrites it. Returns `{ok, recovered, path}`.
 func recover_pending_swap() -> Dictionary:
-	var fs := _fs()
+	var fs: Variant = _fs()
 	# A new game owns these files while it runs: one of its staged copies is *supposed* to
 	# be the only copy for a moment, and putting it back here would undo the very thing it
 	# is doing.
@@ -443,10 +443,10 @@ func recover_pending_swap() -> Dictionary:
 ##
 ## Returns `{ok, staged, staged_path, reason, detail}`.
 func stage_save() -> Dictionary:
-	var fs := _fs()
+	var fs: Variant = _fs()
 	if not fs.exists(SAVE_PATH):
 		return {"ok": true, "staged": false, "staged_path": "", "reason": "", "detail": ""}
-	var bytes := fs.read_bytes(SAVE_PATH)
+	var bytes: PackedByteArray = fs.read_bytes(SAVE_PATH)
 	var staged_path := "%s.%s.staged" % [SAVE_PATH, _new_nonce()]
 	var moved: int = fs.rename(SAVE_PATH, staged_path)
 	if moved != OK or not fs.exists(staged_path):
@@ -472,14 +472,14 @@ func stage_save() -> Dictionary:
 
 ## Puts a staged save back where the game reads it, and proves the bytes arrived.
 func restore_staged(staged_path: String) -> Dictionary:
-	var fs := _fs()
+	var fs: Variant = _fs()
 	if staged_path.is_empty() or not fs.exists(staged_path):
 		return {
 			"ok": false,
 			"reason": "missing",
 			"detail": "there is no staged save at '%s'" % staged_path,
 		}
-	var bytes := fs.read_bytes(staged_path)
+	var bytes: PackedByteArray = fs.read_bytes(staged_path)
 	if fs.rename(staged_path, SAVE_PATH) != OK or not fs.exists(SAVE_PATH):
 		return {
 			"ok": false,
@@ -496,7 +496,7 @@ func restore_staged(staged_path: String) -> Dictionary:
 func discard_staged(staged_path: String) -> Dictionary:
 	if staged_path.is_empty():
 		return {"ok": true, "removed": false, "detail": ""}
-	var fs := _fs()
+	var fs: Variant = _fs()
 	if not fs.exists(staged_path):
 		return {"ok": true, "removed": false, "detail": ""}
 	var error: int = fs.remove(staged_path)
@@ -640,7 +640,7 @@ func load_game() -> Dictionary:
 ## what test hygiene wants and what a new game must not do.
 func delete_save(options: Dictionary = {}) -> Dictionary:
 	var remove_broken := bool(options.get("broken", false))
-	var fs := _fs()
+	var fs: Variant = _fs()
 	var removed: Array = []
 	var refused: Array = []
 	var targets: Array = [SAVE_PATH, BROKEN_PATH] if remove_broken else [SAVE_PATH]

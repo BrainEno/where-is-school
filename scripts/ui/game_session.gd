@@ -102,7 +102,8 @@ func continue_game() -> Dictionary:
 
 
 func go_to_title() -> Dictionary:
-	return _go_to(TITLE_SCENE, "the title screen")
+	var error := _go_to(TITLE_SCENE, "the title screen")
+	return {"ok": error == OK, "error": error, "scene": TITLE_SCENE}
 
 
 func quit_game() -> void:
