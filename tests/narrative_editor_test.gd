@@ -94,7 +94,7 @@ class RollbackConflictWriter extends "res://addons/narrative_editor/core/narrati
 
 
 ## Injects a second-language .saving after preflight while the first file is staged.
-class LateSavingArtifactWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+class LateSavingWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
 	var trigger_path: String = ""
 	var artifact_path: String = ""
 	var artifact_text: String = ""
@@ -662,7 +662,7 @@ func _case_late_saving_artifact_is_preserved() -> void:
 	var before_second := _read(second_path)
 	var english_edit := "Pending English edit."
 	var chinese_edit := "未保存的中文修改。"
-	var writer := LateSavingArtifactWriter.new()
+	var writer := LateSavingWriter.new()
 	var store := Store.new(ROOT, writer)
 	if not _prepare_bilingual_edit(store, english_edit, chinese_edit, "暂存期间出现 .saving"):
 		return
