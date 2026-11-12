@@ -281,6 +281,11 @@ jobs:
           # The same clips in the shipping game: main.tscn's player (keys and clicks), the
           # classroom Q and the following Q, measured off their skeletons.
           run_check runtime_character_animation 300 godot --headless --path . --script res://tests/runtime_character_animation_test.gd || status=1
+          # The protagonist model (PR #118): its import, skeleton and skinning, the bone
+          # mapping (positional sides, which joints animate), every clip's limbs measured on
+          # all three rigs, the player scene, the former protagonist seated in the classroom
+          # as a plain student, and Q binding exactly as before.
+          run_check protagonist_model 240 godot --headless --path . --script res://tests/protagonist_model_test.gd || status=1
           # The animation library retargeted onto the protagonist: the bones pair up, the
           # baked clip actually moves the character, and the retarget is rest-relative (the
           # source's rotation change and the target's are the same rotation). Then the

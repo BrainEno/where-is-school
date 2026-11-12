@@ -1,14 +1,14 @@
 {
   "schema": "where-is-school/runtime-model-manifest",
   "schema_version": 1,
-  "description": "The structural record of the two models the game instantiates at run time. tools/model_library.py --check compares every registered model against it on every run; a difference fails the check and the manifest is updated on purpose, by tools/model_library.py --update-manifest, so the change shows up in review.",
+  "description": "The structural record of the three rigged models the game instantiates at run time. tools/model_library.py --check compares every registered model against it on every run; a difference fails the check and the manifest is updated on purpose, by tools/model_library.py --update-manifest, so the change shows up in review.",
   "scope": "Runtime characters only. art/character_rigging/ (Blender working files and the unrigged Q source), scenes/dev/animation_retarget_test/ (a development retarget asset) and art/character_rig_audit/*_rig_audit.json (Blender-side audits of other stages) are deliberately not covered: they are different stages of the same character, and mixing them is how a manifest starts describing a file nobody ships.",
   "measured_from": "The .glb files as committed, read by tools/model_library.py. Not the Blender sources, not the rig audits.",
   "models": [
     {
       "path": "assets/models/protagonist/protagonist.glb",
-      "wrapper": "scenes/environment/characters/protagonist.tscn",
-      "note": "The player character. One armature (RIG_Protagonist_Blockout) whose 16 deform bones are the skin's joints, 78 mesh nodes all bound to that skin, 22 materials, and no embedded animation: the seven clips in scripts/actors/character_animation.gd are composed onto this rig's rest pose at run time.",
+      "wrapper": "scenes/environment/characters/classroom_student.tscn",
+      "note": "The first protagonist model; since PR #118 a seated classroom student (scenes/locations/classroom/classroom.tscn, Actors/SeatedStudent) with no controller or interaction. One armature (RIG_Protagonist_Blockout) whose 16 deform bones are the skin's joints, 78 mesh nodes all bound to that skin, 22 materials, and no embedded animation: the seven clips in scripts/actors/character_animation.gd are composed onto this rig's rest pose at run time.",
       "counts": {
         "nodes": 96,
         "meshes": 78,
@@ -1661,6 +1661,3551 @@
         }
       ],
       "animations": []
+    },
+    {
+      "path": "assets/models/protagonist/Protagonist_Character.glb",
+      "wrapper": "scenes/environment/characters/protagonist.tscn",
+      "note": "The player character since PR #118. One armature (Protagonist_Armature) whose 60 bones are the skin's joints (root, four IK targets, pelvis, four spine/chest bones, clavicles, arms, hands with 15 finger joints each, neck, head, eyes, legs and toes), 9 mesh nodes all bound to that skin (the head carries 9 blend shapes), 12 materials, and five embedded animations that the game does not play (the imported AnimationPlayer has no autoplay): the seven clips in scripts/actors/character_animation.gd are composed onto this rig's rest pose at run time, and 15 of the 60 joints are keyed by them.",
+      "counts": {
+        "nodes": 70,
+        "meshes": 9,
+        "primitives": 15,
+        "materials": 12,
+        "skins": 1,
+        "joints": 60,
+        "animations": 5,
+        "animation_channels": 721
+      },
+      "scene_roots": [
+        "Protagonist_Armature"
+      ],
+      "nodes": [
+        {
+          "path": "Protagonist_Armature",
+          "name": "Protagonist_Armature",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Body",
+          "name": "Protagonist_Body",
+          "mesh": "Protagonist_Body",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Buttons",
+          "name": "Protagonist_Buttons",
+          "mesh": "Protagonist_Buttons",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Eyes",
+          "name": "Protagonist_Eyes",
+          "mesh": "Protagonist_Eyes",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Feet",
+          "name": "Protagonist_Feet",
+          "mesh": "Protagonist_Feet",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Hair",
+          "name": "Protagonist_Hair",
+          "mesh": "Protagonist_Hair",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Hands",
+          "name": "Protagonist_Hands",
+          "mesh": "Protagonist_Hands",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Head",
+          "name": "Protagonist_Head",
+          "mesh": "Protagonist_Head",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_Jacket",
+          "name": "Protagonist_Jacket",
+          "mesh": "Protagonist_Jacket",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Protagonist_JacketDetails",
+          "name": "Protagonist_JacketDetails",
+          "mesh": "Protagonist_JacketDetails",
+          "skin": 0
+        },
+        {
+          "path": "Protagonist_Armature/Root",
+          "name": "Root",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/IK_Foot_L",
+          "name": "IK_Foot_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/IK_Foot_R",
+          "name": "IK_Foot_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/IK_Hand_L",
+          "name": "IK_Hand_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/IK_Hand_R",
+          "name": "IK_Hand_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis",
+          "name": "Pelvis",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine",
+          "name": "Spine",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+          "name": "Spine_01",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+          "name": "Spine_02",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+          "name": "Chest",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+          "name": "Clavicle_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+          "name": "UpperArm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+          "name": "Forearm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+          "name": "Hand_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+          "name": "Index_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+          "name": "Index_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+          "name": "Index_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+          "name": "Little_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+          "name": "Little_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+          "name": "Little_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+          "name": "Middle_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+          "name": "Middle_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+          "name": "Middle_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+          "name": "Ring_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+          "name": "Ring_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+          "name": "Ring_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+          "name": "Thumb_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+          "name": "Thumb_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+          "name": "Thumb_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+          "name": "Clavicle_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+          "name": "UpperArm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+          "name": "Forearm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+          "name": "Hand_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+          "name": "Index_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+          "name": "Index_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+          "name": "Index_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+          "name": "Little_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+          "name": "Little_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+          "name": "Little_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+          "name": "Middle_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+          "name": "Middle_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+          "name": "Middle_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+          "name": "Ring_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+          "name": "Ring_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+          "name": "Ring_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+          "name": "Thumb_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+          "name": "Thumb_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+          "name": "Thumb_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+          "name": "Neck",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+          "name": "Head",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+          "name": "Eye_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+          "name": "Eye_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+          "name": "Thigh_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+          "name": "Shin_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+          "name": "Foot_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+          "name": "Toe_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+          "name": "Thigh_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+          "name": "Shin_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+          "name": "Foot_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+          "name": "Toe_R",
+          "mesh": null,
+          "skin": null
+        }
+      ],
+      "meshes": [
+        {
+          "name": "Protagonist_Body",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_SkinBody",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_Trousers",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_Shirt",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Buttons",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Button",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Eyes",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Sclera",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_Iris",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_Pupil",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Feet",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Shoes",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Hair",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Hair",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Hands",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_SkinBody",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Head",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Skin",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_Hair",
+              "skinned": true
+            },
+            {
+              "material": "Protagonist_Mat_MouthInner",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Jacket",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Jacket",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_JacketDetails",
+          "primitives": [
+            {
+              "material": "Protagonist_Mat_Jacket",
+              "skinned": true
+            }
+          ]
+        }
+      ],
+      "materials": [
+        "Protagonist_Mat_Button",
+        "Protagonist_Mat_Hair",
+        "Protagonist_Mat_Iris",
+        "Protagonist_Mat_Jacket",
+        "Protagonist_Mat_MouthInner",
+        "Protagonist_Mat_Pupil",
+        "Protagonist_Mat_Sclera",
+        "Protagonist_Mat_Shirt",
+        "Protagonist_Mat_Shoes",
+        "Protagonist_Mat_Skin",
+        "Protagonist_Mat_SkinBody",
+        "Protagonist_Mat_Trousers"
+      ],
+      "skins": [
+        {
+          "name": "Protagonist_Armature",
+          "skeleton": null,
+          "joints": [
+            "Protagonist_Armature/Root",
+            "Protagonist_Armature/Root/IK_Foot_L",
+            "Protagonist_Armature/Root/IK_Foot_R",
+            "Protagonist_Armature/Root/IK_Hand_L",
+            "Protagonist_Armature/Root/IK_Hand_R",
+            "Protagonist_Armature/Root/Pelvis",
+            "Protagonist_Armature/Root/Pelvis/Spine",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+            "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+            "Protagonist_Armature/Root/Pelvis/Thigh_L",
+            "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+            "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+            "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+            "Protagonist_Armature/Root/Pelvis/Thigh_R",
+            "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+            "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+            "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R"
+          ]
+        }
+      ],
+      "animations": [
+        {
+          "name": "Idle_Breathing",
+          "channels": 180,
+          "targets": [
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "translation"
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Face_Test",
+          "channels": 1,
+          "targets": [
+            {
+              "node": "Protagonist_Armature/Protagonist_Head",
+              "path": "weights"
+            }
+          ]
+        },
+        {
+          "name": "Protagonist_Idle_Breathing",
+          "channels": 180,
+          "targets": [
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "translation"
+            }
+          ]
+        },
+        {
+          "name": "Slight_Posture_Shift",
+          "channels": 180,
+          "targets": [
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "translation"
+            }
+          ]
+        },
+        {
+          "name": "Subtle_Head_Movement",
+          "channels": 180,
+          "targets": [
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/IK_Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+              "path": "translation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "scale"
+            },
+            {
+              "node": "Protagonist_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+              "path": "translation"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

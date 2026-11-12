@@ -20,7 +20,7 @@ extends SceneTree
 ##      character's facing, not sideways), and releasing it returns to idle with the legs back
 ##      under the body, not frozen mid-stride;
 ##   5. a click on the floor, through `PointerNavigator`, walks with the same clip and stops
-##      in idle;
+##      in idle; holding Shift with a movement key jogs, with the same limb checks as the walk;
 ##   6. the classroom Q's tween walk plays walk and returns to idle;
 ##   7. Q following the player walks, faces the way it walks, and idles when it stops;
 ##   8. the facing the controllers decide is untouched by animation: the player's pivot is
@@ -121,6 +121,9 @@ func _run() -> void:
 
 	Harness.stage = "classroom Q"
 	await _check_classroom_q()
+
+	Harness.stage = "player sprint"
+	await _check_sprint_jog(player_animator)
 
 	Harness.stage = "companion Q"
 	await _check_companion()
@@ -240,6 +243,29 @@ func _check_click_walk(animator: CharacterVisualAnimation) -> void:
 		_failures.append("The click-to-move walk did not arrive within 8 s.")
 		_player.cancel_path()
 	await _check_returns_to_idle("the player after the click-to-move walk arrived", animator)
+
+
+## Shift held with a movement key: the body aims for `jog_speed` (5.6 m/s), crosses the jog
+## threshold (4.4) and the clip follows. Measured in the walkway, which has the room for it,
+## with the same knee/elbow/hand/foot checks as the walk; releasing the keys returns to idle.
+func _check_sprint_jog(animator: CharacterVisualAnimation) -> void:
+	if not await _enter(CORRIDOR, &"FromClassroom"):
+		return
+	await _seconds(0.3)
+	var action := _clear_movement_action(3.5)
+	if action.is_empty():
+		_failures.append("No movement key has 3.5 m of clear floor at the walkway spawn; cannot test Shift jog.")
+		return
+	Input.action_press(PlayerController.SPRINT_ACTION)
+	Input.action_press(action)
+	# Up to speed in ~0.3 s at 18 m/s², then ~0.35 s of jogging: about 2.6 m of the 3.5 m.
+	var jogged := await _sample_walk(
+		"the player (Shift + '%s')" % action, animator, 0.65, CharacterVisualAnimation.STATE_JOG
+	)
+	Input.action_release(action)
+	Input.action_release(PlayerController.SPRINT_ACTION)
+	if jogged:
+		await _check_returns_to_idle("the player after the Shift jog", animator)
 
 
 # --- Q ----------------------------------------------------------------------
@@ -367,8 +393,12 @@ func _check_companion() -> void:
 # --- shared measurements ----------------------------------------------------
 
 
-## Plays out a stretch of walking and measures it. Returns whether the character walked.
-func _sample_walk(label: String, animator: CharacterVisualAnimation, duration: float) -> bool:
+## Plays out a stretch of walking (or, with `state` = jog, jogging) and measures it. Returns
+## whether the character played that clip.
+func _sample_walk(
+	label: String, animator: CharacterVisualAnimation, duration: float,
+	state: StringName = CharacterVisualAnimation.STATE_WALK
+) -> bool:
 	var skeleton := animator.get_skeleton()
 	var thigh := _bone(animator, "thigh.L")
 	var foot := _bone(animator, "foot.L")
@@ -391,7 +421,7 @@ func _sample_walk(label: String, animator: CharacterVisualAnimation, duration: f
 		await process_frame
 		elapsed += _frame_seconds()
 		frames += 1
-		if animator.get_locomotion_state() != CharacterVisualAnimation.STATE_WALK:
+		if animator.get_locomotion_state() != state:
 			continue
 		walk_frames += 1
 		max_scale = maxf(max_scale, animator.get_animation_player().speed_scale)
@@ -414,20 +444,20 @@ func _sample_walk(label: String, animator: CharacterVisualAnimation, duration: f
 				raised_hands += 1
 	if walk_frames == 0:
 		_failures.append(
-			"%s moved (speed %.2f m/s) but never played walk in %d frame(s)."
-			% [label, animator.get_planar_speed(), frames]
+			"%s moved (speed %.2f m/s) but never played %s in %d frame(s)."
+			% [label, animator.get_planar_speed(), state, frames]
 		)
 		return false
 	var player := animator.get_animation_player()
-	if player.current_animation != "%s/walk" % String(CharacterAnimation.LIBRARY_NAME) or not player.is_playing():
-		_failures.append("%s reports walk but its AnimationPlayer is on '%s'." % [label, player.current_animation])
+	if player.current_animation != "%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), state] or not player.is_playing():
+		_failures.append("%s reports %s but its AnimationPlayer is on '%s'." % [label, state, player.current_animation])
 	var swing := 0.0
 	if not thigh_angles.is_empty():
 		swing = float(thigh_angles.max()) - float(thigh_angles.min())
 	var travel := foot_max - foot_min
 	_notes.append(
-		"%s: walk on %d/%d frames, thigh swing %.1f°, foot travel z %.3f x %.3f m, playback ×%.2f"
-		% [label, walk_frames, frames, swing, travel.z, travel.x, max_scale]
+		"%s: %s on %d/%d frames, thigh swing %.1f°, foot travel z %.3f x %.3f m, playback ×%.2f"
+		% [label, state, walk_frames, frames, swing, travel.z, travel.x, max_scale]
 	)
 	if swing < WALK_SWING_DEGREES:
 		_failures.append("%s plays walk but its thigh swings only %.1f°." % [label, swing])
