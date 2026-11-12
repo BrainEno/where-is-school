@@ -18,7 +18,8 @@ extends SceneTree
 ## - a save whose second file cannot be written restores the first and reports failure;
 ## - external edits, deletions and read failures conflict before either language is written;
 ## - a transaction rollback preserves a third-party edit and its backup for manual recovery;
-## - stale .saving/.backup files are cleaned only after success or recovered when unambiguous;
+## - stale .saving/.backup files are kept or recovered only when the target is missing;
+## - a late .saving with candidate-identical content is never mistaken for this save's file;
 ## - every one of the shipped content files can be rewritten byte for byte unchanged, so the
 ##   span-level editor is not quietly reformatting them;
 ## - the chapter list is the one on disk, and it agrees with the library constants.
@@ -92,6 +93,29 @@ class RollbackConflictWriter extends "res://addons/narrative_editor/core/narrati
 		return true
 
 
+## Injects a second-language .saving after preflight while the first file is staged.
+class LateSavingArtifactWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var trigger_path: String = ""
+	var artifact_path: String = ""
+	var artifact_text: String = ""
+	var injected: bool = false
+
+	func _write_bytes(target: String, text: String) -> String:
+		var failure := super._write_bytes(target, text)
+		if failure.is_empty() and not injected and target == trigger_path:
+			injected = _write_external(artifact_path, artifact_text)
+		return failure
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
 ## A `user://` copy of real content: the editor is pointed at it, so a bug in the tool can
 ## never touch `res://data/` from a test run.
 const ROOT := "user://narrative_editor_fixture"
@@ -140,6 +164,8 @@ func _run() -> void:
 	_case_unreadable_target_is_a_conflict()
 	Harness.stage = "recheck before replace"
 	_case_rechecks_after_staging()
+	Harness.stage = "late .saving artifact"
+	_case_late_saving_artifact_is_preserved()
 	Harness.stage = "external edit during rollback"
 	_case_external_edit_survives_rollback()
 	Harness.stage = "crash artifacts"
@@ -624,6 +650,53 @@ func _case_rechecks_after_staging() -> void:
 				and not FileAccess.file_exists(zh_path + suffix),
 			"替换前文件变化后不应留下 %s。" % suffix
 		)
+
+
+func _case_late_saving_artifact_is_preserved() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var english_edit := "Pending English edit."
+	var chinese_edit := "未保存的中文修改。"
+	var writer := LateSavingArtifactWriter.new()
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, english_edit, chinese_edit, "暂存期间出现 .saving"):
+		return
+
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var field := _field(store.node_model(conversation_id, node_index), "text")
+	var expected_doc := JsonText.new()
+	var loaded := expected_doc.load_file(second_path)
+	_expect(loaded, "测试无法读取中文 fixture 来构造并发 .saving。")
+	if not loaded:
+		return
+	var address: Array = field.get("address", [])
+	var edited := expected_doc.set_string(address, chinese_edit)
+	_expect(edited, "测试无法构造预期的中文暂存内容。")
+	if not edited:
+		return
+
+	writer.trigger_path = first_path + ".saving"
+	writer.artifact_path = second_path + ".saving"
+	writer.artifact_text = expected_doc.build_text()
+	_expect(not store.save(), "保存期间出现 .saving 文件后竟然保存成功。")
+	_expect(writer.injected, "测试没有在双语保存预检后注入第二语言 .saving。")
+	var errors := store.describe_errors()
+	_expect(errors.contains(writer.artifact_path), "错误没有指出并发出现的 .saving 文件：%s" % errors)
+	_expect(_read(first_path) == before_first, "并发 .saving 出现后第一种语言不应部分保存。")
+	_expect(_read(second_path) == before_second, "并发 .saving 出现后第二种语言目标不应改变。")
+	_expect(not FileAccess.file_exists(writer.trigger_path), "失败后本次暂存文件应清理。")
+	_expect(FileAccess.file_exists(writer.artifact_path), "清理误删了并发出现的 .saving 文件。")
+	_expect(
+		_read(writer.artifact_path) == writer.artifact_text,
+		"清理改写或删除了与候选文本相同的并发 .saving 文件。"
+	)
+	_expect(store.is_dirty(), "并发 .saving 出现后编辑器中的未保存修改丢失。")
 
 
 func _case_external_edit_survives_rollback() -> void:

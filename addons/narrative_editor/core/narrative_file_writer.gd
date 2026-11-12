@@ -39,11 +39,9 @@ func write_atomic(target: String, text: String) -> String:
 
 	var failure := _write_bytes(temp, text)
 	if not failure.is_empty():
-		return _with_temp_cleanup(
-			"写临时文件失败：%s。" % failure,
-			[temp],
-			[text]
-		)
+		# The path may have appeared after the preflight check. Do not try to clean it by
+		# comparing text: an external file can legitimately contain the same candidate.
+		return "写临时文件失败：%s。未擅自删除文件，请先检查。" % failure
 	failure = _replace(target, temp, text, expected_exists, expected_text)
 	if not failure.is_empty():
 		return _with_temp_cleanup(failure, [temp], [text])
@@ -100,15 +98,13 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 		var temp := targets[index] + TEMP_SUFFIX
 		# Do not truncate a .saving file that appeared after the first preflight check.
 		if FileAccess.file_exists(temp):
-			staged_paths.append(temp)
-			staged_texts.append(texts[index])
+			# This file appeared after preflight and is not owned by this save. Keep it out
+			# of the cleanup list even if its bytes happen to match the candidate text.
 			return _with_temp_cleanup(
 				"保存已停止：保存期间出现临时文件 %s；未改写它。" % temp,
 				staged_paths,
 				staged_texts
 			)
-		staged_paths.append(temp)
-		staged_texts.append(texts[index])
 		failure = _write_bytes(temp, texts[index])
 		if not failure.is_empty():
 			return _with_temp_cleanup(
@@ -124,6 +120,8 @@ func save_pair(targets: Array[String], texts: Array[String], originals: Array[St
 				staged_paths,
 				staged_texts
 			)
+		staged_paths.append(temp)
+		staged_texts.append(texts[index])
 
 	var replaced: Array[int] = []
 	for index in targets.size():
@@ -388,6 +386,8 @@ func recover_missing(targets: Array[String]) -> Array[String]:
 ## Overridden by the tests to fail on purpose. Everything else in this class goes through
 ## it, so a single override covers the whole save path.
 func _write_bytes(target: String, text: String) -> String:
+	if FileAccess.file_exists(target):
+		return "临时文件已经存在，拒绝改写：%s" % target
 	var file := FileAccess.open(target, FileAccess.WRITE)
 	if file == null:
 		return "%s（错误码 %d）" % [target, FileAccess.get_open_error()]
