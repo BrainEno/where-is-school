@@ -289,8 +289,40 @@ other conversation plays that one.
 `InteractionController` resolves one target per physics frame from two inputs:
 
 - a screen-space ray from the camera through the pointer, restricted to the
-  interaction layer, with the same reach and line-of-sight rules as facing;
+  interaction layer, with the same reach and line-of-sight rules as facing, plus one rule
+  of its own: the object has to be *drawn* at that pixel (`is_drawn_at_screen_ray`);
 - the facing/distance score that existed before.
+
+**Two different "can see" questions (issue #115).** Line of sight
+(`has_line_of_sight_from`) is about the character: rays from the player's eye height, and
+only the object's declared `support_paths` (plus bodies under the interactable) may be
+looked through. The pointer adds the camera's question, answered the way the
+depth-tested outline mask answers it, because the pointer ray itself meets only
+interaction areas and an area is not a picture - the timetable's anchor sphere pokes out
+through the back of the classroom's south wall, so the camera outside that wall used to
+find the sheet while the outline, correctly, drew nothing.
+
+- *On the object* (the pixel ray enters a box around one of its outline meshes, grown by
+  `PICK_PADDING`): a body ray from the camera to that entry point; any opaque drawn body in
+  between hides the object at that pixel. This is per pixel, so a partly covered object is
+  pointable on its uncovered part only, and asking again gives the same answer.
+- *On its anchor sphere, off the object*: it counts while any part is in view - a ray to the
+  centre or a corner of one of its boxes reaches the box first.
+- *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, with no
+  `transparency` and no transparent `material_override`: the meshes that write depth. A wall
+  `CameraOccluderFader` has faded, or a collider with nothing drawn, hides nothing - in the
+  frame, in the mask, and now for the pointer. The bodies the object's own outline meshes
+  belong to never hide it. Declared supports are *not* looked through by this ray: the
+  renderer does not know about them, and a wall drawn between the camera and a notice hides
+  it whoever declared what.
+- An object with no outline meshes has no outline to disagree with and is not tested.
+- A hotspot that fails this test is looked past, like a switched-off one, so something
+  drawn in front of the wall can still answer the pixel.
+- *Not covered:* the facing path does not consult the camera. Standing in reach and facing
+  an object the camera sees only through an opaque wall still selects it (prompt, E), with
+  no outline. That is a level and camera decision (where the fader fades, where the camera
+  sits), left to the owner rather than settled here. Pick boxes are mesh bounds, not
+  silhouettes, so around a thin or irregular mesh the answer is a box's, not a pixel's.
 
 The pointer wins when it hits something, a new pointer pick has to hold for one frame
 before it replaces a different target, and facing takes over immediately when the
@@ -425,12 +457,12 @@ together:
     back to the outline layer (the negative control, `03e_outline_without_depth.png`). It
     fails if a target whose sampled points are all behind opaque geometry changes a single
     pixel, or if one in plain view loses more than half its line.
-  - *A visible consequence.* From the classroom's fixed camera the timetable sheet hangs on
-    the inside of the south wall, which the camera sees from outside: the sheet is hidden.
-    The pointer still reaches it (its pick box is not behind anything the pick ray tests),
-    so hovering that spot of wall shows the prompt and, now, no outline - before this the
-    outline was drawn through the wall. Whether such targets should stay usable from there
-    is a level and camera question, not an outline one.
+  - *A visible consequence, since fixed for the pointer.* From the classroom's fixed camera
+    the timetable sheet hangs on the inside of the south wall, which the camera sees from
+    outside: the sheet is hidden unless the fader has dimmed that wall. The pointer used to
+    reach it anyway (its pick ray met only interaction areas), so hovering that spot of wall
+    showed the prompt and no outline. Since #115 the pointer asks the camera's question too
+    (section 5e); facing still does not.
   - *Known limits.* Only surfaces that write depth hide the outline. A wall the occlusion
     fader has turned see-through (`transparency` 0.82, drawn in the transparent pass) does
     not, which matches what the player sees through it; nor does other alpha-blended
