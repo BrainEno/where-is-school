@@ -39,6 +39,15 @@ What it checks, and why each one is a failure rather than a note:
 - **Model names are unique across the library.** Wrappers, tests and `.gitignore`
   exceptions are all written against a model's bare name; two files called the same thing
   make `grep` and code review lie.
+- **The two runtime characters still have the structure
+  `art/character_rig_audit/runtime_model_manifest.json` records.** Nodes, node paths, mesh
+  and skin bindings, primitives, materials, the joint list in order, and the embedded
+  animations (both models have none — the clips are built in
+  `scripts/actors/character_animation.gd`) are compared against the file on every run. A
+  lost bone, a split mesh, an unregistered node or an animation that appeared inside a
+  `.glb` fails here; the other checks cannot see any of it, because a model can be clean,
+  small, camera-free and still bound to a rig nobody declared. Structural changes are
+  allowed — `--update-manifest` rewrites the record and the diff is the review.
 
 What it does *not* check: triangles, materials, or where a model's origin is. Triangles are
 a judgement call per model (the protagonist is 12k, the playground bench 8k, the corridor's
@@ -50,8 +59,9 @@ the two numbers for a floor prop, a wall fixture and a ceiling fixture.
 
 Usage:
 
-    python3 tools/model_library.py --check     # CI: fails on a contract violation
-    python3 tools/model_library.py --report    # markdown table for docs/MODEL_LIBRARY.md
+    python3 tools/model_library.py --check            # CI: fails on a contract violation
+    python3 tools/model_library.py --report           # markdown table for docs/MODEL_LIBRARY.md
+    python3 tools/model_library.py --update-manifest  # accept a reviewed structural change
 
 It needs no engine and no network.
 """
@@ -431,6 +441,441 @@ def audit(models: list[str], root: str = ROOT) -> tuple[list[str], list[str], di
     return problems, notes, measured
 
 
+# ---------------------------------------------------------------------------------------
+# The runtime character manifest
+# ---------------------------------------------------------------------------------------
+#
+# Everything above reads a model on its own terms: does it parse, is it in metres, is it
+# inside the budget. None of it notices that the protagonist lost a hand bone, that a mesh
+# was split in two, or that Q gained a node nobody meant to ship — the file is still clean,
+# still the right size, still has no camera, and the character silently binds to a rig that
+# is not the one the clips were written for.
+#
+# So the two models the game actually instantiates have a written-down structure:
+# `art/character_rig_audit/runtime_model_manifest.json`. It is not a second audit of the
+# Blender file and not a copy of the old rig audits — both of those describe different
+# stages. It is what `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb`
+# contain now, node by node, checked against the file on every `--check`.
+#
+# What it locks, and why each thing is structural rather than cosmetic:
+#
+# - **The node tree**, by path (`CHR_Protagonist_Root/RIG_Protagonist_Blockout/Neck`). A new
+#   node, a lost node, a renamed node or a re-parented node all change a path. Paths — not
+#   names — because both rigs contain two nodes called `Neck`, one a bone and one a mesh.
+# - **Each node's mesh and skin binding.** A mesh that stops being skinned still renders;
+#   it just stops following the bone it was bound to. That is invisible in every other check.
+# - **Each mesh's primitive count and material.** Splitting a primitive is how a material
+#   assignment changes, and a changed material assignment is a changed character.
+# - **The material names.**
+# - **The skins: the joint list, in order.** `JOINTS_0` stores *indices into* that list;
+#   reordering it rebinds every vertex in the mesh to a different bone. The order is not a
+#   detail, it is the bind.
+# - **The embedded animations: names, channel counts and what each channel targets.** Both
+#   models carry none, and that is a fact worth holding: the clips in
+#   `scripts/actors/character_animation.gd` are built at run time against these bone names,
+#   so an animation appearing inside a `.glb` means someone changed where animation comes
+#   from without saying so.
+#
+# What it deliberately does not lock: node transforms, triangle and vertex counts, UVs,
+# texture details, import metadata, file size. Those change with every legitimate art pass,
+# and a manifest that fails on them would be a file lock nobody could work behind. The size
+# budget above still applies to these models, and node scale is still forbidden by §1. A
+# structural change is allowed too — it just has to be made on purpose, by running
+# `--update-manifest` and committing the diff, which is the review.
+
+MANIFEST_SCHEMA = "where-is-school/runtime-model-manifest"
+MANIFEST_SCHEMA_VERSION = 1
+MANIFEST_PARTS = ("art", "character_rig_audit", "runtime_model_manifest.json")
+
+# The fields `describe_model` generates. `--update-manifest` replaces exactly these and
+# keeps every other key of an entry, which is where the human writing lives (`wrapper`,
+# `note`). A field nobody here produces is therefore preserved, not silently dropped.
+MANIFEST_STRUCTURAL = ("counts", "scene_roots", "nodes", "meshes", "materials", "skins", "animations")
+
+
+class ManifestError(Exception):
+    """A runtime model manifest that cannot be read as one."""
+
+
+def manifest_path(root: str = ROOT) -> str:
+    return os.path.join(root, *MANIFEST_PARTS)
+
+
+def _node_paths(nodes: list[dict]) -> tuple[list[str], dict[int, int]]:
+    """Every node's slash-joined path from its root, plus the child -> parent map.
+
+    A path is a node's identity in the manifest. Names alone cannot be: `Neck` appears twice
+    in both rigs. Siblings that genuinely share a name get an occurrence suffix (`#2`), so
+    duplicating a node is a difference rather than an ambiguity.
+    """
+    parents: dict[int, int] = {}
+    for index, node in enumerate(nodes):
+        for child in node.get("children", []):
+            if isinstance(child, int):
+                parents[child] = index
+
+    paths: list[str] = []
+    occurrences: dict[str, int] = {}
+    for index in range(len(nodes)):
+        parts = []
+        cursor: int | None = index
+        guard: set[int] = set()
+        while cursor is not None and cursor not in guard:
+            guard.add(cursor)
+            parts.append(nodes[cursor].get("name") or "(unnamed)")
+            cursor = parents.get(cursor)
+        if cursor is not None:  # a cycle: say so rather than loop forever
+            parts.append("(cycle)")
+        base = "/".join(reversed(parts))
+        occurrences[base] = occurrences.get(base, 0) + 1
+        paths.append(base if occurrences[base] == 1 else "%s#%d" % (base, occurrences[base]))
+    return paths, parents
+
+
+def describe_model(gltf: dict) -> dict:
+    """The structural facts of one runtime model, in the shape the manifest stores them.
+
+    Deterministic: every list is sorted by a stable key, so the same file always describes
+    the same way and a diff between two manifests is a diff of structure.
+    """
+    nodes = gltf.get("nodes", [])
+    meshes = gltf.get("meshes", [])
+    materials = [material.get("name") or "(unnamed)" for material in gltf.get("materials", [])]
+    paths, _parents = _node_paths(nodes)
+
+    def path_of(index: object) -> str | None:
+        if isinstance(index, int) and 0 <= index < len(paths):
+            return paths[index]
+        return None
+
+    node_entries = []
+    for index, node in enumerate(nodes):
+        mesh_index = node.get("mesh")
+        node_entries.append({
+            "path": paths[index],
+            "name": node.get("name") or "(unnamed)",
+            "mesh": (meshes[mesh_index].get("name") or "(unnamed)")
+            if isinstance(mesh_index, int) and 0 <= mesh_index < len(meshes) else None,
+            "skin": node.get("skin") if isinstance(node.get("skin"), int) else None,
+        })
+    node_entries.sort(key=lambda entry: entry["path"])
+
+    mesh_entries = []
+    for mesh in meshes:
+        primitives = []
+        for primitive in mesh.get("primitives", []):
+            material = primitive.get("material")
+            attributes = primitive.get("attributes") or {}
+            primitives.append({
+                "material": materials[material]
+                if isinstance(material, int) and 0 <= material < len(materials) else None,
+                # Whether a vertex in this primitive carries bone weights. A primitive that
+                # loses them stops following its skeleton without any other visible change.
+                "skinned": "JOINTS_0" in attributes and "WEIGHTS_0" in attributes,
+            })
+        mesh_entries.append({"name": mesh.get("name") or "(unnamed)", "primitives": primitives})
+    mesh_entries.sort(key=lambda entry: entry["name"])
+
+    skin_entries = []
+    for skin in gltf.get("skins", []):
+        skin_entries.append({
+            "name": skin.get("name") or "(unnamed)",
+            "skeleton": path_of(skin.get("skeleton")),
+            # Ordered: the order is what `JOINTS_0` indexes into.
+            "joints": [path_of(joint) or str(joint) for joint in skin.get("joints", [])],
+        })
+    skin_entries.sort(key=lambda entry: entry["name"])
+
+    animation_entries = []
+    for animation in gltf.get("animations", []):
+        channels = animation.get("channels", [])
+        targets = []
+        for channel in channels:
+            target = channel.get("target") or {}
+            targets.append({"node": path_of(target.get("node")), "path": target.get("path")})
+        targets.sort(key=lambda target: (target["node"] or "", target["path"] or ""))
+        animation_entries.append({
+            "name": animation.get("name") or "(unnamed)",
+            "channels": len(channels),
+            "targets": targets,
+        })
+    animation_entries.sort(key=lambda entry: entry["name"])
+
+    scenes = gltf.get("scenes", [])
+    active = gltf.get("scene", 0 if scenes else None)
+    scene_roots = []
+    if isinstance(active, int) and 0 <= active < len(scenes):
+        scene_roots = sorted(path for path in (path_of(node) for node in scenes[active].get("nodes", []))
+                             if path is not None)
+
+    return {
+        "counts": {
+            "nodes": len(nodes),
+            "meshes": len(meshes),
+            "primitives": sum(len(mesh.get("primitives", [])) for mesh in meshes),
+            "materials": len(materials),
+            "skins": len(skin_entries),
+            "joints": sum(len(skin["joints"]) for skin in skin_entries),
+            "animations": len(animation_entries),
+            "animation_channels": sum(animation["channels"] for animation in animation_entries),
+        },
+        "scene_roots": scene_roots,
+        "nodes": node_entries,
+        "meshes": mesh_entries,
+        "materials": sorted(materials),
+        "skins": skin_entries,
+        "animations": animation_entries,
+    }
+
+
+def compare_model(expected: dict, actual: dict, rel: str) -> list[str]:
+    """Every structural difference between the manifest's record and the file, as sentences.
+
+    Each line names the model, the field and both values. That is what makes a failure
+    actionable without opening the manifest by hand: the reader is told *what* changed, not
+    only that something did.
+    """
+    problems: list[str] = []
+
+    for key, value in (expected.get("counts") or {}).items():
+        if actual["counts"].get(key) != value:
+            problems.append("%s: counts.%s is %s, the manifest says %s"
+                            % (rel, key, actual["counts"].get(key), value))
+
+    if sorted(expected.get("scene_roots") or []) != actual["scene_roots"]:
+        problems.append("%s: the scene roots are %s, the manifest says %s"
+                        % (rel, actual["scene_roots"], expected.get("scene_roots")))
+
+    wanted = {node["path"]: node for node in expected.get("nodes") or []}
+    have = {node["path"]: node for node in actual["nodes"]}
+    for path in sorted(set(have) - set(wanted)):
+        problems.append("%s: node %r is in the model and not in the manifest "
+                        "(a node nobody registered was added)" % (rel, path))
+    for path in sorted(set(wanted) - set(have)):
+        problems.append("%s: node %r is registered and missing from the model" % (rel, path))
+    for path in sorted(set(wanted) & set(have)):
+        for field in ("name", "mesh", "skin"):
+            if wanted[path].get(field) != have[path].get(field):
+                problems.append("%s: node %r field %s is %r, the manifest says %r"
+                                % (rel, path, field, have[path].get(field), wanted[path].get(field)))
+
+    wanted_meshes = {mesh["name"]: mesh for mesh in expected.get("meshes") or []}
+    have_meshes = {mesh["name"]: mesh for mesh in actual["meshes"]}
+    for name in sorted(set(have_meshes) - set(wanted_meshes)):
+        problems.append("%s: mesh %r is not in the manifest" % (rel, name))
+    for name in sorted(set(wanted_meshes) - set(have_meshes)):
+        problems.append("%s: mesh %r is registered and missing from the model" % (rel, name))
+    for name in sorted(set(wanted_meshes) & set(have_meshes)):
+        want = wanted_meshes[name].get("primitives") or []
+        got = have_meshes[name]["primitives"]
+        if len(want) != len(got):
+            problems.append("%s: mesh %r has %d primitive(s), the manifest says %d"
+                            % (rel, name, len(got), len(want)))
+        for index in range(min(len(want), len(got))):
+            for field in ("material", "skinned"):
+                if want[index].get(field) != got[index].get(field):
+                    problems.append("%s: mesh %r primitive %d %s is %r, the manifest says %r"
+                                    % (rel, name, index, field, got[index].get(field),
+                                       want[index].get(field)))
+
+    wanted_materials = sorted(expected.get("materials") or [])
+    if wanted_materials != actual["materials"]:
+        added = sorted(set(actual["materials"]) - set(wanted_materials))
+        removed = sorted(set(wanted_materials) - set(actual["materials"]))
+        detail = []
+        if added:
+            detail.append("new: " + ", ".join(added[:6]))
+        if removed:
+            detail.append("gone: " + ", ".join(removed[:6]))
+        problems.append("%s: materials are %d (%s), the manifest says %d"
+                        % (rel, len(actual["materials"]), "; ".join(detail) or "reordered",
+                           len(wanted_materials)))
+
+    wanted_skins = {skin["name"]: skin for skin in expected.get("skins") or []}
+    have_skins = {skin["name"]: skin for skin in actual["skins"]}
+    for name in sorted(set(have_skins) - set(wanted_skins)):
+        problems.append("%s: skin %r is not in the manifest" % (rel, name))
+    for name in sorted(set(wanted_skins) - set(have_skins)):
+        problems.append("%s: skin %r is registered and missing from the model" % (rel, name))
+    for name in sorted(set(wanted_skins) & set(have_skins)):
+        want, got = wanted_skins[name], have_skins[name]
+        if want.get("skeleton") != got.get("skeleton"):
+            problems.append("%s: skin %r skeleton is %r, the manifest says %r"
+                            % (rel, name, got.get("skeleton"), want.get("skeleton")))
+        want_joints, got_joints = want.get("joints") or [], got["joints"]
+        if len(want_joints) != len(got_joints):
+            problems.append("%s: skin %r has %d joint(s), the manifest says %d"
+                            % (rel, name, len(got_joints), len(want_joints)))
+        for index in range(min(len(want_joints), len(got_joints))):
+            if want_joints[index] != got_joints[index]:
+                # The order is the bind: JOINTS_0 indexes into this list.
+                problems.append("%s: skin %r joint %d is %r, the manifest says %r "
+                                "(the joint order is what the mesh's bone indices point at)"
+                                % (rel, name, index, got_joints[index], want_joints[index]))
+
+    wanted_animations = {animation["name"]: animation for animation in expected.get("animations") or []}
+    have_animations = {animation["name"]: animation for animation in actual["animations"]}
+    for name in sorted(set(have_animations) - set(wanted_animations)):
+        problems.append("%s: embedded animation %r is not in the manifest (the clips are "
+                        "meant to come from scripts/actors/character_animation.gd)"
+                        % (rel, name))
+    for name in sorted(set(wanted_animations) - set(have_animations)):
+        problems.append("%s: embedded animation %r is registered and missing from the model"
+                        % (rel, name))
+    for name in sorted(set(wanted_animations) & set(have_animations)):
+        want, got = wanted_animations[name], have_animations[name]
+        if want.get("channels") != got["channels"]:
+            problems.append("%s: animation %r has %d channel(s), the manifest says %s"
+                            % (rel, name, got["channels"], want.get("channels")))
+        want_targets = [(t.get("node"), t.get("path")) for t in want.get("targets") or []]
+        got_targets = [(t.get("node"), t.get("path")) for t in got["targets"]]
+        if want_targets != got_targets:
+            added = [target for target in got_targets if target not in want_targets]
+            removed = [target for target in want_targets if target not in got_targets]
+            problems.append("%s: animation %r targets %s, the manifest says %s"
+                            % (rel, name,
+                               ", ".join("%s.%s" % (node, path) for node, path in added[:4]) or "the same nodes",
+                               ", ".join("%s.%s" % (node, path) for node, path in removed[:4]) or "the same nodes"))
+
+    return problems
+
+
+def check_manifest(models: list[str] | None = None, root: str = ROOT,
+                   path: str | None = None) -> tuple[list[str], list[str]]:
+    """Read the runtime manifest and hold the registered models to it.
+
+    Returns `(problems, notes)`, like `audit`. Every failure names the manifest path or the
+    model path and the field, in that order, because the reader of a red CI job has the log
+    and nothing else.
+    """
+    problems: list[str] = []
+    notes: list[str] = []
+    manifest = path or manifest_path(root)
+    rel_manifest = os.path.relpath(manifest, root).replace(os.sep, "/")
+
+    if not os.path.exists(manifest):
+        return (["%s is missing; the two runtime characters are not structurally checked "
+                 "without it (rebuild it with --update-manifest)" % rel_manifest], notes)
+    try:
+        with open(manifest, encoding="utf-8") as handle:
+            text = handle.read()
+    except OSError as error:
+        return (["%s cannot be read: %s" % (rel_manifest, error)], notes)
+    try:
+        document = json.loads(text)
+    except json.JSONDecodeError as error:
+        return (["%s is not valid JSON (line %d, column %d): %s"
+                 % (rel_manifest, error.lineno, error.colno, error.msg)], notes)
+    if not isinstance(document, dict):
+        return (["%s holds a %s, not an object" % (rel_manifest, type(document).__name__)], notes)
+
+    if document.get("schema") != MANIFEST_SCHEMA:
+        problems.append("%s: schema is %r, this tool reads %r"
+                        % (rel_manifest, document.get("schema"), MANIFEST_SCHEMA))
+    version = document.get("schema_version")
+    if version != MANIFEST_SCHEMA_VERSION:
+        problems.append("%s: schema_version is %r, this tool reads %d"
+                        % (rel_manifest, version, MANIFEST_SCHEMA_VERSION))
+    if problems:
+        return problems, notes
+
+    entries = document.get("models")
+    if not isinstance(entries, list) or not entries:
+        return (["%s: 'models' is empty; a manifest that registers nothing checks nothing"
+                 % rel_manifest], notes)
+
+    seen: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            problems.append("%s: an entry has no 'path'; every entry names the model it covers"
+                            % rel_manifest)
+            continue
+        rel = entry["path"]
+        if rel in seen:
+            problems.append("%s: %s is registered twice" % (rel_manifest, rel))
+            continue
+        seen.add(rel)
+        if not rel.startswith("assets/models/"):
+            problems.append("%s: %s is registered, but the runtime manifest only covers "
+                            "runtime models under assets/models/ — dev and retarget assets "
+                            "are a different stage" % (rel_manifest, rel))
+            continue
+        full = os.path.join(root, rel.replace("/", os.sep))
+        if not os.path.exists(full):
+            problems.append("%s: registers %s, which does not exist" % (rel_manifest, rel))
+            continue
+        try:
+            gltf, binary, _images = read_glb(full)
+        except Problem as error:
+            problems.append("%s: %s" % (rel, error))
+            continue
+        actual = describe_model(gltf)
+        if models is not None and full not in models:
+            # The file is there and parseable but the library walk did not see it: that means
+            # the manifest points outside the library the rest of the check reads.
+            problems.append("%s: %s is not under the model library this run scanned"
+                            % (rel, rel))
+        differences = compare_model(entry, actual, rel)
+        problems.extend(differences)
+        if differences:
+            problems.append(
+                "%s: %d structural difference(s) from %s; if they are intended, run "
+                "`python3 tools/model_library.py --update-manifest` and commit the manifest "
+                "diff so the change is reviewed" % (rel, len(differences), rel_manifest))
+        counts = actual["counts"]
+        notes.append("%s: %d node(s), %d mesh(es), %d primitive(s), %d material(s), "
+                     "%d skin(s) with %d joint(s), %d embedded animation(s)"
+                     % (rel, counts["nodes"], counts["meshes"], counts["primitives"],
+                        counts["materials"], counts["skins"], counts["joints"],
+                        counts["animations"]))
+    return problems, notes
+
+
+def update_manifest(root: str = ROOT, path: str | None = None) -> tuple[list[str], str]:
+    """Rewrite the manifest's structural fields from the registered models.
+
+    Human-written fields of an entry (`wrapper`, `note`, anything this tool does not
+    generate) are kept; only `MANIFEST_STRUCTURAL` is replaced. Returns the accepted
+    differences and the new file text, so the caller can print what it just agreed to — a
+    manifest update is a reviewed change, and the diff is the review.
+    """
+    manifest = path or manifest_path(root)
+    rel_manifest = os.path.relpath(manifest, root).replace(os.sep, "/")
+    if not os.path.exists(manifest):
+        raise ManifestError("%s does not exist; there is nothing to update" % rel_manifest)
+    with open(manifest, encoding="utf-8") as handle:
+        try:
+            document = json.loads(handle.read())
+        except json.JSONDecodeError as error:
+            raise ManifestError("%s is not valid JSON (line %d, column %d): %s"
+                                % (rel_manifest, error.lineno, error.colno, error.msg)) from error
+
+    accepted: list[str] = []
+    entries = document.get("models") or []
+    for entry in entries:
+        rel = entry.get("path")
+        if not isinstance(rel, str) or not rel.startswith("assets/models/"):
+            raise ManifestError("%s: %r is not a runtime asset under assets/models/"
+                                % (rel_manifest, rel))
+        full = os.path.join(root, rel.replace("/", os.sep))
+        if not os.path.exists(full):
+            raise ManifestError("%s: %s does not exist" % (rel_manifest, rel))
+        try:
+            gltf, binary, _images = read_glb(full)
+        except Problem as error:
+            raise ManifestError("%s: %s" % (rel, error)) from error
+        actual = describe_model(gltf)
+        accepted.extend(compare_model(entry, actual, rel))
+        for field in MANIFEST_STRUCTURAL:
+            if field in actual:
+                entry[field] = actual[field]
+
+    text = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+    with open(manifest, "w", encoding="utf-8") as handle:
+        handle.write(text)
+    return accepted, rel_manifest
+
+
 def _fmt(value: float) -> str:
     return ("%.2f" % value).rstrip("0").rstrip(".") if abs(value) < 100 else "%.0f" % value
 
@@ -470,9 +915,33 @@ def main(argv: list[str]) -> int:
                         help="fail on anything the pipeline contract forbids")
     parser.add_argument("--report", action="store_true",
                         help="print the markdown catalogue for docs/MODEL_LIBRARY.md")
+    parser.add_argument("--update-manifest", action="store_true",
+                        help="rewrite the runtime character manifest from the registered "
+                             "models (a reviewed change: commit the diff)")
     options = parser.parse_args(argv or ["--check"])
 
     root = os.path.dirname(os.path.dirname(LIBRARY))  # <root>/assets/models
+
+    if options.update_manifest:
+        try:
+            accepted, rel_manifest = update_manifest(root)
+        except ManifestError as error:
+            print("MODEL_LIBRARY_PROBLEM: " + str(error))
+            return 1
+        # Every accepted line carries both values, which is what the reviewer of the diff
+        # needs; the cap keeps a first build of the manifest from filling the log.
+        for line in accepted[:25]:
+            print("MODEL_LIBRARY_ACCEPTED: " + line)
+        if len(accepted) > 25:
+            print("MODEL_LIBRARY_ACCEPTED: … and %d more difference(s); all of them are in "
+                  "the manifest diff." % (len(accepted) - 25))
+        summary = ("no accepted difference: the manifest already described these files"
+                   if not accepted else
+                   "%d accepted difference(s), which belong in the review" % len(accepted))
+        print("MODEL_LIBRARY_MANIFEST_UPDATED: %s now records the structure of the files on "
+              "disk (%s)." % (rel_manifest, summary))
+        return 0
+
     models = collect()
     if not models:
         print("MODEL_LIBRARY_PROBLEM: no .glb found under %s"
@@ -484,6 +953,13 @@ def main(argv: list[str]) -> int:
     if options.report:
         sys.stdout.write(report(measured))
         return 0
+
+    # The runtime characters get one check more than the rest of the library: the structure
+    # the manifest records. It is not a subset of the checks above and not a replacement for
+    # them — a model can pass every one of those and still be bound to the wrong rig.
+    manifest_problems, manifest_notes = check_manifest(models, root)
+    problems.extend(manifest_problems)
+    notes.extend(manifest_notes)
 
     total = sum(i["bytes"] for i in measured.values())
     kinds = sorted({i["kind"] for i in measured.values()})
@@ -499,7 +975,8 @@ def main(argv: list[str]) -> int:
         return 1
 
     print("MODEL_LIBRARY_OK: every model parses, carries no scale/node matrix, camera or "
-          "light, fits its budget, and has a matching .import sidecar.")
+          "light, fits its budget, and has a matching .import sidecar; the runtime "
+          "characters match art/character_rig_audit/runtime_model_manifest.json.")
     return 0
 
 
