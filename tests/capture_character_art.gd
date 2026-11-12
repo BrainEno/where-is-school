@@ -149,7 +149,9 @@ func _boot() -> bool:
 		return false
 	_protagonist_look = _protagonist.get_node_or_null(^"Look") as CharacterLookApplier
 	var classroom := _host.get_current()
-	var q_actor := classroom.get_node_or_null(^"Actors/Q") as NpcActor if classroom != null else null
+	var q_actor: NpcActor = null
+	if classroom != null:
+		q_actor = classroom.get_node_or_null(^"Actors/Q") as NpcActor
 	if q_actor == null or q_actor.get_visual() == null:
 		_failures.append("The classroom has no Q with a visual.")
 		return false
@@ -250,6 +252,12 @@ func _place(subject: CharacterVisualAnimation, at: Vector3, facing: float) -> vo
 		if absf(error) < 0.01:
 			break
 		_q_holder.rotation.y += error
+
+
+func _treat(treatment: CharacterLookApplier.Treatment) -> void:
+	_protagonist_look.apply_treatment(treatment)
+	_q_look.apply_treatment(treatment)
+	await _wait(0.4)
 
 
 # --- groups -------------------------------------------------------------------
@@ -490,7 +498,7 @@ func _body_panel(
 	var camera := frame["camera"] as Camera3D
 	var box := _screen_box(camera, _subtree_aabb(subject))
 	var image := frame["image"] as Image
-	_measure_drawn(subject, camera, image, box, shot_name)
+	await _measure_drawn(subject, camera, image, box, shot_name)
 	camera.queue_free()
 	image.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
 	return _fit(image, box.grow(int(box.size.y * 0.06)), size)
@@ -676,7 +684,7 @@ func _print_sheets() -> void:
 		var image := (entry["image"] as Image).duplicate() as Image
 		var encoded := ""
 		for attempt in 8:
-			var quality := [0.72, 0.62, 0.52, 0.45, 0.45, 0.4, 0.4, 0.35][attempt]
+			var quality: float = [0.72, 0.62, 0.52, 0.45, 0.45, 0.4, 0.4, 0.35][attempt]
 			if attempt >= 4:
 				image.resize(int(image.get_width() * 0.85), int(image.get_height() * 0.85), Image.INTERPOLATE_LANCZOS)
 			encoded = Marshalls.raw_to_base64(image.save_jpg_to_buffer(quality))
