@@ -25,6 +25,8 @@ extends SceneTree
 ## 1. open: line pixels all around the silhouette, none farther from it than the pen;
 ## 2. hidden: not a single pixel differs from the frame without the outline, and the mask is
 ##    empty there; with the wall hidden, the same box is outlined all round (the control);
+##    and with the mask camera cut back to the outline layer alone - the mask as it was before
+##    it was depth-tested - the outline shows through the wall (the negative control);
 ## 3. partial: the line runs along the visible part of the silhouette and along the post's
 ##    edge where the post cuts the box, and is absent from the part of the silhouette the post
 ##    covers;
@@ -302,6 +304,25 @@ func _check_hidden() -> void:
 		"Fully hidden: the mask marks the box although the wall covers it.")
 	_expect(_overlay.is_active(), "Fully hidden: the overlay stopped being active (it should still own the box).")
 
+	# The negative control: the same outline with the mask drawing only the outline layer -
+	# what the mask did before it was depth-tested. The outline must now show through the
+	# wall, which proves both that this check would see it and that the scene's depth in the
+	# mask is what hides it. The overlay stops syncing for the duration (the camera is
+	# still), so it cannot put the full culling back.
+	var mask_camera := _overlay.get_mask_camera()
+	var synced_mask := mask_camera.cull_mask
+	_overlay.process_mode = Node.PROCESS_MODE_DISABLED
+	mask_camera.cull_mask = OutlineOverlay.MASK_LAYER
+	var through := await _grab_after(3)
+	_save(through, "case2_hidden_negative_control_no_depth.png")
+	var through_found := _line_coverage(through, _outward_samples(_hull(_hidden)))
+	_expect(through_found >= FULL_COVERAGE,
+		"Negative control: without the scene in the mask the outline should show through the "
+		+ "wall, but the line is on only %.0f%% of the silhouette." % (through_found * 100.0))
+	mask_camera.cull_mask = synced_mask
+	_overlay.process_mode = Node.PROCESS_MODE_INHERIT
+	await _frames(2)
+
 	# The control: the same box, the same outline, the wall out of the way.
 	_wall.visible = false
 	var control := await _grab_after(3)
@@ -310,8 +331,10 @@ func _check_hidden() -> void:
 	_expect(found >= FULL_COVERAGE,
 		"Control: with the wall hidden the box is outlined on only %.0f%% of its silhouette."
 		% (found * 100.0))
-	_notes.append("hidden: max change %.4f behind the wall; control line %.0f%%"
-		% [change, found * 100.0])
+	_notes.append(
+		"hidden: max change %.4f behind the wall; without depth in the mask %.0f%%; control %.0f%%"
+		% [change, through_found * 100.0, found * 100.0]
+	)
 	_wall.visible = true
 	_overlay.release(owner)
 	await _frames(2)
