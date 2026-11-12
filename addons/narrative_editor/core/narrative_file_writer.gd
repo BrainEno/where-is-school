@@ -412,7 +412,20 @@ func _restore_written_target(target: String, new_text: String, original_text: St
 			String(verification["reason"]),
 			[target, String(isolated_target["path"])]
 		)
-	var removed := _remove_quarantine_batch([isolated_target])
+	var removed := _remove_quarantine_batch(
+		[isolated_target],
+		"rollback_candidate_cleanup",
+		[backup, target + TEMP_SUFFIX],
+		verify_target,
+		[target.get_base_dir()]
+	)
+	if not String(removed.get("safety_failure", "")).is_empty():
+		return _diagnostic(
+			"回滚后清理事务目标",
+			String(removed.get("failure_path", target)),
+			String(removed["safety_failure"]),
+			[target, backup, String(isolated_target["path"]), String(removed.get("failure_path", ""))]
+		)
 	if not removed["failed_paths"].is_empty():
 		return _diagnostic(
 			"回滚后清理事务目标",
@@ -560,10 +573,28 @@ func _discard_pair_backups(
 			materials
 		)
 
-	# This is the pair's backup-cleanup commit point. Do not perform conflict checks between
-	# removing the first and second copy: both were reviewed above. A later delete failure is
-	# reported as a warning because one recovery copy may already have been removed.
-	var removed := _remove_quarantine_batch(isolated_backups)
+	# Cleanup moves both backups into fresh quarantine paths and checks the entire batch again
+	# before its first unlink. Do not split the pair's guard review across individual deletes.
+	# A later unlink failure is reported as a warning because an earlier copy may be gone.
+	var removed := _remove_quarantine_batch(
+		isolated_backups,
+		"pair_backup_cleanup",
+		absent_paths,
+		target_guards,
+		_target_parents(targets)
+	)
+	if not String(removed.get("safety_failure", "")).is_empty():
+		var materials := _paths_from_records(isolated_backups)
+		materials.append_array(backups)
+		materials.append_array(legacy_temps)
+		materials.append_array(targets)
+		materials.append(String(removed.get("failure_path", "")))
+		return _diagnostic(
+			"双语备份清理复核",
+			String(removed.get("failure_path", "")),
+			String(removed["safety_failure"]),
+			materials
+		)
 	for path: String in removed["failed_paths"]:
 		warnings.append("双语保存已完成，但恢复材料仍保留在 %s；请手工检查。" % path)
 	for path: String in removed["leftover_directories"]:
@@ -609,7 +640,20 @@ func _discard_backup_if_matches(
 			String(verification["reason"]),
 			[target, backup, String(isolated["path"])]
 		)
-	var removed := _remove_quarantine_batch([isolated])
+	var removed := _remove_quarantine_batch(
+		[isolated],
+		"single_backup_cleanup",
+		absent,
+		guards,
+		[target.get_base_dir()]
+	)
+	if not String(removed.get("safety_failure", "")).is_empty():
+		return _diagnostic(
+			"单文件备份清理复核",
+			String(removed.get("failure_path", backup)),
+			String(removed["safety_failure"]),
+			[target, backup, String(isolated["path"]), String(removed.get("failure_path", ""))]
+		)
 	if not removed["failed_paths"].is_empty():
 		warnings.append("单文件保存已完成，但恢复材料仍保留在 %s。" % removed["failed_paths"][0])
 	for path: String in removed["leftover_directories"]:
@@ -689,7 +733,26 @@ func _cleanup_staged(
 				materials
 			),
 		}
-	var removed := _remove_quarantine_batch(records)
+	var removed := _remove_quarantine_batch(
+		records,
+		"saving_cleanup",
+		absent_paths,
+		[],
+		_target_parents(targets)
+	)
+	if not String(removed.get("safety_failure", "")).is_empty():
+		var materials := _paths_from_records(records)
+		materials.append_array(absent_paths)
+		materials.append(String(removed.get("failure_path", "")))
+		return {
+			"ok": false,
+			"message": _diagnostic(
+				"暂存文件清理复核",
+				String(removed.get("failure_path", "")),
+				String(removed["safety_failure"]),
+				materials
+			),
+		}
 	if not removed["failed_paths"].is_empty():
 		return {
 			"ok": false,
@@ -713,9 +776,9 @@ func _cleanup_staged(
 	return {"ok": true, "message": ""}
 
 
-## Reviews the whole quarantine batch, then exposes a second deterministic hook immediately
-## before unlink. It rechecks the entire batch after that hook; only the final check-to-unlink
-## window is unavoidable without a no-replace CAS delete.
+## Reviews the whole quarantine batch, exposes a deterministic post-review hook, and then
+## rechecks the guards. Removal makes a final fresh isolation and content check; only the
+## last check-to-unlink interval remains an ordinary filesystem race, not a CAS delete.
 func _verify_quarantine_batch(
 	records: Array[Dictionary],
 	phase: String,
@@ -814,15 +877,131 @@ func _check_quarantine_batch(
 	return {"ok": true, "reason": ""}
 
 
-func _remove_quarantine_batch(records: Array[Dictionary]) -> Dictionary:
+func _remove_quarantine_batch(
+	records: Array[Dictionary],
+	phase: String,
+	must_be_absent: Array[String],
+	snapshots: Array[Dictionary],
+	parents: Array[String]
+) -> Dictionary:
 	var failed_paths: Array[String] = []
 	var leftover_directories: Array[String] = []
+	var final_records: Array[Dictionary] = []
+	var original_paths := _paths_from_records(records)
+	var parents_to_check: Array[String] = []
+	for parent: String in parents:
+		if not parent.is_empty() and not parents_to_check.has(parent):
+			parents_to_check.append(parent)
+
+	# The first quarantine copy may still be reachable by another process. Move each member
+	# again into a fresh private directory, then inspect the bytes at the new path before any
+	# unlink. The original quarantine files are not deleted one-by-one before the whole batch
+	# has made it through this move and the final guard check.
 	for record: Dictionary in records:
+		var source := String(record.get("path", ""))
+		var old_directory := String(record.get("directory", ""))
+		var parent := old_directory.get_base_dir() if not old_directory.is_empty() else source.get_base_dir()
+		if not parent.is_empty() and not parents_to_check.has(parent):
+			parents_to_check.append(parent)
+		var isolated := _isolate_file(
+			source,
+			String(record.get("expected", "")),
+			"%s_final_delete" % phase,
+			parent
+		)
+		if not bool(isolated["ok"]):
+			_preserve_quarantine_records(records)
+			_preserve_quarantine_records(final_records)
+			var failure_path := String(isolated.get("path", source))
+			if not failure_path.is_empty() and _path_exists(failure_path):
+				_remember_preserved(failure_path)
+			var failed_directory := String(isolated.get("directory", ""))
+			if not failed_directory.is_empty() and _path_exists(failed_directory):
+				_remember_preserved(failed_directory)
+			failed_paths.append(failure_path if not failure_path.is_empty() else source)
+			return {
+				"failed_paths": failed_paths,
+				"leftover_directories": leftover_directories,
+				"safety_failure": "最终删除隔离失败：%s" % String(isolated.get("reason", "无法确认移动后的文件")),
+				"failure_path": failure_path,
+			}
+		final_records.append(isolated)
+
+	# Retire only the now-empty first-round directories. If an unknown entry appeared, keep
+	# every final candidate and report the directory instead of cleaning any member.
+	var old_directories: Array[String] = []
+	for record: Dictionary in records:
+		var directory := String(record.get("directory", ""))
+		if not directory.is_empty() and not old_directories.has(directory):
+			old_directories.append(directory)
+	for directory: String in old_directories:
+		if not _remove_empty_directory(directory):
+			leftover_directories.append(directory)
+			_remember_preserved(directory)
+	if not leftover_directories.is_empty():
+		_preserve_quarantine_records(records)
+		_preserve_quarantine_records(final_records)
+		for directory: String in leftover_directories:
+			_remember_preserved(directory)
+		return {"failed_paths": failed_paths, "leftover_directories": leftover_directories}
+
+	var absent_paths: Array[String] = []
+	for path: String in must_be_absent:
+		if not absent_paths.has(path):
+			absent_paths.append(path)
+	for path: String in original_paths:
+		if not absent_paths.has(path):
+			absent_paths.append(path)
+	for record: Dictionary in final_records:
+		_before_file_operation(
+			"%s_after_final_isolate_before_unlink" % phase,
+			String(record.get("source", "")),
+			String(record.get("path", ""))
+		)
+	var final_review := _check_quarantine_batch(
+		final_records, absent_paths, snapshots, parents_to_check
+	)
+	if not bool(final_review["ok"]):
+		_preserve_quarantine_records(records)
+		_preserve_quarantine_records(final_records)
+		var failure_path := String(final_review.get("path", ""))
+		if not failure_path.is_empty() and _path_exists(failure_path):
+			_remember_preserved(failure_path)
+		if not failure_path.is_empty():
+			failed_paths.append(failure_path)
+		return {
+			"failed_paths": failed_paths,
+			"leftover_directories": leftover_directories,
+			"safety_failure": String(final_review.get("reason", "最终批量复核失败")),
+			"failure_path": failure_path,
+		}
+
+	# The final review covers all members and guards before the first unlink. The remaining
+	# check-to-delete interval is an ordinary filesystem race: Godot exposes no CAS unlink.
+	for index in final_records.size():
+		var record: Dictionary = final_records[index]
 		var path := String(record["path"])
 		if not _discard(path):
-			failed_paths.append(path)
-			_remember_preserved(path)
-			continue
+			for pending_index in range(index, final_records.size()):
+				var pending: Dictionary = final_records[pending_index]
+				var pending_path := String(pending["path"])
+				if _path_exists(pending_path):
+					if not failed_paths.has(pending_path):
+						failed_paths.append(pending_path)
+					_remember_preserved(pending_path)
+				var pending_directory := String(pending.get("directory", ""))
+				if not pending_directory.is_empty() and _path_exists(pending_directory):
+					if not leftover_directories.has(pending_directory):
+						leftover_directories.append(pending_directory)
+						_remember_preserved(pending_directory)
+			var failure := {
+				"failed_paths": failed_paths,
+				"leftover_directories": leftover_directories,
+			}
+			if not _path_exists(path):
+				failure["safety_failure"] = "最终隔离文件在删除调用时消失；无法确认删除是否由本次操作完成"
+				failure["failure_path"] = path
+			return failure
 		_forget_preserved(path)
 		var directory := String(record.get("directory", ""))
 		if not _remove_empty_directory(directory):
@@ -1181,7 +1360,7 @@ func _rename(from_path: String, to_path: String) -> Error:
 
 func _discard(target: String) -> bool:
 	if not _path_exists(target):
-		return true
+		return false
 	return DirAccess.remove_absolute(globalize(target)) == OK
 
 

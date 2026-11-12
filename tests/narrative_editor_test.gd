@@ -374,6 +374,8 @@ func _run() -> void:
 	_case_isolation_move_inspects_actual_file()
 	Harness.stage = "bilingual late conflict materials"
 	_case_bilingual_late_conflict_keeps_both_backups()
+	Harness.stage = "final quarantine late conflict"
+	_case_final_quarantine_conflict_keeps_bilingual_backups()
 	Harness.stage = "crash artifacts"
 	_case_crash_artifacts_are_preserved_or_recovered()
 	Harness.stage = "dirty"
@@ -1407,6 +1409,42 @@ func _case_bilingual_late_conflict_keeps_both_backups() -> void:
 	)
 	_expect(store.describe_errors().contains("双语备份清理复核"), "错误没有报告迟到冲突的批量复核阶段。")
 	_expect(store.is_dirty(), "双语迟到冲突后编辑器修改丢失。")
+
+
+func _case_final_quarantine_conflict_keeps_bilingual_backups() -> void:
+	_reset_fixture()
+	var first_path := _dialogue_path(L10n.LOCALES[0], "alley")
+	var second_path := _dialogue_path(L10n.LOCALES[1], "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_second := before_second + " late edit after final quarantine"
+	var first_edit := "Pending English edit." if L10n.LOCALES[0] == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.hook_phase = "pair_backup_cleanup_after_final_isolate_before_unlink"
+	writer.hook_target = second_path
+	writer.hook_text = external_second
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "最终隔离后第二目标冲突"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_first := _edited_file_text(first_path, address, first_edit)
+
+	_expect(not store.save(), "最终隔离后第二目标出现冲突，保存竟然成功。")
+	_expect(writer.hook_fired, "没有在最终隔离完成后、删除前注入第二目标冲突。")
+	_expect_bytes(first_path, candidate_first, "检测到第二目标冲突时第一语言目标内容不符。")
+	_expect_bytes(second_path, external_second, "最终复核覆盖了第二目标的外部内容。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_first) >= 1,
+		"最终批量复核前未保留第一份原文备份。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_second) >= 1,
+		"最终批量复核前未保留第二份原文备份。"
+	)
+	_expect(store.describe_errors().contains("双语备份清理复核"), "错误没有标明最终双语批量复核失败。")
+	_expect(store.is_dirty(), "最终批量复核冲突后编辑器修改丢失。")
 
 
 func _case_crash_artifacts_are_preserved_or_recovered() -> void:
