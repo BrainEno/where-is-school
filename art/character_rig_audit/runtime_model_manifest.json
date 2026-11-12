@@ -5206,6 +5206,541 @@
           ]
         }
       ]
+    },
+    {
+      "path": "assets/models/teacher-n/teacher-n.glb",
+      "wrapper": "scenes/environment/characters/teacher_n.tscn",
+      "note": "Substitute teacher N, built by tools/prepare_teacher_n.py from the owner's export (art/character_models/teacher-n/teacher-n_source.glb). One 16-joint skin with the same joint names and parentage as Q (Root, Spine, Neck, Head, UpperArm/LowerArm/Hand and Thigh/Shin/Foot on each side), 18 mesh nodes all bound to it, 17 materials, no blend shapes (the source's 15 facial blend shapes are not shipped). Four embedded animations authored by the owner; only the channels that move are kept (8 rotation channels). All four are played together as N's idle (CharacterAnimation.adopt_authored_layers(), named in teacher_n.tscn); walking and the other states use the procedural clips in scripts/actors/character_animation.gd. Unlike the other three characters this model faces -Z (docs/ASSET_PIPELINE.md section 1), so its wrapper sets faces_negative_z and its NpcActor visual_yaw_degrees 0.",
+      "counts": {
+        "nodes": 35,
+        "meshes": 18,
+        "primitives": 28,
+        "materials": 17,
+        "skins": 1,
+        "joints": 16,
+        "animations": 4,
+        "animation_channels": 8
+      },
+      "scene_roots": [
+        "CHR_Substitute_Teacher_Root"
+      ],
+      "nodes": [
+        {
+          "path": "CHR_Substitute_Teacher_Root",
+          "name": "CHR_Substitute_Teacher_Root",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root",
+          "name": "Root",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine",
+          "name": "Spine",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/Neck",
+          "name": "Neck",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/Neck/Head",
+          "name": "Head",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L",
+          "name": "UpperArm.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L/LowerArm.L",
+          "name": "LowerArm.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L/LowerArm.L/Hand.L",
+          "name": "Hand.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R",
+          "name": "UpperArm.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R",
+          "name": "LowerArm.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R/Hand.R",
+          "name": "Hand.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.L",
+          "name": "Thigh.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.L/Shin.L",
+          "name": "Shin.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.L/Shin.L/Foot.L",
+          "name": "Foot.L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.R",
+          "name": "Thigh.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.R/Shin.R",
+          "name": "Shin.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/Root/Thigh.R/Shin.R/Foot.R",
+          "name": "Foot.R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Blouse",
+          "name": "ST_Blouse",
+          "mesh": "ST_Blouse",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Blouse_Button_113",
+          "name": "ST_Blouse_Button_113",
+          "mesh": "ST_Blouse_Button_113",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Blouse_Button_122",
+          "name": "ST_Blouse_Button_122",
+          "mesh": "ST_Blouse_Button_122",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Blouse_Button_131",
+          "name": "ST_Blouse_Button_131",
+          "mesh": "ST_Blouse_Button_131",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Body_Skin",
+          "name": "ST_Body_Skin",
+          "mesh": "ST_Body_Skin",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Cardigan",
+          "name": "ST_Cardigan",
+          "mesh": "ST_Cardigan",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Ear_L",
+          "name": "ST_Ear_L",
+          "mesh": "ST_Ear_L",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Ear_R",
+          "name": "ST_Ear_R",
+          "mesh": "ST_Ear_R",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Eye_L",
+          "name": "ST_Eye_L",
+          "mesh": "ST_Eye_L",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Eye_R",
+          "name": "ST_Eye_R",
+          "mesh": "ST_Eye_R",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Eyebrow_L",
+          "name": "ST_Eyebrow_L",
+          "mesh": "ST_Eyebrow_L",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Eyebrow_R",
+          "name": "ST_Eyebrow_R",
+          "mesh": "ST_Eyebrow_R",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Feet",
+          "name": "ST_Feet",
+          "mesh": "ST_Feet",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Hair",
+          "name": "ST_Hair",
+          "mesh": "ST_Hair",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Hands",
+          "name": "ST_Hands",
+          "mesh": "ST_Hands",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Head_Skin",
+          "name": "ST_Head_Skin",
+          "mesh": "ST_Head_Skin",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Shoes",
+          "name": "ST_Shoes",
+          "mesh": "ST_Shoes",
+          "skin": 0
+        },
+        {
+          "path": "CHR_Substitute_Teacher_Root/ST_Trousers",
+          "name": "ST_Trousers",
+          "mesh": "ST_Trousers",
+          "skin": 0
+        }
+      ],
+      "meshes": [
+        {
+          "name": "ST_Blouse",
+          "primitives": [
+            {
+              "material": "M_ST_Blouse",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Blouse_Button_113",
+          "primitives": [
+            {
+              "material": "M_ST_Button",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Blouse_Button_122",
+          "primitives": [
+            {
+              "material": "M_ST_Button",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Blouse_Button_131",
+          "primitives": [
+            {
+              "material": "M_ST_Button",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Body_Skin",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Cardigan",
+          "primitives": [
+            {
+              "material": "M_ST_Cardigan",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Ear_L",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Ear_R",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Eye_L",
+          "primitives": [
+            {
+              "material": "M_ST_Sclera",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Iris",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Pupil",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Eye_R",
+          "primitives": [
+            {
+              "material": "M_ST_Sclera",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Iris",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Pupil",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Eyebrow_L",
+          "primitives": [
+            {
+              "material": "M_ST_Brow",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Eyebrow_R",
+          "primitives": [
+            {
+              "material": "M_ST_Brow",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Feet",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Hair",
+          "primitives": [
+            {
+              "material": "M_ST_Hair",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_HairLight",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Hands",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Head_Skin",
+          "primitives": [
+            {
+              "material": "M_ST_Skin",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_MouthInner",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Lip",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Teeth",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Lash",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Shoes",
+          "primitives": [
+            {
+              "material": "M_ST_Shoes",
+              "skinned": true
+            },
+            {
+              "material": "M_ST_Sole",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "ST_Trousers",
+          "primitives": [
+            {
+              "material": "M_ST_Trousers",
+              "skinned": true
+            }
+          ]
+        }
+      ],
+      "materials": [
+        "M_ST_Blouse",
+        "M_ST_Brow",
+        "M_ST_Button",
+        "M_ST_Cardigan",
+        "M_ST_Hair",
+        "M_ST_HairLight",
+        "M_ST_Iris",
+        "M_ST_Lash",
+        "M_ST_Lip",
+        "M_ST_MouthInner",
+        "M_ST_Pupil",
+        "M_ST_Sclera",
+        "M_ST_Shoes",
+        "M_ST_Skin",
+        "M_ST_Sole",
+        "M_ST_Teeth",
+        "M_ST_Trousers"
+      ],
+      "skins": [
+        {
+          "name": "CHR_Substitute_Teacher_Root",
+          "skeleton": null,
+          "joints": [
+            "CHR_Substitute_Teacher_Root/Root",
+            "CHR_Substitute_Teacher_Root/Root/Spine",
+            "CHR_Substitute_Teacher_Root/Root/Spine/Neck",
+            "CHR_Substitute_Teacher_Root/Root/Spine/Neck/Head",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L/LowerArm.L",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L/LowerArm.L/Hand.L",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R",
+            "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R/Hand.R",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.L",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.L/Shin.L",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.L/Shin.L/Foot.L",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.R",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.R/Shin.R",
+            "CHR_Substitute_Teacher_Root/Root/Thigh.R/Shin.R/Foot.R"
+          ]
+        }
+      ],
+      "animations": [
+        {
+          "name": "ST_Idle_Breathing",
+          "channels": 2,
+          "targets": [
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/Neck",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "ST_Nervous_Posture_Shift",
+          "channels": 3,
+          "targets": [
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.L",
+              "path": "rotation"
+            },
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "ST_Slight_Hand_Movement",
+          "channels": 2,
+          "targets": [
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R",
+              "path": "rotation"
+            },
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/UpperArm.R/LowerArm.R/Hand.R",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "ST_Subtle_Head_Movement",
+          "channels": 1,
+          "targets": [
+            {
+              "node": "CHR_Substitute_Teacher_Root/Root/Spine/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

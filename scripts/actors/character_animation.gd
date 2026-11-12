@@ -7,6 +7,7 @@ extends RefCounted
 ##   protagonist (Protagonist_Character.glb)  Root, Pelvis, Spine, Chest, UpperArm_L, Shin_L, …
 ##   former protagonist (protagonist.glb)     Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
 ##   rigged Q                                 Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
+##   substitute teacher N (teacher-n.glb)     Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
 ##   retargeted protagonist (dev test)        Root, Hips, Spine, Chest, UpperChest, …
 ##
 ## and the animation library that was attempted first used a third convention
@@ -19,6 +20,8 @@ extends RefCounted
 ## The set is seven clips: four that loop a state (`idle`, `walk`, `jog`, `sit_idle`), two
 ## that are beats (`wave`, `talk`), and one transition (`get_up`) that is played once and
 ## hands back. What selects them is the character's own driver, not this file.
+## A model that arrives with motion of its own can have one of them rebuilt from it instead
+## (`adopt_authored_layers()`): N's idle is the four loops its author made in Blender.
 ##
 ## Nothing here needs a third-party animation library, an external `.glb`, or a retarget pass
 ## in the editor: an `Animation` is a resource and its track paths are
@@ -47,6 +50,17 @@ extends RefCounted
 ## moves and the next one does not would otherwise keep the last pose the first clip gave it —
 ## a character that stops walking would stand with one leg still mid-stride. Bones a clip does
 ## not author are held at rest.
+##
+## **Which way the model faces.** Everything above is measured in the character's own frame,
+## and on the protagonist and Q that frame *is* skeleton space: both were exported looking down
+## +Z. A model exported the way `docs/ASSET_PIPELINE.md` §1 asks — looking down −Z, like
+## substitute teacher N — has its skeleton turned half way round relative to that frame, so the
+## same key would swing its legs backwards when it walks and bend its knees forwards when it
+## sits. `bind(…, faces_negative_z = true)` measures the side axis and the positional sides in
+## the character's frame instead: the side axis becomes skeleton −X and `.L` the limb on the
+## skeleton's +X side. That is exactly what binding a copy of the model turned 180° about Y
+## would produce, without turning the asset. The default is +Z, so every existing caller binds
+## exactly the clips it always did.
 
 ## Bones the clips talk about, in the order the resolver prefers them. The first name that
 ## exists on a rig wins, so a rig that has both `Hips` and `Root` binds the hips to `Hips`.
@@ -75,8 +89,8 @@ const BONE_ALIASES := {
 ## The clips, authored in canonical names. Each key is `[time in seconds, degrees about the
 ## bone's own axes]`; the last key repeats the first so a looping clip closes the cycle.
 ## Rotations are offsets from the rest pose, about the bone's semantic axes
-## (`semantic_frame()`): Y runs along the bone, X is the character's side axis (skeleton +X)
-## made perpendicular to it, and Z = X × Y. X swings a limb and Z reaches out to the side.
+## (`semantic_frame()`): Y runs along the bone, X is the character's side axis (skeleton +X;
+## −X for a model that faces −Z) made perpendicular to it, and Z = X × Y. X swings a limb and Z reaches out to the side.
 ## On a hanging limb Z points backwards, so +Z moves the far end towards −X: outwards for a
 ## `.L` limb, which is why the `.R` keys carry the opposite Z sign.
 ##
@@ -235,6 +249,9 @@ const SEMANTIC_MIN_SIDE := 0.2
 
 ## Name the built library is registered under, so clips play as `char/idle`.
 const LIBRARY_NAME := &"char"
+## Samples per second when `adopt_authored_layers()` combines a model's own clips. The
+## author's keys are at 24 per second; 30 is finer than that and matches the import rate.
+const AUTHORED_SAMPLE_RATE := 30.0
 
 
 ## Every skeleton under `model_root`, in tree order.
@@ -256,7 +273,12 @@ static func skeletons_in(model_root: Node) -> Array[Skeleton3D]:
 ## +X) gets the pair swapped, and the stem is listed in `mirrored`, so a reader of the report
 ## sees `upper_arm.L → UpperArm_R` and why. Without it the names decide, which is what a
 ## retarget between two rigs needs: the source's left arm drives the target's left arm.
-static func resolve_rig(skeleton: Skeleton3D, by_position: bool = false) -> Dictionary:
+##
+## `faces_negative_z` says the model looks down −Z (see the note at the top): "the −X side" is
+## then the character's −X side, which is the skeleton's +X.
+static func resolve_rig(
+		skeleton: Skeleton3D, by_position: bool = false, faces_negative_z: bool = false
+) -> Dictionary:
 	var by_lower := {}
 	var bones: Array[String] = []
 	for index in skeleton.get_bone_count():
@@ -279,8 +301,14 @@ static func resolve_rig(skeleton: Skeleton3D, by_position: bool = false) -> Dict
 		var right := "%s.R" % stem
 		if not resolved.has(left) or not resolved.has(right):
 			continue
-		var left_x := skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[left]))).origin.x
-		var right_x := skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[right]))).origin.x
+		var left_x := _character_x(
+			skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[left]))).origin.x,
+			faces_negative_z
+		)
+		var right_x := _character_x(
+			skeleton.get_bone_global_rest(skeleton.find_bone(String(resolved[right]))).origin.x,
+			faces_negative_z
+		)
 		if left_x > right_x:
 			var swap: String = resolved[left]
 			resolved[left] = resolved[right]
@@ -290,6 +318,16 @@ static func resolve_rig(skeleton: Skeleton3D, by_position: bool = false) -> Dict
 		"skeleton": skeleton, "bones": bones, "resolved": resolved, "missing": missing,
 		"mirrored": mirrored,
 	}
+
+
+## A skeleton-space x coordinate in the character's own frame (+Z forward).
+static func _character_x(skeleton_x: float, faces_negative_z: bool) -> float:
+	return -skeleton_x if faces_negative_z else skeleton_x
+
+
+## The character's side axis in skeleton space: the axis the clips' X keys swing about.
+static func side_axis(faces_negative_z: bool = false) -> Vector3:
+	return Vector3.LEFT if faces_negative_z else Vector3.RIGHT
 
 
 ## The bone name on this rig for a canonical name, or "" when the rig does not have it.
@@ -316,7 +354,12 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 ## `player.root_node` must be the model root, so that a track path of `"Skeleton3D:Spine"`
 ## means "this model's skeleton, this bone". Returns the report the caller can print:
 ## the resolved and missing bones, and the track count of each clip.
-static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
+##
+## `faces_negative_z` is for a model exported looking down −Z (see the note at the top of this
+## file). It changes nothing for the +Z models, which is every caller that leaves it out.
+static func bind(
+		model_root: Node3D, player: AnimationPlayer, faces_negative_z: bool = false
+) -> Dictionary:
 	var skeletons := skeletons_in(model_root)
 	if skeletons.is_empty():
 		return {
@@ -337,7 +380,7 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		# Track paths are resolved against the player's root node, so the player has to sit
 		# inside the model for `..` to be the model and the skeleton path to be relative to it.
 		push_warning("AnimationPlayer should be a child of the model root; binding anyway.")
-	var rig := resolve_rig(skeleton, true)
+	var rig := resolve_rig(skeleton, true, faces_negative_z)
 	var skeleton_path := model_root.get_path_to(skeleton)
 	var resolved: Dictionary = rig["resolved"]
 	# Every canonical bone any clip animates, resolved on this rig: each clip writes all of
@@ -349,7 +392,9 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 	var frames := {}
 	var twists := {}
 	for canonical: String in animated:
-		var frame := semantic_frame(skeleton, skeleton.find_bone(String(resolved[canonical])))
+		var frame := semantic_frame(
+			skeleton, skeleton.find_bone(String(resolved[canonical])), faces_negative_z
+		)
 		frames[canonical] = frame
 		twists[canonical] = snappedf(rad_to_deg(frame.get_angle()), 0.1)
 	var library := AnimationLibrary.new()
@@ -395,6 +440,7 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 	player.add_animation_library(LIBRARY_NAME, library)
 	return {
 		"ok": true,
+		"faces": "-Z" if faces_negative_z else "+Z",
 		"skeleton": skeleton.name,
 		"bones": rig["bones"],
 		"resolved": rig["resolved"],
@@ -425,10 +471,16 @@ static func offset_rotation(degrees: Vector3) -> Quaternion:
 ## are within 1° — so those keys are exactly the `rest * offset` they always were. It is what
 ## makes the same key mean the same movement on a rig whose arms are twisted 35° about their
 ## length (the new protagonist) and one whose arms are twisted 16° (the former protagonist).
-static func semantic_frame(skeleton: Skeleton3D, index: int) -> Quaternion:
+##
+## For a −Z model the side axis is skeleton −X (`side_axis()`), so X still means "the
+## character's side" and a positive X key still swings a hanging limb backwards.
+static func semantic_frame(
+		skeleton: Skeleton3D, index: int, faces_negative_z: bool = false
+) -> Quaternion:
 	var global := skeleton.get_bone_global_rest(index).basis.orthonormalized()
 	var along := global.y.normalized()
-	var side := Vector3.RIGHT - along * along.dot(Vector3.RIGHT)
+	var axis := side_axis(faces_negative_z)
+	var side := axis - along * along.dot(axis)
 	if side.length() < SEMANTIC_MIN_SIDE:
 		return Quaternion.IDENTITY
 	side = side.normalized()
@@ -464,6 +516,141 @@ static func _animated_bones(resolved: Dictionary) -> Array[String]:
 		if wanted.has(canonical) and resolved.has(canonical):
 			ordered.append(canonical)
 	return ordered
+
+
+## Rebuilds the bound clip `clip_name` from clips the model's author embedded in the file.
+##
+## Some models arrive with their own motion: substitute teacher N carries four five-second
+## loops made in Blender (breathing, a nervous shift of weight, a small movement of the right
+## hand, a slight turn of the head), each moving a different part of the body on the same
+## key times. They are layers of one idle rather than four idles, so this plays them
+## together: on every bone, each layer's rotation away from rest is applied in turn,
+## `rest * delta_1 * delta_2 ...`. Nothing is invented and nothing is retargeted — the keys
+## are the author's, on the skeleton they were made for, sampled at `AUTHORED_SAMPLE_RATE`.
+##
+## The result replaces `clip_name` in the bound library, so the state machine plays it
+## exactly where it played the procedural clip. Like every bound clip it writes all the bones
+## the other clips animate (the ones no layer moves are held at rest), so leaving a walk for
+## this idle puts the arms and legs back where they belong instead of where the walk left
+## them. Call it after `bind()`. Returns a report; with `ok` false the procedural clip stays.
+static func adopt_authored_layers(
+		model_root: Node3D, player: AnimationPlayer, clip_name: String,
+		layer_names: PackedStringArray
+) -> Dictionary:
+	var failed := {"ok": false, "clip": clip_name, "layers": layer_names}
+	var library: AnimationLibrary = null
+	if player.has_animation_library(LIBRARY_NAME):
+		library = player.get_animation_library(LIBRARY_NAME)
+	if library == null or not library.has_animation(clip_name):
+		failed["reason"] = "'%s' is not bound on this player; call bind() first" % clip_name
+		return failed
+	if layer_names.is_empty():
+		failed["reason"] = "no layers were named"
+		return failed
+	var skeletons := skeletons_in(model_root)
+	if skeletons.is_empty():
+		failed["reason"] = "the model has no Skeleton3D"
+		return failed
+	var skeleton := skeletons[0]
+	var source := _authored_player(model_root, player)
+	if source == null:
+		failed["reason"] = "the model carries no AnimationPlayer of its own"
+		return failed
+	var source_root := source.get_node_or_null(source.root_node)
+	# Each layer as {bone name: track index}, and the span every layer's keys cover.
+	var layers: Array[Animation] = []
+	var layer_tracks: Array[Dictionary] = []
+	var start := INF
+	var finish := -INF
+	var ignored := 0
+	for layer_name in layer_names:
+		if not source.has_animation(layer_name):
+			failed["reason"] = "the model has no clip named '%s'" % layer_name
+			return failed
+		var layer := source.get_animation(layer_name)
+		var tracks := {}
+		for track in layer.get_track_count():
+			var path := layer.track_get_path(track)
+			var target: Node = null
+			if source_root != null:
+				target = source_root.get_node_or_null(NodePath(path.get_concatenated_names()))
+			var bone := String(path.get_concatenated_subnames())
+			if (
+				layer.track_get_type(track) != Animation.TYPE_ROTATION_3D
+				or target != skeleton
+				or skeleton.find_bone(bone) < 0
+				or layer.track_get_key_count(track) == 0
+			):
+				ignored += 1
+				continue
+			tracks[bone] = track
+			start = minf(start, layer.track_get_key_time(track, 0))
+			finish = maxf(finish, layer.track_get_key_time(track, layer.track_get_key_count(track) - 1))
+		if tracks.is_empty():
+			failed["reason"] = "'%s' moves no bone of %s" % [layer_name, skeleton.name]
+			return failed
+		layers.append(layer)
+		layer_tracks.append(tracks)
+	var length := finish - start
+	if length <= 0.0:
+		failed["reason"] = "the layers span no time"
+		return failed
+	# Every bone the bound clip writes, plus every bone a layer moves.
+	var skeleton_path := String(model_root.get_path_to(skeleton))
+	var written: Array[String] = []
+	var bound := library.get_animation(clip_name)
+	for track in bound.get_track_count():
+		written.append(String(bound.track_get_path(track).get_concatenated_subnames()))
+	var authored: Array[String] = []
+	for tracks: Dictionary in layer_tracks:
+		for bone: String in tracks:
+			if not authored.has(bone):
+				authored.append(bone)
+			if not written.has(bone):
+				written.append(bone)
+	var samples := maxi(int(round(length * AUTHORED_SAMPLE_RATE)), 1)
+	var animation := Animation.new()
+	animation.length = length
+	animation.loop_mode = Animation.LOOP_LINEAR
+	for bone: String in written:
+		var rest := skeleton.get_bone_rest(skeleton.find_bone(bone)).basis.get_rotation_quaternion()
+		var track := animation.add_track(Animation.TYPE_ROTATION_3D)
+		animation.track_set_path(track, NodePath("%s:%s" % [skeleton_path, bone]))
+		if not authored.has(bone):
+			animation.rotation_track_insert_key(track, 0.0, rest)
+			animation.rotation_track_insert_key(track, length, rest)
+			continue
+		var inverse_rest := rest.inverse()
+		for sample in samples + 1:
+			var time := length * float(sample) / float(samples)
+			var pose := rest
+			for index in layers.size():
+				var tracks: Dictionary = layer_tracks[index]
+				if not tracks.has(bone):
+					continue
+				var keyed := layers[index].rotation_track_interpolate(int(tracks[bone]), start + time)
+				pose = pose * (inverse_rest * keyed)
+			animation.rotation_track_insert_key(track, time, pose.normalized())
+	library.remove_animation(clip_name)
+	library.add_animation(clip_name, animation)
+	return {
+		"ok": true,
+		"clip": clip_name,
+		"layers": layer_names,
+		"bones": authored,
+		"held": written.size() - authored.size(),
+		"length": length,
+		"samples": samples + 1,
+		"ignored_tracks": ignored,
+	}
+
+
+## The model's own `AnimationPlayer` (the one the importer made from the file), not `player`.
+static func _authored_player(model_root: Node, player: AnimationPlayer) -> AnimationPlayer:
+	for node in model_root.find_children("*", "AnimationPlayer", true, false):
+		if node != player:
+			return node as AnimationPlayer
+	return null
 
 
 ## Plays `clip_name` on a bound player. Returns false (and says why) rather than leaving a

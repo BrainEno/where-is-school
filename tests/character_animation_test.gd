@@ -29,6 +29,10 @@ const PRODUCTION_PROTAGONIST := "res://assets/models/protagonist/Protagonist_Cha
 ## The first protagonist model, now a classroom student (`classroom_student.tscn`).
 const FORMER_PROTAGONIST := "res://assets/models/protagonist/protagonist.glb"
 const PRODUCTION_Q := "res://assets/models/q/q.glb"
+## Substitute teacher N: the one character exported facing −Z.
+const PRODUCTION_N := "res://assets/models/teacher-n/teacher-n.glb"
+## How far, in metres, a thigh raised for sitting has to carry the knee along the facing axis.
+const SEATED_KNEE_TRAVEL := 0.2
 
 ## Degrees a bone has to turn between two samples of a clip before the clip counts as moving
 ## it. Small enough for the idle sway, large enough that floating point noise cannot pass.
@@ -101,6 +105,10 @@ func _run() -> void:
 	await _check_model("protagonist (production)", PRODUCTION_PROTAGONIST, true)
 	await _check_model("former protagonist (classroom student)", FORMER_PROTAGONIST, true)
 	await _check_model("Q (production)", PRODUCTION_Q, true)
+	await _check_model("N (production)", PRODUCTION_N, true, true)
+
+	Harness.stage = "a model that faces -Z"
+	await _check_negative_z_binding()
 
 	Harness.stage = "the sprint the jog clip exists for"
 	_check_jog_threshold()
@@ -108,19 +116,22 @@ func _run() -> void:
 	Harness.stage = "the production wrapper scenes"
 	await _check_runtime_wrapper("protagonist", "res://scenes/environment/characters/protagonist.tscn")
 	await _check_runtime_wrapper("Q", "res://scenes/environment/characters/q.tscn")
+	await _check_runtime_wrapper("N", "res://scenes/environment/characters/teacher_n.tscn")
 	await _check_seated_student("res://scenes/environment/characters/classroom_student.tscn")
 
 	_report()
 	Harness.finish(
 		self, _failures,
-		"both rigged characters play the same seven clips, every track points at a bone that "
+		"every rigged character (+Z and -Z) plays the same seven clips, every track points at a bone that "
 		+ "exists, the transition does not loop, and the seats and speeds are wired."
 	)
 
 
 ## Binds one model and runs the clip checks. `should_bind` false means the model is expected
 ## to have no skeleton, and the report has to say so instead of half-working.
-func _check_model(label: String, path: String, should_bind: bool) -> Variant:
+func _check_model(
+	label: String, path: String, should_bind: bool, faces_negative_z: bool = false
+) -> Variant:
 	var packed: PackedScene = load(path)
 	if packed == null:
 		_failures.append("%s: %s could not be loaded." % [label, path])
@@ -152,7 +163,7 @@ func _check_model(label: String, path: String, should_bind: bool) -> Variant:
 		model.queue_free()
 		return null
 	var player := _player_for(model)
-	var report := CharacterAnimation.bind(model, player)
+	var report := CharacterAnimation.bind(model, player, faces_negative_z)
 	if not bool(report.get("ok", false)):
 		_failures.append("%s: bind failed: %s" % [label, String(report.get("reason", "?"))])
 		model.queue_free()
@@ -396,6 +407,61 @@ func _check_transition_poses(
 			% [label, worst, worst_bone]
 			+ "beat would jump when the get-up starts."
 		)
+
+
+## N looks down −Z; the clips are written for a character looking down +Z. Bound with
+## `faces_negative_z`, sitting has to bring N's knees out in front of it (−Z), which is the
+## check that the side axis was turned with the character. Bound without it — the control —
+## the same keys fold N's legs backwards, which is what the flag exists to prevent; if that
+## ever stops happening, the flag no longer does anything and this test says so.
+func _check_negative_z_binding() -> void:
+	var packed := load(PRODUCTION_N) as PackedScene
+	if packed == null:
+		_failures.append("N: %s could not be loaded." % PRODUCTION_N)
+		return
+	var model := packed.instantiate() as Node3D
+	root.add_child(model)
+	await process_frame
+	var skeletons := CharacterAnimation.skeletons_in(model)
+	if skeletons.is_empty():
+		_failures.append("N: no skeleton to bind.")
+		model.queue_free()
+		return
+	var skeleton := skeletons[0]
+	for faces_negative_z: bool in [true, false]:
+		var player := _player_for(model)
+		var report := CharacterAnimation.bind(model, player, faces_negative_z)
+		var resolved: Dictionary = report.get("resolved", {})
+		if not bool(report.get("ok", false)) or not resolved.has("shin.L") or not resolved.has("shin.R"):
+			_failures.append("N: binding (faces −Z %s) did not resolve both shins." % faces_negative_z)
+			player.queue_free()
+			continue
+		CharacterAnimation.play(player, "sit_idle")
+		player.seek(0.0, true)
+		var travel := 0.0
+		for side in ["L", "R"]:
+			var knee := skeleton.find_bone(String(resolved["shin.%s" % side]))
+			var moved := skeleton.get_bone_global_pose(knee).origin - skeleton.get_bone_global_rest(knee).origin
+			# Along N's facing (−Z), so positive is "in front of N".
+			travel += -moved.z * 0.5
+		player.stop()
+		var label := "with faces_negative_z" if faces_negative_z else "without faces_negative_z (control)"
+		_notes.append("N sit_idle %s: knees move %+.3f m along N's facing" % [label, travel])
+		if faces_negative_z and travel < SEATED_KNEE_TRAVEL:
+			_failures.append(
+				"N, bound facing −Z, sits with its knees %+.3f m along its facing; they have to come forward."
+				% travel
+			)
+		if not faces_negative_z and travel > -SEATED_KNEE_TRAVEL:
+			_failures.append(
+				"N bound as a +Z model no longer folds its knees backwards (%+.3f m); "
+				% travel
+				+ "faces_negative_z would then be doing nothing, so this check is out of date."
+			)
+		model.remove_child(player)
+		player.free()
+	model.queue_free()
+	await process_frame
 
 
 ## The pose a clip is in at time zero, per canonical bone, as the skeleton ends up holding it.
