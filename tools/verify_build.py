@@ -133,15 +133,17 @@ CATEGORIES = (
         "font",
         384 * KiB,
         1 * MiB,
-        "the subset covering every character the game can print is 252 KiB; 1 MiB means the "
-        "full 10 MiB source font, or a subset without its glyph range, got packed",
+        "each of the two subsets (Noto Sans SC for the interface, Noto Serif SC for the "
+        "dialogue) covers every character it can print in about 0.25-0.4 MiB; 1 MiB means a "
+        "full 10-11 MiB source font, or a subset without its glyph range, got packed",
     ),
     Category(
         "texture",
         512 * KiB,
         2 * MiB,
-        "no textures ship yet, and none is needed: 512 KiB is a 1024x1024 RGBA image, 2 MiB "
-        "is the point where a photo is being used as a wall",
+        "the dialogue portraits are cropped and scaled to 1100 px high and imported as lossy "
+        "WebP; 512 KiB is a 1024x1024 RGBA image, 2 MiB is the point where a photo is being "
+        "used as a wall or a full-size painting was packed",
     ),
     Category(
         "audio",
@@ -822,7 +824,13 @@ PACKAGE_FORBIDDEN_SUFFIXES = (".log", ".pdb", ".tmp", ".import", ".pck", ".md5",
 # is the executable's name on that platform. Godot emits `where-is-school.exe` on Windows and
 # `where-is-school.x86_64` on Linux; both are copied in under a name a player can type.
 PACKAGE_REQUIRED = {
-    "windows": ("where-is-school.exe", "HOW-TO-RUN.txt", "licences/COPYRIGHT.md", "licences/NotoSansSC-OFL.txt"),
+    "windows": (
+        "where-is-school.exe",
+        "HOW-TO-RUN.txt",
+        "licences/COPYRIGHT.md",
+        "licences/NotoSansSC-OFL.txt",
+        "licences/NotoSerifSC-OFL.txt",
+    ),
     "linux": (
         "where-is-school",
         "where-is-school.desktop",
@@ -831,6 +839,7 @@ PACKAGE_REQUIRED = {
         "HOW-TO-RUN.txt",
         "licences/COPYRIGHT.md",
         "licences/NotoSansSC-OFL.txt",
+        "licences/NotoSerifSC-OFL.txt",
     ),
 }
 PACKAGE_EXECUTABLE = {"windows": "where-is-school.exe", "linux": "where-is-school"}

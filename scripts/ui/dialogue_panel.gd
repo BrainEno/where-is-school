@@ -29,6 +29,13 @@ extends Control
 ## scrolls inside the body instead of growing past the screen. Nothing shrinks the type
 ## to make text fit: the type sizes are fixed and the panel adapts around them.
 ##
+## The reading voice follows Disco Elysium's dialogue column rather than a game's chat box
+## (owner's direction, 2026-11-12): a dark, almost opaque ink ground; the speaker's name in
+## tracked capitals in the speaker's colour; the sentence large, in a serif (Noto Serif SC,
+## `assets/fonts/NotoSerifSC-Regular.otf`), warm off-white on the dark; the options numbered
+## and set in a warm vermilion that brightens under the pointer. The interface outside the
+## panel keeps the Sans; anything the serif subset cannot draw falls back to it.
+##
 ## A speaker *may* have an approved 2D portrait (`CharacterProfile.portrait`). Most do
 ## not, and then nothing here changes: no column is reserved, the band sits where it
 ## always sat and every rect is the same. When one exists it is part of the same
@@ -38,7 +45,10 @@ extends Control
 ## the sentence, the options or the hint, and it never takes a click. A portrait that
 ## cannot be used (missing file, not a texture, no pixels, absurd proportions) is
 ## reported by `get_portrait_report()` and a warning, and the line is shown as if the
-## speaker had none.
+## speaker had none. The portraits are painted rectangles with their own grounds, so the
+## two edges that face the picture (the top and the side towards the text) dissolve into
+## the scene through `assets/shaders/ui/portrait_fade.gdshader`; the edge on the screen
+## border and the bottom stay hard.
 
 signal advance_requested
 signal choice_selected(index: int)
@@ -66,18 +76,18 @@ signal backlog_requested
 @export_range(0.35, 0.85, 0.01) var max_height_ratio: float = 0.62
 
 @export_category("Type")
-@export var speaker_size: int = 26
-@export var role_size: int = 13
+@export var speaker_size: int = 24
+@export var role_size: int = 14
 @export var badge_size: int = 12
-@export var title_size: int = 16
-@export var body_size: int = 22
-@export var choice_size: int = 20
-@export var hint_size: int = 12
+@export var title_size: int = 18
+@export var body_size: int = 25
+@export var choice_size: int = 22
+@export var hint_size: int = 13
 
 @export_category("Portrait")
 ## Largest share of the viewport width an optional portrait may take. A portrait that
 ## would be wider is scaled down as a whole, never cropped into a box.
-@export_range(0.1, 0.4, 0.01) var portrait_max_width_ratio: float = 0.28
+@export_range(0.1, 0.4, 0.01) var portrait_max_width_ratio: float = 0.3
 ## How far the band's own padding may slide over the inner edge of the portrait, so
 ## the two read as one composition. Kept below the frame's content margins (36 px on
 ## the left, 32 px on the right) so the text itself never reaches the figure.
@@ -85,6 +95,10 @@ signal backlog_requested
 ## Narrowest a portrait may be drawn. With less room than this the portrait is left
 ## out (status "no_room") instead of being shown as a sliver.
 @export var portrait_min_width: float = 48.0
+## How far the top edge and the edge facing the text fade into the scene, as fractions of
+## the drawn portrait (see `assets/shaders/ui/portrait_fade.gdshader`).
+@export_range(0.0, 0.5, 0.01) var portrait_inner_fade: float = 0.14
+@export_range(0.0, 0.5, 0.01) var portrait_top_fade: float = 0.1
 
 @onready var _speaker_label: Label = %SpeakerLabel
 @onready var _role_label: Label = %RoleLabel
@@ -109,7 +123,13 @@ const SOURCE_COLORS: Dictionary = {
 const SUBJECTIVE_TINT := Color(0.717, 0.427, 0.286, 1.0)
 const PAPER := Color(0.898, 0.871, 0.804, 1.0)
 const MUTED := Color(0.611, 0.6, 0.561, 1.0)
-const INK := Color(0.055, 0.065, 0.067, 0.78)
+const INK := Color(0.035, 0.038, 0.04, 0.9)
+## The options: a warm vermilion at rest, a pale apricot under the pointer or the cursor.
+const CHOICE_COLOR := Color(0.851, 0.447, 0.271, 1.0)
+const CHOICE_LIT := Color(0.976, 0.792, 0.643, 1.0)
+## The serif the sentence, the name, the title and the options are set in. Everything else
+## in the panel (role, source label, hint) stays in the project's Sans.
+const DIALOGUE_FONT: FontFile = preload("res://assets/fonts/NotoSerifSC-Regular.otf")
 
 var _reveal_progress: float = 0.0
 var _revealing: bool = false
@@ -152,6 +172,8 @@ var _choice_window_target := -1
 ## FOCUS_NONE: the highlight is drawn here so a click and a digit still work unchanged.
 var _choice_cursor: int = -1
 var _stick_frame: int = -1
+## The serif with the project Sans behind it as a fallback, built once in `_ready`.
+var _serif: FontVariation = null
 
 
 func _ready() -> void:
@@ -159,6 +181,9 @@ func _ready() -> void:
 	_choices_container.hide()
 	_hint_label.hide()
 	_remember_base_type()
+	if _portrait.material != null:
+		# Each panel sets its own fade sides, so it needs its own copy of the material.
+		_portrait.material = _portrait.material.duplicate()
 	_apply_type()
 	_connect_settings()
 	refresh_static_text()
@@ -194,18 +219,36 @@ func _set_transparent_to_mouse(node: Node) -> void:
 ## Type is set here rather than only in the scene so the panel has one source of truth
 ## for its scale, and tests can read the sizes that are really in use.
 func _apply_type() -> void:
+	var serif := _dialogue_font()
 	_speaker_label.add_theme_font_size_override("font_size", speaker_size)
-	_speaker_label.add_theme_font_override("font", _tracked_font(_speaker_label, 3))
+	_speaker_label.add_theme_font_override("font", _tracked_font(serif, 3))
+	_speaker_label.uppercase = true
 	# A name that would push the role and the source label out of the band is trimmed
 	# with an ellipsis instead. The name is the anchor, not a reason to break the frame.
 	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_role_label.add_theme_font_size_override("font_size", role_size)
 	_badge_label.add_theme_font_size_override("font_size", badge_size)
-	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label, 2))
+	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label.get_theme_font("font"), 2))
 	_title_label.add_theme_font_size_override("font_size", title_size)
+	_title_label.add_theme_font_override("font", serif)
 	_hint_label.add_theme_font_size_override("font_size", hint_size)
 	_body_label.add_theme_font_size_override("normal_font_size", body_size)
+	_body_label.add_theme_font_override("normal_font", serif)
+
+
+## The dialogue serif, with the project font (the Sans the theme sets) behind it, so a
+## character the serif subset does not carry is drawn in Sans instead of as a box.
+func _dialogue_font() -> Font:
+	if _serif != null:
+		return _serif
+	_serif = FontVariation.new()
+	_serif.base_font = DIALOGUE_FONT
+	var sans := _hint_label.get_theme_font("font")
+	if sans != null and sans != DIALOGUE_FONT:
+		var fallback_fonts: Array[Font] = [sans]
+		_serif.fallbacks = fallback_fonts
+	return _serif
 
 
 func _remember_base_type() -> void:
@@ -284,11 +327,9 @@ func _choice_min_height() -> float:
 	return roundf(32.0 * maxf(_text_scale, 1.0))
 
 
-## A `FontVariation` of the project font with extra letter spacing. The project ships
-## one font; this widens it for the two short labels (name, source) instead of adding a
-## second typeface.
-func _tracked_font(source: Label, amount: int) -> Font:
-	var base := source.get_theme_font("font")
+## A `FontVariation` of `base` with extra letter spacing, for the two short labels that
+## are tracked: the name (in the serif) and the source label (in the Sans).
+func _tracked_font(base: Font, amount: int) -> Font:
 	if base == null:
 		return null
 	var variation := FontVariation.new()
@@ -370,6 +411,7 @@ func set_choices(choices: Array) -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		button.add_theme_font_size_override("font_size", choice_size)
+		button.add_theme_font_override("font", _dialogue_font())
 		button.add_theme_constant_override("outline_size", 0)
 		button.custom_minimum_size = Vector2(0.0, _choice_min_height())
 		_apply_choice_colors(button)
@@ -446,7 +488,7 @@ func _set_choice_cursor(index: int) -> void:
 			continue
 		var marked := i == _choice_cursor
 		button.add_theme_stylebox_override("normal", _style_hover if marked else _style_normal)
-		var color := PAPER if marked else Color(0.807, 0.788, 0.741, 0.86)
+		var color := CHOICE_LIT if marked else CHOICE_COLOR
 		button.add_theme_color_override("font_color", color)
 	if _choice_window_count > 0:
 		reveal_choice(_choice_cursor)
@@ -801,9 +843,20 @@ func get_layout_report() -> Dictionary:
 		"choice_count": _choice_buttons.size(),
 		"choices_windowed": _choice_window_count > 0,
 		"choice_font_size": choice_size,
+		"dialogue_font": DIALOGUE_FONT.resource_path,
+		"body_font_path": _font_path(_body_label.get_theme_font("normal_font")),
+		"speaker_font_path": _font_path(_speaker_label.get_theme_font("font")),
 		"covers_width": rect.size.x / maxf(get_viewport_rect().size.x, 1.0),
 		"covers_height": rect.size.y / maxf(get_viewport_rect().size.y, 1.0),
 	}
+
+
+## The file a font (or the font a variation is built on) was loaded from, for the report.
+func _font_path(font: Font) -> String:
+	var current := font
+	while current is FontVariation:
+		current = (current as FontVariation).base_font
+	return current.resource_path if current != null else ""
 
 
 ## What the portrait layer is doing for the line on screen, for tests and for anyone
@@ -938,6 +991,13 @@ func _place_portrait(plan: Dictionary) -> void:
 	var to_local := get_global_transform().affine_inverse()
 	_portrait.position = to_local * rect.position
 	_portrait.size = rect.size
+	var fade := _portrait.material as ShaderMaterial
+	if fade != null:
+		# Only the edge that faces the text fades; the one on the screen border stays hard.
+		var right := _portrait_side == "right"
+		fade.set_shader_parameter("fade_left", portrait_inner_fade if right else 0.0)
+		fade.set_shader_parameter("fade_right", 0.0 if right else portrait_inner_fade)
+		fade.set_shader_parameter("fade_top", portrait_top_fade)
 	_portrait.visible = true
 
 
@@ -1020,30 +1080,32 @@ func _apply_accent(accent: Color) -> void:
 
 
 func _apply_choice_colors(button: Button) -> void:
-	button.add_theme_color_override("font_color", Color(0.807, 0.788, 0.741, 0.86))
-	button.add_theme_color_override("font_hover_color", PAPER)
-	button.add_theme_color_override("font_pressed_color", PAPER)
-	button.add_theme_color_override("font_focus_color", PAPER)
+	button.add_theme_color_override("font_color", CHOICE_COLOR)
+	button.add_theme_color_override("font_hover_color", CHOICE_LIT)
+	button.add_theme_color_override("font_pressed_color", CHOICE_LIT)
+	button.add_theme_color_override("font_hover_pressed_color", CHOICE_LIT)
+	button.add_theme_color_override("font_focus_color", CHOICE_LIT)
 
 
 ## Option styling lives in one place so every rebuilt list looks the same after a
-## language switch: flat by default, a margin mark and a lifted line on hover. The
+## language switch: flat by default; on hover a vermilion margin mark, a faint warm ground
+## and the text lit from vermilion to apricot. The
 ## shapes are built once and shared by every option.
 func _build_choice_styles() -> void:
 	_style_normal.content_margin_left = 10.0
 	_style_normal.content_margin_right = 6.0
 	_style_normal.content_margin_top = 4.0
 	_style_normal.content_margin_bottom = 4.0
-	_style_hover.bg_color = Color(0.776, 0.733, 0.643, 0.07)
+	_style_hover.bg_color = Color(0.851, 0.447, 0.271, 0.08)
 	_style_hover.border_width_left = 2
-	_style_hover.border_color = Color(0.776, 0.733, 0.643, 0.55)
+	_style_hover.border_color = Color(0.851, 0.447, 0.271, 0.75)
 	_style_hover.content_margin_left = 10.0
 	_style_hover.content_margin_right = 6.0
 	_style_hover.content_margin_top = 4.0
 	_style_hover.content_margin_bottom = 4.0
-	_style_pressed.bg_color = Color(0.776, 0.733, 0.643, 0.12)
+	_style_pressed.bg_color = Color(0.851, 0.447, 0.271, 0.14)
 	_style_pressed.border_width_left = 2
-	_style_pressed.border_color = Color(0.898, 0.871, 0.804, 0.8)
+	_style_pressed.border_color = Color(0.976, 0.792, 0.643, 0.85)
 	_style_pressed.content_margin_left = 10.0
 	_style_pressed.content_margin_right = 6.0
 	_style_pressed.content_margin_top = 4.0

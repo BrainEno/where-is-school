@@ -1,10 +1,17 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/dialogue_panel.gd" id="1_dialogue_panel"]
+[ext_resource type="Shader" path="res://assets/shaders/ui/portrait_fade.gdshader" id="2_portrait_fade"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_portrait"]
+shader = ExtResource("2_portrait_fade")
+shader_parameter/fade_left = 0.0
+shader_parameter/fade_right = 0.0
+shader_parameter/fade_top = 0.1
 
 [sub_resource type="Gradient" id="Gradient_wash"]
 offsets = PackedFloat32Array(0, 0.55, 1)
-colors = PackedColorArray(0.032, 0.04, 0.042, 0, 0.032, 0.04, 0.042, 0.42, 0.032, 0.04, 0.042, 0.88)
+colors = PackedColorArray(0.03, 0.032, 0.034, 0, 0.03, 0.032, 0.034, 0.5, 0.03, 0.032, 0.034, 0.92)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_wash"]
 gradient = SubResource("Gradient_wash")
@@ -18,7 +25,7 @@ content_margin_left = 36.0
 content_margin_top = 16.0
 content_margin_right = 32.0
 content_margin_bottom = 14.0
-bg_color = Color(0.055, 0.065, 0.067, 0.78)
+bg_color = Color(0.035, 0.038, 0.04, 0.9)
 
 [node name="DialoguePanel" type="Control"]
 anchor_top = 1.0
@@ -34,6 +41,8 @@ script = ExtResource("1_dialogue_panel")
 [node name="Portrait" type="TextureRect" parent="."]
 unique_name_in_owner = true
 visible = false
+texture_filter = 4
+material = SubResource("ShaderMaterial_portrait")
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
@@ -78,15 +87,16 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.898, 0.871, 0.804, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 24
 text = "Speaker"
+uppercase = true
 
 [node name="RoleLabel" type="Label" parent="Frame/Content/HeaderRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
 theme_override_colors/font_color = Color(0.611, 0.6, 0.561, 0.85)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 14
 text = "role"
 
 [node name="Spacer" type="Control" parent="Frame/Content/HeaderRow"]
@@ -105,7 +115,7 @@ text = "seen"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.702, 0.671, 0.596, 0.9)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 autowrap_mode = 3
 text = "Title"
 
@@ -117,15 +127,16 @@ size_flags_vertical = 3
 bbcode_enabled = false
 fit_content = true
 scroll_active = false
-theme_override_constants/line_separation = 10
-theme_override_font_sizes/normal_font_size = 22
+theme_override_colors/default_color = Color(0.91, 0.886, 0.827, 1)
+theme_override_constants/line_separation = 9
+theme_override_font_sizes/normal_font_size = 25
 text = "Body"
 
 [node name="ChoiceRule" type="ColorRect" parent="Frame/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-color = Color(0.702, 0.671, 0.596, 0.16)
+color = Color(0.851, 0.447, 0.271, 0.22)
 
 [node name="ChoicesContainer" type="VBoxContainer" parent="Frame/Content"]
 unique_name_in_owner = true
@@ -136,6 +147,6 @@ theme_override_constants/separation = 2
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.588, 0.549, 0.62)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 13
 text = "[Space] continue"
 horizontal_alignment = 2

@@ -223,6 +223,7 @@ jobs:
           cp build/windows/where-is-school.exe "${windows}/"
           cp packaging/HOW-TO-RUN.txt "${windows}/"
           cp assets/fonts/OFL.txt "${windows}/licences/NotoSansSC-OFL.txt"
+          cp assets/fonts/NotoSerifSC-OFL.txt "${windows}/licences/NotoSerifSC-OFL.txt"
           cp COPYRIGHT.md "${windows}/licences/"
 
           # The Linux folder carries the same run notes plus the Linux half: how to launch
@@ -235,6 +236,7 @@ jobs:
           cp packaging/linux/README.txt "${linux}/README.txt"
           cp packaging/HOW-TO-RUN.txt "${linux}/"
           cp assets/fonts/OFL.txt "${linux}/licences/NotoSansSC-OFL.txt"
+          cp assets/fonts/NotoSerifSC-OFL.txt "${linux}/licences/NotoSerifSC-OFL.txt"
           cp COPYRIGHT.md "${linux}/licences/"
 
           # `zip` keeps the permission bits of what it is given, which is how the Linux

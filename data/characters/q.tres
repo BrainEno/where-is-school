@@ -8,3 +8,5 @@ character_id = &"q"
 display_name = "Q"
 short_role = "classmate"
 accent_color = Color(0.706, 0.6, 0.467, 1)
+portrait_path = "res://assets/ui/portraits/q.webp"
+portrait_side = 1

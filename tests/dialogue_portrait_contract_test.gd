@@ -1,12 +1,15 @@
 extends SceneTree
-## The optional 2D dialogue portrait, as a contract rather than as art.
+## The optional 2D dialogue portrait, as a contract and for the three that ship.
 ##
-## No approved portrait exists yet, so nothing here ships an image: every texture is
-## generated in code for the length of the test and thrown away. What is checked is the
-## promise the panel and the profile make about portraits:
+## Three portraits are approved (owner, 2026-11-12): the protagonist, Q and N, in
+## `assets/ui/portraits/`. The contract cases below still use textures generated in code
+## for the length of the test, so they do not depend on the art; the shipped portraits are
+## checked on their own (5). What is checked is the promise the panel and the profile make
+## about portraits:
 ##
-## 1. Every shipped `CharacterProfile` still loads, and none of them asks for a
-##    portrait. Old files that predate the fields read as "no portrait".
+## 1. Every shipped `CharacterProfile` still loads. Exactly the approved speakers ask for
+##    a portrait, from the approved file, entering from the right; every other profile
+##    (B, the inner voice) reads as "no portrait".
 ## 2. No portrait means no change. A line shown without a portrait has exactly the
 ##    rects it had before portraits existed (band, body, name, hint, options), and
 ##    showing a portrait in between leaves nothing behind.
@@ -19,6 +22,10 @@ extends SceneTree
 ##    pixels, absurd proportions, a crop that leaves nothing) is reported with a status
 ##    and a message naming the character, and the line is laid out exactly as if the
 ##    speaker had no portrait.
+## 5. The shipped portraits, through the real character directory: at all three sizes
+##    and in both languages each one is drawn at the right edge, whole and unstretched,
+##    clear of every word and option, without narrowing the band; and the sentence, the
+##    name and the options are set in the dialogue serif.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -29,6 +36,18 @@ const PROBE_ID := &"portrait_probe"
 const LONG_NAME_ZH := "名字非常非常长的一个人物名称"
 const LONG_NAME_EN := "A Speaker Whose Name Is Far Too Long For The Name Row"
 const TOLERANCE := 0.5
+## A speaker that has no portrait and a profile in the directory, for the plain lines.
+const PLAIN_ID := &"b"
+const PLAIN_NAME := "B"
+## The approved portraits, by speaker. Anything else asking for one is a mistake.
+const APPROVED_PORTRAITS: Dictionary = {
+	&"protagonist": "res://assets/ui/portraits/protagonist.webp",
+	&"q": "res://assets/ui/portraits/q.webp",
+	&"n": "res://assets/ui/portraits/n.webp",
+}
+const DIALOGUE_FONT_PATH := "res://assets/fonts/NotoSerifSC-Regular.otf"
+## The shipped portraits are cut to this height by tools/prepare_portraits.py.
+const SHIPPED_PORTRAIT_HEIGHT := 1100.0
 
 var _failures: Array[String] = []
 var _panel: DialoguePanel = null
@@ -96,6 +115,7 @@ func _run() -> void:
 	await _run_failure_cases()
 	await _run_edge_cases()
 	await _run_click_case()
+	await _run_shipped_portraits()
 
 	_panel.close()
 	await process_frame
@@ -104,14 +124,15 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"optional dialogue portraits leave the text layout untouched when absent, stay clear of the text at 1280x720, 1600x900 and 1920x1080 in en and zh-CN when present, and fail visibly but harmlessly when unusable."
+		"optional dialogue portraits leave the text layout untouched when absent, stay clear of the text at 1280x720, 1600x900 and 1920x1080 in en and zh-CN when present, fail visibly but harmlessly when unusable, and the three approved portraits ship that way."
 	)
 
 
 # --- Profiles -----------------------------------------------------------------
 
 
-## Every profile in data/characters loads as before and none requests a portrait.
+## Every profile in data/characters loads as before; exactly the approved ones request a
+## portrait, and they resolve.
 func _check_shipped_profiles() -> void:
 	var files := DirAccess.get_files_at("res://data/characters")
 	var seen := 0
@@ -127,8 +148,13 @@ func _check_shipped_profiles() -> void:
 		var profile: CharacterProfile = resource
 		if String(profile.character_id).is_empty():
 			_failures.append("%s lost its character_id." % path)
+		if APPROVED_PORTRAITS.has(profile.character_id):
+			_check_approved_profile(path, profile)
+			continue
 		if profile.has_portrait() or profile.portrait != null or not profile.portrait_path.is_empty():
-			_failures.append("%s asks for a portrait; no portrait has been approved yet." % path)
+			_failures.append(
+				"%s asks for a portrait; only %s have one approved." % [path, APPROVED_PORTRAITS.keys()]
+			)
 		if profile.portrait_side != CharacterProfile.PortraitSide.LEFT \
 				or not is_equal_approx(profile.portrait_height_ratio, 0.72) \
 				or profile.portrait_crop != Rect2(0.0, 0.0, 1.0, 1.0):
@@ -144,8 +170,39 @@ func _check_shipped_profiles() -> void:
 		_failures.append("CharacterDirectory reported errors: %s" % " | ".join(directory.errors))
 	for character_id in directory.get_ids():
 		var profile := directory.get_profile(character_id)
-		if profile == null or profile.has_portrait():
-			_failures.append("Directory profile '%s' is missing or has a portrait." % character_id)
+		if profile == null:
+			_failures.append("Directory profile '%s' is missing." % character_id)
+		elif profile.has_portrait() != APPROVED_PORTRAITS.has(character_id):
+			_failures.append(
+				"Directory profile '%s' has_portrait() is %s, expected %s."
+				% [character_id, profile.has_portrait(), APPROVED_PORTRAITS.has(character_id)]
+			)
+	for character_id: StringName in APPROVED_PORTRAITS.keys():
+		if directory.get_profile(character_id) == null:
+			_failures.append("The approved portrait speaker '%s' has no profile." % character_id)
+
+
+## An approved portrait: the approved file, from the right, the default height, uncropped
+## (the crop is made once, in tools/prepare_portraits.py), and it resolves.
+func _check_approved_profile(path: String, profile: CharacterProfile) -> void:
+	var expected := String(APPROVED_PORTRAITS[profile.character_id])
+	if profile.portrait != null or profile.portrait_path != expected:
+		_failures.append("%s points at '%s', expected '%s'." % [path, profile.portrait_path, expected])
+	if profile.portrait_side != CharacterProfile.PortraitSide.RIGHT:
+		_failures.append("%s: the portrait does not enter from the right." % path)
+	if not is_equal_approx(profile.portrait_height_ratio, 0.72) \
+			or profile.portrait_crop != Rect2(0.0, 0.0, 1.0, 1.0):
+		_failures.append("%s: the portrait height or crop was changed in the profile." % path)
+	var resolved := profile.resolve_portrait()
+	if String(resolved["status"]) != "ok" or resolved["texture"] == null:
+		_failures.append("%s: the approved portrait does not resolve: %s." % [path, resolved])
+		return
+	var source_size: Vector2 = resolved["source_size"]
+	if not is_equal_approx(source_size.y, SHIPPED_PORTRAIT_HEIGHT) or source_size.x < 400.0:
+		_failures.append(
+			"%s: the portrait is %s; tools/prepare_portraits.py cuts them %.0f px high."
+			% [path, source_size, SHIPPED_PORTRAIT_HEIGHT]
+		)
 
 
 ## `resolve_portrait()` on its own, without the panel.
@@ -201,6 +258,10 @@ func _check_scene_contract() -> void:
 		_failures.append("The portrait is visible before any line is shown.")
 	if portrait.texture != null:
 		_failures.append("The scene ships a portrait texture.")
+	if not (portrait.material is ShaderMaterial):
+		_failures.append("The portrait has lost its edge-fade material.")
+	if portrait.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS:
+		_failures.append("The portrait is not filtered with mipmaps; downscaled paint would shimmer.")
 	var report := _panel.get_portrait_report()
 	if String(report["status"]) != "none" or bool(report["visible"]):
 		_failures.append("A fresh panel reports a portrait: %s." % report)
@@ -209,8 +270,8 @@ func _check_scene_contract() -> void:
 func _run_layout_case(size: Vector2i, locale: String, choice_count: int, long_name: bool) -> void:
 	var zh := locale == "zh-CN"
 	var prose := String(_samples[locale])
-	var speaker_id := PROBE_ID if long_name else &"q"
-	var speaker_name := (LONG_NAME_ZH if zh else LONG_NAME_EN) if long_name else "Q"
+	var speaker_id := PROBE_ID if long_name else PLAIN_ID
+	var speaker_name := (LONG_NAME_ZH if zh else LONG_NAME_EN) if long_name else PLAIN_NAME
 	var label := "%dx%d %s %s name, %d option(s)" % [
 		size.x, size.y, locale, "long" if long_name else "short", choice_count
 	]
@@ -306,12 +367,12 @@ func _run_edge_cases() -> void:
 	var size := RESOLUTIONS[0]
 	var prose := String(_samples["zh-CN"])
 	L10n.set_locale("zh-CN")
-	var plain := _line(prose, &"q", "Q")
+	var plain := _line(prose, PLAIN_ID, PLAIN_NAME)
 	await _show(plain, [])
 	var baseline := _snapshot()
 
 	# A landscape portrait is capped at the width ratio and scaled as a whole.
-	var wide := _line(prose, &"q", "Q")
+	var wide := _line(prose, PLAIN_ID, PLAIN_NAME)
 	wide["portrait_profile"] = _profile(_wide_texture, CharacterProfile.PortraitSide.LEFT)
 	await _show(wide, [])
 	_check_portrait_layout("wide portrait", size, baseline, _wide_texture.get_size().aspect())
@@ -322,7 +383,7 @@ func _run_edge_cases() -> void:
 	# A hand-edited height ratio far out of range is clamped, never drawn off screen.
 	var tall_profile := _profile(_tall_texture, CharacterProfile.PortraitSide.RIGHT)
 	tall_profile.portrait_height_ratio = 4.0
-	var tall := _line(prose, &"q", "Q")
+	var tall := _line(prose, PLAIN_ID, PLAIN_NAME)
 	tall["portrait_profile"] = tall_profile
 	await _show(tall, [])
 	_check_portrait_layout("height ratio 4.0", size, baseline, _tall_texture.get_size().aspect())
@@ -330,7 +391,7 @@ func _run_edge_cases() -> void:
 	# A crop frames part of the figure; the drawn aspect follows the crop.
 	var crop_profile := _profile(_tall_texture, CharacterProfile.PortraitSide.LEFT)
 	crop_profile.portrait_crop = Rect2(0.2, 0.0, 0.6, 0.8)
-	var cropped := _line(prose, &"q", "Q")
+	var cropped := _line(prose, PLAIN_ID, PLAIN_NAME)
 	cropped["portrait_profile"] = crop_profile
 	await _show(cropped, [])
 	_check_portrait_layout("cropped portrait", size, baseline, (600.0 * 0.6) / (1000.0 * 0.8))
@@ -338,7 +399,7 @@ func _run_edge_cases() -> void:
 	# A viewport too narrow for both: the band keeps its minimum width and the portrait
 	# steps aside (status "no_room") instead of squeezing the text.
 	await _resize(Vector2i(760, 720))
-	var narrow := _line(prose, &"q", "Q")
+	var narrow := _line(prose, PLAIN_ID, PLAIN_NAME)
 	narrow["portrait_profile"] = _profile(_tall_texture, CharacterProfile.PortraitSide.LEFT)
 	await _show(narrow, [])
 	var report := _panel.get_portrait_report()
@@ -359,7 +420,7 @@ func _run_edge_cases() -> void:
 ## Clicking the portrait does nothing; clicking the band still continues.
 func _run_click_case() -> void:
 	var prose := String(_samples["en"])
-	var line := _line(prose, &"q", "Q")
+	var line := _line(prose, PLAIN_ID, PLAIN_NAME)
 	line["portrait_profile"] = _profile(_tall_texture, CharacterProfile.PortraitSide.LEFT)
 	await _show(line, [])
 	var report := _panel.get_portrait_report()
@@ -392,6 +453,64 @@ func _run_click_case() -> void:
 			"click case: clicking the band with a portrait up advanced %d time(s), expected 1."
 			% _advance_count
 		)
+
+
+## The approved portraits, as the game shows them: the profile comes from the character
+## directory by speaker id, exactly as a line from the dialogue runtime would find it.
+func _run_shipped_portraits() -> void:
+	for size in RESOLUTIONS:
+		await _resize(size)
+		for locale in LOCALES:
+			L10n.set_locale(locale)
+			var zh := locale == "zh-CN"
+			var prose := String(_samples[locale])
+			for choice_count: int in [0, 4]:
+				var choices: Array = []
+				for index in choice_count:
+					var text := prose.substr(0, mini(38 if zh else 64, prose.length()))
+					choices.append({"text": ("%s（%d）" if zh else "%s (%d)") % [text, index + 1]})
+				await _show(_line(prose, PLAIN_ID, PLAIN_NAME), choices)
+				var baseline := _snapshot()
+				for speaker_id: StringName in APPROVED_PORTRAITS.keys():
+					var label := "shipped %s portrait, %dx%d %s, %d option(s)" % [
+						String(speaker_id), size.x, size.y, locale, choice_count
+					]
+					await _show(_line(prose, speaker_id, String(speaker_id).to_upper()), choices)
+					_check_shipped_portrait(label, size, baseline, speaker_id)
+	await _resize(RESOLUTIONS[0])
+	L10n.set_locale("en")
+
+
+func _check_shipped_portrait(
+	label: String, size: Vector2i, baseline: Dictionary, speaker_id: StringName
+) -> void:
+	var report := _panel.get_portrait_report()
+	var texture := (_panel.get_node("Portrait") as TextureRect).texture
+	if texture == null:
+		_failures.append("%s: no texture is drawn (%s)." % [label, report])
+		return
+	_check_portrait_layout(label, size, baseline, texture.get_size().aspect())
+	if String(report["side"]) != "right" or String(report["speaker_id"]) != String(speaker_id):
+		_failures.append(
+			"%s: drawn on side '%s' for '%s'." % [label, report["side"], report["speaker_id"]]
+		)
+	_check_dialogue_type(label)
+
+
+## The sentence, the name and the options are set in the dialogue serif.
+func _check_dialogue_type(label: String) -> void:
+	var layout := _panel.get_layout_report()
+	if String(layout["dialogue_font"]) != DIALOGUE_FONT_PATH:
+		_failures.append("%s: the dialogue font is '%s'." % [label, layout["dialogue_font"]])
+	for key in ["body_font_path", "speaker_font_path"]:
+		if String(layout[key]) != DIALOGUE_FONT_PATH:
+			_failures.append("%s: %s is '%s', not the dialogue serif." % [label, key, layout[key]])
+	for button in _panel.get_choice_buttons():
+		var font: Font = button.get_theme_font("font")
+		while font is FontVariation:
+			font = (font as FontVariation).base_font
+		if font == null or font.resource_path != DIALOGUE_FONT_PATH:
+			_failures.append("%s: option %s is not set in the dialogue serif." % [label, button.name])
 
 
 # --- Checks -------------------------------------------------------------------
