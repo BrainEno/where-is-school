@@ -5,7 +5,7 @@ render_mode unshaded;
 //
 // `mask` is a viewport rendered from the player's camera. Its red channel is 1 where a
 // highlighted mesh is the nearest thing to the camera and 0 everywhere else - including where
-// the mesh is behind a wall or a desk (see outline_mask_key.gdshader). It is therefore the
+// the mesh is behind a wall or a desk (the mask's key, in scripts/interaction/outline_overlay.gd). It is therefore the
 // *visible* part of the object's silhouette in screen space: the outline traces the object as
 // the player sees it - any mesh, any shape, no per-prop authoring - stops where something
 // covers it, and is absent when the object is hidden. Its width is in pixels, not in metres,

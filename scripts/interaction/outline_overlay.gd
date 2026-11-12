@@ -7,18 +7,16 @@ extends CanvasLayer
 ## made, for any mesh and without touching a single prop:
 ##
 ## 1. The meshes to outline get one extra visual layer bit (`MASK_LAYER`) and, at the end of
-##    their `material_overlay` chain, the key material
-##    (`assets/shaders/interaction/outline_mask_key.gdshader`). Both are given back exactly as
-##    they were on release. The key draws nothing for the player's camera, and the player's
-##    camera never draws `MASK_LAYER` (the overlay clears that bit from it), so nothing changes
-##    in the frame the player sees.
+##    their `material_overlay` chain, the key material (`KEY_SHADER_CODE`). Both are given
+##    back exactly as they were on release. The key draws nothing for the player's camera,
+##    and the player's camera never draws `MASK_LAYER` (the overlay clears that bit from it),
+##    so nothing changes in the frame the player sees.
 ## 2. `Mask`, a `SubViewport` in the same world, renders the scene from a camera that copies the
 ##    player's camera every frame - unshaded, and only as far as the farthest highlighted mesh,
 ##    because nothing behind the object can hide it. That fills its depth buffer with what is
-##    in front of the object. A full-screen quad (`outline_mask_blank.gdshader`, on
-##    `MASK_LAYER` only) then paints the colour black without touching depth, and the key,
-##    drawn last with the depth test on, paints white exactly where the highlighted meshes are
-##    the nearest surface. Its red channel is the *visible* part of the object's silhouette.
+##    in front of the object. A full-screen quad (`BLANK_SHADER_CODE`, on `MASK_LAYER` only)
+##    then paints the colour black without touching depth, and the key, drawn last with the
+##    depth test on, paints white exactly where the highlighted meshes are the nearest surface. Its red channel is the *visible* part of the object's silhouette.
 ## 3. `Ink`, a full-screen `ColorRect`, runs `assets/shaders/interaction/highlight_outline.gdshader`
 ##    over that silhouette and draws a thin warm line just outside it, a dark rim outside
 ##    that, and a faint wash over the object. Because the mask is depth-tested, an object
@@ -29,12 +27,11 @@ extends CanvasLayer
 ## below. A canvas shader cannot read the 3D depth buffer, and a 3D pass that could (a
 ## `hint_depth_texture` quad in the main view) would be tonemapped, glowed and colour-adjusted
 ## with the room, so the warm line would change colour from room to room. The extra pass only
-## runs while something is highlighted, without lights (`DEBUG_DRAW_UNSHADED` drops them), and
-## its far plane stops at the object. Nothing in it needs more than Godot's Compatibility
-## renderer offers: overlay materials, `CAMERA_VISIBLE_LAYERS`, `POSITION`, render priority.
-## Directional shadow cascades are still prepared for the mask camera by the engine (a
-## viewport cannot opt out of them); that is the main cost of the pass and it is bounded by
-## the short far plane.
+## runs while something is highlighted, without lights (`DEBUG_DRAW_UNSHADED` drops them) or
+## shadows (the viewport has no shadow atlas, and the engine prepares no shadow maps for a
+## viewport without one), and its far plane stops at the object. Nothing in it needs more than
+## Godot's Compatibility renderer offers: overlay materials, `CAMERA_VISIBLE_LAYERS`,
+## `POSITION`, render priority.
 ##
 ## Why not the inverted-hull trick the environment already uses for its ink lines
 ## (`assets/shaders/painterly/environment_outline.gdshader`): growing a box along its split
@@ -51,13 +48,71 @@ extends CanvasLayer
 ## builds one interactable on the root) gets one created on demand by `for_node`.
 
 ## Visual layer 20 (bit 19). Nothing else in the project uses it; `tests/interaction_outline_content_test.gd`
-## checks that no shipped mesh is authored on it. The two mask shaders test the same bit
-## against `CAMERA_VISIBLE_LAYERS`; change all three together.
+## checks that no shipped mesh is authored on it. The two mask shaders below test the same
+## bit (524288) against `CAMERA_VISIBLE_LAYERS`; change all three together.
 const MASK_LAYER := 1 << 19
 const GROUP := &"outline_overlay"
 const SHADER := preload("res://assets/shaders/interaction/highlight_outline.gdshader")
-const KEY_SHADER := preload("res://assets/shaders/interaction/outline_mask_key.gdshader")
-const BLANK_SHADER := preload("res://assets/shaders/interaction/outline_mask_blank.gdshader")
+
+## The key: the highlighted meshes' own pixels in the mask. Hung on each highlighted mesh at
+## the end of its `material_overlay` chain. An overlay is drawn after the scene's opaque
+## geometry, with the depth test on, over the same surface, so it lands exactly on the parts of
+## the mesh that are in front of everything else and on nothing a wall or a desk hides. That
+## is the whole of the occlusion: the depth buffer the mask pass has just filled, used the way
+## every overlay uses it. No depth texture is read.
+##
+## It moves itself off screen for any camera that does not see `MASK_LAYER` - the player's
+## camera never does - so in the frame the player sees it costs a vertex pass, no pixels. The
+## small pull towards the camera (2 mm + 1 mm per metre of distance, along the view ray, so
+## no pixel moves) keeps it from losing the depth test to the very surface it covers: its
+## vertex code is not the mesh material's, and two programs need not round alike.
+const KEY_SHADER_CODE := """shader_type spatial;
+render_mode unshaded, fog_disabled, cull_disabled, depth_draw_never, shadows_disabled, blend_mix;
+
+const uint MASK_LAYER = 524288u;
+uniform float pull_m = 0.002;
+uniform float pull_per_m = 0.001;
+
+void vertex() {
+	vec4 view = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
+	float distance_m = length(view.xyz);
+	if (distance_m > 0.0001) {
+		view.xyz -= view.xyz / distance_m * (pull_m + pull_per_m * distance_m);
+	}
+	POSITION = PROJECTION_MATRIX * view;
+	if ((CAMERA_VISIBLE_LAYERS & MASK_LAYER) == 0u) {
+		POSITION = vec4(2.0, 2.0, 2.0, 1.0);
+	}
+}
+
+void fragment() {
+	ALBEDO = vec3(1.0);
+	ALPHA = 1.0;
+}
+"""
+
+## The blank: a full-screen quad on `MASK_LAYER` that paints the mask black after the scene
+## was drawn into it for depth. It neither tests nor writes depth, so the depth buffer
+## survives for the key, and it sorts after every other transparent surface. Its corners are
+## (-1, -1)..(1, 1), straight to clip space; z = 0.5 is inside the clip volume for both depth
+## conventions. Mask camera only, like the key.
+const BLANK_SHADER_CODE := """shader_type spatial;
+render_mode unshaded, fog_disabled, cull_disabled, depth_test_disabled, depth_draw_never, shadows_disabled, blend_mix;
+
+const uint MASK_LAYER = 524288u;
+
+void vertex() {
+	POSITION = vec4(VERTEX.xy, 0.5, 1.0);
+	if ((CAMERA_VISIBLE_LAYERS & MASK_LAYER) == 0u) {
+		POSITION = vec4(2.0, 2.0, 2.0, 1.0);
+	}
+}
+
+void fragment() {
+	ALBEDO = vec3(0.0);
+	ALPHA = 1.0;
+}
+"""
 ## Transparent surfaces draw in ascending priority. The scene's own sit at 0 (one nameplate at
 ## 1); the blank goes over all of them and the key over the blank.
 const BLANK_PRIORITY := Material.RENDER_PRIORITY_MAX - 1
@@ -203,11 +258,17 @@ func _keyed(authored: Material) -> Material:
 	return head
 
 
+static func _shader(code: String) -> Shader:
+	var shader := Shader.new()
+	shader.code = code
+	return shader
+
+
 func _ensure_key_material() -> void:
 	if _key_material != null:
 		return
 	_key_material = ShaderMaterial.new()
-	_key_material.shader = KEY_SHADER
+	_key_material.shader = _shader(KEY_SHADER_CODE)
 	_key_material.render_priority = KEY_PRIORITY
 
 
@@ -254,7 +315,7 @@ func _build() -> void:
 	quad.size = Vector2(2.0, 2.0)
 	_blank.mesh = quad
 	var blank_material := ShaderMaterial.new()
-	blank_material.shader = BLANK_SHADER
+	blank_material.shader = _shader(BLANK_SHADER_CODE)
 	blank_material.render_priority = BLANK_PRIORITY
 	_blank.material_override = blank_material
 	_blank.layers = MASK_LAYER
