@@ -66,3 +66,23 @@ Deliver loose studies with visible alternatives. For outdoor scenes, include at 
 Provide neutral, legible views that can inform 3D blockouts alongside expressive artwork that communicates mood. Keep the playable route and interaction targets understandable.
 
 The project owner approves visual direction. AI-generated explorations are references only until their provenance, rights, and consistency with the art bible have been reviewed.
+### 5. Heterogeneous media and postmodern spatial discontinuity
+
+Explore a world whose locations do not share one mandatory rendering style or medium. A classroom may be a restrained 3D set; another place may be a 2D painting, a photographic collage, a crude diagram, a mirrored passage, or a hybrid in which flat images intrude into 3D space. A scene may even change medium at the moment of interaction.
+
+The point is not random stylistic variety. Each discontinuity should sharpen the experience of disorientation, memory, institutional absurdity, or dream logic. The game's unity comes from its literary sensibility and emotional restraint, not from making every asset look alike.
+
+### 6. Biology classroom: two spatial impossibilities
+
+Explore two distinct discoveries in the biology classroom:
+
+- **The curtained window:** Keep one window ordinary, with the exterior laundry visible. Cover the other with a curtain. Pulling it aside reveals no normal exterior—only an absence beyond the opening. The protagonist falls from the classroom's apparent height and arrives in the schoolyard. Aim for a quiet, matter-of-fact reveal rather than a jump scare.
+- **The rear door and suspended staircase:** The front door remains the ordinary exit. The rear door opens onto a staircase suspended inside the classroom, descending from the ceiling and hanging without visible support around the teacher's lectern. Its traversal and narrative function remain open for later design.
+
+### 7. Further location motifs
+
+- A crawlable pipe or narrow passage whose entire inner surface is mirrored, multiplying the protagonist into repeated, fragmented, or impossible reflections.
+- A familiar schoolyard in which crocodiles, lions, or other out-of-place animals appear without the scene automatically turning into combat or horror.
+- Future locations such as a laboratory may adopt their own visual medium and spatial grammar rather than inheriting the classroom's style.
+
+Treat these as exploratory motifs, not finished level specifications. Develop each one through composition, interaction, emotional purpose, and a playable graybox before committing to final assets.

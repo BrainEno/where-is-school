@@ -300,3 +300,57 @@ The current runtime dialogue surface was redesigned and tested in PR #29, and re
 Keep evolving the reading surface toward the integrated portrait/text composition defined in this Art Bible as more portraits arrive. Preserve the successful properties of the current implementation: text-first hierarchy when needed, Chinese long-form readability, responsive sizing, clear choices, keyboard/mouse behavior, and narrative-source distinction.
 
 Development nameplates over graybox characters are debugging aids, not final game UI. They remain a development-only feature and should not be treated as part of the character portrait system.
+## Postmodern spatial language and visual plurality
+
+The game's visual direction is intentionally open to heterogeneous media and styles. The earlier expressionist, graphic, hand-made 2.5D language remains an important visual foundation, especially for character identity and the emotional tone of ordinary school spaces, but it is no longer a requirement that every location use one rendering method or one consistent 3D style.
+
+A location may be:
+- fully 3D, with deliberately authored geometry and materials;
+- a 2D illustrated, painted, photographed, or collaged space;
+- a hybrid of 3D geometry and 2D planes, cut-outs, drawings, labels, or image fragments;
+- a space whose visual medium changes abruptly as the player moves or interacts;
+- an intentionally crude, diagrammatic, theatrical, miniature, mirrored, or otherwise materially unusual construction.
+
+Different locations may have radically different visual identities. Even within one location, a 2D image may intrude into a 3D environment, a flat backdrop may behave as a real doorway, or a familiar object may reveal a spatial impossibility. Do not force these elements to imitate one another to achieve surface-level consistency.
+
+**The unifying identity is literary and experiential, not technical or stylistic.** Each visual discontinuity should feel authored: it should contribute to the game's themes of disorientation, memory, institutional absurdity, unreliable space, and the uncertain boundary between ordinary school life and dream logic. Heterogeneity is not permission for arbitrary visual noise.
+
+### Rules for stylistic discontinuity
+
+1. **Local rules may differ.** Each place may establish its own palette, rendering technique, scale, material logic, and spatial behavior.
+2. **Contradiction is a design tool.** A familiar school object may open onto an impossible void, lead to an unrelated location, or reveal geometry that should not fit inside the building.
+3. **Use contrast deliberately.** A sudden 2D/3D shift, photographic insert, crude drawing, or change in rendering should have a clear compositional or narrative purpose.
+4. **Keep interaction legible.** The player must still understand what can be inspected, opened, crossed, or avoided. Visual ambiguity can be intentional; input ambiguity should not be.
+5. **Do not explain every impossibility.** The world may present spatial contradictions without supplying a lore explanation. Let the player encounter and interpret them.
+6. **Avoid a single surrealism filter.** Do not cover every location with distortion, noise, strange symbols, or horror effects. Ordinary spaces and quiet stretches are necessary for the impossible moments to matter.
+7. **Preserve the human scale of the story.** The people remain psychologically specific even when the space around them becomes irrational.
+
+### Surreal interactions as spatial events
+
+An interaction may change more than an object's state: it may reveal that the apparent architecture was false. A curtain can conceal the absence of an exterior wall; a door can reveal a staircase suspended inside a classroom. Such events should be staged as discoveries, not as conventional fantasy portals with explanatory effects.
+
+Prefer restrained transitions, strong composition, and a clear before/after state. The impossible object or opening should be visually readable from the gameplay camera. Any fall, traversal, or teleport-like transition must have deliberate player feedback, a reliable destination, and safe recovery behavior.
+
+### Location studies and future visual possibilities
+
+The following are approved creative directions for exploration, not claims about implemented content:
+
+- **Biology classroom — the curtained window:** One of the two windows continues to show the ordinary exterior detail of laundry hanging outside. The other is covered by a curtain. When the player chooses to pull it aside, there is no exterior view or building facade beyond it—only open absence. The protagonist falls from the classroom's apparent height and arrives in the schoolyard. The reveal should be quiet and matter-of-fact rather than a conventional jump scare.
+- **Biology classroom — the impossible rear door:** The front door remains the ordinary exit. Opening the second, rear door reveals a staircase suspended in the classroom, descending from the ceiling/roof and hanging unsupported through the space above or in front of the teacher's lectern. It should feel architecturally impossible, not like a normal staircase with hidden supports. Its eventual traversal or narrative function can be decided separately.
+- **Mirror-lined crawlspace or pipe:** A narrow passage that the protagonist can crawl through, with mirrored inner walls producing repeated, fragmented, or apparently endless reflections. Reflection behavior may be optically impossible; it need not obey a fully realistic mirror simulation if a designed visual solution communicates the idea better.
+- **The schoolyard's impossible animals:** Animals such as a crocodile or lion may appear in an otherwise familiar schoolyard. Their presence should be treated with the same calm, matter-of-fact absurdity as the architecture, not automatically as a combat encounter or horror threat.
+- **Future laboratory and other locations:** Each new location may introduce a distinct medium, spatial rule, or visual grammar. A laboratory need not resemble the classroom; a tunnel, corridor, playground, or interior may each have a separate visual treatment.
+
+These are a growing catalogue of motifs, not a checklist to implement all at once. New ideas should be added as location studies with a short statement of their emotional purpose, visual medium, interaction, and relationship to the surrounding space.
+
+### Production and acceptance guidance for heterogeneous scenes
+
+- Decide the intended medium and spatial rule during concept/graybox work, not after a conventional 3D scene has already been fully dressed.
+- A scene may combine Blender/Godot 3D assets with 2D textures, sprites, planes, hand-authored illustrations, photographs, or composited images. Record source files and provenance for every external or generated asset.
+- Use the simplest technical method that achieves the intended image. Do not build a physically accurate mirror system, procedural portal, or complex geometry when a controlled visual illusion is more reliable.
+- Validate the scene in the actual game camera and interaction flow. Test visual transitions, collision, fall destinations, traversal, and player recovery.
+- Keep important interactive affordances readable even when their consequences are impossible.
+- Do not retrofit every existing location to the new direction. Let the visual plurality emerge location by location, where it serves the experience.
+- Performance, accessibility, asset licensing, and maintainability remain requirements regardless of style.
+
+**Updated visual principle:** The world may change its medium, scale, and physical laws from one place to another. The work should still feel like one literary experience because its spaces share a sensibility of estrangement, restraint, and human vulnerability.
