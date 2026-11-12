@@ -284,7 +284,8 @@ func _run() -> void:
 		var stairs := street.find_interactable(&"street_to_residential")
 		if stairs != null:
 			await _wait_for_free(60.0)
-			_teleport(Vector3(10.5, 0, -28.6), 0.0)
+			# On the landing at the head of the stair, facing the doorway into the flats.
+			_teleport(Vector3(10.5, 1.6, -35.0), 0.0)
 			if not await _wait_for_target(&"street_to_residential", 30.0):
 				_failures.append("The way to the residential area was never offered.")
 			await _shot("15b_stair_prompt", "The way up to the residential area.")
@@ -349,7 +350,7 @@ func _run() -> void:
 				_failures.append("The courtyard has no way into the alley.")
 			else:
 				await _wait_for_free(60.0)
-				_teleport(Vector3(6.0, 0, -31.6), 0.0)
+				_teleport(Vector3(6.0, 0, -33.0), 0.0)
 				if not await _wait_for_target(&"res_alley_end", 30.0):
 					_failures.append("The alley was never offered from the courtyard.")
 				await _press(KEY_E)
@@ -440,7 +441,7 @@ func _capture_free_period() -> void:
 		_note("hover prompt: '%s'" % prompt)
 		await _shot(
 			"13b_hover_trolley",
-			"The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing."
+			"The pointer resting on the cleaning trolley: its outline, the prompt, and the object E would use are the same thing."
 		)
 		await _press(KEY_E)
 		if await _wait_for_line(6.0):
@@ -637,12 +638,12 @@ func _capture_yard_checks() -> void:
 # --- the ground mark: candidate comparison ----------------------------------
 
 
-## Half of this is the shipped mark (candidate A); B and C are composed here, out of the same
+## Candidate A is the shipped mark (a thin ring and a dot); B and C are composed here, out of the same
 ## pen, so that all three are real geometry drawn by the real material on the real floor. A
 ## candidate that only exists in this file cannot leak into the game.
 func _candidate_mesh(design: String) -> ArrayMesh:
 	match design:
-		"tick":
+		"ring":
 			return WorldCue.destination_mark_mesh()
 		"brackets":
 			var bracket := SurfaceTool.new()
@@ -895,7 +896,7 @@ func _capture_cue_candidates() -> void:
 	_note("cue candidates: mark at %s on normal %s" % [str(point), str(normal)])
 
 	var screen := _screen_position_of_point(point)
-	var designs: Array[String] = ["tick", "brackets", "commas"]
+	var designs: Array[String] = ["ring", "brackets", "commas"]
 	var inked := {}
 	for design: String in designs:
 		await _shot_free_frame()
@@ -920,8 +921,8 @@ func _capture_cue_candidates() -> void:
 	await _wait(0.3)
 	await _shot(
 		"cue_candidates_abc",
-		"The three candidates side by side on the same floor, from one camera: A tick, "
-		+ "B brackets, C commas. The shipped one is A."
+		"The three candidates side by side on the same floor, from one camera: A ring with a "
+		+ "dot, B brackets, C commas. The shipped one is A."
 	)
 	var current := _host.get_current()
 	if current != null:
@@ -967,6 +968,150 @@ func _grab_image() -> Image:
 	await process_frame
 	await process_frame
 	return root.get_texture().get_image()
+
+
+## The outline is depth-tested (`OutlineOverlay`): it is drawn only where the object is the
+## nearest surface. `tests/interaction_outline_occlusion_test.gd` proves that on boxes; this
+## asks the real classroom, from the real camera, at the moment the player hovers the
+## timetable sheet - a thin sheet on the inside of the south wall, which the fixed camera
+## can see from outside that wall.
+##
+## Three frames of the same moment: the outline as shipped, no outline at all (the overlay's
+## opacity taken to zero by the cue that owns it), and the outline with the mask cut back to
+## the outline layer alone - the mask as it was before it was depth-tested (the negative
+## control). Then:
+## * the negative control must draw the warm line: the sheet is on screen and outlinable,
+##   so the check below is about depth and nothing else;
+## * where every sampled point of the sheet is behind opaque geometry (by world bounds along
+##   the camera ray), the shipped outline must change no pixel at all - no line through
+##   the wall;
+## * where none is, the shipped outline must draw at least half the line the control does;
+## * in between (partly hidden), the numbers are logged.
+func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
+	var overlay := cue.get_overlay()
+	if overlay == null or not overlay.is_owned_by(cue):
+		_note("outline in the classroom: the sheet's cue does not own the overlay; not measured")
+		return
+	var camera := _player.get_viewport().get_camera_3d()
+	var meshes := overlay.get_meshes()
+	var area := Rect2(centre, Vector2.ZERO)
+	var points: Array[Vector3] = []
+	for mesh in meshes:
+		var box := mesh.get_aabb()
+		points.append(mesh.global_transform * box.get_center())
+		for corner in 8:
+			var point := mesh.global_transform * box.get_endpoint(corner)
+			points.append(point)
+			area = area.expand(camera.unproject_position(point))
+	var frame_rect := Rect2(Vector2.ZERO, root.get_visible_rect().size)
+	var probe := Rect2i(area.grow(24.0).intersection(frame_rect))
+
+	# What hides each sampled point: opaque, visible geometry that is not the target, whose
+	# world bounds the camera ray crosses more than 5 cm short of the point (so the wall the
+	# sheet hangs on does not count as being in front of it).
+	var eye := camera.global_position
+	var blocked := 0
+	var blockers: Array[String] = []
+	var scene := _host.get_current()
+	var candidates := scene.find_children("*", "GeometryInstance3D", true, true)
+	for point in points:
+		for node in candidates:
+			var geometry := node as GeometryInstance3D
+			if geometry == null or meshes.has(geometry) or not geometry.is_visible_in_tree():
+				continue
+			if geometry.transparency > 0.0:
+				continue
+			var hit: Variant = (geometry.global_transform * geometry.get_aabb()).intersects_segment(eye, point)
+			if hit != null and (hit as Vector3).distance_to(point) > 0.05:
+				blocked += 1
+				var label := str(scene.get_path_to(geometry))
+				if not blockers.has(label):
+					blockers.append(label)
+				break
+
+	var shipped := await _grab_image()
+	var mask_image: Image = null
+	var mask_viewport := overlay.get_mask_viewport()
+	if mask_viewport != null:
+		mask_image = mask_viewport.get_texture().get_image()
+	var opacity := overlay.get_opacity()
+	overlay.set_opacity(cue, 0.0)
+	var bare := await _grab_image()
+	overlay.set_opacity(cue, opacity)
+	# The negative control. The overlay stops syncing while it is shown (the camera is
+	# still), so it cannot put the full culling back.
+	var mask_camera := overlay.get_mask_camera()
+	var synced := mask_camera.cull_mask
+	overlay.process_mode = Node.PROCESS_MODE_DISABLED
+	mask_camera.cull_mask = OutlineOverlay.MASK_LAYER
+	var through := await _grab_image()
+	await _shot(
+		"03e_outline_without_depth",
+		"Negative control: the same moment with the outline mask cut back to the outline layer, "
+		+ "as it was before it was depth-tested - whatever hides the sheet no longer hides its outline."
+	)
+	mask_camera.cull_mask = synced
+	overlay.process_mode = Node.PROCESS_MODE_INHERIT
+	await _grab_image()
+
+	var shipped_line := _warm_line_pixels(shipped, bare, probe)
+	var through_line := _warm_line_pixels(through, bare, probe)
+	var shipped_changed := _ink_pixels(bare, shipped, area.get_center(), int(maxf(area.size.x, area.size.y) * 0.5) + 24)
+	var mask_pixels := 0
+	if mask_image != null:
+		for y in range(probe.position.y, mini(probe.end.y, mask_image.get_height())):
+			for x in range(probe.position.x, mini(probe.end.x, mask_image.get_width())):
+				if mask_image.get_pixel(x, y).r > 0.5:
+					mask_pixels += 1
+	var state := "partly hidden"
+	if blocked == points.size():
+		state = "fully hidden"
+	elif blocked == 0:
+		state = "in view"
+	var summary := (
+		"%s (%d of %d points behind %s): shipped outline %d line px / %d changed / mask %d px; "
+		% [state, blocked, points.size(), ", ".join(blockers) if not blockers.is_empty() else "nothing", shipped_line, shipped_changed, mask_pixels]
+		+ "without depth %d line px; camera %s" % [through_line, str(eye)]
+	)
+	_note("outline depth in the classroom: %s" % summary)
+	# Small crops printed inline, so the moment can be looked at from the run's annotations.
+	var crop_rect := Rect2i(Rect2(probe).grow(40.0).intersection(frame_rect))
+	for entry: Array in [["shipped", shipped], ["without_depth", through]]:
+		var image := entry[1] as Image
+		if image != null:
+			var crop := image.get_region(crop_rect)
+			crop.convert(Image.FORMAT_RGB8)
+			print("CROP: classroom_outline_%s.jpg %s" % [
+				entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.8))
+			])
+	if bare != null:
+		var small := bare.duplicate() as Image
+		small.convert(Image.FORMAT_RGB8)
+		small.resize(400, 225, Image.INTERPOLATE_BILINEAR)
+		print("CROP: classroom_frame_small.jpg %s" % Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.6)))
+	if through_line < 30:
+		_failures.append(
+			"Outline depth in the classroom: the negative control drew no line, so the sheet "
+			+ "was not outlinable on screen and nothing was measured (%s)." % summary
+		)
+	elif state == "fully hidden" and (shipped_changed > 0 or mask_pixels > 0):
+		_failures.append("Outline depth in the classroom: the outline shows through the wall (%s)." % summary)
+	elif state == "in view" and shipped_line * 2 < through_line:
+		_failures.append("Outline depth in the classroom: a sheet in plain view lost its outline (%s)." % summary)
+
+
+## Pixels in `area` that are the outline's warm, light line in `drawn` and were not in `bare`.
+func _warm_line_pixels(drawn: Image, bare: Image, area: Rect2i) -> int:
+	if drawn == null or bare == null:
+		return -1
+	var count := 0
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var now: Color = drawn.get_pixel(x, y)
+			var was: Color = bare.get_pixel(x, y)
+			if now.r > 0.7 and now.g > 0.55 and now.r - now.b > 0.15 and now.r > was.r + 0.05:
+				count += 1
+	return count
 
 
 ## How many pixels changed between two frames inside a square around `centre`. A mark that
@@ -1199,19 +1344,23 @@ func _capture_click_navigation() -> void:
 		# resolves to the sheet, rather than by projecting its origin and hoping.
 		var sheet_screen: Vector2 = await _cursor_onto(sheet)
 		if sheet_screen != Vector2.ZERO and await _wait_for_target(sheet.interact_id, 6.0):
-			# Long enough for the fade to finish and for the ring to have turned: a frame
-			# taken in the first sixteenth of a second shows the cue at its dimmest.
+			# Long enough for the outline to finish fading in: a frame taken in the first
+			# tenth of a second shows the cue at its dimmest.
 			await _wait(0.45)
 			await _shot(
 				"03d_hover_cue",
-				"The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, "
-				+ "and a shard floating above the object."
+				"The hover cue on the timetable sheet: a warm outline traced around the sheet "
+				+ "and its clip, and nothing on the floor."
 			)
 			var cue := sheet.get_cue()
 			if cue != null:
+				await _check_outline_drawn(cue, sheet_screen)
 				_note(
-					"hover cue: revealed=%s opacity=%.2f parts=%s"
-					% [str(cue.is_revealed()), cue.get_opacity(), str(cue.get_parts().keys())]
+					"hover cue: revealed=%s opacity=%.2f outlining=%s meshes=%d"
+					% [
+						str(cue.is_revealed()), cue.get_opacity(), str(cue.is_outlining()),
+						cue.get_outline_meshes().size()
+					]
 				)
 			else:
 				_note("hover cue: the object is highlighted but carries no cue")
@@ -1265,7 +1414,7 @@ func _capture_refused_click(near: Interactable) -> void:
 	await _wait(0.12)
 	await _shot(
 		"03g_refused_click",
-		"A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts."
+		"A click on a wall: the ring contracts in the refusal colour and fades, with no dot and no echo, and no walk starts."
 	)
 	_note(
 		"refused click: role=%s, rejection=%s"

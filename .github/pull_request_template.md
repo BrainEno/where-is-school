@@ -1,36 +1,88 @@
-## Purpose
+<!-- 所有标题和正文均使用简体中文。代码标识、路径、命令、原始测试输出和 SHA 保持原样。请勿删除任何章节；不适用时写明原因。 -->
 
-<!-- What player-facing or engineering problem does this PR solve? -->
+## 1. 任务信息
 
-## Implementation
+- **任务目标：**
+- **关联 Issue / PR：**
+- **目标分支：** main
+- **开发基线 SHA：**
+- **最终提交 SHA：**
+- **引擎 / 运行环境版本：**
+- **Agent 平台显示的模型名称与版本：**
+  - 若平台未公开，请填写：平台未显示，无法核实（不得猜测）
 
-<!-- Summarize the approach and important ownership boundaries. -->
+## 2. 变更摘要
 
-## Validation
+### 实现内容
 
-- [ ] Godot version recorded
-- [ ] Headless editor/import check run
-- [ ] Relevant automated tests run
-- [ ] Manual test steps completed (where applicable)
-- [ ] No known parse/resource/runtime errors
+- 
 
-Commands and results:
+### 设计原因与行为变化
 
-~~~text
-<!-- Paste exact commands and concise results. -->
-~~~
+- 
 
-## Screenshots / capture
+## 3. 文件范围
 
-<!-- Required for visible gameplay or UI changes. Not required for pure documentation. -->
+| 文件路径 | 变更内容 | 所属任务范围 |
+|---|---|---|
+|  |  |  |
 
-## Known limitations
+- **白名单检查：** 是 / 否
+- **超出原定范围的文件：** 无 / 列出路径并说明原因、事先如何获得授权
 
-<!-- Be explicit about unimplemented behavior and follow-up work. -->
+## 4. 验证结果
 
-## Scope check
+| 验证层级 | 命令 / 工作流 | 实际结果 | 证据 |
+|---|---|---|---|
+| 静态检查 |  | 通过 / 失败 / 未运行 |  |
+| 自动化测试 |  | 通过 / 失败 / 未运行 |  |
+| Godot / 运行时 |  | 通过 / 失败 / 未运行 |  |
+| Playthrough / 渲染 |  | 通过 / 失败 / 未运行 / 不适用 |  |
+| 构建 / 导出 |  | 通过 / 失败 / 未运行 / 不适用 |  |
 
-- [ ] No unrelated refactor
-- [ ] Asset provenance updated, if applicable
-- [ ] Documentation updated, if applicable
-- [ ] No secrets, editor cache, or local absolute paths
+- **Godot / 运行时确切版本：**
+- **CI 是否在最终 PR head SHA 上运行：** 是 / 否
+- **CI Run 链接及 Run ID：**
+- **未运行的检查及原因：**
+- **警告、错误、资源泄漏或跳过项：**
+
+> 只有实际执行并取得结果的检查才能标记为“通过”。不得用较早提交、其他分支或相似环境的结果代替最终 PR head 的验证。
+
+## 5. 人工验收清单
+
+请提供所有者可以在本地复现的步骤。自动化测试无法证明的画面、手柄、音频、窗口或实际交互行为必须明确列出。
+
+- [ ] 
+- [ ] 
+- [ ] 
+
+## 6. 回归与兼容性
+
+- **本次重点保护的既有行为 / 契约：**
+- **已运行的相关旧测试：**
+- **回归风险：** 无 / 具体说明
+- **与其他开放 PR 或并行任务的文件冲突检查：**
+
+## 7. 已知限制与未完成事项
+
+- **已知限制：** 无 / 具体说明
+- **尚未验证的行为：** 无 / 具体说明
+- **依赖的后续工作：** 无 / 具体说明
+- **需要所有者明确决定的事项：** 无 / 具体说明
+
+## 8. 合并建议
+
+**建议：** 建议合并 / 暂不建议合并
+
+**依据：**
+
+- 
+- 
+
+**Agent 自检声明：**
+
+- [ ] 未直接向 main 推送。
+- [ ] 未自行合并本 PR。
+- [ ] 未删除、跳过或弱化既有测试来掩盖问题。
+- [ ] 已检查完整 diff，未包含无关文件。
+- [ ] 已按仓库 AGENTS.md 的中文汇报和英文 Commit Message 协议执行。

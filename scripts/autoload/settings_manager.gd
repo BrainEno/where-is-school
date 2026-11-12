@@ -636,7 +636,7 @@ func restore_default_bindings() -> void:
 	bindings_changed.emit()
 
 
-## True when an action's events are exactly its defaults.
+## Whether the settings screen offers this side of an action for rebinding.
 ## False for the keyboard side of the Esc actions; the settings screen shows them fixed.
 func can_rebind(action: StringName, device: StringName) -> bool:
 	if not REBINDABLE_ACTIONS.has(action):
@@ -644,6 +644,7 @@ func can_rebind(action: StringName, device: StringName) -> bool:
 	return device == DEVICE_GAMEPAD or not KEYBOARD_LOCKED_ACTIONS.has(action)
 
 
+## True when an action's events are exactly its defaults.
 func is_default_binding(action: StringName) -> bool:
 	return _encoded(InputMap.action_get_events(action)) == _encoded(default_events(action))
 
@@ -682,6 +683,12 @@ func load_settings() -> void:
 	_load_problems.clear()
 	var config := ConfigFile.new()
 	var loaded := config.load(SETTINGS_PATH)
+	if loaded != OK and FileAccess.file_exists(SETTINGS_PATH):
+		# A file that is there but does not parse is damage, not a first run: say so.
+		_load_problems.append(
+			"%s could not be read (error %d); every setting is at its default"
+			% [SETTINGS_PATH, loaded]
+		)
 	_text_size = DEFAULT_TEXT_SIZE
 	_text_speed = DEFAULT_TEXT_SPEED
 	_ui_scale = DEFAULT_UI_SCALE
@@ -735,6 +742,7 @@ func _read_volume(config: ConfigFile, key: String) -> int:
 func _load_bindings(config: ConfigFile) -> void:
 	if not config.has_section(SECTION_INPUT):
 		return
+	var loaded: Array[StringName] = []
 	for key: String in config.get_section_keys(SECTION_INPUT):
 		var action := StringName(key)
 		if not REBINDABLE_ACTIONS.has(action):
@@ -747,7 +755,78 @@ func _load_bindings(config: ConfigFile) -> void:
 				"[input] %s = %s is not a valid binding list; defaults kept" % [key, str(value)]
 			)
 			continue
+		var broken := _broken_rule(action, decoded)
+		if not broken.is_empty():
+			_load_problems.append("[input] %s = %s %s; defaults kept" % [key, str(value), broken])
+			continue
 		_apply_events(action, decoded)
+		loaded.append(action)
+	_drop_loaded_conflicts(loaded)
+
+
+## The rules `rebind` keeps one input at a time, checked on a whole stored list: a file
+## edited by hand or written by another build must not take Esc away from the menus, give
+## Esc to anything else, or leave an action without a key or a controller input it has by
+## default. Empty when the list is fine; otherwise what is wrong with it.
+func _broken_rule(action: StringName, events: Array) -> String:
+	var keys := PackedStringArray()
+	var has_key := false
+	var has_pad := false
+	for event: InputEvent in events:
+		if event is InputEventKey:
+			has_key = true
+			keys.append(encode_event(event))
+		elif is_gamepad_event(event):
+			has_pad = true
+	var default_keys := PackedStringArray()
+	var default_has_pad := false
+	for event: InputEvent in default_events(action):
+		if event is InputEventKey:
+			default_keys.append(encode_event(event))
+		elif is_gamepad_event(event):
+			default_has_pad = true
+	if KEYBOARD_LOCKED_ACTIONS.has(action):
+		if keys != default_keys:
+			return "changes the keyboard side, which stays Esc"
+	else:
+		for reserved: int in RESERVED_KEYS:
+			if keys.has("key:%d" % reserved):
+				return "binds a reserved key"
+	if not has_key and not default_keys.is_empty():
+		return "leaves the action without a key"
+	if not has_pad and default_has_pad:
+		return "leaves the action without a controller input"
+	return ""
+
+
+## Two actions on one input is what `rebind` refuses, and a stored file can still say it:
+## edited by hand, or two lists that were each fine against the defaults. The action read
+## last goes back to its defaults until nothing clashes; the defaults never clash, so this
+## ends, and it does not depend on the order the file lists a valid swap in.
+func _drop_loaded_conflicts(loaded: Array[StringName]) -> void:
+	var index := loaded.size() - 1
+	while index >= 0:
+		var action := loaded[index]
+		var other := _conflict_of(action)
+		if String(other).is_empty():
+			index -= 1
+			continue
+		_load_problems.append("[input] %s shares an input with %s; defaults kept" % [action, other])
+		_apply_events(action, default_events(action))
+		loaded.remove_at(index)
+		index = loaded.size() - 1
+
+
+## The first other action using one of `action`'s inputs, apart from the shared pairs.
+func _conflict_of(action: StringName) -> StringName:
+	var mine := _encoded(InputMap.action_get_events(action))
+	for other: StringName in REBINDABLE_ACTIONS:
+		if other == action or _may_share(action, other) or not InputMap.has_action(other):
+			continue
+		for code: String in _encoded(InputMap.action_get_events(other)):
+			if mine.has(code):
+				return other
+	return StringName()
 
 
 ## Every entry must decode, and the list must not be empty; otherwise nothing is used.

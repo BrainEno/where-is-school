@@ -25,7 +25,9 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const RIGGED_Q := "res://scenes/dev/animation_retarget_test/q_rigged.glb"
 const RETARGETED_PROTAGONIST := "res://scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb"
-const PRODUCTION_PROTAGONIST := "res://assets/models/protagonist/protagonist.glb"
+const PRODUCTION_PROTAGONIST := "res://assets/models/protagonist/Protagonist_Character.glb"
+## The first protagonist model, now a classroom student (`classroom_student.tscn`).
+const FORMER_PROTAGONIST := "res://assets/models/protagonist/protagonist.glb"
 const PRODUCTION_Q := "res://assets/models/q/q.glb"
 
 ## Degrees a bone has to turn between two samples of a clip before the clip counts as moving
@@ -97,6 +99,7 @@ func _run() -> void:
 
 	Harness.stage = "the production models"
 	await _check_model("protagonist (production)", PRODUCTION_PROTAGONIST, true)
+	await _check_model("former protagonist (classroom student)", FORMER_PROTAGONIST, true)
 	await _check_model("Q (production)", PRODUCTION_Q, true)
 
 	Harness.stage = "the sprint the jog clip exists for"
@@ -105,6 +108,7 @@ func _run() -> void:
 	Harness.stage = "the production wrapper scenes"
 	await _check_runtime_wrapper("protagonist", "res://scenes/environment/characters/protagonist.tscn")
 	await _check_runtime_wrapper("Q", "res://scenes/environment/characters/q.tscn")
+	await _check_seated_student("res://scenes/environment/characters/classroom_student.tscn")
 
 	_report()
 	Harness.finish(
@@ -508,6 +512,40 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 		+ "get-up that hands back."
 	)
 	body.queue_free()
+	await process_frame
+
+
+## The classroom student is scenery: no body above it, `start_seated` set, so it has to open
+## on `sit_idle` by itself, bound, with nothing to read a velocity from, and stay there.
+func _check_seated_student(path: String) -> void:
+	var packed := load(path) as PackedScene
+	if packed == null:
+		_failures.append("classroom student wrapper could not be loaded at %s." % path)
+		return
+	var holder := Node3D.new()
+	root.add_child(holder)
+	var visual := packed.instantiate() as CharacterVisualAnimation
+	if visual == null:
+		_failures.append("classroom student wrapper is not a CharacterVisualAnimation.")
+		holder.queue_free()
+		return
+	holder.add_child(visual)
+	await process_frame
+	await process_frame
+	if not visual.is_bound():
+		_failures.append("classroom student did not bind: %s" % str(visual.get_bind_report()))
+	elif visual.get_current_clip() != "sit_idle" or not visual.is_seated():
+		_failures.append(
+			"classroom student opened on '%s' (seated %s); it has to sit."
+			% [visual.get_current_clip(), visual.is_seated()]
+		)
+	if visual.get_locomotion_body() != null:
+		_failures.append("classroom student found a body to follow; it has none.")
+	await _wait_seconds(0.5)
+	if visual.get_current_clip() != "sit_idle":
+		_failures.append("classroom student got up by itself ('%s')." % visual.get_current_clip())
+	_notes.append("classroom student: opens and stays on '%s'" % visual.get_current_clip())
+	holder.queue_free()
 	await process_frame
 
 

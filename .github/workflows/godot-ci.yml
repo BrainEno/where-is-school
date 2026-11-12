@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Install Godot
-        uses: chickensoft-games/setup-godot@v2.4.3
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
@@ -131,6 +131,18 @@ jobs:
           # sidecar, a sidecar left behind by a move, and a duplicated model name.
           python3 tests/model_library_test.py
 
+      - name: Check the workflow actions are pinned by commit
+        shell: bash
+        run: |
+          # Issue #116: a tag like `actions/checkout@v6` can be moved upstream, so what CI ran
+          # would be decided by somebody else. Every external `uses:` in every workflow (and in
+          # our composite actions) must name a full 40-character commit SHA with a `# vX.Y.Z`
+          # comment, one pin per action across files; `./` local actions are allowed as they
+          # are. The checker reads YAML structure, not strings, and its test proves both
+          # directions: tags, branches and short SHAs fail; local actions and scripts don't.
+          python3 tools/check_workflow_action_pins.py
+          python3 tests/workflow_action_pins_test.py
+
       - name: Check the bundled font covers the current text
         shell: bash
         run: |
@@ -230,6 +242,11 @@ jobs:
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
           # Synthetic pointer events need a real GUI viewport; run this standalone test under Xvfb.
           run_check title_menu_interaction 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd || status=1
+          # The settings themselves (#105, #106): every preference survives a restart without
+          # touching `[display] locale`, damaged files and rule-breaking bindings fall back,
+          # rebinding refuses what it must, a capture never traps or leaks input, the three
+          # volume dials stay independent, and the screen is reachable by keyboard and pad.
+          run_check settings_regression 300 godot --headless --path . --script res://tests/settings_regression_test.gd || status=1
           # Every room on disk is described by data/story/locations.json, every door
           # points at a described room, and every key exists in both languages.
           run_check location_catalog 180 godot --headless --path . --script res://tests/location_catalog_test.gd || status=1
@@ -266,6 +283,11 @@ jobs:
           # The same clips in the shipping game: main.tscn's player (keys and clicks), the
           # classroom Q and the following Q, measured off their skeletons.
           run_check runtime_character_animation 300 godot --headless --path . --script res://tests/runtime_character_animation_test.gd || status=1
+          # The protagonist model (PR #118): its import, skeleton and skinning, the bone
+          # mapping (positional sides, which joints animate), every clip's limbs measured on
+          # all three rigs, the player scene, the former protagonist seated in the classroom
+          # as a plain student, and Q binding exactly as before.
+          run_check protagonist_model 240 godot --headless --path . --script res://tests/protagonist_model_test.gd || status=1
           # The animation library retargeted onto the protagonist: the bones pair up, the
           # baked clip actually moves the character, and the retarget is rest-relative (the
           # source's rotation change and the target's are the same rotation). Then the
@@ -306,9 +328,14 @@ jobs:
           # fails on the same errors the real run would, in a few seconds and without a
           # display.
           run_check capture_script 120 godot --headless --path . --check-only --script res://tests/capture_playthrough.gd || status=1
-          # The two cues the mouse draws: their parts, their motion, their colour per
-          # role, the ground they are laid on, and that they hide when finished.
+          # The two cues the mouse draws: the ground mark (a small ring that lands, echoes
+          # once and holds; a refusal that contracts) and the outline traced around the
+          # object itself, its hand-over, its fallback, and the pick boxes under it.
           run_check interaction_cue 180 godot --headless --path . --script res://tests/interaction_cue_test.gd || status=1
+          # The outline on shipped content: every interactable in the six locations and
+          # the companion resolves meshes to trace and is pointable where they are drawn,
+          # the overlay sits under the UI, and nothing authored uses its mask layer.
+          run_check interaction_outline_content 240 godot --headless --path . --script res://tests/interaction_outline_content_test.gd || status=1
           # The same cues, in the ears: the four synthesised buffers, their levels, the
           # hover rate limit, and that the drawing code asks for the sound that matches.
           run_check interaction_audio 180 godot --headless --path . --script res://tests/interaction_audio_test.gd || status=1

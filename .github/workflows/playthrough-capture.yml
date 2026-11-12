@@ -15,8 +15,9 @@ name: Playthrough capture
 # `docs/screenshots/` are left untouched; new runs do not write them back to Git.
 #
 # The artifact has **one** root: `${{ runner.temp }}/evidence`
-#   evidence/logs/import-1.log, import-2.log, capture.log
+#   evidence/logs/import-1.log, import-2.log, capture.log, outline-occlusion.log
 #   evidence/docs/screenshots/*.png, PLAYTHROUGH.log, PLAYTHROUGH.md
+#   evidence/outline-occlusion/*.png (the depth-aware outline check's frames)
 # Everything is uploaded from that one directory, so paths are stable when the artifact
 # is downloaded. The artifact is addressed by id, not name: each attempt has a distinct
 # name, and the exact id is passed to PR verification so it cannot read an older attempt.
@@ -38,6 +39,7 @@ on:
       - "project.godot"
       - "addons/**"
       - "tests/capture_editor_dock.gd"
+      - "tests/interaction_outline_occlusion_test.gd"
   # `pull_request` has no branch filter: a pull request whose base is another
   # branch - a stacked one - is still a pull request, and until this was removed the
   # only place it could be tested was the branch it was stacked on, or a manual
@@ -57,6 +59,7 @@ on:
       - "project.godot"
       - "addons/**"
       - "tests/capture_editor_dock.gd"
+      - "tests/interaction_outline_occlusion_test.gd"
   workflow_dispatch:
 
 permissions:
@@ -75,9 +78,9 @@ jobs:
       evidence_artifact_id: ${{ steps.upload_evidence.outputs.artifact-id }}
       shot_count: ${{ steps.capture.outputs.shot_count }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - uses: chickensoft-games/setup-godot@v2.4.3
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
         with:
           version: 4.7.2
           use-dotnet: false
@@ -206,6 +209,9 @@ jobs:
           code=$?
           echo "capture exit=${code}"
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" "${capture_log}" | tail -n 60 || true
+          # Small inline crops the script printed (base64 images). They are published by
+          # their own step below, which has its own annotation budget.
+          grep -E "^CROP: " "${capture_log}" > "${EVIDENCE}/logs/inline-crops.txt" || true
           ls -l docs/screenshots || true
           # The frames this run wrote into the project folder are staged, not moved: the
           # working tree is never the thing that gets uploaded, and a file that was
@@ -232,7 +238,7 @@ jobs:
           # actually saw, which is the only place that says why a prompt shot is missing.
           # `cue audio` carries the interaction cue counts. A sound cannot be photographed,
           # so the numbers the run's real clicks produced are the evidence for it.
-          summary=$(grep -E "FAILURE|RESULT|never appeared|cue audio|cue candidates" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1800) || true
+          summary=$(grep -E "FAILURE|RESULT|never appeared|cue audio|cue candidates|outline depth" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1800) || true
           # The script's own verdict decides, not the process exit code. `quit(0)` does
           # set it, but a windowed run under Xvfb also exits non-zero sometimes while
           # the engine tears down its window and GL context, after the playthrough has
@@ -261,6 +267,32 @@ jobs:
           echo "::notice title=playthrough frames::$(grep -oE 'screenshot [a-z0-9_]+' \
             "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" | sed 's/screenshot //' \
             | tr '\n' ' ' | cut -c-1400)"
+
+      - name: Publish the classroom outline crops
+        if: always()
+        shell: bash
+        run: |
+          # The playthrough prints small JPEG crops of the classroom outline check (the
+          # shipped outline, the negative control without depth, and the whole frame scaled
+          # down) as base64. An annotation holds about 4 KB, so each image is split into
+          # numbered parts: concatenate the parts of one file in order and decode them. The
+          # full-resolution frames are 03d_hover_cue.png and 03e_outline_without_depth.png in
+          # the evidence artifact; these are only so the moment can be seen from the report.
+          set +e -uo pipefail
+          crops="${RUNNER_TEMP}/evidence/logs/inline-crops.txt"
+          [ -s "${crops}" ] || { echo "no inline crops"; exit 0; }
+          budget=10
+          while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=capture crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done < "${crops}"
 
       - name: Capture the dialogue layout
         id: ui_capture
@@ -357,6 +389,64 @@ jobs:
           echo "EDITOR_CAPTURE_RESULT=success"
           echo "::notice title=narrative editor capture::${staged} frame(s) :: $(grep -E '^RESULT: ' "${script_log}" | tr '\n' '|')"
 
+      - name: Check the interaction outline against scene depth
+        id: outline_occlusion
+        if: always() && steps.import.outcome == 'success'
+        shell: bash
+        run: |
+          # A window run on the Compatibility renderer that reads its own frames back:
+          # an unobstructed object is outlined all round, one behind a wall draws nothing
+          # (and does draw through it when the mask is cut back to the outline layer - the
+          # negative control), one half behind a post is outlined only where it shows, and
+          # switching, releasing during a fade and a moving camera leave nothing behind.
+          # See tests/interaction_outline_occlusion_test.gd. Its frames go into the
+          # evidence artifact under outline-occlusion/.
+          #
+          # The verdict is the test's own `PASS:` line and the absence of failure lines,
+          # not the exit code: a windowed engine can exit non-zero while tearing down GL.
+          set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          frames="${EVIDENCE}/outline-occlusion"
+          log="${EVIDENCE}/logs/outline-occlusion.log"
+          mkdir -p "${frames}"
+          OUTLINE_EVIDENCE_DIR="${frames}" OUTLINE_REQUIRE_RENDERER=gl_compatibility \
+            OUTLINE_PRINT_CROPS=1 \
+            timeout 300 xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-method gl_compatibility \
+            --rendering-driver opengl3 \
+            --script res://tests/interaction_outline_occlusion_test.gd > "${log}.raw" 2>&1
+          code=$?
+          # The inline crops are for the annotations below; the PNG files are the evidence.
+          grep -v "^CROP: " "${log}.raw" > "${log}"
+          cat "${log}"
+          echo "--- exit ${code}"
+          # Annotation text has `%` escaped: the runner drops a command whose `%xx` it cannot
+          # decode, and the test's messages are full of percentages.
+          escape () { local text="$1"; text="${text//\%/%25}"; printf '%s' "${text}"; }
+          grep -E "^CROP: " "${log}.raw" | head -n 6 | while read -r _ file data; do
+            echo "::notice title=outline frame ${file} (base64 PNG crop)::${data}"
+          done
+          rm -f "${log}.raw"
+          measures=$(grep -E '^(renderer|frame|NOTE|PASS):' "${log}" | tr '\n' '|' | cut -c1-1500)
+          echo "::notice title=outline occlusion (exit ${code})::$(escape "${measures:-no measurements}")"
+          echo "::notice title=outline occlusion frames::$(ls "${frames}" | tr '\n' ' ')"
+          why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "${log}" \
+            | head -n 12 | tr '\n' '|' | cut -c1-3500)
+          if [ -n "${why}" ]; then
+            echo "::error title=outline occlusion failed::$(escape "${why}")"
+            exit 1
+          fi
+          if ! grep -qE "^PASS: " "${log}"; then
+            tail_lines=$(tail -n 8 "${log}" | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=outline occlusion failed::no verdict (exit ${code}) - tail: $(escape "${tail_lines}")"
+            exit 1
+          fi
+          staged=$(find "${frames}" -maxdepth 1 -name 'case*.png' | wc -l)
+          if [ "${staged}" -lt 3 ]; then
+            echo "::error title=outline occlusion failed::only ${staged} evidence frame(s) were written"
+            exit 1
+          fi
+
       - name: Stage the frame list
         if: always()
         shell: bash
@@ -387,6 +477,7 @@ jobs:
             echo "| capture | ${CAPTURE_OUTCOME:-unknown} |"
             echo "| dialogue frames | ${UI_CAPTURE_OUTCOME:-unknown} |"
             echo "| editor dock frames | ${EDITOR_CAPTURE_OUTCOME:-unknown} |"
+            echo "| outline depth check | ${OUTLINE_OCCLUSION_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
             echo "Log and frames: download \`playthrough-evidence-${GITHUB_RUN_ATTEMPT}\` from this workflow run."
@@ -397,12 +488,13 @@ jobs:
           CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
           UI_CAPTURE_OUTCOME: ${{ steps.ui_capture.outcome }}
           EDITOR_CAPTURE_OUTCOME: ${{ steps.editor_capture.outcome }}
+          OUTLINE_OCCLUSION_OUTCOME: ${{ steps.outline_occlusion.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
 
       - name: Upload the evidence
         id: upload_evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           # The attempt number belongs in the name: a re-run must not look like the run
           # before it, and a name that repeats inside one run is a name that cannot be
@@ -449,7 +541,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -466,7 +558,7 @@ jobs:
           echo "verifying artifact ${ARTIFACT_ID} from attempt ${{ github.run_attempt }}"
 
       - name: Download the artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           # By id, not by name: see the note at the top of this file.
           artifact-ids: ${{ needs.capture.outputs.evidence_artifact_id }}

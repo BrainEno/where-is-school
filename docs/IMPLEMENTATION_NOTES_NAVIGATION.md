@@ -86,6 +86,14 @@ reasoning and the evidence.
 
 ## 4. The cue round: what the mouse draws
 
+> **Superseded (outline round).** The owner rejected the ground rings on the object and
+> the scribbled floor mark. The object is now shown by an outline traced around its own
+> meshes (`scripts/interaction/outline_overlay.gd`, driven by `HoverCue`), the pointer
+> finds it by pick boxes built from those meshes, and the floor mark is a small ring and a
+> dot that lands, echoes once and holds still. `hover_cue_height` and the ground ring under
+> the object are gone. The current contract is `docs/ARCHITECTURE.md` sections 5f and 5j;
+> the text below is the earlier round's reasoning.
+
 The first version of the cues was two hand-rolled tori — one flat ring on the highlighted
 object, one flat ring at the destination — and they looked like what they were: three
 days of code that nobody had looked at on a screen. What was wrong with them, in order:

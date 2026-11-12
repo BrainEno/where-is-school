@@ -232,11 +232,15 @@ func _check_out_of_reach_is_not_a_target() -> void:
 		_failures.append("The pointer selected a probe %.1f m away, beyond the reach limit." % _probe_far.global_position.distance_to(_player.global_position))
 
 
-## The same rule against real content: stand at the classroom door, face it, and put
-## the pointer on the timetable sheet on the other side of the room's corner.
+## The same rule against real content: stand beside the timetable sheet facing the
+## classroom door, and put the pointer on the sheet. Since #115 an object is only targeted
+## while the camera sees it, and from the door itself the sheet is behind WallSouthLeft,
+## opaque. At (1.98, 3.15) the fader's ray to the player's eye still crosses that wall
+## (at x 2.53 of its 2.6 end), so the sheet is drawn, and the door ahead (1.23 m) still
+## outscores the sheet just behind (0.38 m + the facing penalty 0.9).
 func _check_real_prop() -> void:
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(3.2, 0, 2.55)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-97.0)), Vector3(1.98, 0, 3.15)))
 	await _physics_frames(4)
 	var door := _location.find_interactable(&"classroom_door")
 	var sheet := _location.find_interactable(&"timetable")
@@ -244,9 +248,18 @@ func _check_real_prop() -> void:
 		_failures.append("The classroom lost the door or the timetable.")
 		return
 	if _interaction.get_current_target() != door:
-		_failures.append("Facing the door did not target it (got '%s')." % _name_of(_interaction.get_current_target()))
+		_failures.append(
+			"Facing the door did not target it (got '%s'; player at %s, door seen by the camera: %s)."
+			% [
+				_name_of(_interaction.get_current_target()), str(_player.global_position),
+				str(_interaction.is_seen_by_camera(door))
+			]
+		)
 		return
-	_interaction.set_mouse_override(_screen_position_of(sheet))
+	# At the sheet as it is drawn, not at its anchor: the anchor is a point in the air in
+	# front of the wall under the sheet, and from the camera the door frame (pickable since
+	# the outline round) stands in front of that point. A player points at the paper.
+	_interaction.set_mouse_override(_screen_position_of_drawn(sheet))
 	await _physics_frames(4)
 	var target := _interaction.get_current_target()
 	if target != sheet:
@@ -265,6 +278,21 @@ func _screen_position_of(interactable: Interactable) -> Vector2:
 		_failures.append("There is no current camera to project through.")
 		return Vector2.ZERO
 	return camera.unproject_position(interactable.global_position)
+
+
+## The middle of what the object's outline traces, on screen: where a player points.
+func _screen_position_of_drawn(interactable: Interactable) -> Vector2:
+	var meshes := interactable.get_outline_meshes()
+	if meshes.is_empty():
+		return _screen_position_of(interactable)
+	var bounds := meshes[0].global_transform * meshes[0].get_aabb()
+	for mesh in meshes:
+		bounds = bounds.merge(mesh.global_transform * mesh.get_aabb())
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		_failures.append("There is no current camera to project through.")
+		return Vector2.ZERO
+	return camera.unproject_position(bounds.get_center())
 
 
 func _count_highlighted() -> int:

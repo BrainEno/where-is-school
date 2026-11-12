@@ -5,11 +5,14 @@ extends Node
 ##
 ## Two ways to pick a target, one of them always wins the same way:
 ##
-## 1. **The pointer.** If the mouse is over an interactable that is close enough
-##    and not behind a wall, that object is the target, whatever the player is
-##    facing. A pointer is an explicit statement of intent.
+## 1. **The pointer.** If the mouse is over an interactable that is close enough,
+##    not behind a wall, and drawn at that pixel (`is_drawn_at_screen_ray`), that
+##    object is the target, whatever the player is facing. A pointer is an explicit
+##    statement of intent.
 ## 2. **Facing.** Otherwise the object in front of the player and nearest to them
-##    wins, so two props in the same aisle do not produce a flickering prompt.
+##    wins, so two props in the same aisle do not produce a flickering prompt. It has
+##    to be in sight of the player's eye and drawn somewhere on screen
+##    (`is_seen_by_camera`): what has no outline gets no prompt.
 ##
 ## To stop the prompt blinking at the edge of a prop, a pointer pick has to hold
 ## still for `mouse_hold_frames` frames before it takes over from a different
@@ -19,6 +22,16 @@ extends Node
 
 signal target_changed(interactable: Interactable)
 signal activation_requested(interactable: Interactable)
+
+## How many see-through bodies (a wall the camera has faded, a collider with nothing drawn)
+## one camera ray may pass before it gives up. Bounded so a room full of glass cannot spin
+## the pointer; past the limit the object counts as hidden.
+const CAMERA_SEE_THROUGH_LIMIT := 6
+## How far in front of the object's drawn surface a body may stand and still not hide it.
+## The pick boxes the comparison uses are already `Interactable.PICK_PADDING` larger than
+## the meshes, so this only absorbs a coplanar surface, the way the outline mask's own key
+## pull does.
+const CAMERA_DEPTH_TOLERANCE := 0.01
 
 @export var player_path: NodePath = ^".."
 @export var sensor_path: NodePath = ^"../InteractionSensor"
@@ -148,8 +161,232 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 			return null
 		if not _has_line_of_sight(candidate):
 			return null
+		if not is_drawn_at_screen_ray(from, direction, candidate):
+			# The area is there, the object is not: an opaque surface is drawn in front of
+			# it at this pixel, so the outline mask shows nothing here and neither may the
+			# pointer. Look past it, as past a switched-off hotspot: something drawn in
+			# front of the wall may still be under the cursor.
+			var hidden: RID = hit.get("rid", RID())
+			if not hidden.is_valid():
+				return null
+			excluded.append(hidden)
+			continue
 		return candidate
 	return null
+
+
+## Whether the camera sees `candidate` along this pixel's ray, by the rule the outline mask
+## draws with (`OutlineOverlay`): the object counts where it is the nearest *drawn* surface.
+##
+## The pointer ray itself only meets interaction areas, and an area is not a picture: the
+## timetable's anchor sphere pokes out through the back of the classroom wall, so from the
+## fixed camera outside that wall the pointer found the sheet while the depth-tested outline,
+## correctly, drew nothing (issue #115). The player's eye seeing the object is a different
+## question - it is about the character - and stays in `has_line_of_sight_from`.
+##
+## * On the object (the ray enters one of the boxes around its outline meshes): the ray is
+##   cast from the camera to that entry point, and any opaque drawn body in between hides it.
+##   Per pixel, so a partly covered object is pointable exactly on its uncovered part.
+## * Off the object, on its anchor sphere: it counts while any part of it is in view - a ray
+##   to the centre or a corner of one of its boxes reaches the box first.
+## * Nothing to draw (no outline meshes): there is no outline to disagree with; true.
+##
+## What a body may be looked through is the same ray as `_probe_is_clear`, with two
+## differences that both come from the renderer rather than from gameplay. A body the camera
+## draws see-through - a wall `CameraOccluderFader` has faded (drawn with alpha-blended
+## materials, which write no depth; see `_draws_opaque`), or a collider with no visible
+## mesh - hides nothing. And the object's own bodies (the ones its outline meshes belong to) never hide it.
+## Declared `support_paths` are *not* looked through here: the renderer does not know about
+## them, and a wall drawn between the camera and a notice hides it whoever declared what.
+func is_drawn_at_screen_ray(from: Vector3, direction: Vector3, candidate: Interactable) -> bool:
+	if not is_live_target(candidate) or _player == null or occluder_mask == 0:
+		return is_live_target(candidate)
+	var meshes := candidate.get_outline_meshes()
+	if meshes.is_empty():
+		return true
+	var world := _player.get_world_3d()
+	var space := world.direct_space_state if world != null else null
+	if space == null:
+		return true
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	var cull_mask := camera.cull_mask if camera != null else 0xFFFFF
+	var own := _bodies_owning(meshes)
+	var none: Array[RID] = []
+	var see_through := func(body: CollisionObject3D) -> bool:
+		return not _draws_opaque(body, cull_mask)
+	var ray := direction.normalized()
+	var entry := _nearest_box_entry(from, ray, meshes)
+	if entry >= 0.0:
+		return _probe_is_clear(
+			space, from, from + ray * maxf(entry - CAMERA_DEPTH_TOLERANCE, 0.0), own, none, see_through
+		)
+	return _any_box_in_view(space, from, meshes, own, see_through)
+
+
+## Whether any part of `candidate` is drawn from the current camera: the facing path's form
+## of `is_drawn_at_screen_ray`, with no pixel to ask about. Same rule as the anchor-sphere
+## case there - a ray to the centre or a corner of one of its outline boxes reaches the box
+## before an opaque drawn body. True when there is no camera or nothing to draw.
+func is_seen_by_camera(candidate: Interactable) -> bool:
+	if not is_live_target(candidate):
+		return false
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if camera == null or _player == null or occluder_mask == 0:
+		return true
+	var meshes := candidate.get_outline_meshes()
+	if meshes.is_empty():
+		return true
+	var world := _player.get_world_3d()
+	var space := world.direct_space_state if world != null else null
+	if space == null:
+		return true
+	var cull_mask := camera.cull_mask
+	var see_through := func(body: CollisionObject3D) -> bool:
+		return not _draws_opaque(body, cull_mask)
+	return _any_box_in_view(space, camera.global_position, meshes, _bodies_owning(meshes), see_through)
+
+
+## The anchor-sphere half of `is_drawn_at_screen_ray`: true while a ray from the camera to
+## the centre, or to a corner pulled 10% inwards, of any outline box reaches that box before
+## an opaque drawn body.
+func _any_box_in_view(
+	space: PhysicsDirectSpaceState3D,
+	from: Vector3,
+	meshes: Array[GeometryInstance3D],
+	own: Array[RID],
+	see_through: Callable
+) -> bool:
+	for mesh in meshes:
+		var box := mesh.get_aabb().grow(Interactable.PICK_PADDING)
+		var points: Array[Vector3] = [box.get_center()]
+		for corner in 8:
+			points.append(box.get_center().lerp(box.get_endpoint(corner), 0.9))
+		for point in points:
+			var toward := mesh.global_transform * point - from
+			if toward.length_squared() <= 0.000001:
+				return true
+			var aim := toward.normalized()
+			var only: Array[GeometryInstance3D] = [mesh]
+			var reach := _nearest_box_entry(from, aim, only)
+			if reach < 0.0:
+				continue
+			var none: Array[RID] = []
+			if _probe_is_clear(
+				space, from, from + aim * maxf(reach - CAMERA_DEPTH_TOLERANCE, 0.0), own, none,
+				see_through
+			):
+				return true
+	return false
+
+
+## Distance along `ray` (normalised) to where it first enters any of these meshes' boxes,
+## grown by the same padding as the pick boxes; -1 when it misses all of them. Measured in
+## each mesh's own frame, so a rotated or scaled mesh is boxed tightly, not by a world AABB.
+func _nearest_box_entry(from: Vector3, ray: Vector3, meshes: Array[GeometryInstance3D]) -> float:
+	var best := -1.0
+	for mesh in meshes:
+		if not is_instance_valid(mesh) or not mesh.is_inside_tree():
+			continue
+		var box := mesh.get_aabb().grow(Interactable.PICK_PADDING)
+		var to_local := mesh.global_transform.affine_inverse()
+		var local_from := to_local * from
+		var local_ray := to_local.basis * ray
+		var near := 0.0
+		var far := INF
+		var missed := false
+		for axis in 3:
+			var low := box.position[axis]
+			var high := box.end[axis]
+			if absf(local_ray[axis]) < 0.0000001:
+				if local_from[axis] < low or local_from[axis] > high:
+					missed = true
+					break
+				continue
+			var t1 := (low - local_from[axis]) / local_ray[axis]
+			var t2 := (high - local_from[axis]) / local_ray[axis]
+			near = maxf(near, minf(t1, t2))
+			far = minf(far, maxf(t1, t2))
+			if near > far:
+				missed = true
+				break
+		if missed:
+			continue
+		if best < 0.0 or near < best:
+			best = near
+	return best
+
+
+## The collision bodies the outline meshes belong to: the object's own geometry, which can
+## stand in front of its own drawn surface (a collision box a little larger than the model)
+## without hiding it.
+func _bodies_owning(meshes: Array[GeometryInstance3D]) -> Array[RID]:
+	var rids: Array[RID] = []
+	for mesh in meshes:
+		var node: Node = mesh
+		while node != null:
+			var body := node as CollisionObject3D
+			if body != null and not (body is Area3D):
+				if not rids.has(body.get_rid()):
+					rids.append(body.get_rid())
+				break
+			node = node.get_parent()
+	return rids
+
+
+## Whether the camera draws this body as something that hides what is behind it: at least
+## one visible piece under it, on a layer the camera renders, that writes depth.
+##
+## What writes depth is decided by the material, the way the renderer decides it: an
+## alpha-blended `BaseMaterial3D` (`TRANSPARENCY_ALPHA`, depth not forced) is drawn in the
+## transparent pass and hides nothing - in the frame and in the outline mask alike. That is
+## how `CameraOccluderFader` draws a faded wall. `GeometryInstance3D.transparency` alone
+## counts only on Forward+: Mobile and Compatibility ignore it (Godot documentation; a real
+## Compatibility frame of the classroom showed a wall at 0.82 fully opaque), and the game
+## ships on Compatibility. A `ShaderMaterial`, or a piece with no material, counts as opaque.
+## Internal children (the outline's key twins) are not part of what the body draws.
+func _draws_opaque(body: CollisionObject3D, cull_mask: int) -> bool:
+	var nodes: Array[Node] = [body]
+	var index := 0
+	while index < nodes.size():
+		var node := nodes[index]
+		index += 1
+		nodes.append_array(node.get_children())
+		var geometry := node as GeometryInstance3D
+		if geometry == null or not geometry.is_visible_in_tree():
+			continue
+		if (geometry.layers & cull_mask) == 0:
+			continue
+		if geometry.transparency > 0.0 and _instance_transparency_drawn():
+			continue
+		if _writes_depth(geometry):
+			return true
+	return false
+
+
+## True when any material the piece is drawn with writes depth.
+func _writes_depth(geometry: GeometryInstance3D) -> bool:
+	if geometry.material_override != null:
+		return not _is_alpha_blended(geometry.material_override)
+	var mesh := geometry as MeshInstance3D
+	if mesh == null or mesh.mesh == null:
+		return true
+	for surface in mesh.get_surface_override_material_count():
+		if not _is_alpha_blended(mesh.get_active_material(surface)):
+			return true
+	return false
+
+
+static func _is_alpha_blended(material: Material) -> bool:
+	var base := material as BaseMaterial3D
+	if base == null:
+		return false
+	return base.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA \
+		and base.depth_draw_mode != BaseMaterial3D.DEPTH_DRAW_ALWAYS
+
+
+## Whether the running renderer draws `GeometryInstance3D.transparency` at all.
+static func _instance_transparency_drawn() -> bool:
+	return RenderingServer.get_current_rendering_method() == "forward_plus"
 
 
 ## Pins the pointer to a screen position (tests only). The real cursor path is
@@ -300,6 +537,8 @@ func _find_best_target() -> Interactable:
 		var candidate := area as Interactable
 		if not is_live_target(candidate) or not candidate.can_interact():
 			continue
+		if not _sensor_reaches_anchor(candidate):
+			continue
 		var offset := candidate.global_position - origin
 		offset.y = 0.0
 		var distance := offset.length()
@@ -308,11 +547,34 @@ func _find_best_target() -> Interactable:
 		var alignment := facing.dot(offset.normalized())
 		if not _has_line_of_sight(candidate):
 			continue
+		# The same camera question the pointer asks (issue #115): an object the camera sees
+		# only through an opaque wall gets no outline, so it gets no prompt and no E either.
+		if not is_seen_by_camera(candidate):
+			continue
 		var score := distance + facing_weight * (1.0 - maxf(alignment, 0.0))
 		if score < best_score:
 			best_score = score
 			best = candidate
 	return best
+
+
+## Proximity is about the object's anchor sphere, as it always was.
+##
+## An interactable's area also carries pick boxes around the meshes its outline traces
+## (`Interactable._build_pick_shapes`), so the pointer finds a door where the door is drawn.
+## Those boxes make the area larger, and the sensor overlaps it from farther away; without
+## this gate a long fence or a wide shutter would join the facing candidates from where its
+## anchor was never in reach of the sensor. The test is the sphere-against-sphere overlap the
+## sensor used to report on its own.
+func _sensor_reaches_anchor(candidate: Interactable) -> bool:
+	var sensor_shape := _sensor.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
+	if sensor_shape == null:
+		return true
+	var sphere := sensor_shape.shape as SphereShape3D
+	if sphere == null:
+		return true
+	var reach := sphere.radius + maxf(candidate.radius, 0.0)
+	return sensor_shape.global_position.distance_to(candidate.global_position) <= reach + 0.01
 
 
 ## You cannot read a notice through a wall. Three probes are cast (upper body, knee
@@ -383,15 +645,22 @@ func has_line_of_sight_from(from: Vector3, candidate: Interactable) -> bool:
 ## mounted on, a door frame — is not an obstruction for that object, so the ray is
 ## re-cast without it. Every other hit blocks, full stop. The loop is bounded by the
 ## number of declared supports so a badly authored object cannot spin here.
+##
+## `see_through` is the camera's addition (`is_drawn_at_screen_ray`): a body it answers
+## true for is not drawn opaque, so it hides nothing from the camera and is passed too, at
+## most `CAMERA_SEE_THROUGH_LIMIT` times. The player's eye never passes one.
 func _probe_is_clear(
 	space: PhysicsDirectSpaceState3D,
 	from: Vector3,
 	to: Vector3,
 	allowed: Array[RID],
-	excluded: Array[RID]
+	excluded: Array[RID],
+	see_through: Callable = Callable()
 ) -> bool:
 	var skipped: Array[RID] = []
 	var limit := allowed.size() + 1
+	if see_through.is_valid():
+		limit += CAMERA_SEE_THROUGH_LIMIT
 	for _attempt in limit:
 		var query := PhysicsRayQueryParameters3D.create(from, to, occluder_mask)
 		query.exclude = excluded + skipped
@@ -404,7 +673,7 @@ func _probe_is_clear(
 		if body == null:
 			return false
 		var rid := body.get_rid()
-		if not allowed.has(rid):
+		if not allowed.has(rid) and not (see_through.is_valid() and see_through.call(body)):
 			return false
 		skipped.append(rid)
 	return false

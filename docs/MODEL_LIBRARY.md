@@ -23,7 +23,8 @@ draws from:
 | `classroom/` | 11 | `scenes/locations/classroom/classroom.tscn` |
 | `corridor/` | 3 | `scenes/locations/corridor/corridor.tscn` |
 | `playground/` | 2 | `scenes/locations/playground/playground.tscn` |
-| `protagonist/`, `q/` | 1 each | the player and NPC controllers, via `scenes/environment/characters/` |
+| `protagonist/` | 2 | `Protagonist_Character.glb`, the player (`player.tscn`, via `scenes/environment/characters/protagonist.tscn`); `protagonist.glb`, the former protagonist, seated in the classroom (`classroom_student.tscn`) |
+| `q/` | 1 | the NPC and companion controllers, via `scenes/environment/characters/q.tscn` |
 | `school_desk/`, `stationery_supplies/`, `playground_bench/`, `student_backpack/` | 1 each | the wrappers in `scenes/environment/props/` |
 | `sample/` | 2 | test fixtures, built by `tools/build_sample_models.py` |
 
@@ -218,6 +219,7 @@ owner, written up in `docs/adr/0007-large-binaries-and-repository-size.md`.
 | Embedded images under 512 KiB (warn) / 2 MiB (fail) | same | same |
 | A `.import` sidecar that matches the model's path | same | same |
 | Model names unique across the library | same | same |
+| The two runtime characters still have the node tree, meshes, materials, skin joints and embedded animations `art/character_rig_audit/runtime_model_manifest.json` records | same | same |
 | The tables in this file | `tools/model_library.py --report` | re-run it; the numbers are printed from the files, and this file is a copy of its output |
 
 `tests/model_library_test.py` tests the checker itself against files it writes — a scaled
@@ -225,3 +227,167 @@ node, a matrix node, a camera, a light, a size one byte over each limit, an over
 embedded texture (in a `bufferView` and in a data URI), a missing sidecar, a sidecar left
 behind by a move, and a duplicate name — so a checker that quietly stops checking fails CI
 instead of passing it.
+
+## 5. The runtime character manifest
+
+The three rigged models the game instantiates at run time —
+`assets/models/protagonist/Protagonist_Character.glb` (the player since PR #118),
+`assets/models/protagonist/protagonist.glb` (the former protagonist, now the seated
+classroom student) and `assets/models/q/q.glb` — are also checked against a written-down
+structure, `art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py
+--check` reads it on every run and fails when a registered model does not match it; the
+other 22 models in the library keep the checks in §4 and are not registered.
+
+The rest of this library is judged by rules (no scale, no camera, inside the budget). A rig
+cannot be: a character whose hand bone was renamed, whose mesh was split, whose joint list
+was reordered or whose node was added still parses, still fits, still has no light — and
+binds to a skeleton nobody declared. The manifest is what makes that a red check instead of
+a bug found while playing.
+
+### 5.1 What the runtime files actually contain
+
+Measured from the committed `.glb` files, not from the Blender sources and not from
+`art/character_rig_audit/*_rig_audit.json`:
+
+| | `Protagonist_Character.glb` | `protagonist.glb` | `q.glb` |
+|---|---|---|---|
+| nodes | 70 | 96 | 25 |
+| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` |
+| skin joints (bones) | 60 | 16 | 16 |
+| mesh nodes, all bound to skin 0 | 9 | 78 | 7 |
+| meshes / primitives | 9 / 15 | 78 / 78 | 7 / 15 |
+| materials | 12 | 22 | 14 |
+| embedded animations | 5 (721 channels; not played by the game) | 0 | 0 |
+| triangles | 15,782 | 12,388 | 35,432 |
+| file | 851.9 KiB | 513.6 KiB | 1008.8 KiB |
+
+The two skeletons carry the **same joint names in the same parentage** — `Root`, `Spine`,
+`Neck`, `Head`, `UpperArm.L`/`LowerArm.L`/`Hand.L`, the same on the right, and
+`Thigh`/`Shin`/`Foot` — which is why one set of clips can bind to both.
+
+**Both models contain zero embedded animations, and the manifest holds that as a fact.**
+The seven clips are composed at run time in `scripts/actors/character_animation.gd` against
+semantic bone names and written into an `AnimationLibrary` built in code; nothing in either
+`.glb` is an `Animation`. An animation appearing *inside* one of these files therefore means
+the source of animation changed without anyone saying so, and it fails the check.
+
+The bind is nearly rigid in both files, which is what this art is made of: all 7,591
+weighted vertices of the protagonist sit on exactly one bone, so a cardigan sleeve follows
+`LowerArm.L` as a single piece; Q has 17,433 vertices on one bone and 598 blended across
+two. The manifest does not record weights — it records that each primitive is *skinned at
+all*, which is the part whose loss is invisible everywhere else.
+
+### 5.2 What it locks, and what it deliberately does not
+
+Locked, because each is a structural promise the runtime depends on:
+
+- the node tree, by **path** — `CHR_Protagonist_Root/RIG_Protagonist_Blockout/Neck`. Paths,
+  not names: both rigs contain two nodes called `Neck`, one a bone and one a mesh node.
+  A new node, a lost node, a rename or a re-parent changes a path and fails;
+- each node's `mesh` and `skin` binding;
+- each mesh's primitive count, and each primitive's material and whether it carries bone
+  weights;
+- the material names;
+- each skin's joint list **in order** — `JOINTS_0` stores indices into that list, so
+  reordering it rebinds every vertex to a different bone;
+- the embedded animations: names, channel counts and what each channel targets.
+
+Not locked, on purpose: node transforms, triangle and vertex counts, UVs, texture details,
+import metadata, file size. Those move with every legitimate art pass, and a manifest that
+failed on them would be a file lock nobody could work behind. The size budget in §4 still
+applies to these files, and node scale is still forbidden by pipeline §1.
+
+### 5.3 Where the runtime files differ from the older records
+
+Three stages of the same characters exist in this repository and they do not agree, which is
+why the manifest was built from the `.glb` files rather than from the audits:
+
+- **`protagonist_rig_audit.json`** describes a Blender import of the *same path*: 1 armature,
+  16 bones, **79 mesh objects**, 12,468 polygons, 0 actions. The runtime `.glb` holds **78
+  mesh nodes** and 12,388 triangles. The audit counts objects in the Blender scene; one of
+  them does not reach the export, and a polygon count is not a triangle count. The manifest
+  records the exported file, so its number is 78.
+- **`q_rig_audit.json`** describes `art/character_rigging/q/q_unrigged_source.glb` — 8 nodes,
+  7 meshes, **0 skins**, classification `UNRIGGED_NO_ARMATURE`. That is the *unrigged source*.
+  The runtime `assets/models/q/q.glb` is the rigged result: 25 nodes, 1 skin, 16 joints, and
+  every primitive weighted. Reading the Q audit as if it described what the game loads
+  under-reports the rig entirely, which is exactly the mistake this section exists to prevent.
+- **`scenes/dev/animation_retarget_test/q_rigged.glb`** is a development retarget asset
+  (25 nodes, the same 16-joint skeleton, 0 animations). It is not registered and must not be:
+  it is not what the game loads, and `tools/model_library.py --check_manifest` refuses a
+  manifest entry outside `assets/models/`.
+
+### 5.4 Changing a character on purpose
+
+The manifest is not a lock; it is a reviewed snapshot. To make a structural change:
+
+```sh
+# ... change the model, re-export it, then:
+python3 tools/model_library.py --update-manifest   # accepts the new structure, prints each
+                                                   # difference it accepted, keeps the entry's
+                                                   # human-written `wrapper` and `note`
+git diff art/character_rig_audit/runtime_model_manifest.json
+```
+
+The diff is the review: it shows, node by node, what the character gained or lost. A change
+that was not meant to be structural shows up there before it reaches a release, which is the
+whole point of writing the structure down. If the manifest itself is malformed, the update
+refuses to run and leaves the file alone (§5.5) — a broken manifest is fixed by hand, never
+by overwriting it with whatever a run happened to generate.
+
+`--update-manifest` only rewrites entries that exist. Adding a *new* runtime character is
+two reviewed edits: add its path to `REQUIRED_RUNTIME_MODELS` in `tools/model_library.py`,
+and add its entry, whose structural fields are exactly what `describe_model()` reads from
+the committed `.glb` (with a human-written `wrapper` and `note`). That is how
+`Protagonist_Character.glb` was registered in PR #118; the `--check` that follows compares
+the file against that entry like any other.
+
+### 5.5 What the manifest itself has to be
+
+A snapshot check is only as strong as the document it reads, so the manifest is validated as
+a document before any `.glb` is opened (`validate_manifest` in `tools/model_library.py`,
+called by both `--check` and `--update-manifest`):
+
+- **Every runtime character, once each, and nothing else.** The manifest registers
+  `assets/models/protagonist/protagonist.glb`, `assets/models/q/q.glb` and
+  `assets/models/protagonist/Protagonist_Character.glb`. A missing entry, a duplicated
+  entry, an entry for any other model and an empty `models` are all failures. "At least one
+  model" was the old rule and it was not enough: deleting Q's entry used to leave a file that
+  was valid, plausible and had quietly stopped checking Q.
+- **Every structural field, with the right shape.** `counts`, `scene_roots`, `nodes`,
+  `meshes`, `materials`, `skins` and `animations` must all be present and of the right type,
+  and every element inside them is checked too — a node without a `path`, a primitive whose
+  `skinned` is not a boolean, a `joints` list that is a string, a counter that is not a whole
+  number. A field that is missing or `null` is a *problem*, never a section the comparison
+  skips.
+- **The counters must agree with the lists they count** — `counts.nodes` against `len(nodes)`
+  and so on. A truncated entry with a stale counter would otherwise report one difference
+  when what happened is that the entry lost data.
+- **Names are identity, so names must be unique.** `compare_model` pairs resources by name
+  (and nodes by path); two meshes called `Q_Hair_mesh.001` would fold into one entry and make
+  one of them invisible. Duplicates are therefore refused on *both* sides — in the manifest
+  and in the `.glb` — and the structure is not compared while a name is ambiguous. The same
+  rule covers skins and embedded animations. Node *paths* are unique by construction (`Neck`
+  legitimately appears twice in each rig, so the second occurrence is recorded as `…/Neck#2`).
+
+Every one of those is reported as a `MODEL_LIBRARY_PROBLEM` line naming the manifest, the
+entry (and its model path) and the field, and `--check` exits non-zero. Nothing in this path
+raises: a malformed manifest is a diagnosis, not a traceback.
+
+`--update-manifest` runs the same validation **before** it reads a single model, and refuses
+a malformed manifest instead of "repairing" it: the file is left byte-for-byte as it was, the
+run exits non-zero, and the reason is printed. When the manifest is well-formed it also
+validates the text it is about to write, and the write itself is atomic (a temporary file
+replaced into place), so an interrupted or buggy update cannot leave a half-written manifest
+behind.
+
+`tests/model_library_test.py` tests the checker against a synthetic rig it writes itself —
+an added node, a removed node, a re-parented node, a split primitive, a reassigned material,
+a primitive that lost its weights, a reordered joint list, a lost joint, a lost skin, an
+animation that appeared, a lost animation, a changed channel target — and against a manifest
+it writes itself: a missing character, a duplicated one, a stray third entry, an empty
+`models`, each structural field removed or set to the wrong type, a malformed element inside
+each list, duplicate mesh/skin/animation names on both sides, a resource replaced by a copy
+of another, and an update run against a malformed file that must leave it untouched. 140
+checks, so the snapshot cannot rot into a check that always passes.
+

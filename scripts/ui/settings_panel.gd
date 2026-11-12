@@ -203,12 +203,81 @@ func _rebuild() -> void:
 	_controls[&"restore_bindings"] = restore
 
 	UiTextScale.apply(self, _factor)
+	_link_focus()
 	_refresh_status_hint()
 	_fit()
 	if visible and not String(_focus_after_rebuild).is_empty():
 		var target := _focus_after_rebuild
 		call_deferred("focus_row", target)
 	_focus_after_rebuild = StringName()
+
+
+## This screen is a modal over the pause menu or the title, and Godot looks for the nearest
+## control in the pressed direction anywhere under the same top-level Control: with the list
+## scrolled, ↓ from "Restore defaults" landed on the pause menu behind the screen, and Tab
+## from "Back" did too. So every row names its neighbours itself. ↑/↓ walk the list (the
+## binding grid keeps its column and steps over the fixed Esc cells), ←/→ stay on the row or
+## cross between its two cells, the ends stop, and Tab wraps inside the screen.
+func _link_focus() -> void:
+	var grid: Array[Array] = []
+	for id: StringName in [
+		&"text_size", &"text_speed", &"volume_master", &"volume_music", &"volume_sfx",
+		&"ui_scale", &"fullscreen", &"language",
+	]:
+		var single := _focusable(get_row_control(id))
+		if single != null:
+			grid.append([single, single])
+	for action: StringName in _rebindable():
+		var keys := _focusable(get_row_control(_bind_id(action, &"keyboard")))
+		var pad := _focusable(get_row_control(_bind_id(action, &"gamepad")))
+		if keys != null or pad != null:
+			grid.append([keys, pad])
+	for id: StringName in [&"restore_bindings", &"back"]:
+		var single := _focusable(get_row_control(id))
+		if single != null:
+			grid.append([single, single])
+	for row in grid.size():
+		var cells: Array = grid[row]
+		for column in 2:
+			var control := cells[column] as Control
+			# A single row is listed in both columns; it is linked once, from the keyboard
+			# side, so ↓ into the binding grid lands on the first key cell.
+			if control == null or (column == 1 and cells[0] == control):
+				continue
+			var left := control
+			var right := control
+			if column == 1 and cells[0] != null:
+				left = cells[0] as Control
+			if column == 0 and cells[1] != null:
+				right = cells[1] as Control
+			control.focus_neighbor_left = control.get_path_to(left)
+			control.focus_neighbor_right = control.get_path_to(right)
+			control.focus_neighbor_top = control.get_path_to(_grid_step(grid, row, column, -1))
+			control.focus_neighbor_bottom = control.get_path_to(_grid_step(grid, row, column, 1))
+	if grid.is_empty():
+		return
+	var first := grid[0][0] as Control
+	var last := grid[grid.size() - 1][0] as Control
+	first.focus_previous = first.get_path_to(last)
+	last.focus_next = last.get_path_to(first)
+
+
+## The next row up (`step` -1) or down (+1) that has a cell in `column`, or the cell itself
+## at the end of the list.
+func _grid_step(grid: Array[Array], row: int, column: int, step: int) -> Control:
+	var at := row + step
+	while at >= 0 and at < grid.size():
+		var cell := grid[at][column] as Control
+		if cell != null:
+			return cell
+		at += step
+	return grid[row][column] as Control
+
+
+func _focusable(control: Control) -> Control:
+	if control == null or control.focus_mode == Control.FOCUS_NONE:
+		return null
+	return control
 
 
 func _queue_rebuild(focus: StringName = &"") -> void:
@@ -529,33 +598,44 @@ func _refresh_status_hint() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible or not is_capturing():
 		return
-	var key := event as InputEventKey
-	if key != null:
-		if not key.pressed or key.echo:
-			return
+	# While a capture waits, every press belongs to it: none reaches the focused row, the
+	# menu behind this screen or the game.
+	if event is InputEventKey:
+		_capture_key(event as InputEventKey)
+	elif event is InputEventMouseButton:
+		# A click elsewhere while waiting is not a binding, and not a second capture.
 		get_viewport().set_input_as_handled()
-		if key.physical_keycode == KEY_ESCAPE:
-			_cancel_capture()
-			return
-		if _capture_device == &"keyboard":
-			_finish_capture(key)
+	elif event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		_capture_pad(event)
+
+
+func _capture_key(key: InputEventKey) -> void:
+	if not key.pressed or key.echo:
 		return
-	if _capture_device != &"gamepad":
-		# A click elsewhere while waiting for a key is not a binding.
-		if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-			get_viewport().set_input_as_handled()
-		return
+	get_viewport().set_input_as_handled()
+	if key.physical_keycode == KEY_ESCAPE or key.keycode == KEY_ESCAPE:
+		_cancel_capture()
+	elif _capture_device == &"keyboard":
+		_finish_capture(key)
+
+
+func _capture_pad(event: InputEvent) -> void:
+	get_viewport().set_input_as_handled()
 	var joy := event as InputEventJoypadButton
-	if joy != null:
-		get_viewport().set_input_as_handled()
-		if joy.pressed:
-			_finish_capture(joy)
-		return
 	var motion := event as InputEventJoypadMotion
-	if motion != null:
-		get_viewport().set_input_as_handled()
-		if absf(motion.axis_value) >= 0.6:
-			_finish_capture(motion)
+	var decisive := (joy != null and joy.pressed) \
+		or (motion != null and absf(motion.axis_value) >= 0.6)
+	if not decisive:
+		return
+	if _capture_device == &"gamepad":
+		_finish_capture(event)
+		return
+	# The controller during a keyboard capture: the player has changed hands, and a pad has
+	# no Esc. The wait ends here instead of leaving the pad dead until the timeout.
+	_cancel_capture()
+	var settings := _settings()
+	if settings != null:
+		settings.call("set_input_device", &"gamepad")
 
 
 func _process(_delta: float) -> void:
