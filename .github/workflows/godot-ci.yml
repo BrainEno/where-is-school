@@ -228,6 +228,7 @@ jobs:
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          run_check title_menu_interaction 240 godot --headless --resolution 1600x900 --path . --script res://tests/title_menu_interaction_test.gd || status=1
           # Every room on disk is described by data/story/locations.json, every door
           # points at a described room, and every key exists in both languages.
           run_check location_catalog 180 godot --headless --path . --script res://tests/location_catalog_test.gd || status=1
