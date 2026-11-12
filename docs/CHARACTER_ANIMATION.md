@@ -143,6 +143,51 @@ Every clip keys every bone that any clip animates. Bones a clip does not author 
 rest, so a cross-fade always has a full pose to fade to and no bone is left where the
 previous clip put it.
 
+### Each character's own way of carrying the clips
+
+The seven clips are one body rhythm. Played as written, the protagonist and Q breathed,
+walked and talked with the same timing and the same swing, and stood equally straight. A
+`CharacterMotionProfile` (`scripts/actors/character_motion_profile.gd`) gives a character its
+own version of that rhythm without changing the system. The wrapper root carries it
+(`CharacterVisualAnimation.motion_profile`), and `bind()` applies it as the keys are written:
+
+```
+offset(t) = amplitude × clip key(t) + layer(t) + posture × posture_weight(clip, t)
+```
+
+The offset is in the same semantic degrees as `CLIPS` and is keyed at `t × tempo`. The
+clips, their names, the bones they key, the state machine, the hysteresis and the playback
+rates are all unchanged. N, the classroom student and every test that binds a bare GLB pass
+no profile, which is the identity. The rules a profile keeps:
+
+- **No new joints.** Only bones the clips already animate are keyed. Anything else a profile
+  names is reported in the bind report's `profile_ignored` and not keyed. This is why Q's
+  profile has no `chest`: his rig does not have one.
+- **Posed limbs stay held.** Q's modelled forearm is still a held limb.
+- **Loops still close.** A layer's last key repeats its first.
+- **`get_up` still starts on the `sit_idle` pose and ends standing.** Its posture weight runs
+  from the seated weight to the standing one.
+- **Idle still plays at ×1.** A slower idle is a longer clip, not a lower `speed_scale`.
+- **The existing limits hold with the profiles applied.** These are idle limbs within 20° of
+  rest, legs within 8° after a walk, hands below the shoulders, a thigh swing of at least 12°,
+  foot travel of at least 0.12 m, and `get_up` under 4 s.
+
+| | Protagonist (`assets/characters/protagonist/protagonist_motion.tres`) | Q (`assets/characters/q/q_motion.tres`) |
+|---|---|---|
+| Idea | tired, slumped, held in | loose, leaning back, weight on the heels |
+| Posture | spine +4°, chest +5°, neck +6° (forward); head −3° with a 1.5° tilt; upper arms drawn 14° in and 4° back; elbows 6° bent | spine −4.5° (back); neck +3°; head +1° and cocked 4°; thighs 2.5° apart (wide stance); left arm 2° out from the belly, left elbow 6° bent |
+| Tempo (× clip length) | idle 2.0 (4 s), get_up 1.35 (2.0 s), talk 1.4, wave 1.3, sit_idle 1.6, jog 1.05, walk 1.0 | idle 1.2, walk 0.92, jog 0.95, talk 0.8, wave 0.85, get_up 0.9 |
+| Amplitude | idle ×1.3 (a deeper, slower breath); walk arms ×0.45, forearms ×0.6, head ×0.6, thighs ×0.9, shins ×0.85, feet ×0.75; jog arms ×0.6; talk ×0.5; wave ×0.6–0.75 | walk spine ×2, head ×1.4, arms ×1.2; jog spine ×1.6, arms ×1.1; talk ×1.5 |
+| Layers | idle: a sigh in the chest, a head that drops and recovers | idle: a sway of the spine and head, the free arm drifting; talk: the spine rocking side to side |
+
+Worst idle bone with the protagonist's profile: the forearm at about 16° from rest, inside the
+20° limit. The walk keeps 19.8° of thigh swing. `tests/character_animation_test.gd` checks the
+profiles against the bare bind (same tracks on the same bones, lengths equal to `CLIPS` × tempo,
+the `get_up` / `sit_idle` agreement, the posture present in the standing pose, the two
+characters' idle, walk and talk lengths different). `tests/runtime_character_animation_test.gd`
+checks the same characters in the running game. How the characters look is in
+[CHARACTER_ART.md](CHARACTER_ART.md).
+
 ## Runtime wiring
 
 - `assets/models/protagonist/Protagonist_Character.glb` (the player) has the 60-bone rig
@@ -156,7 +201,8 @@ previous clip put it.
   names, faces −Z and carries four authored loops (above).
 - `scenes/environment/characters/protagonist.tscn`, `q.tscn` and `teacher_n.tscn` attach
   `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
-  `AnimationPlayer`, binds the clips and logs the bind report.
+  `AnimationPlayer`, binds the clips (with the wrapper's `motion_profile`, set on the
+  protagonist and Q) and logs the bind report.
 - Three things can hold a clip, in this order: a **one-shot action** (nothing else takes over
   until it reports `animation_finished`), then **seated** (`sit_idle`, which outranks the
   body's velocity), then **locomotion**. The locomotion decision keeps running underneath, so

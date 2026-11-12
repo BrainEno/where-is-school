@@ -133,7 +133,7 @@ func apply_treatment(which: Treatment) -> Dictionary:
 					)
 			else:
 				(report["kept"] as Array).append("%s/%s" % [String(mesh_instance.name), authored_name])
-		report["expression"] = _apply_expression(mesh_instance, which == Treatment.PAINTED)
+		(report["expression"] as Dictionary).merge(_apply_expression(mesh_instance, which == Treatment.PAINTED))
 	_report = report
 	return report
 

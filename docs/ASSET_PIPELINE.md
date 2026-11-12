@@ -333,6 +333,33 @@ with it.
    tolerance, so a re-export that moves it fails the test rather than a placement. The
    protagonist that replaced it (PR #118) stands on its origin.
 
+### 10.2a The protagonist's and Q's painted look lives beside the model
+
+The protagonist and Q are not drawn in their GLB materials in the game. Each wrapper has a
+`Look` node (`CharacterLookApplier`). At run time it replaces every surface's material with
+a painted shader material from the character's `CharacterLook`
+(`assets/characters/protagonist/protagonist_look.tres`, `assets/characters/q/q_look.tres`).
+It also adds an ink hull as a `next_pass` on the outer parts and sets the protagonist's
+resting expression on his own blend shapes. The wrapper root carries a
+`CharacterMotionProfile` (`assets/characters/*/…_motion.tres`) that `CharacterAnimation.bind()`
+writes into the clips. The design is [CHARACTER_ART.md](CHARACTER_ART.md).
+
+What this means for the contract:
+
+- **The GLBs are unchanged.** Their materials still import as the owner exported them, and
+  `imported_assets_test.gd` still reads them: names, colours, the iris used for facing.
+- **The model directories hold only the `.glb` and its `.import`.** The looks, profiles
+  and shaders live under `assets/characters/` and `assets/shaders/characters/`.
+- **Meshes are rebuilt only in memory.** For meshes without blend shapes, the applier
+  builds an in-memory copy with the bind-pose position added in `CUSTOM0`. The copy keeps
+  the GLB's vertices, indices, bones and weights, in order (tested), and is shared by every
+  instance. Nothing is written to disk. Counts, sizes and wrapper bounds are unchanged.
+- **The looks are generated.** `art/characters/build_character_looks.py` writes them
+  (`--check` to verify). Edit the script, not the `.tres` files.
+- **A re-export needs a check of the material names.** If a re-export renames a material,
+  that surface falls back to its GLB material, and `imported_assets_test.gd` fails because
+  a surface is no longer painted. A new material needs an entry in the script.
+
 ### 10.3 Textures are embedded, not extracted
 
 The engine's default for a `.glb` with embedded textures is `gltf/embedded_image_handling

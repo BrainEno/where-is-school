@@ -669,15 +669,13 @@ func _check_motion_profiles() -> void:
 				_failures.append("the protagonist and Q play '%s' at the same length: one body rhythm." % clip_name)
 		if float(protagonist_lengths.get("idle", 0.0)) <= float(q_lengths.get("idle", 0.0)):
 			_failures.append("the protagonist's idle is not slower than Q's; he is the tired one.")
-		_notes.append(
-			"clip lengths, protagonist / Q: %s"
-			% ", ".join(PackedStringArray(CLIPS.keys().map(
-				func(clip_name: String) -> String:
-					return "%s %.2f/%.2f s" % [
-						clip_name, float(protagonist_lengths.get(clip_name, 0.0)), float(q_lengths.get(clip_name, 0.0))
-					]
-			)))
-		)
+		var parts: PackedStringArray = []
+		for clip_name: String in CLIPS:
+			parts.append(
+				"%s %.2f/%.2f s"
+				% [clip_name, float(protagonist_lengths.get(clip_name, 0.0)), float(q_lengths.get(clip_name, 0.0))]
+			)
+		_notes.append("clip lengths, protagonist / Q: %s" % ", ".join(parts))
 
 
 ## The real wrapper scene must bind its own visual and switch clips, not just the

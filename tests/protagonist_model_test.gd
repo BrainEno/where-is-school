@@ -730,7 +730,9 @@ func _check_painted_skinning(wrapper: CharacterVisualAnimation) -> void:
 		if mesh_instance.mesh != null and mesh_instance.mesh.resource_name != "" and mesh_instance.mesh.resource_path.is_empty():
 			swapped += 1
 		if String(mesh_instance.name) == "Protagonist_Head":
-			var shapes := mesh_instance.mesh.get_blend_shape_count() if mesh_instance.mesh != null else 0
+			var shapes: int = 0
+			if mesh_instance.mesh != null:
+				shapes = mesh_instance.mesh.get_blend_shape_count()
 			if shapes != 9:
 				_failures.append("The painted protagonist's head has %d blend shapes, the model 9." % shapes)
 	_notes.append(
