@@ -157,8 +157,11 @@ func _check_every_location_has_a_usable_mesh() -> void:
 			).length()
 			if away > 1.5:
 				_failures.append(
-					"In the %s the exit '%s' is %.2f m off the navigation mesh %s"
-					% [label, String(exit.interact_id), away, _report(nav)]
+					"In the %s the exit '%s' at %s is %.2f m off the navigation mesh (closest %s) %s"
+					% [
+						label, String(exit.interact_id), str(exit.global_position), away,
+						str(snapped), _report(nav)
+					]
 				)
 				continue
 			var route := NavigationServer3D.map_get_path(
@@ -267,8 +270,13 @@ func _check_isolated_island_is_not_reached() -> void:
 			"The character climbed onto an island it cannot reach (y = %.2f)." % _player.global_position.y
 		)
 	if _player.is_path_active():
+		var legs := _player.get_path_legs()
+		var stuck_at := _player.global_position
 		_player.cancel_path()
-		_failures.append("The walk to an unreachable island never stopped.")
+		_failures.append(
+			"The walk to an unreachable island never stopped: island at %s, body at %s, route %s."
+			% [str(island_center), str(stuck_at), str(legs)]
+		)
 	_remove_node(location, "IslandSlab")
 	await _rebake(nav)
 

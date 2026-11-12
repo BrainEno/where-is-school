@@ -116,16 +116,68 @@ function per step (`_migrate_v1_to_v2`, …) or refused if none exists. v1 has n
 predecessor, so nothing migrates yet; the seam and the refusal are implemented and
 tested with a synthetic v0/v2 file.
 
-### 7. Boot behaviour: resume, because there is no menu
+### 7. Boot behaviour: the title screen decides (amended for #62 / #95)
 
-The project boots straight into `main.tscn`; there is no title screen to offer
-"continue" versus "new game". So: **if a readable save exists, the game resumes it**;
-if it does not, the prologue starts from the beginning. A new game is
-`SaveManager.delete_save()` — an API the future menu will call.
+*Originally:* the project booted straight into `main.tscn` and resumed any readable
+save, because there was no menu to ask. That is superseded now that a menu exists.
 
-- **Revisit when a menu exists:** resume-versus-choose becomes a menu decision.
+The project boots into `scenes/ui/title_screen.tscn`. `Session.inspect_save()` reads
+the file once (without applying it) and the menu follows from the answer:
+
+| Save state | Entries | Notes |
+|---|---|---|
+| none | **Start** / Settings / Quit | Start enters the opening; nothing to confirm |
+| readable | **Continue** / New game / Settings / Quit | Continue enters `main.tscn`, whose director resumes the file exactly as before |
+| unreadable | New game / Settings / Quit | the reason is shown on the title screen; there is no Continue, and reading it already copied it to `save.broken.json` (6) |
+
+The same New game is offered in the **pause menu** (Esc / Start during play) and as
+**Start again** on the end-of-slice card. Every one of them asks first, with the focus on
+*Cancel*; cancelling (Esc, B, the Cancel button, a click outside) changes nothing — not
+the file, not the flags, not the knowledge.
+
+### 8. Starting a new game: one ordered path
+
+All three entry points call `Session.start_new_game()` (`scripts/ui/game_session.gd`),
+which runs these steps in this order and returns a report of them:
+
+1. **Silence the old world**: its `OpeningSequence.autosave_enabled = false`, then
+   `Save.unbind_world()`. Unbinding alone is not enough — a save with no world bound
+   still writes the flags — so the director's own switch comes first.
+2. **Unpause** (the pause menu may have paused the tree).
+3. **Free the old world** and wait two frames, so nothing in it can run a checkpoint
+   after the file is gone.
+4. **Delete the save** with `Save.delete_save()`. Because that call also removes
+   `save.broken.json`, its bytes are read first and written back: a quarantined copy
+   is the player's, and starting over does not silently discard it (6).
+5. **Clear the session**: `GameState.clear()`, `NarrativeState.clear()`, and release
+   any held input actions. Location, objective and every story flag live in
+   `GameState`, so they go with it.
+6. **Verify**: no save file, no flags, no knowledge entries — otherwise the report is
+   not `ok` and an error is logged.
+7. **Enter the opening**: `main.tscn` is loaded fresh. Its `DialogueController` takes a
+   new dice seed from the clock, and with no file the director starts at the wake.
+
+Tests: `tests/opening_resume_test.gd` (title menu by save state, cancel keeps
+everything, confirm from the title and from the pause menu, an unreadable save, and
+the next boot carrying no old flag, entry, room or seed) and
+`tests/opening_flow_test.gd` (Start again from the end card after the whole slice,
+on the controller).
+
+### 9. Preferences are not progress
+
+`user://settings.cfg` holds the preferences, owned by `Settings`
+(`scripts/autoload/settings_manager.gd`): `[text]` size and speed, `[audio]` master,
+music and sfx, `[display] ui_scale`, `[input]` one encoded list per rebound action, and
+`[settings] version`. `[display] locale` in the same file belongs to `Loc` and is never
+written or removed by `Settings` — every write re-reads the file first and changes only
+its own key. New game does not touch this file. Unknown values fall back to the default
+and are reported; a binding list with any undecodable entry is ignored as a whole, so an
+action is never left half-bound or unbound.
+
 - **Revisit when saves can be taken mid-beat:** the checkpoint restriction in 4
   should then be lifted by making beats resumable, not by loosening the format.
+- **Revisit when there is more than one slot:** `inspect_save()` and the confirmation
+  wording assume one.
 
 ## Consequences
 

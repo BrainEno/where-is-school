@@ -8,11 +8,23 @@ extends SceneTree
 ## substitute, exit, milestone end).
 ##
 ## Time is scaled up so the fade and bell pacing do not dominate CI runtime.
+##
+## Input (issue #62). The classroom is driven through the presentation APIs as before,
+## and the walkway gate is opened with a real E key press. From the street to the end
+## card the run switches to the controller: every line is continued, every choice
+## picked (D-pad + A) and every object used with real joypad events pushed through the
+## viewport, the left stick walks the player, and the end card's Start again is
+## confirmed with the pad (issue #95). Moving between the authored stops still uses
+## `teleport()` as the keyboard half does. The summary line reports how many steps the
+## controller performed and how many fell back to an API call (a dialogue that was busy
+## with nothing on screen), so a run that quietly stopped using the pad is visible.
 
 const Harness = preload("res://tests/test_harness.gd")
 
 const TIME_SCALE := 4.0
 const OVERALL_TIMEOUT_SECONDS := 320.0
+const SETTINGS_SCRIPT := "res://scripts/autoload/settings_manager.gd"
+const SESSION_SCRIPT := "res://scripts/ui/game_session.gd"
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -26,6 +38,13 @@ var _narrative: Node = null
 var _started_at_msec: int = 0
 var _saw_subjective := false
 var _observed_during_expectation := 0
+## From the street on, the controller drives the run.
+var _pad_mode := false
+var _pad_presses := 0
+var _pad_activations := 0
+var _api_fallbacks := 0
+var _settings: Node = null
+var _end_card_reached := false
 
 
 func _initialize() -> void:
@@ -42,6 +61,12 @@ func _run() -> void:
 		Harness.finish(self, ["State autoloads are unavailable."], "")
 		return
 	Harness.clear_session_state(self)
+	_settings = Harness.ensure_autoload(self, "Settings", SETTINGS_SCRIPT)
+	Harness.ensure_autoload(self, "Session", SESSION_SCRIPT)
+	if _settings != null:
+		# Defaults for every preference, so a file another check left cannot change the run.
+		_settings.call("reset_to_defaults")
+		_settings.call("set_input_device", &"keyboard")
 
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	if packed == null:
@@ -194,7 +219,8 @@ func _run() -> void:
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"school_gate", "gate prompt")
-			_interaction.request_activation(gate)
+			# The keyboard's own path: a real E press, not the activation API.
+			await _press_key_e(gate)
 			if await _pump_until(
 				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "street",
 				60.0, "the street to load"
@@ -205,6 +231,10 @@ func _run() -> void:
 					_failures.append("The street arrival line did not finish.")
 				elif not bool(_game_state.get_flag(StoryFlags.STREET_ARRIVED, false)):
 					_failures.append("Reaching the street did not play its arrival line.")
+
+	# --- From here on the controller drives the run --------------------------
+	_pad_mode = true
+	await _check_stick_walk()
 
 	# --- Beat H: an object on the street, read once and then again ---------
 	var street := _host.get_current()
@@ -221,7 +251,7 @@ func _run() -> void:
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"street_gutter", "gutter prompt")
-			_interaction.request_activation(gutter)
+			await _activate(gutter)
 			await process_frame
 			var first_text := ""
 			if not _dialogue.is_busy():
@@ -235,7 +265,7 @@ func _run() -> void:
 				_failures.append("Looking at the gutter recorded no knowledge entry.")
 			if not bool(_game_state.get_flag(StoryFlags.inspection_seen_flag(&"street_gutter"), false)):
 				_failures.append("Looking at the gutter did not mark it as seen.")
-			_interaction.request_activation(gutter)
+			await _activate(gutter)
 			await process_frame
 			if _dialogue.is_busy():
 				var repeat_text := String(_dialogue.get_current_line().get("text", ""))
@@ -251,10 +281,10 @@ func _run() -> void:
 		if to_residential == null:
 			_failures.append("The street has no way on to the residential area.")
 		else:
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(10.5, 0, -28.6)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(10.5, 1.6, -35.0)))
 			await physics_frame
 			await physics_frame
-			_interaction.request_activation(to_residential)
+			await _activate(to_residential)
 			if await _pump_until(
 				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "residential",
 				60.0, "the residential area to load"
@@ -275,7 +305,7 @@ func _run() -> void:
 			await physics_frame
 			await physics_frame
 			await _check_prompt(&"green_animal", "animal prompt")
-			_interaction.request_activation(animal)
+			await _activate(animal)
 			await process_frame
 			if not _dialogue.is_busy():
 				_failures.append("Looking at the green animal started nothing.")
@@ -291,7 +321,7 @@ func _run() -> void:
 				_failures.append("Meeting the animal did not set its flag.")
 			if not _narrative.has_entry(&"animal_seen"):
 				_failures.append("Meeting the animal recorded no knowledge entry.")
-			_interaction.request_activation(animal)
+			await _activate(animal)
 			await process_frame
 			if _dialogue.is_busy():
 				if String(_dialogue.get_current_line().get("node_id", "")) != "aa_1":
@@ -310,10 +340,10 @@ func _run() -> void:
 			var exit_node := alley_exit as LocationExit
 			if exit_node != null and exit_node.is_milestone_end:
 				_failures.append("The courtyard still ends the slice at its alley exit.")
-			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -31.6)))
+			_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), Vector3(6.0, 0, -33.0)))
 			await physics_frame
 			await physics_frame
-			_interaction.request_activation(alley_exit)
+			await _activate(alley_exit)
 			if await _pump_until(
 				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "alley",
 				60.0, "the alley to load"
@@ -335,7 +365,7 @@ func _run() -> void:
 						)
 						await physics_frame
 						await physics_frame
-						_interaction.request_activation(gate)
+						await _activate(gate)
 						if await _pump_until(
 							func() -> bool:
 								return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "playground",
@@ -366,7 +396,7 @@ func _run() -> void:
 									)
 									await physics_frame
 									await physics_frame
-									_interaction.request_activation(gap)
+									await _activate(gap)
 									if await _pump_until(
 										func() -> bool: return _ui.end_card.visible,
 										30.0, "the end-of-slice card"
@@ -378,14 +408,33 @@ func _run() -> void:
 											_failures.append(
 												"The end-of-slice card is not using its locale key."
 											)
+										_end_card_reached = true
 
 	_dump_state()
+	# Last, because it frees the world every reference above points into.
 	Engine.time_scale = 1.0
-	_main.queue_free()
+	if _end_card_reached:
+		await _check_end_card_restart()
+	if is_instance_valid(_main):
+		_main.queue_free()
+	if current_scene != null:
+		var sequence := current_scene.get_node_or_null("OpeningSequence")
+		if sequence != null:
+			sequence.set("autosave_enabled", false)
+		current_scene.queue_free()
 	await process_frame
+	await process_frame
+	Harness.clear_session_state(self)
+	print(
+		"INPUT pad_presses=%d pad_activations=%d api_fallbacks=%d"
+		% [_pad_presses, _pad_activations, _api_fallbacks]
+	)
 	Harness.finish(
 		self, _failures,
-		"the slice runs from waking up through the yard to the milestone card at its far fence."
+		"the slice runs from waking up through the yard to the milestone card at its far fence, "
+		+ "the second half on the controller (%d presses, %d uses), and Start again on the "
+		% [_pad_presses, _pad_activations]
+		+ "card boots a new game with nothing of the old run left."
 	)
 
 
@@ -429,10 +478,189 @@ func _entry_source(entry_id: StringName) -> int:
 
 
 func _advance_presentation() -> void:
+	var panel := _ui.dialogue_panel
+	if _pad_mode and panel.visible and not _ui.backlog.is_open():
+		# The controller's path: A continues; a choice is marked with the D-pad (the
+		# first option, as the API path picks) and taken with A.
+		if panel.has_choices() and panel.get_choice_cursor() < 0:
+			_push_pad(JOY_BUTTON_DPAD_DOWN)
+		_push_pad(JOY_BUTTON_A)
+		return
+	if _pad_mode:
+		_api_fallbacks += 1
 	if _dialogue.has_pending_choices():
 		_dialogue.select_choice(0)
 	else:
 		_dialogue.advance_presentation()
+
+
+## One real controller button, down and up, through the viewport.
+func _push_pad(button: JoyButton) -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventJoypadButton.new()
+		event.device = 0
+		event.button_index = button
+		event.pressed = pressed
+		root.push_input(event)
+	_pad_presses += 1
+
+
+## The keyboard's interact key, for real: E down and up through the viewport.
+func _press_key_e(target: Interactable) -> void:
+	await _wait_for_target(target)
+	for pressed: bool in [true, false]:
+		var event := InputEventKey.new()
+		event.physical_keycode = KEY_E
+		event.keycode = KEY_E
+		event.pressed = pressed
+		root.push_input(event)
+		await process_frame
+
+
+func _wait_for_target(target: Interactable) -> bool:
+	for _index in 30:
+		if _interaction.get_current_target() == target:
+			return true
+		await physics_frame
+	return _interaction.get_current_target() == target
+
+
+## Uses an object the way a controller does: it has to be the target, then A.
+func _activate(target: Interactable) -> void:
+	if not _pad_mode:
+		_interaction.request_activation(target)
+		return
+	if await _wait_for_target(target):
+		_push_pad(JOY_BUTTON_A)
+		_pad_activations += 1
+		await process_frame
+		return
+	_failures.append(
+		"With a controller, '%s' was not the target where the run stands, so A could not use it (%s)."
+		% [target.interact_id, _diagnose_interaction(target.interact_id)]
+	)
+	_interaction.request_activation(target)
+
+
+## The left stick walks the player: the click-to-walk alternative for a controller.
+func _check_stick_walk() -> void:
+	await _settle(30.0, "control before the stick walk")
+	var moved := 0.0
+	# Forward first; if the spawn faces a wall, back the other way.
+	for direction: float in [-1.0, 1.0]:
+		moved = await _stick_push(JOY_AXIS_LEFT_Y, direction)
+		if moved >= 0.3:
+			break
+	if moved < 0.3:
+		_failures.append("The left stick moved the player %.2f m in 20 physics frames." % moved)
+	if _settings != null and not bool(_settings.call("is_using_gamepad")):
+		_failures.append("Using the stick did not switch the prompts to the controller.")
+
+
+## Holds the stick for 20 physics frames and lets go; returns how far the player went.
+func _stick_push(axis: JoyAxis, value: float) -> float:
+	var before := _player.global_position
+	await _stick(axis, value)
+	for _index in 20:
+		await physics_frame
+	var moved := _player.global_position.distance_to(before)
+	await _stick(axis, 0.0)
+	for _index in 4:
+		await physics_frame
+	return moved
+
+
+## The action state (what the player polls) and the event (what the menus and the
+## device detection hear) both see the stick.
+func _stick(axis: JoyAxis, value: float) -> void:
+	var motion := InputEventJoypadMotion.new()
+	motion.device = 0
+	motion.axis = axis
+	motion.axis_value = value
+	Input.parse_input_event(motion)
+	Input.flush_buffered_events()
+	root.push_input(motion)
+
+
+## Start again from the end card, with the pad: cancel first (nothing changes), then
+## confirm, and the game that boots has nothing of this run.
+func _check_end_card_restart() -> void:
+	var card := _ui.end_card
+	var save := root.get_node_or_null(^"Save")
+	var session := root.get_node_or_null(^"Session")
+	for _index in 10:
+		await process_frame
+	if not card.has_actions():
+		_failures.append("The end-of-slice card offers no way to start again.")
+		return
+	if root.gui_get_focus_owner() != card.get_restart_button():
+		_failures.append("Start again does not have the focus on the end card.")
+		card.get_restart_button().grab_focus()
+	if save == null or not save.has_save():
+		_failures.append("The end of the slice left no save to start again from.")
+	_push_pad(JOY_BUTTON_A)
+	await process_frame
+	await process_frame
+	if not card.get_confirm().visible:
+		_failures.append("Start again did not ask before deleting the save.")
+		return
+	_push_pad(JOY_BUTTON_B)
+	await process_frame
+	await process_frame
+	if card.get_confirm().visible:
+		_failures.append("B did not cancel the start-again question.")
+	if save != null and not save.has_save():
+		_failures.append("Cancelling Start again deleted the save.")
+	if not bool(_game_state.get_flag(StoryFlags.ANIMAL_SEEN, false)):
+		_failures.append("Cancelling Start again cleared the story.")
+	_push_pad(JOY_BUTTON_A)
+	await process_frame
+	await process_frame
+	_push_pad(JOY_BUTTON_DPAD_RIGHT)
+	await process_frame
+	if root.gui_get_focus_owner() != card.get_confirm().get_confirm_button():
+		_failures.append("The D-pad did not reach the confirm answer.")
+		card.get_confirm().get_confirm_button().grab_focus()
+	var reports: Array = []
+	var on_started := func(report: Dictionary) -> void: reports.append(report)
+	if session != null:
+		session.connect("new_game_started", on_started)
+	_push_pad(JOY_BUTTON_A)
+	for _index in 240:
+		await process_frame
+		if not reports.is_empty() and current_scene != null \
+				and current_scene.get_node_or_null("OpeningSequence") != null:
+			break
+	if session != null:
+		session.disconnect("new_game_started", on_started)
+	await process_frame
+	await process_frame
+	if reports.is_empty():
+		_failures.append("Confirming Start again did not start a new game.")
+		return
+	var report: Dictionary = reports[0]
+	if not bool(report.get("ok", false)):
+		_failures.append("Start again left state behind: %s" % str(report))
+	if is_instance_valid(_main):
+		_failures.append("Start again did not free the finished world.")
+	var fresh := current_scene
+	if fresh == null or fresh.get_node_or_null("OpeningSequence") == null:
+		_failures.append("Start again did not boot the opening.")
+		return
+	for flag: StringName in [
+		StoryFlags.MET_Q, StoryFlags.LEFT_SCHOOL, StoryFlags.ANIMAL_SEEN,
+		StoryFlags.PLAYGROUND_ARRIVED,
+	]:
+		if bool(_game_state.get_flag(flag, false)):
+			_failures.append("Start again kept the story flag '%s'." % flag)
+	if _narrative.has_entry(&"animal_seen"):
+		_failures.append("Start again kept the knowledge of the animal.")
+	var location := String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "classroom"))
+	if location != "classroom":
+		_failures.append("Start again booted in '%s', not the classroom." % location)
+	var sequence := fresh.get_node_or_null("OpeningSequence") as OpeningSequence
+	if sequence != null and sequence.next_step() != &"wake":
+		_failures.append("Start again did not begin at the wake ('%s')." % sequence.next_step())
 
 
 func _check_targeting() -> void:
@@ -483,7 +711,9 @@ func _check_prompt(interact_id: StringName, label: String) -> void:
 			% [label, _diagnose_interaction(interact_id, scans_before)]
 		)
 		return
-	if not text.contains("E]"):
+	# The keyboard's prompt names E; the controller's names A.
+	var key_label := "A]" if _pad_mode else "E]"
+	if not text.contains(key_label):
 		_failures.append("The %s prompt does not name the interact key: '%s'." % [label, text])
 	var target := _interaction.get_current_target()
 	if target == null or target.interact_id != interact_id:

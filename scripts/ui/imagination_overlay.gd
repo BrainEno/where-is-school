@@ -27,6 +27,25 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
 		loc.locale_changed.connect(_on_locale_changed)
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings != null:
+		settings.connect("setting_changed", _on_setting_changed)
+	set_text_scale(UiTextScale.current(self))
+
+
+## The player's text size. The flavour line moves down with a taller banner instead of
+## being drawn over it.
+func set_text_scale(factor: float) -> void:
+	UiTextScale.apply(self, factor)
+	var banner_height := ceilf(36.0 * maxf(factor, 1.0))
+	_banner.offset_bottom = _banner.offset_top + banner_height
+	_flavour.offset_top = _banner.offset_bottom + 2.0
+	_flavour.offset_bottom = _flavour.offset_top + ceilf(28.0 * maxf(factor, 1.0))
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if UiTextScale.is_text_size_key(key):
+		set_text_scale(UiTextScale.current(self))
 
 
 func _on_locale_changed(_locale: String) -> void:

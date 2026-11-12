@@ -6,22 +6,53 @@ Run it
 Double-click where-is-school.exe.
 
 The build is unsigned, so Windows SmartScreen will show "Windows protected your PC" the
-first time. Choose "More info" -> "Run anyway". Nothing is installed, nothing is written
-outside the game's own settings file (language choice, in %APPDATA%\Godot\app_userdata\
-where-is-school).
+first time. Choose "More info" -> "Run anyway". Nothing is installed. The game writes only
+inside its own folder, %APPDATA%\Godot\app_userdata\where-is-school:
+
+  save.json          your progress (Godot calls this user://save.json)
+  save.broken.json   a copy of a save the game could not read, kept for you
+  settings.cfg       language, text size and speed, volumes, interface scale, controls
+
+Title screen
+------------
+  Continue   only when there is a readable save: carries on from the last checkpoint
+  New game   asks first, then deletes save.json and starts from the beginning
+             ("Start" when there is no save yet; nothing is asked then)
+  Settings   text size, text speed, volumes, interface scale, fullscreen, language,
+             and the controls (keyboard and controller, each can be rebound; "Restore
+             default controls" puts everything back)
+  Quit
+
+Saving is automatic: the game writes save.json each time you arrive somewhere new and
+when the prologue hands you control. There is no save button. Quitting, or going back to
+the title screen, keeps the last checkpoint; Continue picks it up there.
+
+If save.json cannot be read, the title screen says so and offers no Continue. Starting a
+new game then removes save.json but keeps save.broken.json, so nothing is lost silently.
 
 Controls
 --------
-  WASD / arrow keys        walk (camera-relative); pressing them also cancels an
-                           automatic walk
-  left click on the floor  walk there
-  left click on a thing    walk over and use it (same as E)
-  E                        use what the prompt names
-  Space / Enter / click    advance a line of dialogue; the sentence on screen is
-                           finished first if it is still typing
-  Tab / Esc                open, and close, the log of what has been read
-  1..9                     pick a dialogue option
-  L                        switch between English and simplified Chinese, mid-line
+  Keyboard and mouse        Controller (Xbox layout)
+  WASD / arrow keys         left stick / D-pad      walk (camera-relative); also
+                                                    cancels an automatic walk
+  left click on the floor   (walk with the stick)   walk there
+  left click on a thing     A when it is prompted   walk over and use it (same as E)
+  E                         A                       use what the prompt names
+  Space / Enter / click     A                       advance a line of dialogue; a
+                                                    sentence still typing is finished
+  Up / Down + Enter, 1..9   D-pad up / down + A     pick a dialogue option
+  Tab                       Y                       open, and close, the log
+  Esc                       Start                   pause menu (Resume, Settings,
+                                                    New game, Title screen)
+  Esc                       B                       back / cancel in any menu
+  Shift                     RB                      walk faster
+  L                         Back / View             switch English / simplified Chinese
+  F11                       right stick click       fullscreen
+
+Every menu works with the keyboard alone (arrows, Enter, Esc) or the controller alone
+(D-pad, A, B); the mouse is never required. The prompts name the controller's buttons as
+soon as it is used, and the keyboard's again when a key is pressed. Esc is reserved for
+the menus and cannot be rebound.
 
 A conversation, once started, is read to its end: there is no way to walk out of one
 mid-sentence, which is deliberate for a slice this short and is listed as a limitation,
@@ -33,8 +64,8 @@ the E key would use.
 What this build is
 ------------------
 The end of a milestone, not the end of the story: the slice stops at a gap in the yard's
-fence with an end card. There is no save/load, no options screen, no pause menu, and the
-only setting remembered between runs is the language.
+fence with an end card. The card offers "Start again" (asks first, then begins a new game)
+and "Title screen".
 
 Known cosmetic gaps (not bugs to report):
   - grey boxes stand in for people, and some furniture is still a box

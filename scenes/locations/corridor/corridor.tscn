@@ -343,6 +343,7 @@ rotation = Vector3(0, -1.570796, 0)
 [node name="NoticeboardInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(-1.6, 0.8, -2)
 interact_id = &"noticeboard"
+outline_paths = PackedStringArray("../../CorridorNoticeboard")
 prompt_text = "Read the noticeboard"
 inspection_id = &"corridor_noticeboard"
 radius = 1.1
@@ -351,6 +352,7 @@ support_paths = PackedStringArray("../../CorridorNoticeboard")
 [node name="ExtinguisherInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(-1.6, 0.6, 0.1)
 interact_id = &"extinguisher"
+outline_paths = PackedStringArray("../../CorridorExtinguisher")
 prompt_text = "Look at the extinguisher"
 inspection_id = &"corridor_extinguisher"
 radius = 0.9
@@ -359,6 +361,7 @@ support_paths = PackedStringArray("../../CorridorExtinguisher")
 [node name="ClassroomGlassInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(-1.5, 0.8, 4.2)
 interact_id = &"classroom_glass"
+outline_paths = PackedStringArray("../../ClassroomGlass", "../../ClassroomGlassFrame")
 prompt_text = "Look through the glass"
 inspection_id = &"corridor_classroom_glass"
 radius = 1.1
@@ -366,6 +369,7 @@ radius = 1.1
 [node name="BackToClassroom" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = Vector3(-1.55, 0.6, 2)
 interact_id = &"back_to_classroom"
+outline_paths = PackedStringArray("../../ClassroomDoorLeaf", "../../ClassroomDoorFrameTop")
 prompt_text = "Go back inside"
 prompt_key = "prompt.back_inside"
 radius = 1.0
@@ -376,6 +380,7 @@ destination_id = &"classroom"
 [node name="SchoolGateExit" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = Vector3(0, 0.6, 6.5)
 interact_id = &"school_gate"
+outline_paths = PackedStringArray("../../ExitFrameLeft", "../../ExitFrameRight", "../../ExitFrameHead", "../../Step0", "../../Step1", "../../Step2")
 prompt_text = "Go down towards the gate"
 prompt_key = "prompt.gate"
 radius = 1.3
@@ -386,6 +391,7 @@ destination_id = &"street"
 [node name="SpeakerInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(1.9, 2.3, -3)
 interact_id = &"corridor_speaker"
+outline_paths = PackedStringArray("../../SpeakerBox")
 prompt_text = "Listen to the speaker"
 prompt_key = "prompt.corridor_speaker"
 conversation_route = &"corridor_speaker"
@@ -394,6 +400,7 @@ radius = 1.2
 [node name="TrolleyInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(1.1, 0.8, 3.68)
 interact_id = &"corridor_trolley"
+outline_paths = PackedStringArray("../../CorridorTrolley")
 prompt_text = "Look at the cleaning trolley"
 prompt_key = "prompt.corridor_trolley"
 conversation_route = &"corridor_trolley"
@@ -403,6 +410,7 @@ support_paths = PackedStringArray("../../CorridorTrolley")
 [node name="RailingWait" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(1.75, 0.9, -1.2)
 interact_id = &"corridor_wait"
+outline_paths = PackedStringArray("../../ParapetRail")
 prompt_text = "Stop at the railing"
 prompt_key = "prompt.corridor_wait"
 conversation_route = &"corridor_wait"
@@ -411,6 +419,7 @@ radius = 1.2
 [node name="YardDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = Vector3(0, 0.6, -8.3)
 interact_id = &"to_schoolyard"
+outline_paths = PackedStringArray("../../YardDoorLeaf", "../../YardDoorStep")
 prompt_text = "Go out into the yard"
 prompt_key = "prompt.yard_door"
 radius = 1.4

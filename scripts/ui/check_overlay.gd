@@ -41,6 +41,20 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null and loc.has_signal("locale_changed"):
 		loc.locale_changed.connect(_on_locale_changed)
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings != null:
+		settings.connect("setting_changed", _on_setting_changed)
+	set_text_scale(UiTextScale.current(self))
+
+
+## The player's text size. The panel is a container, so it grows around larger type.
+func set_text_scale(factor: float) -> void:
+	UiTextScale.apply(self, factor)
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if UiTextScale.is_text_size_key(key):
+		set_text_scale(UiTextScale.current(self))
 
 
 func is_showing() -> bool:
