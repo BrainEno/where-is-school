@@ -730,11 +730,7 @@ func _check_capture() -> void:
 	_expect(_settings.call("get_text_speed") == &"normal", "C: Left did not change speed back.")
 	panel.focus_row(&"volume_music")
 	await _frames(1)
-	# A slider also asks the `Input` singleton whether a pad direction was just pressed (it
-	# repeats while held), and `push_input` does not touch that state; a real press does.
-	Input.action_press(&"ui_left")
-	await _tap_pad(JOY_BUTTON_DPAD_LEFT)
-	Input.action_release(&"ui_left")
+	await _tap_pad_through_input(JOY_BUTTON_DPAD_LEFT, panel.get_row_control(&"volume_music"))
 	_expect(int(_settings.call("get_volume", &"music")) == 95, "C: D-pad left did not lower music.")
 	await _tap_key(KEY_RIGHT)
 	_expect(int(_settings.call("get_volume", &"music")) == 100, "C: Right did not raise music.")
@@ -1247,6 +1243,30 @@ func _tap_key(code: Key, shift: bool = false) -> void:
 
 func _tap_pad(button: JoyButton) -> void:
 	await _tap(_joy(button), _joy(button, false))
+
+
+## A slider takes a pad direction only once the `Input` singleton has seen that very event
+## (it repeats while the button is held), and `push_input` skips the singleton. So this press
+## goes through `Input.parse_input_event`, and straight to the viewport, in the same frame,
+## only when the display server did not deliver it already.
+func _tap_pad_through_input(button: JoyButton, control: Control) -> void:
+	var slider := control as Range
+	if slider == null:
+		_failures.append("C: no slider to press.")
+		return
+	var accumulated := Input.use_accumulated_input
+	Input.use_accumulated_input = false
+	var before := slider.value
+	var down := _joy(button)
+	Input.parse_input_event(down)
+	if is_equal_approx(slider.value, before):
+		root.push_input(down)
+	await process_frame
+	var up := _joy(button, false)
+	Input.parse_input_event(up)
+	root.push_input(up)
+	await process_frame
+	Input.use_accumulated_input = accumulated
 
 
 func _click(control: Control) -> void:
