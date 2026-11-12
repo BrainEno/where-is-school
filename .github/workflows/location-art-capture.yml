@@ -175,10 +175,12 @@ jobs:
       - name: Location art test
         shell: bash
         run: |
-          set -uo pipefail
+          # No `set -u`: the sourced helper reads optional variables.
+          set +e
           source tools/ci_run_check.sh
-          run_check location_art 540 godot --headless --path . --script res://tests/location_art_test.gd
-          status=$?
+          status=0
+          run_check location_art 540 godot --headless --path . --script res://tests/location_art_test.gd || status=$?
+          touch ci-logs/location_art.log
           # The verdict lines as annotations, readable through the REST API.
           grep -E "TEST FAILURE|SCRIPT ERROR|Parse Error" ci-logs/location_art.log | head -n 9 \
             | while IFS= read -r line; do echo "::error title=location art::${line}"; done
