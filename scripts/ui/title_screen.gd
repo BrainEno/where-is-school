@@ -244,12 +244,13 @@ func _refresh_texts() -> void:
 func _refresh_hint() -> void:
 	if _hint == null:
 		return
-	if MenuStyle.using_gamepad(self):
-		_hint.text = L10n.t("menu.hint_pad", {"language": MenuStyle.key(self, &"toggle_language")})
-	else:
-		_hint.text = L10n.t(
-			"menu.hint_keyboard", {"language": MenuStyle.key(self, &"toggle_language")}
-		)
+	var keys := {
+		"language": MenuStyle.key(self, &"toggle_language"),
+		"confirm": MenuStyle.key(self, &"ui_accept"),
+	}
+	_hint.text = L10n.t(
+		"menu.hint_pad" if MenuStyle.using_gamepad(self) else "menu.hint_keyboard", keys
+	)
 
 
 func _ask_new_game() -> void:

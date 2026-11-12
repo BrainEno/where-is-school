@@ -3,9 +3,9 @@ extends SceneTree
 ##
 ## The reading surface has to hold the worst content the game can produce — a long
 ## Chinese paragraph, a multi-paragraph recollection, four long options, a speaker name
-## and a role that are both too long — at the three window sizes the game is expected
-## to run in. "It looked fine on my screen" is not a test, so this script drives the
-## real panel with real content at 1280x720, 1600x900 and 1920x1080 and asserts:
+## and a role that are both too long — at the five supported window sizes through 4K.
+## "It looked fine on my screen" is not a test, so this script drives the real panel
+## with its actual content at all five sizes and asserts:
 ##
 ## - the panel stays a band: inside the viewport, at most 72% of its width and 66% of
 ##   its height, so the room it is drawn over is still the main picture;
@@ -26,7 +26,13 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const SETTINGS_SCRIPT := "res://scripts/autoload/settings_manager.gd"
 
-const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
+const RESOLUTIONS: Array[Vector2i] = [
+	Vector2i(1280, 720),
+	Vector2i(1600, 900),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(3840, 2160),
+]
 
 ## Hard ceilings on how much of the screen the band may occupy. They are the contract:
 ## the 3D scene stays the protagonist.
@@ -125,7 +131,7 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"the dialogue panel keeps its hierarchy and its type at 1280x720, 1600x900 and 1920x1080, "
+		"the dialogue panel keeps its hierarchy and its type at all five resolutions through 4K, "
 		+ "at the standard and the largest text size."
 	)
 
@@ -134,8 +140,15 @@ func size_smallest() -> Vector2i:
 	return RESOLUTIONS[0]
 
 
+func _logical_canvas_size(fallback: Vector2i) -> Vector2i:
+	if root.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS:
+		return root.content_scale_size
+	return Vector2i(root.get_visible_rect().size) if root.get_visible_rect().size.x > 0.0 else fallback
+
+
 func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	var tag := "%s%dx%d" % [prefix, size.x, size.y]
+	var layout_size := _logical_canvas_size(size)
 	var prose_en := String(samples["prose_en"])
 	var prose_zh := String(samples["prose_zh"])
 	var beat_zh := String(samples["beat_zh"])
@@ -146,7 +159,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	await _show(
 		_line(prose_en, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false)
 	)
-	_measure("%s long English prose" % tag, size, true)
+	_measure("%s long English prose" % tag, layout_size, true)
 
 	# 2. A long Chinese paragraph, heard. Chinese is the script's own language and the
 	#    one whose line lengths the layout has to survive.
@@ -154,7 +167,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	await _show(
 		_line(prose_zh, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
 	)
-	_measure("%s long Chinese prose" % tag, size, true)
+	_measure("%s long Chinese prose" % tag, layout_size, true)
 
 	# 3. One paragraph long enough that no fixed box could hold it: the scroll path.
 	L10n.set_locale("zh-CN")
@@ -166,7 +179,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 		if index < 15:
 			wall += "\n"
 	await _show(_line(wall, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false))
-	_measure("%s over-long single paragraph" % tag, size, false)
+	_measure("%s over-long single paragraph" % tag, layout_size, false)
 	if not bool(_panel.get_layout_report()["body_scrolling"]):
 		_failures.append("%s: an over-long paragraph did not fall back to scrolling." % tag)
 
@@ -177,7 +190,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	)
 	recall_line["title"] = L10n.t("badge.recalled")
 	await _show(recall_line)
-	_measure("%s multi-paragraph recollection" % tag, size, false)
+	_measure("%s multi-paragraph recollection" % tag, layout_size, false)
 
 	# 5. Four long options under a long line: the layout that breaks first.
 	var choice_line := _line(prose_zh, "n", "N", "role.n", NarrativeEntry.Source.REPORTED, false)
@@ -190,8 +203,8 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	_panel.set_choices(options)
 	await process_frame
 	await process_frame
-	_measure("%s four long options" % tag, size, false)
-	await _measure_options("%s four long options" % tag, size)
+	_measure("%s four long options" % tag, layout_size, false)
+	await _measure_options("%s four long options" % tag, layout_size)
 
 	# 6. A name and a role that are both too long, plus a title.
 	var long_name := "名字非常非常长的一个人物名称"
@@ -200,14 +213,14 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	long_line["speaker_role"] = long_role
 	long_line["title"] = "一个同样很长的标题，用来检查标题行会不会越过面板"
 	await _show(long_line)
-	_measure("%s overlong name and role" % tag, size, true)
+	_measure("%s overlong name and role" % tag, layout_size, true)
 
 	# 7. Consecutive inner voices: subjective, imagined, no role.
 	var voice_line := _line(
 		beat_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
 	)
 	await _show(voice_line)
-	_measure("%s inner voice" % tag, size, true)
+	_measure("%s inner voice" % tag, layout_size, true)
 	if _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel").get_theme_color("font_color") \
 			== Color(0.898, 0.871, 0.804, 1.0):
 		_failures.append("%s inner voice: the subjective tint was not applied." % tag)

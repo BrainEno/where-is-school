@@ -178,6 +178,8 @@ func _enter_fullscreen(window: Window) -> void:
 		_windowed_size = DESIGN_WINDOW_SIZE
 		_windowed_position = centred_rect(DESIGN_WINDOW_SIZE).position
 	_fullscreen = true
+	# Godot's regular fullscreen mode is desktop-sized and borderless. Keep exclusive
+	# fullscreen opt-in only: it is less portable across multi-monitor/window managers.
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 

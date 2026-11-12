@@ -626,7 +626,11 @@ func _refresh_status_hint() -> void:
 	if _status == null or is_capturing():
 		return
 	var pad := MenuStyle.using_gamepad(self)
-	_status.text = L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard")
+	var keys := {
+		"confirm": MenuStyle.key(self, &"ui_accept"),
+		"cancel": MenuStyle.key(self, &"ui_cancel"),
+	}
+	_status.text = L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard", keys)
 
 
 # --- Capturing a new binding -----------------------------------------------------

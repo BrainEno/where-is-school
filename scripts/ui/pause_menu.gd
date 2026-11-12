@@ -345,10 +345,14 @@ func _refresh_texts() -> void:
 	_status.text = _status_text()
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
-	if MenuStyle.using_gamepad(self):
-		_hint.text = L10n.t("menu.pause_hint_pad", {"key": MenuStyle.key(self, &"pause")})
-	else:
-		_hint.text = L10n.t("menu.pause_hint_keyboard", {"key": MenuStyle.key(self, &"pause")})
+	var keys := {
+		"key": MenuStyle.key(self, &"pause"),
+		"cancel": MenuStyle.key(self, &"ui_cancel"),
+	}
+	_hint.text = L10n.t(
+		"menu.pause_hint_pad" if MenuStyle.using_gamepad(self) else "menu.pause_hint_keyboard",
+		keys
+	)
 
 
 ## The last save as the session sees it, without touching the file.
