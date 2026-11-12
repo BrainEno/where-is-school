@@ -1,0 +1,127 @@
+name: Protagonist import probe
+
+# TEMPORARY (PR #118 follow-up). Runs Godot 4.7.2's own blocking import on the checkout and
+# reports, as annotations, the `.import` sidecar the engine generated for
+# `Protagonist_Character.glb` (byte for byte, with its sha256) and a dump of what the
+# importer built for every character model (`tools/character_rig_probe.gd`). The sidecar's
+# uid and paths are the engine's, never typed by hand. This file is removed again before the
+# pull request is ready for review.
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/protagonist-import-probe.yml"
+      - "tools/character_rig_probe.gd"
+      - "assets/models/protagonist/**"
+      - "scripts/actors/character_animation.gd"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Import and dump the character rigs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          set -uo pipefail
+          godot --version | tee /tmp/godot_version.txt
+          had=0
+          [ -f assets/models/protagonist/Protagonist_Character.glb.import ] && had=1
+          echo "sidecar committed before import: ${had}"
+          godot --headless --path . --import 2>&1 | tee /tmp/import.log | tail -40 || true
+          grep -n -i "protagonist_character\|error" /tmp/import.log | head -40 > /tmp/import_grep.txt || true
+          ls -la assets/models/protagonist/
+          ls -la .godot/imported/ | grep -i protagonist || true
+
+      - name: Report the generated sidecar
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib
+          def esc(s):
+              return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          side = pathlib.Path("assets/models/protagonist/Protagonist_Character.glb.import")
+          version = pathlib.Path("/tmp/godot_version.txt").read_text().strip()
+          if not side.exists():
+              print("::error title=probe sidecar::Godot produced no Protagonist_Character.glb.import")
+          else:
+              data = side.read_bytes()
+              print("::notice title=probe sidecar sha256::%s bytes=%d godot=%s" % (
+                  hashlib.sha256(data).hexdigest(), len(data), version))
+              text = data.decode("utf-8")
+              chunks = [text[i:i + 2500] for i in range(0, len(text), 2500)]
+              for n, chunk in enumerate(chunks):
+                  print("::notice title=probe sidecar (%d/%d)::%s" % (n + 1, len(chunks), esc(chunk)))
+          grep = pathlib.Path("/tmp/import_grep.txt")
+          if grep.exists() and grep.read_text().strip():
+              print("::notice title=probe import log::%s" % esc(grep.read_text()[:2500]))
+          PY
+
+      - name: Dump the rigs
+        shell: bash
+        run: |
+          set -uo pipefail
+          timeout 300 godot --headless --path . --script res://tools/character_rig_probe.gd > /tmp/probe.log 2>&1 || true
+          grep '^RIG|' /tmp/probe.log > /tmp/rig.txt || true
+          grep -n -i "error\|warning" /tmp/probe.log | head -30 > /tmp/probe_errors.txt || true
+          wc -l /tmp/rig.txt /tmp/probe.log
+          gzip -9 -c /tmp/rig.txt | base64 -w0 > /tmp/rig.b64
+          wc -c /tmp/rig.b64
+          sha256sum /tmp/rig.txt
+
+      - name: Report the rig dump (part 1)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, pathlib
+          def esc(s):
+              return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          raw = pathlib.Path("/tmp/rig.txt").read_bytes()
+          blob = pathlib.Path("/tmp/rig.b64").read_text()
+          chunks = [blob[i:i + 3000] for i in range(0, len(blob), 3000)]
+          print("::notice title=probe rig meta::sha256=%s lines=%d b64=%d chunks=%d" % (
+              hashlib.sha256(raw).hexdigest(), raw.count(b"\n"), len(blob), len(chunks)))
+          errs = pathlib.Path("/tmp/probe_errors.txt").read_text()
+          if errs.strip():
+              print("::notice title=probe engine messages::%s" % esc(errs[:2800]))
+          for n, chunk in enumerate(chunks[:8]):
+              print("::notice title=rig b64 %02d/%02d::%s" % (n + 1, len(chunks), chunk))
+          PY
+
+      - name: Report the rig dump (part 2)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          blob = pathlib.Path("/tmp/rig.b64").read_text()
+          chunks = [blob[i:i + 3000] for i in range(0, len(blob), 3000)]
+          for n, chunk in enumerate(chunks[8:18], start=8):
+              print("::notice title=rig b64 %02d/%02d::%s" % (n + 1, len(chunks), chunk))
+          PY
+
+      - name: Report the rig dump (part 3)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          blob = pathlib.Path("/tmp/rig.b64").read_text()
+          chunks = [blob[i:i + 3000] for i in range(0, len(blob), 3000)]
+          for n, chunk in enumerate(chunks[18:28], start=18):
+              print("::notice title=rig b64 %02d/%02d::%s" % (n + 1, len(chunks), chunk))
+          if len(chunks) > 28:
+              print("::warning title=rig dump truncated::%d chunks, only 28 reported" % len(chunks))
+          PY
