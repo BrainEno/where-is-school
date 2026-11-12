@@ -461,7 +461,7 @@ def audit(models: list[str], root: str = ROOT) -> tuple[list[str], list[str], di
 # So the rigged models the game actually instantiates have a written-down structure:
 # `art/character_rig_audit/runtime_model_manifest.json`. It is not a second audit of the
 # Blender file and not a copy of the old rig audits — both of those describe different
-# stages. It is what `REQUIRED_RUNTIME_MODELS` (the two protagonist models and Q)
+# stages. It is what `REQUIRED_RUNTIME_MODELS` (the two protagonist models, Q and N)
 # contain now, node by node, checked against the file on every `--check`.
 #
 # What it locks, and why each thing is structural rather than cosmetic:
@@ -494,16 +494,18 @@ MANIFEST_SCHEMA = "where-is-school/runtime-model-manifest"
 MANIFEST_SCHEMA_VERSION = 1
 MANIFEST_PARTS = ("art", "character_rig_audit", "runtime_model_manifest.json")
 
-# The three rigged characters the game actually instantiates, exactly as the manifest must
-# spell them: the former protagonist (now the seated classroom student), Q, and the player's
-# protagonist. The manifest registers *these*, once each, and nothing else. "At least one
-# model" is not the contract: deleting Q's entry would leave the file valid, plausible and
-# silently unchecked, which is the failure this list exists to make impossible. The new
-# protagonist is last so that the first two keep the indices the tests address them by.
+# The four rigged characters the game actually instantiates, exactly as the manifest must
+# spell them: the former protagonist (now the seated classroom student), Q, the player's
+# protagonist and substitute teacher N. The manifest registers *these*, once each, and
+# nothing else. "At least one model" is not the contract: deleting Q's entry would leave the
+# file valid, plausible and silently unchecked, which is the failure this list exists to
+# make impossible. Each new character is appended, so the earlier ones keep the indices the
+# tests address them by.
 REQUIRED_RUNTIME_MODELS = (
     "assets/models/protagonist/protagonist.glb",
     "assets/models/q/q.glb",
     "assets/models/protagonist/Protagonist_Character.glb",
+    "assets/models/teacher-n/teacher-n.glb",
 )
 
 # The fields `describe_model` generates. `--update-manifest` replaces exactly these and

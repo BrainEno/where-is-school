@@ -16,8 +16,8 @@ extends SceneTree
 ##  3. **Floating or sunk.** A model whose origin is not on its base, dropped at a y that
 ##     looked right for the previous asset, hovers over the floor or buries its feet.
 ##     The characters and the desk dressing are both in this category.
-##  4. **Facing without a rule.** The two authored characters look down +Z, the pipeline
-##     says −Z, and the player's turn and the NPC's turn each apply an angle. Get one of
+##  4. **Facing without a rule.** The protagonist and Q look down +Z, N and the pipeline
+##     look down −Z, and the player's turn and the NPC's turn each apply an angle. Get one of
 ##     them wrong and a character walks backwards while every size still matches.
 ##
 ## So this test loads the real scenes — `classroom.tscn`, `player.tscn`,
@@ -40,6 +40,8 @@ const TEACHER_DESK := "res://scenes/environment/props/teacher_desk.tscn"
 const STATIONERY := "res://scenes/environment/props/stationery_supplies.tscn"
 const PROTAGONIST := "res://scenes/environment/characters/protagonist.tscn"
 const Q_CHARACTER := "res://scenes/environment/characters/q.tscn"
+const N_CHARACTER := "res://scenes/environment/characters/teacher_n.tscn"
+const NPC_ACTOR := "res://scenes/actors/npc/npc_actor.tscn"
 
 ## The six student desks, exactly where the classroom has always put them. The round that
 ## swapped the model was allowed to move the chair inside the desk, not the furniture.
@@ -80,6 +82,14 @@ const VISUAL_PIVOT_Y := 0.9
 const NPC_TURN := PI
 ## The half turn the +Z characters need on their own visual node.
 const VISUAL_CORRECTION := PI
+## 1.6466 m, the rigged Q: the rig bake dropped the ~9° authored tilt on Q's head and hair
+## nodes instead of applying it to the vertices, so the crown is 1.5 cm lower than the
+## unrigged 1.662 m. `imported_assets_test.gd` records the same number for the same reason.
+const Q_HEIGHT := 1.6466
+## 1.654 m, substitute teacher N as exported (`teacher-n.glb`, sole to crown). N is the one
+## character exported the way `docs/ASSET_PIPELINE.md` §1 asks — looking down −Z — so its
+## visual needs no correction at all.
+const N_HEIGHT := 1.654
 
 var _failures: Array[String] = []
 
@@ -539,9 +549,33 @@ func _check_q(holder: Node3D) -> void:
 	if classroom_n == null:
 		_failures.append("The classroom's N is gone.")
 	else:
-		_check_graybox_actor("The classroom N", classroom_n)
+		_check_authored_actor(
+			"The classroom N", classroom_n, N_CHARACTER, 0.0, N_HEIGHT, "N", Vector3.FORWARD
+		)
+		_check_actor_turn("The classroom N", classroom_n, Vector3.FORWARD)
+		if classroom_n.visible:
+			_failures.append(
+				"The classroom N is visible when the scene loads; it is hidden until the "
+				+ "opening brings it in through the door."
+			)
 	holder.remove_child(location)
 	location.free()
+
+	# With Q and N both modelled, no location shows the blockout any more; the fallback is
+	# still the contract for the next person to arrive, so it is checked on a bare actor.
+	var actor_packed := load(NPC_ACTOR) as PackedScene
+	if actor_packed == null:
+		_failures.append("The NPC actor scene could not be loaded.")
+	else:
+		var bare := actor_packed.instantiate() as NpcActor
+		if bare == null:
+			_failures.append("The NPC actor scene's root is not an NpcActor.")
+		else:
+			holder.add_child(bare)
+			await process_frame
+			_check_graybox_actor("A bare NpcActor", bare)
+			holder.remove_child(bare)
+			bare.free()
 
 	# The companion is the second Q, and the one a model swap forgets: the director
 	# spawns it, so nothing about the classroom proves it wears the same model.
@@ -594,7 +628,16 @@ func _check_q(holder: Node3D) -> void:
 
 ## An actor with an authored model: the model is there, turned to match the actor's −Z
 ## convention, standing on the actor's floor, with the graybox behind it not drawn.
-func _check_authored_actor(label: String, actor: NpcActor, expected_scene: String) -> void:
+##
+## `correction` is the yaw the visual node must carry (a half turn for a +Z character, none
+## for a −Z one), `height` the character's measured sole-to-crown height, and `model_faces`
+## the way the model itself looks in its wrapper's space: +Z for Q, −Z for N. That last one is
+## not taken on trust either: the feet are measured, and the toes have to point along it.
+func _check_authored_actor(
+	label: String, actor: NpcActor, expected_scene: String,
+	correction: float = VISUAL_CORRECTION, height: float = Q_HEIGHT,
+	nameplate_text: String = "Q", model_faces: Vector3 = Vector3.BACK
+) -> void:
 	if actor.visual_scene == null:
 		_failures.append("%s has no visual_scene, so it is still drawn as the capsule." % label)
 		return
@@ -611,11 +654,15 @@ func _check_authored_actor(label: String, actor: NpcActor, expected_scene: Strin
 			"%s's model is named '%s'; the tree and the tests call it 'Visual'."
 			% [label, visual.name]
 		)
-	if absf(angle_difference(visual.rotation.y, VISUAL_CORRECTION)) > 0.001:
+	if absf(angle_difference(visual.rotation.y, correction)) > 0.001:
 		_failures.append(
-			"%s's model is turned %.1f degrees on its own axis; a +Z character needs %.0f."
-			% [label, rad_to_deg(visual.rotation.y), rad_to_deg(VISUAL_CORRECTION)]
+			"%s's model is turned %.1f degrees on its own axis; a %s character needs %.0f."
+			% [
+				label, rad_to_deg(visual.rotation.y), "+Z" if model_faces.z > 0.0 else "−Z",
+				rad_to_deg(correction),
+			]
 		)
+	_check_model_facing(label, visual, model_faces)
 	if not visual.scale.is_equal_approx(Vector3.ONE):
 		_failures.append("%s's model is scaled to %s." % [label, str(visual.scale)])
 
@@ -627,13 +674,10 @@ func _check_authored_actor(label: String, actor: NpcActor, expected_scene: Strin
 			"%s's feet are at y = %.3f m while the actor stands at %.3f m."
 			% [label, extent.position.y, actor.global_position.y]
 		)
-	# 1.6466 m, the rigged asset: the rig bake dropped the ~9° authored tilt on Q's head and
-	# hair nodes instead of applying it to the vertices, so the crown is 1.5 cm lower than the
-	# unrigged 1.662 m. `imported_assets_test.gd` records the same number for the same reason.
-	if absf(extent.size.y - 1.6466) > SIZE_TOLERANCE:
+	if absf(extent.size.y - height) > SIZE_TOLERANCE:
 		_failures.append(
-			"%s's model measures %.3f m; the rigged authored character is 1.647 m."
-			% [label, extent.size.y]
+			"%s's model measures %.3f m; the rigged authored character is %.3f m."
+			% [label, extent.size.y, height]
 		)
 
 	var body := actor.get_node_or_null(^"Body") as MeshInstance3D
@@ -648,8 +692,10 @@ func _check_authored_actor(label: String, actor: NpcActor, expected_scene: Strin
 	var nameplate := actor.get_node_or_null(^"Nameplate") as Label3D
 	if nameplate == null or not nameplate.visible:
 		_failures.append("%s has no nameplate any more." % label)
-	elif String(nameplate.text) != "Q":
-		_failures.append("%s's nameplate reads '%s'." % [label, nameplate.text])
+	elif String(nameplate.text) != nameplate_text:
+		_failures.append(
+			"%s's nameplate reads '%s', not '%s'." % [label, nameplate.text, nameplate_text]
+		)
 	# A model is not a body: nothing under the actor may collide.
 	for node in _descendants(actor):
 		if node is CollisionObject3D or node is CollisionShape3D:
@@ -661,8 +707,37 @@ func _check_authored_actor(label: String, actor: NpcActor, expected_scene: Strin
 			break
 
 
+## The model's toes, measured on its skeleton, point the way the test says the model looks;
+## and the wrapper binds its clips for that same direction. A model that faced one way while
+## its clips assumed the other would walk with its knees bending forwards.
+func _check_model_facing(label: String, visual: Node3D, model_faces: Vector3) -> void:
+	var animator := visual as CharacterVisualAnimation
+	if animator == null:
+		_failures.append("%s's model has no CharacterVisualAnimation at its root." % label)
+		return
+	if animator.faces_negative_z != (model_faces.z < 0.0):
+		_failures.append(
+			"%s's wrapper binds its clips for a model facing %s, but the model faces %s."
+			% [label, "−Z" if animator.faces_negative_z else "+Z", str(model_faces)]
+		)
+	var skeleton := animator.get_skeleton()
+	var resolved: Dictionary = animator.get_bind_report().get("resolved", {})
+	if skeleton == null or not resolved.has("foot.L"):
+		_failures.append("%s has no skeleton with a left foot to measure its facing on." % label)
+		return
+	var foot := skeleton.find_bone(String(resolved["foot.L"]))
+	var to_wrapper := animator.global_transform.affine_inverse() * skeleton.global_transform
+	var toes := to_wrapper.basis * skeleton.get_bone_global_rest(foot).basis.y
+	toes.y = 0.0
+	if toes.length() < 0.0001 or toes.normalized().dot(model_faces) < 0.9:
+		_failures.append(
+			"%s's toes point %s in its wrapper; the test expects a model facing %s."
+			% [label, str(toes.normalized()), str(model_faces)]
+		)
+
+
 ## The actor's own turn is unchanged, and the model ends up looking at the target.
-func _check_actor_turn(label: String, actor: NpcActor) -> void:
+func _check_actor_turn(label: String, actor: NpcActor, model_faces: Vector3 = Vector3.BACK) -> void:
 	var visual := actor.get_visual()
 	if visual == null:
 		return
@@ -678,7 +753,7 @@ func _check_actor_turn(label: String, actor: NpcActor) -> void:
 			% [label, rad_to_deg(actor.rotation.y)]
 			+ "turn for a −Z model, and this round does not change that."
 		)
-	var model_forward := (actor.global_basis * visual.transform.basis) * Vector3(0.0, 0.0, 1.0)
+	var model_forward := (actor.global_basis * visual.transform.basis) * model_faces
 	model_forward.y = 0.0
 	if model_forward.length() > 0.0001:
 		if model_forward.normalized().dot(target.normalized()) < 0.99:
@@ -693,7 +768,7 @@ func _check_actor_turn(label: String, actor: NpcActor) -> void:
 ## An actor with no `visual_scene` keeps the blockout it always had.
 func _check_graybox_actor(label: String, actor: NpcActor) -> void:
 	if actor.visual_scene != null:
-		_failures.append("%s was given an authored model; N is still a graybox." % label)
+		_failures.append("%s has a visual_scene it was not given." % label)
 	if actor.get_visual() != null:
 		_failures.append("%s built a visual it was not given." % label)
 	var body := actor.get_node_or_null(^"Body") as MeshInstance3D
@@ -703,7 +778,6 @@ func _check_graybox_actor(label: String, actor: NpcActor) -> void:
 		return
 	if not body.visible or not head.visible:
 		_failures.append("%s's graybox is hidden although it has no model to draw." % label)
-
 
 # --- helpers ----------------------------------------------------------------
 
