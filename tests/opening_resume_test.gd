@@ -46,6 +46,57 @@ const SESSION_SCRIPT := "res://scripts/ui/game_session.gd"
 const SETTINGS_PATH := "user://settings.cfg"
 const OLD_SEED := 424242
 const OLD_ENTRY := &"new_game_probe_entry"
+const SAVE_PATH := "user://save.json"
+const USER_DIR := "user://"
+
+
+## The real file layer, with the calls a case names made to fail.
+##
+## A new game's first act is moving the save aside, and the only interesting failure is the
+## one that happens *there*, halfway through — which no test can ask a real disk to produce.
+## Everything not listed goes to the real filesystem, so the bytes asserted on are real.
+class FaultyIO:
+	var fail_renames: Array = []
+	var renames := 0
+	var renamed: Array = []
+
+	func exists(path: String) -> bool:
+		return FileAccess.file_exists(path)
+
+	func read_bytes(path: String) -> PackedByteArray:
+		return FileAccess.get_file_as_bytes(path)
+
+	func write_bytes(path: String, data: PackedByteArray) -> int:
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file == null:
+			return FileAccess.get_open_error()
+		file.store_buffer(data)
+		var error := file.get_error()
+		file.close()
+		return error
+
+	func rename(from: String, to: String) -> int:
+		var index := renames
+		renames += 1
+		renamed.append([from, to])
+		if fail_renames.has(index):
+			return ERR_FILE_CANT_WRITE
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.rename(from, to)
+
+	func remove(path: String) -> int:
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.remove(path)
+
+	func list() -> PackedStringArray:
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return PackedStringArray()
+		return dir.get_files()
 
 var _failures: Array[String] = []
 var _game_state: Node = null
@@ -87,6 +138,10 @@ func _run() -> void:
 		await _check_new_game_from_title()
 		await _check_new_game_from_pause()
 		await _check_broken_save_new_game()
+		await _check_entry_points_share_the_flow()
+		await _check_new_game_keeps_everything_when_the_save_cannot_move()
+		await _check_new_game_rolls_back_when_the_opening_cannot_load()
+		await _check_new_game_ignores_a_second_click()
 		await _check_settings_persist(settings)
 	Harness.clear_session_state(self)
 	Harness.finish(
@@ -637,16 +692,269 @@ func _wait_for_world(reports: Array) -> Node:
 	return world
 
 
+# --- When a new game must not start -----------------------------------------
+
+
+## The three ways in all ask the same session for the same transaction, because a second
+## copy of "clear the game and load the opening" is a second set of bugs (#122).
+func _check_entry_points_share_the_flow() -> void:
+	_case_label = "the three ways into a new game"
+	Harness.stage = _case_label
+	var files := {
+		"the title screen": "res://scripts/ui/title_screen.gd",
+		"the pause menu": "res://scripts/ui/pause_menu.gd",
+		"the end card": "res://scripts/ui/end_card.gd",
+	}
+	for label: String in files:
+		var path: String = files[label]
+		var text := FileAccess.get_file_as_string(path)
+		_expect(not text.is_empty(), "%s: %s could not be read." % [_case_label, path])
+		_expect(
+			text.contains("start_new_game"),
+			"%s: %s does not go through the session's new game." % [_case_label, label]
+		)
+		_expect(
+			text.contains("Session"),
+			"%s: %s never talks to the session." % [_case_label, label]
+		)
+	var session_text := FileAccess.get_file_as_string(SESSION_SCRIPT)
+	for marker: String in [
+		"new_game_failed", "change_scene_to_file", "suspend_writes", "scene_change_failed"
+	]:
+		_expect(
+			session_text.contains(marker),
+			"%s: the session never mentions %s." % [_case_label, marker]
+		)
+
+
+## The save cannot be moved aside (a locked file, a read-only user directory). Nothing may
+## be cleared, nothing may be freed, and the player must be told.
+##
+## Run twice: once where the first rename fails and the fallback works, once where every
+## rename fails. Both have to leave the session exactly as it was.
+func _check_new_game_keeps_everything_when_the_save_cannot_move() -> void:
+	for fail_renames: Array in [[0], [0, 1, 2, 3]]:
+		await _refused_stage(fail_renames)
+
+
+func _refused_stage(fail_renames: Array) -> void:
+	_case_label = "a new game whose save cannot move (%s)" % str(fail_renames)
+	Harness.stage = _case_label
+	var world := await _make_saved_world()
+	var save := root.get_node_or_null(^"Save")
+	var session := root.get_node_or_null(^"Session")
+	if world == null or save == null or session == null:
+		_failures.append("%s: the fixture could not be built." % _case_label)
+		return
+	var before := FileAccess.get_file_as_bytes(SAVE_PATH)
+	var flags_before: Dictionary = _game_state.get_snapshot()
+	var entries_before: int = _narrative.get_entries().size()
+	var scene_before := current_scene
+
+	var failures: Array = []
+	var on_failed := func(report: Dictionary) -> void: failures.append(report)
+	session.connect("new_game_failed", on_failed)
+	var faults := FaultyIO.new()
+	faults.fail_renames = fail_renames
+	save.set("io", faults)
+	var report: Dictionary = await session.call("start_new_game", world)
+	save.set("io", null)
+	session.disconnect("new_game_failed", on_failed)
+
+	_expect(
+		not bool(report.get("ok", true)),
+		"%s: the new game started although the save could not be moved: %s" % [_case_label, str(report)]
+	)
+	_expect(
+		String(report.get("reason", "")) == "save_stage_failed",
+		"%s: the failure reason was '%s'." % [_case_label, report.get("reason")]
+	)
+	_expect(not String(report.get("detail", "")).is_empty(), "%s: the report gives no detail." % _case_label)
+	_expect(String(report.get("save_path", "")) == SAVE_PATH, "%s: the report names no save." % _case_label)
+	_expect(failures.size() == 1, "%s: a failure was not announced exactly once." % _case_label)
+	_expect(
+		FileAccess.file_exists(SAVE_PATH) and FileAccess.get_file_as_bytes(SAVE_PATH) == before,
+		"%s: the save on disk is not the save that was there before." % _case_label
+	)
+	_expect(
+		_game_state.get_snapshot() == flags_before,
+		"%s: the story flags were cleared by a new game that did not start." % _case_label
+	)
+	_expect(
+		_narrative.get_entries().size() == entries_before,
+		"%s: the knowledge log was cleared by a new game that did not start." % _case_label
+	)
+	_expect(is_instance_valid(world), "%s: the running world was freed anyway." % _case_label)
+	# Somewhere a player can see: the world they were in, or the title screen. Never a freed
+	# scene, and never an empty one.
+	await _frames(4)
+	_expect(
+		(is_instance_valid(world) and current_scene == world) or current_scene is TitleScreen,
+		"%s: the player was left on %s." % [
+			_case_label, current_scene.name if current_scene != null else "nothing"
+		]
+	)
+	if scene_before != null and is_instance_valid(scene_before) and current_scene != scene_before:
+		_expect(current_scene is TitleScreen, "%s: the screen changed to something unknown." % _case_label)
+	_expect(
+		not bool(session.call("is_starting_new_game")),
+		"%s: the session stayed busy after a failure." % _case_label
+	)
+	_expect(
+		String(session.call("get_last_new_game_report").get("reason", "")) == "save_stage_failed",
+		"%s: the failure was not kept for the UI to read." % _case_label
+	)
+	if is_instance_valid(world):
+		world.queue_free()
+		await _frames(2)
+	Harness.clear_session_state(self)
+
+
+## The save moves, the old world lets go, the session is emptied - and then the opening
+## will not load. Everything that was cleared must come back, the save must come back byte
+## for byte, and the player must land on a screen that works.
+func _check_new_game_rolls_back_when_the_opening_cannot_load() -> void:
+	_case_label = "a new game whose opening cannot load"
+	Harness.stage = _case_label
+	var world := await _make_saved_world()
+	var session := root.get_node_or_null(^"Session")
+	var save := root.get_node_or_null(^"Save")
+	if world == null or session == null or save == null:
+		_failures.append("%s: the fixture could not be built." % _case_label)
+		return
+	var before := FileAccess.get_file_as_bytes(SAVE_PATH)
+	var flags_before: Dictionary = _game_state.get_snapshot()
+	var entries_before: int = _narrative.get_entries().size()
+
+	var failures: Array = []
+	var on_failed := func(report: Dictionary) -> void: failures.append(report)
+	session.connect("new_game_failed", on_failed)
+	var world_scene: String = session.get("world_scene")
+	session.set("world_scene", "res://scenes/ui/does_not_exist.tscn")
+	var report: Dictionary = await session.call("start_new_game", world)
+	session.set("world_scene", world_scene)
+	session.disconnect("new_game_failed", on_failed)
+	await _frames(4)
+
+	_expect(not bool(report.get("ok", true)), "%s: the failure was reported as a new game: %s" % [
+		_case_label, str(report)
+	])
+	_expect(
+		String(report.get("reason", "")) == "scene_change_failed",
+		"%s: the failure reason was '%s'." % [_case_label, report.get("reason")]
+	)
+	_expect(failures.size() == 1, "%s: a failure was not announced exactly once." % _case_label)
+	_expect(
+		FileAccess.file_exists(SAVE_PATH) and FileAccess.get_file_as_bytes(SAVE_PATH) == before,
+		"%s: the save was not put back after a failed hand-off." % _case_label
+	)
+	_expect(
+		_save_strays().is_empty(),
+		"%s: a failed hand-off left %s behind." % [_case_label, str(_save_strays())]
+	)
+	_expect(
+		_game_state.get_snapshot() == flags_before,
+		"%s: the story flags were not restored." % _case_label
+	)
+	_expect(
+		_narrative.get_entries().size() == entries_before,
+		"%s: the knowledge log was not restored." % _case_label
+	)
+	_expect(
+		current_scene is TitleScreen,
+		"%s: the player was left on %s instead of a screen that works."
+		% [_case_label, current_scene.name if current_scene != null else "nothing"]
+	)
+	_expect(
+		not bool(session.call("is_starting_new_game")),
+		"%s: the session stayed busy after a failure." % _case_label
+	)
+	Harness.clear_session_state(self)
+
+
+## Two clicks, one transaction: the second press must be refused while the first is still
+## running, and only one report may come out the other end.
+func _check_new_game_ignores_a_second_click() -> void:
+	_case_label = "a second click on new game"
+	Harness.stage = _case_label
+	var world := await _make_saved_world()
+	var session := root.get_node_or_null(^"Session")
+	if world == null or session == null:
+		_failures.append("%s: the fixture could not be built." % _case_label)
+		return
+	var reports: Array = []
+	var on_started := func(report: Dictionary) -> void: reports.append(report)
+	session.connect("new_game_started", on_started)
+
+	# The first press is not awaited: it is still mid-flight when the second one lands.
+	session.call("start_new_game", world, false)
+	await _frames(1)
+	# No world: the refusal happens before anything looks at it, and a freed node cannot be
+	# passed to a typed parameter at all.
+	var second: Dictionary = await session.call("start_new_game", null, false)
+	_expect(
+		String(second.get("reason", "")) == "busy",
+		"%s: the second press was not refused: %s" % [_case_label, str(second)]
+	)
+	for _index in 240:
+		if not reports.is_empty():
+			break
+		await process_frame
+	session.disconnect("new_game_started", on_started)
+
+	_expect(reports.size() == 1, "%s: %d new games ran." % [_case_label, reports.size()])
+	if reports.size() == 1:
+		var report: Dictionary = reports[0]
+		var steps := Array(report.get("steps", PackedStringArray()))
+		_expect(bool(report.get("ok", false)), "%s: the one new game failed: %s" % [_case_label, str(report)])
+		_expect(
+			steps.count("save_staged") == 1 and steps.count("state_cleared") == 1,
+			"%s: the transaction ran its steps twice: %s" % [_case_label, str(steps)]
+		)
+	Harness.clear_session_state(self)
+
+
+## Every file the save system may leave beside the save, by name.
+func _save_strays() -> PackedStringArray:
+	var found := PackedStringArray()
+	var dir := DirAccess.open(USER_DIR)
+	if dir == null:
+		return found
+	for name: String in dir.get_files():
+		if name.begins_with("save.json."):
+			found.append(name)
+	found.sort()
+	return found
+
+
 ## The proof that nothing came back: the report, the file, and the booted world.
 func _expect_fresh_boot(world: Node, reports: Array) -> void:
 	if not reports.is_empty():
 		var report: Dictionary = reports[0]
 		_expect(bool(report.get("ok", false)), "%s: the report is not ok: %s" % [_case_label, str(report)])
+		# The steps are the transaction, in order, and only the ones that apply to this
+		# starting point: there may be no save to move aside, and no world to free.
+		var expected := "writes_suspended,autosave_off,unpaused,"
+		expected += "save_staged," if bool(report.get("had_save", false)) else "no_save,"
+		if bool(report.get("had_world", false)):
+			expected += "world_freed,"
+		expected += (
+			"state_cleared,verified,scene_entered,staged_discarded,writes_released,committed"
+		)
 		var steps := ",".join(report.get("steps", PackedStringArray()))
 		_expect(
-			steps == "autosave_off,world_freed,save_deleted,state_cleared,verified",
-			"%s: the steps ran as %s." % [_case_label, steps]
+			steps == expected,
+			"%s: the steps ran as %s, not %s (had_save %s, had_world %s)."
+			% [_case_label, steps, expected,
+				str(report.get("had_save")), str(report.get("had_world"))]
 		)
+		_expect(bool(report.get("staged_removed", false)), "%s: the staged copy was not removed." % _case_label)
+		_expect(
+			(report.get("leftovers", []) as Array).is_empty(),
+			"%s: the new game left %s behind." % [_case_label, str(report.get("leftovers", []))]
+		)
+		var strays := _save_strays()
+		_expect(strays.is_empty(), "%s: the new game left %s on disk." % [_case_label, str(strays)])
 	if world == null:
 		return
 	var sequence := world.get_node_or_null("OpeningSequence") as OpeningSequence
