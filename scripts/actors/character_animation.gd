@@ -402,8 +402,8 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 
 
 ## The rotation a `CLIPS` key describes, as an offset from the bone's rest: degrees about
-## the bone's semantic X, Y and Z. `bind()` writes `rest * F * offset_rotation(key) * F⁻¹`,
-## with F the bone's `semantic_frame()`.
+## the bone's semantic X, Y and Z. `bind()` writes
+## `rest * F * offset_rotation(key) * F.inverse()`, with F the bone's `semantic_frame()`.
 static func offset_rotation(degrees: Vector3) -> Quaternion:
 	return Quaternion.from_euler(
 		Vector3(deg_to_rad(degrees.x), deg_to_rad(degrees.y), deg_to_rad(degrees.z))
