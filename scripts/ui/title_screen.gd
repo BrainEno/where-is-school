@@ -263,6 +263,7 @@ func _draw() -> void:
 	var view := size
 	if view.x <= 0.0 or view.y <= 0.0:
 		return
+	draw_rect(Rect2(Vector2.ZERO, view), MenuStyle.INK)
 	var horizon_y := view.y * 0.59
 	var line := Color(MenuStyle.ACCENT, 0.14)
 	draw_line(Vector2(view.x * 0.59, horizon_y), Vector2(view.x * 0.96, horizon_y), line, 1.0)
