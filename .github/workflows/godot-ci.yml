@@ -240,6 +240,8 @@ jobs:
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          # Synthetic pointer events need a real GUI viewport; run this standalone test under Xvfb.
+          run_check title_menu_interaction 240 xvfb-run -a godot --resolution 1600x900 --path . --script res://tests/title_menu_interaction_test.gd || status=1
           # The settings themselves (#105, #106): every preference survives a restart without
           # touching `[display] locale`, damaged files and rule-breaking bindings fall back,
           # rebinding refuses what it must, a capture never traps or leaks input, the three
