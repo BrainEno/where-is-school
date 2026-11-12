@@ -1,6 +1,7 @@
 extends SceneTree
-## The imported production assets (round two): four GLBs that came from outside the
-## repository — two Poly Haven CC0 props and the owner's two Blender characters —
+## The imported production assets (round two): five GLBs that came from outside the
+## repository — two Poly Haven CC0 props and the owner's three Blender characters (the
+## protagonist, the former protagonist who now sits in the classroom as a student, and Q) —
 ## measured in the engine, not in a file listing.
 ##
 ##   godot --headless --path . --script res://tests/imported_assets_test.gd
@@ -12,7 +13,7 @@ extends SceneTree
 ## not. Three deviations exist and each is pinned here so a re-export that silently
 ## changes it fails:
 ##
-## 1. the two characters face **+Z**, not the -Z the pipeline asks for, and the wrapper
+## 1. the characters face **+Z**, not the -Z the pipeline asks for, and the wrapper
 ##    does not hide it (a yaw baked into the wrapper would break the moment the GLB is
 ##    replaced) — see docs/ASSET_PIPELINE.md §10;
 ## 2. the stationery is a *display line-up* of nine separate items centred on its own
@@ -67,17 +68,36 @@ const ASSETS: Array[Dictionary] = [
 	},
 	{
 		"name": "protagonist",
-		"file": "res://assets/models/protagonist/protagonist.glb",
+		"file": "res://assets/models/protagonist/Protagonist_Character.glb",
 		"wrapper": "res://scenes/environment/characters/protagonist.tscn",
+		# 1.05 m wide because the arms rest in an A-pose (~35° out from the body).
+		"size": Vector3(1.0457, 1.7669, 0.3236),
+		"meshes": 9,
+		"surfaces": 15,
+		"model_base": 0.0,
+		"scaled_nodes": {},
+		"kind": "character",
+		"shape": "",
+		"anchor_height": 1.2,
+		"note": "the player's protagonist (PR #118): 60-joint skin, A-pose arms, five embedded "
+			+ "clips the game does not play",
+	},
+	{
+		"name": "former protagonist",
+		"file": "res://assets/models/protagonist/protagonist.glb",
+		"wrapper": "res://scenes/environment/characters/classroom_student.tscn",
 		"size": Vector3(0.5559, 1.7269, 0.3370),
 		"meshes": 78,
 		"surfaces": 78,
 		"model_base": 0.0170,
 		"scaled_nodes": {},
-		"kind": "character",
+		"kind": "seated_character",
 		"shape": "",
-		"anchor_height": 1.2,
-		"note": "the player's own expressionist character, rigid-weighted, no animation",
+		# The wrapper lowers the model so that, in `sit_idle`, the soles meet the floor the
+		# wrapper stands on: its origin is the floor under the seat, not the standing base.
+		"seated_drop": -0.347,
+		"note": "the first protagonist model, now a seated classroom student; rigid-weighted, "
+			+ "no embedded animation",
 	},
 	{
 		"name": "q",
@@ -126,7 +146,7 @@ func _run() -> void:
 	_check_documents()
 	Harness.finish(
 		self, _failures,
-		"all four imported assets measure at their declared size and ship a wrapper that matches them."
+		"all five imported assets measure at their declared size and ship a wrapper that matches them."
 	)
 
 
@@ -199,7 +219,7 @@ func _check_model(asset: Dictionary, holder: Node3D) -> void:
 		)
 
 	_check_scaled_nodes(label, instance, asset)
-	if String(asset["kind"]) == "character":
+	if String(asset["kind"]).ends_with("character"):
 		_check_facing(label, meshes)
 
 	holder.remove_child(instance)
@@ -297,13 +317,16 @@ func _check_wrapper(asset: Dictionary, holder: Node3D) -> void:
 			_check_prop_wrapper(label, wrapper, shapes, asset)
 		"character":
 			_check_character_wrapper(label, wrapper, shapes, asset)
+		"seated_character":
+			_check_seated_wrapper(label, wrapper, shapes, asset)
 		_:
 			_check_decoration_wrapper(label, wrapper, shapes)
 
 	# Whatever the kind, the wrapper's own origin sits on the object's base: that is the
-	# one promise every consumer relies on.
+	# one promise every consumer relies on. A seated character's base is the floor under
+	# its chair, which `_check_seated_wrapper()` measures instead.
 	var extent := _subtree_aabb(wrapper)
-	if extent.size.y > 0.0:
+	if extent.size.y > 0.0 and kind != "seated_character":
 		var base := extent.position.y - wrapper.global_position.y
 		if absf(base) > WRAPPER_BASE_TOLERANCE:
 			_failures.append(
@@ -395,6 +418,30 @@ func _check_character_wrapper(
 			)
 
 
+## A seated character is scenery that happens to be a person: the classroom student. It has
+## no collision (like every character visual), no interaction anchor (nothing interacts with
+## it), and its model hangs at the recorded seated drop so the clip it opens in, `sit_idle`,
+## puts its soles on the floor the wrapper stands on.
+func _check_seated_wrapper(
+	label: String, wrapper: Node3D, shapes: Array[CollisionShape3D], asset: Dictionary
+) -> void:
+	if wrapper is PhysicsBody3D or not shapes.is_empty():
+		_failures.append("The wrapper for %s collides; a seated student must not." % label)
+	if wrapper.get_node_or_null(^"InteractionAnchor") != null:
+		_failures.append("The wrapper for %s has an InteractionAnchor; nothing interacts with it." % label)
+	var animator := wrapper as CharacterVisualAnimation
+	if animator == null or not animator.start_seated:
+		_failures.append("The wrapper for %s does not open seated." % label)
+	var model := wrapper.get_node_or_null(^"Model") as Node3D
+	if model == null:
+		_failures.append("The wrapper for %s has no Model." % label)
+	elif absf(model.position.y - float(asset["seated_drop"])) > BASE_TOLERANCE:
+		_failures.append(
+			"The wrapper for %s hangs its model at y=%.4f, recorded seated drop %.4f."
+			% [label, model.position.y, float(asset["seated_drop"])]
+		)
+
+
 ## Desk dressing does not collide on purpose: it sits on furniture that already does, and
 ## a 0.16 m prop with its own collider would carve a hole in the baked navigation mesh.
 func _check_decoration_wrapper(
@@ -441,11 +488,16 @@ func _check_documents() -> void:
 
 
 ## A runtime model is one `.glb` and nothing else. A stray `.bin`, a `textures/` folder or
-## a `.blend` next to the model means the export was copied rather than converted.
+## a `.blend` next to the model means the export was copied rather than converted. Two
+## recorded models may share a directory (`protagonist/` holds the protagonist and the
+## former protagonist); each one still brings only its `.glb` and `.import`.
 func _check_model_directory(asset: Dictionary) -> void:
 	var directory := String(asset["file"]).get_base_dir()
-	var model_file := String(asset["file"]).get_file()
-	var allowed := [model_file, model_file + ".import"]
+	var allowed: Array[String] = []
+	for other: Dictionary in ASSETS:
+		if String(other["file"]).get_base_dir() == directory:
+			allowed.append(String(other["file"]).get_file())
+			allowed.append(String(other["file"]).get_file() + ".import")
 	var dir := DirAccess.open(directory)
 	if dir == null:
 		_failures.append("Cannot list %s." % directory)

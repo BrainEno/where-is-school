@@ -1,4 +1,4 @@
-[gd_scene load_steps=79 format=3]
+[gd_scene load_steps=80 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="20_ambience_player"]
 [ext_resource type="PackedScene" path="res://scenes/environment/characters/q.tscn" id="21_q_character"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/stationery_supplies.tscn" id="22_stationery_supplies"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/classroom_student.tscn" id="23_classroom_student"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_section.tres" id="c_wall_section"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_north.tres" id="c_wall_north"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_west.tres" id="c_wall_west"]
@@ -575,6 +576,9 @@ visible = false
 npc_id = &"n"
 debug_name = "N"
 body_color = Color(0.5, 0.54, 0.56, 1)
+
+[node name="SeatedStudent" parent="Actors" instance=ExtResource("23_classroom_student")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.5, 0, -0.85)
 
 [node name="NEntryPath" type="Node3D" parent="."]
 

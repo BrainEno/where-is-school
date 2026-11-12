@@ -39,17 +39,18 @@ What it checks, and why each one is a failure rather than a note:
 - **Model names are unique across the library.** Wrappers, tests and `.gitignore`
   exceptions are all written against a model's bare name; two files called the same thing
   make `grep` and code review lie.
-- **The two runtime characters still have the structure
+- **The three runtime characters still have the structure
   `art/character_rig_audit/runtime_model_manifest.json` records.** Nodes, node paths, mesh
   and skin bindings, primitives, materials, the joint list in order, and the embedded
-  animations (both models have none — the clips are built in
+  animations (the former protagonist and Q have none; the protagonist embeds five the game
+  does not play — its clips, like theirs, are built in
   `scripts/actors/character_animation.gd`) are compared against the file on every run. A
   lost bone, a split mesh, an unregistered node or an animation that appeared inside a
   `.glb` fails here; the other checks cannot see any of it, because a model can be clean,
   small, camera-free and still bound to a rig nobody declared. Structural changes are
   allowed — `--update-manifest` rewrites the record and the diff is the review.
-- **The manifest is a document before it is a snapshot.** Both characters are registered,
-  once each and nothing else; every structural field exists and has the right shape, and the
+- **The manifest is a document before it is a snapshot.** All three characters are
+  registered, once each and nothing else; every structural field exists and has the right shape, and the
   counters agree with the lists they count; and mesh, skin and animation names are unique on
   both sides, because the comparison pairs resources by name and a duplicate would fold one
   of them out of the check. All of that is validated before a `.glb` is opened, and
@@ -457,10 +458,10 @@ def audit(models: list[str], root: str = ROOT) -> tuple[list[str], list[str], di
 # still the right size, still has no camera, and the character silently binds to a rig that
 # is not the one the clips were written for.
 #
-# So the two models the game actually instantiates have a written-down structure:
+# So the rigged models the game actually instantiates have a written-down structure:
 # `art/character_rig_audit/runtime_model_manifest.json`. It is not a second audit of the
 # Blender file and not a copy of the old rig audits — both of those describe different
-# stages. It is what `assets/models/protagonist/protagonist.glb` and `assets/models/q/q.glb`
+# stages. It is what `REQUIRED_RUNTIME_MODELS` (the two protagonist models and Q)
 # contain now, node by node, checked against the file on every `--check`.
 #
 # What it locks, and why each thing is structural rather than cosmetic:
@@ -493,13 +494,16 @@ MANIFEST_SCHEMA = "where-is-school/runtime-model-manifest"
 MANIFEST_SCHEMA_VERSION = 1
 MANIFEST_PARTS = ("art", "character_rig_audit", "runtime_model_manifest.json")
 
-# The two models the game actually instantiates, exactly as the manifest must spell them.
-# The manifest registers *these*, once each, and nothing else. "At least one model" is not
-# the contract: deleting Q's entry would leave the file valid, plausible and silently
-# unchecked, which is the failure this list exists to make impossible.
+# The three rigged characters the game actually instantiates, exactly as the manifest must
+# spell them: the former protagonist (now the seated classroom student), Q, and the player's
+# protagonist. The manifest registers *these*, once each, and nothing else. "At least one
+# model" is not the contract: deleting Q's entry would leave the file valid, plausible and
+# silently unchecked, which is the failure this list exists to make impossible. The new
+# protagonist is last so that the first two keep the indices the tests address them by.
 REQUIRED_RUNTIME_MODELS = (
     "assets/models/protagonist/protagonist.glb",
     "assets/models/q/q.glb",
+    "assets/models/protagonist/Protagonist_Character.glb",
 )
 
 # The fields `describe_model` generates. `--update-manifest` replaces exactly these and
@@ -1084,7 +1088,7 @@ def compare_model(expected: dict, actual: dict, rel: str) -> list[str]:
 def _load_manifest(manifest: str, rel_manifest: str) -> tuple[object, list[str]]:
     """The parsed document, or the reason it could not be parsed. Never raises."""
     if not os.path.exists(manifest):
-        return None, ["%s is missing; the two runtime characters are not structurally checked "
+        return None, ["%s is missing; the runtime characters are not structurally checked "
                       "without it (rebuild it with --update-manifest)" % rel_manifest]
     try:
         with open(manifest, encoding="utf-8") as handle:

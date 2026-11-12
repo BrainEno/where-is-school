@@ -272,7 +272,8 @@ hidden. The companion record is
 |---|---|---|---|---|---|
 | School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
-| Protagonist | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/protagonist.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D` + `InteractionAnchor` |
+| Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
+| Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
 | Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.647 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor`; 16-bone rig |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
@@ -282,7 +283,10 @@ character owns the capsule — so it is a `Node3D`, a `Model` child, and an
 `InteractionAnchor` at chest height so nobody re-derives that per character. A decoration
 wrapper carries no collision on purpose: desk dressing sits on furniture that already
 collides, and a 0.16 m prop with its own collider would carve a hole in the baked
-navigation mesh.
+navigation mesh. A seated character wrapper (the classroom student) is a character visual
+that opens in `sit_idle` (`CharacterVisualAnimation.start_seated`) with its model lowered
+so the seated soles meet the wrapper's floor; it has no anchor, because nothing interacts
+with it.
 
 ### 10.2 Three deviations, recorded rather than hidden
 
@@ -313,8 +317,9 @@ navigation mesh.
    that gave Q its 16-bone armature baked that scale into the collar's vertices, so the
    exception is gone and the record is empty — the size, base and facing assertions above
    did not move, which is the evidence that the bake changed nothing on screen. The
-   protagonist's origin sitting 1.7 cm above its sole is still recorded at 5 mm
-   tolerance, so a re-export that moves it fails the test rather than a placement.
+   former protagonist's origin sitting 1.7 cm above its sole is still recorded at 5 mm
+   tolerance, so a re-export that moves it fails the test rather than a placement. The
+   protagonist that replaced it (PR #118) stands on its origin.
 
 ### 10.3 Textures are embedded, not extracted
 
@@ -348,7 +353,8 @@ placement as well as a contract:
 |---|---|---|
 | `props/school_desk.tscn` | `classroom_desk.tscn`'s `Desk` child | the six classroom desks. The old 1.2 × 0.8 × 0.6 blockout body — and its duplicate collider — is gone; the chair stays, moved to the desk's back edge. |
 | `props/stationery_supplies.tscn` | `classroom.tscn` → `Furniture/DeskB2/Stationery` | one instance, on the player's own desk, no collision. |
-| `characters/protagonist.tscn` | `player.tscn` → `VisualPivot/Visual/Model` | `Visual` is a `Node3D` pivot at y = 0.9; the model hangs at −0.917 so its 1.7 cm origin offset puts its sole on the floor. |
+| `characters/protagonist.tscn` | `player.tscn` → `VisualPivot/Visual/Model` | `Visual` is a `Node3D` pivot at y = 0.9; the model hangs at −0.9 so its sole, which is on its own origin, is on the floor. (−0.917 until PR #118: the former model stood 1.7 cm above its origin.) |
+| `characters/classroom_student.tscn` | `classroom.tscn` → `Actors/SeatedStudent` | the former protagonist on desk A1's chair, yawed 180° like every +Z character, seated from the first frame; no collision, no controller, no interaction, so navigation and the room's interactables are unchanged. |
 | `characters/q.tscn` | `classroom.tscn` → `Actors/Q`, and `companion.tscn` → `Actor` | both name it as `NpcActor.visual_scene`, which hides the graybox and adds no collision. |
 
 The teacher's desk is deliberately not on that list: it is 1.9 m wide, and the student desk
