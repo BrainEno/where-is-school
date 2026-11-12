@@ -18,10 +18,11 @@ The split this script maintains:
 A second face follows the same split: `art/fonts/NotoSerifSC-Regular.otf` (Noto Serif SC
 Regular from notofonts/noto-cjk, 11.1 MiB) is cut down to
 `assets/fonts/NotoSerifSC-Regular.otf`, the serif the dialogue panel sets its sentences,
-names and options in (`scripts/ui/dialogue_panel.gd`). It only ever draws dialogue, so its
-character set is taken from what can reach the dialogue panel (`data/`, `scenes/`,
+names and options in (`scripts/ui/dialogue_panel.gd`), and the title screen and pause menu
+their name, headings, entries and questions (`scripts/ui/menu_style.gd`). It only ever draws
+game text, so its character set is taken from what can reach the player (`data/`, `scenes/`,
 `scripts/`, `project.godot`) and not from the editor add-on or the tests; anything it does
-not carry falls back to the Sans subset instead of becoming a tofu box (the panel sets that
+not carry falls back to the Sans subset instead of becoming a tofu box (each user sets that
 fallback). Both faces are built and checked by one run of this script, so CI did not need a
 second step.
 

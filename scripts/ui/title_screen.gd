@@ -11,6 +11,12 @@ extends Control
 ## Starting over when there is something to lose always asks first; the question opens on
 ## "Cancel". The list is a column of plain text on the same ink as the reading band, set to
 ## the left the way the band is: a page, not a storefront.
+##
+## The page is set like the dialogue column (#125): the name in the serif, emboldened and
+## tracked, an ember rule in the margin, the entries in the serif with a slanted ember mark
+## when selected, and under Continue the room and the time the save was written. Behind it,
+## to the right, one distant building cut out of two colour fields on a bare horizon - a
+## spare stage (ART_BIBLE, "Outdoor spaces") drawn in `_draw()`, not an illustration.
 
 signal entry_activated(id: StringName)
 
@@ -20,6 +26,8 @@ var _save_report: Dictionary = {}
 var _column: VBoxContainer = null
 var _entries_box: VBoxContainer = null
 var _title: Label = null
+## The line under Continue: where the save stands and when it was written.
+var _continue_detail: Label = null
 var _notice: Label = null
 var _hint: Label = null
 var _entries: Dictionary = {}
@@ -36,12 +44,13 @@ func _ready() -> void:
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 10)
 	add_child(_column)
-	var game_name := String(ProjectSettings.get_setting("application/config/name", ""))
-	_title = MenuStyle.label(game_name, MenuStyle.TITLE_SIZE + 14, _factor, MenuStyle.PAPER)
+	_title = MenuStyle.serif_label(
+		_display_name(), MenuStyle.DISPLAY_SIZE, _factor, MenuStyle.PAPER, 0.7, 4
+	)
 	_title.name = "Title"
 	_column.add_child(_title)
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 18.0)
+	gap.custom_minimum_size = Vector2(0.0, 40.0)
 	_column.add_child(gap)
 	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
 	_notice.name = "Notice"
@@ -49,7 +58,7 @@ func _ready() -> void:
 	_column.add_child(_notice)
 	_entries_box = VBoxContainer.new()
 	_entries_box.name = "Entries"
-	_entries_box.add_theme_constant_override(&"separation", 2)
+	_entries_box.add_theme_constant_override(&"separation", 4)
 	_column.add_child(_entries_box)
 	_hint = MenuStyle.label("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_hint.name = "Hint"
@@ -151,11 +160,18 @@ func activate(id: StringName) -> void:
 				get_tree().quit()
 
 
+## "where-is-school" set as a name: words, not a slug, in capitals for the tracking.
+static func _display_name() -> String:
+	var game_name := String(ProjectSettings.get_setting("application/config/name", ""))
+	return game_name.replace("-", " ").replace("_", " ").strip_edges().to_upper()
+
+
 func _build_entries() -> void:
 	for child in _entries_box.get_children():
 		_entries_box.remove_child(child)
 		child.queue_free()
 	_entries.clear()
+	_continue_detail = null
 	var ids: Array[StringName] = []
 	if _save_state == &"valid":
 		ids.append(&"continue")
@@ -163,13 +179,33 @@ func _build_entries() -> void:
 	ids.append(&"settings")
 	ids.append(&"quit")
 	for id: StringName in ids:
-		var entry := MenuStyle.entry_button(_entry_text(id), MenuStyle.ENTRY_SIZE, _factor)
+		var entry := MenuStyle.page_entry(_entry_text(id), MenuStyle.ENTRY_SIZE, _factor)
 		entry.name = String(id)
 		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
 		entry.pressed.connect(activate.bind(id))
 		_entries_box.add_child(entry)
 		_entries[id] = entry
+		if id == &"continue":
+			_add_continue_detail()
 	_refresh_texts()
+
+
+## The save's room and time, indented to the entry text and a step quieter. It is not a
+## button, so the focus moves straight from Continue to New game.
+func _add_continue_detail() -> void:
+	var holder := MarginContainer.new()
+	holder.name = "ContinueDetail"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_theme_constant_override(&"margin_left", 26)
+	holder.add_theme_constant_override(&"margin_bottom", 6)
+	_continue_detail = MenuStyle.label("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
+	_continue_detail.name = "Detail"
+	holder.add_child(_continue_detail)
+	_entries_box.add_child(holder)
+
+
+func get_continue_detail() -> String:
+	return _continue_detail.text if _continue_detail != null else ""
 
 
 func _entry_text(id: StringName) -> String:
@@ -182,6 +218,11 @@ func _refresh_texts() -> void:
 	for id: Variant in _entries.keys():
 		var entry := _entries[id] as Button
 		entry.text = _entry_text(StringName(id))
+	if _continue_detail != null:
+		_continue_detail.text = MenuStyle.save_caption(
+			String(_save_report.get("location_id", "")), int(_save_report.get("saved_at_unix", 0))
+		)
+		(_continue_detail.get_parent() as Control).visible = not _continue_detail.text.is_empty()
 	if _save_state == &"broken":
 		var lines := PackedStringArray([L10n.t("menu.save_unreadable")])
 		var detail := String(_save_report.get("detail", ""))
@@ -272,19 +313,76 @@ func _show_start_error(detail: String) -> void:
 
 
 func _draw() -> void:
-	# A spare, stage-like horizon: a single ground plane and one distant structure,
-	# deliberately quiet behind the text rather than an illustrated scene.
 	var view := size
 	if view.x <= 0.0 or view.y <= 0.0:
 		return
 	draw_rect(Rect2(Vector2.ZERO, view), MenuStyle.INK)
-	var horizon_y := view.y * 0.59
-	var line := Color(MenuStyle.ACCENT, 0.14)
-	draw_line(Vector2(view.x * 0.59, horizon_y), Vector2(view.x * 0.96, horizon_y), line, 1.0)
-	draw_line(Vector2(view.x * 0.79, horizon_y), Vector2(view.x * 0.79, horizon_y - view.y * 0.13), Color(MenuStyle.ACCENT, 0.17), 1.0)
-	draw_line(Vector2(view.x * 0.76, horizon_y - view.y * 0.13), Vector2(view.x * 0.82, horizon_y - view.y * 0.13), Color(MenuStyle.ACCENT, 0.17), 1.0)
-	draw_line(Vector2(view.x * 0.07, view.y * 0.20), Vector2(view.x * 0.11, view.y * 0.20), Color(MenuStyle.ACCENT, 0.52), 1.0)
-	draw_line(Vector2(view.x * 0.07, view.y * 0.20), Vector2(view.x * 0.07, view.y * 0.24), Color(MenuStyle.ACCENT, 0.52), 1.0)
+	_draw_stage(view)
+	MenuStyle.draw_vignette(self, view, Color(0.0, 0.0, 0.0, 0.5))
+	_draw_margin()
+
+
+## The backdrop: a warm cast from the upper right, a bare horizon, and one distant building
+## cut from two colour fields, with a pole and a scrap of flag beside it. Everything sits to
+## the right of the column, so nothing crosses the text.
+func _draw_stage(view: Vector2) -> void:
+	var warm := Color(0.2, 0.11, 0.075, 1.0)
+	draw_polygon(
+		PackedVector2Array([
+			Vector2(view.x * 0.45, 0.0), Vector2(view.x, 0.0), Vector2(view.x, view.y * 0.7),
+			Vector2(view.x * 0.45, view.y * 0.7),
+		]),
+		PackedColorArray([MenuStyle.INK, warm, MenuStyle.INK, MenuStyle.INK])
+	)
+	var horizon := view.y * 0.62
+	draw_rect(Rect2(0.0, horizon, view.x, view.y - horizon), MenuStyle.GROUND)
+	var block := Rect2(view.x * 0.64, view.y * 0.33, view.x * 0.2, horizon - view.y * 0.33)
+	MenuStyle.draw_rough_slab(self, block.grow(4.0), Color(MenuStyle.OCHRE, 0.2), 7, 9.0)
+	MenuStyle.draw_rough_slab(self, block, Color(MenuStyle.BRICK, 0.88), 3, 5.0)
+	# Two rows of windows, dark and slightly uneven: a school, not a diagram of one.
+	var pane := Vector2(block.size.x * 0.09, block.size.y * 0.13)
+	for row in range(2):
+		for column in range(4):
+			var corner := block.position + Vector2(
+				block.size.x * (0.12 + 0.21 * float(column)), block.size.y * (0.22 + 0.32 * float(row))
+			)
+			draw_rect(Rect2(corner, pane), Color(MenuStyle.INK, 0.62 + 0.04 * float(column % 2)))
+	var line := Color(MenuStyle.ACCENT, 0.2)
+	draw_line(Vector2(view.x * 0.5, horizon), Vector2(view.x * 0.98, horizon), line, 1.0)
+	var pole_x := view.x * 0.89
+	draw_line(
+		Vector2(pole_x, horizon), Vector2(pole_x, view.y * 0.2), Color(MenuStyle.ACCENT, 0.32), 1.5
+	)
+	MenuStyle.draw_rough_slab(
+		self, Rect2(pole_x + 1.0, view.y * 0.2, view.x * 0.028, view.y * 0.03),
+		Color(MenuStyle.EMBER, 0.72), 11, 2.0, false, true
+	)
+	for stroke in range(3):
+		var y := horizon + view.y * (0.06 + 0.07 * float(stroke))
+		MenuStyle.draw_dry_brush(
+			self, Vector2(view.x * (0.56 + 0.05 * float(stroke)), y), Vector2(view.x * 0.97, y),
+			Color(MenuStyle.ACCENT, 0.07), 20 + stroke, 5.0
+		)
+
+
+## The ember rule down the margin of the column, and a short one under the name.
+func _draw_margin() -> void:
+	if _column == null or _title == null or _entries_box == null:
+		return
+	var origin := get_global_rect().position
+	var title_box := _title.get_global_rect()
+	title_box.position -= origin
+	var entries_box := _entries_box.get_global_rect()
+	entries_box.position -= origin
+	var x := _column.position.x - 16.0
+	draw_line(
+		Vector2(x, title_box.position.y + 6.0), Vector2(x, entries_box.end.y - 4.0),
+		Color(MenuStyle.EMBER, 0.85), 2.0
+	)
+	var under := title_box.end.y + 12.0
+	MenuStyle.draw_rough_slab(
+		self, Rect2(_column.position.x + 4.0, under, 72.0, 4.0), MenuStyle.EMBER, 5, 2.0
+	)
 
 
 func _on_settings_closed() -> void:
@@ -325,6 +423,7 @@ func _fit() -> void:
 	_column.position = Vector2(left, maxf(top, 24.0))
 	_hint.position = Vector2(left + 12.0, view.y - 48.0 * factor)
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
+	queue_redraw()
 
 
 ## Wrapped text knows its height only after a layout pass, so the fit runs once more.

@@ -86,6 +86,17 @@ no "save anywhere" button: it would need every in-flight system to be
 serialisable, and the player loses nothing today because the two checkpoints above
 are exactly the moments where progress is meaningful.
 
+*Amended for Save and quit:* the pause menu's **Save and quit** writes a save on request,
+but only where the same condition holds — `Session.is_at_rest()`: the prologue is behind
+the player (`next_step()` is empty), no beat holds the lock, no conversation is open, the
+slice is not over, and the player has control. Such a moment has nothing in flight, so the
+file is the same kind of file a checkpoint writes (flags, knowledge, seed, room and the
+exact position). Anywhere else the menu does not write: it says that the next Continue
+will load the last save (naming its room and time) or that there is none, and asks before
+leaving, with the focus on *Cancel*. A write that fails is reported the same way and never
+leaves silently. Leaving switches the world's autosave off first, so the frame before the
+scene changes cannot put a different checkpoint on disk.
+
 ### 5. Loading is all-or-nothing, except per-entry knowledge
 
 Reading happens in two tiers:
@@ -132,6 +143,14 @@ the file once (without applying it) and the menu follows from the answer:
 | readable | **Continue** / New game / Settings / Quit | Continue enters `main.tscn`, whose director resumes the file exactly as before |
 | unreadable | New game / Settings / Quit | the reason is shown on the title screen; there is no Continue, and reading it already copied it to `save.broken.json` (6) |
 
+**Continue** (zh-CN 从上次继续) carries one line under it: the room and the time of the
+save it loads (`MenuStyle.save_caption()`, e.g. "Corridor · 2026-11-12 14:03"), so the
+player knows what they are going back to before they press it. The pause menu shows the
+same line under its heading. The title takes it from the one `inspect_save()` it already
+makes at boot; the pause menu, which redraws during play, reads it with
+`SaveManager.peek_save()` (9) instead of `read_save()`, so opening it can neither restore
+nor quarantine anything.
+
 The same New game is offered in the **pause menu** (Esc / Start during play) and as
 **Start again** on the end-of-slice card. Every one of them asks first, with the focus on
 *Cancel*; cancelling (Esc, B, the Cancel button, a click outside) changes nothing — not
@@ -166,7 +185,12 @@ which runs these steps in this order, returns a report naming them, and emits
    code *and* whether `current_scene` actually changed. Writes stay suspended through
    this step, because the new world's `_ready` asks `has_save()` and a recovery pass at
    that moment would put the staged copy back and resume the run being replaced.
-9. **Commit**: discard the staged copy (proved gone), then release writes.
+9. **Commit**: discard the staged copy (proved gone), then every other `.tmp`/`.bak`/
+   `.staged` file beside the save (`Save.discard_strays()`; anything that will not go is
+   named in `leftovers`), then release writes. Those files belong to the run the player
+   just chose to end; left behind, the first moment the save path is empty — the new run
+   quit before its first checkpoint — would *recover* one of them, and the title would
+   offer to continue the old run.
 
 With no save at all, step 4 is `no_save` and the rest is the same.
 
@@ -203,7 +227,13 @@ The write path (`SaveManager.write_payload()`) never rewrites the file in place:
 3. Files a crash left behind (`.tmp`, `.bak`, `.staged`) are cleaned up, and any that
    could not be removed are named in the result's `leftovers` and logged, not ignored.
    A `.bak`/`.staged` may be *restored* on the next read, but only when there is no save
-   at all, and never while a new game holds the files (8).
+   at all, and never while a new game holds the files (8). Because of that, a committed
+   new game removes every `.bak`/`.staged` the old run left (`discard_strays()`, step 9
+   of 8): a leftover that outlived the new game would be "recovered" the first time the
+   save path is empty again, and bring back the run the player chose to end.
+   `peek_save()`, the read the menus use for their captions, does no recovery and no
+   quarantine at all; it only reports whether a readable save exists and where and when
+   it was made.
 
 `delete_save()` returns `{ok, removed, leftovers}` and reports a filesystem refusal
 instead of silently doing nothing. It does not remove `save.broken.json` unless the

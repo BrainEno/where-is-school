@@ -2,11 +2,20 @@ class_name PauseMenu
 extends CanvasLayer
 ## The menu during play: Esc or Start.
 ##
-## Resume / Settings / New game / Title. The world is paused while it is open (the tree is,
-## and this layer runs anyway); the settings screen is the same one the title screen opens.
-## New game asks first and then hands over to `Session.start_new_game()`, which stops this
-## world's autosave before anything is deleted. Title leaves the run where its last
-## checkpoint put it, exactly as quitting does.
+## Resume / Save and quit / Settings / New game. The world is paused while it is open (the
+## tree is, and this layer runs anyway); the settings screen is the same one the title
+## screen opens. New game asks first and then hands over to `Session.start_new_game()`,
+## which stops this world's autosave before anything is deleted.
+##
+## **Save and quit** saves the run where it stands and goes to the title, where Continue
+## picks it up again. It saves only where a save can describe everything (ADR 0005 §4:
+## after the prologue, no conversation open, no beat running - `Session.is_at_rest()`).
+## Anywhere else, or when the write fails, it does not pretend: it asks whether to leave
+## anyway, says which save the next Continue will load, and the safe answer has the focus.
+##
+## The look is the title screen's: a dark sheet with a hand-cut edge down the left of the
+## paused world, an ember rule in its margin, the heading and entries in the serif, and the
+## last save's room and time under the heading.
 ##
 ## It never takes Esc from something that is already using it: with the log open, Esc
 ## closes the log; with a confirmation or the settings up, Esc closes those first.
@@ -14,17 +23,58 @@ extends CanvasLayer
 signal opened
 signal closed
 
-const ENTRIES: Array[StringName] = [&"resume", &"settings", &"new_game", &"title"]
+# Settings stays second (Down, Enter reaches it from Resume) and the way out comes last.
+const ENTRIES: Array[StringName] = [&"resume", &"settings", &"new_game", &"save_quit"]
+
+
+## The paused world behind a wash, and the sheet the menu is set on: dark, its right edge
+## cut by hand, an ember rule down the column's margin. It also stops clicks reaching the
+## world, as the plain backdrop did.
+class Sheet:
+	extends Control
+
+	var column_rect := Rect2()
+
+	func _init() -> void:
+		name = "Sheet"
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+
+	func _draw() -> void:
+		var view := size
+		draw_rect(Rect2(Vector2.ZERO, view), Color(MenuStyle.INK, 0.6))
+		var right := minf(column_rect.end.x + 90.0, view.x)
+		MenuStyle.draw_rough_slab(
+			self, Rect2(0.0, -8.0, right + 10.0, view.y + 16.0),
+			Color(MenuStyle.OCHRE, 0.12), 17, 12.0, false, true
+		)
+		MenuStyle.draw_rough_slab(
+			self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(0.04, 0.047, 0.048, 0.96), 13,
+			8.0, false, true
+		)
+		if column_rect.size.y > 0.0:
+			var x := column_rect.position.x - 16.0
+			draw_line(
+				Vector2(x, column_rect.position.y + 6.0), Vector2(x, column_rect.end.y - 4.0),
+				Color(MenuStyle.EMBER, 0.85), 2.0
+			)
 
 var _factor := 1.0
 var _root: Control = null
 var _column: VBoxContainer = null
 var _heading: Label = null
+## The last save, under the heading: "Last saved: Corridor · 14:03".
+var _status: Label = null
+## Why Save and quit did not save, when it could not.
+var _notice: Label = null
+var _sheet: Sheet = null
 var _hint: Label = null
 var _entries: Dictionary = {}
 var _settings_panel: SettingsPanel = null
 var _confirm: ConfirmPrompt = null
 var _was_paused := false
+## What the open question is about: `new_game` or `quit_unsaved`.
+var _pending: StringName = &""
 
 
 func _ready() -> void:
@@ -38,23 +88,32 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.visible = false
 	add_child(_root)
-	_root.add_child(MenuStyle.backdrop())
+	_sheet = Sheet.new()
+	_root.add_child(_sheet)
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 4)
 	_root.add_child(_column)
-	_heading = MenuStyle.label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER)
+	_heading = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER, 0.6, 3)
+	_heading.name = "Heading"
 	_column.add_child(_heading)
+	_status = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
+	_status.name = "Status"
+	_column.add_child(_status)
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 14.0)
+	gap.custom_minimum_size = Vector2(0.0, 22.0)
 	_column.add_child(gap)
 	for id: StringName in ENTRIES:
-		var entry := MenuStyle.entry_button("", MenuStyle.ENTRY_SIZE, _factor)
+		var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 		entry.name = String(id)
 		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
 		entry.pressed.connect(activate.bind(id))
 		_column.add_child(entry)
 		_entries[id] = entry
+	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
+	_notice.name = "Notice"
+	_notice.visible = false
+	_column.add_child(_notice)
 	_hint = MenuStyle.label("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_root.add_child(_hint)
 
@@ -63,8 +122,8 @@ func _ready() -> void:
 	_settings_panel.closed.connect(focus_entry.bind(&"settings"))
 	_confirm = ConfirmPrompt.new()
 	_root.add_child(_confirm)
-	_confirm.confirmed.connect(_on_new_game_confirmed)
-	_confirm.cancelled.connect(focus_entry.bind(&"new_game"))
+	_confirm.confirmed.connect(_on_confirmed)
+	_confirm.cancelled.connect(_on_cancelled)
 
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
@@ -89,6 +148,7 @@ func open() -> void:
 	get_tree().paused = true
 	_factor = UiTextScale.current(self)
 	UiTextScale.apply(_root, _factor)
+	_notice.visible = false
 	_refresh_texts()
 	_root.show()
 	_fit()
@@ -118,6 +178,15 @@ func get_confirm() -> ConfirmPrompt:
 	return _confirm
 
 
+## The line under the heading, for the tests: the last save, or that there is none.
+func get_status_text() -> String:
+	return _status.text if _status != null else ""
+
+
+func get_notice_text() -> String:
+	return _notice.text if _notice != null and _notice.visible else ""
+
+
 func focus_entry(id: StringName) -> void:
 	var entry := get_entry(id)
 	if entry != null and entry.is_visible_in_tree():
@@ -128,19 +197,88 @@ func activate(id: StringName) -> void:
 	match id:
 		&"resume":
 			close()
+		&"save_quit":
+			_save_and_quit()
 		&"settings":
 			_settings_panel.open()
 		&"new_game":
+			_pending = &"new_game"
 			_confirm.ask(
 				L10n.t("menu.confirm_new_game"),
 				L10n.t("menu.confirm_yes"),
 				L10n.t("menu.confirm_no")
 			)
 		&"title":
-			var session := get_node_or_null(^"/root/Session")
+			# Kept for callers from before Save and quit: the same thing without the save.
+			_quit_without_saving()
+
+
+## The menu's own world: the scene this layer belongs to.
+func _world() -> Node:
+	return owner if owner != null else get_parent()
+
+
+## Saves and leaves when the world is at rest; otherwise says why it cannot and asks.
+func _save_and_quit() -> void:
+	var session := get_node_or_null(^"/root/Session")
+	if session == null:
+		return
+	var status: Dictionary = session.call("get_save_status", _world())
+	if bool(status.get("can_save_now", false)):
+		var report: Dictionary = session.call("save_and_quit", true, _world())
+		if bool(report.get("ok", false)):
 			_root.hide()
-			if session != null:
-				session.call("go_to_title")
+			return
+		if String(report.get("reason", "")) == "save_failed":
+			_ask_quit_unsaved(L10n.t("menu.confirm_quit_failed", {
+				"detail": String(report.get("detail", "")),
+			}))
+			return
+		_show_notice(String(report.get("detail", report.get("reason", ""))))
+		return
+	var caption := _caption(status)
+	if bool(status.get("ok", false)):
+		_ask_quit_unsaved(L10n.t("menu.confirm_quit_checkpoint", {"caption": caption}))
+	else:
+		_ask_quit_unsaved(L10n.t("menu.confirm_quit_no_save"))
+
+
+func _ask_quit_unsaved(message: String) -> void:
+	_pending = &"quit_unsaved"
+	_confirm.ask(message, L10n.t("menu.confirm_quit_yes"), L10n.t("menu.confirm_no"))
+
+
+func _quit_without_saving() -> void:
+	var session := get_node_or_null(^"/root/Session")
+	if session == null:
+		return
+	var report: Dictionary = session.call("save_and_quit", false, _world())
+	if bool(report.get("ok", false)):
+		_root.hide()
+	else:
+		_show_notice(String(report.get("detail", report.get("reason", ""))))
+
+
+func _show_notice(text: String) -> void:
+	_notice.text = text
+	_notice.visible = not text.is_empty()
+	_fit()
+
+
+func _on_confirmed() -> void:
+	var pending := _pending
+	_pending = &""
+	match pending:
+		&"quit_unsaved":
+			_quit_without_saving()
+		_:
+			_on_new_game_confirmed()
+
+
+func _on_cancelled() -> void:
+	var pending := _pending
+	_pending = &""
+	focus_entry(&"save_quit" if pending == &"quit_unsaved" else &"new_game")
 
 
 func _on_new_game_confirmed() -> void:
@@ -148,7 +286,14 @@ func _on_new_game_confirmed() -> void:
 	var session := get_node_or_null(^"/root/Session")
 	if session != null:
 		# The menu's own world: the session switches its autosave off before anything else.
-		session.call("start_new_game", owner if owner != null else get_parent())
+		session.call("start_new_game", _world())
+
+
+## "Corridor · 11/12 14:03" from a status or peek, or "" when the file says nothing.
+static func _caption(status: Dictionary) -> String:
+	return MenuStyle.save_caption(
+		String(status.get("location_id", "")), int(status.get("saved_at_unix", 0))
+	)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -192,12 +337,25 @@ func _refresh_texts() -> void:
 	if _heading == null:
 		return
 	_heading.text = L10n.t("menu.paused")
+	_status.text = _status_text()
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
 	if MenuStyle.using_gamepad(self):
 		_hint.text = L10n.t("menu.pause_hint_pad", {"key": MenuStyle.key(self, &"pause")})
 	else:
 		_hint.text = L10n.t("menu.pause_hint_keyboard", {"key": MenuStyle.key(self, &"pause")})
+
+
+## The last save as the session sees it, without touching the file.
+func _status_text() -> String:
+	var session: Node = get_node_or_null(^"/root/Session") if is_inside_tree() else null
+	if session == null or not session.has_method("get_save_status"):
+		return ""
+	var status: Dictionary = session.call("get_save_status", _world())
+	if not bool(status.get("ok", false)):
+		return L10n.t("menu.no_save_yet")
+	var caption := _caption(status)
+	return L10n.t("menu.last_save", {"caption": caption}) if not caption.is_empty() else ""
 
 
 func _on_locale_changed(_locale: String) -> void:
@@ -228,3 +386,6 @@ func _fit() -> void:
 	_column.position = Vector2(left, maxf(24.0, minf(view.y * 0.28, view.y - needed - 90.0)))
 	_hint.position = Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
+	if _sheet != null:
+		_sheet.column_rect = Rect2(_column.position, Vector2(width, needed))
+		_sheet.queue_redraw()
