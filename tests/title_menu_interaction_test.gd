@@ -70,11 +70,18 @@ func _run() -> void:
 	title = current_scene as TitleScreen
 	title.get_entry(&"new_game").grab_focus()
 	await _push_pad(JOY_BUTTON_A)
+	var gamepad_activated := false
 	for _i in 90:
-		if title.get_confirm().visible or current_scene != title:
+		if current_scene != title:
+			gamepad_activated = true
+			break
+		if not is_instance_valid(title):
+			break
+		if title.get_confirm().visible:
+			gamepad_activated = true
 			break
 		await process_frame
-	_check(title.get_confirm().visible or current_scene != title, "Gamepad A did not activate the focused entry.")
+	_check(gamepad_activated, "Gamepad A did not activate the focused entry.")
 
 	Harness.clear_session_state(self)
 	if failures.is_empty():
