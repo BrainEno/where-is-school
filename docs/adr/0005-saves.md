@@ -143,6 +143,14 @@ the file once (without applying it) and the menu follows from the answer:
 | readable | **Continue** / New game / Settings / Quit | Continue enters `main.tscn`, whose director resumes the file exactly as before |
 | unreadable | New game / Settings / Quit | the reason is shown on the title screen; there is no Continue, and reading it already copied it to `save.broken.json` (6) |
 
+**Continue** (zh-CN 从上次继续) carries one line under it: the room and the time of the
+save it loads (`MenuStyle.save_caption()`, e.g. "Corridor · 2026-11-12 14:03"), so the
+player knows what they are going back to before they press it. The pause menu shows the
+same line under its heading. The title takes it from the one `inspect_save()` it already
+makes at boot; the pause menu, which redraws during play, reads it with
+`SaveManager.peek_save()` (9) instead of `read_save()`, so opening it can neither restore
+nor quarantine anything.
+
 The same New game is offered in the **pause menu** (Esc / Start during play) and as
 **Start again** on the end-of-slice card. Every one of them asks first, with the focus on
 *Cancel*; cancelling (Esc, B, the Cancel button, a click outside) changes nothing — not
@@ -219,7 +227,13 @@ The write path (`SaveManager.write_payload()`) never rewrites the file in place:
 3. Files a crash left behind (`.tmp`, `.bak`, `.staged`) are cleaned up, and any that
    could not be removed are named in the result's `leftovers` and logged, not ignored.
    A `.bak`/`.staged` may be *restored* on the next read, but only when there is no save
-   at all, and never while a new game holds the files (8).
+   at all, and never while a new game holds the files (8). Because of that, a committed
+   new game removes every `.bak`/`.staged` the old run left (`discard_strays()`, step 9
+   of 8): a leftover that outlived the new game would be "recovered" the first time the
+   save path is empty again, and bring back the run the player chose to end.
+   `peek_save()`, the read the menus use for their captions, does no recovery and no
+   quarantine at all; it only reports whether a readable save exists and where and when
+   it was made.
 
 `delete_save()` returns `{ok, removed, leftovers}` and reports a filesystem refusal
 instead of silently doing nothing. It does not remove `save.broken.json` unless the
