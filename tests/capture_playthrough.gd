@@ -1082,13 +1082,13 @@ func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
 			var crop := image.get_region(crop_rect)
 			crop.convert(Image.FORMAT_RGB8)
 			print("CROP: classroom_outline_%s.jpg %s" % [
-				entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.9))
+				entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.8))
 			])
 	if bare != null:
 		var small := bare.duplicate() as Image
 		small.convert(Image.FORMAT_RGB8)
-		small.resize(480, 270, Image.INTERPOLATE_BILINEAR)
-		print("CROP: classroom_frame_small.jpg %s" % Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.8)))
+		small.resize(400, 225, Image.INTERPOLATE_BILINEAR)
+		print("CROP: classroom_frame_small.jpg %s" % Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.6)))
 	if through_line < 30:
 		_failures.append(
 			"Outline depth in the classroom: the negative control drew no line, so the sheet "

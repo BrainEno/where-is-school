@@ -420,8 +420,17 @@ together:
     (with a negative control that shows the outline through the wall when the mask is cut
     back to the outline layer) plus switching, release during a fade and a moving camera,
     and stores the frames under `outline-occlusion/` in the playthrough evidence artifact.
-    The playthrough itself checks the real classroom too: the timetable sheet, a thin sheet
-    flat on a wall, still gets its warm line with the depth-tested mask.
+    The playthrough checks the real classroom too, at the moment the player hovers the
+    timetable sheet: with the outline as shipped, without any outline, and with the mask cut
+    back to the outline layer (the negative control, `03e_outline_without_depth.png`). It
+    fails if a target whose sampled points are all behind opaque geometry changes a single
+    pixel, or if one in plain view loses more than half its line.
+  - *A visible consequence.* From the classroom's fixed camera the timetable sheet hangs on
+    the inside of the south wall, which the camera sees from outside: the sheet is hidden.
+    The pointer still reaches it (its pick box is not behind anything the pick ray tests),
+    so hovering that spot of wall shows the prompt and, now, no outline - before this the
+    outline was drawn through the wall. Whether such targets should stay usable from there
+    is a level and camera question, not an outline one.
   - *Known limits.* Only surfaces that write depth hide the outline. A wall the occlusion
     fader has turned see-through (`transparency` 0.82, drawn in the transparent pass) does
     not, which matches what the player sees through it; nor does other alpha-blended

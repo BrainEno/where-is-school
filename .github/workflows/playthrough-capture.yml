@@ -209,11 +209,9 @@ jobs:
           code=$?
           echo "capture exit=${code}"
           grep -E "CAPTURE|SCRIPT ERROR|ERROR:" "${capture_log}" | tail -n 60 || true
-          # Small inline crops the script printed (base64 images), one notice each, so a
-          # frame can be looked at from the run report without the artifact.
-          grep -E "^CROP: " "${capture_log}" | head -n 5 | while read -r _ file data; do
-            echo "::notice title=capture crop ${file} (base64)::${data}"
-          done
+          # Small inline crops the script printed (base64 images). They are published by
+          # their own step below, which has its own annotation budget.
+          grep -E "^CROP: " "${capture_log}" > "${EVIDENCE}/logs/inline-crops.txt" || true
           ls -l docs/screenshots || true
           # The frames this run wrote into the project folder are staged, not moved: the
           # working tree is never the thing that gets uploaded, and a file that was
@@ -240,7 +238,7 @@ jobs:
           # actually saw, which is the only place that says why a prompt shot is missing.
           # `cue audio` carries the interaction cue counts. A sound cannot be photographed,
           # so the numbers the run's real clicks produced are the evidence for it.
-          summary=$(grep -E "FAILURE|RESULT|never appeared|cue audio|cue candidates" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1800) || true
+          summary=$(grep -E "FAILURE|RESULT|never appeared|cue audio|cue candidates|outline depth" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null | tr '\n' '|' | cut -c1-1800) || true
           # The script's own verdict decides, not the process exit code. `quit(0)` does
           # set it, but a windowed run under Xvfb also exits non-zero sometimes while
           # the engine tears down its window and GL context, after the playthrough has
@@ -269,6 +267,32 @@ jobs:
           echo "::notice title=playthrough frames::$(grep -oE 'screenshot [a-z0-9_]+' \
             "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" | sed 's/screenshot //' \
             | tr '\n' ' ' | cut -c-1400)"
+
+      - name: Publish the classroom outline crops
+        if: always()
+        shell: bash
+        run: |
+          # The playthrough prints small JPEG crops of the classroom outline check (the
+          # shipped outline, the negative control without depth, and the whole frame scaled
+          # down) as base64. An annotation holds about 4 KB, so each image is split into
+          # numbered parts: concatenate the parts of one file in order and decode them. The
+          # full-resolution frames are 03d_hover_cue.png and 03e_outline_without_depth.png in
+          # the evidence artifact; these are only so the moment can be seen from the report.
+          set +e -uo pipefail
+          crops="${RUNNER_TEMP}/evidence/logs/inline-crops.txt"
+          [ -s "${crops}" ] || { echo "no inline crops"; exit 0; }
+          budget=10
+          while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=capture crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done < "${crops}"
 
       - name: Capture the dialogue layout
         id: ui_capture
