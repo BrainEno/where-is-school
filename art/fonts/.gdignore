@@ -3,6 +3,8 @@
 # art/fonts/ holds the untrimmed upstream Noto Sans SC (10.6 MB, 30,890 characters). It is
 # the source the shipped subset is cut from by tools/subset_font.py, not an asset the game
 # loads: `assets/fonts/NotoSansSC-Regular.ttf` is the 330 KB subset the theme points at.
+# Next to it is the untrimmed upstream Noto Serif SC Regular (11.1 MB), the source of
+# `assets/fonts/NotoSerifSC-Regular.otf`, the subset the dialogue panel sets its text in.
 #
 # Godot imports every `.ttf` under res:// as a FontFile and packs every imported resource
 # into the export, so leaving the full font next to the subset would have put 10.6 MB of

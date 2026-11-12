@@ -158,7 +158,8 @@ where-is-school-<version>-windows.zip
   where-is-school-<version>-windows/
     where-is-school.exe          the game; pack embedded
     HOW-TO-RUN.txt               controls, the SmartScreen warning, known gaps
-    licences/NotoSansSC-OFL.txt  the font licence
+    licences/NotoSansSC-OFL.txt  the interface font's licence
+    licences/NotoSerifSC-OFL.txt the dialogue font's licence
     licences/COPYRIGHT.md        the project's own terms
 ```
 

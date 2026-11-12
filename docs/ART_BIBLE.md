@@ -286,15 +286,17 @@ The visual identity of where-is-school comes from the tension between an express
 
 ## Current dialogue presentation (implemented baseline)
 
-The current runtime dialogue surface was redesigned and tested in PR #29. This section records the implementation that exists today; it is a production baseline, not a replacement for the integrated portrait direction defined above.
+The current runtime dialogue surface was redesigned and tested in PR #29, and restyled with the first approved portraits on 2026-11-12. This section records the implementation that exists today; it is a production baseline, not a replacement for the integrated portrait direction defined above.
 
 - The dialogue is presented as a text-led band in the lower-left area, fading into the scene along its upper edge. It is sized from the current content and leaves the environment visible.
-- The sentence is the largest element, with measured line length and generous line spacing.
-- The speaker name anchors the composition and uses the character's accent color. The role remains small and muted.
+- **Reading voice (owner's direction, 2026-11-12: "like Disco Elysium's dialogue box").** The band's ground is a dark, nearly opaque ink. The sentence, the speaker name, the title and the choices are set in a serif, Noto Serif SC (`assets/fonts/NotoSerifSC-Regular.otf`), warm off-white on the dark. The rest of the interface keeps Noto Sans SC.
+- The sentence is the largest element: 25 px at the standard text size (it was 22 px), with measured line length and generous line spacing. Text is never shrunk to fit.
+- The speaker name anchors the composition: tracked capitals in the character's accent color. The role remains small and muted.
 - Narrative source (observed, reported, recalled, or imagined) is communicated through a restrained hairline and small label rather than a badge, pill, or saturated block.
-- Choices appear as numbered text lines under a rule. They remain visually quiet until pointer interaction; avoid filled buttons, decorative iconography, and glow.
-- Dialogue portraits are planned but are not yet production assets. The existing layout reserves space at the left margin and above the text band. Do not add a placeholder silhouette or a fake portrait.
+- Choices appear as numbered text lines under a rule, set in a warm vermilion that lights to a pale apricot under the pointer or the controller cursor, with a thin margin mark. Avoid filled buttons, decorative iconography, and glow.
+- **Portraits.** The protagonist, Q and N have approved painted portraits (`assets/ui/portraits/`, sources in `art/portraits/`). Each one stands on the bottom edge of the screen and enters from the right. All three use the right side so the text band stays where it is when speakers alternate. The two edges facing the picture, the top and the side towards the text, dissolve into the scene, and the screen-border edge stays hard. There is no frame, border or glow. A portrait is never under a word or an option, never takes a click, and never narrows the text. B and the inner voices have no portrait, and nothing is shown in its place.
+- The protagonist's portrait also accompanies the protagonist's inspection narration, because those lines carry the protagonist as speaker. This is the current behaviour, not a confirmed decision; see the PR that introduced it.
 
-When approved portrait artwork becomes available, evolve the current reading surface into the integrated portrait/text composition defined in this Art Bible. The portrait should feel composed into the scene and reading surface, not placed inside a conventional avatar frame. Preserve the successful properties of the current implementation: text-first hierarchy when needed, Chinese long-form readability, responsive sizing, clear choices, keyboard/mouse behavior, and narrative-source distinction.
+Keep evolving the reading surface toward the integrated portrait/text composition defined in this Art Bible as more portraits arrive. Preserve the successful properties of the current implementation: text-first hierarchy when needed, Chinese long-form readability, responsive sizing, clear choices, keyboard/mouse behavior, and narrative-source distinction.
 
 Development nameplates over graybox characters are debugging aids, not final game UI. They remain a development-only feature and should not be treated as part of the character portrait system.

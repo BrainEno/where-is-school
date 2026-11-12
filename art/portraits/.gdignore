@@ -1,0 +1,8 @@
+# Godot must not look inside this folder.
+#
+# art/portraits/ holds the dialogue portraits exactly as the owner supplied them
+# (1145x1374 to 1280x1936 px, 2.4-3.6 MB each, every one over the 2 MiB texture limit).
+# They are the sources tools/prepare_portraits.py crops and scales into
+# assets/ui/portraits/*.webp, which is what the game loads. Godot imports every image
+# under res:// and packs it into the export, so without this file the full-size sources
+# would ship next to the derived ones. Same arrangement as art/fonts/ and art/props/.

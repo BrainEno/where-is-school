@@ -313,6 +313,8 @@ jobs:
           code=$?
           echo "dialogue capture exit=${code}"
           grep -E "SHOT|FAILURE|PASS|SCRIPT ERROR|ERROR:" "${ui_log}" | tail -n 40 || true
+          # Small inline frames the script printed (base64 JPEGs), published by the next step.
+          grep -E "^CROP: " "${ui_log}" > "${EVIDENCE}/logs/ui-inline-frames.txt" || true
           if [ -d docs/screenshots ]; then
             cp -a docs/screenshots/ui-*.png "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
             cp -a docs/screenshots/UI_CAPTURE.log "${EVIDENCE}/docs/screenshots/" 2>/dev/null || true
@@ -335,6 +337,31 @@ jobs:
             exit 1
           fi
           echo "UI_CAPTURE_RESULT=success"
+
+      - name: Publish the dialogue frames
+        if: always()
+        shell: bash
+        run: |
+          # Three dialogue frames (spoken line, choices, inspection at 1600x900 in Chinese),
+          # scaled down to 400x225 JPEGs by tests/capture_dialogue_ui.gd, so the panel's
+          # composition can be seen from the run report. Same encoding as the outline crops
+          # above: concatenate the parts of one file in order and decode them. The full
+          # frames are ui-*.png in the evidence artifact.
+          set +e -uo pipefail
+          frames="${RUNNER_TEMP}/evidence/logs/ui-inline-frames.txt"
+          [ -s "${frames}" ] || { echo "no inline dialogue frames"; exit 0; }
+          budget=10
+          while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=dialogue frame ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done < "${frames}"
 
       - name: Capture the narrative editor dock
         id: editor_capture

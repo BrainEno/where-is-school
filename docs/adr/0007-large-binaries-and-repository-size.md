@@ -66,7 +66,8 @@ The repository already has the stronger pattern and keeps it:
 | Artefact | Script | Check |
 |---|---|---|
 | `assets/models/sample/*.glb` | `tools/build_sample_models.py` | `--check`: byte-identical to a fresh build |
-| `assets/fonts/NotoSansSC-Regular.ttf` | `tools/subset_font.py` | `--check`: the subset covers the current text |
+| `assets/fonts/NotoSansSC-Regular.ttf`, `assets/fonts/NotoSerifSC-Regular.otf` | `tools/subset_font.py` | `--check`: each subset covers its text and is byte-identical to a fresh build |
+| `assets/ui/portraits/*.webp` | `tools/prepare_portraits.py` | `--check` (run by hand; CI does not install Pillow): byte-identical to a fresh crop and scale of `art/portraits/` |
 | `assets/audio/music/guitar_ambient_loop_01.wav` | `tools/build_music_loop.py` | `--check`: byte-identical, and the loop seam is measured |
 
 Committed derivatives stay committed (the engine has to import them) but are never edited
@@ -153,7 +154,10 @@ Three items the issue names, with what is true today:
   either way, only the packfile number changes;
 - the music moves to Ogg, at which point the audio row above is deleted and the runtime file
   drops to about a tenth of its size;
-- a second asset legitimately needs more than 12 MiB: that is the signal to revisit the
+- a second asset legitimately needs more than 12 MiB (the second font source,
+  `art/fonts/NotoSerifSC-Regular.otf`, added on 2026-11-12 for the dialogue panel's serif, is
+  11.1 MiB and still under the ceiling; the three portrait sources in `art/portraits/` are
+  2.3-3.4 MiB each): that is the signal to revisit the
   ceiling, or to move that class of source out of the repository entirely (Git LFS was
   considered and rejected — it moves the bytes to a second quota, keeps a pointer in the
   tree, and every clone still has to fetch it to build).

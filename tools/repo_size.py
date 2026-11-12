@@ -23,9 +23,9 @@ the build:
 What the ceiling is, and why it is not the pack's 2 MiB: a file under `assets/` is judged by
 `tools/verify_build.py` *as shipped* — that check is the one that matters for a runtime
 asset, and it is stricter. This one is about what a clone has to carry: the repository
-legitimately holds an uncompressed 10.1 MiB font source (the OFL file the bundled subset is
-built from) and a 7.3 MiB third-party animation library used by a dev-only retarget test.
-12 MiB clears both and stops anything of the 70 MB class, which is the size at which a file
+legitimately holds two uncompressed font sources (the OFL files the bundled subsets are
+built from: Noto Sans SC at 10.1 MiB and Noto Serif SC at 11.1 MiB) and a 7.3 MiB third-party
+animation library used by a dev-only retarget test. 12 MiB clears all three and stops anything of the 70 MB class, which is the size at which a file
 is a source export, a raw recording, or a mistake.
 
 Rules this encodes, written out in `docs/adr/0007-large-binaries-and-repository-size.md`:
@@ -54,7 +54,7 @@ import sys
 MiB = 1024 * 1024
 
 # The per-file ceiling for anything in the repository. See the module docstring: it clears
-# the 10.1 MiB font source by 2 MiB and is 5x under the 67.4 MiB file that made this
+# the larger font source (11.1 MiB) by 0.9 MiB and is 5x under the 67.4 MiB file that made this
 # necessary.
 PER_FILE_CEILING = 12 * MiB
 

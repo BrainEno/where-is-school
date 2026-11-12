@@ -8,3 +8,5 @@ character_id = &"protagonist"
 display_name = "You"
 short_role = ""
 accent_color = Color(0.776, 0.733, 0.643, 1)
+portrait_path = "res://assets/ui/portraits/protagonist.webp"
+portrait_side = 1

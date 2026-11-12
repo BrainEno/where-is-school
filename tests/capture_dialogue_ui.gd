@@ -19,6 +19,14 @@ const Harness = preload("res://tests/test_harness.gd")
 const OUT_DIR := "res://docs/screenshots"
 const LOG_PATH := "res://docs/screenshots/UI_CAPTURE.log"
 
+## Frames also printed as small inline JPEGs (`CROP: <file> <base64>`), which the workflow
+## publishes as annotations, so the composition can be seen from the run report without
+## downloading the artifact. Small on purpose: an annotation holds about 4 KB.
+const INLINE_FRAMES: Array[String] = [
+	"ui-dialogue-1600x900-zh.png", "ui-choices-1600x900-zh.png", "ui-inspection-1600x900-zh.png"
+]
+const INLINE_SIZE := Vector2i(400, 225)
+
 const RESOLUTIONS: Array[Vector2i] = [
 	Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)
 ]
@@ -148,6 +156,13 @@ func _shot(name: String, size: Vector2i) -> void:
 		_failures.append("Could not write %s (error %d)." % [path, error])
 		return
 	_shots.append(name)
+	if INLINE_FRAMES.has(name):
+		var small := image.duplicate() as Image
+		small.convert(Image.FORMAT_RGB8)
+		small.resize(INLINE_SIZE.x, INLINE_SIZE.y, Image.INTERPOLATE_BILINEAR)
+		print("CROP: %s %s" % [
+			name.get_basename() + ".jpg", Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.6))
+		])
 	print(
 		"SHOT %s  %dx%d  band %.0f%%x%.0f%%  body %dpx  scrolling=%s"
 		% [

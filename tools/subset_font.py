@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cut the bundled CJK font down to the characters this project can actually draw.
+"""Cut the bundled CJK fonts down to the characters this project can actually draw.
 
 The shipped font is Noto Sans SC Regular: 10.6 MB and 30,890 mapped characters for a
 15-minute slice that uses 820 of them. Every byte of it was in the export, because a
@@ -15,13 +15,23 @@ The split this script maintains:
   import sidecar and same resource uid as before, so nothing else in the project had to
   move: only the bytes shrank.
 
+A second face follows the same split: `art/fonts/NotoSerifSC-Regular.otf` (Noto Serif SC
+Regular from notofonts/noto-cjk, 11.1 MiB) is cut down to
+`assets/fonts/NotoSerifSC-Regular.otf`, the serif the dialogue panel sets its sentences,
+names and options in (`scripts/ui/dialogue_panel.gd`). It only ever draws dialogue, so its
+character set is taken from what can reach the dialogue panel (`data/`, `scenes/`,
+`scripts/`, `project.godot`) and not from the editor add-on or the tests; anything it does
+not carry falls back to the Sans subset instead of becoming a tofu box (the panel sets that
+fallback). Both faces are built and checked by one run of this script, so CI did not need a
+second step.
+
 Re-run this after writing text that uses characters the subset does not carry:
 
     pip install fonttools
     python3 tools/subset_font.py
 
-`--check` does the same build in memory and compares it byte for byte with the committed
-file, which is what CI runs: a content change that needs a new glyph then fails with the
+`--check` does the same build in memory and compares it byte for byte with every committed
+subset, which is what CI runs: a content change that needs a new glyph then fails with the
 list of characters to add, instead of shipping a build full of tofu boxes.
 
 The character set is deliberately wider than today's text (see `ALWAYS_INCLUDED`): full
@@ -37,6 +47,7 @@ import glob
 import json
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_SOURCE = Path("art/fonts/NotoSansSC-Regular.ttf")
@@ -55,6 +66,37 @@ TEXT_SOURCES = (
     "tests/**/*.gd",
     "addons/**/*.gd",
     "project.godot",
+)
+
+# What can reach the dialogue panel: content, locale tables, scenes and scripts. The serif
+# face draws nothing else, so the editor add-on and the tests are left out on purpose; a
+# glyph only they use is drawn by the Sans subset through the panel's fallback.
+DIALOGUE_TEXT_SOURCES = (
+    "data/**/*.json",
+    "scenes/**/*.tscn",
+    "scripts/**/*.gd",
+    "project.godot",
+)
+
+
+@dataclass(frozen=True)
+class Target:
+    """One upstream font and the subset cut from it."""
+
+    source: Path
+    output: Path
+    text_sources: tuple[str, ...]
+
+
+# Every subset this script maintains. A run with no arguments builds all of them, and
+# `--check` checks all of them.
+TARGETS = (
+    Target(DEFAULT_SOURCE, DEFAULT_OUTPUT, TEXT_SOURCES),
+    Target(
+        Path("art/fonts/NotoSerifSC-Regular.otf"),
+        Path("assets/fonts/NotoSerifSC-Regular.otf"),
+        DIALOGUE_TEXT_SOURCES,
+    ),
 )
 
 # Ranges kept whether or not the current text uses them. Measured cost: about 20 KB on
@@ -82,7 +124,7 @@ MAX_SHIPPED_FONT_BYTES = 2 * 1024 * 1024
 PINNED_FONTTOOLS = "4.58.5"
 
 
-def collect_characters() -> tuple[set[str], set[str]]:
+def collect_characters(text_sources: tuple[str, ...] = TEXT_SOURCES) -> tuple[set[str], set[str]]:
     """Characters the project can ask the font to draw, and the ones kept as margin.
 
     The first set is a hard requirement: if the source font cannot draw one of them, the
@@ -91,7 +133,7 @@ def collect_characters() -> tuple[set[str], set[str]]:
     code point the font happens not to map is simply dropped there.
     """
     characters: set[str] = set()
-    for pattern in TEXT_SOURCES:
+    for pattern in text_sources:
         for name in glob.glob(pattern, recursive=True):
             text = Path(name).read_text(encoding="utf-8", errors="ignore")
             if name.endswith(".json"):
@@ -205,7 +247,7 @@ def check(source: Path, output: Path, characters: set[str], margin: set[str]) ->
         return 0
 
     with tempfile.TemporaryDirectory() as scratch:
-        fresh = Path(scratch) / "fresh.ttf"
+        fresh = Path(scratch) / f"fresh{output.suffix}"
         build(source, characters, fresh, margin)
         committed = output.read_bytes()
         rebuilt = fresh.read_bytes()
@@ -224,15 +266,21 @@ def check(source: Path, output: Path, characters: set[str], margin: set[str]) ->
 def oversized_shipped_fonts() -> list[Path]:
     return [
         path
-        for path in Path("assets").rglob("*.ttf")
+        for pattern in ("*.ttf", "*.otf")
+        for path in sorted(Path("assets").rglob(pattern))
         if path.stat().st_size > MAX_SHIPPED_FONT_BYTES
     ]
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--source",
+        type=Path,
+        default=None,
+        help="build one custom pair instead of every target (needs --output)",
+    )
+    parser.add_argument("--output", type=Path, default=None)
     parser.add_argument(
         "--check",
         action="store_true",
@@ -244,9 +292,18 @@ def main(argv: list[str]) -> int:
         if not path.is_dir():
             raise SystemExit(f"run this from the repository root ({path} not found)")
 
-    characters, margin = collect_characters()
+    if (arguments.source is None) != (arguments.output is None):
+        parser.error("--source and --output go together")
+    if arguments.source is None:
+        targets = TARGETS
+    else:
+        targets = (Target(arguments.source, arguments.output, TEXT_SOURCES),)
+
     if arguments.check:
-        status = check(arguments.source, arguments.output, characters, margin)
+        status = 0
+        for target in targets:
+            characters, margin = collect_characters(target.text_sources)
+            status |= check(target.source, target.output, characters, margin)
         fat = oversized_shipped_fonts()
         if fat:
             for path in fat:
@@ -258,9 +315,11 @@ def main(argv: list[str]) -> int:
             status = 1
         return status
 
-    arguments.output.parent.mkdir(parents=True, exist_ok=True)
-    build(arguments.source, characters, arguments.output, margin)
-    report(arguments.source, arguments.output, characters, margin)
+    for target in targets:
+        characters, margin = collect_characters(target.text_sources)
+        target.output.parent.mkdir(parents=True, exist_ok=True)
+        build(target.source, characters, target.output, margin)
+        report(target.source, target.output, characters, margin)
     return 0
 
 

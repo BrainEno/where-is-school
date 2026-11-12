@@ -446,6 +446,7 @@ def make_package(
 LICENCES = {
     "licences/COPYRIGHT.md": b"# Copyright\n",
     "licences/NotoSansSC-OFL.txt": b"OFL\n",
+    "licences/NotoSerifSC-OFL.txt": b"OFL\n",
 }
 DESKTOP = b"""[Desktop Entry]
 Type=Application
