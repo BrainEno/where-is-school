@@ -11,8 +11,10 @@ extends RefCounted
 ## way the dialogue column is (#125): the serif (Noto Serif SC, the dialogue panel's face,
 ## with the project Sans behind it for anything its subset does not carry), one warm accent
 ## ("ember") for what is selected, and colour fields with hand-cut edges instead of boxes
-## (ART_BIBLE, "UI restraint"). `page_entry()` is that entry; the settings screen keeps the
-## plain one because its rows are a form, not a page.
+## (ART_BIBLE, "UI restraint"). `page_entry()` is that entry. The settings screen is a form,
+## not a page, so its values are `style_form_entry()` fields instead - but in the same serif
+## (`page_theme()`) and with the same ember mark, so it does not change typeface or accent
+## when it opens over the menu that called it.
 
 const INK := Color(0.043, 0.051, 0.051, 1.0)
 const INK_WASH := Color(0.043, 0.051, 0.051, 0.86)
@@ -37,13 +39,14 @@ const SERIF_PATH := "res://assets/fonts/NotoSerifSC-Regular.otf"
 const TITLE_SIZE := 30
 const ENTRY_SIZE := 21
 const BODY_SIZE := 18
-const HEADING_SIZE := 15
 const SMALL_SIZE := 14
 ## The name of the game on the title screen.
 const DISPLAY_SIZE := 52
 
 ## FontVariations of the serif, one per (weight, tracking), shared by every menu.
 static var _serif_cache: Dictionary = {}
+static var _page_theme: Theme = null
+static var _dot_cache: Dictionary = {}
 
 
 static func entry_button(text: String, size: int, factor: float) -> Button:
@@ -180,15 +183,139 @@ static func serif_label(text: String, size: int, factor: float, color: Color = P
 	return item
 
 
-## The question box over a page: dark, with the ember rule down its left edge.
-static func prompt_panel_style() -> StyleBoxFlat:
-	var box := panel_style()
-	box.bg_color = Color(0.047, 0.055, 0.057, 0.98)
-	box.border_width_left = 3
-	box.border_color = EMBER
-	box.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	box.shadow_size = 18
+## The theme a whole menu surface wears: every Label and Button under it in the serif, so
+## a line nobody gave a font of its own (a hint, a caption, a value) is not the one line
+## still set in the Sans. Shared, built once.
+static func page_theme() -> Theme:
+	if _page_theme != null:
+		return _page_theme
+	var theme := Theme.new()
+	var font := serif()
+	if font != null:
+		theme.default_font = font
+		for type_name: StringName in [&"Label", &"Button", &"LineEdit"]:
+			theme.set_font(&"font", type_name, font)
+	_page_theme = theme
+	return theme
+
+
+## The inside of the question card: margins only. The card itself - a dark sheet with
+## hand-cut sides - is drawn behind it by `ConfirmPrompt`, so nothing here reads as the
+## bordered box of an error message.
+static func prompt_content_style() -> StyleBoxEmpty:
+	var box := StyleBoxEmpty.new()
+	box.content_margin_left = 48.0
+	box.content_margin_right = 44.0
+	box.content_margin_top = 34.0
+	box.content_margin_bottom = 28.0
 	return box
+
+
+## The settings sheet: the same dark as the pause menu's, no frame, a soft shadow.
+static func sheet_style() -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.04, 0.047, 0.048, 0.97)
+	box.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
+	box.shadow_size = 24
+	box.content_margin_left = 48.0
+	box.content_margin_right = 44.0
+	box.content_margin_top = 30.0
+	box.content_margin_bottom = 24.0
+	return box
+
+
+## A value on a form (a choice, a key cell, a plain action): a faint field so it reads as
+## something that can be changed, and the same ember rule and wash as the page entries
+## when it is hovered or has the focus.
+static func style_form_entry(button: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(PAPER, 0.045)
+	_form_pad(normal)
+	var marked := StyleBoxFlat.new()
+	marked.bg_color = Color(EMBER, 0.16)
+	marked.border_width_left = 3
+	marked.border_color = EMBER
+	_form_pad(marked)
+	var pressed := marked.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color(EMBER, 0.3)
+	var disabled := StyleBoxEmpty.new()
+	_form_pad(disabled)
+	button.add_theme_stylebox_override(&"normal", normal)
+	button.add_theme_stylebox_override(&"hover", marked)
+	button.add_theme_stylebox_override(&"focus", marked)
+	button.add_theme_stylebox_override(&"pressed", pressed)
+	button.add_theme_stylebox_override(&"hover_pressed", pressed)
+	button.add_theme_stylebox_override(&"disabled", disabled)
+	button.add_theme_color_override(&"font_color", PAGE_TEXT)
+	button.add_theme_color_override(&"font_hover_color", PAGE_LIT)
+	button.add_theme_color_override(&"font_focus_color", PAGE_LIT)
+	button.add_theme_color_override(&"font_pressed_color", PAGE_LIT)
+	button.add_theme_color_override(&"font_hover_pressed_color", PAGE_LIT)
+	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.7))
+	button.add_theme_constant_override(&"outline_size", 0)
+
+
+static func _form_pad(box: StyleBox) -> void:
+	box.content_margin_left = 14.0
+	box.content_margin_right = 14.0
+	box.content_margin_top = 5.0
+	box.content_margin_bottom = 6.0
+
+
+## A volume dial in the menus' colours: a hairline track, the filled part in ember, and a
+## small round grabber that brightens with the focus.
+static func style_slider(slider: HSlider) -> void:
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(PAPER, 0.18)
+	track.content_margin_top = 1.0
+	track.content_margin_bottom = 1.0
+	var filled := StyleBoxFlat.new()
+	filled.bg_color = Color(EMBER, 0.75)
+	filled.content_margin_top = 1.0
+	filled.content_margin_bottom = 1.0
+	var lit := filled.duplicate() as StyleBoxFlat
+	lit.bg_color = EMBER
+	slider.add_theme_stylebox_override(&"slider", track)
+	slider.add_theme_stylebox_override(&"grabber_area", filled)
+	slider.add_theme_stylebox_override(&"grabber_area_highlight", lit)
+	var focus := StyleBoxFlat.new()
+	focus.bg_color = Color(EMBER, 0.08)
+	focus.border_width_left = 3
+	focus.border_color = EMBER
+	focus.expand_margin_left = 6.0
+	focus.expand_margin_top = 4.0
+	focus.expand_margin_bottom = 4.0
+	slider.add_theme_stylebox_override(&"focus", focus)
+	slider.add_theme_icon_override(&"grabber", _dot(Color(PAGE_TEXT, 0.95)))
+	slider.add_theme_icon_override(&"grabber_highlight", _dot(PAGE_LIT))
+	slider.add_theme_icon_override(&"grabber_disabled", _dot(Color(MUTED, 0.6)))
+
+
+## A small filled circle, antialiased by hand, cached per colour.
+static func _dot(color: Color, diameter: int = 14) -> Texture2D:
+	var key := "%s/%d" % [color.to_html(), diameter]
+	if _dot_cache.has(key):
+		return _dot_cache[key] as Texture2D
+	var image := Image.create(diameter, diameter, false, Image.FORMAT_RGBA8)
+	var radius := float(diameter) * 0.5
+	for y in diameter:
+		for x in diameter:
+			var distance := Vector2(x + 0.5 - radius, y + 0.5 - radius).length()
+			var coverage := clampf(radius - distance, 0.0, 1.0)
+			image.set_pixel(x, y, Color(color, color.a * coverage))
+	var texture := ImageTexture.create_from_image(image)
+	_dot_cache[key] = texture
+	return texture
+
+
+## A short ember rule: under a heading, the one mark of colour on a sheet.
+static func rule(width: float, color: Color = EMBER, thickness: float = 2.0) -> ColorRect:
+	var line := ColorRect.new()
+	line.color = color
+	line.custom_minimum_size = Vector2(width, thickness)
+	line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return line
 
 
 ## "教室 · 11月12日 14:03": where the save stands and when it was written, local time.
