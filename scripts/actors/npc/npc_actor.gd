@@ -11,7 +11,8 @@ extends Node3D
 ## the graybox parts are hidden rather than deleted, so the node paths every other
 ## system knows keep existing. The model is a *visual*: the body that collides is
 ## whatever parents the actor (a `CharacterBody3D`, for the companion), exactly as
-## `docs/ASSET_PIPELINE.md` §10 asks. N keeps the graybox by simply not setting it.
+## `docs/ASSET_PIPELINE.md` §10 asks. Q and N both have one; an actor that leaves it
+## empty stays a graybox.
 
 @export var npc_id: StringName = &""
 ## Development label only; the UI gets names from CharacterProfile.
@@ -24,10 +25,10 @@ extends Node3D
 ## Yaw for the instanced visual, in degrees, around its own vertical axis.
 ##
 ## `face_towards()` follows the pipeline's convention that a model looks down −Z.
-## The authored characters look down +Z (`docs/ASSET_PIPELINE.md` §10.2), so their
+## Q and the protagonists look down +Z (`docs/ASSET_PIPELINE.md` §10.2), so their
 ## visual is turned 180° here — at the placement, in one place, on the visual node
 ## only. The GLB and this actor's own rotation stay untouched, which is what keeps
-## a re-export from having two corrections to undo. Set 0 for a −Z model.
+## a re-export from having two corrections to undo. Set 0 for a −Z model: N is one.
 @export_range(-180.0, 180.0, 1.0) var visual_yaw_degrees: float = 180.0
 
 var _body: MeshInstance3D = null

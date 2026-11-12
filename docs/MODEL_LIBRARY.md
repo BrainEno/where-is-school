@@ -13,8 +13,8 @@ release. Anything below that the tool cannot know is marked as such.
 ## 1. How the tree is organised
 
 A model lives at `assets/models/<kind>/<name>.glb`, and **the kind is the place the model
-is instanced**: `classroom/`, `corridor/`, `playground/`, and the two character kinds
-`protagonist/` and `q/`. That is the same unit the rest of the project is assembled in —
+is instanced**: `classroom/`, `corridor/`, `playground/`, and the three character kinds
+`protagonist/`, `q/` and `teacher-n/`. That is the same unit the rest of the project is assembled in —
 `scenes/locations/<location>/` — so a kind folder is exactly the set of props one location
 draws from:
 
@@ -25,6 +25,7 @@ draws from:
 | `playground/` | 2 | `scenes/locations/playground/playground.tscn` |
 | `protagonist/` | 2 | `Protagonist_Character.glb`, the player (`player.tscn`, via `scenes/environment/characters/protagonist.tscn`); `protagonist.glb`, the former protagonist, seated in the classroom (`classroom_student.tscn`) |
 | `q/` | 1 | the NPC and companion controllers, via `scenes/environment/characters/q.tscn` |
+| `teacher-n/` | 1 | the classroom's `Actors/N`, via `scenes/environment/characters/teacher_n.tscn`; built from the owner's export by `tools/prepare_teacher_n.py` |
 | `school_desk/`, `stationery_supplies/`, `playground_bench/`, `student_backpack/` | 1 each | the wrappers in `scenes/environment/props/` |
 | `sample/` | 2 | test fixtures, built by `tools/build_sample_models.py` |
 
@@ -230,13 +231,14 @@ instead of passing it.
 
 ## 5. The runtime character manifest
 
-The three rigged models the game instantiates at run time —
+The four rigged models the game instantiates at run time —
 `assets/models/protagonist/Protagonist_Character.glb` (the player since PR #118),
 `assets/models/protagonist/protagonist.glb` (the former protagonist, now the seated
-classroom student) and `assets/models/q/q.glb` — are also checked against a written-down
-structure, `art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py
---check` reads it on every run and fails when a registered model does not match it; the
-other 22 models in the library keep the checks in §4 and are not registered.
+classroom student), `assets/models/q/q.glb` and `assets/models/teacher-n/teacher-n.glb`
+(substitute teacher N) — are also checked against a written-down structure,
+`art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py --check`
+reads it on every run and fails when a registered model does not match it; the other 22
+models in the library keep the checks in §4 and are not registered.
 
 The rest of this library is judged by rules (no scale, no camera, inside the budget). A rig
 cannot be: a character whose hand bone was renamed, whose mesh was split, whose joint list
@@ -249,27 +251,33 @@ a bug found while playing.
 Measured from the committed `.glb` files, not from the Blender sources and not from
 `art/character_rig_audit/*_rig_audit.json`:
 
-| | `Protagonist_Character.glb` | `protagonist.glb` | `q.glb` |
-|---|---|---|---|
-| nodes | 70 | 96 | 25 |
-| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` |
-| skin joints (bones) | 60 | 16 | 16 |
-| mesh nodes, all bound to skin 0 | 9 | 78 | 7 |
-| meshes / primitives | 9 / 15 | 78 / 78 | 7 / 15 |
-| materials | 12 | 22 | 14 |
-| embedded animations | 5 (721 channels; not played by the game) | 0 | 0 |
-| triangles | 15,782 | 12,388 | 35,432 |
-| file | 851.9 KiB | 513.6 KiB | 1008.8 KiB |
+| | `Protagonist_Character.glb` | `protagonist.glb` | `q.glb` | `teacher-n.glb` |
+|---|---|---|---|---|
+| nodes | 70 | 96 | 25 | 35 |
+| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` | `CHR_Substitute_Teacher_Root` → its armature |
+| skin joints (bones) | 60 | 16 | 16 | 16 |
+| mesh nodes, all bound to skin 0 | 9 | 78 | 7 | 18 |
+| meshes / primitives | 9 / 15 | 78 / 78 | 7 / 15 | 18 / 28 |
+| materials | 12 | 22 | 14 | 17 |
+| embedded animations | 5 (721 channels; not played by the game) | 0 | 0 | 4 (8 channels; played together as N's idle) |
+| triangles | 15,782 | 12,388 | 35,432 | 57,460 |
+| file | 851.9 KiB | 513.6 KiB | 1008.8 KiB | 1334.7 KiB |
 
-The two skeletons carry the **same joint names in the same parentage** — `Root`, `Spine`,
-`Neck`, `Head`, `UpperArm.L`/`LowerArm.L`/`Hand.L`, the same on the right, and
-`Thigh`/`Shin`/`Foot` — which is why one set of clips can bind to both.
+The three 16-joint skeletons carry the **same joint names in the same parentage** —
+`Root`, `Spine`, `Neck`, `Head`, `UpperArm.L`/`LowerArm.L`/`Hand.L`, the same on the right,
+and `Thigh`/`Shin`/`Foot` — which is why one set of clips can bind to all of them.
 
-**Both models contain zero embedded animations, and the manifest holds that as a fact.**
+**The former protagonist and Q contain zero embedded animations, and the manifest holds
+that as a fact.**
 The seven clips are composed at run time in `scripts/actors/character_animation.gd` against
 semantic bone names and written into an `AnimationLibrary` built in code; nothing in either
 `.glb` is an `Animation`. An animation appearing *inside* one of these files therefore means
-the source of animation changed without anyone saying so, and it fails the check.
+the source of animation changed without anyone saying so, and it fails the check. N is
+the exception on purpose: its four loops are the owner's, the manifest records each one's
+channels by target, and `teacher_n.tscn` names them as N's idle
+(`CharacterAnimation.adopt_authored_layers()`, `docs/CHARACTER_ANIMATION.md`). N's file is
+not the owner's export but what `tools/prepare_teacher_n.py` builds from it (kept under
+`art/character_models/teacher-n/`); the script's `--check` proves the two agree.
 
 The bind is nearly rigid in both files, which is what this art is made of: all 7,591
 weighted vertices of the protagonist sit on exactly one bone, so a cardigan sleeve follows
@@ -339,8 +347,9 @@ by overwriting it with whatever a run happened to generate.
 two reviewed edits: add its path to `REQUIRED_RUNTIME_MODELS` in `tools/model_library.py`,
 and add its entry, whose structural fields are exactly what `describe_model()` reads from
 the committed `.glb` (with a human-written `wrapper` and `note`). That is how
-`Protagonist_Character.glb` was registered in PR #118; the `--check` that follows compares
-the file against that entry like any other.
+`Protagonist_Character.glb` was registered in PR #118 and `teacher-n.glb` after it; the
+`--check` that follows compares the file against that entry like any other, and
+`--update-manifest` run straight after reports no difference.
 
 ### 5.5 What the manifest itself has to be
 
@@ -349,8 +358,9 @@ a document before any `.glb` is opened (`validate_manifest` in `tools/model_libr
 called by both `--check` and `--update-manifest`):
 
 - **Every runtime character, once each, and nothing else.** The manifest registers
-  `assets/models/protagonist/protagonist.glb`, `assets/models/q/q.glb` and
-  `assets/models/protagonist/Protagonist_Character.glb`. A missing entry, a duplicated
+  `assets/models/protagonist/protagonist.glb`, `assets/models/q/q.glb`,
+  `assets/models/protagonist/Protagonist_Character.glb` and
+  `assets/models/teacher-n/teacher-n.glb`. A missing entry, a duplicated
   entry, an entry for any other model and an empty `models` are all failures. "At least one
   model" was the old rule and it was not enough: deleting Q's entry used to leave a file that
   was valid, plausible and had quietly stopped checking Q.

@@ -22,6 +22,9 @@ extends SceneTree
 ##   5. a click on the floor, through `PointerNavigator`, walks with the same clip and stops
 ##      in idle; holding Shift with a movement key jogs, with the same limb checks as the walk;
 ##   6. the classroom Q's tween walk plays walk and returns to idle;
+##   6b. the classroom N — the one model exported facing −Z — idles on the four loops its
+##      author made, measured moving on the skeleton, and its tween walk passes the same
+##      limb checks as the player's: legs along its facing, knees folding backwards;
 ##   7. Q following the player walks, faces the way it walks, and idles when it stops;
 ##   8. the facing the controllers decide is untouched by animation: the player's pivot is
 ##      at `atan2(facing)`, the model under it is never moved.
@@ -122,6 +125,9 @@ func _run() -> void:
 	Harness.stage = "classroom Q"
 	await _check_classroom_q()
 
+	Harness.stage = "classroom N"
+	await _check_classroom_n()
+
 	Harness.stage = "player sprint"
 	await _check_sprint_jog(player_animator)
 
@@ -132,8 +138,9 @@ func _run() -> void:
 	Engine.time_scale = 1.0
 	Harness.finish(
 		self, _failures,
-		"in main.tscn the player (keys and clicks), the classroom Q and the following Q idle and "
-		+ "walk through one animator, with limbs measured where they belong and facing untouched."
+		"in main.tscn the player (keys and clicks), the classroom Q, the classroom N and the "
+		+ "following Q idle and walk through one animator, with limbs measured where they belong "
+		+ "and facing untouched."
 	)
 
 
@@ -299,7 +306,7 @@ func _check_classroom_q() -> void:
 	await _frames(3)
 	if animator.get_locomotion_state() != CharacterVisualAnimation.STATE_WALK:
 		_failures.append("The classroom Q's walk_along() did not play walk (state %s)." % animator.get_locomotion_state())
-	var model_forward := (q.global_basis * q.get_visual().transform.basis) * Vector3(0.0, 0.0, 1.0)
+	var model_forward := (q.global_basis * q.get_visual().transform.basis) * _model_forward(animator)
 	model_forward.y = 0.0
 	if model_forward.normalized().dot(Vector3.RIGHT) < 0.95:
 		_failures.append("The classroom Q walks +X but its model faces %s." % model_forward.normalized())
@@ -314,6 +321,103 @@ func _check_classroom_q() -> void:
 	await _check_idle_pose("the classroom Q after its walk", animator, SETTLED_REST_DEGREES, true)
 	q.global_position = start
 	q.rotation.y = start_rotation
+
+
+## N is hidden until the opening walks it in through the door, so this drives the same actor
+## the opening drives, through the same `walk_along()`, while nobody can see it, and puts it
+## back exactly as the scene placed it.
+func _check_classroom_n() -> void:
+	var location := _host.get_current()
+	var n: NpcActor = null
+	if location != null:
+		n = location.find_actor(&"n")
+	if n == null:
+		_failures.append("The classroom has no N.")
+		return
+	var animator := n.get_character_animator()
+	if animator == null or not animator.is_bound():
+		_failures.append("The classroom N's model has no bound CharacterVisualAnimation.")
+		return
+	var report := animator.get_bind_report()
+	_check_tracks_are_bones_only("classroom N", animator)
+	_notes.append("N bind: %s" % CharacterAnimation.describe(report))
+	_check_walking_limbs_free("N", animator)
+	if not animator.faces_negative_z or String(report.get("faces", "")) != "-Z":
+		_failures.append("N's model faces −Z, but its clips were bound for %s." % report.get("faces", "?"))
+	if not (report.get("mirrored", []) as Array).is_empty():
+		# Bound in N's own frame, `.L` is the limb on the character's −X side, which on a −Z
+		# model is the one its author named `.R`, exactly as on a +Z model turned round.
+		_notes.append("N mirrored pairs (expected for a −Z model): %s" % [report["mirrored"]])
+
+	# Idle is the author's: four layers, every one found, every track a bone of N's skeleton.
+	var authored: Dictionary = report.get("authored_idle", {})
+	if not bool(authored.get("ok", false)):
+		_failures.append("N's idle is not built from its own clips: %s" % authored.get("reason", "no report"))
+	else:
+		var layers: PackedStringArray = authored["layers"]
+		if layers.size() != 4:
+			_failures.append("N's idle combines %d of the model's clips, not its four loops." % layers.size())
+		if int(authored["ignored_tracks"]) != 0:
+			_failures.append("%d track(s) of N's own clips could not be applied." % int(authored["ignored_tracks"]))
+		_notes.append(
+			"N idle: %s, %d bone(s) moved, %d held, %.2fs"
+			% [", ".join(layers), (authored["bones"] as Array).size(), int(authored["held"]), float(authored["length"])]
+		)
+	await _check_idle_pose("the classroom N, standing", animator, IDLE_REST_DEGREES)
+	await _check_idle_moves(animator)
+
+	var was_visible := n.visible
+	var start := n.global_transform
+	# Two metres along the front of the room and back: long enough for the walk to cover more
+	# than a stride at N's 1.5 m/s, and the tween does not collide.
+	var target := n.global_position + Vector3(-2.0, 0.0, 0.0)
+	n.walk_along([target])
+	await _frames(3)
+	if animator.get_locomotion_state() != CharacterVisualAnimation.STATE_WALK:
+		_failures.append("The classroom N's walk_along() did not play walk (state %s)." % animator.get_locomotion_state())
+	var model_forward := (n.global_basis * n.get_visual().transform.basis) * _model_forward(animator)
+	model_forward.y = 0.0
+	if model_forward.normalized().dot(Vector3.LEFT) < 0.95:
+		_failures.append("The classroom N walks −X but its model faces %s." % model_forward.normalized())
+	await _sample_walk("the classroom N", animator, 0.9)
+	var waited := 0.0
+	while n.global_position.distance_to(target) > 0.01 and waited < 4.0:
+		await _seconds(0.1)
+		waited += 0.1
+	await _check_returns_to_idle("the classroom N after its walk", animator)
+	n.global_transform = start
+	n.visible = was_visible
+
+
+## The authored idle is played, not just bound: over one five-second cycle N's head and spine
+## move by more than a held pose would, and less than anything but a small idle.
+func _check_idle_moves(animator: CharacterVisualAnimation) -> void:
+	var skeleton := animator.get_skeleton()
+	var bones := {}
+	for canonical in ["head", "spine"]:
+		var index := _bone(animator, canonical)
+		if index >= 0:
+			bones[canonical] = [INF, -INF]
+	var length := 5.0
+	var authored: Dictionary = animator.get_bind_report().get("authored_idle", {})
+	if bool(authored.get("ok", false)):
+		length = float(authored["length"])
+	var elapsed := 0.0
+	while elapsed < length + 0.1:
+		await process_frame
+		elapsed += _frame_seconds()
+		for canonical: String in bones:
+			var angle := _angle_from_rest(skeleton, _bone(animator, canonical))
+			var span: Array = bones[canonical]
+			bones[canonical] = [minf(float(span[0]), angle), maxf(float(span[1]), angle)]
+	for canonical: String in bones:
+		var span: Array = bones[canonical]
+		var moved := float(span[1]) - float(span[0])
+		_notes.append("N idle %s moves %.2f° over a cycle" % [canonical, moved])
+		if moved < 1.0:
+			_failures.append("N's %s moves only %.2f° over an idle cycle: the authored idle is not playing." % [canonical, moved])
+		if float(span[1]) > IDLE_REST_DEGREES:
+			_failures.append("N's %s reaches %.1f° from rest while idle." % [canonical, float(span[1])])
 
 
 func _check_companion() -> void:
@@ -476,8 +580,8 @@ func _sample_walk(
 	if raised_hands > 0:
 		_failures.append("%s raised a hand to shoulder height on %d walking frame(s)." % [label, raised_hands])
 	if foot >= 0 and walk_frames >= 6:
-		# Measured in the wrapper's space, whose +Z is the way the character faces. A walk
-		# swings the feet along it; a clip on the wrong axis would kick them out sideways.
+		# Measured in the character's space, whose +Z is the way it faces. A walk swings the
+		# feet along it; a clip on the wrong axis would kick them out sideways.
 		if travel.z < WALK_FOOT_TRAVEL:
 			_failures.append("%s's foot travels only %.3f m forward and back while walking." % [label, travel.z])
 		if travel.x > travel.z * 0.5:
@@ -686,12 +790,27 @@ func _bone(animator: CharacterVisualAnimation, canonical: String) -> int:
 	return animator.get_skeleton().find_bone(String(resolved[canonical]))
 
 
-## A joint's position in the character wrapper's own space: +Y up, +Z the way the character
-## faces, whatever transform the glTF armature node carries.
+## A joint's position in the character's own space: +Y up, +Z the way the character faces,
+## whatever transform the glTF armature node carries. For the +Z models that is the wrapper's
+## space; a model that faces −Z (N) is measured half a turn round, so "forward" and "the side
+## axis" mean the same thing on every character and the limb checks need no second version.
 func _joint(animator: CharacterVisualAnimation, index: int) -> Vector3:
 	var skeleton := animator.get_skeleton()
+	return _to_character(animator) * skeleton.get_bone_global_pose(index).origin
+
+
+## Skeleton space to the character's own space (see `_joint()`).
+func _to_character(animator: CharacterVisualAnimation) -> Transform3D:
+	var skeleton := animator.get_skeleton()
 	var to_wrapper := animator.global_transform.affine_inverse() * skeleton.global_transform
-	return to_wrapper * skeleton.get_bone_global_pose(index).origin
+	if animator.faces_negative_z:
+		to_wrapper = Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO) * to_wrapper
+	return to_wrapper
+
+
+## The way the model looks in its wrapper's space.
+func _model_forward(animator: CharacterVisualAnimation) -> Vector3:
+	return Vector3.FORWARD if animator.faces_negative_z else Vector3.BACK
 
 
 ## The knees and elbows a walk bends, as `name → [upper, joint, end]` bone indices. An elbow
@@ -711,8 +830,8 @@ func _bending_limbs(animator: CharacterVisualAnimation) -> Dictionary:
 	return limbs
 
 
-## How far the middle joint of a three-bone chain is folded, signed about the wrapper's X
-## (the character's side axis): the X of `upper × lower` on unit vectors.
+## How far the middle joint of a three-bone chain is folded, signed about the character's X
+## (its side axis, see `_joint()`): the X of `upper × lower` on unit vectors.
 func _bend(animator: CharacterVisualAnimation, chain: Array, rest: bool) -> float:
 	var points: Array[Vector3] = []
 	for index: int in chain:
@@ -722,11 +841,10 @@ func _bend(animator: CharacterVisualAnimation, chain: Array, rest: bool) -> floa
 	return upper.cross(lower).x
 
 
-## Where a joint sits in the modelled pose, in the same wrapper space as `_joint()`.
+## Where a joint sits in the modelled pose, in the same character space as `_joint()`.
 func _rest_joint(animator: CharacterVisualAnimation, index: int) -> Vector3:
 	var skeleton := animator.get_skeleton()
-	var to_wrapper := animator.global_transform.affine_inverse() * skeleton.global_transform
-	return to_wrapper * skeleton.get_bone_global_rest(index).origin
+	return _to_character(animator) * skeleton.get_bone_global_rest(index).origin
 
 
 func _angle_from_rest(skeleton: Skeleton3D, index: int) -> float:
