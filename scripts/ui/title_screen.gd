@@ -25,23 +25,19 @@ var _hint: Label = null
 var _entries: Dictionary = {}
 var _settings_panel: SettingsPanel = null
 var _confirm: ConfirmPrompt = null
+var _starting := false
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_factor = UiTextScale.current(self)
-	var ink := ColorRect.new()
-	ink.color = MenuStyle.INK
-	ink.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ink.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(ink)
-
+	queue_redraw()
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 10)
 	add_child(_column)
 	var game_name := String(ProjectSettings.get_setting("application/config/name", ""))
-	_title = MenuStyle.label(game_name, MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER)
+	_title = MenuStyle.label(game_name, MenuStyle.TITLE_SIZE + 14, _factor, MenuStyle.PAPER)
 	_title.name = "Title"
 	_column.add_child(_title)
 	var gap := Control.new()
@@ -227,12 +223,55 @@ func _on_new_game_cancelled() -> void:
 
 
 func _start_new_game() -> void:
+	if _starting:
+		return
+	_starting = true
+	for entry: Button in _entries.values():
+		entry.disabled = true
 	var session := get_node_or_null(^"/root/Session")
 	if session == null:
-		get_tree().change_scene_to_file("res://scenes/main/main.tscn")
+		var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
+		if error != OK:
+			_show_start_error("Could not open the game scene (error %d)." % error)
 		return
-	# Not awaited: the session frees this screen on its way to the opening.
-	session.call("start_new_game")
+	# Keep this menu alive until Session's report is checked. Passing Session itself as
+	# the transaction target prevents its title-scene fallback from freeing this screen;
+	# only a successful report is allowed to hand off to the opening.
+	var report: Dictionary = await session.call("start_new_game", session, false)
+	if not is_inside_tree():
+		return
+	if not bool(report.get("ok", false)):
+		_show_start_error(String(report.get("detail", report.get("reason", "Unknown error."))))
+		return
+	var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
+	if error != OK:
+		_show_start_error("Could not open the game scene (error %d)." % error)
+
+
+func _show_start_error(detail: String) -> void:
+	_starting = false
+	for entry: Button in _entries.values():
+		entry.disabled = false
+	_notice.text = detail if not detail.is_empty() else "The new game could not be started. Please try again."
+	_notice.visible = true
+	_refit()
+	focus_entry(&"new_game")
+
+
+func _draw() -> void:
+	# A spare, stage-like horizon: a single ground plane and one distant structure,
+	# deliberately quiet behind the text rather than an illustrated scene.
+	var view := size
+	if view.x <= 0.0 or view.y <= 0.0:
+		return
+	draw_rect(Rect2(Vector2.ZERO, view), MenuStyle.INK)
+	var horizon_y := view.y * 0.59
+	var line := Color(MenuStyle.ACCENT, 0.14)
+	draw_line(Vector2(view.x * 0.59, horizon_y), Vector2(view.x * 0.96, horizon_y), line, 1.0)
+	draw_line(Vector2(view.x * 0.79, horizon_y), Vector2(view.x * 0.79, horizon_y - view.y * 0.13), Color(MenuStyle.ACCENT, 0.17), 1.0)
+	draw_line(Vector2(view.x * 0.76, horizon_y - view.y * 0.13), Vector2(view.x * 0.82, horizon_y - view.y * 0.13), Color(MenuStyle.ACCENT, 0.17), 1.0)
+	draw_line(Vector2(view.x * 0.07, view.y * 0.20), Vector2(view.x * 0.11, view.y * 0.20), Color(MenuStyle.ACCENT, 0.52), 1.0)
+	draw_line(Vector2(view.x * 0.07, view.y * 0.20), Vector2(view.x * 0.07, view.y * 0.24), Color(MenuStyle.ACCENT, 0.52), 1.0)
 
 
 func _on_settings_closed() -> void:
