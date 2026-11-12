@@ -39,7 +39,9 @@ extends RefCounted
 ## (the convention the clips were authored and measured in), whatever the rig calls it. The
 ## former protagonist and Q name that side `.L`; the new protagonist names its limbs
 ## anatomically and puts `UpperArm_L` at +X, so on that rig `upper_arm.L` binds to
-## `UpperArm_R`. `resolve_rig()` decides this from the rest positions and reports it.
+## `UpperArm_R`. `bind()` asks `resolve_rig()` to decide this from the rest positions and
+## reports it. Retargeting (`AnimationRetarget`) keeps the names' meaning: there, anatomical
+## left pairs with anatomical left on both rigs, wherever each one stands.
 ##
 ## Every clip also carries a track for every bone *any* clip animates. A bone that one clip
 ## moves and the next one does not would otherwise keep the last pose the first clip gave it —
@@ -248,11 +250,13 @@ static func skeletons_in(model_root: Node) -> Array[Skeleton3D]:
 ## Which of a rig's bones each canonical name resolved to, and which canonical names the rig
 ## cannot express. `resolved` maps canonical → the rig's own bone name.
 ##
-## A canonical pair is then put on the right sides by where the two bones *are*: `.L` is the
-## bone on the skeleton's −X side. A rig whose names say the opposite (the new protagonist,
-## named anatomically, has `UpperArm_L` at +X) gets the pair swapped, and the stem is listed in
-## `mirrored`, so a reader of the report sees `upper_arm.L → UpperArm_R` and why.
-static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
+## With `by_position`, which is what the clips need (`bind()`), a canonical pair is then put
+## on the sides by where the two bones *are*: `.L` is the bone on the skeleton's −X side. A rig
+## whose names say the opposite (the new protagonist, named anatomically, has `UpperArm_L` at
+## +X) gets the pair swapped, and the stem is listed in `mirrored`, so a reader of the report
+## sees `upper_arm.L → UpperArm_R` and why. Without it the names decide, which is what a
+## retarget between two rigs needs: the source's left arm drives the target's left arm.
+static func resolve_rig(skeleton: Skeleton3D, by_position: bool = false) -> Dictionary:
 	var by_lower := {}
 	var bones: Array[String] = []
 	for index in skeleton.get_bone_count():
@@ -269,6 +273,8 @@ static func resolve_rig(skeleton: Skeleton3D) -> Dictionary:
 			resolved[canonical] = bone
 	var mirrored: Array[String] = []
 	for stem: String in SIDE_PAIRS:
+		if not by_position:
+			break
 		var left := "%s.L" % stem
 		var right := "%s.R" % stem
 		if not resolved.has(left) or not resolved.has(right):
@@ -331,7 +337,7 @@ static func bind(model_root: Node3D, player: AnimationPlayer) -> Dictionary:
 		# Track paths are resolved against the player's root node, so the player has to sit
 		# inside the model for `..` to be the model and the skeleton path to be relative to it.
 		push_warning("AnimationPlayer should be a child of the model root; binding anyway.")
-	var rig := resolve_rig(skeleton)
+	var rig := resolve_rig(skeleton, true)
 	var skeleton_path := model_root.get_path_to(skeleton)
 	var resolved: Dictionary = rig["resolved"]
 	# Every canonical bone any clip animates, resolved on this rig: each clip writes all of
