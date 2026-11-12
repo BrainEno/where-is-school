@@ -1051,6 +1051,7 @@ material_override = ExtResource("5_dusk")
 
 [node name="Step_0" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.06, -8.03)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_0"]
 shape = SubResource("BoxShape3D_54")
@@ -1066,6 +1067,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_1" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.12, -8.35)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_1"]
 shape = SubResource("BoxShape3D_56")
@@ -1081,6 +1083,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_2" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.18, -8.67)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_2"]
 shape = SubResource("BoxShape3D_58")
@@ -1096,6 +1099,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_3" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.24, -8.99)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_3"]
 shape = SubResource("BoxShape3D_60")
@@ -1111,6 +1115,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_4" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.3, -9.31)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_4"]
 shape = SubResource("BoxShape3D_62")
@@ -1126,6 +1131,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_5" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.36, -9.63)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_5"]
 shape = SubResource("BoxShape3D_64")
@@ -1141,6 +1147,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_6" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.42, -9.95)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_6"]
 shape = SubResource("BoxShape3D_66")
@@ -1156,6 +1163,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_7" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.48, -10.27)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_7"]
 shape = SubResource("BoxShape3D_68")
@@ -1171,6 +1179,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_8" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.54, -10.59)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_8"]
 shape = SubResource("BoxShape3D_70")
@@ -1186,6 +1195,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_9" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.6, -10.91)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_9"]
 shape = SubResource("BoxShape3D_72")
@@ -1201,6 +1211,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_10" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.66, -11.23)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_10"]
 shape = SubResource("BoxShape3D_74")
@@ -1216,6 +1227,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_11" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.72, -11.55)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_11"]
 shape = SubResource("BoxShape3D_76")
@@ -1231,6 +1243,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_12" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.78, -11.87)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_12"]
 shape = SubResource("BoxShape3D_78")
@@ -1246,6 +1259,7 @@ material_override = ExtResource("6_paper")
 
 [node name="Step_13" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.84, -12.19)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step_13"]
 shape = SubResource("BoxShape3D_80")
@@ -1311,6 +1325,7 @@ material_override = ExtResource("8_lamp")
 
 [node name="StreetStep_0" type="StaticBody3D" parent="."]
 position = Vector3(-17.16, -0.962, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_0"]
 shape = SubResource("BoxShape3D_91")
@@ -1326,6 +1341,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_1" type="StaticBody3D" parent="."]
 position = Vector3(-17.48, -1.023, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_1"]
 shape = SubResource("BoxShape3D_93")
@@ -1341,6 +1357,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_2" type="StaticBody3D" parent="."]
 position = Vector3(-17.8, -1.085, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_2"]
 shape = SubResource("BoxShape3D_95")
@@ -1356,6 +1373,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_3" type="StaticBody3D" parent="."]
 position = Vector3(-18.12, -1.146, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_3"]
 shape = SubResource("BoxShape3D_97")
@@ -1371,6 +1389,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_4" type="StaticBody3D" parent="."]
 position = Vector3(-18.44, -1.208, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_4"]
 shape = SubResource("BoxShape3D_99")
@@ -1386,6 +1405,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_5" type="StaticBody3D" parent="."]
 position = Vector3(-18.76, -1.269, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_5"]
 shape = SubResource("BoxShape3D_101")
@@ -1401,6 +1421,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_6" type="StaticBody3D" parent="."]
 position = Vector3(-19.08, -1.331, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_6"]
 shape = SubResource("BoxShape3D_103")
@@ -1416,6 +1437,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_7" type="StaticBody3D" parent="."]
 position = Vector3(-19.4, -1.392, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_7"]
 shape = SubResource("BoxShape3D_105")
@@ -1431,6 +1453,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_8" type="StaticBody3D" parent="."]
 position = Vector3(-19.72, -1.454, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_8"]
 shape = SubResource("BoxShape3D_107")
@@ -1446,6 +1469,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_9" type="StaticBody3D" parent="."]
 position = Vector3(-20.04, -1.515, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_9"]
 shape = SubResource("BoxShape3D_109")
@@ -1461,6 +1485,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_10" type="StaticBody3D" parent="."]
 position = Vector3(-20.36, -1.577, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_10"]
 shape = SubResource("BoxShape3D_111")
@@ -1476,6 +1501,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_11" type="StaticBody3D" parent="."]
 position = Vector3(-20.68, -1.638, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_11"]
 shape = SubResource("BoxShape3D_113")
@@ -1491,6 +1517,7 @@ material_override = ExtResource("6_paper")
 
 [node name="StreetStep_12" type="StaticBody3D" parent="."]
 position = Vector3(-21.0, -1.7, 12.8)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStep_12"]
 shape = SubResource("BoxShape3D_115")
@@ -1839,6 +1866,7 @@ shape = SubResource("RampShape_0")
 [node name="StairLandingTread" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 1.75, -13.55)
 rotation = Vector3(0, 0, 0)
+collision_layer = 16
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StairLandingTread"]
 shape = SubResource("RampShape_1")
@@ -1918,6 +1946,7 @@ position = Vector3(-19.0, -0.3, 12.8)
 interact_id = &"res_back_to_street"
 prompt_key = "prompt.back_to_street"
 radius = 1.4
+support_paths = PackedStringArray("../../StreetStep_0", "../../StreetStep_1", "../../StreetStep_2", "../../StreetStep_3", "../../StreetStep_4", "../../StreetStep_5", "../../StreetStep_6", "../../StreetStep_7", "../../StreetStep_8", "../../StreetStep_9", "../../StreetStep_10", "../../StreetStep_11", "../../StreetStep_12", "../../StreetStairRamp", "../../StreetGatePostNorth", "../../StreetGatePostSouth")
 outline_paths = PackedStringArray("../../StreetStep_0", "../../StreetStep_1", "../../StreetStep_2", "../../StreetStep_3", "../../StreetStep_4", "../../StreetStep_5", "../../StreetStep_6", "../../StreetStep_7", "../../StreetStep_8", "../../StreetStep_9", "../../StreetStep_10", "../../StreetStep_11", "../../StreetStep_12", "../../StreetGatePostNorth", "../../StreetGatePostSouth", "../../StreetGateLintel", "../../StreetGateSign")
 destination_scene = "res://scenes/locations/street/street.tscn"
 destination_spawn = &"FromResidential"
@@ -1928,6 +1957,7 @@ position = Vector3(6.0, 0.9, -34.6)
 interact_id = &"res_alley_end"
 prompt_key = "prompt.milestone"
 radius = 1.6
+support_paths = PackedStringArray("../../AlleyBackPierWest", "../../AlleyBackPierEast", "../../AlleyBeyondLight")
 outline_paths = PackedStringArray("../../AlleyBackPierWest", "../../AlleyBackPierEast", "../../AlleyBackLintel", "../../AlleyBeyondLight")
 destination_scene = "res://scenes/locations/alley/alley.tscn"
 destination_spawn = &"FromCourtyard"

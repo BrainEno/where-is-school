@@ -14,6 +14,14 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Layer 4 is included in LocationNavigation.geometry_collision_mask and the interaction
+# occluder mask, but excluded from the player's collision mask. Visible stair blocks remain
+# in the bake and still occlude sight while the player rides the smooth ramp.
+NAVIGATION_ONLY_LAYER = 1 << 3
+# Layer 5 is for invisible bake-only treads: they complete navigation over tall landings
+# without colliding with the player or blocking interaction line-of-sight.
+BAKE_ONLY_LAYER = 1 << 4
+
 MATS = {
     "asphalt": "res://assets/materials/outdoor_asphalt.tres",
     "concrete": "res://assets/materials/outdoor_concrete.tres",
@@ -36,7 +44,7 @@ class Scene:
     def __init__(self, root_name, location_id):
         self.root_name = root_name
         self.location_id = location_id
-        self.boxes = []      # (name, pos, size, mat, group, body)
+        self.boxes = []      # (name, pos, size, mat, group, body, collision_layer)
         self.extras = []     # literal node blocks
         self.env = None
         self.sun = None
@@ -45,21 +53,21 @@ class Scene:
         self.exits = []
         self.spawns = []
         self.ambience = None
-        self.ramps = []      # (name, pos, size, rotation radians) - collision only, see _ramp
+        self.ramps = []      # (name, pos, size, rotation, collision_layer) - see _ramp/_tread
 
 
-    def box(self, name, pos, size, mat, group=None, body=True):
-        self.boxes.append((name, pos, size, mat, group, body))
+    def box(self, name, pos, size, mat, group=None, body=True, collision_layer=1):
+        self.boxes.append((name, pos, size, mat, group, body, collision_layer))
 
-    def ramp(self, name, pos, size, rotation):
-        self.ramps.append((name, pos, size, rotation))
+    def ramp(self, name, pos, size, rotation, collision_layer=1):
+        self.ramps.append((name, pos, size, rotation, collision_layer))
 
     def extra(self, text):
         self.extras.append(text)
 
     def emit(self):
         used = []
-        for _, _, _, mat, _, _ in self.boxes:
+        for _, _, _, mat, _, _, _ in self.boxes:
             if mat not in used:
                 used.append(mat)
         for item in self.interactables + self.exits:
@@ -95,14 +103,14 @@ class Scene:
         # sub resources: one shape + one mesh per box
         subs = []
         sub_ids = []
-        for index, (name, pos, size, mat, group, body) in enumerate(self.boxes):
+        for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
             shape_id = f'BoxShape3D_{index}' if body else None
             mesh_id = f'BoxMesh_{index}'
             if body:
                 subs.append((shape_id, 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
             subs.append((mesh_id, 'BoxMesh', 'size = Vector3(%s, %s, %s)' % tuple(size)))
             sub_ids.append((shape_id, mesh_id))
-        for index, (name, pos, size, rotation) in enumerate(self.ramps):
+        for index, (name, pos, size, rotation, collision_layer) in enumerate(self.ramps):
             subs.append((f'RampShape_{index}', 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
 
         lines.append('[gd_scene load_steps=%d format=3]\n' % (len(ext) + len(subs) + 2))
@@ -148,12 +156,14 @@ class Scene:
         lines.append('directional_shadow_max_distance = 90.0')
         lines.append('')
 
-        for index, (name, pos, size, mat, group, body) in enumerate(self.boxes):
+        for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
             shape_id, mesh_id = sub_ids[index]
             group_text = f' groups=[{", ".join(chr(34) + g + chr(34) for g in group)}]' if group else ''
             if body:
                 lines.append(f'[node name="{name}" type="StaticBody3D" parent="."{group_text}]')
                 lines.append('position = %s' % v3(pos))
+                if collision_layer != 1:
+                    lines.append(f'collision_layer = {collision_layer}')
                 lines.append('')
                 lines.append(f'[node name="CollisionShape3D" type="CollisionShape3D" parent="{name}"]')
                 lines.append(f'shape = SubResource("{shape_id}")')
@@ -168,10 +178,12 @@ class Scene:
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
             lines.append('')
 
-        for index, (name, pos, size, rotation) in enumerate(self.ramps):
+        for index, (name, pos, size, rotation, collision_layer) in enumerate(self.ramps):
             lines.append(f'[node name="{name}" type="StaticBody3D" parent="."]')
             lines.append('position = %s' % v3(pos))
             lines.append('rotation = %s' % v3(rotation))
+            if collision_layer != 1:
+                lines.append(f'collision_layer = {collision_layer}')
             lines.append('')
             lines.append(f'[node name="CollisionShape3D" type="CollisionShape3D" parent="{name}"]')
             lines.append(f'shape = SubResource("RampShape_{index}")')
@@ -357,6 +369,7 @@ def build_street():
     s.exits = [
         {"name": "BackToSchool", "pos": (-9.6, 0.9, 16.0), "id": "street_back_to_school",
          "prompt_key": "prompt.back_to_classroom", "radius": 1.1,
+         "support": ("../../GatePillarSouth", "../../GatePillarNorth"),
          "outline": ("SchoolExitRecess", "SchoolExitDark", "GatePillarSouth", "GatePillarNorth"),
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromStreet",
          "id_dest": "corridor"},
@@ -364,6 +377,9 @@ def build_street():
         # walks the player up it and through the door instead of stopping at the bottom.
         {"name": "ToResidential", "pos": (10.5, 2.5, -36.6), "id": "street_to_residential",
          "prompt_key": "prompt.stairs_up", "radius": 1.5,
+         "support": tuple(f"../../{name}" for name in street_steps) + (
+             "../../StairRamp", "../../StairLanding",
+         ),
          "outline": tuple(street_steps) + ("StairLanding", "DoorwayLintel", "DoorwayJambWest",
                                            "DoorwayJambEast", "PassageLight"),
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromStreet",
@@ -542,12 +558,16 @@ def build_residential():
         # the stairwell before the street loads, instead of fading out on the courtyard.
         {"name": "BackToStreet", "pos": (-19.0, -0.3, 12.8), "id": "res_back_to_street",
          "prompt_key": "prompt.back_to_street", "radius": 1.4,
+         "support": tuple(f"../../{name}" for name in street_steps) + (
+             "../../StreetStairRamp", "../../StreetGatePostNorth", "../../StreetGatePostSouth",
+         ),
          "outline": tuple(street_steps) + ("StreetGatePostNorth", "StreetGatePostSouth",
                                            "StreetGateLintel", "StreetGateSign"),
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromResidential",
          "id_dest": "street"},
         {"name": "AlleyEnd", "pos": (6.0, 0.9, -34.6), "id": "res_alley_end",
          "prompt_key": "prompt.milestone", "radius": 1.6,
+         "support": ("../../AlleyBackPierWest", "../../AlleyBackPierEast", "../../AlleyBeyondLight"),
          "outline": ("AlleyBackPierWest", "AlleyBackPierEast", "AlleyBackLintel", "AlleyBeyondLight"),
          "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromCourtyard",
          "id_dest": "alley"},
@@ -632,11 +652,13 @@ def build_alley():
     s.exits = [
         {"name": "BackToCourtyard", "pos": (0.0, 0.9, 12.5), "id": "alley_back_to_courtyard",
          "prompt_key": "prompt.back_to_street", "radius": 1.4,
+         "support": ("../../MouthPierWest", "../../MouthPierEast", "../../MouthCourtyardLight"),
          "outline": ("MouthPierWest", "MouthPierEast", "MouthLintel", "MouthCourtyardLight"),
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromAlley",
          "id_dest": "residential"},
         {"name": "ToPlayground", "pos": (0.0, 0.9, -21.6), "id": "alley_to_playground",
          "prompt_key": "prompt.alley_gate", "radius": 1.6,
+         "support": ("../../GatePostWest", "../../GatePostEast"),
          "outline": ("GateLeaf", "GatePostWest", "GatePostEast"),
          "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromAlley",
          "id_dest": "playground"},
@@ -880,7 +902,9 @@ def _stair(s, prefix, steps, rise, run, x_range, z_range, axis, direction, start
     `axis` is "x" or "z", the direction the flight climbs or descends along; `direction`
     is +1 or -1 along it; `start` is where the first step begins on that axis. `rise` is
     signed: negative for a flight that goes down. Every step is a solid block down to
-    `base`, not a floating slab: seen from the side, a flight of slabs reads as a shelf.
+    `base`, not a floating slab: seen from the side, a flight of slabs reads as a shelf. The
+    block remains in the navigation bake but uses the navigation-only layer; the player rides
+    `_ramp` instead of switching contact surfaces between the slope and each riser.
     Returns the names of the steps, for the outline tables.
     """
     names = []
@@ -898,7 +922,7 @@ def _stair(s, prefix, steps, rise, run, x_range, z_range, axis, direction, start
             pos = (round((x_range[0] + x_range[1]) / 2.0, 3), round(y, 3), round(centre, 3))
             size = (round(x_range[1] - x_range[0], 3), round(height, 3), run)
         name = f"{prefix}_{step}"
-        s.box(name, pos, size, mat)
+        s.box(name, pos, size, mat, collision_layer=NAVIGATION_ONLY_LAYER)
         names.append(name)
         if edge:
             # A pale strip along the nosing of every tread, as on real outdoor steps. Seen
@@ -933,16 +957,18 @@ def _tread(s, name, x_range, z_range, top):
     pos = (round((x_range[0] + x_range[1]) / 2.0, 4), round(top - thickness / 2.0, 4),
            round((z_range[0] + z_range[1]) / 2.0, 4))
     size = (round(x_range[1] - x_range[0], 3), thickness, round(z_range[1] - z_range[0], 3))
-    s.ramp(name, pos, size, (0, 0, 0))
+    s.ramp(name, pos, size, (0, 0, 0), BAKE_ONLY_LAYER)
 
 
 def _ramp(s, name, steps, rise, run, x_range, z_range, axis, direction, start, base):
-    """An invisible slope over a flight built by `_stair`, through its nosings.
+    """An invisible walking slope over a flight built by `_stair`, through its nosings.
 
-    The navigation bake only treats a collision box as floor when the box is thin: see
-    `_tread`. A solid step is not floor, so a flight of them is drawn but cannot be routed
-    up, and an exit at its head sits metres off the mesh. A thin slope the body and the
-    bake both stand on is the answer. Its top surface runs through the front edge of
+    The player collides with this continuous ramp on the world layer; the visible stair
+    blocks are navigation-only, so the body never alternates between the ramp and individual
+    treads. Both layers are retained in the navigation bake. The bake only treats a collision
+    box as floor when it is thin: see `_tread`. A solid step is not floor, so a flight of
+    them is drawn but cannot be routed up, and an exit at its head sits metres off the mesh.
+    A thin slope the bake sees is the answer. Its top surface runs through the front edge of
     every tread (for a flight that goes down, through the edge each tread drops off), so it
     is never below a step and the feet stay at most one riser above a tread. It ends level
     with the top of the flight, which `_stair` callers put one riser above the last step
@@ -977,7 +1003,7 @@ def _ramp(s, name, steps, rise, run, x_range, z_range, axis, direction, start, b
         size = (round(length, 4), thickness, round(width, 3))
         # local +X onto (da, dh, 0): a rotation about Z of atan2(dh, da)
         rotation = (0, 0, round(math.atan2(dh, da), 6))
-    s.ramp(name, pos, size, rotation)
+    s.ramp(name, pos, size, rotation, collision_layer=1)
 
 
 def write(scene, path):

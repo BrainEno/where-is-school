@@ -38,8 +38,9 @@ const CAMERA_DEPTH_TOLERANCE := 0.01
 @export var max_distance: float = 2.4
 ## How strongly facing direction outweighs raw distance when ranking targets.
 @export var facing_weight: float = 0.9
-## Physics layer(s) that can hide an interactable (walls, floors, props).
-@export_flags_3d_physics var occluder_mask: int = 1
+## Physics layers that can hide an interactable: world colliders and visible navigation-only
+## stair blocks. Invisible bake-only treads use layer 5 and must not block sight.
+@export_flags_3d_physics var occluder_mask: int = 9
 ## Eyeball height used for the line-of-sight probe.
 @export var eye_height: float = 1.1
 ## Whether the mouse can pick a target. Turning this off leaves facing-only

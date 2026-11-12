@@ -669,6 +669,7 @@ radius = 1.1
 position = Vector3(3.2, 0.6, 3.3)
 interact_id = &"classroom_door"
 outline_paths = PackedStringArray("../../DoorFrameLeft", "../../DoorFrameRight", "../../DoorFrameHead", "../../Threshold")
+support_paths = PackedStringArray("../../DoorLintel")
 prompt_text = "Try the door"
 prompt_key = "prompt.door_try"
 radius = 1.15
