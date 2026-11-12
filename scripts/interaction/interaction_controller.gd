@@ -193,9 +193,9 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 ##
 ## What a body may be looked through is the same ray as `_probe_is_clear`, with two
 ## differences that both come from the renderer rather than from gameplay. A body the camera
-## draws see-through - a wall `CameraOccluderFader` has faded (any transparency puts it in the
-## transparent pass, which writes no depth), or a collider with no visible mesh - hides
-## nothing. And the object's own bodies (the ones its outline meshes belong to) never hide it.
+## draws see-through - a wall `CameraOccluderFader` has faded (drawn with alpha-blended
+## materials, which write no depth; see `_draws_opaque`), or a collider with no visible
+## mesh - hides nothing. And the object's own bodies (the ones its outline meshes belong to) never hide it.
 ## Declared `support_paths` are *not* looked through here: the renderer does not know about
 ## them, and a wall drawn between the camera and a notice hides it whoever declared what.
 func is_drawn_at_screen_ray(from: Vector3, direction: Vector3, candidate: Interactable) -> bool:

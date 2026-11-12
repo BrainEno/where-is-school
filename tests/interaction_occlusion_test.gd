@@ -525,10 +525,22 @@ func _check_canopy_hides_from_the_camera() -> void:
 		)
 	# Facing it, in reach and in the eye's sight: the camera still cannot see it, so it
 	# is not the target either - no prompt, no cue, no E for what has no outline.
+	# Step up to it first: from the reset spot it is 2.2 m away, beyond the sensor's reach
+	# of its anchor, and "not chosen" would prove nothing. The faded-canopy check at the end
+	# of this case is the control: from here, once the camera can see it, it is chosen.
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
-	var here := _player.global_position
+	var here := Vector3(0.9, 0.0, -0.8)
 	_player.teleport(Transform3D(_yaw_towards(here, target.global_position), here))
 	await _physics_frames(4)
+	var near_eye := _player.global_position + Vector3.UP * _interaction.eye_height
+	if _first_drawn_body(centre) != canopy or not _interaction.has_line_of_sight_from(near_eye, target):
+		_failures.append(
+			"Case 7 setup: from the facing spot the camera ray meets '%s' (not the canopy?) or the eye lost it. %s"
+			% [_node_name(_first_drawn_body(centre)), _explain(target)]
+		)
+		_interaction.clear_mouse_override()
+		_clean_up()
+		return
 	print(
 		"[#115] canopy, facing: current=%s highlight=%s seen_by_camera=%s"
 		% [

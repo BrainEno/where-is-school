@@ -291,7 +291,9 @@ other conversation plays that one.
 - a screen-space ray from the camera through the pointer, restricted to the
   interaction layer, with the same reach and line-of-sight rules as facing, plus one rule
   of its own: the object has to be *drawn* at that pixel (`is_drawn_at_screen_ray`);
-- the facing/distance score that existed before.
+- the facing/distance score that existed before, among objects in the eye's sight *and*
+  drawn somewhere on screen (`is_seen_by_camera`, the anchor-sphere rule below): what has
+  no outline gets no prompt and no E.
 
 **Two different "can see" questions (issue #115).** Line of sight
 (`has_line_of_sight_from`) is about the character: rays from the player's eye height, and
@@ -308,21 +310,40 @@ find the sheet while the outline, correctly, drew nothing.
   pointable on its uncovered part only, and asking again gives the same answer.
 - *On its anchor sphere, off the object*: it counts while any part is in view - a ray to the
   centre or a corner of one of its boxes reaches the box first.
-- *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, with no
-  `transparency` and no transparent `material_override`: the meshes that write depth. A wall
-  `CameraOccluderFader` has faded, or a collider with nothing drawn, hides nothing - in the
-  frame, in the mask, and now for the pointer. The bodies the object's own outline meshes
-  belong to never hide it. Declared supports are *not* looked through by this ray: the
+- *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, drawn
+  with at least one material that writes depth - anything but an alpha-blended
+  `BaseMaterial3D` (a `ShaderMaterial`, or no material, counts as opaque). A collider with
+  nothing drawn hides nothing. `GeometryInstance3D.transparency` on its own counts only on
+  Forward+: Godot ignores it on Mobile and Compatibility, and the game ships on
+  Compatibility. The bodies the object's own outline meshes belong to never hide it.
+- *Faded walls.* `CameraOccluderFader` animates `transparency`, which by itself drew nothing
+  on Compatibility - a real frame showed the classroom's south wall at 0.82 fully opaque,
+  with the timetable behind it invisible. While a piece is faded the fader now swaps its
+  `StandardMaterial3D`s for alpha-blended copies whose alpha follows the fade, and puts the
+  authored materials back (the same resources) when it is restored; `material_overlay` and
+  the outline's internal key twins are not touched. The faded wall is then see-through in
+  the frame, in the outline mask, and for the pointer and facing alike. A piece drawn with a
+  `ShaderMaterial` cannot be faded this way and stays opaque everywhere.
+- *What is faded.* The fader casts two rays: camera to the player's eye, as before, and
+  camera to the point the player faces (0.9 m ahead at eye height, `facing_reach`). The
+  second ray exists because of the facing gate: standing in front of the timetable, the eye
+  ray passes the south wall through the door gap, so the wall stayed opaque and the sheet
+  the player faced could not be used. The fader runs before the controller in each physics
+  tick (`process_physics_priority = -1`), so the controller judges the walls as the frame
+  about to be rendered draws them. Declared supports are *not* looked through by this ray: the
   renderer does not know about them, and a wall drawn between the camera and a notice hides
   it whoever declared what.
 - An object with no outline meshes has no outline to disagree with and is not tested.
 - A hotspot that fails this test is looked past, like a switched-off one, so something
   drawn in front of the wall can still answer the pixel.
-- *Not covered:* the facing path does not consult the camera. Standing in reach and facing
-  an object the camera sees only through an opaque wall still selects it (prompt, E), with
-  no outline. That is a level and camera decision (where the fader fades, where the camera
-  sits), left to the owner rather than settled here. Pick boxes are mesh bounds, not
-  silhouettes, so around a thin or irregular mesh the answer is a box's, not a pixel's.
+- *Consequence for content:* an object the fixed camera sees only through an opaque wall is
+  not usable from there by any input. The classroom timetable hangs inside the south wall,
+  which the camera always sees from outside, so it is usable only while one of the fader's
+  rays (to the player's eye, or to the point the player faces) crosses `WallSouthLeft` and
+  fades it - in practice, when the player faces the sheet or stands west of the door gap.
+- *Not covered:* a click that starts a walk is validated again on arrival by the player's
+  eye (`has_line_of_sight`), not by the camera. Pick boxes are mesh bounds, not silhouettes,
+  so around a thin or irregular mesh the answer is a box's, not a pixel's.
 
 The pointer wins when it hits something, a new pointer pick has to hold for one frame
 before it replaces a different target, and facing takes over immediately when the
@@ -457,16 +478,16 @@ together:
     back to the outline layer (the negative control, `03e_outline_without_depth.png`). It
     fails if a target whose sampled points are all behind opaque geometry changes a single
     pixel, or if one in plain view loses more than half its line.
-  - *A visible consequence, since fixed for the pointer.* From the classroom's fixed camera
-    the timetable sheet hangs on the inside of the south wall, which the camera sees from
-    outside: the sheet is hidden unless the fader has dimmed that wall. The pointer used to
-    reach it anyway (its pick ray met only interaction areas), so hovering that spot of wall
-    showed the prompt and no outline. Since #115 the pointer asks the camera's question too
-    (section 5e); facing still does not.
+  - *A visible consequence, since fixed (#115).* From the classroom's fixed camera the
+    timetable sheet hangs on the inside of the south wall, which the camera sees from
+    outside: the sheet is hidden unless the fader has dimmed that wall. The pointer and
+    facing used to reach it anyway, so the prompt showed with no outline. Both now ask the
+    camera's question (section 5e).
   - *Known limits.* Only surfaces that write depth hide the outline. A wall the occlusion
-    fader has turned see-through (`transparency` 0.82, drawn in the transparent pass) does
-    not, which matches what the player sees through it; nor does other alpha-blended
-    geometry. The key is pulled 2 mm + 1 mm per metre towards the camera so it never loses
+    fader has faded is drawn with alpha-blended copies of its materials (section 5e; before
+    #115 the fade was `transparency` alone, which Compatibility ignores, so the wall stayed
+    opaque in the frame and in the mask), so it does not hide the outline, which matches
+    what the player sees through it; nor does other alpha-blended geometry. The key is pulled 2 mm + 1 mm per metre towards the camera so it never loses
     the depth test to its own surface; something closer than that in front of the object
     does not hide it. The environment's inverted-hull ink lines (`environment_outline.gdshader`)
     do not write depth, so they never hide an outline. A twin copies the mesh, skeleton,
