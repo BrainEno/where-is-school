@@ -849,7 +849,13 @@ func _check_new_game_rolls_back_when_staged_save_cannot_be_removed() -> void:
 	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before, "%s: restored save bytes differ from the original." % _case_label)
 	_expect(_game_state.get_snapshot() == flags_before, "%s: story flags were not restored." % _case_label)
 	_expect(_narrative.get_entries().size() == entries_before, "%s: the knowledge log was not restored." % _case_label)
-	_expect(current_scene is TitleScreen, "%s: rollback did not leave a usable title screen." % _case_label)
+	# `change_scene_to_file()` is deferred to the end of the frame, as everywhere else.
+	await _frames(4)
+	_expect(
+		current_scene is TitleScreen,
+		"%s: rollback did not leave a usable title screen (%s)."
+		% [_case_label, current_scene.name if current_scene != null else "nothing"]
+	)
 	_expect(not bool(session.call("is_starting_new_game")), "%s: Session remained busy after rollback." % _case_label)
 	_expect(_save_strays().is_empty(), "%s: rollback left staged files %s." % [_case_label, str(_save_strays())])
 

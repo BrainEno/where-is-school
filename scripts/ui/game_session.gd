@@ -288,6 +288,12 @@ func _abort(report: Dictionary, steps: PackedStringArray, save: Node, world: Nod
 		report["recovery_path"] = String(restored.get("path", ""))
 		if bool(restored.get("ok", false)):
 			rollback.append("save_restored")
+			# The file is back where the game reads it, so it is no longer a leftover.
+			var kept: Array = []
+			for path: Variant in report.get("leftovers", []):
+				if String(path) != staged_path:
+					kept.append(path)
+			report["leftovers"] = kept
 		else:
 			report["recovery_path"] = staged_path
 			rollback.append("save_restore_failed")
