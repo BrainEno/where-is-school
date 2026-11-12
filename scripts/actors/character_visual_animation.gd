@@ -63,6 +63,10 @@ const SEATED_CLIP := "sit_idle"
 ## the fade always has a pose to fade *to*. Actions and the seated pose cut: `get_up` starts
 ## on exactly the pose `sit_idle` holds.
 @export_range(0.0, 1.0, 0.01) var blend_time: float = 0.18
+## Opens in the seated pose (`sit_idle`) instead of idle, as if `set_seated(true)` had been
+## called before the first frame. For a character that is placed in a chair and never driven:
+## the classroom's seated student. Nothing else changes; `set_seated(false)` still stands it up.
+@export var start_seated: bool = false
 
 var _player: AnimationPlayer
 var _bound := false
@@ -99,7 +103,8 @@ func _ready() -> void:
 	print("CharacterVisualAnimation: %s — %s" % [name, CharacterAnimation.describe(_bind_report)])
 	if _body == null:
 		_body = _find_body_ancestor()
-	_show(String(STATE_IDLE), 0.0)
+	_seated = _seated or start_seated
+	_show(_resume_clip(), 0.0)
 
 
 func _process(_delta: float) -> void:
