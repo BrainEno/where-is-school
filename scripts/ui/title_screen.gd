@@ -234,17 +234,14 @@ func _start_new_game() -> void:
 		if error != OK:
 			_show_start_error("Could not open the game scene (error %d)." % error)
 		return
-	# Let Session finish and inspect its report before changing scenes. A failed report
-	# keeps this menu alive instead of replacing it with a blank/failed transition.
-	var report: Dictionary = await session.call("start_new_game", session, false)
+	# Session owns the whole transaction, including entering main.tscn and rolling
+	# back to this menu if the save or scene hand-off fails. Never pass the Session
+	# autoload as the old world: only a real gameplay scene belongs in that argument.
+	var report: Dictionary = await session.call("start_new_game")
 	if not is_inside_tree():
 		return
 	if not bool(report.get("ok", false)):
 		_show_start_error(String(report.get("detail", report.get("reason", "Unknown error."))))
-		return
-	var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
-	if error != OK:
-		_show_start_error("Could not open the game scene (error %d)." % error)
 
 
 func _show_start_error(detail: String) -> void:
