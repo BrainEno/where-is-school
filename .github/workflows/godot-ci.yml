@@ -228,6 +228,11 @@ jobs:
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          # The settings themselves (#105, #106): every preference survives a restart without
+          # touching `[display] locale`, damaged files and rule-breaking bindings fall back,
+          # rebinding refuses what it must, a capture never traps or leaks input, the three
+          # volume dials stay independent, and the screen is reachable by keyboard and pad.
+          run_check settings_regression 300 godot --headless --path . --script res://tests/settings_regression_test.gd || status=1
           # Every room on disk is described by data/story/locations.json, every door
           # points at a described room, and every key exists in both languages.
           run_check location_catalog 180 godot --headless --path . --script res://tests/location_catalog_test.gd || status=1
