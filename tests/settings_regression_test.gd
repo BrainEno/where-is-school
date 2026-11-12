@@ -730,7 +730,11 @@ func _check_capture() -> void:
 	_expect(_settings.call("get_text_speed") == &"normal", "C: Left did not change speed back.")
 	panel.focus_row(&"volume_music")
 	await _frames(1)
+	# A slider also asks the `Input` singleton whether a pad direction was just pressed (it
+	# repeats while held), and `push_input` does not touch that state; a real press does.
+	Input.action_press(&"ui_left")
 	await _tap_pad(JOY_BUTTON_DPAD_LEFT)
+	Input.action_release(&"ui_left")
 	_expect(int(_settings.call("get_volume", &"music")) == 95, "C: D-pad left did not lower music.")
 	await _tap_key(KEY_RIGHT)
 	_expect(int(_settings.call("get_volume", &"music")) == 100, "C: Right did not raise music.")
