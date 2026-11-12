@@ -296,7 +296,7 @@ static func _dot(color: Color, diameter: int = 14) -> Texture2D:
 	var key := "%s/%d" % [color.to_html(), diameter]
 	if _dot_cache.has(key):
 		return _dot_cache[key] as Texture2D
-	var image := Image.create(diameter, diameter, false, Image.FORMAT_RGBA8)
+	var image := Image.create_empty(diameter, diameter, false, Image.FORMAT_RGBA8)
 	var radius := float(diameter) * 0.5
 	for y in diameter:
 		for x in diameter:
