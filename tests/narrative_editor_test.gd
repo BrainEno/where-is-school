@@ -4,8 +4,8 @@ extends SceneTree
 ## The dock needs a window and a human; everything the dock can *do* to a file goes through
 ## `addons/narrative_editor/core/`, and that layer is plain `RefCounted` code. So this test
 ## loads the shipped chapters through it, edits them in a `user://` copy, saves, and reads
-## the result back — including the two ways a save can fail, which is where a content tool
-## does its real damage if it is wrong.
+## the result back — including save failures and external edits, which is where a content
+## tool does its real damage if it is wrong.
 ##
 ## What it pins:
 ##
@@ -16,6 +16,16 @@ extends SceneTree
 ##   unknown fields — is exactly what it was, and only the edited line changed;
 ## - a save where the two languages disagree fails, names the address, and writes nothing;
 ## - a save whose second file cannot be written restores the first and reports failure;
+## - external edits, deletions and injected read failures during either language's save are
+##   rejected while exact bytes and the editor's dirty state are checked;
+## - a first replacement followed by a second-language conflict rolls back without overwriting
+##   the late writer, while rollback-time rewrites and target recreation retain recovery bytes;
+## - backup and staged-file cleanup inspect an isolated batch before deleting any member;
+##   injected late conflicts retain both bilingual backups and cleanup warnings reach the store;
+## - validation-time cleanup warnings pass through the validator and appear in the dock status;
+## - a colliding stage path is never truncated, and rollback cleanup leaves a late .backup intact;
+## - stale .saving/.backup files are kept or recovered only when the target is missing;
+## - a late .saving with candidate-identical content is never mistaken for this save's file;
 ## - every one of the shipped content files can be rewritten byte for byte unchanged, so the
 ##   span-level editor is not quietly reformatting them;
 ## - the chapter list is the one on disk, and it agrees with the library constants.
@@ -26,9 +36,261 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 const Store = preload("res://addons/narrative_editor/core/narrative_store.gd")
+const FileWriter = preload("res://addons/narrative_editor/core/narrative_file_writer.gd")
 const JsonText = preload("res://addons/narrative_editor/core/narrative_json_text.gd")
 const Parity = preload("res://addons/narrative_editor/core/narrative_parity.gd")
 const FailWriter = preload("res://tests/narrative_editor_fail_writer.gd")
+const Dock = preload("res://addons/narrative_editor/ui/narrative_editor_dock.gd")
+
+
+## Simulates a read error without relying on chmod, which is not effective for every CI user.
+class UnreadableWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var unreadable_path: String = ""
+
+	func _read_text(target: String) -> Dictionary:
+		if target == unreadable_path:
+			return {"ok": false, "reason": "测试设定的读取错误"}
+		return super._read_text(target)
+
+
+## Simulates another editor saving after staging but before the first target replacement.
+class MutateAfterStageWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var mutate_after_path: String = ""
+	var external_path: String = ""
+	var external_text: String = ""
+	var mutated: bool = false
+
+	func _write_bytes(target: String, text: String) -> String:
+		var failure := super._write_bytes(target, text)
+		var expected_name := mutate_after_path.get_file()
+		var expected_parent := mutate_after_path.get_base_dir()
+		var stage_parent := target.get_base_dir().get_base_dir()
+		if (
+			failure.is_empty()
+			and not mutated
+			and target.get_file() == expected_name
+			and stage_parent == expected_parent
+		):
+			mutated = _write_external(external_path, external_text)
+		return failure
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
+## Changes the first installed language while the second target's install is failing. The
+## real writer must preserve that external edit and the original backup during rollback.
+class RollbackConflictWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var fail_destination: String = ""
+	var external_path: String = ""
+	var external_text: String = ""
+	var mutated: bool = false
+
+	func _rename(from_path: String, to_path: String) -> Error:
+		if not mutated and from_path.ends_with(".saving") and to_path == fail_destination:
+			mutated = _write_external(external_path, external_text)
+			if mutated:
+				return ERR_BUSY
+		return super._rename(from_path, to_path)
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
+## Injects a second-language .saving after preflight while the first file is staged.
+class LateSavingWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var trigger_path: String = ""
+	var artifact_path: String = ""
+	var artifact_text: String = ""
+	var injected: bool = false
+
+	func _write_bytes(target: String, text: String) -> String:
+		var failure := super._write_bytes(target, text)
+		var expected_name := trigger_path.get_file()
+		var expected_parent := trigger_path.get_base_dir()
+		var stage_parent := target.get_base_dir().get_base_dir()
+		if (
+			failure.is_empty()
+			and not injected
+			and target.get_file() == expected_name
+			and stage_parent == expected_parent
+		):
+			injected = _write_external(artifact_path, artifact_text)
+		return failure
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
+## General deterministic file-operation injection. No timing or sleeps are involved.
+class InjectedWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var hook_phase: String = ""
+	var hook_source: String = ""
+	var hook_destination: String = ""
+	var hook_action: String = "write"
+	var hook_target: String = ""
+	var hook_text: String = ""
+	var hook_fired: bool = false
+
+	var fail_install_target: String = ""
+	var install_failure_fired: bool = false
+
+	var rename_mutation_source: String = ""
+	var rename_mutation_destination_fragment: String = ""
+	var rename_mutation_target: String = ""
+	var rename_mutation_text: String = ""
+	var rename_mutation_fired: bool = false
+
+	var after_install_target: String = ""
+	var after_install_external_target: String = ""
+	var after_install_external_text: String = ""
+	var after_install_fired: bool = false
+
+	var fail_discard_fragment: String = ""
+	var discard_failure_fired: bool = false
+
+	func _discard(target: String) -> bool:
+		if (
+			not discard_failure_fired
+			and not fail_discard_fragment.is_empty()
+			and target.contains(fail_discard_fragment)
+		):
+			discard_failure_fired = true
+			return false
+		return super._discard(target)
+
+	func _before_file_operation(phase: String, source: String, destination: String) -> void:
+		if hook_fired or phase != hook_phase:
+			return
+		if not hook_source.is_empty() and source != hook_source:
+			return
+		if not hook_destination.is_empty() and destination != hook_destination:
+			return
+		hook_fired = _perform_action(hook_action, hook_target, hook_text)
+
+	func _rename(from_path: String, to_path: String) -> Error:
+		if (
+			not rename_mutation_fired
+			and not rename_mutation_source.is_empty()
+			and from_path == rename_mutation_source
+			and to_path.contains(rename_mutation_destination_fragment)
+		):
+			rename_mutation_fired = _write_external(rename_mutation_target, rename_mutation_text)
+		if (
+			not install_failure_fired
+			and not fail_install_target.is_empty()
+			and from_path.ends_with(".saving")
+			and to_path == fail_install_target
+		):
+			install_failure_fired = true
+			return ERR_BUSY
+		var code := super._rename(from_path, to_path)
+		if (
+			code == OK
+			and not after_install_fired
+			and not after_install_target.is_empty()
+			and from_path.ends_with(".saving")
+			and to_path == after_install_target
+		):
+			after_install_fired = _write_external(
+				after_install_external_target, after_install_external_text
+			)
+		return code
+
+	func _perform_action(action: String, target: String, text: String) -> bool:
+		if action == "delete":
+			return DirAccess.remove_absolute(ProjectSettings.globalize_path(target)) == OK
+		return _write_external(target, text)
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
+## Arms an unreadable-file failure only at a chosen operation point, after save preflight.
+class ReadFailureDuringSaveWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var trigger_path: String = ""
+	var armed: bool = false
+
+	func _before_file_operation(phase: String, source: String, _destination: String) -> void:
+		if phase == "replace_target_to_backup" and source == trigger_path:
+			armed = true
+
+	func _read_text(target: String) -> Dictionary:
+		if armed and target == trigger_path:
+			return {"ok": false, "reason": "测试在替换窗口注入读取错误"}
+		return super._read_text(target)
+
+
+## Creates a colliding stage entry after the writer's first existence check but before open.
+class StageCreationCollisionWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var target_parent: String = ""
+	var injected_path: String = ""
+	var injected_text: String = ""
+	var injected: bool = false
+
+	func _before_file_operation(phase: String, source: String, _destination: String) -> void:
+		if phase != "write_stage_before_open" or injected:
+			return
+		if source.get_base_dir().get_base_dir() != target_parent:
+			return
+		injected_path = source
+		injected = _write_external(source, injected_text)
+
+	func _write_external(target: String, text: String) -> bool:
+		var file := FileAccess.open(target, FileAccess.WRITE)
+		if file == null:
+			return false
+		file.store_string(text)
+		file.flush()
+		file.close()
+		return true
+
+
+## Leaves the final validation stage directory behind so its warning can be checked end to end.
+class ValidationWarningWriter extends "res://addons/narrative_editor/core/narrative_file_writer.gd":
+	var stage_directory: String = ""
+	var warning_injected: bool = false
+
+	func _write_bytes(target: String, text: String) -> String:
+		var failure := super._write_bytes(target, text)
+		if (
+			failure.is_empty()
+			and target.get_file().begins_with("zh-CN-")
+			and target.get_base_dir().get_file().begins_with(".ne-stage-")
+		):
+			stage_directory = target.get_base_dir()
+		return failure
+
+	func _remove_empty_directory(path: String) -> bool:
+		if not warning_injected and path == stage_directory and not path.is_empty():
+			warning_injected = true
+			return false
+		return super._remove_empty_directory(path)
+
 
 ## A `user://` copy of real content: the editor is pointed at it, so a bug in the tool can
 ## never touch `res://data/` from a test run.
@@ -70,6 +332,52 @@ func _run() -> void:
 	_case_parity_failure()
 	Harness.stage = "failed save"
 	_case_failed_save_keeps_both_languages()
+	Harness.stage = "external edits"
+	_case_external_edits_are_conflicts()
+	Harness.stage = "deleted target"
+	_case_deleted_target_is_a_conflict()
+	Harness.stage = "unreadable target"
+	_case_unreadable_target_is_a_conflict()
+	Harness.stage = "external writes during save"
+	_case_in_save_external_rewrites_preserved()
+	Harness.stage = "deletions during save"
+	_case_in_save_target_deletions_preserved()
+	Harness.stage = "read failure during save"
+	_case_in_save_read_failure_preserved()
+	Harness.stage = "staged saving creation collision"
+	_case_stage_creation_collision_is_preserved()
+	Harness.stage = "normal pair byte save"
+	_case_normal_pair_save_bytes()
+	Harness.stage = "cleanup warning surfaced"
+	_case_cleanup_warning_is_presented()
+	Harness.stage = "validation warning reaches dock"
+	_case_validation_warning_reaches_dock()
+	Harness.stage = "recheck before replace"
+	_case_rechecks_after_staging()
+	Harness.stage = "late .saving artifact"
+	_case_late_saving_artifact_is_preserved()
+	Harness.stage = "external edit during rollback"
+	_case_external_edit_survives_rollback()
+	Harness.stage = "first replace then second conflict"
+	_case_second_target_conflict_rolls_back_first()
+	Harness.stage = "rollback isolation rewrite"
+	_case_rollback_isolation_conflict_preserved()
+	Harness.stage = "rollback cleanup conflict"
+	_case_rollback_cleanup_conflict_preserved()
+	Harness.stage = "target recreated after isolation"
+	_case_target_recreated_after_rollback_isolation()
+	Harness.stage = "saving cleanup replacement"
+	_case_saving_cleanup_replacement_preserved()
+	Harness.stage = "backup cleanup replacement"
+	_case_backup_cleanup_replacement_preserved()
+	Harness.stage = "isolate rename inspection"
+	_case_isolation_move_inspects_actual_file()
+	Harness.stage = "bilingual late conflict materials"
+	_case_bilingual_late_conflict_keeps_both_backups()
+	Harness.stage = "final quarantine late conflict"
+	_case_final_quarantine_conflict_keeps_bilingual_backups()
+	Harness.stage = "crash artifacts"
+	_case_crash_artifacts_are_preserved_or_recovered()
 	Harness.stage = "dirty"
 	_case_dirty_state()
 	Harness.stage = "search"
@@ -418,7 +726,7 @@ func _case_failed_save_keeps_both_languages() -> void:
 		var saved := store.save()
 		var label := String(scenario["label"])
 		_expect(not saved, "%s：save() 竟然返回成功。" % label)
-		_expect(store.describe_errors().contains("保存失败"), "%s：没有明确报出保存失败。" % label)
+		_expect(store.describe_errors().contains("保存失败"), "%s：没有明确说明保存失败。" % label)
 		_expect(_read(en_path) == before_en, "%s：英文文件被写坏了。" % label)
 		_expect(_read(zh_path) == before_zh, "%s：中文文件被写坏了。" % label)
 		_expect(store.is_dirty(), "%s：保存失败之后 dirty 状态丢了。" % label)
@@ -427,6 +735,784 @@ func _case_failed_save_keeps_both_languages() -> void:
 				not FileAccess.file_exists(en_path + suffix) and not FileAccess.file_exists(zh_path + suffix),
 				"%s：失败之后留下了 %s 文件。" % [label, suffix]
 			)
+
+
+func _case_external_edits_are_conflicts() -> void:
+	for locale: String in L10n.LOCALES:
+		_reset_fixture()
+		var en_path := _dialogue_path("en", "alley")
+		var zh_path := _dialogue_path("zh-CN", "alley")
+		var before_en := _read(en_path)
+		var before_zh := _read(zh_path)
+		var store := Store.new(ROOT)
+		if not _prepare_bilingual_edit(
+			store, "Pending English edit.", "未保存的中文修改。", "外部修改 %s" % locale
+		):
+			continue
+		var conflict_path := en_path if locale == "en" else zh_path
+		var external_text := (before_en if locale == "en" else before_zh) + " \n"
+		_write(conflict_path, external_text)
+
+		_expect(not store.save(), "%s 文件被磁盘内容变更后竟然保存成功。" % locale)
+		var errors := store.describe_errors()
+		_expect(errors.contains("保存已停止"), "%s：没有明确说明保存已停止：%s" % [locale, errors])
+		_expect(errors.contains(conflict_path), "%s：错误没有点出变化的文件：%s" % [locale, errors])
+		_expect(_read(conflict_path) == external_text, "%s：外部版本被改写。" % locale)
+		_expect(
+			_read(zh_path if locale == "en" else en_path)
+			== (before_zh if locale == "en" else before_en),
+			"%s 文件变化时另一种语言的文件被部分保存。" % locale
+		)
+		_expect(store.is_dirty(), "%s 文件变化后编辑器里的未保存修改丢失。" % locale)
+		var conversation_id := String(store.list_ids()[0])
+		var node_index := _first_node_with_text(store, conversation_id)
+		var pending := _field(store.node_model(conversation_id, node_index), "text")
+		var pending_values: Dictionary = pending.get("values", {})
+		_expect(
+			String(pending_values.get("en", "")) == "Pending English edit."
+				and String(pending_values.get("zh-CN", "")) == "未保存的中文修改。",
+			"%s 文件变化后内存中的双语编辑没有保留。" % locale
+		)
+		_expect(
+			not FileAccess.file_exists(en_path + ".saving")
+				and not FileAccess.file_exists(zh_path + ".saving"),
+			"%s 的预检检测不应新建 .saving 文件。" % locale
+		)
+
+
+func _case_deleted_target_is_a_conflict() -> void:
+	for locale: String in L10n.LOCALES:
+		_reset_fixture()
+		var en_path := _dialogue_path("en", "alley")
+		var zh_path := _dialogue_path("zh-CN", "alley")
+		var missing_path := en_path if locale == "en" else zh_path
+		var other_path := zh_path if locale == "en" else en_path
+		var other_before := _read(other_path)
+		var store := Store.new(ROOT)
+		if not _prepare_bilingual_edit(
+			store, "Pending English edit.", "未保存的中文修改。", "删除文件 %s" % locale
+		):
+			continue
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(missing_path))
+
+		_expect(not store.save(), "%s 目标文件被删除后竟然保存成功。" % locale)
+		var errors := store.describe_errors()
+		_expect(errors.contains("保存已停止"), "%s 删除后没有明确说明保存已停止：%s" % [locale, errors])
+		_expect(errors.contains(missing_path), "%s 删除后的错误没有点出文件：%s" % [locale, errors])
+		_expect(not FileAccess.file_exists(missing_path), "保存尝试新建了已删除的 %s 文件。" % locale)
+		_expect(_read(other_path) == other_before, "%s 删除时另一语言不应部分保存。" % locale)
+		_expect(store.is_dirty(), "%s 删除文件变化后编辑器里的未保存修改丢失。" % locale)
+		_expect(
+			not FileAccess.file_exists(en_path + ".saving")
+				and not FileAccess.file_exists(zh_path + ".saving"),
+			"%s 删除后不应新建 .saving 文件。" % locale
+		)
+
+
+func _case_unreadable_target_is_a_conflict() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := UnreadableWriter.new()
+	writer.unreadable_path = zh_path
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "不可读文件"):
+		return
+
+	_expect(not store.save(), "无法读取中文文件时竟然保存成功。")
+	var errors := store.describe_errors()
+	_expect(errors.contains("保存已停止"), "无法读取目标后没有明确说明保存已停止：%s" % errors)
+	_expect(errors.contains(zh_path), "无法读取目标的错误没有点出文件名：%s" % errors)
+	_expect(errors.contains("无法读取"), "无法读取目标的错误原因不明确：%s" % errors)
+	_expect(_read(en_path) == before_en, "中文目标不可读时英文文件不应部分保存。")
+	_expect(_read(zh_path) == before_zh, "测试设定的读取失败不应改动中文磁盘内容。")
+	_expect(store.is_dirty(), "目标不可读后编辑器里的未保存修改丢失。")
+
+
+func _case_in_save_external_rewrites_preserved() -> void:
+	for locale: String in L10n.LOCALES:
+		_reset_fixture()
+		var en_path := _dialogue_path("en", "alley")
+		var zh_path := _dialogue_path("zh-CN", "alley")
+		var changed_path := en_path if locale == "en" else zh_path
+		var other_path := zh_path if locale == "en" else en_path
+		var changed_before := _read(changed_path)
+		var other_before := _read(other_path)
+		var external_text := changed_before + " \n"
+		var writer := InjectedWriter.new()
+		writer.hook_phase = "replace_target_to_backup"
+		writer.hook_source = changed_path
+		writer.hook_target = changed_path
+		writer.hook_text = external_text
+		var store := Store.new(ROOT, writer)
+		if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "保存中改写 %s" % locale):
+			continue
+
+		_expect(not store.save(), "%s 文件在保存替换窗口被改写后竟然成功。" % locale)
+		_expect(writer.hook_fired, "没有在 %s 目标移动窗口注入外部写入。" % locale)
+		_expect_bytes(changed_path, external_text, "%s 外部写入的实际字节未保留。" % locale)
+		_expect_bytes(other_path, other_before, "%s 冲突后另一语言未还原到原字节。" % locale)
+		_expect(store.is_dirty(), "%s 保存冲突后编辑器里的未保存修改丢失。" % locale)
+		_expect(store.describe_errors().contains(changed_path), "%s 错误没有指出冲突目标。" % locale)
+
+
+func _case_in_save_target_deletions_preserved() -> void:
+	for locale: String in L10n.LOCALES:
+		_reset_fixture()
+		var en_path := _dialogue_path("en", "alley")
+		var zh_path := _dialogue_path("zh-CN", "alley")
+		var deleted_path := en_path if locale == "en" else zh_path
+		var other_path := zh_path if locale == "en" else en_path
+		var other_before := _read(other_path)
+		var writer := InjectedWriter.new()
+		writer.hook_phase = "replace_target_to_backup"
+		writer.hook_source = deleted_path
+		writer.hook_action = "delete"
+		writer.hook_target = deleted_path
+		var store := Store.new(ROOT, writer)
+		if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "保存中删除 %s" % locale):
+			continue
+
+		_expect(not store.save(), "%s 目标在保存期间被删除后竟然成功。" % locale)
+		_expect(writer.hook_fired, "没有在 %s 目标移动窗口注入删除。" % locale)
+		_expect(not FileAccess.file_exists(deleted_path), "%s 被删除的目标被保存流程重新创建。" % locale)
+		_expect_bytes(other_path, other_before, "%s 目标删除后另一语言未还原到原字节。" % locale)
+		_expect(store.is_dirty(), "%s 目标删除后编辑器里的未保存修改丢失。" % locale)
+
+
+func _case_in_save_read_failure_preserved() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := ReadFailureDuringSaveWriter.new()
+	writer.trigger_path = zh_path
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "保存中读失败"):
+		return
+
+	_expect(not store.save(), "替换窗口读取失败后竟然保存成功。")
+	_expect(writer.armed, "没有在目标移动窗口注入读取失败。")
+	_expect_bytes(en_path, before_en, "读取失败后英文目标未还原到原字节。")
+	_expect_bytes(zh_path, before_zh, "读取失败改动了中文目标字节。")
+	_expect(store.describe_errors().contains("测试在替换窗口注入读取错误"), "错误未报告注入的读取失败。")
+	_expect(store.is_dirty(), "读取失败后编辑器里的未保存修改丢失。")
+
+
+func _case_stage_creation_collision_is_preserved() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := StageCreationCollisionWriter.new()
+	writer.target_parent = en_path.get_base_dir()
+	writer.injected_text = "external staged bytes"
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "暂存创建窗口冲突"):
+		return
+
+	_expect(not store.save(), "暂存路径在打开前被占用后竟然保存成功。")
+	_expect(writer.injected, "测试没有在暂存路径首次检查后创建外部文件。")
+	_expect_bytes(writer.injected_path, writer.injected_text, "暂存创建逻辑覆盖了窗口中出现的外部字节。")
+	_expect_bytes(en_path, before_en, "暂存创建冲突不应改动英文目标。")
+	_expect_bytes(zh_path, before_zh, "暂存创建冲突不应改动中文目标。")
+	_expect(store.describe_errors().contains(writer.injected_path), "错误没有指出冲突暂存路径。")
+	_expect(store.is_dirty(), "暂存创建冲突后编辑器修改丢失。")
+
+
+func _case_normal_pair_save_bytes() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var writer := FileWriter.new()
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Exact English bytes.", "精确核对中文字节。", "正常双语字节保存"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var expected_en := _edited_file_text(en_path, address, "Exact English bytes.")
+	var expected_zh := _edited_file_text(zh_path, address, "精确核对中文字节。")
+
+	_expect(store.save(), "正常双语保存失败：%s" % store.describe_errors())
+	_expect_bytes(en_path, expected_en, "英文目标保存后的完整字节不符合候选文本。")
+	_expect_bytes(zh_path, expected_zh, "中文目标保存后的完整字节不符合候选文本。")
+	_expect(writer.leftovers([en_path, zh_path]).is_empty(), "正常双语保存留下事务恢复材料。")
+	_expect(not store.is_dirty(), "正常双语保存完成后仍标记为 dirty。")
+
+
+func _case_cleanup_warning_is_presented() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := InjectedWriter.new()
+	writer.fail_discard_fragment = ROOT + "/dialogue/"
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Saved English edit.", "已保存的中文修改。", "清理警告呈现"):
+		return
+
+	_expect(store.save(), "备份清理未完成时双语内容已保存，事务应以警告完成：%s" % store.describe_errors())
+	_expect(writer.discard_failure_fired, "测试没有触发隔离备份的删除失败。")
+	_expect(not store.is_dirty(), "保留恢复副本后成功保存却仍标记为 dirty。")
+	var warning_was_surfaced := false
+	for message: String in store.warnings:
+		if message.contains("恢复材料仍保留"):
+			warning_was_surfaced = true
+	_expect(
+		warning_was_surfaced,
+		"writer 的备份清理警告没有传递到 store.warnings：%s" % str(store.warnings)
+	)
+	_expect(
+		FileAccess.file_exists(en_path) and FileAccess.file_exists(zh_path),
+		"清理警告不应撤销已经完成的双语写入。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_en) >= 1
+			or _count_paths_with_bytes(writer.preserved_paths, before_zh) >= 1,
+		"清理失败时未保留任何一份原文备份。"
+	)
+	_expect(not writer.leftovers([en_path, zh_path]).is_empty(), "失败的备份清理没有留下可见恢复材料。")
+
+
+func _case_validation_warning_reaches_dock() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := ValidationWarningWriter.new()
+	var store := Store.new(ROOT, writer)
+	var dock := Dock.new()
+	dock.store = store
+	root.add_child(dock)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "校验警告呈现"):
+		dock.free()
+		return
+
+	dock.call("_on_validate_pressed")
+	var status_label := dock.get("_status_label") as Label
+	var status_text := dock.get("_status_text") as TextEdit
+	_expect(writer.warning_injected, "校验没有触发暂存目录清理警告。")
+	var warning_visible := false
+	for message: String in store.warnings:
+		warning_visible = warning_visible or message.contains("暂存目录无法安全移除")
+	_expect(warning_visible, "validator 未把 writer 的清理警告传递给 store：%s" % str(store.warnings))
+	_expect(status_label != null, "dock 状态标题节点没有建立。")
+	_expect(status_text != null, "dock 状态信息节点没有建立。")
+	if status_label != null:
+		_expect(
+			status_label.text == "校验通过，另有警告需要检查",
+			"dock 没有以警告状态呈现校验结果：%s" % status_label.text
+		)
+	if status_text != null:
+		_expect(
+			status_text.text.contains("暂存目录无法安全移除"),
+			"dock 没有显示 validator 传来的恢复警告：%s" % status_text.text
+		)
+	_expect(store.is_dirty(), "校验不应清除编辑器中的未保存内容。")
+	_expect_bytes(en_path, before_en, "校验写入了英文内容文件。")
+	_expect_bytes(zh_path, before_zh, "校验写入了中文内容文件。")
+	var validation_temp := "user://narrative_editor_validation/zh-CN-alley.json"
+	_expect(not FileAccess.file_exists(validation_temp), "校验留下了中文运行时临时文件。")
+	if not writer.stage_directory.is_empty():
+		var remove_error := DirAccess.remove_absolute(
+			ProjectSettings.globalize_path(writer.stage_directory)
+		)
+		_expect(remove_error == OK, "测试没有清理故意留下的暂存目录（错误码 %d）。" % remove_error)
+	dock.free()
+
+
+func _case_rechecks_after_staging() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	var writer := MutateAfterStageWriter.new()
+	writer.mutate_after_path = zh_path + ".saving"
+	writer.external_path = en_path
+	writer.external_text = before_en + " \n"
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "暂存期间修改"):
+		return
+
+	_expect(not store.save(), "暂存期间英文文件被磁盘内容变更后竟然保存成功。")
+	_expect(writer.mutated, "测试没有在暂存阶段注入外部修改。")
+	var errors := store.describe_errors()
+	_expect(errors.contains(en_path), "替换前复检没有点出英文目标文件名：%s" % errors)
+	_expect(_read(en_path) == writer.external_text, "替换前复检仍改写了暂存期间的外部修改。")
+	_expect(_read(zh_path) == before_zh, "暂存期间的变化后不应让中文文件部分保存。")
+	_expect(store.is_dirty(), "替换前文件变化后未保存编辑没有保留。")
+	for suffix: String in [".saving", ".backup"]:
+		_expect(
+			not FileAccess.file_exists(en_path + suffix)
+				and not FileAccess.file_exists(zh_path + suffix),
+			"替换前文件变化后不应留下 %s。" % suffix
+		)
+
+
+func _case_late_saving_artifact_is_preserved() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var english_edit := "Pending English edit."
+	var chinese_edit := "未保存的中文修改。"
+	var writer := LateSavingWriter.new()
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, english_edit, chinese_edit, "暂存期间出现 .saving"):
+		return
+
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var field := _field(store.node_model(conversation_id, node_index), "text")
+	var expected_doc := JsonText.new()
+	var loaded := expected_doc.load_file(second_path)
+	_expect(loaded, "测试无法读取中文 fixture 来构造并发 .saving。")
+	if not loaded:
+		return
+	var address: Array = field.get("address", [])
+	var edited := expected_doc.set_string(address, chinese_edit)
+	_expect(edited, "测试无法构造预期的中文暂存内容。")
+	if not edited:
+		return
+
+	writer.trigger_path = first_path + ".saving"
+	writer.artifact_path = second_path + ".saving"
+	writer.artifact_text = expected_doc.build_text()
+	_expect(not store.save(), "保存期间出现 .saving 文件后竟然保存成功。")
+	_expect(writer.injected, "测试没有在双语保存预检后注入第二语言 .saving。")
+	var errors := store.describe_errors()
+	_expect(errors.contains(writer.artifact_path), "错误没有指出并发出现的 .saving 文件：%s" % errors)
+	_expect(_read(first_path) == before_first, "并发 .saving 出现后第一种语言不应部分保存。")
+	_expect(_read(second_path) == before_second, "并发 .saving 出现后第二种语言目标不应改变。")
+	_expect(not FileAccess.file_exists(writer.trigger_path), "失败后本次暂存文件应清理。")
+	_expect(FileAccess.file_exists(writer.artifact_path), "清理误删了并发出现的 .saving 文件。")
+	_expect(
+		_read(writer.artifact_path) == writer.artifact_text,
+		"清理改写或删除了与候选文本相同的并发 .saving 文件。"
+	)
+	_expect(store.is_dirty(), "并发 .saving 出现后编辑器中的未保存修改丢失。")
+
+
+func _case_external_edit_survives_rollback() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var writer := RollbackConflictWriter.new()
+	writer.fail_destination = second_path
+	writer.external_path = first_path
+	writer.external_text = before_first + " \n"
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "事务恢复期间修改"):
+		return
+
+	_expect(not store.save(), "恢复期间发生磁盘内容变更后竟然保存成功。")
+	_expect(writer.mutated, "测试没有在事务后半段注入外部修改。")
+	var errors := store.describe_errors()
+	_expect(errors.contains("回滚期间检测到外部变化"), "错误没有报告安全恢复中的外部修改：%s" % errors)
+	_expect(errors.contains(first_path), "恢复说明没有指出被外部修改的目标：%s" % errors)
+	_expect(errors.contains(first_path + ".backup"), "恢复说明没有指出保留的备份：%s" % errors)
+	_expect(errors.contains("手工比对恢复"), "恢复说明缺少人工恢复指引：%s" % errors)
+	_expect(_read(first_path) == writer.external_text, "恢复改写了事务期间第三方写入的内容。")
+	_expect(_read(first_path + ".backup") == before_first, "安全恢复没有保留原始备份。")
+	_expect(_read(second_path) == before_second, "第二种语言应安全恢复成原文。")
+	_expect(not FileAccess.file_exists(second_path + ".backup"), "已安全恢复的第二种语言不应留下备份。")
+	_expect(store.is_dirty(), "发生恢复文件变化后编辑器里的未保存修改丢失。")
+	for suffix: String in [".saving"]:
+		_expect(
+			not FileAccess.file_exists(first_path + suffix)
+				and not FileAccess.file_exists(second_path + suffix),
+			"安全恢复后不应留下本次临时文件。"
+		)
+
+
+func _case_second_target_conflict_rolls_back_first() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_second := before_second + " \n"
+	var writer := InjectedWriter.new()
+	writer.after_install_target = first_path
+	writer.after_install_external_target = second_path
+	writer.after_install_external_text = external_second
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "首份成功后第二份冲突"):
+		return
+
+	_expect(not store.save(), "第一份替换成功后第二份被改写，双语保存竟然成功。")
+	_expect(writer.after_install_fired, "测试没有在第一份安装后注入第二份外部写入。")
+	_expect_bytes(first_path, before_first, "第二份冲突后第一份没有按原字节回滚。")
+	_expect_bytes(second_path, external_second, "第二份迟到的外部字节被覆盖。")
+	_expect(not FileAccess.file_exists(first_path + ".backup"), "安全回滚后第一份备份仍应已移回目标。")
+	_expect(store.is_dirty(), "第二份迟到冲突后编辑器修改丢失。")
+
+
+func _case_rollback_isolation_conflict_preserved() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_text := before_first + " \n"
+	var writer := InjectedWriter.new()
+	writer.fail_install_target = second_path
+	writer.rename_mutation_source = first_path
+	writer.rename_mutation_destination_fragment = ".ne-recovery-"
+	writer.rename_mutation_target = first_path
+	writer.rename_mutation_text = external_text
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "回滚隔离前外部改写"):
+		return
+
+	_expect(not store.save(), "第二份安装失败且回滚隔离时发生外部改写后竟然成功。")
+	_expect(writer.install_failure_fired, "测试没有触发第二份安装失败。")
+	_expect(writer.rename_mutation_fired, "测试没有在回滚目标隔离 rename 前改写源文件。")
+	_expect(not FileAccess.file_exists(first_path), "隔离后不应把外部改写的字节放回不确定的目标名。")
+	_expect_bytes(first_path + ".backup", before_first, "回滚冲突时英文原文备份未保留原字节。")
+	_expect_bytes(second_path, before_second, "第二份安装失败后中文目标未还原原字节。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, external_text) >= 1,
+		"隔离后实际移动的外部版本没有按原字节保留在恢复目录。"
+	)
+	_expect(store.describe_errors().contains("回滚目标隔离"), "错误没有指出回滚隔离阶段。")
+	_expect(store.is_dirty(), "回滚隔离冲突后编辑器修改丢失。")
+
+
+func _case_rollback_cleanup_conflict_preserved() -> void:
+	_reset_fixture()
+	var first_path := _dialogue_path(L10n.LOCALES[0], "alley")
+	var second_path := _dialogue_path(L10n.LOCALES[1], "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_backup := "external backup created during rollback cleanup"
+	var new_first := "Pending English edit." if L10n.LOCALES[0] == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.fail_install_target = second_path
+	writer.hook_phase = "rollback_candidate_cleanup_after_review_before_unlink"
+	writer.hook_destination = first_path
+	writer.hook_target = first_path + ".backup"
+	writer.hook_text = external_backup
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "回滚清理窗口重建备份"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_first := _edited_file_text(first_path, address, new_first)
+
+	_expect(not store.save(), "回滚清理窗口新建 .backup 后竟然成功。")
+	_expect(writer.install_failure_fired, "测试没有触发第二份安装失败。")
+	_expect(writer.hook_fired, "测试没有在回滚候选删除前重建 .backup。")
+	_expect_bytes(first_path, before_first, "回滚清理检测到新 .backup 时原目标不应改变。")
+	_expect_bytes(first_path + ".backup", external_backup, "回滚清理覆盖或删除了外部新建的 .backup。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, candidate_first) >= 1,
+		"回滚清理冲突后没有保留被隔离的事务目标。"
+	)
+	_expect(
+		store.describe_errors().contains("回滚后清理事务目标"),
+		"错误未指出回滚候选清理阶段。"
+	)
+	_expect(store.is_dirty(), "回滚清理冲突后编辑器修改丢失。")
+
+
+func _case_target_recreated_after_rollback_isolation() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_text := before_first + " \n"
+	var new_first := "Pending English edit." if first_locale == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.fail_install_target = second_path
+	writer.hook_phase = "rollback_after_target_isolate"
+	writer.hook_destination = first_path
+	writer.hook_target = first_path
+	writer.hook_text = external_text
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "隔离后重建目标"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_first := _edited_file_text(first_path, address, new_first)
+
+	_expect(not store.save(), "目标在回滚隔离后被重建，保存竟然成功。")
+	_expect(writer.install_failure_fired, "测试没有触发第二份安装失败。")
+	_expect(writer.hook_fired, "测试没有在隔离后重建同名目标。")
+	_expect_bytes(first_path, external_text, "隔离后新建的同名目标被覆盖。")
+	_expect_bytes(first_path + ".backup", before_first, "隔离后重建目标时原文备份被删除或改写。")
+	_expect_bytes(second_path, before_second, "第二份安装失败后没有还原为原字节。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, candidate_first) >= 1,
+		"被隔离的事务目标没有保留其实际字节。"
+	)
+	_expect(store.describe_errors().contains("外部进程在目标隔离后重新创建"), "错误没有报告隔离后同名目标重建。")
+
+
+func _case_saving_cleanup_replacement_preserved() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var injected_saving := "external saving bytes"
+	var new_second := "Pending English edit." if second_locale == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.fail_install_target = second_path
+	writer.hook_phase = "saving_cleanup_after_review_before_unlink"
+	writer.hook_target = second_path + ".saving"
+	writer.hook_text = injected_saving
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "暂存清理窗口替换"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_second := _edited_file_text(second_path, address, new_second)
+
+	_expect(not store.save(), ".saving 清理窗口出现外部文件后竟然成功。")
+	_expect(writer.install_failure_fired, "测试没有触发第二份安装失败。")
+	_expect(writer.hook_fired, "测试没有在暂存隔离后、删除前注入 .saving。")
+	_expect_bytes(first_path, before_first, "失败回滚后第一份目标不符合原字节。")
+	_expect_bytes(second_path, before_second, "失败回滚后第二份目标不符合原字节。")
+	_expect_bytes(second_path + ".saving", injected_saving, "清理误删或改写窗口中出现的 .saving 字节。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, candidate_second) >= 1,
+		"清理发现迟到 .saving 后没有保留已隔离的本次候选字节。"
+	)
+
+
+func _case_backup_cleanup_replacement_preserved() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var writer := InjectedWriter.new()
+	writer.hook_phase = "pair_backup_cleanup_after_review_before_unlink"
+	writer.hook_destination = first_path + ".backup"
+	writer.hook_target = second_path + ".backup"
+	writer.hook_text = "external backup bytes"
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "备份清理窗口替换"):
+		return
+
+	_expect(not store.save(), "备份隔离后同名 .backup 重建，保存竟然成功。")
+	_expect(writer.hook_fired, "测试没有在备份批次删除前重建 .backup。")
+	_expect_bytes(second_path + ".backup", writer.hook_text, "清理误删或改写后来出现的 .backup 字节。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_first) >= 1,
+		"第一份原文备份没有留在隔离恢复材料中。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_second) >= 1,
+		"第二份原文备份没有留在隔离恢复材料中。"
+	)
+	_expect(store.describe_errors().contains("双语备份清理复核"), "错误没有报告双语备份批量复核阶段。")
+
+
+func _case_isolation_move_inspects_actual_file() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var changed_backup := before_first + " external"
+	var writer := InjectedWriter.new()
+	writer.rename_mutation_source = first_path + ".backup"
+	writer.rename_mutation_destination_fragment = ".ne-recovery-"
+	writer.rename_mutation_target = first_path + ".backup"
+	writer.rename_mutation_text = changed_backup
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "隔离 rename 前后复核"):
+		return
+
+	_expect(not store.save(), "隔离 rename 移动了与预期不同的备份后竟然成功。")
+	_expect(writer.rename_mutation_fired, "测试没有在源检查后、隔离 rename 调用前改写备份。")
+	_expect_bytes(second_path + ".backup", before_second, "未执行检查的第二份备份没有保留原字节。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, changed_backup) >= 1,
+		"rename 后没有检查实际移动的备份字节或隔离副本未保留。"
+	)
+	_expect(store.describe_errors().contains("移动后发现实际文件内容与预期不同"), "错误没有说明隔离后实际内容不符。")
+
+
+func _case_bilingual_late_conflict_keeps_both_backups() -> void:
+	_reset_fixture()
+	var first_locale := L10n.LOCALES[0]
+	var second_locale := L10n.LOCALES[1]
+	var first_path := _dialogue_path(first_locale, "alley")
+	var second_path := _dialogue_path(second_locale, "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_second := before_second + " late external edit"
+	var first_edit := "Pending English edit." if first_locale == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.hook_phase = "pair_backup_cleanup_after_review_before_unlink"
+	writer.hook_destination = first_path + ".backup"
+	writer.hook_target = second_path
+	writer.hook_text = external_second
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "第二份迟到冲突"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_first := _edited_file_text(first_path, address, first_edit)
+
+	_expect(not store.save(), "第二份目标在备份清理前迟到冲突，保存竟然成功。")
+	_expect(writer.hook_fired, "测试没有在双语备份清理检查期间注入第二份冲突。")
+	_expect_bytes(first_path, candidate_first, "第二份迟到冲突时第一语言的已安装字节不符。")
+	_expect_bytes(second_path, external_second, "第二份迟到外部字节被覆盖。")
+	_expect(
+		not FileAccess.file_exists(first_path + ".backup")
+			and not FileAccess.file_exists(second_path + ".backup"),
+		"双语备份清理检查应把两份原文保留在隔离恢复材料，而不是一份先被删除。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_first) >= 1,
+		"迟到冲突后第一份原文恢复材料已被过早删除。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_second) >= 1,
+		"迟到冲突后第二份原文恢复材料已被过早删除。"
+	)
+	_expect(store.describe_errors().contains("双语备份清理复核"), "错误没有报告迟到冲突的批量复核阶段。")
+	_expect(store.is_dirty(), "双语迟到冲突后编辑器修改丢失。")
+
+
+func _case_final_quarantine_conflict_keeps_bilingual_backups() -> void:
+	_reset_fixture()
+	var first_path := _dialogue_path(L10n.LOCALES[0], "alley")
+	var second_path := _dialogue_path(L10n.LOCALES[1], "alley")
+	var before_first := _read(first_path)
+	var before_second := _read(second_path)
+	var external_second := before_second + " late edit after final quarantine"
+	var first_edit := "Pending English edit." if L10n.LOCALES[0] == "en" else "未保存的中文修改。"
+	var writer := InjectedWriter.new()
+	writer.hook_phase = "pair_backup_cleanup_after_final_isolate_before_unlink"
+	writer.hook_target = second_path
+	writer.hook_text = external_second
+	var store := Store.new(ROOT, writer)
+	if not _prepare_bilingual_edit(store, "Pending English edit.", "未保存的中文修改。", "最终隔离后第二目标冲突"):
+		return
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var address: Array = _field(store.node_model(conversation_id, node_index), "text").get("address", [])
+	var candidate_first := _edited_file_text(first_path, address, first_edit)
+
+	_expect(not store.save(), "最终隔离后第二目标出现冲突，保存竟然成功。")
+	_expect(writer.hook_fired, "没有在最终隔离完成后、删除前注入第二目标冲突。")
+	_expect_bytes(first_path, candidate_first, "检测到第二目标冲突时第一语言目标内容不符。")
+	_expect_bytes(second_path, external_second, "最终复核覆盖了第二目标的外部内容。")
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_first) >= 1,
+		"最终批量复核前未保留第一份原文备份。"
+	)
+	_expect(
+		_count_paths_with_bytes(writer.preserved_paths, before_second) >= 1,
+		"最终批量复核前未保留第二份原文备份。"
+	)
+	_expect(store.describe_errors().contains("双语备份清理复核"), "错误没有标明最终双语批量复核失败。")
+	_expect(store.is_dirty(), "最终批量复核冲突后编辑器修改丢失。")
+
+
+func _case_crash_artifacts_are_preserved_or_recovered() -> void:
+	_reset_fixture()
+	var en_path := _dialogue_path("en", "alley")
+	var zh_path := _dialogue_path("zh-CN", "alley")
+	var before_en := _read(en_path)
+	var before_zh := _read(zh_path)
+	_write(en_path + ".backup", before_en)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(en_path))
+	_write(en_path + ".saving", "staged text from an interrupted save")
+	_write(zh_path + ".backup", before_zh)
+
+	var store := Store.new(ROOT)
+	var opened := store.open("dialogue", "alley")
+	_expect(opened, "存在中断保存留下的文件时，能恢复的内容仍应可打开：%s" % store.describe_errors())
+	if not opened:
+		return
+	_expect(_read(en_path) == before_en, "目标缺失时没有从 .backup 恢复英文原文。")
+	_expect(not FileAccess.file_exists(en_path + ".backup"), "已恢复的英文 .backup 应被移回目标。")
+	_expect(FileAccess.file_exists(en_path + ".saving"), "打开时不应擅自删除旧的 .saving。")
+	_expect(FileAccess.file_exists(zh_path + ".backup"), "目标仍存在时不应擅自删除不确定的 .backup。")
+	var warned_saving := false
+	var warned_backup := false
+	var warned_recovery := false
+	for warning: String in store.warnings:
+		warned_saving = warned_saving or warning.contains(en_path + ".saving")
+		warned_backup = warned_backup or warning.contains(zh_path + ".backup")
+		warned_recovery = warned_recovery or warning.contains("已经把备份还原")
+	_expect(warned_saving, "打开时没有警告旧的 .saving。")
+	_expect(warned_backup, "打开时没有警告目标仍存在的 .backup。")
+	_expect(warned_recovery, "打开时没有报告自动恢复的 .backup。")
+
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	var field := _field(store.node_model(conversation_id, node_index), "text")
+	store.set_field(field, "en", "This remains an unsaved edit.")
+	store.set_field(field, "zh-CN", "这条修改仍然留在内存中。")
+	_expect(not store.save(), "旧的 .saving 存在时不应开始新保存。")
+	_expect(store.describe_errors().contains(en_path + ".saving"), "保存没有指出旧的 .saving。")
+	_expect(FileAccess.file_exists(en_path + ".saving"), "保存删除了旧的 .saving。")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(en_path + ".saving"))
+	_expect(not store.save(), "目标存在且有不确定的 .backup 时不应开始新保存。")
+	_expect(store.describe_errors().contains(zh_path + ".backup"), "保存没有指出不确定的 .backup。")
+	_expect(FileAccess.file_exists(zh_path + ".backup"), "保存删除了目标仍存在时的 .backup。")
+	_expect(store.is_dirty(), "旧的事务文件存在时，编辑器里的修改仍应保留。")
+
+
+func _prepare_bilingual_edit(
+	store: Store, english: String, chinese: String, label: String
+) -> bool:
+	var opened := store.open("dialogue", "alley")
+	_expect(opened, "%s：alley 打不开：%s" % [label, store.describe_errors()])
+	if not opened:
+		return false
+	var conversation_id := String(store.list_ids()[0])
+	var node_index := _first_node_with_text(store, conversation_id)
+	_expect(node_index >= 0, "%s：找不到带正文的对话节点。" % label)
+	if node_index < 0:
+		return false
+	var field := _field(store.node_model(conversation_id, node_index), "text")
+	_expect(not field.is_empty(), "%s：节点正文不是可编辑字段。" % label)
+	if field.is_empty():
+		return false
+	var en_set := store.set_field(field, "en", english)
+	var zh_set := store.set_field(field, "zh-CN", chinese)
+	_expect(en_set and zh_set, "%s：没有设置好双语编辑：%s" % [label, store.describe_errors()])
+	return en_set and zh_set
 
 
 func _case_dirty_state() -> void:
@@ -703,6 +1789,41 @@ func _read(path: String) -> String:
 	return text
 
 
+func _read_bytes(path: String) -> PackedByteArray:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return PackedByteArray()
+	var bytes := file.get_buffer(file.get_length())
+	file.close()
+	return bytes
+
+
+func _expect_bytes(path: String, expected_text: String, message: String) -> void:
+	_expect(FileAccess.file_exists(path), "%s（文件不存在：%s）" % [message, path])
+	if FileAccess.file_exists(path):
+		_expect(_read_bytes(path) == expected_text.to_utf8_buffer(), "%s（字节不符：%s）" % [message, path])
+
+
+func _edited_file_text(path: String, address: Array, value: String) -> String:
+	var doc := JsonText.new()
+	if not doc.load_file(path):
+		_failures.append("构造候选字节时读不到 %s：%s" % [path, doc.error])
+		return ""
+	if not doc.set_string(address, value):
+		_failures.append("构造候选字节时无法编辑 %s：%s" % [path, doc.pointer_of(address)])
+		return ""
+	return doc.build_text()
+
+
+func _count_paths_with_bytes(paths: Array[String], expected_text: String) -> int:
+	var expected := expected_text.to_utf8_buffer()
+	var count := 0
+	for path: String in paths:
+		if FileAccess.file_exists(path) and _read_bytes(path) == expected:
+			count += 1
+	return count
+
+
 func _write(path: String, text: String) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -725,10 +1846,35 @@ func _copy(source: String, target: String) -> bool:
 
 
 func _clear_dir(path: String) -> void:
-	if not DirAccess.dir_exists_absolute(path):
+	var absolute := ProjectSettings.globalize_path(path)
+	if not DirAccess.dir_exists_absolute(absolute):
 		return
-	for name: String in DirAccess.get_files_at(path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s" % [path, name]))
-	for name: String in DirAccess.get_directories_at(path):
-		_clear_dir("%s/%s" % [path, name])
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var directory := DirAccess.open(path)
+	if directory == null:
+		_failures.append("fixture cleanup: cannot open %s" % path)
+		return
+	directory.include_hidden = true
+	directory.include_navigational = false
+	var begin_error := directory.list_dir_begin()
+	if begin_error != OK:
+		_failures.append("fixture cleanup: cannot list %s (error %d)" % [path, begin_error])
+		return
+	var name := directory.get_next()
+	while not name.is_empty():
+		var child := path.path_join(name)
+		if directory.current_is_dir() and not directory.is_link(name):
+			_clear_dir(child)
+		else:
+			var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(child))
+			if remove_error != OK:
+				_failures.append(
+					"fixture cleanup: cannot remove %s (error %d)" % [child, remove_error]
+				)
+		name = directory.get_next()
+	directory.list_dir_end()
+	var remove_directory_error := DirAccess.remove_absolute(absolute)
+	if remove_directory_error != OK:
+		_failures.append(
+			"fixture cleanup: cannot remove directory %s (error %d)"
+			% [path, remove_directory_error]
+		)

@@ -582,6 +582,7 @@ func _save_now() -> bool:
 	_set_status("已保存：%s" % "、".join(PackedStringArray(store.file_paths())), true)
 	_refresh_dirty()
 	_refresh_current()
+	_report_warnings("已保存，另有警告需要检查")
 	return true
 
 
@@ -593,6 +594,7 @@ func _on_validate_pressed() -> void:
 	if store.validate():
 		_set_status("校验通过：现在保存不会改变结构。", true)
 		_status_text.text = ""
+		_report_warnings("校验通过，另有警告需要检查")
 		return
 	_show_errors("校验没有通过：")
 
@@ -662,12 +664,14 @@ func _show_errors(headline: String) -> void:
 	_status_label.text = headline
 	_status_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
 	_status_text.text = store.describe_errors()
+	if not store.warnings.is_empty():
+		_status_text.text += "\n\n警告：\n" + "\n".join(PackedStringArray(store.warnings))
 
 
-func _report_warnings() -> void:
+func _report_warnings(headline: String = "内容有一处需要注意的地方（不影响编辑）") -> void:
 	if store.warnings.is_empty():
 		return
-	_status_label.text = "内容有一处需要注意的地方（不影响编辑）"
+	_status_label.text = headline
 	_status_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.4))
 	_status_text.text = "\n".join(PackedStringArray(store.warnings))
 
