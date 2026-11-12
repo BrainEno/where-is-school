@@ -1,4 +1,4 @@
-[gd_scene load_steps=239 format=3]
+[gd_scene load_steps=240 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_concrete.tres" id="2_concrete"]
@@ -685,6 +685,9 @@ size = Vector3(1.2, 0.06, 0.6)
 size = Vector3(2.2, 0.1, 5.1264)
 
 [sub_resource type="BoxShape3D" id="RampShape_1"]
+size = Vector3(2.2, 0.1, 2.4)
+
+[sub_resource type="BoxShape3D" id="RampShape_2"]
 size = Vector3(4.4571, 0.1, 3.6)
 
 [node name="Residential" type="Node3D"]
@@ -1791,12 +1794,19 @@ rotation = Vector3(0.358771, 0, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StairRamp"]
 shape = SubResource("RampShape_0")
 
+[node name="StairLandingTread" type="StaticBody3D" parent="."]
+position = Vector3(-9.9, 1.75, -13.55)
+rotation = Vector3(0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StairLandingTread"]
+shape = SubResource("RampShape_1")
+
 [node name="StreetStairRamp" type="StaticBody3D" parent="."]
 position = Vector3(-19.0621, -0.8467, 12.8)
 rotation = Vector3(0, 0, 0.367174)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StreetStairRamp"]
-shape = SubResource("RampShape_1")
+shape = SubResource("RampShape_2")
 
 [node name="SampleChair" parent="." instance=ExtResource("18_prop")]
 position = Vector3(10.3, 0.0, 13.5)

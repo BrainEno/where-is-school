@@ -311,6 +311,7 @@ def build_street():
     _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (8.5, 12.5), None, "z",
           -1, flight["start"], 0.0)
     s.box("StairLanding", (10.5, 0.8, -35.8), (4.0, 1.6, 2.4), "concrete")
+    _tread(s, "StairLandingTread", (8.5, 12.5), (-37.0, -34.6), 1.6)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
               (12.42, round(flight["rise"] * (step + 1) + 0.45, 3),
@@ -328,6 +329,8 @@ def build_street():
     s.box("DoorwayJambEast", (12.5, 3.0, -36.96), (0.2, 2.8, 0.1), "concrete", None, False)
     # the passage through the block: walkable, roofed, and lit at the far end
     s.box("PassageFloor", (10.5, 0.8, -39.3), (3.8, 1.6, 4.2), "concrete")
+    # the threshold under the doorway and the passage floor, as one walking surface
+    _tread(s, "PassageTread", (8.6, 12.4), (-41.4, -37.0), 1.6)
     s.box("PassageWallWest", (8.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
     s.box("PassageWallEast", (12.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
     s.box("PassageCeiling", (10.5, 4.5, -39.3), (4.2, 0.2, 4.2), "concrete", None, False)
@@ -419,6 +422,7 @@ def build_residential():
     _ramp(s, "StairRamp", flight["steps"], flight["rise"], flight["run"], (-11.0, -8.8), None,
           "z", -1, flight["start"], 0.0)
     s.box("StairLanding", (-9.9, 0.9, -13.55), (2.2, 1.8, 2.4), "concrete")
+    _tread(s, "StairLandingTread", (-11.0, -8.8), (-14.75, -12.35), 1.8)
     for step in range(0, flight["steps"], 3):
         s.box(f"StairPost_{step}",
               (-8.86, round(flight["rise"] * (step + 1) + 0.45, 3),
@@ -913,14 +917,32 @@ def _stair(s, prefix, steps, rise, run, x_range, z_range, axis, direction, start
     return names
 
 
+def _tread(s, name, x_range, z_range, top):
+    """An invisible 10 cm slab whose top is the walking surface of a solid box under it.
+
+    `LocationNavigation._add_shape` hands Recast each box's faces in an order that makes
+    the box's underside, not its top, the face that points up. A box therefore counts as
+    floor only when it is thinner than one climb voxel (0.25 m), so that its top and bottom
+    land in the same span: the road, the pavements, the kerbs and the slab floors do; a
+    landing 1.6 m tall does not, and neither does anything standing on it. Rather than
+    change what every existing room bakes, a solid box someone has to walk on gets a thin
+    slab at its top (and a flight gets a thin slope, `_ramp`). The body stands on the box
+    exactly as before; only the bake sees the difference.
+    """
+    thickness = 0.1
+    pos = (round((x_range[0] + x_range[1]) / 2.0, 4), round(top - thickness / 2.0, 4),
+           round((z_range[0] + z_range[1]) / 2.0, 4))
+    size = (round(x_range[1] - x_range[0], 3), thickness, round(z_range[1] - z_range[0], 3))
+    s.ramp(name, pos, size, (0, 0, 0))
+
+
 def _ramp(s, name, steps, rise, run, x_range, z_range, axis, direction, start, base):
     """An invisible slope over a flight built by `_stair`, through its nosings.
 
-    The navigation bake voxelises at 0.25 m and may climb one voxel. On a real flight two
-    neighbouring cells can sit one voxel above and one below a third, and Recast's ledge
-    filter then drops the whole flight from the mesh: the stair is drawn but cannot be
-    routed up, and an exit at its head sits metres off the mesh. A slope the body and the
-    bake both stand on is the usual answer. Its top surface runs through the front edge of
+    The navigation bake only treats a collision box as floor when the box is thin: see
+    `_tread`. A solid step is not floor, so a flight of them is drawn but cannot be routed
+    up, and an exit at its head sits metres off the mesh. A thin slope the body and the
+    bake both stand on is the answer. Its top surface runs through the front edge of
     every tread (for a flight that goes down, through the edge each tread drops off), so it
     is never below a step and the feet stay at most one riser above a tread. It ends level
     with the top of the flight, which `_stair` callers put one riser above the last step

@@ -726,14 +726,22 @@ schoolyard's way back to the alley is a gate with posts, a lintel and a lamp. Th
 gate pieces draw only (no collision), because `tests/playground_art_slice_test.gd` pins the
 yard's solids and its baked navigation.
 
-**Every flight is a slope to the navigation bake.** The bake voxelises at 0.25 m and climbs
-one voxel; Recast's ledge filter drops any cell whose neighbours sit one voxel above *and*
-one below it, so a real flight (16 cm risers on 34 cm treads) was drawn but never baked, and
-the street's exit at the head of its stair sat 2.8 m off the mesh. `_ramp` in the generator
-lays an invisible `StaticBody3D` slope over each flight, through the front edge of every
-tread, ending level with the landing; the body and the bake both stand on it. The flights
-are kept under 0.4 m of rise per metre (12.3 cm and 12 cm risers), because a slope of half a
-voxel per cell or more trips the same filter.
+**What the navigation bake counts as floor: thin boxes only.** `LocationNavigation._add_shape`
+hands Recast each collision box's faces wound so that the box's *underside* is the face that
+points up; the top points down. A box therefore bakes as floor only when it is thinner than one
+climb voxel (0.25 m), so that its top and bottom fall in the same span and merge: the road,
+pavements, kerbs and slab floors. A solid box (a step, a 1.6 m landing, a passage floor on a
+plinth) is never floor. This was found by reproducing the bake outside Godot with the same
+Recast settings: the flipped winding reproduces CI's mesh bounds and its closest point at the
+head of the street stair exactly; the correct winding bakes the landing (and building roofs).
+Changing the winding would change what every room bakes (roofs, tables and walls become
+islands, and `tests/playground_art_slice_test.gd` pins the yard's polygons), so it is left as
+a proposed follow-up, not done here. Instead the generator gives every walked-on solid box a
+thin invisible slab at its top (`_tread`: the street's landing and passage, the courtyard
+stair's landing) and every flight a thin invisible slope (`_ramp`: through the front edge of
+each tread, ending level with the landing). The body stands on the boxes as before; only the
+bake sees the slabs. The flights are kept gentle (12.3 cm and 12 cm risers) so the body walks
+the slope without bumping the nosings.
 
 ## 5k. The window: size, centring and F11 (implemented contract)
 

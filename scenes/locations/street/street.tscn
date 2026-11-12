@@ -1,4 +1,4 @@
-[gd_scene load_steps=151 format=3]
+[gd_scene load_steps=153 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/outdoor_asphalt.tres" id="2_asphalt"]
@@ -428,6 +428,12 @@ size = Vector3(1.4, 2.2, 0.04)
 
 [sub_resource type="BoxShape3D" id="RampShape_0"]
 size = Vector3(4.0, 0.1, 4.7007)
+
+[sub_resource type="BoxShape3D" id="RampShape_1"]
+size = Vector3(4.0, 0.1, 2.4)
+
+[sub_resource type="BoxShape3D" id="RampShape_2"]
+size = Vector3(3.8, 0.1, 4.4)
 
 [node name="Street" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -1112,6 +1118,20 @@ rotation = Vector3(0.347317, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StairRamp"]
 shape = SubResource("RampShape_0")
+
+[node name="StairLandingTread" type="StaticBody3D" parent="."]
+position = Vector3(10.5, 1.55, -35.8)
+rotation = Vector3(0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StairLandingTread"]
+shape = SubResource("RampShape_1")
+
+[node name="PassageTread" type="StaticBody3D" parent="."]
+position = Vector3(10.5, 1.55, -39.2)
+rotation = Vector3(0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PassageTread"]
+shape = SubResource("RampShape_2")
 
 [node name="Interactables" type="Node3D" parent="."]
 
