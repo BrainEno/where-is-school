@@ -23,9 +23,10 @@
 
 ## 本次运行记录
 
-- 当前 Arena 工作区没有 Godot 可执行文件，所以没有本地 Godot 运行；PR CI 使用仓库工作流安装的 Godot 4.7.2 Stable。
-- 本地：`gdparse` 解析 `scripts/`、`tests/` 全部 GDScript 通过；`git diff --check`、locale JSON 和两个修改 workflow 的 YAML 解析通过；`bash tests/run_check_test.sh` 为 10 cases / 0 failures。
-- 最近一次完整代码验证对应提交 `58c2b8791befb2de8cb7e6209af62842ba7e7cb2`（后续 `68f50b7` 仅更新本记录文档，没有代码变化）。Godot CI 全部通过，Godot 4.7.2 Stable：完整 gameplay job 与独立 `Display scaling and input device tests` 均成功；独立 job 为 9/9（display_mode、display_resolution、input_device、dialogue_layout，以及 1280×720、1600×900、1920×1080、2560×1440、3840×2160 HUD 布局）。Run：<https://github.com/BrainEno/where-is-school/actions/runs/43244762891>。
-- 同一 head 的 Playthrough capture 全步骤通过，流程抵达已实现内容结尾；验证 job 检查 77 个 frame、result marker present、no failures。截图证据：<https://github.com/BrainEno/where-is-school/actions/runs/43244763012/artifacts/13956821898>。工作流：<https://github.com/BrainEno/where-is-school/actions/runs/43244763012>。CI 记录的 `to_schoolyard` 提示未出现情况仍存在，但脚本继续完成流程；需人工核对相应提示时序。
-- Release build 的双平台导出、验证和打包均通过：<https://github.com/BrainEno/where-is-school/actions/runs/43244762878>。此前同一改动在另一轮 CI 出现模型库契约与 teacher 导入资源体积失败；后续完整 Godot CI 和 Release 检查通过，未修改或绕过 Agent 01/02/03 资源约束。
-- 在提交 `58c2b8791befb2de8cb7e6209af62842ba7e7cb2` 上，Godot CI、Playthrough capture、Release build 与 artifact verification checks 全部通过：<https://github.com/BrainEno/where-is-school/pull/131>。后续文档记录提交未改动代码，未产生新的 CI run。GitHub 当前报告 PR 与最新 `main` 存在冲突（`.github/workflows/playthrough-capture.yml`），因此 PR 还不能合并；遵循独立 PR 约束，本次没有把 `main` 合并进工作分支，也没有合并 PR。真实显示器的 F11 / 无边框全屏与多屏位置，以及真实控制器热插拔仍需人工验收；CI 使用 Xvfb 和合成输入，不能替代硬件验证。
+- 当前 Arena 工作区没有 Godot 可执行文件，故未声称本地运行时结果；CI 使用 Godot 4.7.2 Stable。
+- 本地静态检查：`gdparse` 解析仓库全部 GDScript 通过；两个 locale JSON、修改后的 workflow YAML 解析通过；`git diff --check` 通过。`bash tests/run_check_test.sh` 为 10 cases / 0 failures；构建验证 135 checks、模型库测试 146 checks、workflow action pins 115 checks、仓库大小测试 18 checks 均通过，样例模型可复现。
+- 按冲突解决要求，将最新 `main`（`6cdf0378`）合入功能分支，提交 `997072457a70d1e8a063994f746c7f382a746b92`。保留了上游 playthrough workflow 中的 substitute teacher N 截图步骤，并保留本分支的 4K/15 帧 UI capture；locale 冲突合并为上游确认对话标题文案加上本分支动态 InputMap 按键提示。
+- 同一合并提交的 Godot 4.7.2 CI 全部通过：完整 gameplay job 通过；独立显示/输入 job 9/9（display_mode、display_resolution、input_device、dialogue_layout 与 1280×720、1600×900、1920×1080、2560×1440、3840×2160 HUD）。Run：<https://github.com/BrainEno/where-is-school/actions/runs/43249825763>。Release build 双平台导出、验证及打包通过：<https://github.com/BrainEno/where-is-school/actions/runs/43250044783>。
+- PR Playthrough capture 与 artifact verifier 均通过；验证 **78 frame、result marker present、no failures**。截图：<https://github.com/BrainEno/where-is-school/actions/runs/43250044837/artifacts/13958534758>。日志仍有两次 `to_schoolyard` prompt 未出现，但流程继续抵达已实现内容终点，提示时序尚需人工核对。
+- PR #131 现为 OPEN / CLEAN / MERGEABLE，冲突已解决；功能分支已更新自 `main`，但 PR 本身仍未合并。<https://github.com/BrainEno/where-is-school/pull/131>
+- 真实显示器上的 F11 / 无边框全屏、多屏位置及真实控制器热插拔仍需人工验收；CI 使用 Xvfb 和合成输入，不能替代硬件验证。
