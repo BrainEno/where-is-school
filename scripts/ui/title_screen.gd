@@ -38,6 +38,8 @@ var _starting := false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# One face on the page: the hint and the line under Continue in the serif too.
+	theme = MenuStyle.page_theme()
 	_factor = UiTextScale.current(self)
 	queue_redraw()
 	_column = VBoxContainer.new()
@@ -252,7 +254,10 @@ func _refresh_hint() -> void:
 
 func _ask_new_game() -> void:
 	var key := "menu.confirm_new_game_broken" if _save_state == &"broken" else "menu.confirm_new_game"
-	_confirm.ask(L10n.t(key), L10n.t("menu.confirm_yes"), L10n.t("menu.confirm_no"))
+	_confirm.ask(
+		L10n.t(key), L10n.t("menu.confirm_yes"), L10n.t("menu.confirm_no"),
+		L10n.t("menu.confirm_heading_new_game")
+	)
 
 
 func _on_new_game_confirmed() -> void:

@@ -229,6 +229,7 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 		panel.open()
 		await _frames(4)
 		_expect_controls_fit(panel, viewport, tag % "settings screen")
+		_expect_one_face(panel, factor, tag % "settings screen")
 		_expect(
 			panel.get_row_ids().size() >= 20,
 			"%s: only %d rows were built." % [tag % "settings screen", panel.get_row_ids().size()]
@@ -244,6 +245,7 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 		await _frames(3)
 		_expect(menu.get_confirm().visible, "%s: New game did not ask." % (tag % "pause menu"))
 		_expect_controls_fit(menu.get_confirm(), viewport, tag % "new-game question")
+		_expect_answers_readable(menu.get_confirm(), tag % "new-game question")
 		menu.get_confirm().get_cancel_button().pressed.emit()
 		await _frames(2)
 		menu.close()
@@ -282,6 +284,43 @@ func _measure_title(viewport: Vector2, factor: float) -> void:
 		)
 	title.queue_free()
 	await _frames(2)
+
+
+## The settings screen is set in one face and three sizes: the title, the reading size for
+## every row, value and button, and the small size for column heads and the hint.
+func _expect_one_face(panel: SettingsPanel, factor: float, tag: String) -> void:
+	var serif := MenuStyle.serif() as FontVariation
+	var sizes := [
+		UiTextScale.scaled(MenuStyle.TITLE_SIZE, factor),
+		UiTextScale.scaled(MenuStyle.BODY_SIZE, factor),
+		UiTextScale.scaled(MenuStyle.SMALL_SIZE, factor),
+	]
+	var odd := PackedStringArray()
+	for control: Control in _visible_text_controls(panel):
+		var size := control.get_theme_font_size(&"font_size")
+		var font := control.get_theme_font(&"font") as FontVariation
+		var in_serif := serif == null or (font != null and font.base_font == serif.base_font)
+		if not in_serif or not sizes.has(size):
+			odd.append("%s '%s' (%d px)" % [control.name, _short_text(control), size])
+	_expect(odd.is_empty(), "%s: not in the serif at %s: %s" % [tag, str(sizes), ", ".join(odd)])
+
+
+## Both answers of a question show their whole word on one line. A Button allowed to wrap
+## reports almost no minimum width, so `_expect_controls_fit` alone passed a card whose
+## answers were laid out narrower than a single character and showed nothing.
+func _expect_answers_readable(prompt: ConfirmPrompt, tag: String) -> void:
+	_expect(not prompt.get_heading().is_empty(), "%s: the question has no heading." % tag)
+	for button: Button in [prompt.get_cancel_button(), prompt.get_confirm_button()]:
+		var text := button.text.strip_edges()
+		_expect(not text.is_empty(), "%s: the %s answer has no text." % [tag, button.name])
+		var font := button.get_theme_font(&"font")
+		var size := button.get_theme_font_size(&"font_size")
+		var needed := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		_expect(
+			button.autowrap_mode == TextServer.AUTOWRAP_OFF and button.size.x >= needed,
+			"%s: the %s answer '%s' is %.0f px wide for %.0f px of text (autowrap %d)."
+			% [tag, button.name, text, button.size.x, needed, button.autowrap_mode]
+		)
 
 
 ## Every visible label and button under `node` is inside the viewport - or, inside a
