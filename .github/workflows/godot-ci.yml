@@ -411,3 +411,52 @@ jobs:
           echo "measured: ${codes}"
           echo "::notice title=measurement step::exit codes ${codes}; status ${status}"
           exit "${status}"
+
+      - name: Check the interaction outline against scene depth (rendered, Compatibility)
+        if: always()
+        shell: bash
+        run: |
+          # The one check here that looks at real pixels. Headless Godot draws nothing, so
+          # this runs in a window under Xvfb on the Compatibility renderer (opengl3, Mesa's
+          # software rasteriser on the runner) and reads its frames back: an unobstructed
+          # object is outlined all round, one behind a wall draws nothing, one half behind a
+          # post is outlined only where it shows, and switching, releasing and a moving camera
+          # leave nothing behind. See tests/interaction_outline_occlusion_test.gd.
+          #
+          # The verdict is the test's own, as in the measurement step: a windowed engine can
+          # exit non-zero while tearing down GL after a finished run, so the run passes when it
+          # printed `PASS:` and no failure line. The frames it saved are uploaded as evidence.
+          set -uo pipefail
+          mkdir -p ci-logs
+          evidence="${RUNNER_TEMP}/outline-occlusion"
+          mkdir -p "${evidence}"
+          log="ci-logs/interaction_outline_occlusion.log"
+          OUTLINE_EVIDENCE_DIR="${evidence}" OUTLINE_REQUIRE_RENDERER=gl_compatibility \
+            timeout 300 xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-method gl_compatibility \
+            --rendering-driver opengl3 \
+            --script res://tests/interaction_outline_occlusion_test.gd > "${log}" 2>&1
+          code=$?
+          cat "${log}"
+          cp "${log}" "${evidence}/" || true
+          echo "--- exit ${code}"
+          why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "${log}" \
+            | head -n 12 | tr '\n' '|' | cut -c1-3500)
+          if [ -n "${why}" ]; then
+            echo "::error title=interaction_outline_occlusion failed::${why}"
+            exit 1
+          fi
+          if ! grep -qE "^PASS: " "${log}"; then
+            echo "::error title=interaction_outline_occlusion failed::the run printed no verdict at all (exit ${code})"
+            exit 1
+          fi
+          echo "::notice title=interaction_outline_occlusion::$(grep -E '^(renderer|NOTE|PASS):' "${log}" | tr '\n' '|' | cut -c1-1500)"
+
+      - name: Upload the outline occlusion frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-occlusion-evidence
+          path: ${{ runner.temp }}/outline-occlusion
+          if-no-files-found: warn
+          retention-days: 14

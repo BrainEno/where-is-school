@@ -3,11 +3,13 @@ render_mode unshaded;
 
 // The outline drawn around the object the player can use (scripts/interaction/outline_overlay.gd).
 //
-// `mask` is a viewport that renders only the highlighted meshes over a transparent
-// background, from the player's camera. Its alpha is the object's silhouette in screen
-// space, so the outline traces the object as the player sees it - any mesh, any shape, no
-// per-prop authoring - and its width is in pixels, not in metres, so a key on a desk and a
-// doorway across the yard get the same pen.
+// `mask` is a viewport rendered from the player's camera. Its red channel is 1 where a
+// highlighted mesh is the nearest thing to the camera and 0 everywhere else - including where
+// the mesh is behind a wall or a desk (see outline_mask_key.gdshader). It is therefore the
+// *visible* part of the object's silhouette in screen space: the outline traces the object as
+// the player sees it - any mesh, any shape, no per-prop authoring - stops where something
+// covers it, and is absent when the object is hidden. Its width is in pixels, not in metres,
+// so a key on a desk and a doorway across the yard get the same pen.
 //
 // Three layers, drawn in this order:
 //   fill - a faint wash over the object itself, so it lifts a little off the room;
@@ -33,14 +35,14 @@ float reach(vec2 uv, float radius, vec2 texel) {
 	float best = 0.0;
 	for (int i = 0; i < TAPS; i++) {
 		float angle = TAU * (float(i) + 0.5) / float(TAPS);
-		best = max(best, texture(mask, uv + vec2(cos(angle), sin(angle)) * radius * texel).a);
+		best = max(best, texture(mask, uv + vec2(cos(angle), sin(angle)) * radius * texel).r);
 	}
 	return best;
 }
 
 void fragment() {
 	vec2 texel = 1.0 / vec2(textureSize(mask, 0));
-	float inside = texture(mask, UV).a;
+	float inside = texture(mask, UV).r;
 	float near = max(reach(UV, line_px * 0.5, texel), reach(UV, line_px, texel));
 	float far = max(near, reach(UV, line_px + rim_px, texel));
 	float line = clamp(near - inside, 0.0, 1.0);
