@@ -197,7 +197,7 @@ func _build_scene() -> void:
 	_post = _box("Post", Vector3(1.5, 1.0, 1.2), Vector3(0.55, 3.2, 0.1), OCCLUDER_COLOUR)
 
 	# The open box carries an authored overlay, as the classroom desks do: the outline must
-	# append to it, not replace it, and give it back untouched.
+	# leave it exactly as it is, highlighted or not.
 	_authored_overlay = StandardMaterial3D.new()
 	_authored_overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_authored_overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -365,16 +365,21 @@ func _check_switch() -> void:
 	var open_layers := _open.layers
 	_show(first, _open, 1.0)
 	await _grab_after(3)
-	_expect(_open.material_overlay != _authored_overlay,
-		"The outline did not add its key to the box's overlay chain.")
-	_expect(_authored_overlay.next_pass == null,
-		"Marking the box changed its authored overlay material (shared materials would leak).")
+	_expect(_open.material_overlay == _authored_overlay and _authored_overlay.next_pass == null,
+		"Highlighting the box changed its authored overlay material.")
+	var twins := _overlay.get_key_twins()
+	_expect(twins.size() == 1 and twins[0].get_parent() == _open,
+		"The highlighted box has no key twin in the mask (%d twins)." % twins.size())
+	_expect(_open.get_child_count() == 0,
+		"The key twin is visible to scene walks (get_children): it must be an internal child.")
 
 	# The controller hands over in one frame: new owner, new meshes.
 	_show(second, _partial, 1.0)
 	_expect(_open.layers == open_layers, "Switching did not give the first box its layers back.")
 	_expect(_open.material_overlay == _authored_overlay,
-		"Switching did not give the first box its own overlay back.")
+		"Switching changed the first box's own overlay.")
+	_expect(_open.get_child_count(true) == 0,
+		"Switching left the first box's key twin in the tree.")
 	var frame := await _grab_after(0)
 	_save(frame, "case4_switch_first_frame.png")
 	var old_found := _line_coverage(frame, _outward_samples(_hull(_open)))
@@ -404,7 +409,8 @@ func _check_release_while_fading() -> void:
 	_overlay.release(owner)
 	_expect(not _overlay.is_active(), "Released while fading: the overlay is still active.")
 	_expect(_open.material_overlay == _authored_overlay and _authored_overlay.next_pass == null,
-		"Released while fading: the box's overlay was not restored as authored.")
+		"Released while fading: the box's overlay is not the authored one.")
+	_expect(_open.get_child_count(true) == 0, "Released while fading: the key twin is still in the tree.")
 	_expect(_open.layers & OutlineOverlay.MASK_LAYER == 0,
 		"Released while fading: the box kept the mask layer.")
 	var viewport := _overlay.get_mask_viewport()

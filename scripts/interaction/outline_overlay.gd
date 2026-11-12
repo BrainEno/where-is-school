@@ -6,17 +6,18 @@ extends CanvasLayer
 ## Elysium does, instead of a ring on the floor next to it. This node is how that outline is
 ## made, for any mesh and without touching a single prop:
 ##
-## 1. The meshes to outline get one extra visual layer bit (`MASK_LAYER`) and, at the end of
-##    their `material_overlay` chain, the key material (`KEY_SHADER_CODE`). Both are given
-##    back exactly as they were on release. The key draws nothing for the player's camera,
-##    and the player's camera never draws `MASK_LAYER` (the overlay clears that bit from it),
-##    so nothing changes in the frame the player sees.
+## 1. The meshes to outline get one extra visual layer bit (`MASK_LAYER`), given back exactly
+##    as it was on release, and a twin: an internal child that draws the same mesh on
+##    `MASK_LAYER` only, with the key material (`KEY_SHADER_CODE`), freed on release. The
+##    mesh's own materials and overlay are not touched. The player's camera never draws
+##    `MASK_LAYER` (the overlay clears that bit from it) and the key collapses itself for any
+##    camera but the mask's, so nothing changes in the frame the player sees.
 ## 2. `Mask`, a `SubViewport` in the same world, renders the scene from a camera that copies the
 ##    player's camera every frame - unshaded, and only as far as the farthest highlighted mesh,
 ##    because nothing behind the object can hide it. That fills its depth buffer with what is
 ##    in front of the object. A full-screen quad (`BLANK_SHADER_CODE`, on `MASK_LAYER` only)
-##    then paints the colour black without touching depth, and the key, drawn last with the
-##    depth test on, paints white exactly where the highlighted meshes are the nearest surface. Its red channel is the *visible* part of the object's silhouette.
+##    then paints the colour black without touching depth, and the twins, drawn last with the
+##    depth test on, paint white exactly where the highlighted meshes are the nearest surface. Its red channel is the *visible* part of the object's silhouette.
 ## 3. `Ink`, a full-screen `ColorRect`, runs `assets/shaders/interaction/highlight_outline.gdshader`
 ##    over that silhouette and draws a thin warm line just outside it, a dark rim outside
 ##    that, and a faint wash over the object. Because the mask is depth-tested, an object
@@ -54,12 +55,12 @@ const MASK_LAYER := 1 << 19
 const GROUP := &"outline_overlay"
 const SHADER := preload("res://assets/shaders/interaction/highlight_outline.gdshader")
 
-## The key: the highlighted meshes' own pixels in the mask. Hung on each highlighted mesh at
-## the end of its `material_overlay` chain. An overlay is drawn after the scene's opaque
-## geometry, with the depth test on, over the same surface, so it lands exactly on the parts of
-## the mesh that are in front of everything else and on nothing a wall or a desk hides. That
-## is the whole of the occlusion: the depth buffer the mask pass has just filled, used the way
-## every overlay uses it. No depth texture is read.
+## The key: the highlighted meshes' own pixels in the mask, drawn by each mesh's twin. It is
+## a transparent-pass material, so it is drawn after the scene's opaque geometry, with the
+## depth test on, over the same surface as the mesh: it lands exactly on the parts of the mesh
+## that are in front of everything else and on nothing a wall or a desk hides. That is the
+## whole of the occlusion: the depth buffer the mask pass has just filled, used the way every
+## overlay uses it. No depth texture is read.
 ##
 ## It moves itself off screen for any camera that does not see `MASK_LAYER` - the player's
 ## camera never does - so in the frame the player sees it costs a vertex pass, no pixels. The
@@ -185,9 +186,15 @@ func show_meshes(owner_object: Object, meshes: Array[GeometryInstance3D]) -> voi
 	for mesh in meshes:
 		if mesh == null or not is_instance_valid(mesh) or _marked.has(mesh):
 			continue
-		_marked[mesh] = {"layers": mesh.layers, "overlay": mesh.material_overlay}
+		var twin := _make_twin(mesh)
+		_marked[mesh] = {
+			"layers": mesh.layers,
+			"overlay": mesh.material_overlay,
+			"twin": twin,
+		}
 		mesh.layers = mesh.layers | MASK_LAYER
-		mesh.material_overlay = _keyed(mesh.material_overlay)
+		if twin == null:
+			mesh.material_overlay = _keyed(mesh.material_overlay)
 	_refresh()
 
 
@@ -240,6 +247,48 @@ func get_mask_camera() -> Camera3D:
 func get_key_material() -> ShaderMaterial:
 	_ensure_key_material()
 	return _key_material
+
+
+## The key's carrier for a mesh: an internal child that draws the same mesh, with the same
+## skeleton and skin, on `MASK_LAYER` only, with the key as its material. The mesh itself -
+## its materials and its own overlay (the classroom desks share one) - is not touched. Null
+## for a geometry that is not a `MeshInstance3D` (none of the outlined ones today); that one
+## gets the key appended to its overlay chain instead (`_keyed`).
+func _make_twin(mesh: GeometryInstance3D) -> MeshInstance3D:
+	_ensure_key_material()
+	var source := mesh as MeshInstance3D
+	if source == null or source.mesh == null:
+		return null
+	var twin := MeshInstance3D.new()
+	twin.name = "OutlineKey"
+	twin.mesh = source.mesh
+	twin.skin = source.skin
+	twin.material_override = _key_material
+	twin.layers = MASK_LAYER
+	twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	twin.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	twin.extra_cull_margin = source.extra_cull_margin
+	twin.custom_aabb = source.custom_aabb
+	twin.lod_bias = source.lod_bias
+	twin.visibility_range_begin = source.visibility_range_begin
+	twin.visibility_range_end = source.visibility_range_end
+	# Internal: scene walks (`get_children`, `find_children`) do not see it, so nothing that
+	# measures or collects the room's meshes while an outline is up counts it.
+	source.add_child(twin, false, Node.INTERNAL_MODE_BACK)
+	var skeleton := source.get_node_or_null(source.skeleton) if not source.skeleton.is_empty() else null
+	if skeleton != null:
+		twin.skeleton = twin.get_path_to(skeleton)
+	return twin
+
+
+## The twins standing in for the marked meshes in the mask (tests look at them).
+func get_key_twins() -> Array[MeshInstance3D]:
+	var twins: Array[MeshInstance3D] = []
+	for key: Variant in _marked.keys():
+		var twin: Variant = (_marked[key] as Dictionary)["twin"]
+		if twin != null and is_instance_valid(twin):
+			twins.append(twin as MeshInstance3D)
+	return twins
 
 
 ## The mesh's own overlay with the key appended, or the key alone. The authored overlay is
@@ -318,7 +367,9 @@ func _build() -> void:
 	blank_material.shader = _shader(BLANK_SHADER_CODE)
 	blank_material.render_priority = BLANK_PRIORITY
 	_blank.material_override = blank_material
-	_blank.layers = MASK_LAYER
+	# On `MASK_LAYER` only while an outline is up (`_refresh`): at rest nothing in the tree
+	# sits on the reserved layer.
+	_blank.layers = 0
 	_blank.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_blank.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	# The shader places it on the whole screen; the margin keeps the engine from culling it
@@ -326,7 +377,7 @@ func _build() -> void:
 	_blank.extra_cull_margin = 16384.0
 	_blank.position = Vector3(0.0, 0.0, -1.0)
 	_blank.visible = false
-	_mask_camera.add_child(_blank)
+	_mask_camera.add_child(_blank, false, Node.INTERNAL_MODE_BACK)
 
 	_ink = ColorRect.new()
 	_ink.name = "Ink"
@@ -352,6 +403,7 @@ func _refresh() -> void:
 	if active:
 		_sync_camera()
 	_blank.visible = active
+	_blank.layers = MASK_LAYER if active else 0
 	_ink.visible = active
 	_mask.render_target_update_mode = (
 		SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
@@ -422,7 +474,13 @@ func _clear_marks() -> void:
 			var mesh := key as GeometryInstance3D
 			var authored: Dictionary = _marked[key]
 			mesh.layers = int(authored["layers"])
-			mesh.material_overlay = authored["overlay"] as Material
+			var twin: Variant = authored["twin"]
+			if twin == null:
+				mesh.material_overlay = authored["overlay"] as Material
+			elif is_instance_valid(twin):
+				var node := twin as Node
+				node.get_parent().remove_child(node)
+				node.queue_free()
 	_marked.clear()
 
 

@@ -440,17 +440,22 @@ jobs:
           cat "${log}"
           cp "${log}" "${evidence}/" || true
           echo "--- exit ${code}"
+          # Annotation text has `%` escaped: the runner treats `%xx` as an escape and drops a
+          # command it cannot decode, and the test's messages are full of percentages.
+          escape () { local text="$1"; text="${text//\%/%25}"; printf '%s' "${text}"; }
+          measures=$(grep -E '^(renderer|frame|NOTE|PASS):' "${log}" | tr '\n' '|' | cut -c1-1500)
+          echo "::notice title=interaction_outline_occlusion (exit ${code})::$(escape "${measures:-no measurements}")"
           why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "${log}" \
             | head -n 12 | tr '\n' '|' | cut -c1-3500)
           if [ -n "${why}" ]; then
-            echo "::error title=interaction_outline_occlusion failed::${why}"
+            echo "::error title=interaction_outline_occlusion failed::$(escape "${why}")"
             exit 1
           fi
           if ! grep -qE "^PASS: " "${log}"; then
-            echo "::error title=interaction_outline_occlusion failed::the run printed no verdict at all (exit ${code})"
+            tail_lines=$(tail -n 8 "${log}" | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=interaction_outline_occlusion failed::no verdict (exit ${code}) - tail: $(escape "${tail_lines}")"
             exit 1
           fi
-          echo "::notice title=interaction_outline_occlusion::$(grep -E '^(renderer|NOTE|PASS):' "${log}" | tr '\n' '|' | cut -c1-1500)"
 
       - name: Upload the outline occlusion frames
         if: always()
