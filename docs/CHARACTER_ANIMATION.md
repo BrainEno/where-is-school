@@ -265,6 +265,10 @@ run's *teacher N crop* annotations (base64, in numbered parts).
 - `tests/character_animation_test.gd` also binds N's GLB facing −Z and checks that
   `sit_idle` brings its knees out in front of it, and — as a control — that binding it as a
   +Z model would fold them backwards, so the flag is proven to matter.
+  It also checks `adopt_authored_layers()` both ways: N's four loops replace the idle with a
+  looping, rotation-only clip that applies every track; a list naming a clip N does not have,
+  and Q (which carries no clips of its own), are refused with a reason and leave the
+  procedural idle untouched.
 - `tests/protagonist_model_test.gd` is about the model swap: the new GLB's skeleton,
   hierarchy, skinning and embedded clips; the exact bone mapping and mirrored pairs on all
   three rigs, and which of the 60 joints animate; every clip track pointing at a real bone;
