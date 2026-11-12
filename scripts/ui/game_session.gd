@@ -185,7 +185,7 @@ func start_new_game(world: Node = null, enter_world: bool = true) -> Dictionary:
 		target.queue_free()
 		await tree.process_frame
 		await tree.process_frame
-	steps.append("world_freed")
+		steps.append("world_freed")
 
 	# 6. The session itself.
 	_clear_session()
