@@ -14,6 +14,86 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const SAVE_PATH := "user://save.json"
 const BROKEN_PATH := "user://save.broken.json"
+const USER_DIR := "user://"
+
+
+## The real file layer, with the operations a case names made to fail.
+##
+## A disk cannot be asked to fail on demand, and every failure the writer has to survive
+## happens *halfway through* a replacement — which is exactly the moment no test can reach
+## by other means. So the six calls are repeated here, each checking a list of call indices
+## first: call 0 of `rename`, call 1, or all of them. Everything else goes to the real
+## filesystem, so the bytes under assertion are real bytes on a real disk.
+class FaultyIO:
+	var fail_writes: Array = []
+	var fail_renames: Array = []
+	var fail_removes: Array = []
+	var fail_reads: Array = []
+	## A write that reports success and stores fewer bytes: the "full disk" case.
+	var truncate_writes := false
+	var writes := 0
+	var renames := 0
+	var removes := 0
+	var reads := 0
+	## Every path a removal was attempted on, so a case can prove the save itself was never
+	## one of them.
+	var removed: Array = []
+	## Every (from, to) pair a rename was attempted with.
+	var renamed: Array = []
+
+	func exists(path: String) -> bool:
+		return FileAccess.file_exists(path)
+
+	func read_bytes(path: String) -> PackedByteArray:
+		var index := reads
+		reads += 1
+		if fail_reads.has(index):
+			return PackedByteArray()
+		return FileAccess.get_file_as_bytes(path)
+
+	func write_bytes(path: String, data: PackedByteArray) -> int:
+		var index := writes
+		writes += 1
+		if fail_writes.has(index):
+			return ERR_FILE_CANT_WRITE
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file == null:
+			return FileAccess.get_open_error()
+		var payload := data
+		if truncate_writes and data.size() > 8:
+			payload = data.slice(0, data.size() / 2)
+		file.store_buffer(payload)
+		var error := file.get_error()
+		file.close()
+		return error
+
+	func rename(from: String, to: String) -> int:
+		var index := renames
+		renames += 1
+		renamed.append([from, to])
+		if fail_renames.has(index):
+			return ERR_FILE_CANT_WRITE
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.rename(from, to)
+
+	func remove(path: String) -> int:
+		var index := removes
+		removes += 1
+		removed.append(path)
+		if fail_removes.has(index):
+			return ERR_FILE_CANT_WRITE
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return DirAccess.get_open_error()
+		return dir.remove(path)
+
+	func list() -> PackedStringArray:
+		var dir := DirAccess.open(USER_DIR)
+		if dir == null:
+			return PackedStringArray()
+		return dir.get_files()
 
 var _failures: Array[String] = []
 
@@ -53,8 +133,17 @@ func _run() -> void:
 	Harness.stage = "determinism"
 	_expect_seed_round_trip()
 
+	Harness.stage = "write failures"
+	_check_write_failures()
+
+	Harness.stage = "recovery and cleanup"
+	_check_recovery_and_cleanup()
+
+	Harness.stage = "the delete contract"
+	_check_delete_contract()
+
 	Harness.stage = "housekeeping"
-	_save.delete_save()
+	_save.delete_save({"broken": true})
 	_expect(not _save.has_save(), "delete_save() left the file behind.")
 
 	Harness.finish(
@@ -336,7 +425,267 @@ func _expect_seed_round_trip() -> void:
 	_expect(differs, "The dice do not depend on the seed, so this test proves nothing.")
 
 
+# --- Writing: what a failure costs ------------------------------------------
+#
+# Every case below writes one save, then tries to write a second one with exactly one call
+# made to fail, and asks the same three questions: was the failure reported, is the *first*
+# save still the bytes it was, and was the save file itself ever removed to make room.
+
+
+func _check_write_failures() -> void:
+	Harness.clear_session_state(self)
+	var first: Dictionary = _save.write_payload(_payload(&"first_run"))
+	_expect(first["ok"] == true, "the fixture save was not written: %s" % first)
+	var before := _disk_bytes(SAVE_PATH)
+	_expect(not before.is_empty(), "the fixture save has no bytes on disk.")
+
+	# 1. The temporary file cannot be written at all. Nothing else is touched.
+	var io := _install(FaultyIO.new())
+	io.fail_writes = [0]
+	var result: Dictionary = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] != true, "a write that failed was reported as a success.")
+	_expect(String(result.get("reason", "")) == "write", "the failure reason was '%s'." % result.get("reason"))
+	_expect(_disk_bytes(SAVE_PATH) == before, "a failed write changed the save on disk.")
+	_expect(not io.removed.has(SAVE_PATH), "a failed write removed the save.")
+	_expect(_strays().is_empty(), "a failed write left %s behind." % str(_strays()))
+
+	# 2. The write reports success and the bytes are not there: the "full disk" case. The
+	#    writer has to notice, because `store_buffer()` returning is not evidence.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	before = _disk_bytes(SAVE_PATH)
+	io = _install(FaultyIO.new())
+	io.truncate_writes = true
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] != true, "a shortened write was accepted as a complete save.")
+	_expect(
+		String(result.get("detail", "")).contains("reads back")
+		or String(result.get("detail", "")).contains("does not hold"),
+		"the short write was not described as a short write: %s" % result.get("detail")
+	)
+	_expect(_disk_bytes(SAVE_PATH) == before, "a short write changed the save on disk.")
+
+	# 3. The rename onto the save path fails, and so does every retry: the old save is still
+	#    there, byte for byte, and was never removed.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	before = _disk_bytes(SAVE_PATH)
+	io = _install(FaultyIO.new())
+	io.fail_renames = [0, 1, 2, 3, 4, 5]
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] != true, "a save that was never installed was reported as written.")
+	_expect(_disk_bytes(SAVE_PATH) == before, "the old save is not the file it was.")
+	_expect(not io.removed.has(SAVE_PATH), "the writer removed the save to make room for a new one.")
+	_expect(_strays().is_empty(), "a failed replacement left %s behind." % str(_strays()))
+
+	# 4. The platform refuses to rename onto an existing file (the first rename), so the
+	#    two-step swap runs: the old save is moved aside, the new one installed, the backup
+	#    removed. It succeeds once, and the save on disk is the new one.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	io = _install(FaultyIO.new())
+	io.fail_renames = [0]
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] == true, "the backup path did not save the file: %s" % result)
+	_expect(not io.removed.has(SAVE_PATH), "the backup path removed the save instead of moving it.")
+	_expect(_strays().is_empty(), "the backup path left %s behind." % str(_strays()))
+	var read: Dictionary = _save.read_save()
+	_expect(read["ok"] == true, "the save written through the backup path cannot be read.")
+	if read["ok"] == true:
+		var flags: Dictionary = SaveCodec.decode_flags(read["payload"].get("flags", {}))["flags"]
+		_expect(flags.has(&"second_run"), "the file on disk is not the save that was written.")
+
+	# 5. The second phase fails: the new save cannot be installed *and* the old one cannot be
+	#    put back. What is left must be a named recovery path holding the old bytes.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	before = _disk_bytes(SAVE_PATH)
+	io = _install(FaultyIO.new())
+	io.fail_renames = [0, 2, 3]
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] != true, "a replacement that could not be installed was reported as written.")
+	var recovery := String(result.get("recovery_path", ""))
+	_expect(not recovery.is_empty(), "the failure names no recovery path.")
+	if not recovery.is_empty():
+		_expect(
+			_disk_bytes(recovery) == before,
+			"the recovery path %s does not hold the save that was there before." % recovery
+		)
+
+	# 6. The same, except the old save *can* be put back: it is back at the save path, and
+	#    the game reads it as its own.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	before = _disk_bytes(SAVE_PATH)
+	io = _install(FaultyIO.new())
+	io.fail_renames = [0, 2]
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] != true, "a replacement that failed was reported as written.")
+	_expect(_disk_bytes(SAVE_PATH) == before, "the old save was not put back after a failed swap.")
+	read = _save.read_save()
+	_expect(read["ok"] == true, "the save left after a failed swap cannot be read.")
+	if read["ok"] == true:
+		var restored: Dictionary = SaveCodec.decode_flags(read["payload"].get("flags", {}))["flags"]
+		_expect(restored.has(&"first_run"), "the save left after a failed swap is not the old one.")
+
+	# 7. The backup cannot be removed. The write still succeeded, and the file it could not
+	#    clean up is named rather than forgotten.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	io = _install(FaultyIO.new())
+	io.fail_renames = [0]
+	io.fail_removes = [0, 1, 2, 3]
+	result = _save.write_payload(_payload(&"second_run"))
+	_uninstall()
+	_expect(result["ok"] == true, "a write failed because a backup could not be cleaned up.")
+	_expect(
+		(result.get("leftovers", []) as Array).size() > 0,
+		"a backup that could not be removed was not reported."
+	)
+	_expect(_save.read_save()["ok"] == true, "the save written beside an unclean backup is unreadable.")
+	_force_clean()
+
+	# 8. No write at all is accepted while a new game holds the files.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	before = _disk_bytes(SAVE_PATH)
+	_save.suspend_writes(true)
+	result = _save.write_payload(_payload(&"second_run"))
+	_save.suspend_writes(false)
+	_expect(result["ok"] != true, "a write during a suspended session was accepted.")
+	_expect(String(result.get("reason", "")) == "suspended", "the refusal reason was '%s'." % result.get("reason"))
+	_expect(_disk_bytes(SAVE_PATH) == before, "a suspended write touched the save.")
+
+
+# --- Recovery and cleanup ---------------------------------------------------
+
+
+func _check_recovery_and_cleanup() -> void:
+	# A temporary file left by a crash is rubbish, and the next write clears it.
+	Harness.clear_session_state(self)
+	var stale := SAVE_PATH + ".000000000001-001-0001.tmp"
+	var file := FileAccess.open(stale, FileAccess.WRITE)
+	file.store_string("half a save")
+	file.close()
+	_expect(FileAccess.file_exists(stale), "the stale temporary file was not created.")
+	var result: Dictionary = _save.write_payload(_payload(&"first_run"))
+	_expect(result["ok"] == true, "a write with a stale temporary file present failed: %s" % result)
+	_expect(not FileAccess.file_exists(stale), "the stale temporary file survived a successful write.")
+	_expect((result.get("leftovers", []) as Array).is_empty(), "a clean write reported leftovers.")
+
+	# A save that is *only* at its staged name (the process died mid-swap) is put back by the
+	# next read instead of looking like a missing run.
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"crashed_run"))
+	var bytes := _disk_bytes(SAVE_PATH)
+	var staged: Dictionary = _save.stage_save()
+	_expect(staged["ok"] == true, "stage_save() failed: %s" % staged)
+	_expect(not FileAccess.file_exists(SAVE_PATH), "staging left the save where it was.")
+	var staged_path := String(staged.get("staged_path", ""))
+	_expect(FileAccess.file_exists(staged_path), "staging did not leave a copy behind.")
+	_expect(_save.has_save(), "a staged save was not recovered on the next check.")
+	_expect(_disk_bytes(SAVE_PATH) == bytes, "the recovered save is not the bytes that were staged.")
+	_expect(not FileAccess.file_exists(staged_path), "the staged copy survived its own recovery.")
+	var recovered: Dictionary = _save.read_save()
+	_expect(recovered["ok"] == true, "the recovered save cannot be read.")
+	_force_clean()
+
+
+# --- The delete contract ----------------------------------------------------
+
+
+func _check_delete_contract() -> void:
+	Harness.clear_session_state(self)
+	_save.write_payload(_payload(&"first_run"))
+	_write_raw_to(BROKEN_PATH, "{\"the broken save\": true}")
+	var broken := _disk_bytes(BROKEN_PATH)
+
+	# The quarantined copy of an unreadable save outlives the save it came from.
+	var result: Dictionary = _save.delete_save()
+	_expect(result["ok"] == true, "delete_save() failed: %s" % result)
+	_expect(not FileAccess.file_exists(SAVE_PATH), "delete_save() left the save behind.")
+	_expect(FileAccess.file_exists(BROKEN_PATH), "delete_save() removed the quarantined copy.")
+	_expect(_disk_bytes(BROKEN_PATH) == broken, "delete_save() rewrote the quarantined copy.")
+	_expect(not (result.get("removed", []) as Array).has(BROKEN_PATH), "the result claims the copy was removed.")
+
+	# Asking for it removes it, which is what test hygiene needs and a new game must not.
+	result = _save.delete_save({"broken": true})
+	_expect(result["ok"] == true, "delete_save({\"broken\": true}) failed: %s" % result)
+	_expect(not FileAccess.file_exists(BROKEN_PATH), "asking for the quarantined copy left it behind.")
+
+	# A delete that the filesystem refuses is a failure with the file still there, not a
+	# silent no-op.
+	_save.write_payload(_payload(&"first_run"))
+	var before := _disk_bytes(SAVE_PATH)
+	var io := _install(FaultyIO.new())
+	io.fail_removes = [0, 1, 2, 3]
+	result = _save.delete_save()
+	_uninstall()
+	_expect(result["ok"] != true, "a delete the disk refused was reported as done.")
+	_expect(String(result.get("reason", "")) == "delete", "the delete failure reason was '%s'." % result.get("reason"))
+	_expect(_disk_bytes(SAVE_PATH) == before, "a refused delete damaged the save.")
+
+
 # --- Helpers ----------------------------------------------------------------
+
+
+func _payload(flag: StringName) -> Dictionary:
+	return {
+		"flags": SaveCodec.encode_flags({flag: true, &"counter": 3}),
+		"entries": [],
+		"check_seed": 4242,
+	}
+
+
+func _disk_bytes(path: String) -> PackedByteArray:
+	if not FileAccess.file_exists(path):
+		return PackedByteArray()
+	return FileAccess.get_file_as_bytes(path)
+
+
+func _install(faults: FaultyIO) -> FaultyIO:
+	_save.set("io", faults)
+	return faults
+
+
+func _uninstall() -> void:
+	_save.set("io", null)
+
+
+## Everything the save system may leave behind, by name.
+func _strays() -> PackedStringArray:
+	var found := PackedStringArray()
+	var dir := DirAccess.open(USER_DIR)
+	if dir == null:
+		return found
+	for name: String in dir.get_files():
+		if name.begins_with("save.json."):
+			found.append(name)
+	found.sort()
+	return found
+
+
+func _force_clean() -> void:
+	_uninstall()
+	_save.suspend_writes(false)
+	_save.delete_save({"broken": true})
+	for name: String in _strays():
+		DirAccess.remove_absolute(USER_DIR + name)
+
+
+func _write_raw_to(path: String, text: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		_failures.append("Could not write a fixture at %s." % path)
+		return
+	file.store_string(text)
+	file.close()
 
 
 func _write_raw(text: String) -> void:
