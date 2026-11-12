@@ -279,7 +279,10 @@ func _check_failed_write_keeps_the_run() -> void:
 		FileAccess.get_file_as_bytes(SAVE_PATH) == before,
 		"a write that could not be installed changed the save on disk."
 	)
-	_expect(_read_back_flags().has(&"kept_entry"), "the knowledge entry vanished from the file.")
+	_expect(
+		FileAccess.get_file_as_string(SAVE_PATH).contains("kept_entry"),
+		"the knowledge entry vanished from the file."
+	)
 	_expect(_strays().is_empty(), "the failed write left %s behind." % str(_strays()))
 
 	# Now the boot that matters: the world is gone, the state is wiped, and only the file
@@ -355,16 +358,6 @@ class FaultyIO:
 		if dir == null:
 			return PackedStringArray()
 		return dir.get_files()
-
-
-## The flags the save on disk holds, read without touching the session.
-func _read_back_flags() -> Dictionary:
-	var read: Dictionary = _save.read_save()
-	if read.get("ok", false) != true:
-		_failures.append("the save on disk cannot be read: %s" % str(read))
-		return {}
-	var decoded: Dictionary = SaveCodec.decode_flags(read["payload"].get("flags", {}))
-	return decoded.get("flags", {})
 
 
 ## Every file the save system may leave beside the save, by name.

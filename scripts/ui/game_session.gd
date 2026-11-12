@@ -355,15 +355,18 @@ func _blank_report() -> Dictionary:
 	}
 
 
-## The running game: the current scene when it is a world, or (when something added it by
-## hand, as the headless checks do) the child of the root that carries the opening director.
+## The running game: the current scene when it is a world, or - when a check added the
+## world by hand and never made it the current scene - the child of the root that carries
+## the opening director.
 ##
-## The title screen is deliberately not a "world": a new game started from it must not
-## silence, bind or free anything, because there is no session to protect yet.
+## A title screen is deliberately not a "world": a new game started from it must not
+## silence, bind or free anything, because there is no session to protect yet. So when the
+## current scene is something else, that is the answer, and the root is not searched for a
+## stray world to take over.
 func _find_world() -> Node:
 	var tree := get_tree()
-	if tree.current_scene != null and _is_world(tree.current_scene):
-		return tree.current_scene
+	if tree.current_scene != null:
+		return tree.current_scene if _is_world(tree.current_scene) else null
 	for child in tree.root.get_children():
 		if _is_world(child):
 			return child

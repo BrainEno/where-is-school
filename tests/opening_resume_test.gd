@@ -889,7 +889,9 @@ func _check_new_game_ignores_a_second_click() -> void:
 	# The first press is not awaited: it is still mid-flight when the second one lands.
 	session.call("start_new_game", world, false)
 	await _frames(1)
-	var second: Dictionary = await session.call("start_new_game", world, false)
+	# No world: the refusal happens before anything looks at it, and a freed node cannot be
+	# passed to a typed parameter at all.
+	var second: Dictionary = await session.call("start_new_game", null, false)
 	_expect(
 		String(second.get("reason", "")) == "busy",
 		"%s: the second press was not refused: %s" % [_case_label, str(second)]
@@ -940,7 +942,12 @@ func _expect_fresh_boot(world: Node, reports: Array) -> void:
 			"state_cleared,verified,scene_entered,staged_discarded,writes_released,committed"
 		)
 		var steps := ",".join(report.get("steps", PackedStringArray()))
-		_expect(steps == expected, "%s: the steps ran as %s, not %s." % [_case_label, steps, expected])
+		_expect(
+			steps == expected,
+			"%s: the steps ran as %s, not %s (had_save %s, had_world %s)."
+			% [_case_label, steps, expected,
+				str(report.get("had_save")), str(report.get("had_world"))]
+		)
 		_expect(bool(report.get("staged_removed", false)), "%s: the staged copy was not removed." % _case_label)
 		_expect(
 			(report.get("leftovers", []) as Array).is_empty(),
