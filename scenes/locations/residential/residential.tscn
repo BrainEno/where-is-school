@@ -1955,20 +1955,20 @@ target_db = -24.0
 [node name="Distance" type="Node3D" parent="StageArt"]
 
 [node name="SkyFloor" type="MeshInstance3D" parent="StageArt/Distance"]
-position = Vector3(0, -2.6, -10)
+position = Vector3(0, -3, -10)
 mesh = SubResource("PlaneMesh_art1")
 material_override = ExtResource("art_residential_distance")
 cast_shadow = 0
 
 [node name="RowTower" type="MeshInstance3D" parent="StageArt/Distance"]
-position = Vector3(-34, 0.025, -30)
+position = Vector3(-34, -0.375, -30)
 rotation_degrees = Vector3(0, 45, 0)
 mesh = SubResource("QuadMesh_art2")
 material_override = ExtResource("art_row_tower")
 cast_shadow = 0
 
 [node name="RowChimney" type="MeshInstance3D" parent="StageArt/Distance"]
-position = Vector3(30, 0.39, -44)
+position = Vector3(30, -0.01, -44)
 rotation_degrees = Vector3(0, 30, 0)
 mesh = SubResource("QuadMesh_art3")
 material_override = ExtResource("art_row_chimney")

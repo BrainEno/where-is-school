@@ -309,8 +309,8 @@ def residential_nodes() -> Builder:
     b = Builder()
     A = "StageArt"
     b.nodes.append(MARKER + "\n")
-    distance(b, A, "residential", "residential_distance", -2.6)
-    cutouts(b, A, [("RowTower", "row_tower", (-34.0, -30.0), 45, 1.4), ("RowChimney", "row_chimney", (30.0, -44.0), 30, 1.3)], -2.6)
+    distance(b, A, "residential", "residential_distance", -3.0)
+    cutouts(b, A, [("RowTower", "row_tower", (-34.0, -30.0), 45, 1.4), ("RowChimney", "row_chimney", (30.0, -44.0), 30, 1.3)], -3.0)
     # Chalk on the courtyard: hopscotch, one square drawn twice.
     b.flat("Hopscotch", A, yard.plane(b, 1.6, 4.4), "hopscotch", (-1.5, 0.004, 3.0), (0, 10, 0))
     # Roofs: water tanks and a leaning aerial, the silhouette every block like this has.

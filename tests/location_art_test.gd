@@ -92,7 +92,7 @@ const LOCATIONS := {
 	"alley": {
 		"scene": "res://scenes/locations/alley/alley.tscn",
 		"stage": true,
-		"shapes": 17,
+		"shapes": 40,
 		"interactables": 5,
 		"spawns": ["FromCourtyard", "FromPlayground"],
 		"exits": {
