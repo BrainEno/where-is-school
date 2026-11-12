@@ -5,9 +5,9 @@ extends Control
 ## director owns; every string it shows is resolved through L10n at draw time so
 ## a language switch only has to ask for a redraw.
 
-@onready var _objective_label: Label = %ObjectiveLabel
-@onready var _prompt_label: Label = %PromptLabel
-@onready var _language_label: Label = %LanguageLabel
+@onready var _objective_label: Label = $ObjectiveLabel
+@onready var _prompt_label: Label = $PromptLabel
+@onready var _language_label: Label = $LanguageLabel
 
 var _objective_tween: Tween = null
 var _prompt_tween: Tween = null
@@ -163,13 +163,6 @@ func set_dialogue_open(open: bool) -> void:
 		_language_label.visible = not open
 
 
-## Reads the actual interact binding so the hint cannot drift from the input map: the
-## key on a keyboard ("E"), the button on a controller ("A").
+## Shared device-aware presentation; no scene-local device branching or binding lookup.
 func _interact_key_label() -> String:
-	if MenuStyle.using_gamepad(self):
-		return MenuStyle.key(self, &"interact")
-	for event: InputEvent in InputMap.action_get_events("interact"):
-		var key_event := event as InputEventKey
-		if key_event != null and key_event.physical_keycode != 0:
-			return OS.get_keycode_string(key_event.physical_keycode)
-	return "E"
+	return InputHint.action_key(self, &"interact")

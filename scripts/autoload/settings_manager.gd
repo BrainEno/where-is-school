@@ -57,6 +57,7 @@ const UI_REFERENCE_SIZE := Vector2(1920.0, 1080.0)
 const UI_MINIMUM_LOGICAL := Vector2(1280.0, 720.0)
 
 const DEVICE_KEYBOARD := &"keyboard"
+const DEVICE_MOUSE := &"mouse"
 const DEVICE_GAMEPAD := &"gamepad"
 
 ## Everything the settings screen lets the player rebind, in the order it lists them.
@@ -116,6 +117,8 @@ func _ready() -> void:
 	if root != null and not root.size_changed.is_connected(_apply_ui_scale):
 		root.size_changed.connect(_apply_ui_scale)
 	_apply_ui_scale()
+	if not Input.joy_connection_changed.is_connected(_on_joy_connection_changed):
+		Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 
 # --- Text --------------------------------------------------------------------
@@ -332,8 +335,9 @@ func is_using_gamepad() -> bool:
 	return _device == DEVICE_GAMEPAD
 
 
-## Which hand is on the controls, so prompts can name the right button. Mouse motion does
-## not count: a pad player who nudges the mouse should keep seeing pad prompts.
+## The last meaningful device event selects the prompt family. Mouse motion is included
+## so pointer users see click affordances; axis noise below the gameplay deadzone is ignored.
+## This only changes presentation state: it never replays or synthesizes an action.
 func _input(event: InputEvent) -> void:
 	var device := _device
 	if event is InputEventJoypadButton and (event as InputEventJoypadButton).pressed:
@@ -343,20 +347,31 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and (event as InputEventKey).pressed:
 		device = DEVICE_KEYBOARD
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-		device = DEVICE_KEYBOARD
-	if device != _device:
-		_device = device
-		input_device_changed.emit(device)
+		device = DEVICE_MOUSE
+	elif event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length_squared() > 0.0:
+		device = DEVICE_MOUSE
+	_set_detected_device(device)
 
 
-## For tests and for the menus: say which device is in use without a real event.
-func set_input_device(device: StringName) -> void:
-	if device != DEVICE_KEYBOARD and device != DEVICE_GAMEPAD:
+## A disconnected active controller has no buttons to describe. Fall back immediately to
+## the always-available keyboard; connecting a pad alone does not steal the active hand.
+func _on_joy_connection_changed(_device_id: int, connected: bool) -> void:
+	if not connected and _device == DEVICE_GAMEPAD:
+		_set_detected_device(DEVICE_KEYBOARD)
+
+
+func _set_detected_device(device: StringName) -> void:
+	if device != DEVICE_KEYBOARD and device != DEVICE_MOUSE and device != DEVICE_GAMEPAD:
 		return
 	if device == _device:
 		return
 	_device = device
 	input_device_changed.emit(device)
+
+
+## For tests and explicit settings flows: select a presentation family without an event.
+func set_input_device(device: StringName) -> void:
+	_set_detected_device(device)
 
 
 ## The defaults are what `project.godot` declares, read from the project settings rather

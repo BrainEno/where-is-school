@@ -27,6 +27,7 @@ on:
     branches: [main]
     paths:
       - "tests/capture_playthrough.gd"
+      - "tests/capture_dialogue_ui.gd"
       - ".github/workflows/playthrough-capture.yml"
       - ".github/actions/evidence-check/**"
       - "scenes/**"
@@ -47,6 +48,7 @@ on:
   pull_request:
     paths:
       - "tests/capture_playthrough.gd"
+      - "tests/capture_dialogue_ui.gd"
       - ".github/workflows/playthrough-capture.yml"
       - ".github/actions/evidence-check/**"
       - "scenes/**"
@@ -299,15 +301,15 @@ jobs:
         shell: bash
         run: |
           # A second window run, for the text rather than the walk. It boots the same
-          # main scene and photographs the real dialogue panel at three resolutions in
-          # both languages, plus a real choice list, an inspection, a recollection and
-          # the log. The step fails when fewer frames than that arrive, so a silently
+          # main scene and photographs the real dialogue panel at five resolutions in
+          # both languages, plus a controller-hint frame, a choice list, an inspection,
+          # a recollection and the log. The step fails when fewer frames than that arrive, so a silently
           # empty capture cannot pass as evidence.
           set +e -uo pipefail
           EVIDENCE="${RUNNER_TEMP}/evidence"
           ui_log="${EVIDENCE}/logs/ui-capture.log"
           mkdir -p docs/screenshots
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+          xvfb-run -a --server-args="-screen 0 3840x2160x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
             --script res://tests/capture_dialogue_ui.gd > "${ui_log}" 2>&1
           code=$?
@@ -321,9 +323,9 @@ jobs:
           fi
           staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'ui-*.png' | wc -l)
           echo "staged dialogue frames: ${staged}"
-          if [ "${staged}" -lt 6 ]; then
+          if [ "${staged}" -lt 15 ]; then
             echo "UI_CAPTURE_RESULT=failure"
-            echo "::error title=dialogue capture::only ${staged} dialogue frame(s) were produced"
+            echo "::error title=dialogue capture::only ${staged} dialogue frame(s) were produced; expected 15 (five sizes x two locales, one controller view and four other views)"
             exit 1
           fi
           if grep -qE "^FAILURE: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
@@ -331,9 +333,9 @@ jobs:
             echo "::error title=dialogue capture::the script reported a failure"
             exit 1
           fi
-          if ! grep -qE "^RESULT: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
+          if ! grep -qF "RESULT: 15 dialogue frames captured." "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
             echo "UI_CAPTURE_RESULT=failure"
-            echo "::error title=dialogue capture::the script wrote no result marker"
+            echo "::error title=dialogue capture::the script did not report all 15 requested frames"
             exit 1
           fi
           echo "UI_CAPTURE_RESULT=success"

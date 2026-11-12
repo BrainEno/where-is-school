@@ -313,23 +313,13 @@ static func backdrop(color: Color = INK_WASH) -> ColorRect:
 
 ## The key or button that triggers an action, for hint lines: "Esc", "B", "Start".
 static func key(node: Node, action: StringName) -> String:
-	var settings: Node = node.get_node_or_null(^"/root/Settings") if node.is_inside_tree() else null
-	if settings != null and settings.has_method("binding_label"):
-		return local_key_name(String(settings.call("binding_label", action, &"")))
-	for event: InputEvent in InputMap.action_get_events(action):
-		var key_event := event as InputEventKey
-		if key_event != null and key_event.physical_keycode != KEY_NONE:
-			return local_key_name(OS.get_keycode_string(key_event.physical_keycode))
-	return String(action)
+	return InputHint.action_key(node, action)
 
 
-## The engine names keys in English; the few with a common local name ("空格") use it.
+## Kept as a compatibility helper for controls that already hold a label.
 static func local_key_name(label: String) -> String:
-	var lookup := "key.%s" % label.to_lower()
-	return L10n.t(lookup) if L10n.has_key(lookup) else label
+	return InputHint.local_key_name(label)
 
 
 static func using_gamepad(node: Node) -> bool:
-	var settings: Node = node.get_node_or_null(^"/root/Settings") if node.is_inside_tree() else null
-	return settings != null and settings.has_method("is_using_gamepad") \
-		and bool(settings.call("is_using_gamepad"))
+	return InputHint.is_gamepad(node)

@@ -4,6 +4,7 @@
   "name": "简体中文",
   "strings": {
     "ui.dialogue_continue": "[{advance}] 或点击此处继续    [{log}] 记录    [{language}] 语言",
+    "ui.dialogue_continue_mouse": "单击继续    [{log}] 记录    [{language}] 语言",
     "ui.dialogue_choose": "点击选项或按 1-{count}    [{log}] 记录    [{language}] 语言",
     "ui.log_title": "你记得的事",
     "ui.log_hint": "[{key}] 关闭",
@@ -73,6 +74,7 @@
     "ui.dialogue_choose_pad": "↑/↓ 选择    [{advance}] 确认    [{log}] 记录",
     "key.space": "空格",
     "key.enter": "回车",
+    "key.escape": "Esc",
     "menu.start": "开始",
     "menu.continue": "从上次继续",
     "menu.new_game": "新游戏",
@@ -88,10 +90,10 @@
     "menu.confirm_new_game_broken": "开始新游戏？无法读取的存档会被移除，之前另存的副本会保留。",
     "menu.confirm_yes": "删除并重新开始",
     "menu.confirm_no": "取消",
-    "menu.hint_keyboard": "↑/↓ 选择    回车 确认    [{language}] 语言",
-    "menu.hint_pad": "方向键 选择    A 确认    [{language}] 语言",
+    "menu.hint_keyboard": "↑/↓ 选择    [{confirm}] 确认    [{language}] 语言",
+    "menu.hint_pad": "方向键 选择    [{confirm}] 确认    [{language}] 语言",
     "menu.pause_hint_keyboard": "[{key}] 回到游戏",
-    "menu.pause_hint_pad": "[{key}] 或 B 回到游戏",
+    "menu.pause_hint_pad": "[{key}] 或 [{cancel}] 回到游戏",
     "menu.save_quit": "保存并退出",
     "menu.last_save": "上次存档：{caption}",
     "menu.no_save_yet": "还没有存档。",
@@ -140,8 +142,8 @@
     "settings.conflict": "这个输入已被“{action}”使用，未作更改。",
     "settings.refused": "这个输入不能用在这里，未作更改。",
     "settings.restored": "已恢复默认按键。",
-    "settings.hint_keyboard": "↑/↓ 移动    ←/→ 调整    回车 选择    Esc 返回",
-    "settings.hint_pad": "方向键 ↑/↓ 移动    ←/→ 调整    A 选择    B 返回",
+    "settings.hint_keyboard": "↑/↓ 移动    ←/→ 调整    [{confirm}] 选择    [{cancel}] 返回",
+    "settings.hint_pad": "方向键 ↑/↓ 移动    ←/→ 调整    [{confirm}] 选择    [{cancel}] 返回",
     "settings.action.move_forward": "向前走",
     "settings.action.move_back": "向后走",
     "settings.action.move_left": "向左走",
@@ -153,6 +155,7 @@
     "settings.action.cancel": "关闭 / 返回",
     "settings.action.pause": "菜单",
     "settings.action.toggle_language": "切换语言",
-    "settings.action.toggle_fullscreen": "全屏"
+    "settings.action.toggle_fullscreen": "全屏",
+    "key.click": "单击"
   }
 }

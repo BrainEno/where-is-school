@@ -4,6 +4,7 @@
   "name": "English",
   "strings": {
     "ui.dialogue_continue": "[{advance}] or click here to continue    [{log}] log    [{language}] language",
+    "ui.dialogue_continue_mouse": "Click to continue    [{log}] log    [{language}] language",
     "ui.dialogue_choose": "Click an option or press 1-{count}    [{log}] log    [{language}] language",
     "ui.log_title": "What you know",
     "ui.log_hint": "[{key}] close",
@@ -73,6 +74,7 @@
     "ui.dialogue_choose_pad": "↑/↓ choose    [{advance}] confirm    [{log}] log",
     "key.space": "Space",
     "key.enter": "Enter",
+    "key.escape": "Esc",
     "menu.start": "Start",
     "menu.continue": "Continue",
     "menu.new_game": "New game",
@@ -88,10 +90,10 @@
     "menu.confirm_new_game_broken": "Start a new game? The unreadable save will be removed; the copy that was set aside is kept.",
     "menu.confirm_yes": "Delete and start over",
     "menu.confirm_no": "Cancel",
-    "menu.hint_keyboard": "↑/↓ choose    Enter confirm    [{language}] language",
-    "menu.hint_pad": "D-pad choose    A confirm    [{language}] language",
+    "menu.hint_keyboard": "↑/↓ choose    [{confirm}] confirm    [{language}] language",
+    "menu.hint_pad": "D-pad choose    [{confirm}] confirm    [{language}] language",
     "menu.pause_hint_keyboard": "[{key}] resume",
-    "menu.pause_hint_pad": "[{key}] or B resume",
+    "menu.pause_hint_pad": "[{key}] or [{cancel}] resume",
     "menu.save_quit": "Save and quit",
     "menu.last_save": "Last saved: {caption}",
     "menu.no_save_yet": "Nothing has been saved yet.",
@@ -140,8 +142,8 @@
     "settings.conflict": "That input is already used by “{action}”; nothing changed.",
     "settings.refused": "That input cannot be used here; nothing changed.",
     "settings.restored": "Default controls restored.",
-    "settings.hint_keyboard": "↑/↓ move    ←/→ change    Enter select    Esc back",
-    "settings.hint_pad": "D-pad ↑/↓ move    ←/→ change    A select    B back",
+    "settings.hint_keyboard": "↑/↓ move    ←/→ change    [{confirm}] select    [{cancel}] back",
+    "settings.hint_pad": "D-pad ↑/↓ move    ←/→ change    [{confirm}] select    [{cancel}] back",
     "settings.action.move_forward": "Walk forward",
     "settings.action.move_back": "Walk back",
     "settings.action.move_left": "Walk left",
@@ -153,6 +155,7 @@
     "settings.action.cancel": "Close / back",
     "settings.action.pause": "Menu",
     "settings.action.toggle_language": "Switch language",
-    "settings.action.toggle_fullscreen": "Fullscreen"
+    "settings.action.toggle_fullscreen": "Fullscreen",
+    "key.click": "Click"
   }
 }

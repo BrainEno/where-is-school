@@ -349,11 +349,16 @@ jobs:
           run_check music 240 godot --headless --path . --script res://tests/music_test.gd || status=1
           # The window the game opens in, and the one F11 has to come back to.
           run_check display_mode 180 godot --headless --path . --script res://tests/display_mode_test.gd || status=1
-          # The HUD at the three sizes the game is expected to run in. The dialogue panel is
-          # already measured at all three inside dialogue_layout; this is the other half.
+          # UI logical canvas and device-aware prompts, including synthetic input events.
+          run_check display_resolution 120 godot --headless --path . --script res://tests/display_resolution_test.gd || status=1
+          run_check input_device 90 godot --headless --path . --script res://tests/input_device_test.gd || status=1
+          # The HUD is measured at every supported size; dialogue_layout measures the
+          # reading surface at the same five sizes.
           run_check hud_layout_720 180 godot --headless --resolution 1280x720 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_900 180 godot --headless --resolution 1600x900 --path . --script res://tests/hud_layout_test.gd || status=1
           run_check hud_layout_1080 180 godot --headless --resolution 1920x1080 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_1440 180 godot --headless --resolution 2560x1440 --path . --script res://tests/hud_layout_test.gd || status=1
+          run_check hud_layout_4k 240 godot --headless --resolution 3840x2160 --path . --script res://tests/hud_layout_test.gd || status=1
           # The editor tool's data layer, driven headlessly against a user:// copy of the
           # real chapters: load, locate, edit, save, fail to save, and prove the files come
           # back byte-identical when nothing changed.
