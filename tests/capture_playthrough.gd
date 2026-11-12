@@ -970,124 +970,148 @@ func _grab_image() -> Image:
 	return root.get_texture().get_image()
 
 
-## The outline is depth-tested now (`OutlineOverlay`): it is drawn only where the object is
-## the nearest surface. The timetable sheet is a thin sheet pinned flat to a wall, which is
-## the case where a depth test is most likely to lose the object to the surface behind it -
-## and the room's real geometry is not what `tests/interaction_outline_occlusion_test.gd`
-## builds. So, in the real classroom: the same frame with and without the outline (the
-## overlay's opacity taken to zero for one frame by the cue that owns it), and the warm line
-## has to be there around the visible sheet.
+## The outline is depth-tested (`OutlineOverlay`): it is drawn only where the object is the
+## nearest surface. `tests/interaction_outline_occlusion_test.gd` proves that on boxes; this
+## asks the real classroom, from the real camera, at the moment the player hovers the
+## timetable sheet - a thin sheet on the inside of the south wall, which the fixed camera
+## can see from outside that wall.
+##
+## Three frames of the same moment: the outline as shipped, no outline at all (the overlay's
+## opacity taken to zero by the cue that owns it), and the outline with the mask cut back to
+## the outline layer alone - the mask as it was before it was depth-tested (the negative
+## control). Then:
+## * the negative control must draw the warm line: the sheet is on screen and outlinable,
+##   so the check below is about depth and nothing else;
+## * where every sampled point of the sheet is behind opaque geometry (by world bounds along
+##   the camera ray), the shipped outline must change no pixel at all - no line through
+##   the wall;
+## * where none is, the shipped outline must draw at least half the line the control does;
+## * in between (partly hidden), the numbers are logged.
 func _check_outline_drawn(cue: HoverCue, centre: Vector2) -> void:
 	var overlay := cue.get_overlay()
 	if overlay == null or not overlay.is_owned_by(cue):
 		_note("outline in the classroom: the sheet's cue does not own the overlay; not measured")
 		return
 	var camera := _player.get_viewport().get_camera_3d()
-	# Where the outlined meshes are on screen: the union of their projected bounds.
-	var area := Rect2()
-	var first := true
-	for mesh in overlay.get_meshes():
+	var meshes := overlay.get_meshes()
+	var area := Rect2(centre, Vector2.ZERO)
+	var points: Array[Vector3] = []
+	for mesh in meshes:
 		var box := mesh.get_aabb()
+		points.append(mesh.global_transform * box.get_center())
 		for corner in 8:
-			var point := camera.unproject_position(mesh.global_transform * box.get_endpoint(corner))
-			if first:
-				area = Rect2(point, Vector2.ZERO)
-				first = false
-			else:
-				area = area.expand(point)
-	if first:
-		area = Rect2(centre, Vector2.ZERO)
+			var point := mesh.global_transform * box.get_endpoint(corner)
+			points.append(point)
+			area = area.expand(camera.unproject_position(point))
 	var frame_rect := Rect2(Vector2.ZERO, root.get_visible_rect().size)
-	var probe := area.grow(24.0).intersection(frame_rect)
-	var with_outline := await _grab_image()
+	var probe := Rect2i(area.grow(24.0).intersection(frame_rect))
+
+	# What hides each sampled point: opaque, visible geometry that is not the target, whose
+	# world bounds the camera ray crosses more than 5 cm short of the point (so the wall the
+	# sheet hangs on does not count as being in front of it).
+	var eye := camera.global_position
+	var blocked := 0
+	var blockers: Array[String] = []
+	var scene := _host.get_current()
+	var candidates := scene.find_children("*", "GeometryInstance3D", true, true)
+	for point in points:
+		for node in candidates:
+			var geometry := node as GeometryInstance3D
+			if geometry == null or meshes.has(geometry) or not geometry.is_visible_in_tree():
+				continue
+			if geometry.transparency > 0.0:
+				continue
+			var hit: Variant = (geometry.global_transform * geometry.get_aabb()).intersects_segment(eye, point)
+			if hit != null and (hit as Vector3).distance_to(point) > 0.05:
+				blocked += 1
+				var label := str(scene.get_path_to(geometry))
+				if not blockers.has(label):
+					blockers.append(label)
+				break
+
+	var shipped := await _grab_image()
 	var mask_image: Image = null
 	var mask_viewport := overlay.get_mask_viewport()
 	if mask_viewport != null:
 		mask_image = mask_viewport.get_texture().get_image()
 	var opacity := overlay.get_opacity()
 	overlay.set_opacity(cue, 0.0)
-	var without := await _grab_image()
+	var bare := await _grab_image()
 	overlay.set_opacity(cue, opacity)
-	var line_pixels := 0
-	var changed := 0
-	var mask_pixels := 0
-	if with_outline != null and without != null:
-		for y in range(int(probe.position.y), int(probe.end.y)):
-			for x in range(int(probe.position.x), int(probe.end.x)):
-				var now: Color = with_outline.get_pixel(x, y)
-				var was: Color = without.get_pixel(x, y)
-				var delta := maxf(maxf(absf(now.r - was.r), absf(now.g - was.g)), absf(now.b - was.b))
-				if delta > 0.04:
-					changed += 1
-					# The line colour (warm and light) where the frame without it was not.
-					if now.r > 0.7 and now.g > 0.55 and now.r - now.b > 0.15 and now.r > was.r + 0.05:
-						line_pixels += 1
-				if mask_image != null and x < mask_image.get_width() and y < mask_image.get_height():
-					if mask_image.get_pixel(x, y).r > 0.5:
-						mask_pixels += 1
-	_note(
-		(
-			"outline in the classroom: meshes %d on screen at %s (%.0f px2), mask %d px, %d warm "
-			+ "line pixel(s), %d changed pixel(s), opacity %.2f, camera %s, player %s"
-		)
-		% [
-			overlay.get_meshes().size(), str(area), area.get_area(), mask_pixels, line_pixels,
-			changed, opacity, str(camera.global_position), str(_player.global_position)
-		]
+	# The negative control. The overlay stops syncing while it is shown (the camera is
+	# still), so it cannot put the full culling back.
+	var mask_camera := overlay.get_mask_camera()
+	var synced := mask_camera.cull_mask
+	overlay.process_mode = Node.PROCESS_MODE_DISABLED
+	mask_camera.cull_mask = OutlineOverlay.MASK_LAYER
+	var through := await _grab_image()
+	await _shot(
+		"03e_outline_without_depth",
+		"Negative control: the same moment with the outline mask cut back to the outline layer, "
+		+ "as it was before it was depth-tested - whatever hides the sheet no longer hides its outline."
 	)
-	# Evidence that can be read from the run's annotations: the frame with and without the
-	# outline, and the mask, around the sheet.
-	var crop_rect := Rect2i(probe.grow(40.0).intersection(frame_rect))
-	for entry: Array in [["with", with_outline], ["without", without], ["mask", mask_image]]:
+	mask_camera.cull_mask = synced
+	overlay.process_mode = Node.PROCESS_MODE_INHERIT
+	await _grab_image()
+
+	var shipped_line := _warm_line_pixels(shipped, bare, probe)
+	var through_line := _warm_line_pixels(through, bare, probe)
+	var shipped_changed := _ink_pixels(bare, shipped, area.get_center(), int(maxf(area.size.x, area.size.y) * 0.5) + 24)
+	var mask_pixels := 0
+	if mask_image != null:
+		for y in range(probe.position.y, mini(probe.end.y, mask_image.get_height())):
+			for x in range(probe.position.x, mini(probe.end.x, mask_image.get_width())):
+				if mask_image.get_pixel(x, y).r > 0.5:
+					mask_pixels += 1
+	var state := "partly hidden"
+	if blocked == points.size():
+		state = "fully hidden"
+	elif blocked == 0:
+		state = "in view"
+	var summary := (
+		"%s (%d of %d points behind %s): shipped outline %d line px / %d changed / mask %d px; "
+		% [state, blocked, points.size(), ", ".join(blockers) if not blockers.is_empty() else "nothing", shipped_line, shipped_changed, mask_pixels]
+		+ "without depth %d line px; camera %s" % [through_line, str(eye)]
+	)
+	_note("outline depth in the classroom: %s" % summary)
+	# Small crops printed inline, so the moment can be looked at from the run's annotations.
+	var crop_rect := Rect2i(Rect2(probe).grow(40.0).intersection(frame_rect))
+	for entry: Array in [["shipped", shipped], ["without_depth", through]]:
 		var image := entry[1] as Image
-		if image == null:
-			continue
-		var crop := image.get_region(crop_rect)
-		crop.convert(Image.FORMAT_RGB8)
-		print("CROP: classroom_outline_%s.jpg %s" % [
-			entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.85))
-		])
-	# What stands between the camera and the sheet, by the meshes' world bounds: the name of
-	# whatever hides it, if anything does.
-	var blockers: Array[String] = []
-	var sheet_centre := Vector3.ZERO
-	var meshes := overlay.get_meshes()
-	for mesh in meshes:
-		sheet_centre += mesh.global_transform * mesh.get_aabb().get_center()
-	if not meshes.is_empty():
-		sheet_centre /= float(meshes.size())
-		var eye := camera.global_position
-		for node in _host.get_current().find_children("*", "GeometryInstance3D", true, false):
-			var geometry := node as GeometryInstance3D
-			if geometry == null or not geometry.is_visible_in_tree() or meshes.has(geometry):
-				continue
-			var bounds := geometry.global_transform * geometry.get_aabb()
-			var hit: Variant = bounds.intersects_segment(eye, sheet_centre)
-			if hit != null:
-				blockers.append(
-					"%s (transparency %.2f, %.2f m)"
-					% [
-						_host.get_current().get_path_to(geometry), geometry.transparency,
-						eye.distance_to(hit as Vector3)
-					]
-				)
-	_note("outline in the classroom: between the camera and the sheet: %s" % ", ".join(blockers))
-	if without != null:
-		var small := without.duplicate() as Image
+		if image != null:
+			var crop := image.get_region(crop_rect)
+			crop.convert(Image.FORMAT_RGB8)
+			print("CROP: classroom_outline_%s.jpg %s" % [
+				entry[0], Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.9))
+			])
+	if bare != null:
+		var small := bare.duplicate() as Image
 		small.convert(Image.FORMAT_RGB8)
 		small.resize(480, 270, Image.INTERPOLATE_BILINEAR)
 		print("CROP: classroom_frame_small.jpg %s" % Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.8)))
-	if line_pixels < 30:
+	if through_line < 30:
 		_failures.append(
-			(
-				"The hover cue drew no outline around the timetable sheet (%d line pixels, %d changed, "
-				+ "mask %d px; camera %s, player %s, sheet %s on screen at %s; in between: %s)."
-			)
-			% [
-				line_pixels, changed, mask_pixels, str(camera.global_position),
-				str(_player.global_position), str(sheet_centre), str(area), ", ".join(blockers)
-			]
+			"Outline depth in the classroom: the negative control drew no line, so the sheet "
+			+ "was not outlinable on screen and nothing was measured (%s)." % summary
 		)
+	elif state == "fully hidden" and (shipped_changed > 0 or mask_pixels > 0):
+		_failures.append("Outline depth in the classroom: the outline shows through the wall (%s)." % summary)
+	elif state == "in view" and shipped_line * 2 < through_line:
+		_failures.append("Outline depth in the classroom: a sheet in plain view lost its outline (%s)." % summary)
+
+
+## Pixels in `area` that are the outline's warm, light line in `drawn` and were not in `bare`.
+func _warm_line_pixels(drawn: Image, bare: Image, area: Rect2i) -> int:
+	if drawn == null or bare == null:
+		return -1
+	var count := 0
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var now: Color = drawn.get_pixel(x, y)
+			var was: Color = bare.get_pixel(x, y)
+			if now.r > 0.7 and now.g > 0.55 and now.r - now.b > 0.15 and now.r > was.r + 0.05:
+				count += 1
+	return count
 
 
 ## How many pixels changed between two frames inside a square around `centre`. A mark that

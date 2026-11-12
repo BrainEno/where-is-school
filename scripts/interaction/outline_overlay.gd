@@ -272,8 +272,9 @@ func _make_twin(mesh: GeometryInstance3D) -> MeshInstance3D:
 	twin.lod_bias = source.lod_bias
 	twin.visibility_range_begin = source.visibility_range_begin
 	twin.visibility_range_end = source.visibility_range_end
-	# Internal: scene walks (`get_children`, `find_children`) do not see it, so nothing that
-	# measures or collects the room's meshes while an outline is up counts it.
+	# Internal: `get_children` and `get_child_count` do not see it, so the interactable's own
+	# mesh collection and pick boxes never count it. (`find_children` does list internal
+	# children; `_process` keeps the one walk that matters - the occluder fader - off it.)
 	source.add_child(twin, false, Node.INTERNAL_MODE_BACK)
 	var skeleton := source.get_node_or_null(source.skeleton) if not source.skeleton.is_empty() else null
 	if skeleton != null:
@@ -325,6 +326,12 @@ func _process(_delta: float) -> void:
 	if not is_active():
 		return
 	_sync_camera()
+	# The camera's occluder fader dims whole branches it finds with `find_children`, which
+	# also returns internal children. A twin must stay opaque: a dimmed key would leave a
+	# faint mask, and the outline is not the fader's to dim.
+	for twin in get_key_twins():
+		if twin.transparency != 0.0:
+			twin.transparency = 0.0
 
 
 func _build() -> void:
