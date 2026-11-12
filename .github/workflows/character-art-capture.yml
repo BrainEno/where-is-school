@@ -19,10 +19,6 @@ name: Character art capture
 # The full-size frames and the log are in the job's artifact.
 
 on:
-  # TEMPORARY (development only, removed before review): runs on pushes to this branch
-  # until the pull request exists.
-  push:
-    branches: ["arena/c4ee3722-where-is-school"]
   pull_request:
     paths:
       - "tests/capture_character_art.gd"
