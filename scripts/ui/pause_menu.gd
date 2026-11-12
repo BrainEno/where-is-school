@@ -23,7 +23,8 @@ extends CanvasLayer
 signal opened
 signal closed
 
-const ENTRIES: Array[StringName] = [&"resume", &"save_quit", &"settings", &"new_game"]
+# Settings stays second (Down, Enter reaches it from Resume) and the way out comes last.
+const ENTRIES: Array[StringName] = [&"resume", &"settings", &"new_game", &"save_quit"]
 
 
 ## The paused world behind a wash, and the sheet the menu is set on: dark, its right edge

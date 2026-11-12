@@ -581,8 +581,9 @@ func _check_new_game_from_title() -> void:
 	await _accept_on(title.get_confirm().get_confirm_button())
 	var world := await _wait_for_world(reports)
 	session.disconnect("new_game_started", on_started)
-	# The title screen checks the session transaction, then owns the scene hand-off itself.
-	await _expect_fresh_boot(world, reports, false)
+	# Session owns the hand-off from the title too (step 8, `scene_entered`): the title
+	# screen no longer changes the scene itself after the transaction has committed.
+	await _expect_fresh_boot(world, reports)
 	await _free_current_scene()
 
 
