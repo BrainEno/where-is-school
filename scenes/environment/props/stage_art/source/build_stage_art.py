@@ -89,19 +89,19 @@ MATERIALS: dict[str, dict] = {
     "walk_plaster": tiled((206, 198, 174)),
     # Wall decal 16 x 3.1 m: the whole texture once across the quad.
     "walk_wall": {"texture": stex("corridor_wall")},
-    "walk_terrazzo": tiled((92, 56, 48), "ground_tile"),
+    "walk_terrazzo": tiled((92, 56, 48), "plaster_tile"),
     "walk_floor": {"texture": stex("corridor_floor")},
     "walk_dado": {"color": (52, 94, 80), "outline": True},
     "walk_door": tiled((66, 104, 128), "metal_tile", 0.5),
-    "walk_step": tiled((176, 164, 150), "ground_tile"),
+    "walk_step": tiled((176, 164, 150), "plaster_tile"),
     "walk_bin": tiled((74, 106, 76), "metal_tile", 0.5),
     "walk_distance": {"texture": stex("distance_corridor"), "unshaded": True},
     "yard_ground": tiled((236, 232, 226), "ground_tile"),
     "yard_court": {"texture": ptex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
     # the street
-    "street_asphalt": tiled((96, 88, 112), "ground_tile"),
-    "pavement": tiled((200, 188, 170), "ground_tile"),
-    "kerb": tiled((222, 212, 194), "ground_tile"),
+    "street_asphalt": tiled((118, 110, 136), "plaster_tile"),
+    "pavement": tiled((200, 188, 170), "plaster_tile"),
+    "kerb": tiled((222, 212, 194), "plaster_tile"),
     "plinth_ivory": tiled((220, 208, 180)),
     "flats_rose": tiled((150, 106, 110), scale=0.2),
     "shop_ochre": tiled((184, 146, 86), scale=0.2),
@@ -112,10 +112,10 @@ MATERIALS: dict[str, dict] = {
     "school_windows": {"texture": stex("window_tile"), "cut": 0.5, "scale": (5.5, 11.4 / 6.5, 1.0)},
     "street_distance": {"texture": stex("distance_street"), "unshaded": True},
     # the courtyard
-    "court_concrete": tiled((206, 196, 182), "ground_tile"),
-    "housing_yellow": tiled((188, 166, 110), scale=0.2),
-    "housing_rose": tiled((164, 116, 114), scale=0.2),
-    "housing_sage": tiled((128, 146, 124), scale=0.2),
+    "court_concrete": tiled((206, 196, 182), "plaster_tile"),
+    "housing_yellow": tiled((178, 160, 116), scale=0.2),
+    "housing_rose": tiled((150, 110, 112), scale=0.2),
+    "housing_sage": tiled((122, 138, 120), scale=0.2),
     "hedge": tiled((58, 80, 56), "foliage_tile", 0.5),
     "tank": tiled((214, 206, 186), "metal_tile", 0.5),
     "hopscotch": {"texture": stex("hopscotch"), "cut": 0.5},
@@ -123,9 +123,9 @@ MATERIALS: dict[str, dict] = {
     # the alley
     "alley_wall": {"color": (96, 116, 132), "texture": stex("streak_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "alley_wall_high": {"color": (78, 96, 116), "texture": stex("streak_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
-    "alley_concrete": tiled((160, 150, 154), "ground_tile"),
-    "alley_ground": tiled((112, 104, 122), "ground_tile"),
-    "alley_paving": tiled((176, 166, 156), "ground_tile"),
+    "alley_concrete": tiled((160, 150, 154), "plaster_tile"),
+    "alley_ground": tiled((120, 112, 132), "plaster_tile"),
+    "alley_paving": tiled((176, 166, 156), "plaster_tile"),
     "alley_distance": {"texture": stex("distance_alley"), "unshaded": True},
 }
 
@@ -233,8 +233,9 @@ def corridor_nodes() -> Builder:
 
 CORRIDOR = {
     "scene": LOC / "corridor" / "corridor.tscn",
-    "environment": environment(SKY, COOL, 0.75, 0.8, 0.0, 0.95),
-    "sun": sun(-24, 62, 1.0, (1, 0.82, 0.68)),
+    "environment": environment(SKY, COOL, 0.9, 0.72, 0.0, 0.95),
+    "sun": sun(-24, 62, 0.6, (1, 0.82, 0.68)),
+    "no_shadow": [r"FarBuilding"],
     "by_material": {
         "wall_paint.tres": "walk_plaster",
         "floor_concrete.tres": "walk_step",
@@ -282,8 +283,8 @@ def street_nodes() -> Builder:
 
 STREET = {
     "scene": LOC / "street" / "street.tscn",
-    "environment": environment(SKY, COOL, 0.85, 0.72, 0.003, 1.0),
-    "sun": sun(-48, 38, 1.1),
+    "environment": environment(SKY, COOL, 1.0, 0.78, 0.003, 1.0),
+    "sun": sun(-48, 38, 0.5),
     "by_material": {
         "outdoor_asphalt.tres": "street_asphalt",
         "outdoor_concrete.tres": "pavement",
@@ -329,8 +330,8 @@ def residential_nodes() -> Builder:
 
 RESIDENTIAL = {
     "scene": LOC / "residential" / "residential.tscn",
-    "environment": environment(SKY, (0.68, 0.64, 0.72), 0.85, 0.72, 0.003, 1.0),
-    "sun": sun(-52, 40, 1.1),
+    "environment": environment(SKY, (0.68, 0.64, 0.72), 1.0, 0.78, 0.003, 1.0),
+    "sun": sun(-52, 40, 0.5),
     "by_material": {
         "outdoor_concrete.tres": "court_concrete",
         "outdoor_brick.tres": "housing_yellow",
@@ -370,14 +371,14 @@ def alley_nodes() -> Builder:
         mid = (z0 + z1) / 2
         b.flat(name, "WallWest", box(b, (0.5, 4.0, length)), "alley_wall_high", (0.35, 3.9, mid + 4.0), (0, 0, -8), shadow=True)
     # Past the gate, where the yard is: light, not a view.
-    b.flat("GateLight", A, yard.quad(b, 4.0, 5.0), "light_beyond", (0.0, 2.5, -25.0))
+    b.flat("GateLight", A, yard.quad(b, 3.0, 3.6), "light_beyond", (0.0, 1.8, -25.0))
     return b
 
 
 ALLEY = {
     "scene": LOC / "alley" / "alley.tscn",
-    "environment": environment((0.29, 0.29, 0.39), (0.64, 0.64, 0.74), 0.85, 0.74, 0.0, 1.0),
-    "sun": sun(-50, 100, 1.05),
+    "environment": environment((0.29, 0.29, 0.39), (0.64, 0.64, 0.74), 1.0, 0.76, 0.0, 1.0),
+    "sun": sun(-50, 100, 0.55),
     "by_material": {
         "outdoor_brick.tres": "alley_wall",
         "outdoor_concrete.tres": "alley_concrete",
@@ -446,6 +447,8 @@ def apply(text: str, cfg: dict) -> tuple[str, set[str]]:
                 if mat is not None:
                     block = block.replace(m.group(0), f'material_override = ExtResource("art_{mat}")')
                     used.add(mat)
+            if any(re.fullmatch(pattern, path) for pattern in cfg.get("no_shadow", [])) and "cast_shadow" not in block:
+                block += "\ncast_shadow = 0"
         out.append((block, sep))
     return "".join(b + s for b, s in out), used
 

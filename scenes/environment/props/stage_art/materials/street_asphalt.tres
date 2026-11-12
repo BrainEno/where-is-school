@@ -1,14 +1,14 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ink_outline.tres" id="1_ink"]
-[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/ground_tile.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/plaster_tile.png" id="2_tex"]
 
 [resource]
 resource_name = "street_asphalt"
 next_pass = ExtResource("1_ink")
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.376, 0.345, 0.439, 1)
+albedo_color = Color(0.463, 0.431, 0.533, 1)
 albedo_texture = ExtResource("2_tex")
 roughness = 1.0
 uv1_scale = Vector3(0.25, 0.25, 0.25)

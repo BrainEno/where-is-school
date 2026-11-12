@@ -142,6 +142,9 @@ MATERIALS: dict[str, dict] = {
     "row_tower": {"color": DISTANT, "texture": tex("row_tower"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_chimney": {"color": DISTANT, "texture": tex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
+    # The fence that carries on past the yard: the panel texture once per 3 x 2 m quad
+    # (plain UVs, not world triplanar, so each panel can sink without its rails sliding).
+    "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
 
 
@@ -331,6 +334,27 @@ def build_nodes() -> Builder:
     ]
     for name, mat, (w, h), (x, z) in rows:
         b.flat(name, f"{A}/Distance", quad(b, w, h), mat, (x, -1.2 + h / 2, z), (0, 45, 0))
+    # The north fence does not stop where the yard does: past the open west edge a run of
+    # panels goes on along its line, each a little lower, until the last one is wading in
+    # the sky. A boundary that is not continuous and not finished.
+    panel = quad(b, 3.0, 2.0)
+    for i in range(4):
+        b.flat(f"FenceRun_{i}", f"{A}/Distance", panel, "fence_far", (-27.5 - i * 3.1, 1.0 - i * 0.55, -18.6 + i * 0.25), (0, 4.0 * i, 0))
+    # A floodlight mast at the wrong scale: twenty metres of pole standing in the laid-flat
+    # sky, its lamp lit, lighting nothing anyone plays on.
+    b.flat("Mast", f"{A}/Distance", b.mesh("BoxMesh", size=vec3((0.3, 20.0, 0.3))), "metal_ink", (-44.0, 8.8, -6.0))
+    b.flat("MastHead", f"{A}/Distance", b.mesh("BoxMesh", size=vec3((2.6, 0.7, 1.0))), "metal_ink", (-44.0, 18.9, -6.0), (0, 45, 0))
+    b.flat("MastLamp", f"{A}/Distance", b.mesh("BoxMesh", size=vec3((2.2, 0.08, 0.7))), "lane_light", (-44.0, 18.52, -6.0), (0, 45, 0))
+    # One chair out there, facing the yard, as if someone had carried it out to wait.
+    chair = f"{A}/Distance/Chair"
+    b.node("Chair", f"{A}/Distance", position=vec3((-30.5, -1.2, 5.0)), rotation_degrees=vec3((0, 70, 0)))
+    b.flat("Seat", chair, b.mesh("BoxMesh", size=vec3((0.46, 0.04, 0.42))), "pale", (0.0, 0.45, 0.0))
+    b.flat("Back", chair, b.mesh("BoxMesh", size=vec3((0.46, 0.34, 0.03))), "pale", (0.0, 0.74, -0.2))
+    leg = b.mesh("BoxMesh", size=vec3((0.03, 0.45, 0.03)))
+    for i, (lx, lz) in enumerate(((-0.2, -0.18), (0.2, -0.18), (-0.2, 0.18), (0.2, 0.18))):
+        b.flat(f"Leg_{i}", chair, leg, "metal_ink", (lx, 0.225, lz))
+    b.flat("BackPostL", chair, b.mesh("BoxMesh", size=vec3((0.03, 0.5, 0.03))), "metal_ink", (-0.2, 0.7, -0.19))
+    b.flat("BackPostR", chair, b.mesh("BoxMesh", size=vec3((0.03, 0.5, 0.03))), "metal_ink", (0.2, 0.7, -0.19))
 
     # The ground: the newer pour east of the seam, the seam itself (over the court paint,
     # too), the newer concrete round the near hoop, the colour block under bench and bag.

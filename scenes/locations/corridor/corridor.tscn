@@ -38,9 +38,9 @@ background_mode = 1
 background_color = Color(0.251, 0.29, 0.392, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.66, 0.64, 0.74, 1)
-ambient_light_energy = 0.75
+ambient_light_energy = 0.9
 tonemap_mode = 2
-tonemap_exposure = 0.8
+tonemap_exposure = 0.72
 adjustment_enabled = true
 adjustment_saturation = 0.95
 adjustment_contrast = 1.04
@@ -238,7 +238,7 @@ environment = SubResource("Environment_1")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-24, 62, 0)
 light_color = Color(1, 0.82, 0.68, 1)
-light_energy = 1
+light_energy = 0.6
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 
@@ -334,6 +334,7 @@ material_override = ExtResource("art_yard_ground")
 position = Vector3(15, 1.4, -3)
 mesh = SubResource("BoxMesh_18")
 material_override = ExtResource("art_school_teal")
+cast_shadow = 0
 
 [node name="BinRow" type="MeshInstance3D" parent="."]
 position = Vector3(3.4, -0.4, 1.6)
