@@ -23,8 +23,8 @@ extends SceneTree
 ##    scale into the collar's vertices, which is what §1 asks for, so the record is empty
 ##    and the rule now holds for all four assets. A new scale still fails this test.
 ##
-## What this does not test: how the assets look (that is the preview scene's job) or any
-## performance budget.
+## The player's twelve named flat-colour materials must import with real, distinct albedo colours;
+## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -38,6 +38,22 @@ const SIZE_TOLERANCE := 0.02
 const BASE_TOLERANCE := 0.005
 ## Where every wrapper's own origin has to sit: on the object's base.
 const WRAPPER_BASE_TOLERANCE := 0.02
+
+## Every named surface on the production protagonist must carry an authored base colour.
+const PROTAGONIST_MATERIAL_NAMES := [
+	"protagonist_mat_skinbody",
+	"protagonist_mat_trousers",
+	"protagonist_mat_shirt",
+	"protagonist_mat_button",
+	"protagonist_mat_sclera",
+	"protagonist_mat_iris",
+	"protagonist_mat_pupil",
+	"protagonist_mat_shoes",
+	"protagonist_mat_hair",
+	"protagonist_mat_skin",
+	"protagonist_mat_mouthinner",
+	"protagonist_mat_jacket",
+]
 
 const ASSETS: Array[Dictionary] = [
 	{
@@ -200,6 +216,9 @@ func _check_model(asset: Dictionary, holder: Node3D) -> void:
 			% [label, surfaces, int(asset["surfaces"])]
 		)
 
+	if label == "protagonist":
+		_check_protagonist_palette(meshes)
+
 	var expected: Vector3 = asset["size"]
 	for axis in 3:
 		var measured: float = extent.size[axis]
@@ -278,6 +297,54 @@ func _check_facing(label: String, meshes: Array[MeshInstance3D]) -> void:
 			"%s no longer faces +Z: its eyes reach z=%.4f. Update the facing note in "
 			% [label, front]
 			+ "docs/ASSET_PIPELINE.md §10 and every placement that relies on it."
+		)
+
+
+## Catch the exact regression: named materials without PBR base colours import as white.
+func _check_protagonist_palette(meshes: Array[MeshInstance3D]) -> void:
+	var found: Dictionary = {}
+	var distinct_colours: Array[Color] = []
+	for mesh_instance: MeshInstance3D in meshes:
+		if mesh_instance.mesh == null:
+			continue
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.get_active_material(surface_index)
+			if material == null:
+				continue
+			var material_name := material.resource_name.to_lower()
+			if not material_name.begins_with("protagonist_mat_"):
+				continue
+			found[material_name] = true
+			var standard := material as StandardMaterial3D
+			if standard == null:
+				_failures.append(
+					"Protagonist material '%s' did not import as a StandardMaterial3D."
+					% material_name
+				)
+				continue
+			var albedo := standard.albedo_color
+			if albedo.is_equal_approx(Color.WHITE):
+				_failures.append(
+					"Protagonist material '%s' has the default white albedo; its GLB baseColorFactor is missing."
+					% material_name
+				)
+			var duplicate := false
+			for previous: Color in distinct_colours:
+				if albedo.is_equal_approx(previous):
+					duplicate = true
+					break
+			if not duplicate:
+				distinct_colours.append(albedo)
+
+	for expected_name: String in PROTAGONIST_MATERIAL_NAMES:
+		if not found.has(expected_name):
+			_failures.append(
+				"The protagonist no longer imports the expected material '%s'." % expected_name
+			)
+	if distinct_colours.size() < 8:
+		_failures.append(
+			"The protagonist imports only %d distinct material colours; its art-directed palette is missing."
+			% distinct_colours.size()
 		)
 
 
