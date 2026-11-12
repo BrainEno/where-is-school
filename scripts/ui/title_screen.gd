@@ -236,7 +236,7 @@ func _start_new_game() -> void:
 		return
 	# Let Session finish and inspect its report before changing scenes. A failed report
 	# keeps this menu alive instead of replacing it with a blank/failed transition.
-	var report: Dictionary = await session.call("start_new_game", null, false)
+	var report: Dictionary = await session.call("start_new_game", session, false)
 	if not is_inside_tree():
 		return
 	if not bool(report.get("ok", false)):
