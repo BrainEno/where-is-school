@@ -171,7 +171,8 @@ func _check_location(id: String, spec: Dictionary) -> void:
 
 	root.remove_child(location)
 	location.free()
-	await process_frame
+	for _frame in 4:
+		await physics_frame
 
 
 # --- 1 and 2. colliders, spawns, interactables, exits ---------------------------------
@@ -463,10 +464,14 @@ func _fading_shapes(mesh: Node) -> Array:
 # --- helpers ------------------------------------------------------------------------
 
 
+## Baked, synchronized, and alone on the map: the location tested before this one has
+## been freed, but the server drops its region on a later sync, and until then grid and
+## route queries would land on the old room's mesh.
 func _wait_for_bake(nav: LocationNavigation) -> bool:
 	var budget := 0
 	while budget < 240:
-		if nav.is_baked() and nav.get_map_region_count() > 0 and nav.is_routable():
+		var alone := NavigationServer3D.map_get_regions(nav.get_navigation_map()).size() == 1
+		if nav.is_baked() and alone and nav.is_synchronized() and nav.is_routable():
 			return true
 		await physics_frame
 		budget += 1
