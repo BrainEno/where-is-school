@@ -403,6 +403,9 @@ func _make_drawn_probe(interact_id: StringName, position: Vector3, size: Vector3
 	box.size = size
 	mesh.mesh = box
 	probe.add_child(mesh)
+	# Only the box is the object. With `outline_paths` empty the outline (and so the object,
+	# for the camera) would fall back to whatever `support_paths` names.
+	probe.outline_paths = PackedStringArray(["Drawn"])
 	return probe
 
 
@@ -555,11 +558,11 @@ func _check_canopy_hides_from_the_camera() -> void:
 ## does not, and asking again gives the same answer.
 func _check_partial_cover_is_per_pixel() -> void:
 	await _reset()
-	var target := _make_drawn_probe(&"occlusion_partial", Vector3(0.0, 0.9, -1.6), Vector3(1.2, 0.6, 0.1))
+	var target := _make_drawn_probe(&"occlusion_partial", Vector3(0.0, 0.9, -1.4), Vector3(1.2, 0.6, 0.1))
 	var canopy := _make_wall(Vector3(-0.2, 2.2, -0.9), Vector3(2.0, 0.1, 2.6), true)
 	await _physics_frames(4)
-	var left := Vector3(-0.45, 0.9, -1.6)
-	var right := Vector3(0.45, 0.9, -1.6)
+	var left := Vector3(-0.45, 0.9, -1.4)
+	var right := Vector3(0.45, 0.9, -1.4)
 	if _first_drawn_body(left) != canopy or _first_drawn_body(right) != null:
 		_failures.append(
 			"Case 8 setup: expected the canopy over the left half only (left meets '%s', right meets '%s')."
@@ -583,8 +586,11 @@ func _check_partial_cover_is_per_pixel() -> void:
 	await _physics_frames(4)
 	if _interaction.get_current_target() != target or _interaction.get_highlighted() != target:
 		_failures.append(
-			"The open half was pointed at but not adopted (current %s, highlight %s)."
-			% [_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted())]
+			"The open half was pointed at but not adopted (current %s, highlight %s, hover ask %s). %s"
+			% [
+				_name_of(_interaction.get_current_target()), _name_of(_interaction.get_highlighted()),
+				_name_of(_pointer_at(right, true)), _explain(target)
+			]
 		)
 	# The hover path asks with reach required; the covered half must answer the same there.
 	if _pointer_at(left, true) == target:
