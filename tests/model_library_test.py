@@ -293,13 +293,15 @@ class ManifestLibrary(Library):
 
 def runtime_character_library(project_root: str) -> ManifestLibrary:
     """Every runtime character, registered under the paths the production manifest uses:
-    the former protagonist, Q and the protagonist, in `REQUIRED_RUNTIME_MODELS` order."""
+    the former protagonist, Q, the protagonist and N, in `REQUIRED_RUNTIME_MODELS` order."""
     library = ManifestLibrary(project_root)
     library.register(ml.REQUIRED_RUNTIME_MODELS[0],
                      character_document(root_name="CHR_Protagonist_Test"))
     library.register(ml.REQUIRED_RUNTIME_MODELS[1], character_document(root_name="CHR_Q_Test"))
     library.register(ml.REQUIRED_RUNTIME_MODELS[2],
                      character_document(root_name="Protagonist_Character_Test"))
+    library.register(ml.REQUIRED_RUNTIME_MODELS[3],
+                     character_document(root_name="CHR_Substitute_Teacher_Test"))
     return library
 
 
@@ -600,15 +602,16 @@ def document_with(library: ManifestLibrary, mutate) -> dict:
 def test_manifest_requires_every_runtime_character() -> None:
     check(ml.REQUIRED_RUNTIME_MODELS == ("assets/models/protagonist/protagonist.glb",
                                          "assets/models/q/q.glb",
-                                         "assets/models/protagonist/Protagonist_Character.glb"),
-          "the required set is the three runtime characters, got: %r" % (ml.REQUIRED_RUNTIME_MODELS,))
+                                         "assets/models/protagonist/Protagonist_Character.glb",
+                                         "assets/models/teacher-n/teacher-n.glb"),
+          "the required set is the four runtime characters, got: %r" % (ml.REQUIRED_RUNTIME_MODELS,))
     with tempfile.TemporaryDirectory() as tmp:
         library = runtime_character_library(tmp)
         problems, notes = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
-        check(problems == [], "all three characters registered must pass, got: %s" % problems)
-        check(len(notes) == 3, "all three characters must be described, got: %s" % notes)
+        check(problems == [], "all four characters registered must pass, got: %s" % problems)
+        check(len(notes) == 4, "all four characters must be described, got: %s" % notes)
 
-        for index in (2, 1, 0):
+        for index in (3, 2, 1, 0):
             rel = ml.REQUIRED_RUNTIME_MODELS[index]
             library.write_manifest(document_with(library, lambda d, i=index: d["models"].pop(i)))
             problems, notes = library.check_manifest(ml.REQUIRED_RUNTIME_MODELS)
@@ -990,7 +993,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         library = runtime_character_library(tmp)
         # The desk is in the library but not in the manifest: the runtime manifest lists the
-        # three characters and nothing else, which is now a rule rather than a convention.
+        # four characters and nothing else, which is now a rule rather than a convention.
         library.add("classroom/classroom_desk.glb", make_glb(simple_model()))
         saved = ml.LIBRARY
         try:

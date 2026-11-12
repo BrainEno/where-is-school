@@ -214,6 +214,7 @@ jobs:
           # Small inline crops the script printed (base64 images). They are published by
           # their own step below, which has its own annotation budget.
           grep -E "^CROP: " "${capture_log}" > "${EVIDENCE}/logs/inline-crops.txt" || true
+          grep -E "^NCROP: " "${capture_log}" > "${EVIDENCE}/logs/teacher-n-crops.txt" || true
           ls -l docs/screenshots || true
           # The frames this run wrote into the project folder are staged, not moved: the
           # working tree is never the thing that gets uploaded, and a file that was
@@ -292,6 +293,40 @@ jobs:
             fi
             for i in $(seq 1 "${parts}"); do
               echo "::notice title=capture crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done < "${crops}"
+
+      - name: Publish the substitute teacher N crops
+        if: always()
+        shell: bash
+        run: |
+          # The playthrough photographs substitute teacher N's model in the running game
+          # (walking in, at the front of the room, and a close-up of the face) and prints a
+          # small JPEG of each as base64. Same format as the classroom crops above: an
+          # annotation holds about 4 KB, so each image is split into numbered parts;
+          # concatenate the parts of one file in order and decode them. The full frames are
+          # 11c_n_walks_in.png (when the entry walk is caught), 11d_n_at_the_front.png,
+          # 11e_n_face.png and 11f_n_walking.png in the evidence artifact. This step has
+          # its own budget so these do not crowd out the others.
+          set +e -uo pipefail
+          # What the run measured on those frames (the share of N's screen box the model
+          # drew, the face colour, the walk state), from the playthrough log.
+          measured=$(grep -E "N in n_|N at the front|N walking at the front|N had already" \
+            "${RUNNER_TEMP}/evidence/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null \
+            | tr '\n' '|' | cut -c1-3000)
+          [ -n "${measured}" ] && echo "::notice title=teacher N measurements::${measured}"
+          crops="${RUNNER_TEMP}/evidence/logs/teacher-n-crops.txt"
+          [ -s "${crops}" ] || { echo "no teacher N crops"; exit 0; }
+          budget=9
+          while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=teacher N crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
             done
             budget=$(( budget - parts ))
           done < "${crops}"

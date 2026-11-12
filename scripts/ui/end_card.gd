@@ -92,7 +92,8 @@ func get_confirm() -> ConfirmPrompt:
 ## Asks before starting over: the save holds the end of the run.
 func ask_restart() -> void:
 	_confirm.ask(
-		L10n.t("menu.confirm_new_game"), L10n.t("menu.confirm_yes"), L10n.t("menu.confirm_no")
+		L10n.t("menu.confirm_new_game"), L10n.t("menu.confirm_yes"), L10n.t("menu.confirm_no"),
+		L10n.t("menu.confirm_heading_new_game")
 	)
 
 

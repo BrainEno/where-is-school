@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/teacher-n/teacher-n.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/actors/character_visual_animation.gd" id="2_animation"]
+
+[node name="TeacherN" type="Node3D"]
+script = ExtResource("2_animation")
+faces_negative_z = true
+authored_idle_layers = PackedStringArray("ST_Idle_Breathing", "ST_Nervous_Posture_Shift", "ST_Slight_Hand_Movement", "ST_Subtle_Head_Movement")
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="InteractionAnchor" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)

@@ -1,0 +1,3 @@
+Owner-supplied character exports kept byte for byte, not runtime assets.
+Godot skips any directory holding this file, so a source .glb here is never imported or
+exported; the runtime copy under assets/models/ is built from it by a script in tools/.
