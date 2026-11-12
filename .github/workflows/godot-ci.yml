@@ -426,7 +426,9 @@ jobs:
           # The verdict is the test's own, as in the measurement step: a windowed engine can
           # exit non-zero while tearing down GL after a finished run, so the run passes when it
           # printed `PASS:` and no failure line. The frames it saved are uploaded as evidence.
-          set -uo pipefail
+          # `+e`: the runner starts bash with `-e`, and a grep that finds no failure line is
+          # the good outcome here, not a reason to stop.
+          set +e -uo pipefail
           mkdir -p ci-logs
           evidence="${RUNNER_TEMP}/outline-occlusion"
           mkdir -p "${evidence}"
