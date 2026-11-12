@@ -100,7 +100,7 @@ MATERIALS: dict[str, dict] = {
     "yard_court": {"texture": ptex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
     # the street
     "street_asphalt": tiled((100, 98, 116), "plaster_tile"),
-    "pavement": tiled((176, 166, 152), "plaster_tile"),
+    "pavement": tiled((156, 148, 138), "plaster_tile"),
     "kerb": tiled((222, 212, 194), "plaster_tile"),
     "plinth_ivory": tiled((220, 208, 180)),
     "flats_rose": tiled((150, 106, 110), scale=0.2),
@@ -112,7 +112,7 @@ MATERIALS: dict[str, dict] = {
     "school_windows": {"texture": stex("window_tile"), "cut": 0.5, "scale": (5.5, 11.4 / 6.5, 1.0)},
     "street_distance": {"texture": stex("distance_street"), "unshaded": True},
     # the courtyard
-    "court_concrete": tiled((166, 158, 150), "plaster_tile"),
+    "court_concrete": tiled((132, 124, 120), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
     "housing_rose": tiled((150, 110, 112), scale=0.2),
     "housing_sage": tiled((122, 138, 120), scale=0.2),
@@ -125,7 +125,7 @@ MATERIALS: dict[str, dict] = {
     "alley_wall_high": {"color": (78, 96, 116), "texture": stex("streak_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "alley_concrete": tiled((160, 150, 154), "plaster_tile"),
     "alley_ground": tiled((108, 104, 122), "plaster_tile"),
-    "alley_paving": tiled((158, 148, 144), "plaster_tile"),
+    "alley_paving": tiled((136, 128, 128), "plaster_tile"),
     "alley_distance": {"texture": stex("distance_alley"), "unshaded": True},
 }
 

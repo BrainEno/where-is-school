@@ -23,7 +23,10 @@ extends SceneTree
 ## 6. **Never in the way of the camera.** From every standing spot (a 1 m grid over the
 ##    navigation mesh) and at every interactable, no piece of the pass crosses the sight
 ##    line from the follow camera to the player (at 0.9 m and 1.5 m) or to the thing.
-##    Pieces under 0.5 m across are only reported.
+##    Pieces under 0.5 m across are only reported. A piece parented under a
+##    `camera_occluder` body is not counted when the same sight line also meets that
+##    body's collider: the occluder fader (`scripts/world/camera_occluder_fader.gd`) then
+##    fades the body together with everything under it.
 ## 7. **Not murk.** A filmic tone map, a flat ambient colour bright enough to read the
 ##    shaded ground, and a clear colour that is not near-black.
 ##
@@ -48,12 +51,14 @@ const MIN_AMBIENT := 0.45
 
 ## Per location: scene, whether the stage pass dresses it, colliders, interactables,
 ## spawn markers, and exits as interact_id -> "destination_id/destination_spawn".
-## Counted on main at 6cdf037, before the pass.
+## Collision shapes are counted at runtime, so the instanced prop wrappers and the
+## interactables' areas are included. The pass does not touch either, and the scene files
+## hold the same CollisionShape3D nodes as on main at 6cdf037, so these are main's numbers.
 const LOCATIONS := {
 	"corridor": {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
-		"shapes": 7,
+		"shapes": 87,
 		"interactables": 9,
 		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard"],
 		"exits": {
@@ -65,7 +70,7 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 41,
+		"shapes": 80,
 		"interactables": 8,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
@@ -76,7 +81,7 @@ const LOCATIONS := {
 	"residential": {
 		"scene": "res://scenes/locations/residential/residential.tscn",
 		"stage": true,
-		"shapes": 61,
+		"shapes": 131,
 		"interactables": 9,
 		"spawns": ["FromStreet", "FromStair", "FromAlley"],
 		"exits": {
@@ -98,7 +103,7 @@ const LOCATIONS := {
 	"playground": {
 		"scene": "res://scenes/locations/playground/playground.tscn",
 		"stage": false,
-		"shapes": 31,
+		"shapes": 79,
 		"interactables": 12,
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
@@ -363,7 +368,8 @@ func _check_camera(id: String, location: Node, nav: LocationNavigation, pieces: 
 	var boxes := []
 	for mesh in pieces:
 		if mesh.is_visible_in_tree():
-			boxes.append([String(location.get_path_to(mesh)), mesh.get_aabb(), mesh.global_transform.affine_inverse()])
+			var path := String(location.get_path_to(mesh))
+			boxes.append([path, mesh.get_aabb(), mesh.global_transform.affine_inverse(), _fading_shapes(mesh)])
 	var map := nav.get_navigation_map()
 	var spots := _standing_spots(nav, map)
 	_checks += 1
@@ -424,10 +430,34 @@ func _test_segment(
 		var to_local: Transform3D = entry[2]
 		if not box.intersects_segment(to_local * eye, to_local * target):
 			continue
+		var fades := false
+		for shape: Array in entry[3]:
+			var shape_box: AABB = shape[0]
+			var shape_local: Transform3D = shape[1]
+			fades = fades or shape_box.intersects_segment(shape_local * eye, shape_local * target)
+		if fades:
+			continue
 		if maxf(box.size.x, box.size.z) < SMALL_PIECE:
 			grazed[entry[0]] = int(grazed.get(entry[0], 0)) + 1
 		else:
 			blocked.append("%s hides %s" % [entry[0], what])
+
+
+## The box colliders of the `camera_occluder` body a piece hangs under, as
+## [local box, world-to-local transform]; empty when it hangs under none.
+func _fading_shapes(mesh: Node) -> Array:
+	var shapes := []
+	var body := mesh.get_parent()
+	while body != null and not (body is CollisionObject3D and body.is_in_group(&"camera_occluder")):
+		body = body.get_parent()
+	if body == null:
+		return shapes
+	for child in body.get_children():
+		var shape := child as CollisionShape3D
+		if shape != null and shape.shape is BoxShape3D:
+			var size := (shape.shape as BoxShape3D).size
+			shapes.append([AABB(-size * 0.5, size), shape.global_transform.affine_inverse()])
+	return shapes
 
 
 # --- helpers ------------------------------------------------------------------------
