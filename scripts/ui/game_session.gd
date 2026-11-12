@@ -248,9 +248,13 @@ func start_new_game(world: Node = null, enter_world: bool = true) -> Dictionary:
 		discarded = save.call("discard_staged", staged_path)
 	report["staged_removed"] = bool(discarded.get("removed", false))
 	if not bool(discarded.get("ok", true)):
-		push_error("Session: the staged save could not be discarded: %s"
-			% String(discarded.get("detail", "")))
+		var discard_detail := String(discarded.get("detail", "the staged save remains on disk"))
+		push_error("Session: the staged save could not be discarded: %s" % discard_detail)
 		report["leftovers"] = [staged_path]
+		return _abort(
+			report, steps, save, null, snapshot, "staged_discard_failed", discard_detail,
+			"the previous save and session were restored; the new game was not committed"
+		)
 	steps.append("staged_discarded")
 
 	if save != null and save.has_method("suspend_writes"):
@@ -300,7 +304,11 @@ func _abort(report: Dictionary, steps: PackedStringArray, save: Node, world: Nod
 	rollback.append("writes_released")
 
 	# Somewhere safe to be: the old world if it survived, otherwise the title screen.
-	if world != null and is_instance_valid(world) and tree.current_scene == world:
+	if tree.current_scene != null and tree.current_scene.scene_file_path == TITLE_SCENE:
+		# The title screen is already the safe destination; reloading it would free the
+		# caller before it can display the failure report.
+		rollback.append("stayed_on_title")
+	elif world != null and is_instance_valid(world) and tree.current_scene == world:
 		rollback.append("stayed_in_world")
 	else:
 		var target := TITLE_SCENE

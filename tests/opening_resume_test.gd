@@ -57,7 +57,9 @@ const USER_DIR := "user://"
 ## Everything not listed goes to the real filesystem, so the bytes asserted on are real.
 class FaultyIO:
 	var fail_renames: Array = []
+	var fail_removes: Array = []
 	var renames := 0
+	var removes := 0
 	var renamed: Array = []
 
 	func exists(path: String) -> bool:
@@ -87,6 +89,10 @@ class FaultyIO:
 		return dir.rename(from, to)
 
 	func remove(path: String) -> int:
+		var index := removes
+		removes += 1
+		if fail_removes.has(index):
+			return ERR_FILE_CANT_WRITE
 		var dir := DirAccess.open(USER_DIR)
 		if dir == null:
 			return DirAccess.get_open_error()
@@ -140,6 +146,7 @@ func _run() -> void:
 		await _check_broken_save_new_game()
 		await _check_entry_points_share_the_flow()
 		await _check_new_game_keeps_everything_when_the_save_cannot_move()
+		await _check_new_game_rolls_back_when_staged_save_cannot_be_removed()
 		await _check_new_game_rolls_back_when_the_opening_cannot_load()
 		await _check_new_game_ignores_a_second_click()
 		await _check_settings_persist(settings)
@@ -813,6 +820,40 @@ func _refused_stage(fail_renames: Array) -> void:
 ## The save moves, the old world lets go, the session is emptied - and then the opening
 ## will not load. Everything that was cleared must come back, the save must come back byte
 ## for byte, and the player must land on a screen that works.
+func _check_new_game_rolls_back_when_staged_save_cannot_be_removed() -> void:
+	_case_label = "a staged save that cannot be discarded"
+	Harness.stage = _case_label
+	var world := await _make_saved_world()
+	var save := root.get_node_or_null(^"Save")
+	var session := root.get_node_or_null(^"Session")
+	if world == null or save == null or session == null:
+		_failures.append("%s: the fixture could not be built." % _case_label)
+		return
+	var before := FileAccess.get_file_as_bytes(SAVE_PATH)
+	var flags_before: Dictionary = _game_state.get_snapshot()
+	var entries_before: int = _narrative.get_entries().size()
+	var failures: Array = []
+	var on_failed := func(report: Dictionary) -> void: failures.append(report)
+	session.connect("new_game_failed", on_failed)
+	var faults := FaultyIO.new()
+	faults.fail_removes = [0]
+	save.set("io", faults)
+	var report: Dictionary = await session.call("start_new_game", world)
+	save.set("io", null)
+	session.disconnect("new_game_failed", on_failed)
+
+	_expect(not bool(report.get("ok", true)), "%s: a staged save that remains on disk was committed." % _case_label)
+	_expect(String(report.get("reason", "")) == "staged_discard_failed", "%s: failure reason was '%s'." % [_case_label, report.get("reason")])
+	_expect(failures.size() == 1, "%s: new_game_failed was not emitted exactly once." % _case_label)
+	_expect(FileAccess.file_exists(SAVE_PATH), "%s: the previous save was not restored." % _case_label)
+	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before, "%s: restored save bytes differ from the original." % _case_label)
+	_expect(_game_state.get_snapshot() == flags_before, "%s: story flags were not restored." % _case_label)
+	_expect(_narrative.get_entries().size() == entries_before, "%s: the knowledge log was not restored." % _case_label)
+	_expect(current_scene is TitleScreen, "%s: rollback did not leave a usable title screen." % _case_label)
+	_expect(not bool(session.call("is_starting_new_game")), "%s: Session remained busy after rollback." % _case_label)
+	_expect(_save_strays().is_empty(), "%s: rollback left staged files %s." % [_case_label, str(_save_strays())])
+
+
 func _check_new_game_rolls_back_when_the_opening_cannot_load() -> void:
 	_case_label = "a new game whose opening cannot load"
 	Harness.stage = _case_label
