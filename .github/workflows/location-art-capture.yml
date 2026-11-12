@@ -150,3 +150,38 @@ jobs:
             ${{ runner.temp }}/frames/
             ${{ runner.temp }}/capture.log
           if-no-files-found: warn
+
+  # `tests/location_art_test.gd` is not in `godot-ci.yml` yet (another open pull request
+  # is changing that file), so this workflow runs it until it is registered there.
+  art-test:
+    name: location art test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Location art test
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          run_check location_art 540 godot --headless --path . --script res://tests/location_art_test.gd
+          status=$?
+          # The verdict lines as annotations, readable through the REST API.
+          grep -E "TEST FAILURE|SCRIPT ERROR|Parse Error" ci-logs/location_art.log | head -n 9 \
+            | while IFS= read -r line; do echo "::error title=location art::${line}"; done
+          grep -E "PASS:|FAIL:|location art:|spots, " ci-logs/location_art.log | head -n 9 \
+            | while IFS= read -r line; do echo "::notice title=location art::${line}"; done
+          exit "${status}"

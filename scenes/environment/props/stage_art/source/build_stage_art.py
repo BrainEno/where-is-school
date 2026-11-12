@@ -86,9 +86,9 @@ MATERIALS: dict[str, dict] = {
     "row_chimney": {"color": (52, 46, 66), "texture": ptex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": (44, 40, 58), "texture": ptex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
     # the walkway
-    "walk_plaster": tiled((206, 198, 174)),
+    "walk_plaster": tiled((180, 172, 152)),
     # Wall decal 16 x 3.1 m: the whole texture once across the quad.
-    "walk_wall": {"texture": stex("corridor_wall")},
+    "walk_wall": {"color": (212, 206, 196), "texture": stex("corridor_wall")},
     "walk_terrazzo": tiled((92, 56, 48), "plaster_tile"),
     "walk_floor": {"texture": stex("corridor_floor")},
     "walk_dado": {"color": (52, 94, 80), "outline": True},
@@ -99,8 +99,8 @@ MATERIALS: dict[str, dict] = {
     "yard_ground": tiled((236, 232, 226), "ground_tile"),
     "yard_court": {"texture": ptex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
     # the street
-    "street_asphalt": tiled((118, 110, 136), "plaster_tile"),
-    "pavement": tiled((200, 188, 170), "plaster_tile"),
+    "street_asphalt": tiled((100, 98, 116), "plaster_tile"),
+    "pavement": tiled((176, 166, 152), "plaster_tile"),
     "kerb": tiled((222, 212, 194), "plaster_tile"),
     "plinth_ivory": tiled((220, 208, 180)),
     "flats_rose": tiled((150, 106, 110), scale=0.2),
@@ -112,7 +112,7 @@ MATERIALS: dict[str, dict] = {
     "school_windows": {"texture": stex("window_tile"), "cut": 0.5, "scale": (5.5, 11.4 / 6.5, 1.0)},
     "street_distance": {"texture": stex("distance_street"), "unshaded": True},
     # the courtyard
-    "court_concrete": tiled((206, 196, 182), "plaster_tile"),
+    "court_concrete": tiled((166, 158, 150), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
     "housing_rose": tiled((150, 110, 112), scale=0.2),
     "housing_sage": tiled((122, 138, 120), scale=0.2),
@@ -124,8 +124,8 @@ MATERIALS: dict[str, dict] = {
     "alley_wall": {"color": (96, 116, 132), "texture": stex("streak_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "alley_wall_high": {"color": (78, 96, 116), "texture": stex("streak_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "alley_concrete": tiled((160, 150, 154), "plaster_tile"),
-    "alley_ground": tiled((120, 112, 132), "plaster_tile"),
-    "alley_paving": tiled((176, 166, 156), "plaster_tile"),
+    "alley_ground": tiled((108, 104, 122), "plaster_tile"),
+    "alley_paving": tiled((158, 148, 144), "plaster_tile"),
     "alley_distance": {"texture": stex("distance_alley"), "unshaded": True},
 }
 
