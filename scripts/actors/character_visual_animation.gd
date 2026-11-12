@@ -77,6 +77,12 @@ const SEATED_CLIP := "sit_idle"
 ## (`CharacterAnimation.adopt_authored_layers()`). Empty — every character but N — keeps the
 ## procedural one. A name the file does not carry is an error and the procedural idle stays.
 @export var authored_idle_layers: PackedStringArray = PackedStringArray()
+## The character's own way of carrying the shared clips: tempo, amplitude, standing posture
+## and small layers (`CharacterMotionProfile`, applied by `CharacterAnimation.bind()`). The
+## protagonist and Q each have one (`assets/characters/*/…_motion.tres`); null — N, the classroom
+## student — plays the clips as `CharacterAnimation.CLIPS` writes them. Same clip names,
+## same bones, same state machine either way.
+@export var motion_profile: CharacterMotionProfile = null
 
 var _player: AnimationPlayer
 var _bound := false
@@ -101,7 +107,7 @@ func _ready() -> void:
 	add_child(_player)
 	_player.root_node = _player.get_path_to(self)
 
-	_bind_report = CharacterAnimation.bind(self, _player, faces_negative_z)
+	_bind_report = CharacterAnimation.bind(self, _player, faces_negative_z, motion_profile)
 	_bound = bool(_bind_report.get("ok", false))
 	if not _bound:
 		push_error(

@@ -62,6 +62,9 @@ const TRANSITIONS := ["get_up"]
 
 ## Degrees two keys of the same bone may differ by and still count as the same pose.
 const POSE_TOLERANCE_DEGREES := 0.5
+## The two characters' own ways of carrying the clips (docs/CHARACTER_ANIMATION.md).
+const PROTAGONIST_MOTION := "res://assets/characters/protagonist/protagonist_motion.tres"
+const Q_MOTION := "res://assets/characters/q/q_motion.tres"
 
 var _failures: Array[String] = []
 var _notes: Array[String] = []
@@ -126,6 +129,9 @@ func _run() -> void:
 	await _check_runtime_wrapper("Q", "res://scenes/environment/characters/q.tscn")
 	await _check_runtime_wrapper("N", "res://scenes/environment/characters/teacher_n.tscn")
 	await _check_seated_student("res://scenes/environment/characters/classroom_student.tscn")
+
+	Harness.stage = "the two characters' motion profiles"
+	await _check_motion_profiles()
 
 	_report()
 	Harness.finish(
@@ -552,6 +558,124 @@ func _first_pose(
 		poses[canonical] = skeleton.get_bone_pose_rotation(index)
 	player.stop()
 	return poses
+
+
+## The protagonist and Q each carry the shared clips their own way. A profile is written into
+## the keys at bind time, so the checks are on what `bind()` builds:
+##
+## - the same seven clips, the same tracks on the same bones as without it — a profile never
+##   widens the set of joints that move — and nothing it names is ignored;
+## - every clip as long as `CLIPS` says times the profile's tempo, `get_up` still once;
+## - `get_up` still starts on exactly the pose `sit_idle` holds (posture included), and the
+##   seated hip is still seated;
+## - the standing pose actually differs from the bare clips (the posture is applied), and by
+##   the amount the profile asks for;
+## - the two profiles are not one rhythm: idle, walk and talk differ in length between the
+##   protagonist and Q, and the protagonist's idle is the slower one.
+func _check_motion_profiles() -> void:
+	var protagonist_profile := load(PROTAGONIST_MOTION) as CharacterMotionProfile
+	var q_profile := load(Q_MOTION) as CharacterMotionProfile
+	if protagonist_profile == null or q_profile == null:
+		_failures.append("the motion profiles %s and %s did not load." % [PROTAGONIST_MOTION, Q_MOTION])
+		return
+	var lengths := {}
+	for entry: Array in [
+		["protagonist", PRODUCTION_PROTAGONIST, protagonist_profile],
+		["Q", PRODUCTION_Q, q_profile],
+	]:
+		var label := "%s with its motion profile" % String(entry[0])
+		var profile: CharacterMotionProfile = entry[2]
+		var packed := load(String(entry[1])) as PackedScene
+		var bare_model := packed.instantiate() as Node3D
+		var model := packed.instantiate() as Node3D
+		root.add_child(bare_model)
+		root.add_child(model)
+		await process_frame
+		var bare_player := _player_for(bare_model)
+		var player := _player_for(model)
+		var bare := CharacterAnimation.bind(bare_model, bare_player)
+		var report := CharacterAnimation.bind(model, player, false, profile)
+		if not bool(report.get("ok", false)) or not bool(bare.get("ok", false)):
+			_failures.append("%s: bind failed: %s" % [label, String(report.get("reason", "?"))])
+			bare_model.queue_free()
+			model.queue_free()
+			continue
+		_notes.append("%s: %s" % [label, CharacterAnimation.describe(report)])
+		if String(report.get("profile", "")).is_empty():
+			_failures.append("%s: the bind report does not name the profile." % label)
+		var ignored: Array = report.get("profile_ignored", [])
+		if not ignored.is_empty():
+			_failures.append("%s: the profile names bones this rig does not animate: %s" % [label, str(ignored)])
+		var bare_clips: Dictionary = bare.get("clips", {})
+		var clips: Dictionary = report.get("clips", {})
+		if bare_clips.keys() != clips.keys():
+			_failures.append("%s: the clips changed: %s vs %s" % [label, str(clips.keys()), str(bare_clips.keys())])
+		var skeleton := CharacterAnimation.skeletons_in(model)[0]
+		var clip_lengths := {}
+		for clip_name: String in CLIPS:
+			var animation := player.get_animation("%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name])
+			var bare_animation := bare_player.get_animation(
+				"%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name]
+			)
+			if animation == null or bare_animation == null:
+				_failures.append("%s: '%s' was not built." % [label, clip_name])
+				continue
+			clip_lengths[clip_name] = animation.length
+			var expected := float(CharacterAnimation.CLIPS[clip_name]["length"]) * profile.tempo_for(clip_name)
+			if not is_equal_approx(animation.length, expected):
+				_failures.append(
+					"%s: '%s' is %.3f s long, the profile asks for %.3f s." % [label, clip_name, animation.length, expected]
+				)
+			if animation.get_track_count() != bare_animation.get_track_count():
+				_failures.append(
+					"%s: '%s' has %d tracks, %d without the profile; a profile must not add joints."
+					% [label, clip_name, animation.get_track_count(), bare_animation.get_track_count()]
+				)
+			else:
+				for track in animation.get_track_count():
+					if animation.track_get_path(track) != bare_animation.track_get_path(track):
+						_failures.append("%s: '%s' track %d moved to another bone." % [label, clip_name, track])
+						break
+			var loops := not TRANSITIONS.has(clip_name)
+			if (animation.loop_mode == Animation.LOOP_LINEAR) != loops:
+				_failures.append("%s: '%s' changed its loop mode." % [label, clip_name])
+		lengths[String(entry[0])] = clip_lengths
+		_check_transition_poses(label, player, skeleton, report.get("resolved", {}))
+		# The posture is in the standing pose: the chest (or spine) sits where the profile says.
+		var resolved: Dictionary = report.get("resolved", {})
+		var standing := _first_pose(label, player, skeleton, resolved, "idle")
+		var bare_standing := _first_pose(label, bare_player, CharacterAnimation.skeletons_in(bare_model)[0], resolved, "idle")
+		var moved := 0
+		for canonical: String in profile.posture:
+			if not standing.has(canonical) or not bare_standing.has(canonical):
+				continue
+			var wanted := (profile.posture[canonical] as Vector3).length()
+			var difference := rad_to_deg((standing[canonical] as Quaternion).angle_to(bare_standing[canonical]))
+			if wanted >= 2.0 and difference >= wanted * 0.5:
+				moved += 1
+			_notes.append(
+				"%s: idle starts with %s %.1f° from the bare clip (posture %.1f°)" % [label, canonical, difference, wanted]
+			)
+		if moved < 3:
+			_failures.append("%s: only %d bones carry the profile's posture in the standing pose." % [label, moved])
+		bare_model.queue_free()
+		model.queue_free()
+		await process_frame
+	if lengths.has("protagonist") and lengths.has("Q"):
+		var protagonist_lengths: Dictionary = lengths["protagonist"]
+		var q_lengths: Dictionary = lengths["Q"]
+		for clip_name: String in ["idle", "walk", "talk"]:
+			if is_equal_approx(float(protagonist_lengths.get(clip_name, 0.0)), float(q_lengths.get(clip_name, 0.0))):
+				_failures.append("the protagonist and Q play '%s' at the same length: one body rhythm." % clip_name)
+		if float(protagonist_lengths.get("idle", 0.0)) <= float(q_lengths.get("idle", 0.0)):
+			_failures.append("the protagonist's idle is not slower than Q's; he is the tired one.")
+		var parts: PackedStringArray = []
+		for clip_name: String in CLIPS:
+			parts.append(
+				"%s %.2f/%.2f s"
+				% [clip_name, float(protagonist_lengths.get(clip_name, 0.0)), float(q_lengths.get(clip_name, 0.0))]
+			)
+		_notes.append("clip lengths, protagonist / Q: %s" % ", ".join(parts))
 
 
 ## The real wrapper scene must bind its own visual and switch clips, not just the

@@ -357,8 +357,13 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 ##
 ## `faces_negative_z` is for a model exported looking down −Z (see the note at the top of this
 ## file). It changes nothing for the +Z models, which is every caller that leaves it out.
+##
+## `profile` is the character's own way of carrying the clips (`CharacterMotionProfile`):
+## tempo, amplitude, a standing posture and small layers, applied as the keys are written.
+## Null — every caller that leaves it out — writes the clips exactly as `CLIPS` has them.
 static func bind(
-		model_root: Node3D, player: AnimationPlayer, faces_negative_z: bool = false
+		model_root: Node3D, player: AnimationPlayer, faces_negative_z: bool = false,
+		profile: CharacterMotionProfile = null
 ) -> Dictionary:
 	var skeletons := skeletons_in(model_root)
 	if skeletons.is_empty():
@@ -397,12 +402,20 @@ static func bind(
 		)
 		frames[canonical] = frame
 		twists[canonical] = snappedf(rad_to_deg(frame.get_angle()), 0.1)
+	# What a profile names that this rig does not animate: reported, never keyed, so a
+	# profile cannot widen the set of joints that move.
+	var ignored: Array[String] = []
+	if profile != null:
+		for canonical: String in profile.named_bones():
+			if not animated.has(canonical) or posed.has(canonical):
+				ignored.append(canonical)
 	var library := AnimationLibrary.new()
 	var clip_report := {}
 	for clip_name in CLIPS:
 		var spec: Dictionary = CLIPS[clip_name]
 		var animation := Animation.new()
-		animation.length = float(spec["length"])
+		var tempo := 1.0 if profile == null else profile.tempo_for(clip_name)
+		animation.length = float(spec["length"]) * tempo
 		# A transition is played once and stops on its last key; everything else closes
 		# its cycle, so the last key repeats the first.
 		var loops := bool(spec.get("loop", true))
@@ -416,15 +429,20 @@ static func bind(
 			var path := NodePath("%s:%s" % [String(skeleton_path), bone])
 			var track := animation.add_track(Animation.TYPE_ROTATION_3D)
 			animation.track_set_path(track, path)
-			if not tracks.has(canonical) or posed.has(canonical):
+			var keys: Array = []
+			if not posed.has(canonical):
+				keys = _profiled_keys(clip_name, spec, canonical, profile)
+			if keys.is_empty():
 				animation.rotation_track_insert_key(track, 0.0, rest)
 				animation.rotation_track_insert_key(track, animation.length, rest)
 				held += 1
 				continue
 			var frame: Quaternion = frames[canonical]
-			for key: Array in tracks[canonical]:
+			for key: Array in keys:
 				var offset := frame * offset_rotation(key[1]) * frame.inverse()
-				animation.rotation_track_insert_key(track, float(key[0]), (rest * offset).normalized())
+				animation.rotation_track_insert_key(
+					track, float(key[0]) * tempo, (rest * offset).normalized()
+				)
 			used += 1
 		library.add_animation(clip_name, animation)
 		clip_report[clip_name] = {
@@ -450,7 +468,52 @@ static func bind(
 		"twist_degrees": twists,
 		"clips": clip_report,
 		"library": library,
+		"profile": "" if profile == null else (
+			profile.label if not profile.label.is_empty() else profile.resource_path
+		),
+		"profile_ignored": ignored,
 	}
+
+
+## The keys `bind()` writes for one bone of one clip, in the clip's own seconds (before the
+## profile's tempo): `[[time, Vector3 degrees], ...]`, or empty when the bone is held at rest.
+##
+## Without a profile these are the `CLIPS` keys, unchanged. With one, every key time of the
+## clip track and of the profile's layer is kept, plus both ends of the clip, and at each
+## the offset is `amplitude × clip(t) + layer(t) + posture × weight(t)` — linear between
+## keys, which is what the rotation track does between them anyway.
+static func _profiled_keys(
+		clip_name: String, spec: Dictionary, canonical: String, profile: CharacterMotionProfile
+) -> Array:
+	var tracks: Dictionary = spec["tracks"]
+	var base: Array = tracks.get(canonical, [])
+	if profile == null:
+		return base
+	var layer := profile.layer_keys(clip_name, canonical)
+	var posture := profile.posture_for(canonical)
+	if base.is_empty() and layer.is_empty() and posture.is_zero_approx():
+		return []
+	var length := float(spec["length"])
+	var times: Array[float] = [0.0, length]
+	for key: Array in base:
+		if not times.has(float(key[0])):
+			times.append(float(key[0]))
+	for key: Array in layer:
+		var time := clampf(float(key[0]), 0.0, length)
+		if not times.has(time):
+			times.append(time)
+	times.sort()
+	var amplitude := profile.amplitude_for(clip_name, canonical)
+	var keys: Array = []
+	for time: float in times:
+		var weight := profile.posture_weight_at(clip_name, time / length if length > 0.0 else 0.0)
+		var offset := (
+			CharacterMotionProfile.sample(base, time) * amplitude
+			+ CharacterMotionProfile.sample(layer, time)
+			+ posture * weight
+		)
+		keys.append([time, offset])
+	return keys
 
 
 ## The rotation a `CLIPS` key describes, as an offset from the bone's rest: degrees about
@@ -701,9 +764,10 @@ static func describe(report: Dictionary) -> String:
 			", ".join(PackedStringArray(missing)) if not missing.is_empty() else "none",
 			", ".join(PackedStringArray(posed)) if not posed.is_empty() else "none",
 		]
-		+ "sides mirrored: %s, local axes twisted up to %.1f° | %s" % [
+		+ "sides mirrored: %s, local axes twisted up to %.1f°, motion profile: %s | %s" % [
 			", ".join(PackedStringArray(mirrored)) if not mirrored.is_empty() else "none",
 			widest,
+			String(report.get("profile", "")) if not String(report.get("profile", "")).is_empty() else "none",
 			" | ".join(parts),
 		]
 	)
