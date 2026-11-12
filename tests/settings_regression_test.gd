@@ -134,11 +134,29 @@ func _run() -> void:
 	_expect(_file_matches_backup(), "The real settings.cfg was not restored byte for byte.")
 	Harness.finish(
 		self,
-		_failures,
+		_ordered_failures(),
 		"settings persist without touching the language, bindings serialise and refuse "
 		+ "what they must, capture never traps or leaks input, the volume dials are "
 		+ "independent, and the settings screen is reachable by keyboard and pad alone."
 	)
+
+
+## The CI annotation keeps only the first twenty failure lines, so a section with many
+## failures must not hide another's: the first three of every section come first.
+func _ordered_failures() -> Array[String]:
+	var first: Array[String] = []
+	var rest: Array[String] = []
+	var per_section: Dictionary = {}
+	for failure: String in _failures:
+		var section := failure.substr(0, 2)
+		var seen := int(per_section.get(section, 0))
+		per_section[section] = seen + 1
+		if seen < 3:
+			first.append(failure)
+		else:
+			rest.append(failure)
+	first.append_array(rest)
+	return first
 
 
 # --- A. persistence and the language key -------------------------------------------
