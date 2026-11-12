@@ -158,8 +158,12 @@ click, then leave the classroom during the free period with Q along.
     facing, and the model under it never moves.
 
 The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
-baked onto the development protagonist. That library and its baked resource remain
-development-only; the game uses the seven project-authored clips above.
+baked onto the development protagonist (the library ships 43; `A_TPose` is a rest pose and
+is skipped). That library and its baked resource remain development-only; the game uses the
+seven project-authored clips above. Its licence is recorded in
+`docs/ASSET_PROVENANCE.md` — CC0 1.0 on every channel that distributes the pack — together
+with the note there about Quaternius's site-wide licence and the decision to keep it out of
+every build.
 
 ## Remaining limitations
 
