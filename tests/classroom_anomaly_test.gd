@@ -118,6 +118,10 @@ func _run() -> void:
 		Harness.finish(self, ["Main did not expose the nodes this test needs."], "")
 		return
 	_connect_world()
+	# The prologue is not run here (autostart is off), so nothing hands the player control
+	# the way the game does when it ends; without this every beat would end with control
+	# still withheld and "control is back" could not be checked.
+	_sequence.allow_player_control()
 	Engine.time_scale = TIME_SCALE
 
 	if _host.get_current_path() != CLASSROOM or _host.get_current() == null:
