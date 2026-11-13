@@ -181,14 +181,14 @@
         {
           "id": "p_absent",
           "speaker": "protagonist",
-          "text": "我没去考试？",
+          "text": "我是没进考场？",
           "source": "observed",
           "next": "q_absent_1"
         },
         {
           "id": "q_absent_1",
           "speaker": "q",
-          "text": "你说你走错了考场，监考老师没让你进去。后来你就没再提了。",
+          "text": "你那天好像没进考场。具体怎么回事我也没弄清楚，后来你就不提了。",
           "next": "q_exam_end"
         },
         {
