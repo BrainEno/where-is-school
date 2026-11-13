@@ -197,6 +197,15 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
 A reminder line from Q fires after 40 s if the bag has not been searched, and the
 bell is forced after 95 s, so no player can dead-lock the slice.
 
+Both limits, and every other pause between beats, are **story time**: they go through
+`OpeningSequence.wait_seconds()`, which creates its timer with `process_always = false`,
+so they stop while the pause menu has the tree paused. `create_timer()` defaults to
+counting through a pause, and before this was fixed a player who spent the bag step in
+the menu or the settings came back to a step that had already timed out, with the
+expectation beat skipped for the rest of the run. `tests/story_pause_timing_test.gd`
+holds the line, including a scan that refuses a counting-through-the-pause timer
+anywhere under `scripts/world/`.
+
 ## 7. Camera and target selection
 
 The camera keeps the fixed 2.5D offset (3.4, 6.4, 3.4) with a 58° field of view.
