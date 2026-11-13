@@ -19,6 +19,9 @@ extends RefCounted
 const FORMAT := "where-is-school/save"
 ## Bumped when the payload shape changes; see `SaveManager.MIGRATIONS`.
 const VERSION := 1
+## Binary64 can represent 2^63 exactly, but not INT64_MAX (it rounds up to 2^63).
+## Floats therefore use an exclusive upper bound and an inclusive negative bound.
+const INT64_FLOAT_LIMIT := 9223372036854775808.0
 
 const TAG_BOOL := "b"
 const TAG_INT := "i"
@@ -62,8 +65,8 @@ static func unwrap(text: String) -> Dictionary:
 			"the file declares format '%s', not '%s'" % [format, FORMAT]
 		)
 	var version_value: Variant = envelope.get("version", null)
-	if not (version_value is float or version_value is int):
-		return _refuse("version", "the file declares no numeric version")
+	if not _is_signed_integer(version_value):
+		return _refuse("version", "the file's version must be a finite signed 64-bit integer")
 	var version := int(version_value)
 	if version > VERSION:
 		return _refuse(
@@ -178,8 +181,8 @@ static func decode_value(raw: Variant, path: String) -> Dictionary:
 			return {"ok": true, "value": tagged["v"], "detail": ""}
 		TAG_INT:
 			var int_value: Variant = tagged.get("v", null)
-			if not (int_value is int or int_value is float):
-				return _bad_value(path, "'i' does not hold a number")
+			if not _is_signed_integer(int_value):
+				return _bad_value(path, "'i' does not hold a finite signed 64-bit integer")
 			return {"ok": true, "value": int(int_value), "detail": ""}
 		TAG_FLOAT:
 			var float_value: Variant = tagged.get("v", null)
@@ -226,6 +229,21 @@ static func decode_value(raw: Variant, path: String) -> Dictionary:
 
 
 # --- Helpers ----------------------------------------------------------------
+
+
+## JSON numbers arrive as floats, but callers can also supply native integers.
+## Never narrow an int through float: the native signed 64-bit edges are valid.
+static func _is_signed_integer(value: Variant) -> bool:
+	if value is int:
+		return true
+	if not (value is float):
+		return false
+	var number: float = value
+	return (
+		is_finite(number)
+		and number >= -INT64_FLOAT_LIMIT and number < INT64_FLOAT_LIMIT
+		and number == floorf(number)
+	)
 
 
 static func _refuse(reason: String, detail: String) -> Dictionary:

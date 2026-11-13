@@ -15,6 +15,10 @@ const Harness = preload("res://tests/test_harness.gd")
 const SAVE_PATH := "user://save.json"
 const BROKEN_PATH := "user://save.broken.json"
 const USER_DIR := "user://"
+## Keep the native-int edges independent of the codec's float range guard. In
+## particular, converting MAX_SIGNED_INT to float would round it up to 2^63.
+const MAX_SIGNED_INT := 9223372036854775807
+const MIN_SIGNED_INT := -MAX_SIGNED_INT - 1
 
 
 ## The real file layer, with the operations a case names made to fail.
@@ -126,6 +130,18 @@ func _run() -> void:
 
 	Harness.stage = "payload"
 	_expect_payload_refusals()
+
+	Harness.stage = "integer validation"
+	var integer_failures_before := _failures.size()
+	_expect_integer_values()
+	_expect_integer_versions()
+	_expect_integer_load_refusals()
+	print(
+		"::notice title=save integer validation::Godot %s; native int64 edges, integral floats, "
+		% Engine.get_version_info()["string"]
+		+ "fractions, non-finite/range guards, nested paths and disk refusals; %d problem(s)"
+		% (_failures.size() - integer_failures_before)
+	)
 
 	Harness.stage = "knowledge"
 	_expect_knowledge_rules()
@@ -338,6 +354,152 @@ func _expect_payload_refusals() -> void:
 		)
 	)
 	_expect(_save.read_save()["ok"] != true, "A three-element point of two numbers was accepted.")
+
+
+# --- Integer validation (#149) ----------------------------------------------
+
+
+func _expect_integer_values() -> void:
+	var invalid: Array = [
+		{"label": "positive fraction", "value": 3.7},
+		{"label": "negative fraction", "value": -3.7},
+		{"label": "not a number", "value": NAN},
+		{"label": "positive infinity", "value": INF},
+		{"label": "negative infinity", "value": -INF},
+		{"label": "exclusive upper edge", "value": 9223372036854775808.0},
+		{"label": "below the lower edge", "value": -9223372036854777856.0},
+		{"label": "numeric string", "value": "3"},
+		{"label": "boolean", "value": true},
+	]
+	for fixture: Dictionary in invalid:
+		var decoded := SaveCodec.decode_value({"t": "i", "v": fixture["value"]}, "flags.numeric")
+		_expect(decoded["ok"] != true, "An int tag accepted %s." % fixture["label"])
+		_expect(
+			String(decoded.get("detail", "")).contains("flags.numeric"),
+			"The %s int refusal did not name flags.numeric." % fixture["label"]
+		)
+
+	var valid: Array = [
+		{"label": "native zero", "value": 0, "expected": 0},
+		{"label": "integral float", "value": 3.0, "expected": 3},
+		{"label": "negative integral float", "value": -3.0, "expected": -3},
+		{"label": "negative zero", "value": -0.0, "expected": 0},
+		{"label": "native maximum", "value": MAX_SIGNED_INT, "expected": MAX_SIGNED_INT},
+		{"label": "native minimum", "value": MIN_SIGNED_INT, "expected": MIN_SIGNED_INT},
+		{"label": "float minimum", "value": -9223372036854775808.0, "expected": MIN_SIGNED_INT},
+		{
+			"label": "last float below the upper edge",
+			"value": 9223372036854774784.0,
+			"expected": 9223372036854774784,
+		},
+	]
+	for fixture: Dictionary in valid:
+		var decoded := SaveCodec.decode_value({"t": "i", "v": fixture["value"]}, "flags.numeric")
+		_expect(decoded["ok"] == true, "An int tag refused %s: %s" % [fixture["label"], decoded])
+		_expect(
+			typeof(decoded.get("value")) == TYPE_INT and decoded.get("value") == fixture["expected"],
+			"The %s int changed type or value." % fixture["label"]
+		)
+
+	# Fractions belong to a float tag; tightening integers must not narrow floats.
+	var floating := SaveCodec.decode_value({"t": "f", "v": -3.7}, "flags.floating")
+	_expect(
+		floating["ok"] == true and typeof(floating.get("value")) == TYPE_FLOAT
+		and floating.get("value") == -3.7,
+		"A legitimate fractional float tag was changed or refused."
+	)
+	var nested := SaveCodec.decode_flags({
+		"fine": {"t": "i", "v": 1},
+		"nested": {"t": "d", "v": {"rolls": {"t": "a", "v": [{"t": "i", "v": 3.7}]}}},
+	})
+	_expect(nested["ok"] != true, "A nested fractional integer flag was accepted.")
+	_expect((nested["flags"] as Dictionary).is_empty(), "A refused integer table was partially decoded.")
+	_expect(
+		String(nested.get("detail", "")).contains("flags.nested.rolls[0]"),
+		"The nested integer refusal lost its array/dictionary path."
+	)
+
+
+func _expect_integer_versions() -> void:
+	for token: String in [
+		"1.9", "1.0001", "-1.9", "0.9", "9223372036854775808.0", "-9223372036854777856.0",
+	]:
+		var text := '{"format":"where-is-school/save","version":%s,"payload":{}}' % token
+		var decoded := SaveCodec.unwrap(text)
+		_expect(decoded["ok"] != true, "The envelope accepted version %s." % token)
+		_expect(decoded["reason"] == "version", "Version %s did not report a version refusal." % token)
+		_expect((decoded["payload"] as Dictionary).is_empty(), "A refused version exposed its payload.")
+		_expect(
+			String(decoded.get("detail", "")).contains("version"),
+			"The version %s refusal did not name the field." % token
+		)
+
+	# Test the raw JSON spelling too: JSON numbers arrive as floats in Godot.
+	for token: String in ["1", "1.0", "1e0"]:
+		var text := '{"format":"where-is-school/save","version":%s,"payload":{}}' % token
+		var decoded := SaveCodec.unwrap(text)
+		_expect(decoded["ok"] == true, "The valid version spelling %s was refused." % token)
+		_expect(
+			typeof(decoded.get("version")) == TYPE_INT and decoded.get("version") == SaveCodec.VERSION,
+			"The valid version spelling %s changed type or value." % token
+		)
+
+
+func _expect_integer_load_refusals() -> void:
+	var fixtures: Array = [
+		{"label": "fractional version", "version": 1.9, "bad": {"t": "i", "v": 3},
+			"reason": "version", "path": "version"},
+		{"label": "fractional flag", "version": 1, "bad": {"t": "i", "v": -3.7},
+			"reason": "payload", "path": "flags.bad"},
+		{"label": "out-of-range flag", "version": 1, "bad": {"t": "i", "v": 9223372036854775808.0},
+			"reason": "payload", "path": "flags.bad"},
+		{"label": "nested fractional flag", "version": 1,
+			"bad": {"t": "a", "v": [{"t": "i", "v": 3.7}]},
+			"reason": "payload", "path": "flags.bad[0]"},
+	]
+	for fixture: Dictionary in fixtures:
+		Harness.clear_session_state(self)
+		_game_state.set_flag(&"kept_across_integer_refusal", 7)
+		var seeded: Dictionary = _narrative.restore_snapshot({"entries": [{
+			"entry_id": "kept_integer_knowledge", "source": "recalled",
+			"speaker_id": "", "text": "Existing test knowledge.",
+		}]})
+		_expect(seeded["ok"] == true, "Could not seed the integer refusal's knowledge fixture.")
+		var flags_before: Dictionary = _game_state.get_snapshot().duplicate(true)
+		var knowledge_before: Dictionary = _narrative.to_snapshot().duplicate(true)
+		var text := JSON.stringify({
+			"format": SaveCodec.FORMAT, "version": fixture["version"],
+			"payload": {"flags": {"must_not_apply": {"t": "b", "v": true}, "bad": fixture["bad"]},
+				"entries": [], "check_seed": 0},
+		})
+		_write_raw(text)
+		var bytes := _disk_bytes(SAVE_PATH)
+		_expect(bytes == text.to_utf8_buffer(), "The integer refusal fixture was not written in full.")
+		var loaded: Dictionary = _save.load_game()
+		_expect(loaded["ok"] != true, "load_game accepted %s." % fixture["label"])
+		_expect(
+			loaded.get("reason") == fixture["reason"]
+			and String(loaded.get("detail", "")).contains(String(fixture["path"])),
+			"The %s load refusal lost its reason/path: %s" % [fixture["label"], loaded]
+		)
+		_expect(
+			_game_state.get_snapshot() == flags_before,
+			"A %s load applied or cleared flags." % fixture["label"]
+		)
+		_expect(
+			_narrative.to_snapshot() == knowledge_before,
+			"A %s load applied or cleared knowledge." % fixture["label"]
+		)
+		_expect(_disk_bytes(SAVE_PATH) == bytes, "An integer refusal rewrote/deleted the save.")
+		_expect(_disk_bytes(BROKEN_PATH) == bytes, "The integer refusal quarantine is not the original bytes.")
+		var repeated: Dictionary = _save.load_game()
+		_expect(repeated["ok"] != true, "A repeated integer refusal unexpectedly loaded.")
+		_expect(
+			_game_state.get_snapshot() == flags_before and _narrative.to_snapshot() == knowledge_before
+			and _disk_bytes(SAVE_PATH) == bytes and _disk_bytes(BROKEN_PATH) == bytes,
+			"Repeating an integer refusal changed the session, save or quarantine."
+		)
+	Harness.clear_session_state(self)
 
 
 # --- Knowledge --------------------------------------------------------------
