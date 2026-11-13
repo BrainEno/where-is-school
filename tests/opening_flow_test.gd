@@ -669,7 +669,7 @@ func _check_targeting() -> void:
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
 		{"position": Vector3(-3.2, 0, 2.85), "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
-		{"position": Vector3(-4.0, 0, -1.0), "yaw": 0.0, "expected": &"set_square"},
+		{"position": Vector3(-4.0, 0, -0.65), "yaw": 0.0, "expected": &"set_square"},
 		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},
 		{"position": Vector3(0.0, 0, 3.7), "yaw": 180.0, "expected": &"timetable"},
 		{"position": Vector3(3.0, 0.12, -3.1), "yaw": 0.0, "expected": &"classroom_door"},
@@ -677,6 +677,9 @@ func _check_targeting() -> void:
 	if _interaction == null:
 		_failures.append("The player has no InteractionController to test.")
 		return
+	# This case pins down the facing fallback, not whichever prop happens to be under the
+	# desktop cursor in a headless run.
+	_interaction.set_mouse_override(Vector2(2.0, 2.0))
 	for test_case: Dictionary in cases:
 		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(test_case["yaw"])),
 			test_case["position"]))
@@ -689,6 +692,7 @@ func _check_targeting() -> void:
 				"At %s the interaction prompt targeted '%s' instead of '%s'."
 				% [test_case["position"], found, test_case["expected"]]
 			)
+	_interaction.clear_mouse_override()
 
 
 ## Compact state line printed once at the end of a run (and used by CI to

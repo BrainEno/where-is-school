@@ -1834,28 +1834,38 @@ func _cursor_onto(target: Interactable) -> Vector2:
 func _position_near(target: Interactable, distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := target.global_position
-	for index in 16:
-		var angle := TAU * float(index) / 16.0
-		var candidate := origin + Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
-		var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
-		if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
-			continue
-		var to_target := origin - snapped
-		var yaw := atan2(-to_target.x, -to_target.z)
-		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
-		await _wait(0.2)
-		# The camera trails the body and the visibility ray is cast from wherever it has got
-		# to, so a teleport needs a frame or two before the object is under the cursor. One
-		# check after a fixed sleep made this the flakiest step in the capture: give it half
-		# a second instead of one frame, and only then move on to the next angle.
-		if await _poll(
-			func() -> bool:
-				return _interaction.get_target_at_screen_position(
-					_screen_position_of(target), false
-				) == target,
-			0.5
-		):
-			return true
+	# The classroom's desk rows make one exact-radius ring brittle: a nearby chair can
+	# consume every snapped point even though the object has reachable floor around it.
+	var radii: Array[float] = []
+	for requested: float in [distance - 0.35, distance, distance + 0.35, distance + 0.7]:
+		var radius := clampf(requested, 0.6, _interaction.max_distance - 0.1)
+		if not radii.has(radius):
+			radii.append(radius)
+	for radius: float in radii:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
+				continue
+			if not _interaction.is_in_reach_at(snapped, target):
+				continue
+			var to_target := origin - snapped
+			var yaw := atan2(-to_target.x, -to_target.z)
+			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+			await _wait(0.2)
+			# The camera trails the body and the visibility ray is cast from wherever it has got
+			# to, so a teleport needs a frame or two before the object is under the cursor. One
+			# check after a fixed sleep made this the flakiest step in the capture: give it half
+			# a second instead of one frame, and only then move on to the next angle.
+			if await _poll(
+				func() -> bool:
+					return _interaction.get_target_at_screen_position(
+						_screen_position_of(target), false
+					) == target,
+				0.5
+			):
+				return true
 	return false
 
 

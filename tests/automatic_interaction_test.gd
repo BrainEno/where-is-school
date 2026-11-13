@@ -589,14 +589,19 @@ func _stand_far_from(target: Interactable, min_distance: float, max_distance: fl
 func _stand_near(target: Interactable, min_distance: float, max_distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := target.global_position
-	for radius in [min_distance + 0.2, max_distance - 0.2]:
+	var radii: Array[float] = [min_distance + 0.2, (min_distance + max_distance) * 0.5, max_distance - 0.2]
+	for radius: float in radii:
 		for index in 16:
 			var angle := TAU * float(index) / 16.0
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
 				continue
-			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+			if not _interaction.is_in_reach_at(snapped, target):
+				continue
+			var to_target := origin - snapped
+			var yaw := atan2(-to_target.x, -to_target.z)
+			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
 			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:
 				return true

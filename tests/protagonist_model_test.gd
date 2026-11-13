@@ -171,7 +171,7 @@ const SAMPLES := 12
 const MAX_TWIST_DEGREES := 8.0
 const MAX_HAND_FOOT_TWIST_DEGREES := 1.0
 ## The classroom seat the former protagonist sits at (desk A1 and its chair).
-const SEAT_DESK := Vector3(-2.5, 0.0, -1.5)
+const SEAT_DESK := Vector3(-4.8, 0.0, -0.8)
 const SEAT_TOP := 0.475
 ## How far the former protagonist's soles sit above its own origin (its recorded model base).
 const FORMER_SOLE := 0.017
