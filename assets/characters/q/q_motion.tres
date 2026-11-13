@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="CharacterMotionProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+label = "Q: loose, leaning back, weight on the heels"
+tempo = {
+"get_up": 0.9,
+"idle": 1.2,
+"jog": 0.95,
+"talk": 0.8,
+"walk": 0.92,
+"wave": 0.85
+}
+amplitude = {
+"jog": {
+"spine": 1.6,
+"upper_arm": 1.1
+},
+"talk": {
+"*": 1.5
+},
+"walk": {
+"head": 1.4,
+"spine": 2.0,
+"upper_arm": 1.2
+}
+}
+posture = {
+"fore_arm.L": Vector3(-6, 0, 0),
+"head": Vector3(1, 0, 4),
+"neck": Vector3(3, 0, 0),
+"spine": Vector3(-4.5, 0, 0),
+"thigh.L": Vector3(0, 0, 2.5),
+"thigh.R": Vector3(0, 0, -2.5),
+"upper_arm.L": Vector3(0, 0, 2)
+}
+posture_weight = {}
+layers = {
+"idle": {
+"head": [[0.0, Vector3(0, 0, -1.5)], [0.5, Vector3(-1.5, 0, 0)], [1.0, Vector3(0, 0, 1.5)], [1.5, Vector3(-1, 0, 0)], [2.0, Vector3(0, 0, -1.5)]],
+"spine": [[0.0, Vector3(0, 0, 2)], [1.0, Vector3(0, 0, -2)], [2.0, Vector3(0, 0, 2)]],
+"upper_arm.L": [[0.0, Vector3(0, 0, 0)], [1.0, Vector3(-3, 0, 0)], [2.0, Vector3(0, 0, 0)]]
+},
+"talk": {
+"spine": [[0.0, Vector3(-1, 0, 0)], [0.3, Vector3(0, 0, 2)], [0.6, Vector3(1, 0, 0)], [0.9, Vector3(0, 0, -2)], [1.2, Vector3(-1, 0, 0)]]
+}
+}

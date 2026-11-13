@@ -28,7 +28,7 @@ texture sources stay out of `assets/`; the runtime file is a build artefact.
 |---|---|
 | glTF 2.0 **binary** (`.glb`) | one file, no side-car `.bin` or `.gltf` to lose; Godot imports it as a scene without an add-on |
 | **1 unit = 1 metre** | every number in this project is metres: doors are 2.1 m, the agent is 1.8 m high, `agent_max_climb` is 0.3 m |
-| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards. The two authored characters in the tree do not meet this yet — see §10.2 |
+| **+Y up**, model **faces -Z** | the same axes the engine and the camera use; a model that faces +Z walks backwards. The protagonist and Q do not meet this yet; substitute teacher N does — see §10.2 |
 | **origin at the floor, on the model's centre line** | placement code writes a position on the ground and gets the object standing there; no per-instance offsets |
 | **no node scale**, no rotation baked into nodes | a 0.01-scaled export passes a size check in the viewport and then behaves like a different object in code |
 | **one material per mesh**, named after the asset | a placeholder material is easy to replace when its name is stable |
@@ -259,7 +259,8 @@ that made the first version of the reader report a build with no files in it.
 ## 10. The imported production assets
 
 Round two of the pipeline imported the four assets a scene is now allowed to be built
-from: two Poly Haven CC0 props and the owner's two characters. They follow the same
+from: two Poly Haven CC0 props and the owner's two characters. The owner's later
+characters — the protagonist of PR #118 and substitute teacher N — joined the same list. They follow the same
 shape as everything above — a `.glb` under `assets/models/<name>/`, a hand-authored
 wrapper under `scenes/environment/` — with the deviations in §10.2 written down instead of
 hidden. The companion record is
@@ -275,6 +276,7 @@ hidden. The companion record is
 | Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
 | Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
 | Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.647 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor`; 16-bone rig |
+| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 57,460 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a
@@ -290,7 +292,7 @@ with it.
 
 ### 10.2 Three deviations, recorded rather than hidden
 
-1. **The two characters face +Z, not −Z.** §1 asks for −Z forward, and the two
+1. **The protagonist and Q face +Z, not −Z.** §1 asks for −Z forward, and the two
    Blender-born characters — like the playground bench before them, whose back
    `IMPLEMENTATION_NOTES_PROPS.md` records as sitting on its own −Z side — were authored
    facing the other way: their eyes are on the +Z side. The wrapper deliberately does
@@ -307,6 +309,16 @@ with it.
    not just which angles were written. §1 remains what a *new* export should produce; it
    is not what these two files do. **Owner decision needed:** re-export the characters
    facing −Z, or adopt "authored characters are yawed at placement" as the rule.
+
+   **Substitute teacher N is the first character that follows §1**: its eyes and toes are
+   on the −Z side. Its actor therefore sets `visual_yaw_degrees = 0` — the turn
+   `face_towards()` already applies is the whole correction — and its wrapper sets
+   `CharacterVisualAnimation.faces_negative_z`, because the procedural clips are written in
+   a +Z character's frame: bound in skeleton space, N's walk would swing its legs the wrong
+   way and its knees would fold forwards. `imported_assets_test.gd` checks N's eyes are on
+   −Z, `imported_placement_test.gd` measures its toes against the facing its wrapper
+   declares, and `character_animation_test.gd` checks that sitting brings N's knees out in
+   front of it (and, as a control, that binding it as a +Z model does not).
 2. **The stationery does not stand on a floor.** Its own origin is the middle of the
    arrangement — its lowest point is 7.4 cm below it — so the raw GLB is not drop-in
    placeable. `stationery_supplies.tscn` re-origins it to its base, which is why the
@@ -320,6 +332,33 @@ with it.
    former protagonist's origin sitting 1.7 cm above its sole is still recorded at 5 mm
    tolerance, so a re-export that moves it fails the test rather than a placement. The
    protagonist that replaced it (PR #118) stands on its origin.
+
+### 10.2a The protagonist's and Q's painted look lives beside the model
+
+The protagonist and Q are not drawn in their GLB materials in the game. Each wrapper has a
+`Look` node (`CharacterLookApplier`). At run time it replaces every surface's material with
+a painted shader material from the character's `CharacterLook`
+(`assets/characters/protagonist/protagonist_look.tres`, `assets/characters/q/q_look.tres`).
+It also adds an ink hull as a `next_pass` on the outer parts and sets the protagonist's
+resting expression on his own blend shapes. The wrapper root carries a
+`CharacterMotionProfile` (`assets/characters/*/…_motion.tres`) that `CharacterAnimation.bind()`
+writes into the clips. The design is [CHARACTER_ART.md](CHARACTER_ART.md).
+
+What this means for the contract:
+
+- **The GLBs are unchanged.** Their materials still import as the owner exported them, and
+  `imported_assets_test.gd` still reads them: names, colours, the iris used for facing.
+- **The model directories hold only the `.glb` and its `.import`.** The looks, profiles
+  and shaders live under `assets/characters/` and `assets/shaders/characters/`.
+- **Meshes are rebuilt only in memory.** For meshes without blend shapes, the applier
+  builds an in-memory copy with the bind-pose position added in `CUSTOM0`. The copy keeps
+  the GLB's vertices, indices, bones and weights, in order (tested), and is shared by every
+  instance. Nothing is written to disk. Counts, sizes and wrapper bounds are unchanged.
+- **The looks are generated.** `art/characters/build_character_looks.py` writes them
+  (`--check` to verify). Edit the script, not the `.tres` files.
+- **A re-export needs a check of the material names.** If a re-export renames a material,
+  that surface falls back to its GLB material, and `imported_assets_test.gd` fails because
+  a surface is no longer painted. A new material needs an entry in the script.
 
 ### 10.3 Textures are embedded, not extracted
 
@@ -356,6 +395,7 @@ placement as well as a contract:
 | `characters/protagonist.tscn` | `player.tscn` → `VisualPivot/Visual/Model` | `Visual` is a `Node3D` pivot at y = 0.9; the model hangs at −0.9 so its sole, which is on its own origin, is on the floor. (−0.917 until PR #118: the former model stood 1.7 cm above its origin.) |
 | `characters/classroom_student.tscn` | `classroom.tscn` → `Actors/SeatedStudent` | the former protagonist on desk A1's chair, yawed 180° like every +Z character, seated from the first frame; no collision, no controller, no interaction, so navigation and the room's interactables are unchanged. |
 | `characters/q.tscn` | `classroom.tscn` → `Actors/Q`, and `companion.tscn` → `Actor` | both name it as `NpcActor.visual_scene`, which hides the graybox and adds no collision. |
+| `characters/teacher_n.tscn` | `classroom.tscn` → `Actors/N` | the only N in the game; `NpcActor.visual_scene` with `visual_yaw_degrees = 0` (a −Z model). Still hidden until the opening walks it in along `NEntryPath`; nameplate, dialogue and triggers are the actor's and did not change. |
 
 The teacher's desk is deliberately not on that list: it is 1.9 m wide, and the student desk
 is not a substitute for a lectern. The room's layout, its interaction anchors and its

@@ -1,8 +1,8 @@
 extends SceneTree
-## The HUD at the three window sizes the game is expected to run in.
+## The HUD at five supported window sizes, through 4K.
 ##
-## `tests/dialogue_layout_test.gd` already measures the reading surface at 1280x720,
-## 1600x900 and 1920x1080. This covers the other half of the interface — the objective
+## `tests/dialogue_layout_test.gd` also measures the reading surface at all five sizes.
+## This covers the other half of the interface — the objective
 ## line, the interaction prompt and the language hint — inside the real `GameUI`, with the
 ## shipped strings in both languages, at whichever resolution the process was started with:
 ##
@@ -17,7 +17,7 @@ extends SceneTree
 ##
 ##     godot --headless --resolution 1280x720 --script res://tests/hud_layout_test.gd
 ##
-## CI does exactly that three times (`hud_layout_720`, `hud_layout_900`, `hud_layout_1080`).
+## CI drives this test at all five supported sizes.
 ##
 ## Then the same measurements again at the **largest text size** (issue #62), through the
 ## real `Settings` node, plus the interface that only exists since then - the pause menu,
@@ -33,7 +33,11 @@ const SESSION_SCRIPT := "res://scripts/ui/game_session.gd"
 ## The sizes the game is expected to run in. A run whose viewport is none of these is
 ## reported, not silently accepted: a test that always measures the same size proves nothing.
 const VERIFIED_SIZES: Array[Vector2i] = [
-	Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)
+	Vector2i(1280, 720),
+	Vector2i(1600, 900),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(3840, 2160),
 ]
 
 var _failures: Array[String] = []
@@ -89,23 +93,29 @@ func _run() -> void:
 	root.min_size = Vector2i.ZERO
 	root.size = target
 	await _frames(3)
-	var viewport := root.get_visible_rect().size
-	print("hud layout: viewport %s, verified sizes %s" % [str(viewport), str(VERIFIED_SIZES)])
-	_expect(
-		VERIFIED_SIZES.has(Vector2i(viewport)),
-		"This run is not at one of the verified sizes: %s." % str(viewport)
+	var physical_size := Vector2i(root.size)
+	var viewport := (
+		Vector2(root.content_scale_size)
+		if root.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		else root.get_visible_rect().size
+	)
+	print(
+		"hud layout: physical %s, logical %s, supported sizes %s"
+		% [str(physical_size), str(viewport), str(VERIFIED_SIZES)]
 	)
 	_expect(
-		Vector2i(viewport) == target,
-		"The viewport is %s; it was set to %s and the labels would be measured at the "
-		% [str(viewport), str(target)]
-		+ "wrong size."
+		VERIFIED_SIZES.has(physical_size),
+		"This run is not at one of the supported display sizes: %s." % str(physical_size)
+	)
+	_expect(
+		physical_size == target,
+		"The physical viewport is %s; it was set to %s." % [str(physical_size), str(target)]
 	)
 
 	# The shipped strings, not invented ones: the objective key the story sets, and the
 	# longest prompt the content actually asks the HUD to print. The prompt line is a short
 	# contextual label ("Look", "Open"); the long paragraphs belong to the dialogue panel,
-	# which `tests/dialogue_layout_test.gd` measures at these same three sizes.
+	# which `tests/dialogue_layout_test.gd` measures at these same five sizes.
 	await _measure_hud(main, hud, viewport, "standard")
 
 	# --- The largest text size -------------------------------------------------
@@ -229,6 +239,7 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 		panel.open()
 		await _frames(4)
 		_expect_controls_fit(panel, viewport, tag % "settings screen")
+		_expect_one_face(panel, factor, tag % "settings screen")
 		_expect(
 			panel.get_row_ids().size() >= 20,
 			"%s: only %d rows were built." % [tag % "settings screen", panel.get_row_ids().size()]
@@ -244,6 +255,7 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 		await _frames(3)
 		_expect(menu.get_confirm().visible, "%s: New game did not ask." % (tag % "pause menu"))
 		_expect_controls_fit(menu.get_confirm(), viewport, tag % "new-game question")
+		_expect_answers_readable(menu.get_confirm(), tag % "new-game question")
 		menu.get_confirm().get_cancel_button().pressed.emit()
 		await _frames(2)
 		menu.close()
@@ -282,6 +294,43 @@ func _measure_title(viewport: Vector2, factor: float) -> void:
 		)
 	title.queue_free()
 	await _frames(2)
+
+
+## The settings screen is set in one face and three sizes: the title, the reading size for
+## every row, value and button, and the small size for column heads and the hint.
+func _expect_one_face(panel: SettingsPanel, factor: float, tag: String) -> void:
+	var serif := MenuStyle.serif() as FontVariation
+	var sizes := [
+		UiTextScale.scaled(MenuStyle.TITLE_SIZE, factor),
+		UiTextScale.scaled(MenuStyle.BODY_SIZE, factor),
+		UiTextScale.scaled(MenuStyle.SMALL_SIZE, factor),
+	]
+	var odd := PackedStringArray()
+	for control: Control in _visible_text_controls(panel):
+		var size := control.get_theme_font_size(&"font_size")
+		var font := control.get_theme_font(&"font") as FontVariation
+		var in_serif := serif == null or (font != null and font.base_font == serif.base_font)
+		if not in_serif or not sizes.has(size):
+			odd.append("%s '%s' (%d px)" % [control.name, _short_text(control), size])
+	_expect(odd.is_empty(), "%s: not in the serif at %s: %s" % [tag, str(sizes), ", ".join(odd)])
+
+
+## Both answers of a question show their whole word on one line. A Button allowed to wrap
+## reports almost no minimum width, so `_expect_controls_fit` alone passed a card whose
+## answers were laid out narrower than a single character and showed nothing.
+func _expect_answers_readable(prompt: ConfirmPrompt, tag: String) -> void:
+	_expect(not prompt.get_heading().is_empty(), "%s: the question has no heading." % tag)
+	for button: Button in [prompt.get_cancel_button(), prompt.get_confirm_button()]:
+		var text := button.text.strip_edges()
+		_expect(not text.is_empty(), "%s: the %s answer has no text." % [tag, button.name])
+		var font := button.get_theme_font(&"font")
+		var size := button.get_theme_font_size(&"font_size")
+		var needed := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		_expect(
+			button.autowrap_mode == TextServer.AUTOWRAP_OFF and button.size.x >= needed,
+			"%s: the %s answer '%s' is %.0f px wide for %.0f px of text (autowrap %d)."
+			% [tag, button.name, text, button.size.x, needed, button.autowrap_mode]
+		)
 
 
 ## Every visible label and button under `node` is inside the viewport - or, inside a

@@ -1,7 +1,8 @@
 extends SceneTree
-## The imported production assets (round two): five GLBs that came from outside the
-## repository — two Poly Haven CC0 props and the owner's three Blender characters (the
-## protagonist, the former protagonist who now sits in the classroom as a student, and Q) —
+## The imported production assets (round two): six GLBs that came from outside the
+## repository — two Poly Haven CC0 props and the owner's four Blender characters (the
+## protagonist, the former protagonist who now sits in the classroom as a student, Q and the
+## substitute teacher N) —
 ## measured in the engine, not in a file listing.
 ##
 ##   godot --headless --path . --script res://tests/imported_assets_test.gd
@@ -13,20 +14,34 @@ extends SceneTree
 ## not. Three deviations exist and each is pinned here so a re-export that silently
 ## changes it fails:
 ##
-## 1. the characters face **+Z**, not the -Z the pipeline asks for, and the wrapper
-##    does not hide it (a yaw baked into the wrapper would break the moment the GLB is
-##    replaced) — see docs/ASSET_PIPELINE.md §10;
+## 1. the protagonist and Q face **+Z**, not the -Z the pipeline asks for (N is the one
+##    character that faces -Z), and the wrapper does not hide it (a yaw baked into the
+##    wrapper would break the moment the GLB is replaced) — see docs/ASSET_PIPELINE.md §10;
 ## 2. the stationery is a *display line-up* of nine separate items centred on its own
 ##    origin, so the wrapper re-origins it to its base;
 ## 3. no asset carries a non-unit node scale. `q.glb` used to be the one exception
 ##    (`Q_Collar`, 1 × 0.7 × 0.9, recorded here by name); the rigging re-export baked that
 ##    scale into the collar's vertices, which is what §1 asks for, so the record is empty
-##    and the rule now holds for all four assets. A new scale still fails this test.
+##    and the rule now holds for all six assets. A new scale still fails this test.
 ##
 ## The player's twelve named flat-colour materials must import with real, distinct albedo colours;
 ## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
+## The painted looks and motion profiles the protagonist's and Q's wrappers carry
+## (docs/CHARACTER_ART.md), by asset name. N and the classroom student have neither.
+const CHARACTER_LOOKS := {
+	"protagonist": {
+		"look": "res://assets/characters/protagonist/protagonist_look.tres",
+		"motion": "res://assets/characters/protagonist/protagonist_motion.tres",
+	},
+	"q": {
+		"look": "res://assets/characters/q/q_look.tres",
+		"motion": "res://assets/characters/q/q_motion.tres",
+	},
+}
+const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
+const PIGMENT_SHADER_PATH := "res://assets/shaders/painterly/character_pigment.gdshader"
 
 const PIPELINE_DOC := "res://docs/ASSET_PIPELINE.md"
 const PROVENANCE_DOC := "res://docs/ASSET_PROVENANCE.md"
@@ -135,7 +150,38 @@ const ASSETS: Array[Dictionary] = [
 		"note": "the classmate Q, flat-colour materials, no textures; rigged, and its head/hair "
 			+ "node tilt was dropped by the rig bake (crown 1.5 cm lower than the unrigged file)",
 	},
+	{
+		"name": "teacher n",
+		"file": "res://assets/models/teacher-n/teacher-n.glb",
+		"wrapper": "res://scenes/environment/characters/teacher_n.tscn",
+		# 0.62 m wide with the arms resting slightly out from the body; 1.654 m sole to crown.
+		"size": Vector3(0.6244, 1.6539, 0.3262),
+		"meshes": 18,
+		"surfaces": 28,
+		"model_base": 0.0,
+		"scaled_nodes": {},
+		"kind": "character",
+		"shape": "",
+		"anchor_height": 1.2,
+		# The only character exported the way docs/ASSET_PIPELINE.md §1 asks.
+		"faces": "-Z",
+		"note": "substitute teacher N, built by tools/prepare_teacher_n.py from the owner's "
+			+ "export: 16-joint skin, 17 flat-colour materials, no textures, four embedded loops",
+	},
 ]
+
+## N's materials after `tools/prepare_teacher_n.py`: the names the owner gave them, and the
+## roughness the script sets on the six it tunes (see `ROUGHNESS` there). The other eleven keep
+## the owner's value, so only these are pinned; every one of the seventeen has to arrive.
+const TEACHER_N_MATERIAL_NAMES := [
+	"m_st_blouse", "m_st_button", "m_st_skin", "m_st_cardigan", "m_st_sclera", "m_st_iris",
+	"m_st_pupil", "m_st_brow", "m_st_hair", "m_st_hairlight", "m_st_mouthinner", "m_st_lip",
+	"m_st_teeth", "m_st_lash", "m_st_shoes", "m_st_sole", "m_st_trousers",
+]
+const TEACHER_N_ROUGHNESS := {
+	"m_st_skin": 0.8, "m_st_hair": 0.75, "m_st_hairlight": 0.72, "m_st_brow": 0.85,
+	"m_st_lash": 0.85, "m_st_shoes": 0.6,
+}
 
 var _failures: Array[String] = []
 
@@ -162,7 +208,7 @@ func _run() -> void:
 	_check_documents()
 	Harness.finish(
 		self, _failures,
-		"all five imported assets measure at their declared size and ship a wrapper that matches them."
+		"all six imported assets measure at their declared size and ship a wrapper that matches them."
 	)
 
 
@@ -218,6 +264,8 @@ func _check_model(asset: Dictionary, holder: Node3D) -> void:
 
 	if label == "protagonist":
 		_check_protagonist_palette(meshes)
+	if label == "teacher n":
+		_check_teacher_n_materials(meshes)
 
 	var expected: Vector3 = asset["size"]
 	for axis in 3:
@@ -239,14 +287,14 @@ func _check_model(asset: Dictionary, holder: Node3D) -> void:
 
 	_check_scaled_nodes(label, instance, asset)
 	if String(asset["kind"]).ends_with("character"):
-		_check_facing(label, meshes)
+		_check_facing(label, meshes, String(asset.get("faces", "+Z")))
 
 	holder.remove_child(instance)
 	instance.free()
 
 
-## The pipeline forbids a node scale other than 1. Two of the four assets honour it; the
-## exception is named here so a *new* one cannot appear unnoticed.
+## The pipeline forbids a node scale other than 1. Every asset honours it now; an exception
+## would be named in its `scaled_nodes` so a *new* one cannot appear unnoticed.
 func _check_scaled_nodes(label: String, instance: Node, asset: Dictionary) -> void:
 	var expected: Dictionary = asset["scaled_nodes"]
 	var found: Dictionary = {}
@@ -273,11 +321,12 @@ func _check_scaled_nodes(label: String, instance: Node, asset: Dictionary) -> vo
 			return
 
 
-## Both characters were authored facing +Z, which is the opposite of the pipeline's
-## `-Z forward` rule. The wrapper does not correct it, so the fact is asserted instead:
-## the eyes have to be in front, or every placement in the repository is suddenly a
-## guess. See docs/ASSET_PIPELINE.md §10.
-func _check_facing(label: String, meshes: Array[MeshInstance3D]) -> void:
+## The protagonist and Q were authored facing +Z, which is the opposite of the pipeline's
+## `-Z forward` rule; N follows the rule. No wrapper corrects either, so the fact is asserted
+## instead: the eyes have to be in front, or every placement in the repository is suddenly a
+## guess. See docs/ASSET_PIPELINE.md §10. `faces` is "+Z" or "-Z".
+func _check_facing(label: String, meshes: Array[MeshInstance3D], faces: String) -> void:
+	var toward := -1.0 if faces == "-Z" else 1.0
 	var front := -INF
 	for mesh_instance: MeshInstance3D in meshes:
 		if mesh_instance.mesh == null:
@@ -289,13 +338,13 @@ func _check_facing(label: String, meshes: Array[MeshInstance3D]) -> void:
 			var arrays: Array = mesh_instance.mesh.surface_get_arrays(index)
 			var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 			for vertex in vertices:
-				front = maxf(front, (mesh_instance.global_transform * vertex).z)
+				front = maxf(front, toward * (mesh_instance.global_transform * vertex).z)
 	if front == -INF:
 		_failures.append("%s has no surface whose material is named for the iris." % label)
 	elif front <= 0.0:
 		_failures.append(
-			"%s no longer faces +Z: its eyes reach z=%.4f. Update the facing note in "
-			% [label, front]
+			"%s no longer faces %s: its eyes reach z=%.4f. Update the facing note in "
+			% [label, faces, toward * front]
 			+ "docs/ASSET_PIPELINE.md §10 and every placement that relies on it."
 		)
 
@@ -345,6 +394,47 @@ func _check_protagonist_palette(meshes: Array[MeshInstance3D]) -> void:
 		_failures.append(
 			"The protagonist imports only %d distinct material colours; its art-directed palette is missing."
 			% distinct_colours.size()
+		)
+
+
+## N's seventeen materials stay seventeen: named as the owner named them, flat colour (no
+## texture), not metallic, with the roughness the preparation script gives the six it tunes.
+## Merging them, or a re-export that lost the base colours, fails here.
+func _check_teacher_n_materials(meshes: Array[MeshInstance3D]) -> void:
+	var found: Dictionary = {}
+	for mesh_instance: MeshInstance3D in meshes:
+		if mesh_instance.mesh == null:
+			continue
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.get_active_material(surface_index)
+			if material == null:
+				continue
+			var material_name := material.resource_name.to_lower()
+			found[material_name] = true
+			var standard := material as StandardMaterial3D
+			if standard == null:
+				_failures.append("N's material '%s' did not import as a StandardMaterial3D." % material_name)
+				continue
+			if standard.albedo_color.is_equal_approx(Color.WHITE):
+				_failures.append("N's material '%s' imported white; its base colour is missing." % material_name)
+			if standard.albedo_texture != null:
+				_failures.append("N's material '%s' has a texture; the model is flat colour." % material_name)
+			if standard.metallic > 0.001:
+				_failures.append("N's material '%s' is metallic (%.2f)." % [material_name, standard.metallic])
+			if TEACHER_N_ROUGHNESS.has(material_name):
+				var expected := float(TEACHER_N_ROUGHNESS[material_name])
+				if absf(standard.roughness - expected) > 0.01:
+					_failures.append(
+						"N's material '%s' has roughness %.2f; tools/prepare_teacher_n.py sets %.2f."
+						% [material_name, standard.roughness, expected]
+					)
+	for expected_name: String in TEACHER_N_MATERIAL_NAMES:
+		if not found.has(expected_name):
+			_failures.append("N no longer imports the material '%s'." % expected_name)
+	if found.size() != TEACHER_N_MATERIAL_NAMES.size():
+		_failures.append(
+			"N imports %d material(s) %s; the model has %d."
+			% [found.size(), str(found.keys()), TEACHER_N_MATERIAL_NAMES.size()]
 		)
 
 
@@ -483,6 +573,116 @@ func _check_character_wrapper(
 			_failures.append(
 				"The interaction anchor for %s is above the character's head." % label
 			)
+	if CHARACTER_LOOKS.has(label):
+		_check_character_look(label, wrapper, asset)
+
+
+## The protagonist's and Q's painted look: the wrapper carries its motion profile and a
+## `Look` applier, and the applier repaints every surface of the GLB — none left in its
+## smooth PBR material — with the painted shader, without touching what the model *is*:
+## the same meshes, surfaces, vertex counts, skins and skeleton. The other two treatments
+## (the GLB's own materials, the pigment shader) are reachable and reversible, because the
+## character art capture photographs all three.
+func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) -> void:
+	var paths: Dictionary = CHARACTER_LOOKS[label]
+	var animator := wrapper as CharacterVisualAnimation
+	if animator == null:
+		_failures.append("The wrapper for %s is not driven by CharacterVisualAnimation." % label)
+	elif animator.motion_profile == null or animator.motion_profile.resource_path != String(paths["motion"]):
+		_failures.append("The wrapper for %s does not carry its motion profile %s." % [label, String(paths["motion"])])
+	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
+	if applier == null:
+		_failures.append("The wrapper for %s has no Look applier." % label)
+		return
+	if applier.look == null or applier.look.resource_path != String(paths["look"]):
+		_failures.append("The Look applier for %s does not use %s." % [label, String(paths["look"])])
+		return
+	var model := applier.get_model()
+	if model == null or model.scene_file_path != String(asset["file"]):
+		_failures.append("The Look applier for %s is not pointed at the GLB instance." % label)
+		return
+	var report := applier.get_report()
+	var expected_surfaces := int(asset["surfaces"])
+	if String(report.get("treatment", "")) != "PAINTED":
+		_failures.append("%s starts in the %s treatment, not PAINTED." % [label, String(report.get("treatment", "?"))])
+	if int(report.get("surfaces", 0)) != expected_surfaces or int(report.get("replaced", 0)) != expected_surfaces:
+		_failures.append(
+			"%s's look replaced %d of %d surfaces (the GLB has %d); kept %s."
+			% [label, int(report.get("replaced", 0)), int(report.get("surfaces", 0)), expected_surfaces, str(report.get("kept", []))]
+		)
+	var meshes := _meshes_under(model)
+	var outlined := 0
+	for mesh_instance: MeshInstance3D in meshes:
+		for index in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.get_surface_override_material(index) as ShaderMaterial
+			if material == null or material.shader == null or material.shader.resource_path != PAINT_SHADER_PATH:
+				_failures.append(
+					"%s's %s surface %d is not painted with %s." % [label, mesh_instance.name, index, PAINT_SHADER_PATH]
+				)
+				continue
+			if material.next_pass != null:
+				outlined += 1
+	if outlined == 0 or outlined == expected_surfaces:
+		_failures.append(
+			"%s has %d of %d surfaces outlined; the ink line belongs on the outer forms only, not the eyes and mouth."
+			% [label, outlined, expected_surfaces]
+		)
+	# The mesh a surface is drawn from may be the rest-coordinate rebuild; it is the same
+	# geometry, skinned the same way.
+	var skeletons := model.find_children("*", "Skeleton3D", true, false)
+	var bone_count := (skeletons[0] as Skeleton3D).get_bone_count() if not skeletons.is_empty() else -1
+	var original_meshes := {}
+	applier.apply_treatment(CharacterLookApplier.Treatment.ORIGINAL)
+	for mesh_instance: MeshInstance3D in meshes:
+		original_meshes[mesh_instance] = mesh_instance.mesh
+		for index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.get_surface_override_material(index) != null:
+				_failures.append("%s's ORIGINAL treatment left an override on %s." % [label, mesh_instance.name])
+			var authored := mesh_instance.get_active_material(index) as StandardMaterial3D
+			if authored == null:
+				_failures.append("%s's ORIGINAL treatment does not show the GLB's own material on %s." % [label, mesh_instance.name])
+	applier.apply_treatment(CharacterLookApplier.Treatment.PIGMENT)
+	for mesh_instance: MeshInstance3D in meshes:
+		for index in mesh_instance.mesh.get_surface_count():
+			var pigment := mesh_instance.get_surface_override_material(index) as ShaderMaterial
+			if pigment == null or pigment.shader == null or pigment.shader.resource_path != PIGMENT_SHADER_PATH:
+				_failures.append("%s's PIGMENT treatment did not use %s on %s." % [label, PIGMENT_SHADER_PATH, mesh_instance.name])
+	var painted := applier.apply_treatment(CharacterLookApplier.Treatment.PAINTED)
+	if int(painted.get("replaced", 0)) != expected_surfaces:
+		_failures.append("%s did not come back to PAINTED on every surface." % label)
+	var rebuilt := 0
+	for mesh_instance: MeshInstance3D in meshes:
+		var source: Mesh = original_meshes[mesh_instance]
+		var mesh := mesh_instance.mesh
+		if mesh != source:
+			rebuilt += 1
+			if mesh.get_surface_count() != source.get_surface_count():
+				_failures.append("%s's rebuilt %s has %d surfaces, the GLB %d." % [label, mesh_instance.name, mesh.get_surface_count(), source.get_surface_count()])
+				continue
+			for index in source.get_surface_count():
+				var before: Array = source.surface_get_arrays(index)
+				var after: Array = mesh.surface_get_arrays(index)
+				for slot in [Mesh.ARRAY_VERTEX, Mesh.ARRAY_INDEX, Mesh.ARRAY_BONES, Mesh.ARRAY_WEIGHTS]:
+					if before[slot] != after[slot]:
+						_failures.append(
+							"%s's rebuilt %s surface %d changed array %d; only CUSTOM0 may be added."
+							% [label, mesh_instance.name, index, slot]
+						)
+				var custom: Variant = after[Mesh.ARRAY_CUSTOM0]
+				var vertices: PackedVector3Array = before[Mesh.ARRAY_VERTEX]
+				if not (custom is PackedFloat32Array) or (custom as PackedFloat32Array).size() != vertices.size() * 4:
+					_failures.append("%s's rebuilt %s surface %d carries no rest coordinates." % [label, mesh_instance.name, index])
+		if mesh.get_aabb().size.distance_to(source.get_aabb().size) > 0.001:
+			_failures.append("%s's %s changed size when it was painted." % [label, mesh_instance.name])
+	if rebuilt == 0:
+		_failures.append("%s's look rebuilt no mesh with rest-pose paint coordinates." % label)
+	var after_bones := (skeletons[0] as Skeleton3D).get_bone_count() if not skeletons.is_empty() else -1
+	if after_bones != bone_count or bone_count <= 0:
+		_failures.append("%s's skeleton has %d bones after painting, %d before." % [label, after_bones, bone_count])
+	if label == "protagonist":
+		var expression: Dictionary = painted.get("expression", {})
+		if expression.is_empty():
+			_failures.append("The protagonist's painted look set no resting expression on the head's blend shapes.")
 
 
 ## A seated character is scenery that happens to be a person: the classroom student. It has

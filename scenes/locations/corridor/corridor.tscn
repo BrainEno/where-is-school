@@ -1,12 +1,7 @@
-[gd_scene load_steps=47 format=3]
+[gd_scene load_steps=94 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/floor_concrete.tres" id="2_floor_concrete"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_paint.tres" id="3_wall_paint"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/wall_trim.tres" id="4_wall_trim"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/door_blue.tres" id="5_door_blue"]
-[ext_resource type="StandardMaterial3D" path="res://assets/materials/metal_dark.tres" id="7_metal_dark"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass_pane"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/dusk_glow.tres" id="9_dusk_glow"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="11_interactable"]
@@ -19,15 +14,36 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/corridor_fire_extinguisher.tscn" id="20_extinguisher"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/corridor_cleaning_trolley.tscn" id="21_trolley"]
 
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/glass_dusk.tres" id="art_glass_dusk"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/light_beyond.tres" id="art_light_beyond"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/metal_ink.tres" id="art_metal_ink"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/pale.tres" id="art_pale"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/row_flats.tres" id="art_row_flats"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/row_pylon.tres" id="art_row_pylon"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_teal.tres" id="art_school_teal"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_bin.tres" id="art_walk_bin"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_dado.tres" id="art_walk_dado"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_distance.tres" id="art_walk_distance"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_door.tres" id="art_walk_door"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_floor.tres" id="art_walk_floor"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_step.tres" id="art_walk_step"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_terrazzo.tres" id="art_walk_terrazzo"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_wall.tres" id="art_walk_wall"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_court.tres" id="art_yard_court"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_ground.tres" id="art_yard_ground"]
+
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
-background_color = Color(0.192, 0.149, 0.129, 1)
+background_color = Color(0.251, 0.29, 0.392, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.46, 0.4, 0.36, 1)
-ambient_light_energy = 0.6
+ambient_light_color = Color(0.66, 0.64, 0.74, 1)
+ambient_light_energy = 0.9
 tonemap_mode = 2
+tonemap_exposure = 0.72
 adjustment_enabled = true
-adjustment_saturation = 0.8
+adjustment_saturation = 0.95
+adjustment_contrast = 1.04
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
 size = Vector3(4.4, 0.2, 16)
@@ -110,6 +126,108 @@ size = Vector3(1.3, 2.1, 0.12)
 [sub_resource type="BoxMesh" id="BoxMesh_yard_step"]
 size = Vector3(1.8, 0.12, 0.9)
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_art1"]
+size = Vector2(160, 160)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art2"]
+size = Vector2(13, 5.4)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art3"]
+size = Vector2(9, 3.78)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_art4"]
+size = Vector2(9, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+size = Vector3(0.12, 2.4, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+size = Vector3(0.9, 0.6, 0.06)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art7"]
+size = Vector2(16, 3.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+size = Vector3(4.36, 0.8, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art9"]
+size = Vector3(3, 3.6, 16.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(3.2, 0.16, 16.6)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art11"]
+size = Vector2(1.5, 1.2)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art12"]
+size = Vector2(1.29, 1.056)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art13"]
+size = Vector2(1.1094, 0.92928)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art14"]
+size = Vector2(0.954084, 0.817766)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art15"]
+size = Vector2(0.820512, 0.719634)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art16"]
+size = Vector2(0.705641, 0.633278)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art17"]
+size = Vector2(0.606851, 0.557285)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art18"]
+size = Vector2(0.521892, 0.490411)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art19"]
+size = Vector2(0.448827, 0.431561)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art20"]
+size = Vector2(0.385991, 0.379774)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art21"]
+size = Vector2(0.331952, 0.334201)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art22"]
+size = Vector2(0.285479, 0.294097)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art23"]
+size = Vector2(0.245512, 0.258805)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art24"]
+size = Vector2(0.21114, 0.227749)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art25"]
+size = Vector2(0.181581, 0.200419)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art26"]
+size = Vector2(0.156159, 0.176369)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art27"]
+size = Vector2(0.134297, 0.155204)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art28"]
+size = Vector2(0.115495, 0.13658)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art29"]
+size = Vector2(0.0993261, 0.12019)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art30"]
+size = Vector2(1.3, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art31"]
+size = Vector3(0.1, 3, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art32"]
+size = Vector3(1.5, 0.1, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art33"]
+size = Vector3(1.3, 0.06, 0.05)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_art34"]
+size = Vector2(4.4, 16)
+
 [node name="Corridor" type="Node3D"]
 script = ExtResource("1_location_root")
 location_id = &"corridor"
@@ -118,11 +236,11 @@ location_id = &"corridor"
 environment = SubResource("Environment_1")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-18, 62, 0)
-light_color = Color(1, 0.74, 0.52, 1)
-light_energy = 1.3
+rotation_degrees = Vector3(-24, 62, 0)
+light_color = Color(1, 0.82, 0.68, 1)
+light_energy = 0.6
 shadow_enabled = true
-directional_shadow_max_distance = 45.0
+directional_shadow_max_distance = 90.0
 
 [node name="Navigation" type="NavigationRegion3D" parent="."]
 script = ExtResource("90_navigation")
@@ -135,7 +253,7 @@ shape = SubResource("BoxShape3D_2")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
 mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_walk_terrazzo")
 
 [node name="WallBuilding" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-2.2, 1.55, -1)
@@ -145,7 +263,7 @@ shape = SubResource("BoxShape3D_4")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="WallBuilding"]
 mesh = SubResource("BoxMesh_5")
-material_override = ExtResource("3_wall_paint")
+material_override = ExtResource("art_walk_plaster")
 
 [node name="WallEndNorth" type="StaticBody3D" parent="."]
 position = Vector3(0, 1.55, -9.1)
@@ -155,7 +273,7 @@ shape = SubResource("BoxShape3D_6")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="WallEndNorth"]
 mesh = SubResource("BoxMesh_7")
-material_override = ExtResource("3_wall_paint")
+material_override = ExtResource("art_walk_plaster")
 
 [node name="Parapet" type="StaticBody3D" parent="."]
 position = Vector3(2.1, 0.52, -1)
@@ -165,32 +283,32 @@ shape = SubResource("BoxShape3D_8")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Parapet"]
 mesh = SubResource("BoxMesh_9")
-material_override = ExtResource("3_wall_paint")
+material_override = ExtResource("art_walk_plaster")
 
 [node name="ParapetRail" type="MeshInstance3D" parent="."]
 position = Vector3(2.1, 1.08, -1)
 mesh = SubResource("BoxMesh_10")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="WallTrimTop" type="MeshInstance3D" parent="."]
 position = Vector3(-2.08, 3.05, -1)
 mesh = SubResource("BoxMesh_11")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="Skirting" type="MeshInstance3D" parent="."]
 position = Vector3(-2.08, 0.07, -1)
 mesh = SubResource("BoxMesh_12")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="ClassroomDoorLeaf" type="MeshInstance3D" parent="."]
 position = Vector3(-2.04, 1.05, 2)
 mesh = SubResource("BoxMesh_13")
-material_override = ExtResource("5_door_blue")
+material_override = ExtResource("art_walk_door")
 
 [node name="ClassroomDoorFrameTop" type="MeshInstance3D" parent="."]
 position = Vector3(-2.06, 2.16, 2)
 mesh = SubResource("BoxMesh_14")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="ClassroomGlass" type="MeshInstance3D" parent="."]
 position = Vector3(-2.08, 1.72, 4.2)
@@ -205,22 +323,23 @@ material_override = ExtResource("9_dusk_glow")
 [node name="ClassroomGlassFrame" type="MeshInstance3D" parent="."]
 position = Vector3(-2.06, 1.06, 4.2)
 mesh = SubResource("BoxMesh_16")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="YardGround" type="MeshInstance3D" parent="."]
 position = Vector3(12, -3.6, -1)
 mesh = SubResource("BoxMesh_17")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_yard_ground")
 
 [node name="FarBuilding" type="MeshInstance3D" parent="."]
 position = Vector3(15, 1.4, -3)
 mesh = SubResource("BoxMesh_18")
-material_override = ExtResource("3_wall_paint")
+material_override = ExtResource("art_school_teal")
+cast_shadow = 0
 
 [node name="BinRow" type="MeshInstance3D" parent="."]
 position = Vector3(3.4, -0.4, 1.6)
 mesh = SubResource("BoxMesh_19")
-material_override = ExtResource("7_metal_dark")
+material_override = ExtResource("art_walk_bin")
 
 [node name="Step0" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.09, 6.8)
@@ -230,7 +349,7 @@ shape = SubResource("BoxShape3D_20")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Step0"]
 mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_walk_step")
 
 [node name="Step1" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.27, 7.1)
@@ -240,7 +359,7 @@ shape = SubResource("BoxShape3D_20")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Step1"]
 mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_walk_step")
 
 [node name="Step2" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.45, 7.4)
@@ -250,37 +369,37 @@ shape = SubResource("BoxShape3D_20")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Step2"]
 mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_walk_step")
 
 [node name="ExitFrameLeft" type="MeshInstance3D" parent="."]
 position = Vector3(-2, 1.35, 6.9)
 mesh = SubResource("BoxMesh_22")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="ExitFrameRight" type="MeshInstance3D" parent="."]
 position = Vector3(2, 1.35, 6.9)
 mesh = SubResource("BoxMesh_22")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="ExitFrameHead" type="MeshInstance3D" parent="."]
 position = Vector3(0, 2.62, 6.9)
 mesh = SubResource("BoxMesh_23")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="BenchSeat" type="MeshInstance3D" parent="."]
 position = Vector3(1.5, 0.44, -3.2)
 mesh = SubResource("BoxMesh_30")
-material_override = ExtResource("4_wall_trim")
+material_override = ExtResource("art_walk_dado")
 
 [node name="BenchLegA" type="MeshInstance3D" parent="."]
 position = Vector3(1.5, 0.2, -4)
 mesh = SubResource("BoxMesh_31")
-material_override = ExtResource("7_metal_dark")
+material_override = ExtResource("art_metal_ink")
 
 [node name="BenchLegB" type="MeshInstance3D" parent="."]
 position = Vector3(1.5, 0.2, -2.4)
 mesh = SubResource("BoxMesh_31")
-material_override = ExtResource("7_metal_dark")
+material_override = ExtResource("art_metal_ink")
 
 [node name="WalkwayLight0" type="OmniLight3D" parent="."]
 position = Vector3(0, 2.75, -5)
@@ -306,7 +425,7 @@ shadow_enabled = false
 [node name="SpeakerBox" type="MeshInstance3D" parent="."]
 position = Vector3(2.02, 2.35, -3)
 mesh = SubResource("BoxMesh_speaker")
-material_override = ExtResource("7_metal_dark")
+material_override = ExtResource("art_metal_ink")
 
 [node name="SpeakerCue" type="AudioStreamPlayer3D" parent="."]
 position = Vector3(2.0, 2.3, -3)
@@ -319,12 +438,12 @@ conversation_id = &"corridor_speaker"
 [node name="YardDoorLeaf" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.05, -9.0)
 mesh = SubResource("BoxMesh_yard_door")
-material_override = ExtResource("5_door_blue")
+material_override = ExtResource("art_walk_door")
 
 [node name="YardDoorStep" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.06, -8.5)
 mesh = SubResource("BoxMesh_yard_step")
-material_override = ExtResource("2_floor_concrete")
+material_override = ExtResource("art_walk_step")
 
 [node name="CorridorNoticeboard" parent="." instance=ExtResource("19_noticeboard")]
 position = Vector3(-1.99, 0, -2)
@@ -381,6 +500,7 @@ destination_id = &"classroom"
 position = Vector3(0, 0.6, 6.5)
 interact_id = &"school_gate"
 outline_paths = PackedStringArray("../../ExitFrameLeft", "../../ExitFrameRight", "../../ExitFrameHead", "../../Step0", "../../Step1", "../../Step2")
+support_paths = PackedStringArray("../../Step0", "../../Step1", "../../Step2")
 prompt_text = "Go down towards the gate"
 prompt_key = "prompt.gate"
 radius = 1.3
@@ -443,3 +563,242 @@ stream = ExtResource("15_room_tone_walkway")
 volume_db = -18.0
 script = ExtResource("16_ambience_player")
 target_db = -26.0
+
+[node name="StageArt" type="Node3D" parent="."]
+
+[node name="Distance" type="Node3D" parent="StageArt"]
+
+[node name="SkyFloor" type="MeshInstance3D" parent="StageArt/Distance"]
+position = Vector3(20, -3.9, -1)
+mesh = SubResource("PlaneMesh_art1")
+material_override = ExtResource("art_walk_distance")
+cast_shadow = 0
+
+[node name="RowFlats" type="MeshInstance3D" parent="StageArt/Distance"]
+position = Vector3(6, -1.2, -24)
+rotation_degrees = Vector3(0, 30, 0)
+mesh = SubResource("QuadMesh_art2")
+material_override = ExtResource("art_row_flats")
+cast_shadow = 0
+
+[node name="RowPylon" type="MeshInstance3D" parent="StageArt/Distance"]
+position = Vector3(22, -2.01, -16)
+rotation_degrees = Vector3(0, 45, 0)
+mesh = SubResource("QuadMesh_art3")
+material_override = ExtResource("art_row_pylon")
+cast_shadow = 0
+
+[node name="Yard" type="Node3D" parent="StageArt"]
+
+[node name="CourtFragment" type="MeshInstance3D" parent="StageArt/Yard"]
+position = Vector3(8, -3.488, -2.5)
+rotation_degrees = Vector3(0, 14, 0)
+mesh = SubResource("PlaneMesh_art4")
+material_override = ExtResource("art_yard_court")
+cast_shadow = 0
+
+[node name="HoopPost" type="MeshInstance3D" parent="StageArt/Yard"]
+position = Vector3(6.2, -2.3, -6.4)
+mesh = SubResource("BoxMesh_art5")
+material_override = ExtResource("art_pale")
+
+[node name="HoopBoard" type="MeshInstance3D" parent="StageArt/Yard"]
+position = Vector3(6.2, -1, -6.3)
+rotation_degrees = Vector3(0, 14, 0)
+mesh = SubResource("BoxMesh_art6")
+material_override = ExtResource("art_pale")
+
+[node name="StageWallPaint" type="MeshInstance3D" parent="WallBuilding"]
+position = Vector3(0.103, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art7")
+material_override = ExtResource("art_walk_wall")
+cast_shadow = 0
+
+[node name="StageEndDado" type="MeshInstance3D" parent="WallEndNorth"]
+position = Vector3(0, -1.15, 0.106)
+mesh = SubResource("BoxMesh_art8")
+material_override = ExtResource("art_walk_dado")
+cast_shadow = 0
+
+[node name="StageUpperStorey" type="MeshInstance3D" parent="WallBuilding"]
+position = Vector3(-1.4, 3.35, 0)
+rotation_degrees = Vector3(0, 0, -3)
+mesh = SubResource("BoxMesh_art9")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="StageCoping" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(0, 1.86, 0)
+mesh = SubResource("BoxMesh_art10")
+material_override = ExtResource("art_walk_dado")
+
+[node name="StageWindow0" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, 0.1, 7.65)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art11")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow1" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, 0.0568, 5.355)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art12")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow2" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, 0.0188, 3.3813)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art13")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow3" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.0147, 1.6839)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art14")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow4" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.0441, 0.2242)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art15")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow5" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.07, -1.0312)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art16")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow6" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.0928, -2.1108)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art17")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow7" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1129, -3.0393)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art18")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow8" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1305, -3.8378)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art19")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow9" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1461, -4.5245)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art20")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow10" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1597, -5.1151)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art21")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow11" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1718, -5.623)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art22")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow12" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1824, -6.0598)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art23")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow13" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1917, -6.4354)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art24")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow14" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.1999, -6.7584)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art25")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow15" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.2071, -7.0363)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art26")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow16" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.2134, -7.2752)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art27")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow17" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.219, -7.4807)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art28")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="StageWindow18" type="MeshInstance3D" parent="WallBuilding/StageUpperStorey"]
+position = Vector3(1.506, -0.2239, -7.6574)
+rotation_degrees = Vector3(0, 90, 0)
+mesh = SubResource("QuadMesh_art29")
+material_override = ExtResource("art_glass_dusk")
+cast_shadow = 0
+
+[node name="YardDoor" type="Node3D" parent="StageArt"]
+
+[node name="Transom" type="MeshInstance3D" parent="StageArt/YardDoor"]
+position = Vector3(0, 2.52, -8.993)
+mesh = SubResource("QuadMesh_art30")
+material_override = ExtResource("art_light_beyond")
+cast_shadow = 0
+
+[node name="FrameWest" type="MeshInstance3D" parent="StageArt/YardDoor"]
+position = Vector3(-0.7, 1.5, -8.97)
+mesh = SubResource("BoxMesh_art31")
+material_override = ExtResource("art_walk_dado")
+cast_shadow = 0
+
+[node name="FrameEast" type="MeshInstance3D" parent="StageArt/YardDoor"]
+position = Vector3(0.7, 1.5, -8.97)
+mesh = SubResource("BoxMesh_art31")
+material_override = ExtResource("art_walk_dado")
+cast_shadow = 0
+
+[node name="FrameHead" type="MeshInstance3D" parent="StageArt/YardDoor"]
+position = Vector3(0, 2.97, -8.97)
+mesh = SubResource("BoxMesh_art32")
+material_override = ExtResource("art_walk_dado")
+cast_shadow = 0
+
+[node name="FrameMullion" type="MeshInstance3D" parent="StageArt/YardDoor"]
+position = Vector3(0, 2.12, -8.97)
+mesh = SubResource("BoxMesh_art33")
+material_override = ExtResource("art_walk_dado")
+cast_shadow = 0
+
+[node name="FloorPaint" type="MeshInstance3D" parent="StageArt"]
+position = Vector3(0, 0.003, -1)
+mesh = SubResource("PlaneMesh_art34")
+material_override = ExtResource("art_walk_floor")
+cast_shadow = 0

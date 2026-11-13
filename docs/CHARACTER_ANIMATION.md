@@ -1,7 +1,9 @@
 # Character animation
 
 The protagonist (`Protagonist_Character.glb` since PR #118), the former protagonist (now a
-seated classroom student) and Q use the same seven code-authored clips, built in
+seated classroom student), Q and substitute teacher N use the same seven code-authored clips
+(N's idle is the exception: it is built from N's own four loops, see "Substitute teacher N"
+below), built in
 `scripts/actors/character_animation.gd` and resolved against each rig's own bone names at
 bind time. Their production wrapper scenes bind them when instantiated. In the game, every
 authored character goes through one state machine, `CharacterVisualAnimation`, fed by the
@@ -82,6 +84,31 @@ Applying the frame changes what the first two rigs' arms do, by up to 0.16 m at 
 and head are unchanged, and the runtime and model tests measure all three rigs with the
 same limits.
 
+### Substitute teacher N: a −Z model with motion of its own
+
+`assets/models/teacher-n/teacher-n.glb` is the first character exported facing **−Z**, as
+`docs/ASSET_PIPELINE.md` §1 asks; the other three face +Z. Its skeleton has Q's sixteen
+joint names, but turned half way round relative to the frame the keys were written in, so
+bound like the others its walk would swing the legs backwards and sitting would fold its
+knees forwards. `bind(model, player, faces_negative_z = true)` measures the side axis as
+skeleton −X and decides the left/right pairs by the character's own −X side. That is
+exactly what binding a copy of the model turned 180° would give, without touching the asset.
+N's pairs therefore all report `mirrored` — its `UpperArm.L` drives the clips' `.R`, as on a
++Z rig turned round. The +Z rigs pass nothing and bind exactly what they did before.
+
+N's file also carries four five-second loops the owner made in Blender:
+`ST_Idle_Breathing` (spine and neck, ≤1.2°), `ST_Nervous_Posture_Shift` (spine and both upper
+arms, ≤3°), `ST_Slight_Hand_Movement` (right forearm and hand, ≤10°) and
+`ST_Subtle_Head_Movement` (head, ≤4.5°). They share key times and touch different parts of
+the body, so they are layers of one idle, not four idles. `teacher_n.tscn` lists them in
+`CharacterVisualAnimation.authored_idle_layers`, and after binding,
+`CharacterAnimation.adopt_authored_layers()` replaces the procedural `idle` with their
+combination: on each bone, every layer's rotation away from rest is applied in turn, sampled
+at 30 Hz over the 4.96 s the keys span. Bones no layer moves are held at rest, like every
+bound clip, so leaving a walk puts the legs back. The state machine never knows the
+difference — it still plays `char/idle`. The keys are not retargeted, scaled or smoothed;
+the only reading is that they play together, which the owner can change in the wrapper.
+
 ### The protagonist's rig
 
 `Protagonist_Armature/Skeleton3D`, 60 bones (the skin has 60 joints, not 61), all bound by
@@ -116,6 +143,51 @@ Every clip keys every bone that any clip animates. Bones a clip does not author 
 rest, so a cross-fade always has a full pose to fade to and no bone is left where the
 previous clip put it.
 
+### Each character's own way of carrying the clips
+
+The seven clips are one body rhythm. Played as written, the protagonist and Q breathed,
+walked and talked with the same timing and the same swing, and stood equally straight. A
+`CharacterMotionProfile` (`scripts/actors/character_motion_profile.gd`) gives a character its
+own version of that rhythm without changing the system. The wrapper root carries it
+(`CharacterVisualAnimation.motion_profile`), and `bind()` applies it as the keys are written:
+
+```
+offset(t) = amplitude × clip key(t) + layer(t) + posture × posture_weight(clip, t)
+```
+
+The offset is in the same semantic degrees as `CLIPS` and is keyed at `t × tempo`. The
+clips, their names, the bones they key, the state machine, the hysteresis and the playback
+rates are all unchanged. N, the classroom student and every test that binds a bare GLB pass
+no profile, which is the identity. The rules a profile keeps:
+
+- **No new joints.** Only bones the clips already animate are keyed. Anything else a profile
+  names is reported in the bind report's `profile_ignored` and not keyed. This is why Q's
+  profile has no `chest`: his rig does not have one.
+- **Posed limbs stay held.** Q's modelled forearm is still a held limb.
+- **Loops still close.** A layer's last key repeats its first.
+- **`get_up` still starts on the `sit_idle` pose and ends standing.** Its posture weight runs
+  from the seated weight to the standing one.
+- **Idle still plays at ×1.** A slower idle is a longer clip, not a lower `speed_scale`.
+- **The existing limits hold with the profiles applied.** These are idle limbs within 20° of
+  rest, legs within 8° after a walk, hands below the shoulders, a thigh swing of at least 12°,
+  foot travel of at least 0.12 m, and `get_up` under 4 s.
+
+| | Protagonist (`assets/characters/protagonist/protagonist_motion.tres`) | Q (`assets/characters/q/q_motion.tres`) |
+|---|---|---|
+| Idea | tired, slumped, held in | loose, leaning back, weight on the heels |
+| Posture | spine +4°, chest +5°, neck +6° (forward); head −3° with a 1.5° tilt; upper arms drawn 14° in and 4° back; elbows 6° bent | spine −4.5° (back); neck +3°; head +1° and cocked 4°; thighs 2.5° apart (wide stance); left arm 2° out from the belly, left elbow 6° bent |
+| Tempo (× clip length) | idle 2.0 (4 s), get_up 1.35 (2.0 s), talk 1.4, wave 1.3, sit_idle 1.6, jog 1.05, walk 1.0 | idle 1.2, walk 0.92, jog 0.95, talk 0.8, wave 0.85, get_up 0.9 |
+| Amplitude | idle ×1.3 (a deeper, slower breath); walk arms ×0.45, forearms ×0.6, head ×0.6, thighs ×0.9, shins ×0.85, feet ×0.75; jog arms ×0.6; talk ×0.5; wave ×0.6–0.75 | walk spine ×2, head ×1.4, arms ×1.2; jog spine ×1.6, arms ×1.1; talk ×1.5 |
+| Layers | idle: a sigh in the chest, a head that drops and recovers | idle: a sway of the spine and head, the free arm drifting; talk: the spine rocking side to side |
+
+Worst idle bone with the protagonist's profile: the forearm at about 16° from rest, inside the
+20° limit. The walk keeps 19.8° of thigh swing. `tests/character_animation_test.gd` checks the
+profiles against the bare bind (same tracks on the same bones, lengths equal to `CLIPS` × tempo,
+the `get_up` / `sit_idle` agreement, the posture present in the standing pose, the two
+characters' idle, walk and talk lengths different). `tests/runtime_character_animation_test.gd`
+checks the same characters in the running game. How the characters look is in
+[CHARACTER_ART.md](CHARACTER_ART.md).
+
 ## Runtime wiring
 
 - `assets/models/protagonist/Protagonist_Character.glb` (the player) has the 60-bone rig
@@ -125,9 +197,12 @@ previous clip put it.
 - `scenes/environment/characters/classroom_student.tscn` is the former protagonist as
   scenery: `start_seated = true` opens it on `sit_idle` with no body, and its `Model` is
   lowered 0.347 m so the seated soles are on the floor.
-- `scenes/environment/characters/protagonist.tscn` and `q.tscn` attach
+- `assets/models/teacher-n/teacher-n.glb` (substitute teacher N) has the same 16 joint
+  names, faces −Z and carries four authored loops (above).
+- `scenes/environment/characters/protagonist.tscn`, `q.tscn` and `teacher_n.tscn` attach
   `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
-  `AnimationPlayer`, binds the clips and logs the bind report.
+  `AnimationPlayer`, binds the clips (with the wrapper's `motion_profile`, set on the
+  protagonist and Q) and logs the bind report.
 - Three things can hold a clip, in this order: a **one-shot action** (nothing else takes over
   until it reports `animation_finished`), then **seated** (`sit_idle`, which outranks the
   body's velocity), then **locomotion**. The locomotion decision keeps running underneath, so
@@ -192,6 +267,16 @@ Keys **1** idle, **2** walk, **3** jog, **4** sit_idle, **5** get_up, **6** wave
 the movement the two halves make. In the game, walk around the classroom with WASD or a
 click, then leave the classroom during the free period with Q along.
 
+N is seen in the running game by `tests/capture_playthrough.gd` (the *Playthrough capture*
+workflow): `11d_n_at_the_front` head to feet after the class is dismissed, `11e_n_face` the
+face at one metre, and `11f_n_walking` N mid-stride, walked two metres along the front of the
+room through its own `walk_along()` and put back. `11c_n_walks_in` photographs the entry walk
+along `NEntryPath` itself, but only when the capture reaches it in time: the beat usually
+plays while the capture is still busy with Q, and the log then says N had already arrived. Each frame is rendered a second time with N's model hidden; the share of
+N's screen box that changes is logged and has to clear a floor, so a model that imported
+invisible or black fails the run. Small JPEG crops of the frames are published as the
+run's *teacher N crop* annotations (base64, in numbered parts).
+
 ## Check it
 
 - `tests/character_animation_test.gd` binds the clips to the development rigs, the
@@ -214,11 +299,22 @@ click, then leave the classroom during the free period with Q along.
   - a click on the floor through `PointerNavigator` walks and stops the same way;
   - Shift with a movement key jogs, with the same limb checks, and stopping returns to idle;
   - the classroom Q's `walk_along()` walks, faces its path, and returns to idle;
+  - the classroom N is bound facing −Z, its idle is its four loops with no track left over,
+    its head and spine are measured moving over a cycle, and its `walk_along()` passes the
+    full walk limb checks — measured in N's own frame, so the knee and elbow signs are the
+    same test as everyone else's — before returning to idle;
   - Q following the player walks while its body moves, faces the way it walks, and idles
     when it stops;
   - the clips hold only bone-rotation tracks, the player's pivot stays at the controller's
     facing, and the model under it never moves.
 
+- `tests/character_animation_test.gd` also binds N's GLB facing −Z and checks that
+  `sit_idle` brings its knees out in front of it, and — as a control — that binding it as a
+  +Z model would fold them backwards, so the flag is proven to matter.
+  It also checks `adopt_authored_layers()` both ways: N's four loops replace the idle with a
+  looping, rotation-only clip that applies every track; a list naming a clip N does not have,
+  and Q (which carries no clips of its own), are refused with a reason and leave the
+  procedural idle untouched.
 - `tests/protagonist_model_test.gd` is about the model swap: the new GLB's skeleton,
   hierarchy, skinning and embedded clips; the exact bone mapping and mirrored pairs on all
   three rigs, and which of the 60 joints animate; every clip track pointing at a real bone;
@@ -250,6 +346,9 @@ every build.
   y = −0.347).
 - The new protagonist's fingers, eyes, toes, clavicles and two of its four spine bones never
   move, and its five embedded clips and 9 blend shapes are unused (see above).
+- N walks with the procedural walk (its file has none) and its idle is the owner's; the two
+  were not made for each other, so the change between them is a 0.18 s cross-fade and nothing
+  more. N's facial blend shapes are not shipped, and `talk` on N is as untriggered as on Q.
 - Q's right forearm is held at its modelled pose in every clip, so `wave` on Q raises the
   upper arm with a rigid forearm. `wave` and `talk` are not triggered by anything in the game.
 - The rigs use mostly rigid-part weights. Q's trousers blend at the joints, but neither model

@@ -1,0 +1,154 @@
+name: Character art capture
+
+# Photographs the protagonist and Q in the running game, for the character art review
+# (docs/CHARACTER_ART.md): head to feet and face close-ups with the original GLB materials
+# (A), the procedural pigment shader (B) and the painted look the wrappers ship (C); the
+# seven clips; idle and walk without and with each character's motion profile; the
+# silhouettes from four sides; and the painted pair under the classroom, corridor and
+# street lights, from the game's own camera. It runs `tests/capture_character_art.gd`
+# under Xvfb with the OpenGL renderer, one job per group so each group has its own
+# annotation budget.
+#
+# This workflow only takes pictures; the assertions about the characters live in the
+# headless tests in godot-ci.yml. It still fails when the script reports a failure: a
+# character that did not draw, did not bind, or kept a GLB material under the painted look.
+#
+# The contact sheets are published as notices: each JPEG is base64, split into numbered
+# 4000-character parts (concatenate the parts of one file in order and decode). GitHub
+# keeps 10 notices per step and 50 per job, so the parts are published over four steps.
+# The full-size frames and the log are in the job's artifact.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_character_art.gd"
+      - ".github/workflows/character-art-capture.yml"
+      - "assets/characters/**"
+      - "assets/shaders/characters/**"
+      - "assets/models/protagonist/**"
+      - "assets/models/q/**"
+      - "scenes/environment/characters/protagonist.tscn"
+      - "scenes/environment/characters/q.tscn"
+      - "scripts/actors/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Character art (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [bodies, faces, clips, posture, light]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import project
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Blocking import first (it waits for the queue to drain), then an editor pass
+          # whose log is the one that must be free of script errors. Same as the
+          # playthrough capture.
+          godot --headless --path . --import > import-1.log 2>&1 || true
+          godot --headless --editor --path . --quit > import-2.log 2>&1
+          code=$?
+          if [ "${code}" -ne 0 ] || grep -qE "SCRIPT ERROR|Parse Error" import-2.log; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=import failed (exit ${code})::${summary:-no summary}"
+            exit 1
+          fi
+
+      - name: Capture
+        id: capture
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          mkdir -p docs/screenshots/character_art
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_character_art.gd -- --group=${{ matrix.group }} > capture.log 2>&1
+          code=$?
+          grep -E "^ARTNOTE: |SCRIPT ERROR|ERROR:" capture.log | cut -c1-400 | tail -n 120 || true
+          grep -E "^ARTSHEET: " capture.log > sheets.txt || true
+          # Every part of every sheet, one per line, in order: "<file> <i> <n> <data>".
+          : > parts.txt
+          while read -r _ file data; do
+            n=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${n}"); do
+              echo "${file} ${i} ${n} ${data:$(( (i - 1) * 4000 )):4000}" >> parts.txt
+            done
+          done < sheets.txt
+          echo "sheet parts: $(wc -l < parts.txt)"
+          notes=$(grep -E "^ARTNOTE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' \
+            | grep -vE "^(published|sheet) " | tr '\n' '|')
+          echo "::notice title=character art ${{ matrix.group }} measurements 1::${notes:0:3800}"
+          [ "${#notes}" -gt 3800 ] && echo "::notice title=character art ${{ matrix.group }} measurements 2::${notes:3800:3800}"
+          if grep -qE "RESULT: FAILURE" capture.log; then
+            failures=$(grep -E "FAILURE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=character art ${{ matrix.group }} failed (exit ${code})::${failures}"
+            exit 1
+          fi
+          if ! grep -qE "RESULT: SUCCESS" capture.log; then
+            tail_lines=$(grep -E "SCRIPT ERROR|ERROR:" capture.log | head -n 8 | tr '\n' '|' | cut -c1-1200)
+            echo "::error title=character art ${{ matrix.group }} ended without a result (exit ${code})::${tail_lines:-no error lines}"
+            exit 1
+          fi
+
+      - name: Publish sheets (parts 1-10)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '1,10p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character art crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 11-20)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '11,20p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character art crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 21-30)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '21,30p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character art crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 31-40)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '31,40p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character art crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Upload the frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: character-art-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            docs/screenshots/character_art/
+            capture.log
+          if-no-files-found: warn
+          retention-days: 14

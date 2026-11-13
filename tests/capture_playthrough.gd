@@ -217,6 +217,25 @@ func _run() -> void:
 	_note("locale after pressing L again: %s" % L10n.current)
 	await _shot("11_back_to_english", "The same scene after switching back to English.")
 
+	# 9a. Substitute teacher N walking in along NEntryPath: the first moment its model is
+	# on screen in the story, photographed mid-walk, from inside the room.
+	classroom = _host.get_current()
+	var n_actor: NpcActor = classroom.find_actor(&"n") if classroom != null else null
+	if n_actor == null:
+		_failures.append("The classroom has no N to photograph.")
+	elif await _drive_until(
+		func() -> bool: return (
+			_n_is_walking_in(n_actor) or bool(_game_state.get_flag(StoryFlags.N_ARRIVED, false))
+		),
+		180.0, "the substitute to walk in"
+	):
+		if _n_is_walking_in(n_actor):
+			await _capture_n_walking(n_actor)
+		else:
+			# Not a failure of the model: the beat ran while an earlier step was waiting.
+			# The frames at the front of the room below still show it.
+			_note("N had already arrived when the capture looked for the walk; no walking frame")
+
 	# 9. The rest of the story, driven by keys where the player would press them.
 	if not await _drive_until(
 		func() -> bool: return bool(_game_state.get_flag(StoryFlags.CLASS_DISMISSED, false)) and not _dialogue.is_busy(),
@@ -226,6 +245,10 @@ func _run() -> void:
 		return
 
 	classroom = _host.get_current()
+	# 9b. N where the story leaves it, at the front of the room after dismissing the class.
+	n_actor = classroom.find_actor(&"n") if classroom != null else null
+	if n_actor != null:
+		await _capture_n_at_the_front(n_actor)
 	var door := classroom.find_interactable(&"classroom_door") if classroom != null else null
 	if door == null:
 		_failures.append("The classroom door is missing.")
@@ -814,6 +837,235 @@ func _capture_imported_models() -> void:
 	await _wait(0.2)
 
 
+# --- substitute teacher N ------------------------------------------------------
+
+
+## N is inside the room and walking: past the doorway on the first leg of `NEntryPath`.
+func _n_is_walking_in(n_actor: NpcActor) -> bool:
+	if not n_actor.visible:
+		return false
+	var animator := n_actor.get_character_animator()
+	if animator == null:
+		return false
+	return (
+		animator.get_locomotion_state() == CharacterVisualAnimation.STATE_WALK
+		and n_actor.global_position.z < 2.3
+	)
+
+
+## N mid-walk, from ahead of it and a little to the room side, so the walk is seen
+## three-quarter on and the aisle wall is behind it rather than in front of the lens.
+func _capture_n_walking(n_actor: NpcActor) -> void:
+	var at := n_actor.global_position
+	var forward := _planar_forward(n_actor)
+	# The aisle runs along the +X wall, so the room is towards −X of N.
+	var room_side := Vector3.LEFT - forward * forward.dot(Vector3.LEFT)
+	room_side = room_side.normalized() if room_side.length() > 0.1 else Vector3.ZERO
+	await _shot_from_camera(
+		at + forward * 2.7 + room_side * 0.9 + Vector3(0.0, 1.3, 0.0),
+		at + Vector3(0.0, 1.0, 0.0),
+		"11c_n_walks_in",
+		"Substitute teacher N walking in along NEntryPath during the substitute beat, wearing "
+		+ "the authored model, under the nameplate the game shows.",
+		n_actor.get_node_or_null(^"Nameplate") as Node3D,
+		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_walks_in", 220)
+	)
+	await _restore_player_camera()
+
+
+## N at the front after the class is dismissed: head to feet from the side N faces, then
+## a close-up of the face, for the materials. The player is moved out of the way first and
+## left where the door shot that follows puts them anyway.
+func _capture_n_at_the_front(n_actor: NpcActor) -> void:
+	_teleport(Vector3(3.2, 0, 2.55), 180.0)
+	await _wait(0.4)
+	var at := n_actor.global_position
+	var forward := _planar_forward(n_actor)
+	_note("N at the front: position %s, facing %s, visible %s" % [str(at), str(forward), n_actor.visible])
+	await _shot_from_camera(
+		at + forward * 2.3 + Vector3(0.0, 1.28, 0.0),
+		at + Vector3(0.0, 1.0, 0.0),
+		"11d_n_at_the_front",
+		"N at the front of the classroom after dismissing the class, head to feet, from the "
+		+ "side N faces, under the nameplate the game shows.",
+		n_actor.get_node_or_null(^"Nameplate") as Node3D,
+		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_at_the_front", 220)
+	)
+	await _shot_from_camera(
+		at + forward * 1.0 + Vector3(0.0, 1.5, 0.0),
+		at + Vector3(0.0, 1.46, 0.0),
+		"11e_n_face",
+		"N's face and shoulders at one metre, in the classroom light: skin, hair, eyes, cardigan.",
+		null,
+		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_face", 180, true)
+	)
+	await _restore_player_camera()
+	# The entry walk usually plays while the capture is still busy with Q, so the walk is
+	# photographed here as well: the same `walk_along()` the opening drives, two metres along
+	# the front of the room, then N is put back exactly where the story left it.
+	await _capture_n_walk_at_the_front(n_actor)
+
+
+## N walking, driven through its own `walk_along()` after the story has finished with it.
+func _capture_n_walk_at_the_front(n_actor: NpcActor) -> void:
+	var start := n_actor.global_transform
+	var target := n_actor.global_position + Vector3(-2.0, 0.0, 0.0)
+	n_actor.walk_along([target])
+	await _wait(0.55)
+	var animator := n_actor.get_character_animator()
+	var state := animator.get_locomotion_state() if animator != null else &"none"
+	_note("N walking at the front: state %s, clip %s" % [
+		state, animator.get_current_clip() if animator != null else "none"
+	])
+	if state != CharacterVisualAnimation.STATE_WALK:
+		_failures.append("N's walk_along() at the front did not play walk (state %s)." % state)
+	var at := n_actor.global_position
+	var forward := _planar_forward(n_actor)
+	await _shot_from_camera(
+		at + forward * 2.6 + Vector3(0.0, 0.0, 1.2) + Vector3(0.0, 1.3, 0.0),
+		at + Vector3(0.0, 0.95, 0.0),
+		"11f_n_walking",
+		"N mid-stride, walking along the front of the classroom through its own walk_along(), "
+		+ "seen three-quarter on from ahead and to the class side.",
+		n_actor.get_node_or_null(^"Nameplate") as Node3D,
+		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_walking", 220)
+	)
+	await _restore_player_camera()
+	var waited := 0.0
+	while n_actor.global_position.distance_to(target) > 0.01 and waited < 4.0:
+		await _wait(0.1)
+		waited += 0.1
+	n_actor.global_transform = start
+	await _wait(0.3)
+	if animator != null and animator.get_locomotion_state() != CharacterVisualAnimation.STATE_IDLE:
+		_failures.append("N did not return to idle after its walk at the front.")
+
+
+func _planar_forward(actor: Node3D) -> Vector3:
+	# `NpcActor.face_towards()` points the actor's −Z at its target.
+	var forward := -actor.global_basis.z
+	forward.y = 0.0
+	return forward.normalized() if forward.length() > 0.01 else Vector3(0.0, 0.0, 1.0)
+
+
+func _restore_player_camera() -> void:
+	var player_camera := _main.get_node_or_null(^"CameraRig/Camera3D") as Camera3D
+	if player_camera != null:
+		player_camera.current = true
+	await _wait(0.1)
+
+
+## Measures what the frame just saved shows of N, instead of trusting that a model that
+## loaded also drew: the same view is rendered again with N's model hidden, and the pixels
+## inside N's screen box that change are N. A model that imported black, transparent or
+## not at all changes almost nothing. The box, the share of it N covers, and the colour at
+## the face are logged, and a small JPEG crop is printed for the run's annotations
+## (`NCROP:` lines, published by their own step), so the frame can be looked at without
+## downloading the artifact. `centre_crop` crops the middle of the frame instead of N's
+## box, for the close-up, where N fills more than the frame.
+func _inspect_n_frame(
+	camera: Camera3D, n_actor: NpcActor, crop_name: String, crop_height: int,
+	centre_crop: bool = false
+) -> void:
+	var visual := n_actor.get_visual()
+	var frame := root.get_texture().get_image()
+	if visual == null or frame == null:
+		_failures.append("N has no model or the frame has no image (%s)." % crop_name)
+		return
+	var frame_rect := Rect2i(Vector2i.ZERO, frame.get_size())
+	var box := _screen_box(camera, _subtree_aabb(visual)).grow(12).intersection(frame_rect)
+	if centre_crop:
+		var side := int(frame.get_height() * 0.5)
+		box = Rect2i(frame.get_size() / 2 - Vector2i(side, side) / 2, Vector2i(side, side))
+	if box.size.x < 8 or box.size.y < 8:
+		_failures.append("N is not in the frame for %s (screen box %s)." % [crop_name, str(box)])
+		return
+	visual.visible = false
+	RenderingServer.force_draw(true)
+	await process_frame
+	await process_frame
+	var without := root.get_texture().get_image()
+	visual.visible = true
+	await process_frame
+	var changed := 0
+	var total := 0
+	for y in range(box.position.y, box.end.y, 2):
+		for x in range(box.position.x, box.end.x, 2):
+			total += 1
+			var a := frame.get_pixel(x, y)
+			var b := without.get_pixel(x, y)
+			if absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b) > 0.12:
+				changed += 1
+	var share := float(changed) / float(maxi(total, 1))
+	var face := _face_colour(camera, n_actor, frame)
+	_note(
+		"N in %s: screen box %s, %.0f%% of it drawn by the model, face colour %s"
+		% [crop_name, str(box), share * 100.0, face]
+	)
+	# A standing figure covers roughly a third of its own bounding box; far less means the
+	# model did not draw. The close-up's square is about half face, hair and shoulders.
+	if share < (0.3 if centre_crop else 0.15):
+		_failures.append(
+			"N's model drew only %.0f%% of its screen box in %s; it should be plainly visible."
+			% [share * 100.0, crop_name]
+		)
+	var crop := frame.get_region(box)
+	crop.convert(Image.FORMAT_RGB8)
+	var width := maxi(int(round(float(box.size.x) * float(crop_height) / float(box.size.y))), 1)
+	crop.resize(width, crop_height, Image.INTERPOLATE_BILINEAR)
+	print("NCROP: %s.jpg %s" % [crop_name, Marshalls.raw_to_base64(crop.save_jpg_to_buffer(0.6))])
+
+
+## The screen rectangle an axis-aligned world box projects to.
+func _screen_box(camera: Camera3D, box: AABB) -> Rect2i:
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
+	for index in 8:
+		var corner := box.get_endpoint(index)
+		if camera.is_position_behind(corner):
+			continue
+		var screen := camera.unproject_position(corner)
+		low = low.min(screen)
+		high = high.max(screen)
+	if low.x == INF:
+		return Rect2i()
+	return Rect2i(Vector2i(low.floor()), Vector2i((high - low).ceil()))
+
+
+## The average colour of a few pixels on N's face: a little above and in front of the head
+## bone's origin, which is the base of the skull. Logged, not asserted — it is how a reader
+## of the log can tell skin from an untextured white or a missing-material magenta.
+func _face_colour(camera: Camera3D, n_actor: NpcActor, frame: Image) -> String:
+	var animator := n_actor.get_character_animator()
+	if animator == null:
+		return "unknown"
+	var skeleton := animator.get_skeleton()
+	var resolved: Dictionary = animator.get_bind_report().get("resolved", {})
+	if skeleton == null or not resolved.has("head"):
+		return "unknown"
+	var head := skeleton.find_bone(String(resolved["head"]))
+	var origin := skeleton.global_transform * skeleton.get_bone_global_pose(head).origin
+	var point := origin + Vector3.UP * 0.09 + _planar_forward(n_actor) * 0.09
+	if camera.is_position_behind(point):
+		return "behind the camera"
+	var screen := Vector2i(camera.unproject_position(point))
+	var sum := Color(0, 0, 0)
+	var count := 0
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var pixel := screen + Vector2i(dx, dy)
+			if pixel.x < 0 or pixel.y < 0 or pixel.x >= frame.get_width() or pixel.y >= frame.get_height():
+				continue
+			var colour := frame.get_pixelv(pixel)
+			sum = Color(sum.r + colour.r, sum.g + colour.g, sum.b + colour.b)
+			count += 1
+	if count == 0:
+		return "off screen"
+	return "rgb(%d, %d, %d)" % [
+		int(sum.r / count * 255.0), int(sum.g / count * 255.0), int(sum.b / count * 255.0)
+	]
+
+
 ## The world-space box around everything a node draws, for the logging above.
 func _subtree_aabb(node: Node) -> AABB:
 	var result := AABB()
@@ -838,7 +1090,8 @@ func _shot_from_camera(
 	look_at_point: Vector3,
 	shot_name: String,
 	caption: String,
-	plate: Node3D = null
+	plate: Node3D = null,
+	inspect: Callable = Callable()
 ) -> void:
 	var camera := Camera3D.new()
 	camera.name = "CaptureCamera"
@@ -872,6 +1125,9 @@ func _shot_from_camera(
 					+ "character it belongs to, so the frame does not show it"
 				)
 	await _shot(shot_name, caption)
+	# Whatever measures the frame runs while this camera is still the one drawing it.
+	if inspect.is_valid():
+		await inspect.call(camera)
 	camera.queue_free()
 	await process_frame
 

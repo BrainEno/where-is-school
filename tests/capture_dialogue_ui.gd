@@ -3,8 +3,8 @@ extends SceneTree
 ##
 ## `capture_playthrough.gd` proves the slice can be walked; this script proves the text
 ## can be read. It boots the same `main.tscn`, drives the same `DialogueController`, and
-## photographs the same panel showing real content — one frame per resolution and
-## language, plus a real choice list, a real inspection, a real recollection and the log.
+## photographs the same panel showing real content — one frame per supported resolution
+## and language through 4K, plus a real choice list, inspection, recollection and the log.
 ##
 ## Run it with a display (Xvfb in CI):
 ##
@@ -28,7 +28,11 @@ const INLINE_FRAMES: Array[String] = [
 const INLINE_SIZE := Vector2i(400, 225)
 
 const RESOLUTIONS: Array[Vector2i] = [
-	Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)
+	Vector2i(1280, 720),
+	Vector2i(1600, 900),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(3840, 2160),
 ]
 
 var _failures: Array[String] = []
@@ -73,7 +77,7 @@ func _run() -> void:
 		_finish(["The opening conversation never showed a line."])
 		return
 
-	# --- the same line, two languages, three sizes ----------------------
+	# --- the same line, two languages, five sizes through 4K -------------
 	for size in RESOLUTIONS:
 		await _resize(size)
 		loc.set_locale("en")
@@ -82,6 +86,20 @@ func _run() -> void:
 		loc.set_locale("zh-CN")
 		await _frames(4)
 		await _shot("ui-dialogue-%dx%d-zh.png" % [size.x, size.y], size)
+
+	# The same real line, on a controller: the hint should use the InputMap's A and Y
+	# bindings, not retain the keyboard's Space and Tab after the display-size changes.
+	await _resize(Vector2i(1600, 900))
+	var settings := Harness.ensure_autoload(
+		self, "Settings", "res://scripts/autoload/settings_manager.gd"
+	)
+	if settings == null:
+		_failures.append("Settings could not be created for the controller hint capture.")
+	else:
+		settings.call("set_input_device", &"gamepad")
+		await _frames(4)
+		await _shot("ui-dialogue-1600x900-pad.png", Vector2i(1600, 900))
+		settings.call("set_input_device", &"keyboard")
 
 	# --- a real choice list ---------------------------------------------
 	await _resize(Vector2i(1600, 900))

@@ -11,6 +11,12 @@ extends Control
 ##
 ## Every change is applied and saved by the `Settings` autoload the moment it is made: there
 ## is no "apply" step to forget.
+##
+## It is set like the menus that open it: one face throughout (the serif, through
+## `MenuStyle.page_theme()`, so a hint or a key name is not the one line left in the Sans),
+## three sizes only - the title, the reading size for every row, value and button, and a
+## small size for the column heads and the hint line - and the ember of the title and pause
+## menus for section heads, focus and the volume dials.
 
 signal closed
 
@@ -42,6 +48,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	theme = MenuStyle.page_theme()
 	add_child(MenuStyle.backdrop())
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -54,13 +61,15 @@ func _ready() -> void:
 	margin.add_child(center)
 	_panel = PanelContainer.new()
 	_panel.name = "Panel"
-	_panel.add_theme_stylebox_override(&"panel", MenuStyle.panel_style())
+	_panel.add_theme_stylebox_override(&"panel", MenuStyle.sheet_style())
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override(&"separation", 12)
 	_panel.add_child(column)
-	_title = MenuStyle.label("", MenuStyle.TITLE_SIZE, 1.0, MenuStyle.PAPER)
+	_title = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, 1.0, MenuStyle.PAPER, 0.6, 3)
+	_title.name = "Title"
 	column.add_child(_title)
+	column.add_child(MenuStyle.rule(56.0))
 	_scroll = ScrollContainer.new()
 	_scroll.name = "Scroll"
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -70,14 +79,15 @@ func _ready() -> void:
 	_rows = VBoxContainer.new()
 	_rows.name = "Rows"
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_rows.add_theme_constant_override(&"separation", 6)
+	_rows.add_theme_constant_override(&"separation", 8)
 	_scroll.add_child(_rows)
 	_status = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, 1.0, MenuStyle.MUTED)
 	column.add_child(_status)
 	var footer := HBoxContainer.new()
 	column.add_child(footer)
-	_back = MenuStyle.entry_button("", MenuStyle.ENTRY_SIZE, 1.0)
+	_back = MenuStyle.page_entry("", MenuStyle.BODY_SIZE, 1.0)
 	_back.name = "Back"
+	_back.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_back.pressed.connect(close)
 	footer.add_child(_back)
 
@@ -180,7 +190,7 @@ func _rebuild() -> void:
 	_title.text = L10n.t("settings.title")
 	_back.text = L10n.t("menu.back")
 
-	_heading("settings.section.text")
+	_heading("settings.section.text", true)
 	_choice_row(&"text_size", "settings.text_size", _text_size_options(), _current(&"text_size"))
 	_choice_row(&"text_speed", "settings.text_speed", _text_speed_options(), _current(&"text_speed"))
 	_heading("settings.section.sound")
@@ -198,6 +208,12 @@ func _rebuild() -> void:
 		L10n.t("settings.restore_bindings"), MenuStyle.BODY_SIZE, _factor
 	)
 	restore.name = "RestoreBindings"
+	MenuStyle.style_form_entry(restore)
+	restore.autowrap_mode = TextServer.AUTOWRAP_OFF
+	restore.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var before_restore := Control.new()
+	before_restore.custom_minimum_size = Vector2(0.0, 6.0)
+	_rows.add_child(before_restore)
 	restore.pressed.connect(_on_restore_pressed)
 	_rows.add_child(restore)
 	_controls[&"restore_bindings"] = restore
@@ -289,17 +305,31 @@ func _queue_rebuild(focus: StringName = &"") -> void:
 	call_deferred("_rebuild")
 
 
-func _heading(key: String) -> void:
-	var item := MenuStyle.label(L10n.t(key), MenuStyle.HEADING_SIZE, _factor, MenuStyle.ACCENT)
-	item.uppercase = false
+## A section head: the reading size, in ember, over a hairline. Not smaller than the rows
+## it heads - a 15 px head over 18 px rows read as the odd one out - and spaced from the
+## section above so the sections, not the lines, are what the eye groups.
+func _heading(key: String, first: bool = false) -> void:
+	if not first:
+		var gap := Control.new()
+		gap.custom_minimum_size = Vector2(0.0, 14.0)
+		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rows.add_child(gap)
+	var item := MenuStyle.label(L10n.t(key), MenuStyle.BODY_SIZE, _factor, MenuStyle.EMBER)
+	item.name = "Section_%s" % key.get_slice(".", 2)
 	_rows.add_child(item)
+	var line := MenuStyle.rule(0.0, Color(MenuStyle.PAPER, 0.14), 1.0)
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rows.add_child(line)
 
 
 func _row(label_key: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 16)
 	_rows.add_child(row)
-	var caption := MenuStyle.paragraph(L10n.t(label_key), MenuStyle.BODY_SIZE, _factor)
+	var caption := MenuStyle.paragraph(
+		L10n.t(label_key), MenuStyle.BODY_SIZE, _factor, MenuStyle.PAGE_TEXT
+	)
+	caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	caption.size_flags_stretch_ratio = 1.0
 	row.add_child(caption)
 	return row
@@ -310,6 +340,8 @@ func _choice_row(id: StringName, label_key: String, options: Array, current: int
 	var row := _row(label_key)
 	var button := MenuStyle.entry_button("", MenuStyle.BODY_SIZE, _factor)
 	button.name = String(id)
+	MenuStyle.style_form_entry(button)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.size_flags_stretch_ratio = 1.0
 	button.set_meta(&"options", options)
@@ -348,13 +380,11 @@ func _volume_row(key: StringName) -> void:
 	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slider.custom_minimum_size = Vector2(120.0, 24.0)
 	slider.value = float(_volume(key))
-	var focus_box := StyleBoxFlat.new()
-	focus_box.bg_color = Color(0, 0, 0, 0)
-	focus_box.border_width_left = 2
-	focus_box.border_color = MenuStyle.ACCENT
-	slider.add_theme_stylebox_override(&"focus", focus_box)
+	MenuStyle.style_slider(slider)
 	holder.add_child(slider)
-	var readout := MenuStyle.label("%d%%" % _volume(key), MenuStyle.BODY_SIZE, _factor)
+	var readout := MenuStyle.label(
+		"%d%%" % _volume(key), MenuStyle.BODY_SIZE, _factor, MenuStyle.PAGE_TEXT
+	)
 	readout.custom_minimum_size = Vector2(56.0 * _factor, 0.0)
 	readout.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	holder.add_child(readout)
@@ -371,6 +401,7 @@ func _binding_header() -> void:
 	for key: String in ["settings.column_keyboard", "settings.column_gamepad"]:
 		var head := MenuStyle.label(L10n.t(key), MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 		head.custom_minimum_size = Vector2(_binding_width(), 0.0)
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		row.add_child(head)
 
 
@@ -378,13 +409,19 @@ func _binding_row(action: StringName) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 16)
 	_rows.add_child(row)
-	row.add_child(MenuStyle.paragraph(_action_name(action), MenuStyle.BODY_SIZE, _factor))
+	var caption := MenuStyle.paragraph(
+		_action_name(action), MenuStyle.BODY_SIZE, _factor, MenuStyle.PAGE_TEXT
+	)
+	caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(caption)
 	for device: StringName in [&"keyboard", &"gamepad"]:
 		var id := _bind_id(action, device)
 		var button := MenuStyle.entry_button(
 			_binding_text(action, device), MenuStyle.BODY_SIZE, _factor
 		)
 		button.name = String(id)
+		MenuStyle.style_form_entry(button)
+		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.autowrap_mode = TextServer.AUTOWRAP_OFF
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.clip_text = true
@@ -589,7 +626,11 @@ func _refresh_status_hint() -> void:
 	if _status == null or is_capturing():
 		return
 	var pad := MenuStyle.using_gamepad(self)
-	_status.text = L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard")
+	var keys := {
+		"confirm": MenuStyle.key(self, &"ui_accept"),
+		"cancel": MenuStyle.key(self, &"ui_cancel"),
+	}
+	_status.text = L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard", keys)
 
 
 # --- Capturing a new binding -----------------------------------------------------

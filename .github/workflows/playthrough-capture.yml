@@ -27,6 +27,7 @@ on:
     branches: [main]
     paths:
       - "tests/capture_playthrough.gd"
+      - "tests/capture_dialogue_ui.gd"
       - ".github/workflows/playthrough-capture.yml"
       - ".github/actions/evidence-check/**"
       - "scenes/**"
@@ -47,6 +48,7 @@ on:
   pull_request:
     paths:
       - "tests/capture_playthrough.gd"
+      - "tests/capture_dialogue_ui.gd"
       - ".github/workflows/playthrough-capture.yml"
       - ".github/actions/evidence-check/**"
       - "scenes/**"
@@ -212,6 +214,7 @@ jobs:
           # Small inline crops the script printed (base64 images). They are published by
           # their own step below, which has its own annotation budget.
           grep -E "^CROP: " "${capture_log}" > "${EVIDENCE}/logs/inline-crops.txt" || true
+          grep -E "^NCROP: " "${capture_log}" > "${EVIDENCE}/logs/teacher-n-crops.txt" || true
           ls -l docs/screenshots || true
           # The frames this run wrote into the project folder are staged, not moved: the
           # working tree is never the thing that gets uploaded, and a file that was
@@ -294,20 +297,54 @@ jobs:
             budget=$(( budget - parts ))
           done < "${crops}"
 
+      - name: Publish the substitute teacher N crops
+        if: always()
+        shell: bash
+        run: |
+          # The playthrough photographs substitute teacher N's model in the running game
+          # (walking in, at the front of the room, and a close-up of the face) and prints a
+          # small JPEG of each as base64. Same format as the classroom crops above: an
+          # annotation holds about 4 KB, so each image is split into numbered parts;
+          # concatenate the parts of one file in order and decode them. The full frames are
+          # 11c_n_walks_in.png (when the entry walk is caught), 11d_n_at_the_front.png,
+          # 11e_n_face.png and 11f_n_walking.png in the evidence artifact. This step has
+          # its own budget so these do not crowd out the others.
+          set +e -uo pipefail
+          # What the run measured on those frames (the share of N's screen box the model
+          # drew, the face colour, the walk state), from the playthrough log.
+          measured=$(grep -E "N in n_|N at the front|N walking at the front|N had already" \
+            "${RUNNER_TEMP}/evidence/docs/screenshots/PLAYTHROUGH.log" 2>/dev/null \
+            | tr '\n' '|' | cut -c1-3000)
+          [ -n "${measured}" ] && echo "::notice title=teacher N measurements::${measured}"
+          crops="${RUNNER_TEMP}/evidence/logs/teacher-n-crops.txt"
+          [ -s "${crops}" ] || { echo "no teacher N crops"; exit 0; }
+          budget=9
+          while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=teacher N crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done < "${crops}"
+
       - name: Capture the dialogue layout
         id: ui_capture
         shell: bash
         run: |
           # A second window run, for the text rather than the walk. It boots the same
-          # main scene and photographs the real dialogue panel at three resolutions in
-          # both languages, plus a real choice list, an inspection, a recollection and
-          # the log. The step fails when fewer frames than that arrive, so a silently
+          # main scene and photographs the real dialogue panel at five resolutions in
+          # both languages, plus a controller-hint frame, a choice list, an inspection,
+          # a recollection and the log. The step fails when fewer frames than that arrive, so a silently
           # empty capture cannot pass as evidence.
           set +e -uo pipefail
           EVIDENCE="${RUNNER_TEMP}/evidence"
           ui_log="${EVIDENCE}/logs/ui-capture.log"
           mkdir -p docs/screenshots
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+          xvfb-run -a --server-args="-screen 0 3840x2160x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
             --script res://tests/capture_dialogue_ui.gd > "${ui_log}" 2>&1
           code=$?
@@ -321,9 +358,9 @@ jobs:
           fi
           staged=$(find "${EVIDENCE}/docs/screenshots" -maxdepth 1 -name 'ui-*.png' | wc -l)
           echo "staged dialogue frames: ${staged}"
-          if [ "${staged}" -lt 6 ]; then
+          if [ "${staged}" -lt 15 ]; then
             echo "UI_CAPTURE_RESULT=failure"
-            echo "::error title=dialogue capture::only ${staged} dialogue frame(s) were produced"
+            echo "::error title=dialogue capture::only ${staged} dialogue frame(s) were produced; expected 15 (five sizes x two locales, one controller view and four other views)"
             exit 1
           fi
           if grep -qE "^FAILURE: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
@@ -331,9 +368,9 @@ jobs:
             echo "::error title=dialogue capture::the script reported a failure"
             exit 1
           fi
-          if ! grep -qE "^RESULT: " "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
+          if ! grep -qF "RESULT: 15 dialogue frames captured." "${EVIDENCE}/docs/screenshots/UI_CAPTURE.log" 2>/dev/null; then
             echo "UI_CAPTURE_RESULT=failure"
-            echo "::error title=dialogue capture::the script wrote no result marker"
+            echo "::error title=dialogue capture::the script did not report all 15 requested frames"
             exit 1
           fi
           echo "UI_CAPTURE_RESULT=success"

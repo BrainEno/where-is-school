@@ -567,6 +567,8 @@ func _hint_text() -> String:
 				_choice_buttons.size(),
 			]
 		return text
+	if InputHint.device(self) == InputHint.DEVICE_MOUSE:
+		return L10n.t("ui.dialogue_continue_mouse", keys)
 	return L10n.t("ui.dialogue_continue_pad" if pad else "ui.dialogue_continue", keys)
 
 

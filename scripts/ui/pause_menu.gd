@@ -87,6 +87,8 @@ func _ready() -> void:
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.visible = false
+	# One face on the sheet: the status, the notice and the hint in the serif too.
+	_root.theme = MenuStyle.page_theme()
 	add_child(_root)
 	_sheet = Sheet.new()
 	_root.add_child(_sheet)
@@ -206,7 +208,8 @@ func activate(id: StringName) -> void:
 			_confirm.ask(
 				L10n.t("menu.confirm_new_game"),
 				L10n.t("menu.confirm_yes"),
-				L10n.t("menu.confirm_no")
+				L10n.t("menu.confirm_no"),
+				L10n.t("menu.confirm_heading_new_game")
 			)
 		&"title":
 			# Kept for callers from before Save and quit: the same thing without the save.
@@ -232,7 +235,7 @@ func _save_and_quit() -> void:
 		if String(report.get("reason", "")) == "save_failed":
 			_ask_quit_unsaved(L10n.t("menu.confirm_quit_failed", {
 				"detail": String(report.get("detail", "")),
-			}))
+			}), L10n.t("menu.confirm_heading_save_failed"))
 			return
 		_show_notice(String(report.get("detail", report.get("reason", ""))))
 		return
@@ -243,9 +246,11 @@ func _save_and_quit() -> void:
 		_ask_quit_unsaved(L10n.t("menu.confirm_quit_no_save"))
 
 
-func _ask_quit_unsaved(message: String) -> void:
+func _ask_quit_unsaved(message: String, heading: String = "") -> void:
 	_pending = &"quit_unsaved"
-	_confirm.ask(message, L10n.t("menu.confirm_quit_yes"), L10n.t("menu.confirm_no"))
+	if heading.is_empty():
+		heading = L10n.t("menu.confirm_heading_quit")
+	_confirm.ask(message, L10n.t("menu.confirm_quit_yes"), L10n.t("menu.confirm_no"), heading)
 
 
 func _quit_without_saving() -> void:
@@ -340,10 +345,14 @@ func _refresh_texts() -> void:
 	_status.text = _status_text()
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
-	if MenuStyle.using_gamepad(self):
-		_hint.text = L10n.t("menu.pause_hint_pad", {"key": MenuStyle.key(self, &"pause")})
-	else:
-		_hint.text = L10n.t("menu.pause_hint_keyboard", {"key": MenuStyle.key(self, &"pause")})
+	var keys := {
+		"key": MenuStyle.key(self, &"pause"),
+		"cancel": MenuStyle.key(self, &"ui_cancel"),
+	}
+	_hint.text = L10n.t(
+		"menu.pause_hint_pad" if MenuStyle.using_gamepad(self) else "menu.pause_hint_keyboard",
+		keys
+	)
 
 
 ## The last save as the session sees it, without touching the file.

@@ -21,6 +21,11 @@ class_name PlayerController
 signal path_finished
 signal path_cancelled
 
+## The step probe only lifts onto a near-horizontal tread. A continuous stair ramp is
+## already a walkable floor; treating its slope as a new step makes the body fight the
+## ramp contact and produces a visible vertical wobble.
+const STEP_UP_SURFACE_DOT := 0.985
+
 @export_category("Movement")
 @export_range(0.5, 12.0, 0.1) var move_speed: float = 3.6
 ## Speed while the sprint input is held. The model picks it up on its own: above
@@ -212,7 +217,9 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 ##
 ## Only when the body is on the floor, moving, and actually blocked: the block has to
 ## be low enough to step over (a kerb, a threshold) and there has to be room above it.
-## Anything taller — a desk, a wall — still stops the character.
+## Anything taller — a desk, a wall — still stops the character. The probe uses the
+## body's collision mask and only accepts a horizontal tread: a smooth ramp is already
+## walkable and must not be repeatedly lifted by this curb helper.
 func _try_step_up(motion: Vector3) -> void:
 	if max_step_height <= 0.0 or not is_on_floor() or motion.length() < 0.0001:
 		return
@@ -226,11 +233,14 @@ func _try_step_up(motion: Vector3) -> void:
 	var ahead := motion.normalized() * reach
 	var from := global_position + Vector3.UP * max_step_height + ahead
 	var query := PhysicsRayQueryParameters3D.create(
-		from, from - Vector3.UP * max_step_height * 2.0
+		from, from - Vector3.UP * max_step_height * 2.0, collision_mask
 	)
 	query.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
+		return
+	var hit_normal: Vector3 = hit.get("normal", Vector3.UP)
+	if hit_normal.dot(Vector3.UP) < STEP_UP_SURFACE_DOT:
 		return
 	var rise := float(hit["position"].y) - global_position.y
 	if rise <= 0.02 or rise > max_step_height:

@@ -2,7 +2,7 @@ class_name CharacterVisualAnimation
 extends Node3D
 ## The one animation state machine every authored character uses.
 ##
-## Hangs off a character wrapper (`protagonist.tscn`, `q.tscn`), builds that model's clips
+## Hangs off a character wrapper (`protagonist.tscn`, `q.tscn`, `teacher_n.tscn`), builds that model's clips
 ## with `CharacterAnimation.bind()` on an `AnimationPlayer` of its own, and decides each frame
 ## which clip the character holds. Three things can hold a clip, in this order of precedence:
 ##
@@ -67,6 +67,22 @@ const SEATED_CLIP := "sit_idle"
 ## called before the first frame. For a character that is placed in a chair and never driven:
 ## the classroom's seated student. Nothing else changes; `set_seated(false)` still stands it up.
 @export var start_seated: bool = false
+## The model looks down −Z, the way `docs/ASSET_PIPELINE.md` §1 asks, instead of +Z like the
+## protagonist and Q. The clips are then bound in the character's frame rather than the
+## skeleton's (see `CharacterAnimation.bind()`), so a walk still swings the legs forward.
+## Which way the *placement* turns the model is a separate setting on the actor
+## (`NpcActor.visual_yaw_degrees`); this one only tells the clips which way is forward.
+@export var faces_negative_z: bool = false
+## Clips embedded in the model file whose combination replaces the procedural `idle`
+## (`CharacterAnimation.adopt_authored_layers()`). Empty — every character but N — keeps the
+## procedural one. A name the file does not carry is an error and the procedural idle stays.
+@export var authored_idle_layers: PackedStringArray = PackedStringArray()
+## The character's own way of carrying the shared clips: tempo, amplitude, standing posture
+## and small layers (`CharacterMotionProfile`, applied by `CharacterAnimation.bind()`). The
+## protagonist and Q each have one (`assets/characters/*/…_motion.tres`); null — N, the classroom
+## student — plays the clips as `CharacterAnimation.CLIPS` writes them. Same clip names,
+## same bones, same state machine either way.
+@export var motion_profile: CharacterMotionProfile = null
 
 var _player: AnimationPlayer
 var _bound := false
@@ -91,7 +107,7 @@ func _ready() -> void:
 	add_child(_player)
 	_player.root_node = _player.get_path_to(self)
 
-	_bind_report = CharacterAnimation.bind(self, _player)
+	_bind_report = CharacterAnimation.bind(self, _player, faces_negative_z, motion_profile)
 	_bound = bool(_bind_report.get("ok", false))
 	if not _bound:
 		push_error(
@@ -99,6 +115,26 @@ func _ready() -> void:
 			% [name, String(_bind_report.get("reason", "unknown"))]
 		)
 		return
+	if not authored_idle_layers.is_empty():
+		var authored := CharacterAnimation.adopt_authored_layers(
+			self, _player, String(STATE_IDLE), authored_idle_layers
+		)
+		_bind_report["authored_idle"] = authored
+		if not bool(authored.get("ok", false)):
+			push_error(
+				"CharacterVisualAnimation on '%s' kept the procedural idle: %s"
+				% [name, String(authored.get("reason", "unknown"))]
+			)
+		else:
+			print(
+				"CharacterVisualAnimation: %s — idle from the model's own clips %s (%d bone(s), %.2fs)"
+				% [
+					name,
+					", ".join(authored_idle_layers),
+					(authored["bones"] as Array).size(),
+					float(authored["length"]),
+				]
+			)
 	_player.animation_finished.connect(_on_animation_finished)
 	print("CharacterVisualAnimation: %s — %s" % [name, CharacterAnimation.describe(_bind_report)])
 	if _body == null:
