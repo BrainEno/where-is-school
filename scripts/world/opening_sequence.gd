@@ -387,12 +387,17 @@ func _resolve_nodes() -> bool:
 func _run_opening() -> void:
 	var index := _first_pending_step()
 	while index < STEPS.size():
-		await _run_step(STEPS[index])
+		var step := STEPS[index]
+		index += 1
+		# Asked again for every step, not only for the first: a step the flags already
+		# prove is over is never run a second time, whatever the steps before it did.
+		if is_step_done(step):
+			continue
+		await _run_step(step)
 		# A step boundary is the one moment where nothing is mid-flight, which is what
 		# makes it a legal save point (ADR 0005 §4). It is also what makes quitting in
 		# the middle of the prologue cost the player one beat instead of the run.
-		autosave(String(STEPS[index]))
-		index += 1
+		autosave(String(step))
 	_after_opening()
 
 
@@ -405,20 +410,44 @@ func _first_pending_step() -> int:
 	return STEPS.size()
 
 
-## True when the flag that proves `step` happened is set.
+## True when `step` is behind the player: its own proof is set, or the proof of any
+## step after it is.
+##
+## Progress only moves forward. The steps run in order, so a later step's flag is proof
+## that every step before it closed, whichever way it closed - and a reload can never
+## put a finished step back in front of the player. That is also what keeps saves
+## written before `bag_wait_expired` / `expectation_skipped` existed working: a player
+## who let the bag step run out has `bell_rung` and `class_dismissed`, and those are
+## enough.
+func is_step_done(step: StringName) -> bool:
+	var index := STEPS.find(step)
+	if index < 0:
+		return true
+	for later in range(index, STEPS.size()):
+		if _is_step_proved(STEPS[later]):
+			return true
+	return false
+
+
+## True when the flag that proves `step` itself happened is set.
 ##
 ## This table is the prologue's only memory. Two steps share `met_q` because the
-## wake has no flag of its own and cannot outlive Q's first line; `substitute` ends
-## at `class_dismissed` rather than at `n_arrived`, because N arriving without the
-## conversation that dismisses the class would leave the door locked forever.
-func is_step_done(step: StringName) -> bool:
+## wake has no flag of its own and cannot outlive Q's first line. The bag step closes
+## either way the player can close it - the bag searched, or the fallback run out - and
+## the expectation beat is either played or skipped because the bag was not searched;
+## each of those has its own flag, so nothing the player did not do is ever claimed.
+## `substitute` ends at `class_dismissed` rather than at `n_arrived`, because N arriving
+## without the conversation that dismisses the class would leave the door locked forever.
+func _is_step_proved(step: StringName) -> bool:
 	match step:
 		&"wake", &"q_wake":
 			return _has_flag(StoryFlags.MET_Q)
 		&"bag":
-			return _has_flag(StoryFlags.TEXTBOOK_MISSING)
+			return _has_flag(StoryFlags.TEXTBOOK_MISSING) \
+				or _has_flag(StoryFlags.BAG_WAIT_EXPIRED)
 		&"expectation":
-			return _has_flag(StoryFlags.EXPECTATION_PLAYED)
+			return _has_flag(StoryFlags.EXPECTATION_PLAYED) \
+				or _has_flag(StoryFlags.EXPECTATION_SKIPPED)
 		&"bell":
 			return _has_flag(StoryFlags.BELL_RUNG)
 		&"substitute":
@@ -493,15 +522,23 @@ func _beat_q_wake() -> void:
 ## Beats C/D: the bag reminder runs in the background while the player looks around.
 ## The step ends when the bag has been searched - or when the fallback limit runs
 ## out, because a player who never opens the bag still has to reach the lesson.
+## The fallback is recorded as what it is (`bag_wait_expired`), not as a search: the
+## textbook is not known to be missing, and no observation is written.
 func _beat_bag() -> void:
 	_start_bag_reminder()
 	await _wait_for_flag(StoryFlags.TEXTBOOK_MISSING, BAG_WAIT_LIMIT)
+	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
+		_game_state().set_flag(StoryFlags.BAG_WAIT_EXPIRED, true)
 
 
 ## Beat E: expectation, clearly framed as imagination. Skipped when the bag was
-## never searched, which is what the fallback above produces.
+## never searched, which is what the fallback above produces; the skip is recorded
+## (`expectation_skipped`) so the step stays closed if the bag is searched later.
 func _beat_expectation() -> void:
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.EXPECTATION_PLAYED):
+	if _has_flag(StoryFlags.EXPECTATION_PLAYED):
+		return
+	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
+		_game_state().set_flag(StoryFlags.EXPECTATION_SKIPPED, true)
 		return
 	await wait_seconds(EXPECTATION_LEAD_IN)
 	await begin_beat()
@@ -528,6 +565,10 @@ func _beat_bell() -> void:
 
 
 func _beat_substitute() -> void:
+	# The class is already dismissed: N's lesson is over, and the player may not even be
+	# in the room N is in any more. Nothing to look for.
+	if _has_flag(StoryFlags.CLASS_DISMISSED):
+		return
 	var location := _locations.get_current()
 	if location == null:
 		push_error("OpeningSequence: no location loaded for the substitute beat.")
