@@ -1,4 +1,4 @@
-[gd_scene load_steps=80 format=3]
+[gd_scene load_steps=81 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -38,16 +38,18 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/front_wall_dressing.tscn" id="c_front_wall"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/back_board.tscn" id="c_back_board"]
 
+[ext_resource type="Script" path="res://scenes/locations/classroom/classroom_presentation.gd" id="c_presentation"]
+
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
 background_color = Color(0.129, 0.106, 0.106, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.58, 0.53, 0.6, 1)
-ambient_light_energy = 0.42
+ambient_light_color = Color(0.57, 0.59, 0.72, 1)
+ambient_light_energy = 0.66
 tonemap_mode = 2
 adjustment_enabled = true
-adjustment_saturation = 0.94
-adjustment_contrast = 1.04
+adjustment_saturation = 1.0
+adjustment_contrast = 1.02
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
 size = Vector3(9.4, 0.2, 7.4)
@@ -185,7 +187,7 @@ environment = SubResource("Environment_1")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-56, -24, 0)
 light_color = Color(1, 0.8, 0.6, 1)
-light_energy = 0.6
+light_energy = 0.48
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 
@@ -489,8 +491,8 @@ material_override = ExtResource("9_light_panel")
 
 [node name="FittingLight0" type="OmniLight3D" parent="."]
 position = Vector3(-1.7, 2.86, -2.9)
-light_color = Color(1, 0.94, 0.86, 1)
-light_energy = 0.7
+light_color = Color(1, 0.86, 0.7, 1)
+light_energy = 0.38
 omni_range = 7.0
 shadow_enabled = false
 
@@ -501,15 +503,15 @@ material_override = ExtResource("9_light_panel")
 
 [node name="FittingLight1" type="OmniLight3D" parent="."]
 position = Vector3(1.7, 2.86, -2.9)
-light_color = Color(1, 0.94, 0.86, 1)
-light_energy = 0.7
+light_color = Color(1, 0.86, 0.7, 1)
+light_energy = 0.38
 omni_range = 7.0
 shadow_enabled = false
 
 [node name="BackFill" type="OmniLight3D" parent="."]
 position = Vector3(0, 2.9, 2.4)
-light_color = Color(0.95, 0.91, 0.86, 1)
-light_energy = 0.4
+light_color = Color(0.66, 0.68, 0.86, 1)
+light_energy = 0.45
 omni_range = 7.5
 shadow_enabled = false
 
@@ -688,3 +690,6 @@ stream = ExtResource("19_room_tone_classroom")
 volume_db = -14.0
 script = ExtResource("20_ambience_player")
 target_db = -20.0
+
+[node name="ClassroomPresentation" type="Node3D" parent="."]
+script = ExtResource("c_presentation")

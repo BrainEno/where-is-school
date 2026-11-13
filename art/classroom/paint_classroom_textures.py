@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import math
 from pathlib import Path
 
@@ -43,29 +44,28 @@ RES_DIR = "res://assets/materials/classroom/textures"
 
 # --- the colour system (sRGB) ------------------------------------------------------
 # Kept in step with art/classroom/README.md and tests/classroom_visual_slice_test.gd.
-INK = (43, 38, 34)
-IVORY = (226, 216, 190)
-IVORY_LIGHT = (237, 229, 207)
-IVORY_SHADE = (205, 193, 166)
-TEAL = (78, 118, 124)  # the wainscot: a blue-leaning green, kept away from Q's sweater
-TEAL_DARK = (57, 91, 98)
-TEAL_LIGHT = (100, 139, 141)
-FLOOR = (158, 148, 130)
-FLOOR_LIGHT = (171, 161, 142)
-FLOOR_DARK = (138, 129, 113)
-STAGE = (140, 76, 60)  # the painted teacher's zone on the floor
-VERMILION = (178, 67, 46)
-OXBLOOD = (122, 44, 36)
-BOARD = (38, 63, 53)
-BOARD_DARK = (29, 49, 42)
+INK = (46, 41, 51)
+IVORY = (206, 194, 187)
+IVORY_LIGHT = (233, 213, 171)
+IVORY_SHADE = (150, 151, 167)
+TEAL = (71, 101, 111)  # the wainscot: a blue-leaning green, kept away from Q's sweater
+TEAL_DARK = (54, 69, 85)
+TEAL_LIGHT = (102, 126, 130)
+FLOOR = (137, 132, 134)
+FLOOR_LIGHT = (167, 158, 145)
+FLOOR_DARK = (99, 108, 125)
+STAGE = (120, 81, 72)  # the painted teacher's zone on the floor
+OXBLOOD = (110, 60, 54)
+BOARD = (36, 61, 63)
+BOARD_DARK = (33, 42, 58)
 CHALK = (214, 220, 206)
-APRICOT = (242, 166, 90)
+APRICOT = (224, 165, 105)
 APRICOT_DEEP = (224, 122, 62)
-APRICOT_PALE = (250, 208, 152)
+APRICOT_PALE = (239, 205, 151)
 PLUM = (92, 59, 79)
 PLUM_DARK = (64, 43, 58)
-HONEY = (192, 138, 82)
-HONEY_PALE = (216, 174, 122)
+HONEY = (169, 132, 88)
+HONEY_PALE = (200, 175, 129)
 MUSTARD = (190, 150, 62)
 MUSTARD_DARK = (148, 110, 42)
 COBALT = (64, 86, 140)
@@ -337,6 +337,19 @@ def paint_wall(c: Canvas, openings: list[tuple[float, float, float, float]] | No
     for shade, subset in ((IVORY_LIGHT, strokes[0::3]), (IVORY_SHADE, strokes[1::4])):
         c.brush(jitter(shade, rng, 0.02), subset, opacity=0.55)
     c.mottle(rgb(IVORY_SHADE), 0.9, 0.35)
+    # A few authored, metre-scale warm/cool planes. These are not dirt or a
+    # uniform noise overlay: leave breathing room above the board and between props.
+    cool = c.polygon_mask(
+        [(-0.1, 1.28), (c.width_m * 0.38, 1.12), (c.width_m * 0.29, 2.55), (-0.1, 2.9)],
+        rough=0.35, cell_m=0.12, blur_m=0.025,
+    )
+    c.paint((135, 141, 164), cool, 0.22)
+    warm = c.polygon_mask(
+        [(c.width_m * 0.58, 1.2), (c.width_m + 0.1, 1.55),
+         (c.width_m + 0.1, 2.95), (c.width_m * 0.66, 2.72)],
+        rough=0.4, cell_m=0.16, blur_m=0.025,
+    )
+    c.paint((220, 181, 139), warm, 0.2)
     # A painted (not lit) shadow band under the ceiling: a stage flat, not a render.
     top = c.rect_mask(-0.1, c.height_m - 0.32, c.width_m + 0.1, c.height_m + 0.1, rough=0.45, cell_m=0.08)
     c.paint(rgb(IVORY_SHADE) * 0.93, top, 0.75)
@@ -499,6 +512,13 @@ def floor() -> Image.Image:
     c.brush(jitter(FLOOR_LIGHT, rng, 0.02), planks[0::3], opacity=0.5)
     c.brush(jitter(FLOOR_DARK, rng, 0.02), planks[1::4], opacity=0.45)
     c.mottle(rgb(FLOOR_DARK), 1.4, 0.25)
+    # One broad violet-grey counterplane, kept away from the bright window side.
+    # Its broken edge is a paint boundary, never a raised sill or navigation obstacle.
+    cool = c.polygon_mask(
+        [(5.8, -0.1), (9.1, -0.1), (9.1, 5.3), (7.1, 4.65), (6.35, 2.1)],
+        rough=0.3, cell_m=0.17, blur_m=0.055,
+    )
+    c.paint((104, 110, 142), cool, 0.23)
     # The two aisles between the desk columns (x = -1.25 and 1.25) and the cross aisle,
     # worn paler by feet.
     worn = []
@@ -556,6 +576,12 @@ def board_front() -> Image.Image:
     heading top left, a ghost date column at the right, eraser arcs over everything."""
     c = Canvas(4.84, 1.30, 250.0, BOARD, seed=606)
     c.mottle(rgb(BOARD_DARK), 0.5, 0.6)
+    # Layer pigment beneath the meaningful chalk, not another row of fake text.
+    field = c.polygon_mask(
+        [(-0.1, 0.1), (1.8, 0.03), (2.6, 0.72), (1.2, 1.4), (-0.1, 1.4)],
+        rough=0.35, cell_m=0.09, blur_m=0.035,
+    )
+    c.paint((57, 61, 85), field, 0.3)
     # The ghost of what was written before the wipe.
     scribble_word(c, 0.22, 1.02, 0.85, 0.12, 0.012, 0.3)
     scribble_word(c, 1.2, 1.02, 0.95, 0.12, 0.012, 0.3)
@@ -689,26 +715,6 @@ def glass(cracked: bool, seed: int) -> Image.Image:
 # --- small surfaces ----------------------------------------------------------------------
 
 
-def banner() -> Image.Image:
-    """The cloth banner over the board (3.2 x 0.42 m): vermilion, frayed at the ends, with
-    a row of brush 'characters' that are gesture only - nothing on it can be read, in
-    either language."""
-    c = Canvas(3.2, 0.42, 240.0, VERMILION, seed=909, alpha=0.0)
-    cloth = c.polygon_mask([(0.02, 0.02), (3.18, 0.03), (3.17, 0.4), (0.03, 0.39)], rough=0.5, cell_m=0.012, blur_m=0.004)
-    c.paint_alpha(VERMILION, cloth, 1.0)
-    folds = [([(s, 0.4), (s + c.rng.uniform(-0.04, 0.04), 0.02)], 0.05, {"bristles": 6, "dryness": 0.5}) for s in np.linspace(0.2, 3.0, 9)]
-    c.brush(rgb(OXBLOOD), folds, opacity=0.4)
-    c.a = np.minimum(c.a, cloth)
-    for k in range(9):
-        x0 = 0.28 + k * 0.32
-        for _ in range(c.rng.integers(3, 6)):
-            a = (x0 + c.rng.uniform(0, 0.16), c.rng.uniform(0.1, 0.32))
-            b = (a[0] + c.rng.uniform(-0.08, 0.1), a[1] + c.rng.uniform(-0.12, 0.08))
-            c.ink_line([a, b], width_m=0.022, wobble_m=0.004, color=IVORY_LIGHT, opacity=0.95)
-    c.a = np.minimum(c.a, cloth)
-    return c.image(16, alpha="cut")
-
-
 def tile_noise_texture(base, light, dark, seed: int, size: tuple[int, int], streak_dir: str, colors: int) -> Image.Image:
     """A small tileable painted surface (wood, lacquer, canvas). Painted once, then made
     seamless by cross-fading with a copy shifted by half a tile: the shifted copy is the
@@ -812,13 +818,17 @@ def clock_face() -> Image.Image:
 
 
 def uid_for(res_path: str) -> str:
-    """A stable `uid://` for a path, in Godot's own base-36 alphabet."""
+    """A stable `uid://` in Godot 4.7.2's 34-character alphabet (no z/9).
+
+    ResourceUID uses ('z' - 'a') + ('9' - '0'), not base 36. A canonical
+    round trip prevents the editor from rewriting these checked sidecars.
+    """
     value = int.from_bytes(hashlib.sha256(res_path.encode()).digest()[:8], "little") & ((1 << 63) - 1)
-    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    alphabet = "abcdefghijklmnopqrstuvwxy012345678"
     text = ""
     while True:
-        text = alphabet[value % 36] + text
-        value //= 36
+        text = alphabet[value % len(alphabet)] + text
+        value //= len(alphabet)
         if value == 0:
             break
     return "uid://" + text
@@ -879,15 +889,31 @@ detect_3d/compress_to=0
 def save(img: Image.Image, name: str) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUT_DIR / name
-    img.save(path, optimize=True)
+    encoded = io.BytesIO()
+    img.save(encoded, format="PNG", optimize=True)
+    payload = encoded.getvalue()
     res_path = f"{RES_DIR}/{name}"
-    (OUT_DIR / (name + ".import")).write_text(import_sidecar(res_path))
+    sidecar = OUT_DIR / (name + ".import")
+    expected_sidecar = import_sidecar(res_path)
+    if CHECK_ONLY:
+        if not path.is_file() or path.read_bytes() != payload:
+            raise SystemExit(f"Texture drift: {name}; regenerate with {__file__}")
+        if not sidecar.is_file() or sidecar.read_text() != expected_sidecar:
+            raise SystemExit(f"Import settings drift: {name}.import")
+    else:
+        path.write_bytes(payload)
+        sidecar.write_text(expected_sidecar)
     print(f"{name:28s} {img.size[0]:5d} x {img.size[1]:<5d} {path.stat().st_size / 1024:7.1f} KiB")
 
 
+CHECK_ONLY = False
+
+
 def main() -> None:
+    global CHECK_ONLY
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.parse_args()
+    parser.add_argument("--check", action="store_true", help="Verify byte-identical PNGs and import settings without writing")
+    CHECK_ONLY = parser.parse_args().check
     save(wall_north(), "wall_north.png")
     save(wall_west(), "wall_west.png")
     save(wall_east(), "wall_east.png")
@@ -901,9 +927,8 @@ def main() -> None:
     save(window_view(), "window_view.png")
     save(glass(True, 1313), "glass_cracked.png")
     save(glass(False, 1414), "glass_clean.png")
-    save(banner(), "banner.png")
-    save(tile_noise_texture(HONEY, HONEY_PALE, (160, 110, 62), 1515, (256, 128), "h", 20), "wood_honey.png")
-    save(tile_noise_texture(OXBLOOD, (146, 60, 48), (92, 32, 28), 1616, (256, 256), "h", 16), "lacquer_oxblood.png")
+    save(tile_noise_texture(HONEY, HONEY_PALE, (110, 114, 95), 1515, (256, 128), "h", 20), "wood_honey.png")
+    save(tile_noise_texture(OXBLOOD, (138, 79, 68), (76, 48, 59), 1616, (256, 256), "h", 16), "lacquer_oxblood.png")
     save(tile_noise_texture(MUSTARD, (210, 172, 86), MUSTARD_DARK, 1717, (256, 256), "x", 16), "canvas_mustard.png")
     save(desk_marks(), "desk_marks.png")
     save(timetable(), "timetable.png")

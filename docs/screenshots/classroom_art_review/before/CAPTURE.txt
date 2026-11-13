@@ -1,0 +1,43 @@
+engine=4.7.2-stable (custom_build) renderer=forward_plus display=X11
+adapter=SwiftShader Device (Subzero)
+viewport=(1600, 900)
+shot=01_gameplay.png sha256=50df2d0b3907860a8d7c89b2f4d84e7eb302cb3053804d53cd59ebca50742e8a
+shot=02_wall_occlusion.png sha256=f171d00d230cc12e56ea0bb98b320dcae8ff781ff8048374a226d1dcf95065c2
+occlusion WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+occlusion WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
+occlusion WallNorth/FrontWallDressing/Banner instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/banner.tres
+occlusion WallNorth/FrontWallDressing/Banner/PinLeft instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+occlusion WallNorth/FrontWallDressing/Banner/PinRight instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+occlusion WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
+occlusion WallWest/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+occlusion WallWest/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_west.tres
+occlusion WallEast/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+occlusion WallEast/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_east.tres
+occlusion WallSouthLeft/MeshInstance3D instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+occlusion WallSouthLeft/Paint instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+occlusion WallSouthLeft/BackBoard/Frame instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+occlusion WallSouthLeft/BackBoard/Board instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+occlusion WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+occlusion WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
+occlusion DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+occlusion DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
+shot=03_walls_restored.png sha256=fb53a2ac675219850d9c13df6f1a95a3954ab9fb9c180ab6a0edeb5472548996
+restored WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
+restored WallNorth/FrontWallDressing/Banner instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/banner.tres
+restored WallNorth/FrontWallDressing/Banner/PinLeft instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+restored WallNorth/FrontWallDressing/Banner/PinRight instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+restored WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
+restored WallWest/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored WallWest/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_west.tres
+restored WallEast/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored WallEast/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_east.tres
+restored WallSouthLeft/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored WallSouthLeft/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_left.tres
+restored WallSouthLeft/BackBoard/Frame instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/trim_teal.tres
+restored WallSouthLeft/BackBoard/Board instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/board_back.tres
+restored WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
+restored DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+restored DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
+shot=04_board_and_teacher.png sha256=485987d5f0dbedfcc91057b6b3f3ae1f906d2f78a03253e35f5287755ef50634

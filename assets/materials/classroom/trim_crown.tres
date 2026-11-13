@@ -4,5 +4,5 @@
 resource_name = "trim_crown"
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.769, 0.714, 0.596, 1)
+albedo_color = Color(0.68, 0.64, 0.66, 1)
 roughness = 1.0

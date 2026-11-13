@@ -1,0 +1,94 @@
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+libxkbcommon.so.0: cannot open shared object file: No such file or directory
+WSI connection=0x56333afe25f0 display=:100 connect=0x7f65a0ac5300
+Vulkan 1.3.0 - Forward+ - Using Device #0: Unknown - SwiftShader Device (Subzero)
+WARNING: Keeping screen on not supported by this display server.
+     at: screen_set_keep_on (servers/display/display_server.cpp:588)
+
+CharacterVisualAnimation: Model — 19 bone(s) resolved, 0 not on this rig (none), held at their modelled pose: none, sides mirrored: shoulder, upper_arm, fore_arm, hand, thigh, shin, foot, local axes twisted up to 38.9° | idle 7/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 5/5 tracks 1.2s
+DialogueLibrary: 2 language(s) in 73.6 ms.
+  en: 57.7 KB, 25 conversations, 169 nodes, parsed in 25.0 ms
+    prologue: 24.8 KB, 8 conversations, 89 nodes, 7.4 ms
+    corridor: 3.6 KB, 3 conversations, 11 nodes, 0.9 ms
+    street: 3.2 KB, 3 conversations, 9 nodes, 0.7 ms
+    residential: 6.4 KB, 4 conversations, 17 nodes, 1.4 ms
+    alley: 1.4 KB, 1 conversations, 3 nodes, 0.3 ms
+    playground: 14.7 KB, 3 conversations, 28 nodes, 11.5 ms
+    inner_voice: 3.7 KB, 3 conversations, 12 nodes, 2.7 ms
+  zh-CN: 56.8 KB, 25 conversations, 169 nodes, parsed in 32.8 ms
+    prologue: 24.9 KB, 8 conversations, 89 nodes, 15.7 ms
+    corridor: 3.5 KB, 3 conversations, 11 nodes, 2.5 ms
+    street: 3.1 KB, 3 conversations, 9 nodes, 2.2 ms
+    residential: 6.2 KB, 4 conversations, 17 nodes, 2.9 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 1.8 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 5.3 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 2.4 ms
+InspectionLibrary: 2 language(s) in 9.2 ms.
+  en: 16.2 KB, 28 entries, parsed in 2.1 ms
+    classroom: 5.6 KB, 8 entries, 0.7 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.8 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.4 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.3 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 4.6 ms
+    classroom: 5.9 KB, 8 entries, 1.9 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 1.7 ms
+    playground: 2.9 KB, 6 entries, 0.4 ms
+DialogueController: text corpus loaded in 82.8 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 1589.1 ms (load 625.7, instantiate 747.8, tree 215.4, place 0.1, commit 0.0), 344 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.5), 168 faces -> 22 polygons, 1 region(s).
+CLASSROOM_CAPTURE engine=4.7.2-stable (custom_build) renderer=forward_plus display=X11
+CLASSROOM_CAPTURE adapter=SwiftShader Device (Subzero)
+CLASSROOM_CAPTURE viewport=(1600, 900)
+CLASSROOM_CAPTURE shot=01_gameplay.png sha256=50df2d0b3907860a8d7c89b2f4d84e7eb302cb3053804d53cd59ebca50742e8a
+CLASSROOM_CAPTURE shot=02_wall_occlusion.png sha256=f171d00d230cc12e56ea0bb98b320dcae8ff781ff8048374a226d1dcf95065c2
+CLASSROOM_CAPTURE occlusion WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE occlusion WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
+CLASSROOM_CAPTURE occlusion WallNorth/FrontWallDressing/Banner instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/banner.tres
+CLASSROOM_CAPTURE occlusion WallNorth/FrontWallDressing/Banner/PinLeft instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+CLASSROOM_CAPTURE occlusion WallNorth/FrontWallDressing/Banner/PinRight instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+CLASSROOM_CAPTURE occlusion WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
+CLASSROOM_CAPTURE occlusion WallWest/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE occlusion WallWest/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_west.tres
+CLASSROOM_CAPTURE occlusion WallEast/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE occlusion WallEast/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_east.tres
+CLASSROOM_CAPTURE occlusion WallSouthLeft/MeshInstance3D instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+CLASSROOM_CAPTURE occlusion WallSouthLeft/Paint instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+CLASSROOM_CAPTURE occlusion WallSouthLeft/BackBoard/Frame instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+CLASSROOM_CAPTURE occlusion WallSouthLeft/BackBoard/Board instance_transparency=0.8200 material_mode=1 alpha=0.1800 material=
+CLASSROOM_CAPTURE occlusion WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE occlusion WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
+CLASSROOM_CAPTURE occlusion DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE occlusion DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
+CLASSROOM_CAPTURE shot=03_walls_restored.png sha256=fb53a2ac675219850d9c13df6f1a95a3954ab9fb9c180ab6a0edeb5472548996
+CLASSROOM_CAPTURE restored WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
+CLASSROOM_CAPTURE restored WallNorth/FrontWallDressing/Banner instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/banner.tres
+CLASSROOM_CAPTURE restored WallNorth/FrontWallDressing/Banner/PinLeft instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+CLASSROOM_CAPTURE restored WallNorth/FrontWallDressing/Banner/PinRight instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/metal_ink.tres
+CLASSROOM_CAPTURE restored WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
+CLASSROOM_CAPTURE restored WallWest/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored WallWest/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_west.tres
+CLASSROOM_CAPTURE restored WallEast/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored WallEast/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_east.tres
+CLASSROOM_CAPTURE restored WallSouthLeft/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored WallSouthLeft/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_left.tres
+CLASSROOM_CAPTURE restored WallSouthLeft/BackBoard/Frame instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/trim_teal.tres
+CLASSROOM_CAPTURE restored WallSouthLeft/BackBoard/Board instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/board_back.tres
+CLASSROOM_CAPTURE restored WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
+CLASSROOM_CAPTURE restored DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
+CLASSROOM_CAPTURE restored DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
+CLASSROOM_CAPTURE shot=04_board_and_teacher.png sha256=485987d5f0dbedfcc91057b6b3f3ae1f906d2f78a03253e35f5287755ef50634
+PASS: captured four unmodified classroom viewport images and wall states.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

@@ -1,0 +1,752 @@
+4.7.2.stable.custom_build
+=== smoke: $TOOLS/godot --headless --path . --script res://tests/smoke_test.gd
+    residential: 6.2 KB, 4 conversations, 17 nodes, 1.6 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.4 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.8 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 1.0 ms
+InspectionLibrary: 2 language(s) in 5.2 ms.
+  en: 16.2 KB, 28 entries, parsed in 2.2 ms
+    classroom: 5.6 KB, 8 entries, 0.7 ms
+    corridor: 2.0 KB, 3 entries, 0.3 ms
+    street: 1.8 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.5 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.9 ms
+    classroom: 5.9 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.4 ms
+DialogueController: text corpus loaded in 46.3 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 280.4 ms (load 256.9, instantiate 12.8, tree 10.5, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 3.2 ms (collect 1.5), 168 faces -> 22 polygons, 1 region(s).
+PASS: main scene, classroom, player, UI, and content loaded.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== camera_rig: $TOOLS/godot --headless --path . --script res://tests/camera_rig_test.gd
+    residential: 6.2 KB, 4 conversations, 17 nodes, 1.3 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.3 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.1 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 0.8 ms
+InspectionLibrary: 2 language(s) in 4.1 ms.
+  en: 16.2 KB, 28 entries, parsed in 1.7 ms
+    classroom: 5.6 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.8 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.3 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.4 ms
+    classroom: 5.9 KB, 8 entries, 0.4 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 39.1 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 223.3 ms (load 204.5, instantiate 10.2, tree 8.3, place 0.0, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+PASS: one camera on a rig, one fov, the view snaps on a teleport, and a faded wall comes back.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== classroom_visual_slice: $TOOLS/godot --headless --path . --script res://tests/classroom_visual_slice_test.gd
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/classroom_visual_slice_test.gd:216)
+       [2] _check_game_camera (res://tests/classroom_visual_slice_test.gd:716)
+       [3] _physics_frames (res://tests/classroom_visual_slice_test.gd:787)
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/classroom_visual_slice_test.gd:216)
+       [2] _check_game_camera (res://tests/classroom_visual_slice_test.gd:716)
+       [3] _physics_frames (res://tests/classroom_visual_slice_test.gd:787)
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthRight/MeshInstance3D.
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/classroom_visual_slice_test.gd:216)
+       [2] _check_game_camera (res://tests/classroom_visual_slice_test.gd:716)
+       [3] _physics_frames (res://tests/classroom_visual_slice_test.gd:787)
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthRight/Paint.
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/classroom_visual_slice_test.gd:216)
+       [2] _check_game_camera (res://tests/classroom_visual_slice_test.gd:716)
+       [3] _physics_frames (res://tests/classroom_visual_slice_test.gd:787)
+FAIL: 46 problem(s) found.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 1
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.
+::notice title=classroom visual slice::solids 14 | 131 surfaces, 34 materials | 18 textures, 565 KiB source | hierarchy board_face/wall_north 0.32, lacquer_oxblood/wall_north 0.27, canvas_mustard/floor_paint 0.46, window_view_front/wall_west 0.28, varnish_pale/wood_honey 0.21, register_cover/wood_honey 0.21, lacquer_oxblood/wall_south_left 0.28 | nav polygons 22, worst desk reach 0.95 m | 99 standing spots checked; desk 57 px, Q 115 px; Q 1.65 m, player 1.75 m, desk 0.88 m
+::error title=classroom_visual_slice failed (exit 1)::ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.|
+ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Frame.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallSouthLeft/BackBoard/Board.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: DoorLintel/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/MeshInstance3D.|ERROR: TEST FAILURE: Forward+ multiplied material alpha into the instance fade: WallEast/Paint.|
+=== navigation: $TOOLS/godot --headless --path . --script res://tests/navigation_test.gd
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 26.6 ms (load 13.5, instantiate 3.5, tree 7.6, place 0.1, commit 0.7), 342 nodes, 1 live location(s).
+LocationNavigation: '@Node3D@74' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/residential/residential.tscn in 30.3 ms (load 20.7, instantiate 5.6, tree 2.4, place 0.0, commit 0.5), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 23.8 ms (collect 2.0), 756 faces -> 109 polygons, 1 region(s).
+LocationNavigation: 'Residential' baked in 31.0 ms (collect 2.7), 768 faces -> 111 polygons, 1 region(s).
+LocationNavigation: 'Residential' baked in 30.9 ms (collect 2.9), 756 faces -> 109 polygons, 1 region(s).
+LocationHost: res://scenes/locations/street/street.tscn in 20.2 ms (load 12.8, instantiate 3.9, tree 2.2, place 0.0, commit 0.5), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 32.2 ms (collect 1.5), 492 faces -> 56 polygons, 1 region(s).
+LocationNavigation: 'Street' baked in 32.8 ms (collect 1.6), 504 faces -> 68 polygons, 1 region(s).
+LocationNavigation: 'Street' baked in 26.4 ms (collect 1.7), 492 faces -> 56 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 246.8 ms (load 226.0, instantiate 11.2, tree 7.9, place 0.1, commit 0.4), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 31.7 ms (load 16.3, instantiate 3.9, tree 9.3, place 0.1, commit 0.7), 342 nodes, 1 live location(s).
+LocationNavigation: '@Node3D@81' baked in 3.0 ms (collect 1.5), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 33.8 ms (load 18.8, instantiate 4.0, tree 8.8, place 0.1, commit 0.8), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 3.6 ms (collect 1.5), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/street/street.tscn in 29.1 ms (load 17.5, instantiate 6.3, tree 3.0, place 0.1, commit 1.0), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 42.7 ms (collect 2.5), 492 faces -> 56 polygons, 1 region(s).
+PASS: every location bakes a usable mesh, and clicked movement walks, arrives, stops and yields to input.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== navigation_sync_stress: $TOOLS/godot --headless --path . --script res://tests/navigation_sync_stress_test.gd
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 255.0 ms (load 235.6, instantiate 8.8, tree 8.6, place 0.1, commit 0.5), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.8 ms (collect 1.3), 168 faces -> 22 polygons, 1 region(s).
+::notice title=navigation sync::classroom (round 10): synchronized in 3 frame(s), iteration 106 -> 108, 1 region(s), spawn 0.20 m off, 1 exit(s) worst 0.26 m
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 17.6 ms (load 12.6, instantiate 2.5, tree 1.5, place 0.0, commit 0.5), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.7 ms (collect 0.6), 120 faces -> 6 polygons, 1 region(s).
+::notice title=navigation sync::corridor (round 10): synchronized in 2 frame(s), iteration 108 -> 110, 1 region(s), spawn 0.00 m off, 3 exit(s) worst 0.00 m
+LocationHost: res://scenes/locations/street/street.tscn in 16.1 ms (load 10.5, instantiate 2.9, tree 1.6, place 0.0, commit 0.3), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 26.0 ms (collect 1.3), 492 faces -> 56 polygons, 1 region(s).
+::notice title=navigation sync::street (round 10): synchronized in 1 frame(s), iteration 110 -> 112, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.08 m
+LocationHost: res://scenes/locations/residential/residential.tscn in 32.0 ms (load 23.5, instantiate 5.0, tree 2.3, place 0.0, commit 0.2), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 23.4 ms (collect 2.0), 756 faces -> 109 polygons, 1 region(s).
+::notice title=navigation sync::residential/res_alley_end: route 53.94 m over 22 point(s)
+LocationHost: res://scenes/locations/alley/alley.tscn in 11.2 ms (load 7.2, instantiate 1.9, tree 1.3, place 0.0, commit 0.4), 88 nodes, 1 live location(s).
+LocationNavigation: 'Alley' baked in 6.0 ms (collect 0.7), 204 faces -> 24 polygons, 1 region(s).
+::notice title=navigation sync::alley/alley_back_to_courtyard: route 2.00 m over 2 point(s)
+LocationHost: res://scenes/locations/residential/residential.tscn in 33.0 ms (load 23.5, instantiate 5.5, tree 2.5, place 0.0, commit 0.1), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 28.7 ms (collect 2.2), 756 faces -> 109 polygons, 1 region(s).
+::notice title=navigation sync::residential/res_alley_end: route 53.94 m over 22 point(s)
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 250.4 ms (load 229.1, instantiate 11.2, tree 8.2, place 0.1, commit 0.6), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.6 ms (collect 1.2), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 23.1 ms (load 17.3, instantiate 2.8, tree 1.7, place 0.1, commit 0.6), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 2.0 ms (collect 0.6), 120 faces -> 6 polygons, 1 region(s).
+::notice title=navigation sync::60 hop(s) over 10 round(s); slowest synchronization 3 frame(s), worst spawn offset 0.20 m, worst exit offset 0.26 m
+PASS: the navigation map answers for the room the player is in after every one of 60 switches, and nothing is left behind.
+WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+::notice title=navigation sync::classroom (round 1): synchronized in 1 frame(s), iteration 3 -> 3, 1 region(s), spawn 0.20 m off, 1 exit(s) worst 0.26 m
+::notice title=navigation sync::corridor (round 1): synchronized in 1 frame(s), iteration 3 -> 5, 1 region(s), spawn 0.00 m off, 3 exit(s) worst 0.00 m
+::notice title=navigation sync::street (round 1): synchronized in 2 frame(s), iteration 5 -> 7, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.08 m
+::notice title=navigation sync::residential (round 1): synchronized in 1 frame(s), iteration 7 -> 9, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.00 m
+::notice title=navigation sync::alley (round 1): synchronized in 3 frame(s), iteration 9 -> 11, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.00 m
+::notice title=navigation sync::playground (round 1): synchronized in 2 frame(s), iteration 11 -> 13, 1 region(s), spawn 0.01 m off, 3 exit(s) worst 0.20 m
+::notice title=navigation sync::corridor (round 2): synchronized in 1 frame(s), iteration 13 -> 14, 1 region(s), spawn 0.01 m off, 3 exit(s) worst 0.00 m
+::notice title=navigation sync::street (round 2): synchronized in 1 frame(s), iteration 14 -> 16, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.08 m
+::notice title=navigation sync::residential (round 2): synchronized in 2 frame(s), iteration 16 -> 18, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.00 m
+::notice title=navigation sync::alley (round 2): synchronized in 1 frame(s), iteration 18 -> 19, 1 region(s), spawn 0.00 m off, 2 exit(s) worst 0.00 m
+::notice title=navigation sync::playground (round 2): synchronized in 1 frame(s), iteration 19 -> 21, 1 region(s), spawn 0.01 m off, 3 exit(s) worst 0.20 m
+::notice title=navigation sync::classroom (round 2): synchronized in 3 frame(s), iteration 21 -> 23, 1 region(s), spawn 0.20 m off, 1 exit(s) worst 0.26 m
+=== prop_placement: $TOOLS/godot --headless --path . --script res://tests/prop_placement_test.gd
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+LocationNavigation: 'Residential' baked in 30.3 ms (collect 2.5), 756 faces -> 109 polygons, 1 region(s).
+LocationNavigation: 'Playground' baked in 34.5 ms (collect 1.6), 396 faces -> 143 polygons, 1 region(s).
+PASS: the authored bench and bag are placed where the generator table says, sit on what they should, keep their look-anchors usable, and leave the walk routes intact.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== imported_placement: $TOOLS/godot --headless --path . --script res://tests/imported_placement_test.gd
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Model — 19 bone(s) resolved, 0 not on this rig (none), held at their modelled pose: none, sides mirrored: shoulder, upper_arm, fore_arm, hand, thigh, shin, foot, local axes twisted up to 38.9° | idle 7/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 5/5 tracks 1.2s
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.8 ms (collect 1.3), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+PASS: the six student desks are the imported model with one collider each, the stationery sits on the player's own desk, the player and Q both wear their authored models with their feet on the floor, the grayboxes are retired, and N keeps his.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== imported_assets: $TOOLS/godot --headless --path . --script res://tests/imported_assets_test.gd
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+CharacterVisualAnimation: Protagonist — 19 bone(s) resolved, 0 not on this rig (none), held at their modelled pose: none, sides mirrored: shoulder, upper_arm, fore_arm, hand, thigh, shin, foot, local axes twisted up to 38.9° | idle 7/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 5/5 tracks 1.2s
+CharacterVisualAnimation: ClassroomStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+CharacterVisualAnimation: Q — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+PASS: all five imported assets measure at their declared size and ship a wrapper that matches them.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== interaction_occlusion: $TOOLS/godot --headless --path . --script res://tests/interaction_occlusion_test.gd
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:725)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:584)
+[#115] canopy: eye sees the target, camera ray meets the canopy; pointer pick at (0.0, 0.0)
+[#115] canopy, facing: current=<nothing> highlight=<nothing> seen_by_camera=false
+[#115] partial cover: left (covered) -> <nothing>, right (open) -> occlusion_partial
+[#115] classroom: sheet anchor (1.6, 0.6, 3.15), outline (1.6, 1.735, 3.475), wall (-1.0, 1.6, 3.6)
+[#115] view { "view": "a #111 spot", "player": (3.1, 0.0, 3.04), "camera": (6.5, 6.4, 6.44), "wall": 0.0, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 0, "contradictions": 0, "blocker": "WallSouthLeft", "current": "classroom_door", "highlight": "classroom_door", "prompt": "Try the door", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "b faded wall", "player": (1.6, 0.0, 2.7), "camera": (5.0, 6.4, 6.1), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "timetable", "highlight": "timetable", "prompt": "Read the timetable", "e_used": true, "click_used": true, "click_walks": false }
+[#115] fader: authored wall_section ():<StandardMaterial3D#-9223371858965950824>, while faded wall_section ():<StandardMaterial3D#-9223371858965950824>
+[#115] view { "view": "c behind the wall", "player": (1.6, 0.0, 4.3), "camera": (5.0, 6.4, 7.7), "wall": 0.81999999284744, "eye": false, "reach": true, "points": 27, "hidden": 0, "picked": 0, "contradictions": 0, "blocker": "", "current": "<nothing>", "highlight": "<nothing>", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=0.9", "player": (0.9, 0.0, 2.75), "camera": (4.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.1", "player": (1.1, 0.0, 2.75), "camera": (4.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.3", "player": (1.3, 0.0, 2.75), "camera": (4.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.5", "player": (1.5, 0.0, 2.75), "camera": (4.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.7", "player": (1.7, 0.0, 2.75), "camera": (5.1, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.9", "player": (1.9, 0.0, 2.75), "camera": (5.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.1", "player": (2.1, 0.0, 2.75), "camera": (5.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.3", "player": (2.3, 0.0, 2.75), "camera": (5.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.5", "player": (2.5, 0.0, 2.75), "camera": (5.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 0, "picked": 27, "contradictions": 0, "blocker": "", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] edge sweep (z=2.75): x=0.9 t=0.82 hidden=0 picked=27; x=1.1 t=0.82 hidden=0 picked=27; x=1.3 t=0.82 hidden=0 picked=27; x=1.5 t=0.82 hidden=0 picked=27; x=1.7 t=0.82 hidden=0 picked=27; x=1.9 t=0.82 hidden=0 picked=27; x=2.1 t=0.82 hidden=0 picked=27; x=2.3 t=0.82 hidden=0 picked=27; x=2.5 t=0.82 hidden=0 picked=27; flips=0
+[#115] facing { "view": "facing", "player": (1.6, 0.0, 1.9), "wall": 0.0, "eye": true, "reach": true, "seen": false, "points": 27, "hidden": 27, "current": "schoolbag", "highlight": "schoolbag", "e_used": false }
+[#115] facing { "view": "facing", "player": (1.6, 0.0, 2.7), "wall": 0.81999999284744, "eye": true, "reach": true, "seen": true, "points": 27, "hidden": 0, "current": "timetable", "highlight": "timetable", "e_used": true }
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 21.4 ms (load 15.8, instantiate 2.6, tree 1.5, place 0.0, commit 0.9), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.8 ms (collect 0.6), 120 faces -> 6 polygons, 1 region(s).
+[#115] scene swap: before=timetable after=back_to_classroom highlight=back_to_classroom
+PASS: only declared support structure is looked through; walls block from either side; the pointer picks only where the camera sees the object drawn (#115).
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== interaction_visibility_sweep: $TOOLS/godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.5 ms
+DialogueController: text corpus loaded in 51.6 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 291.7 ms (load 265.0, instantiate 13.9, tree 12.5, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 3.3 ms (collect 1.7), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+SWEEP classroom: 9 interactable(s), all visible from somewhere.
+WARNING: SpeakerCue: no DialogueController found; the cue will stay silent.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _ready (res://scripts/world/speaker_cue.gd:22)
+         [1] _run (res://tests/interaction_visibility_sweep_test.gd:83)
+         [2] _physics_frames (res://tests/interaction_visibility_sweep_test.gd:149)
+SWEEP corridor: 9 interactable(s), all visible from somewhere.
+SWEEP street: 8 interactable(s), all visible from somewhere.
+SWEEP playground: 12 interactable(s), all visible from somewhere.
+SWEEP residential: 9 interactable(s), all visible from somewhere.
+SWEEP alley: 5 interactable(s), all visible from somewhere.
+PASS: all 52 authored interactables are visible from at least one standing position.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== interaction_outline_content: $TOOLS/godot --headless --path . --script res://tests/interaction_outline_content_test.gd
+    classroom: 5.9 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.4 ms
+DialogueController: text corpus loaded in 50.4 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 285.8 ms (load 260.4, instantiate 14.0, tree 11.0, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 3.1 ms (collect 1.3), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+OUTLINE classroom: 9 interactable(s) checked.
+WARNING: SpeakerCue: no DialogueController found; the cue will stay silent.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _ready (res://scripts/world/speaker_cue.gd:22)
+         [1] _run (res://tests/interaction_outline_content_test.gd:99)
+         [2] _physics_frames (res://tests/interaction_outline_content_test.gd:179)
+OUTLINE corridor: 'corridor_wait' is pointable by its anchor only.
+OUTLINE corridor: 9 interactable(s) checked.
+OUTLINE street: 'street_gutter' is pointable by its anchor only.
+OUTLINE street: 8 interactable(s) checked.
+OUTLINE residential: 9 interactable(s) checked.
+OUTLINE alley: 5 interactable(s) checked.
+OUTLINE playground: 'pg_court_middle' is pointable by its anchor only.
+OUTLINE playground: 12 interactable(s) checked.
+PASS: all 52 shipped interactables (and the companion) outline a visible mesh and have a pick box for every mesh that qualifies; no authored mesh is on the outline layer.
+--- exit 0
+=== interaction_hover: $TOOLS/godot --headless --path . --script res://tests/interaction_hover_test.gd
+    corridor: 2.0 KB, 3 entries, 0.3 ms
+    street: 1.8 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.4 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.9 ms
+    classroom: 5.9 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.4 ms
+DialogueController: text corpus loaded in 46.2 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 287.1 ms (load 262.0, instantiate 13.7, tree 11.2, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+WARNING: DialoguePanel portrait: Character 'protagonist': only 19 px of the 64 px screen are left for the portrait; it is not shown.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _warn_portrait (res://scripts/ui/dialogue_panel.gd:1023)
+         [1] _plan_portrait (res://scripts/ui/dialogue_panel.gd:964)
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:725)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:584)
+PASS: the pointer, the facing fallback, the cue, and E all name the same object.
+WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== interaction_cue: $TOOLS/godot --headless --path . --script res://tests/interaction_cue_test.gd
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+PASS: 112 checks: the ground mark is a small ring that lands, echoes once and holds; the object cue outlines the object's own meshes, hands over cleanly, restores what it marked, falls back when there is nothing to trace, and is pointable where drawn.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== automatic_interaction: $TOOLS/godot --headless --path . --script res://tests/automatic_interaction_test.gd
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 31.1 ms (load 16.4, instantiate 3.6, tree 8.7, place 0.1, commit 0.7), 342 nodes, 1 live location(s).
+LocationNavigation: '@Node3D@96' baked in 3.1 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 31.3 ms (load 16.3, instantiate 3.8, tree 9.0, place 0.1, commit 0.8), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 28.3 ms (load 21.8, instantiate 3.3, tree 1.9, place 0.1, commit 0.6), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 2.5 ms (collect 0.9), 120 faces -> 6 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 228.9 ms (load 206.7, instantiate 11.6, tree 9.0, place 0.1, commit 0.3), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 32.9 ms (load 17.0, instantiate 4.0, tree 9.5, place 0.1, commit 0.8), 342 nodes, 1 live location(s).
+LocationNavigation: '@Node3D@104' baked in 3.0 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 29.8 ms (load 17.3, instantiate 3.3, tree 7.2, place 0.0, commit 0.8), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/street/street.tscn in 24.4 ms (load 14.8, instantiate 5.3, tree 2.4, place 0.1, commit 0.8), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 37.2 ms (collect 1.8), 492 faces -> 56 polygons, 1 region(s).
+PASS: a click on a person, a prop or an exit walks there and uses it exactly once, through the same path as E.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== pointer_target_switch: $TOOLS/godot --headless --path . --script res://tests/pointer_target_switch_test.gd
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.8 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.3 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.5 ms
+    classroom: 5.9 KB, 8 entries, 0.5 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 36.5 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 234.8 ms (load 214.5, instantiate 11.0, tree 9.0, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.4 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+WARNING: DialoguePanel portrait: Character 'protagonist': only 19 px of the 64 px screen are left for the portrait; it is not shown.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _warn_portrait (res://scripts/ui/dialogue_panel.gd:1023)
+         [1] _plan_portrait (res://scripts/ui/dialogue_panel.gd:964)
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:725)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:584)
+PASS: a new click replaces the old target once, and the walk it asks for survives.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== opening_flow: $TOOLS/godot --headless --path . --script res://tests/opening_flow_test.gd
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.4 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.4 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 1.2 ms
+InspectionLibrary: 2 language(s) in 4.6 ms.
+  en: 16.2 KB, 28 entries, parsed in 2.0 ms
+    classroom: 5.6 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.8 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.4 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.6 ms
+    classroom: 5.9 KB, 8 entries, 0.5 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 42.2 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 219.8 ms (load 194.9, instantiate 14.2, tree 10.5, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.4), 168 faces -> 22 polygons, 1 region(s).
+INPUT pad_presses=56 pad_activations=8 api_fallbacks=0
+PASS: the slice runs from waking up through the yard to the milestone card at its far fence, the second half on the controller (56 presses, 8 uses), and Start again on the card boots a new game with nothing of the old run left.
+WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 2 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== opening_resume: $TOOLS/godot --headless --path . --script res://tests/opening_resume_test.gd
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] start_new_game (res://scripts/ui/game_session.gd:237)
+         [1] _check_new_game_ignores_a_second_click (res://tests/opening_resume_test.gd:943)
+         [2] _frames (res://tests/opening_resume_test.gd:1168)
+ERROR: Couldn't find the given section "display" and key "locale", and no default was given.
+   at: get_value (core/io/config_file.cpp:60)
+   GDScript backtrace (most recent call first):
+       [0] _check_settings_persist (res://tests/opening_resume_test.gd:1058)
+       [1] _run (res://tests/opening_resume_test.gd:152)
+       [2] _check_new_game_ignores_a_second_click (res://tests/opening_resume_test.gd:963)
+ERROR: Invalid polygon data, triangulation failed.
+   at: canvas_item_add_polygon (servers/rendering/renderer_canvas_cull.cpp:1770)
+   GDScript backtrace (most recent call first):
+       [0] draw_rough_slab (res://scripts/ui/menu_style.gd:236)
+       [1] _draw_stage (res://scripts/ui/title_screen.gd:356)
+       [2] _draw (res://scripts/ui/title_screen.gd:320)
+ERROR: Invalid polygon data, triangulation failed.
+   at: canvas_item_add_polygon (servers/rendering/renderer_canvas_cull.cpp:1770)
+   GDScript backtrace (most recent call first):
+       [0] draw_rough_slab (res://scripts/ui/menu_style.gd:236)
+       [1] _draw_stage (res://scripts/ui/title_screen.gd:356)
+       [2] _draw (res://scripts/ui/title_screen.gd:320)
+ERROR: Invalid polygon data, triangulation failed.
+   at: canvas_item_add_polygon (servers/rendering/renderer_canvas_cull.cpp:1770)
+   GDScript backtrace (most recent call first):
+       [0] draw_rough_slab (res://scripts/ui/menu_style.gd:236)
+       [1] _draw_stage (res://scripts/ui/title_screen.gd:356)
+       [2] _draw (res://scripts/ui/title_screen.gd:320)
+PASS: every flag snapshot resumes at the right beat without replaying the ones behind it; the title offers Continue / New game / Settings by save state, a cancelled new game keeps the save, a confirmed one leaves no flag, entry, room or seed for the next boot, and settings survive a restart.
+--- exit 0
+=== free_period: $TOOLS/godot --headless --path . --script res://tests/free_period_test.gd
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+DialogueLibrary: 2 language(s) in 45.6 ms.
+  en: 57.7 KB, 25 conversations, 169 nodes, parsed in 18.7 ms
+    prologue: 24.8 KB, 8 conversations, 89 nodes, 8.5 ms
+    corridor: 3.6 KB, 3 conversations, 11 nodes, 1.2 ms
+    street: 3.2 KB, 3 conversations, 9 nodes, 1.0 ms
+    residential: 6.4 KB, 4 conversations, 17 nodes, 2.5 ms
+    alley: 1.4 KB, 1 conversations, 3 nodes, 0.6 ms
+    playground: 14.7 KB, 3 conversations, 28 nodes, 3.8 ms
+    inner_voice: 3.7 KB, 3 conversations, 12 nodes, 1.1 ms
+  zh-CN: 56.8 KB, 25 conversations, 169 nodes, parsed in 15.9 ms
+    prologue: 24.9 KB, 8 conversations, 89 nodes, 7.9 ms
+    corridor: 3.5 KB, 3 conversations, 11 nodes, 1.1 ms
+    street: 3.1 KB, 3 conversations, 9 nodes, 1.0 ms
+    residential: 6.2 KB, 4 conversations, 17 nodes, 1.6 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.4 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.8 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 1.0 ms
+PASS: staying and leaving are both recorded, and neither one is forced.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== subjective_isolation: $TOOLS/godot --headless --path . --script res://tests/subjective_isolation_test.gd
+         [2] _enter_node (res://scripts/dialogue/dialogue_runtime.gd:254)
+         [3] advance (res://scripts/dialogue/dialogue_runtime.gd:171)
+         [4] _drain (res://tests/subjective_isolation_test.gd:249)
+         [5] _check_runtime_refuses_check (res://tests/subjective_isolation_test.gd:184)
+         [6] _run (res://tests/subjective_isolation_test.gd:48)
+WARNING: DialogueRuntime: a check in a subjective conversation was not rolled or recorded
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _reject (res://scripts/dialogue/dialogue_runtime.gd:545)
+         [1] _resolve_check (res://scripts/dialogue/dialogue_runtime.gd:300)
+         [2] _enter_node (res://scripts/dialogue/dialogue_runtime.gd:254)
+         [3] advance (res://scripts/dialogue/dialogue_runtime.gd:171)
+         [4] _drain (res://tests/subjective_isolation_test.gd:249)
+         [5] _check_runtime_refuses_check (res://tests/subjective_isolation_test.gd:184)
+         [6] _run (res://tests/subjective_isolation_test.gd:48)
+WARNING: DialogueRuntime: a check in a subjective conversation was not rolled or recorded
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _reject (res://scripts/dialogue/dialogue_runtime.gd:545)
+         [1] _resolve_check (res://scripts/dialogue/dialogue_runtime.gd:300)
+         [2] _enter_node (res://scripts/dialogue/dialogue_runtime.gd:254)
+         [3] advance (res://scripts/dialogue/dialogue_runtime.gd:171)
+         [4] _drain (res://tests/subjective_isolation_test.gd:249)
+         [5] _check_runtime_refuses_check (res://tests/subjective_isolation_test.gd:184)
+         [6] _run (res://tests/subjective_isolation_test.gd:48)
+PASS: a fantasy cannot write a flag, an objective, a choice record, or a dice result.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== location_transition: $TOOLS/godot --headless --path . --script res://tests/location_transition_test.gd
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 270.8 ms (load 247.5, instantiate 12.1, tree 9.2, place 0.1, commit 0.5), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.9 ms (collect 1.3), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/street/street.tscn in 23.8 ms (load 14.3, instantiate 5.7, tree 2.3, place 0.1, commit 0.6), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 34.8 ms (collect 1.7), 492 faces -> 56 polygons, 1 region(s).
+LocationHost: res://scenes/locations/playground/playground.tscn in 110.0 ms (load 89.4, instantiate 16.5, tree 2.5, place 0.1, commit 0.4), 232 nodes, 1 live location(s).
+LocationNavigation: 'Playground' baked in 39.3 ms (collect 1.6), 396 faces -> 143 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 24.0 ms (load 17.0, instantiate 4.1, tree 1.8, place 0.1, commit 0.4), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 2.5 ms (collect 0.8), 120 faces -> 6 polygons, 1 region(s).
+LocationHost: res://scenes/locations/residential/residential.tscn in 39.4 ms (load 28.4, instantiate 6.2, tree 3.0, place 0.1, commit 0.4), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 30.6 ms (collect 2.5), 756 faces -> 109 polygons, 1 region(s).
+LocationHost: res://scenes/locations/street/street.tscn in 19.9 ms (load 12.9, instantiate 3.5, tree 2.1, place 0.1, commit 0.6), 201 nodes, 1 live location(s).
+LocationNavigation: 'Street' baked in 33.8 ms (collect 1.5), 492 faces -> 56 polygons, 1 region(s).
+LocationHost: res://scenes/locations/alley/alley.tscn in 10.2 ms (load 6.0, instantiate 1.8, tree 1.5, place 0.1, commit 0.4), 88 nodes, 1 live location(s).
+LocationNavigation: 'Alley' baked in 6.6 ms (collect 0.8), 204 faces -> 24 polygons, 1 region(s).
+LocationHost: res://scenes/locations/residential/residential.tscn in 34.8 ms (load 24.8, instantiate 5.7, tree 2.7, place 0.1, commit 0.3), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 30.8 ms (collect 2.5), 756 faces -> 109 polygons, 1 region(s).
+LocationHost: res://scenes/locations/playground/playground.tscn in 84.3 ms (load 69.0, instantiate 12.1, tree 2.0, place 0.0, commit 0.4), 232 nodes, 1 live location(s).
+LocationNavigation: 'Playground' baked in 29.4 ms (collect 1.2), 396 faces -> 143 polygons, 1 region(s).
+LocationHost: res://scenes/locations/alley/alley.tscn in 14.1 ms (load 7.7, instantiate 4.0, tree 1.5, place 0.1, commit 0.4), 88 nodes, 1 live location(s).
+LocationNavigation: 'Alley' baked in 6.4 ms (collect 0.8), 204 faces -> 24 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 15.9 ms (load 12.1, instantiate 1.6, tree 1.5, place 0.0, commit 0.2), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.7 ms (collect 0.5), 120 faces -> 6 polygons, 1 region(s).
+LocationHost: res://scenes/locations/residential/residential.tscn in 37.5 ms (load 26.8, instantiate 5.9, tree 3.0, place 0.1, commit 0.4), 332 nodes, 1 live location(s).
+LocationNavigation: 'Residential' baked in 30.9 ms (collect 2.6), 756 faces -> 109 polygons, 1 region(s).
+DIAG walk residential/res_alley_end: 53.94 m over 22 point(s)
+LocationHost: res://scenes/locations/alley/alley.tscn in 10.6 ms (load 6.6, instantiate 1.7, tree 1.3, place 0.1, commit 0.5), 88 nodes, 1 live location(s).
+LocationNavigation: 'Alley' baked in 6.0 ms (collect 0.7), 204 faces -> 24 polygons, 1 region(s).
+DIAG walk alley/alley_back_to_courtyard: 2.00 m over 2 point(s)
+DIAG arrival geometry: classroom/classroom_door off-mesh 0.00 m; corridor/back_to_classroom off-mesh 0.00 m; corridor/school_gate off-mesh 0.00 m; corridor/to_schoolyard off-mesh 0.02 m; street/street_back_to_school off-mesh 0.00 m; street/street_to_residential off-mesh 0.00 m; residential/res_back_to_street off-mesh 0.00 m; residential/res_alley_end off-mesh 0.00 m; alley/alley_back_to_courtyard off-mesh 0.00 m; alley/alley_to_playground off-mesh 0.01 m; playground/pg_back_to_alley off-mesh 0.00 m; playground/pg_to_corridor off-mesh 0.00 m
+PASS: a location transition commits only when its scene, id and spawn all exist, and every shipped exit lands on a real spawn.
+--- exit 0
+=== companion_route: $TOOLS/godot --headless --path . --script res://tests/companion_route_test.gd
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 36.5 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 228.1 ms (load 208.1, instantiate 10.8, tree 8.9, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.4 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 26.9 ms (load 20.8, instantiate 3.1, tree 1.8, place 0.0, commit 0.6), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 2.4 ms (collect 0.8), 120 faces -> 6 polygons, 1 region(s).
+WARNING: DialoguePanel portrait: Character 'protagonist': only 19 px of the 64 px screen are left for the portrait; it is not shown.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _warn_portrait (res://scripts/ui/dialogue_panel.gd:1023)
+         [1] _plan_portrait (res://scripts/ui/dialogue_panel.gd:964)
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:725)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:584)
+WARNING: DialoguePanel portrait: Character 'q': only 19 px of the 64 px screen are left for the portrait; it is not shown.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _warn_portrait (res://scripts/ui/dialogue_panel.gd:1023)
+         [1] _plan_portrait (res://scripts/ui/dialogue_panel.gd:964)
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:725)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:584)
+LocationHost: res://scenes/locations/playground/playground.tscn in 103.3 ms (load 84.5, instantiate 14.6, tree 2.6, place 0.1, commit 0.3), 232 nodes, 1 live location(s).
+LocationNavigation: 'Playground' baked in 37.0 ms (collect 1.7), 396 faces -> 143 polygons, 1 region(s).
+PASS: Q follows through the free period, and the yard is reached through the walkway.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== companion_obstacle: $TOOLS/godot --headless --path . --script res://tests/companion_obstacle_test.gd
+    playground: 3.2 KB, 6 entries, 0.3 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.5 ms
+    classroom: 5.9 KB, 8 entries, 0.4 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 36.2 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 224.7 ms (load 205.1, instantiate 10.7, tree 8.7, place 0.1, commit 0.0), 342 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+LocationNavigation: 'Classroom' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 20.6 ms (load 15.5, instantiate 2.5, tree 1.5, place 0.0, commit 0.5), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.7 ms (collect 0.5), 120 faces -> 6 polygons, 1 region(s).
+LocationNavigation: 'Corridor' baked in 2.6 ms (collect 1.0), 144 faces -> 10 polygons, 1 region(s).
+LocationNavigation: 'Corridor' baked in 2.7 ms (collect 1.0), 132 faces -> 6 polygons, 1 region(s).
+LocationNavigation: 'Corridor' baked in 3.6 ms (collect 1.4), 120 faces -> 6 polygons, 1 region(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9° | idle 5/7 tracks 2.0s | walk 11/12 tracks 1.0s | jog 11/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.5s once | wave 3/5 tracks 1.6s | talk 3/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4° | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 209.1 ms (load 190.6, instantiate 9.5, tree 7.3, place 0.1, commit 0.5), 342 nodes, 1 live location(s).
+LocationNavigation: 'Classroom' baked in 2.3 ms (collect 1.1), 168 faces -> 22 polygons, 1 region(s).
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 17.5 ms (load 12.4, instantiate 2.5, tree 1.4, place 0.0, commit 0.6), 141 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.8 ms (collect 0.6), 120 faces -> 6 polygons, 1 region(s).
+PASS: Q walks the navigation route, is stopped by real walls, and waits when there is no way.
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== dialogue_content: $TOOLS/godot --headless --path . --script res://tests/dialogue_content_test.gd
+    playground: 14.7 KB, 3 conversations, 28 nodes, 2.8 ms
+    inner_voice: 3.7 KB, 3 conversations, 12 nodes, 1.1 ms
+  zh-CN: 56.8 KB, 25 conversations, 169 nodes, parsed in 14.4 ms
+    prologue: 24.9 KB, 8 conversations, 89 nodes, 7.1 ms
+    corridor: 3.5 KB, 3 conversations, 11 nodes, 1.0 ms
+    street: 3.1 KB, 3 conversations, 9 nodes, 0.8 ms
+    residential: 6.2 KB, 4 conversations, 17 nodes, 1.6 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.3 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.5 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 1.1 ms
+InspectionLibrary: 2 language(s) in 4.9 ms.
+  en: 16.2 KB, 28 entries, parsed in 2.0 ms
+    classroom: 5.6 KB, 8 entries, 0.7 ms
+    corridor: 2.0 KB, 3 entries, 0.3 ms
+    street: 1.8 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 0.4 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.8 ms
+    classroom: 5.9 KB, 8 entries, 0.5 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+PASS: dialogue and inspection content are consistent.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+=== content_integrity: $TOOLS/godot --headless --path . --script res://tests/content_integrity_test.gd
+    playground: 3.2 KB, 6 entries, 0.5 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.9 ms
+    classroom: 5.9 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.3 ms
+    street: 1.7 KB, 4 entries, 0.2 ms
+    residential: 2.0 KB, 4 entries, 0.2 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.4 ms
+DialogueLibrary: 2 language(s) in 42.0 ms.
+  en: 57.7 KB, 25 conversations, 169 nodes, parsed in 16.1 ms
+    prologue: 24.8 KB, 8 conversations, 89 nodes, 7.9 ms
+    corridor: 3.6 KB, 3 conversations, 11 nodes, 1.1 ms
+    street: 3.2 KB, 3 conversations, 9 nodes, 0.9 ms
+    residential: 6.4 KB, 4 conversations, 17 nodes, 1.7 ms
+    alley: 1.4 KB, 1 conversations, 3 nodes, 0.4 ms
+    playground: 14.7 KB, 3 conversations, 28 nodes, 3.0 ms
+    inner_voice: 3.7 KB, 3 conversations, 12 nodes, 1.1 ms
+  zh-CN: 56.8 KB, 25 conversations, 169 nodes, parsed in 15.6 ms
+    prologue: 24.9 KB, 8 conversations, 89 nodes, 7.7 ms
+    corridor: 3.5 KB, 3 conversations, 11 nodes, 1.1 ms
+    street: 3.1 KB, 3 conversations, 9 nodes, 0.9 ms
+    residential: 6.2 KB, 4 conversations, 17 nodes, 1.6 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.3 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 2.8 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 1.1 ms
+PASS: every scene reference resolves in every language.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+--- exit 0
+SUITE.log: 50 ERROR, 29 WARNING
+automatic_interaction.log: 1 ERROR, 3 WARNING
+camera_rig.log: 1 ERROR, 1 WARNING
+classroom-first.log: 47 ERROR, 1 WARNING
+classroom_visual_slice.log: 47 ERROR, 1 WARNING
+companion_obstacle.log: 1 ERROR, 1 WARNING
+companion_route.log: 1 ERROR, 3 WARNING
+content_integrity.log: 1 ERROR, 1 WARNING
+dialogue_content.log: 1 ERROR, 1 WARNING
+free_period.log: 1 ERROR, 1 WARNING
+import-1.log: 95 ERROR, 0 WARNING
+import-2.log: 10 ERROR, 0 WARNING
+imported_assets.log: 1 ERROR, 1 WARNING
+imported_placement.log: 1 ERROR, 1 WARNING
+interaction_cue.log: 1 ERROR, 1 WARNING
+interaction_hover.log: 1 ERROR, 2 WARNING
+interaction_occlusion.log: 1 ERROR, 2 WARNING
+interaction_outline_content.log: 0 ERROR, 1 WARNING
+interaction_visibility_sweep.log: 1 ERROR, 2 WARNING
+location_transition.log: 12 ERROR, 0 WARNING
+navigation.log: 1 ERROR, 1 WARNING
+navigation_sync_stress.log: 1 ERROR, 1 WARNING
+opening_flow.log: 1 ERROR, 4 WARNING
+opening_resume.log: 21 ERROR, 7 WARNING
+pointer_target_switch.log: 1 ERROR, 2 WARNING
+prop_placement.log: 1 ERROR, 1 WARNING
+smoke-first.log: 1 ERROR, 1 WARNING
+smoke.log: 1 ERROR, 1 WARNING
+subjective_isolation.log: 1 ERROR, 202 WARNING
+overall status: 1
+checks run: 24
+passed: smoke camera_rig navigation navigation_sync_stress prop_placement imported_placement imported_assets interaction_occlusion interaction_visibility_sweep interaction_outline_content interaction_hover interaction_cue automatic_interaction pointer_target_switch opening_flow opening_resume free_period subjective_isolation location_transition companion_route companion_obstacle dialogue_content content_integrity
+::notice title=headless checks::24 check(s), status 1; passed: smoke camera_rig navigation navigation_sync_stress prop_placement imported_placement imported_assets interaction_occlusion interaction_visibility_sweep interaction_outline_content interaction_hover interaction_cue automatic_interaction pointer_target_switch opening_flow opening_resume free_period subjective_isolation location_transition companion_route companion_obstacle dialogue_content content_integrity

@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/environment_surface.gdshader" id="1_surface"]
+
+[resource]
+resource_name = "Classroom student wood — opaque pigment, not a PBR wash"
+shader = ExtResource("1_surface")
+shader_parameter/base_color = Color(0.66, 0.53, 0.37, 1)
+shader_parameter/shadow_pigment = Color(0.32, 0.34, 0.42, 1)
+shader_parameter/highlight_pigment = Color(0.78, 0.67, 0.48, 1)
+shader_parameter/brush_pigment = Color(0.43, 0.36, 0.38, 1)
+shader_parameter/use_base_texture = false
+shader_parameter/style_level = 2
+shader_parameter/patch_scale = 1.7
+shader_parameter/patch_strength = 0.24
+shader_parameter/brush_scale = 3.0
+shader_parameter/brush_strength = 0.08

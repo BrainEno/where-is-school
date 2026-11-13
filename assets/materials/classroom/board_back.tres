@@ -3,6 +3,9 @@
 [ext_resource type="Texture2D" path="res://assets/materials/classroom/textures/board_back.png" id="1_tex"]
 
 [resource]
+transparency = 0
+depth_draw_mode = 0
+cull_mode = 0
 resource_name = "board_back"
 diffuse_mode = 3
 specular_mode = 2

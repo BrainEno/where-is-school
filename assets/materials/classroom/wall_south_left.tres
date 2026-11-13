@@ -3,6 +3,9 @@
 [ext_resource type="Texture2D" path="res://assets/materials/classroom/textures/wall_south_left.png" id="1_tex"]
 
 [resource]
+transparency = 0
+depth_draw_mode = 0
+cull_mode = 0
 resource_name = "wall_south_left"
 diffuse_mode = 3
 specular_mode = 2
