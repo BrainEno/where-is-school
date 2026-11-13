@@ -33,10 +33,31 @@ extends SceneTree
 ##    An unreadable save's quarantined copy survives; the old world cannot write it back.
 ## 7. **Settings survive a restart** without touching `[display] locale`, and a damaged
 ##    controls section falls back to the defaults instead of leaving actions unbound.
+##
+## And the prologue's progress survives a real save file (issue #144):
+##
+## 8. **Both ways through the bag step finish the prologue** — searching the bag, and never
+##    searching it so the 95 s fallback closes the step. After N dismisses the class nothing
+##    is pending, `Session.is_at_rest()` agrees, and Save and quit writes the file. Neither
+##    path is given a discovery, a record or an imagined scene the player did not have.
+## 9. **The file brings the world back without replaying it**, in the classroom and on the
+##    walkway: the world is freed, memory is cleared, Continue loads the file, and the
+##    restored world runs long enough for a replayed bag wait, bell or substitute class to
+##    show — none may, and the director must not go looking for N outside the classroom.
+## 10. **Older saves** (written before the fallback left a mark) resume past the steps their
+##    later flags prove are over, instead of reopening them.
 
 const Harness = preload("res://tests/test_harness.gd")
 
 const TIME_SCALE := 6.0
+## Used while a run waits out the bag step's 95 s fallback, and while a restored world is
+## watched for beats it should not replay: story time, not CI time, is what has to pass.
+const FALLBACK_TIME_SCALE := 30.0
+## Story seconds a restored world is watched for. Longer than the bag step's fallback plus
+## the bell and N's lead-in, so a resume that reopened the bag step reaches N here.
+const RESUME_WATCH_SECONDS := 130.0
+## Real seconds any one part of a disk case may take.
+const DISK_CASE_REAL_SECONDS := 60.0
 const OVERALL_TIMEOUT_SECONDS := 200.0
 const CASE_TIMEOUT_SECONDS := 90.0
 const MAIN_SCENE := "res://scenes/main/main.tscn"
@@ -104,6 +125,41 @@ class FaultyIO:
 			return PackedStringArray()
 		return dir.get_files()
 
+
+## Collects the errors the engine reports while a restored world runs. `push_error()`
+## does not stop a coroutine, so "the director looked for N on the walkway and gave up"
+## is invisible to every other assertion; the error stream is where it shows.
+class ErrorProbe extends Logger:
+	var _lock := Mutex.new()
+	var _errors := PackedStringArray()
+
+	func _log_error(
+		_function: String, _file: String, _line: int, code: String, rationale: String,
+		_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]
+	) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		_lock.lock()
+		_errors.append("%s %s" % [code, rationale])
+		_lock.unlock()
+
+	func clear() -> void:
+		_lock.lock()
+		_errors.clear()
+		_lock.unlock()
+
+	## The errors whose text names one of `markers`.
+	func matching(markers: Array) -> PackedStringArray:
+		var found := PackedStringArray()
+		_lock.lock()
+		for error: String in _errors:
+			for marker: String in markers:
+				if error.contains(marker):
+					found.append(error)
+					break
+		_lock.unlock()
+		return found
+
 var _failures: Array[String] = []
 var _game_state: Node = null
 var _narrative: Node = null
@@ -114,6 +170,7 @@ var _sequence: OpeningSequence = null
 ## Every conversation the director started during the current case.
 var _played: Array[StringName] = []
 var _case_label := ""
+var _probe: ErrorProbe = null
 
 
 func _initialize() -> void:
@@ -139,6 +196,8 @@ func _run() -> void:
 	if session == null or settings == null:
 		_failures.append("The Session / Settings autoloads could not be created.")
 	else:
+		await _check_disk_resume(true)
+		await _check_disk_resume(false)
 		await _check_title_menu()
 		await _check_cancel_keeps_save()
 		await _check_new_game_from_title()
@@ -154,6 +213,8 @@ func _run() -> void:
 	Harness.finish(
 		self, _failures,
 		"every flag snapshot resumes at the right beat without replaying the ones behind it; "
+		+ "with or without a bag search the prologue ends, Save and quit writes the file and "
+		+ "Continue restores the classroom and the walkway without replaying a beat; "
 		+ "the title offers Continue / New game / Settings by save state, a cancelled new game "
 		+ "keeps the save, a confirmed one leaves no flag, entry, room or seed for the next "
 		+ "boot, and settings survive a restart."
@@ -204,6 +265,47 @@ func _scenarios() -> Array:
 			"expect_played": [],
 			"expect_not_played": [&"q_wake", &"expected_b", &"bell_moment", &"n_class"],
 		},
+		# The snapshots below are what saves written before #144 hold for a player who
+		# let the bag step's fallback run out: no flag says the bag step or the
+		# expectation beat is over, but the flags of the steps after them do.
+		{
+			"label": "an older save: the bell rang without a bag search",
+			"flags": [StoryFlags.MET_Q, StoryFlags.BELL_RUNG],
+			"expect_next": &"substitute",
+			"run": true,
+			"expect_played": [&"n_class"],
+			"expect_not_played": [
+				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment",
+			],
+		},
+		{
+			"label": "an older save: dismissed without a bag search",
+			"flags": [
+				StoryFlags.MET_Q, StoryFlags.BELL_RUNG, StoryFlags.N_ARRIVED,
+				StoryFlags.CLASS_DISMISSED,
+			],
+			"expect_next": &"",
+			"run": true,
+			"expect_played": [],
+			"expect_not_played": [
+				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment", &"n_class",
+			],
+		},
+		{
+			# The bag searched only after the fallback had closed its step: the beat that
+			# needed it was already behind the player, and must stay there.
+			"label": "an older save: the bag searched late, then dismissed",
+			"flags": [
+				StoryFlags.MET_Q, StoryFlags.TEXTBOOK_MISSING, StoryFlags.BELL_RUNG,
+				StoryFlags.N_ARRIVED, StoryFlags.CLASS_DISMISSED,
+			],
+			"expect_next": &"",
+			"run": true,
+			"expect_played": [],
+			"expect_not_played": [
+				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment", &"n_class",
+			],
+		},
 	]
 
 
@@ -248,6 +350,12 @@ func _run_scenario(scenario: Dictionary) -> void:
 			_case_label, _sequence.next_step(), scenario["expect_next"],
 		]
 	)
+
+	if _sequence.next_step() != scenario["expect_next"]:
+		# The pick is already wrong and recorded; running it would only wait out
+		# whichever step it reopened (up to the bag step's 95 s fallback).
+		await _free_scene()
+		return
 
 	if not bool(scenario["run"]):
 		# A game that has not started is asleep: no control, body slumped, camera
@@ -353,6 +461,315 @@ func _on_conversation_started(conversation_id: StringName) -> void:
 
 func _has_flag(flag: StringName) -> bool:
 	return bool(_game_state.get_flag(flag, false))
+
+
+# --- Progress through a real save file (#144) -------------------------------------
+
+
+## Plays the prologue from Q's first line to N's dismissal - searching the bag, or never
+## touching it so the bag step's fallback has to close it - then takes the run through
+## Save and quit, a freed world, cleared memory and Continue twice: once saved in the
+## classroom, once on the walkway after leaving it.
+##
+## Every world here is the current scene and every save goes through `Session`, the same
+## calls the pause menu and the title screen make: what is on disk is what a player would
+## have, and what comes back is only what was on disk.
+func _check_disk_resume(searched: bool) -> void:
+	_case_label = "disk resume (%s)" % ("bag searched" if searched else "bag never searched")
+	Harness.stage = _case_label
+	var session := root.get_node_or_null(^"Session")
+	var save := root.get_node_or_null(^"Save")
+	if session == null or save == null:
+		_failures.append("%s: Session / Save are unavailable." % _case_label)
+		return
+	Harness.clear_session_state(self)
+	_probe = ErrorProbe.new()
+	OS.add_logger(_probe)
+
+	# Q has spoken; the bag step is next. Flags first, because the director reads them
+	# in `_ready()`, then the world enters the way Continue enters it.
+	_game_state.set_flag(StoryFlags.MET_Q, true)
+	_game_state.set_flag(StoryFlags.OBJECTIVE_KEY, "objective.check_bag")
+	_played.clear()
+	Engine.time_scale = TIME_SCALE
+	change_scene_to_file(MAIN_SCENE)
+	var world := await _wait_for_main()
+	if world != null:
+		await _disk_resume_body(world, searched, session, save)
+	Engine.time_scale = TIME_SCALE
+	await _free_current_scene()
+	OS.remove_logger(_probe)
+	_probe = null
+
+
+func _disk_resume_body(world: Node, searched: bool, session: Node, save: Node) -> void:
+	_expect(
+		_sequence.next_step() == &"bag",
+		"%s: the run starts at '%s', not at the bag step." % [_case_label, _sequence.next_step()]
+	)
+	if searched:
+		var bag := _current_location(world).find_interactable(&"schoolbag")
+		_expect(bag != null, "%s: the classroom has no schoolbag." % _case_label)
+		if bag != null:
+			await _frames(2)
+			_interaction(world).request_activation(bag)
+
+	# --- The live run, up to N's dismissal.
+	var dismissed := await _play_until(
+		func() -> bool: return _has_flag(StoryFlags.CLASS_DISMISSED) and _settled(),
+		not searched
+	)
+	Engine.time_scale = TIME_SCALE
+	if not dismissed:
+		return
+	for conversation: StringName in [&"bell_moment", &"n_class"]:
+		_expect(
+			_played.has(conversation),
+			"%s: '%s' never played on the way to the dismissal." % [_case_label, conversation]
+		)
+	_expect(
+		_played.has(&"expected_b") == searched,
+		"%s: the expectation beat %s although the bag was %s." % [
+			_case_label, "played" if _played.has(&"expected_b") else "did not play",
+			"searched" if searched else "never searched",
+		]
+	)
+	_expect_progress(world, searched, "after the dismissal")
+	var status: Dictionary = session.get_save_status(world)
+	_expect(
+		bool(status.get("can_save_now", false)),
+		"%s: after the dismissal the pause menu would refuse Save and quit: %s"
+		% [_case_label, str(status)]
+	)
+
+	# --- Saved in the classroom.
+	await _save_and_quit(world, session, save, &"classroom")
+	world = await _continue_from_disk(session)
+	if world == null:
+		return
+	_expect_resumed(world, searched, &"classroom")
+
+	# --- Out through the door, saved on the walkway.
+	if not await _play_until(_settled, false):
+		return
+	var door := _current_location(world).find_interactable(&"classroom_door")
+	_expect(door != null, "%s: the classroom has no door." % _case_label)
+	if door == null:
+		return
+	_interaction(world).request_activation(door)
+	var outside := await _play_until(
+		func() -> bool: return _location_id(world) == &"corridor" and _settled(), false
+	)
+	if not outside:
+		return
+	_expect(
+		_has_flag(StoryFlags.LEFT_CLASSROOM),
+		"%s: the walkway was entered without 'left_classroom'." % _case_label
+	)
+	_expect_progress(world, searched, "on the walkway")
+	await _save_and_quit(world, session, save, &"corridor")
+	world = await _continue_from_disk(session)
+	if world == null:
+		return
+	_expect_resumed(world, searched, &"corridor")
+
+
+## What the progress has to say at any rest point after the dismissal - and what it must
+## not claim: a search, a record or an imagined scene the player never had.
+func _expect_progress(world: Node, searched: bool, where: String) -> void:
+	_expect(
+		String(_sequence.next_step()).is_empty(),
+		"%s: %s, the prologue still has '%s' pending." % [_case_label, where, _sequence.next_step()]
+	)
+	for step: StringName in OpeningSequence.STEPS:
+		_expect(
+			_sequence.is_step_done(step),
+			"%s: %s, step '%s' is not done." % [_case_label, where, step]
+		)
+	_expect(
+		_has_flag(StoryFlags.TEXTBOOK_MISSING) == searched,
+		"%s: %s, 'textbook_missing' is %s although the bag was %s." % [
+			_case_label, where, str(_has_flag(StoryFlags.TEXTBOOK_MISSING)),
+			"searched" if searched else "never searched",
+		]
+	)
+	_expect(
+		_narrative.has_entry(&"bag_missing_textbook") == searched,
+		"%s: %s, the bag record is %s although the bag was %s." % [
+			_case_label, where,
+			"there" if _narrative.has_entry(&"bag_missing_textbook") else "missing",
+			"searched" if searched else "never searched",
+		]
+	)
+	_expect(
+		_has_flag(StoryFlags.EXPECTATION_PLAYED) == searched,
+		"%s: %s, 'expectation_played' is %s." % [
+			_case_label, where, str(_has_flag(StoryFlags.EXPECTATION_PLAYED))
+		]
+	)
+	_expect(
+		_has_flag(StoryFlags.CLASS_DISMISSED),
+		"%s: %s, the class is not dismissed." % [_case_label, where]
+	)
+	var session := root.get_node_or_null(^"Session")
+	_expect(
+		session != null and bool(session.is_at_rest(world)),
+		"%s: %s, Session.is_at_rest() is false (next step '%s', beat %s, talking %s, control %s)."
+		% [
+			_case_label, where, _sequence.next_step(), str(_sequence.is_beat_active()),
+			str(_dialogue.is_busy()), str(_player.is_control_enabled()),
+		]
+	)
+
+
+## A world Continue brought back from disk, after it ran long enough to replay anything.
+func _expect_resumed(world: Node, searched: bool, location_id: StringName) -> void:
+	var where := "resumed in '%s'" % location_id
+	_expect(
+		_location_id(world) == location_id,
+		"%s: %s, but the player is in '%s'." % [_case_label, where, _location_id(world)]
+	)
+	_expect(
+		_played.is_empty(),
+		"%s: %s, the world replayed %s." % [_case_label, where, str(_played)]
+	)
+	var errors := _probe.matching(["OpeningSequence", "LocationFlow", "npc_id"])
+	_expect(
+		errors.is_empty(),
+		"%s: %s, the director reported: %s" % [_case_label, where, " | ".join(errors)]
+	)
+	_expect_progress(world, searched, where)
+
+
+## Save and quit from the world, as the pause menu does it. A refusal is a failure; the
+## world is then left without writing, so the last autosave is what the next part loads.
+func _save_and_quit(world: Node, session: Node, save: Node, location_id: StringName) -> void:
+	var report: Dictionary = session.save_and_quit(true, world)
+	_expect(
+		bool(report.get("ok", false)) and bool(report.get("saved", false)),
+		"%s: Save and quit in '%s' did not save: %s" % [_case_label, location_id, str(report)]
+	)
+	if bool(report.get("ok", false)):
+		await _wait_for_title()
+	else:
+		world.get_node("OpeningSequence").set("autosave_enabled", false)
+		world.queue_free()
+		await _frames(3)
+		save.unbind_world()
+	_expect(not is_instance_valid(world), "%s: the saved world was not freed." % _case_label)
+	var info: Dictionary = save.peek_save()
+	_expect(
+		bool(info.get("ok", false)) and StringName(String(info.get("location_id", ""))) == location_id,
+		"%s: the file on disk does not describe '%s': %s" % [_case_label, location_id, str(info)]
+	)
+
+
+## Continue from the title with nothing in memory: every flag and record the next world
+## has came out of the file. The world is then left alone for `RESUME_WATCH_SECONDS` of
+## story time, and only then advanced again.
+func _continue_from_disk(session: Node) -> Node:
+	_game_state.clear()
+	_narrative.clear()
+	_played.clear()
+	_probe.clear()
+	Engine.time_scale = TIME_SCALE
+	var result: Dictionary = session.continue_game()
+	_expect(bool(result.get("ok", false)), "%s: Continue failed: %s" % [_case_label, str(result)])
+	var world := await _wait_for_main()
+	if world == null:
+		return null
+	_expect(
+		_has_flag(StoryFlags.MET_Q) and _has_flag(StoryFlags.CLASS_DISMISSED),
+		"%s: Continue did not bring the flags back from the file." % _case_label
+	)
+	Engine.time_scale = FALLBACK_TIME_SCALE
+	var timer := create_timer(RESUME_WATCH_SECONDS, false)
+	var started := Time.get_ticks_msec()
+	while timer.time_left > 0.0 and _played.is_empty():
+		if Time.get_ticks_msec() - started > int(DISK_CASE_REAL_SECONDS * 1000.0):
+			_failures.append("%s: the watch on the restored world ran out of real time." % _case_label)
+			break
+		await process_frame
+	Engine.time_scale = TIME_SCALE
+	await _frames(2)
+	return world
+
+
+## Advances whatever is on screen until `done` holds. With `fast_until_bell`, story time
+## runs at `FALLBACK_TIME_SCALE` until the bell, which is what the bag step's fallback
+## needs, and at the usual scale afterwards so N's walk is not physics at 30x.
+func _play_until(done: Callable, fast_until_bell: bool) -> bool:
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < int(DISK_CASE_REAL_SECONDS * 1000.0):
+		if fast_until_bell:
+			Engine.time_scale = (
+				TIME_SCALE if _has_flag(StoryFlags.BELL_RUNG) else FALLBACK_TIME_SCALE
+			)
+		if _dialogue.is_busy():
+			if _dialogue.has_pending_choices():
+				_dialogue.select_choice(0)
+			else:
+				_dialogue.advance_presentation()
+		elif bool(done.call()):
+			await _frames(2)
+			if bool(done.call()):
+				return true
+		await process_frame
+	_failures.append(
+		"%s: timed out (next step '%s', played %s)." % [_case_label, _sequence.next_step(), str(_played)]
+	)
+	return false
+
+
+## Nothing authored is running: no beat, no conversation, and the player can move.
+func _settled() -> bool:
+	return not _sequence.is_beat_active() and not _dialogue.is_busy() \
+		and _player.is_control_enabled()
+
+
+## Waits for a world to become the current scene and starts listening to it on the frame
+## it appears, before its director has had time to start anything.
+func _wait_for_main() -> Node:
+	for _index in 600:
+		await process_frame
+		var scene := current_scene
+		if scene != null and scene.get_node_or_null("OpeningSequence") != null:
+			_dialogue = scene.get_node_or_null("DialogueController") as DialogueController
+			_player = scene.get_node_or_null("Player") as PlayerController
+			_sequence = scene.get_node_or_null("OpeningSequence") as OpeningSequence
+			if _dialogue == null or _player == null or _sequence == null:
+				_failures.append("%s: main did not expose its nodes." % _case_label)
+				return null
+			_dialogue.conversation_started.connect(_on_conversation_started)
+			var voice := scene.get_node_or_null("InnerVoiceDirector")
+			if voice != null:
+				voice.set_process(false)
+			return scene
+	_failures.append("%s: the world never became the current scene." % _case_label)
+	return null
+
+
+func _wait_for_title() -> void:
+	for _index in 240:
+		await process_frame
+		if current_scene is TitleScreen:
+			await _frames(2)
+			return
+	_failures.append("%s: Save and quit did not reach the title screen." % _case_label)
+
+
+func _current_location(world: Node) -> LocationRoot:
+	var host := world.get_node_or_null("LocationHost") as LocationHost
+	return host.get_current() if host != null else null
+
+
+func _location_id(world: Node) -> StringName:
+	var location := _current_location(world)
+	return location.location_id if location != null else &""
+
+
+func _interaction(world: Node) -> InteractionController:
+	return world.get_node_or_null("Player/InteractionController") as InteractionController
 
 
 # --- The way in and out of a run -------------------------------------------------
