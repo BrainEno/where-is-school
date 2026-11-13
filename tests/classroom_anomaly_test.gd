@@ -136,7 +136,7 @@ func _run() -> void:
 # --- 1. placement -------------------------------------------------------------------
 
 
-func _room() -> Node3D:
+func _room() -> LocationRoot:
 	return _host.get_current()
 
 
@@ -262,7 +262,7 @@ func _check_placement() -> void:
 
 
 func _check_lesson() -> void:
-	var before := _game_state.get_snapshot()
+	var before: Dictionary = _game_state.get_snapshot()
 	_conversations.clear()
 	await _activate(&"curtain")
 	await _settle(40.0, "the curtain during the lesson")
@@ -520,7 +520,7 @@ func _check_return() -> void:
 		)
 	if not _door().is_open() or not _stair().visible:
 		_failures.append("Back in the classroom the rear door is shut or the staircase is gone.")
-	var curtain := _room().find_interactable(&"curtain")
+	var curtain: Interactable = _room().find_interactable(&"curtain")
 	if curtain != null and curtain.get_prompt_override() != "prompt.curtain_drawn":
 		_failures.append(
 			"The drawn curtain still offers to be drawn ('%s')." % curtain.get_prompt_override()
@@ -542,7 +542,7 @@ func _check_return() -> void:
 
 func _activate(id: StringName) -> void:
 	var room := _room()
-	var target := room.find_interactable(id) if room != null else null
+	var target: Interactable = room.find_interactable(id) if room != null else null
 	if target == null:
 		_failures.append("No '%s' interactable to use." % id)
 		return
