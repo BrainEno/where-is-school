@@ -129,7 +129,7 @@ func _run() -> void:
 		_failures,
 		(
 			"the curtained window opens on nothing and drops the player into the yard; the "
-			+ "rear door puts an unsupported staircase over the teacher's desk; both are "
+			+ "second door puts an unsupported staircase in front of the lectern; both are "
 			+ "decoration, both are remembered."
 		)
 	)

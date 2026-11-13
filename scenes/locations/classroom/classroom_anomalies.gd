@@ -1,3 +1,4 @@
+class_name ClassroomAnomalies
 extends Node3D
 ## The biology classroom's two impossible things (docs/ART_BIBLE.md, location studies).
 ##
