@@ -31,6 +31,7 @@ const LANDING_CONVERSATION := &"classroom_fall_landing"
 const STAIR_CONVERSATION := &"classroom_rear_door"
 const REAR_DOOR_OPEN_INSPECTION := &"classroom_rear_door_open"
 const CURTAIN_DRAWN_PROMPT := "prompt.curtain_drawn"
+const CURTAIN_RETRY_PROMPT := "prompt.curtain_retry"
 const REAR_DOOR_OPEN_PROMPT := "prompt.rear_door_open"
 ## A floor point that frames the player at the rear door and the whole staircase at once
 ## from the game camera's fixed angle (measured with its offset and field of view).
@@ -103,6 +104,10 @@ func _apply_story_state() -> void:
 		_set_prompt(_curtain_interactable, CURTAIN_DRAWN_PROMPT)
 	else:
 		_show_void(false)
+		_set_prompt(
+			_curtain_interactable,
+			CURTAIN_RETRY_PROMPT if _flag(StoryFlags.CURTAIN_FALL_PENDING) else "prompt.curtain"
+		)
 	if _flag(StoryFlags.REAR_DOOR_OPENED):
 		if _door != null:
 			_door.open(false)
@@ -144,8 +149,13 @@ func _stage_curtain(director: Node) -> Dictionary:
 			"departure": departure,
 			"fade_out": FALL_FADE_SECONDS,
 			"arrival_conversation": LANDING_CONVERSATION,
-			# The fall is paid; the curtain stays drawn (CURTAIN_DRAWN is already set).
-			"arrival_flags": {StoryFlags.CURTAIN_FALL_PENDING: false},
+			# Commit the drawn state only after the yard has actually loaded. A refused
+			# transition leaves the pending flag intact and the room retryable.
+			"arrival_flags": {
+				StoryFlags.CURTAIN_FALL_PENDING: false,
+				StoryFlags.CURTAIN_DRAWN: true,
+			},
+			"on_failure": Callable(self, "reset_curtain_after_failed_transition"),
 		}
 	}
 
@@ -157,9 +167,17 @@ func draw_curtain(animated: bool = true) -> void:
 	# The void goes in while the cloth still covers the whole window, so it is the
 	# curtain moving that uncovers it.
 	_show_void(true)
-	_set_state_flag(StoryFlags.CURTAIN_DRAWN)
-	_set_prompt(_curtain_interactable, CURTAIN_DRAWN_PROMPT)
+	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 	await _curtain.open(animated)
+
+
+## A refused fall returns to the same room. Put the cloth and window back as they were;
+## curtain_fall_pending remains true so the player can try the same choice again.
+func reset_curtain_after_failed_transition() -> void:
+	if _curtain != null:
+		_curtain.set_open_amount(0.0)
+	_show_void(false)
+	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 
 
 func _show_void(open: bool) -> void:
