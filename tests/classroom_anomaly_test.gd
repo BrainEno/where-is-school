@@ -115,6 +115,8 @@ func _run() -> void:
 	await _check_see_through()
 	Harness.stage = "curtain left drawn"
 	await _check_curtain_left()
+	Harness.stage = "curtain failure recovery"
+	await _check_curtain_failure_recovery()
 	Harness.stage = "curtain and fall"
 	await _check_fall()
 	Harness.stage = "the room remembers"
@@ -405,6 +407,28 @@ func _check_curtain_left() -> void:
 		_failures.append("Leaving the curtain drawn still opened it.")
 	if String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) != "classroom":
 		_failures.append("Leaving the curtain drawn left the classroom.")
+
+
+func _check_curtain_failure_recovery() -> void:
+	var anomalies := _anomalies() as ClassroomAnomalies
+	if anomalies == null:
+		_failures.append("ClassroomAnomalies is unavailable for the failure-recovery check.")
+		return
+	_game_state.set_flag(StoryFlags.CURTAIN_FALL_PENDING, true)
+	_game_state.set_flag(StoryFlags.CURTAIN_DRAWN, false)
+	await anomalies.draw_curtain(false)
+	if _flag(StoryFlags.CURTAIN_DRAWN):
+		_failures.append("Drawing the curtain committed CURTAIN_DRAWN before a destination loaded.")
+	if not _curtain().is_open() or not _void().visible:
+		_failures.append("The curtain failure fixture did not reach its open/void state.")
+	anomalies.reset_curtain_after_failed_transition()
+	if _curtain().is_open() or _void().visible:
+		_failures.append("A refused fall did not restore the closed curtain and ordinary window.")
+	if not _flag(StoryFlags.CURTAIN_FALL_PENDING) or _flag(StoryFlags.CURTAIN_DRAWN):
+		_failures.append("A refused fall consumed pending state or committed the drawn state.")
+	var curtain := _room().find_interactable(&"curtain")
+	if curtain == null or curtain.get_prompt_override() != "prompt.curtain_retry":
+		_failures.append("A refused fall did not leave an explicit curtain retry prompt.")
 
 
 func _check_fall() -> void:
