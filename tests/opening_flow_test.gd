@@ -691,6 +691,9 @@ func _check_targeting() -> void:
 		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), test_case["position"]))
 		await physics_frame
 		await physics_frame
+		# The camera rig follows a teleported player over several frames; the facing
+		# fallback also requires the object to be visible from the settled camera.
+		await get_tree().create_timer(0.4).timeout
 		var target := _interaction.get_current_target()
 		var found := String(target.interact_id) if target != null else "<nothing>"
 		if target == null or target.interact_id != test_case["expected"]:
