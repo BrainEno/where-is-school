@@ -154,7 +154,9 @@ func _run() -> void:
 
 	# 5. Press E and photograph the description.
 	await _press(KEY_E)
-	if not await _wait_for_line(5.0):
+	# The schoolbag description is deliberately a full paragraph; wait for its
+	# typewriter reveal instead of mistaking a mid-line screenshot for no response.
+	if not await _wait_for_line(15.0):
 		await _fail("pressing E on the schoolbag showed nothing")
 		return
 	await _wait(0.6)
@@ -177,7 +179,7 @@ func _run() -> void:
 
 	# 7. An object read a second time, in Chinese.
 	await _press(KEY_E)
-	if await _wait_for_line(5.0):
+	if await _wait_for_line(15.0):
 		await _wait(0.6)
 		await _shot("08_repeat_read_chinese", "The second read of the same object, in Chinese.")
 	await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the second read to close")
