@@ -35,6 +35,8 @@ const WALK_LIMIT_SECONDS := 10.0
 const DIALOGUE_LIMIT_SECONDS := 12.0
 ## Longer than `DestinationCue.DISMISS_SECONDS` at any time scale this test uses.
 const FADE_LIMIT_SECONDS := 1.0
+## Game seconds after an arrival by which its fade (0.14 s) has certainly finished.
+const FADE_WINDOW_SECONDS := 0.3
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -56,6 +58,7 @@ var _finish_seen := 0
 var _finish_cue_shown := false
 var _finish_cue_visible := false
 var _finish_cue_role := ""
+var _fade_window_over := false
 
 
 func _initialize() -> void:
@@ -223,22 +226,44 @@ func _check_keys_after_arrival_leave_no_mark() -> void:
 	if not await _wait_until(func() -> bool: return not _player.is_path_active(), WALK_LIMIT_SECONDS):
 		_failures.append("keys after arrival: the character never arrived.")
 		return
+	# The keys are taken on the very frame of the arrival, so the first frames overlap the
+	# arrival's own fade (`DestinationCue.DISMISS_SECONDS`, requirement: the mark fades on
+	# arrival). Two separate questions, then: is the old mark still *shown* - a live mark
+	# for a walk that is over - on any frame of keyboard movement; and is anything still
+	# drawn once the fade window has passed.
 	var start := _player.global_position
-	var drawn_frames := 0
+	var live_frames := 0
+	var drawn_after_fade := 0
+	_fade_window_over = false
+	create_timer(FADE_WINDOW_SECONDS).timeout.connect(_on_fade_window_over)
 	Input.action_press("move_back")
 	for _index in 30:
 		await physics_frame
-		if _cue_drawn():
-			drawn_frames += 1
+		var cue := _navigator.get_cue()
+		if cue != null and cue.is_shown():
+			live_frames += 1
+		if _fade_window_over and _cue_drawn():
+			drawn_after_fade += 1
 	Input.action_release("move_back")
+	if not _fade_window_over:
+		_failures.append("keys after arrival: 30 frames of keyboard movement were shorter than the fade window.")
 	if _flat_distance(_player.global_position, start) < 0.1:
 		_failures.append("keys after arrival: the movement key did not move the character.")
-	if drawn_frames > 0:
+	if live_frames > 0:
 		_failures.append(
-			"keys after arrival: the old mark was on the floor for %d of 30 frame(s) of keyboard movement (role '%s')."
-			% [drawn_frames, _navigator.get_cue_role()]
+			"keys after arrival: the old mark was still shown for %d of 30 frame(s) of keyboard movement (role '%s')."
+			% [live_frames, _navigator.get_cue_role()]
+		)
+	if drawn_after_fade > 0:
+		_failures.append(
+			"keys after arrival: the old mark was still drawn on %d frame(s) after its fade should have ended."
+			% drawn_after_fade
 		)
 	await _physics_frames(4)
+
+
+func _on_fade_window_over() -> void:
+	_fade_window_over = true
 
 
 # --- 4. several clicks ---------------------------------------------------------
