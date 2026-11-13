@@ -75,6 +75,9 @@ var _confirm: ConfirmPrompt = null
 var _was_paused := false
 ## What the open question is about: `new_game` or `quit_unsaved`.
 var _pending: StringName = &""
+## The new game that did not start, while the notice shows it. Kept as the report so a
+## language switch renders it again (`NewGameFailureText`).
+var _failure: Dictionary = {}
 
 
 func _ready() -> void:
@@ -151,6 +154,7 @@ func open() -> void:
 	_factor = UiTextScale.current(self)
 	UiTextScale.apply(_root, _factor)
 	_notice.visible = false
+	_failure = {}
 	_refresh_texts()
 	_root.show()
 	_fit()
@@ -265,6 +269,7 @@ func _quit_without_saving() -> void:
 
 
 func _show_notice(text: String) -> void:
+	_failure = {}
 	_notice.text = text
 	_notice.visible = not text.is_empty()
 	_fit()
@@ -287,11 +292,48 @@ func _on_cancelled() -> void:
 
 
 func _on_new_game_confirmed() -> void:
-	_root.hide()
 	var session := get_node_or_null(^"/root/Session")
-	if session != null:
-		# The menu's own world: the session switches its autosave off before anything else.
-		session.call("start_new_game", _world())
+	if session == null:
+		return
+	_root.hide()
+	# A failure before the world is freed (the save could not be moved aside) leaves this
+	# menu alive, and it comes back with the reason. A failure after it ends on the title
+	# screen, which reads the report itself; this menu is gone by then, and so is the
+	# connection.
+	if not session.is_connected("new_game_failed", _on_new_game_failed):
+		session.connect("new_game_failed", _on_new_game_failed, CONNECT_ONE_SHOT)
+	# The menu's own world: the session switches its autosave off before anything else.
+	var immediate: Variant = session.call("start_new_game", _world())
+	if immediate is Dictionary and String((immediate as Dictionary).get("reason", "")) == "busy":
+		# Refused before it started, so no signal follows.
+		if session.is_connected("new_game_failed", _on_new_game_failed):
+			session.disconnect("new_game_failed", _on_new_game_failed)
+		_reopen_with_failure(immediate as Dictionary)
+
+
+func _on_new_game_failed(report: Dictionary) -> void:
+	if not is_inside_tree():
+		return
+	var session := get_node_or_null(^"/root/Session")
+	if session != null and session.has_method("mark_new_game_failure_shown"):
+		session.call("mark_new_game_failure_shown")
+	_reopen_with_failure(report)
+
+
+## Back on screen after a new game that did not start, with the reason and the focus on
+## New game: Enter tries again, Resume or Esc goes back to the run that is still there.
+## The transaction unpaused the tree to free the world; it did not, so the pause comes back.
+func _reopen_with_failure(report: Dictionary) -> void:
+	_pending = &""
+	_confirm.hide()
+	get_tree().paused = true
+	_failure = report.duplicate(true)
+	_refresh_texts()
+	_root.show()
+	_notice.text = NewGameFailureText.describe(_failure)
+	_notice.visible = true
+	_fit()
+	focus_entry(&"new_game")
 
 
 ## "Corridor · 11/12 14:03" from a status or peek, or "" when the file says nothing.
@@ -343,6 +385,8 @@ func _refresh_texts() -> void:
 		return
 	_heading.text = L10n.t("menu.paused")
 	_status.text = _status_text()
+	if not _failure.is_empty():
+		_notice.text = NewGameFailureText.describe(_failure)
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
 	var keys := {
@@ -369,6 +413,7 @@ func _status_text() -> String:
 
 func _on_locale_changed(_locale: String) -> void:
 	_refresh_texts()
+	_fit()
 
 
 func _on_setting_changed(key: StringName) -> void:
