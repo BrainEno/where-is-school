@@ -145,6 +145,12 @@ func _run() -> void:
 		_failures.append("The schoolbag was never offered as an interaction target.")
 		await _shot("FAIL_schoolbag_prompt", "No prompt appeared for the schoolbag.")
 	await _shot("04_prompt_schoolbag", "The interaction prompt with the key that is bound in the input map.")
+	# Reassert the real pointer target after the capture frame. The camera may have settled
+	# during the screenshot; E must activate the same visible schoolbag prompt, not a stale
+	# target from the previous frame.
+	if not await _wait_for_target(&"schoolbag", 5.0):
+		await _fail("the schoolbag prompt was lost before pressing E")
+		return
 
 	# 5. Press E and photograph the description.
 	await _press(KEY_E)
