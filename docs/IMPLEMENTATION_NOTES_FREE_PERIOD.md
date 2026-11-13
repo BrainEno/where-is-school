@@ -15,31 +15,22 @@ Four things were missing, and each one is now a system rather than a scene:
 
 | Missing | Now |
 | --- | --- |
-| a free period the player could actually choose | `n_class` ends with stay / leave, both recorded, neither forced |
+| a free period the player could actually choose | N announces the options in `n_class`; Q then invites the player in `q_after_dismissal`, with stay / leave intent recorded separately |
 | Q as company rather than a one-off conversation | `CompanionController`, outside `LocationRoot`, follows / waits / resumes |
 | things to do in the walkway | speaker cue, cleaning trolley, railing, plus the three existing inspections |
 | a reason to walk to the yard | the walkway's end door, and the yard's content extended |
 
-## 2. The stay-or-leave branch
+## 2. N announces the free period; Q asks whether to go
 
-`data/dialogue/{en,zh-CN}/prologue.json`, conversation `n_class`:
+The two conversations have separate jobs:
 
-- `n_turn_2` sets `class_dismissed`, the new objective `objective.free_period`, and
-  the reported entry `n_allows_free_period`. It no longer sets
-  `objective.leave_classroom`.
-- `n_choice` offers two options. **Leave is listed first** so a scripted walkthrough
-  picks the intended path without knowing node ids; staying is one key away.
-- `n_leave_1` sets `free_period_leaving`, `objective.leave_classroom` and records
-  `n_leaving`. It does **not** move the player: the classroom door is still the way
-  out, and the exit is already open because `class_dismissed` is set.
-- `n_stay_1` sets `free_period_stayed`, `objective.stay_classroom` and records
-  `n_stayed`. Control returns; the room stays inspectable and the door stays open, so
-  a player who stays can still leave whenever they want.
+- `n_class` is the substitute's arrival and the classroom's attendance beat. N notices how few students are present, asks where everyone went, and hears Q say they have gone out to play. The seated classmate corrects him: most of them skipped class. N is out of her depth and ends the lesson without pretending to teach.
+- N's final line sets `class_dismissed`, the objective `objective.free_period`, and the reported entry `n_allows_free_period`. The conversation ends there; it does not choose for the player.
+- The classroom's Q interactable routes to `q_after_dismissal` only when `class_dismissed` is true. Before that, it routes to the earlier Q conversation, so the invitation cannot appear before N has dismissed the class.
+- `q_after_dismissal` is Q's invitation to go to the yard. The player can accept, defer, decline, or say nothing. Accepting sets `free_period_leaving`, `objective.leave_classroom` and records the intention as `n_leaving`. Declining sets `free_period_stayed`, `objective.stay_classroom` and records `n_stayed`.
+- These choices express intent; they do **not** move the player. The classroom door remains the actual way out, and the exit is already open because `class_dismissed` is set. A player can also ignore Q and use the door directly.
 
-Nothing in the branch is a cutscene, and no flag is written that the other branch
-also writes, so the two free periods are distinguishable later.
-
-Covered by `tests/free_period_test.gd` (state) and by
+Covered by `tests/free_period_test.gd` (N's announcement followed by Q's invitation), `tests/dialogue_content_test.gd` (route gate), and by
 `tests/companion_route_test.gd` + `tests/opening_flow_test.gd` (the door).
 
 ## 3. Q as a companion

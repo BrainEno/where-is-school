@@ -11,14 +11,14 @@
         {
           "id": "cs_1",
           "speaker": "protagonist",
-          "text": "防火门上方有一个匣子喇叭，从前是它打铃的。现在它还开着。",
+          "text": "防火门上方装着一个喇叭，以前上课铃就是从这里传出来的。现在喇叭还开着。",
           "source": "observed",
           "next": "cs_2"
         },
         {
           "id": "cs_2",
           "speaker": "protagonist",
-          "text": "墙那边整班人一起说话，然后忽然停了，像是有人走了进去。",
+          "text": "墙那边有一整个班的人在说话。声音挤在一起，过了一会儿突然停了，像是有人进了教室。",
           "source": "observed",
           "next": "cs_q_q"
         },
@@ -57,7 +57,7 @@
         {
           "id": "ct_2",
           "speaker": "protagonist",
-          "text": "一把拖把、半桶水、一瓶黄色的东西。后面那个柜子里，从书脊看是练习本。",
+          "text": "一把拖把、半桶水，还有一瓶黄色的清洁剂。后面的柜子里放着练习本，能从书脊看出来。",
           "source": "observed",
           "next": "ct_q_q"
         },
@@ -75,7 +75,7 @@
         {
           "id": "ct_3",
           "speaker": "protagonist",
-          "text": "你把清洁车留在原地。它挡着的只有一只柜子。",
+          "text": "你没去动那辆清洁车。它只是挡住了柜子，别的地方都能走。",
           "source": "observed",
           "next": null
         }
@@ -89,21 +89,21 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "你在栏杆边停下。从这里看下去，操场和在屋里看是两种颜色。",
+          "text": "你在栏杆边停下来。楼下的操场看起来和刚才在教室里看到的不太一样，颜色也变了。",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "两个篮架、一间工具棚、一片水泥。有一阵什么也没发生。",
+          "text": "两个篮架，一间工具棚，一大片水泥地。看了一会儿，也没什么动静。",
           "source": "observed",
           "next": "cw_3"
         },
         {
           "id": "cw_3",
           "speaker": "protagonist",
-          "text": "这一节课在你没参与的情况下继续着。这并不难受。",
+          "text": "这节课还在继续，只是跟你没什么关系。你倒也不觉得难受。",
           "source": "observed",
           "next": null,
           "effects": [

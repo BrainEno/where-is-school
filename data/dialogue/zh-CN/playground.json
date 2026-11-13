@@ -11,12 +11,12 @@
         {
           "id": "pa_1",
           "speaker": "protagonist",
-          "text": "一片空地上画着球场，一个攀爬架，一张长椅，旁边一间小屋。你进来的那道门在身后。"
+          "text": "这是一块空地。地上画着球场，旁边有攀爬架、长椅和一间小屋。你刚才进来的门就在身后。"
         },
         {
           "id": "pa_2",
           "speaker": "protagonist",
-          "text": "这里没有人，也没有什么东西要求你站在哪一个位置上。",
+          "text": "四周没人。也没有人管你该站哪儿。",
           "effects": [
             {
               "type": "set_flag",
@@ -39,7 +39,7 @@
         {
           "id": "pa_3",
           "speaker": "protagonist",
-          "text": "小屋后面的栅栏上开着一个口子，口子那边的地和场子是同一种水泥。",
+          "text": "小屋后面的栅栏缺了一块。缺口外面还是水泥地，和这边没什么两样。",
           "next": null
         }
       ]
@@ -52,12 +52,12 @@
         {
           "id": "ps_1",
           "speaker": "protagonist",
-          "text": "器材室是一扇绿门，一个搭扣，搭扣上挂着锁。窗子里面贴着的那张表朝外。"
+          "text": "器材室有扇绿门，门上装着搭扣，还挂着一把锁。窗户里贴着一张表，纸面朝外。"
         },
         {
           "id": "ps_2",
           "speaker": "protagonist",
-          "text": "你可以把手按在门上。你可以读那张表。你也可以就这样走开。",
+          "text": "你可以试试门，也可以看看窗户里的表。或者就算了。",
           "choices": [
             {
               "id": "frame",
@@ -89,7 +89,7 @@
         {
           "id": "ps_boundary_check",
           "speaker": "voice_orientation",
-          "text": "等等。先看这扇门是怎么卡在门框里的。",
+          "text": "等一下。先看看门和门框之间的缝。",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -101,7 +101,7 @@
         {
           "id": "ps_boundary_ok",
           "speaker": "voice_orientation",
-          "text": "门没有涨。合页那边，门框比门宽；那道缝从上到下一样宽。原本填住它的东西被拿走了，没有再放回去。",
+          "text": "门不是被挤变形了。合页那边留着一道缝，从上到下差不多一样宽。原来卡在那里的东西像是被拆走了。",
           "effects": [
             {
               "type": "set_flag",
@@ -126,25 +126,25 @@
         {
           "id": "ps_inside",
           "speaker": "protagonist",
-          "text": "椅子摞到天花板，一卷绳，三个打坏的羽毛球。最高那把椅子底下贴着胶带，写着名字——坐着的人看不见那里。",
+          "text": "椅子一直摞到天花板。旁边有卷绳子，还有三个坏掉的羽毛球。最上面那把椅子的椅面底下贴着一条胶带，上面写了个名字。坐在椅子上的人看不到。",
           "next": "ps_inside_2"
         },
         {
           "id": "ps_inside_2",
           "speaker": "protagonist",
-          "text": "从门口读不出来。要读就得挪开这一摞，而这一摞是整间屋子唯一撑着这一摞的东西。",
+          "text": "站在门口看不清那个名字。要看只能把椅子挪开，可这堆椅子摞得太高了。",
           "next": null
         },
         {
           "id": "ps_boundary_bad",
           "speaker": "voice_orientation",
-          "text": "门框是正的。看不出哪里不对。",
+          "text": "门框看着没歪。暂时看不出问题。",
           "next": "ps_boundary_bad_2"
         },
         {
           "id": "ps_boundary_bad_2",
           "speaker": "protagonist",
-          "text": "门没有动。门底下透光，搭扣后面的漆是干净的，像那个搭扣有很长一段时间钉在别的地方。",
+          "text": "门推不动。门底下透着光，搭扣后面的漆却很干净，像是搭扣以前装在别处。",
           "effects": [
             {
               "type": "set_flag",
@@ -169,7 +169,7 @@
         {
           "id": "ps_ledger_check",
           "speaker": "voice_orientation",
-          "text": "那扇窗。看看那张纸是怎么贴在玻璃上的。",
+          "text": "看看窗户里的那张表。尤其是它贴的位置。",
           "check": {
             "ability": "orientation",
             "difficulty": 8,
@@ -181,7 +181,7 @@
         {
           "id": "ps_ledger_ok",
           "speaker": "voice_orientation",
-          "text": "九行，正好和窗框上下对齐。最后两行是同一天写了两遍，第二遍比第一行矮了一周的位子。",
+          "text": "一共九行，纸边和窗框对得很齐。最后两行写的是同一天，第二行的日期却比第一行晚了一周。",
           "effects": [
             {
               "type": "set_flag",
@@ -206,13 +206,13 @@
         {
           "id": "ps_ledger_bad",
           "speaker": "voice_orientation",
-          "text": "窗上贴着一张值日表。两条边，一道留白。",
+          "text": "一张值日表。两边有线，中间留着空白。",
           "next": "ps_ledger_bad_2"
         },
         {
           "id": "ps_ledger_bad_2",
           "speaker": "protagonist",
-          "text": "你再数一遍，是八行。雨把两行泡在了一起。有一个姓还认得出来，就是巷子口墙上用粉笔写的那个姓。",
+          "text": "你重新数了一遍，只有八行。雨水把其中两行泡在了一起。还有一个姓没糊掉，和巷口墙上粉笔写的那个姓一样。",
           "effects": [
             {
               "type": "set_flag",
@@ -237,7 +237,7 @@
         {
           "id": "ps_leave",
           "speaker": "protagonist",
-          "text": "你让锁继续挂着。身后的近篮没有网，远篮有。",
+          "text": "你没碰那把锁。回头看了一眼，近处的篮筐没有网，远处那个倒是有。",
           "next": null
         }
       ]
@@ -250,12 +250,12 @@
         {
           "id": "pb_1",
           "speaker": "protagonist",
-          "text": "一个乒乓球卡在小屋基座和水泥地之间。它后面的树篱底下有一块发白的东西，扁的。"
+          "text": "一个乒乓球卡在器材室的水泥基座和地面之间。后面的树篱底下露出一块发白的东西，扁扁的。"
         },
         {
           "id": "pb_2",
           "speaker": "protagonist",
-          "text": "那道缝比球深。",
+          "text": "缝隙比乒乓球还要深。",
           "choices": [
             {
               "id": "reach",
@@ -287,7 +287,7 @@
         {
           "id": "pb_boundary_check",
           "speaker": "voice_orientation",
-          "text": "先用手。我会告诉你它的后背在哪儿。",
+          "text": "先把手伸进去摸摸。我来帮你判断里面有多深。",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -299,7 +299,7 @@
         {
           "id": "pb_boundary_ok",
           "speaker": "voice_orientation",
-          "text": "一掌深，然后水泥，然后一道边。球后面有台面，台面上的东西不是圆的。",
+          "text": "手伸进去一掌深，碰到水泥，又摸到一道边。球后面还有个小台面，上面放着什么东西，不是圆的。",
           "effects": [
             {
               "type": "set_flag",
@@ -330,13 +330,13 @@
         {
           "id": "pb_boundary_bad",
           "speaker": "voice_orientation",
-          "text": "后面什么也没有。缝只有一手深，然后就合上了。",
+          "text": "后面没东西。伸进去一掌深，就到底了。",
           "next": "pb_boundary_bad_2"
         },
         {
           "id": "pb_boundary_bad_2",
           "speaker": "protagonist",
-          "text": "指节擦破了，球动了一下又停住。树篱下那块发白的东西根本不在球后面，它更靠外，是一根棍上的一道白漆。",
+          "text": "你擦破了指节。乒乓球动了一下，又卡回原处。树篱下那块白色的东西并不在球后面，而是在更外面——像是根棍子上蹭了一道白漆。",
           "effects": [
             {
               "type": "set_flag",
@@ -361,7 +361,7 @@
         {
           "id": "pb_ledger_check",
           "speaker": "voice_orientation",
-          "text": "先看影子。影子比指节便宜。",
+          "text": "先看影子吧。总比把手弄破强。",
           "check": {
             "ability": "orientation",
             "difficulty": 7,
@@ -373,7 +373,7 @@
         {
           "id": "pb_ledger_ok",
           "speaker": "voice_orientation",
-          "text": "影子的进深比那道缝更长。树篱底下的东西离你比球更近，而且不是球的形状。",
+          "text": "影子比那道缝伸得更远。树篱下的东西离你更近，而且形状也不像球。",
           "effects": [
             {
               "type": "set_flag",
@@ -398,13 +398,13 @@
         {
           "id": "pb_ledger_bad",
           "speaker": "voice_orientation",
-          "text": "一道缝、一个球、一道影子。线都对上了。",
+          "text": "一道缝，一个球，再加一道影子。看起来都能对上。",
           "next": "pb_ledger_bad_2"
         },
         {
           "id": "pb_ledger_bad_2",
           "speaker": "protagonist",
-          "text": "对得上，什么也没说明。球留在原处。小屋有两个基座，缝只在左边那个——这种细节，通常是在一道算式刚辜负你的时候才会看见。",
+          "text": "数字是对得上的，可这也说明不了什么。球还是卡在原处。器材室下面有两个基座，只有左边留着缝。你偏偏在算错的时候注意到了这种事。",
           "effects": [
             {
               "type": "set_flag",
@@ -429,7 +429,7 @@
         {
           "id": "pb_leave",
           "speaker": "protagonist",
-          "text": "你把球留在原处。它不是你的，这院子里也没有人在等它。",
+          "text": "你没去碰那个球。它又不是你的，也没人站在这里等着拿它。",
           "next": null
         }
       ]

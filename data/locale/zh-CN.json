@@ -60,8 +60,8 @@
     "prompt.gate_far": "从栅栏的缺口过去",
     "prompt.alley_gate": "穿过那道门",
     "prompt.court": "看看球场",
-    "objective.free_period": "自由时间。留在座位上，或者走出教室。",
-    "objective.stay_classroom": "你留下来了。这一节课会自己过去。",
+    "objective.free_period": "N 说可以自习，也可以去操场。要不要出去，自己决定。",
+    "objective.stay_classroom": "你决定留在教室里。",
     "prompt.ask_along": "叫上 Q 一起走",
     "prompt.yard_door": "走到操场去",
     "prompt.corridor_speaker": "听走廊里的喇叭",
@@ -159,6 +159,8 @@
     "settings.action.pause": "菜单",
     "settings.action.toggle_language": "切换语言",
     "settings.action.toggle_fullscreen": "全屏",
-    "key.click": "单击"
+    "key.click": "单击",
+    "name.student": "同学",
+    "role.student": "同学"
   }
 }

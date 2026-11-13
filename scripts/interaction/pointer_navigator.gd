@@ -53,6 +53,9 @@ const GROUND_PROBE_DEPTH := 4.0
 @export_range(0.0, 1.0, 0.01) var min_ground_normal_y: float = 0.6
 ## Draw the destination cue where a click lands (turn off for a bare capture).
 @export var marker_enabled: bool = true
+## The location host, whose `location_entered` ends whatever the old room's click started.
+## Optional: a player used outside `main.tscn` simply has no room changes to follow.
+@export var location_host_path: NodePath = ^"../../LocationHost"
 
 var _player: PlayerController = null
 var _interaction: InteractionController = null
@@ -88,6 +91,9 @@ func _ready() -> void:
 		push_error("PointerNavigator: interaction_path '%s' did not resolve." % interaction_path)
 	_player.path_finished.connect(_on_path_finished)
 	_player.path_cancelled.connect(_on_path_cancelled)
+	var host := get_node_or_null(location_host_path)
+	if host != null and host.has_signal("location_entered"):
+		host.location_entered.connect(_on_location_entered)
 
 
 func set_enabled(interact: bool) -> void:
@@ -267,7 +273,14 @@ func _walk_to(point: Vector3) -> void:
 	if _player.request_path_to(point):
 		_last_click_accepted = true
 		_last_rejection = ""
-		_mark_destination(point)
+		if _player.is_path_active():
+			_mark_destination(point)
+		else:
+			# Already standing there: `request_path_to()` finished the walk before it
+			# returned, so `path_finished` has come and gone. A mark drawn now would mark a
+			# walk that is already over, and nothing would ever take it down again. The
+			# click still answers in the ears.
+			_announce(WorldCue.ROLE_DESTINATION)
 		destination_accepted.emit(point)
 		return
 	_last_rejection = "no route from here to that point"
@@ -338,6 +351,12 @@ func _begin_approach(target: Interactable) -> void:
 		_last_rejection = "no route to the spot next to %s" % String(target.interact_id)
 		_abandon_pending()
 		_mark_refused(_ground_point_under(target.global_position))
+		return
+	if not _player.is_path_active():
+		# The spot was within arrival distance, so the walk finished inside
+		# `request_path_to()` and `_on_path_finished()` has already activated (or
+		# abandoned) the target and cleared the cue. There is no walk left to mark.
+		_announce(WorldCue.ROLE_TARGET)
 		return
 	_approaching = true
 	_last_click_accepted = true
@@ -448,8 +467,20 @@ func _on_path_finished() -> void:
 	if _has_pending:
 		_activate_pending()
 		return
-	if _approaching:
-		_approaching = false
+	_approaching = false
+	# A ground walk arrived: the mark has nothing left to say, so it fades. Only the
+	# marks that stand for a walk are taken down here. A refusal drawn while the walk
+	# went on is about a different click and ends its own short gesture.
+	_clear_walk_cue()
+
+
+## A new room: the player was teleported into it, and the click that was in flight
+## belonged to the old one. `teleport()` only reports a cancellation when a walk was
+## still running, and the cue lives beside the player rather than inside the room, so
+## without this a mark that was still fading (an arrival, a refusal) would be carried
+## into the next location. It goes at once, with the room it was drawn in.
+func _on_location_entered(_location: Node, _spawn_id: StringName) -> void:
+	cancel()
 
 
 func _on_path_cancelled() -> void:
@@ -529,6 +560,13 @@ func _announce(role: String) -> void:
 	if audio == null or not audio.has_method("play"):
 		return
 	audio.play(StringName(role))
+
+
+## Takes down the cue only if it marks a walk (a destination or a target).
+func _clear_walk_cue() -> void:
+	var role := get_cue_role()
+	if role == WorldCue.ROLE_DESTINATION or role == WorldCue.ROLE_TARGET:
+		_clear_cue()
 
 
 func _clear_cue(immediate: bool = false) -> void:

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/narrative/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+character_id = &"student"
+display_name = "Classmate"
+short_role = "classmate"
+accent_color = Color(0.65, 0.68, 0.62, 1)

@@ -31,6 +31,7 @@ const ORDINARY_CHARACTER_PATHS: Array[String] = [
 	"res://data/characters/q.tres",
 	"res://data/characters/n.tres",
 	"res://data/characters/b.tres",
+	"res://data/characters/student.tres",
 ]
 
 var errors: Array[String] = []

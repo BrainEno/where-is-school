@@ -11,7 +11,7 @@
         {
           "id": "vn_1",
           "speaker": "voice_orientation",
-          "text": "这儿有什么东西不在线上。等我一下。",
+          "text": "等一下。这里有一处不太对。",
           "check": {
             "ability": "orientation",
             "difficulty": 8,
@@ -29,7 +29,7 @@
         {
           "id": "vn_bad",
           "speaker": "voice_orientation",
-          "text": "一块板，上面贴着纸。板就是板。",
+          "text": "一块板子，上面贴了几张纸。还能有什么？",
           "next": "vn_bad_2"
         },
         {
@@ -48,7 +48,7 @@
         {
           "id": "va_1",
           "speaker": "voice_orientation",
-          "text": "这块操场长大于宽，小路是从角上进来的。",
+          "text": "这块操场挺长，窄一些。小路从一个角上通进来。",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -60,7 +60,7 @@
         {
           "id": "va_ok",
           "speaker": "voice_orientation",
-          "text": "水泥地上有一道两次浇筑留下的接缝，一直延伸过操场正中。大门却开在短的那一头。铺路的人以为人会从别处来。",
+          "text": "水泥地中间有一道接缝，像是分两次浇的。接缝一直通到另一头。可大门偏偏开在短边上。",
           "next": null
         },
         {
@@ -72,7 +72,7 @@
         {
           "id": "va_bad_2",
           "speaker": "protagonist",
-          "text": "操场就是这个形状。你站过这样的操场，或者是照同一张图建的。",
+          "text": "你以前见过这样的操场。也可能只是学校里的操场都差不多。",
           "next": null
         }
       ]
@@ -85,7 +85,7 @@
         {
           "id": "vh_1",
           "speaker": "voice_orientation",
-          "text": "等等。看那根杆子立在哪儿。",
+          "text": "等一下。看那根篮架的杆子立在哪里。",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -97,19 +97,19 @@
         {
           "id": "vh_ok",
           "speaker": "voice_orientation",
-          "text": "杆子立在比整块操场更新的水泥里，旧螺栓孔还在墙上，被填平刷过。这个篮架被挪近过。",
+          "text": "杆子周围的水泥比操场其他地方新。墙上还有几个旧螺栓孔，填过，又刷了一遍漆。篮架以前应该在别处。",
           "next": null
         },
         {
           "id": "vh_bad",
           "speaker": "voice_orientation",
-          "text": "篮筐就在篮筐该在的高度上。",
+          "text": "篮圈的高度看起来没什么问题。",
           "next": "vh_bad_2"
         },
         {
           "id": "vh_bad_2",
           "speaker": "protagonist",
-          "text": "你并不知道那个高度。杆子底座那块水泥和操场其他地方颜色不一样，网比圈新。",
+          "text": "你也说不准正常的篮筐该有多高。只是底座那块水泥颜色不一样，篮网看着也比篮圈新。",
           "next": null
         }
       ]
