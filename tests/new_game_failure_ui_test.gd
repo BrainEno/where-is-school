@@ -316,10 +316,10 @@ func _check_end_card_staging_failure() -> void:
 	var card := await _present_end_card(world)
 	if card == null:
 		return
-	_snapshot()
 	await _click(card.get_restart_button())
 	await _frames(2)
 	_expect(card.get_confirm().visible, "%s: a click on Start again did not ask first." % _case)
+	_snapshot()
 	var faults := FaultyIO.new()
 	faults.fail_renames = [0, 1, 2, 3]
 	_save.set("io", faults)
@@ -372,7 +372,6 @@ func _check_end_card_discard_failure() -> void:
 	var card := await _present_end_card(world)
 	if card == null:
 		return
-	_snapshot()
 	await _pad(JOY_BUTTON_A)
 	await _frames(2)
 	_expect(card.get_confirm().visible, "%s: A on Start again did not ask first." % _case)
@@ -386,6 +385,9 @@ func _check_end_card_discard_failure() -> void:
 	await _pad(JOY_BUTTON_DPAD_RIGHT)
 	_expect_focus(card.get_confirm().get_confirm_button(), "the D-pad did not reach the confirm answer")
 	var world_id := world.get_instance_id()
+	# The world is not paused under the end card, so the moment before the press is the
+	# "before": the transaction restores what it found when it started.
+	_snapshot()
 	var faults := FaultyIO.new()
 	faults.fail_removes = [0]
 	_save.set("io", faults)
@@ -584,7 +586,10 @@ func _expect_nothing_changed() -> void:
 		and FileAccess.get_file_as_bytes(BROKEN_PATH) == _quarantine_before,
 		"%s: the quarantined copy changed or disappeared." % _case
 	)
-	_expect(_game_state.get_snapshot() == _flags_before, "%s: the story flags changed." % _case)
+	var flags_now: Dictionary = _game_state.get_snapshot()
+	_expect(flags_now == _flags_before, "%s: the story flags changed: %s." % [
+		_case, _flag_diff(_flags_before, flags_now)
+	])
 	_expect(_narrative.get_entries().size() == _entries_before, "%s: the knowledge log changed." % _case)
 	_expect(not bool(_session.call("is_starting_new_game")), "%s: the session is still busy." % _case)
 
@@ -738,6 +743,21 @@ func _free_current_scene() -> void:
 	await _frames(3)
 	if _save != null:
 		_save.unbind_world()
+
+
+## "flag: before -> now" for every flag that differs.
+func _flag_diff(before: Dictionary, now: Dictionary) -> String:
+	var lines := PackedStringArray()
+	var keys: Array = before.keys()
+	for key: Variant in now.keys():
+		if not keys.has(key):
+			keys.append(key)
+	for key: Variant in keys:
+		var was: Variant = before.get(key, "<unset>")
+		var is_now: Variant = now.get(key, "<unset>")
+		if typeof(was) != typeof(is_now) or was != is_now:
+			lines.append("%s: %s -> %s" % [str(key), str(was), str(is_now)])
+	return ", ".join(lines)
 
 
 func _strays() -> PackedStringArray:
