@@ -83,7 +83,7 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Two panes, one cracked and taped; wet concrete, low wall, bins; late-afternoon light | `WindowGlass0` (crack + tape), `window_view.png` |
 | (curtain lines) The front window is ordinary, washing pegged out on a line; the back window has its curtain drawn | `window_view.png`, window 0's third only (s 3.0–4.5 m) carries the washing; `Anomalies/BackCurtain` hangs over Window1 |
 | (curtain lines) Behind the curtain: no glass, the wall's own thickness, then nothing | `Anomalies/VoidOpening` (`void_opening.tres` / `.gdshader`, a parallax hole) replaces `WindowGlass1`/`WindowGlow1`/`WindowMullion1` |
-| (rear door) Plaster behind the door; a staircase from the ceiling stopping in front of the teacher's desk, two metres up | `WallSouthLeft/RearDoor` (owner's door GLB, 0.8 width), `Anomalies/Staircase` (bottom tread ≈ 1.92 m) |
+| (rear door) Plaster behind the door; a staircase from the ceiling stopping in front of the teacher's desk, two metres up | `WallSouthLeft/RearDoor` (owner's door GLB, 0.8 width), `Anomalies/Staircase` (7 treads; bottom tread ≈ 2.06 m, lowest stringer corner ≈ 1.82 m) |
 | Set square, forearm length, pale varnish, split corner taped with browned tape, taped corner faces the room | `set_square.tscn` now lies flat (0.55 × 0.42 m; the prism's size axes were swapped), `TapeRepair` in browned tape, ink ticks |
 | Own desk: scratched-out name, half-peeled sticker, groove along the front edge | `Furniture/DeskB2/DeskMarks` decal |
 | Teacher's desk: register in plastic, stapler, mug of chalk, chair pushed in at an angle, tidier | `Register` + label, `Stapler`, `Mug` with three sticks, `Papers`, the new `Chair` |
