@@ -11,12 +11,12 @@
         {
           "id": "ra_1",
           "speaker": "protagonist",
-          "text": "Three blocks around a courtyard. Someone's washing, going nowhere in the still air."
+          "text": "Three blocks around a courtyard. Someone has washing out between the buildings. There is hardly any wind, and the clothes barely move."
         },
         {
           "id": "ra_2",
           "speaker": "protagonist",
-          "text": "A slide, a bench, and a patch of concrete where the grass gave up.",
+          "text": "There is a slide and a bench in the yard, with a small patch of grass beside them. Not much grass has taken; most of the ground is concrete.",
           "effects": [
             {
               "type": "set_flag",
@@ -39,7 +39,7 @@
         {
           "id": "ra_3",
           "speaker": "protagonist",
-          "text": "Between the blocks, the road comes out of a gap you did not walk through.",
+          "text": "A path runs between the blocks. You have not walked along it, but it seems to begin in a gap between the buildings.",
           "next": null
         }
       ]
@@ -52,7 +52,7 @@
         {
           "id": "rs_1",
           "speaker": "protagonist",
-          "text": "Stairs up between two blocks. Eleven steps, a landing, then more steps.",
+          "text": "A flight of stairs between two blocks. Eleven steps, a landing, then another flight.",
           "choices": [
             {
               "id": "up",
@@ -69,7 +69,7 @@
         {
           "id": "rs_up_1",
           "speaker": "protagonist",
-          "text": "You go up. The landing is the same landing, and the stairs below are the ones you just came up.",
+          "text": "You go up. At the landing, you look back. The stairs below seem to be the ones you just climbed.",
           "effects": [
             {
               "type": "record",
@@ -83,13 +83,13 @@
         {
           "id": "rs_up_2",
           "speaker": "protagonist",
-          "text": "You go back down. It takes the same number of steps.",
+          "text": "You go back down. There are the same number of steps.",
           "next": null
         },
         {
           "id": "rs_down_1",
           "speaker": "protagonist",
-          "text": "You stay on the ground. The stairs are still there, going up.",
+          "text": "You do not go up. The stairs are still there, leading somewhere above.",
           "next": null
         }
       ]
@@ -102,7 +102,7 @@
         {
           "id": "a_1",
           "speaker": "protagonist",
-          "text": "There is something at the edge of the planter. Green. Not the green of the hedge.",
+          "text": "Something green is beside the planter. Not the green of the hedge.",
           "effects": [
             {
               "type": "set_flag",
@@ -142,12 +142,12 @@
         {
           "id": "a_c_1",
           "speaker": "protagonist",
-          "text": "It does not run. It turns its head just enough to keep you in view."
+          "text": "It does not run. It turns its head, keeping its eyes on you."
         },
         {
           "id": "a_c_2",
           "speaker": "protagonist",
-          "text": "Close up: a flat bill, wet fur, a tail like a paddle held clear of the ground.",
+          "text": "Up close, you can make it out: a flat bill, wet fur, and a paddle-shaped tail held off the ground.",
           "next": "a_recall",
           "effects": [
             {
@@ -162,18 +162,18 @@
         {
           "id": "a_s_1",
           "speaker": "protagonist",
-          "text": "You stay where you are. It carries on doing whatever it was doing."
+          "text": "You stay still. It takes no notice and carries on with whatever it was doing."
         },
         {
           "id": "a_s_2",
           "speaker": "protagonist",
-          "text": "It does not look at you the way an animal usually looks at a person.",
+          "text": "It keeps looking at you. It does not move away or do anything else.",
           "next": "a_recall"
         },
         {
           "id": "a_recall",
           "speaker": "protagonist",
-          "text": "You have seen a drawing of this. In the biology book. You cannot find the page.",
+          "text": "You have seen something like it in the biology book. You want to find the picture, but cannot remember the page.",
           "source": "recalled",
           "effects": [
             {
@@ -188,7 +188,7 @@
         {
           "id": "a_end",
           "speaker": "protagonist",
-          "text": "You cannot tell what it is. You also cannot say whether it belongs here.",
+          "text": "You still cannot name it. You have no idea why it is here, either.",
           "next": null
         }
       ]
@@ -201,12 +201,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "Still there. It has moved about a metre along the planter, towards the alley."
+          "text": "It is still there. It has moved about a metre along the planter, towards the alley."
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "You still do not know what it is.",
+          "text": "You still cannot tell what it is.",
           "next": null
         }
       ]
