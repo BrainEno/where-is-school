@@ -137,7 +137,8 @@ func _run() -> void:
 	_expect_integer_versions()
 	_expect_integer_load_refusals()
 	print(
-		"::notice title=save integer validation::native int64 edges, integral floats, "
+		"::notice title=save integer validation::Godot %s; native int64 edges, integral floats, "
+		% Engine.get_version_info()["string"]
 		+ "fractions, non-finite/range guards, nested paths and disk refusals; %d problem(s)"
 		% (_failures.size() - integer_failures_before)
 	)
