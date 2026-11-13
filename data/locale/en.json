@@ -60,8 +60,8 @@
     "prompt.gate_far": "Go through the gap in the fence",
     "prompt.alley_gate": "Through the gate",
     "prompt.court": "Look at the court",
-    "objective.free_period": "Free period. Stay at your desk, or go out of the classroom.",
-    "objective.stay_classroom": "You are staying. The period will pass on its own.",
+    "objective.free_period": "N says you can study here or spend the period in the yard. It's up to you.",
+    "objective.stay_classroom": "You've decided to stay in the classroom.",
     "prompt.ask_along": "Ask Q to come along",
     "prompt.yard_door": "Go out into the yard",
     "prompt.corridor_speaker": "Listen to the speaker",
@@ -159,6 +159,7 @@
     "settings.action.pause": "Menu",
     "settings.action.toggle_language": "Switch language",
     "settings.action.toggle_fullscreen": "Fullscreen",
-    "key.click": "Click"
+    "key.click": "Click",
+    "name.student": "Classmate"
   }
 }
