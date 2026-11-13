@@ -722,7 +722,7 @@ material_override = ExtResource("c_void_opening")
 cast_shadow = 0
 
 [node name="Staircase" parent="Anomalies" instance=ExtResource("c_stair")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.7, 3.2, -1.1)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.7, 3.2, -1.35)
 
 [node name="Furniture" type="Node3D" parent="."]
 
