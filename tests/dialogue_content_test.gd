@@ -207,3 +207,27 @@ func _check_free_period_gate(library: DialogueLibrary) -> void:
 			choice_hub_found = node.choices.size() >= 4
 	if not choice_hub_found:
 		_failures.append("Q's invitation needs accept, defer, decline and silent choices.")
+
+
+func _check_free_period_gate(library: DialogueLibrary) -> void:
+	if not library.has_conversation(&"n_class") or not library.has_conversation(&"q_after_dismissal"):
+		_failures.append("The substitute lesson or Q's free-period invitation is missing.")
+		return
+	var before_dismissal := ConversationRouter.select(
+		&"q", {StoryFlags.TEXTBOOK_MISSING: true}
+	)
+	if before_dismissal == &"q_after_dismissal":
+		_failures.append("Q's free-period invitation is available before N dismisses the class.")
+	var after_dismissal := ConversationRouter.select(
+		&"q", {StoryFlags.CLASS_DISMISSED: true}
+	)
+	if after_dismissal != &"q_after_dismissal":
+		_failures.append("Q's free-period invitation is not routed after class dismissal.")
+	var invitation := library.get_conversation(&"q_after_dismissal")
+	var choice_hub_found := false
+	for node_id in invitation.order:
+		var node: DialogueGraph.DialogueNode = invitation.nodes[node_id]
+		if node_id == &"q_ad_1":
+			choice_hub_found = node.choices.size() >= 4
+	if not choice_hub_found:
+		_failures.append("Q's invitation needs accept, defer, decline and silent choices.")
