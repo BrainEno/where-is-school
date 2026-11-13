@@ -131,7 +131,7 @@
         {
           "id": "q_exam_1",
           "speaker": "q",
-          "text": "Yeah. You hate biology, don't you? Last term's exam—did you miss it, or hand in a blank paper? I can't remember which.",
+          "text": "Yeah. You hate biology, don't you? Last term's exam—did you miss it altogether, or hand in a blank paper? I can't remember which.",
           "next": "q_exam_2",
           "effects": [
             {
@@ -220,7 +220,7 @@
         {
           "id": "q_topic_ask",
           "speaker": "q",
-          "text": "She's supposed to ask questions today. Have you learned the bits you're meant to know?",
+          "text": "She might ask questions today. Have you memorised the key points?",
           "choices": [
             {
               "id": "ask",
@@ -262,20 +262,20 @@
         {
           "id": "q_ecosystem",
           "speaker": "q",
-          "text": "A group of living things, and the place they live. Who eats what, what gives what shade, where the water and nutrients go. The book makes it sound more complicated.",
+          "text": "It's everything living in one place, plus the place itself. What eats what, what grows where, where the water goes. That sort of thing.",
           "next": "p_ecosystem_reply"
         },
         {
           "id": "p_ecosystem_reply",
           "speaker": "protagonist",
-          "text": "Sounds like a lot of things shoved into one word.",
+          "text": "Sounds like they've shoved a lot of things under one label.",
           "source": "observed",
           "next": "q_ecosystem_end"
         },
         {
           "id": "q_ecosystem_end",
           "speaker": "q",
-          "text": "More or less. Say that much and she might leave you alone.",
+          "text": "More or less. That should be enough to get you through a question.",
           "next": "q_end_1"
         },
         {
