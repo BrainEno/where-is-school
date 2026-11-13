@@ -11,14 +11,14 @@
         {
           "id": "cs_1",
           "speaker": "protagonist",
-          "text": "A box speaker sits above the fire door, the kind that used to carry the bell. It is still on.",
+          "text": "There is a box speaker above the fire door. It used to carry the school bell. It is still switched on.",
           "source": "observed",
           "next": "cs_2"
         },
         {
           "id": "cs_2",
           "speaker": "protagonist",
-          "text": "Behind the wall a class is talking all at once, and then stops, as if someone had walked in.",
+          "text": "A whole class is talking on the other side of the wall. The voices run together, then stop all at once, as if someone has just come in.",
           "source": "observed",
           "next": "cs_q_q"
         },
@@ -57,7 +57,7 @@
         {
           "id": "ct_2",
           "speaker": "protagonist",
-          "text": "A mop, a bucket half full, a bottle of something yellow. The cupboard behind it holds exercise books by the look of the spines.",
+          "text": "A mop, half a bucket of water, and a bottle of yellow cleaning fluid. The cupboard behind them seems to be full of exercise books; you can make out the spines.",
           "source": "observed",
           "next": "ct_q_q"
         },
@@ -75,7 +75,7 @@
         {
           "id": "ct_3",
           "speaker": "protagonist",
-          "text": "You leave the trolley where it is. It is in the way of nothing except a cupboard.",
+          "text": "You leave the trolley alone. It blocks the cupboard, but there is room to get past it.",
           "source": "observed",
           "next": null
         }
@@ -89,21 +89,21 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "You stop at the railing. From up here the yard is a different colour than it is from inside.",
+          "text": "You stop by the railing. The yard looks different from up here than it did through the classroom window. Even the colours seem to have changed.",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "Two hoops, a shed, the concrete. Nothing happens in it for a while.",
+          "text": "Two hoops, a shed, a stretch of concrete. You watch for a while. Nothing much happens.",
           "source": "observed",
           "next": "cw_3"
         },
         {
           "id": "cw_3",
           "speaker": "protagonist",
-          "text": "The period goes on without you. That is not unpleasant.",
+          "text": "The lesson carries on without you. You don't mind as much as you thought you might.",
           "source": "observed",
           "next": null,
           "effects": [
