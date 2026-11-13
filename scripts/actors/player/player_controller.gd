@@ -503,6 +503,18 @@ func settle_camera_roll(duration: float) -> void:
 	await camera_rig.settle_roll(duration)
 
 
+## Turns the body to face `direction` (flattened onto the floor) without moving it or
+## touching the camera. The turn is kept: the per-frame facing lerp aims at it too, so a
+## staged beat that turns the player is not undone a frame later.
+func face_toward(direction: Vector3, snap: bool = true) -> void:
+	direction.y = 0.0
+	if direction.length() < 0.001:
+		return
+	_facing_direction = direction.normalized()
+	if snap and visual_pivot != null:
+		visual_pivot.rotation.y = atan2(_facing_direction.x, _facing_direction.z)
+
+
 func teleport(target: Transform3D) -> void:
 	# A teleport means a location change: any walk being followed belongs to the old
 	# scene's navigation map.

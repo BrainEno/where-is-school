@@ -71,6 +71,9 @@
 |---|---|
 | 黑板擦过又没擦干净；粉笔槽里有一截断粉笔和一个夹子 | `Board/Face` 贴图、`ChalkBrokenEnd`、`Clip`、粉笔槽上的粉笔灰 |
 | 两块玻璃，一块裂了、用胶带补过；窗外是湿水泥地、矮墙、一排垃圾桶；傍晚的光 | `WindowGlass0`（裂纹 + 胶带）、`window_view.png` |
+| （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain` 挂在 Window1 的 `WindowCurtainMount1` 上，位于这扇窗原有束带窗帘（`WallWest/CurtainRod1`、`CurtainPanel1L/R`，保留）的室内一侧 |
+| （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `Anomalies/VoidOpening`（`void_opening.tres` / `.gdshader`，视差“墙洞”）取代 `WindowGlass1`/`WindowGlow1`/`WindowMullion1` |
+| （另一扇门）门后是墙；一段楼梯从天花板伸下来，停在讲台前、离地两米 | 教室自己的异常门（`WallNorth/RearDoorAnomalyMount`：`DoorLeaf` + `AnomalyDoorInlay`），由 `Hinge`（`SwingDoor`，加载时接管门板网格）向室内转开 75°；`DoorwayBacking` 是门后的墙面。`Anomalies/Staircase` 悬在讲台区上方、与 `Stage/Lectern` 对齐（7 级；最低一级约 2.06 m，梁的最低角约 1.82 m，止于讲台前沿） |
 | 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度 |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |
 | 讲桌上有塑料封皮的点名册、订书机、装粉笔的杯子；椅子斜着推进去；比其他桌子整洁 | `Register` 及标签、`Stapler`、插着三支粉笔的 `Mug`、`Papers`、新增的 `Chair` |

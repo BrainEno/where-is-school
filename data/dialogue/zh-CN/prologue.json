@@ -864,6 +864,268 @@
           "next": null
         }
       ]
+    },
+    "classroom_curtain_lesson": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ccl_1",
+      "nodes": [
+        {
+          "id": "ccl_1",
+          "speaker": "protagonist",
+          "text": "后面那扇窗的窗帘一上午都拉着。没人说为什么，也没人看它一眼。"
+        },
+        {
+          "id": "ccl_2",
+          "speaker": "protagonist",
+          "text": "还在上课。你没去碰它。",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cc_1",
+      "nodes": [
+        {
+          "id": "cc_1",
+          "speaker": "protagonist",
+          "text": "前面那扇窗很普通：一块空地，一道矮墙，绳子上夹着谁家晾的衣服。后面那扇窗拉着窗帘。"
+        },
+        {
+          "id": "cc_2",
+          "speaker": "protagonist",
+          "text": "布的边上一点光都没透进来。今天这么亮，本来应该透进来的。",
+          "choices": [
+            {
+              "id": "edges",
+              "text": "先看看它是怎么挂的。",
+              "next": "cc_edges_check",
+              "conditions": {
+                "not_flags": [
+                  "check:classroom_curtain:cc_edges_check"
+                ]
+              }
+            },
+            {
+              "id": "draw",
+              "text": "把它拉开。",
+              "next": "cc_draw"
+            },
+            {
+              "id": "leave",
+              "text": "就让它拉着。",
+              "next": "cc_leave"
+            }
+          ]
+        },
+        {
+          "id": "cc_edges_check",
+          "speaker": "voice_orientation",
+          "text": "等一下。碰它之前，先看看下摆。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "cc_edges_ok",
+            "failure": "cc_edges_bad"
+          }
+        },
+        {
+          "id": "cc_edges_ok",
+          "speaker": "voice_orientation",
+          "text": "它垂得笔直。后面的窗是开着的，窗框边上看得见缝，可布一动不动。开着的窗总会有风进来。现在什么也没进来。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "curtain_hangs_still",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "后窗开着，窗帘却一动不动地垂在前面。"
+            }
+          ],
+          "next": "cc_decide"
+        },
+        {
+          "id": "cc_edges_bad",
+          "speaker": "voice_orientation",
+          "text": "一副窗帘。一边赭黄，一边蓝，被太阳晒到的地方褪了色。",
+          "next": "cc_decide"
+        },
+        {
+          "id": "cc_decide",
+          "speaker": "protagonist",
+          "text": "你的手已经搭在布上了。",
+          "choices": [
+            {
+              "id": "draw",
+              "text": "把它拉开。",
+              "next": "cc_draw"
+            },
+            {
+              "id": "leave",
+              "text": "就让它拉着。",
+              "next": "cc_leave"
+            }
+          ]
+        },
+        {
+          "id": "cc_draw",
+          "speaker": "protagonist",
+          "text": "你抓住一把布，顺着窗帘杆往旁边拉。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "curtain_fall_pending",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "drew_back_curtain",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你拉开了生物教室后窗的窗帘。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "cc_leave",
+          "speaker": "protagonist",
+          "text": "你松了手。它垂回原样，一点没变。",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_void": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cv_1",
+      "nodes": [
+        {
+          "id": "cv_1",
+          "speaker": "protagonist",
+          "text": "窗帘后面没有空地，也没有玻璃。窗台只有墙那么厚，墙外面什么都没有：不是黑，也不是天。没有任何能被照亮的东西。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "saw_void_window",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "生物教室后窗的窗帘后面，根本没有外面。"
+            }
+          ]
+        },
+        {
+          "id": "cv_2",
+          "speaker": "protagonist",
+          "text": "并不吓人。只是楼到这里就没有了。"
+        },
+        {
+          "id": "cv_3",
+          "speaker": "protagonist",
+          "text": "你探出身去，想看看它往下有多深。",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_drawn": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ccd_1",
+      "nodes": [
+        {
+          "id": "ccd_1",
+          "speaker": "protagonist",
+          "text": "窗帘还收在一边，是你拉开的样子。窗台外面还是什么都没有。"
+        },
+        {
+          "id": "ccd_2",
+          "speaker": "protagonist",
+          "text": "这次你没有探出身去。",
+          "next": null
+        }
+      ]
+    },
+    "classroom_fall_landing": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cl_1",
+      "nodes": [
+        {
+          "id": "cl_1",
+          "speaker": "protagonist",
+          "text": "背后是平平的水泥地。上面是天。哪里都不疼。头顶上也没有一扇你可能掉下来的窗。"
+        },
+        {
+          "id": "cl_2",
+          "speaker": "q",
+          "source": "reported",
+          "text": "你在这儿啊。我还以为你会跟大家一样走楼梯下来。",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "cl_3",
+          "speaker": "protagonist",
+          "text": "你站起来。地上画着球场，一个攀爬架，一张长椅，旁边一间小屋。是操场。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "fell_into_playground",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你从生物教室的后窗掉了下去，落在操场上，没有受伤。"
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "classroom_rear_door": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "rd_1",
+      "nodes": [
+        {
+          "id": "rd_1",
+          "speaker": "protagonist",
+          "text": "那扇门打开，后面是墙：抹灰，和教室其他地方一样的漆，缩在门框里。"
+        },
+        {
+          "id": "rd_2",
+          "speaker": "protagonist",
+          "text": "而教室前面，刚才还什么都没有的地方，一段楼梯从天花板上伸下来，停在讲台前面，离地两米。"
+        },
+        {
+          "id": "rd_3",
+          "speaker": "protagonist",
+          "text": "没有东西托着它。它哪儿也不通，看上去也并不在意。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "saw_suspended_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "打开教室黑板墙上的另一扇门之后，教室里多了一段楼梯。它从天花板上垂下来，悬在讲台前面，什么也没托着它。"
+            }
+          ],
+          "next": null
+        }
+      ]
     }
   }
 }

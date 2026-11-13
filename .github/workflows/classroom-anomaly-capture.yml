@@ -1,0 +1,106 @@
+name: Classroom anomaly capture
+
+# Photographs the biology-classroom anomalies (the curtained window, the void behind it,
+# the fall, the rear door and its staircase) from the game's own camera in a real window,
+# so the round can be judged on frames. `tests/capture_classroom_anomalies.gd` takes them.
+#
+# Same publishing as `Location art capture`: the frames are an artifact, and each one is
+# also printed as a small JPEG, base64 split into numbered notice annotations (an
+# annotation holds about 4 KB; concatenate the parts of one file in order and decode).
+# Nothing is committed by Actions.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_classroom_anomalies.gd"
+      - ".github/workflows/classroom-anomaly-capture.yml"
+      - "scenes/locations/classroom/**"
+      - "scenes/environment/props/classroom_art/**"
+      - "scripts/environment/**"
+      - "assets/materials/classroom/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: classroom anomalies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          # `--import` waits for the queue to drain; its exit code is not the verdict (the
+          # project theme can load before its font is imported). The second pass is.
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          log="${RUNNER_TEMP}/capture.log"
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_classroom_anomalies.gd > "${log}" 2>&1
+          code=$?
+          grep -E "SHOT|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${log}" | grep -v "^CROP" | head -n 60
+          out="docs/screenshots/classroom_anomalies"
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}"/*.png "${out}/CAPTURE.log" "${RUNNER_TEMP}/frames/" 2>/dev/null || true
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          grep -E "^CROP: " "${log}" | while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s); exit ${code}"
+          if [ "${code}" -ne 0 ]; then
+            echo "::error title=classroom anomaly capture::the capture exited ${code}"
+            exit 1
+          fi
+
+      # GitHub keeps at most 10 notices per step, so the parts are spread over steps.
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classroom-anomaly-frames-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn

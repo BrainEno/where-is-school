@@ -1,4 +1,4 @@
-[gd_scene load_steps=103 format=3]
+[gd_scene load_steps=110 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -45,6 +45,12 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/back_board.tscn" id="c_back_board"]
 
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_presentation.gd" id="c_presentation"]
+[ext_resource type="Script" path="res://scenes/locations/classroom/classroom_anomalies.gd" id="c_anomalies"]
+[ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="c_staged"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/window_curtain.tscn" id="c_curtain"]
+[ext_resource type="Script" path="res://scripts/environment/swing_door.gd" id="c_swing_door"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/suspended_stair.tscn" id="c_stair"]
+[ext_resource type="Material" path="res://assets/materials/classroom/void_opening.tres" id="c_void_opening"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -237,6 +243,9 @@ size = Vector3(0.06, 0.045, 1.82)
 [sub_resource type="BoxMesh" id="BoxMesh_Curtain"]
 size = Vector3(0.07, 1.2, 0.38)
 
+[sub_resource type="QuadMesh" id="QuadMesh_DoorwayBacking"]
+size = Vector2(1.24, 2.14)
+
 [node name="Classroom" type="Node3D"]
 script = ExtResource("1_location_root")
 location_id = &"classroom"
@@ -332,6 +341,18 @@ material_override = ExtResource("c_wall_section")
 position = Vector3(-0.24, 0.0, 0.036)
 mesh = SubResource("BoxMesh_AnomalyInlay")
 material_override = ExtResource("c_lacquer_oxblood")
+
+[node name="Hinge" type="Node3D" parent="WallNorth/RearDoorAnomalyMount"]
+position = Vector3(0.55, 0, 0)
+script = ExtResource("c_swing_door")
+leaf_paths = Array[NodePath]([NodePath("../DoorLeaf"), NodePath("../AnomalyDoorInlay")])
+open_degrees = 75.0
+
+[node name="DoorwayBacking" type="MeshInstance3D" parent="WallNorth/RearDoorAnomalyMount"]
+position = Vector3(0, 0, -0.2)
+mesh = SubResource("QuadMesh_DoorwayBacking")
+material_override = ExtResource("c_wall_section")
+cast_shadow = 0
 
 [node name="WallWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-6.9, 1.6, 0)
@@ -686,6 +707,23 @@ light_energy = 0.45
 omni_range = 7.5
 shadow_enabled = false
 
+[node name="Anomalies" type="Node3D" parent="."]
+script = ExtResource("c_anomalies")
+door_path = NodePath("../WallNorth/RearDoorAnomalyMount/Hinge")
+
+[node name="BackCurtain" parent="Anomalies" instance=ExtResource("c_curtain")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -6.46, 2.47, 2.2)
+
+[node name="VoidOpening" type="MeshInstance3D" parent="Anomalies"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.765, 1.72, 2.2)
+visible = false
+mesh = SubResource("QuadMesh_window_view")
+material_override = ExtResource("c_void_opening")
+cast_shadow = 0
+
+[node name="Staircase" parent="Anomalies" instance=ExtResource("c_stair")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.7, 3.2, -1.35)
+
 [node name="Furniture" type="Node3D" parent="."]
 
 [node name="DeskA1" parent="Furniture" instance=ExtResource("11_classroom_desk")]
@@ -902,6 +940,25 @@ destination_spawn = &"FromClassroom"
 destination_id = &"corridor"
 required_flag = &"class_dismissed"
 blocked_inspection_id = &"classroom_door_blocked"
+
+[node name="CurtainDraw" parent="Interactables" instance=ExtResource("17_interactable")]
+script = ExtResource("c_staged")
+position = Vector3(-5.95, 0.6, 2.2)
+interact_id = &"curtain"
+outline_paths = PackedStringArray("../../Anomalies/BackCurtain")
+prompt_text = "Look at the curtain"
+prompt_key = "prompt.curtain"
+conversation_route = &"classroom_curtain"
+radius = 1.0
+
+[node name="RearDoorTry" parent="Interactables" instance=ExtResource("17_interactable")]
+script = ExtResource("c_staged")
+position = Vector3(4.85, 0.6, -3.95)
+interact_id = &"rear_door"
+outline_paths = PackedStringArray("../../WallNorth/RearDoorAnomalyMount")
+prompt_text = "Try the second door"
+inspection_id = &"classroom_rear_door"
+radius = 0.9
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 

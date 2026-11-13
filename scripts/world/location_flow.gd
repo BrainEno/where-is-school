@@ -90,32 +90,74 @@ func handle_exit(exit: LocationExit) -> void:
 func _transition_to(exit: LocationExit) -> void:
 	# Loading the next location frees this one, and `exit` with it, so everything the
 	# transition needs afterwards is copied first.
-	var destination_scene := exit.destination_scene
-	var destination_spawn := exit.destination_spawn
-	var destination_id := exit.destination_id
-	var exit_id := exit.interact_id
-	await _host.begin_beat()
-	await _ui.fade.fade_to_black(0.7)
+	await transition_to(
+		exit.destination_scene,
+		exit.destination_spawn,
+		exit.destination_id,
+		{"label": "exit '%s'" % exit.interact_id}
+	)
+
+
+## Takes the player to `destination_spawn` in `destination_scene`, the same way an exit
+## does: one beat, fade, load, arrival bookkeeping, fade back, the arrival line, a save
+## point. Exits come through here; so does a room that leaves by other means (the biology
+## classroom's curtain, which is a fall rather than a door - see `StagedInteractable`).
+##
+## `destination_id` is the location id the scene must turn out to have; the load is
+## refused otherwise and the player stays where they were. Returns whether the player is
+## now in the new room.
+##
+## `options` (all optional):
+##   "label": String               names the cause in error messages.
+##   "beat_held": bool             the caller already holds the beat (a staged moment
+##                                 that ends by leaving); it is ended here either way.
+##   "departure": Callable         awaited before the fade: the room's own way of leaving,
+##                                 played while the room still exists. It may pose the
+##                                 player's body and roll the camera; both are put back
+##                                 before the new room fades in.
+##   "fade_out": float             seconds of fade to black after the departure (0.7).
+##   "arrival_flags": Dictionary   flag -> value, written once the new room is loaded.
+##   "arrival_conversation": StringName
+##                                 plays instead of the room's own arrival line, whether
+##                                 or not that line has been heard.
+func transition_to(
+	destination_scene: String,
+	destination_spawn: StringName,
+	destination_id: StringName,
+	options: Dictionary = {}
+) -> bool:
+	var label := String(options.get("label", destination_scene))
+	if not bool(options.get("beat_held", false)):
+		await _host.begin_beat()
+	var departure: Callable = options.get("departure", Callable())
+	var posed := departure.is_valid()
+	if posed:
+		await departure.call()
+	await _ui.fade.fade_to_black(float(options.get("fade_out", 0.7)))
 	# `destination_id` is passed as the expected id, so the load fails unless the
-	# scene really is the place the exit named.
+	# scene really is the place the caller named.
 	var loaded := _locations.load_location(
 		destination_scene, destination_spawn, _player, destination_id
 	)
+	if posed:
+		_stand_player_up()
 	if not loaded:
 		# Nothing has moved: the old location is still current, the player is still
 		# standing in it, and CURRENT_LOCATION still describes it.
 		push_error(
-			"LocationFlow: could not enter '%s' from exit '%s'; staying put."
-			% [destination_scene, exit_id]
+			"LocationFlow: could not enter '%s' from %s; staying put." % [destination_scene, label]
 		)
 		await _ui.fade.fade_from_black(0.5)
 		_host.end_beat()
-		return
+		return false
 
 	var entered := _locations.get_current()
 	if entered != null:
 		destination_id = entered.location_id
 	_game_state.set_flag(StoryFlags.CURRENT_LOCATION, destination_id)
+	var arrival_flags: Dictionary = options.get("arrival_flags", {})
+	for flag: Variant in arrival_flags:
+		_game_state.set_flag(StringName(String(flag)), arrival_flags[flag])
 	_apply_arrival(destination_id)
 	if _hud != null:
 		_hud.clear_prompt()
@@ -127,7 +169,22 @@ func _transition_to(exit: LocationExit) -> void:
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.
 	_host.end_beat()
-	_play_arrival_beat(destination_id)
+	_play_arrival_beat(destination_id, StringName(options.get("arrival_conversation", &"")))
+	return true
+
+
+## Undoes whatever a departure did to the body and the view: upright, unrolled, the
+## camera back on the player.
+func _stand_player_up() -> void:
+	if _player == null:
+		return
+	_player.set_wake_pose(0.0)
+	if _player.visual != null:
+		_player.visual.position.x = 0.0
+		_player.visual.position.z = 0.0
+	_player.set_camera_roll(0.0)
+	if _player.camera_rig != null:
+		_player.camera_rig.release_frame(0.0)
 
 
 ## The part of arriving that is data: the objective line, the flags this room sets,
@@ -150,11 +207,18 @@ func _apply_arrival(location_id: StringName) -> void:
 		_hud.set_objective(entry.objective)
 
 
-## The first line a location says about itself, once.
-func _play_arrival_beat(location_id: StringName) -> void:
+## The first line a location says about itself, once - or, when the way in was not an
+## ordinary one, the line the caller asked for instead (`override`).
+func _play_arrival_beat(location_id: StringName, override: StringName = &"") -> void:
 	# The checkpoint comes last in every branch: after the line that this room had to
 	# say, so the flags it set are in the file, and outside the beat, so nothing that
 	# owns the lock is serialised half-applied.
+	if not String(override).is_empty():
+		await _host.begin_beat()
+		await _host.play_conversation(override)
+		_host.end_beat()
+		_checkpoint(location_id)
+		return
 	var entry := _catalog.get_entry(location_id) if _catalog != null else null
 	if entry == null or String(entry.arrival_conversation).is_empty():
 		_checkpoint(location_id)

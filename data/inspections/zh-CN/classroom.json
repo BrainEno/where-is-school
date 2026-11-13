@@ -120,5 +120,21 @@
     "source": "observed",
     "text": "门其实没有关，更没有反锁。外面的走廊寂静无声，而你现在应该待在教室里，等待那节还没开始的生物课开始。感觉到有人在看你之后，你把手从门上拿开了。",
     "repeat_text": "走廊就在门外，直觉告诉你应该先上课。"
+  },
+  "classroom_rear_door": {
+    "title": "另一扇门",
+    "prompt": "试试另一扇门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "黑板这面墙上，教室门旁边还有一扇门，刷得和墙一个颜色，只有一道深红的漆条。推不动。也不算锁着，更像是这节课正压在门上。",
+    "repeat_text": "那扇门还是推不动。还在上课。"
+  },
+  "classroom_rear_door_open": {
+    "title": "另一扇门",
+    "prompt": "看看另一扇门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "那扇门开着，门后是墙。讲台前那段楼梯还在，什么也没托着它。",
+    "repeat_text": "门后是墙。楼梯还在。"
   }
 }

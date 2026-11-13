@@ -170,6 +170,10 @@
     "settings.action.toggle_fullscreen": "全屏",
     "key.click": "单击",
     "name.student": "同学",
-    "role.student": "同学"
+    "role.student": "同学",
+    "prompt.curtain": "看看窗帘",
+    "prompt.curtain_retry": "再试着拉开窗帘",
+    "prompt.curtain_drawn": "看向后窗外面",
+    "prompt.rear_door_open": "看看另一扇门"
   }
 }
