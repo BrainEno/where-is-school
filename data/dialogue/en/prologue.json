@@ -471,6 +471,13 @@
             {
               "type": "set_objective",
               "key": "objective.leave_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_leaving",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You decided to leave the classroom for the free period."
             }
           ]
         },
@@ -519,13 +526,20 @@
             {
               "type": "set_objective",
               "key": "objective.stay_classroom"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_stayed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You chose to stay in the classroom for the free period."
             }
           ]
         },
         {
           "id": "q_no",
           "speaker": "q",
-          "text": "Suit yourself. I'll have a look at the yard.",
+          "text": "All right. I won't rush you.",
           "next": null
         },
         {
