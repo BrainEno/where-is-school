@@ -324,6 +324,10 @@ jobs:
           run_check nameplate 180 godot --headless --path . --script res://tests/nameplate_test.gd || status=1
           run_check street_prompt 180 godot --headless --path . --script res://tests/street_prompt_test.gd || status=1
           run_check pointer_target_switch 300 godot --headless --resolution 1600x900 --path . --script res://tests/pointer_target_switch_test.gd || status=1
+          # The ground mark lives as long as its walk: it fades on arrival and is gone after a
+          # movement key, a newer click, a click where the character stands, an object's
+          # automatic interaction, a control lock and a location change.
+          run_check destination_cue_lifecycle 360 godot --headless --resolution 1600x900 --path . --script res://tests/destination_cue_lifecycle_test.gd || status=1
           run_check interaction_occlusion 300 godot --headless --resolution 1600x900 --path . --script res://tests/interaction_occlusion_test.gd || status=1
           run_check interaction_visibility_sweep 300 godot --headless --path . --script res://tests/interaction_visibility_sweep_test.gd || status=1
           # Compiles the window capture script. No test loads it — only the capture
