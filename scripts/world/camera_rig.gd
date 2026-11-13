@@ -21,6 +21,11 @@ extends Node3D
 ## It follows a position rather than a transform on purpose. A rig that inherited
 ## the body's rotation would swing the camera every time the character turned,
 ## which is the behaviour this exists to avoid.
+##
+## A beat can borrow the framing for a moment (`frame_point`): the rig glides off the
+## target to a point in the world and back again (`release_frame`). The angle and the
+## distance never change, only what the camera is centred on - a staged discovery shows
+## the player where to look without cutting away from the game camera.
 
 ## What the rig frames. The player, in the game scene.
 @export var target_path: NodePath = ^"../Player"
@@ -35,6 +40,11 @@ extends Node3D
 
 var _target: Node3D = null
 var _roll_degrees: float = 0.0
+## Where a beat wants the view centred, and how far the view has moved there from the
+## target (0 = on the target, the normal state; 1 = on the point).
+var _frame_point := Vector3.ZERO
+var _frame_weight := 0.0
+var _frame_tween: Tween = null
 
 
 func _ready() -> void:
@@ -47,16 +57,25 @@ func _ready() -> void:
 	snap()
 
 
+## What the rig follows (the player in the game). Scenery that has no collider - and so
+## is invisible to the occluder fader - can ask whose view it might be blocking.
+func get_target() -> Node3D:
+	return _target
+
+
 ## Puts the rig on the target and aims the camera at it. Called once per physics
 ## frame, and directly after a teleport so the camera never spends a frame on the
 ## far side of a wall the player has already left.
 func snap() -> void:
 	if _target == null or camera == null:
 		return
-	global_position = _target.global_position
+	var anchor := _target.global_position
+	if _frame_weight > 0.0:
+		anchor = anchor.lerp(_frame_point, _frame_weight)
+	global_position = anchor
 	camera.position = offset
 	camera.fov = fov
-	camera.look_at(_target.global_position + Vector3(0.0, target_height, 0.0), Vector3.UP)
+	camera.look_at(anchor + Vector3(0.0, target_height, 0.0), Vector3.UP)
 	if not is_zero_approx(_roll_degrees):
 		camera.rotate_object_local(Vector3(0.0, 0.0, 1.0), deg_to_rad(_roll_degrees))
 
@@ -86,6 +105,42 @@ func settle_roll(duration: float) -> void:
 	var tween := create_tween()
 	tween.tween_method(set_roll, _roll_degrees, 0.0, duration)
 	await tween.finished
+
+
+## Glides the view off the target until it is centred on `point` (a floor point; the
+## usual `target_height` is added), over `duration` seconds. Awaitable. The target is
+## still followed underneath, so the view comes back to wherever it is now.
+func frame_point(point: Vector3, duration: float) -> void:
+	_frame_point = point
+	await _glide_frame(1.0, duration)
+
+
+## Gives the view back to the target. Awaitable; 0 seconds is a cut.
+func release_frame(duration: float) -> void:
+	await _glide_frame(0.0, duration)
+
+
+## 0 while the camera is on its target, 1 while a beat holds it on a point.
+func get_frame_weight() -> float:
+	return _frame_weight
+
+
+func _glide_frame(weight: float, duration: float) -> void:
+	if _frame_tween != null and _frame_tween.is_valid():
+		_frame_tween.kill()
+	_frame_tween = null
+	if duration <= 0.0 or not is_inside_tree():
+		_set_frame_weight(weight)
+		return
+	_frame_tween = create_tween()
+	_frame_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_frame_tween.tween_method(_set_frame_weight, _frame_weight, weight, duration)
+	await _frame_tween.finished
+
+
+func _set_frame_weight(weight: float) -> void:
+	_frame_weight = clampf(weight, 0.0, 1.0)
+	snap()
 
 
 ## The horizontal axis the camera shows as "right", which is the axis player

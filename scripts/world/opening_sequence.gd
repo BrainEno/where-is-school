@@ -581,6 +581,17 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		_handle_exit(exit)
 		return
 
+	# A room that stages its own moment (see StagedInteractable) is asked before the
+	# object's declared route or text, which are then the room's to use.
+	var staged := interactable as StagedInteractable
+	if staged != null and staged.is_staged():
+		# A staged moment owns the room while it runs (a door is still swinging, a
+		# curtain still moving), even between its lines, when no dialogue is busy.
+		if _beat_active:
+			return
+		_run_staged(staged)
+		return
+
 	if not String(interactable.conversation_route).is_empty():
 		var conversation := ConversationRouter.select(
 			interactable.conversation_route, _game_state().get_snapshot()
@@ -606,6 +617,37 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		"OpeningSequence: interactable '%s' declares no inspection, conversation, or exit."
 		% interactable.interact_id
 	)
+
+
+## One staged moment: the room's handler runs inside a beat, then whatever it asked for
+## afterwards (see `StagedInteractable`) - a text once the beat is over, or a transition
+## that keeps the same beat, so the player never gets a frame of control in between.
+func _run_staged(staged: StagedInteractable) -> void:
+	await begin_beat()
+	var request: Dictionary = await staged.perform(self)
+	var transition: Dictionary = request.get("transition", {})
+	if not transition.is_empty() and _flow != null:
+		var options := transition.duplicate()
+		options["beat_held"] = true
+		if not options.has("label"):
+			options["label"] = "staged '%s'" % staged.interact_id
+		await _flow.transition_to(
+			String(transition.get("scene", "")),
+			StringName(String(transition.get("spawn", ""))),
+			StringName(String(transition.get("id", ""))),
+			options
+		)
+		return
+	end_beat()
+	var inspection := StringName(String(request.get("inspection", "")))
+	if not String(inspection).is_empty():
+		_dialogue.present_inspection(inspection)
+
+
+## The body a staged moment may pose (StagedInteractable handlers run in the room and
+## have no other way to reach it).
+func get_player() -> PlayerController:
+	return _player
 
 
 func _on_target_changed(interactable: Interactable) -> void:

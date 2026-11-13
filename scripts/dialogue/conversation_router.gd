@@ -29,6 +29,25 @@ const ROUTES: Dictionary = {
 			"requires": {},
 		},
 	],
+	# The biology classroom's back-window curtain. Before N lets the class go it is only
+	# looked at; afterwards it can be drawn aside (the conversation sets the provisional
+	# `curtain_fall_pending`, and the classroom stages the fall); once it hangs open, a
+	# visit is a look at what is still there. The room's StagedInteractable plays the
+	# conversation this route selects.
+	&"classroom_curtain": [
+		{
+			"conversation": &"classroom_curtain_drawn",
+			"requires": {StoryFlags.CURTAIN_DRAWN: true},
+		},
+		{
+			"conversation": &"classroom_curtain",
+			"requires": {StoryFlags.CLASS_DISMISSED: true},
+		},
+		{
+			"conversation": &"classroom_curtain_lesson",
+			"requires": {},
+		},
+	],
 	# Outside the school the routes are things, not people: a wall, a notice, a
 	# staircase. Same table, same rules.
 	# The companion only ever says one thing when asked along, and it is not advice.

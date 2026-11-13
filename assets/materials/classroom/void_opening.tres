@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/classroom/void_opening.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "void_opening"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/half_size = Vector2(0.77, 0.67)
+shader_parameter/wall_depth = 0.24
+shader_parameter/break_jag = 0.045
+shader_parameter/plaster_colour = Color(0.886, 0.847, 0.745, 1)
+shader_parameter/plaster_depth = 0.03
+shader_parameter/section_colour = Color(0.376, 0.282, 0.259, 1)
+shader_parameter/void_low = Color(0.01, 0.011, 0.014, 1)
+shader_parameter/void_high = Color(0.034, 0.036, 0.046, 1)

@@ -161,6 +161,9 @@
     "settings.action.toggle_fullscreen": "Fullscreen",
     "key.click": "Click",
     "name.student": "Classmate",
-    "role.student": "classmate"
+    "role.student": "classmate",
+    "prompt.curtain": "Look at the curtain",
+    "prompt.curtain_drawn": "Look out of the back window",
+    "prompt.rear_door_open": "Look at the rear door"
   }
 }

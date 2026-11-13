@@ -1,0 +1,24 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/swing_door.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/classroom/classroom_door_assembly.glb" id="2_model"]
+[ext_resource type="Material" path="res://assets/materials/classroom/lacquer_oxblood.tres" id="3_frame"]
+[ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="4_leaf"]
+[ext_resource type="Material" path="res://assets/materials/classroom/board_slate.tres" id="5_panel"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="6_metal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="7_rail"]
+[ext_resource type="Material" path="res://assets/materials/classroom/glass_clean.tres" id="8_glass"]
+
+[node name="RearDoor" type="Node3D"]
+script = ExtResource("1_script")
+open_degrees = 75.0
+leaf_width_scale = 0.8
+frame_material = ExtResource("3_frame")
+leaf_material = ExtResource("4_leaf")
+panel_material = ExtResource("5_panel")
+shadow_material = ExtResource("6_metal")
+rail_material = ExtResource("7_rail")
+metal_material = ExtResource("6_metal")
+glass_material = ExtResource("8_glass")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

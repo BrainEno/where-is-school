@@ -654,7 +654,8 @@ def board_back() -> Image.Image:
 def window_view() -> Image.Image:
     """What the windows look out on: one panorama, 4.5 x 1.3 m, shared by both windows
     (window 1 shows s 0..1.5, window 0 shows s 3.0..4.5). Orange late light over wet
-    concrete, a low wall and a line of bins - a spare stage flat, not a photograph."""
+    concrete, a low wall and a line of bins - a spare stage flat, not a photograph -
+    and, in window 0's part only, washing on a line."""
     c = Canvas(4.5, 1.3, 220.0, APRICOT, seed=808)
     rng = c.rng
     # Sky: horizontal bands of apricot, brushed.
@@ -689,6 +690,49 @@ def window_view() -> Image.Image:
     c.paint((96, 78, 74), ground, 1.0)
     streaks = [([(s, 0.19), (s + rng.uniform(-0.01, 0.01), rng.uniform(0.03, 0.1))], rng.uniform(0.03, 0.07), {"bristles": 6, "dryness": 0.45, "wobble_m": 0.003}) for s in rng.uniform(0.0, 4.5, 18)]
     c.brush(rgb(APRICOT), streaks, opacity=0.4)
+    # The washing (docs/ART_BIBLE.md, the biology classroom): only window 0's part of the
+    # panorama (s 3.0..4.5) has it, so that window is the ordinary one - someone's
+    # laundry pegged out on a line in front of the bins - and window 1, whose view this
+    # never reaches, is the one behind the curtain. Painted last, from its own fixed
+    # values, so nothing above it moves.
+    line = [(2.95, 0.98), (3.4, 0.9), (3.75, 0.875), (4.1, 0.89), (4.55, 0.95)]
+    c.ink_line(line, width_m=0.008, wobble_m=0.002, color=PLUM_DARK, taper=False)
+
+    def on_line(s: float) -> float:
+        for (s0, y0), (s1, y1) in zip(line, line[1:]):
+            if s0 <= s <= s1:
+                return y0 + (y1 - y0) * (s - s0) / (s1 - s0)
+        return line[-1][1]
+
+    def garment(outline, color, shade) -> None:
+        mask = c.polygon_mask(outline, rough=0.15, cell_m=0.01, blur_m=0.004)
+        c.paint(color, mask, 0.97)
+        lower = [(s, y) for s, y in outline if y < max(p[1] for p in outline) - 0.12]
+        if len(lower) >= 3:
+            c.paint(shade, c.polygon_mask(lower, rough=0.2, cell_m=0.01), 0.35)
+        c.ink_line(outline + [outline[0]], width_m=0.006, wobble_m=0.002, color=PLUM_DARK, opacity=0.8)
+
+    # A shirt, a towel, two socks, a child's vest: pale cloth against the late light.
+    s0 = 3.12
+    y = on_line(s0 + 0.13)
+    garment([(s0, y), (s0 + 0.26, y - 0.01), (s0 + 0.31, y - 0.1), (s0 + 0.25, y - 0.12),
+             (s0 + 0.24, y - 0.33), (s0 + 0.03, y - 0.34), (s0 + 0.02, y - 0.12), (s0 - 0.04, y - 0.1)],
+            (196, 206, 214), (120, 136, 160))
+    s0 = 3.52
+    y = on_line(s0 + 0.12)
+    garment([(s0, y + 0.004), (s0 + 0.25, y - 0.004), (s0 + 0.24, y - 0.29), (s0 + 0.13, y - 0.31),
+             (s0 + 0.01, y - 0.28)], (226, 214, 184), (176, 140, 110))
+    for s0 in (3.86, 3.95):
+        y = on_line(s0 + 0.02)
+        garment([(s0, y), (s0 + 0.05, y), (s0 + 0.05, y - 0.11), (s0 + 0.09, y - 0.15),
+                 (s0 + 0.07, y - 0.18), (s0, y - 0.13)], (150, 72, 60), (92, 59, 79))
+    s0 = 4.12
+    y = on_line(s0 + 0.1)
+    garment([(s0, y), (s0 + 0.05, y - 0.005), (s0 + 0.1, y - 0.05), (s0 + 0.15, y - 0.005),
+             (s0 + 0.2, y), (s0 + 0.19, y - 0.22), (s0 + 0.01, y - 0.22)], (112, 132, 158), (64, 86, 140))
+    for peg in (3.14, 3.33, 3.53, 3.75, 3.87, 3.96, 4.13, 4.31):
+        y = on_line(peg)
+        c.paint(PLUM_DARK, c.rect_mask(peg - 0.008, y - 0.03, peg + 0.008, y + 0.012, rough=0.1, cell_m=0.005), 0.9)
     return c.image(32)
 
 

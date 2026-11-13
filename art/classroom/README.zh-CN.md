@@ -69,6 +69,9 @@
 |---|---|
 | 黑板擦过又没擦干净；粉笔槽里有一截断粉笔和一个夹子 | `Board/Face` 贴图、`ChalkBrokenEnd`、`Clip`、粉笔槽上的粉笔灰 |
 | 两块玻璃，一块裂了、用胶带补过；窗外是湿水泥地、矮墙、一排垃圾桶；傍晚的光 | `WindowGlass0`（裂纹 + 胶带）、`window_view.png` |
+| （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain` 挂在 Window1 上 |
+| （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `Anomalies/VoidOpening`（`void_opening.tres` / `.gdshader`，视差“墙洞”）取代 `WindowGlass1`/`WindowGlow1`/`WindowMullion1` |
+| （后门）门后是墙；一段楼梯从天花板伸下来，停在讲台前、离地两米 | `WallSouthLeft/RearDoor`（作者的门 GLB，宽度 0.8 倍）、`Anomalies/Staircase`（最低一级约 1.92 m） |
 | 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度 |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |
 | 讲桌上有塑料封皮的点名册、订书机、装粉笔的杯子；椅子斜着推进去；比其他桌子整洁 | `Register` 及标签、`Stapler`、插着三支粉笔的 `Mug`、`Papers`、新增的 `Chair` |

@@ -45,6 +45,17 @@ const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
 const Q_COMPANION: StringName = &"q_companion"
 ## bool: the player used the walkway railing to let part of the period pass.
 const CORRIDOR_WAITED: StringName = &"corridor_waited"
+## bool: the curtain conversation ended with the protagonist drawing the back-window
+## curtain aside; the classroom's fall is owed. Set by dialogue (`classroom_curtain`),
+## cleared by the fall itself once the player has landed in the yard.
+## PROVISIONAL: a placeholder until the curtain scene's narrative owner (Agent 04) takes
+## the dialogue over; the id is what the classroom code listens for, so keep it or
+## migrate both together.
+const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
+## bool: the back-window curtain hangs open on the void; the classroom loads that way.
+const CURTAIN_DRAWN: StringName = &"curtain_drawn"
+## bool: the rear door has been opened and the staircase hangs in the classroom.
+const REAR_DOOR_OPENED: StringName = &"rear_door_opened"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -111,6 +122,10 @@ const ALL_FLAGS: Array[StringName] = [
 	FREE_PERIOD_LEAVING,
 	Q_COMPANION,
 	CORRIDOR_WAITED,
+	# The biology classroom's two anomalies.
+	CURTAIN_FALL_PENDING,
+	CURTAIN_DRAWN,
+	REAR_DOOR_OPENED,
 	# Outdoor beats.
 	ALLEY_ARRIVED,
 	PLAYGROUND_ARRIVED,

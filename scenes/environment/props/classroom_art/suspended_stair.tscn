@@ -1,0 +1,132 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/suspended_stair.gd" id="1_script"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_honey.tres" id="2_tread"]
+[ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="3_stringer"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="4_nosing"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_tread"]
+size = Vector3(0.9, 0.05, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nosing"]
+size = Vector3(0.9, 0.03, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_stringer"]
+size = Vector3(0.05, 0.24, 2.631)
+
+[node name="SuspendedStair" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Stringers" type="Node3D" parent="."]
+position = Vector3(0, -0.05, -0.06)
+rotation_degrees = Vector3(30.65, 0, 0)
+
+[node name="StringerLeft" type="MeshInstance3D" parent="Stringers"]
+position = Vector3(-0.475, -0.07, 1.315)
+mesh = SubResource("BoxMesh_stringer")
+material_override = ExtResource("3_stringer")
+cast_shadow = 0
+
+[node name="StringerRight" type="MeshInstance3D" parent="Stringers"]
+position = Vector3(0.475, -0.07, 1.315)
+mesh = SubResource("BoxMesh_stringer")
+material_override = ExtResource("3_stringer")
+cast_shadow = 0
+
+[node name="Treads" type="Node3D" parent="."]
+
+[node name="Tread0" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.160, 0.135)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread0"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread1" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.320, 0.405)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread1"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread2" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.480, 0.675)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread2"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread3" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.640, 0.945)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread3"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread4" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.800, 1.215)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread4"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread5" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -0.960, 1.485)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread5"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread6" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -1.120, 1.755)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread6"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0
+
+[node name="Tread7" type="MeshInstance3D" parent="Treads"]
+position = Vector3(0, -1.280, 2.025)
+mesh = SubResource("BoxMesh_tread")
+material_override = ExtResource("2_tread")
+cast_shadow = 0
+
+[node name="Nosing" type="MeshInstance3D" parent="Treads/Tread7"]
+position = Vector3(0, 0.01, 0.15)
+mesh = SubResource("BoxMesh_nosing")
+material_override = ExtResource("4_nosing")
+cast_shadow = 0

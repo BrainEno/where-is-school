@@ -864,6 +864,268 @@
           "next": null
         }
       ]
+    },
+    "classroom_curtain_lesson": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ccl_1",
+      "nodes": [
+        {
+          "id": "ccl_1",
+          "speaker": "protagonist",
+          "text": "The curtain over the back window has been drawn all morning. Nobody has said why, and nobody has looked at it."
+        },
+        {
+          "id": "ccl_2",
+          "speaker": "protagonist",
+          "text": "The lesson is not over. You leave it where it is.",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cc_1",
+      "nodes": [
+        {
+          "id": "cc_1",
+          "speaker": "protagonist",
+          "text": "The front window is ordinary: a yard, a low wall, somebody's washing pegged out on a line. The back window has its curtain drawn."
+        },
+        {
+          "id": "cc_2",
+          "speaker": "protagonist",
+          "text": "No light comes round the edges of the cloth. On a morning this bright it should.",
+          "choices": [
+            {
+              "id": "edges",
+              "text": "Look at how it hangs first.",
+              "next": "cc_edges_check",
+              "conditions": {
+                "not_flags": [
+                  "check:classroom_curtain:cc_edges_check"
+                ]
+              }
+            },
+            {
+              "id": "draw",
+              "text": "Draw it aside.",
+              "next": "cc_draw"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it drawn.",
+              "next": "cc_leave"
+            }
+          ]
+        },
+        {
+          "id": "cc_edges_check",
+          "speaker": "voice_orientation",
+          "text": "Wait. Look at the hem before you touch it.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "cc_edges_ok",
+            "failure": "cc_edges_bad"
+          }
+        },
+        {
+          "id": "cc_edges_ok",
+          "speaker": "voice_orientation",
+          "text": "It hangs dead straight. The window behind it is open - you can see the gap at the frame - and the cloth does not move. Air comes in through an open window. Nothing is coming in.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "curtain_hangs_still",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The curtain over the back window hangs perfectly still in front of an open window."
+            }
+          ],
+          "next": "cc_decide"
+        },
+        {
+          "id": "cc_edges_bad",
+          "speaker": "voice_orientation",
+          "text": "A curtain. Ochre on one side, blue on the other, faded where the sun gets at it.",
+          "next": "cc_decide"
+        },
+        {
+          "id": "cc_decide",
+          "speaker": "protagonist",
+          "text": "Your hand is already on the cloth.",
+          "choices": [
+            {
+              "id": "draw",
+              "text": "Draw it aside.",
+              "next": "cc_draw"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it drawn.",
+              "next": "cc_leave"
+            }
+          ]
+        },
+        {
+          "id": "cc_draw",
+          "speaker": "protagonist",
+          "text": "You take a fistful of it and walk it along the rail.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "curtain_fall_pending",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "drew_back_curtain",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You drew aside the curtain over the back window of the biology classroom."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "cc_leave",
+          "speaker": "protagonist",
+          "text": "You let go. It settles back exactly as it was.",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_void": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cv_1",
+      "nodes": [
+        {
+          "id": "cv_1",
+          "speaker": "protagonist",
+          "text": "There is no yard behind it. There is no glass. The sill runs out as far as the wall is thick, and after the wall there is nothing: not dark, not sky. Nothing to be lit.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "saw_void_window",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "Behind the curtain at the back of the biology classroom there is no outside at all."
+            }
+          ]
+        },
+        {
+          "id": "cv_2",
+          "speaker": "protagonist",
+          "text": "It is not frightening. It is just where the building stops."
+        },
+        {
+          "id": "cv_3",
+          "speaker": "protagonist",
+          "text": "You lean out to see how far down it goes.",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_drawn": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ccd_1",
+      "nodes": [
+        {
+          "id": "ccd_1",
+          "speaker": "protagonist",
+          "text": "The curtain is still gathered at the side, where you left it. Past the sill there is still nothing."
+        },
+        {
+          "id": "ccd_2",
+          "speaker": "protagonist",
+          "text": "You do not lean out this time.",
+          "next": null
+        }
+      ]
+    },
+    "classroom_fall_landing": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cl_1",
+      "nodes": [
+        {
+          "id": "cl_1",
+          "speaker": "protagonist",
+          "text": "Concrete, flat under your back. Sky. Nothing hurts. There is no window above you to have fallen from."
+        },
+        {
+          "id": "cl_2",
+          "speaker": "q",
+          "source": "reported",
+          "text": "There you are. I thought you'd come down the stairs like everybody else.",
+          "conditions": {
+            "all_flags": [
+              "q_companion"
+            ]
+          }
+        },
+        {
+          "id": "cl_3",
+          "speaker": "protagonist",
+          "text": "You get up. A court painted on the ground, a climbing frame, a bench, a shed at the side. The yard.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "playground_arrived",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.playground"
+            },
+            {
+              "type": "record",
+              "entry_id": "fell_into_playground",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You fell from the back window of the biology classroom and landed in the yard, unhurt."
+            }
+          ],
+          "next": null
+        }
+      ]
+    },
+    "classroom_rear_door": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "rd_1",
+      "nodes": [
+        {
+          "id": "rd_1",
+          "speaker": "protagonist",
+          "text": "The rear door opens onto wall: plaster, the same paint as the rest of the room, flush with the frame."
+        },
+        {
+          "id": "rd_2",
+          "speaker": "protagonist",
+          "text": "And at the front of the room, where there was nothing a moment ago, a staircase comes down out of the ceiling and stops in front of the teacher's desk, two metres up."
+        },
+        {
+          "id": "rd_3",
+          "speaker": "protagonist",
+          "text": "Nothing holds it. It goes nowhere, and it does not look as if it minds.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "saw_suspended_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "Opening the classroom's rear door put a staircase in the room. It hangs from the ceiling in front of the teacher's desk, held by nothing."
+            }
+          ],
+          "next": null
+        }
+      ]
     }
   }
 }
