@@ -20,6 +20,13 @@ class_name PlayerController
 
 signal path_finished
 signal path_cancelled
+## The current walk stalled, asked the map for a fresh route from where the body stands,
+## and got one. At most `STALL_REPATHS_PER_WALK` times per requested walk.
+signal path_rerouted
+
+## How many fresh routes one requested walk may ask for after stalling. See
+## `_stall_repaths_left`.
+const STALL_REPATHS_PER_WALK := 1
 
 ## The step probe only lifts onto a near-horizontal tread. A continuous stair ramp is
 ## already a walkable floor; treating its slope as a new step makes the body fight the
@@ -108,6 +115,11 @@ var _path_progress_elapsed: float = 0.0
 ## still walk the same destination from where it actually stands, and a route asked for
 ## from the wall the body is pressed against is a different route. A body that stalls
 ## twice has found something a second route does not fix.
+##
+## Only `request_path_to()` - a walk somebody asked for - fills it. The re-route itself
+## goes through `_route_to()`, which leaves it alone: a re-route that refilled the budget
+## would let a body pressed against something the map does not know about re-route
+## forever (#145).
 var _stall_repaths_left: int = 0
 var _path_last_position: Vector3 = Vector3.ZERO
 ## The route the navigation map returned for the current request, in order.
@@ -284,6 +296,18 @@ func request_path_to(destination: Vector3) -> bool:
 		_path_target = target
 		_finish_path()
 		return true
+	if not _route_to(map, target):
+		return false
+	# A new walk: it gets its own re-route, whatever the walk it replaces had left.
+	_stall_repaths_left = STALL_REPATHS_PER_WALK
+	return true
+
+
+## Asks the map for a route from where the body stands to `target` and starts following
+## it. Shared by a requested walk and by the stall re-route; it never touches the re-route
+## budget, which belongs to the request (see `_stall_repaths_left`). Returns false, leaving
+## the current walk as it was, when the map has no route.
+func _route_to(map: RID, target: Vector3) -> bool:
 	var path := NavigationServer3D.map_get_path(map, global_position, target, true)
 	if path.size() < 2:
 		return false
@@ -293,7 +317,6 @@ func request_path_to(destination: Vector3) -> bool:
 	# The first point is where the body already is.
 	_path_index = 1
 	_path_progress_elapsed = 0.0
-	_stall_repaths_left = 1
 	_path_last_position = global_position
 	navigation_agent.target_position = target
 	return true
@@ -354,14 +377,8 @@ func _path_direction(delta: float) -> Vector3:
 			# without being anywhere it cannot go. Asking the map again from where the
 			# body actually is gives a route around *that* corner; if the fresh route
 			# stalls too, the walk ends as it always did.
-			if _stall_repaths_left > 0:
-				# Cleared before the fresh request: that request resets the budget for a
-				# walk somebody asked for, and a walk that keeps re-routing itself is a
-				# walk that never gives up.
-				_stall_repaths_left = 0
-				_path_progress_elapsed = 0.0
-				if request_path_to(_path_target):
-					return Vector3.ZERO
+			if _stall_repaths_left > 0 and _reroute():
+				return Vector3.ZERO
 			_abort_path()
 			return Vector3.ZERO
 
@@ -387,10 +404,26 @@ func _path_direction(delta: float) -> Vector3:
 	return to_next.normalized()
 
 
+## Spends one re-route on a fresh route to the same target from where the body stands.
+## The target is kept as the request settled it: it is already a point on the mesh, so
+## it is not snapped (or raised) again. Returns false when there is no route, and the
+## caller ends the walk; the re-route is spent either way.
+func _reroute() -> bool:
+	_stall_repaths_left -= 1
+	if not _control_enabled or navigation_agent == null:
+		return false
+	var map := navigation_agent.get_navigation_map()
+	if not _map_has_geometry(map) or not _route_to(map, _path_target):
+		return false
+	path_rerouted.emit()
+	return true
+
+
 func _finish_path() -> void:
 	_path_active = false
 	_path_legs = PackedVector3Array()
 	_path_index = 0
+	_stall_repaths_left = 0
 	if navigation_agent != null:
 		navigation_agent.target_position = global_position
 	path_finished.emit()
