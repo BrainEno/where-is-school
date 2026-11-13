@@ -87,6 +87,71 @@ Favor simple materials, painted surfaces, broad color changes, hand-made texture
 
 A surface may be clean, plain, rough, or graphic. Choose its treatment according to the composition and narrative purpose.
 
+### Classroom material baseline — 2026-11-12
+
+This is a **classroom-local implementation baseline**, not a mandate to recolor other
+locations or characters. ADR 0004's camera comparison and owner visual acceptance remain
+open. Preserve the existing room geometry, collision, navigation, exits and story.
+
+**Organize color before adding marks.** Warm ochre light meets blue-grey/violet shadow;
+muted rose frames identify the teacher's area and doorway. The empty strip over the board
+stays empty: the former red pseudo-writing banner, pins, material, image and generator
+entry are removed. Do not replace it with another slogan, glyph strip or decorative decal.
+
+| Role | Recommended sRGB anchors / range | Hierarchy |
+|---|---|---|
+| Upper plaster | `#CEC2BB`, warm `#E9D5AB`, cool `#9697A7` | Broad, low-contrast planes; quiet above the board |
+| Wainscot / window frames | `#47656F`, `#364555`, `#667E82` | Blue-leaning, darker than plaster; do not merge with Q's green clothing |
+| Floor | `#898486`, `#A79E91`, `#636C7D` | Quiet walkable ground with one violet-grey counterplane, no invented steps |
+| Teacher's floor / lacquer | `#785148`, `#6E3C36` | Muted rose/umber, not a saturated red stripe |
+| Board | `#243D3F`, shadow `#212A3A`, chalk `#D6DCCE` | Cool pigment underneath the existing erased heading, diagram and date ghosts |
+| Wood | `#A98458`, light `#C8AF81`, cool `#6E725F` | Matte ochre against cool floor; chairs quieter than the bag |
+| Window light / schoolbag | `#E0A569`–`#EFCD97`; bag `#BE963E` | Concentrate warm chroma here, not on every surface |
+| Contour | near `#2E2933` | Warm-violet dark, never a pure-black cage |
+
+**Material tiers.**
+
+- Walls, floor, boards, lectern, door frames, paper and small functional props keep
+  classroom-owned `StandardMaterial3D`: toon diffuse, specular disabled, roughness near
+  1.0. Structural walls explicitly use opaque transparency, opaque-only depth draw and
+  back-face culling. Their inward-facing paint quads remain 4 mm off solid box meshes;
+  do not enable double-sided Alpha blending to disguise a normal or depth problem.
+- The photographic student desk is the exception that benefits from a material shader.
+  `student_wood.tres` reuses `assets/shaders/painterly/environment_surface.gdshader`
+  **read-only**, with classroom-owned pigments, patch strength 0.24 and brush strength
+  0.08. `ClassroomPresentation` replaces the source surface and removes the legacy wash
+  overlay after the desk wrappers are ready; no photographic albedo, normal or ORM maps
+  are sampled. Do not migrate characters, dialogue portraits or every prop to this shader.
+- Window views stay unshaded painted images, bounded by dark frames. Glass alone may
+  Alpha-blend for the crack/tape and reflection marks; keep the opaque view behind it.
+  Clock-face and desk-mark cutouts are functional details, not permission for transparent
+  structural surfaces.
+- Camera obstruction relief is an explicit exception to opaque walls: a near wall may
+  fade only while it obstructs the player/facing ray, then restore the **same** authored
+  resources. There must be one fade owner per renderer, not multiplied instance and
+  material opacity. Keep the camera, pointer visibility and outline tests together.
+
+**Edges and brushwork.** Use the existing painted seams and irregular color boundaries
+rather than distorting collision or raising floor edges. The classroom's optional
+inverted-hull contour is **6 mm**, only on selected furniture/props; no wall/floor-wide
+outline, character contour retrofit or full-screen oil filter. Remove a contour from a
+thin/hard-normal mesh if it produces seams; never widen all lines to compensate. Broad
+fields live at approximately 1–3 m scale, subordinate bristle marks at centimetre scale.
+Keep marks sparse, fixed to the surface and mipmapped. Chalk, the cracked pane, repaired
+set square, timetable and own-desk marks remain meaningful details; do not add generic
+noise, grime, pseudo-writing or graffiti to fill quiet space.
+
+**Reuse in the next location.** First validate its walkable geometry and camera. Choose
+local warm/cool anchors and one or two chromatic focal objects; retain at least 0.15
+value/chroma separation for important object/backdrop pairs and keep broad-plane mean
+chroma below 0.20. Copy material *presets* into the new location's own folder, reference
+reviewed shaders read-only, and author its texture fields from its own composition.
+Do not change this classroom palette or a global shader to restyle another location.
+Re-run collision/navigation/interaction/story checks and photograph the actual game
+camera plus obstruction-and-restoration views on Forward+ and Compatibility. Source,
+rights and deterministic regeneration are recorded in `docs/ASSET_PROVENANCE.md` and
+`art/classroom/README.md`; the capture command is `tests/capture_classroom_art.gd`.
+
 ## Character direction
 
 ### Character design

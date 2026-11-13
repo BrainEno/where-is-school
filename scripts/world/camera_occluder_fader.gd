@@ -7,19 +7,18 @@ extends Node3D
 ## dithered out while it blocks the view and restored afterwards, which keeps
 ## navigation readable without moving the camera.
 ##
-## **How the fade is drawn (issue #115).** `GeometryInstance3D.transparency` is what is
-## animated, but on its own it draws nothing in this project: the Godot documentation says
-## it is only supported by the Forward+ renderer and is ignored (treated as 0.0) by Mobile
-## and Compatibility, and the game ships on Compatibility. A real frame confirmed it: the
-## classroom's south wall at transparency 0.82 was drawn fully opaque, and the timetable
-## behind it was invisible. So while a piece is faded, its materials are swapped for
-## alpha-blended copies whose albedo alpha follows the same value (`_apply_fade`), and the
-## authored materials are put back exactly when it is restored. An alpha-blended material
-## is drawn in the transparent pass and writes no depth, so what is behind the wall shows in
-## the frame and in the outline's depth mask alike, and `InteractionController` counts the
-## wall as see-through for the same reason. Only `StandardMaterial3D`/`ORMMaterial3D` can be
-## copied this way; a piece drawn with a `ShaderMaterial` (or nothing) stays opaque, and is
-## counted as opaque. `material_overlay` is never touched.
+## **How the fade is drawn (issue #115, classroom art regression).** Exactly one
+## renderer owns opacity. Forward+ supports `GeometryInstance3D.transparency` directly;
+## multiplying a material's alpha by the same fade made a requested 18% wall only 3.24%
+## opaque (confirmed by tests/classroom_wall_render_test.gd on real frames). Forward+
+## therefore leaves all authored materials alone. Mobile and Compatibility ignore instance
+## transparency, so they still need alpha-blended BaseMaterial3D copies whose albedo alpha
+## follows the fade (`_apply_fade`), restored to the exact resources when the wall clears.
+## Their alpha pass writes no depth, and InteractionController/outline masks see the same
+## relief. On those two renderers only StandardMaterial3D/ORMMaterial3D can be copied;
+## a ShaderMaterial (or no material) stays opaque and is counted as opaque. Forward+
+## can instance-fade those too. `material_overlay`, ray selection, fade speed and collision
+## are unchanged. Do not replace this renderer distinction with unconditional alpha copies.
 ##
 ## **What is faded (issue #115).** Two rays: camera to the target's eye, and camera to the
 ## point the target faces, `facing_reach` ahead at the same height. The second one is there
@@ -52,9 +51,12 @@ var _faded: Array[Node] = []
 ## surface override materials, "copies": the alpha-blended copies drawn instead}, for
 ## every piece whose materials are currently swapped.
 var _swapped: Dictionary = {}
+## Rendering method is fixed for the lifetime of the process.
+var _uses_instance_fade := false
 
 
 func _ready() -> void:
+	_uses_instance_fade = RenderingServer.get_current_rendering_method() == "forward_plus"
 	# Before the player's InteractionController in every physics tick: it asks whether the
 	# camera sees an object through these walls (#115), and it should get the answer the
 	# frame about to be rendered shows, not last tick's. The cost is that the fade itself
@@ -173,13 +175,13 @@ func _update_materials(delta: float) -> void:
 			_swapped.erase(key)
 
 
-## Draws `geometry.transparency` with materials, so the fade shows on every renderer.
-## At 0 the authored materials are back, exactly as they were.
+## Material-alpha fallback only where instance transparency is not drawn.
+## Forward+ must not multiply both opacity paths. At 0 restore exact resources.
 func _apply_fade(geometry: GeometryInstance3D) -> void:
-	var alpha := clampf(1.0 - geometry.transparency, 0.0, 1.0)
-	if geometry.transparency <= 0.0:
+	if _uses_instance_fade or geometry.transparency <= 0.0:
 		_restore(geometry)
 		return
+	var alpha := clampf(1.0 - geometry.transparency, 0.0, 1.0)
 	if not _swapped.has(geometry):
 		_swap(geometry)
 	var entry: Dictionary = _swapped.get(geometry, {})

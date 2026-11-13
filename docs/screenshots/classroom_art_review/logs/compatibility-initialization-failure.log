@@ -1,0 +1,44 @@
+WorkerThreadPool: 2 threads, 1 max low-priority.
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+SDL: Init OK!
+libxkbcommon.so.0: cannot open shared object file: No such file or directory
+Detected XKBcommon library version older than 0.5, dead key composition and Unicode key labels disabled.
+Detected XKBcommon library version older than 0.8, Unicode key labels disabled.
+Xshape 1.1 detected.
+Xinerama 1.1 detected.
+Xrandr 1.5 detected.
+Xrender 0.11 detected.
+Xinput 2.2 detected.
+XInput: Refreshing devices.
+XInput: No touch devices found.
+Input method started.
+ERR: Display.cpp:1062 (initialize): ANGLE Display::initialize error 0: Internal Vulkan error (-3): Initialization of an object could not be completed for implementation-specific reasons, in ../../src/libANGLE/renderer/vulkan/vk_renderer.cpp, initialize:2045.
+ERR: Display.cpp:1062 (initialize): ANGLE Display::initialize error 0: Internal Vulkan error (-3): Initialization of an object could not be completed for implementation-specific reasons, in ../../src/libANGLE/renderer/vulkan/vk_renderer.cpp, initialize:2045.
+Loaded EGL 1.0
+ERROR: EGL version is too old! 1.0 < 1.4
+   at: initialize (drivers/egl/egl_manager.cpp:493)
+Your video card drivers seem not to support the required OpenGL ES 3.0 version.
+
+If possible, consider updating your video card drivers.
+
+If you recently updated your video card drivers, try rebooting.
+ERROR: Could not initialize OpenGL ES.
+   at: DisplayServerX11 (platform/linuxbsd/x11/display_server_x11.cpp:7237)
+ERROR: Unable to create DisplayServer, all display drivers failed.
+Use "--headless" command line argument to run the engine in headless mode if this is desired (e.g. for continuous integration).
+   at: setup2 (main/main.cpp:3390)
+X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  24 (X_ConvertSelection)
+  Resource id in failed request:  0x0
+  Serial number of failed request:  43
+  Current serial number in output stream:  43
+ERROR: Pages in use exist at exit in PagedAllocator: N10StringName5_DataE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: Pages in use exist at exit in PagedAllocator: N12VariantPools11BucketLargeE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: Pages in use exist at exit in PagedAllocator: N12VariantPools12BucketMediumE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: Pages in use exist at exit in PagedAllocator: N12VariantPools11BucketSmallE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)

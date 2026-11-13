@@ -9,13 +9,15 @@ extends SceneTree
 ##    least one visible mesh to trace - so the fallback diamond is never what a player sees,
 ##    and an `outline_paths` entry that stopped resolving after a scene edit is caught here
 ##    instead of as a silent fallback in a playtest;
-## 2. every outlined object can be pointed at where it is drawn: each outline mesh that
+## 2. every authored support path resolves, so line-of-sight checks can look through the
+##    actual frame or stair geometry attached to an exit instead of losing the target;
+## 3. every outlined object can be pointed at where it is drawn: each outline mesh that
 ##    qualifies (`Interactable.gets_pick_box`) has a pick box; objects that are only floor
 ##    paint or longer than a pick box are listed in the log as anchor-only;
-## 3. no shipped mesh is authored on `OutlineOverlay.MASK_LAYER`. The overlay renders that
+## 4. no shipped mesh is authored on `OutlineOverlay.MASK_LAYER`. The overlay renders that
 ##    layer and nothing else into its silhouette mask; a prop authored on it would be
 ##    outlined all the time;
-## 4. the overlay in the main scene sits under the UI, so an outline never draws over a
+## 5. the overlay in the main scene sits under the UI, so an outline never draws over a
 ##    dialogue box.
 
 const Harness = preload("res://tests/test_harness.gd")
@@ -116,14 +118,19 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"all %d shipped interactables (and the companion) outline a visible mesh and have a "
+		"all %d shipped interactables (and the companion) resolve support paths, outline a "
 		% total
-		+ "pick box for every mesh that qualifies; no authored mesh is on the outline layer."
+		+ "visible mesh and have its pick box; no authored mesh is on the outline layer."
 	)
 
 
 func _check_interactable(interactable: Interactable, label: String) -> void:
 	var id := String(interactable.interact_id)
+	for support_path: String in interactable.support_paths:
+		if interactable.get_node_or_null(NodePath(support_path)) == null:
+			_failures.append(
+				"%s: '%s' has unresolved support path '%s'." % [label, id, support_path]
+			)
 	var meshes := interactable.get_outline_meshes()
 	if meshes.is_empty():
 		_failures.append(

@@ -1,0 +1,162 @@
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+CharacterVisualAnimation: Model — 19 bone(s) resolved, 0 not on this rig (none), held at their modelled pose: none, sides mirrored: shoulder, upper_arm, fore_arm, hand, thigh, shin, foot, local axes twisted up to 38.9°, motion profile: protagonist: tired, slumped, held in | idle 8/7 tracks 4.0s | walk 14/12 tracks 1.0s | jog 14/12 tracks 0.8s | sit_idle 14/13 tracks 3.8s | get_up 14/13 tracks 2.0s once | wave 9/5 tracks 2.1s | talk 8/5 tracks 1.7s
+DialogueLibrary: 2 language(s) in 112.5 ms.
+  en: 57.7 KB, 25 conversations, 169 nodes, parsed in 53.8 ms
+    prologue: 24.8 KB, 8 conversations, 89 nodes, 26.1 ms
+    corridor: 3.6 KB, 3 conversations, 11 nodes, 4.0 ms
+    street: 3.2 KB, 3 conversations, 9 nodes, 2.8 ms
+    residential: 6.4 KB, 4 conversations, 17 nodes, 6.9 ms
+    alley: 1.4 KB, 1 conversations, 3 nodes, 0.6 ms
+    playground: 14.7 KB, 3 conversations, 28 nodes, 10.2 ms
+    inner_voice: 3.7 KB, 3 conversations, 12 nodes, 3.2 ms
+  zh-CN: 56.8 KB, 25 conversations, 169 nodes, parsed in 37.5 ms
+    prologue: 24.9 KB, 8 conversations, 89 nodes, 17.9 ms
+    corridor: 3.5 KB, 3 conversations, 11 nodes, 2.6 ms
+    street: 3.1 KB, 3 conversations, 9 nodes, 2.4 ms
+    residential: 6.2 KB, 4 conversations, 17 nodes, 4.5 ms
+    alley: 1.3 KB, 1 conversations, 3 nodes, 0.4 ms
+    playground: 14.1 KB, 3 conversations, 28 nodes, 7.1 ms
+    inner_voice: 3.6 KB, 3 conversations, 12 nodes, 2.5 ms
+InspectionLibrary: 2 language(s) in 10.9 ms.
+  en: 16.2 KB, 28 entries, parsed in 3.6 ms
+    classroom: 5.6 KB, 8 entries, 0.7 ms
+    corridor: 2.0 KB, 3 entries, 0.3 ms
+    street: 1.8 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 1.6 KB, 3 entries, 0.2 ms
+    playground: 3.2 KB, 6 entries, 1.8 ms
+  zh-CN: 16.5 KB, 28 entries, parsed in 1.9 ms
+    classroom: 5.9 KB, 8 entries, 0.6 ms
+    corridor: 2.0 KB, 3 entries, 0.2 ms
+    street: 1.7 KB, 4 entries, 0.3 ms
+    residential: 2.0 KB, 4 entries, 0.3 ms
+    alley: 2.0 KB, 3 entries, 0.2 ms
+    playground: 2.9 KB, 6 entries, 0.3 ms
+DialogueController: text corpus loaded in 123.4 ms (2 dialogue language(s), 2 inspection language(s)).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9°, motion profile: Q: loose, leaning back, weight on the heels | idle 8/7 tracks 2.4s | walk 12/12 tracks 0.9s | jog 12/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.4s once | wave 8/5 tracks 1.4s | talk 8/5 tracks 1.0s
+CharacterVisualAnimation: Visual — idle from the model's own clips ST_Idle_Breathing, ST_Nervous_Posture_Shift, ST_Slight_Hand_Movement, ST_Subtle_Head_Movement (7 bone(s), 5.00s)
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: upper_arm, fore_arm, hand, thigh, shin, foot, local axes twisted up to 199.3°, motion profile: none | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+CharacterVisualAnimation: SeatedStudent — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: none, sides mirrored: none, local axes twisted up to 16.4°, motion profile: none | idle 6/7 tracks 2.0s | walk 12/12 tracks 1.0s | jog 12/12 tracks 0.7s | sit_idle 13/13 tracks 2.4s | get_up 13/13 tracks 1.5s once | wave 5/5 tracks 1.6s | talk 4/5 tracks 1.2s
+LocationHost: res://scenes/locations/classroom/classroom.tscn in 668.0 ms (load 556.5, instantiate 27.9, tree 83.2, place 0.1, commit 0.0), 368 nodes, 1 live location(s).
+CharacterVisualAnimation: Visual — 16 bone(s) resolved, 3 not on this rig (chest, shoulder.L, shoulder.R), held at their modelled pose: fore_arm.R, hand.L, hand.R, sides mirrored: none, local axes twisted up to 89.9°, motion profile: Q: loose, leaning back, weight on the heels | idle 8/7 tracks 2.4s | walk 12/12 tracks 0.9s | jog 12/12 tracks 0.7s | sit_idle 12/13 tracks 2.4s | get_up 12/13 tracks 1.4s once | wave 8/5 tracks 1.4s | talk 8/5 tracks 1.0s
+LocationNavigation: 'Classroom' baked in 5.7 ms (collect 2.8), 168 faces -> 22 polygons, 1 region(s).
+WARNING: DialoguePanel portrait: Character 'protagonist': only 19 px of the 64 px screen are left for the portrait; it is not shown.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _warn_portrait (res://scripts/ui/dialogue_panel.gd:1025)
+         [1] _plan_portrait (res://scripts/ui/dialogue_panel.gd:966)
+         [2] _settle_layout (res://scripts/ui/dialogue_panel.gd:727)
+         [3] _process (res://scripts/ui/dialogue_panel.gd:586)
+[#115] canopy: eye sees the target, camera ray meets the canopy; pointer pick at (0.0, 0.0)
+[#115] canopy, facing: current=<nothing> highlight=<nothing> seen_by_camera=false
+[#115] partial cover: left (covered) -> <nothing>, right (open) -> occlusion_partial
+[#115] classroom: sheet anchor (1.6, 0.6, 3.15), outline (1.6, 1.735, 3.475), wall (-1.0, 1.6, 3.6)
+[#115] view { "view": "a #111 spot", "player": (3.1, 0.0, 3.04), "camera": (6.5, 6.4, 6.44), "wall": 0.0, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 0, "contradictions": 0, "blocker": "WallSouthLeft", "current": "classroom_door", "highlight": "classroom_door", "prompt": "Try the door", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "b faded wall", "player": (1.6, 0.0, 2.7), "camera": (5.0, 6.4, 6.1), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "timetable", "highlight": "timetable", "prompt": "Read the timetable", "e_used": true, "click_used": true, "click_walks": false }
+[#115] fader: authored wall_section (res://assets/materials/classroom/wall_section.tres):<StandardMaterial3D#-9223371944378758389>, while faded wall_section (res://assets/materials/classroom/wall_section.tres):<StandardMaterial3D#-9223371944378758389>
+[#115] view { "view": "c behind the wall", "player": (1.6, 0.0, 4.3), "camera": (5.0, 6.4, 7.7), "wall": 0.81999999284744, "eye": false, "reach": true, "points": 27, "hidden": 27, "picked": 0, "contradictions": 0, "blocker": "WallSouthLeft", "current": "<nothing>", "highlight": "<nothing>", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=0.9", "player": (0.9, 0.0, 2.75), "camera": (4.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.1", "player": (1.1, 0.0, 2.75), "camera": (4.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.3", "player": (1.3, 0.0, 2.75), "camera": (4.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.5", "player": (1.5, 0.0, 2.75), "camera": (4.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.7", "player": (1.7, 0.0, 2.75), "camera": (5.1, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=1.9", "player": (1.9, 0.0, 2.75), "camera": (5.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.1", "player": (2.1, 0.0, 2.75), "camera": (5.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.3", "player": (2.3, 0.0, 2.75), "camera": (5.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] view { "view": "d edge x=2.5", "player": (2.5, 0.0, 2.75), "camera": (5.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+[#115] edge sweep (z=2.75): x=0.9 t=0.82 hidden=27 picked=27; x=1.1 t=0.82 hidden=27 picked=27; x=1.3 t=0.82 hidden=27 picked=27; x=1.5 t=0.82 hidden=27 picked=27; x=1.7 t=0.82 hidden=27 picked=27; x=1.9 t=0.82 hidden=27 picked=27; x=2.1 t=0.82 hidden=27 picked=27; x=2.3 t=0.82 hidden=27 picked=27; x=2.5 t=0.82 hidden=27 picked=27; flips=0
+[#115] facing { "view": "facing", "player": (1.6, 0.0, 1.9), "wall": 0.0, "eye": true, "reach": true, "seen": false, "points": 27, "hidden": 27, "current": "schoolbag", "highlight": "schoolbag", "e_used": false }
+[#115] facing { "view": "facing", "player": (1.6, 0.0, 2.7), "wall": 0.81999999284744, "eye": true, "reach": true, "seen": true, "points": 27, "hidden": 27, "current": "timetable", "highlight": "timetable", "e_used": true }
+LocationHost: res://scenes/locations/corridor/corridor.tscn in 101.9 ms (load 92.1, instantiate 6.6, tree 1.8, place 0.0, commit 0.8), 180 nodes, 1 live location(s).
+LocationNavigation: 'Corridor' baked in 1.8 ms (collect 0.6), 120 faces -> 6 polygons, 1 region(s).
+[#115] scene swap: before=timetable after=back_to_classroom highlight=back_to_classroom
+ERROR: TEST FAILURE: Case 10b: the faded wall is not drawn with an alpha-blended material, so it would stay opaque on Compatibility (material wall_section (res://assets/materials/classroom/wall_section.tres):<StandardMaterial3D#-9223371944378758389>).
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10b: the visible sheet was not pointable consistently. { "view": "b faded wall", "player": (1.6, 0.0, 2.7), "camera": (5.0, 6.4, 6.1), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "timetable", "highlight": "timetable", "prompt": "Read the timetable", "e_used": true, "click_used": true, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=0.9. { "view": "d edge x=0.9", "player": (0.9, 0.0, 2.75), "camera": (4.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=1.1. { "view": "d edge x=1.1", "player": (1.1, 0.0, 2.75), "camera": (4.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=1.3. { "view": "d edge x=1.3", "player": (1.3, 0.0, 2.75), "camera": (4.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=1.5. { "view": "d edge x=1.5", "player": (1.5, 0.0, 2.75), "camera": (4.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=1.7. { "view": "d edge x=1.7", "player": (1.7, 0.0, 2.75), "camera": (5.1, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=1.9. { "view": "d edge x=1.9", "player": (1.9, 0.0, 2.75), "camera": (5.3, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=2.1. { "view": "d edge x=2.1", "player": (2.1, 0.0, 2.75), "camera": (5.5, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=2.3. { "view": "d edge x=2.3", "player": (2.3, 0.0, 2.75), "camera": (5.7, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+ERROR: TEST FAILURE: Case 10d: a pick through the opaque wall at x=2.5. { "view": "d edge x=2.5", "player": (2.5, 0.0, 2.75), "camera": (5.9, 6.4, 6.15), "wall": 0.81999999284744, "eye": true, "reach": true, "points": 27, "hidden": 27, "picked": 27, "contradictions": 27, "blocker": "WallSouthLeft", "current": "", "highlight": "", "prompt": "", "e_used": false, "click_used": false, "click_walks": false }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] finish (res://tests/test_harness.gd:107)
+       [1] _run (res://tests/interaction_occlusion_test.gd:126)
+       [2] _check_classroom_timetable (res://tests/interaction_occlusion_test.gd:793)
+       [3] _check_scene_swap_leaves_nothing (res://tests/interaction_occlusion_test.gd:935)
+       [4] _physics_frames (res://tests/interaction_occlusion_test.gd:1110)
+FAIL: 11 problem(s) found.

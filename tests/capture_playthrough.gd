@@ -723,7 +723,7 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 
 ## The four imported models, in the room the player is standing in.
 ##
-## The classroom's six student desks, the stationery on the player's own desk, the
+## The classroom's twelve student desks, the stationery on the player's own desk, the
 ## player's own model and Q. These are frames of the running game — the same window, the
 ## same light, the same baked navigation as every other frame in this run — from a camera
 ## the capture places for the purpose, because the player's own camera is nailed to the
@@ -743,7 +743,11 @@ func _capture_imported_models() -> void:
 	# The scene the frames are supposed to show, checked before it is photographed: a
 	# missing model is a defect in the build, not a bad camera angle.
 	var furniture := classroom.get_node_or_null(^"Furniture")
-	var desk_names: Array[String] = ["DeskA1", "DeskA2", "DeskA3", "DeskB1", "DeskB2", "DeskB3"]
+	var desk_names: Array[String] = [
+		"DeskA1", "DeskA2", "DeskA3", "DeskA4",
+		"DeskB1", "DeskB2", "DeskB3", "DeskB4",
+		"DeskC1", "DeskC2", "DeskC3", "DeskC4",
+	]
 	var with_models := 0
 	if furniture != null:
 		for desk_name: String in desk_names:
@@ -768,12 +772,11 @@ func _capture_imported_models() -> void:
 
 	var player_camera := _main.get_node_or_null(^"CameraRig/Camera3D") as Camera3D
 
-	# 1. The room from the back, over both rows: six desks, six chairs.
+	# 1. A high rear view takes in all three rows without staging or moving the furniture.
 	await _shot_from_camera(
-		Vector3(0.0, 2.7, 3.25), Vector3(0.0, 0.5, -0.85),
+		Vector3(0.0, 5.5, 8.4), Vector3(0.0, 0.6, 0.1),
 		"03h_classroom_desks",
-		"The classroom from the back: six student desks with the imported model and their "
-		+ "chairs, at the positions the room has always had."
+		"The expanded classroom: all twelve student desks and chairs across three rows."
 	)
 
 	# 2. The player's own desk, close enough to see what is on it.

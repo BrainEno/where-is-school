@@ -1,39 +1,14 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Material" path="res://assets/materials/classroom/banner.tres" id="1_banner"]
-[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="2_ink"]
 [ext_resource type="Material" path="res://assets/materials/classroom/clock_dial.tres" id="3_dial"]
-
-[sub_resource type="QuadMesh" id="QuadMesh_banner"]
-size = Vector2(3.2, 0.42)
-
-[sub_resource type="BoxMesh" id="BoxMesh_pin"]
-size = Vector3(0.025, 0.025, 0.012)
 
 [sub_resource type="QuadMesh" id="QuadMesh_dial"]
 size = Vector2(0.46, 0.46)
 
 [node name="FrontWallDressing" type="Node3D"]
 
-[node name="Banner" type="MeshInstance3D" parent="."]
-position = Vector3(0.2, 2.74, 0.012)
-rotation_degrees = Vector3(0, 0, -0.6)
-mesh = SubResource("QuadMesh_banner")
-material_override = ExtResource("1_banner")
-cast_shadow = 0
-
-[node name="PinLeft" type="MeshInstance3D" parent="Banner"]
-position = Vector3(-1.55, 0.17, 0.006)
-mesh = SubResource("BoxMesh_pin")
-material_override = ExtResource("2_ink")
-
-[node name="PinRight" type="MeshInstance3D" parent="Banner"]
-position = Vector3(1.55, 0.17, 0.006)
-mesh = SubResource("BoxMesh_pin")
-material_override = ExtResource("2_ink")
-
 [node name="ClockDial" type="MeshInstance3D" parent="."]
-position = Vector3(3.6, 2.42, 0.078)
+position = Vector3(1.45, 2.42, 0.078)
 mesh = SubResource("QuadMesh_dial")
 material_override = ExtResource("3_dial")
 cast_shadow = 0

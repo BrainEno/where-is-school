@@ -264,7 +264,7 @@ jobs:
           # stationery, and the two characters. Same measurement, and the three places they
           # deviate from the pipeline contract are pinned instead of relaxed.
           run_check imported_assets 300 godot --headless --path . --script res://tests/imported_assets_test.gd || status=1
-          # The same four assets, *placed*: the six student desks and the stationery on the
+          # The same four assets, *placed*: all twelve student desks and the stationery on the
           # player's own desk, the player's model, and both of Q's (the classroom one and
           # the companion the director spawns). It fails on a graybox left behind, a second
           # collider on a desk, a model that hovers, or a character that faces backwards.

@@ -7,5 +7,5 @@ resource_name = "metal_ink"
 next_pass = ExtResource("2_ink")
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.204, 0.243, 0.259, 1)
+albedo_color = Color(0.22, 0.24, 0.30, 1)
 roughness = 1.0

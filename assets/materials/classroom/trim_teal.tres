@@ -4,5 +4,5 @@
 resource_name = "trim_teal"
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.224, 0.357, 0.384, 1)
+albedo_color = Color(0.21, 0.30, 0.36, 1)
 roughness = 1.0

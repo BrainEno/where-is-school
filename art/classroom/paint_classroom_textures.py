@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import math
 from pathlib import Path
 
@@ -43,29 +44,28 @@ RES_DIR = "res://assets/materials/classroom/textures"
 
 # --- the colour system (sRGB) ------------------------------------------------------
 # Kept in step with art/classroom/README.md and tests/classroom_visual_slice_test.gd.
-INK = (43, 38, 34)
-IVORY = (226, 216, 190)
-IVORY_LIGHT = (237, 229, 207)
-IVORY_SHADE = (205, 193, 166)
-TEAL = (78, 118, 124)  # the wainscot: a blue-leaning green, kept away from Q's sweater
-TEAL_DARK = (57, 91, 98)
-TEAL_LIGHT = (100, 139, 141)
-FLOOR = (158, 148, 130)
-FLOOR_LIGHT = (171, 161, 142)
-FLOOR_DARK = (138, 129, 113)
-STAGE = (140, 76, 60)  # the painted teacher's zone on the floor
-VERMILION = (178, 67, 46)
-OXBLOOD = (122, 44, 36)
-BOARD = (38, 63, 53)
-BOARD_DARK = (29, 49, 42)
+INK = (46, 41, 51)
+IVORY = (206, 194, 187)
+IVORY_LIGHT = (233, 213, 171)
+IVORY_SHADE = (150, 151, 167)
+TEAL = (71, 101, 111)  # the wainscot: a blue-leaning green, kept away from Q's sweater
+TEAL_DARK = (54, 69, 85)
+TEAL_LIGHT = (102, 126, 130)
+# A cool, low-chroma painted concrete; the floor is brushed and mottled, never planked.
+FLOOR = (126, 132, 140)
+FLOOR_LIGHT = (151, 158, 166)
+FLOOR_DARK = (101, 110, 122)
+OXBLOOD = (110, 60, 54)
+BOARD = (36, 61, 63)
+BOARD_DARK = (33, 42, 58)
 CHALK = (214, 220, 206)
-APRICOT = (242, 166, 90)
+APRICOT = (224, 165, 105)
 APRICOT_DEEP = (224, 122, 62)
-APRICOT_PALE = (250, 208, 152)
+APRICOT_PALE = (239, 205, 151)
 PLUM = (92, 59, 79)
 PLUM_DARK = (64, 43, 58)
-HONEY = (192, 138, 82)
-HONEY_PALE = (216, 174, 122)
+HONEY = (169, 132, 88)
+HONEY_PALE = (200, 175, 129)
 MUSTARD = (190, 150, 62)
 MUSTARD_DARK = (148, 110, 42)
 COBALT = (64, 86, 140)
@@ -337,6 +337,19 @@ def paint_wall(c: Canvas, openings: list[tuple[float, float, float, float]] | No
     for shade, subset in ((IVORY_LIGHT, strokes[0::3]), (IVORY_SHADE, strokes[1::4])):
         c.brush(jitter(shade, rng, 0.02), subset, opacity=0.55)
     c.mottle(rgb(IVORY_SHADE), 0.9, 0.35)
+    # A few authored, metre-scale warm/cool planes. These are not dirt or a
+    # uniform noise overlay: leave breathing room above the board and between props.
+    cool = c.polygon_mask(
+        [(-0.1, 1.28), (c.width_m * 0.38, 1.12), (c.width_m * 0.29, 2.55), (-0.1, 2.9)],
+        rough=0.35, cell_m=0.12, blur_m=0.025,
+    )
+    c.paint((135, 141, 164), cool, 0.22)
+    warm = c.polygon_mask(
+        [(c.width_m * 0.58, 1.2), (c.width_m + 0.1, 1.55),
+         (c.width_m + 0.1, 2.95), (c.width_m * 0.66, 2.72)],
+        rough=0.4, cell_m=0.16, blur_m=0.025,
+    )
+    c.paint((220, 181, 139), warm, 0.2)
     # A painted (not lit) shadow band under the ceiling: a stage flat, not a render.
     top = c.rect_mask(-0.1, c.height_m - 0.32, c.width_m + 0.1, c.height_m + 0.1, rough=0.45, cell_m=0.08)
     c.paint(rgb(IVORY_SHADE) * 0.93, top, 0.75)
@@ -390,16 +403,16 @@ def tally(c: Canvas, s: float, y: float, groups: int, size: float = 0.07) -> Non
 
 # --- the walls ------------------------------------------------------------------------
 
-WALL_PPM = 176.0
+WALL_PPM = 140.0
 
 
 def wall_north() -> Image.Image:
-    """North wall, seen from the room: s = x + 4.5. The blackboard spans s 2.2..7.2,
-    y 0.975..2.425 (blackboard.tscn at x = 0.2)."""
-    c = Canvas(9.0, 3.2, WALL_PPM, IVORY, seed=101)
+    """North wall, seen from the room: s = x + 7. The board and both door openings
+    share this face; their actual geometry is cut into the wall in classroom.tscn."""
+    c = Canvas(14.0, 3.2, WALL_PPM, IVORY, seed=101)
     paint_wall(c)
     # The board is hung on a painted shadow: a cut-paper flat, offset down and right.
-    halo = c.rect_mask(2.2 + 0.07, 0.975 - 0.09, 7.2 + 0.11, 2.425 - 0.02, rough=0.5, cell_m=0.03)
+    halo = c.rect_mask(2.9 + 0.07, 0.975 - 0.09, 7.8 + 0.11, 2.425 - 0.02, rough=0.5, cell_m=0.03)
     c.paint(rgb(INK), halo, 0.42)
     # A sweep of grey where years of chalk dust have been wiped onto the wall.
     dust = [([(2.0, 0.9), (2.4, 0.7), (3.4, 0.82)], 0.12, {"bristles": 10, "dryness": 0.7}),
@@ -412,11 +425,10 @@ def wall_north() -> Image.Image:
 
 
 def wall_west() -> Image.Image:
-    """West (window) wall, seen from the room: s = 3.5 - z. Window glass spans y 1.07..2.37;
-    window 1 (z = 1.3) is s 1.45..2.95, window 0 (z = -1.7) is s 4.45..5.95."""
-    c = Canvas(7.0, 3.2, WALL_PPM, IVORY, seed=202)
+    """West window wall, seen from inside: s = 5 - z on the ten-metre side."""
+    c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=202)
     paint_wall(c)
-    for s0 in (1.45, 4.45):
+    for s0 in (2.8, 7.4):
         s1 = s0 + 1.5
         # The impossible light bleeds onto the plaster around each window.
         spill = c.polygon_mask(
@@ -433,16 +445,15 @@ def wall_west() -> Image.Image:
         c.paint(TEAL_DARK, reveal, 0.8)
         c.ink_line([(s0 - 0.14, 2.5), (s1 + 0.14, 2.5)], width_m=0.012, wobble_m=0.004, opacity=0.8)
         c.ink_line([(s0 - 0.15, 0.96), (s1 + 0.16, 0.95)], width_m=0.016, wobble_m=0.004, opacity=0.9)
-    # Below the back window: somebody's tally, and a second, shorter one beside it.
-    tally(c, 1.62, 0.5, 3, size=0.16)
-    tally(c, 2.3, 0.3, 1, size=0.11)
+    # Below the nearer window: somebody's tally, and a second, shorter one beside it.
+    tally(c, 3.0, 0.5, 3, size=0.16)
+    tally(c, 3.7, 0.3, 1, size=0.11)
     return c.image(40)
 
 
 def wall_east() -> Image.Image:
-    """East wall, seen from the room: s = z + 3.5. Almost empty: the pale ghosts of
-    notices that have been taken down, and a door someone drew where there is none."""
-    c = Canvas(7.0, 3.2, WALL_PPM, IVORY, seed=303)
+    """East wall, seen from the room: s = z + 5. Almost empty: pale ghosts of notices."""
+    c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=303)
     paint_wall(c)
     for s0, y0, w, h in ((1.2, 1.45, 0.62, 0.84), (2.05, 1.6, 0.44, 0.6), (4.6, 1.5, 0.8, 0.55)):
         ghost = c.rect_mask(s0, y0, s0 + w, y0 + h, rough=0.25, cell_m=0.03)
@@ -450,24 +461,13 @@ def wall_east() -> Image.Image:
         for cs, cy in ((s0, y0 + h), (s0 + w, y0 + h), (s0, y0), (s0 + w, y0)):
             tape = c.rect_mask(cs - 0.03, cy - 0.015, cs + 0.03, cy + 0.015, rough=0.2, cell_m=0.01)
             c.paint((210, 188, 140), tape, 0.75)
-    # A small chalk door on the wainscot, knob and all. It goes nowhere; it is a drawing.
-    d0, dw, dh = 5.7, 0.42, 0.78
-    c.chalk([(d0, 0.12), (d0, 0.12 + dh), (d0 + dw * 0.5, 0.12 + dh + 0.12), (d0 + dw, 0.12 + dh), (d0 + dw, 0.12)], 0.012, opacity=0.7)
-    c.chalk([(d0 + dw * 0.78, 0.5), (d0 + dw * 0.8, 0.52)], 0.03, opacity=0.8)
     return c.image(36)
 
 
-# South wall pieces, seen from the room: s = 4.5 - x. The door opening is s 0.7..1.9,
-# floor to 2.1 m; WallSouthRight is s 0..0.7, the lintel s 0.7..1.9 above 2.1 m and
-# WallSouthLeft s 1.9..9.0.
 def wall_south_full() -> Canvas:
-    c = Canvas(9.0, 3.2, WALL_PPM, IVORY, seed=404)
-    paint_wall(c, openings=[(0.7, -0.1, 1.9, 2.1)])
-    # A second, sketchier door frame drawn around the real one.
-    c.ink_line([(0.62, 0.0), (0.6, 2.2), (1.98, 2.21), (1.99, 0.0)], width_m=0.01, wobble_m=0.006, opacity=0.75, broken=0.4)
-    # Where the back board hangs (s 4.9..7.9), the same cut-paper shadow as at the front.
-    halo = c.rect_mask(4.9 + 0.06, 0.92 - 0.07, 7.9 + 0.09, 2.3 - 0.02, rough=0.5, cell_m=0.03)
-    c.paint(rgb(INK), halo, 0.38)
+    """South wall, seen from the room: a continuous fourteen-metre wall."""
+    c = Canvas(14.0, 3.2, WALL_PPM, IVORY, seed=404)
+    paint_wall(c)
     return c
 
 
@@ -479,57 +479,58 @@ def crop(c: Canvas, s0: float, s1: float, y0: float, y1: float, colors: int, alp
 
 
 def floor() -> Image.Image:
-    """The floor, 9 x 7 m, u along +x, v along +z (PlaneMesh). Seen from above: the
-    teacher's zone painted in front of the board, the aisles worn lighter, and the
-    window light laid down as painted shapes rather than computed."""
+    """Fourteen by ten metres of hand-painted cool concrete, with no plank or board grain."""
     ppm = 132.0
-    c = Canvas(9.0, 7.0, ppm, FLOOR, seed=505)
-    # Here `s` is x + 4.5 and `y` is 7 - (z + 3.5) = 3.5 - z, so y = 7 is the board wall.
+    c = Canvas(14.0, 10.0, ppm, FLOOR, seed=505)
     rng = c.rng
-    planks = []
-    y = -0.2
-    while y < 7.2:
-        width = rng.uniform(0.35, 0.7)
-        s0 = rng.uniform(-0.6, 0.4)
-        while s0 < 9.4:
-            length = rng.uniform(1.6, 3.4)
-            planks.append(([(s0, y), (s0 + length, y + rng.uniform(-0.05, 0.05))], width, {"bristles": 18, "dryness": 0.6, "wobble_m": 0.02}))
-            s0 += length * rng.uniform(0.6, 0.95)
-        y += width * rng.uniform(0.6, 0.9)
-    c.brush(jitter(FLOOR_LIGHT, rng, 0.02), planks[0::3], opacity=0.5)
-    c.brush(jitter(FLOOR_DARK, rng, 0.02), planks[1::4], opacity=0.45)
-    c.mottle(rgb(FLOOR_DARK), 1.4, 0.25)
-    # The two aisles between the desk columns (x = -1.25 and 1.25) and the cross aisle,
-    # worn paler by feet.
+    # Broad, broken dry-brush drags suggest trowelled cement without a directional wood grain.
+    drags = []
+    for _ in range(92):
+        x = rng.uniform(-0.4, 14.2)
+        y = rng.uniform(-0.3, 10.3)
+        length = rng.uniform(0.18, 1.25)
+        drift = rng.uniform(-0.16, 0.16)
+        width = rng.uniform(0.025, 0.15)
+        drags.append(([(x, y), (x + length * 0.48, y + drift), (x + length, y + drift * 0.4)], width,
+                      {"bristles": int(rng.integers(5, 12)), "dryness": rng.uniform(0.55, 0.85), "wobble_m": 0.025}))
+    c.brush(jitter(FLOOR_LIGHT, rng, 0.025), drags[::2], opacity=0.20, soften_m=0.025)
+    c.brush(jitter(FLOOR_DARK, rng, 0.02), drags[1::2], opacity=0.17, soften_m=0.02)
+    c.mottle(rgb(FLOOR_DARK), 1.8, 0.30)
+    # Pale, irregular worn lanes echo foot traffic; the marks remain pigment, not geometry.
     worn = []
-    for x in (-1.25, 1.25, 3.55):
-        worn.append(([(x + 4.5, 0.4), (x + 4.5 + rng.uniform(-0.1, 0.1), 5.6)], 0.55, {"bristles": 14, "dryness": 0.7, "wobble_m": 0.04}))
-    worn.append(([(0.6, 5.0), (8.6, 5.05)], 0.5, {"bristles": 14, "dryness": 0.7, "wobble_m": 0.03}))
-    c.brush(rgb(FLOOR_LIGHT), worn, opacity=0.35, soften_m=0.03)
-    # Window light: two skewed apricot planes thrown from the west windows (z = -1.7 and
-    # 1.3), leaning towards the door the way the sun in classroom.tscn leans.
-    for zc in (-1.7, 1.3):
-        y0 = 3.5 - (zc - 0.75)
-        y1 = 3.5 - (zc + 0.75)
-        light = c.polygon_mask([(0.05, y0), (0.05, y1), (2.05, y1 - 0.75), (2.15, y0 - 0.65)], rough=0.5, cell_m=0.06, blur_m=0.03)
-        c.paint(APRICOT, light, 0.42)
-        # The window bars, as shadow stripes across the light.
-        bar = c.polygon_mask([(0.05, (y0 + y1) / 2 + 0.04), (0.05, (y0 + y1) / 2 - 0.04), (2.1, (y0 + y1) / 2 - 0.74), (2.1, (y0 + y1) / 2 - 0.66)], rough=0.3, cell_m=0.02)
-        c.paint(FLOOR_DARK, bar, 0.55)
-    # The teacher's zone: a ragged, faded vermilion plane under the front desk and board.
-    stage = c.polygon_mask([(1.75, 7.1), (8.15, 7.1), (8.05, 5.85), (1.85, 5.92)], rough=0.55, cell_m=0.05, blur_m=0.015)
-    c.paint(STAGE, stage, 0.78)
-    stage_strokes = [([(2.0 + k * 1.3, 6.9), (2.9 + k * 1.3, 6.05)], 0.4, {"bristles": 14, "dryness": 0.6}) for k in range(5)]
-    c.brush(jitter(OXBLOOD, rng, 0.03), stage_strokes, opacity=0.35)
-    c.ink_line([(1.82, 5.9), (8.1, 5.84)], width_m=0.02, wobble_m=0.012, taper=False, broken=0.3, opacity=0.85)
-    # Where the floor meets the walls: a heavy drawn contour all the way round.
+    for x in (-4.8, -1.6, 1.6, 4.8):
+        sx = x + 7.0
+        worn.append(([(sx, 1.2), (sx + rng.uniform(-0.16, 0.16), 8.7)], 0.34,
+                     {"bristles": 12, "dryness": 0.72, "wobble_m": 0.06}))
+    worn.append(([(0.6, 7.55), (13.4, 7.4)], 0.42,
+                 {"bristles": 14, "dryness": 0.75, "wobble_m": 0.05}))
+    c.brush(rgb(FLOOR_LIGHT), worn, opacity=0.22, soften_m=0.06)
+    # Muted cool-grey trowel patches, softly feathered into the base coat.
+    for _ in range(7):
+        x = rng.uniform(0.4, 13.6)
+        y = rng.uniform(0.4, 9.6)
+        w = rng.uniform(0.7, 1.8)
+        h = rng.uniform(0.35, 1.0)
+        patch = c.polygon_mask(
+            [(x, y), (x + w * 0.8, y - 0.08), (x + w, y + h * 0.7), (x + w * 0.18, y + h)],
+            rough=0.55, cell_m=0.08, blur_m=0.10,
+        )
+        c.paint((112, 122, 136), patch, 0.12)
+    # A few soft window-light planes, deliberately cool and low saturation.
+    for zc in (-2.4, 2.2):
+        y0 = 5.0 - (zc - 0.75)
+        y1 = 5.0 - (zc + 0.75)
+        light = c.polygon_mask([(0.0, y0), (0.0, y1), (3.6, y1 - 1.2), (3.8, y0 - 1.0)],
+                               rough=0.55, cell_m=0.08, blur_m=0.08)
+        c.paint((165, 171, 178), light, 0.18)
+    # A restrained hand-inked room perimeter, not faux board seams.
     for pts in (
-        [(0.03, 0.03), (8.97, 0.04)],
-        [(0.03, 6.97), (8.97, 6.96)],
-        [(0.03, 0.03), (0.04, 6.97)],
-        [(8.97, 0.04), (8.96, 6.96)],
+        [(0.03, 0.03), (13.97, 0.04)],
+        [(0.03, 9.97), (13.97, 9.96)],
+        [(0.03, 0.03), (0.04, 9.97)],
+        [(13.97, 0.04), (13.96, 9.96)],
     ):
-        c.ink_line(pts, width_m=0.035, wobble_m=0.01, taper=False)
+        c.ink_line(pts, width_m=0.025, wobble_m=0.008, taper=False, opacity=0.75)
     return c.image(36)
 
 
@@ -556,6 +557,12 @@ def board_front() -> Image.Image:
     heading top left, a ghost date column at the right, eraser arcs over everything."""
     c = Canvas(4.84, 1.30, 250.0, BOARD, seed=606)
     c.mottle(rgb(BOARD_DARK), 0.5, 0.6)
+    # Layer pigment beneath the meaningful chalk, not another row of fake text.
+    field = c.polygon_mask(
+        [(-0.1, 0.1), (1.8, 0.03), (2.6, 0.72), (1.2, 1.4), (-0.1, 1.4)],
+        rough=0.35, cell_m=0.09, blur_m=0.035,
+    )
+    c.paint((57, 61, 85), field, 0.3)
     # The ghost of what was written before the wipe.
     scribble_word(c, 0.22, 1.02, 0.85, 0.12, 0.012, 0.3)
     scribble_word(c, 1.2, 1.02, 0.95, 0.12, 0.012, 0.3)
@@ -689,26 +696,6 @@ def glass(cracked: bool, seed: int) -> Image.Image:
 # --- small surfaces ----------------------------------------------------------------------
 
 
-def banner() -> Image.Image:
-    """The cloth banner over the board (3.2 x 0.42 m): vermilion, frayed at the ends, with
-    a row of brush 'characters' that are gesture only - nothing on it can be read, in
-    either language."""
-    c = Canvas(3.2, 0.42, 240.0, VERMILION, seed=909, alpha=0.0)
-    cloth = c.polygon_mask([(0.02, 0.02), (3.18, 0.03), (3.17, 0.4), (0.03, 0.39)], rough=0.5, cell_m=0.012, blur_m=0.004)
-    c.paint_alpha(VERMILION, cloth, 1.0)
-    folds = [([(s, 0.4), (s + c.rng.uniform(-0.04, 0.04), 0.02)], 0.05, {"bristles": 6, "dryness": 0.5}) for s in np.linspace(0.2, 3.0, 9)]
-    c.brush(rgb(OXBLOOD), folds, opacity=0.4)
-    c.a = np.minimum(c.a, cloth)
-    for k in range(9):
-        x0 = 0.28 + k * 0.32
-        for _ in range(c.rng.integers(3, 6)):
-            a = (x0 + c.rng.uniform(0, 0.16), c.rng.uniform(0.1, 0.32))
-            b = (a[0] + c.rng.uniform(-0.08, 0.1), a[1] + c.rng.uniform(-0.12, 0.08))
-            c.ink_line([a, b], width_m=0.022, wobble_m=0.004, color=IVORY_LIGHT, opacity=0.95)
-    c.a = np.minimum(c.a, cloth)
-    return c.image(16, alpha="cut")
-
-
 def tile_noise_texture(base, light, dark, seed: int, size: tuple[int, int], streak_dir: str, colors: int) -> Image.Image:
     """A small tileable painted surface (wood, lacquer, canvas). Painted once, then made
     seamless by cross-fading with a copy shifted by half a tile: the shifted copy is the
@@ -812,13 +799,17 @@ def clock_face() -> Image.Image:
 
 
 def uid_for(res_path: str) -> str:
-    """A stable `uid://` for a path, in Godot's own base-36 alphabet."""
+    """A stable `uid://` in Godot 4.7.2's 34-character alphabet (no z/9).
+
+    ResourceUID uses ('z' - 'a') + ('9' - '0'), not base 36. A canonical
+    round trip prevents the editor from rewriting these checked sidecars.
+    """
     value = int.from_bytes(hashlib.sha256(res_path.encode()).digest()[:8], "little") & ((1 << 63) - 1)
-    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    alphabet = "abcdefghijklmnopqrstuvwxy012345678"
     text = ""
     while True:
-        text = alphabet[value % 36] + text
-        value //= 36
+        text = alphabet[value % len(alphabet)] + text
+        value //= len(alphabet)
         if value == 0:
             break
     return "uid://" + text
@@ -879,31 +870,46 @@ detect_3d/compress_to=0
 def save(img: Image.Image, name: str) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUT_DIR / name
-    img.save(path, optimize=True)
+    encoded = io.BytesIO()
+    img.save(encoded, format="PNG", optimize=True)
+    payload = encoded.getvalue()
     res_path = f"{RES_DIR}/{name}"
-    (OUT_DIR / (name + ".import")).write_text(import_sidecar(res_path))
+    sidecar = OUT_DIR / (name + ".import")
+    expected_sidecar = import_sidecar(res_path)
+    if CHECK_ONLY:
+        if not path.is_file() or path.read_bytes() != payload:
+            raise SystemExit(f"Texture drift: {name}; regenerate with {__file__}")
+        if not sidecar.is_file() or sidecar.read_text() != expected_sidecar:
+            raise SystemExit(f"Import settings drift: {name}.import")
+    else:
+        path.write_bytes(payload)
+        sidecar.write_text(expected_sidecar)
     print(f"{name:28s} {img.size[0]:5d} x {img.size[1]:<5d} {path.stat().st_size / 1024:7.1f} KiB")
 
 
+CHECK_ONLY = False
+
+
 def main() -> None:
+    global CHECK_ONLY
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.parse_args()
+    parser.add_argument("--check", action="store_true", help="Verify byte-identical PNGs and import settings without writing")
+    CHECK_ONLY = parser.parse_args().check
     save(wall_north(), "wall_north.png")
     save(wall_west(), "wall_west.png")
     save(wall_east(), "wall_east.png")
     south = wall_south_full()
-    save(crop(south, 1.9, 9.0, 0.0, 3.2, 40, "opaque"), "wall_south_left.png")
-    save(crop(south, 0.0, 0.7, 0.0, 3.2, 40, "opaque"), "wall_south_right.png")
-    save(crop(south, 0.7, 1.9, 2.1, 3.2, 40, "opaque"), "wall_south_lintel.png")
+    save(crop(south, 0.0, 7.0, 0.0, 3.2, 40, "opaque"), "wall_south_left.png")
+    save(crop(south, 7.0, 14.0, 0.0, 3.2, 40, "opaque"), "wall_south_right.png")
+    save(crop(south, 0.0, 1.0, 2.1, 3.2, 40, "opaque"), "wall_south_lintel.png")
     save(floor(), "floor.png")
     save(board_front(), "board_front.png")
     save(board_back(), "board_back.png")
     save(window_view(), "window_view.png")
     save(glass(True, 1313), "glass_cracked.png")
     save(glass(False, 1414), "glass_clean.png")
-    save(banner(), "banner.png")
-    save(tile_noise_texture(HONEY, HONEY_PALE, (160, 110, 62), 1515, (256, 128), "h", 20), "wood_honey.png")
-    save(tile_noise_texture(OXBLOOD, (146, 60, 48), (92, 32, 28), 1616, (256, 256), "h", 16), "lacquer_oxblood.png")
+    save(tile_noise_texture(HONEY, HONEY_PALE, (110, 114, 95), 1515, (256, 128), "h", 20), "wood_honey.png")
+    save(tile_noise_texture(OXBLOOD, (138, 79, 68), (76, 48, 59), 1616, (256, 256), "h", 16), "lacquer_oxblood.png")
     save(tile_noise_texture(MUSTARD, (210, 172, 86), MUSTARD_DARK, 1717, (256, 256), "x", 16), "canvas_mustard.png")
     save(desk_marks(), "desk_marks.png")
     save(timetable(), "timetable.png")

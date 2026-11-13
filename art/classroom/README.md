@@ -8,40 +8,45 @@ This folder holds the **source** of the classroom's painted look. Godot does not
 - `paint_classroom_textures.py` paints every PNG under
   `assets/materials/classroom/textures/` and writes each one's `.import` sidecar.
   Requires Pillow 11.3.0 and NumPy 2.2.6, and repaints byte-identical files:
-  `python3 art/classroom/paint_classroom_textures.py`.
+  `python3 art/classroom/paint_classroom_textures.py`. Verify without writing with
+  `python3 art/classroom/paint_classroom_textures.py --check`.
 
 Nothing in the room is a static background image. Every wall, the floor, the board and
 the windows are still the 3D geometry the graybox had. The paint is applied to them as
-textures, on quads that sit 4 mm in front of the wall and floor bodies. Those quads are
+textures, on quads that sit 4 mm in front of wall bodies and 3 mm above the floor. Those quads are
 children of the bodies, so the camera occluder fades them along with their wall.
 
 ## Identity: what makes this room *this* classroom
 
-The classroom's look comes from the room itself: a teal wainscot, a vermilion teacher's
-zone on the floor, an oxblood board frame, a cloth banner that cannot be read, and orange
-light coming in where it should not. There is no screen-wide "oil paint" filter. The
-materials are plain `StandardMaterial3D` (toon diffuse, no specular), so the character
-lies in what is painted, not in a shader effect. The classroom does not depend on
-`assets/shaders/**`.
+The classroom is a 14 × 10 m space with a quiet cool-gray concrete floor, a low concrete
+teacher's platform with a real step, and a curved high lectern. Twelve student desk/chair
+assemblies sit in four columns by three rows, leaving broad cross-aisles and routes to the
+board, paired doors and story props. Facing the board, the normal corridor exit and the
+separate anomaly door share its right-hand wall; `RearDoorAnomalyMount` is the stable
+integration point. Both west windows retain curtain rods and mount markers. The space above
+the board stays empty; the former red pseudo-writing banner and its generation code have been deleted. There is no screen-wide "oil paint" filter. Walls and functional props
+keep `StandardMaterial3D` (toon diffuse, no specular). The student desks replace their
+photographic PBR surface with the classroom-owned `student_wood.tres`, referencing the
+existing environment pigment shader read-only. There is no photographic albedo/normal/ORM
+under a transparent wash anymore; the model and shared wrapper are unchanged.
 
 ## Colour system (sRGB)
 
 | Role | Colour | Used for |
 |---|---|---|
-| Ink | `#2B2622` | Contours (inverted-hull outline, 1.6 cm), wall seams, room corners, floor edge |
-| Section | `#604842` | Wall tops and outer faces: the room reads as a cut-away model |
-| Plaster | `#E2D8BE` / light `#EDE5CF` / shade `#CDC1A6` | Upper walls: broad vertical brush planes |
-| Wainscot | `#4E767C` / dark `#395B62` | The band under 1.05 m, skirting, window frames |
-| Floor | `#9E9482` | Plank strokes; the aisles are worn paler |
-| Teacher's zone | `#8C4C3C` | Ragged painted plane under the front desk and board |
-| Board | `#263F35` + chalk `#D6DCCE` | The wiped-not-quite front board, the old chalk newspaper on the back wall |
-| Oxblood lacquer | `#7A2C24` | Board frame, teacher's desk panels, door frame: the *authority* objects |
-| Vermilion | `#B2432E` | The banner over the board |
-| Apricot | `#F2A65A` / pale `#FAD098` | The impossible late light: the window view, its spill on the wall, its shapes on the floor |
-| Honey wood | `#C08A52` | Teacher's desk top, chalk tray; the wash over the imported student desks |
-| Worn wood | `#AA8E70` | Student chairs: deliberately quieter |
+| Ink | `#2E2933` | Selected prop contours (inverted-hull outline, 6 mm), wall seams, room corners, floor edge |
+| Section | `#4F4754` | Wall tops and outer faces: the room reads as a cut-away model |
+| Plaster | `#CEC2BB` / light `#E9D5AB` / shade `#9697A7` | Upper walls: broad vertical brush planes |
+| Wainscot | `#47656F` / dark `#364555` | The band under 1.05 m, skirting, window frames |
+| Floor | `#7E848C` base / cool mineral gray | Broken trowel strokes, light scuffs and soft concrete mottling; no plank grain |
+| Teacher's platform | Cool concrete (`cement_stage.tres`) | Physically raised 0.12 m, with a lower broad approach step |
+| Board | `#243D3F` + chalk `#D6DCCE` | The wiped-not-quite front board, the old chalk newspaper on the back wall |
+| Oxblood lacquer | `#6E3C36` | Board frame, teacher's desk panels, door frame: the *authority* objects |
+| Apricot | `#E0A569` / pale `#EFCD97` | The impossible late light: the window view, its spill on the wall, its shapes on the floor |
+| Honey wood | `#A98458` | Teacher's desk top, chalk tray; the student desk pigment anchors |
+| Worn wood | `#998775` | Student chairs: deliberately quieter |
 | Mustard canvas | `#BE963E` | The schoolbag: the first thing the player is sent to |
-| Cobalt | `#40568C` | The register's plastic cover |
+| Cobalt | `#40568C` | The register's cover, readable but matte rather than glossy |
 
 ### Hierarchy rules
 
@@ -51,7 +56,7 @@ lies in what is painted, not in a shader effect. The classroom does not depend o
    least 0.15, in value or in colourfulness: board against wall, schoolbag against floor,
    window against wall, set square and register against the desk top, door frame against
    the back wall.
-3. **Repeated furniture does not compete.** The twelve chairs stay at least 0.15 less
+3. **Repeated furniture does not compete.** The repeated chairs stay at least 0.15 less
    colourful than the schoolbag.
 4. **Ink is for edges, not texture.** Lines go on contours, seams and the few graffiti
    marks. They do not cover walkable floor or interactables.
@@ -64,14 +69,15 @@ lies in what is painted, not in a shader effect. The classroom does not depend o
   a pencil height chart someone started by the door and gave up on.
 - **Window wall:** apricot spill around both windows, a painted reveal, and chalk tallies
   under the back window.
-- **East wall:** pale ghosts of notices that have been taken down, with their tape, and a
-  small chalk door that leads nowhere.
-- **Back wall:** a sketchy second door frame drawn around the real one, and an old chalk
-  newspaper in coloured chalk (a leaf, a fish skeleton, a flower; nothing legible).
+- **East wall:** pale ghosts of notices that have been taken down, with their tape; the
+  only visible doorways are the paired openings on the board wall.
+- **South wall:** an old chalk newspaper in coloured chalk (a leaf, a fish skeleton, a flower; nothing legible).
+- **Blackboard wall:** the actual segmented wall opening carries the corridor exit and
+  the anomaly opening to the right of the board; their lintels close the wall above the doors.
 - **Front board:** heading and date-column ghosts under the eraser arcs, which match the
   inspection text (*LAST TERM — REVISION*, a date three weeks old). They are kept
   illegible on purpose, so the board needs no localisation.
-- **Banner:** brush strokes that suggest characters but spell nothing, in either language.
+- **Above the board:** deliberate negative space; no replacement text or glyph decoration.
 
 ## Inspection texts → scene
 
@@ -85,8 +91,39 @@ lies in what is painted, not in a shader effect. The classroom does not depend o
 | Timetable: coffee ring, teacher's name lined out in biro | `TimetableSheet/Face` |
 | Schoolbag: canvas, one strap | Mustard canvas, one `Strap`, a side pocket |
 
-## What did not change
+## Material and reuse contract
 
-Room size, walls, door gap, desk grid, spawn points, every interactable and its
-position, and the `Sun` / `WorldEnvironment` nodes all stay as they were. No new
-colliders were added, so the runtime navigation bake sees exactly the same solids.
+The full synchronized classroom chapter in `docs/ART_BIBLE.md` /
+`docs/ART_BIBLE.zh-CN.md` records material tiers, palette ranges, contour eligibility,
+brush density and reuse in later locations. Walls are authored opaque, back-face culled
+and depth-writing; only temporary camera obstruction relief may fade them. Forward+
+uses instance transparency alone, while Compatibility/Mobile need material-alpha copies.
+Do not multiply both. `tests/classroom_wall_render_test.gd` compares actual pixels against
+a single-alpha control; `tests/capture_classroom_art.gd` records the actual classroom.
+Glass remains the deliberate surface-alpha exception.
+
+The generator uses Godot 4.7.2's canonical 34-character UID encoding; check the sidecars
+again after a real import to catch editor rewrites. Curated actual before/after frames,
+pixel measurements, baseline-noise comparison and explicit platform limits are recorded
+in `docs/screenshots/classroom_art_review/README.md`. Runtime evidence is not a substitute
+for owner art review or target-GPU acceptance.
+
+## Geometry and gameplay contract
+
+The classroom shell is 14 × 10 m with a 3.2 m wall height. The north/blackboard wall is
+segmented around two 1.2 m-wide door openings. `classroom_door` retains its original ID,
+blocked inspection and corridor destination; the second doorway exposes
+`WallNorth/RearDoorAnomalyMount` for later integration. Two marker nodes,
+`WindowCurtainMount0` and `WindowCurtainMount1`, reserve attachment points above the west
+windows. The stage and its step are actual colliders: the 0.12 m rise stays below the
+player's 0.25 m step-up and the navmesh's 0.25 m climb. The high circular/curved lectern
+is separate from the retained inspection desk. Q/N states, inspection IDs, `Sun`,
+`WorldEnvironment` and the classroom-to-corridor transition remain in place.
+
+`tests/classroom_visual_slice_test.gd` retains the previous colour, texture, inspection,
+wall-fade, camera and navigation checks, and now also asserts the expanded shell, all 12
+seats, the two same-wall doors, the anomaly mount, physical step/platform, curved high
+lectern, curtain markers and all three initial story positions. `tests/capture_classroom_art.gd`
+produces eight real 1600 × 900 images, including the five requested architectural views;
+it rejects headless output. The `Classroom visual evidence` PR workflow renders the eight views
+under Godot 4.7.2 Stable and publishes them as a downloadable CI artifact.

@@ -22,7 +22,6 @@ const Harness = preload("res://tests/test_harness.gd")
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const STREET := "res://scenes/locations/street/street.tscn"
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
-const EXIT_SCENE := "res://scenes/interaction/location_exit.tscn"
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -93,6 +92,7 @@ func _run() -> void:
 	await _check_click_in_reach_is_immediate()
 	await _check_click_inspectable()
 	await _check_click_exit_transitions()
+	await _check_click_real_street_stair_exit()
 	await _check_disabled_target_is_not_activated()
 	await _check_freed_target_is_not_activated()
 	await _check_e_still_works()
@@ -207,39 +207,50 @@ func _check_click_inspectable() -> void:
 	await _frames(2)
 
 
-## A probe exit in the classroom that leads to the corridor: the click has to perform
-## the normal transition, by going through the sequence director rather than around it.
+## The shipped classroom door to the corridor: clicking the visible, authored exit has to
+## use the normal approach and transition path, not a synthetic exit in empty space.
 func _check_click_exit_transitions() -> void:
 	var location := await _enter(CLASSROOM, &"PlayerStart")
 	if location == null:
 		return
-	var packed: PackedScene = load(EXIT_SCENE)
-	if packed == null:
-		_failures.append("The exit scene could not be loaded.")
+	var exit := _find_interactable(location, &"classroom_door") as LocationExit
+	if exit == null:
+		_failures.append("The classroom's authored exit is missing.")
 		return
-	var exit := packed.instantiate() as LocationExit
-	exit.name = "ProbeExit"
-	exit.interact_id = &"probe_exit"
-	exit.prompt_text = "Leave"
-	exit.radius = 0.8
-	exit.destination_scene = "res://scenes/locations/corridor/corridor.tscn"
-	exit.destination_spawn = &"FromClassroom"
-	exit.destination_id = &"corridor"
-	location.add_child(exit)
-	# Somewhere the character can stand next to: reuse the spot search around the exit.
-	var placed := await _place_clear_of_props(exit, 1.4, 2.0)
-	if not placed:
-		_failures.append("Could not place a probe exit with room in front of it.")
-		_free(exit)
+	var game_state := root.get_node_or_null(^"GameState")
+	if game_state == null:
+		_failures.append("GameState is unavailable to open the classroom door for this test.")
 		return
-	await _physics_frames(3)
+	# The opening sequence normally sets this flag after the lesson. The test skips that
+	# narrative beat but still exercises the actual exit node and its transition routing.
+	game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	if not await _stand_near(exit, 1.4, 2.0):
+		_failures.append("Could not stand in a visible, reachable spot beside the classroom door.")
+		return
+	await _check_authored_door_highlight_and_transition(exit)
+
+
+func _check_authored_door_highlight_and_transition(exit: LocationExit) -> void:
 	_activations.clear()
+	_approaches_activated.clear()
 	var screen := _screen_of(exit.global_position)
+	_interaction.set_mouse_override(screen)
+	await _physics_frames(3)
+	if _interaction.get_current_target() != exit or _interaction.get_highlighted() != exit:
+		_failures.append("Pointing at the authored classroom door did not highlight that exit.")
+		_interaction.clear_mouse_override()
+		return
+	_interaction.clear_mouse_override()
 	if _interaction.get_target_at_screen_position(screen, false) != exit:
-		_failures.append("The probe exit was not under the click position.")
-		_free(exit)
+		_failures.append("The authored classroom door was not under its click position.")
 		return
 	_navigator.click_at_screen_position(screen)
+	if not _navigator.was_last_click_accepted():
+		_failures.append(
+			"Clicking the authored classroom door was refused: %s"
+			% _navigator.get_last_rejection()
+		)
+		return
 	var entered := await _wait_until(
 		func() -> bool:
 			var current := _host.get_current()
@@ -247,13 +258,81 @@ func _check_click_exit_transitions() -> void:
 		18.0
 	)
 	if not entered:
-		_failures.append("Clicking an exit did not move the player to its destination.")
+		_failures.append("Clicking the authored classroom door did not transition to the corridor.")
 		return
-	if _activations.size() != 1:
-		_failures.append("The exit was activated %d times for one click." % _activations.size())
+	if _activations.size() != 1 or _activations[0] != &"classroom_door":
+		_failures.append(
+			"The classroom door click activated %d time(s) (%s), expected exactly once."
+			% [_activations.size(), str(_activations)]
+		)
+	if _approaches_activated.size() != 1 or _approaches_activated[0] != &"classroom_door":
+		_failures.append(
+			"The authored door click completed %d approach activation(s) (%s)."
+			% [_approaches_activated.size(), str(_approaches_activated)]
+		)
 	if _player.global_position.y < -1.0:
 		_failures.append("The transition dropped the character through the floor.")
-	await _frames(3)
+	if not await _wait_for_transition_idle(&"corridor", 20.0):
+		_failures.append("The classroom door transition did not return control in the corridor.")
+
+
+## From the foot of the generated street stair, a click on its real exit must route up
+## the same ramp the character walks, activate once on arrival, and enter residential.
+func _check_click_real_street_stair_exit() -> void:
+	var location := await _enter(STREET, &"FromCorridor")
+	if location == null:
+		return
+	var exit := _find_interactable(location, &"street_to_residential") as LocationExit
+	if exit == null:
+		_failures.append("The generated street stair exit is missing.")
+		return
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(10.5, 0.0, -29.8)))
+	await _physics_frames(4)
+	if _interaction.is_in_reach(exit):
+		_failures.append(
+			"The stair-exit click starts within interaction reach, not at the foot of the stairs."
+		)
+		return
+	var screen := _screen_of(exit.global_position)
+	var hit := _interaction.get_target_at_screen_position(screen, false)
+	if hit != exit:
+		_failures.append(
+			"The real street stair exit is not clickable from below (hit '%s' at %s)."
+			% [_name_of(hit), str(screen)]
+		)
+		return
+	_activations.clear()
+	_approaches_activated.clear()
+	_navigator.click_at_screen_position(screen)
+	if not _navigator.was_last_click_accepted() or not _player.is_path_active():
+		_failures.append(
+			"Clicking the real stair exit did not start an approach: %s"
+			% _navigator.get_last_rejection()
+		)
+		return
+	var entered := await _wait_until(
+		func() -> bool:
+			var current := _host.get_current()
+			return current != null and current.location_id == &"residential",
+		25.0
+	)
+	if not entered:
+		_failures.append("Clicking the real street stair did not transition to residential.")
+		return
+	if _activations.size() != 1 or _activations[0] != &"street_to_residential":
+		_failures.append(
+			"The stair exit activated %d time(s) (%s), expected exactly once."
+			% [_activations.size(), str(_activations)]
+		)
+	if _approaches_activated.size() != 1 or _approaches_activated[0] != &"street_to_residential":
+		_failures.append(
+			"The stair click completed %d approach activation(s) (%s)."
+			% [_approaches_activated.size(), str(_approaches_activated)]
+		)
+	if _player.global_position.y < -1.0:
+		_failures.append("The stair transition dropped the character through the floor.")
+	if not await _wait_for_transition_idle(&"residential", 30.0):
+		_failures.append("The street stair transition did not return control in residential.")
 
 
 func _check_disabled_target_is_not_activated() -> void:
@@ -719,6 +798,26 @@ func _wait_until(condition: Callable, limit_seconds: float) -> bool:
 		if Time.get_ticks_msec() > deadline:
 			return false
 	return true
+
+
+func _wait_for_transition_idle(location_id: StringName, limit_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
+	while Time.get_ticks_msec() <= deadline:
+		if _dialogue.is_busy():
+			if _dialogue.has_pending_choices():
+				_dialogue.select_choice(0)
+			else:
+				_dialogue.advance_presentation()
+		var current := _host.get_current()
+		if (
+			current != null
+			and current.location_id == location_id
+			and _player.is_control_enabled()
+			and not _dialogue.is_busy()
+		):
+			return true
+		await process_frame
+	return false
 
 
 func _settle_dialogue() -> void:

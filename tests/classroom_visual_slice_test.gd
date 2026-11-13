@@ -5,16 +5,14 @@ extends SceneTree
 ## system of its own, restyled board, windows and teacher's desk - and none of that is
 ## allowed to cost the room anything a player relies on. The claims under test:
 ##
-## 1. **Same room.** Floor, walls, door gap, desk grid, spawn points and every original
-##    interactable are where they were, and `Sun` / `WorldEnvironment` still exist.
-## 2. **No new solids.** The only collision bodies are the floor, the walls, the six
-##    desk wrappers and the teacher's desk (plus whatever the interactables and actors
-##    bring themselves). Decoration that collided would carve the baked navigation mesh
-##    and block the interaction rays.
+## 1. **A larger room.** A 14 x 10 m shell contains twelve desks, two same-wall doors, a
+##    step-up concrete platform, a curved lectern, the original story props and exits.
+## 2. **Only purposeful solids.** The floor, segmented walls, two lintels, platform/step,
+##    twelve desk wrappers and teacher desk are the only scene-owned collision bodies.
 ## 3. **Its own colour system.** Every surface of the room draws a material from
 ##    `assets/materials/classroom/` (the shared ceiling-light material is the one
 ##    exception), nothing reaches into another agent's shader folder, and the imported
-##    desk model wears the room's wash and ink.
+##    desk model replaces photographic PBR with an opaque classroom pigment surface.
 ## 4. **Wall decoration fades with the wall.** Each wall's painted face and the dressing
 ##    hung on it are children of the wall body, so the camera occluder fades them with it.
 ## 5. **Textures within budget.** Every painted texture is the project's own, lives with
@@ -31,6 +29,7 @@ extends SceneTree
 ##    spawn.
 
 const Harness = preload("res://tests/test_harness.gd")
+const WallContract = preload("res://tests/classroom_wall_contract.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const CLASSROOM_MATERIALS := "res://assets/materials/classroom/"
@@ -38,54 +37,65 @@ const CLASSROOM_TEXTURES := "res://assets/materials/classroom/textures/"
 ## Shared materials the room may still use, each for a reason: the ceiling fittings are
 ## the same light panels the corridor hangs, and they are not part of the colour system.
 const SHARED_MATERIALS: Array[String] = ["res://assets/materials/light_panel.tres"]
-## The Shader Agent's work lives here; the classroom must not depend on it.
+## No material presets are borrowed from another scene. The classroom student-wood
+## material may reference the existing environment shader read-only (owner task direction).
 const FOREIGN_PREFIXES: Array[String] = ["res://assets/shaders/"]
-const DESK_OVERLAY := "res://assets/materials/classroom/desk_wash.tres"
+const DESK_SURFACE := "res://assets/materials/classroom/student_wood.tres"
 ## tools/verify_build.py: the texture warning budget, per file.
 const TEXTURE_WARN_BYTES := 512 * 1024
 const TEXTURE_MAX_SIDE := 2048
 
-const FLOOR_SIZE := Vector3(9.4, 0.2, 7.4)
+const FLOOR_SIZE := Vector3(14.0, 0.2, 10.0)
 const WALLS := {
-	"WallNorth": Vector3(0.0, 1.6, -3.6),
-	"WallWest": Vector3(-4.6, 1.6, 0.0),
-	"WallEast": Vector3(4.6, 1.6, 0.0),
-	"WallSouthLeft": Vector3(-1.0, 1.6, 3.6),
-	"WallSouthRight": Vector3(4.2, 1.6, 3.6),
-	"DoorLintel": Vector3(3.2, 2.65, 3.6),
+	"WallNorth": Vector3(0.0, 1.6, -4.9),
+	"WallWest": Vector3(-6.9, 1.6, 0.0),
+	"WallEast": Vector3(6.9, 1.6, 0.0),
+	"WallSouthLeft": Vector3(-3.5, 1.6, 4.9),
+	"WallSouthRight": Vector3(3.5, 1.6, 4.9),
+	"DoorLintel": Vector3(3.0, 2.65, -4.9),
+	"AnomalyDoorLintel": Vector3(5.0, 2.65, -4.9),
 }
 const DESKS := {
-	"DeskA1": Vector3(-2.5, 0.0, -1.5),
-	"DeskA2": Vector3(0.0, 0.0, -1.5),
-	"DeskA3": Vector3(2.5, 0.0, -1.5),
-	"DeskB1": Vector3(-2.5, 0.0, 0.2),
-	"DeskB2": Vector3(0.0, 0.0, 0.2),
-	"DeskB3": Vector3(2.5, 0.0, 0.2),
+	"DeskA1": Vector3(-4.8, 0.0, -0.8),
+	"DeskA2": Vector3(-1.6, 0.0, -0.8),
+	"DeskA3": Vector3(1.6, 0.0, -0.8),
+	"DeskA4": Vector3(4.8, 0.0, -0.8),
+	"DeskB1": Vector3(-4.8, 0.0, 1.3),
+	"DeskB2": Vector3(-1.6, 0.0, 1.3),
+	"DeskB3": Vector3(1.6, 0.0, 1.3),
+	"DeskB4": Vector3(4.8, 0.0, 1.3),
+	"DeskC1": Vector3(-4.8, 0.0, 3.4),
+	"DeskC2": Vector3(-1.6, 0.0, 3.4),
+	"DeskC3": Vector3(1.6, 0.0, 3.4),
+	"DeskC4": Vector3(4.8, 0.0, 3.4),
 }
 const PROPS := {
-	"Furniture/FrontDesk": Vector3(2.0, 0.0, -2.85),
-	"Props/Blackboard": Vector3(0.2, 0.0, -3.45),
-	"Props/SetSquare": Vector3(1.35, 0.81, -2.72),
-	"Props/Schoolbag": Vector3(0.62, 0.0, 1.02),
-	"Actors/Q": Vector3(-1.32, 0.0, 0.82),
-	"SpawnPoints/PlayerStart": Vector3(0.0, 0.0, 0.85),
-	"SpawnPoints/FromCorridor": Vector3(3.2, 0.0, 2.85),
+	"Furniture/FrontDesk": Vector3(-4.65, 0.0, -2.2),
+	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
+	"Props/SetSquare": Vector3(-4.25, 0.81, -2.1),
+	"Props/Schoolbag": Vector3(-4.0, 0.0, -0.45),
+	"Actors/Q": Vector3(-3.2, 0.0, 2.1),
+	"Actors/N": Vector3(3.2, 0.0, 4.2),
+	"SpawnPoints/PlayerStart": Vector3(0.0, 0.0, 0.25),
+	"SpawnPoints/FromCorridor": Vector3(3.0, 0.12, -4.3),
 }
 const INTERACTABLES := {
-	"blackboard": Vector3(0.2, 0.6, -3.0),
-	"set_square": Vector3(1.35, 0.6, -2.5),
-	"front_desk": Vector3(2.4, 0.5, -2.5),
-	"window": Vector3(-3.9, 0.6, -0.2),
-	"own_desk": Vector3(0.0, 0.4, 0.25),
-	"schoolbag": Vector3(0.62, 0.2, 1.02),
-	"timetable": Vector3(1.6, 0.6, 3.15),
-	"q_talk": Vector3(-1.32, 0.8, 0.82),
-	"classroom_door": Vector3(3.2, 0.6, 3.3),
+	"blackboard": Vector3(-1.6, 0.6, -4.25),
+	"set_square": Vector3(-4.0, 0.6, -1.45),
+	"front_desk": Vector3(-4.4, 0.5, -1.7),
+	"window": Vector3(-6.0, 0.6, 0.0),
+	"own_desk": Vector3(-1.6, 0.4, 1.3),
+	"schoolbag": Vector3(-4.0, 0.2, -0.45),
+	"timetable": Vector3(0.0, 0.6, 4.3),
+	"q_talk": Vector3(-3.2, 0.8, 2.1),
+	"classroom_door": Vector3(3.0, 0.6, -4.35),
 }
 const SOLIDS: Array[String] = [
 	"Floor", "WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight",
-	"DoorLintel", "Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk",
-	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk",
+	"DoorLintel", "AnomalyDoorLintel", "Stage",
+	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
+	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
+	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
 	"Furniture/FrontDesk/Body",
 ]
 ## Each wall's painted face and the material it has to carry.
@@ -95,10 +105,10 @@ const WALL_PAINT := {
 	"WallEast": "wall_east.tres",
 	"WallSouthLeft": "wall_south_left.tres",
 	"WallSouthRight": "wall_south_right.tres",
-	"DoorLintel": "wall_south_lintel.tres",
+	"DoorLintel": "wall_north_door.tres",
+	"AnomalyDoorLintel": "wall_north_anomaly.tres",
 }
-## [focus material, backdrop material, why]. The focus has to separate from the backdrop
-## by at least HIERARCHY_MIN in value or in colourfulness.
+
 const HIERARCHY_PAIRS := [
 	["board_face", "wall_north", "the board against the front wall"],
 	["lacquer_oxblood", "wall_north", "the board frame and the teacher's desk front"],
@@ -106,7 +116,7 @@ const HIERARCHY_PAIRS := [
 	["window_view_front", "wall_west", "the window against its wall"],
 	["varnish_pale", "wood_honey", "the set square on the teacher's desk top"],
 	["register_cover", "wood_honey", "the register on the teacher's desk top"],
-	["lacquer_oxblood", "wall_south_left", "the door frame against the back wall"],
+	["lacquer_oxblood", "wall_north", "the door frame against the blackboard wall"],
 ]
 const HIERARCHY_MIN := 0.15
 ## Broad planes stay quiet: walls and floor below this colourfulness (max - min, sRGB).
@@ -199,12 +209,16 @@ func _run() -> void:
 	_check_wall_dressing()
 	Harness.stage = "textures"
 	_check_textures()
+	Harness.stage = "cool concrete floor"
+	_check_floor_art()
 	Harness.stage = "hierarchy"
 	_check_hierarchy()
 	Harness.stage = "inspection agreement"
 	_check_inspection_agreement()
 	Harness.stage = "navigation"
 	var navigation := await _check_navigation()
+	Harness.stage = "live wall rendering contract"
+	await WallContract.verify(self, _main, _room, _failures)
 	Harness.stage = "game camera"
 	await _check_game_camera(navigation)
 
@@ -212,8 +226,8 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"the painted classroom keeps its layout, colliders, interactables and navigation, "
-		+ "draws only its own materials, and keeps the board and windows out of the "
+		"the expanded classroom layout, colliders, interactables and navigation satisfy the slice, "
+		+ "draws only its own materials and keeps the board and windows out of the "
 		+ "camera's way.",
 	)
 
@@ -230,13 +244,75 @@ func _check_layout() -> void:
 	if floor_shape != null:
 		floor_box = floor_shape.shape as BoxShape3D
 	if floor_box == null or not floor_box.size.is_equal_approx(FLOOR_SIZE):
-		_failures.append("The classroom floor is no longer the 9.4 x 7.4 m room.")
+		_failures.append("The classroom floor is no longer the 14 x 10 m room.")
 	for wall_name: String in WALLS:
 		_expect_at(wall_name, WALLS[wall_name])
 	for desk_name: String in DESKS:
 		_expect_at("Furniture/%s" % desk_name, DESKS[desk_name])
 	for path: String in PROPS:
 		_expect_at(path, PROPS[path])
+	var north_left := _room.get_node_or_null(^"WallNorth/CollisionShape3D") as CollisionShape3D
+	var north_middle := _room.get_node_or_null(^"WallNorth/NorthCenterCollision") as CollisionShape3D
+	var north_right := _room.get_node_or_null(^"WallNorth/NorthRightCollision") as CollisionShape3D
+	var left_box := north_left.shape as BoxShape3D if north_left != null else null
+	var middle_box := north_middle.shape as BoxShape3D if north_middle != null else null
+	var right_box := north_right.shape as BoxShape3D if north_right != null else null
+	if left_box == null or middle_box == null or right_box == null:
+		_failures.append("The blackboard wall no longer has its three solid piers and two real door gaps.")
+	else:
+		var normal_gap := north_middle.position.x - middle_box.size.x * 0.5 - (north_left.position.x + left_box.size.x * 0.5)
+		var anomaly_gap := north_right.position.x - right_box.size.x * 0.5 - (north_middle.position.x + middle_box.size.x * 0.5)
+		if not is_equal_approx(normal_gap, 1.2) or not is_equal_approx(anomaly_gap, 1.2):
+			_failures.append("The shared blackboard wall must contain two separate 1.2 m door openings.")
+	var normal_head := _room.get_node_or_null(^"DoorFrameHead") as Node3D
+	var anomaly_head := _room.get_node_or_null(^"AnomalyDoorFrameHead") as Node3D
+	if normal_head == null or anomaly_head == null or normal_head.position.x >= anomaly_head.position.x:
+		_failures.append("The ordinary exit and anomaly doorway are not separately framed side by side.")
+	elif absf(normal_head.position.z + 4.78) > 0.02 or absf(anomaly_head.position.z + 4.78) > 0.02:
+		_failures.append("The two door frames have left the blackboard wall.")
+	var glass0 := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
+	var glass1 := _room.get_node_or_null(^"WindowGlass1") as MeshInstance3D
+	if glass0 == null or glass1 == null or not is_equal_approx(glass0.position.x, -6.74) or not is_equal_approx(glass1.position.x, -6.74):
+		_failures.append("Both west-wall windows must remain in the expanded room shell.")
+	if DESKS.size() < 12:
+		_failures.append("The layout has only %d authored student desks; twelve are required." % DESKS.size())
+	var anomaly := _room.get_node_or_null(^"WallNorth/RearDoorAnomalyMount") as Node3D
+	if anomaly == null:
+		_failures.append("The stable WallNorth/RearDoorAnomalyMount integration point is missing.")
+	else:
+		var normal_door := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
+		if normal_door == null or normal_door.interact_id != &"classroom_door":
+			_failures.append("The normal exit lost its classroom_door ID.")
+		elif normal_door.destination_id != &"corridor" or normal_door.destination_scene != "res://scenes/locations/corridor/corridor.tscn":
+			_failures.append("classroom_door no longer routes to the corridor.")
+		var board := _room.get_node_or_null(^"Props/Blackboard") as Node3D
+		if board != null and (float(_room.get_node(^"DoorFrameHead").position.x) <= board.position.x or anomaly.global_position.x <= board.global_position.x):
+			_failures.append("Both blackboard-wall doors must sit to the board's right.")
+	for mount: Array in [
+		["WindowCurtainMount0", Vector3(-6.55, 2.5, -2.4)],
+		["WindowCurtainMount1", Vector3(-6.55, 2.5, 2.2)],
+	]:
+		var marker := _room.get_node_or_null(NodePath(mount[0])) as Marker3D
+		if marker == null or not marker.position.is_equal_approx(mount[1]):
+			_failures.append("The west-window curtain mount '%s' is missing or misplaced." % mount[0])
+	var stage_shape := _room.get_node_or_null(^"Stage/CollisionShape3D") as CollisionShape3D
+	var stage_box := stage_shape.shape as BoxShape3D if stage_shape != null else null
+	var step_shape := _room.get_node_or_null(^"Stage/StepCollision") as CollisionShape3D
+	var step_box := step_shape.shape as BoxShape3D if step_shape != null else null
+	if stage_box == null or not stage_box.size.is_equal_approx(Vector3(6.8, 0.12, 2.5)):
+		_failures.append("The raised concrete platform is missing its real 0.12 m collision surface.")
+	if step_box == null or step_box.size.y > _player.max_step_height:
+		_failures.append("The platform's physical front step is taller than the player's step-up limit.")
+	var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
+	var lectern_top := lectern.get_node_or_null(^"CurvedTop") as MeshInstance3D if lectern != null else null
+	if lectern_top == null or not lectern_top.mesh is CylinderMesh:
+		_failures.append("The raised platform lacks a distinctly curved high teacher's lectern.")
+	else:
+		var lectern_bounds := _subtree_aabb(lectern)
+		var desk_node := _room.get_node(^"Furniture/DeskB2") as Node3D
+		var desk_bounds := _subtree_aabb(desk_node.get_node(^"Desk"))
+		if lectern_bounds.end.y < desk_bounds.end.y + 0.15:
+			_failures.append("The curved lectern is not meaningfully taller than a student desk.")
 
 	var found := {}
 	var interactables := _room.get_node_or_null(^"Interactables")
@@ -311,14 +387,15 @@ func _check_colour_system() -> void:
 			continue
 		var desk_model := _is_desk_model(path)
 		if desk_model:
-			if mesh_instance.material_overlay == null:
-				_failures.append("The imported desk mesh '%s' has no classroom overlay." % path)
-			elif mesh_instance.material_overlay.resource_path != DESK_OVERLAY:
-				_failures.append(
-					"The imported desk mesh '%s' wears '%s', not the classroom wash."
-					% [path, mesh_instance.material_overlay.resource_path]
-				)
-			continue
+			var replacement := mesh_instance.material_override as ShaderMaterial
+			if replacement == null or replacement.resource_path != DESK_SURFACE:
+				_failures.append("The imported desk mesh '%s' kept its photographic PBR surface." % path)
+			elif replacement.shader.resource_path != "res://assets/shaders/painterly/environment_surface.gdshader":
+				_failures.append("The desk '%s' does not reuse the reviewed environment shader." % path)
+			elif bool(replacement.get_shader_parameter("use_base_texture")):
+				_failures.append("The desk '%s' still samples the photographic albedo." % path)
+			if mesh_instance.material_overlay != null:
+				_failures.append("The imported desk mesh '%s' still has a redundant alpha wash." % path)
 		for surface in mesh_instance.mesh.get_surface_count():
 			surfaces += 1
 			var material := mesh_instance.get_active_material(surface)
@@ -374,6 +451,14 @@ func _check_wall_dressing() -> void:
 		var expected: String = CLASSROOM_MATERIALS + WALL_PAINT[wall_name]
 		if material == null or material.resource_path != expected:
 			_failures.append("'%s/Paint' does not carry %s." % [wall_name, expected])
+	for pair: Array in [["PaintCenter", "wall_north_center.tres"], ["PaintRight", "wall_north_right.tres"]]:
+		var segment := _room.get_node_or_null(NodePath("WallNorth/%s" % pair[0])) as MeshInstance3D
+		if segment == null or segment.material_override == null or not segment.material_override.resource_path.ends_with(pair[1]):
+			_failures.append("The segmented north wall panel '%s' does not keep metric UV sampling." % pair[0])
+	for pair: Array in [["DoorLintel", "wall_north_door.tres"], ["AnomalyDoorLintel", "wall_north_anomaly.tres"]]:
+		var lintel_paint := _room.get_node_or_null(NodePath("%s/Paint" % pair[0])) as MeshInstance3D
+		if lintel_paint == null or lintel_paint.material_override == null or not lintel_paint.material_override.resource_path.ends_with(pair[1]):
+			_failures.append("The '%s' header lost its matching hand-painted wall section." % pair[0])
 	for pair: Array in [["WallNorth", "FrontWallDressing"], ["WallSouthLeft", "BackBoard"]]:
 		var dressing := _room.get_node_or_null(NodePath("%s/%s" % [pair[0], pair[1]]))
 		if dressing == null:
@@ -384,11 +469,16 @@ func _check_wall_dressing() -> void:
 	var north := _room.get_node_or_null(^"WallNorth")
 	if north != null:
 		var geometry := north.find_children("*", "GeometryInstance3D", true, false)
-		if geometry.size() < 4:
-			_failures.append(
-				"WallNorth holds %d drawable pieces; its paint and dressing are not under it."
-				% geometry.size()
-			)
+		# Segmented wall shells, face panels, one clock dial, and the mounted rear door.
+		# The red pseudo-writing banner AND pins stay absent, not hidden in the tree.
+		if geometry.size() < 9:
+			_failures.append("WallNorth has only %d meshes; segmented face or anomaly mount is missing." % geometry.size())
+		var dressing := north.get_node("FrontWallDressing")
+		if dressing.get_child_count() != 1 or not dressing.has_node("ClockDial"):
+			_failures.append("FrontWallDressing must retain only the meaningful clock dial.")
+	for removed: String in ["banner.tres", "textures/banner.png", "textures/banner.png.import"]:
+		if FileAccess.file_exists(CLASSROOM_MATERIALS + removed):
+			_failures.append("Removed decoration resource still exists: %s" % removed)
 
 
 # --- 5. textures --------------------------------------------------------------------
@@ -426,6 +516,26 @@ func _check_textures() -> void:
 	if textures.is_empty():
 		_failures.append("No classroom material samples a painted texture.")
 	_notes.append("%d textures, %d KiB source" % [textures.size(), total / 1024])
+
+
+func _check_floor_art() -> void:
+	var material := load(CLASSROOM_MATERIALS + "floor_paint.tres") as BaseMaterial3D
+	if material == null or material.albedo_texture == null:
+		_failures.append("The expanded room has no generated floor paint texture.")
+		return
+	var texture := material.albedo_texture
+	if texture.resource_path != CLASSROOM_TEXTURES + "floor.png":
+		_failures.append("The floor stopped sampling its classroom-owned generated paint source.")
+	if not is_equal_approx(float(texture.get_width()) / float(texture.get_height()), 1.4):
+		_failures.append("The floor paint source no longer matches the 14 x 10 m room aspect.")
+	var mean := _texture_mean(texture.resource_path)
+	if mean.b <= mean.r or mean.r > 0.58 or _chroma(mean) > 0.14:
+		_failures.append(
+			"The floor source is not low-saturation cool concrete (mean RGB %.2f, %.2f, %.2f)."
+			% [mean.r, mean.g, mean.b]
+		)
+	else:
+		_notes.append("cool concrete floor %.2f/%.2f/%.2f" % [mean.r, mean.g, mean.b])
 
 
 func _classroom_material_paths() -> PackedStringArray:
@@ -550,6 +660,16 @@ func _check_inspection_agreement() -> void:
 	if glass == null or glass.material_override == null or not glass.material_override.resource_path.ends_with("glass_cracked.tres"):
 		_failures.append("The window's cracked, taped pane is not drawn.")
 	var bag := _room.get_node_or_null(^"Props/Schoolbag")
+	var q_talk := _room.get_node_or_null(^"Interactables/QTalk")
+	if q_talk == null or StringName(q_talk.get("conversation_route")) != &"q":
+		_failures.append("The original Q conversation interaction no longer routes to Q.")
+	var q_actor := _room.get_node_or_null(^"Actors/Q") as Node3D
+	var n_actor := _room.get_node_or_null(^"Actors/N") as Node3D
+	if q_actor == null or not q_actor.visible or n_actor == null or n_actor.visible:
+		_failures.append("The initial Q/N classroom story states have changed.")
+	var normal_exit := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
+	if normal_exit == null or normal_exit.blocked_inspection_id != &"classroom_door_blocked":
+		_failures.append("The normal door lost its existing blocked-exit inspection.")
 	if bag != null:
 		var straps := 0
 		for child in bag.get_children():
@@ -583,6 +703,10 @@ func _check_navigation() -> LocationNavigation:
 	var map := navigation.get_navigation_map()
 	var start_marker := _room.get_node_or_null(^"SpawnPoints/PlayerStart") as Node3D
 	var start := NavigationServer3D.map_get_closest_point(map, start_marker.global_position)
+	var stage_top := _room.to_global(Vector3(0.0, 0.12, -3.65))
+	var stage_gap := _route_gap(map, start, stage_top)
+	if stage_gap > 0.25:
+		_failures.append("The navigation mesh does not join the floor to the raised platform step (%.2f m)." % stage_gap)
 	var worst := 0.0
 	for desk_name: String in DESKS:
 		var desk := _room.get_node_or_null(NodePath("Furniture/%s" % desk_name)) as Node3D
@@ -607,7 +731,7 @@ func _check_navigation() -> LocationNavigation:
 				% [String(child.get("interact_id")), gap, radius]
 			)
 	_notes.append(
-		"nav polygons %d, worst desk reach %.2f m" % [navigation.get_polygon_count(), worst]
+		"nav polygons %d, twelve desks, step %.2f m, worst desk reach %.2f m" % [navigation.get_polygon_count(), stage_gap, worst]
 	)
 	return navigation
 
@@ -639,10 +763,10 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 	# Every standing spot on the walkable floor, on a half-metre grid.
 	var spots: Array[Vector3] = []
 	var map := navigation.get_navigation_map() if navigation != null else RID()
-	var x := -4.25
-	while x <= 4.25:
-		var z := -3.25
-		while z <= 3.25:
+	var x := -6.25
+	while x <= 6.25:
+		var z := -4.25
+		while z <= 4.25:
 			var point := _room.to_global(Vector3(x, 0.0, z))
 			if map.is_valid():
 				var on_mesh := NavigationServer3D.map_get_closest_point(map, point)
