@@ -18,7 +18,13 @@ extends SceneTree
 ##    route bends and the body keeps its distance from the obstacle;
 ## 7. manual input cancels a walk, and a second destination replaces the first;
 ## 8. a location swap cancels everything, so nothing from the old room can be
-##    activated later.
+##    activated later;
+## 9. a body the map cannot help - pressed against something physical the map does not
+##    know about - re-routes once and then gives up: one `path_cancelled`, no
+##    `path_finished`, no budget handed back by the re-route itself, and a new request
+##    gets its own re-route (#145);
+## 10. a walk following a route that no longer fits the room (the map was re-baked under
+##    it) stalls, re-routes once from where the body stands, and arrives.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -32,6 +38,11 @@ const LOCATIONS: Array[Dictionary] = [
 ]
 
 const WALK_LIMIT_SECONDS := 14.0
+## A physics layer the player collides with (`player.tscn`: mask 5 = layers 1 and 3) that
+## neither the navigation bake (`LocationNavigation.geometry_collision_mask`, 25), the
+## interaction occluders (9) nor the click ground ray (1) reads: a body on it is a wall
+## for the character and nothing at all for the map.
+const PHYSICS_ONLY_LAYER := 4
 
 var _failures: Array[String] = []
 ## Where the body was during the last walk, sampled for failure messages.
@@ -43,6 +54,7 @@ var _sequence: OpeningSequence = null
 var _location: LocationRoot = null
 var _finished := 0
 var _cancelled := 0
+var _rerouted := 0
 
 
 func _initialize() -> void:
@@ -85,6 +97,10 @@ func _run() -> void:
 		voice.set_process(false)
 	_player.path_finished.connect(func() -> void: _finished += 1)
 	_player.path_cancelled.connect(func() -> void: _cancelled += 1)
+	# Connected by name: the signal is what this file asks the controller to report, and a
+	# controller without it is a failure to name, not a script error to crash on.
+	if _player.has_signal(&"path_rerouted"):
+		_player.connect(&"path_rerouted", func() -> void: _rerouted += 1)
 	Engine.time_scale = 4.0
 	await _frames(2)
 
@@ -96,6 +112,8 @@ func _run() -> void:
 	await _check_manual_input_cancels()
 	await _check_second_destination_replaces_the_first()
 	await _check_location_swap_clears_the_walk()
+	await _check_permanent_block_gives_up()
+	await _check_stale_route_recovers_with_one_reroute()
 
 	Harness.finish(
 		self, _failures,
@@ -421,6 +439,257 @@ func _check_location_swap_clears_the_walk() -> void:
 		_failures.append("The character fell through the street floor after the swap.")
 
 
+## A wall across a straight route that only physics knows about. The map keeps handing
+## out the same straight route through it - before and after the wall, from the start and
+## from the wall's face - and the body really walks into it with `move_and_slide()`.
+## The walk may re-route once, and the fresh route stalls the same way; then it has to end,
+## however long it is left to run.
+func _check_permanent_block_gives_up() -> void:
+	var location := await _enter(LOCATIONS[2]["scene"], LOCATIONS[2]["spawn"])
+	if location == null:
+		return
+	var nav := _nav_of(location)
+	if nav == null:
+		_failures.append("permanent block: the street has no navigation region.")
+		return
+	var map := _player.navigation_agent.get_navigation_map()
+	var start := _player.global_position
+	var destination: Variant = _straight_destination(start, 5.0, 8.0)
+	if destination == null:
+		_failures.append("permanent block: the street has no straight 5-8 m route from the spawn.")
+		return
+	var dest: Vector3 = destination
+	var direction := Vector3(dest.x - start.x, 0.0, dest.z - start.z).normalized()
+	var wall_center := start + direction * 2.2
+	var wall := _add_slab(location, wall_center + Vector3.UP * 1.0, Vector3(0.3, 2.0, 4.0), "PhysicsOnlyWall")
+	wall.rotation.y = atan2(direction.x, direction.z)
+	wall.collision_layer = PHYSICS_ONLY_LAYER
+	wall.collision_mask = 0
+	await _physics_frames(3)
+
+	# The fixture, proved before the walk: the wall is a wall for the body, the map does
+	# not know it is there, and the route still runs straight through it.
+	if (_player.collision_mask & PHYSICS_ONLY_LAYER) == 0:
+		_failures.append("permanent block: the player does not collide with the probe wall's layer.")
+	if (nav.geometry_collision_mask & PHYSICS_ONLY_LAYER) != 0:
+		_failures.append("permanent block: the bake would read the probe wall's layer.")
+	var route := NavigationServer3D.map_get_path(map, start, dest, true)
+	if route.size() != 2:
+		_failures.append(
+			"permanent block: with the wall in place the map's route has %d points; it is "
+			% route.size() + "supposed to run straight through a wall the map does not know."
+		)
+	var ray := PhysicsRayQueryParameters3D.create(
+		start + Vector3.UP * 0.9, dest + Vector3.UP * 0.9, _player.collision_mask
+	)
+	ray.exclude = [_player.get_rid()]
+	var hit := _player.get_world_3d().direct_space_state.intersect_ray(ray)
+	if hit.is_empty() or hit.get("collider") != wall:
+		_failures.append("permanent block: the wall does not stand across the route (%s)." % str(hit))
+
+	for attempt in ["the first request", "a new request after giving up"]:
+		var report := await _walk_into_block(dest, wall_center, direction, String(attempt))
+		if report.is_empty():
+			break
+	_remove_node(location, "PhysicsOnlyWall")
+	await _physics_frames(2)
+
+
+## One requested walk into the probe wall, watched for four stall timeouts and then some.
+## Returns an empty Dictionary when the walk could not even start.
+func _walk_into_block(
+	dest: Vector3, wall_center: Vector3, direction: Vector3, attempt: String
+) -> Dictionary:
+	var label := "permanent block, %s" % attempt
+	_finished = 0
+	_cancelled = 0
+	_rerouted = 0
+	if not _player.request_path_to(dest):
+		_failures.append("%s: the map's straight route was refused." % label)
+		return {}
+	if not _player.is_path_active():
+		_failures.append("%s: the accepted request started no walk." % label)
+		return {}
+	var budget := int(_player.get("_stall_repaths_left"))
+	if budget != 1:
+		_failures.append("%s: a requested walk starts with %d re-route(s), not 1." % [label, budget])
+
+	var watch := _player.stall_timeout * 4.0 + 2.0
+	var timer := create_timer(watch, true, true)
+	var real_deadline := Time.get_ticks_msec() + 20000
+	var started_ms := Time.get_ticks_msec()
+	var cancelled_after := -1.0
+	# Re-routes are also counted from the outside, without the signal: a stalled body's
+	# no-progress clock only climbs, so a clock that drops back while the body has not
+	# moved is the stall branch starting a fresh route. Each one is checked for what it
+	# left in the budget - nobody asks for a new walk inside this loop, so anything
+	# above zero is a re-route that paid for itself.
+	var stall_restarts := 0
+	var refills := 0
+	var previous_clock := 0.0
+	var previous_position := _player.global_position
+	var deepest := -INF
+	while timer.time_left > 0.0 and Time.get_ticks_msec() < real_deadline:
+		await physics_frame
+		var active := _player.is_path_active()
+		var clock := float(_player.get("_path_progress_elapsed"))
+		var still := _player.global_position.distance_to(previous_position) <= 0.01
+		if active and still and previous_clock > _player.stall_timeout * 0.5 and clock < previous_clock:
+			stall_restarts += 1
+			if int(_player.get("_stall_repaths_left")) > 0:
+				refills += 1
+		previous_clock = clock if active else 0.0
+		previous_position = _player.global_position
+		var along := (_player.global_position - wall_center).dot(direction)
+		deepest = maxf(deepest, along)
+		if cancelled_after < 0.0 and _cancelled > 0:
+			cancelled_after = float(Time.get_ticks_msec() - started_ms) / 1000.0 * Engine.time_scale
+
+	var still_walking := _player.is_path_active()
+	var legs := _player.get_path_legs()
+	var index := _player.get_path_index()
+	var left := int(_player.get("_stall_repaths_left"))
+	var agent_gap := Vector2(
+		_player.navigation_agent.target_position.x - _player.global_position.x,
+		_player.navigation_agent.target_position.z - _player.global_position.z
+	).length()
+	var to_target := Vector2(
+		_player.global_position.x - dest.x, _player.global_position.z - dest.z
+	).length()
+	var state := "rerouted=%d stall_restarts=%d cancelled=%d finished=%d refills=%d active=%s at %s" % [
+		_rerouted, stall_restarts, _cancelled, _finished, refills, str(still_walking),
+		str(_player.global_position)
+	]
+
+	# It really walked into the wall, and the wall really held.
+	if deepest < -0.9:
+		_failures.append("%s: the body never reached the wall (closest %.2f m from it). %s" % [
+			label, -deepest, state
+		])
+	if deepest > 0.0:
+		_failures.append("%s: the body got %.2f m past the wall's middle. %s" % [label, deepest, state])
+	if to_target < 1.0:
+		_failures.append("%s: the body reached a target behind a wall. %s" % [label, state])
+	# The contract: one re-route, then the walk ends - once, as a cancellation.
+	if still_walking:
+		_failures.append(
+			"%s: the walk was still running %.1f s (four stall timeouts) after it started. %s"
+			% [label, watch, state]
+		)
+		_player.cancel_path()
+	if stall_restarts != 1:
+		_failures.append(
+			"%s: the stalled walk started %d fresh route(s); one is allowed. %s"
+			% [label, stall_restarts, state]
+		)
+	if refills > 0:
+		_failures.append("%s: the re-route handed the budget back %d time(s). %s" % [label, refills, state])
+	if not _player.has_signal(&"path_rerouted"):
+		_failures.append("%s: PlayerController reports no re-route (no path_rerouted signal)." % label)
+	elif _rerouted != 1:
+		_failures.append("%s: %d re-routes instead of exactly one. %s" % [label, _rerouted, state])
+	if _cancelled != 1 and not still_walking:
+		_failures.append("%s: path_cancelled fired %d times. %s" % [label, _cancelled, state])
+	if _finished != 0:
+		_failures.append("%s: a walk that never arrived reported path_finished. %s" % [label, state])
+	if cancelled_after >= 0.0 and cancelled_after < _player.stall_timeout * 1.8:
+		_failures.append(
+			"%s: the walk ended %.2f s in, before it could have stalled twice. %s"
+			% [label, cancelled_after, state]
+		)
+	if not still_walking:
+		if not legs.is_empty() or index != 0 or left != 0:
+			_failures.append("%s: the ended walk kept legs=%d index=%d re-routes=%d." % [
+				label, legs.size(), index, left
+			])
+		if agent_gap > 0.3:
+			_failures.append(
+				"%s: the agent still aims %.2f m away from the body after the walk ended." % [label, agent_gap]
+			)
+	# And nothing keeps pushing the body into the wall afterwards.
+	var before := _player.global_position
+	await _physics_frames(20)
+	var horizontal := Vector2(_player.velocity.x, _player.velocity.z).length()
+	if horizontal > 0.05 or _player.global_position.distance_to(before) > 0.05:
+		_failures.append("%s: the body still moves (%.2f m/s) after the walk ended." % [label, horizontal])
+	if _cancelled > 1:
+		_failures.append("%s: path_cancelled fired again after the walk ended (%d)." % [label, _cancelled])
+	return {"rerouted": _rerouted, "cancelled": _cancelled}
+
+
+## A walk whose route the room has outgrown: the request is answered with a straight
+## route, then - before the body takes a step - a wall goes up across it and the map is
+## re-baked around the wall. The body walks the old route into the wall, stalls, asks the
+## map again from where it stands, and the fresh route goes round. One re-route, then
+## `path_finished`; no cancellation. This is what the re-route is for, and the fix for
+## #145 must not take it away.
+func _check_stale_route_recovers_with_one_reroute() -> void:
+	var location := await _enter(LOCATIONS[2]["scene"], LOCATIONS[2]["spawn"])
+	if location == null:
+		return
+	var nav := _nav_of(location)
+	if nav == null:
+		return
+	var start := _player.global_position
+	var destination: Variant = _straight_destination(start, 5.0, 8.0)
+	if destination == null:
+		_failures.append("stale route: the street has no straight 5-8 m route from the spawn.")
+		return
+	var dest: Vector3 = destination
+	var direction := Vector3(dest.x - start.x, 0.0, dest.z - start.z).normalized()
+	var across := Vector3(-direction.z, 0.0, direction.x)
+	var wall_center := start + direction * 2.2
+	var half_length := 1.5
+	_finished = 0
+	_cancelled = 0
+	_rerouted = 0
+	if not _player.request_path_to(dest):
+		_failures.append("stale route: the straight route was refused.")
+		return
+	# Held in place while the room changes, so the walk is following the old route.
+	_player.set_physics_process(false)
+	var wall := _add_slab(
+		location, wall_center + Vector3.UP * 1.0, Vector3(0.3, 2.0, half_length * 2.0), "StaleRouteWall"
+	)
+	wall.rotation.y = atan2(direction.x, direction.z)
+	await _rebake(nav)
+	var fresh := NavigationServer3D.map_get_path(
+		_player.navigation_agent.get_navigation_map(), _player.global_position, dest, true
+	)
+	if fresh.size() < 3:
+		_failures.append("stale route: the re-baked map still routes straight (%d points)." % fresh.size())
+	if _player.get_path_legs().size() != 2:
+		_failures.append(
+			"stale route: the walk is not following the old straight route (%d legs)."
+			% _player.get_path_legs().size()
+		)
+	_player.set_physics_process(true)
+	var closest := INF
+	var deadline := Time.get_ticks_msec() + int(WALK_LIMIT_SECONDS * 1000.0)
+	while _player.is_path_active() and Time.get_ticks_msec() < deadline:
+		await physics_frame
+		closest = minf(closest, _distance_to_wall(_player.global_position, wall_center, across, half_length))
+	var state := "rerouted=%d cancelled=%d finished=%d at %s" % [
+		_rerouted, _cancelled, _finished, str(_player.global_position)
+	]
+	if _player.is_path_active():
+		_player.cancel_path()
+		_failures.append("stale route: the walk did not end within %.0f s. %s" % [WALK_LIMIT_SECONDS, state])
+	var gap := Vector2(_player.global_position.x - dest.x, _player.global_position.z - dest.z).length()
+	if gap > 1.2:
+		_failures.append("stale route: the body stopped %.2f m short of the target. %s" % [gap, state])
+	if _finished != 1 or _cancelled != 0:
+		_failures.append("stale route: the recovered walk did not end with one path_finished. %s" % state)
+	if not _player.has_signal(&"path_rerouted"):
+		_failures.append("stale route: PlayerController reports no re-route (no path_rerouted signal).")
+	elif _rerouted != 1:
+		_failures.append("stale route: %d re-routes instead of exactly one. %s" % [_rerouted, state])
+	if closest < 0.3:
+		_failures.append("stale route: the body went %.2f m from the wall's middle, i.e. through it." % closest)
+	_remove_node(location, "StaleRouteWall")
+	await _rebake(nav)
+
+
 # --- helpers ----------------------------------------------------------------
 
 
@@ -546,6 +815,34 @@ func _farthest_reachable(origin: Vector3, max_distance: float, avoid: Variant = 
 		if best_distance > 0.5:
 			return Vector3(best.x, origin.y + 0.05, best.z)
 	return null
+
+
+## The farthest on-mesh point, on the same floor, that the map reaches in one straight
+## leg (a two-point route) from `origin`, between `min_distance` and `max_distance` away.
+## A straight route is what makes a wall across it a wall across *the* route.
+func _straight_destination(origin: Vector3, min_distance: float, max_distance: float) -> Variant:
+	var map := _player.navigation_agent.get_navigation_map()
+	var floor_y := NavigationServer3D.map_get_closest_point(map, origin).y
+	var best: Variant = null
+	var best_distance := 0.0
+	for index in 48:
+		var angle := TAU * float(index) / 48.0
+		for radius in [max_distance, (min_distance + max_distance) * 0.5, min_distance]:
+			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.3:
+				continue
+			if absf(snapped.y - floor_y) > 0.1:
+				continue
+			var path := NavigationServer3D.map_get_path(map, origin, snapped, true)
+			if path.size() != 2:
+				continue
+			var reach := Vector2(snapped.x - origin.x, snapped.z - origin.z).length()
+			if reach >= min_distance and reach > best_distance:
+				best_distance = reach
+				best = Vector3(snapped.x, origin.y + 0.05, snapped.z)
+			break
+	return best
 
 
 ## Every exit the location declares, in tree order.
