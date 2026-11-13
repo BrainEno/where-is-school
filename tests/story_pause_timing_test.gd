@@ -16,8 +16,9 @@ extends SceneTree
 ## 2. `_wait_for_flag()`, the bag step's fallback clock, does not run out under a pause.
 ## 3. The expectation beat, started and then paused through its lead-in, neither takes
 ##    the beat lock nor opens its conversation until the pause ends - and then it does.
-## 4. No script under `res://scripts/world/` creates a timer that keeps counting through
-##    a pause, so the next wait cannot quietly bring the bug back.
+## 4. No story script - `res://scripts/world/`, and the room scripts under
+##    `res://scenes/locations/` that stage moments of their own - creates a timer that
+##    keeps counting through a pause, so the next wait cannot quietly bring the bug back.
 ##
 ## Before the fix, checks 2 and 3 fail (the fallback returns and the beat starts while
 ## paused) and check 1 reports the missing helper.
@@ -34,7 +35,10 @@ const SHORT_WAIT := 0.4
 const EXPECTATION_PAUSE_SECONDS := 2.4
 ## How long, after unpausing, a wait is allowed to take to finish.
 const RESUME_LIMIT_SECONDS := 4.0
-const WORLD_SCRIPTS_DIR := "res://scripts/world/"
+## Where story time is kept. `scenes/locations/` is searched recursively: a room's own
+## script stages beats too, and its waits are as visible to a paused player as the
+## director's.
+const STORY_SCRIPT_DIRS: Array[String] = ["res://scripts/world/", "res://scenes/locations/"]
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -56,8 +60,8 @@ func _run() -> void:
 		return
 	Harness.clear_session_state(self)
 
-	Harness.stage = "the world scripts' timers"
-	_check_world_timers()
+	Harness.stage = "the story scripts' timers"
+	_check_story_timers()
 
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	if packed == null:
@@ -191,22 +195,16 @@ func _check_expectation_beat() -> void:
 # --- 4. The source rule ----------------------------------------------------------
 
 
-## A timer under `scripts/world/` is story time. One created with the default
+## A timer in a story script is story time. One created with the default
 ## `process_always = true` counts through the pause menu, which is the bug above.
-func _check_world_timers() -> void:
-	var dir := DirAccess.open(WORLD_SCRIPTS_DIR)
-	if dir == null:
-		_failures.append("Could not open %s." % WORLD_SCRIPTS_DIR)
-		return
+func _check_story_timers() -> void:
 	var single_argument := RegEx.create_from_string("create_timer\\(([^,()]*)\\)")
 	var always := RegEx.create_from_string("create_timer\\([^,()]*,\\s*true")
-	var scanned := 0
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".gd"):
-			continue
-		var path := WORLD_SCRIPTS_DIR + file_name
+	var scripts: Array[String] = []
+	for dir_path in STORY_SCRIPT_DIRS:
+		_collect_scripts(dir_path, dir_path != STORY_SCRIPT_DIRS[0], scripts)
+	for path in scripts:
 		var lines := FileAccess.get_file_as_string(path).split("\n")
-		scanned += 1
 		for index in lines.size():
 			var line := lines[index]
 			if line.strip_edges().begins_with("#"):
@@ -216,7 +214,23 @@ func _check_world_timers() -> void:
 					"%s:%d creates a timer that keeps counting while the game is paused: %s"
 					% [path, index + 1, line.strip_edges()]
 				)
-	_expect(scanned > 0, "No scripts were found under %s." % WORLD_SCRIPTS_DIR)
+	_expect(
+		scripts.has("res://scripts/world/opening_sequence.gd"),
+		"The scan did not reach opening_sequence.gd; it would pass without looking."
+	)
+
+
+func _collect_scripts(dir_path: String, recursive: bool, into: Array[String]) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		_failures.append("Could not open %s." % dir_path)
+		return
+	for file_name in dir.get_files():
+		if file_name.ends_with(".gd"):
+			into.append(dir_path.path_join(file_name))
+	if recursive:
+		for sub in dir.get_directories():
+			_collect_scripts(dir_path.path_join(sub), true, into)
 
 
 # --- Helpers ---------------------------------------------------------------------

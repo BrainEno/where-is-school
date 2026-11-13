@@ -204,7 +204,7 @@ counting through a pause, and before this was fixed a player who spent the bag s
 the menu or the settings came back to a step that had already timed out, with the
 expectation beat skipped for the rest of the run. `tests/story_pause_timing_test.gd`
 holds the line, including a scan that refuses a counting-through-the-pause timer
-anywhere under `scripts/world/`.
+in `scripts/world/` or in a room script under `scenes/locations/`.
 
 ## 7. Camera and target selection
 
