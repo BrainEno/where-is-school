@@ -35,6 +35,13 @@ const ROUTES: Dictionary = {
 	# visit is a look at what is still there. The room's StagedInteractable plays the
 	# conversation this route selects.
 	&"classroom_curtain": [
+		# An unfinished fall is always retryable, even if an older save also has the
+		# provisional drawn flag. ClassroomAnomalies resumes the staged fall without
+		# replaying this conversation; this rule keeps route selection aligned with it.
+		{
+			"conversation": &"classroom_curtain",
+			"requires": {StoryFlags.CURTAIN_FALL_PENDING: true},
+		},
 		{
 			"conversation": &"classroom_curtain_drawn",
 			"requires": {StoryFlags.CURTAIN_DRAWN: true},

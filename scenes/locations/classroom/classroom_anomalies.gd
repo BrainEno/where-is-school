@@ -98,17 +98,22 @@ func _ready() -> void:
 
 ## Builds the room as the story left it, with no animation.
 func _apply_story_state() -> void:
-	if _flag(StoryFlags.CURTAIN_DRAWN):
+	var fall_pending := _flag(StoryFlags.CURTAIN_FALL_PENDING)
+	var curtain_drawn := _flag(StoryFlags.CURTAIN_DRAWN)
+	if curtain_drawn:
 		_show_void(true)
 		if _curtain != null:
 			_curtain.open(false)
-		_set_prompt(_curtain_interactable, CURTAIN_DRAWN_PROMPT)
 	else:
 		_show_void(false)
-		_set_prompt(
-			_curtain_interactable,
-			CURTAIN_RETRY_PROMPT if _flag(StoryFlags.CURTAIN_FALL_PENDING) else "prompt.curtain"
-		)
+	if fall_pending:
+		# Pending is the unfinished transaction, even in a save made by an older build
+		# that set CURTAIN_DRAWN before the destination had loaded.
+		_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
+	elif curtain_drawn:
+		_set_prompt(_curtain_interactable, CURTAIN_DRAWN_PROMPT)
+	else:
+		_set_prompt(_curtain_interactable, "prompt.curtain")
 	if _flag(StoryFlags.REAR_DOOR_OPENED):
 		if _door != null:
 			_door.open(false)
@@ -126,21 +131,30 @@ func is_void_open() -> bool:
 
 
 func _stage_curtain(director: Node) -> Dictionary:
-	var conversation := ConversationRouter.select(CURTAIN_ROUTE, _snapshot())
-	if String(conversation).is_empty():
-		push_error("ClassroomAnomalies: no conversation matched '%s'." % CURTAIN_ROUTE)
-		return {}
-	await director.play_conversation(conversation)
-	if not _flag(StoryFlags.CURTAIN_FALL_PENDING) or _flag(StoryFlags.CURTAIN_DRAWN):
-		return {}
+	# A pending fall is already the player's choice. On a retry (including a save
+	# containing the old drawn+pending combination), do not route through the choice
+	# conversation again: resume the unfinished transition directly.
+	if not _flag(StoryFlags.CURTAIN_FALL_PENDING):
+		var conversation := ConversationRouter.select(CURTAIN_ROUTE, _snapshot())
+		if String(conversation).is_empty():
+			push_error("ClassroomAnomalies: no conversation matched '%s'." % CURTAIN_ROUTE)
+			return {}
+		await director.play_conversation(conversation)
+		if not _flag(StoryFlags.CURTAIN_FALL_PENDING):
+			return {}
 	await draw_curtain()
 	await get_tree().create_timer(0.9, false).timeout  # story time: stops under the pause menu
-	await director.play_conversation(VOID_CONVERSATION)
+	# A refused transition leaves the observed void in the narrative log. Resuming that
+	# pending fall should not repeat the discovery line on every retry or after a save.
+	if not _has_narrative_entry(&"saw_void_window"):
+		await director.play_conversation(VOID_CONVERSATION)
 	var player: PlayerController = director.get_player() if director.has_method("get_player") \
 		else null
 	var departure := Callable()
+	var on_failure := Callable(self, "reset_curtain_after_failed_transition")
 	if player != null:
 		departure = _fall.bind(player)
+		on_failure = on_failure.bind(player, player.get_facing_direction())
 	return {
 		"transition": {
 			"scene": FALL_SCENE,
@@ -156,7 +170,7 @@ func _stage_curtain(director: Node) -> Dictionary:
 				StoryFlags.CURTAIN_FALL_PENDING: false,
 				StoryFlags.CURTAIN_DRAWN: true,
 			},
-			"on_failure": Callable(self, "reset_curtain_after_failed_transition"),
+			"on_failure": on_failure,
 		}
 	}
 
@@ -172,12 +186,20 @@ func draw_curtain(animated: bool = true) -> void:
 	await _curtain.open(animated)
 
 
-## A refused fall returns to the same room. Put the cloth and window back as they were;
-## curtain_fall_pending remains true so the player can try the same choice again.
-func reset_curtain_after_failed_transition() -> void:
+## A refused fall returns to the same room. Roll back the provisional drawn flag and
+## presentation, but keep pending: the choice is still owed and the interaction retries it.
+## The facing changed by the departure pose is restored too; LocationFlow has already
+## stood the body up, unwound the camera and released any temporary frame.
+func reset_curtain_after_failed_transition(
+	player: PlayerController = null, previous_facing: Vector3 = Vector3.ZERO
+) -> void:
+	if _flag(StoryFlags.CURTAIN_FALL_PENDING):
+		_set_state_flag(StoryFlags.CURTAIN_DRAWN, false)
 	if _curtain != null:
 		_curtain.set_open_amount(0.0)
 	_show_void(false)
+	if player != null and previous_facing.length_squared() > 0.0001:
+		player.face_toward(previous_facing)
 	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 
 
@@ -283,12 +305,17 @@ func _snapshot() -> Dictionary:
 	return state.get_snapshot() if state != null else {}
 
 
+func _has_narrative_entry(entry_id: StringName) -> bool:
+	var narrative := get_node_or_null(^"/root/NarrativeState")
+	return narrative != null and narrative.has_entry(entry_id)
+
+
 func _flag(flag: StringName) -> bool:
 	var state := _game_state()
 	return state != null and bool(state.get_flag(flag, false))
 
 
-func _set_state_flag(flag: StringName) -> void:
+func _set_state_flag(flag: StringName, value: bool = true) -> void:
 	var state := _game_state()
 	if state != null:
-		state.set_flag(flag, true)
+		state.set_flag(flag, value)

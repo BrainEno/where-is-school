@@ -24,6 +24,7 @@ extends SceneTree
 ##    player out a second time.
 
 const Harness = preload("res://tests/test_harness.gd")
+const RecoveryTest = preload("res://tests/classroom_anomaly_recovery_test.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const TIME_SCALE := 4.0
@@ -121,6 +122,12 @@ func _run() -> void:
 	await _check_fall()
 	Harness.stage = "the room remembers"
 	await _check_return()
+	Harness.stage = "curtain failure transactions and disk recovery"
+	var recovery := RecoveryTest.new()
+	root.add_child(recovery)
+	await recovery.run(_main)
+	_failures.append_array(recovery.failures)
+	recovery.queue_free()
 
 	Engine.time_scale = 1.0
 	print("::notice title=classroom anomalies::%s" % " | ".join(_notes))
@@ -442,6 +449,8 @@ func _check_curtain_failure_recovery() -> void:
 	if anomalies == null:
 		_failures.append("ClassroomAnomalies is unavailable for the failure-recovery check.")
 		return
+	var previous_pending := _flag(StoryFlags.CURTAIN_FALL_PENDING)
+	var previous_drawn := _flag(StoryFlags.CURTAIN_DRAWN)
 	_game_state.set_flag(StoryFlags.CURTAIN_FALL_PENDING, true)
 	_game_state.set_flag(StoryFlags.CURTAIN_DRAWN, false)
 	await anomalies.draw_curtain(false)
@@ -449,6 +458,13 @@ func _check_curtain_failure_recovery() -> void:
 		_failures.append("Drawing the curtain committed CURTAIN_DRAWN before a destination loaded.")
 	if not _curtain().is_open() or not _void().visible:
 		_failures.append("The curtain failure fixture did not reach its open/void state.")
+	# Recreate the legacy state from #141: an early drawn commit beside a still-pending fall.
+	_game_state.set_flag(StoryFlags.CURTAIN_DRAWN, true)
+	if (
+		ConversationRouter.select(&"classroom_curtain", _game_state.get_snapshot())
+		!= &"classroom_curtain"
+	):
+		_failures.append("A pending fall lost route priority to the provisional drawn flag.")
 	anomalies.reset_curtain_after_failed_transition()
 	if _curtain().is_open() or _void().visible:
 		_failures.append("A refused fall did not restore the closed curtain and ordinary window.")
@@ -457,6 +473,9 @@ func _check_curtain_failure_recovery() -> void:
 	var curtain := _room().find_interactable(&"curtain")
 	if curtain == null or curtain.get_prompt_override() != "prompt.curtain_retry":
 		_failures.append("A refused fall did not leave an explicit curtain retry prompt.")
+	_game_state.set_flag(StoryFlags.CURTAIN_FALL_PENDING, previous_pending)
+	_game_state.set_flag(StoryFlags.CURTAIN_DRAWN, previous_drawn)
+	anomalies._apply_story_state()
 
 
 func _check_fall() -> void:
