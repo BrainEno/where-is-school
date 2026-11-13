@@ -289,9 +289,21 @@ func _check_consecutive_clicks_leave_one_mark() -> void:
 func _check_click_where_standing_leaves_no_mark() -> void:
 	Harness.stage = "click where standing"
 	await _reset_to_start()
-	var screen: Variant = _ground_screen_near_player(_player.arrival_radius * 0.6)
+	# Walk somewhere first: where a walk ends is, by definition, on the navigation mesh
+	# and within arrival distance of a point the map hands out, which START need not be.
+	if not await _start_floor_walk("click where standing", 1.8, 4.0):
+		return
+	if not await _wait_until(func() -> bool: return not _player.is_path_active(), WALK_LIMIT_SECONDS):
+		_failures.append("click where standing: the walk there never arrived.")
+		return
+	await _wait_until(func() -> bool: return not _cue_drawn(), FADE_LIMIT_SECONDS)
+	await _wait_seconds(0.3)
+	var screen: Variant = _ground_screen_near_player(_player.arrival_radius * 0.9)
 	if screen == null:
-		_failures.append("click where standing: no clickable floor right beside the character.")
+		_failures.append(
+			"click where standing: no clickable floor within %.2f m of the character at %s (%s)."
+			% [_player.arrival_radius * 0.9, str(_player.global_position), str(_near_stats)]
+		)
 		return
 	_navigator.click_at_screen_position(screen)
 	if not _navigator.was_last_click_accepted():
@@ -616,22 +628,31 @@ func _open_floor_point(min_distance: float, max_distance: float) -> Variant:
 	return _navigator.get_ground_point_at(screen)
 
 
+## How many probes around the player survived each question, for the failure message.
+var _near_stats := {}
+
+
 ## A screen position whose click lands on walkable floor within `radius` of the player.
 func _ground_screen_near_player(radius: float) -> Variant:
 	var camera := _player.get_viewport().get_camera_3d()
+	_near_stats = {"probes": 0, "free": 0, "ground": 0, "near": 0}
 	if camera == null:
 		return null
-	for ring: float in [0.0, radius * 0.5, radius]:
-		for index in 8:
-			var angle := TAU * float(index) / 8.0
+	for ring: float in [0.0, radius * 0.25, radius * 0.5, radius * 0.75]:
+		for index in 12:
+			var angle := TAU * float(index) / 12.0
 			var world := _player.global_position + Vector3(cos(angle) * ring, 0.0, sin(angle) * ring)
 			var screen := camera.unproject_position(world)
+			_near_stats["probes"] = int(_near_stats["probes"]) + 1
 			if _interaction.get_target_at_screen_position(screen, false) != null:
 				continue
+			_near_stats["free"] = int(_near_stats["free"]) + 1
 			var point: Variant = _navigator.get_ground_point_at(screen)
 			if point == null:
 				continue
+			_near_stats["ground"] = int(_near_stats["ground"]) + 1
 			if _flat_distance(point as Vector3, _player.global_position) <= radius:
+				_near_stats["near"] = int(_near_stats["near"]) + 1
 				return screen
 	return null
 
