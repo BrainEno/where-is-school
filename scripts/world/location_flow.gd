@@ -162,7 +162,9 @@ func transition_to(
 	if _hud != null:
 		_hud.clear_prompt()
 	update_exit_prompt()
-	await _host.get_tree().create_timer(0.3).timeout
+	# Story time, like every authored wait: a pause opened mid-transition holds this
+	# beat where it is (see `OpeningSequence.wait_seconds()`).
+	await _host.get_tree().create_timer(0.3, false).timeout
 	await _ui.fade.fade_from_black(0.9)
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.

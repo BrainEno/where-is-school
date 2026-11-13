@@ -327,7 +327,7 @@ func _announce_save_problem() -> void:
 	if not quarantined_to.is_empty():
 		hint = L10n.t(SAVE_ERROR_QUARANTINE_KEY, {"path": quarantined_to})
 	_ui.end_card.present(L10n.t(SAVE_ERROR_TITLE_KEY), body, hint)
-	await get_tree().create_timer(SAVE_NOTICE_SECONDS).timeout
+	await wait_seconds(SAVE_NOTICE_SECONDS)
 	_ui.end_card.dismiss()
 
 
@@ -475,7 +475,7 @@ func _beat_wake() -> void:
 	await _ui.fade.fade_from_black(WAKE_FADE_SECONDS)
 	_player.settle_wake_pose(WAKE_SETTLE_SECONDS)
 	_player.settle_camera_roll(WAKE_SETTLE_SECONDS)
-	await get_tree().create_timer(0.4).timeout
+	await wait_seconds(0.4)
 	_control_allowed = true
 	sync_player_locks()
 	if _hud != null:
@@ -484,7 +484,7 @@ func _beat_wake() -> void:
 
 ## Beat B: Q starts talking without being asked.
 func _beat_q_wake() -> void:
-	await get_tree().create_timer(0.9).timeout
+	await wait_seconds(0.9)
 	await begin_beat()
 	await play_conversation(&"q_wake")
 	end_beat()
@@ -503,13 +503,13 @@ func _beat_bag() -> void:
 func _beat_expectation() -> void:
 	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.EXPECTATION_PLAYED):
 		return
-	await get_tree().create_timer(EXPECTATION_LEAD_IN).timeout
+	await wait_seconds(EXPECTATION_LEAD_IN)
 	await begin_beat()
 	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
-	await get_tree().create_timer(0.7).timeout
+	await wait_seconds(0.7)
 	await play_conversation(&"expected_b")
 	_ui.overlay.show_localized_overlay("overlay.deny_title", "overlay.deny_body")
-	await get_tree().create_timer(EXPECTATION_DISCLAIMER_SECONDS).timeout
+	await wait_seconds(EXPECTATION_DISCLAIMER_SECONDS)
 	await _ui.overlay.hide_overlay()
 	_game_state().set_flag(StoryFlags.EXPECTATION_PLAYED, true)
 	end_beat()
@@ -522,7 +522,7 @@ func _beat_bell() -> void:
 	_game_state().set_flag(StoryFlags.BELL_RUNG, true)
 	_bell_audio.play()
 	_hud.set_objective("objective.bell")
-	await get_tree().create_timer(1.0).timeout
+	await wait_seconds(1.0)
 	await play_conversation(&"bell_moment")
 	end_beat()
 
@@ -552,7 +552,7 @@ func _beat_substitute() -> void:
 
 	await begin_beat()
 	_game_state().set_flag(StoryFlags.N_ARRIVED, true)
-	await get_tree().create_timer(0.4).timeout
+	await wait_seconds(0.4)
 	await play_conversation(&"n_class")
 	end_beat()
 	_flow.update_exit_prompt()
@@ -561,7 +561,7 @@ func _beat_substitute() -> void:
 func _start_bag_reminder() -> void:
 	if _has_flag(StoryFlags.TEXTBOOK_MISSING):
 		return
-	await get_tree().create_timer(BAG_REMINDER_SECONDS).timeout
+	await wait_seconds(BAG_REMINDER_SECONDS)
 	if _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.BELL_RUNG) or is_slice_finished():
 		return
 	await begin_beat()
@@ -684,6 +684,21 @@ func play_conversation(conversation_id: StringName) -> void:
 	await _dialogue.conversation_finished
 
 
+## Waits `seconds` of *story* time: the clock stops while the tree is paused.
+##
+## `SceneTree.create_timer()` keeps counting through a pause unless it is told not to,
+## and every wait in the prologue used that default. The pause menu pauses the tree, so
+## the beats went on timing themselves behind it: a player who spent the bag step in
+## the menu or the settings for `BAG_WAIT_LIMIT` seconds came back to a bag step that
+## had already given up, and the expectation beat - which needs the bag to have been
+## searched - was gone for the rest of the run. Q's bag reminder could likewise start
+## its conversation while the menu was still open. The fades never had this problem:
+## they are node tweens, and those already stop with the tree. Every authored wait goes
+## through here so the two clocks agree.
+func wait_seconds(seconds: float) -> void:
+	await get_tree().create_timer(seconds, false).timeout
+
+
 ## True while an authored beat (arrival lines, scripted conversation) owns the
 ## frame. Passive inner voices wait for this to clear instead of talking over it.
 func is_beat_active() -> bool:
@@ -746,7 +761,7 @@ func _wait_for_flag(flag: StringName, limit_seconds: float) -> void:
 	while elapsed < limit_seconds:
 		if _has_flag(flag):
 			return
-		await get_tree().create_timer(0.25).timeout
+		await wait_seconds(0.25)
 		elapsed += 0.25
 
 

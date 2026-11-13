@@ -128,7 +128,7 @@ func _stage_curtain(director: Node) -> Dictionary:
 	if not _flag(StoryFlags.CURTAIN_FALL_PENDING) or _flag(StoryFlags.CURTAIN_DRAWN):
 		return {}
 	await draw_curtain()
-	await get_tree().create_timer(0.9).timeout
+	await get_tree().create_timer(0.9, false).timeout  # story time: stops under the pause menu
 	await director.play_conversation(VOID_CONVERSATION)
 	var player: PlayerController = director.get_player() if director.has_method("get_player") \
 		else null
@@ -224,7 +224,7 @@ func _stage_rear_door(director: Node) -> Dictionary:
 		await rig.frame_point(STAIR_FRAME_POINT, STAIR_FRAME_SECONDS)
 	if _stair != null:
 		await _stair.reveal()
-	await get_tree().create_timer(0.8).timeout
+	await get_tree().create_timer(0.8, false).timeout  # story time
 	await director.play_conversation(STAIR_CONVERSATION)
 	if rig != null:
 		await rig.release_frame(STAIR_RELEASE_SECONDS)
