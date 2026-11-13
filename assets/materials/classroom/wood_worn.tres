@@ -7,5 +7,5 @@ resource_name = "wood_worn"
 next_pass = ExtResource("2_ink")
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.667, 0.557, 0.439, 1)
+albedo_color = Color(0.60, 0.53, 0.46, 1)
 roughness = 1.0

@@ -14,7 +14,7 @@ extends SceneTree
 ## 3. **Its own colour system.** Every surface of the room draws a material from
 ##    `assets/materials/classroom/` (the shared ceiling-light material is the one
 ##    exception), nothing reaches into another agent's shader folder, and the imported
-##    desk model wears the room's wash and ink.
+##    desk model replaces photographic PBR with an opaque classroom pigment surface.
 ## 4. **Wall decoration fades with the wall.** Each wall's painted face and the dressing
 ##    hung on it are children of the wall body, so the camera occluder fades them with it.
 ## 5. **Textures within budget.** Every painted texture is the project's own, lives with
@@ -31,6 +31,7 @@ extends SceneTree
 ##    spawn.
 
 const Harness = preload("res://tests/test_harness.gd")
+const WallContract = preload("res://tests/classroom_wall_contract.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const CLASSROOM_MATERIALS := "res://assets/materials/classroom/"
@@ -38,9 +39,10 @@ const CLASSROOM_TEXTURES := "res://assets/materials/classroom/textures/"
 ## Shared materials the room may still use, each for a reason: the ceiling fittings are
 ## the same light panels the corridor hangs, and they are not part of the colour system.
 const SHARED_MATERIALS: Array[String] = ["res://assets/materials/light_panel.tres"]
-## The Shader Agent's work lives here; the classroom must not depend on it.
+## No material presets are borrowed from another scene. The classroom student-wood
+## material may reference the existing environment shader read-only (owner task direction).
 const FOREIGN_PREFIXES: Array[String] = ["res://assets/shaders/"]
-const DESK_OVERLAY := "res://assets/materials/classroom/desk_wash.tres"
+const DESK_SURFACE := "res://assets/materials/classroom/student_wood.tres"
 ## tools/verify_build.py: the texture warning budget, per file.
 const TEXTURE_WARN_BYTES := 512 * 1024
 const TEXTURE_MAX_SIDE := 2048
@@ -205,6 +207,8 @@ func _run() -> void:
 	_check_inspection_agreement()
 	Harness.stage = "navigation"
 	var navigation := await _check_navigation()
+	Harness.stage = "live wall rendering contract"
+	await WallContract.verify(self, _main, _room, _failures)
 	Harness.stage = "game camera"
 	await _check_game_camera(navigation)
 
@@ -311,14 +315,15 @@ func _check_colour_system() -> void:
 			continue
 		var desk_model := _is_desk_model(path)
 		if desk_model:
-			if mesh_instance.material_overlay == null:
-				_failures.append("The imported desk mesh '%s' has no classroom overlay." % path)
-			elif mesh_instance.material_overlay.resource_path != DESK_OVERLAY:
-				_failures.append(
-					"The imported desk mesh '%s' wears '%s', not the classroom wash."
-					% [path, mesh_instance.material_overlay.resource_path]
-				)
-			continue
+			var replacement := mesh_instance.material_override as ShaderMaterial
+			if replacement == null or replacement.resource_path != DESK_SURFACE:
+				_failures.append("The imported desk mesh '%s' kept its photographic PBR surface." % path)
+			elif replacement.shader.resource_path != "res://assets/shaders/painterly/environment_surface.gdshader":
+				_failures.append("The desk '%s' does not reuse the reviewed environment shader." % path)
+			elif bool(replacement.get_shader_parameter("use_base_texture")):
+				_failures.append("The desk '%s' still samples the photographic albedo." % path)
+			if mesh_instance.material_overlay != null:
+				_failures.append("The imported desk mesh '%s' still has a redundant alpha wash." % path)
 		for surface in mesh_instance.mesh.get_surface_count():
 			surfaces += 1
 			var material := mesh_instance.get_active_material(surface)
@@ -384,11 +389,16 @@ func _check_wall_dressing() -> void:
 	var north := _room.get_node_or_null(^"WallNorth")
 	if north != null:
 		var geometry := north.find_children("*", "GeometryInstance3D", true, false)
-		if geometry.size() < 4:
-			_failures.append(
-				"WallNorth holds %d drawable pieces; its paint and dressing are not under it."
-				% geometry.size()
-			)
+		# Exactly shell + paint + clock face. The red pseudo-writing banner AND
+		# its two pins are removed, not made transparent or hidden in the tree.
+		if geometry.size() != 3:
+			_failures.append("WallNorth has %d meshes, expected only shell, paint and clock dial." % geometry.size())
+		var dressing := north.get_node("FrontWallDressing")
+		if dressing.get_child_count() != 1 or not dressing.has_node("ClockDial"):
+			_failures.append("FrontWallDressing must retain only the meaningful clock dial.")
+	for removed: String in ["banner.tres", "textures/banner.png", "textures/banner.png.import"]:
+		if FileAccess.file_exists(CLASSROOM_MATERIALS + removed):
+			_failures.append("Removed decoration resource still exists: %s" % removed)
 
 
 # --- 5. textures --------------------------------------------------------------------

@@ -1,0 +1,25 @@
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+libxkbcommon.so.0: cannot open shared object file: No such file or directory
+WSI connection=0x55918ecf4440 display=:100 connect=0x7ff79a985300
+Vulkan 1.3.0 - Forward+ - Using Device #0: Unknown - SwiftShader Device (Subzero)
+WARNING: Keeping screen on not supported by this display server.
+     at: screen_set_keep_on (servers/display/display_server.cpp:588)
+
+renderer: forward_plus (driver vulkan, display X11, adapter SwiftShader Device (Subzero))
+frame: (1600, 900)
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case1_open.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case2_hidden.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case2_hidden_negative_control_no_depth.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case2_hidden_control_no_wall.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case3_partial.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case4_switch_first_frame.png
+EVIDENCE: $REPO/build/classroom-current/outline-forward/case6_camera_moved.png
+NOTE: open: line on 100% of the silhouette, 0 stray pixels
+NOTE: hidden: max change 0.0000 behind the wall; without depth in the mask 100%; control 100%
+NOTE: partial: visible 100%, covered 0%, along the post 100%
+NOTE: camera motion: worst coverage 100%, worst stray 0
+PASS: 91 checks on rendered frames (forward_plus): an open box is outlined all round, a box behind a wall draws nothing, a box half behind a post is outlined only where it shows, switching and releasing leave nothing behind, and the outline stays on the box in every frame of a moving camera.
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

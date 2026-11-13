@@ -6,6 +6,6 @@
 resource_name = "register_cover"
 next_pass = ExtResource("2_ink")
 diffuse_mode = 3
-specular_mode = 1
+specular_mode = 2
 albedo_color = Color(0.251, 0.337, 0.549, 1)
-roughness = 0.35
+roughness = 0.96
