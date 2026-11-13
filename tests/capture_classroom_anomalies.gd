@@ -141,6 +141,17 @@ func _shot(name: String) -> void:
 	var small := image.duplicate() as Image
 	small.convert(Image.FORMAT_RGB8)
 	small.resize(INLINE_SIZE.x, INLINE_SIZE.y, Image.INTERPOLATE_BILINEAR)
+	# A frame that is almost all one dark value is a cover, not the room: fail it, so a
+	# black capture cannot pass as evidence.
+	var total := 0.0
+	var samples := 0
+	for y in range(0, small.get_height(), 9):
+		for x in range(0, small.get_width(), 9):
+			total += small.get_pixel(x, y).get_luminance()
+			samples += 1
+	var mean := total / maxf(1.0, float(samples))
+	if mean < 0.06:
+		_failures.append("The %s frame is black (mean luminance %.3f)." % [name, mean])
 	var encoded := Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.62))
 	print("CROP: %s %s" % [name.get_basename() + ".jpg", encoded])
 	print("SHOT %s %dx%d" % [name, image.get_width(), image.get_height()])
