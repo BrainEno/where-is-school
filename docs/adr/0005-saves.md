@@ -86,6 +86,18 @@ no "save anywhere" button: it would need every in-flight system to be
 serialisable, and the player loses nothing today because the two checkpoints above
 are exactly the moments where progress is meaningful.
 
+*Amended for refused transitions (#148):* a transition `LocationHost` refuses is not a
+checkpoint. Nothing about the destination is written (`CURRENT_LOCATION`, `arrival_flags`
+and the arrival line all wait for a successful load), and `LocationFlow.transition_to()`
+runs the caller's `on_failure` once, behind the black and inside the beat, so the room is
+back in its pre-departure state before the player has control - and therefore before
+Save and quit can write. For the classroom curtain that state is
+`curtain_fall_pending = true`, `curtain_drawn = false`: saved and continued, it rebuilds a
+closed curtain with the retry prompt, and the same conversation can start the fall again.
+While that conversation runs the classroom sets `curtain_fall_pending` aside and puts it
+back if the player leaves the curtain drawn; that happens inside a beat, which no save
+can see.
+
 *Amended for Save and quit:* the pause menu's **Save and quit** writes a save on request,
 but only where the same condition holds — `Session.is_at_rest()`: the prologue is behind
 the player (`next_step()` is empty), no beat holds the lock, no conversation is open, the

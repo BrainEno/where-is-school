@@ -130,7 +130,17 @@ func _stage_curtain(director: Node) -> Dictionary:
 	if String(conversation).is_empty():
 		push_error("ClassroomAnomalies: no conversation matched '%s'." % CURTAIN_ROUTE)
 		return {}
+	# After a refused fall `curtain_fall_pending` is still true, and the conversation asks
+	# again. Only this conversation's answer may start the fall: the flag is set aside for
+	# its length (inside the beat, where nothing can save), "Draw it aside" writes it
+	# again, and "Leave it drawn" gets the failed attempt's state back exactly.
+	var retrying := _flag(StoryFlags.CURTAIN_FALL_PENDING) and not _flag(StoryFlags.CURTAIN_DRAWN)
+	if retrying:
+		_set_flag_value(StoryFlags.CURTAIN_FALL_PENDING, false)
 	await director.play_conversation(conversation)
+	if retrying and not _flag(StoryFlags.CURTAIN_FALL_PENDING):
+		_set_flag_value(StoryFlags.CURTAIN_FALL_PENDING, true)
+		return {}
 	if not _flag(StoryFlags.CURTAIN_FALL_PENDING) or _flag(StoryFlags.CURTAIN_DRAWN):
 		return {}
 	await draw_curtain()
@@ -151,7 +161,9 @@ func _stage_curtain(director: Node) -> Dictionary:
 			"fade_out": FALL_FADE_SECONDS,
 			"arrival_conversation": LANDING_CONVERSATION,
 			# Commit the drawn state only after the yard has actually loaded. A refused
-			# transition leaves the pending flag intact and the room retryable.
+			# transition leaves the pending flag intact and the room retryable, and
+			# LocationFlow calls `on_failure` once, behind the black, before the room is
+			# shown again.
 			"arrival_flags": {
 				StoryFlags.CURTAIN_FALL_PENDING: false,
 				StoryFlags.CURTAIN_DRAWN: true,
@@ -174,6 +186,9 @@ func draw_curtain(animated: bool = true) -> void:
 
 ## A refused fall returns to the same room. Put the cloth and window back as they were;
 ## curtain_fall_pending remains true so the player can try the same choice again.
+## `LocationFlow.transition_to()` calls this as the fall's `on_failure`, once, while the
+## screen is still black and the beat is held; the body and camera are already upright.
+## Idempotent, and it writes no flags.
 func reset_curtain_after_failed_transition() -> void:
 	if _curtain != null:
 		_curtain.set_open_amount(0.0)
@@ -289,6 +304,10 @@ func _flag(flag: StringName) -> bool:
 
 
 func _set_state_flag(flag: StringName) -> void:
+	_set_flag_value(flag, true)
+
+
+func _set_flag_value(flag: StringName, value: bool) -> void:
 	var state := _game_state()
 	if state != null:
-		state.set_flag(flag, true)
+		state.set_flag(flag, value)
