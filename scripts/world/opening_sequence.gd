@@ -631,12 +631,16 @@ func _run_staged(staged: StagedInteractable) -> void:
 		options["beat_held"] = true
 		if not options.has("label"):
 			options["label"] = "staged '%s'" % staged.interact_id
-		await _flow.transition_to(
+		var transitioned: bool = await _flow.transition_to(
 			String(transition.get("scene", "")),
 			StringName(String(transition.get("spawn", ""))),
 			StringName(String(transition.get("id", ""))),
 			options
 		)
+		if not transitioned:
+			var on_failure: Callable = transition.get("on_failure", Callable())
+			if on_failure.is_valid():
+				on_failure.call()
 		return
 	end_beat()
 	var inspection := StringName(String(request.get("inspection", "")))
