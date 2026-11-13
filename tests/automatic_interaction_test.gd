@@ -12,7 +12,12 @@ extends SceneTree
 ##    and the walk ends instead of continuing forever;
 ## 6. E still works and reaches the same activation path;
 ## 7. a ground click moves and never activates anything;
-## 8. activating once means once: no repeat on the frames after arrival.
+## 8. activating once means once: no repeat on the frames after arrival;
+## 9. an approach the body physically cannot finish - boxed in by walls only physics
+##    knows about, so the map keeps offering a route - ends after the one re-route the walk
+##    is allowed: the target is abandoned exactly once, never activated, the cue goes, and
+##    the next click on it starts a fresh approach that works (#145);
+## 10. taking control away, or a movement key, ends an approach the same way.
 ##
 ## The classroom is used for the person and the props, because it is the room with a
 ## talk target, an inspectable sheet, and a door in one place.
@@ -22,6 +27,9 @@ const Harness = preload("res://tests/test_harness.gd")
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const STREET := "res://scenes/locations/street/street.tscn"
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
+## Collided with by the player (mask 5), read by neither the navigation bake (25), the
+## interaction occluders (9) nor the click ground ray (1). See `navigation_test.gd`.
+const PHYSICS_ONLY_LAYER := 4
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -35,6 +43,9 @@ var _location: LocationRoot = null
 var _activations: Array[StringName] = []
 var _approaches_activated: Array[StringName] = []
 var _approaches_abandoned: Array[StringName] = []
+var _paths_cancelled := 0
+var _paths_finished := 0
+var _paths_rerouted := 0
 
 
 func _initialize() -> void:
@@ -85,6 +96,10 @@ func _run() -> void:
 	_interaction.activation_requested.connect(_on_activation)
 	_navigator.approach_activated.connect(_on_approach_activated)
 	_navigator.approach_abandoned.connect(_on_approach_abandoned)
+	_player.path_cancelled.connect(func() -> void: _paths_cancelled += 1)
+	_player.path_finished.connect(func() -> void: _paths_finished += 1)
+	if _player.has_signal(&"path_rerouted"):
+		_player.connect(&"path_rerouted", func() -> void: _paths_rerouted += 1)
 	Engine.time_scale = 4.0
 	await _frames(2)
 
@@ -97,6 +112,8 @@ func _run() -> void:
 	await _check_freed_target_is_not_activated()
 	await _check_e_still_works()
 	await _check_ground_click_does_not_activate()
+	await _check_blocked_approach_is_abandoned()
+	await _check_lock_and_keys_end_an_approach()
 
 	Harness.finish(
 		self, _failures,
@@ -509,6 +526,195 @@ func _check_ground_click_does_not_activate() -> void:
 
 
 # --- helpers ----------------------------------------------------------------
+
+
+## The player is boxed in by low walls the map knows nothing about, and a probe is
+## clicked across the room. The map routes the approach out of the box; the body walks
+## into the box's side and stalls. One re-route, the same stall, and the approach has to
+## end: abandoned once, not activated, no cue, no walk - and it stays that way for longer
+## than another two stalls would take. Then the box goes and the same probe is clicked
+## again: a new request, a new budget, and it is reached and used once.
+func _check_blocked_approach_is_abandoned() -> void:
+	var location := await _enter(CLASSROOM, &"PlayerStart")
+	if location == null:
+		return
+	var probe := _make_probe(location, &"probe_boxed_in", &"classroom_own_desk")
+	if not await _place_clear_of_props(probe, 3.0, 4.5):
+		_failures.append("boxed in: could not place a reachable probe 3-4.5 m away.")
+		_free(probe)
+		return
+	var box := _box_in_player(location)
+	await _physics_frames(3)
+	var screen := _screen_of(probe.global_position)
+	if _interaction.get_target_at_screen_position(screen, false) != probe:
+		_failures.append("boxed in: the probe is not under the click position with the box up.")
+		_free(box)
+		_free(probe)
+		return
+	_activations.clear()
+	_approaches_activated.clear()
+	_approaches_abandoned.clear()
+	_paths_cancelled = 0
+	_paths_finished = 0
+	_paths_rerouted = 0
+	var inside := _player.global_position
+	_navigator.click_at_screen_position(screen)
+	if not _player.is_path_active() or _navigator.get_pending_target() != probe:
+		_failures.append(
+			"boxed in: clicking the probe started no approach (accepted=%s, pending=%s, %s)."
+			% [
+				str(_navigator.was_last_click_accepted()), _name_of(_navigator.get_pending_target()),
+				_navigator.get_last_rejection()
+			]
+		)
+		_navigator.cancel()
+		_free(box)
+		_free(probe)
+		return
+	if _navigator.get_cue_role() != WorldCue.ROLE_TARGET:
+		_failures.append("boxed in: the approach drew '%s', not the target cue." % _navigator.get_cue_role())
+
+	# Four stall timeouts and then some, in story time: two stalls end the walk, and
+	# whatever is left of the watch is there to catch a walk that does not stay ended.
+	var timer := create_timer(_player.stall_timeout * 4.0 + 2.0, true, true)
+	var real_deadline := Time.get_ticks_msec() + 20000
+	while timer.time_left > 0.0 and Time.get_ticks_msec() < real_deadline:
+		await physics_frame
+	var state := "walk=%s pending=%s cue='%s' rerouted=%d cancelled=%d finished=%d abandoned=%s" % [
+		str(_player.is_path_active()), _name_of(_navigator.get_pending_target()),
+		_navigator.get_cue_role(), _paths_rerouted, _paths_cancelled, _paths_finished,
+		str(_approaches_abandoned),
+	]
+	var flat_out := Vector2(
+		_player.global_position.x - inside.x, _player.global_position.z - inside.z
+	).length()
+	if flat_out > 0.85:
+		_failures.append("boxed in: the body left the box (%.2f m from where it stood). %s" % [flat_out, state])
+	if _player.is_path_active() or _navigator.get_pending_target() != null or _navigator.is_approaching():
+		_failures.append("boxed in: the approach was still running after four stall timeouts. %s" % state)
+	if _approaches_abandoned.size() != 1 or _approaches_abandoned[0] != &"probe_boxed_in":
+		_failures.append("boxed in: the target was not abandoned exactly once. %s" % state)
+	if not _activations.is_empty() or not _approaches_activated.is_empty():
+		_failures.append("boxed in: the unreachable target was activated. %s" % state)
+	if _navigator.get_cue_role() != "":
+		_failures.append("boxed in: the cue still shows '%s'. %s" % [_navigator.get_cue_role(), state])
+	if _paths_cancelled != 1 or _paths_finished != 0:
+		_failures.append("boxed in: the walk did not end with exactly one path_cancelled. %s" % state)
+	if not _player.has_signal(&"path_rerouted"):
+		_failures.append("boxed in: PlayerController reports no re-route (no path_rerouted signal).")
+	elif _paths_rerouted != 1:
+		_failures.append("boxed in: %d re-routes instead of exactly one. %s" % [_paths_rerouted, state])
+	_navigator.cancel()
+	_player.cancel_path()
+
+	# A new click is a new walk with its own re-route; with the box gone it arrives.
+	_free(box)
+	await _physics_frames(3)
+	_activations.clear()
+	_approaches_abandoned.clear()
+	_paths_cancelled = 0
+	screen = _screen_of(probe.global_position)
+	if _interaction.get_target_at_screen_position(screen, false) != probe:
+		_failures.append("boxed in: the probe left the click position once the box was gone.")
+		_free(probe)
+		return
+	_navigator.click_at_screen_position(screen)
+	if _navigator.get_pending_target() != probe:
+		_failures.append("boxed in: the second click on the probe started no approach.")
+	elif not await _wait_until(func() -> bool: return not _activations.is_empty(), 16.0):
+		_failures.append(
+			"boxed in: the second approach never used the probe (walk=%s, pending=%s, cancelled=%d)."
+			% [str(_player.is_path_active()), _name_of(_navigator.get_pending_target()), _paths_cancelled]
+		)
+		_navigator.cancel()
+	elif _activations.size() != 1 or _activations[0] != &"probe_boxed_in":
+		_failures.append("boxed in: the second approach activated %s." % str(_activations))
+	await _frames(4)
+	await _settle_dialogue()
+	_free(probe)
+	await _frames(2)
+
+
+## Four low walls around the player, on `PHYSICS_ONLY_LAYER`: too tall to step over, too
+## low to hide anything from the camera, and invisible to the map.
+func _box_in_player(location: LocationRoot) -> Node3D:
+	var box := Node3D.new()
+	box.name = "PhysicsOnlyBox"
+	location.add_child(box)
+	box.global_position = _player.global_position
+	var half := 0.8
+	var thickness := 0.2
+	var height := 0.7
+	for side: Vector3 in [Vector3.RIGHT, Vector3.LEFT, Vector3.FORWARD, Vector3.BACK]:
+		var wall := StaticBody3D.new()
+		wall.collision_layer = PHYSICS_ONLY_LAYER
+		wall.collision_mask = 0
+		var shape_node := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		var span := (half + thickness) * 2.0
+		shape.size = Vector3(thickness, height, span) if side.x != 0.0 else Vector3(span, height, thickness)
+		shape_node.shape = shape
+		wall.add_child(shape_node)
+		box.add_child(wall)
+		wall.position = side * (half + thickness * 0.5) + Vector3.UP * (height * 0.5)
+	return box
+
+
+## Control taken away mid-approach (dialogue, a beat, a transition) and a movement key
+## mid-approach both end it: walk over, target abandoned once, cue gone, nothing used.
+func _check_lock_and_keys_end_an_approach() -> void:
+	var location := await _enter(CLASSROOM, &"PlayerStart")
+	if location == null:
+		return
+	var probe := _make_probe(location, &"probe_interrupted", &"classroom_own_desk")
+	if not await _place_clear_of_props(probe, 3.0, 4.5):
+		_failures.append("interrupted approach: could not place a reachable probe.")
+		_free(probe)
+		return
+	await _physics_frames(3)
+	for how in ["control lock", "movement key"]:
+		_activations.clear()
+		_approaches_abandoned.clear()
+		_paths_cancelled = 0
+		_paths_finished = 0
+		var screen := _screen_of(probe.global_position)
+		if _interaction.get_target_at_screen_position(screen, false) != probe:
+			_failures.append("interrupted approach (%s): the probe is not under the click." % how)
+			break
+		_navigator.click_at_screen_position(screen)
+		if not _player.is_path_active() or _navigator.get_pending_target() != probe:
+			_failures.append("interrupted approach (%s): the click started no approach." % how)
+			_navigator.cancel()
+			break
+		await _physics_frames(2)
+		if how == "control lock":
+			_player.set_control_enabled(false)
+			await _physics_frames(2)
+		else:
+			Input.action_press("move_forward")
+			await _physics_frames(2)
+			Input.action_release("move_forward")
+		var state := "walk=%s pending=%s cue='%s' cancelled=%d finished=%d abandoned=%s" % [
+			str(_player.is_path_active()), _name_of(_navigator.get_pending_target()),
+			_navigator.get_cue_role(), _paths_cancelled, _paths_finished, str(_approaches_abandoned),
+		]
+		if _player.is_path_active() or _navigator.get_pending_target() != null:
+			_failures.append("interrupted approach (%s): the approach kept going. %s" % [how, state])
+		if _approaches_abandoned.size() != 1 or _approaches_abandoned[0] != &"probe_interrupted":
+			_failures.append("interrupted approach (%s): not abandoned exactly once. %s" % [how, state])
+		if _paths_cancelled != 1 or _paths_finished != 0:
+			_failures.append("interrupted approach (%s): not exactly one path_cancelled. %s" % [how, state])
+		if _navigator.get_cue_role() != "":
+			_failures.append("interrupted approach (%s): the cue still shows. %s" % [how, state])
+		_player.set_control_enabled(true)
+		await _physics_frames(6)
+		if not _activations.is_empty():
+			_failures.append("interrupted approach (%s): the abandoned probe was used later." % how)
+		# Back where a click can reach the probe again for the next way of interrupting.
+		await _place_clear_of_props(probe, 3.0, 4.5)
+		await _physics_frames(3)
+	_free(probe)
+	await _frames(2)
 
 
 func _enter(scene: String, spawn: StringName) -> LocationRoot:
