@@ -500,6 +500,7 @@ destination_id = &"classroom"
 position = Vector3(0, 0.6, 6.5)
 interact_id = &"school_gate"
 outline_paths = PackedStringArray("../../ExitFrameLeft", "../../ExitFrameRight", "../../ExitFrameHead", "../../Step0", "../../Step1", "../../Step2")
+support_paths = PackedStringArray("../../Step0", "../../Step1", "../../Step2")
 prompt_text = "Go down towards the gate"
 prompt_key = "prompt.gate"
 radius = 1.3

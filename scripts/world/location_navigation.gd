@@ -18,8 +18,10 @@ extends NavigationRegion3D
 ##   walkable.
 ##
 ## The parsing rules are deliberately conservative: only static colliders on the world
-## layer are considered, with an agent radius wide enough that the player does not clip
-## corners through walls.
+## layer and two reserved navigation-only layers are considered, with an agent radius wide
+## enough that the player does not clip corners through walls. Visible outdoor stair blocks
+## use layer 4 so Recast sees them and they still occlude sight; invisible thin treads use
+## layer 5, which only the bake sees. The player rides one continuous ramp collider.
 
 signal navigation_baked(success: bool)
 
@@ -53,8 +55,9 @@ signal navigation_baked(success: bool)
 ## promises less produces routes around a kerb the player could have stepped over.
 @export var agent_max_climb: float = 0.25
 @export_range(1.0, 89.0, 1.0) var agent_max_slope: float = 45.0
-## Which physics layer the walkable world lives on.
-@export_flags_3d_physics var geometry_collision_mask: int = 1
+## World geometry plus bits 8 and 16 (physics layers 4 and 5). Layer 4 is for visible
+## stair blocks that still occlude sight; layer 5 is for invisible bake-only treads.
+@export_flags_3d_physics var geometry_collision_mask: int = 25
 
 var _baked := false
 var _polygon_count := 0
@@ -469,7 +472,7 @@ func project_point(point: Vector3) -> Dictionary:
 
 
 ## Collects the solid geometry to bake from: every `StaticBody3D` under the location
-## root, at any depth, on the world layer.
+## root, at any depth, whose layer is included in `geometry_collision_mask`.
 ##
 ## The engine's own source-geometry parser is not used here. Nested and instanced
 ## bodies are exactly what a greybox room is made of (a desk prop is a `StaticBody3D`

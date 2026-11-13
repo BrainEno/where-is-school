@@ -20,19 +20,48 @@ extends SceneTree
 ## used, and then it asks the map and the body to do the thing: find the pavement from the
 ## road, path to it, and walk there.
 ##
-## Four claims:
+## Five claims:
 ##   1. every location bakes with a climb, height and radius that survive the voxel
 ##      conversion, and the climb is the body's step height;
 ##   2. the east pavement of the street is a walkable surface on the map, not just geometry;
 ##   3. a route exists from the road spawn to that pavement, and walking it ends on the
 ##      pavement rather than against the kerb;
-##   4. the body still steps only what it says it steps: a 0.28 m box is a step, a 0.75 m one
+##   4. visible stair blocks and thin bake-only treads are in the navigation bake, the
+##      player rides continuous ramps and thin landing tops, and only visible stair blocks
+##      occlude interaction rays;
+##   5. the body still steps only what it says it steps: a 0.28 m box is a step, a 0.75 m one
 ##      is a wall, and a step taller than `max_step_height` is not taken.
 
 const Harness = preload("res://tests/test_harness.gd")
 
 const STREET := "res://scenes/locations/street/street.tscn"
+const RESIDENTIAL := "res://scenes/locations/residential/residential.tscn"
 const STREET_SPAWN := &"FromCorridor"
+const NAVIGATION_ONLY_LAYER := 1 << 3
+const BAKE_ONLY_LAYER := 1 << 4
+const PLAYER_ONLY_LAYER := 1 << 2
+const OUTDOOR_STAIR_CONTRACTS: Array[Dictionary] = [
+	{
+		"scene": STREET,
+		"step_sets": [{"prefix": "Step", "count": 12}],
+		"ramps": ["StairRamp"],
+		"landing_surfaces": [{"name": "StairLandingSurface", "top": 1.6}],
+		"treads": ["StairLandingTread", "PassageTread"],
+	},
+	{
+		"scene": RESIDENTIAL,
+		"step_sets": [
+			{"prefix": "Step", "count": 14},
+			{"prefix": "StreetStep", "count": 13},
+		],
+		"ramps": ["StairRamp", "StreetStairRamp"],
+		"landing_surfaces": [{"name": "StairLandingSurface", "top": 1.8}],
+		"treads": ["StairLandingTread"],
+	},
+]
+const STAIR_BASE := Vector3(10.5, 0.0, -29.8)
+const STAIR_LANDING := Vector3(10.5, 1.6, -35.8)
+const STAIR_WALK_FRAME_LIMIT := 20 * 60
 ## The east kerb is a 0.35 m wide box whose top sits 0.24 m above the road: one 0.25 m
 ## voxel of the bake, and one step of the body, with room to spare on both.
 const KERB_TOP := 0.24
@@ -108,11 +137,16 @@ func _run() -> void:
 
 	Harness.stage = "the numbers the bake used"
 	await _check_bake_numbers()
+	Harness.stage = "the outdoor stair collision contract"
+	_check_outdoor_stair_collision_contract()
 
 	Harness.stage = "the pavement"
 	await _enter_street()
 	await _check_pavement_is_a_surface()
 	await _check_walk_onto_the_pavement()
+
+	Harness.stage = "the continuous outdoor stair"
+	await _check_walk_up_street_stair()
 
 	Harness.stage = "the body's step"
 	await _check_body_steps()
@@ -120,8 +154,8 @@ func _run() -> void:
 	_report()
 	Harness.finish(
 		self, _failures,
-		"every location bakes the step it promises, and the street's pavement is where a "
-		+ "path and a walk both arrive."
+		"every location bakes the step it promises; the street pavement and stair landing are "
+		+ "reachable, with the outdoor stair walked smoothly."
 	)
 
 
@@ -200,6 +234,138 @@ func _check_bake_numbers() -> void:
 			_failures.append(
 				"%s: the bake assumes a %.2f m agent for a %.2f m body." % [name, radius, BODY_REACH]
 			)
+
+
+## Visible stair blocks remain rendered and parsed by Recast; thin landing treads exist only
+## for the bake. The player collides with the continuous ramps and with thin landing tops,
+## never with the tall decorative plinths. Check packed scenes to catch stale generated files.
+func _check_outdoor_stair_collision_contract() -> void:
+	if (_player.collision_mask & NAVIGATION_ONLY_LAYER) != 0:
+		_failures.append("The player collision mask includes the navigation-only stair layer.")
+	if (_player.collision_mask & BAKE_ONLY_LAYER) != 0:
+		_failures.append("The player collision mask includes the bake-only tread layer.")
+	var interaction := _player.get_node_or_null("InteractionController") as InteractionController
+	if interaction == null:
+		_failures.append("The player has no InteractionController to check stair occlusion.")
+	else:
+		if (interaction.occluder_mask & NAVIGATION_ONLY_LAYER) == 0:
+			_failures.append(
+				"Visible navigation-only stair blocks do not occlude interaction sight rays."
+			)
+		if (interaction.occluder_mask & BAKE_ONLY_LAYER) != 0:
+			_failures.append("Invisible bake-only treads occlude interaction sight rays.")
+	for contract: Dictionary in OUTDOOR_STAIR_CONTRACTS:
+		var scene_path := String(contract["scene"])
+		var packed := load(scene_path) as PackedScene
+		if packed == null:
+			_failures.append("Could not load the stair scene '%s'." % scene_path)
+			continue
+		var location := packed.instantiate() as LocationRoot
+		if location == null:
+			_failures.append("The stair scene '%s' is not a LocationRoot." % scene_path)
+			continue
+		var landing_mesh := location.get_node_or_null("StairLanding") as MeshInstance3D
+		if landing_mesh == null:
+			_failures.append("The stair scene '%s' has no non-colliding landing plinth mesh." % scene_path)
+		var nav := location.get_node_or_null("Navigation") as LocationNavigation
+		if nav == null:
+			_failures.append("The stair scene '%s' has no LocationNavigation." % scene_path)
+		else:
+			var reserved_layers := NAVIGATION_ONLY_LAYER | BAKE_ONLY_LAYER
+			if (nav.geometry_collision_mask & reserved_layers) != reserved_layers:
+				_failures.append("The navigation region in '%s' ignores a reserved bake layer." % scene_path)
+		for step_set: Dictionary in contract["step_sets"]:
+			var prefix := String(step_set["prefix"])
+			for index in range(int(step_set["count"])):
+				var node_path := NodePath("%s_%d" % [prefix, index])
+				var step := location.get_node_or_null(node_path) as StaticBody3D
+				if step == null:
+					_failures.append("%s is missing stair collider '%s'." % [scene_path, node_path])
+					continue
+				if (step.collision_layer & NAVIGATION_ONLY_LAYER) == 0:
+					_failures.append(
+						"%s does not put '%s' on the navigation-only layer."
+						% [scene_path, node_path]
+					)
+				if (step.collision_layer & _player.collision_mask) != 0:
+					_failures.append(
+						"The player still collides with stair collider '%s' in %s."
+						% [node_path, scene_path]
+					)
+				if nav != null and (step.collision_layer & nav.geometry_collision_mask) == 0:
+					_failures.append(
+						"The navigation bake cannot see stair collider '%s' in %s."
+						% [node_path, scene_path]
+					)
+		for ramp_name: String in contract["ramps"]:
+			var ramp := location.get_node_or_null(NodePath(ramp_name)) as StaticBody3D
+			if ramp == null:
+				_failures.append("%s is missing walking ramp '%s'." % [scene_path, ramp_name])
+			else:
+				if (ramp.collision_layer & _player.collision_mask) == 0:
+					_failures.append(
+						"The player cannot collide with walking ramp '%s' in %s."
+						% [ramp_name, scene_path]
+					)
+				if nav != null and (ramp.collision_layer & nav.geometry_collision_mask) == 0:
+					_failures.append(
+						"The navigation bake cannot see ramp '%s' in %s."
+						% [ramp_name, scene_path]
+					)
+		for surface_contract: Dictionary in contract["landing_surfaces"]:
+			var surface_name := String(surface_contract["name"])
+			var surface := location.get_node_or_null(NodePath(surface_name)) as StaticBody3D
+			if surface == null:
+				_failures.append("%s is missing player landing surface '%s'." % [scene_path, surface_name])
+				continue
+			if (surface.collision_layer & _player.collision_mask) == 0:
+				_failures.append("The player cannot stand on '%s' in %s." % [surface_name, scene_path])
+			if surface.collision_layer != PLAYER_ONLY_LAYER:
+				_failures.append(
+					"Landing surface '%s' in %s is not isolated on the player-only layer."
+					% [surface_name, scene_path]
+				)
+			if nav != null and (surface.collision_layer & nav.geometry_collision_mask) != 0:
+				_failures.append(
+					"Landing surface '%s' duplicates navigation geometry in %s."
+					% [surface_name, scene_path]
+				)
+			if interaction != null and (surface.collision_layer & interaction.occluder_mask) != 0:
+				_failures.append(
+					"Landing surface '%s' occludes interaction sight in %s."
+					% [surface_name, scene_path]
+				)
+			var shape_node := surface.get_node_or_null("CollisionShape3D") as CollisionShape3D
+			var shape := shape_node.shape as BoxShape3D if shape_node != null else null
+			if shape == null:
+				_failures.append("Landing surface '%s' in %s has no box collider." % [surface_name, scene_path])
+			elif shape.size.y > 0.051 or absf(
+				surface.position.y + shape.size.y * 0.5 - float(surface_contract["top"])
+			) > 0.001:
+				_failures.append(
+					"Landing surface '%s' in %s is not a thin collider at the landing top."
+					% [surface_name, scene_path]
+				)
+		for tread_name: String in contract["treads"]:
+			var tread := location.get_node_or_null(NodePath(tread_name)) as StaticBody3D
+			if tread == null:
+				_failures.append("%s is missing navigation tread '%s'." % [scene_path, tread_name])
+				continue
+			if (tread.collision_layer & BAKE_ONLY_LAYER) == 0:
+				_failures.append("Tread '%s' in %s is not on the bake-only layer." % [tread_name, scene_path])
+			if nav != null and (tread.collision_layer & nav.geometry_collision_mask) == 0:
+				_failures.append("The navigation bake cannot see tread '%s' in %s." % [tread_name, scene_path])
+			if (tread.collision_layer & _player.collision_mask) != 0:
+				_failures.append(
+					"The player collides with bake-only tread '%s' in %s."
+					% [tread_name, scene_path]
+				)
+			if interaction != null and (tread.collision_layer & interaction.occluder_mask) != 0:
+				_failures.append(
+					"Bake-only tread '%s' blocks interaction sight in %s."
+					% [tread_name, scene_path]
+				)
+		location.free()
 
 
 # --- the street's kerb -------------------------------------------------------
@@ -287,6 +453,81 @@ func _check_walk_onto_the_pavement() -> void:
 	if missed > ARRIVAL_TOLERANCE:
 		_failures.append(
 			"the walk stopped %.2f m from the point it was sent to (%s)." % [missed, str(end)]
+		)
+
+
+## Walks the real street flight with the same CharacterBody3D the game uses. Besides
+## arriving on the landing, the largest one-frame vertical change must stay smooth: the
+## old overlapping ramp-and-tread collisions could make the step helper pop the body up
+## between surfaces.
+func _check_walk_up_street_stair() -> void:
+	var location := _host.get_current()
+	if location == null or location.location_id != &"street":
+		_failures.append("The street was not current before the stair walk.")
+		return
+	var nav := location.get_node_or_null("Navigation") as LocationNavigation
+	if nav == null or not nav.is_synchronized():
+		_failures.append("The street navigation was not synchronized before the stair walk.")
+		return
+	_player.teleport(Transform3D(Basis.IDENTITY, STAIR_BASE))
+	await _physics_frames(4)
+	var map := _player.navigation_agent.get_navigation_map()
+	var target := NavigationServer3D.map_get_closest_point(map, STAIR_LANDING)
+	if target.distance_to(STAIR_LANDING) > 0.6:
+		_failures.append(
+			"The street stair landing is not represented by the navigation mesh (%s)." % str(target)
+		)
+		return
+	var saved_time_scale := Engine.time_scale
+	Engine.time_scale = 1.0
+	if not _player.request_path_to(target):
+		_failures.append("The player could not request a route up the real street stair.")
+		Engine.time_scale = saved_time_scale
+		return
+	var previous_y := _player.global_position.y
+	var largest_vertical_frame := 0.0
+	var largest_vertical_from := _player.global_position
+	var largest_vertical_to := _player.global_position
+	var largest_vertical_frame_index := 0
+	var largest_vertical_floor := false
+	var largest_vertical_velocity := Vector3.ZERO
+	var frames := 0
+	while _player.is_path_active() and frames < STAIR_WALK_FRAME_LIMIT:
+		var frame_start := _player.global_position
+		await physics_frame
+		var current_y := _player.global_position.y
+		var frame_change := absf(current_y - previous_y)
+		if frame_change > largest_vertical_frame:
+			largest_vertical_frame = frame_change
+			largest_vertical_from = frame_start
+			largest_vertical_to = _player.global_position
+			largest_vertical_frame_index = frames + 1
+			largest_vertical_floor = _player.is_on_floor()
+			largest_vertical_velocity = _player.velocity
+		previous_y = current_y
+		frames += 1
+	Engine.time_scale = saved_time_scale
+	var end := _player.global_position
+	var missed := Vector2(end.x - target.x, end.z - target.z).length()
+	_notes.append(
+		"street stair: walked to %s in %d frame(s), ended at %s; max vertical frame %.3f m"
+		% [str(target), frames, str(end), largest_vertical_frame]
+	)
+	if _player.is_path_active():
+		_failures.append("The stair walk did not finish within %d frames." % STAIR_WALK_FRAME_LIMIT)
+	elif missed > ARRIVAL_TOLERANCE or end.y < 1.35:
+		_failures.append(
+			"The stair walk stopped short of its landing at %s (%.2f m away)." % [str(end), missed]
+		)
+	if largest_vertical_frame > 0.1:
+		_failures.append(
+			"The stair walk changed height by %.3f m in one physics frame (%d: %s -> %s, "
+			% [
+				largest_vertical_frame, largest_vertical_frame_index,
+				str(largest_vertical_from), str(largest_vertical_to),
+			]
+			+ "floor=%s, velocity=%s); the ramp ride is not smooth."
+			% [str(largest_vertical_floor), str(largest_vertical_velocity)]
 		)
 
 
