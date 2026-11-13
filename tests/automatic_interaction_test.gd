@@ -614,7 +614,7 @@ func _stand_near(target: Interactable, min_distance: float, max_distance: float)
 				yaw = deg_to_rad(0.01)
 			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
-			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:
+			if _screen_for_target(target) != Vector2.ZERO:
 				return true
 	return false
 

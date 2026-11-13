@@ -1862,13 +1862,16 @@ func _position_near(target: Interactable, distance: float) -> bool:
 			# check after a fixed sleep made this the flakiest step in the capture: give it half
 			# a second instead of one frame, and only then move on to the next angle.
 			if await _poll(
-				func() -> bool: return _screen_position_for_interactable(target) != Vector2.ZERO,
+				func() -> bool:
+					return _interaction.get_target_at_screen_position(
+						_screen_position_of(target), false
+					) == target,
 				0.5
 			):
 				# A ray query proves the spot, but it does not move the real cursor. Place the
-				# cursor on the visible outlined surface too: the screenshot, prompt and E press
-				# must all exercise the same pointer-selected object.
-				await _mouse_over_interactable(target)
+				# cursor on the target too: the screenshot, prompt and E press must all exercise
+				# the same pointer-selected object.
+				await _mouse_to_world(target.global_position)
 				await _physics_frames(2)
 				return true
 	return false
@@ -1913,6 +1916,9 @@ func _screen_position_for_interactable(target: Interactable) -> Vector2:
 
 
 func _mouse_over_interactable(target: Interactable) -> void:
+	if target.interact_id != &"classroom_door" and target.interact_id != &"to_schoolyard":
+		await _mouse_to_world(target.global_position)
+		return
 	var screen := _screen_position_for_interactable(target)
 	if screen == Vector2.ZERO:
 		await _mouse_to_world(target.global_position)

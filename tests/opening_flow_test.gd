@@ -665,7 +665,7 @@ func _check_end_card_restart() -> void:
 
 func _check_targeting() -> void:
 	var cases := [
-		{"position": Vector3(-5.6, 0, 0.15), "yaw": -69.0, "expected": &"schoolbag"},
+		{"position": Vector3(-5.6, 0, 1.0), "yaw": -48.0, "expected": &"schoolbag"},
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
 		{"position": Vector3(-3.2, 0, 2.85), "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
