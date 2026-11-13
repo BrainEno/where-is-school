@@ -160,6 +160,7 @@
     "settings.action.toggle_language": "切换语言",
     "settings.action.toggle_fullscreen": "全屏",
     "key.click": "单击",
-    "name.student": "同学"
+    "name.student": "同学",
+    "role.student": "同学"
   }
 }
