@@ -454,6 +454,11 @@ def verify(args: argparse.Namespace) -> int:
     print("classroom render evidence (%s): %s" % (method, verdict))
     for key, value in sorted(evidence.facts.items()):
         print("  %s = %s" % (key, value))
+    # One annotation with the facts, so the run page shows which device and numbers the
+    # verdict is about without downloading the artifact.
+    summary = "; ".join("%s=%s" % item for item in sorted(evidence.facts.items()))
+    print("::notice title=classroom render evidence (%s): %s::%s"
+          % (method, verdict, summary.replace("\n", " ") or "no facts recorded"))
     for reason in evidence.reasons:
         print("::error title=classroom render evidence (%s)::%s" % (method, reason))
     return 0 if verdict == "PASS" else 1
@@ -470,7 +475,11 @@ def summarize(args: argparse.Namespace) -> int:
         values = key_values(path.read_text(encoding="utf-8", errors="replace"))
         found.setdefault(first(values, "method") or "", []).append(first(values, "verdict") or "")
     status = 0
-    for method in args.require:
+    required = [method.strip() for method in args.require.split(",") if method.strip()]
+    if not required:
+        print("::error title=classroom render verdict::--require names no renderer")
+        return 1
+    for method in required:
         verdicts = found.get(method, [])
         if not verdicts:
             print("::error title=classroom render verdict::no evidence verdict for %s" % method)
@@ -495,7 +504,10 @@ def main(argv: list[str] | None = None) -> int:
     one.add_argument("--checked-out-sha", default="")
     one.set_defaults(func=verify)
     many = sub.add_parser("summarize", help="require a PASS verdict from every renderer")
-    many.add_argument("--require", nargs="+", default=["forward_plus", "gl_compatibility"])
+    # One comma-separated value, not nargs="+": a list option would swallow the verdict
+    # paths that follow it and leave nothing to check.
+    many.add_argument("--require", default="forward_plus,gl_compatibility",
+                      help="comma-separated renderers that must each have a PASS verdict")
     many.add_argument("verdicts", nargs="*")
     many.set_defaults(func=summarize)
     args = parser.parse_args(argv)

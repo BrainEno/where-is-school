@@ -343,11 +343,34 @@ def main() -> int:
             missing_file = evidence.main(["summarize", str(good / "VERDICT.txt"), str(temp_root / "gone.txt")])
             mixed = evidence.main(["summarize", str(good / "VERDICT.txt"), str(bad),
                                    str(good_compat / "VERDICT.txt")])
+            # Exactly as the workflow's verdict job calls it: the option before the paths.
+            as_workflow = evidence.main(["summarize", "--require", "forward_plus,gl_compatibility",
+                                         str(good / "VERDICT.txt"), str(good_compat / "VERDICT.txt")])
+            as_workflow_one_bad = evidence.main(["summarize", "--require",
+                                                 "forward_plus,gl_compatibility",
+                                                 str(bad), str(good_compat / "VERDICT.txt")])
+            no_files = evidence.main(["summarize", "--require", "forward_plus,gl_compatibility"])
+            empty_require = evidence.main(["summarize", "--require", " , ",
+                                           str(good / "VERDICT.txt")])
         check("both renderers passing passes the gate", both == 0, out.getvalue())
         check("a failing Forward+ fails the gate", one_bad == 1)
         check("a renderer with no verdict fails the gate", one_missing == 1)
         check("a missing verdict file fails the gate", missing_file == 1)
         check("a PASS and a FAIL for one renderer fail the gate", mixed == 1)
+        check("the workflow's own summarize call passes two PASS verdicts", as_workflow == 0,
+              out.getvalue())
+        check("the workflow's own summarize call fails one FAIL verdict", as_workflow_one_bad == 1)
+        check("no verdict files at all fail the gate", no_files == 1)
+        check("an empty --require fails the gate", empty_require == 1)
+
+    # The workflow must call summarize the way the checks above do.
+    workflow = (ROOT / ".github" / "workflows" / "classroom-art-evidence.yml").read_text()
+    count += 1
+    if not re.search(r"summarize \\\n\s+--require forward_plus,gl_compatibility ", workflow):
+        failures.append("the workflow's verdict job does not require both renderers")
+        print("FAIL: the workflow's verdict job does not require both renderers")
+    else:
+        print("ok: the workflow's verdict job requires both renderers")
 
     # The verifier's limits are the GDScript test's limits, not new ones.
     source = (ROOT / "tests" / "classroom_wall_render_test.gd").read_text()

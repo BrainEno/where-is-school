@@ -196,7 +196,7 @@ jobs:
           status=0
           mapfile -t verdicts < <(find build/classroom-verdicts -name VERDICT.txt | sort)
           python3 tools/classroom_render_evidence.py summarize \
-            --require forward_plus gl_compatibility "${verdicts[@]}" || status=1
+            --require forward_plus,gl_compatibility "${verdicts[@]}" || status=1
           if [ "${RENDER_RESULT}" != success ]; then
             echo "::error title=classroom render verdict::render jobs ended '${RENDER_RESULT}'"
             status=1
