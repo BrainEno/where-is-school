@@ -55,6 +55,11 @@ func _run() -> void:
 	if _host == null or _player == null or _dialogue == null or game_state == null:
 		_finish(["Main did not expose the nodes this capture needs."])
 		return
+	# The HUD carries the boot fade (black until the opening sequence lifts it, and the
+	# sequence is not started here): hidden, as `capture_locations.gd` does.
+	var ui := _main.get_node_or_null("GameUI")
+	if ui is CanvasLayer:
+		(ui as CanvasLayer).visible = false
 	if _host.get_current_path() != CLASSROOM or _host.get_current() == null:
 		if not _host.load_location(CLASSROOM, &"PlayerStart", _player):
 			_finish(["The classroom could not be entered."])
