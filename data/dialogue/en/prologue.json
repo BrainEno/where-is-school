@@ -60,7 +60,7 @@
         {
           "id": "q_who_1",
           "speaker": "q",
-          "text": "It's fine. You don't look entirely awake anyway.",
+          "text": "Right. You've only just woken up.",
           "next": "q_who_2"
         },
         {
@@ -576,12 +576,12 @@
         {
           "id": "q_br_1",
           "speaker": "q",
-          "text": "You're not going to look, are you."
+          "text": "You haven't checked your bag yet? It's right by your foot."
         },
         {
           "id": "q_br_2",
           "speaker": "q",
-          "text": "Bag. On the floor. Next to your foot. That's the one.",
+          "text": "Don't wait for the bell to find out you've left the book behind.",
           "next": null
         }
       ]
@@ -594,17 +594,17 @@
         {
           "id": "q_bm_1",
           "speaker": "q",
-          "text": "That's the second bell."
+          "text": "Second bell."
         },
         {
           "id": "q_bm_2",
           "speaker": "q",
-          "text": "She's not out there. I'd have heard her."
+          "text": "B's not here. She'd usually be at the door by now."
         },
         {
           "id": "q_bm_3",
           "speaker": "q",
-          "text": "Don't look at me like that. I'm not the one who's late.",
+          "text": "Don't look at me. I don't know where she is either.",
           "next": null
         }
       ]
@@ -853,13 +853,13 @@
         {
           "id": "qa_1",
           "speaker": "q",
-          "text": "I am here. I was always here. You walked off.",
+          "text": "You remembered me at last? I thought you were going to walk the whole way alone.",
           "next": "qa_2"
         },
         {
           "id": "qa_2",
           "speaker": "protagonist",
-          "text": "(Q catches up.)",
+          "text": "(Q catches up and falls into step beside you.)",
           "source": "observed",
           "next": null
         }
