@@ -589,10 +589,17 @@ func _stand_far_from(target: Interactable, min_distance: float, max_distance: fl
 func _stand_near(target: Interactable, min_distance: float, max_distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := target.global_position
-	var radii: Array[float] = [min_distance + 0.2, (min_distance + max_distance) * 0.5, max_distance - 0.2]
+	# Search a broader ring than the nominal approach radius: the classroom's elevated
+	# stage and desk corners make a handful of snapped points poor representatives of the
+	# walkable floor around a door.
+	var radii: Array[float] = []
+	for step in 5:
+		var radius := min_distance + 0.15 + (max_distance - min_distance + 0.3) * float(step) / 4.0
+		if not radii.has(radius):
+			radii.append(radius)
 	for radius: float in radii:
-		for index in 16:
-			var angle := TAU * float(index) / 16.0
+		for index in 24:
+			var angle := TAU * float(index) / 24.0
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
@@ -601,6 +608,8 @@ func _stand_near(target: Interactable, min_distance: float, max_distance: float)
 				continue
 			var to_target := origin - snapped
 			var yaw := atan2(-to_target.x, -to_target.z)
+			if is_zero_approx(yaw):
+				yaw = deg_to_rad(0.01)
 			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
 			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:

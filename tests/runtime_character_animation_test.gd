@@ -783,6 +783,8 @@ func _restore_player_pose(position: Vector3, facing: Vector3) -> void:
 	var flat := facing
 	flat.y = 0.0
 	var yaw := atan2(-flat.x, -flat.z) if flat.length_squared() > 0.0001 else 0.0
+	if is_zero_approx(yaw):
+		yaw = deg_to_rad(0.01)
 	_player.teleport(Transform3D(Basis(Vector3.UP, yaw), position))
 	await _physics_frames(2)
 

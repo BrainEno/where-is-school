@@ -237,13 +237,17 @@ func _check_out_of_reach_is_not_a_target() -> void:
 ## around the original test coordinates, so the door and sheet are now checked from their
 ## authored locations rather than from the old, out-of-reach door position.
 func _check_real_prop() -> void:
-	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	var mouse_targeting := _interaction.mouse_targeting
+	_interaction.mouse_targeting = false
 	var door := _location.find_interactable(&"classroom_door")
 	var sheet := _location.find_interactable(&"timetable")
 	if door == null or sheet == null:
 		_failures.append("The classroom lost the door or the timetable.")
+		_interaction.mouse_targeting = mouse_targeting
 		return
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(3.0, 0, -3.0)))
+	_player.teleport(
+		Transform3D(Basis(Vector3.UP, deg_to_rad(0.01)), Vector3(3.0, 0, -3.0))
+	)
 	await _physics_frames(4)
 	if _interaction.get_current_target() != door:
 		_failures.append(
@@ -253,7 +257,9 @@ func _check_real_prop() -> void:
 				str(_interaction.is_seen_by_camera(door))
 			]
 		)
+		_interaction.mouse_targeting = mouse_targeting
 		return
+	_interaction.mouse_targeting = mouse_targeting
 	# The south wall is closest to the camera's diagonal view from this side of the sheet;
 	# the facing ray fades it while the player's eye and the cursor both look at the paper.
 	var sheet_spot := Vector3(1.6, 0, 4.0)

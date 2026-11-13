@@ -183,7 +183,8 @@ func _run() -> void:
 		_failures.append("Q has no interaction point in the classroom.")
 	else:
 		await _wait_for_free(60.0)
-		_teleport(Vector3(-1.32, 0, 1.75), 0.0)
+		_teleport(Vector3(-3.2, 0, 2.9), 0.0)
+		await _wait_for_free(30.0)
 		if await _wait_for_target(&"q_talk", 30.0):
 			await _shot("09_prompt_talk_chinese", "The prompt for a conversation, in Chinese.")
 		# The conversation itself is started with the mouse, from out of reach: the
@@ -253,7 +254,9 @@ func _run() -> void:
 	if door == null:
 		_failures.append("The classroom door is missing.")
 	else:
-		_teleport(Vector3(3.2, 0, 2.55), 180.0)
+		await _wait_for_free(30.0)
+		_teleport(Vector3(3.0, 0, -3.0), 0.0)
+		await _wait_for_free(15.0)
 		await _wait_for_target(&"classroom_door", 5.0)
 		await _shot("12_door_prompt", "The classroom door is open: its prompt changed with the story.")
 		# The transition is made with the mouse if the door is under the cursor; E stays
@@ -498,7 +501,9 @@ func _capture_free_period() -> void:
 		_failures.append("The walkway has no door to the yard.")
 		return
 	await _wait_for_free(45.0)
-	_teleport(Vector3(0.0, 0, -4.2), 1.0)
+	# Movement is camera-relative (diagonal in the corridor), so start offset from the
+	# centreline and let the forward pulses bring the player onto the door's anchor.
+	_teleport(Vector3(1.5, 0, -4.2), -8.0)
 	await _wait(0.3)
 	# Walk in short pulses and stop as soon as the door is offered. A single long
 	# hold overshoots into the end wall, where the door is no longer in front.
@@ -886,11 +891,11 @@ func _capture_n_at_the_front(n_actor: NpcActor) -> void:
 	var forward := _planar_forward(n_actor)
 	_note("N at the front: position %s, facing %s, visible %s" % [str(at), str(forward), n_actor.visible])
 	await _shot_from_camera(
-		at + forward * 2.3 + Vector3(0.0, 1.28, 0.0),
+		at + Vector3(2.2, 1.28, 0.0),
 		at + Vector3(0.0, 1.0, 0.0),
 		"11d_n_at_the_front",
 		"N at the front of the classroom after dismissing the class, head to feet, from the "
-		+ "side N faces, under the nameplate the game shows.",
+		+ "clear side of the room, under the nameplate the game shows.",
 		n_actor.get_node_or_null(^"Nameplate") as Node3D,
 		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_at_the_front", 220)
 	)
@@ -1852,6 +1857,8 @@ func _position_near(target: Interactable, distance: float) -> bool:
 				continue
 			var to_target := origin - snapped
 			var yaw := atan2(-to_target.x, -to_target.z)
+			if is_zero_approx(yaw):
+				yaw = deg_to_rad(0.01)
 			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _wait(0.2)
 			# The camera trails the body and the visibility ray is cast from wherever it has got
@@ -1865,6 +1872,11 @@ func _position_near(target: Interactable, distance: float) -> bool:
 					) == target,
 				0.5
 			):
+				# A ray query proves the spot, but it does not move the real cursor. Place the
+				# cursor on the target too: the screenshot, prompt and subsequent E press must
+				# all exercise the same pointer-selected object.
+				await _mouse_to_world(target.global_position)
+				await _physics_frames(2)
 				return true
 	return false
 
@@ -1953,7 +1965,12 @@ func _press(keycode: Key) -> void:
 
 
 func _teleport(position: Vector3, yaw_degrees: float) -> void:
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(yaw_degrees)), position))
+	# PlayerController.teleport treats an identity basis as position-only, so preserve the
+	# requested -Z facing for the common zero-yaw case with an imperceptible offset.
+	var yaw := deg_to_rad(yaw_degrees)
+	if is_zero_approx(yaw):
+		yaw = deg_to_rad(0.01)
+	_player.teleport(Transform3D(Basis(Vector3.UP, yaw), position))
 
 
 # --- waiting ----------------------------------------------------------------
@@ -1989,6 +2006,13 @@ func _wait_for_line(timeout_seconds: float) -> bool:
 
 
 func _wait_for_target(interact_id: StringName, timeout_seconds: float) -> bool:
+	# This is an on-screen prompt check: put the real cursor on the authored target rather
+	# than relying on the last unrelated cursor position left by an earlier screenshot.
+	var location := _host.get_current() if _host != null else null
+	var interactable := location.find_interactable(interact_id) if location != null else null
+	if interactable != null:
+		await _mouse_to_world(interactable.global_position)
+		await _physics_frames(2)
 	var found := await _poll(func() -> bool:
 		var target := _interaction.get_current_target()
 		return target != null and target.interact_id == interact_id and not _ui.hud.get_prompt_text().is_empty(),

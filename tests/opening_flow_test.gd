@@ -678,11 +678,15 @@ func _check_targeting() -> void:
 		_failures.append("The player has no InteractionController to test.")
 		return
 	# This case pins down the facing fallback, not whichever prop happens to be under the
-	# desktop cursor in a headless run.
-	_interaction.set_mouse_override(Vector2(2.0, 2.0))
+	# desktop cursor in a headless run. Disable pointer targeting so the query cannot be
+	# captured by a test fixture left under the cursor.
+	var mouse_targeting := _interaction.mouse_targeting
+	_interaction.mouse_targeting = false
 	for test_case: Dictionary in cases:
-		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(test_case["yaw"])),
-			test_case["position"]))
+		# PlayerController.teleport treats an identity basis as "position only". Nudge the
+		# zero-yaw cases imperceptibly so the requested facing is still installed.
+		var yaw := deg_to_rad(test_case["yaw"]) + deg_to_rad(0.01)
+		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), test_case["position"]))
 		await physics_frame
 		await physics_frame
 		var target := _interaction.get_current_target()
@@ -692,6 +696,7 @@ func _check_targeting() -> void:
 				"At %s the interaction prompt targeted '%s' instead of '%s'."
 				% [test_case["position"], found, test_case["expected"]]
 			)
+	_interaction.mouse_targeting = mouse_targeting
 	_interaction.clear_mouse_override()
 
 
