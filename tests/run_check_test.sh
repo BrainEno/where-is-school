@@ -77,6 +77,32 @@ CURRENT_NAME=capture_script_broken
 expect "the compile-only check still fails on a parse error" fail \
   bash -c 'printf "Parse Error at res://tests/capture_playthrough.gd:9\n"'
 
+# A hung check is stopped by `timeout` and must be reported as a timeout, not a pass, even
+# when it printed PASS before it hung.
+timeout_case () {
+  local description="$1"; shift
+  checks=0
+  passed=""
+  status=0
+  local output="${CI_LOG_DIR}/timeout_case.out"
+  # Not $(...): run_check must update `status` in this shell, not a subshell.
+  run_check slow_check 1 "$@" > "${output}" 2>&1
+  cases=$((cases + 1))
+  if [ "${status}" -eq 0 ] || ! grep -q "slow_check failed (timed out after 1s" "${output}"; then
+    echo "FAIL: ${description}: expected an explicit timeout failure"
+    failures=$((failures + 1))
+  else
+    echo "ok: ${description} (fail, named as a timeout)"
+  fi
+}
+timeout_case "a check that hangs is an explicit timeout" bash -c 'sleep 5'
+timeout_case "a check that prints PASS and then hangs is still a timeout" \
+  bash -c 'printf "PASS: early\n"; sleep 5'
+
+CURRENT_NAME=import
+expect "the import pass keeps its exception even when it hits its limit" pass \
+  bash -c 'exit 124'
+
 echo
 echo "${cases} case(s), ${failures} failure(s)"
 if [ "${failures}" -ne 0 ]; then

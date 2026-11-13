@@ -7,6 +7,9 @@ extends SceneTree
 ## Output stays outside the shipped assets. No post-processing or paintover is applied.
 ## Eight views include live gameplay, wall fade/restoration, and framing of the full room,
 ## board/platform, both doors, both windows and all twelve student desks.
+## CI passes `--expect-renderer=<method> --expect-driver=<driver>`; a run on any other
+## renderer or driver (for example after Godot's own Vulkan-to-OpenGL fallback) fails.
+## CAPTURE.txt ends with `verdict=PASS|FAIL` and any failure lines.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -15,6 +18,8 @@ var _room: LocationRoot = null
 var _player: PlayerController = null
 var _rig: CameraRig = null
 var _out := "res://build/classroom-evidence/after"
+var _expect_renderer := ""
+var _expect_driver := ""
 var _lines: Array[String] = []
 var _failures: Array[String] = []
 
@@ -24,6 +29,10 @@ func _initialize() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--output="):
 			_out = argument.trim_prefix("--output=")
+		elif argument.begins_with("--expect-renderer="):
+			_expect_renderer = argument.trim_prefix("--expect-renderer=")
+		elif argument.begins_with("--expect-driver="):
+			_expect_driver = argument.trim_prefix("--expect-driver=")
 	call_deferred("_run")
 
 
@@ -68,6 +77,15 @@ func _run() -> void:
 		)
 	)
 	_note("adapter=%s" % RenderingServer.get_video_adapter_name())
+	var driver := ""
+	if RenderingServer.has_method("get_current_rendering_driver_name"):
+		driver = String(RenderingServer.call("get_current_rendering_driver_name"))
+	_note("driver=%s" % driver)
+	var method := RenderingServer.get_current_rendering_method()
+	if not _expect_renderer.is_empty() and method != _expect_renderer:
+		_failures.append("The renderer is '%s', not the expected '%s'." % [method, _expect_renderer])
+	if not _expect_driver.is_empty() and driver != _expect_driver:
+		_failures.append("The rendering driver is '%s', not the expected '%s'." % [driver, _expect_driver])
 	_note("viewport=%s" % str(root.size))
 
 	# The game's camera, lens and player location; N is staged at its existing front
@@ -105,6 +123,9 @@ func _run() -> void:
 	if log_file == null:
 		_failures.append("Cannot write capture manifest.")
 	else:
+		for failure in _failures:
+			_lines.append("failure=" + failure)
+		_lines.append("verdict=" + ("PASS" if _failures.is_empty() else "FAIL"))
 		log_file.store_string("\n".join(_lines) + "\n")
 		log_file.close()
 	_main.queue_free()

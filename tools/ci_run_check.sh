@@ -11,6 +11,7 @@
 #
 # So a check passes only when the log agrees with the exit code:
 #
+#   - stopped by `timeout` (exit 124 / 137)            -> failure, named as a timeout
 #   - non-zero exit                                    -> failure
 #   - "Parse Error" in the log                         -> failure
 #   - "SCRIPT ERROR" in the log                        -> failure
@@ -63,7 +64,12 @@ run_check () {
   # The verdict itself, one reason at a time, most specific first. The log is the second
   # witness: a run that exits 0 with a script error in it is not a pass.
   local failure=""
-  if [ "${check_exit}" -eq 1 ] && [ "${code}" -ne 0 ]; then
+  # `timeout` exits 124 when it had to stop the command (137 if it had to SIGKILL it). Name
+  # that outright: "exit 124" reads like a test verdict, and a hung renderer is not one.
+  # (The import pass keeps its exception: its exit code is not a verdict at all.)
+  if [ "${check_exit}" -eq 1 ] && { [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; }; then
+    failure="timed out after ${limit}s (exit ${code})"
+  elif [ "${check_exit}" -eq 1 ] && [ "${code}" -ne 0 ]; then
     failure="exit ${code}"
   elif [ "${scan_errors}" -eq 1 ] && grep -qE "^Parse Error|Parse Error at" "${log_path}"; then
     failure="a Parse Error was reported"
