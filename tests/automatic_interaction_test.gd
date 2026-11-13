@@ -233,7 +233,10 @@ func _check_click_exit_transitions() -> void:
 func _check_authored_door_highlight_and_transition(exit: LocationExit) -> void:
 	_activations.clear()
 	_approaches_activated.clear()
-	var screen := _screen_of(exit.global_position)
+	var screen := _screen_for_target(exit)
+	if screen == Vector2.ZERO:
+		_failures.append("The classroom door's visible frame could not be pointed at.")
+		return
 	_interaction.set_mouse_override(screen)
 	await _physics_frames(3)
 	if _interaction.get_current_target() != exit or _interaction.get_highlighted() != exit:
@@ -578,8 +581,7 @@ func _stand_far_from(target: Interactable, min_distance: float, max_distance: fl
 				continue
 			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
-			var screen := _screen_of(target.global_position)
-			if _interaction.get_target_at_screen_position(screen, false) == target:
+			if _screen_for_target(target) != Vector2.ZERO:
 				return true
 	return false
 
@@ -775,6 +777,38 @@ func _find_wall_screen_position() -> Vector2:
 				continue
 			if _navigator.is_enabled() and _navigator.can_walk_to_screen_position(screen):
 				continue
+			return screen
+	return Vector2.ZERO
+
+
+## A door's interaction anchor is in the middle of its opening, where there is no
+## outlined surface. Point at the visible frame instead: these are still rays through
+## the real interaction area, and the outline's depth-tested mesh is what the player sees.
+func _screen_for_target(target: Interactable) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null or target == null:
+		return Vector2.ZERO
+	var view := _player.get_viewport().get_visible_rect().size
+	var points: Array[Vector3] = [target.global_position]
+	for mesh: GeometryInstance3D in target.get_outline_meshes():
+		if mesh == null or not mesh.is_visible_in_tree():
+			continue
+		var bounds := mesh.get_aabb()
+		points.append(mesh.to_global(bounds.get_center()))
+		var xs: Array[float] = [bounds.position.x, bounds.end.x]
+		var ys: Array[float] = [bounds.position.y, bounds.end.y]
+		var zs: Array[float] = [bounds.position.z, bounds.end.z]
+		for x: float in xs:
+			for y: float in ys:
+				for z: float in zs:
+					points.append(mesh.to_global(Vector3(x, y, z)))
+	for point: Vector3 in points:
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		if screen.x < 1.0 or screen.y < 1.0 or screen.x >= view.x - 1.0 or screen.y >= view.y - 1.0:
+			continue
+		if _interaction.get_target_at_screen_position(screen, false) == target:
 			return screen
 	return Vector2.ZERO
 

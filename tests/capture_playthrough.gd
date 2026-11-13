@@ -501,22 +501,18 @@ func _capture_free_period() -> void:
 		_failures.append("The walkway has no door to the yard.")
 		return
 	await _wait_for_free(45.0)
-	# Movement is camera-relative (diagonal in the corridor), so start offset from the
-	# centreline and let the forward pulses bring the player onto the door's anchor.
-	_teleport(Vector3(1.5, 0, -4.2), -8.0)
-	await _wait(0.3)
-	# Walk in short pulses and stop as soon as the door is offered. A single long
-	# hold overshoots into the end wall, where the door is no longer in front.
-	var reached := false
-	for _pulse in 8:
-		Input.action_press("move_forward")
-		await _wait(0.25)
-		Input.action_release("move_forward")
-		await _wait(0.15)
-		if await _wait_for_target(&"to_schoolyard", 1.0):
-			reached = true
-			break
-	if not reached:
+	# Camera-relative forward pulses drifted across the corridor instead of towards the
+	# end door. Ask the same navigation path used by click-to-move for a floor point just
+	# in front of it; the player still walks the route under normal movement physics.
+	if not _player.request_path_to(Vector3(0.0, 0.0, -6.6)):
+		_failures.append("The walkway could not route the player to the end door.")
+		await _shot("FAIL_yard_door_path", "The navigation route to the end door was refused.")
+		return
+	if not await _poll(func() -> bool: return not _player.is_path_active(), 12.0):
+		_player.cancel_path()
+		_failures.append("Walking the navigation route to the end door did not finish.")
+		return
+	if not await _wait_for_target(&"to_schoolyard", 8.0):
 		_failures.append("Walking to the end door did not offer it as a target.")
 	await _shot("13e_yard_door_prompt", "The end door of the walkway, reached on foot.")
 	await _press(KEY_E)
@@ -891,8 +887,8 @@ func _capture_n_at_the_front(n_actor: NpcActor) -> void:
 	var forward := _planar_forward(n_actor)
 	_note("N at the front: position %s, facing %s, visible %s" % [str(at), str(forward), n_actor.visible])
 	await _shot_from_camera(
-		at + Vector3(2.2, 1.28, 0.0),
-		at + Vector3(0.0, 1.0, 0.0),
+		at + Vector3(4.2, 1.5, 0.0),
+		at + Vector3(0.0, 1.25, 0.0),
 		"11d_n_at_the_front",
 		"N at the front of the classroom after dismissing the class, head to feet, from the "
 		+ "clear side of the room, under the nameplate the game shows.",
@@ -1866,16 +1862,13 @@ func _position_near(target: Interactable, distance: float) -> bool:
 			# check after a fixed sleep made this the flakiest step in the capture: give it half
 			# a second instead of one frame, and only then move on to the next angle.
 			if await _poll(
-				func() -> bool:
-					return _interaction.get_target_at_screen_position(
-						_screen_position_of(target), false
-					) == target,
+				func() -> bool: return _screen_position_for_interactable(target) != Vector2.ZERO,
 				0.5
 			):
 				# A ray query proves the spot, but it does not move the real cursor. Place the
-				# cursor on the target too: the screenshot, prompt and subsequent E press must
-				# all exercise the same pointer-selected object.
-				await _mouse_to_world(target.global_position)
+				# cursor on the visible outlined surface too: the screenshot, prompt and E press
+				# must all exercise the same pointer-selected object.
+				await _mouse_over_interactable(target)
 				await _physics_frames(2)
 				return true
 	return false
@@ -1886,6 +1879,46 @@ func _screen_position_of(target: Node3D) -> Vector2:
 	if camera == null or target == null:
 		return Vector2.ZERO
 	return camera.unproject_position(target.global_position)
+
+
+## Some interaction anchors sit in empty space (notably the centre of a doorway). Aim at
+## one of the actual outlined meshes so the cursor, visible highlight and prompt agree.
+func _screen_position_for_interactable(target: Interactable) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null or target == null:
+		return Vector2.ZERO
+	var view := _player.get_viewport().get_visible_rect().size
+	var points: Array[Vector3] = [target.global_position]
+	for mesh: GeometryInstance3D in target.get_outline_meshes():
+		if mesh == null or not mesh.is_visible_in_tree():
+			continue
+		var bounds := mesh.get_aabb()
+		points.append(mesh.to_global(bounds.get_center()))
+		var xs: Array[float] = [bounds.position.x, bounds.end.x]
+		var ys: Array[float] = [bounds.position.y, bounds.end.y]
+		var zs: Array[float] = [bounds.position.z, bounds.end.z]
+		for x: float in xs:
+			for y: float in ys:
+				for z: float in zs:
+					points.append(mesh.to_global(Vector3(x, y, z)))
+	for point: Vector3 in points:
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		if screen.x < 1.0 or screen.y < 1.0 or screen.x >= view.x - 1.0 or screen.y >= view.y - 1.0:
+			continue
+		if _interaction.get_target_at_screen_position(screen, false) == target:
+			return screen
+	return Vector2.ZERO
+
+
+func _mouse_over_interactable(target: Interactable) -> void:
+	var screen := _screen_position_for_interactable(target)
+	if screen == Vector2.ZERO:
+		await _mouse_to_world(target.global_position)
+		return
+	Input.warp_mouse(screen)
+	await process_frame
 
 
 ## A real left click at a screen position: cursor first, then press and release
@@ -2016,7 +2049,7 @@ func _wait_for_target(interact_id: StringName, timeout_seconds: float) -> bool:
 	var location := _host.get_current() if _host != null else null
 	var interactable := location.find_interactable(interact_id) if location != null else null
 	if interactable != null:
-		await _mouse_to_world(interactable.global_position)
+		await _mouse_over_interactable(interactable)
 		await _physics_frames(2)
 	var found := await _poll(func() -> bool:
 		var target := _interaction.get_current_target()
