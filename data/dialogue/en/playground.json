@@ -11,12 +11,12 @@
         {
           "id": "pa_1",
           "speaker": "protagonist",
-          "text": "A yard with a court painted on it, a climbing frame, a bench, and a shed at the side. The gate you came through is behind you."
+          "text": "An open yard. A court is painted on the concrete, with a climbing frame, a bench and a small shed beside it. The gate you came through is behind you."
         },
         {
           "id": "pa_2",
           "speaker": "protagonist",
-          "text": "There is nobody here and nothing in the yard asks you to stand anywhere in particular.",
+          "text": "There is nobody around. Nobody here to tell you where to stand, either.",
           "effects": [
             {
               "type": "set_flag",
@@ -39,7 +39,7 @@
         {
           "id": "pa_3",
           "speaker": "protagonist",
-          "text": "Behind the shed the fence has a gap in it, and the ground past the gap is the same concrete as the yard.",
+          "text": "There is a gap in the fence behind the shed. The ground on the other side is the same concrete as this side.",
           "next": null
         }
       ]
@@ -52,12 +52,12 @@
         {
           "id": "ps_1",
           "speaker": "protagonist",
-          "text": "The equipment shed has a green door, a hasp, and a padlock hanging from the hasp. The sheet taped inside the window faces out."
+          "text": "The equipment shed has a green door with a hasp and a padlock hanging from it. A sheet is taped inside the window, facing out."
         },
         {
           "id": "ps_2",
           "speaker": "protagonist",
-          "text": "You could put a hand on the door. You could read the sheet. You could walk on.",
+          "text": "You could try the door, or have a look at the sheet in the window. Or leave it alone.",
           "choices": [
             {
               "id": "frame",
@@ -89,7 +89,7 @@
         {
           "id": "ps_boundary_check",
           "speaker": "voice_orientation",
-          "text": "Hold on. Look at how that door sits in its frame.",
+          "text": "Hold on. Look at the gap between the door and its frame.",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -101,7 +101,7 @@
         {
           "id": "ps_boundary_ok",
           "speaker": "voice_orientation",
-          "text": "The door is not swollen. The opening is wider than the door on the hinge side, and the gap runs level all the way down. Something that used to fill it was taken out and not put back.",
+          "text": "The door has not warped. There is a gap by the hinges, about the same width from top to bottom. Whatever used to fill it seems to have been taken out.",
           "effects": [
             {
               "type": "set_flag",
@@ -126,25 +126,25 @@
         {
           "id": "ps_inside",
           "speaker": "protagonist",
-          "text": "Chairs stacked to the ceiling, a coiled rope, three broken shuttlecocks. On the top chair, taped under the seat where nobody sitting would see it, a name in marker.",
+          "text": "Chairs are stacked almost to the ceiling. Beside them are a coil of rope and three broken shuttlecocks. A strip of tape is stuck under the seat of the top chair, with a name written on it. Nobody sitting there would see it.",
           "next": "ps_inside_2"
         },
         {
           "id": "ps_inside_2",
           "speaker": "protagonist",
-          "text": "You cannot read it from the doorway. You would have to move the stack, and the stack is the only thing in the shed holding the stack up.",
+          "text": "You cannot make out the name from the doorway. You would have to move the chairs, and the stack is too high to shift safely.",
           "next": null
         },
         {
           "id": "ps_boundary_bad",
           "speaker": "voice_orientation",
-          "text": "The frame is true. Nothing about it is out of place.",
+          "text": "The frame does not look crooked. You cannot see what is wrong with it.",
           "next": "ps_boundary_bad_2"
         },
         {
           "id": "ps_boundary_bad_2",
           "speaker": "protagonist",
-          "text": "The door does not move. There is daylight under it, and the paint behind the hasp is clean, as if the hasp had been somewhere else for a long time.",
+          "text": "The door will not move. There is light under it, but the paint behind the hasp is clean, as if the hasp used to be fixed somewhere else.",
           "effects": [
             {
               "type": "set_flag",
@@ -169,7 +169,7 @@
         {
           "id": "ps_ledger_check",
           "speaker": "voice_orientation",
-          "text": "The window. Look at where that sheet sits.",
+          "text": "Look at the sheet in the window. Pay attention to where it has been stuck.",
           "check": {
             "ability": "orientation",
             "difficulty": 8,
@@ -181,7 +181,7 @@
         {
           "id": "ps_ledger_ok",
           "speaker": "voice_orientation",
-          "text": "Nine rows, and they run level with the frame. The last two are the same day written twice; the second one sits a week below the first.",
+          "text": "Nine rows. The edges line up neatly with the window frame. The last two rows list the same day, but the second one is dated a week later.",
           "effects": [
             {
               "type": "set_flag",
@@ -206,13 +206,13 @@
         {
           "id": "ps_ledger_bad",
           "speaker": "voice_orientation",
-          "text": "It is a rota on a window. Two edges and a margin.",
+          "text": "A duty rota on the window. Lines down the sides, blank space in the middle.",
           "next": "ps_ledger_bad_2"
         },
         {
           "id": "ps_ledger_bad_2",
           "speaker": "protagonist",
-          "text": "You count them again and get eight. Rain has run two rows together. One name is still legible, and it is the surname chalked on the wall at the mouth of the alley.",
+          "text": "You count again. There are only eight rows. Rain has blurred two of them together. One surname is still readable, the same one chalked on the wall at the alley entrance.",
           "effects": [
             {
               "type": "set_flag",
@@ -237,7 +237,7 @@
         {
           "id": "ps_leave",
           "speaker": "protagonist",
-          "text": "You leave the padlock hanging. Behind you the hoop on the near side has no net, and the one at the far end does.",
+          "text": "You leave the padlock alone. Looking back, you see that the nearer hoop has no net. The one at the far end does.",
           "next": null
         }
       ]
@@ -250,12 +250,12 @@
         {
           "id": "pb_1",
           "speaker": "protagonist",
-          "text": "A table-tennis ball is wedged between the shed's footing and the concrete. Under the hedge behind it there is something pale and flat."
+          "text": "A table-tennis ball is wedged between the shed's concrete footing and the ground. Something pale and flat shows beneath the hedge behind it."
         },
         {
           "id": "pb_2",
           "speaker": "protagonist",
-          "text": "The gap goes back further than the ball does.",
+          "text": "The gap goes deeper than the ball.",
           "choices": [
             {
               "id": "reach",
@@ -287,7 +287,7 @@
         {
           "id": "pb_boundary_check",
           "speaker": "voice_orientation",
-          "text": "Fingers first. I will tell you where the back of it is.",
+          "text": "Put your hand in and feel around. I'll help you work out how far it goes.",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -299,7 +299,7 @@
         {
           "id": "pb_boundary_ok",
           "speaker": "voice_orientation",
-          "text": "A hand deep, then concrete, then a lip. There is a ledge behind the ball. Something on the ledge is not round.",
+          "text": "A hand's depth in, you touch concrete, then an edge. There is a small ledge behind the ball, with something on it. It is not round.",
           "effects": [
             {
               "type": "set_flag",
@@ -330,13 +330,13 @@
         {
           "id": "pb_boundary_bad",
           "speaker": "voice_orientation",
-          "text": "There is nothing behind it. The gap is a hand deep and then it closes.",
+          "text": "There is nothing behind it. A hand's depth in, and then the gap ends.",
           "next": "pb_boundary_bad_2"
         },
         {
           "id": "pb_boundary_bad_2",
           "speaker": "protagonist",
-          "text": "Your knuckles scrape and the ball shifts and settles again. The pale thing under the hedge is not behind the ball at all. It is further out, and it is a strip of white paint on a stick.",
+          "text": "You scrape your knuckles. The ball shifts, then wedges itself back in place. The pale thing under the hedge is not behind the ball; it is further out, like a streak of white paint on a stick.",
           "effects": [
             {
               "type": "set_flag",
@@ -361,7 +361,7 @@
         {
           "id": "pb_ledger_check",
           "speaker": "voice_orientation",
-          "text": "Shadow first. Shadow is cheaper than knuckles.",
+          "text": "Try the shadow first. Better than scraping your knuckles.",
           "check": {
             "ability": "orientation",
             "difficulty": 7,
@@ -373,7 +373,7 @@
         {
           "id": "pb_ledger_ok",
           "speaker": "voice_orientation",
-          "text": "The shadow runs longer than the gap does. Whatever is under the hedge is nearer to you than the ball is, and it is the wrong shape for a ball.",
+          "text": "The shadow reaches further than the gap. The thing under the hedge is closer to you, and it is not shaped like a ball.",
           "effects": [
             {
               "type": "set_flag",
@@ -398,13 +398,13 @@
         {
           "id": "pb_ledger_bad",
           "speaker": "voice_orientation",
-          "text": "One gap, one ball, one shadow. The lines meet.",
+          "text": "One gap, one ball, one shadow. It all seems to line up.",
           "next": "pb_ledger_bad_2"
         },
         {
           "id": "pb_ledger_bad_2",
           "speaker": "protagonist",
-          "text": "It balances and tells you nothing. The ball stays where it is. The shed has two footings and the gap is only on the left one, which is the kind of thing you notice when a sum has just failed you.",
+          "text": "The numbers add up, but that does not tell you anything. The ball is still stuck. The shed has two footings, and only the left one has a gap. Somehow you noticed that just after getting the sum wrong.",
           "effects": [
             {
               "type": "set_flag",
@@ -429,7 +429,7 @@
         {
           "id": "pb_leave",
           "speaker": "protagonist",
-          "text": "You leave the ball where it is. It is not yours, and nobody in this yard is waiting for it.",
+          "text": "You leave the ball where it is. It is not yours, and nobody is waiting here to collect it.",
           "next": null
         }
       ]
