@@ -566,11 +566,20 @@ func _check_canopy_hides_from_the_camera() -> void:
 	var canopy_mesh := canopy.get_node("MeshInstance3D") as MeshInstance3D
 	canopy_mesh.transparency = 0.82
 	await _physics_frames(2)
-	if RenderingServer.get_current_rendering_method() != "forward_plus" \
-			and _find_target_on_screen(target) != Vector2.ZERO:
+	var forward_plus := RenderingServer.get_current_rendering_method() == "forward_plus"
+	var instance_pick := _find_target_on_screen(target)
+	if forward_plus:
+		if instance_pick == Vector2.ZERO or _first_drawn_body(centre) == canopy:
+			_failures.append("Forward+ instance fade did not uncover the canopy target.")
+	elif instance_pick != Vector2.ZERO or _first_drawn_body(centre) != canopy:
 		_failures.append("Instance transparency alone (not drawn on this renderer) let the pointer through.")
-	# The same canopy drawn the way CameraOccluderFader now draws a faded wall - an
-	# alpha-blended material - is see-through: the pointer finds the object again.
+	# Negative control: removing the instance fade must hide the target again.
+	canopy_mesh.transparency = 0.0
+	await _physics_frames(2)
+	if _find_target_on_screen(target) != Vector2.ZERO or _first_drawn_body(centre) != canopy:
+		_failures.append("Restoring the opaque canopy did not hide the target again.")
+	# Independent single-alpha control, and the Compatibility/Mobile fader path:
+	# an alpha-blended material alone is see-through on every renderer.
 	var faded := StandardMaterial3D.new()
 	faded.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	faded.albedo_color = Color(1.0, 1.0, 1.0, 0.18)
@@ -690,6 +699,7 @@ func _check_classroom_timetable() -> void:
 	if sheet == null or wall == null:
 		_failures.append("Case 10: the classroom lost the timetable or WallSouthLeft.")
 		return
+	var authored := load("res://assets/materials/classroom/wall_section.tres") as BaseMaterial3D
 	print(
 		"[#115] classroom: sheet anchor %s, outline %s, wall %s"
 		% [str(sheet.global_position), str(_box_centre(sheet)), str(wall.global_position)]
@@ -716,11 +726,16 @@ func _check_classroom_timetable() -> void:
 	if spot == Vector3.INF:
 		_failures.append("Case 10b: no standing spot in front of the sheet dims WallSouthLeft.")
 	else:
-		var authored := _wall_material(wall)
 		var b := await _measure_sheet_view("b faded wall", sheet, wall, spot, sheet.global_position)
 		var drawn := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override as BaseMaterial3D
 		print("[#115] fader: authored %s, while faded %s" % [str(authored), str(drawn)])
-		if drawn == null or drawn.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA or drawn.albedo_color.a > 0.5:
+		if RenderingServer.get_current_rendering_method() == "forward_plus":
+			# Real pixels in classroom_wall_render_test prove the instance owns this
+			# fade. Requiring another alpha copy here would reintroduce 18% * 18%.
+			if drawn != authored or drawn == null or drawn.albedo_color.a != 1.0 \
+					or _wall_transparency(wall) < 0.5:
+				_failures.append("Case 10b: Forward+ did not keep one instance fade and the exact authored material.")
+		elif drawn == null or drawn.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA or drawn.albedo_color.a > 0.5:
 			_failures.append(
 				"Case 10b: the faded wall is not drawn with an alpha-blended material, so it would"
 				+ " stay opaque on Compatibility (material %s)." % str(drawn)
@@ -738,7 +753,7 @@ func _check_classroom_timetable() -> void:
 	_player.teleport(Transform3D(_yaw_towards(away, away + Vector3.FORWARD), away))
 	await _physics_frames(12)
 	var rest := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override
-	if _wall_transparency(wall) > 0.0 or rest == null or rest.resource_path.is_empty():
+	if _wall_transparency(wall) > 0.0 or rest != authored:
 		_failures.append(
 			"WallSouthLeft did not get its authored material back after the fade (%s, transparency %.2f)."
 			% [str(rest), _wall_transparency(wall)]
@@ -970,7 +985,8 @@ func _first_drawn_body(point: Vector3) -> Node:
 
 ## A piece hides what is behind it when it writes depth: it is visible, on a camera layer,
 ## and drawn with at least one material that is not alpha-blended. Instance transparency
-## is not drawn on Compatibility, so it does not count here.
+## is drawn only on Forward+ (also measured by classroom_wall_render_test); it must not
+## make a Compatibility/Mobile wall disappear from this independent oracle.
 func _drawn_opaque(body: Node, cull_mask: int) -> bool:
 	var nodes: Array[Node] = [body]
 	nodes.append_array(body.find_children("*", "GeometryInstance3D", true, false))
@@ -979,6 +995,9 @@ func _drawn_opaque(body: Node, cull_mask: int) -> bool:
 		if geometry == null or not geometry.is_visible_in_tree() or geometry.name == "OutlineKey":
 			continue
 		if (geometry.layers & cull_mask) == 0:
+			continue
+		if RenderingServer.get_current_rendering_method() == "forward_plus" \
+				and geometry.transparency > 0.0:
 			continue
 		var materials: Array[Material] = []
 		if geometry.material_override != null:
