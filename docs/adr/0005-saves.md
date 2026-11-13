@@ -205,11 +205,25 @@ offered. The report says which step failed (`reason`: `busy`, `save_stage_failed
 cleaned up (`leftovers`). A second press while the first transaction is between two
 awaits is refused with `busy` and runs none of the steps again.
 
+**What the player sees** (#146). The `detail` is for the log; the screen shows
+`NewGameFailureText.describe(report)` (`scripts/ui/new_game_failure_text.gd`): a localised
+line for the reason, whether the save is safe (or where its copy is), and that they can try
+again. A failure before the world is freed is shown by the screen that started it — the
+pause menu reopens (paused, New game focused), the end card keeps Start again focused, the
+title stays — and that screen calls `Session.mark_new_game_failure_shown()`. A failure after
+it lands on a title screen that did not exist when `new_game_failed` was emitted, so the
+title reads `Session.take_unshown_new_game_failure()` in `_ready`: the report is handed over
+once, and no later title shows it again. The screens keep the report rather than the text,
+so a language switch renders it again; `busy` is answered the same way, without a signal.
+
 Tests: `tests/opening_resume_test.gd` (title menu by save state, cancel keeps
 everything, confirm from the title and from the pause menu, an unreadable save, the next
 boot carrying no old flag, entry, room or seed, a save that cannot be moved, an opening
-that cannot load, and a second click) and `tests/opening_flow_test.gd` (Start again from
-the end card after the whole slice, on the controller).
+that cannot load, and a second click), `tests/opening_flow_test.gd` (Start again from
+the end card after the whole slice, on the controller) and
+`tests/new_game_failure_ui_test.gd` (each failure from the pause menu, the end card and the
+title, through real key, pad and mouse input: the message, the focus, the bytes on disk, a
+busy refusal, the language switch and the largest text size).
 
 ### 9. Writing a save is a swap, and it is proved
 
