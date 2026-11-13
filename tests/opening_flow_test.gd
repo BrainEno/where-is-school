@@ -665,30 +665,48 @@ func _check_end_card_restart() -> void:
 
 func _check_targeting() -> void:
 	var cases := [
-		{"position": Vector3(0.55, 0, 1.7), "yaw": 0.0, "expected": &"schoolbag"},
-		{"position": Vector3(-0.6, 0, 1.0), "yaw": 0.0, "expected": &"own_desk"},
-		{"position": Vector3(-1.32, 0, 1.75), "yaw": 0.0, "expected": &"q_talk"},
-		{"position": Vector3(0.2, 0, -2.3), "yaw": 0.0, "expected": &"blackboard"},
-		{"position": Vector3(1.35, 0, -2.05), "yaw": 0.0, "expected": &"set_square"},
-		{"position": Vector3(-3.5, 0, -0.2), "yaw": 90.0, "expected": &"window"},
-		{"position": Vector3(1.6, 0, 2.6), "yaw": 180.0, "expected": &"timetable"},
-		{"position": Vector3(3.2, 0, 2.55), "yaw": 180.0, "expected": &"classroom_door"},
+		# Stand southeast of the bag and face diagonally across the aisle; the old
+		# west-side fixture was occluded after the room was expanded.
+		{"position": Vector3(-2.8, 0, 0.6), "yaw": 50.0, "expected": &"schoolbag"},
+		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
+		{"position": Vector3(-3.2, 0, 2.85), "yaw": 0.0, "expected": &"q_talk"},
+		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
+		{"position": Vector3(-3.2, 0, -1.0), "yaw": 61.0, "expected": &"set_square"},
+		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},
+		{"position": Vector3(0.0, 0, 3.7), "yaw": 180.0, "expected": &"timetable"},
+		{"position": Vector3(3.0, 0.12, -3.1), "yaw": 0.0, "expected": &"classroom_door"},
 	]
 	if _interaction == null:
 		_failures.append("The player has no InteractionController to test.")
 		return
+	# This case pins down the facing fallback, not whichever prop happens to be under the
+	# desktop cursor in a headless run. Disable pointer targeting so the query cannot be
+	# captured by a test fixture left under the cursor.
+	var mouse_targeting := _interaction.mouse_targeting
+	_interaction.mouse_targeting = false
 	for test_case: Dictionary in cases:
-		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(test_case["yaw"])),
-			test_case["position"]))
-		await physics_frame
-		await physics_frame
-		var target := _interaction.get_current_target()
+		# PlayerController.teleport treats an identity basis as "position only". Nudge the
+		# zero-yaw cases imperceptibly so the requested facing is still installed.
+		var yaw := deg_to_rad(test_case["yaw"]) + deg_to_rad(0.01)
+		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), test_case["position"]))
+		# Teleporting the player does not teleport the smoothed camera rig. Poll the
+		# real facing-target resolver until the object is visible from the settled view;
+		# a fixed two-frame snapshot was racing the camera after the room expansion.
+		var target: Interactable = null
+		var target_started := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - target_started < 3000:
+			target = _interaction.get_current_target()
+			if target != null and target.interact_id == test_case["expected"]:
+				break
+			await physics_frame
 		var found := String(target.interact_id) if target != null else "<nothing>"
 		if target == null or target.interact_id != test_case["expected"]:
 			_failures.append(
 				"At %s the interaction prompt targeted '%s' instead of '%s'."
 				% [test_case["position"], found, test_case["expected"]]
 			)
+	_interaction.mouse_targeting = mouse_targeting
+	_interaction.clear_mouse_override()
 
 
 ## Compact state line printed once at the end of a run (and used by CI to

@@ -189,9 +189,17 @@ func _check_wake(animator: CharacterVisualAnimation) -> void:
 
 
 func _check_keyboard_walk(animator: CharacterVisualAnimation) -> void:
+	# The expanded desk grid intentionally fills the original start's four diagonal paths.
+	# Test the controller in the clear side aisle instead of mistaking furniture at spawn for
+	# an animation failure; the opening/wake checks above still run at the authored start.
+	var saved_position := _player.global_position
+	var saved_facing := _player.get_facing_direction()
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(5.7, 0.0, -2.0)))
+	await _physics_frames(2)
 	var action := _clear_movement_action(2.0)
 	if action.is_empty():
-		_failures.append("No movement key has 2 m of clear floor in front of the player start; cannot test WASD.")
+		_failures.append("No movement key has 2 m of clear floor in the classroom side aisle; cannot test WASD.")
+		await _restore_player_pose(saved_position, saved_facing)
 		return
 	var model := _player_model()
 	var model_transform := model.transform if model != null else Transform3D.IDENTITY
@@ -203,6 +211,7 @@ func _check_keyboard_walk(animator: CharacterVisualAnimation) -> void:
 	var walked := await _sample_walk("the player (key '%s')" % action, animator, 0.5)
 	Input.action_release(action)
 	if not walked:
+		await _restore_player_pose(saved_position, saved_facing)
 		return
 	# The facing is the controller's: the pivot turned to the direction of travel by atan2,
 	# and nothing under it was moved by the animation.
@@ -224,6 +233,7 @@ func _check_keyboard_walk(animator: CharacterVisualAnimation) -> void:
 		_failures.append("The protagonist walks one way and faces another (model +Z %s, facing %s)." % [model_forward, facing])
 
 	await _check_returns_to_idle("the player after releasing the key", animator)
+	await _restore_player_pose(saved_position, saved_facing)
 
 
 func _check_click_walk(animator: CharacterVisualAnimation) -> void:
@@ -767,6 +777,16 @@ func _enter(scene: String, spawn: StringName) -> bool:
 		return false
 	await _frames(2)
 	return true
+
+
+func _restore_player_pose(position: Vector3, facing: Vector3) -> void:
+	var flat := facing
+	flat.y = 0.0
+	var yaw := atan2(-flat.x, -flat.z) if flat.length_squared() > 0.0001 else 0.0
+	if is_zero_approx(yaw):
+		yaw = deg_to_rad(0.01)
+	_player.teleport(Transform3D(Basis(Vector3.UP, yaw), position))
+	await _physics_frames(2)
 
 
 func _player_model() -> Node3D:

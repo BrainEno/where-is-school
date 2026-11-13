@@ -5,6 +5,8 @@ extends SceneTree
 ##   -- --output=build/classroom-evidence/after
 ## The same script/camera/fixtures are used against the unmodified base and PR head.
 ## Output stays outside the shipped assets. No post-processing or paintover is applied.
+## Eight views include live gameplay, wall fade/restoration, and framing of the full room,
+## board/platform, both doors, both windows and all twelve student desks.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -73,7 +75,7 @@ func _run() -> void:
 	var teacher := _room.find_actor(&"n")
 	teacher.visible = true
 	teacher.global_position = _room.get_node("NEntryPath/AtFront").global_position
-	await _stand(Vector3(0.0, 0.0, 0.85), Vector3.FORWARD)
+	await _stand(Vector3(0.0, 0.0, 0.25), Vector3.FORWARD)
 	await _shot("01_gameplay.png")
 
 	# The original #115 south-wall interaction route: camera occlusion is intentional
@@ -81,21 +83,21 @@ func _run() -> void:
 	await _stand(Vector3(1.6, 0.0, 2.7), Vector3.BACK)
 	await _shot("02_wall_occlusion.png")
 	_wall_state("occlusion")
-	await _stand(Vector3(0.0, 0.0, 0.85), Vector3.FORWARD)
+	await _stand(Vector3(0.0, 0.0, 0.25), Vector3.FORWARD)
 	await _shot("03_walls_restored.png")
 	_wall_state("restored")
 
-	# A fixed art-review camera in addition to (not instead of) the real gameplay view.
-	# It does not alter the production rig, navigation, collision or story.
+	# Fixed art-review framing supplements the production-camera captures; it does not
+	# alter the gameplay rig, navigation, collision, or story.
 	var review := Camera3D.new()
 	review.name = "ClassroomEvidenceCamera"
-	review.position = Vector3(1.2, 3.6, 4.0)
 	review.fov = 58.0
 	_main.add_child(review)
-	review.look_at(Vector3(-0.1, 1.35, -2.8), Vector3.UP)
-	review.current = true
-	await _frames(15)
-	await _shot("04_board_and_teacher.png")
+	await _review_shot(review, Vector3(0.0, 8.2, 14.0), Vector3(0.0, 0.9, -0.1), "04_full_classroom.png")
+	await _review_shot(review, Vector3(0.8, 3.2, 2.0), Vector3(0.0, 1.0, -3.7), "05_blackboard_platform_lectern.png")
+	await _review_shot(review, Vector3(4.2, 2.8, 1.4), Vector3(4.0, 1.2, -4.8), "06_double_doors.png")
+	await _review_shot(review, Vector3(-0.4, 2.7, 0.1), Vector3(-6.7, 1.7, 0.0), "07_two_windows_and_curtains.png")
+	await _review_shot(review, Vector3(0.0, 6.5, 8.8), Vector3(0.0, 0.35, 0.7), "08_twelve_student_desks.png")
 	review.queue_free()
 	_rig.camera.current = true
 	await _frames(2)
@@ -108,7 +110,7 @@ func _run() -> void:
 	_main.queue_free()
 	await _frames(3)
 	Harness.finish(
-		self, _failures, "captured four unmodified classroom viewport images and wall states."
+		self, _failures, "captured eight unmodified classroom viewport images and wall states."
 	)
 
 
@@ -120,9 +122,17 @@ func _stand(at: Vector3, facing: Vector3) -> void:
 	await _frames(35)
 
 
+func _review_shot(camera: Camera3D, at: Vector3, target: Vector3, file_name: String) -> void:
+	camera.position = at
+	camera.look_at(target, Vector3.UP)
+	camera.current = true
+	await _frames(15)
+	await _shot(file_name)
+
+
 func _wall_state(label: String) -> void:
 	for wall_name: String in [
-		"WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight", "DoorLintel"
+		"WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight", "DoorLintel", "AnomalyDoorLintel"
 	]:
 		var wall := _room.get_node(NodePath(wall_name))
 		for node in wall.find_children("*", "MeshInstance3D", true, false):

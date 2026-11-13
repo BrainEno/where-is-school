@@ -8,7 +8,7 @@ size = Vector2(0.46, 0.46)
 [node name="FrontWallDressing" type="Node3D"]
 
 [node name="ClockDial" type="MeshInstance3D" parent="."]
-position = Vector3(3.6, 2.42, 0.078)
+position = Vector3(1.45, 2.42, 0.078)
 mesh = SubResource("QuadMesh_dial")
 material_override = ExtResource("3_dial")
 cast_shadow = 0

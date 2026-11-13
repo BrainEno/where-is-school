@@ -51,10 +51,10 @@ IVORY_SHADE = (150, 151, 167)
 TEAL = (71, 101, 111)  # the wainscot: a blue-leaning green, kept away from Q's sweater
 TEAL_DARK = (54, 69, 85)
 TEAL_LIGHT = (102, 126, 130)
-FLOOR = (137, 132, 134)
-FLOOR_LIGHT = (167, 158, 145)
-FLOOR_DARK = (99, 108, 125)
-STAGE = (120, 81, 72)  # the painted teacher's zone on the floor
+# A cool, low-chroma painted concrete; the floor is brushed and mottled, never planked.
+FLOOR = (126, 132, 140)
+FLOOR_LIGHT = (151, 158, 166)
+FLOOR_DARK = (101, 110, 122)
 OXBLOOD = (110, 60, 54)
 BOARD = (36, 61, 63)
 BOARD_DARK = (33, 42, 58)
@@ -403,16 +403,16 @@ def tally(c: Canvas, s: float, y: float, groups: int, size: float = 0.07) -> Non
 
 # --- the walls ------------------------------------------------------------------------
 
-WALL_PPM = 176.0
+WALL_PPM = 140.0
 
 
 def wall_north() -> Image.Image:
-    """North wall, seen from the room: s = x + 4.5. The blackboard spans s 2.2..7.2,
-    y 0.975..2.425 (blackboard.tscn at x = 0.2)."""
-    c = Canvas(9.0, 3.2, WALL_PPM, IVORY, seed=101)
+    """North wall, seen from the room: s = x + 7. The board and both door openings
+    share this face; their actual geometry is cut into the wall in classroom.tscn."""
+    c = Canvas(14.0, 3.2, WALL_PPM, IVORY, seed=101)
     paint_wall(c)
     # The board is hung on a painted shadow: a cut-paper flat, offset down and right.
-    halo = c.rect_mask(2.2 + 0.07, 0.975 - 0.09, 7.2 + 0.11, 2.425 - 0.02, rough=0.5, cell_m=0.03)
+    halo = c.rect_mask(2.9 + 0.07, 0.975 - 0.09, 7.8 + 0.11, 2.425 - 0.02, rough=0.5, cell_m=0.03)
     c.paint(rgb(INK), halo, 0.42)
     # A sweep of grey where years of chalk dust have been wiped onto the wall.
     dust = [([(2.0, 0.9), (2.4, 0.7), (3.4, 0.82)], 0.12, {"bristles": 10, "dryness": 0.7}),
@@ -425,11 +425,10 @@ def wall_north() -> Image.Image:
 
 
 def wall_west() -> Image.Image:
-    """West (window) wall, seen from the room: s = 3.5 - z. Window glass spans y 1.07..2.37;
-    window 1 (z = 1.3) is s 1.45..2.95, window 0 (z = -1.7) is s 4.45..5.95."""
-    c = Canvas(7.0, 3.2, WALL_PPM, IVORY, seed=202)
+    """West window wall, seen from inside: s = 5 - z on the ten-metre side."""
+    c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=202)
     paint_wall(c)
-    for s0 in (1.45, 4.45):
+    for s0 in (2.8, 7.4):
         s1 = s0 + 1.5
         # The impossible light bleeds onto the plaster around each window.
         spill = c.polygon_mask(
@@ -446,16 +445,15 @@ def wall_west() -> Image.Image:
         c.paint(TEAL_DARK, reveal, 0.8)
         c.ink_line([(s0 - 0.14, 2.5), (s1 + 0.14, 2.5)], width_m=0.012, wobble_m=0.004, opacity=0.8)
         c.ink_line([(s0 - 0.15, 0.96), (s1 + 0.16, 0.95)], width_m=0.016, wobble_m=0.004, opacity=0.9)
-    # Below the back window: somebody's tally, and a second, shorter one beside it.
-    tally(c, 1.62, 0.5, 3, size=0.16)
-    tally(c, 2.3, 0.3, 1, size=0.11)
+    # Below the nearer window: somebody's tally, and a second, shorter one beside it.
+    tally(c, 3.0, 0.5, 3, size=0.16)
+    tally(c, 3.7, 0.3, 1, size=0.11)
     return c.image(40)
 
 
 def wall_east() -> Image.Image:
-    """East wall, seen from the room: s = z + 3.5. Almost empty: the pale ghosts of
-    notices that have been taken down, and a door someone drew where there is none."""
-    c = Canvas(7.0, 3.2, WALL_PPM, IVORY, seed=303)
+    """East wall, seen from the room: s = z + 5. Almost empty: pale ghosts of notices."""
+    c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=303)
     paint_wall(c)
     for s0, y0, w, h in ((1.2, 1.45, 0.62, 0.84), (2.05, 1.6, 0.44, 0.6), (4.6, 1.5, 0.8, 0.55)):
         ghost = c.rect_mask(s0, y0, s0 + w, y0 + h, rough=0.25, cell_m=0.03)
@@ -463,24 +461,13 @@ def wall_east() -> Image.Image:
         for cs, cy in ((s0, y0 + h), (s0 + w, y0 + h), (s0, y0), (s0 + w, y0)):
             tape = c.rect_mask(cs - 0.03, cy - 0.015, cs + 0.03, cy + 0.015, rough=0.2, cell_m=0.01)
             c.paint((210, 188, 140), tape, 0.75)
-    # A small chalk door on the wainscot, knob and all. It goes nowhere; it is a drawing.
-    d0, dw, dh = 5.7, 0.42, 0.78
-    c.chalk([(d0, 0.12), (d0, 0.12 + dh), (d0 + dw * 0.5, 0.12 + dh + 0.12), (d0 + dw, 0.12 + dh), (d0 + dw, 0.12)], 0.012, opacity=0.7)
-    c.chalk([(d0 + dw * 0.78, 0.5), (d0 + dw * 0.8, 0.52)], 0.03, opacity=0.8)
     return c.image(36)
 
 
-# South wall pieces, seen from the room: s = 4.5 - x. The door opening is s 0.7..1.9,
-# floor to 2.1 m; WallSouthRight is s 0..0.7, the lintel s 0.7..1.9 above 2.1 m and
-# WallSouthLeft s 1.9..9.0.
 def wall_south_full() -> Canvas:
-    c = Canvas(9.0, 3.2, WALL_PPM, IVORY, seed=404)
-    paint_wall(c, openings=[(0.7, -0.1, 1.9, 2.1)])
-    # A second, sketchier door frame drawn around the real one.
-    c.ink_line([(0.62, 0.0), (0.6, 2.2), (1.98, 2.21), (1.99, 0.0)], width_m=0.01, wobble_m=0.006, opacity=0.75, broken=0.4)
-    # Where the back board hangs (s 4.9..7.9), the same cut-paper shadow as at the front.
-    halo = c.rect_mask(4.9 + 0.06, 0.92 - 0.07, 7.9 + 0.09, 2.3 - 0.02, rough=0.5, cell_m=0.03)
-    c.paint(rgb(INK), halo, 0.38)
+    """South wall, seen from the room: a continuous fourteen-metre wall."""
+    c = Canvas(14.0, 3.2, WALL_PPM, IVORY, seed=404)
+    paint_wall(c)
     return c
 
 
@@ -492,64 +479,58 @@ def crop(c: Canvas, s0: float, s1: float, y0: float, y1: float, colors: int, alp
 
 
 def floor() -> Image.Image:
-    """The floor, 9 x 7 m, u along +x, v along +z (PlaneMesh). Seen from above: the
-    teacher's zone painted in front of the board, the aisles worn lighter, and the
-    window light laid down as painted shapes rather than computed."""
+    """Fourteen by ten metres of hand-painted cool concrete, with no plank or board grain."""
     ppm = 132.0
-    c = Canvas(9.0, 7.0, ppm, FLOOR, seed=505)
-    # Here `s` is x + 4.5 and `y` is 7 - (z + 3.5) = 3.5 - z, so y = 7 is the board wall.
+    c = Canvas(14.0, 10.0, ppm, FLOOR, seed=505)
     rng = c.rng
-    planks = []
-    y = -0.2
-    while y < 7.2:
-        width = rng.uniform(0.35, 0.7)
-        s0 = rng.uniform(-0.6, 0.4)
-        while s0 < 9.4:
-            length = rng.uniform(1.6, 3.4)
-            planks.append(([(s0, y), (s0 + length, y + rng.uniform(-0.05, 0.05))], width, {"bristles": 18, "dryness": 0.6, "wobble_m": 0.02}))
-            s0 += length * rng.uniform(0.6, 0.95)
-        y += width * rng.uniform(0.6, 0.9)
-    c.brush(jitter(FLOOR_LIGHT, rng, 0.02), planks[0::3], opacity=0.5)
-    c.brush(jitter(FLOOR_DARK, rng, 0.02), planks[1::4], opacity=0.45)
-    c.mottle(rgb(FLOOR_DARK), 1.4, 0.25)
-    # One broad violet-grey counterplane, kept away from the bright window side.
-    # Its broken edge is a paint boundary, never a raised sill or navigation obstacle.
-    cool = c.polygon_mask(
-        [(5.8, -0.1), (9.1, -0.1), (9.1, 5.3), (7.1, 4.65), (6.35, 2.1)],
-        rough=0.3, cell_m=0.17, blur_m=0.055,
-    )
-    c.paint((104, 110, 142), cool, 0.23)
-    # The two aisles between the desk columns (x = -1.25 and 1.25) and the cross aisle,
-    # worn paler by feet.
+    # Broad, broken dry-brush drags suggest trowelled cement without a directional wood grain.
+    drags = []
+    for _ in range(92):
+        x = rng.uniform(-0.4, 14.2)
+        y = rng.uniform(-0.3, 10.3)
+        length = rng.uniform(0.18, 1.25)
+        drift = rng.uniform(-0.16, 0.16)
+        width = rng.uniform(0.025, 0.15)
+        drags.append(([(x, y), (x + length * 0.48, y + drift), (x + length, y + drift * 0.4)], width,
+                      {"bristles": int(rng.integers(5, 12)), "dryness": rng.uniform(0.55, 0.85), "wobble_m": 0.025}))
+    c.brush(jitter(FLOOR_LIGHT, rng, 0.025), drags[::2], opacity=0.20, soften_m=0.025)
+    c.brush(jitter(FLOOR_DARK, rng, 0.02), drags[1::2], opacity=0.17, soften_m=0.02)
+    c.mottle(rgb(FLOOR_DARK), 1.8, 0.30)
+    # Pale, irregular worn lanes echo foot traffic; the marks remain pigment, not geometry.
     worn = []
-    for x in (-1.25, 1.25, 3.55):
-        worn.append(([(x + 4.5, 0.4), (x + 4.5 + rng.uniform(-0.1, 0.1), 5.6)], 0.55, {"bristles": 14, "dryness": 0.7, "wobble_m": 0.04}))
-    worn.append(([(0.6, 5.0), (8.6, 5.05)], 0.5, {"bristles": 14, "dryness": 0.7, "wobble_m": 0.03}))
-    c.brush(rgb(FLOOR_LIGHT), worn, opacity=0.35, soften_m=0.03)
-    # Window light: two skewed apricot planes thrown from the west windows (z = -1.7 and
-    # 1.3), leaning towards the door the way the sun in classroom.tscn leans.
-    for zc in (-1.7, 1.3):
-        y0 = 3.5 - (zc - 0.75)
-        y1 = 3.5 - (zc + 0.75)
-        light = c.polygon_mask([(0.05, y0), (0.05, y1), (2.05, y1 - 0.75), (2.15, y0 - 0.65)], rough=0.5, cell_m=0.06, blur_m=0.03)
-        c.paint(APRICOT, light, 0.42)
-        # The window bars, as shadow stripes across the light.
-        bar = c.polygon_mask([(0.05, (y0 + y1) / 2 + 0.04), (0.05, (y0 + y1) / 2 - 0.04), (2.1, (y0 + y1) / 2 - 0.74), (2.1, (y0 + y1) / 2 - 0.66)], rough=0.3, cell_m=0.02)
-        c.paint(FLOOR_DARK, bar, 0.55)
-    # The teacher's zone: a ragged, faded vermilion plane under the front desk and board.
-    stage = c.polygon_mask([(1.75, 7.1), (8.15, 7.1), (8.05, 5.85), (1.85, 5.92)], rough=0.55, cell_m=0.05, blur_m=0.015)
-    c.paint(STAGE, stage, 0.78)
-    stage_strokes = [([(2.0 + k * 1.3, 6.9), (2.9 + k * 1.3, 6.05)], 0.4, {"bristles": 14, "dryness": 0.6}) for k in range(5)]
-    c.brush(jitter(OXBLOOD, rng, 0.03), stage_strokes, opacity=0.35)
-    c.ink_line([(1.82, 5.9), (8.1, 5.84)], width_m=0.02, wobble_m=0.012, taper=False, broken=0.3, opacity=0.85)
-    # Where the floor meets the walls: a heavy drawn contour all the way round.
+    for x in (-4.8, -1.6, 1.6, 4.8):
+        sx = x + 7.0
+        worn.append(([(sx, 1.2), (sx + rng.uniform(-0.16, 0.16), 8.7)], 0.34,
+                     {"bristles": 12, "dryness": 0.72, "wobble_m": 0.06}))
+    worn.append(([(0.6, 7.55), (13.4, 7.4)], 0.42,
+                 {"bristles": 14, "dryness": 0.75, "wobble_m": 0.05}))
+    c.brush(rgb(FLOOR_LIGHT), worn, opacity=0.22, soften_m=0.06)
+    # Muted cool-grey trowel patches, softly feathered into the base coat.
+    for _ in range(7):
+        x = rng.uniform(0.4, 13.6)
+        y = rng.uniform(0.4, 9.6)
+        w = rng.uniform(0.7, 1.8)
+        h = rng.uniform(0.35, 1.0)
+        patch = c.polygon_mask(
+            [(x, y), (x + w * 0.8, y - 0.08), (x + w, y + h * 0.7), (x + w * 0.18, y + h)],
+            rough=0.55, cell_m=0.08, blur_m=0.10,
+        )
+        c.paint((112, 122, 136), patch, 0.12)
+    # A few soft window-light planes, deliberately cool and low saturation.
+    for zc in (-2.4, 2.2):
+        y0 = 5.0 - (zc - 0.75)
+        y1 = 5.0 - (zc + 0.75)
+        light = c.polygon_mask([(0.0, y0), (0.0, y1), (3.6, y1 - 1.2), (3.8, y0 - 1.0)],
+                               rough=0.55, cell_m=0.08, blur_m=0.08)
+        c.paint((165, 171, 178), light, 0.18)
+    # A restrained hand-inked room perimeter, not faux board seams.
     for pts in (
-        [(0.03, 0.03), (8.97, 0.04)],
-        [(0.03, 6.97), (8.97, 6.96)],
-        [(0.03, 0.03), (0.04, 6.97)],
-        [(8.97, 0.04), (8.96, 6.96)],
+        [(0.03, 0.03), (13.97, 0.04)],
+        [(0.03, 9.97), (13.97, 9.96)],
+        [(0.03, 0.03), (0.04, 9.97)],
+        [(13.97, 0.04), (13.96, 9.96)],
     ):
-        c.ink_line(pts, width_m=0.035, wobble_m=0.01, taper=False)
+        c.ink_line(pts, width_m=0.025, wobble_m=0.008, taper=False, opacity=0.75)
     return c.image(36)
 
 
@@ -918,9 +899,9 @@ def main() -> None:
     save(wall_west(), "wall_west.png")
     save(wall_east(), "wall_east.png")
     south = wall_south_full()
-    save(crop(south, 1.9, 9.0, 0.0, 3.2, 40, "opaque"), "wall_south_left.png")
-    save(crop(south, 0.0, 0.7, 0.0, 3.2, 40, "opaque"), "wall_south_right.png")
-    save(crop(south, 0.7, 1.9, 2.1, 3.2, 40, "opaque"), "wall_south_lintel.png")
+    save(crop(south, 0.0, 7.0, 0.0, 3.2, 40, "opaque"), "wall_south_left.png")
+    save(crop(south, 7.0, 14.0, 0.0, 3.2, 40, "opaque"), "wall_south_right.png")
+    save(crop(south, 0.0, 1.0, 2.1, 3.2, 40, "opaque"), "wall_south_lintel.png")
     save(floor(), "floor.png")
     save(board_front(), "board_front.png")
     save(board_back(), "board_back.png")

@@ -12,4 +12,6 @@ specular_mode = 2
 albedo_color = Color(1, 1, 1, 1)
 roughness = 1.0
 texture_filter = 3
+uv1_scale = Vector3(0.6714286, 1, 1)
+uv1_offset = Vector3(0, 0, 0)
 albedo_texture = ExtResource("1_tex")
