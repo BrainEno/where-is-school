@@ -296,8 +296,13 @@ func _check_click_where_standing_leaves_no_mark() -> void:
 	if not await _wait_until(func() -> bool: return not _player.is_path_active(), WALK_LIMIT_SECONDS):
 		_failures.append("click where standing: the walk there never arrived.")
 		return
-	await _wait_until(func() -> bool: return not _cue_drawn(), FADE_LIMIT_SECONDS)
+	# Start this case from a clean floor whatever the arrival did (case 1 is about that),
+	# so a mark seen below can only come from the click at the character's feet.
+	_navigator.cancel()
 	await _wait_seconds(0.3)
+	if _cue_drawn():
+		_failures.append("click where standing: cancel() did not clear the mark before the click.")
+		return
 	var screen: Variant = _ground_screen_near_player(_player.arrival_radius * 0.9)
 	if screen == null:
 		_failures.append(
