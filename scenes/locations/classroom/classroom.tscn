@@ -834,6 +834,7 @@ radius = 1.5
 position = Vector3(-4.0, 0.6, -1.45)
 interact_id = &"set_square"
 outline_paths = PackedStringArray("../../Props/SetSquare")
+support_paths = PackedStringArray("../../Furniture/FrontDesk")
 prompt_text = "Look at the set square"
 inspection_id = &"classroom_set_square"
 radius = 0.8

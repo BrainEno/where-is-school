@@ -92,8 +92,12 @@ func _run() -> void:
 	await _check_flicker_hold()
 	await _check_activation_matches_the_cue()
 	await _check_out_of_reach_is_not_a_target()
-	await _check_real_prop()
+	# The synthetic far probe is intentionally out of reach from its setup origin, but the
+	# real classroom door test teleports near that coordinate. Remove fixtures before
+	# switching from synthetic geometry to authored props.
 	_free_probes()
+	await _physics_frames(2)
+	await _check_real_prop()
 
 	Harness.finish(
 		self, _failures,

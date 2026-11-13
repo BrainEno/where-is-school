@@ -1982,6 +1982,11 @@ func _wait(seconds: float) -> void:
 	await process_frame
 
 
+func _physics_frames(count: int) -> void:
+	for _index in count:
+		await physics_frame
+
+
 ## The director locks the player while a beat plays, and beats can start at any
 ## time (the bell, the reminder, the arrival line). Nothing is pressed until
 ## control has actually come back, otherwise the input goes nowhere.
