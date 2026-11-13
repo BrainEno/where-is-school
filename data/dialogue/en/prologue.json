@@ -181,14 +181,14 @@
         {
           "id": "p_absent",
           "speaker": "protagonist",
-          "text": "I didn't go in?",
+          "text": "I never made it into the exam room?",
           "source": "observed",
           "next": "q_absent_1"
         },
         {
           "id": "q_absent_1",
           "speaker": "q",
-          "text": "You said you went to the wrong room and the invigilator wouldn't let you in. You never brought it up again.",
+          "text": "I think you never made it into the exam room. I don't know what happened after that. You never mentioned it again.",
           "next": "q_exam_end"
         },
         {
