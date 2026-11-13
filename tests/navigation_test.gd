@@ -460,9 +460,11 @@ func _check_permanent_block_gives_up() -> void:
 		return
 	var dest: Vector3 = destination
 	var direction := Vector3(dest.x - start.x, 0.0, dest.z - start.z).normalized()
+	var across := Vector3(-direction.z, 0.0, direction.x)
 	var wall_center := start + direction * 2.2
 	var wall := _add_slab(location, wall_center + Vector3.UP * 1.0, Vector3(0.3, 2.0, 4.0), "PhysicsOnlyWall")
-	wall.rotation.y = atan2(direction.x, direction.z)
+	# Thin along its own X, long along its own Z: the long axis goes across the route.
+	wall.rotation.y = atan2(across.x, across.z)
 	wall.collision_layer = PHYSICS_ONLY_LAYER
 	wall.collision_mask = 0
 	await _physics_frames(3)
@@ -486,6 +488,13 @@ func _check_permanent_block_gives_up() -> void:
 	var hit := _player.get_world_3d().direct_space_state.intersect_ray(ray)
 	if hit.is_empty() or hit.get("collider") != wall:
 		_failures.append("permanent block: the wall does not stand across the route (%s)." % str(hit))
+	else:
+		var hit_along := (Vector3(hit["position"]) - wall_center).dot(direction)
+		if absf(hit_along + 0.15) > 0.05:
+			_failures.append(
+				"permanent block: the route meets the wall %.2f m from its face; the wall is not "
+				% (hit_along + 0.15) + "square across the route."
+			)
 
 	for attempt in ["the first request", "a new request after giving up"]:
 		var report := await _walk_into_block(dest, wall_center, direction, String(attempt))
@@ -651,7 +660,7 @@ func _check_stale_route_recovers_with_one_reroute() -> void:
 	var wall := _add_slab(
 		location, wall_center + Vector3.UP * 1.0, Vector3(0.3, 2.0, half_length * 2.0), "StaleRouteWall"
 	)
-	wall.rotation.y = atan2(direction.x, direction.z)
+	wall.rotation.y = atan2(across.x, across.z)
 	await _rebake(nav)
 	var fresh := NavigationServer3D.map_get_path(
 		_player.navigation_agent.get_navigation_map(), _player.global_position, dest, true
