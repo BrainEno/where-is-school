@@ -11,12 +11,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "The alley is narrower than it looked from the courtyard: one skip, two drains, and a wall of notices stapled over each other."
+          "text": "Cars are parked along both sides of the alley. There's a skip on the left and a drainage channel on the right."
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "At the far end there is a gate in a fence, and past the gate the ground goes on without a building on it.",
+          "text": "At the far end, there's a gate in a fence. No building beyond it, just the ground carrying on. A textbook case of “Thomas architecture.”",
           "effects": [
             {
               "type": "set_flag",
@@ -39,7 +39,7 @@
         {
           "id": "aa_3",
           "speaker": "protagonist",
-          "text": "Nobody is in the alley. The gate is not locked.",
+          "text": "Nobody's here. The gate isn't locked, but somehow getting through it doesn't seem straightforward.",
           "next": null
         }
       ]
