@@ -249,6 +249,8 @@ jobs:
           run_check save_quit 300 godot --headless --path . --script res://tests/save_quit_test.gd || status=1
           # Synthetic pointer events need a real GUI viewport; run this standalone test under Xvfb.
           run_check title_menu_interaction 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd || status=1
+          # A new game that fails from the pause menu, the end card or the title is shown once, localised, with working focus (#146).
+          run_check new_game_failure_ui 300 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/new_game_failure_ui_test.gd || status=1
           # The settings themselves (#105, #106): every preference survives a restart without
           # touching `[display] locale`, damaged files and rule-breaking bindings fall back,
           # rebinding refuses what it must, a capture never traps or leaks input, the three
