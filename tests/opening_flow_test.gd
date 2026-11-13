@@ -689,12 +689,16 @@ func _check_targeting() -> void:
 		# zero-yaw cases imperceptibly so the requested facing is still installed.
 		var yaw := deg_to_rad(test_case["yaw"]) + deg_to_rad(0.01)
 		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), test_case["position"]))
-		await physics_frame
-		await physics_frame
-		# The camera rig follows a teleported player over several frames; the facing
-		# fallback also requires the object to be visible from the settled camera.
-		await get_tree().create_timer(0.4).timeout
-		var target := _interaction.get_current_target()
+		# Teleporting the player does not teleport the smoothed camera rig. Poll the
+		# real facing-target resolver until the object is visible from the settled view;
+		# a fixed two-frame snapshot was racing the camera after the room expansion.
+		var target: Interactable = null
+		var target_started := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - target_started < 3000:
+			target = _interaction.get_current_target()
+			if target != null and target.interact_id == test_case["expected"]:
+				break
+			await physics_frame
 		var found := String(target.interact_id) if target != null else "<nothing>"
 		if target == null or target.interact_id != test_case["expected"]:
 			_failures.append(
