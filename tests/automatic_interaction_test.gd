@@ -233,7 +233,10 @@ func _check_click_exit_transitions() -> void:
 func _check_authored_door_highlight_and_transition(exit: LocationExit) -> void:
 	_activations.clear()
 	_approaches_activated.clear()
-	var screen := _screen_of(exit.global_position)
+	var screen := _screen_for_target(exit)
+	if screen == Vector2.ZERO:
+		_failures.append("The classroom door's visible frame could not be pointed at.")
+		return
 	_interaction.set_mouse_override(screen)
 	await _physics_frames(3)
 	if _interaction.get_current_target() != exit or _interaction.get_highlighted() != exit:
@@ -578,8 +581,7 @@ func _stand_far_from(target: Interactable, min_distance: float, max_distance: fl
 				continue
 			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
-			var screen := _screen_of(target.global_position)
-			if _interaction.get_target_at_screen_position(screen, false) == target:
+			if _screen_for_target(target) != Vector2.ZERO:
 				return true
 	return false
 
@@ -589,16 +591,30 @@ func _stand_far_from(target: Interactable, min_distance: float, max_distance: fl
 func _stand_near(target: Interactable, min_distance: float, max_distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := target.global_position
-	for radius in [min_distance + 0.2, max_distance - 0.2]:
-		for index in 16:
-			var angle := TAU * float(index) / 16.0
+	# Search a broader ring than the nominal approach radius: the classroom's elevated
+	# stage and desk corners make a handful of snapped points poor representatives of the
+	# walkable floor around a door.
+	var radii: Array[float] = []
+	for step in 5:
+		var radius := min_distance + 0.15 + (max_distance - min_distance + 0.3) * float(step) / 4.0
+		if not radii.has(radius):
+			radii.append(radius)
+	for radius: float in radii:
+		for index in 24:
+			var angle := TAU * float(index) / 24.0
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
 				continue
-			_player.teleport(Transform3D(Basis.IDENTITY, Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+			if not _interaction.is_in_reach_at(snapped, target):
+				continue
+			var to_target := origin - snapped
+			var yaw := atan2(-to_target.x, -to_target.z)
+			if is_zero_approx(yaw):
+				yaw = deg_to_rad(0.01)
+			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
-			if _interaction.get_target_at_screen_position(_screen_of(target.global_position), false) == target:
+			if _screen_for_target(target) != Vector2.ZERO:
 				return true
 	return false
 
@@ -761,6 +777,38 @@ func _find_wall_screen_position() -> Vector2:
 				continue
 			if _navigator.is_enabled() and _navigator.can_walk_to_screen_position(screen):
 				continue
+			return screen
+	return Vector2.ZERO
+
+
+## A door's interaction anchor is in the middle of its opening, where there is no
+## outlined surface. Point at the visible frame instead: these are still rays through
+## the real interaction area, and the outline's depth-tested mesh is what the player sees.
+func _screen_for_target(target: Interactable) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null or target == null:
+		return Vector2.ZERO
+	var view := _player.get_viewport().get_visible_rect().size
+	var points: Array[Vector3] = [target.global_position]
+	for mesh: GeometryInstance3D in target.get_outline_meshes():
+		if mesh == null or not mesh.is_visible_in_tree():
+			continue
+		var bounds := mesh.get_aabb()
+		points.append(mesh.to_global(bounds.get_center()))
+		var xs: Array[float] = [bounds.position.x, bounds.end.x]
+		var ys: Array[float] = [bounds.position.y, bounds.end.y]
+		var zs: Array[float] = [bounds.position.z, bounds.end.z]
+		for x: float in xs:
+			for y: float in ys:
+				for z: float in zs:
+					points.append(mesh.to_global(Vector3(x, y, z)))
+	for point: Vector3 in points:
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		if screen.x < 1.0 or screen.y < 1.0 or screen.x >= view.x - 1.0 or screen.y >= view.y - 1.0:
+			continue
+		if _interaction.get_target_at_screen_position(screen, false) == target:
 			return screen
 	return Vector2.ZERO
 
