@@ -160,6 +160,7 @@
     "settings.action.toggle_language": "Switch language",
     "settings.action.toggle_fullscreen": "Fullscreen",
     "key.click": "Click",
-    "name.student": "Classmate"
+    "name.student": "Classmate",
+    "role.student": "classmate"
   }
 }
