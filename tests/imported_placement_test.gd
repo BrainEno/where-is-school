@@ -23,7 +23,7 @@ extends SceneTree
 ## So this test loads the real scenes — `classroom.tscn`, `player.tscn`,
 ## `companion.tscn`, `npc_actor.tscn` — and checks what the player sees and bumps into.
 ## It does not photograph anything (that is `capture_playthrough.gd`) and it is not a
-## layout review: the six desks are required to still be where they were.
+## layout review: the twelve desks are required to still be where they were.
 ##
 ## Where a number could be read off the thing being tested, it is read rather than
 ## copied: the desk's top is measured on the instantiated desk, and the character's feet
@@ -43,15 +43,21 @@ const Q_CHARACTER := "res://scenes/environment/characters/q.tscn"
 const N_CHARACTER := "res://scenes/environment/characters/teacher_n.tscn"
 const NPC_ACTOR := "res://scenes/actors/npc/npc_actor.tscn"
 
-## The six student desks, exactly where the classroom has always put them. The round that
-## swapped the model was allowed to move the chair inside the desk, not the furniture.
+## All twelve student desks in the expanded classroom. Each imported model remains
+## registered with its wrapper and one collider; adding rows does not change desk scale.
 const DESKS := {
-	"DeskA1": Vector3(-2.5, 0, -1.5),
-	"DeskA2": Vector3(0, 0, -1.5),
-	"DeskA3": Vector3(2.5, 0, -1.5),
-	"DeskB1": Vector3(-2.5, 0, 0.2),
-	"DeskB2": Vector3(0, 0, 0.2),
-	"DeskB3": Vector3(2.5, 0, 0.2),
+	"DeskA1": Vector3(-4.8, 0, -0.8),
+	"DeskA2": Vector3(-1.6, 0, -0.8),
+	"DeskA3": Vector3(1.6, 0, -0.8),
+	"DeskA4": Vector3(4.8, 0, -0.8),
+	"DeskB1": Vector3(-4.8, 0, 1.3),
+	"DeskB2": Vector3(-1.6, 0, 1.3),
+	"DeskB3": Vector3(1.6, 0, 1.3),
+	"DeskB4": Vector3(4.8, 0, 1.3),
+	"DeskC1": Vector3(-4.8, 0, 3.4),
+	"DeskC2": Vector3(-1.6, 0, 3.4),
+	"DeskC3": Vector3(1.6, 0, 3.4),
+	"DeskC4": Vector3(4.8, 0, 3.4),
 }
 ## The player's own desk, and therefore the one desk that carries the stationery.
 const OWN_DESK := "DeskB2"
@@ -121,7 +127,7 @@ func _run() -> void:
 
 	Harness.finish(
 		self, _failures,
-		"the six student desks are the imported model with one collider each, the "
+		"the twelve student desks are the imported model with one collider each, the "
 		+ "stationery sits on the player's own desk, the player and Q both wear their "
 		+ "authored models with their feet on the floor, the grayboxes are retired, and "
 		+ "N keeps his."
@@ -144,7 +150,7 @@ func _check_classroom(holder: Node3D) -> void:
 	await process_frame
 	await process_frame
 
-	_check_six_desks(location)
+	_check_student_desks(location)
 	_check_teacher_desk(location)
 	_check_stationery(location)
 
@@ -152,11 +158,20 @@ func _check_classroom(holder: Node3D) -> void:
 	location.free()
 
 
-func _check_six_desks(location: Node3D) -> void:
+func _check_student_desks(location: Node3D) -> void:
 	var furniture := location.get_node_or_null(^"Furniture")
 	if furniture == null:
 		_failures.append("The classroom has no Furniture node.")
 		return
+	var student_desk_count := 0
+	for child: Node in furniture.get_children():
+		if String(child.name).begins_with("Desk") and child is Node3D:
+			student_desk_count += 1
+	if student_desk_count != DESKS.size():
+		_failures.append(
+			"The expanded classroom has %d student desks; exactly %d are required."
+			% [student_desk_count, DESKS.size()]
+		)
 	for desk_name: String in DESKS:
 		var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
 		if desk == null:

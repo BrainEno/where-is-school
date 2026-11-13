@@ -8,7 +8,8 @@ const WALLS := {
 	"WallEast": Vector3.LEFT,
 	"WallSouthLeft": Vector3.FORWARD,
 	"WallSouthRight": Vector3.FORWARD,
-	"DoorLintel": Vector3.FORWARD,
+	"DoorLintel": Vector3.BACK,
+	"AnomalyDoorLintel": Vector3.BACK,
 }
 const SPOTS: Array[Vector3] = [
 	Vector3(0.0, 0.0, 0.85),
@@ -19,6 +20,8 @@ const SPOTS: Array[Vector3] = [
 	Vector3(-3.8, 0.0, -2.4),
 	Vector3(0.0, 0.0, -2.5),
 	Vector3(2.5, 0.0, 1.7),
+	Vector3(3.0, 0.12, -3.6),
+	Vector3(5.0, 0.0, -3.6),
 ]
 
 

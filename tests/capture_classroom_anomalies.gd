@@ -74,20 +74,20 @@ func _run() -> void:
 		return
 
 	# 1. Both windows: the front one ordinary (the washing), the back one curtained.
-	await _stand(Vector3(-2.7, 0.0, 0.2), Vector3.LEFT)
+	await _stand(Vector3(-5.9, 0.0, -0.1), Vector3.LEFT)
 	await _shot("01-windows.png")
 
-	# 2. The rear door open, from inside the room by the back wall.
+	# 2. The second door open, in the blackboard wall right of the classroom door.
 	await anomalies.call("open_rear_door", false)
 	stair.reveal(false)
-	await _stand(Vector3(-2.6, 0.0, 2.3), Vector3.BACK)
+	await _stand(Vector3(4.6, 0.0, -3.4), Vector3.FORWARD)
 	await _shot("02-rear-door.png")
 
-	# 3. The staircase over the teacher's desk, with the framing the beat uses.
-	await _stand(Vector3(0.0, 0.0, 0.85), Vector3.FORWARD)
+	# 3. The staircase in front of the lectern, with the framing the beat uses.
+	await _stand(Vector3(4.85, 0.0, -3.5), Vector3.FORWARD)
 	var rig := _player.camera_rig
 	if rig != null:
-		await rig.frame_point(Vector3.ZERO, 0.3)
+		await rig.frame_point(anomalies.call("stair_frame_point"), 0.3)
 		await _frames(20)
 	await _shot("03-staircase.png")
 	if rig != null:
@@ -95,11 +95,11 @@ func _run() -> void:
 
 	# 4. The back window once the curtain is drawn: no glass, no view.
 	await anomalies.call("draw_curtain", false)
-	await _stand(Vector3(-2.9, 0.0, 1.0), Vector3.LEFT)
+	await _stand(Vector3(-5.6, 0.0, 0.9), Vector3.LEFT)
 	await _shot("04-void.png")
 
 	# 5. Going over the sill (the beat's own departure, photographed part-way).
-	await _stand(Vector3(-3.6, 0.0, 1.3), Vector3.LEFT)
+	await _stand(Vector3(-5.9, 0.0, 2.2), Vector3.LEFT)
 	anomalies.call("_fall", _player)
 	await create_timer(1.1).timeout
 	await _shot("05-fall.png")

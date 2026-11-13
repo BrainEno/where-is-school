@@ -1103,12 +1103,12 @@
         {
           "id": "rd_1",
           "speaker": "protagonist",
-          "text": "The rear door opens onto wall: plaster, the same paint as the rest of the room, flush with the frame."
+          "text": "The second door opens onto wall: plaster, the same paint as the rest of the room, set back in the frame."
         },
         {
           "id": "rd_2",
           "speaker": "protagonist",
-          "text": "And at the front of the room, where there was nothing a moment ago, a staircase comes down out of the ceiling and stops in front of the teacher's desk, two metres up."
+          "text": "And at the front of the room, where there was nothing a moment ago, a staircase comes down out of the ceiling and stops in front of the lectern, two metres up."
         },
         {
           "id": "rd_3",
@@ -1120,7 +1120,7 @@
               "entry_id": "saw_suspended_stair",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "Opening the classroom's rear door put a staircase in the room. It hangs from the ceiling in front of the teacher's desk, held by nothing."
+              "text": "Opening the second door in the classroom's blackboard wall put a staircase in the room. It hangs from the ceiling in front of the lectern, held by nothing."
             }
           ],
           "next": null

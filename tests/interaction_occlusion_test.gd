@@ -281,7 +281,7 @@ func _check_bag_on_a_desk() -> void:
 ## height, and the same wall must block from a crouched one.
 func _check_eye_heights() -> void:
 	await _reset()
-	var target := _make_probe(&"occlusion_height", Vector3(0.0, 1.2, -1.6))
+	var target := _make_probe(&"occlusion_height", Vector3(0.0, 0.9, -1.6))
 	# 0.9 m tall: above a crouched eye, below a standing one.
 	_make_wall(Vector3(0.0, 0.45, -0.6), Vector3(4.0, 0.9, 0.2))
 	await _physics_frames(4)
@@ -685,7 +685,7 @@ func _check_dropped_targets_leave_nothing() -> void:
 # --- case 10: the real classroom ------------------------------------------------
 
 
-## The timetable sheet is a thin sheet on the inside of the south wall (`WallSouthLeft`,
+## The timetable sheet is a thin sheet on the inside of the south wall (`WallSouthRight`,
 ## opaque until the camera's fader dims it). The fixed camera sits south of the player, so
 ## it always looks at that wall from outside: the sheet is on screen only through the wall
 ## while the wall is faded. The #111 capture stood at SHEET_SPOT_111, where the fader's ray
@@ -695,9 +695,9 @@ func _check_dropped_targets_leave_nothing() -> void:
 
 func _check_classroom_timetable() -> void:
 	var sheet := _location.find_interactable(&"timetable")
-	var wall := _location.get_node_or_null("WallSouthLeft") as StaticBody3D
+	var wall := _location.get_node_or_null("WallSouthRight") as StaticBody3D
 	if sheet == null or wall == null:
-		_failures.append("Case 10: the classroom lost the timetable or WallSouthLeft.")
+		_failures.append("Case 10: the classroom lost the timetable or WallSouthRight.")
 		return
 	var authored := load("res://assets/materials/classroom/wall_section.tres") as BaseMaterial3D
 	print(
@@ -724,7 +724,7 @@ func _check_classroom_timetable() -> void:
 	# wall, so the camera sees the sheet through it.
 	var spot := await _find_faded_spot(sheet, wall)
 	if spot == Vector3.INF:
-		_failures.append("Case 10b: no standing spot in front of the sheet dims WallSouthLeft.")
+		_failures.append("Case 10b: no standing spot in front of the sheet dims WallSouthRight.")
 	else:
 		var b := await _measure_sheet_view("b faded wall", sheet, wall, spot, sheet.global_position)
 		var drawn := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override as BaseMaterial3D
@@ -755,15 +755,15 @@ func _check_classroom_timetable() -> void:
 	var rest := (wall.get_node("MeshInstance3D") as GeometryInstance3D).material_override
 	if _wall_transparency(wall) > 0.0 or rest != authored:
 		_failures.append(
-			"WallSouthLeft did not get its authored material back after the fade (%s, transparency %.2f)."
+			"WallSouthRight did not get its authored material back after the fade (%s, transparency %.2f)."
 			% [str(rest), _wall_transparency(wall)]
 		)
 
 	# (c) Behind the wall: the player outside, looking at its back.
-	var back := Vector3(1.6, 0.0, 4.3)
+	var back := Vector3(1.6, 0.0, 5.7)
 	# The classroom floor ends under the wall. A collider-only slab (nothing drawn, so the
-	# camera's view is unchanged) keeps the player standing at eye height out there.
-	_make_wall(Vector3(1.6, -0.1, 4.6), Vector3(3.0, 0.2, 1.6))
+	# camera's view is unchanged) keeps the player standing at eye height beyond it.
+	_make_wall(Vector3(1.6, -0.1, 5.7), Vector3(3.0, 0.2, 1.6))
 	await _physics_frames(2)
 	var c := await _measure_sheet_view("c behind the wall", sheet, wall, back, sheet.global_position)
 	if bool(c["eye"]):
@@ -773,7 +773,7 @@ func _check_classroom_timetable() -> void:
 	_clean_up()
 
 	# (d) The edge: a walk along the room past the end of the wall, where the fader's ray
-	# leaves WallSouthLeft and the wall turns opaque again. The pointer must follow the
+	# leaves WallSouthRight and the wall turns opaque again. The pointer must follow the
 	# wall's drawn state step by step: never a pick through an opaque wall.
 	var lines: Array[String] = []
 	var flips := 0
@@ -893,10 +893,10 @@ func _measure_sheet_view(
 	return result
 
 
-## A spot in front of the sheet from which the camera's fader dims WallSouthLeft, and from
+## A spot in front of the sheet from which the camera's fader dims WallSouthRight, and from
 ## which the sheet is in reach and in the player's sight. Vector3.INF if there is none.
 func _find_faded_spot(sheet: Interactable, wall: StaticBody3D) -> Vector3:
-	for z in [2.7, 2.5, 2.9]:
+	for z in [4.0, 3.8, 4.2]:
 		for x in [1.6, 1.2, 0.8, 2.0, 0.4]:
 			var at := Vector3(x, 0.0, z)
 			_player.teleport(Transform3D(_yaw_towards(at, sheet.global_position), at))

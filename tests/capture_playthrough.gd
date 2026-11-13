@@ -145,10 +145,18 @@ func _run() -> void:
 		_failures.append("The schoolbag was never offered as an interaction target.")
 		await _shot("FAIL_schoolbag_prompt", "No prompt appeared for the schoolbag.")
 	await _shot("04_prompt_schoolbag", "The interaction prompt with the key that is bound in the input map.")
+	# Reassert the real pointer target after the capture frame. The camera may have settled
+	# during the screenshot; E must activate the same visible schoolbag prompt, not a stale
+	# target from the previous frame.
+	if not await _wait_for_target(&"schoolbag", 5.0):
+		await _fail("the schoolbag prompt was lost before pressing E")
+		return
 
 	# 5. Press E and photograph the description.
 	await _press(KEY_E)
-	if not await _wait_for_line(5.0):
+	# The schoolbag description is deliberately a full paragraph; wait for its
+	# typewriter reveal instead of mistaking a mid-line screenshot for no response.
+	if not await _wait_for_line(15.0):
 		await _fail("pressing E on the schoolbag showed nothing")
 		return
 	await _wait(0.6)
@@ -171,7 +179,7 @@ func _run() -> void:
 
 	# 7. An object read a second time, in Chinese.
 	await _press(KEY_E)
-	if await _wait_for_line(5.0):
+	if await _wait_for_line(15.0):
 		await _wait(0.6)
 		await _shot("08_repeat_read_chinese", "The second read of the same object, in Chinese.")
 	await _drive_until(func() -> bool: return not _dialogue.is_busy(), 30.0, "the second read to close")
@@ -183,7 +191,8 @@ func _run() -> void:
 		_failures.append("Q has no interaction point in the classroom.")
 	else:
 		await _wait_for_free(60.0)
-		_teleport(Vector3(-1.32, 0, 1.75), 0.0)
+		_teleport(Vector3(-3.2, 0, 2.9), 0.0)
+		await _wait_for_free(30.0)
 		if await _wait_for_target(&"q_talk", 30.0):
 			await _shot("09_prompt_talk_chinese", "The prompt for a conversation, in Chinese.")
 		# The conversation itself is started with the mouse, from out of reach: the
@@ -253,7 +262,9 @@ func _run() -> void:
 	if door == null:
 		_failures.append("The classroom door is missing.")
 	else:
-		_teleport(Vector3(3.2, 0, 2.55), 180.0)
+		await _wait_for_free(30.0)
+		_teleport(Vector3(3.0, 0, -3.0), 0.0)
+		await _wait_for_free(15.0)
 		await _wait_for_target(&"classroom_door", 5.0)
 		await _shot("12_door_prompt", "The classroom door is open: its prompt changed with the story.")
 		# The transition is made with the mouse if the door is under the cursor; E stays
@@ -498,20 +509,18 @@ func _capture_free_period() -> void:
 		_failures.append("The walkway has no door to the yard.")
 		return
 	await _wait_for_free(45.0)
-	_teleport(Vector3(0.0, 0, -4.2), 1.0)
-	await _wait(0.3)
-	# Walk in short pulses and stop as soon as the door is offered. A single long
-	# hold overshoots into the end wall, where the door is no longer in front.
-	var reached := false
-	for _pulse in 8:
-		Input.action_press("move_forward")
-		await _wait(0.25)
-		Input.action_release("move_forward")
-		await _wait(0.15)
-		if await _wait_for_target(&"to_schoolyard", 1.0):
-			reached = true
-			break
-	if not reached:
+	# Camera-relative forward pulses drifted across the corridor instead of towards the
+	# end door. Ask the same navigation path used by click-to-move for a floor point just
+	# in front of it; the player still walks the route under normal movement physics.
+	if not _player.request_path_to(Vector3(0.0, 0.0, -6.6)):
+		_failures.append("The walkway could not route the player to the end door.")
+		await _shot("FAIL_yard_door_path", "The navigation route to the end door was refused.")
+		return
+	if not await _poll(func() -> bool: return not _player.is_path_active(), 12.0):
+		_player.cancel_path()
+		_failures.append("Walking the navigation route to the end door did not finish.")
+		return
+	if not await _wait_for_target(&"to_schoolyard", 8.0):
 		_failures.append("Walking to the end door did not offer it as a target.")
 	await _shot("13e_yard_door_prompt", "The end door of the walkway, reached on foot.")
 	await _press(KEY_E)
@@ -723,7 +732,7 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 
 ## The four imported models, in the room the player is standing in.
 ##
-## The classroom's six student desks, the stationery on the player's own desk, the
+## The classroom's twelve student desks, the stationery on the player's own desk, the
 ## player's own model and Q. These are frames of the running game — the same window, the
 ## same light, the same baked navigation as every other frame in this run — from a camera
 ## the capture places for the purpose, because the player's own camera is nailed to the
@@ -743,7 +752,11 @@ func _capture_imported_models() -> void:
 	# The scene the frames are supposed to show, checked before it is photographed: a
 	# missing model is a defect in the build, not a bad camera angle.
 	var furniture := classroom.get_node_or_null(^"Furniture")
-	var desk_names: Array[String] = ["DeskA1", "DeskA2", "DeskA3", "DeskB1", "DeskB2", "DeskB3"]
+	var desk_names: Array[String] = [
+		"DeskA1", "DeskA2", "DeskA3", "DeskA4",
+		"DeskB1", "DeskB2", "DeskB3", "DeskB4",
+		"DeskC1", "DeskC2", "DeskC3", "DeskC4",
+	]
 	var with_models := 0
 	if furniture != null:
 		for desk_name: String in desk_names:
@@ -768,12 +781,11 @@ func _capture_imported_models() -> void:
 
 	var player_camera := _main.get_node_or_null(^"CameraRig/Camera3D") as Camera3D
 
-	# 1. The room from the back, over both rows: six desks, six chairs.
+	# 1. A high rear view takes in all three rows without staging or moving the furniture.
 	await _shot_from_camera(
-		Vector3(0.0, 2.7, 3.25), Vector3(0.0, 0.5, -0.85),
+		Vector3(0.0, 5.5, 8.4), Vector3(0.0, 0.6, 0.1),
 		"03h_classroom_desks",
-		"The classroom from the back: six student desks with the imported model and their "
-		+ "chairs, at the positions the room has always had."
+		"The expanded classroom: all twelve student desks and chairs across three rows."
 	)
 
 	# 2. The player's own desk, close enough to see what is on it.
@@ -883,11 +895,11 @@ func _capture_n_at_the_front(n_actor: NpcActor) -> void:
 	var forward := _planar_forward(n_actor)
 	_note("N at the front: position %s, facing %s, visible %s" % [str(at), str(forward), n_actor.visible])
 	await _shot_from_camera(
-		at + forward * 2.3 + Vector3(0.0, 1.28, 0.0),
-		at + Vector3(0.0, 1.0, 0.0),
+		at + Vector3(4.2, 1.5, 0.0),
+		at + Vector3(0.0, 1.25, 0.0),
 		"11d_n_at_the_front",
 		"N at the front of the classroom after dismissing the class, head to feet, from the "
-		+ "side N faces, under the nameplate the game shows.",
+		+ "clear side of the room, under the nameplate the game shows.",
 		n_actor.get_node_or_null(^"Nameplate") as Node3D,
 		func(camera: Camera3D) -> void: await _inspect_n_frame(camera, n_actor, "n_at_the_front", 220)
 	)
@@ -1831,28 +1843,45 @@ func _cursor_onto(target: Interactable) -> Vector2:
 func _position_near(target: Interactable, distance: float) -> bool:
 	var map := _player.navigation_agent.get_navigation_map()
 	var origin := target.global_position
-	for index in 16:
-		var angle := TAU * float(index) / 16.0
-		var candidate := origin + Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
-		var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
-		if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
-			continue
-		var to_target := origin - snapped
-		var yaw := atan2(-to_target.x, -to_target.z)
-		_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
-		await _wait(0.2)
-		# The camera trails the body and the visibility ray is cast from wherever it has got
-		# to, so a teleport needs a frame or two before the object is under the cursor. One
-		# check after a fixed sleep made this the flakiest step in the capture: give it half
-		# a second instead of one frame, and only then move on to the next angle.
-		if await _poll(
-			func() -> bool:
-				return _interaction.get_target_at_screen_position(
-					_screen_position_of(target), false
-				) == target,
-			0.5
-		):
-			return true
+	# The classroom's desk rows make one exact-radius ring brittle: a nearby chair can
+	# consume every snapped point even though the object has reachable floor around it.
+	var radii: Array[float] = []
+	for requested: float in [distance - 0.35, distance, distance + 0.35, distance + 0.7]:
+		var radius := clampf(requested, 0.6, _interaction.max_distance - 0.1)
+		if not radii.has(radius):
+			radii.append(radius)
+	for radius: float in radii:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.5:
+				continue
+			if not _interaction.is_in_reach_at(snapped, target):
+				continue
+			var to_target := origin - snapped
+			var yaw := atan2(-to_target.x, -to_target.z)
+			if is_zero_approx(yaw):
+				yaw = deg_to_rad(0.01)
+			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
+			await _wait(0.2)
+			# The camera trails the body and the visibility ray is cast from wherever it has got
+			# to, so a teleport needs a frame or two before the object is under the cursor. One
+			# check after a fixed sleep made this the flakiest step in the capture: give it half
+			# a second instead of one frame, and only then move on to the next angle.
+			if await _poll(
+				func() -> bool:
+					return _interaction.get_target_at_screen_position(
+						_screen_position_of(target), false
+					) == target,
+				0.5
+			):
+				# A ray query proves the spot, but it does not move the real cursor. Place the
+				# cursor on the target too: the screenshot, prompt and E press must all exercise
+				# the same pointer-selected object.
+				await _mouse_to_world(target.global_position)
+				await _physics_frames(2)
+				return true
 	return false
 
 
@@ -1861,6 +1890,49 @@ func _screen_position_of(target: Node3D) -> Vector2:
 	if camera == null or target == null:
 		return Vector2.ZERO
 	return camera.unproject_position(target.global_position)
+
+
+## Some interaction anchors sit in empty space (notably the centre of a doorway). Aim at
+## one of the actual outlined meshes so the cursor, visible highlight and prompt agree.
+func _screen_position_for_interactable(target: Interactable) -> Vector2:
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null or target == null:
+		return Vector2.ZERO
+	var view := _player.get_viewport().get_visible_rect().size
+	var points: Array[Vector3] = [target.global_position]
+	for mesh: GeometryInstance3D in target.get_outline_meshes():
+		if mesh == null or not mesh.is_visible_in_tree():
+			continue
+		var bounds := mesh.get_aabb()
+		points.append(mesh.to_global(bounds.get_center()))
+		var xs: Array[float] = [bounds.position.x, bounds.end.x]
+		var ys: Array[float] = [bounds.position.y, bounds.end.y]
+		var zs: Array[float] = [bounds.position.z, bounds.end.z]
+		for x: float in xs:
+			for y: float in ys:
+				for z: float in zs:
+					points.append(mesh.to_global(Vector3(x, y, z)))
+	for point: Vector3 in points:
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		if screen.x < 1.0 or screen.y < 1.0 or screen.x >= view.x - 1.0 or screen.y >= view.y - 1.0:
+			continue
+		if _interaction.get_target_at_screen_position(screen, false) == target:
+			return screen
+	return Vector2.ZERO
+
+
+func _mouse_over_interactable(target: Interactable) -> void:
+	if target.interact_id != &"classroom_door" and target.interact_id != &"to_schoolyard":
+		await _mouse_to_world(target.global_position)
+		return
+	var screen := _screen_position_for_interactable(target)
+	if screen == Vector2.ZERO:
+		await _mouse_to_world(target.global_position)
+		return
+	Input.warp_mouse(screen)
+	await process_frame
 
 
 ## A real left click at a screen position: cursor first, then press and release
@@ -1940,7 +2012,12 @@ func _press(keycode: Key) -> void:
 
 
 func _teleport(position: Vector3, yaw_degrees: float) -> void:
-	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(yaw_degrees)), position))
+	# PlayerController.teleport treats an identity basis as position-only, so preserve the
+	# requested -Z facing for the common zero-yaw case with an imperceptible offset.
+	var yaw := deg_to_rad(yaw_degrees)
+	if is_zero_approx(yaw):
+		yaw = deg_to_rad(0.01)
+	_player.teleport(Transform3D(Basis(Vector3.UP, yaw), position))
 
 
 # --- waiting ----------------------------------------------------------------
@@ -1950,6 +2027,11 @@ func _wait(seconds: float) -> void:
 	if seconds > 0.0:
 		await create_timer(seconds).timeout
 	await process_frame
+
+
+func _physics_frames(count: int) -> void:
+	for _index in count:
+		await physics_frame
 
 
 ## The director locks the player while a beat plays, and beats can start at any
@@ -1976,6 +2058,13 @@ func _wait_for_line(timeout_seconds: float) -> bool:
 
 
 func _wait_for_target(interact_id: StringName, timeout_seconds: float) -> bool:
+	# This is an on-screen prompt check: put the real cursor on the authored target rather
+	# than relying on the last unrelated cursor position left by an earlier screenshot.
+	var location := _host.get_current() if _host != null else null
+	var interactable := location.find_interactable(interact_id) if location != null else null
+	if interactable != null:
+		await _mouse_over_interactable(interactable)
+		await _physics_frames(2)
 	var found := await _poll(func() -> bool:
 		var target := _interaction.get_current_target()
 		return target != null and target.interact_id == interact_id and not _ui.hud.get_prompt_text().is_empty(),

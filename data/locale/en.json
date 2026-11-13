@@ -106,6 +106,15 @@
     "menu.confirm_quit_no_save": "The game cannot save right now, and nothing has been saved yet. If you quit, the next game starts from the beginning.",
     "menu.confirm_quit_failed": "The game could not be saved: {detail}. The last save is not affected.",
     "menu.confirm_quit_yes": "Quit",
+    "menu.new_game_failed.save_stage_failed": "The new game did not start: the save file could not be moved aside.",
+    "menu.new_game_failed.scene_change_failed": "The new game did not start: the opening could not be loaded.",
+    "menu.new_game_failed.staged_discard_failed": "The new game did not start: the old save could not be removed.",
+    "menu.new_game_failed.state_left": "The new game did not start: the last run could not be cleared.",
+    "menu.new_game_failed.unknown": "The new game did not start.",
+    "menu.new_game_failed.busy": "A new game is already starting. Wait a moment, then try again.",
+    "menu.new_game_failed.kept": "Nothing was lost: your save and your progress are as they were.",
+    "menu.new_game_failed.save_lost": "The old save could not be put back. A copy is at {path}.",
+    "menu.new_game_failed.retry": "You can try again.",
     "place.classroom": "Classroom",
     "place.corridor": "Corridor",
     "place.street": "Street",
@@ -165,6 +174,6 @@
     "prompt.curtain": "Look at the curtain",
     "prompt.curtain_retry": "Try the curtain again",
     "prompt.curtain_drawn": "Look out of the back window",
-    "prompt.rear_door_open": "Look at the rear door"
+    "prompt.rear_door_open": "Look at the second door"
   }
 }

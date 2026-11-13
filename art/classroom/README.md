@@ -18,10 +18,13 @@ children of the bodies, so the camera occluder fades them along with their wall.
 
 ## Identity: what makes this room *this* classroom
 
-The classroom's look comes from the room itself: a teal wainscot, a muted rose teacher's
-zone on the floor, muted rose board/door frames, violet-grey shadow planes, and ochre
-light coming in where it should not. The space above the board stays empty; the former
-red pseudo-writing banner and its generation code have been deleted. There is no screen-wide "oil paint" filter. Walls and functional props
+The classroom is a 14 × 10 m space with a quiet cool-gray concrete floor, a low concrete
+teacher's platform with a real step, and a curved high lectern. Twelve student desk/chair
+assemblies sit in four columns by three rows, leaving broad cross-aisles and routes to the
+board, paired doors and story props. Facing the board, the normal corridor exit and the
+separate anomaly door share its right-hand wall; `RearDoorAnomalyMount` is the stable
+integration point. Both west windows retain curtain rods and mount markers. The space above
+the board stays empty; the former red pseudo-writing banner and its generation code have been deleted. There is no screen-wide "oil paint" filter. Walls and functional props
 keep `StandardMaterial3D` (toon diffuse, no specular). The student desks replace their
 photographic PBR surface with the classroom-owned `student_wood.tres`, referencing the
 existing environment pigment shader read-only. There is no photographic albedo/normal/ORM
@@ -35,8 +38,8 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Section | `#4F4754` | Wall tops and outer faces: the room reads as a cut-away model |
 | Plaster | `#CEC2BB` / light `#E9D5AB` / shade `#9697A7` | Upper walls: broad vertical brush planes |
 | Wainscot | `#47656F` / dark `#364555` | The band under 1.05 m, skirting, window frames |
-| Floor | `#898486` | Plank strokes; the aisles are worn paler |
-| Teacher's zone | `#785148` | Ragged painted plane under the front desk and board |
+| Floor | `#7E848C` base / cool mineral gray | Broken trowel strokes, light scuffs and soft concrete mottling; no plank grain |
+| Teacher's platform | Cool concrete (`cement_stage.tres`) | Physically raised 0.12 m, with a lower broad approach step |
 | Board | `#243D3F` + chalk `#D6DCCE` | The wiped-not-quite front board, the old chalk newspaper on the back wall |
 | Oxblood lacquer | `#6E3C36` | Board frame, teacher's desk panels, door frame: the *authority* objects |
 | Apricot | `#E0A569` / pale `#EFCD97` | The impossible late light: the window view, its spill on the wall, its shapes on the floor |
@@ -66,10 +69,11 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
   a pencil height chart someone started by the door and gave up on.
 - **Window wall:** apricot spill around both windows, a painted reveal, and chalk tallies
   under the back window.
-- **East wall:** pale ghosts of notices that have been taken down, with their tape, and a
-  small chalk door that leads nowhere.
-- **Back wall:** a sketchy second door frame drawn around the real one, and an old chalk
-  newspaper in coloured chalk (a leaf, a fish skeleton, a flower; nothing legible).
+- **East wall:** pale ghosts of notices that have been taken down, with their tape; the
+  only visible doorways are the paired openings on the board wall.
+- **South wall:** an old chalk newspaper in coloured chalk (a leaf, a fish skeleton, a flower; nothing legible).
+- **Blackboard wall:** the actual segmented wall opening carries the corridor exit and
+  the anomaly opening to the right of the board; their lintels close the wall above the doors.
 - **Front board:** heading and date-column ghosts under the eraser arcs, which match the
   inspection text (*LAST TERM — REVISION*, a date three weeks old). They are kept
   illegible on purpose, so the board needs no localisation.
@@ -81,9 +85,9 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 |---|---|
 | Board wiped, then not quite; chalk tray with one broken stick and a clip | `Board/Face` texture, `ChalkBrokenEnd`, `Clip`, chalk dust on the tray |
 | Two panes, one cracked and taped; wet concrete, low wall, bins; late-afternoon light | `WindowGlass0` (crack + tape), `window_view.png` |
-| (curtain lines) The front window is ordinary, washing pegged out on a line; the back window has its curtain drawn | `window_view.png`, window 0's third only (s 3.0–4.5 m) carries the washing; `Anomalies/BackCurtain` hangs over Window1 |
+| (curtain lines) The front window is ordinary, washing pegged out on a line; the back window has its curtain drawn | `window_view.png`, window 0's third only (s 3.0–4.5 m) carries the washing; `Anomalies/BackCurtain` hangs over Window1 at `WindowCurtainMount1`, room-side of the window's own tie-back panels (`WallWest/CurtainRod1`, `CurtainPanel1L/R`, which stay) |
 | (curtain lines) Behind the curtain: no glass, the wall's own thickness, then nothing | `Anomalies/VoidOpening` (`void_opening.tres` / `.gdshader`, a parallax hole) replaces `WindowGlass1`/`WindowGlow1`/`WindowMullion1` |
-| (rear door) Plaster behind the door; a staircase from the ceiling stopping in front of the teacher's desk, two metres up | `WallSouthLeft/RearDoor` (owner's door GLB, 0.8 width), `Anomalies/Staircase` (7 treads; bottom tread ≈ 2.06 m, lowest stringer corner ≈ 1.82 m) |
+| (the second door) Plaster behind the door; a staircase from the ceiling stopping in front of the lectern, two metres up | The room's own anomaly door (`WallNorth/RearDoorAnomalyMount`: `DoorLeaf` + `AnomalyDoorInlay`), turned 75° into the room by `Hinge` (`SwingDoor`, which adopts the leaf meshes at load); `DoorwayBacking` is the plaster behind it. `Anomalies/Staircase` over the stage in line with `Stage/Lectern` (7 treads; bottom tread ≈ 2.06 m, lowest stringer corner ≈ 1.82 m, ending at the lectern's front edge) |
 | Set square, forearm length, pale varnish, split corner taped with browned tape, taped corner faces the room | `set_square.tscn` now lies flat (0.55 × 0.42 m; the prism's size axes were swapped), `TapeRepair` in browned tape, ink ticks |
 | Own desk: scratched-out name, half-peeled sticker, groove along the front edge | `Furniture/DeskB2/DeskMarks` decal |
 | Teacher's desk: register in plastic, stapler, mug of chalk, chair pushed in at an angle, tidier | `Register` + label, `Stapler`, `Mug` with three sticks, `Papers`, the new `Chair` |
@@ -107,9 +111,22 @@ pixel measurements, baseline-noise comparison and explicit platform limits are r
 in `docs/screenshots/classroom_art_review/README.md`. Runtime evidence is not a substitute
 for owner art review or target-GPU acceptance.
 
-## What did not change
+## Geometry and gameplay contract
 
-Room size, walls, door gap, desk grid, spawn points, every interactable and its
-position, and the `Sun` / `WorldEnvironment` nodes stay in place. Their local light colors and
-energies are tuned for warm/cool painted planes rather than overexposed PBR highlights. No new
-colliders were added, so the runtime navigation bake sees exactly the same solids.
+The classroom shell is 14 × 10 m with a 3.2 m wall height. The north/blackboard wall is
+segmented around two 1.2 m-wide door openings. `classroom_door` retains its original ID,
+blocked inspection and corridor destination; the second doorway exposes
+`WallNorth/RearDoorAnomalyMount` for later integration. Two marker nodes,
+`WindowCurtainMount0` and `WindowCurtainMount1`, reserve attachment points above the west
+windows. The stage and its step are actual colliders: the 0.12 m rise stays below the
+player's 0.25 m step-up and the navmesh's 0.25 m climb. The high circular/curved lectern
+is separate from the retained inspection desk. Q/N states, inspection IDs, `Sun`,
+`WorldEnvironment` and the classroom-to-corridor transition remain in place.
+
+`tests/classroom_visual_slice_test.gd` retains the previous colour, texture, inspection,
+wall-fade, camera and navigation checks, and now also asserts the expanded shell, all 12
+seats, the two same-wall doors, the anomaly mount, physical step/platform, curved high
+lectern, curtain markers and all three initial story positions. `tests/capture_classroom_art.gd`
+produces eight real 1600 × 900 images, including the five requested architectural views;
+it rejects headless output. The `Classroom visual evidence` PR workflow renders the eight views
+under Godot 4.7.2 Stable and publishes them as a downloadable CI artifact.

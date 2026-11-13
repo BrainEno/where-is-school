@@ -33,9 +33,9 @@ const REAR_DOOR_OPEN_INSPECTION := &"classroom_rear_door_open"
 const CURTAIN_DRAWN_PROMPT := "prompt.curtain_drawn"
 const CURTAIN_RETRY_PROMPT := "prompt.curtain_retry"
 const REAR_DOOR_OPEN_PROMPT := "prompt.rear_door_open"
-## A floor point that frames the player at the rear door and the whole staircase at once
-## from the game camera's fixed angle (measured with its offset and field of view).
-const STAIR_FRAME_POINT := Vector3(0.0, 0.0, 0.0)
+## A floor point between the second door (where the player stands, x 4.85) and the staircase
+## over the front of the lectern (x 0.7), so the game camera holds both at once.
+const STAIR_FRAME_POINT := Vector3(2.7, 0.0, -2.7)
 const STAIR_FRAME_SECONDS := 1.4
 const STAIR_RELEASE_SECONDS := 1.1
 ## The fall: a lean over the sill, then the drop, which keeps going while the screen goes
@@ -56,7 +56,7 @@ const FALL_ROLL_DEGREES := -9.0
 
 @export var curtain_path: NodePath = ^"BackCurtain"
 @export var void_path: NodePath = ^"VoidOpening"
-@export var door_path: NodePath = ^"../WallSouthLeft/RearDoor"
+@export var door_path: NodePath = ^"../WallNorth/RearDoorAnomalyMount/Hinge"
 @export var stair_path: NodePath = ^"Staircase"
 @export var curtain_interactable_path: NodePath = ^"../Interactables/CurtainDraw"
 @export var door_interactable_path: NodePath = ^"../Interactables/RearDoorTry"
@@ -229,6 +229,13 @@ func _fall(player: PlayerController) -> void:
 # --- The rear door ------------------------------------------------------------------
 
 
+## The floor point the camera holds while the staircase arrives, in world space (the
+## constant is in the room's own coordinates).
+func stair_frame_point() -> Vector3:
+	var room := get_parent() as Node3D
+	return room.to_global(STAIR_FRAME_POINT) if room != null else STAIR_FRAME_POINT
+
+
 func _stage_rear_door(director: Node) -> Dictionary:
 	if _flag(StoryFlags.REAR_DOOR_OPENED):
 		return {"inspection": REAR_DOOR_OPEN_INSPECTION}
@@ -239,7 +246,7 @@ func _stage_rear_door(director: Node) -> Dictionary:
 	var rig: CameraRig = player.camera_rig if player != null else null
 	await open_rear_door()
 	if rig != null:
-		await rig.frame_point(STAIR_FRAME_POINT, STAIR_FRAME_SECONDS)
+		await rig.frame_point(stair_frame_point(), STAIR_FRAME_SECONDS)
 	if _stair != null:
 		await _stair.reveal()
 	await get_tree().create_timer(0.8, false).timeout  # story time

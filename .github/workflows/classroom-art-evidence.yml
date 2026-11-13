@@ -1,0 +1,56 @@
+name: Classroom visual evidence
+
+on:
+  pull_request:
+    paths:
+      - 'art/classroom/**'
+      - 'assets/materials/classroom/**'
+      - 'scenes/environment/props/classroom_art/**'
+      - 'scenes/locations/classroom/**'
+      - 'tests/capture_classroom_art.gd'
+      - 'tests/classroom_visual_slice_test.gd'
+      - 'tests/classroom_wall_contract.gd'
+      - 'tests/opening_flow_test.gd'
+      - '.github/workflows/classroom-art-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Render the expanded classroom at 1600 × 900
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Godot 4.7.2 Stable
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import project resources
+        run: godot --headless --path . --import
+
+      - name: Capture real rendered classroom views
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/classroom-evidence/after
+          timeout 360s xvfb-run -a --server-args='-screen 0 1920x1080x24' \
+            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
+              --resolution 1600x900 --rendering-method gl_compatibility \
+              --rendering-driver opengl3 \
+              --script res://tests/capture_classroom_art.gd \
+              -- --output=build/classroom-evidence/after
+
+      - name: Publish screenshot evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classroom-expansion-godot-4.7.2
+          path: build/classroom-evidence/after/
+          if-no-files-found: error
+          retention-days: 30

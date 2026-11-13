@@ -122,19 +122,19 @@
     "repeat_text": "The corridor is still out there. It can wait."
   },
   "classroom_rear_door": {
-    "title": "Rear door",
-    "prompt": "Try the rear door",
+    "title": "Second door",
+    "prompt": "Try the second door",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A second door at the back of the room, in the outside wall, next to the window. It doesn't give. Not locked, exactly. More as if the lesson were leaning on it.",
-    "repeat_text": "The rear door still doesn't give. Not while the lesson is on."
+    "text": "Beside the classroom door there is a second one in the blackboard wall, painted the same colour as the wall, with one strip of dark red down it. It doesn't give. Not locked, exactly. More as if the lesson were leaning on it.",
+    "repeat_text": "The second door still doesn't give. Not while the lesson is on."
   },
   "classroom_rear_door_open": {
-    "title": "Rear door",
-    "prompt": "Look at the rear door",
+    "title": "Second door",
+    "prompt": "Look at the second door",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "The rear door stands open on plaster. At the front of the room the staircase is still there, holding on to nothing.",
+    "text": "The second door stands open on plaster. In front of the lectern the staircase is still there, holding on to nothing.",
     "repeat_text": "Plaster behind the door. The staircase, still there."
   }
 }

@@ -106,6 +106,15 @@
     "menu.confirm_quit_no_save": "此刻不能存档，而且还没有任何存档。现在退出的话，下次要从头开始。",
     "menu.confirm_quit_failed": "存档没有写入：{detail}。上一次的存档不受影响。",
     "menu.confirm_quit_yes": "确认退出",
+    "menu.new_game_failed.save_stage_failed": "新游戏没有开始：存档无法移到一边。",
+    "menu.new_game_failed.scene_change_failed": "新游戏没有开始：开场无法打开。",
+    "menu.new_game_failed.staged_discard_failed": "新游戏没有开始：旧存档无法删除。",
+    "menu.new_game_failed.state_left": "新游戏没有开始：上一次的进度没能清空。",
+    "menu.new_game_failed.unknown": "新游戏没有开始。",
+    "menu.new_game_failed.busy": "新游戏正在开始，请稍等一下再试。",
+    "menu.new_game_failed.kept": "存档和进度都没有变，和之前一样。",
+    "menu.new_game_failed.save_lost": "旧存档没能放回原处，它的副本保存在 {path}。",
+    "menu.new_game_failed.retry": "可以再试一次。",
     "place.classroom": "教室",
     "place.corridor": "走廊",
     "place.street": "街上",
@@ -165,6 +174,6 @@
     "prompt.curtain": "看看窗帘",
     "prompt.curtain_retry": "再试着拉开窗帘",
     "prompt.curtain_drawn": "看向后窗外面",
-    "prompt.rear_door_open": "看看后门"
+    "prompt.rear_door_open": "看看另一扇门"
   }
 }

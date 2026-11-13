@@ -179,7 +179,7 @@ wrappers as the target:
 | `classroom_teacher_chair` | the chair half of `scenes/environment/props/teacher_desk.tscn` |
 | `classroom_teacher_lectern` | the desk half of `teacher_desk.tscn` (closest existing piece; a lectern is not a desk, so this is a design choice, not a swap) |
 | `classroom_biology_chart` | nothing — the front wall is a painted plane (`classroom_art/front_wall_dressing.tscn`) |
-| `classroom_door_assembly` | **placed once, as the rear door**: `props/classroom_art/rear_door.tscn` (`SwingDoor`, 0.8 width, leaf on a runtime hinge, classroom materials) → `classroom.tscn` `WallSouthLeft/RearDoor`. The front door is still the `door`/`door_try`/`door_blocked` trigger with no door geometry |
+| `classroom_door_assembly` | nothing — the classroom's second (anomaly) door is the room's own painted leaf in `WallNorth/RearDoorAnomalyMount`, turned by a `SwingDoor` hinge; the ordinary door is the `classroom_door` trigger |
 | `classroom_window_module` | the `window_view_front`/`window_view_back` materials painted onto the classroom wall |
 | `classroom_window_curtains` | **placed once, over the back window**: `props/classroom_art/window_curtain.tscn` (`WindowCurtain`, panels gathered at runtime by one open amount, classroom materials) → `classroom.tscn` `Anomalies/BackCurtain` |
 | `classroom_ceiling_fan`, `classroom_wall_clock` | nothing |

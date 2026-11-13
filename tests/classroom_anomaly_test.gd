@@ -151,7 +151,7 @@ func _curtain() -> WindowCurtain:
 
 
 func _door() -> SwingDoor:
-	return _room().get_node_or_null(^"WallSouthLeft/RearDoor") as SwingDoor
+	return _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount/Hinge") as SwingDoor
 
 
 func _stair() -> SuspendedStair:
@@ -200,19 +200,30 @@ func _check_placement() -> void:
 	var fabric := curtain.get_fabric_aabb()
 	_notes.append("curtain %s" % str(fabric))
 	if (
-		fabric.position.z > 0.55
-		or fabric.end.z < 2.05
-		or fabric.position.y > 1.15
-		or fabric.end.y < 2.38
+		fabric.position.z > 1.45
+		or fabric.end.z < 2.95
+		or fabric.position.y > 1.07
+		or fabric.end.y < 2.37
 	):
 		_failures.append(
 			(
-				"The closed curtain %s does not cover the back window (z 0.5-2.1, y 1.1-2.4)."
+				"The closed curtain %s does not cover the back window (z 1.4-3.0, y 1.07-2.37)."
 				% str(fabric)
 			)
 		)
-	if fabric.position.x < -4.5 or fabric.end.x > -4.2:
-		_failures.append("The curtain %s is not hung against the west wall." % str(fabric))
+	# Hung from WindowCurtainMount1, room-side of the expanded room's own tie-back panels
+	# (WallWest/CurtainPanel1L/R, front faces at x -6.485), which stay where they are.
+	if fabric.position.x < -6.485 or fabric.end.x > -6.3:
+		_failures.append("The curtain %s is not hung at the west-window mount." % str(fabric))
+	for kept: String in [
+		"WallWest/CurtainRod1",
+		"WallWest/CurtainPanel1L",
+		"WallWest/CurtainPanel1R",
+		"WindowCurtainMount1"
+	]:
+		var node := _room().get_node_or_null(NodePath(kept)) as Node3D
+		if node == null or not node.is_visible_in_tree():
+			_failures.append("The expanded room's '%s' is missing or hidden." % kept)
 	if void_mesh.visible or not (_room().get_node(^"WindowGlass1") as Node3D).visible:
 		_failures.append("The back window starts as the void instead of glass.")
 	if (
@@ -221,19 +232,28 @@ func _check_placement() -> void:
 	):
 		_failures.append("The void opening does not draw void_opening.tres.")
 
-	# The rear door: on the back wall, fading with it, between the west wall and the board.
-	if door.get_parent() != _room().get_node(^"WallSouthLeft"):
+	# The second door: the expanded room's own leaf in WallNorth's anomaly doorway, carried
+	# by a hinge on the mount (so it still fades with the wall), inside its 1.2 m opening.
+	var mount := _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount") as Node3D
+	if mount == null or door.get_parent() != mount:
+		_failures.append("The door hinge is not on WallNorth/RearDoorAnomalyMount.")
+	var leaves := door.get_leaves()
+	if leaves.size() != 2:
 		_failures.append(
-			"The rear door is not hung on WallSouthLeft, so it would not fade with it."
+			"The hinge carries %d leaf meshes, not DoorLeaf and its inlay." % leaves.size()
 		)
+	for leaf in leaves:
+		if leaf.get_parent() != door:
+			_failures.append("'%s' is not under the hinge." % leaf.name)
 	var door_box := _subtree_aabb(door)
 	_notes.append("door %s" % str(door_box))
-	if door_box.position.x < -4.5 or door_box.end.x > -3.46:
-		_failures.append(
-			"The rear door %s overlaps the west wall or the back board." % str(door_box)
-		)
-	if door_box.position.z < 3.3 or door_box.end.z > 3.6 or door_box.end.y > 2.4:
-		_failures.append("The rear door %s is not set into the back wall." % str(door_box))
+	if door_box.position.x < 4.4 or door_box.end.x > 5.6 or door_box.end.y > 2.12:
+		_failures.append("The shut door %s does not fill the anomaly doorway." % str(door_box))
+	if door_box.position.z < -4.85 or door_box.end.z > -4.7:
+		_failures.append("The shut door %s is not in the blackboard wall." % str(door_box))
+	var backing := _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount/DoorwayBacking")
+	if backing == null:
+		_failures.append("The doorway has no plaster behind it.")
 	if absf(door.get_angle()) > 0.5 or door.is_open():
 		_failures.append("The rear door starts open.")
 
@@ -248,11 +268,13 @@ func _check_placement() -> void:
 		)
 	if stair_box.end.y > 3.25:
 		_failures.append("The staircase rises above the walls (%.2f m)." % stair_box.end.y)
-	if stair_box.position.x < 1.05 or stair_box.end.x > 2.95:
-		_failures.append("The staircase %s is not over the teacher's desk." % str(stair_box))
-	if stair_box.position.z < -2.42 or stair_box.position.z > -1.6:
+	# Over the stage, its lowest tread just in front of the curved lectern (x 0.7,
+	# front edge at z -3.35), and clear of the light fitting at (1.2, 3.02, -4.2).
+	if stair_box.position.x < 0.15 or stair_box.end.x > 1.25:
+		_failures.append("The staircase %s is not in line with the lectern." % str(stair_box))
+	if stair_box.position.z < -3.45 or stair_box.position.z > -3.1:
 		_failures.append(
-			"The staircase %s does not end just in front of the desk." % str(stair_box)
+			"The staircase %s does not end just in front of the lectern." % str(stair_box)
 		)
 	for id: StringName in [&"curtain", &"rear_door"]:
 		var interactable := _room().find_interactable(id) as StagedInteractable
@@ -293,7 +315,7 @@ func _check_lesson() -> void:
 
 func _check_rear_door() -> void:
 	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
-	_player.teleport(Transform3D(Basis(Vector3.UP, PI), Vector3(-3.9, 0.0, 2.3)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, 0.0001), Vector3(4.85, 0.0, -3.5)))
 	await _frames(4)
 	_conversations.clear()
 	var rig := _player.camera_rig
@@ -334,10 +356,14 @@ func _check_rear_door() -> void:
 		if not tread.visible:
 			_failures.append("Tread '%s' never arrived." % tread.name)
 			break
-	# The leaf swung into the room; nothing behind it but the wall it is set into.
-	var hinge := _door().get_hinge()
-	if hinge == null or hinge.get_child_count() < 5:
-		_failures.append("The rear door's leaf did not move as one piece under its hinge.")
+	# The leaf swung into the room as one piece; plaster behind it.
+	var open_box := _subtree_aabb(_door())
+	_notes.append("open door %s" % str(open_box))
+	if open_box.end.z < -4.2:
+		_failures.append("The door leaf %s did not swing into the room." % str(open_box))
+	for leaf in _door().get_leaves():
+		if leaf.get_parent() != _door().get_hinge():
+			_failures.append("'%s' was left behind when the door opened." % leaf.name)
 	_inspections.clear()
 	await _activate(&"rear_door")
 	await _settle(30.0, "the open rear door")
@@ -354,13 +380,15 @@ func _check_see_through() -> void:
 	for piece in stair.get_pieces():
 		authored[piece] = piece.material_override
 	var hiding_spot := Vector3.INF
-	var x := 0.0
-	while x <= 3.5 and hiding_spot == Vector3.INF:
-		var z := -2.3
-		while z <= 0.0:
-			_player.teleport(Transform3D(Basis(), Vector3(x, 0.0, z)))
+	# Behind the staircase from the camera's corner is the stage (raised 0.12 m).
+	var x := -2.5
+	while x <= 1.5 and hiding_spot == Vector3.INF:
+		var z := -4.5
+		while z <= -1.5:
+			var floor_y := 0.12 if z < -2.4 else 0.0
+			_player.teleport(Transform3D(Basis(), Vector3(x, floor_y, z)))
 			if stair.is_hiding(_player):
-				hiding_spot = Vector3(x, 0.0, z)
+				hiding_spot = Vector3(x, floor_y, z)
 				break
 			z += 0.25
 		x += 0.25
@@ -394,7 +422,7 @@ func _check_see_through() -> void:
 
 
 func _check_curtain_left() -> void:
-	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-3.6, 0.0, 1.3)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-5.9, 0.0, 2.2)))
 	await _frames(4)
 	_conversations.clear()
 	await _activate(&"curtain")
@@ -549,7 +577,7 @@ func _check_return() -> void:
 		_failures.append(
 			"The drawn curtain still offers to be drawn ('%s')." % curtain.get_prompt_override()
 		)
-	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-3.6, 0.0, 1.3)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-5.9, 0.0, 2.2)))
 	await _frames(4)
 	_conversations.clear()
 	await _activate(&"curtain")
