@@ -1,0 +1,38 @@
+name: Temporary font subset refresh
+
+on:
+  push:
+    branches:
+      - agent/prologue-dialogue-rewrite
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: agent/prologue-dialogue-rewrite
+
+      - name: Rebuild the bundled font subsets
+        shell: bash
+        run: |
+          python3 -m venv /tmp/fontenv
+          /tmp/fontenv/bin/pip install --quiet "fonttools==4.58.5"
+          /tmp/fontenv/bin/python tools/subset_font.py
+
+      - name: Commit generated subsets
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/fonts/NotoSansSC-Regular.ttf assets/fonts/NotoSerifSC-Regular.otf
+          if git diff --cached --quiet; then
+            echo "Font subsets are already current."
+            exit 0
+          fi
+          git commit -m "build(fonts): refresh dialogue glyph subsets"
+          git push origin HEAD:agent/prologue-dialogue-rewrite
