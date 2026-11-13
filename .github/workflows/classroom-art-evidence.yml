@@ -1,16 +1,47 @@
 name: Classroom visual evidence
 
+# Issue #150. The classroom wall pixel regression and the classroom capture, run for real
+# (Xvfb, no --headless) on both of Godot's desktop renderers, each with its own verdict:
+#
+#   render (forward_plus)      Forward+ on Vulkan, Mesa lavapipe
+#   render (gl_compatibility)  Compatibility on OpenGL 3, Mesa llvmpipe
+#   negative-tests             the gate's own self-tests: wrong renderer, missing PASS,
+#                              script error, black frame, missing image, pixel error over
+#                              the limit, timeout, one renderer failing
+#   verdict                    green only if both renderers and the self-tests passed
+#
+# Each render job is judged twice: tests/run_classroom_checks.sh (strict run_check: exit
+# code, PASS line, no script error, time limit) and tools/classroom_render_evidence.py
+# (re-reads RESULT.txt, CAPTURE.txt and the raw PNGs: renderer, driver, engine, adapter,
+# re-measured wall pixels against the unchanged thresholds, non-blank frames, PR head SHA).
+# Godot's own Vulkan-to-OpenGL fallback cannot pass as Forward+: both scripts are told
+# which renderer they must be on and the verifier checks what they recorded.
+#
+# This is Linux software rendering. A pass here is not Windows / RTX hardware or
+# performance acceptance (#54); it does not decide whether the painterly shader belongs
+# in production scenes.
+
 on:
   pull_request:
     paths:
       - 'art/classroom/**'
       - 'assets/materials/classroom/**'
+      - 'assets/shaders/**'
       - 'scenes/environment/props/classroom_art/**'
       - 'scenes/locations/classroom/**'
+      - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
+      - 'tests/classroom_wall_render_test.gd'
       - 'tests/classroom_visual_slice_test.gd'
       - 'tests/classroom_wall_contract.gd'
+      - 'tests/classroom_render_evidence_test.py'
       - 'tests/opening_flow_test.gd'
+      - 'tests/run_check_test.sh'
+      - 'tests/run_classroom_checks.sh'
+      - 'tests/run_classroom_checks_test.sh'
+      - 'tests/test_harness.gd'
+      - 'tools/ci_run_check.sh'
+      - 'tools/classroom_render_evidence.py'
       - '.github/workflows/classroom-art-evidence.yml'
   workflow_dispatch:
 
@@ -18,13 +49,38 @@ permissions:
   contents: read
 
 jobs:
-  capture:
-    name: Render the expanded classroom at 1600 × 900
+  render:
+    name: Render the classroom (${{ matrix.method }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    strategy:
+      # Every renderer reports its own verdict, even when the other one fails.
+      fail-fast: false
+      matrix:
+        include:
+          - method: forward_plus
+            driver: vulkan
+          - method: gl_compatibility
+            driver: opengl3
+    env:
+      EVIDENCE_DIR: build/classroom-evidence/checks
+      # The evidence is tied to the commit the PR actually proposes, not GitHub's
+      # temporary merge commit.
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
     steps:
-      - name: Checkout
+      - name: Checkout the PR head
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ env.HEAD_SHA }}
+
+      - name: Install Xvfb and Mesa (lavapipe Vulkan, llvmpipe OpenGL)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            xvfb xauth mesa-vulkan-drivers libgl1-mesa-dri libvulkan1 vulkan-tools mesa-utils
 
       - name: Install Godot 4.7.2 Stable
         uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
@@ -35,22 +91,118 @@ jobs:
       - name: Import project resources
         run: godot --headless --path . --import
 
-      - name: Capture real rendered classroom views
+      - name: Record the graphics stack
+        # Diagnostics only: what the display offers to this renderer. The verdict comes
+        # from the scripts and the verifier, which fail on a missing or wrong device.
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p build/classroom-evidence/after
-          timeout 360s xvfb-run -a --server-args='-screen 0 1920x1080x24' \
-            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
-              --resolution 1600x900 --rendering-method gl_compatibility \
-              --rendering-driver opengl3 \
-              --script res://tests/capture_classroom_art.gd \
-              -- --output=build/classroom-evidence/after
+          set -uo pipefail
+          mkdir -p "${EVIDENCE_DIR}"
+          out="${EVIDENCE_DIR}/GRAPHICS_STACK_${{ matrix.method }}.txt"
+          {
+            echo "runner=$(uname -srm)"
+            echo "--- vulkaninfo --summary"
+            xvfb-run -a --server-args='-screen 0 1920x1080x24' vulkaninfo --summary 2>&1
+            echo "exit=$?"
+            echo "--- glxinfo -B (LIBGL_ALWAYS_SOFTWARE=1)"
+            xvfb-run -a --server-args='-screen 0 1920x1080x24' \
+              env LIBGL_ALWAYS_SOFTWARE=1 glxinfo -B 2>&1
+            echo "exit=$?"
+          } > "${out}"
+          cat "${out}"
 
-      - name: Publish screenshot evidence
+      - name: Run the pixel regression and capture on ${{ matrix.method }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          extra=()
+          if [ "${{ matrix.method }}" = gl_compatibility ]; then
+            extra=(LIBGL_ALWAYS_SOFTWARE=1)
+          fi
+          xvfb-run -a --server-args='-screen 0 1920x1080x24' \
+            env "${extra[@]}" \
+              CLASSROOM_RENDER_METHODS="${{ matrix.method }}" \
+              GODOT_GL_DRIVER=opengl3 \
+              CLASSROOM_LOG_DIR="${EVIDENCE_DIR}" \
+              bash tests/run_classroom_checks.sh --render-only
+
+      - name: Verify the ${{ matrix.method }} evidence
+        # Runs after a failed render too, so the artifact always carries a VERDICT.txt
+        # that says why. It never turns a failed render green: the step above has
+        # already failed the job.
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 tools/classroom_render_evidence.py verify \
+            --dir "${EVIDENCE_DIR}" \
+            --method "${{ matrix.method }}" \
+            --driver "${{ matrix.driver }}" \
+            --head-sha "${HEAD_SHA}" \
+            --base-sha "${BASE_SHA}"
+          code=$?
+          cat "${EVIDENCE_DIR}/VERDICT.txt" >> "${GITHUB_STEP_SUMMARY}" || true
+          exit "${code}"
+
+      - name: Publish ${{ matrix.method }} evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: classroom-expansion-godot-4.7.2
-          path: build/classroom-evidence/after/
+          name: classroom-render-${{ matrix.method }}-${{ env.HEAD_SHA }}
+          path: ${{ env.EVIDENCE_DIR }}/
           if-no-files-found: error
           retention-days: 30
+
+  negative-tests:
+    name: Prove the render gate fails on bad evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Evidence verifier rejects every bad case
+        run: python3 tests/classroom_render_evidence_test.py
+
+      - name: run_check rejects failures, missing verdicts and timeouts
+        run: bash tests/run_check_test.sh
+
+      - name: One wrong renderer turns the whole gate red
+        run: bash tests/run_classroom_checks_test.sh
+
+  verdict:
+    name: Classroom render verdict (both renderers)
+    if: always()
+    needs: [render, negative-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Download the per-renderer verdicts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: classroom-render-*
+          path: build/classroom-verdicts
+
+      - name: Require a PASS from both renderers and the self-tests
+        shell: bash
+        env:
+          RENDER_RESULT: ${{ needs.render.result }}
+          NEGATIVE_RESULT: ${{ needs.negative-tests.result }}
+        run: |
+          set -uo pipefail
+          status=0
+          mapfile -t verdicts < <(find build/classroom-verdicts -name VERDICT.txt | sort)
+          python3 tools/classroom_render_evidence.py summarize \
+            --require forward_plus gl_compatibility "${verdicts[@]}" || status=1
+          if [ "${RENDER_RESULT}" != success ]; then
+            echo "::error title=classroom render verdict::render jobs ended '${RENDER_RESULT}'"
+            status=1
+          fi
+          if [ "${NEGATIVE_RESULT}" != success ]; then
+            echo "::error title=classroom render verdict::gate self-tests ended '${NEGATIVE_RESULT}'"
+            status=1
+          fi
+          exit "${status}"

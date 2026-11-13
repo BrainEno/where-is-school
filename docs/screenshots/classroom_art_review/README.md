@@ -68,6 +68,8 @@
 
 `GODOT_BIN` 指向上面的源码构建；显示／驱动环境由仓库外工具提供。基线在批准 main 的 archive 副本执行，同一个夹具只用于测试。
 
+> 以下是当时的历史命令。#150 之后，`classroom_wall_render_test.gd` 必须带 `--expect-renderer=<方法> --expect-driver=<驱动>`，缺少时会明确失败（裁决必须写明是哪个渲染器）。现行命令见第 8 节。
+
 ```sh
 # 修改前（批准的 main 副本）；旧 fader 像素检查预期退出 1
 "$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 640x480 --script res://tests/classroom_wall_render_test.gd -- --output=build/classroom-current/pixels-before
@@ -90,3 +92,25 @@ CLASSROOM_LOG_DIR=build/classroom-current/checks-final bash tests/run_classroom_
 - 本地观图检查不等于所有者视觉验收；主角／Q／N 的正式美术与目标硬件审查仍由所有者确认。
 
 日志只规范化机器路径前缀为 `$REPO`、`$BASELINE`、`$TOOLS` 并去除行尾空白；不删减日志行、错误或警告。完整构建、缓存、驱动、无效帧及无关自动导入元数据不入 Git，遵循 ADR 0007。
+
+## 8. 现行双渲染器 CI 门禁（#150）
+
+`.github/workflows/classroom-art-evidence.yml` 在 PR 修改教室场景／美术／材质、`assets/shaders/`、`camera_occluder_fader.gd`、这两个渲染脚本或门禁工具时自动运行（也可手动 `workflow_dispatch`）：
+
+- `render (forward_plus)`：Xvfb + Mesa lavapipe，Vulkan；`render (gl_compatibility)`：Xvfb + Mesa llvmpipe（`LIBGL_ALWAYS_SOFTWARE=1`），OpenGL 3。`fail-fast: false`，两个渲染器各自得出裁决。
+- 每个渲染器先由 `tests/run_classroom_checks.sh --render-only`（严格 `run_check`：退出码、`PASS:`、无 SCRIPT ERROR、超时明确失败）判定，再由 `tools/classroom_render_evidence.py verify` 复核证据：实际渲染器／驱动、引擎 4.7.2 stable、非 headless、适配器、`verdict=PASS`、原始 PNG 重新测量中央 32×32 红通道（阈值不变：误差 ≤ 0.025，对照 0.1–0.7）、8 张截图非空白且哈希一致、证据属于 PR head SHA。
+- `negative-tests`：`tests/classroom_render_evidence_test.py`、`tests/run_check_test.sh`、`tests/run_classroom_checks_test.sh` 证明错误渲染器、缺少 PASS、脚本异常、黑帧、缺图、像素超阈值、超时、单个渲染器失败都会变红。夹具全部写在临时目录，不碰生产资源。
+- `verdict`：汇总两个渲染器的 `VERDICT.txt` 与自测结果，任何一项不是 PASS 即失败。
+- 每个渲染器上传 `classroom-render-<方法>-<head SHA>` artifact：完整 Godot 日志、`RESULT.txt`／`CAPTURE.txt`、原始 PNG、`GRAPHICS_STACK_<方法>.txt`、`VERDICT.txt` 与 `MANIFEST.json`（文件 sha256、head／base SHA、Run ID）。截图不入 Git。
+
+本地复现（需要真实显示；GL 驱动可用 `GODOT_GL_DRIVER` 覆盖）：
+
+```sh
+"$GODOT_BIN" --headless --path . --import
+CLASSROOM_RENDER_METHODS=forward_plus GODOT_BIN="$GODOT_BIN" bash tests/run_classroom_checks.sh --render-only
+python3 tools/classroom_render_evidence.py verify --dir build/classroom-evidence/checks --method forward_plus
+CLASSROOM_RENDER_METHODS=gl_compatibility LIBGL_ALWAYS_SOFTWARE=1 GODOT_BIN="$GODOT_BIN" bash tests/run_classroom_checks.sh --render-only
+python3 tools/classroom_render_evidence.py verify --dir build/classroom-evidence/checks --method gl_compatibility
+```
+
+**限制**：这是 Linux 软件渲染。通过不等于 Windows／RTX 硬件或性能验收（#54），也不决定 painterly shader 是否用于生产场景。

@@ -3,6 +3,18 @@
 # Import first: godot --headless --path . --import
 # Usage: GODOT_BIN=godot bash tests/run_classroom_checks.sh [--with-render|--render-only]
 # A real display is required for the optional pixel checks and viewport captures.
+#
+# Render options (environment):
+#   CLASSROOM_RENDER_METHODS   space-separated subset of "forward_plus gl_compatibility"
+#                              (default: both). CI runs one per job, so each renderer has
+#                              its own verdict and its own evidence.
+#   GODOT_GL_DRIVER            Compatibility driver (default opengl3).
+#   CLASSROOM_PIXEL_TIMEOUT    seconds for the wall pixel test (default 240).
+#   CLASSROOM_CAPTURE_TIMEOUT  seconds for the classroom capture (default 300).
+# Each render check is told which renderer and driver it must be running on
+# (--expect-renderer / --expect-driver) and fails on any other, so Godot's own
+# Vulkan-to-OpenGL fallback can never turn a Forward+ failure into a pass.
+# tools/classroom_render_evidence.py then verifies the evidence this leaves behind.
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,17 +50,34 @@ if [ "${headless}" -eq 1 ]; then
 fi
 
 if [ "${render}" -eq 1 ]; then
-  for method in forward_plus gl_compatibility; do
-    driver=vulkan
-    if [ "${method}" = gl_compatibility ]; then driver="${GODOT_GL_DRIVER:-opengl3}"; fi
-    run_check "classroom_pixels_${method}" 240 "${godot}" --path . --audio-driver Dummy \
-      --rendering-method "${method}" --rendering-driver "${driver}" \
+  methods="${CLASSROOM_RENDER_METHODS:-forward_plus gl_compatibility}"
+  pixel_limit="${CLASSROOM_PIXEL_TIMEOUT:-240}"
+  capture_limit="${CLASSROOM_CAPTURE_TIMEOUT:-300}"
+  if [ -z "${methods// /}" ]; then
+    echo "::error title=no renderer selected::CLASSROOM_RENDER_METHODS is empty"
+    status=1
+  fi
+  for method in ${methods}; do
+    case "${method}" in
+      forward_plus) driver=vulkan ;;
+      gl_compatibility) driver="${GODOT_GL_DRIVER:-opengl3}" ;;
+      *)
+        echo "::error title=unknown renderer::'${method}' is not forward_plus or gl_compatibility"
+        status=1
+        continue
+        ;;
+    esac
+    run_check "classroom_pixels_${method}" "${pixel_limit}" "${godot}" --path . \
+      --audio-driver Dummy --rendering-method "${method}" --rendering-driver "${driver}" \
       --script res://tests/classroom_wall_render_test.gd \
-      -- "--output=${CI_LOG_DIR}/pixels-${method}" || status=1
-    run_check "classroom_capture_${method}" 300 "${godot}" --path . --audio-driver Dummy \
-      --resolution 1600x900 --rendering-method "${method}" --rendering-driver "${driver}" \
+      -- "--output=${CI_LOG_DIR}/pixels-${method}" \
+      "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
+    run_check "classroom_capture_${method}" "${capture_limit}" "${godot}" --path . \
+      --audio-driver Dummy --resolution 1600x900 \
+      --rendering-method "${method}" --rendering-driver "${driver}" \
       --script res://tests/capture_classroom_art.gd \
-      -- "--output=${CI_LOG_DIR}/capture-${method}" || status=1
+      -- "--output=${CI_LOG_DIR}/capture-${method}" \
+      "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
   done
 fi
 

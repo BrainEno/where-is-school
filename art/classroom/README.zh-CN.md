@@ -86,7 +86,7 @@
 轮廓适用对象、笔触密度，以及后续地点的复用方式。墙体默认不透明、背面剔除并写入深度；
 只有临时相机遮挡避让才允许淡出。Forward+ 只使用实例透明度，Compatibility/Mobile 则需要材质 Alpha 副本，
 不能把两者叠乘。`tests/classroom_wall_render_test.gd` 将实际像素与单次 Alpha 对照比较；
-`tests/capture_classroom_art.gd` 记录真实教室。玻璃仍是有意使用表面 Alpha 的例外。
+`tests/capture_classroom_art.gd` 记录真实教室。两者在 `.github/workflows/classroom-art-evidence.yml` 中分别以 Forward+ 与 Compatibility 运行，各自独立裁决（#150，见 `docs/screenshots/classroom_art_review/README.md` 第 8 节）。玻璃仍是有意使用表面 Alpha 的例外。
 
 生成器采用 Godot 4.7.2 的规范 34 字符 UID 编码；真实导入后应再次检查 sidecar，防止编辑器改写。
 策展后的实际前后截图、像素数值、基线噪声对照与平台限制见 `docs/screenshots/classroom_art_review/README.md`。

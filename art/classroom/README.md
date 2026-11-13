@@ -102,7 +102,9 @@ brush density and reuse in later locations. Walls are authored opaque, back-face
 and depth-writing; only temporary camera obstruction relief may fade them. Forward+
 uses instance transparency alone, while Compatibility/Mobile need material-alpha copies.
 Do not multiply both. `tests/classroom_wall_render_test.gd` compares actual pixels against
-a single-alpha control; `tests/capture_classroom_art.gd` records the actual classroom.
+a single-alpha control; `tests/capture_classroom_art.gd` records the actual classroom. Both run on
+Forward+ and Compatibility in `.github/workflows/classroom-art-evidence.yml`, each with its own
+verdict (issue #150; see `docs/screenshots/classroom_art_review/README.md`, section 8).
 Glass remains the deliberate surface-alpha exception.
 
 The generator uses Godot 4.7.2's canonical 34-character UID encoding; check the sidecars
