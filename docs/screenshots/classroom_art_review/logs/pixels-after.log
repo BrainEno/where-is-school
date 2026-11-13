@@ -1,6 +1,6 @@
 Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
 libxkbcommon.so.0: cannot open shared object file: No such file or directory
-WSI connection=0x55e127dd1220 display=:100 connect=0x7f9248760300
+WSI connection=0x55e2bce04bd0 display=:100 connect=0x7f1904f60300
 Vulkan 1.3.0 - Forward+ - Using Device #0: Unknown - SwiftShader Device (Subzero)
 WARNING: Keeping screen on not supported by this display server.
      at: screen_set_keep_on (servers/display/display_server.cpp:588)

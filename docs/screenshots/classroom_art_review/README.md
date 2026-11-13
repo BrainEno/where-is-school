@@ -1,87 +1,90 @@
-# 教室美术草稿：实际运行证据与未完成验证
+# 教室美术：真实运行对照与回归证据
 
-> **这是暂停实现时保存的证据，不是最终 PR head 的视觉验收。**
-> 所有 PNG 都来自 Godot 的真实 viewport，按原字节复制，未重编码、调色、绘制或生成。
-> `after-intermediate/` 拍摄后又移除了学生桌椅上不适用的反向外壳描边，并修正了纹理生成器的 UID 编码；
-> 这两项之后尚未重新截图、重建 sidecar 或跑完整回归。按所有者要求先以草稿 PR 公开当前工作，不把旧结果算作最终通过。
+所有 PNG 均来自 Godot 的真实 viewport，按原字节复制，未重编码、调色、绘制或生成。当前帧已替换开草稿时的中间态截图；无效的起床黑幕帧从未作为验收证据收录。
 
-## 版本与环境
+## 1. 版本与集成范围
 
-- 修改前：开发基线 `fcafc6d91dd07a703e9448dd7fdecd45dc2a559d` 的 `git archive` 副本；只加入相同的截图／像素测试夹具，未加入新美术或 fader 修复。
-- 修改后：本分支的提交前中间工作区；**没有对应的已提交 head SHA**，不能当作最终提交的截图。
-- Godot：`4.7.2.stable.custom_build`，由官方 `4.7.2-stable` 标签源码构建，标签提交 `ed1daf0bf001b61586d9930840f2f1394092c079`；不是下载的官方预编译标准版。引擎源码与可执行文件未为测试修改；构建关闭 fontconfig。
-- 实际绘制：Forward+、Vulkan 1.3.0、SwiftShader Device (Subzero)，Xvfb 1.20.10 / Xrender 0.11，X11。
-- 此环境用仓库外的 Xlib→XCB WSI 适配器连接软件 Vulkan 和 Xvfb。适配器只负责原生窗口接口，不生成画面；工具、驱动、引擎不入库。
-- 画面为 1600×900；软件 GPU 不能证明 Windows 目标 GPU 的画质、性能或稳定性。
-- Compatibility 初始化实际失败（EGL 版本不足／ANGLE Vulkan 初始化错误），见日志；Mobile 未验证。
+- 原开发基线：`fcafc6d91dd07a703e9448dd7fdecd45dc2a559d`。
+- 经所有者明确授权后，将 `main` 的 `35357848d1361d7b3983ed672742b32e9ab7c776` 合入当前分支，未 rebase。保留了教师模型接线、英中视觉多元性章节，以及所有非教室来源条目；唯一的文本冲突仅以本任务的两行教室来源更新替换 main 中对应的旧行。
+- 本次修改前截图：上述批准的 main 的 `git archive` 副本，只加入相同的截图／像素夹具，未加入本任务美术或 fader 修复。
+- 本次修改后截图与完整教室套件：代码提交 `8f4c314f6ac0f1ad640ce80012b9cc16e91cd816`。后续证据整理只改文档；`SOURCE_CODE.txt` 记录场景、fader、截图夹具及环境 Shader 的实际哈希。最终 PR head 的 CI／复测状态以 PR 正文为准，不将历史结果冒充最终 head。
+- 最早基线与中间态证据仍可从提交 `2305d00ea713cb24b7d2aa5118267ab0bceb0293` 的 Git 历史查看，当前目录不累积重复帧。
 
-## 截图夹具的边界
+## 2. 环境与证据边界
 
-`tests/capture_classroom_art.gd` 加载真实 `main.tscn`，保留房间布局、碰撞、导航、交互和游戏镜头。
-夹具关闭开场自动播放，清除尚未结束的起床黑幕／姿态，将既有 N 节点显示在既有讲台标记处，便于同时查看角色与道具。
-**N 在该场景中仍是带名字的占位胶囊，不是教师正式模型的美术验收。**
+- Godot `4.7.2.stable.custom_build`，由官方 `4.7.2-stable` 标签提交 `ed1daf0bf001b61586d9930840f2f1394092c079` 的未修改源码构建，关闭 fontconfig；不是下载的官方预编译标准版。
+- 实际绘制：Forward+、Vulkan 1.3.0、SwiftShader Device (Subzero)、Xvfb 1.20.10 / Xrender 0.11 / X11，1600×900。
+- 仓库外 Xlib→XCB WSI 适配器仅连接原生窗口接口，不生成像素。工具、驱动、引擎和构建缓存不入 Git。
+- 夹具加载真实 `main.tscn`，关闭开场自动播放，完成起床黑幕／姿态的清除，将既有 N 显示在既有讲台标记处。主角、Q 与 N 使用批准的 main 中相同的正式场景接线；本任务没有修改角色模型。
+- 前三张使用真实 CameraRig，第四张使用固定美术审查相机。它们不是完整剧情 playthrough，也不是所有者人工验收。
+- 软件 GPU 不能证明 Windows 目标 GPU 的性能／稳定性。Compatibility 在本地仍无法初始化，Mobile 与目标 Windows GPU 的实际像素仍未验证；不要用 headless 或 Forward+ 代替这些结果。
 
-前三张用游戏 CameraRig，第四张用固定的美术审查相机。它们不是完整剧情 playthrough，也不代表所有者人工验收。
-截图夹具会拒绝接近单色的遮挡帧；第一次被起床黑幕盖住的无效截图已排除，未复制到本目录。
+## 3. 实际游戏画面对照
 
-| 视角 | 修改前（精确基线） | 修改后（中间态，非最终 head） |
+| 视角 | 修改前：批准的 main | 修改后：最终代码形态 |
 |---|---|---|
-| 游戏镜头，主角／Q／N 占位与主要道具 | [01_gameplay.png](before/01_gameplay.png) | [01_gameplay.png](after-intermediate/01_gameplay.png) |
-| 南墙遮挡避让 | [02_wall_occlusion.png](before/02_wall_occlusion.png) | [02_wall_occlusion.png](after-intermediate/02_wall_occlusion.png) |
-| 离开遮挡后的恢复 | [03_walls_restored.png](before/03_walls_restored.png) | [03_walls_restored.png](after-intermediate/03_walls_restored.png) |
-| 黑板、原横幅区域、讲台与 N 占位 | [04_board_and_teacher.png](before/04_board_and_teacher.png) | [04_board_and_teacher.png](after-intermediate/04_board_and_teacher.png) |
+| 主角／Q／N 和主要道具 | [01_gameplay.png](before/01_gameplay.png) | [01_gameplay.png](after/01_gameplay.png) |
+| 南墙遮挡避让 | [02_wall_occlusion.png](before/02_wall_occlusion.png) | [02_wall_occlusion.png](after/02_wall_occlusion.png) |
+| 离开遮挡后的恢复 | [03_walls_restored.png](before/03_walls_restored.png) | [03_walls_restored.png](after/03_walls_restored.png) |
+| 黑板、原横幅区域和讲台 | [04_board_and_teacher.png](before/04_board_and_teacher.png) | [04_board_and_teacher.png](after/04_board_and_teacher.png) |
 
-逐帧 SHA-256、引擎、适配器和遮挡／恢复材质状态保存在 [修改前清单](before/CAPTURE.txt) 与 [修改后中间态清单](after-intermediate/CAPTURE.txt)。
-两个截图命令都退出 0，但修改前有 2 个、修改后有 4 个 ObjectDB 实例泄漏，两者均有 1 个资源未释放的 `ERROR`；不能称为干净运行。
+逐帧 SHA-256、材质状态：[修改前 CAPTURE](before/CAPTURE.txt)、[修改后 CAPTURE](after/CAPTURE.txt)。
+源版本及哈希：[修改前 SOURCE_CODE](before/SOURCE_CODE.txt)、[修改后 SOURCE_CODE](after/SOURCE_CODE.txt)。8 张图片均已逐一校验清单哈希。
 
-## 墙面根因：实际像素对照
+实际可见变化：原横幅和 pin 已从源场景删除；黑板粉笔痕迹、时钟、讲台功能道具仍在；暖赭与蓝灰／紫灰色块取代过亮色面；学生桌椅去掉照片 PBR 及旧透明罩色，不在硬法线网格上强行扩大反向外壳描边。没有改变房间布局、碰撞、导航或剧情。
 
-`tests/classroom_wall_render_test.gd` 在两个 256×256 SubViewport 中绘制相同白墙：
-一份用 18% 不透明度的单次材质混合做对照，另一份由真实 CameraOccluderFader 的物理遮挡射线触发淡出。
-取中央 32×32 像素红通道均值，容差为 0.025。均值是屏幕色值，不直接等同线性不透明度。
+截图命令均退出 0，但不是无引擎噪声：修改前有 4 个、修改后有 2 个 ObjectDB 实例泄漏，两边都有 1 个资源未释放的 `ERROR`。见 [修改前日志](logs/capture-before.log)、[修改后日志](logs/capture-after.log)。
 
-| 运行版本 | 对照均值 | fader 均值 | 误差 | instance transparency | 材质 alpha / mode | 退出码 |
+## 4. 墙面根因：实际像素对照
+
+`tests/classroom_wall_render_test.gd` 在两个 256×256 SubViewport 中绘制相同白墙：一份用 18% 不透明度的单次材质混合做对照，另一份由真实 CameraOccluderFader 的物理射线触发淡出。
+取中央 32×32 像素红通道均值，容差 0.025。均值是屏幕色值，不直接等同线性不透明度。
+
+| 版本 | 对照均值 | fader 均值 | 误差 | instance transparency | 材质 alpha / mode | 退出码 |
 |---|---:|---:|---:|---:|---|---:|
-| 精确基线，旧 fader | 0.46275 | 0.19608 | 0.26667 | 0.82 | 0.18 / 1 | 1（预期暴露缺陷） |
-| 修复后的中间工作区 | 0.46275 | 0.45882 | 0.00392 | 0.82 | 1.00 / 0 | 0 |
+| 批准的 main，旧 fader | 0.46275 | 0.19608 | 0.26667 | 0.82 | 0.18 / 1 | 1，预期负向对照 |
+| 本分支修复后 | 0.46275 | 0.45882 | 0.00392 | 0.82 | 1.00 / 0 | 0 |
 
-旧路径在 Forward+ 同时使用实例透明度与材质 alpha，目标 18% 不透明度被叠乘为 3.24%。
-最小修复只在 Forward+ 保留实例淡出，不再替换作者材质；Mobile／Compatibility 保留原有材质 alpha 回退。
-射线、速度、交互逻辑、全局 Shader 与其他地点场景未改。共享脚本修改是在真实运行确认根因之后，按所有者的条件授权执行。
+旧 Forward+ 路径将 18% 实例不透明度与 18% 材质 alpha 叠乘为 3.24%。真实运行确认后，才按所有者条件授权修改共享 fader：Forward+ 不再替换作者材质，Mobile／Compatibility 保留原材质 alpha 回退。射线、速度、交互控制器、全局 Shader 和其他地点场景均未修改。
 
-- 修改前：[对照像素](pixels-before/reference.png)、[旧 fader 像素](pixels-before/fader.png)、[数值](pixels-before/RESULT.txt)、[完整日志](logs/pixels-before.log)。
-- 修改后中间态：[对照像素](pixels-after-intermediate/reference.png)、[新 fader 像素](pixels-after-intermediate/fader.png)、[数值](pixels-after-intermediate/RESULT.txt)、[完整日志](logs/pixels-after-intermediate.log)。
-- 修复后像素命令虽然退出 0，仍有 2 个 ObjectDB 实例泄漏与 1 个资源未释放的 `ERROR`。
+- 修改前：[对照](pixels-before/reference.png)、[旧 fader](pixels-before/fader.png)、[数值](pixels-before/RESULT.txt)、[日志](logs/pixels-before.log)。
+- 修改后：[对照](pixels-after/reference.png)、[新 fader](pixels-after/fader.png)、[数值](pixels-after/RESULT.txt)、[日志](logs/pixels-after.log)。
+- 修改后像素命令退出 0，仍有 2 个实例泄漏和 1 个未释放资源 ERROR，未将其隐藏。
+- 墙体运行契约实测 8 个站位 × 3 个朝向，46 个实际淡出状态；离开后 instance transparency 为 0，恢复精确的作者材质。六面墙／门楣的法线、4 mm 分离、opaque/depth/back-cull 契约也已检查。
 
-## 已执行命令
+## 5. 完整回归与独立正反对照
 
-下面保留实际命令的参数；`GODOT_BIN` 指向上述本地源码构建，机器绝对路径只用环境变量表示。
-在精确基线副本与修改后工作区分别执行；渲染环境变量／显示服务由仓库外工具配置。
+- 修改后 24/24 教室回归通过，整体退出 0；批准的 main 基线也为 24/24、退出 0，保存目录彼此隔离。
+- [修改后套件运行器输出](logs/suite-head.log)、[main 套件输出](logs/suite-main.log)、[24 项 ERROR/WARNING 对照](logs/engine-noise-comparison.md)。运行器输出包含每项命令、退出码和日志尾段，并非各项全量日志的拼接；噪声表从每项全量日志计数。
+- 保留失败定位证据：[更新旧判定前的交互日志](logs/interaction-before-oracle-update.log)。当时交互测试把所有渲染器都视为“只能靠材质 alpha 淡出”，产生 11 条不符合已实测 Forward+ 行为的断言。生产 InteractionController 已正确区分渲染器，未修改。
+- [更新后的交互回归](logs/interaction-head.log) 保留 Compatibility 原断言，新增 Forward+ 的作者材质身份检查，并用“仅实例淡出 → 恢复不透明 → 仅 alpha 淡出”验证正反对照；不是删除失败测试或放宽数值阈值。
+- [真实 Forward+ 轮廓回归](logs/outline-forward.log) 通过 91 项像素检查：无遮挡全轮廓 100%、0 游离像素；完全遮挡最大变化 0；半遮挡可见 100%／被挡 0%；运动镜头最差覆盖 100%、最差游离 0。测试还检查切换／释放与作者 overlay 的恢复。该测试与生产轮廓代码未改；仍有 2 个实例泄漏和 1 个资源 ERROR。
+- 模型管线在集成批准的 main 后已通过；教师模型的缩减和 sidecar 来自 main，不是本任务新增的范围外修复。
+- UID 生成器采用 Godot 4.7.2 的 34 字符编码；18 份 sidecar 已重建。纹理 `--check` 在真实导入前后均通过，像素文件没有因 UID 修复而改变。
+
+## 6. 精确运行命令
+
+`GODOT_BIN` 指向上面的源码构建；显示／驱动环境由仓库外工具提供。基线在批准 main 的 archive 副本执行，同一个夹具只用于测试。
 
 ```sh
-# 基线副本
-"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 640x480 --script res://tests/classroom_wall_render_test.gd -- --output=build/classroom-evidence/wall-probe-before-forward
-"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 1600x900 --script res://tests/capture_classroom_art.gd -- --output=build/classroom-evidence/before-forward
+# 修改前（批准的 main 副本）；旧 fader 像素检查预期退出 1
+"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 640x480 --script res://tests/classroom_wall_render_test.gd -- --output=build/classroom-current/pixels-before
+"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 1600x900 --script res://tests/capture_classroom_art.gd -- --output=build/classroom-current/before-forward
 
-# 修改后中间工作区，最后两项修正之前
-"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 640x480 --script res://tests/classroom_wall_render_test.gd -- --output=build/classroom-evidence/wall-probe-after-forward
-"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 1600x900 --script res://tests/capture_classroom_art.gd -- --output=build/classroom-evidence/after-forward
+# 修改后
+"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 640x480 --script res://tests/classroom_wall_render_test.gd -- --output=build/classroom-current/pixels-after
+"$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 1600x900 --script res://tests/capture_classroom_art.gd -- --output=build/classroom-current/after-forward
+OUTLINE_REQUIRE_RENDERER=forward_plus OUTLINE_EVIDENCE_DIR="$PWD/build/classroom-current/outline-forward" "$GODOT_BIN" --path . --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy --resolution 1600x900 --script res://tests/interaction_outline_occlusion_test.gd
 
-# 更早的整组检查：发生在共享 fader 修复之前，不是当前 head 的结果
-GODOT_BIN="$GODOT_BIN" bash tests/run_classroom_checks.sh
+# 独立 XDG_DATA_HOME，防止两边保存状态串扰；基线使用 checks 目录
+CLASSROOM_LOG_DIR=build/classroom-current/checks-final bash tests/run_classroom_checks.sh
 ```
 
-整组检查当时是 24 项中 23 项给出 PASS，整体退出 1；`classroom_visual_slice` 有 46 条双重 alpha 断言失败。
-[完整套件日志](logs/suite-before-fader-fix.log) 与 [引擎噪声统计](logs/engine-noise-before-fader-fix.txt) 保留失败、警告与资源泄漏。
-尚未完成基线整组噪声对照，不能把这些错误统称为既有噪声。
+## 7. 剩余限制与噪声
 
-## 当前草稿的明确阻塞项
+- Compatibility 本地初始化失败：[日志](logs/compatibility-initialization-failure.log)。Mobile／Windows 目标 GPU 尚未实际渲染验收；最终 head 的 CI 状态另见 PR，不从软件 Forward+ 推断其他平台通过。
+- 自编译引擎的 import 虽退出 0，仍报告关闭 fontconfig 的错误及重建缺失 UID 的警告：[head](logs/import-head.log)、[main](logs/import-main.log)。没有 Parse Error／SCRIPT ERROR，但不能称为干净导入。
+- 资源清理、负向测试与导航告警在两边仍存在，数量并不完全相同；没有为合并而过滤错误、降低断言或改全局测试工具。这些噪声尚未根治。
+- 本地观图检查不等于所有者视觉验收；主角／Q／N 的正式美术与目标硬件审查仍由所有者确认。
 
-1. 最新 UID 编码修正尚未重建 `.import`。开 PR 时实际运行 `python art/classroom/paint_classroom_textures.py --check`（Pillow 11.3.0 / NumPy 2.2.6）退出 1：`Import settings drift: wall_north.png.import`。未为开 PR 隐藏或修复该失败。
-2. 学生桌椅去掉不适用描边之后的最终截图、最终 head 的 24 项回归、真实 `interaction_outline_occlusion_test.gd`、整组基线噪声对照仍未运行。
-3. Compatibility 初始化失败日志见 [compatibility-initialization-failure.log](logs/compatibility-initialization-failure.log)；不能以 headless 或 Forward+ 的结果替代。
-4. 开发基线仍固定为 `fcafc6d91dd07a703e9448dd7fdecd45dc2a559d`，未 rebase。暂停时的并行 PR #133 已合并；开 PR 时观察到 main 为 `35357848d1361d7b3983ed672742b32e9ab7c776`，较基线前进 47 个提交，并同改 `docs/ART_BIBLE.md`、`docs/ART_BIBLE.zh-CN.md`、`docs/ASSET_PROVENANCE.md`、`scenes/locations/classroom/classroom.tscn`。尚未集成验证，不覆盖这些新变更。
-5. 教师正式模型、Windows 目标 GPU 与所有者视觉验收未验证。当前证据不支持“全部验收完成”或“建议合并”。
-
-日志只将本地机器路径前缀规范化为 `$REPO`、`$BASELINE`、`$TOOLS`，并去除两行套件摘要的行尾空格；不删减行、错误或警告。
-当前目录仅收录有说明和链接的少量运行帧；完整构建、缓存、驱动、无效帧与工具生成的无关导入元数据不入 Git，遵循 ADR 0007。
+日志只规范化机器路径前缀为 `$REPO`、`$BASELINE`、`$TOOLS` 并去除行尾空白；不删减日志行、错误或警告。完整构建、缓存、驱动、无效帧及无关自动导入元数据不入 Git，遵循 ADR 0007。

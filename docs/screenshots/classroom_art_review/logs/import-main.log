@@ -1,0 +1,518 @@
+Godot Engine v4.7.2.stable.custom_build - https://godotengine.org
+
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+ERROR: Godot was compiled without fontconfig, system font support is disabled.
+   at: get_system_font_path (platform/linuxbsd/os_linuxbsd.cpp:892)
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Started Project initialization (5 steps)[39m[0m
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Scanning file structure...[39m[0m
+[  16% ] [90m[1mfirst_scan_filesystem[22m | Loading global class names...[39m[0m
+[  33% ] [90m[1mfirst_scan_filesystem[22m | Verifying GDExtensions...[39m[0m
+[  50% ] [90m[1mfirst_scan_filesystem[22m | Creating autoload scripts...[39m[0m
+[  66% ] [90m[1mfirst_scan_filesystem[22m | Initializing plugins...[39m[0m
+[  83% ] [90m[1mfirst_scan_filesystem[22m | Starting file scan...[39m[0m
+[92m[ DONE ][39m [1mfirst_scan_filesystem[22m
+[0m
+[   0% ] [90m[1mupdate_scripts_classes[22m | Started Registering global classes... (162 steps)[39m[0m
+[   0% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   0% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   1% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   1% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   2% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   3% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   3% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   4% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   4% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   5% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   6% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[   6% ] [90m[1mupdate_scripts_classes[22m | NpcActor[39m[0m
+[   7% ] [90m[1mupdate_scripts_classes[22m | PlayerController[39m[0m
+[   7% ] [90m[1mupdate_scripts_classes[22m | AnimationRetarget[39m[0m
+[   8% ] [90m[1mupdate_scripts_classes[22m | CharacterAnimation[39m[0m
+[   9% ] [90m[1mupdate_scripts_classes[22m | CharacterLook[39m[0m
+[   9% ] [90m[1mupdate_scripts_classes[22m | CharacterLookApplier[39m[0m
+[  10% ] [90m[1mupdate_scripts_classes[22m | CharacterMotionProfile[39m[0m
+[  11% ] [90m[1mupdate_scripts_classes[22m | CharacterNameplate[39m[0m
+[  11% ] [90m[1mupdate_scripts_classes[22m | CharacterVisualAnimation[39m[0m
+[  12% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  12% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  13% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  14% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  14% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  15% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  15% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  16% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  17% ] [90m[1mupdate_scripts_classes[22m | CharacterDirectory[39m[0m
+[  17% ] [90m[1mupdate_scripts_classes[22m | ConversationRouter[39m[0m
+[  18% ] [90m[1mupdate_scripts_classes[22m | DialogueController[39m[0m
+[  19% ] [90m[1mupdate_scripts_classes[22m | DialogueGraph[39m[0m
+[  19% ] [90m[1mupdate_scripts_classes[22m | DialogueHistory[39m[0m
+[  20% ] [90m[1mupdate_scripts_classes[22m | DialogueLibrary[39m[0m
+[  20% ] [90m[1mupdate_scripts_classes[22m | DialogueParity[39m[0m
+[  21% ] [90m[1mupdate_scripts_classes[22m | DialogueRuntime[39m[0m
+[  22% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  22% ] [90m[1mupdate_scripts_classes[22m | L10n[39m[0m
+[  23% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  23% ] [90m[1mupdate_scripts_classes[22m | DestinationCue[39m[0m
+[  24% ] [90m[1mupdate_scripts_classes[22m | HoverCue[39m[0m
+[  25% ] [90m[1mupdate_scripts_classes[22m | Interactable[39m[0m
+[  25% ] [90m[1mupdate_scripts_classes[22m | InteractionController[39m[0m
+[  26% ] [90m[1mupdate_scripts_classes[22m | LocationExit[39m[0m
+[  26% ] [90m[1mupdate_scripts_classes[22m | OutlineOverlay[39m[0m
+[  27% ] [90m[1mupdate_scripts_classes[22m | PointerNavigator[39m[0m
+[  28% ] [90m[1mupdate_scripts_classes[22m | WorldCue[39m[0m
+[  28% ] [90m[1mupdate_scripts_classes[22m | CharacterProfile[39m[0m
+[  29% ] [90m[1mupdate_scripts_classes[22m | InspectionLibrary[39m[0m
+[  30% ] [90m[1mupdate_scripts_classes[22m | NarrativeEntry[39m[0m
+[  30% ] [90m[1mupdate_scripts_classes[22m | StoryFlags[39m[0m
+[  31% ] [90m[1mupdate_scripts_classes[22m | CheckResolver[39m[0m
+[  31% ] [90m[1mupdate_scripts_classes[22m | InnerAbilities[39m[0m
+[  32% ] [90m[1mupdate_scripts_classes[22m | SaveCodec[39m[0m
+[  33% ] [90m[1mupdate_scripts_classes[22m | BacklogPanel[39m[0m
+[  33% ] [90m[1mupdate_scripts_classes[22m | CheckOverlay[39m[0m
+[  34% ] [90m[1mupdate_scripts_classes[22m | ConfirmPrompt[39m[0m
+[  34% ] [90m[1mupdate_scripts_classes[22m | DialoguePanel[39m[0m
+[  35% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  36% ] [90m[1mupdate_scripts_classes[22m | EndCard[39m[0m
+[  36% ] [90m[1mupdate_scripts_classes[22m | FadeLayer[39m[0m
+[  37% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  38% ] [90m[1mupdate_scripts_classes[22m | GameUI[39m[0m
+[  38% ] [90m[1mupdate_scripts_classes[22m | GameHud[39m[0m
+[  39% ] [90m[1mupdate_scripts_classes[22m | ImaginationOverlay[39m[0m
+[  39% ] [90m[1mupdate_scripts_classes[22m | InputHint[39m[0m
+[  40% ] [90m[1mupdate_scripts_classes[22m | MenuStyle[39m[0m
+[  41% ] [90m[1mupdate_scripts_classes[22m | PauseMenu[39m[0m
+[  41% ] [90m[1mupdate_scripts_classes[22m | SettingsPanel[39m[0m
+[  42% ] [90m[1mupdate_scripts_classes[22m | TitleScreen[39m[0m
+[  42% ] [90m[1mupdate_scripts_classes[22m | UiTextScale[39m[0m
+[  43% ] [90m[1mupdate_scripts_classes[22m | AmbiencePlayer[39m[0m
+[  44% ] [90m[1mupdate_scripts_classes[22m | CameraOccluderFader[39m[0m
+[  44% ] [90m[1mupdate_scripts_classes[22m | CameraRig[39m[0m
+[  45% ] [90m[1mupdate_scripts_classes[22m | CompanionController[39m[0m
+[  46% ] [90m[1mupdate_scripts_classes[22m | InnerVoiceDirector[39m[0m
+[  46% ] [90m[1mupdate_scripts_classes[22m | LocationCatalog[39m[0m
+[  47% ] [90m[1mupdate_scripts_classes[22m | LocationFlow[39m[0m
+[  47% ] [90m[1mupdate_scripts_classes[22m | LocationHost[39m[0m
+[  48% ] [90m[1mupdate_scripts_classes[22m | LocationNavigation[39m[0m
+[  49% ] [90m[1mupdate_scripts_classes[22m | LocationRoot[39m[0m
+[  49% ] [90m[1mupdate_scripts_classes[22m | OpeningSequence[39m[0m
+[  50% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  50% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  51% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  52% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  52% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  53% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  53% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  54% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  55% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  55% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  56% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  57% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  57% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  58% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  58% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  59% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  60% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  60% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  61% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  61% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  62% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  63% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  63% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  64% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  65% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  65% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  66% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  66% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  67% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  68% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  68% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  69% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  69% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  70% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  71% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  71% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  72% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  73% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  73% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  74% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  74% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  75% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  76% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  76% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  77% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  77% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  78% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  79% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  79% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  80% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  80% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  81% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  82% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  82% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  83% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  84% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  84% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  85% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  85% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  86% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  87% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  87% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  88% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  88% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  89% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  90% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  90% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  91% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  92% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  92% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  93% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  93% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  94% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  95% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  95% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  96% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  96% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  97% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  98% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[  98% ] [90m[1mupdate_scripts_classes[22m | [39m[0m
+[92m[ DONE ][39m [1mupdate_scripts_classes[22m
+[0m
+[   0% ] [90m[1m_update_scan_actions[22m | Started Scanning actions... (95 steps)[39m[0m
+[   0% ] [90m[1m_update_scan_actions[22m | guitar_ambient_loop_01.wav[39m[0m
+[   1% ] [90m[1m_update_scan_actions[22m | bell_second.wav[39m[0m
+[   2% ] [90m[1m_update_scan_actions[22m | corridor_speaker.wav[39m[0m
+[   3% ] [90m[1m_update_scan_actions[22m | room_tone_classroom.wav[39m[0m
+[   4% ] [90m[1m_update_scan_actions[22m | room_tone_walkway.wav[39m[0m
+[   5% ] [90m[1m_update_scan_actions[22m | wake_thud.wav[39m[0m
+[   6% ] [90m[1m_update_scan_actions[22m | NotoSansSC-Regular.ttf[39m[0m
+[   7% ] [90m[1m_update_scan_actions[22m | NotoSerifSC-Regular.otf[39m[0m
+[   8% ] [90m[1m_update_scan_actions[22m | banner.png[39m[0m
+[   9% ] [90m[1m_update_scan_actions[22m | board_back.png[39m[0m
+[  10% ] [90m[1m_update_scan_actions[22m | board_front.png[39m[0m
+[  11% ] [90m[1m_update_scan_actions[22m | canvas_mustard.png[39m[0m
+[  12% ] [90m[1m_update_scan_actions[22m | clock_face.png[39m[0m
+[  13% ] [90m[1m_update_scan_actions[22m | desk_marks.png[39m[0m
+[  14% ] [90m[1m_update_scan_actions[22m | floor.png[39m[0m
+[  15% ] [90m[1m_update_scan_actions[22m | glass_clean.png[39m[0m
+[  16% ] [90m[1m_update_scan_actions[22m | glass_cracked.png[39m[0m
+[  17% ] [90m[1m_update_scan_actions[22m | lacquer_oxblood.png[39m[0m
+[  18% ] [90m[1m_update_scan_actions[22m | timetable.png[39m[0m
+[  19% ] [90m[1m_update_scan_actions[22m | wall_east.png[39m[0m
+[  20% ] [90m[1m_update_scan_actions[22m | wall_north.png[39m[0m
+[  21% ] [90m[1m_update_scan_actions[22m | wall_south_left.png[39m[0m
+[  22% ] [90m[1m_update_scan_actions[22m | wall_south_lintel.png[39m[0m
+[  23% ] [90m[1m_update_scan_actions[22m | wall_south_right.png[39m[0m
+[  25% ] [90m[1m_update_scan_actions[22m | wall_west.png[39m[0m
+[  26% ] [90m[1m_update_scan_actions[22m | window_view.png[39m[0m
+[  27% ] [90m[1m_update_scan_actions[22m | wood_honey.png[39m[0m
+[  28% ] [90m[1m_update_scan_actions[22m | classroom_biology_chart.glb[39m[0m
+[  29% ] [90m[1m_update_scan_actions[22m | classroom_blackboard.glb[39m[0m
+[  30% ] [90m[1m_update_scan_actions[22m | classroom_ceiling_fan.glb[39m[0m
+[  31% ] [90m[1m_update_scan_actions[22m | classroom_door_assembly.glb[39m[0m
+[  32% ] [90m[1m_update_scan_actions[22m | classroom_student_chair.glb[39m[0m
+[  33% ] [90m[1m_update_scan_actions[22m | classroom_student_desk.glb[39m[0m
+[  34% ] [90m[1m_update_scan_actions[22m | classroom_teacher_chair.glb[39m[0m
+[  35% ] [90m[1m_update_scan_actions[22m | classroom_teacher_lectern.glb[39m[0m
+[  36% ] [90m[1m_update_scan_actions[22m | classroom_wall_clock.glb[39m[0m
+[  37% ] [90m[1m_update_scan_actions[22m | classroom_window_curtains.glb[39m[0m
+[  38% ] [90m[1m_update_scan_actions[22m | classroom_window_module.glb[39m[0m
+[  39% ] [90m[1m_update_scan_actions[22m | corridor_cleaning_trolley.glb[39m[0m
+[  40% ] [90m[1m_update_scan_actions[22m | corridor_fire_extinguisher.glb[39m[0m
+[  41% ] [90m[1m_update_scan_actions[22m | corridor_noticeboard.glb[39m[0m
+[  42% ] [90m[1m_update_scan_actions[22m | playground_sports_duffel.glb[39m[0m
+[  43% ] [90m[1m_update_scan_actions[22m | playground_tyre_stack.glb[39m[0m
+[  44% ] [90m[1m_update_scan_actions[22m | bench_playground.glb[39m[0m
+[  45% ] [90m[1m_update_scan_actions[22m | protagonist.glb[39m[0m
+[  46% ] [90m[1m_update_scan_actions[22m | Protagonist_Character.glb[39m[0m
+[  47% ] [90m[1m_update_scan_actions[22m | q.glb[39m[0m
+[  48% ] [90m[1m_update_scan_actions[22m | chair.glb[39m[0m
+[  50% ] [90m[1m_update_scan_actions[22m | figure.glb[39m[0m
+[  51% ] [90m[1m_update_scan_actions[22m | school_desk.glb[39m[0m
+[  52% ] [90m[1m_update_scan_actions[22m | stationery_supplies.glb[39m[0m
+[  53% ] [90m[1m_update_scan_actions[22m | student_backpack.glb[39m[0m
+[  54% ] [90m[1m_update_scan_actions[22m | teacher-n.glb[39m[0m
+[  55% ] [90m[1m_update_scan_actions[22m | n.webp[39m[0m
+[  56% ] [90m[1m_update_scan_actions[22m | protagonist.webp[39m[0m
+[  57% ] [90m[1m_update_scan_actions[22m | q.webp[39m[0m
+[  58% ] [90m[1m_update_scan_actions[22m | protagonist_retarget_ready.glb[39m[0m
+[  59% ] [90m[1m_update_scan_actions[22m | q_rigged.glb[39m[0m
+[  60% ] [90m[1m_update_scan_actions[22m | UAL1_Standard.glb[39m[0m
+[  61% ] [90m[1m_update_scan_actions[22m | backboard.png[39m[0m
+[  62% ] [90m[1m_update_scan_actions[22m | bench_patch.png[39m[0m
+[  63% ] [90m[1m_update_scan_actions[22m | container_gesture.png[39m[0m
+[  64% ] [90m[1m_update_scan_actions[22m | court_line.png[39m[0m
+[  65% ] [90m[1m_update_scan_actions[22m | court_tile.png[39m[0m
+[  66% ] [90m[1m_update_scan_actions[22m | fence_gap.png[39m[0m
+[  67% ] [90m[1m_update_scan_actions[22m | fence_panel.png[39m[0m
+[  68% ] [90m[1m_update_scan_actions[22m | foliage_tile.png[39m[0m
+[  69% ] [90m[1m_update_scan_actions[22m | ground_tile.png[39m[0m
+[  70% ] [90m[1m_update_scan_actions[22m | hoop_net.png[39m[0m
+[  71% ] [90m[1m_update_scan_actions[22m | hoop_patch.png[39m[0m
+[  72% ] [90m[1m_update_scan_actions[22m | key_area.png[39m[0m
+[  73% ] [90m[1m_update_scan_actions[22m | metal_tile.png[39m[0m
+[  75% ] [90m[1m_update_scan_actions[22m | notice_sheet.png[39m[0m
+[  76% ] [90m[1m_update_scan_actions[22m | plaster_tile.png[39m[0m
+[  77% ] [90m[1m_update_scan_actions[22m | pour_b.png[39m[0m
+[  78% ] [90m[1m_update_scan_actions[22m | rota_sheet.png[39m[0m
+[  79% ] [90m[1m_update_scan_actions[22m | row_chimney.png[39m[0m
+[  80% ] [90m[1m_update_scan_actions[22m | row_flats.png[39m[0m
+[  81% ] [90m[1m_update_scan_actions[22m | row_pylon.png[39m[0m
+[  82% ] [90m[1m_update_scan_actions[22m | row_tower.png[39m[0m
+[  83% ] [90m[1m_update_scan_actions[22m | seam.png[39m[0m
+[  84% ] [90m[1m_update_scan_actions[22m | sky_floor.png[39m[0m
+[  85% ] [90m[1m_update_scan_actions[22m | tyre.png[39m[0m
+[  86% ] [90m[1m_update_scan_actions[22m | wall_patches.png[39m[0m
+[  87% ] [90m[1m_update_scan_actions[22m | corridor_floor.png[39m[0m
+[  88% ] [90m[1m_update_scan_actions[22m | corridor_wall.png[39m[0m
+[  89% ] [90m[1m_update_scan_actions[22m | dash_line.png[39m[0m
+[  90% ] [90m[1m_update_scan_actions[22m | distance_alley.png[39m[0m
+[  91% ] [90m[1m_update_scan_actions[22m | distance_corridor.png[39m[0m
+[  92% ] [90m[1m_update_scan_actions[22m | distance_residential.png[39m[0m
+[  93% ] [90m[1m_update_scan_actions[22m | distance_street.png[39m[0m
+[  94% ] [90m[1m_update_scan_actions[22m | hopscotch.png[39m[0m
+[  95% ] [90m[1m_update_scan_actions[22m | streak_tile.png[39m[0m
+[  96% ] [90m[1m_update_scan_actions[22m | window_tile.png[39m[0m
+[  97% ] [90m[1m_update_scan_actions[22m | zebra.png[39m[0m
+[92m[ DONE ][39m [1m_update_scan_actions[22m
+[0m
+[   0% ] [90m[1mreimport[22m | Started (Re)Importing Assets (50 steps)[39m[0m
+[   0% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   1% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   3% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   5% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   7% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   9% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  11% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  13% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  15% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  17% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  19% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  21% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  23% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  25% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  27% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  29% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  31% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  33% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  35% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  37% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  39% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  41% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  43% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  45% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  47% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  49% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  50% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  52% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  54% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  56% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  58% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  60% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  62% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  64% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  66% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  68% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  70% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  72% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  74% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  76% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  78% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  80% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  82% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  84% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  86% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  88% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  90% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  92% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  94% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[  96% ] [90m[1mreimport[22m | Preparing files to reimport...[39m[0m
+[   0% ] [90m[1mreimport[22m | Executing pre-reimport operations...[39m[0m
+[   0% ] [90m[1mpreload_reimporting_scene[22m | Started Preparing scenes for reload (1 steps)[39m[0m
+[   0% ] [90m[1mpreload_reimporting_scene[22m | Analyzing scene [empty][39m[0m
+[  50% ] [90m[1mpreload_reimporting_scene[22m | Preparation done.[39m[0m
+[92m[ DONE ][39m [1mpreload_reimporting_scene[22m
+[0m
+[   0% ] [90m[1mreimport[22m | NotoSerifSC-Regular.otf[39m[0m
+[   1% ] [90m[1mreimport[22m | NotoSerifSC-Regular.otf[39m[0m
+[   1% ] [90m[1mreimport[22m | NotoSerifSC-Regular.otf[39m[0m
+[   3% ] [90m[1mreimport[22m | n.webp[39m[0m
+[   3% ] [90m[1mreimport[22m | n.webp[39m[0m
+[   5% ] [90m[1mreimport[22m | protagonist.webp[39m[0m
+[   5% ] [90m[1mreimport[22m | protagonist.webp[39m[0m
+[   7% ] [90m[1mreimport[22m | q.webp[39m[0m
+[   9% ] [90m[1mreimport[22m | bench_patch.png[39m[0m
+[  11% ] [90m[1mreimport[22m | foliage_tile.png[39m[0m
+[  13% ] [90m[1mreimport[22m | hoop_net.png[39m[0m
+[  15% ] [90m[1mreimport[22m | plaster_tile.png[39m[0m
+[  17% ] [90m[1mreimport[22m | pour_b.png[39m[0m
+[  19% ] [90m[1mreimport[22m | row_chimney.png[39m[0m
+[  21% ] [90m[1mreimport[22m | row_flats.png[39m[0m
+[  23% ] [90m[1mreimport[22m | sky_floor.png[39m[0m
+[  25% ] [90m[1mreimport[22m | tyre.png[39m[0m
+[  27% ] [90m[1mreimport[22m | corridor_floor.png[39m[0m
+[  29% ] [90m[1mreimport[22m | corridor_wall.png[39m[0m
+[  31% ] [90m[1mreimport[22m | dash_line.png[39m[0m
+[  33% ] [90m[1mreimport[22m | distance_alley.png[39m[0m
+[  35% ] [90m[1mreimport[22m | distance_corridor.png[39m[0m
+[  37% ] [90m[1mreimport[22m | distance_residential.png[39m[0m
+[  39% ] [90m[1mreimport[22m | distance_street.png[39m[0m
+[  41% ] [90m[1mreimport[22m | hopscotch.png[39m[0m
+[  43% ] [90m[1mreimport[22m | streak_tile.png[39m[0m
+[  45% ] [90m[1mreimport[22m | window_tile.png[39m[0m
+[  47% ] [90m[1mreimport[22m | zebra.png[39m[0m
+[  49% ] [90m[1mreimport[22m | floor.png[39m[0m
+[  50% ] [90m[1mreimport[22m | glass_clean.png[39m[0m
+[  52% ] [90m[1mreimport[22m | glass_cracked.png[39m[0m
+[  54% ] [90m[1mreimport[22m | lacquer_oxblood.png[39m[0m
+[  56% ] [90m[1mreimport[22m | wall_east.png[39m[0m
+[  58% ] [90m[1mreimport[22m | wall_north.png[39m[0m
+[  60% ] [90m[1mreimport[22m | wall_south_left.png[39m[0m
+[  62% ] [90m[1mreimport[22m | window_view.png[39m[0m
+[  64% ] [90m[1mreimport[22m | classroom_biology_chart.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  66% ] [90m[1mreimport[22m | classroom_blackboard.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  68% ] [90m[1mreimport[22m | classroom_ceiling_fan.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  70% ] [90m[1mreimport[22m | classroom_door_assembly.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  72% ] [90m[1mreimport[22m | classroom_student_chair.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  74% ] [90m[1mreimport[22m | classroom_student_desk.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  76% ] [90m[1mreimport[22m | classroom_teacher_chair.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  78% ] [90m[1mreimport[22m | classroom_teacher_lectern.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  80% ] [90m[1mreimport[22m | classroom_wall_clock.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  82% ] [90m[1mreimport[22m | classroom_window_curtains.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  84% ] [90m[1mreimport[22m | classroom_window_module.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  86% ] [90m[1mreimport[22m | corridor_cleaning_trolley.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  88% ] [90m[1mreimport[22m | corridor_fire_extinguisher.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  90% ] [90m[1mreimport[22m | corridor_noticeboard.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  92% ] [90m[1mreimport[22m | teacher-n.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  94% ] [90m[1mreimport[22m | playground_tyre_stack.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  96% ] [90m[1mreimport[22m | playground_sports_duffel.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Import Scene (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Importing Scene...[39m[0m
+[   1% ] [90m[1mimport[22m | Running Custom Script...[39m[0m
+[  99% ] [90m[1mimport[22m | Saving...[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  98% ] [90m[1mreimport[22m | Finalizing Asset Import...[39m[0m
+[92m[ DONE ][39m [1mreimport[22m
+[0m
+[   0% ] [90m[1mreimport[22m | Started (Re)Importing Assets (50 steps)[39m[0m
+[   0% ] [90m[1mreimport[22m | Executing post-reimport operations...[39m[0m
+[92m[ DONE ][39m [1mreimport[22m
+[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Started Loading editor (5 steps)[39m[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Loading editor layout...[39m[0m
+[  16% ] [90m[1mloading_editor_layout[22m | Loading docks...[39m[0m
+[92m[ DONE ][39m [1mloading_editor_layout[22m
+[0m

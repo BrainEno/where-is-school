@@ -1,8 +1,8 @@
 engine=4.7.2-stable (custom_build) renderer=forward_plus display=X11
 adapter=SwiftShader Device (Subzero)
 viewport=(1600, 900)
-shot=01_gameplay.png sha256=e5e2624962804b23747173b72ecfa535010b9ed932058b361e3376c7e49259fd
-shot=02_wall_occlusion.png sha256=f543f5edad889112fadc0e2ce84dbe8b4cc58a6e734d07cf00ad4c5145e39356
+shot=01_gameplay.png sha256=3ab184ce497709fea32a5f8ae19ab045b1b4d425abc5d5c37e0fe0c2a693ff90
+shot=02_wall_occlusion.png sha256=e5d8cc185d241b080f5d94092188cb66965a84a93c3c6295b640dc09f71b041b
 occlusion WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
 occlusion WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
 occlusion WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
@@ -18,7 +18,7 @@ occlusion WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mo
 occlusion WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
 occlusion DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
 occlusion DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
-shot=03_walls_restored.png sha256=8b97815f03028770596810f0a1608bc1c0ad901038f5b0fe56de6a1ad940cdd1
+shot=03_walls_restored.png sha256=e1990c270737dd0f9de5539de38bf35718efc9b1024ba67d9032c03dd72d8de7
 restored WallNorth/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
 restored WallNorth/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_north.tres
 restored WallNorth/FrontWallDressing/ClockDial instance_transparency=0.0000 material_mode=2 alpha=1.0000 material=res://assets/materials/classroom/clock_dial.tres
@@ -34,4 +34,4 @@ restored WallSouthRight/MeshInstance3D instance_transparency=0.0000 material_mod
 restored WallSouthRight/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_right.tres
 restored DoorLintel/MeshInstance3D instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_section.tres
 restored DoorLintel/Paint instance_transparency=0.0000 material_mode=0 alpha=1.0000 material=res://assets/materials/classroom/wall_south_lintel.tres
-shot=04_board_and_teacher.png sha256=18c8cfdfdae30905502cb117d2230f030a15f9180a8e11692ae9d9ae5fdb1bbd
+shot=04_board_and_teacher.png sha256=7ff37f966e5a32e9c98b491e7bc8f9821a2d5675d994709bfe2a41b32126577a

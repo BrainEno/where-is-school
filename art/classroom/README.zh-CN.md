@@ -83,6 +83,10 @@
 不能把两者叠乘。`tests/classroom_wall_render_test.gd` 将实际像素与单次 Alpha 对照比较；
 `tests/capture_classroom_art.gd` 记录真实教室。玻璃仍是有意使用表面 Alpha 的例外。
 
+生成器采用 Godot 4.7.2 的规范 34 字符 UID 编码；真实导入后应再次检查 sidecar，防止编辑器改写。
+策展后的实际前后截图、像素数值、基线噪声对照与平台限制见 `docs/screenshots/classroom_art_review/README.md`。
+运行证据不能代替所有者美术审查或目标 GPU 验收。
+
 ## 未改动的部分
 
 房间尺寸、墙体、门洞、课桌网格、出生点、全部可交互物及其位置，

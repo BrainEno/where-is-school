@@ -98,6 +98,12 @@ Do not multiply both. `tests/classroom_wall_render_test.gd` compares actual pixe
 a single-alpha control; `tests/capture_classroom_art.gd` records the actual classroom.
 Glass remains the deliberate surface-alpha exception.
 
+The generator uses Godot 4.7.2's canonical 34-character UID encoding; check the sidecars
+again after a real import to catch editor rewrites. Curated actual before/after frames,
+pixel measurements, baseline-noise comparison and explicit platform limits are recorded
+in `docs/screenshots/classroom_art_review/README.md`. Runtime evidence is not a substitute
+for owner art review or target-GPU acceptance.
+
 ## What did not change
 
 Room size, walls, door gap, desk grid, spawn points, every interactable and its
