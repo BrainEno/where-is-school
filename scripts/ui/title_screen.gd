@@ -34,6 +34,9 @@ var _entries: Dictionary = {}
 var _settings_panel: SettingsPanel = null
 var _confirm: ConfirmPrompt = null
 var _starting := false
+## The new game that did not start, as Session reported it. Kept as the report rather than
+## as text, so a language switch renders it again; cleared by the next attempt.
+var _start_failure: Dictionary = {}
 
 
 func _ready() -> void:
@@ -85,6 +88,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_refit)
 
 	refresh_save_state()
+	_show_unshown_failure()
 	_refit()
 
 
@@ -225,19 +229,19 @@ func _refresh_texts() -> void:
 			String(_save_report.get("location_id", "")), int(_save_report.get("saved_at_unix", 0))
 		)
 		(_continue_detail.get_parent() as Control).visible = not _continue_detail.text.is_empty()
+	var lines := PackedStringArray()
+	if not _start_failure.is_empty():
+		lines.append(NewGameFailureText.describe(_start_failure))
 	if _save_state == &"broken":
-		var lines := PackedStringArray([L10n.t("menu.save_unreadable")])
+		lines.append(L10n.t("menu.save_unreadable"))
 		var detail := String(_save_report.get("detail", ""))
 		if not detail.is_empty():
 			lines.append(detail)
 		var copy := String(_save_report.get("quarantined_to", ""))
 		if not copy.is_empty():
 			lines.append(L10n.t("save.error.quarantined", {"path": copy}))
-		_notice.text = "\n".join(lines)
-		_notice.visible = true
-	else:
-		_notice.text = ""
-		_notice.visible = false
+	_notice.text = "\n".join(lines)
+	_notice.visible = not lines.is_empty()
 	_refresh_hint()
 
 
@@ -273,13 +277,17 @@ func _start_new_game() -> void:
 	if _starting:
 		return
 	_starting = true
+	# A new attempt: the last failure no longer describes anything.
+	_start_failure = {}
+	_refresh_texts()
 	for entry: Button in _entries.values():
 		entry.disabled = true
 	var session := get_node_or_null(^"/root/Session")
 	if session == null:
 		var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
 		if error != OK:
-			_show_start_error("Could not open the game scene (error %d)." % error)
+			push_error("TitleScreen: could not open the game scene (error %d)." % error)
+			_show_start_failure({"reason": "scene_change_failed", "scene_error": error})
 		return
 	# Session owns the whole new game, including the hand-off to the opening (step 8 of
 	# its transaction in game_session.gd): the old save stays staged until the opening is
@@ -288,10 +296,10 @@ func _start_new_game() -> void:
 	# left a failed hand-off with nothing to roll back to.
 	#
 	# No world is passed: on the title screen Session finds none (the title is not a
-	# world), so nothing here is freed by the transaction, and a failure stays on this
-	# screen (Session's rollback keeps the title as the current scene). The success path
-	# frees this screen with the scene change, so the call is not awaited: the outcome
-	# arrives as `new_game_failed`, the same way the pause menu and the end card hear it.
+	# world), so nothing here is freed by the transaction. A failure before the hand-off
+	# stays on this screen (Session's rollback keeps the title as the current scene) and
+	# arrives as `new_game_failed`; one after it (the opening was entered, then the commit
+	# failed) frees this screen and lands on a new one, which reads it in `_ready`.
 	if not session.is_connected("new_game_failed", _on_new_game_failed):
 		session.connect("new_game_failed", _on_new_game_failed, CONNECT_ONE_SHOT)
 	var immediate: Variant = session.call("start_new_game")
@@ -299,21 +307,38 @@ func _start_new_game() -> void:
 		# Refused before it started, so no signal follows.
 		if session.is_connected("new_game_failed", _on_new_game_failed):
 			session.disconnect("new_game_failed", _on_new_game_failed)
-		_show_start_error(String((immediate as Dictionary).get("detail", "")))
+		_show_start_failure(immediate as Dictionary)
 
 
 func _on_new_game_failed(report: Dictionary) -> void:
 	if not is_inside_tree():
 		return
-	_show_start_error(String(report.get("detail", report.get("reason", "Unknown error."))))
+	var session := get_node_or_null(^"/root/Session")
+	if session != null and session.has_method("mark_new_game_failure_shown"):
+		session.call("mark_new_game_failure_shown")
+	_show_start_failure(report)
 
 
-func _show_start_error(detail: String) -> void:
+## A failure no screen has shown yet: the new game failed after the screen that started it
+## was freed (the pause menu's world, the end card's, or a title the opening replaced), and
+## Session brought the player here. Shown once; Session forgets it as it hands it over.
+func _show_unshown_failure() -> void:
+	var session := get_node_or_null(^"/root/Session")
+	if session == null or not session.has_method("take_unshown_new_game_failure"):
+		return
+	var report: Dictionary = session.call("take_unshown_new_game_failure")
+	if not report.is_empty():
+		_show_start_failure(report)
+
+
+func _show_start_failure(report: Dictionary) -> void:
 	_starting = false
 	for entry: Button in _entries.values():
 		entry.disabled = false
-	_notice.text = detail if not detail.is_empty() else "The new game could not be started. Please try again."
-	_notice.visible = true
+	_start_failure = report.duplicate(true)
+	if _start_failure.is_empty():
+		_start_failure = {"reason": "unknown"}
+	_refresh_texts()
 	_refit()
 	focus_entry(&"new_game")
 

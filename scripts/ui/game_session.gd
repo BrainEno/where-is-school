@@ -35,6 +35,10 @@ extends Node
 ## safe UI, with their progress on disk and Continue offered. Either way the report says what
 ## failed, why, where the save is and what was restored, and the session emits
 ## `new_game_failed` with that report, which is what a menu renders.
+## A failure after the old world was freed also took the menu that started it, so the title
+## screen it lands on asks for the report with `take_unshown_new_game_failure()`; a menu that
+## showed it from the signal calls `mark_new_game_failure_shown()`. Either way it is shown
+## once (`scripts/ui/new_game_failure_text.gd` turns it into the player's language).
 ##
 ## The old save is therefore never deleted to make room for the new run: it is moved aside,
 ## proved, and either put back or discarded. `SaveManager` makes the same promise one level
@@ -72,6 +76,11 @@ var world_scene := MAIN_SCENE
 
 var _starting := false
 var _last_report: Dictionary = {}
+## False from the moment a new game fails until a screen has shown the failure. A failure
+## after the old world was freed ends on a title screen that did not exist when the signal
+## was emitted, so that screen asks for it in `_ready`; a menu that heard the signal marks it
+## shown, so the next title screen does not show it a second time.
+var _failure_shown := true
 
 
 func _ready() -> void:
@@ -222,6 +231,20 @@ func is_starting_new_game() -> bool:
 ## it prefers to ask later rather than listen to a signal.
 func get_last_new_game_report() -> Dictionary:
 	return _last_report.duplicate(true)
+
+
+## The last new game's failure report if no screen has shown it yet, and from then on `{}`.
+## A success, or a failure a menu already showed, also returns `{}`.
+func take_unshown_new_game_failure() -> Dictionary:
+	if _failure_shown or _last_report.is_empty() or bool(_last_report.get("ok", false)):
+		return {}
+	_failure_shown = true
+	return _last_report.duplicate(true)
+
+
+## Called by a menu that showed the failure it heard through `new_game_failed`.
+func mark_new_game_failure_shown() -> void:
+	_failure_shown = true
 
 
 ## Starts over. `world` is the running game scene (the current scene when omitted); a test
@@ -452,6 +475,7 @@ func _conclude(report: Dictionary, steps: PackedStringArray) -> Dictionary:
 	report["ok"] = String(report["reason"]).is_empty()
 	_starting = false
 	_last_report = report.duplicate(true)
+	_failure_shown = bool(report["ok"])
 	if bool(report["ok"]):
 		new_game_started.emit(report.duplicate(true))
 	else:
