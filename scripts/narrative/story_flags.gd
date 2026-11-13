@@ -11,10 +11,19 @@ extends RefCounted
 const MET_Q: StringName = &"met_q"
 ## bool: the schoolbag has been searched and the textbook is missing.
 const TEXTBOOK_MISSING: StringName = &"textbook_missing"
+## bool: the bag step's fallback ran out before the bag was searched. Closes the bag
+## step without claiming a search: `textbook_missing` stays false and nothing is
+## recorded. Absent (false) in saves written before #144; the director then reads the
+## later steps' flags instead (`OpeningSequence.is_step_done()`).
+const BAG_WAIT_EXPIRED: StringName = &"bag_wait_expired"
 ## bool: the player inspected the wooden set square.
 const SAW_SET_SQUARE: StringName = &"saw_set_square"
 ## bool: the subjective expectation beat has been presented.
 const EXPECTATION_PLAYED: StringName = &"expectation_played"
+## bool: the expectation beat was passed over because the bag had not been searched
+## when its turn came. Closes the step without claiming the scene was seen. Absent
+## (false) in saves written before #144, like `bag_wait_expired`.
+const EXPECTATION_SKIPPED: StringName = &"expectation_skipped"
 ## bool: the second bell has rung.
 const BELL_RUNG: StringName = &"bell_rung"
 ## bool: substitute N has reached the front of the classroom.
@@ -96,8 +105,10 @@ const CURRENT_LOCATION: StringName = &"current_location"
 const ALL_FLAGS: Array[StringName] = [
 	MET_Q,
 	TEXTBOOK_MISSING,
+	BAG_WAIT_EXPIRED,
 	SAW_SET_SQUARE,
 	EXPECTATION_PLAYED,
+	EXPECTATION_SKIPPED,
 	BELL_RUNG,
 	N_ARRIVED,
 	CLASS_DISMISSED,
