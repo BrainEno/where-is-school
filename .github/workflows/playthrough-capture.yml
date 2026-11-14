@@ -41,6 +41,7 @@ on:
       - "addons/**"
       - "tests/capture_editor_dock.gd"
       - "tests/interaction_outline_occlusion_test.gd"
+      - "tests/capture_n_presence.gd"
   # `pull_request` has no branch filter: a pull request whose base is another
   # branch - a stacked one - is still a pull request, and until this was removed the
   # only place it could be tested was the branch it was stacked on, or a manual
@@ -62,6 +63,7 @@ on:
       - "addons/**"
       - "tests/capture_editor_dock.gd"
       - "tests/interaction_outline_occlusion_test.gd"
+      - "tests/capture_n_presence.gd"
   workflow_dispatch:
 
 permissions:
@@ -511,6 +513,56 @@ jobs:
             exit 1
           fi
 
+      - name: Photograph substitute teacher N before, after and on re-entry
+        id: n_presence
+        if: always() && steps.import.outcome == 'success'
+        shell: bash
+        run: |
+          # Issue #166: the classroom from the game camera before N comes in, once she has
+          # dismissed the class, and after the player has left the room and come back (a new
+          # instance of the scene). See tests/capture_n_presence.gd. The full frames go into
+          # the evidence artifact under n-presence/; a 320x180 JPEG of each is printed as
+          # base64 and published below in numbered parts (an annotation holds about 4 KB):
+          # concatenate the parts of one file in order and decode them.
+          set +e -uo pipefail
+          EVIDENCE="${RUNNER_TEMP}/evidence"
+          frames="${EVIDENCE}/n-presence"
+          log="${EVIDENCE}/logs/n-presence.log"
+          mkdir -p "${frames}"
+          N_PRESENCE_EVIDENCE_DIR="${frames}" \
+            timeout 300 xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 \
+            --script res://tests/capture_n_presence.gd > "${log}.raw" 2>&1
+          code=$?
+          grep -v "^CROP: " "${log}.raw" > "${log}"
+          grep -E "N_PRESENCE|PASS|FAIL|TEST FAILURE|SCRIPT ERROR" "${log}" | tail -n 30
+          echo "--- exit ${code}"
+          budget=9
+          grep -E "^CROP: " "${log}.raw" | while read -r _ file data; do
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "${parts}" -gt "${budget}" ]; then
+              echo "skipping ${file}: ${parts} parts, ${budget} annotation(s) left"
+              continue
+            fi
+            for i in $(seq 1 "${parts}"); do
+              echo "::notice title=N presence crop ${file} part ${i}/${parts}::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+            budget=$(( budget - parts ))
+          done
+          rm -f "${log}.raw"
+          measured=$(grep -E "^N_PRESENCE " "${log}" | tr '\n' '|' | cut -c1-1500)
+          echo "::notice title=N presence (exit ${code})::${measured:-no measurements}"
+          why=$(grep -E "TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|Parse Error" "${log}" \
+            | head -n 12 | tr '\n' '|' | cut -c1-3000)
+          if [ -n "${why}" ]; then
+            echo "::error title=N presence capture failed::${why}"
+            exit 1
+          fi
+          if ! grep -qE "^PASS: " "${log}"; then
+            echo "::error title=N presence capture failed::no verdict (exit ${code})"
+            exit 1
+          fi
+
       - name: Stage the frame list
         if: always()
         shell: bash
@@ -542,6 +594,7 @@ jobs:
             echo "| dialogue frames | ${UI_CAPTURE_OUTCOME:-unknown} |"
             echo "| editor dock frames | ${EDITOR_CAPTURE_OUTCOME:-unknown} |"
             echo "| outline depth check | ${OUTLINE_OCCLUSION_OUTCOME:-unknown} |"
+            echo "| N before / after / re-entry frames | ${N_PRESENCE_OUTCOME:-unknown} |"
             echo ""
             echo "Screenshots: ${SHOT_COUNT:-0} frame file(s) staged in docs/screenshots."
             echo "Log and frames: download \`playthrough-evidence-${GITHUB_RUN_ATTEMPT}\` from this workflow run."
@@ -553,6 +606,7 @@ jobs:
           UI_CAPTURE_OUTCOME: ${{ steps.ui_capture.outcome }}
           EDITOR_CAPTURE_OUTCOME: ${{ steps.editor_capture.outcome }}
           OUTLINE_OCCLUSION_OUTCOME: ${{ steps.outline_occlusion.outcome }}
+          N_PRESENCE_OUTCOME: ${{ steps.n_presence.outcome }}
           SHOT_COUNT: ${{ steps.capture.outputs.shot_count }}
 
       - name: Upload the evidence
