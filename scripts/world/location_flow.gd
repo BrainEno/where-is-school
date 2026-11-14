@@ -22,6 +22,11 @@ extends RefCounted
 ## The only exit whose prompt is rewritten by the story.
 const COMPLETION_DOOR_ID := &"classroom_door"
 const EXIT_GROUP := &"location_exit"
+## How long a transition's `on_failure` may take, in story time (seconds), before the
+## refused transition gives the room back anyway. A recovery that never finishes - a
+## coroutine whose script error stopped it after its first `await` never completes - must
+## not leave the screen black and the beat held for the rest of the session.
+const FAILURE_RECOVERY_LIMIT := 5.0
 
 var _host: Node = null
 var _locations: LocationHost = null
@@ -120,6 +125,21 @@ func _transition_to(exit: LocationExit) -> void:
 ##   "arrival_conversation": StringName
 ##                                 plays instead of the room's own arrival line, whether
 ##                                 or not that line has been heard.
+##   "on_failure": Callable        the caller's recovery when the destination is refused
+##                                 (missing scene, wrong id, no spawn, unplaceable player).
+##                                 Called at most once, and only on that path: after the
+##                                 departure's pose and camera have been put back, while
+##                                 the screen is still black, the beat is still held and
+##                                 the old room is still current - so it can put the room
+##                                 back the way the departure found it before anyone sees
+##                                 it. It takes no arguments and may be a coroutine; it is
+##                                 awaited, for at most `FAILURE_RECOVERY_LIMIT` seconds of
+##                                 story time. The fade back and the beat release happen
+##                                 whatever it does. It must not start a transition or
+##                                 take the beat. Nothing else is rolled back for it:
+##                                 `arrival_flags` were never written, and the room's own
+##                                 state is the caller's business. The return value is
+##                                 still `false`; callers must not call it again.
 func transition_to(
 	destination_scene: String,
 	destination_spawn: StringName,
@@ -147,6 +167,9 @@ func transition_to(
 		push_error(
 			"LocationFlow: could not enter '%s' from %s; staying put." % [destination_scene, label]
 		)
+		var on_failure: Callable = options.get("on_failure", Callable())
+		if on_failure.is_valid():
+			await _recover_from_refusal(on_failure, label)
 		await _ui.fade.fade_from_black(0.5)
 		_host.end_beat()
 		return false
@@ -171,6 +194,33 @@ func transition_to(
 	_host.end_beat()
 	_play_arrival_beat(destination_id, StringName(options.get("arrival_conversation", &"")))
 	return true
+
+
+## Runs a refused transition's `on_failure` once and waits for it, but never longer than
+## `FAILURE_RECOVERY_LIMIT` seconds of story time (a timer that stops under the pause menu,
+## like every authored wait). The callback is started from a small runner rather than
+## awaited directly: a coroutine that dies after an `await` never completes, and awaiting
+## it here would hold the beat and the black screen forever.
+func _recover_from_refusal(on_failure: Callable, label: String) -> void:
+	var state := {"done": false}
+	var runner := func() -> void:
+		await on_failure.call()
+		state["done"] = true
+	runner.call()
+	if bool(state["done"]):
+		return
+	var limit := _host.get_tree().create_timer(FAILURE_RECOVERY_LIMIT, false)
+	while not bool(state["done"]):
+		if limit.time_left <= 0.0:
+			push_error(
+				(
+					"LocationFlow: the failure recovery for %s did not finish within %.1f s; "
+					+ "giving the room back anyway."
+				)
+				% [label, FAILURE_RECOVERY_LIMIT]
+			)
+			return
+		await _host.get_tree().process_frame
 
 
 ## Undoes whatever a departure did to the body and the view: upright, unrolled, the

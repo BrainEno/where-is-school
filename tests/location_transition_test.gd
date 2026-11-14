@@ -13,6 +13,10 @@ extends SceneTree
 ##    unchanged, `location_entered` was not emitted, and the rejected instance is gone;
 ## 4. the same holds on the director's own path: a door whose spawn is mistyped leaves
 ##    the room, the player, Q and the story flag alone and gives control back;
+## 4b. a refused `LocationFlow.transition_to()` runs the caller's `on_failure` exactly once,
+##    behind the black, with the beat still held and the old room current; it awaits a
+##    coroutine recovery, gives the room back even when the recovery never finishes, never
+##    writes `arrival_flags`, and a successful transition never calls it (issue #148);
 ## 5. every exit the game ships really works: the scene, the `location_id`, the spawn
 ##    marker, the arrival point on the navigation mesh, and a return marker that sits
 ##    by the exit it comes back through.
@@ -106,6 +110,8 @@ func _run() -> void:
 	await _check_director_refusal()
 	Harness.stage = "director transition"
 	await _check_director_transition()
+	Harness.stage = "failure recovery contract"
+	await _check_failure_recovery_contract()
 	Harness.stage = "every shipped exit"
 	await _check_every_shipped_exit()
 
@@ -360,6 +366,142 @@ func _check_director_transition() -> void:
 		_failures.append("The corridor lost its '%s' spawn." % str(destination_spawn))
 		return
 	_expect_at("the classroom door", spawn.global_transform)
+
+
+# --- failure recovery (issue #148) -------------------------------------------
+
+
+## `on_failure` against the real flow, fade and beat. Starts in the corridor (the director
+## transition above left the player there) and ends back in the classroom.
+func _check_failure_recovery_contract() -> void:
+	var flow: LocationFlow = _sequence.get("_flow") as LocationFlow
+	var ui := _main.get_node_or_null("GameUI") as GameUI
+	if flow == null or ui == null or _host.get_current() == null:
+		_failures.append("The failure-recovery contract has no flow, UI or current room.")
+		return
+	var marker := &"test_arrival_marker_148"
+	var missing := "%s/missing_destination.tscn" % FIXTURE_DIR
+
+	# 1. A plain callback: once, behind the black, inside the beat, in the old room.
+	var calls: Array[Dictionary] = []
+	var spy := func() -> void:
+		calls.append(
+			{
+				"beat": _sequence.is_beat_active(),
+				"alpha": ui.fade.color.a,
+				"room": _host.get_current(),
+				"flag": _game_state.get_flag(StoryFlags.CURRENT_LOCATION, &""),
+			}
+		)
+	var before := _snapshot()
+	var entered: bool = await flow.transition_to(
+		missing, &"Nowhere", &"nowhere",
+		{"label": "the #148 contract", "on_failure": spy, "arrival_flags": {marker: true}}
+	)
+	await _frames(2)
+	_expect_untouched("a missing scene and an on_failure", before)
+	if entered:
+		_failures.append("transition_to() reported success for a scene that does not exist.")
+	if calls.size() != 1:
+		_failures.append("A refused transition called on_failure %d time(s), not once." % calls.size())
+	else:
+		var seen: Dictionary = calls[0]
+		if not bool(seen["beat"]):
+			_failures.append("on_failure ran after the transition beat was released.")
+		if float(seen["alpha"]) < 0.99:
+			_failures.append(
+				"on_failure ran with the screen already %.2f opaque, not black." % float(seen["alpha"])
+			)
+		if seen["room"] != before["location"]:
+			_failures.append("on_failure ran when the old room was no longer current.")
+		if seen["flag"] != before["flag"]:
+			_failures.append("CURRENT_LOCATION had changed by the time on_failure ran.")
+	_expect_returned("a refused transition with on_failure", ui)
+	if _game_state.has_flag(marker):
+		_failures.append("A refused transition wrote its arrival_flags.")
+
+	# 2. A coroutine recovery is awaited: the screen stays black until it has finished.
+	var finished_at: Array[float] = []
+	var slow := func() -> void:
+		await create_timer(0.4, false).timeout
+		finished_at.append(ui.fade.color.a)
+	entered = await flow.transition_to(missing, &"Nowhere", &"nowhere", {"on_failure": slow})
+	await _frames(2)
+	if entered or finished_at.size() != 1:
+		_failures.append(
+			"A coroutine on_failure finished %d time(s) (transition %s)." % [finished_at.size(), entered]
+		)
+	elif finished_at[0] < 0.99:
+		_failures.append(
+			"The room faded back in (%.2f opaque) before a coroutine on_failure finished."
+			% finished_at[0]
+		)
+	_expect_returned("a coroutine on_failure", ui)
+
+	# 3. A recovery that never finishes (what a coroutine stopped by an error after its
+	#    first await looks like from outside) cannot keep the beat or the black.
+	var never := Timer.new()
+	root.add_child(never)
+	var stuck := func() -> void:
+		await never.timeout
+	var started := Time.get_ticks_msec()
+	entered = await flow.transition_to(missing, &"Nowhere", &"nowhere", {"on_failure": stuck})
+	await _frames(2)
+	var waited := (Time.get_ticks_msec() - started) / 1000.0
+	never.queue_free()
+	if entered:
+		_failures.append("A stuck on_failure turned a refused transition into a success.")
+	_expect_returned("an on_failure that never finishes", ui)
+	if waited > (LocationFlow.FAILURE_RECOVERY_LIMIT + 4.0):
+		_failures.append("A stuck on_failure held the room for %.1f s of real time." % waited)
+
+	# 4. No on_failure: the ordinary refusal, and still no arrival flags.
+	before = _snapshot()
+	entered = await flow.transition_to(
+		missing, &"Nowhere", &"nowhere", {"arrival_flags": {marker: true}}
+	)
+	await _frames(2)
+	_expect_untouched("a missing scene without on_failure", before)
+	_expect_returned("a refused transition without on_failure", ui)
+	if entered or _game_state.has_flag(marker):
+		_failures.append("A plain refused transition succeeded or wrote its arrival_flags.")
+
+	# 5. A transition that succeeds never calls it.
+	var success_calls: Array[int] = []
+	entered = await flow.transition_to(
+		CLASSROOM, &"FromCorridor", &"classroom",
+		{"on_failure": func() -> void: success_calls.append(1)}
+	)
+	await _wait_for_rest()
+	if not entered or _host.get_current() == null or _host.get_current().location_id != &"classroom":
+		_failures.append("The corridor -> classroom transition used by the contract failed.")
+	if not success_calls.is_empty():
+		_failures.append("A successful transition called on_failure.")
+
+
+## After a refused transition: no beat, control back, the screen clear.
+func _expect_returned(label: String, ui: GameUI) -> void:
+	if _sequence.is_beat_active():
+		_failures.append("After %s the transition beat is still held." % label)
+	if not _player.is_control_enabled():
+		_failures.append("After %s the player has no control." % label)
+	if ui.fade.color.a > 0.01:
+		_failures.append("After %s the screen is still %.2f black." % [label, ui.fade.color.a])
+
+
+## Waits for the arrival line and the checkpoint that follow a successful transition.
+func _wait_for_rest() -> void:
+	var dialogue := _main.get_node_or_null("DialogueController") as DialogueController
+	for _index in 1200:
+		if dialogue != null and dialogue.is_busy():
+			if dialogue.has_pending_choices():
+				dialogue.select_choice(0)
+			else:
+				dialogue.advance_presentation()
+		elif not _sequence.is_beat_active():
+			break
+		await process_frame
+	await _frames(2)
 
 
 # --- every shipped exit ------------------------------------------------------
