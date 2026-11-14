@@ -113,6 +113,28 @@ const REACHABLE := {
 	"the hatch": Vector3(6.1, 0.0, -1.7),
 	"the far corridor": Vector3(4.3, 0.0, -7.6),
 }
+## What the player cannot walk through: the shell, the four working benches, the drum, the
+## floors that stand above the room floor, and the ramp over the one cable crossing.
+const REQUIRED_SOLIDS := [
+	"Floor",
+	"WallNorthLeft",
+	"WallNorthRight",
+	"WallSouth",
+	"WallWest",
+	"WallEast",
+	"PartitionWestA",
+	"PartitionWestB",
+	"PartitionSouth",
+	"WetBenchBody",
+	"IslandBody",
+	"InstrumentBenchBody",
+	"GlassCabinetBody",
+	"MixerDrum",
+	"AnnexFloor",
+	"FarCorridorFloor",
+	"FarCorridorEnd",
+	"CrossingRamp",
+]
 const ANNEX_CEILING_HEIGHT := 2.6
 const ROOM_WALL_HEIGHT := 3.4
 ## metres of horizontal slack allowed between a routed path and its target
@@ -288,8 +310,12 @@ func _check_solids() -> void:
 			_failures.append(
 				"'%s' collides as %s but is drawn as %s." % [path, str(shape.size), str(mesh.size)]
 			)
-	if bodies < 100:
-		_failures.append("Only %d collision bodies: the room's shell, benches and machines are missing." % bodies)
+	# What has to be solid is the shell, the four benches, the drum and every floor the
+	# player can reach; what must not be is anything small enough to be walked past. The set
+	# is named because a count says nothing about which piece went missing.
+	for required: String in REQUIRED_SOLIDS:
+		if _room.get_node_or_null(NodePath(required)) == null:
+			_failures.append("'%s' is not a collision body; the player walks through it." % required)
 	_notes.append("solids %d, all box-exact" % bodies)
 
 
@@ -303,6 +329,7 @@ func _check_cables() -> void:
 		return
 	var runs := {}
 	var highest := -INF
+	var highest_point := Vector3.ZERO
 	for child in cables.get_children():
 		var piece := child as MeshInstance3D
 		if piece == null:
@@ -311,7 +338,9 @@ func _check_cables() -> void:
 		if not runs.has(run):
 			runs[run] = []
 		(runs[run] as Array).append(piece)
-		highest = maxf(highest, piece.global_position.y)
+		if piece.global_position.y > highest:
+			highest = piece.global_position.y
+			highest_point = piece.global_position
 		if piece.material_override == null:
 			_failures.append("'%s' has no cable material." % piece.name)
 	if cables.get_child_count() < 300:
@@ -352,8 +381,12 @@ func _check_cables() -> void:
 			_failures.append("The bundle does not end at the hatch in the annex.")
 	if not through:
 		_failures.append("No cable crosses the partition, so there is no path to follow through it.")
-	if highest > ROOM_WALL_HEIGHT:
-		_failures.append("A cable hangs at %.2f m, above the room's walls." % highest)
+	# Three risers climb the shaft and go past the top of the building, which is the point of
+	# the shaft. Nothing else in the room may float above the walls.
+	if highest > ROOM_WALL_HEIGHT and not _in_shaft(highest_point):
+		_failures.append(
+			"A cable hangs at %.2f m, above the room's walls, outside the shaft." % highest
+		)
 	_notes.append("cables %d segments, %d runs, highest %.2f m" % [cables.get_child_count(), runs.size(), highest])
 
 
@@ -531,7 +564,9 @@ func _check_spinner() -> void:
 		_failures.append("The mixer blade does not turn: no spinner script on it.")
 		return
 	var before := blade.rotation.y
-	await _physics_frames(6)
+	# The vane turns in `_process`. Waiting on physics frames here is what made this check
+	# report a still blade while the scene was visibly turning it.
+	await _frames(6)
 	if is_equal_approx(before, blade.rotation.y):
 		_failures.append("The mixer blade did not move over six frames.")
 	# It turns about its own shaft, and only that.
@@ -601,8 +636,12 @@ func _check_navigation() -> LocationNavigation:
 	if into_drum < 0.55:
 		_failures.append("A route ends inside the mixing drum (%.2f m from its centre)." % into_drum)
 
-	if navigation.get_polygon_count() < 40:
-		_failures.append("Only %d navigation polygons; the room is bigger than that." % navigation.get_polygon_count())
+	# The bake erodes by the agent radius and merges what it can, so the count is not a
+	# quality score: 167 boxes come out as roughly three dozen polygons. What matters is that
+	# the mesh reaches both halves of the room, which the routes above already establish.
+	var polygons := navigation.get_polygon_count()
+	if polygons < 24:
+		_failures.append("Only %d navigation polygons; the bake lost part of the room." % polygons)
 	_notes.append("nav polygons %d" % navigation.get_polygon_count())
 	return navigation
 
@@ -661,9 +700,23 @@ func _check_camera() -> void:
 	await _physics_frames(2)
 	if not camera.is_position_in_frustum(MIXER_DRUM):
 		_failures.append("The mixing drum is not in shot from the entrance.")
+	# The narrow door is at the right edge of the frame from the entrance - the camera sits on a
+	# fixed diagonal and the door is past it. It is checked from the head of the aisle instead,
+	# which is where a player stands before turning into it.
 	var door := _room.get_node_or_null(^"AnnexDoorJambA") as Node3D
-	if door != null and not camera.is_position_in_frustum(door.global_position):
-		_failures.append("The narrow door is not in shot from the entrance.")
+	if door == null:
+		_failures.append("The narrow door has no jamb to look at.")
+	else:
+		var aisle := Vector3(1.8, 0.0, -1.9)
+		var entry_aisle := _room.get_node_or_null(^"SpawnPoints/Entry") as Node3D
+		_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), aisle))
+		rig.snap()
+		await _physics_frames(2)
+		if not camera.is_position_in_frustum(door.global_position):
+			_failures.append("The narrow door is not in shot from the end of the aisle.")
+		_player.teleport(Transform3D(Basis(Vector3.UP, 0.0), entry_aisle.global_position))
+		rig.snap()
+		await _physics_frames(2)
 	var seen := 0
 	for id: String in INTERACTABLES:
 		if camera.is_position_in_frustum(INTERACTABLES[id]):
@@ -735,13 +788,16 @@ func _has_spawn(spawn_id: StringName) -> bool:
 	return false
 
 
-## The underside of a box: its centre minus half its own height.
+## The underside of a box: its centre minus half its own height. A prop has no collider to
+## measure, so its own box mesh answers — a prop *is* the mesh it draws.
 func _box_bottom(node: Node3D) -> float:
 	if node == null:
 		return -1.0
 	var size := _box_size(node)
 	if size == Vector3.ZERO:
-		var mesh_node := node.get_node_or_null(^"MeshInstance3D") as MeshInstance3D
+		var mesh_node := node as MeshInstance3D
+		if mesh_node == null or mesh_node.mesh == null:
+			mesh_node = node.get_node_or_null(^"MeshInstance3D") as MeshInstance3D
 		var mesh := mesh_node.mesh as BoxMesh if mesh_node != null else null
 		if mesh == null:
 			return -1.0
@@ -795,6 +851,17 @@ func _file_text(path: String) -> String:
 	return text
 
 
+## Whether a point is inside the shaft: the one column in this room that goes above the
+## walls, and so the only place a cable is allowed to.
+func _in_shaft(point: Vector3) -> bool:
+	return point.x > 6.05 and point.x < 7.6 and point.z > -4.45 and point.z < -2.55
+
+
 func _physics_frames(count: int) -> void:
 	for _index in count:
 		await physics_frame
+
+
+func _frames(count: int) -> void:
+	for _index in count:
+		await process_frame

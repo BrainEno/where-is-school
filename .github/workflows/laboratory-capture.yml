@@ -288,8 +288,10 @@ jobs:
                 "%dx%d, depth %d, colour type %d" % (len(open(path, 'rb').read()), signature,
                                                      width, height, depth, colour))
           PY
-          # Three encoders, in order. libx264 is not guaranteed even when ffmpeg is present,
-          # and the encoder is a far likelier point of failure here than the frames are.
+          # Three encoders, in order, then a GIF: libx264 is not guaranteed even when ffmpeg
+          # is present, and the encoder is a far likelier point of failure here than the
+          # frames are. `gif` is the only encoder that is always compiled in, so it is the
+          # floor this step stands on.
           encoded=""
           : > "${RUNNER_TEMP}/ffmpeg.log"
           for spec in "libx264:mp4:-preset slow -crf 24" "libvpx-vp9:webm:-b:v 0 -crf 34 -row-mt 1" "mpeg4:mp4:-q:v 4"; do
@@ -311,7 +313,19 @@ jobs:
             rm -f "${out}"
           done
           if [ -z "${encoded}" ]; then
-            echo "::error title=laboratory walkthrough::no encoder accepted the recording: $(grep -iE 'error|unknown|invalid|no such|could not' "${RUNNER_TEMP}/ffmpeg.log" | head -n 3 | tr '\n' '|' | cut -c1-500)"
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/walkthrough/*.png' \
+              -vf "scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" \
+              build/laboratory_walkthrough.gif >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ -s build/laboratory_walkthrough.gif ]; then
+              encoded="build/laboratory_walkthrough.gif"
+              echo "::warning title=laboratory walkthrough::no video encoder accepted the frames; the recording is a GIF"
+            fi
+          fi
+          # Whatever happened, the log says why: this line is the only way to read it without
+          # downloading the artifact, which the run cannot do.
+          echo "::notice title=laboratory walkthrough::$(grep -vE '^\s*$' "${RUNNER_TEMP}/ffmpeg.log" | tail -n 3 | tr '\n' '|' | cut -c1-450)"
+          if [ -z "${encoded}" ]; then
+            echo "::error title=laboratory walkthrough::no encoder accepted the recording"
             exit 1
           fi
           # Two frames kept as stills: the route is also evidence, not only the video.
@@ -329,6 +343,7 @@ jobs:
           path: |
             build/laboratory_walkthrough.mp4
             build/laboratory_walkthrough.webm
+            build/laboratory_walkthrough.gif
             build/walkthrough_start.png
             build/walkthrough_end.png
             ${{ runner.temp }}/record.log
