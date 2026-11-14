@@ -155,6 +155,9 @@ var _portrait_side: String = ""
 var _portrait_source_size: Vector2 = Vector2.ZERO
 ## Each distinct problem is warned about once per panel, not once per line.
 var _portrait_warned: Dictionary = {}
+## Portrait resolutions keyed by profile instance id, so first-use resource loads happen
+## during panel initialization rather than while opening a line.
+var _portrait_resolution_cache: Dictionary = {}
 ## The type sizes as authored, before the player's text size multiplies them.
 var _base_type: Dictionary = {}
 var _text_scale: float = 1.0
@@ -192,6 +195,7 @@ func _ready() -> void:
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
 	_make_band_clickable()
+	_warm_portrait_resources()
 	_queue_fit()
 
 
@@ -294,6 +298,25 @@ func set_reveal_speed(cps: float) -> void:
 		characters_per_second = cps
 	if instant_reveal and _revealing:
 		complete_reveal()
+
+
+## Portraits are small UI assets, but resolving a path performs a synchronous
+## ResourceLoader.load(). Warm the ordinary speaker portraits while the panel is
+## initialized, not on the first click that opens a conversation.
+func _warm_portrait_resources() -> void:
+	var directory := CharacterDirectory.load_cached()
+	for character_id: StringName in directory.get_ids():
+		var profile := directory.get_profile(character_id)
+		if profile != null and profile.has_portrait():
+			_portrait_resolution_cache[profile.get_instance_id()] = profile.resolve_portrait()
+
+
+func _resolve_profile_portrait(profile: CharacterProfile) -> Dictionary:
+	var profile_id := profile.get_instance_id()
+	if _portrait_resolution_cache.has(profile_id):
+		var cached: Dictionary = _portrait_resolution_cache[profile_id]
+		return cached
+	return profile.resolve_portrait()
 
 
 func _connect_settings() -> void:
@@ -730,13 +753,14 @@ func _settle_layout() -> void:
 		width = float(portrait_plan["band_width"])
 
 	if _layout_stage == 0:
-		# Give the frame the width the text will really wrap at, and the tallest height
-		# it is allowed. What the content measures under those two constraints is what
-		# the band should be.
+		# Give the frame the width the text will really wrap at, but keep its current
+		# height while the containers settle. Expanding to max_height here and shrinking
+		# on the next frame made the visible band flash on every line change.
+		var retained_height := minf(size.y, max_height)
 		offset_left = left
 		offset_right = left + width
 		offset_bottom = -bottom_margin
-		offset_top = -bottom_margin - max_height
+		offset_top = -bottom_margin - retained_height
 		_body_label.fit_content = true
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
@@ -905,7 +929,7 @@ func _resolve_portrait(line: Dictionary) -> void:
 	var profile := _portrait_profile_for(line)
 	if profile == null:
 		return
-	var resolved := profile.resolve_portrait()
+	var resolved := _resolve_profile_portrait(profile)
 	_portrait_status = String(resolved.get("status", "none"))
 	_portrait_message = String(resolved.get("message", ""))
 	_portrait_source_size = resolved.get("source_size", Vector2.ZERO)

@@ -69,6 +69,7 @@ func _run() -> void:
 	root.add_child(_panel)
 	await process_frame
 	await process_frame
+	_check_portrait_resources_are_warm()
 
 	# The longest paragraphs the shipped content actually has, in both languages: the
 	# object descriptions are the long ones, the prologue supplies the shorter beats.
@@ -90,6 +91,8 @@ func _run() -> void:
 		_failures.append("The content files did not yield usable sample text (%s)." % report)
 		Harness.finish(self, _failures, "")
 		return
+
+	await _check_line_change_does_not_flash(String(samples["prose_zh"]))
 
 	for size in RESOLUTIONS:
 		root.size = size
@@ -260,6 +263,59 @@ func _show(line: Dictionary) -> void:
 	# Two frames: one to apply the new text and width, one to measure what it produced.
 	await process_frame
 	await process_frame
+	await process_frame
+
+
+func _check_portrait_resources_are_warm() -> void:
+	var directory := CharacterDirectory.load_cached()
+	for character_id: StringName in directory.get_ids():
+		var profile := directory.get_profile(character_id)
+		if profile == null or not profile.has_portrait():
+			continue
+		if not _panel._portrait_resolution_cache.has(profile.get_instance_id()):
+			_failures.append(
+				"The %s portrait was not resolved before dialogue was opened."
+				% character_id
+			)
+
+
+func _check_line_change_does_not_flash(prose: String) -> void:
+	root.size = Vector2i(1600, 900)
+	await process_frame
+	await _show(_line("A short line.", "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false))
+	var initial_height := _panel.get_global_rect().size.y
+	var long_text := ""
+	for index in 2:
+		long_text += prose
+		if index < 1:
+			long_text += "\n"
+	_panel.show_line(
+		_line(long_text, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
+	)
+	_panel.complete_reveal()
+	var observed_heights: Array[float] = [_panel.get_global_rect().size.y]
+	for _frame in 3:
+		await process_frame
+		observed_heights.append(_panel.get_global_rect().size.y)
+	var final_height: float = observed_heights[observed_heights.size() - 1]
+	if final_height <= initial_height + 24.0:
+		_failures.append(
+			"The line-change probe did not produce a taller final band (%.0f -> %.0f px)."
+			% [initial_height, final_height]
+		)
+	for frame_index in observed_heights.size() - 1:
+		var height := observed_heights[frame_index]
+		if height > maxf(initial_height, final_height) + 2.0:
+			var message := (
+				"The dialogue band flashed to %.0f px on frame %d before settling at %.0f px "
+				% [height, frame_index, final_height]
+				+ "(previous line %.0f px)." % initial_height
+			)
+			_failures.append(message)
+			break
+	if not _panel.is_visible_in_tree():
+		_failures.append("The dialogue panel became hidden while changing lines.")
+	_panel.close()
 	await process_frame
 
 
