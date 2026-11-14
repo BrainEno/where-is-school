@@ -12,7 +12,8 @@ extends Node
 ##   towards the player's eyes (`NpcActor.watch()`), head first, the body only for what the
 ##   neck cannot reach. A watcher the game camera cannot see is brought into view by
 ##   borrowing the framing (`CameraRig.frame_point()`, the rig's existing API for a beat
-##   that shows the player where to look) halfway towards them while the text is up;
+##   that shows the player where to look) just far enough towards them that both faces
+##   show, while the text is up;
 ## - **follows the player** every frame, wherever they stand, for as long as it lasts;
 ## - **ends** when the player walks out of the doorway once the text is closed (the zone
 ##   is the exit's own radius plus a margin, never smaller than where they stood when they
@@ -32,10 +33,14 @@ const ZONE_MARGIN := 1.0
 const ZONE_LIMIT := 2.5
 ## How much further than where the attempt was made the player may stand.
 const ZONE_SLACK := 0.5
-## How far towards the watchers the view is moved when they are off screen (0 = the
-## player, 1 = the watchers), and how long the glide takes.
+## When a watcher is off screen, the view is moved towards them (0 = the player, 1 = the
+## watchers) in this many steps until both faces show; half way if no step does. The glide
+## takes FRAME_SECONDS, and a face closer to the edge than FRAME_EDGE (of the shorter side)
+## does not count as shown.
+const FRAME_STEPS := 10
 const FRAME_SHARE := 0.5
 const FRAME_SECONDS := 0.35
+const FRAME_EDGE := 0.05
 
 var _player: PlayerController = null
 var _dialogue: DialogueController = null
@@ -44,6 +49,7 @@ var _exit: LocationExit = null
 var _watchers: Array[NpcActor] = []
 var _zone := 0.0
 var _framed := false
+var _frame_share := 0.0
 
 
 func setup(player: PlayerController, dialogue: DialogueController, host: Node) -> void:
@@ -94,6 +100,11 @@ func is_framing() -> bool:
 	return _framed
 
 
+## How far towards the watchers the view was moved for the last watch (0: not at all).
+func get_frame_share() -> float:
+	return _frame_share
+
+
 ## Ends the watch now: heads let go, bodies return, the view goes back to the player.
 func release() -> void:
 	for actor in _watchers:
@@ -129,22 +140,48 @@ func _planar_distance_to_exit() -> float:
 	return offset.length()
 
 
-## Moves the view towards the watchers if the game camera cannot see one of them.
+## Moves the view towards the watchers if the game camera cannot see one of them: by the
+## smallest share of the way that shows the player's face and theirs, tried as instant
+## cuts within this frame (nothing is drawn in between), then glided to.
 func _frame_watchers() -> void:
 	var rig := _player.camera_rig
 	if rig == null or rig.camera == null:
 		return
 	var centre := Vector3.ZERO
-	var unseen := false
 	for actor in _watchers:
 		centre += actor.global_position
-		if not rig.camera.is_position_in_frustum(actor.global_position + Vector3.UP * EYE_HEIGHT):
-			unseen = true
-	if not unseen:
-		return
 	centre /= float(_watchers.size())
+	_frame_share = 0.0
+	if _shows_everyone(rig.camera):
+		return
+	var share := FRAME_SHARE
+	for step in range(1, FRAME_STEPS):
+		var candidate := float(step) / float(FRAME_STEPS)
+		rig.frame_point(_player.global_position.lerp(centre, candidate), 0.0)
+		if _shows_everyone(rig.camera):
+			share = candidate
+			break
+	rig.release_frame(0.0)
 	_framed = true
-	rig.frame_point(_player.global_position.lerp(centre, FRAME_SHARE), FRAME_SECONDS)
+	_frame_share = share
+	rig.frame_point(_player.global_position.lerp(centre, share), FRAME_SECONDS)
+
+
+## True when the player's face and every watcher's are inside the view, clear of its edges.
+func _shows_everyone(camera: Camera3D) -> bool:
+	if not _in_view(camera, _player.global_position + Vector3.UP * EYE_HEIGHT):
+		return false
+	for actor in _watchers:
+		if not _in_view(camera, actor.global_position + Vector3.UP * EYE_HEIGHT):
+			return false
+	return true
+
+
+static func _in_view(camera: Camera3D, point: Vector3) -> bool:
+	if camera.is_position_behind(point) or not camera.is_position_in_frustum(point):
+		return false
+	var rect := camera.get_viewport().get_visible_rect()
+	return rect.grow(-minf(rect.size.x, rect.size.y) * FRAME_EDGE).has_point(camera.unproject_position(point))
 
 
 func _unframe() -> void:

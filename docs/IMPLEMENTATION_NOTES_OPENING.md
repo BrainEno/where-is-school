@@ -186,8 +186,8 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
    turns Q's head (`NpcGaze`, after the animation; the body only for what the neck cannot
    reach) towards the player in the same frame as the text, follows them while they stay
    in the doorway, and lets go when they leave, a beat starts or the door opens. Q is
-   off the game camera's frame at the door, so the view glides halfway to him while the
-   text is up (`CameraRig.frame_point()`). `tests/doorway_watch_test.gd` covers it.
+   off the game camera's frame at the door, so while the text is up the view glides just
+   far enough towards him that both faces show (`CameraRig.frame_point()`). `tests/doorway_watch_test.gd` covers it.
 7. **Substitute** — N walks an authored marker path to the front and takes the
    register; the conversation sets `class_dismissed` and a new objective.
 8. **Exit** — the door becomes usable, the player crosses the walkway, and the

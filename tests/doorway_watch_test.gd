@@ -184,8 +184,9 @@ func _check_trigger() -> void:
 	await _seconds(0.2)
 	var q_seen := camera.is_position_in_frustum(_q.global_position + Vector3.UP * EYE)
 	var player_seen := camera.is_position_in_frustum(_player.global_position + Vector3.UP * EYE)
-	_notes.append("camera: Q in view before %s, during %s; player in view %s; framing %s" % [
-		q_seen_before, q_seen, player_seen, _watch.is_framing()
+	_notes.append("camera %s: Q in view before %s, during %s; player in view %s; moved %.1f of the way" % [
+		str(camera.get_viewport().get_visible_rect().size), q_seen_before, q_seen, player_seen,
+		_watch.get_frame_share()
 	])
 	if not q_seen or not player_seen:
 		_failures.append("Trigger: the game camera does not show both Q (%s) and the player (%s)." % [q_seen, player_seen])
