@@ -1,39 +1,42 @@
 extends SceneTree
-## The biology classroom's two impossible things (docs/ART_BIBLE.md, location studies),
-## played through the real main scene, director and dialogue.
+## The biology classroom's impossible thing (docs/ART_BIBLE.md, location studies) and its
+## doors (issue #159), played through the real main scene, director and dialogue.
 ##
 ## Claims under test:
 ##
-## 1. **Placed, and decoration only.** The back window (Window1) has the curtain drawn over
-##    it; the front window (Window0) stays ordinary and shows the washing. The rear door is
-##    hung on the back wall between the west wall and the back board, and fades with that
-##    wall. The staircase hangs over the front of the teacher's desk, out of reach, touching
-##    nothing. None of it collides.
+## 1. **Placed, and decoration only.** The back window is a real hole through the west wall
+##    - no glass, no view, no frame, no backdrop - with a floor-to-ceiling blackout curtain
+##    drawn over it; the front window (Window0) stays ordinary and shows the washing. Both
+##    doors are on the east wall: the grey front door and the white rear door, one model in
+##    the classroom's materials. There is no staircase in the room. None of it collides.
 ## 2. **The lesson is not over.** Before N lets the class go the curtain is only looked at
 ##    and the rear door does not give: nothing changes, no flag is written.
-## 3. **The rear door.** Once the class is dismissed it swings open on plaster, and the
-##    staircase is in the room. The camera goes to it and comes back. The staircase thins
-##    out while it would hide the player, and is exactly its authored self again after.
+## 3. **The rear door never opens.** After the class is dismissed it still only says that
+##    it never opens unless special means are used: no beat, no camera, no flag, no
+##    staircase, and the leaf has not moved.
+## 3b. **The projection screen is furniture.** It is rolled up when the room loads; its
+##    pull rolls it all the way down over the board and, used again, back up, with the
+##    prompt following. No conversation, no inspection, no story flag, nothing saved.
 ## 4. **The curtain.** Leaving it drawn changes nothing. Drawing it aside (after an
-##    orientation check that is visible and recorded) shows the void instead of glass and
-##    a view, and the protagonist falls: the next room is the yard, at `FromSchool`, with
-##    the landing line instead of the yard's ordinary arrival; the provisional
-##    `curtain_fall_pending` flag is spent; the body is upright and the view level.
+##    orientation check that is visible and recorded) uncovers the void, and the
+##    protagonist falls: the next room is the yard, at `FromSchool`, with the landing line
+##    instead of the yard's ordinary arrival; the provisional `curtain_fall_pending` flag is
+##    spent; the body is upright and the view level.
 ## 5. **The room remembers.** Walking back into the classroom finds the curtain open on the
-##    void, the rear door open and the staircase there, and the curtain does not throw the
-##    player out a second time.
+##    void and the rear door still shut, and the curtain does not throw the player out a
+##    second time.
 ## 6. **A refused fall is recoverable** (issue #148). Through the real curtain, director,
 ##    handler, departure and `LocationFlow`, with only the destination in the request the
 ##    handler hands back replaced by this test: a missing scene, a missing spawn and a
 ##    destination that refuses (wrong id). Each time the production `on_failure` runs once,
 ##    behind the black and inside the beat; the classroom is not replaced; no arrival
 ##    state, landing line or landing record is written; `curtain_fall_pending` stays and
-##    `curtain_drawn` does not; the curtain is closed on glass again with the retry prompt;
-##    the body is upright, the view level and unframed, control is back and the beat was
-##    released once. Three failures in a row accumulate nothing. Choosing "Leave it drawn"
-##    on the retry does not fall. The failed state goes to disk, the world is freed, memory
-##    cleared and Continue brings back the same room, flags, curtain and route - and from
-##    there the real curtain falls into the yard, once.
+##    `curtain_drawn` does not; the curtain is closed over the opening again with the retry
+##    prompt; the body is upright, the view level and unframed, control is back and the
+##    beat was released once. Three failures in a row accumulate nothing. Choosing "Leave
+##    it drawn" on the retry does not fall. The failed state goes to disk, the world is
+##    freed, memory cleared and Continue brings back the same room, flags, curtain and
+##    route - and from there the real curtain falls into the yard, once.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -45,7 +48,19 @@ const BUDGET_SECONDS := 270.0
 ## painted into it (art/classroom/paint_classroom_textures.py, `window_view`).
 const PANORAMA := "res://assets/materials/classroom/textures/window_view.png"
 const WASHING_OFFSET := 0.6667
-const VOID_MATERIAL := "res://assets/materials/classroom/void_opening.tres"
+const DOOR_WHITE := "res://assets/materials/classroom/door_white.tres"
+const DOOR_GRAY := "res://assets/materials/classroom/door_gray.tres"
+const REAR_DOOR_TEXT := "这扇门从来不会打开，除非使用特殊的手段。"
+const REAR_DOOR_TEXT_EN := "This door never opens, unless special means are used."
+## The hole through the west wall (art/classroom/paint_classroom_textures.py,
+## `WEST_VOID_OPENING`): z 0.95..3.45, y 0.50..2.75, through x -7.0..-6.8.
+const VOID_HOLE := AABB(Vector3(-7.0, 0.5, 0.95), Vector3(0.2, 2.25, 2.5))
+## Window1's old glass, view, frame and tie-back curtain. None of it may come back.
+const REMOVED_WINDOW_PARTS: Array[String] = [
+	"WindowGlow1", "WindowGlass1", "WindowFrameTop1", "WindowFrameBottom1",
+	"WindowFrameLeft1", "WindowFrameRight1", "WindowMullion1",
+	"WallWest/CurtainRod1", "WallWest/CurtainPanel1L", "WallWest/CurtainPanel1R",
+]
 const CHECK_KEY := "classroom_curtain/cc_edges_check"
 const SESSION_SCRIPT := "res://scripts/ui/game_session.gd"
 ## A scene nobody ships, for the refused-fall fixture (never written anywhere).
@@ -54,6 +69,10 @@ const MISSING_SCENE := "user://classroom_anomaly_fixtures/no_such_yard.tscn"
 const FAILURE_TIME_SCALE := 8.0
 ## The spot in front of the back window every curtain check stands on.
 const CURTAIN_SPOT := Vector3(-5.9, 0.0, 2.2)
+## In front of the rear door, facing it (+x).
+const REAR_DOOR_SPOT := Vector3(5.9, 0.0, 3.55)
+## On the platform in front of the screen's pull, facing the board (-z).
+const SCREEN_SPOT := Vector3(-2.9, 0.17, -3.45)
 
 var _failures: Array[String] = []
 var _notes: Array[String] = []
@@ -137,8 +156,8 @@ func _run() -> void:
 	await _check_lesson()
 	Harness.stage = "rear door"
 	await _check_rear_door()
-	Harness.stage = "staircase see-through"
-	await _check_see_through()
+	Harness.stage = "projector screen"
+	await _check_projector_screen()
 	Harness.stage = "curtain left drawn"
 	await _check_curtain_left()
 	_lap("before the refused falls")
@@ -170,9 +189,8 @@ func _run() -> void:
 		self,
 		_failures,
 		(
-			"the curtained window opens on nothing and drops the player into the yard; the "
-			+ "second door puts an unsupported staircase in front of the lectern; both are "
-			+ "decoration, both are remembered."
+			"the curtained window opens on nothing and drops the player into the yard and is "
+			+ "remembered; the rear door on the east wall never opens; nothing collides."
 		)
 	)
 
@@ -192,41 +210,60 @@ func _curtain() -> WindowCurtain:
 	return _room().get_node_or_null(^"Anomalies/BackCurtain") as WindowCurtain
 
 
-func _door() -> SwingDoor:
-	return _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount/Hinge") as SwingDoor
+func _door() -> ClassroomDoorDressing:
+	return _room().get_node_or_null(^"WallEast/RearDoor") as ClassroomDoorDressing
 
 
-func _stair() -> SuspendedStair:
-	return _room().get_node_or_null(^"Anomalies/Staircase") as SuspendedStair
+func _front_door() -> ClassroomDoorDressing:
+	return _room().get_node_or_null(^"WallEast/FrontDoor") as ClassroomDoorDressing
 
 
-func _void() -> MeshInstance3D:
-	return _room().get_node_or_null(^"Anomalies/VoidOpening") as MeshInstance3D
+func _void() -> Node3D:
+	return _room().get_node_or_null(^"Anomalies/VoidOpening") as Node3D
+
+
+## Global transforms of the rear door's leaf meshes, to prove it never moved.
+func _leaf_pose() -> Array[Transform3D]:
+	var pose: Array[Transform3D] = []
+	for leaf in _door().get_leaf_meshes():
+		pose.append(leaf.global_transform)
+	return pose
+
+
+## True when the room has no staircase and no swinging door anywhere in it.
+func _no_staircase() -> bool:
+	var room := _room()
+	if room.get_node_or_null(^"Anomalies/Staircase") != null:
+		return false
+	for node in room.find_children("*", "Node3D", true, false):
+		if node is SuspendedStair or node is SwingDoor:
+			return false
+	return true
 
 
 func _check_placement() -> void:
 	var curtain := _curtain()
 	var door := _door()
-	var stair := _stair()
-	var void_mesh := _void()
+	var front_door := _front_door()
+	var void_marker := _void()
 	if (
 		_anomalies() == null
 		or curtain == null
 		or door == null
-		or stair == null
-		or void_mesh == null
+		or front_door == null
+		or void_marker == null
 	):
 		_failures.append(
-			"The classroom lost one of Anomalies, its curtain, void, staircase or rear door."
+			"The classroom lost one of Anomalies, its curtain, void marker or east-wall doors."
 		)
 		return
-	for scope: Node in [_anomalies(), door]:
+	for scope: Node in [_anomalies(), door, front_door]:
 		for node in scope.find_children("*", "CollisionObject3D", true, false):
 			_failures.append(
-				"'%s' collides; the anomalies are decoration." % _room().get_path_to(node)
+				"'%s' collides; the curtain and doors are decoration." % _room().get_path_to(node)
 			)
 
-	# The ordinary window shows the washing; the curtained one is closed over Window1.
+	# The ordinary window shows the washing.
 	var front := (
 		(_room().get_node(^"WindowGlow0") as MeshInstance3D).material_override as BaseMaterial3D
 	)
@@ -237,91 +274,85 @@ func _check_placement() -> void:
 		or absf(front.uv1_offset.x - WASHING_OFFSET) > 0.01
 	):
 		_failures.append("The ordinary window does not show the washing on the line.")
+
+	# The back window is a hole: nothing of Window1 is left, and nothing drawn under the
+	# west wall reaches into the opening. The wall's collision stays whole.
+	for removed: String in REMOVED_WINDOW_PARTS:
+		if _room().get_node_or_null(NodePath(removed)) != null:
+			_failures.append("Window1's '%s' is still in the room." % removed)
+	var west := _room().get_node(^"WallWest") as Node3D
+	var hole := VOID_HOLE.grow(-0.02)
+	for node in west.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		if mesh.mesh == null or not mesh.is_visible_in_tree():
+			continue
+		var box := mesh.global_transform * mesh.mesh.get_aabb()
+		if box.intersects(hole):
+			_failures.append(
+				"'%s' %s covers the hole in the west wall." % [mesh.name, str(box)]
+			)
+	var west_shapes := west.find_children("*", "CollisionShape3D", true, false)
+	if west_shapes.size() != 1:
+		_failures.append("The west wall has %d collision shapes, not one." % west_shapes.size())
+	else:
+		var west_box := (west_shapes[0] as CollisionShape3D).shape as BoxShape3D
+		if west_box == null or not west_box.size.is_equal_approx(Vector3(0.2, 3.2, 10.0)):
+			_failures.append("The west wall's collision is no longer the whole wall.")
+	if void_marker.visible:
+		_failures.append("The void is uncovered before the curtain was touched.")
+	if absf(void_marker.global_position.z - 2.2) > 0.05:
+		_failures.append("The void marker %s is not in the opening." % str(void_marker.global_position))
+
+	# The blackout curtain: closed, and covering the opening with room to spare.
 	if curtain.is_open():
 		_failures.append("The back-window curtain starts open.")
 	var fabric := curtain.get_fabric_aabb()
 	_notes.append("curtain %s" % str(fabric))
 	if (
-		fabric.position.z > 1.45
-		or fabric.end.z < 2.95
-		or fabric.position.y > 1.07
-		or fabric.end.y < 2.37
+		fabric.position.z > VOID_HOLE.position.z - 0.2
+		or fabric.end.z < VOID_HOLE.end.z + 0.2
+		or fabric.position.y > 0.12
+		or fabric.end.y < 3.0
 	):
 		_failures.append(
 			(
-				"The closed curtain %s does not cover the back window (z 1.4-3.0, y 1.07-2.37)."
-				% str(fabric)
+				"The closed curtain %s does not hang floor to ceiling over the opening %s."
+				% [str(fabric), str(VOID_HOLE)]
 			)
 		)
-	# Hung from WindowCurtainMount1, room-side of the expanded room's own tie-back panels
-	# (WallWest/CurtainPanel1L/R, front faces at x -6.485), which stay where they are.
-	if fabric.position.x < -6.485 or fabric.end.x > -6.3:
-		_failures.append("The curtain %s is not hung at the west-window mount." % str(fabric))
-	for kept: String in [
-		"WallWest/CurtainRod1",
-		"WallWest/CurtainPanel1L",
-		"WallWest/CurtainPanel1R",
-		"WindowCurtainMount1"
-	]:
-		var node := _room().get_node_or_null(NodePath(kept)) as Node3D
-		if node == null or not node.is_visible_in_tree():
-			_failures.append("The expanded room's '%s' is missing or hidden." % kept)
-	if void_mesh.visible or not (_room().get_node(^"WindowGlass1") as Node3D).visible:
-		_failures.append("The back window starts as the void instead of glass.")
-	if (
-		void_mesh.material_override == null
-		or void_mesh.material_override.resource_path != VOID_MATERIAL
-	):
-		_failures.append("The void opening does not draw void_opening.tres.")
+	if fabric.position.x < -6.8 or fabric.end.x > -6.35:
+		_failures.append("The curtain %s is not hung just off the west wall." % str(fabric))
 
-	# The second door: the expanded room's own leaf in WallNorth's anomaly doorway, carried
-	# by a hinge on the mount (so it still fades with the wall), inside its 1.2 m opening.
-	var mount := _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount") as Node3D
-	if mount == null or door.get_parent() != mount:
-		_failures.append("The door hinge is not on WallNorth/RearDoorAnomalyMount.")
-	var leaves := door.get_leaves()
-	if leaves.size() != 2:
-		_failures.append(
-			"The hinge carries %d leaf meshes, not DoorLeaf and its inlay." % leaves.size()
-		)
-	for leaf in leaves:
-		if leaf.get_parent() != door:
-			_failures.append("'%s' is not under the hinge." % leaf.name)
-	var door_box := _subtree_aabb(door)
-	_notes.append("door %s" % str(door_box))
-	if door_box.position.x < 4.4 or door_box.end.x > 5.6 or door_box.end.y > 2.12:
-		_failures.append("The shut door %s does not fill the anomaly doorway." % str(door_box))
-	if door_box.position.z < -4.85 or door_box.end.z > -4.7:
-		_failures.append("The shut door %s is not in the blackboard wall." % str(door_box))
-	var backing := _room().get_node_or_null(^"WallNorth/RearDoorAnomalyMount/DoorwayBacking")
-	if backing == null:
-		_failures.append("The doorway has no plaster behind it.")
-	if absf(door.get_angle()) > 0.5 or door.is_open():
-		_failures.append("The rear door starts open.")
+	# The doors: both on the east wall, in their openings, one model; the rear one white.
+	for pair: Array in [[front_door, -3.55, DOOR_GRAY], [door, 3.55, DOOR_WHITE]]:
+		var dressing := pair[0] as ClassroomDoorDressing
+		var box := _subtree_aabb(dressing)
+		_notes.append("%s %s" % [dressing.name, str(box)])
+		if (
+			box.position.x < 6.65
+			or box.end.x > 7.0
+			or absf(box.get_center().z - float(pair[1])) > 0.1
+			or box.size.z > 1.25
+			or box.end.y > 2.25
+			or box.position.y < -0.01
+		):
+			_failures.append("%s %s is not in its east-wall opening." % [dressing.name, str(box)])
+		var leaves := dressing.get_leaf_meshes()
+		if leaves.is_empty():
+			_failures.append("%s has no leaf." % dressing.name)
+		for leaf in leaves:
+			if leaf.material_override == null or leaf.material_override.resource_path != pair[2]:
+				_failures.append("%s's '%s' is not %s." % [dressing.name, leaf.name, pair[2]])
+				break
+	if not _no_staircase():
+		_failures.append("There is a staircase or a swinging door in the classroom.")
 
-	# The staircase: hidden, and once shown, out of reach over the front of the desk.
-	if stair.visible or stair.is_revealed():
-		_failures.append("The staircase is in the room before the rear door was opened.")
-	var stair_box := _subtree_aabb(stair, true)
-	_notes.append("stair %s" % str(stair_box))
-	if stair_box.position.y < 1.8:
-		_failures.append(
-			"The staircase comes down to %.2f m; it should stop in the air." % stair_box.position.y
-		)
-	if stair_box.end.y > 3.25:
-		_failures.append("The staircase rises above the walls (%.2f m)." % stair_box.end.y)
-	# Over the stage, its lowest tread just in front of the curved lectern (x 0.7,
-	# front edge at z -3.35), and clear of the light fitting at (1.2, 3.02, -4.2).
-	if stair_box.position.x < 0.15 or stair_box.end.x > 1.25:
-		_failures.append("The staircase %s is not in line with the lectern." % str(stair_box))
-	if stair_box.position.z < -3.45 or stair_box.position.z > -3.1:
-		_failures.append(
-			"The staircase %s does not end just in front of the lectern." % str(stair_box)
-		)
-	for id: StringName in [&"curtain", &"rear_door"]:
-		var interactable := _room().find_interactable(id) as StagedInteractable
-		if interactable == null or not interactable.is_staged():
-			_failures.append("The '%s' interactable is missing or has no stage handler." % id)
+	var curtain_interactable := _room().find_interactable(&"curtain") as StagedInteractable
+	if curtain_interactable == null or not curtain_interactable.is_staged():
+		_failures.append("The curtain interactable is missing or has no stage handler.")
+	var rear := _room().find_interactable(&"rear_door")
+	if rear == null or rear is StagedInteractable or rear.inspection_id != &"classroom_rear_door":
+		_failures.append("The rear door is not a plain inspection of classroom_rear_door.")
 
 
 # --- 2. during the lesson -----------------------------------------------------------
@@ -341,7 +372,7 @@ func _check_lesson() -> void:
 	await _settle(40.0, "the rear door during the lesson")
 	if not _inspections.has(&"classroom_rear_door"):
 		_failures.append("During the lesson the rear door did not say it does not give.")
-	if _curtain().is_open() or _door().is_open() or _stair().visible:
+	if _curtain().is_open() or not _no_staircase():
 		_failures.append("Something moved during the lesson.")
 	for flag: StringName in [
 		StoryFlags.CURTAIN_FALL_PENDING, StoryFlags.CURTAIN_DRAWN, StoryFlags.REAR_DOOR_OPENED
@@ -357,107 +388,103 @@ func _check_lesson() -> void:
 
 func _check_rear_door() -> void:
 	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
-	_player.teleport(Transform3D(Basis(Vector3.UP, 0.0001), Vector3(4.85, 0.0, -3.5)))
+	_player.teleport(Transform3D(Basis(Vector3.UP, -PI * 0.5), REAR_DOOR_SPOT))
 	await _frames(4)
-	_conversations.clear()
+	var before := _leaf_pose()
 	var rig := _player.camera_rig
 	var framed := false
-	await _activate(&"rear_door")
-	var started := Time.get_ticks_msec()
-	while Time.get_ticks_msec() - started < 40000:
-		if rig != null and rig.get_frame_weight() > 0.9:
-			framed = true
-		if _dialogue.is_busy():
-			_dialogue.advance_presentation()
-		if (
-			_flag(StoryFlags.REAR_DOOR_OPENED)
-			and not _dialogue.is_busy()
-			and not _sequence.is_beat_active()
-		):
-			break
-		await process_frame
-	await _settle(30.0, "the rear door beat")
-	if not _flag(StoryFlags.REAR_DOOR_OPENED):
-		_failures.append("Opening the rear door after the lesson did not record it.")
-	if not _door().is_open() or absf(_door().get_angle() - _door().open_degrees) > 1.0:
-		_failures.append("The rear door is at %.1f degrees, not open." % _door().get_angle())
-	if not _stair().visible or not _stair().is_revealed():
-		_failures.append("The staircase did not appear when the rear door opened.")
-	if not _conversations.has(&"classroom_rear_door"):
-		_failures.append("The rear door beat did not play its lines.")
-	if not _narrative.has_entry(&"saw_suspended_stair"):
-		_failures.append("The staircase was not recorded.")
-	if not framed:
-		_failures.append("The camera never went to the staircase.")
-	if rig != null and rig.get_frame_weight() > 0.01:
-		_failures.append(
-			"The camera did not come back to the player (weight %.2f)." % rig.get_frame_weight()
-		)
-	var treads := _stair().get_treads()
-	for tread in treads:
-		if not tread.visible:
-			_failures.append("Tread '%s' never arrived." % tread.name)
-			break
-	# The leaf swung into the room as one piece; plaster behind it.
-	var open_box := _subtree_aabb(_door())
-	_notes.append("open door %s" % str(open_box))
-	if open_box.end.z < -4.2:
-		_failures.append("The door leaf %s did not swing into the room." % str(open_box))
-	for leaf in _door().get_leaves():
-		if leaf.get_parent() != _door().get_hinge():
-			_failures.append("'%s' was left behind when the door opened." % leaf.name)
+	_conversations.clear()
 	_inspections.clear()
 	await _activate(&"rear_door")
-	await _settle(30.0, "the open rear door")
-	if not _inspections.has(&"classroom_rear_door_open"):
-		_failures.append("The open rear door does not describe what it shows now.")
-
-
-# --- the staircase gets out of the way ----------------------------------------------
-
-
-func _check_see_through() -> void:
-	var stair := _stair()
-	var authored: Dictionary = {}
-	for piece in stair.get_pieces():
-		authored[piece] = piece.material_override
-	var hiding_spot := Vector3.INF
-	# Behind the staircase from the camera's corner is the stage (raised 0.12 m).
-	var x := -2.5
-	while x <= 1.5 and hiding_spot == Vector3.INF:
-		var z := -4.5
-		while z <= -1.5:
-			var floor_y := 0.12 if z < -2.4 else 0.0
-			_player.teleport(Transform3D(Basis(), Vector3(x, floor_y, z)))
-			if stair.is_hiding(_player):
-				hiding_spot = Vector3(x, floor_y, z)
-				break
-			z += 0.25
-		x += 0.25
-	if hiding_spot == Vector3.INF:
-		_notes.append("no standing spot is behind the staircase")
-	else:
-		await _frames(30)
-		if stair.get_opacity() > stair.see_through_alpha + 0.05:
-			_failures.append(
-				(
-					"Behind the staircase at %s it stayed at %.2f opacity."
-					% [str(hiding_spot), stair.get_opacity()]
-				)
-			)
-		_notes.append(
-			"behind the stair at %s: opacity %.2f" % [str(hiding_spot), stair.get_opacity()]
-		)
-	_player.teleport(Transform3D(Basis(), Vector3(0.0, 0.0, 0.85)))
-	await _frames(40)
-	if stair.get_opacity() < 0.999:
-		_failures.append(
-			"The staircase stayed thinned (%.2f) after the player left." % stair.get_opacity()
-		)
-	for piece: MeshInstance3D in authored:
-		if piece.material_override != authored[piece]:
-			_failures.append("'%s' did not get its authored material back." % piece.name)
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 20000:
+		if rig != null and rig.get_frame_weight() > 0.1:
+			framed = true
+		if not _dialogue.is_busy() and _inspections.size() > 0:
 			break
+		if _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		await process_frame
+	await _settle(20.0, "the rear door after the lesson")
+	if _inspections != [&"classroom_rear_door"]:
+		_failures.append(
+			"After the lesson the rear door presented %s, not its one inspection." % str(_inspections)
+		)
+	if not _conversations.is_empty():
+		_failures.append("The rear door started a conversation: %s." % str(_conversations))
+	if _flag(StoryFlags.REAR_DOOR_OPENED):
+		_failures.append("The rear door recorded itself as opened.")
+	if framed:
+		_failures.append("The camera went somewhere when the rear door was tried.")
+	if not _no_staircase():
+		_failures.append("Trying the rear door put a staircase in the room.")
+	if _narrative.has_entry(&"saw_suspended_stair"):
+		_failures.append("The staircase was recorded.")
+	_check_rear_door_text()
+	var after := _leaf_pose()
+	for index in mini(before.size(), after.size()):
+		if not before[index].is_equal_approx(after[index]):
+			_failures.append("The rear door's leaf moved.")
+			break
+
+
+## The words the door says, in both languages, and nothing left of the "open" text.
+func _check_rear_door_text() -> void:
+	for pair: Array in [["zh-CN", REAR_DOOR_TEXT], ["en", REAR_DOOR_TEXT_EN]]:
+		var path := "res://data/inspections/%s/classroom.json" % pair[0]
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not (data is Dictionary):
+			_failures.append("%s could not be read." % path)
+			continue
+		var entry: Variant = (data as Dictionary).get("classroom_rear_door")
+		if not (entry is Dictionary) or (entry as Dictionary).get("text") != pair[1]:
+			_failures.append("%s: classroom_rear_door does not say '%s'." % [path, pair[1]])
+		if (data as Dictionary).has("classroom_rear_door_open"):
+			_failures.append("%s still has classroom_rear_door_open." % path)
+
+
+# --- 3b. the projection screen -----------------------------------------------------
+
+
+func _check_projector_screen() -> void:
+	var room := _room()
+	var screen := room.get_node_or_null(^"WallNorth/ProjectorScreen") as ProjectorScreen
+	var pull := room.find_interactable(&"projector_screen") as StagedInteractable
+	if screen == null or pull == null:
+		_failures.append("The projection screen or its staged pull is missing.")
+		return
+	if not pull.is_staged():
+		_failures.append("The screen's pull has no stage handler (ScreenControl did not bind).")
+		return
+	if not screen.is_rolled_up():
+		_failures.append("The projection screen was not rolled up when the room loaded.")
+	if pull.get_prompt() != "prompt.projector_screen_down":
+		_failures.append("The rolled-up screen's prompt is '%s'." % pull.get_prompt())
+	var flags_before: Dictionary = _game_state.get_snapshot().duplicate(true)
+	_player.teleport(Transform3D(Basis.IDENTITY, SCREEN_SPOT))
+	await _frames(4)
+	_conversations.clear()
+	_inspections.clear()
+	for want_down: bool in [true, false]:
+		await _activate(&"projector_screen")
+		await _settle(20.0, "the screen to roll %s" % ("down" if want_down else "up"))
+		if want_down and not screen.is_unrolled():
+			_failures.append(
+				"Pulling the screen left it at %.2f, not all the way down." % screen.get_unroll_amount()
+			)
+		if not want_down and not screen.is_rolled_up():
+			_failures.append(
+				"Pulling the screen again left it at %.2f, not rolled up." % screen.get_unroll_amount()
+			)
+		var want_prompt := "prompt.projector_screen_up" if want_down else "prompt.projector_screen_down"
+		if pull.get_prompt() != want_prompt:
+			_failures.append("After a pull the screen's prompt is '%s'." % pull.get_prompt())
+	if not _conversations.is_empty() or not _inspections.is_empty():
+		_failures.append(
+			"The screen started %s / %s; it should only move." % [str(_conversations), str(_inspections)]
+		)
+	if _game_state.get_snapshot() != flags_before:
+		_failures.append("Pulling the screen changed the story state.")
 
 
 # --- 4. the curtain -----------------------------------------------------------------
@@ -621,8 +648,8 @@ func _expect_refused_state(label: String) -> void:
 		return
 	if _curtain().is_open() or _curtain().get_open_amount() > 0.001:
 		_failures.append("%s: the curtain is still open (%.2f)." % [label, _curtain().get_open_amount()])
-	if _void().visible or not (room.get_node(^"WindowGlass1") as Node3D).visible:
-		_failures.append("%s: the back window still shows the void instead of glass." % label)
+	if _void().visible:
+		_failures.append("%s: the void is still marked uncovered." % label)
 	var curtain := room.find_interactable(&"curtain")
 	if curtain == null or curtain.get_prompt_override() != "prompt.curtain_retry":
 		_failures.append("%s: the curtain does not offer to be tried again." % label)
@@ -712,7 +739,7 @@ func _check_refused_state_on_disk() -> void:
 		_failures.append("%s: what the player saw before the refusal was not restored." % label)
 	if ConversationRouter.select(&"classroom_curtain", _game_state.get_snapshot()) != &"classroom_curtain":
 		_failures.append("%s: the curtain routes to another conversation." % label)
-	if not _flag(StoryFlags.CLASS_DISMISSED) or not _flag(StoryFlags.REAR_DOOR_OPENED):
+	if not _flag(StoryFlags.CLASS_DISMISSED) or _flag(StoryFlags.REAR_DOOR_OPENED):
 		_failures.append("%s: the rest of the story did not come back." % label)
 	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), CURTAIN_SPOT))
 	await _frames(4)
@@ -784,7 +811,7 @@ func _check_fall() -> void:
 			and String(room.location_id) == "classroom"
 			and _void() != null
 			and _void().visible
-			and not (room.get_node(^"WindowGlass1") as Node3D).visible
+			and _curtain().get_open_amount() > 0.5
 		):
 			saw_void = true
 		if _dialogue.is_busy():
@@ -799,7 +826,7 @@ func _check_fall() -> void:
 		await process_frame
 	await _settle(40.0, "the landing")
 	if not saw_void:
-		_failures.append("Drawing the curtain never showed the void in place of the window.")
+		_failures.append("Drawing the curtain never uncovered the void.")
 	if String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) != "playground":
 		_failures.append("The fall did not end in the yard.")
 		return
@@ -860,16 +887,10 @@ func _check_return() -> void:
 		return
 	_game_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
 	await _settle(30.0, "the classroom again")
-	if (
-		not _curtain().is_open()
-		or not _void().visible
-		or (_room().get_node(^"WindowGlass1") as Node3D).visible
-	):
-		_failures.append(
-			"Back in the classroom the curtain is closed again or the window has glass."
-		)
-	if not _door().is_open() or not _stair().visible:
-		_failures.append("Back in the classroom the rear door is shut or the staircase is gone.")
+	if not _curtain().is_open() or not _void().visible:
+		_failures.append("Back in the classroom the curtain is closed over the void again.")
+	if not _no_staircase() or _flag(StoryFlags.REAR_DOOR_OPENED):
+		_failures.append("Back in the classroom the rear door opened or a staircase appeared.")
 	var curtain: Interactable = _room().find_interactable(&"curtain")
 	if curtain != null and curtain.get_prompt_override() != "prompt.curtain_drawn":
 		_failures.append(

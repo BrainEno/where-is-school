@@ -1,0 +1,26 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/classroom_door_dressing.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/classroom/classroom_door_assembly.glb" id="2_model"]
+[ext_resource type="Material" path="res://assets/materials/classroom/door_gray.tres" id="3_leaf"]
+[ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="4_frame"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="5_hardware"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wall_section.tres" id="6_backing"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_backing"]
+size = Vector2(1.2, 2.2)
+
+[node name="ClassroomDoor" type="Node3D"]
+script = ExtResource("1_script")
+leaf_material = ExtResource("3_leaf")
+frame_material = ExtResource("4_frame")
+hardware_material = ExtResource("5_hardware")
+shadow_material = ExtResource("5_hardware")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="Backing" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.1, 0.085)
+mesh = SubResource("QuadMesh_backing")
+material_override = ExtResource("6_backing")
+cast_shadow = 0

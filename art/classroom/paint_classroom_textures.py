@@ -404,11 +404,16 @@ def tally(c: Canvas, s: float, y: float, groups: int, size: float = 0.07) -> Non
 # --- the walls ------------------------------------------------------------------------
 
 WALL_PPM = 140.0
+# Openings cut into the walls, (s0, y0, s1, y1) in each wall's viewer space. They must
+# match the wall segments in classroom.tscn (art/classroom/README.md, geometry contract).
+WEST_VOID_OPENING = (1.55, 0.50, 4.05, 2.75)
+EAST_DOOR_OPENINGS = ((0.85, 0.0, 2.05, 2.2), (7.95, 0.0, 9.15, 2.2))
 
 
 def wall_north() -> Image.Image:
-    """North wall, seen from the room: s = x + 7. The board and both door openings
-    share this face; their actual geometry is cut into the wall in classroom.tscn."""
+    """North wall, seen from the room: s = x + 7. The board and the projector screen
+    share this face; since issue #159 it has no door (both doors are in the east wall),
+    so the wall is one uncut fourteen-metre plane."""
     c = Canvas(14.0, 3.2, WALL_PPM, IVORY, seed=101)
     paint_wall(c)
     # The board is hung on a painted shadow: a cut-paper flat, offset down and right.
@@ -418,44 +423,55 @@ def wall_north() -> Image.Image:
     dust = [([(2.0, 0.9), (2.4, 0.7), (3.4, 0.82)], 0.12, {"bristles": 10, "dryness": 0.7}),
             ([(6.6, 0.88), (7.4, 0.7)], 0.1, {"bristles": 9, "dryness": 0.7})]
     c.brush(rgb(CHALK), dust, opacity=0.35)
-    # A pencil height chart someone started by the door corner and gave up on.
+    # A pencil height chart someone started right of the board and gave up on.
     for k, y in enumerate((1.38, 1.47, 1.55, 1.61)):
         c.ink_line([(8.55, y), (8.72, y + c.rng.uniform(-0.01, 0.01))], width_m=0.006, wobble_m=0.002, opacity=0.6)
     return c.image(40)
 
 
 def wall_west() -> Image.Image:
-    """West window wall, seen from inside: s = 5 - z on the ten-metre side."""
+    """West window wall, seen from inside: s = 5 - z on the ten-metre side.
+
+    The front window (z -3.15..-1.65, s 6.65..8.15) is an ordinary window: glass and a
+    painted view sit in front of the paint. The back window is a real hole through the
+    wall (issue #159): z 0.95..3.45 -> s 1.55..4.05, y 0.50..2.75, cut out of the paint
+    like a door. Nothing is painted around the hole - no spill, no reveal - because
+    there is nothing behind it to give off light, and the floor-to-ceiling curtain hides
+    it until the story draws it aside."""
     c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=202)
-    paint_wall(c)
-    for s0 in (2.8, 7.4):
-        s1 = s0 + 1.5
-        # The impossible light bleeds onto the plaster around each window.
-        spill = c.polygon_mask(
-            [(s0 - 0.35, 2.75), (s1 + 0.55, 2.7), (s1 + 0.95, 0.85), (s0 - 0.1, 0.9)],
-            rough=0.6, cell_m=0.07, blur_m=0.06,
-        )
-        c.paint(APRICOT_PALE, spill, 0.38)
-        # A painted reveal: one side and the sill in shadow, a theatre flat pretending to
-        # have depth.
-        reveal = c.polygon_mask(
-            [(s0 - 0.13, 2.47), (s0 - 0.04, 2.40), (s0 - 0.04, 1.04), (s0 - 0.13, 0.97)],
-            rough=0.4, cell_m=0.02,
-        )
-        c.paint(TEAL_DARK, reveal, 0.8)
-        c.ink_line([(s0 - 0.14, 2.5), (s1 + 0.14, 2.5)], width_m=0.012, wobble_m=0.004, opacity=0.8)
-        c.ink_line([(s0 - 0.15, 0.96), (s1 + 0.16, 0.95)], width_m=0.016, wobble_m=0.004, opacity=0.9)
-    # Below the nearer window: somebody's tally, and a second, shorter one beside it.
-    tally(c, 3.0, 0.5, 3, size=0.16)
-    tally(c, 3.7, 0.3, 1, size=0.11)
+    paint_wall(c, openings=[WEST_VOID_OPENING])
+    s0 = 6.65
+    s1 = s0 + 1.5
+    # The impossible light bleeds onto the plaster around the front window.
+    spill = c.polygon_mask(
+        [(s0 - 0.35, 2.75), (s1 + 0.55, 2.7), (s1 + 0.95, 0.85), (s0 - 0.1, 0.9)],
+        rough=0.6, cell_m=0.07, blur_m=0.06,
+    )
+    c.paint(APRICOT_PALE, spill, 0.38)
+    # A painted reveal: one side and the sill in shadow, a theatre flat pretending to
+    # have depth.
+    reveal = c.polygon_mask(
+        [(s0 - 0.13, 2.47), (s0 - 0.04, 2.40), (s0 - 0.04, 1.04), (s0 - 0.13, 0.97)],
+        rough=0.4, cell_m=0.02,
+    )
+    c.paint(TEAL_DARK, reveal, 0.8)
+    c.ink_line([(s0 - 0.14, 2.5), (s1 + 0.14, 2.5)], width_m=0.012, wobble_m=0.004, opacity=0.8)
+    c.ink_line([(s0 - 0.15, 0.96), (s1 + 0.16, 0.95)], width_m=0.016, wobble_m=0.004, opacity=0.9)
+    # On the pier between the window and the curtain: somebody's tally, and a second,
+    # shorter one beside it.
+    tally(c, 4.9, 0.5, 3, size=0.16)
+    tally(c, 5.6, 0.3, 1, size=0.11)
     return c.image(40)
 
 
 def wall_east() -> Image.Image:
-    """East wall, seen from the room: s = z + 5. Almost empty: pale ghosts of notices."""
+    """East wall, seen from the room: s = z + 5. Both classroom doors are in it (issue
+    #159): the grey front door at z -3.55 and the white rear door at z +3.55, each a
+    1.2 m x 2.2 m opening cut out of the paint. Otherwise almost empty: pale ghosts of
+    notices on the long pier between the doors."""
     c = Canvas(10.0, 3.2, WALL_PPM, IVORY, seed=303)
-    paint_wall(c)
-    for s0, y0, w, h in ((1.2, 1.45, 0.62, 0.84), (2.05, 1.6, 0.44, 0.6), (4.6, 1.5, 0.8, 0.55)):
+    paint_wall(c, openings=list(EAST_DOOR_OPENINGS))
+    for s0, y0, w, h in ((2.55, 1.45, 0.62, 0.84), (3.4, 1.6, 0.44, 0.6), (5.6, 1.5, 0.8, 0.55)):
         ghost = c.rect_mask(s0, y0, s0 + w, y0 + h, rough=0.25, cell_m=0.03)
         c.paint(IVORY_LIGHT, ghost, 0.85)
         for cs, cy in ((s0, y0 + h), (s0 + w, y0 + h), (s0, y0), (s0 + w, y0)):

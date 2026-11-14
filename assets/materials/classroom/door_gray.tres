@@ -3,9 +3,9 @@
 [ext_resource type="Material" path="res://assets/materials/classroom/ink_outline.tres" id="2_ink"]
 
 [resource]
-resource_name = "curtain_ochre"
+resource_name = "door_gray"
 next_pass = ExtResource("2_ink")
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.553, 0.431, 0.302, 1)
+albedo_color = Color(0.49, 0.51, 0.53, 1)
 roughness = 1.0

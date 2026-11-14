@@ -69,9 +69,11 @@ CAPTURE_SHOTS = (
     "03_walls_restored.png",
     "04_full_classroom.png",
     "05_blackboard_platform_lectern.png",
-    "06_double_doors.png",
-    "07_two_windows_and_curtains.png",
+    "06_east_doors.png",
+    "07_window_and_blackout_curtain.png",
     "08_twelve_student_desks.png",
+    "09_projector_screen_down.png",
+    "10_back_window_opening.png",
 )
 EXPECTED_DRIVERS = {"forward_plus": "vulkan", "gl_compatibility": "opengl3"}
 ENGINE_MARK = "4.7.2 stable"

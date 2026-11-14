@@ -174,6 +174,7 @@
     "prompt.curtain": "看看窗帘",
     "prompt.curtain_retry": "再试着拉开窗帘",
     "prompt.curtain_drawn": "看向后窗外面",
-    "prompt.rear_door_open": "看看另一扇门"
+    "prompt.projector_screen_down": "拉下投影幕",
+    "prompt.projector_screen_up": "把投影幕卷上去"
   }
 }

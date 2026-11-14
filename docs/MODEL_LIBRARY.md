@@ -179,9 +179,9 @@ wrappers as the target:
 | `classroom_teacher_chair` | the chair half of `scenes/environment/props/teacher_desk.tscn` |
 | `classroom_teacher_lectern` | the desk half of `teacher_desk.tscn` (closest existing piece; a lectern is not a desk, so this is a design choice, not a swap) |
 | `classroom_biology_chart` | nothing — the front wall is a painted plane (`classroom_art/front_wall_dressing.tscn`) |
-| `classroom_door_assembly` | nothing — the classroom's second (anomaly) door is the room's own painted leaf in `WallNorth/RearDoorAnomalyMount`, turned by a `SwingDoor` hinge; the ordinary door is the `classroom_door` trigger |
+| `classroom_door_assembly` | **placed twice, in the east wall** (issue #159): `props/classroom_art/classroom_door.tscn` (`ClassroomDoorDressing`, the model in classroom materials, wear marks hidden, a plaster backing behind it, no collision) → `classroom.tscn` `WallEast/FrontDoor` (grey leaf, the `classroom_door` exit) and `WallEast/RearDoor` (white leaf, the door that never opens) |
 | `classroom_window_module` | the `window_view_front`/`window_view_back` materials painted onto the classroom wall |
-| `classroom_window_curtains` | **placed once, over the back window**: `props/classroom_art/window_curtain.tscn` (`WindowCurtain`, panels gathered at runtime by one open amount, classroom materials) → `classroom.tscn` `Anomalies/BackCurtain` |
+| `classroom_window_curtains` | nothing since issue #159 — the back window's floor-to-ceiling blackout curtain is built procedurally by `WindowCurtain` (`props/classroom_art/window_curtain.tscn`), because this window-sized model cannot be stretched to 3.3 × 3.14 m without distorting its folds |
 | `classroom_ceiling_fan`, `classroom_wall_clock` | nothing |
 | `corridor_noticeboard` | **placed**: `props/corridor_noticeboard.tscn` → `corridor.tscn` `CorridorNoticeboard`, replacing the `NoticeboardFrame`/`NoticeboardCork`/`NoticePaperA`/`NoticePaperB` boxes |
 | `corridor_cleaning_trolley`, `corridor_fire_extinguisher` | **placed**: `props/corridor_cleaning_trolley.tscn` → `CorridorTrolley` (replacing `TrolleyBody`/`TrolleyLid`/`TrolleyBucket`) and `props/corridor_fire_extinguisher.tscn` → `CorridorExtinguisher` (replacing `Extinguisher`/`ExtinguisherBracket`); numbers in [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) |

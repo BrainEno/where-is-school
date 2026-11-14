@@ -5,8 +5,10 @@ extends SceneTree
 ##   -- --output=build/classroom-evidence/after
 ## The same script/camera/fixtures are used against the unmodified base and PR head.
 ## Output stays outside the shipped assets. No post-processing or paintover is applied.
-## Eight views include live gameplay, wall fade/restoration, and framing of the full room,
-## board/platform, both doors, both windows and all twelve student desks.
+## Ten views include live gameplay, wall fade/restoration, and framing of the full room,
+## board/platform, both east-wall doors, the front window and the blackout curtain, all
+## twelve student desks, the projection screen rolled down and the back window's opening
+## with its curtain drawn aside (issue #159).
 ## CI passes `--expect-renderer=<method> --expect-driver=<driver>`; a run on any other
 ## renderer or driver (for example after Godot's own Vulkan-to-OpenGL fallback) fails.
 ## CAPTURE.txt ends with `verdict=PASS|FAIL` and any failure lines.
@@ -113,9 +115,19 @@ func _run() -> void:
 	_main.add_child(review)
 	await _review_shot(review, Vector3(0.0, 8.2, 14.0), Vector3(0.0, 0.9, -0.1), "04_full_classroom.png")
 	await _review_shot(review, Vector3(0.8, 3.2, 2.0), Vector3(0.0, 1.0, -3.7), "05_blackboard_platform_lectern.png")
-	await _review_shot(review, Vector3(4.2, 2.8, 1.4), Vector3(4.0, 1.2, -4.8), "06_double_doors.png")
-	await _review_shot(review, Vector3(-0.4, 2.7, 0.1), Vector3(-6.7, 1.7, 0.0), "07_two_windows_and_curtains.png")
+	await _review_shot(review, Vector3(0.6, 2.6, 0.0), Vector3(6.9, 1.1, 0.0), "06_east_doors.png")
+	await _review_shot(review, Vector3(-0.4, 2.7, 0.1), Vector3(-6.7, 1.7, 0.0), "07_window_and_blackout_curtain.png")
 	await _review_shot(review, Vector3(0.0, 6.5, 8.8), Vector3(0.0, 0.35, 0.7), "08_twelve_student_desks.png")
+	# The screen pulled down over the board, then put back as the room is built.
+	var screen := _room.get_node("WallNorth/ProjectorScreen") as ProjectorScreen
+	screen.set_unroll_amount(1.0)
+	await _review_shot(review, Vector3(0.2, 2.4, 1.2), Vector3(-2.4, 1.3, -4.6), "09_projector_screen_down.png")
+	screen.set_unroll_amount(0.0)
+	# The curtain drawn aside on the hole in the west wall, then closed again.
+	var curtain := _room.get_node("Anomalies/BackCurtain") as WindowCurtain
+	curtain.set_open_amount(1.0)
+	await _review_shot(review, Vector3(-2.2, 2.3, 2.2), Vector3(-6.9, 1.5, 2.2), "10_back_window_opening.png")
+	curtain.set_open_amount(0.0)
 	review.queue_free()
 	_rig.camera.current = true
 	await _frames(2)
@@ -131,7 +143,7 @@ func _run() -> void:
 	_main.queue_free()
 	await _frames(3)
 	Harness.finish(
-		self, _failures, "captured eight unmodified classroom viewport images and wall states."
+		self, _failures, "captured ten unmodified classroom viewport images and wall states."
 	)
 
 
@@ -153,7 +165,7 @@ func _review_shot(camera: Camera3D, at: Vector3, target: Vector3, file_name: Str
 
 func _wall_state(label: String) -> void:
 	for wall_name: String in [
-		"WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight", "DoorLintel", "AnomalyDoorLintel"
+		"WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight"
 	]:
 		var wall := _room.get_node(NodePath(wall_name))
 		for node in wall.find_children("*", "MeshInstance3D", true, false):

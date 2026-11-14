@@ -188,12 +188,24 @@ func _authored_landing_and_seat() -> void:
 	Harness.stage = "Q: authored landing and held seated pose"
 	if not await _boot():
 		return
-	var marker := Marker3D.new()
-	marker.name = "QOpeningTalk"
-	_room.add_child(marker)
-	# Intentionally distinct from the default 1.25 m fallback: ignoring the
-	# authored marker must fail this check, not accidentally land on the same point.
-	marker.global_position = _player.global_position + _player.get_facing_direction()
+	# The classroom authors its own QOpeningTalk (#159); move that one rather than add a
+	# second, which the beat's first-match lookup would never see.
+	var marker := _room.find_child("QOpeningTalk", true, false) as Marker3D
+	if marker == null:
+		marker = Marker3D.new()
+		marker.name = "QOpeningTalk"
+		_room.add_child(marker)
+	# Intentionally distinct from the default 1.25 m fallback and from the authored point:
+	# ignoring the moved marker must fail this check, not land on the same point by
+	# accident. The protagonist's desk is straight ahead of the seat, so the point is
+	# found on the walkable floor around them (1.2 m, 0.85..1.65 once snapped).
+	var authored := marker.global_position
+	var fixture: Vector3 = await _reachable_landing(authored)
+	if fixture == Vector3.INF:
+		_expect(false, "No reachable floor 1.2 m from the seat for the marker fixture.")
+		await _release_world()
+		return
+	marker.global_position = fixture
 	var actor := _room.find_actor(&"q")
 	if actor == null:
 		_expect(false, "The marker fixture has no Q actor.")
@@ -213,6 +225,36 @@ func _authored_landing_and_seat() -> void:
 			"Q's closing line made the protagonist stand up or changed the wake pose.")
 		_expect(_player.is_control_enabled(), "The held-seat Q beat did not return control.")
 	await _release_world()
+
+
+## A point on the classroom's navigation map 1.2 m from the protagonist, at least 0.4 m
+## from `avoid` and from the beat's default landing (1.25 m straight ahead).
+func _reachable_landing(avoid: Vector3) -> Vector3:
+	var navigation: LocationNavigation = null
+	for child in _room.get_children():
+		if child is LocationNavigation:
+			navigation = child as LocationNavigation
+	if navigation == null:
+		return Vector3.INF
+	var until := Time.get_ticks_msec() + 5000
+	while not navigation.is_synchronized() and Time.get_ticks_msec() < until:
+		await get_tree().process_frame
+	var map := navigation.get_navigation_map()
+	var seat := _player.global_position
+	var fallback := seat + _player.get_facing_direction() * 1.25
+	for index in 16:
+		var angle := TAU * float(index) / 16.0
+		var candidate := seat + Vector3(cos(angle), 0.0, sin(angle)) * 1.2
+		var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
+		var gap := Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length()
+		var reach := Vector2(snapped.x - seat.x, snapped.z - seat.z).length()
+		if gap > 0.2 or reach < 0.95 or reach > 1.55:
+			continue
+		var flat := Vector3(candidate.x, avoid.y, candidate.z)
+		if flat.distance_to(avoid) < 0.4 or flat.distance_to(fallback) < 0.4:
+			continue
+		return Vector3(snapped.x, seat.y, snapped.z)
+	return Vector3.INF
 
 
 func _check_arrival(actor: NpcActor, initial: Vector3) -> void:

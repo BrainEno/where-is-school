@@ -159,7 +159,7 @@ def build(root: Path, method: str, driver: str) -> None:
     (capture / "CAPTURE.txt").write_text("\n".join(notes) + "\n")
     (root / ("classroom_capture_%s.log" % method)).write_text(
         "".join("CLASSROOM_CAPTURE %s\n" % note for note in notes)
-        + "PASS: captured eight unmodified classroom viewport images and wall states.\n"
+        + "PASS: captured ten unmodified classroom viewport images and wall states.\n"
     )
 
 

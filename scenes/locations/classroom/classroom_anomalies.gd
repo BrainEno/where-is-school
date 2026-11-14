@@ -1,25 +1,29 @@
 class_name ClassroomAnomalies
 extends Node3D
-## The biology classroom's two impossible things (docs/ART_BIBLE.md, location studies).
+## The biology classroom's impossible thing (docs/ART_BIBLE.md, location studies).
 ##
 ## **The curtained window.** The front window stays ordinary - the yard, the low wall,
-## the washing on the line. The back window has a curtain drawn over it. Drawing it aside
-## (once the class has been let go) shows no outside at all: the wall's own thickness, and
-## after it nothing. The protagonist leans out, falls, and lands in the yard.
+## the washing on the line. The back window is a large opening hidden behind a
+## floor-to-ceiling blackout curtain (issue #159). Drawing it aside (once the class has
+## been let go) shows no outside at all: the wall's own thickness, and after it nothing -
+## the opening is a real hole through the wall with no glass, no view and no backdrop.
+## The protagonist leans out, falls, and lands in the yard.
 ##
-## **The rear door.** A second door in the outside wall, at the back of the room. Opened,
-## it shows only plaster behind it - and at the front of the room a staircase is suddenly
-## there, coming down out of the ceiling and stopping in mid-air in front of the teacher's
-## desk. What it is for is left open; it is not walkable.
-##
-## Both are staged moments (`StagedInteractable`): the director runs the handlers below
-## inside a beat. The room's state lives in story flags, so a room loaded later - a
+## The curtain is a staged moment (`StagedInteractable`): the director runs the handler
+## below inside a beat. The room's state lives in story flags, so a room loaded later - a
 ## return through the corridor, a save - is built in the state it was left in, and every
 ## animation here also has an instant form used for exactly that.
 ##
-## Nothing here collides. The curtain, the door and the staircase are decoration as far as
-## physics and navigation are concerned (`classroom_visual_slice_test.gd` keeps the room's
-## solids a closed list), so neither one can change where the player can walk.
+## **The rear door** (the white door at the back of the east wall) is not staged any more.
+## It never opens: its interactable is an ordinary inspection ("this door never opens,
+## unless special means are used"). The staircase that used to appear when it opened is
+## kept out of this room for now (issue #159; `suspended_stair.tscn` stays in the project
+## for a later scene), and `StoryFlags.REAR_DOOR_OPENED` is neither read nor written -
+## an older save that carries it loads with the door shut.
+##
+## Nothing here collides. The curtain is decoration as far as physics and navigation are
+## concerned (`classroom_visual_slice_test.gd` keeps the room's solids a closed list), so
+## it cannot change where the player can walk.
 
 ## Where the fall lands. The playground's `FromSchool` marker was authored for "the school
 ## side of the yard" and nothing used it until now (docs/MAP_PLAN.md).
@@ -29,16 +33,8 @@ const FALL_DESTINATION := &"playground"
 const CURTAIN_ROUTE := &"classroom_curtain"
 const VOID_CONVERSATION := &"classroom_curtain_void"
 const LANDING_CONVERSATION := &"classroom_fall_landing"
-const STAIR_CONVERSATION := &"classroom_rear_door"
-const REAR_DOOR_OPEN_INSPECTION := &"classroom_rear_door_open"
 const CURTAIN_DRAWN_PROMPT := "prompt.curtain_drawn"
 const CURTAIN_RETRY_PROMPT := "prompt.curtain_retry"
-const REAR_DOOR_OPEN_PROMPT := "prompt.rear_door_open"
-## A floor point between the second door (where the player stands, x 4.85) and the staircase
-## over the front of the lectern (x 0.7), so the game camera holds both at once.
-const STAIR_FRAME_POINT := Vector3(2.7, 0.0, -2.7)
-const STAIR_FRAME_SECONDS := 1.4
-const STAIR_RELEASE_SECONDS := 1.1
 ## The fall: a lean over the sill, then the drop, which keeps going while the screen goes
 ## black. The drop must end before the fade does (the flow stands the body back up once
 ## the next room is loaded).
@@ -56,43 +52,27 @@ const FALL_FADE_SECONDS := 0.7
 const FALL_ROLL_DEGREES := -9.0
 
 @export var curtain_path: NodePath = ^"BackCurtain"
+## The middle of the hole through the wall: where the fall leans toward.
 @export var void_path: NodePath = ^"VoidOpening"
-@export var door_path: NodePath = ^"../WallNorth/RearDoorAnomalyMount/Hinge"
-@export var stair_path: NodePath = ^"Staircase"
 @export var curtain_interactable_path: NodePath = ^"../Interactables/CurtainDraw"
-@export var door_interactable_path: NodePath = ^"../Interactables/RearDoorTry"
-## The real window behind the curtain - its glass, the painted view and the mullion - which
-## the void replaces. The frame stays: the hole is still a window-shaped hole.
-@export var window_paths: PackedStringArray = [
-	"../WindowGlass1", "../WindowGlow1", "../WindowMullion1"
-]
 
 var _curtain: WindowCurtain = null
-var _void: MeshInstance3D = null
-var _door: SwingDoor = null
-var _stair: SuspendedStair = null
+var _void: Node3D = null
 var _curtain_interactable: StagedInteractable = null
-var _door_interactable: StagedInteractable = null
 
 
 func _ready() -> void:
 	_curtain = get_node_or_null(curtain_path) as WindowCurtain
-	_void = get_node_or_null(void_path) as MeshInstance3D
-	_door = get_node_or_null(door_path) as SwingDoor
-	_stair = get_node_or_null(stair_path) as SuspendedStair
+	_void = get_node_or_null(void_path) as Node3D
 	_curtain_interactable = get_node_or_null(curtain_interactable_path) as StagedInteractable
-	_door_interactable = get_node_or_null(door_interactable_path) as StagedInteractable
 	for pair: Array in [
-		[_curtain, curtain_path], [_void, void_path], [_door, door_path],
-		[_stair, stair_path], [_curtain_interactable, curtain_interactable_path],
-		[_door_interactable, door_interactable_path],
+		[_curtain, curtain_path], [_void, void_path],
+		[_curtain_interactable, curtain_interactable_path],
 	]:
 		if pair[0] == null:
 			push_error("ClassroomAnomalies: '%s' is missing or of the wrong type." % pair[1])
 	if _curtain_interactable != null:
 		_curtain_interactable.stage_handler = _stage_curtain
-	if _door_interactable != null:
-		_door_interactable.stage_handler = _stage_rear_door
 	_apply_story_state()
 
 
@@ -109,15 +89,10 @@ func _apply_story_state() -> void:
 			_curtain_interactable,
 			CURTAIN_RETRY_PROMPT if _flag(StoryFlags.CURTAIN_FALL_PENDING) else "prompt.curtain"
 		)
-	if _flag(StoryFlags.REAR_DOOR_OPENED):
-		if _door != null:
-			_door.open(false)
-		if _stair != null:
-			_stair.reveal(false)
-		_set_prompt(_door_interactable, REAR_DOOR_OPEN_PROMPT)
 
 
-## True once the back window shows the void instead of glass and a view.
+## True once the void behind the back window is uncovered (the curtain is being drawn
+## or is drawn). `VoidOpening` is shown with it; the hole itself is always there.
 func is_void_open() -> bool:
 	return _void != null and _void.visible
 
@@ -177,14 +152,14 @@ func _stage_curtain(director: Node) -> Dictionary:
 func draw_curtain(animated: bool = true) -> void:
 	if _curtain == null:
 		return
-	# The void goes in while the cloth still covers the whole window, so it is the
-	# curtain moving that uncovers it.
+	# Marked open while the cloth still covers the whole opening, so it is the curtain
+	# moving that uncovers it.
 	_show_void(true)
 	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 	await _curtain.open(animated)
 
 
-## A refused fall returns to the same room. Put the cloth and window back as they were;
+## A refused fall returns to the same room. Put the cloth back as it was;
 ## curtain_fall_pending remains true so the player can try the same choice again.
 ## `LocationFlow.transition_to()` calls this as the fall's `on_failure`, once, while the
 ## screen is still black and the beat is held; the body and camera are already upright.
@@ -199,10 +174,6 @@ func reset_curtain_after_failed_transition() -> void:
 func _show_void(open: bool) -> void:
 	if _void != null:
 		_void.visible = open
-	for path in window_paths:
-		var node := get_node_or_null(NodePath(path)) as Node3D
-		if node != null:
-			node.visible = not open
 
 
 ## The lean over the sill and the start of the drop. Plays while the classroom still
@@ -240,45 +211,6 @@ func _fall(player: PlayerController) -> void:
 		visual, "position", rest + Vector3(0.0, -DROP_DEPTH, drop_reach), DROP_SECONDS
 	)
 	drop.tween_method(player.set_camera_roll, 0.0, FALL_ROLL_DEGREES, DROP_SECONDS)
-
-
-# --- The rear door ------------------------------------------------------------------
-
-
-## The floor point the camera holds while the staircase arrives, in world space (the
-## constant is in the room's own coordinates).
-func stair_frame_point() -> Vector3:
-	var room := get_parent() as Node3D
-	return room.to_global(STAIR_FRAME_POINT) if room != null else STAIR_FRAME_POINT
-
-
-func _stage_rear_door(director: Node) -> Dictionary:
-	if _flag(StoryFlags.REAR_DOOR_OPENED):
-		return {"inspection": REAR_DOOR_OPEN_INSPECTION}
-	if not _flag(StoryFlags.CLASS_DISMISSED):
-		return {"inspection": _door_interactable.inspection_id if _door_interactable else &""}
-	var player: PlayerController = director.get_player() if director.has_method("get_player") \
-		else null
-	var rig: CameraRig = player.camera_rig if player != null else null
-	await open_rear_door()
-	if rig != null:
-		await rig.frame_point(stair_frame_point(), STAIR_FRAME_SECONDS)
-	if _stair != null:
-		await _stair.reveal()
-	await get_tree().create_timer(0.8, false).timeout  # story time
-	await director.play_conversation(STAIR_CONVERSATION)
-	if rig != null:
-		await rig.release_frame(STAIR_RELEASE_SECONDS)
-	return {}
-
-
-## Opens the rear door. The staircase is revealed by the beat (so the camera can be on it
-## first) or by `_apply_story_state` on a later load. Public for the anomaly test.
-func open_rear_door(animated: bool = true) -> void:
-	_set_state_flag(StoryFlags.REAR_DOOR_OPENED)
-	_set_prompt(_door_interactable, REAR_DOOR_OPEN_PROMPT)
-	if _door != null:
-		await _door.open(animated)
 
 
 # --- Plumbing -----------------------------------------------------------------------

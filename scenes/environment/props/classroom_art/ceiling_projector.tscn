@@ -1,0 +1,75 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/see_through_prop.gd" id="0_script"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="1_metal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="2_shell"]
+[ext_resource type="Material" path="res://assets/materials/classroom/board_slate.tres" id="3_glass"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_plate"]
+size = Vector3(0.22, 0.02, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rod"]
+size = Vector3(0.04, 0.24, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cradle"]
+size = Vector3(0.3, 0.02, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(0.36, 0.12, 0.3)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_barrel"]
+top_radius = 0.048
+bottom_radius = 0.052
+height = 0.07
+radial_segments = 20
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lens"]
+top_radius = 0.036
+bottom_radius = 0.036
+height = 0.006
+radial_segments = 20
+
+[sub_resource type="BoxMesh" id="BoxMesh_vent"]
+size = Vector3(0.12, 0.004, 0.18)
+
+[node name="CeilingProjector" type="Node3D"]
+script = ExtResource("0_script")
+
+[node name="CeilingPlate" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.01, 0)
+mesh = SubResource("BoxMesh_plate")
+material_override = ExtResource("1_metal")
+
+[node name="Rod" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.14, 0)
+mesh = SubResource("BoxMesh_rod")
+material_override = ExtResource("1_metal")
+
+[node name="Head" type="Node3D" parent="."]
+position = Vector3(0, -0.27, 0)
+rotation_degrees = Vector3(-21.3, 0, 0)
+
+[node name="Cradle" type="MeshInstance3D" parent="Head"]
+position = Vector3(0, -0.01, 0)
+mesh = SubResource("BoxMesh_cradle")
+material_override = ExtResource("1_metal")
+
+[node name="Body" type="MeshInstance3D" parent="Head"]
+position = Vector3(0, -0.08, 0)
+mesh = SubResource("BoxMesh_body")
+material_override = ExtResource("2_shell")
+
+[node name="Vent" type="MeshInstance3D" parent="Head"]
+position = Vector3(0.08, -0.018, 0.02)
+mesh = SubResource("BoxMesh_vent")
+material_override = ExtResource("1_metal")
+
+[node name="Lens" type="MeshInstance3D" parent="Head"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.08, -0.185)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = ExtResource("1_metal")
+
+[node name="LensGlass" type="MeshInstance3D" parent="Head/Lens"]
+position = Vector3(0, 0.036, 0)
+mesh = SubResource("CylinderMesh_lens")
+material_override = ExtResource("3_glass")

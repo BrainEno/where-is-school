@@ -266,7 +266,8 @@ func _run() -> void:
 		_failures.append("The classroom door is missing.")
 	else:
 		await _wait_for_free(30.0)
-		_teleport(Vector3(3.0, 0, -3.0), 0.0)
+		# The front door is in the east wall (issue #159); face it from the room.
+		_teleport(Vector3(5.6, 0, -3.55), -90.0)
 		await _wait_for_free(15.0)
 		await _wait_for_target(&"classroom_door", 5.0)
 		await _shot("12_door_prompt", "The classroom door is open: its prompt changed with the story.")
