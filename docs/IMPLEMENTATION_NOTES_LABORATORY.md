@@ -58,6 +58,14 @@ the annex floor and ends in the hatch.
 - 401 segments, 28 runs, none of them above the walls.
 - The five zone -> knot runs and the knot -> hatch bundle are the path a player can follow
   with their eyes at any point; there is no cable that exists only as decoration on a wall.
+- **The basis was written the wrong way round, and every frame showed it.** A cable is a
+  unit cylinder turned onto its segment by a `Transform3D`. Godot's 9-argument `Basis`
+  constructor fills *rows* while `basis.x` is a *column*, so passing the three axes in
+  order transposes them: a run lying along the floor kept its length in the vertical axis
+  and rendered as a flat blade standing on the floor, one blade per segment, which is what
+  two rounds of review saw as black pegs. The generated scene now writes the basis
+  transposed. Nothing else in this room writes a full basis — boxes and cylinders use
+  `position` plus a `rotation` vector — so the cables were the only place it could hide.
 - **The first version of them was 12 mm thick and did not read at all.** At the follow
   camera's seven-odd metres a 12 mm cylinder is under a pixel across, and a run only shows
   the part of itself that faces the camera — its drops and its ends — so the frames showed

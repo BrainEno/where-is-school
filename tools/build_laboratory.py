@@ -57,9 +57,9 @@ SHARED_MATERIALS = {
 
 MATERIALS = {
     # name: (albedo, texture, outline, unshaded, emission, uv_scale)
-    "wall_plaster": ((0.78, 0.80, 0.84), "wall_plaster", True, False, None, 0.22),
+    "wall_plaster": ((0.78, 0.80, 0.84), "wall_plaster", True, False, None, 0.36),
     "wall_tile": ((1.0, 1.0, 1.0), "tile_glaze", True, False, None, 1.0),
-    "floor_concrete": ((0.84, 0.85, 0.84), "floor_concrete", False, False, None, 0.16),
+    "floor_concrete": ((0.84, 0.85, 0.84), "floor_concrete", False, False, None, 0.46),
     "bench_resin": ((0.92, 0.93, 0.93), "bench_top", False, False, None, 1.4),
     "bench_steel": ((0.706, 0.729, 0.729), None, True, False, None, 0.0),
     "casework_pale": ((0.780, 0.792, 0.780), None, True, False, None, 0.0),
@@ -244,10 +244,14 @@ def tube_along(p0, p1, radius):
     x = (x[0] / norm, x[1] / norm, x[2] / norm)
     z = (x[1] * y[2] - x[2] * y[1], x[2] * y[0] - x[0] * y[2], x[0] * y[1] - x[1] * y[0])
     scale = 2.0 * radius
+    # Godot's 9-argument Basis constructor fills *rows*, while `basis.x` is a column, so a
+    # basis read as three axes has to be written out transposed. Written the other way round
+    # — as the three axes — every cable in the room renders as a flat blade standing on the
+    # floor: a segment that lies along X keeps its length in the vertical axis instead.
     basis = (
-        x[0] * scale, x[1] * scale, x[2] * scale,
-        y[0] * length, y[1] * length, y[2] * length,
-        z[0] * scale, z[1] * scale, z[2] * scale,
+        x[0] * scale, y[0] * length, z[0] * scale,
+        x[1] * scale, y[1] * length, z[1] * scale,
+        x[2] * scale, y[2] * length, z[2] * scale,
     )
     origin = ((p0[0] + p1[0]) * 0.5, (p0[1] + p1[1]) * 0.5, (p0[2] + p1[2]) * 0.5)
     return basis + origin

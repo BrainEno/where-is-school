@@ -12,6 +12,6 @@ resource_name = "lab_wall_plaster"
 albedo_color = Color(0.78, 0.8, 0.84, 1)
 texture_filter = 3
 albedo_texture = ExtResource("1_tex")
-uv1_scale = Vector3(0.22, 0.22, 0.22)
+uv1_scale = Vector3(0.36, 0.36, 0.36)
 uv1_triplanar = true
 uv1_world_triplanar = true
