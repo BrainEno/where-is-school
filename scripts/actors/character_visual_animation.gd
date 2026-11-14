@@ -32,6 +32,8 @@ extends Node3D
 ## beat's slump stay exactly where the controller put them.
 
 signal locomotion_changed(state: StringName)
+## Emitted after a one-shot has reached its last pose and handed back to locomotion.
+signal action_finished(clip_name: StringName)
 
 const STATE_IDLE := &"idle"
 const STATE_WALK := &"walk"
@@ -197,20 +199,35 @@ func is_seated() -> bool:
 
 
 ## Plays a transition clip once. Returns false when this rig cannot play it, so a caller can
-## fall back instead of freezing in the last frame of a clip that is not there.
-func play_action(clip_name: String) -> bool:
+## fall back instead of freezing. A positive duration fits the WHOLE profiled clip into that
+## many seconds; zero preserves authored timing for existing callers and other characters.
+func play_action(clip_name: String, duration: float = 0.0) -> bool:
 	if not _bound:
+		return false
+	if not is_finite(duration) or duration < 0.0:
+		push_error("CharacterVisualAnimation: action duration must be finite and non-negative.")
 		return false
 	if not CharacterAnimation.play(_player, clip_name, 0.0):
 		return false
-	_player.speed_scale = 1.0
+	var animation := _player.get_animation("%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name])
+	_player.speed_scale = animation.length / duration if duration > 0.0 else 1.0
 	_action = clip_name
 	_current_clip = clip_name
+	# Install the first pose now, before a controller reads its progress in physics.
+	_player.advance(0.0)
 	return true
 
 
 func is_playing_action() -> bool:
 	return not _action.is_empty()
+
+
+## The action's own clock, including per-character tempo and requested playback speed.
+## A finished action is exactly 1, regardless of which idle/walk clip replaced it.
+func get_action_progress() -> float:
+	if _action.is_empty():
+		return 1.0
+	return clampf(_player.current_animation_position / maxf(_player.current_animation_length, 0.001), 0.0, 1.0)
 
 
 # --- The decision -----------------------------------------------------------
@@ -291,9 +308,11 @@ func _on_animation_finished(clip_name: StringName) -> void:
 		return
 	if String(clip_name) != "%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), _action]:
 		return
+	var finished := StringName(_action)
 	_action = ""
 	_show(_resume_clip(), blend_time)
 	_player.speed_scale = 1.0 if _seated else playback_for(_state, _planar_speed)
+	action_finished.emit(finished)
 
 
 func _show(clip_name: String, blend: float) -> void:

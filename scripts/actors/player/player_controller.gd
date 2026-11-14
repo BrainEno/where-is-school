@@ -74,8 +74,9 @@ const STEP_PROBE_MARGIN := 0.15
 ## Slump above which the model is *sitting* rather than standing: the protagonist wakes at a
 ## desk, so the fade-in happens in the seated pose and the settle is the get-up.
 const SEATED_WAKE_POSE := 0.5
-## The posture tween and `get_up` action share the authored transition's 1.5 s length.
-const WAKE_GET_UP_SECONDS := 1.5
+## A deliberate stand takes 0.75 s, including the whole profiled get_up clip. The
+## animator normalizes its actual length (2.025 s on this rig), not just the pivot.
+const WAKE_GET_UP_SECONDS := 0.75
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 
@@ -106,6 +107,13 @@ var _control_enabled: bool = true
 ## Whether the wake beat currently has the model seated. Mirrors the model's own state so a
 ## repeated `set_wake_pose(1.0)` does not restart the sit or the get-up.
 var _wake_seated: bool = false
+## Standing up owns horizontal movement until BOTH bones and pivot are upright.
+## The pending path remains live, but its corners/watchdog are not advanced.
+var _getting_up: bool = false
+var _get_up_animated: bool = false
+var _get_up_elapsed: float = 0.0
+var _get_up_tilt: float = 0.0
+var _get_up_height: float = 0.9
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -137,6 +145,7 @@ func _ready() -> void:
 	_character_animator = _find_character_animator()
 	if _character_animator != null:
 		_character_animator.bind_body(self)
+		_character_animator.action_finished.connect(_on_get_up_action_finished)
 	elif visual != null:
 		push_warning("PlayerController: the model under %Visual has no CharacterVisualAnimation; the protagonist will not animate.")
 
@@ -174,12 +183,21 @@ func _physics_process(delta: float) -> void:
 	if _control_enabled:
 		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 
+	if _path_active and input_vector.length() > manual_cancel_threshold:
+		# A hand on the keys always wins, including while a path awaits standing.
+		cancel_path()
+
 	if _wake_seated and (input_vector.length_squared() > 0.0001 or _path_active):
 		_begin_get_up_from_seat()
-
-	if _path_active and input_vector.length() > manual_cancel_threshold:
-		# A hand on the keys always wins over an automatic walk.
-		cancel_path()
+	if _getting_up:
+		_update_get_up_pose(delta)
+		if _getting_up:
+			# Do not call _path_direction(): sitting is not a navigation stall, nor
+			# permission to skip corners. Keep gravity, but discard residual drift.
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_apply_movement(Vector3.ZERO, delta)
+			return
 
 	var move_direction := Vector3.ZERO
 	if _path_active:
@@ -522,25 +540,56 @@ func settle_wake_seated_pose(duration: float) -> Tween:
 	return tween
 
 
-## A deliberate first move gets the protagonist out of the chair. The bone action and the
-## pivot tween use the same authored duration, then locomotion resumes from a standing pose.
+## A deliberate first move gets the protagonist out of the chair, once. Inputs may
+## replace/cancel the path during this state, but never restart or accelerate the action.
 func _begin_get_up_from_seat() -> void:
-	if not _wake_seated:
+	if not _wake_seated or _getting_up:
 		return
-	_set_wake_seated(false)
-	if visual == null:
-		return
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(visual, "rotation_degrees:x", 0.0, WAKE_GET_UP_SECONDS)
-	tween.tween_property(visual, "position:y", 0.9, WAKE_GET_UP_SECONDS)
+	_getting_up = true
+	_get_up_elapsed = 0.0
+	_get_up_tilt = visual.rotation.x if visual != null else 0.0
+	_get_up_height = visual.position.y if visual != null else 0.9
+	_set_wake_seated(false, WAKE_GET_UP_SECONDS)
+	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
+
+
+func is_getting_up() -> bool:
+	return _getting_up
+
+
+## One clock, not a separate tween racing the profiled skeleton. Physics samples the
+## action; its actual completion signal snaps the pivot's final pose before movement
+## may resume. The timed fallback is only for rigless placement/preview fixtures.
+func _update_get_up_pose(delta: float) -> void:
+	_get_up_elapsed += delta
+	var progress := clampf(_get_up_elapsed / WAKE_GET_UP_SECONDS, 0.0, 1.0)
+	if _get_up_animated:
+		progress = _character_animator.get_action_progress()
+	if visual != null:
+		var weight := 0.5 - cos(PI * progress) * 0.5
+		visual.rotation.x = lerpf(_get_up_tilt, 0.0, weight)
+		visual.position.y = lerpf(_get_up_height, 0.9, weight)
+	if progress >= 1.0:
+		_finish_get_up()
+
+
+func _on_get_up_action_finished(clip_name: StringName) -> void:
+	if _getting_up and clip_name == &"get_up":
+		_finish_get_up()
+
+
+func _finish_get_up() -> void:
+	if visual != null:
+		visual.rotation.x = 0.0
+		visual.position.y = 0.9
+	_getting_up = false
+	_get_up_animated = false
 
 
 ## Moves the model between the seated pose and the get-up. Ignored on a model that has no
 ## animation driver (a placement test's capsule, or a rigless preview), so the wake beat
 ## never depends on the character assets being there.
-func _set_wake_seated(seated: bool) -> void:
+func _set_wake_seated(seated: bool, get_up_duration: float = 0.0) -> void:
 	if seated == _wake_seated:
 		return
 	_wake_seated = seated
@@ -549,7 +598,10 @@ func _set_wake_seated(seated: bool) -> void:
 		return
 	wrapper.call("set_seated", seated)
 	if not seated:
-		wrapper.call("play_action", "get_up")
+		if wrapper is CharacterVisualAnimation:
+			(wrapper as CharacterVisualAnimation).play_action("get_up", get_up_duration)
+		else:
+			wrapper.call("play_action", "get_up")
 
 
 ## The model's animation driver, if the visual has one. Found by what it can do rather than

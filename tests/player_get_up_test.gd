@@ -32,10 +32,10 @@ func run(player: PlayerController, navigator: PointerNavigator, dialogue: Dialog
 	var saved_facing := player.get_facing_direction()
 	_animator.get_animation_player().animation_started.connect(_on_clip_started)
 	_animator.get_animation_player().animation_finished.connect(_on_clip_finished)
-	for mode: String in ["click", "keyboard", "cancel", "override", "dialogue", "pause"]:
+	for mode: String in ["click", "keyboard", "tap", "cancel", "override", "dialogue", "pause"]:
 		if not await _seat_in_clear_aisle():
 			break
-		if mode == "keyboard":
+		if mode in ["keyboard", "tap"]:
 			Input.action_press(_action)
 		else:
 			_navigator.click_at_screen_position(_screen)
@@ -139,6 +139,8 @@ func _watch_get_up(mode: String) -> void:
 					_latest_target = _player.get_path_target()
 				"keyboard":
 					Input.action_press(_action)
+				"tap":
+					Input.action_release(_action)
 				"cancel":
 					_navigator.cancel()
 				"override":
