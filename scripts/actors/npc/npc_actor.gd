@@ -31,10 +31,22 @@ extends Node3D
 ## a re-export from having two corrections to undo. Set 0 for a −Z model: N is one.
 @export_range(-180.0, 180.0, 1.0) var visual_yaw_degrees: float = 180.0
 
+## How quickly the body turns to help a watch the neck alone cannot make, and back.
+const WATCH_TURN_SPEED := 5.0
+
 var _body: MeshInstance3D = null
 var _head: MeshInstance3D = null
 var _visual: Node3D = null
 var _nameplate: CharacterNameplate = null
+## Watching someone (`watch()`): who, how high their eyes are, and the head-turn modifier.
+var _gaze: NpcGaze = null
+var _watch_target: Node3D = null
+var _watch_height := 1.55
+## The body's share of a watch: the yaw it rests at, the one it last wrote, and whether it
+## is still the watch's to turn (a beat that turns the actor itself takes it back).
+var _rest_yaw := 0.0
+var _written_yaw := 0.0
+var _body_turn_active := false
 
 
 func _ready() -> void:
@@ -54,6 +66,8 @@ func _ready() -> void:
 	if _nameplate != null and String(_nameplate.character_id).is_empty():
 		_nameplate.character_id = npc_id
 		_nameplate.refresh()
+	# Only a watch turns the body every frame (see `watch()`).
+	set_process(false)
 
 
 ## Instances the authored model, if this actor has one, and retires the graybox.
@@ -128,6 +142,92 @@ func turn_towards(target_point: Vector3, delta: float, turn_speed: float) -> voi
 		return
 	var target_angle := atan2(offset.x, offset.z) + PI
 	rotation.y = lerp_angle(rotation.y, target_angle, clampf(turn_speed * delta, 0.0, 1.0))
+
+
+## Looks at `target` - its eyes `height` metres above its origin - and keeps following it
+## until `stop_watching()`.
+##
+## The head and neck turn first (`NpcGaze`, after the animation); only an angle past their
+## reach turns the body, by the remainder. Where the actor stands, its route, its
+## animation and every collider stay as they are, so a watch can begin and end at any
+## moment without the scene noticing. Letting go eases the head back and returns the body
+## to the yaw it had, unless a beat has turned the actor in the meantime: then the beat's
+## facing is kept.
+func watch(target: Node3D, height: float = 1.55) -> void:
+	if target == null:
+		return
+	if not _body_turn_active:
+		_rest_yaw = rotation.y
+	_written_yaw = rotation.y
+	_body_turn_active = true
+	_watch_target = target
+	_watch_height = height
+	var gaze := _ensure_gaze()
+	if gaze != null:
+		gaze.look_at_node(target, height)
+	set_process(true)
+
+
+func stop_watching() -> void:
+	_watch_target = null
+	if _gaze != null:
+		_gaze.let_go()
+
+
+func is_watching() -> bool:
+	return _watch_target != null and is_instance_valid(_watch_target)
+
+
+## The head-turn modifier, or null for an actor without a skeleton (a graybox turns its
+## whole body instead).
+func get_gaze() -> NpcGaze:
+	return _gaze
+
+
+## The way this actor faces on the floor: `-Z`, the convention `face_towards()` keeps.
+func get_facing_direction() -> Vector3:
+	var forward := -global_basis.z
+	forward.y = 0.0
+	return forward.normalized() if forward.length_squared() > 0.000001 else Vector3.FORWARD
+
+
+func _process(delta: float) -> void:
+	if not _body_turn_active:
+		set_process(false)
+		return
+	# Something else turned the actor (a beat's `face_towards()`, `walk_along()`): the
+	# body is the story's again, and the watch keeps only the head.
+	if absf(angle_difference(rotation.y, _written_yaw)) > 0.001:
+		_body_turn_active = false
+		return
+	var target_yaw := _rest_yaw
+	if is_watching():
+		var offset := _watch_target.global_position - global_position
+		offset.y = 0.0
+		if offset.length_squared() > 0.0001:
+			var turn := angle_difference(_rest_yaw, atan2(offset.x, offset.z) + PI)
+			var reach := deg_to_rad(_gaze.reach_degrees) if _gaze != null else 0.0
+			if absf(turn) > reach:
+				target_yaw = _rest_yaw + turn - signf(turn) * reach
+	rotation.y = lerp_angle(rotation.y, target_yaw, clampf(WATCH_TURN_SPEED * delta, 0.0, 1.0))
+	if not is_watching() and absf(angle_difference(rotation.y, _rest_yaw)) < 0.002:
+		rotation.y = _rest_yaw
+		_body_turn_active = false
+	_written_yaw = rotation.y
+
+
+func _ensure_gaze() -> NpcGaze:
+	if _gaze != null and is_instance_valid(_gaze):
+		return _gaze
+	var animator := get_character_animator()
+	var skeleton := animator.get_skeleton() if animator != null else null
+	if skeleton == null:
+		return null
+	_gaze = NpcGaze.new()
+	_gaze.name = "Gaze"
+	_gaze.setup(self)
+	skeleton.add_child(_gaze)
+	return _gaze
 
 
 ## The locomotion animator of the authored visual, or null for a graybox actor.

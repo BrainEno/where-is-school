@@ -179,7 +179,17 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
    `expectation_played` is written by the director, never by the subjective
    content.
 6. **Bell** — rings ~6 s after the expectation, with a Q line; the door is
-   readable as an exit but refuses until the class is dismissed.
+   readable as an exit but refuses until the class is dismissed. Its blocked text has
+   the player feel someone watching, and someone is (#174): the door names its watcher
+   (`ClassroomDoor.blocked_watcher_ids = [q]` - Q, the only person in the room while the
+   door refuses; N is not in yet and the seated student is scenery), and `ExitWatch`
+   turns Q's head (`NpcGaze`, after the animation; the body only for what the neck cannot
+   reach) towards the player in the same frame as the text, follows them while they stay
+   in the doorway, and lets go when they leave, a beat starts or the door opens. From
+   the doorway Q sits near the edge of the game camera's view, so while the text is up
+   the view glides the smallest share towards him (from 0.1) that keeps both faces
+   inside it (`CameraRig.frame_point()`), and returns when the text closes.
+   `tests/doorway_watch_test.gd` covers it.
 7. **Substitute** — N walks an authored marker path to the front and takes the
    register; the conversation sets `class_dismissed` and a new objective.
 8. **Exit** — the door becomes usable, the player crosses the walkway, and the
