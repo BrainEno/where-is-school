@@ -252,27 +252,30 @@ jobs:
         shell: bash
         run: |
           # Movie maker renders at a fixed step and writes every frame, so the recording is
-          # the same on every run. AVI (MJPEG) is what Godot writes; ffmpeg turns it into
-          # something that plays in a browser.
+          # the same on every run. The frames are written as a PNG sequence and handed to
+          # ffmpeg afterwards: an .avi written by the movie maker is only readable once its
+          # index is patched at exit, so a process that ends badly leaves a file ffmpeg
+          # cannot open at all, and the run cannot say why. A sequence of individual PNGs
+          # is either there or not.
           set +e -uo pipefail
-          mkdir -p build
+          mkdir -p build/walkthrough
           ffmpeg -version | head -n 1
-          xvfb-run -a --server-args="-screen 0 1280x720x24" \
-            godot --path . --resolution 1280x720 --rendering-driver opengl3 \
-            --write-movie build/laboratory_walkthrough.avi --fixed-fps 24 \
+          xvfb-run -a --server-args="-screen 0 960x540x24" \
+            godot --path . --resolution 960x540 --rendering-driver opengl3 \
+            --write-movie build/walkthrough/frame.png --fixed-fps 24 \
             --script res://tests/capture_laboratory_walkthrough.gd \
             > "${RUNNER_TEMP}/record.log" 2>&1
           code=$?
           grep -E "LABORATORY_WALKTHROUGH|PASS|FAIL|SCRIPT ERROR|Movie" "${RUNNER_TEMP}/record.log" | head -n 30
-          ls -l build/ || true
-          if [ ! -f build/laboratory_walkthrough.avi ]; then
-            echo "::error title=laboratory walkthrough::no recording was written (exit ${code})"
+          frames=$(find build/walkthrough -name '*.png' | wc -l)
+          echo "recording: exit ${code}, ${frames} frames"
+          if [ "${frames}" -lt 60 ]; then
+            echo "::error title=laboratory walkthrough::${frames} frames were written (exit ${code})"
             tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
             exit 1
           fi
-          ffmpeg -y -i build/laboratory_walkthrough.avi \
-            -vf "scale=960:-2:flags=lanczos" -c:v libx264 -preset slow -crf 26 \
-            -pix_fmt yuv420p -movflags +faststart \
+          ffmpeg -y -framerate 24 -pattern_type glob -i 'build/walkthrough/*.png' \
+            -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart \
             build/laboratory_walkthrough.mp4 > "${RUNNER_TEMP}/ffmpeg.log" 2>&1
           ffmpeg_code=$?
           ls -l build/laboratory_walkthrough.mp4 2>/dev/null || true
@@ -281,6 +284,10 @@ jobs:
             tail -n 20 "${RUNNER_TEMP}/ffmpeg.log" | cut -c1-400 || true
             exit 1
           fi
+          # Two frames kept as stills: the route is also evidence, not only the video.
+          cp "$(find build/walkthrough -name '*.png' | sort | sed -n '1p')" build/walkthrough_start.png
+          cp "$(find build/walkthrough -name '*.png' | sort | tail -n 1)" build/walkthrough_end.png
+          rm -rf build/walkthrough
           ffprobe -v error -show_entries format=duration,size -of default=nw=1 \
             build/laboratory_walkthrough.mp4 || true
 
@@ -291,5 +298,8 @@ jobs:
           name: laboratory-walkthrough-${{ github.run_attempt }}
           path: |
             build/laboratory_walkthrough.mp4
+            build/walkthrough_start.png
+            build/walkthrough_end.png
             ${{ runner.temp }}/record.log
+            ${{ runner.temp }}/ffmpeg.log
           if-no-files-found: warn

@@ -33,16 +33,16 @@ const FRAMES := [
 	{
 		"name": "room_wide",
 		"kind": "framed",
-		"eye": Vector3(14.5, 12.6, 14.5),
-		"look": Vector3(-0.4, 0.9, -0.6),
-		"fov": 44.0,
+		"eye": Vector3(13.2, 11.4, 13.2),
+		"look": Vector3(-0.3, 0.85, -0.8),
+		"fov": 46.0,
 		"note": "The whole room: wet bench and tile west, hood and cabinet north, island and drum centre, instrument bank east, the partition and its narrow door in the north-east.",
 	},
 	{
 		"name": "entrance_view",
 		"kind": "standing",
-		"feet": Vector3(-4.4, 0.0, 4.4),
-		"look": Vector3(0.7, 1.5, 1.0),
+		"feet": Vector3(-2.4, 0.0, 2.8),
+		"look": Vector3(0.7, 1.4, 0.4),
 		"note": "Standing on the entrance spawn, facing the drum: the first second of the room.",
 	},
 	{
@@ -96,7 +96,7 @@ const FRAMES := [
 		"eye": Vector3(2.9, 1.65, -1.9),
 		"look": Vector3(6.4, 1.9, -3.6),
 		"fov": 52.0,
-		"note": "Inside the room the cables lead to: a lower ceiling, one bulb, the shaft climbing past the roof, the hatch.",
+		"note": "Inside the room the cables lead to: the soffit carrying its low ceiling, one bulb, the shaft climbing past the roof, the hatch."
 	},
 	{
 		"name": "explore_to_unknown",
@@ -109,10 +109,10 @@ const FRAMES := [
 	{
 		"name": "far_corridor",
 		"kind": "framed",
-		"eye": Vector3(4.3, 1.5, -5.9),
-		"look": Vector3(4.3, 1.2, -8.3),
-		"fov": 55.0,
-		"note": "The corridor behind the annex: the floor runs on past the north wall and ends in black.",
+		"eye": Vector3(4.3, 1.55, -5.75),
+		"look": Vector3(4.3, 0.55, -8.35),
+		"fov": 62.0,
+		"note": "The corridor behind the annex: floor and both walls converge and the run stops at an opening with nothing behind it.",
 	},
 	{
 		"name": "drum_close",

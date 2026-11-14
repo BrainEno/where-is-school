@@ -57,10 +57,10 @@ SHARED_MATERIALS = {
 
 MATERIALS = {
     # name: (albedo, texture, outline, unshaded, emission, uv_scale)
-    "wall_plaster": ((1.0, 1.0, 1.0), "wall_plaster", True, False, None, 0.22),
+    "wall_plaster": ((0.78, 0.80, 0.84), "wall_plaster", True, False, None, 0.22),
     "wall_tile": ((1.0, 1.0, 1.0), "tile_glaze", True, False, None, 1.0),
-    "floor_concrete": ((1.0, 1.0, 1.0), "floor_concrete", False, False, None, 0.16),
-    "bench_resin": ((1.0, 1.0, 1.0), "bench_top", False, False, None, 1.4),
+    "floor_concrete": ((0.84, 0.85, 0.84), "floor_concrete", False, False, None, 0.16),
+    "bench_resin": ((0.92, 0.93, 0.93), "bench_top", False, False, None, 1.4),
     "bench_steel": ((0.706, 0.729, 0.729), None, True, False, None, 0.0),
     "casework_pale": ((0.780, 0.792, 0.780), None, True, False, None, 0.0),
     "metal_dark": ((0.216, 0.239, 0.259), None, True, False, None, 0.0),
@@ -77,7 +77,7 @@ MATERIALS = {
     "cable_oxide": ((0.396, 0.459, 0.420), None, False, False, None, 0.0),
     "annex_wall": ((0.478, 0.510, 0.502), None, True, False, None, 0.0),
     "annex_floor": ((0.322, 0.353, 0.361), None, False, False, None, 0.0),
-    "lamp_panel": ((0.949, 0.973, 0.980), None, False, True, (1.0, 1.0, 1.0, 1.0), 0.0),
+    "lamp_panel": ((0.949, 0.973, 0.980), None, False, True, (0.94, 0.97, 1.0, 1.0), 0.0),
     "annex_bulb": ((0.741, 0.855, 0.812), None, False, True, (0.741, 0.855, 0.812, 1.0), 0.0),
     "led_running": ((0.478, 1.0, 0.612), None, False, True, (0.478, 1.0, 0.612, 1.0), 0.0),
     "led_dial": ((1.0, 0.741, 0.365), None, False, True, (1.0, 0.741, 0.365, 1.0), 0.0),
@@ -260,14 +260,18 @@ def control_path(points, step=0.62, sag=0.0):
         a, b = points[index], points[index + 1]
         span = math.dist(a, b)
         count = max(1, int(math.ceil(span / step)))
+        # A leg already on the floor cannot sag into it: the dip is applied only while both
+        # ends are clear of the floor, which keeps a run that hangs from a fixture hanging
+        # and a run that lies down lying flat instead of sinking halfway through the slab.
+        dips = sag if min(a[1], b[1]) > 0.35 else 0.0
         for i in range(count):
             t0 = i / count
             t1 = (i + 1) / count
             p0 = _lerp(a, b, t0)
             p1 = _lerp(a, b, t1)
-            if sag:
-                p0 = (p0[0], p0[1] - sag * 4.0 * t0 * (1.0 - t0), p0[2])
-                p1 = (p1[0], p1[1] - sag * 4.0 * t1 * (1.0 - t1), p1[2])
+            if dips:
+                p0 = (p0[0], p0[1] - dips * 4.0 * t0 * (1.0 - t0), p0[2])
+                p1 = (p1[0], p1[1] - dips * 4.0 * t1 * (1.0 - t1), p1[2])
             out.append((p0, p1))
     return out
 
@@ -276,7 +280,14 @@ def _lerp(a, b, t):
     return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t)
 
 
-def cable_route(lab: Lab, name, points, radius=0.011, mat="cable_ink", step=0.62, sag=0.03, jitter=0.0):
+## Cable radius. A real one is 8-12 mm, which at the follow camera's seven-odd metres is
+## less than a pixel across: the room then reads as a floor with pegs standing on it, one
+## peg per drop, because the drop is the only part of a run that faces the camera. 26 mm
+## keeps a run legible as a line without turning it into a pipe.
+CABLE_RADIUS = 0.026
+
+
+def cable_route(lab: Lab, name, points, radius=CABLE_RADIUS, mat="cable_ink", step=0.62, sag=0.03, jitter=0.0):
     """One cable as a chain of cylinder segments. `jitter` slides the whole run sideways."""
     moved = [(p[0] + jitter, p[1], p[2] + jitter) for p in points]
     for index, (p0, p1) in enumerate(control_path(moved, step=step, sag=sag)):
@@ -575,17 +586,20 @@ def build_annex(lab: Lab) -> None:
     slab(lab, "AnnexFloor", (4.9, -0.06, -3.1), (5.3, 0.12, 4.9), "annex_floor")
     prop(lab, "AnnexStep", (2.32, 0.04, -2.85), (0.24, 0.08, 1.4), "metal_frame")
 
-    # A ceiling at 2.6 m over a room whose neighbours have none, in three pieces so the
-    # shaft can pass through it. It is in the occluder group: standing inside, the camera
-    # is above it, and it has to thin out exactly like a wall does.
+    # The low ceiling is a soffit at 2.6 m, not a lid. Every interior in this project is
+    # open over the working area: the camera looks down into the room from six metres up,
+    # and a lid would simply hide the player from it. Three beams leave the west wall and
+    # stop dead at the edge of the shaft, which is the other thing worth seeing here — the
+    # ceiling runs out where the shaft begins.
     for name, pos, size in (
-        ("AnnexCeilingWest", (4.15, 2.66, -3.1), (3.9, 0.12, 5.0)),
-        ("AnnexCeilingNorth", (6.85, 2.66, -5.0), (1.5, 0.12, 1.2)),
-        ("AnnexCeilingSouth", (6.85, 2.66, -1.6), (1.5, 0.12, 2.0)),
+        ("AnnexSoffitSpine", (4.2, 2.72, -3.1), (3.7, 0.24, 0.5)),
+        ("AnnexSoffitNorth", (4.2, 2.72, -5.35), (3.8, 0.24, 0.5)),
+        ("AnnexSoffitSouth", (4.2, 2.72, -0.85), (3.8, 0.24, 0.5)),
     ):
-        slab(lab, name, pos, size, "annex_wall", group="camera_occluder")
+        prop(lab, name, pos, size, "annex_wall")
 
     # 1. One bulb, on a cord, hanging lower than it should.
+    prop(lab, "AnnexCordStem", (5.1, 2.58, -3.3), (0.04, 0.12, 0.04), "metal_frame")
     lab.cyl("AnnexCord", (5.1, 2.42, -3.3), 0.008, 0.5, "metal_frame", segments=6)
     lab.cyl("AnnexBulb", (5.1, 2.12, -3.3), 0.06, 0.12, "annex_bulb", top_radius=0.04, segments=10)
     prop(lab, "AnnexBulbCage", (5.1, 2.06, -3.3), (0.16, 0.02, 0.16), "metal_frame")
@@ -618,7 +632,10 @@ def build_annex(lab: Lab) -> None:
     slab(lab, "FarCorridorFloor", (4.3, -0.06, -7.0), (1.8, 0.12, 2.8), "annex_floor")
     prop(lab, "FarCorridorWallA", (3.42, 1.2, -7.0), (0.1, 2.4, 2.8), "annex_wall")
     prop(lab, "FarCorridorWallB", (5.18, 1.2, -7.0), (0.1, 2.4, 2.8), "annex_wall")
-    prop(lab, "FarCorridorCeiling", (4.3, 2.42, -7.0), (1.9, 0.1, 2.8), "annex_wall")
+    # No lid over the corridor either: two ribs at 2.4 m and the walls stop there, which is
+    # what a corridor that has run out of building looks like from inside.
+    for name, x in (("FarCorridorRibA", 3.5), ("FarCorridorRibB", 5.1)):
+        prop(lab, name, (x, 2.44, -7.0), (0.16, 0.14, 2.8), "annex_wall")
     # The end of the corridor: an unshaded black wall, so what the player walks into is the
     # surface they can see. There is no invisible blocker anywhere in this room.
     slab(lab, "FarCorridorEnd", (4.3, 1.2, -8.42), (1.9, 2.6, 0.2), "void_black")
@@ -646,7 +663,7 @@ def build_lights(lab: Lab) -> None:
         # The hangers that hold the fixture to a ceiling the room does not have.
         for index, dx in enumerate((-0.55, 0.55)):
             lab.cyl(("FixtureHanger%s%d" % (tag, index)).replace("-", "n"), (x + dx, 3.24, z), 0.008, 0.26, "metal_frame", segments=6)
-        lab.light("CeilingLight" + tag, (x, 2.86, z), 1.45, 8.0, shadow=shadow)
+        lab.light("CeilingLight" + tag, (x, 2.86, z), 1.2, 7.5, shadow=shadow)
 
 
 def build_cables(lab: Lab) -> None:
@@ -660,70 +677,70 @@ def build_cables(lab: Lab) -> None:
         ((6.95, 0.76, 4.1), ((6.98, 0.3, 4.1), (6.8, floor, 3.85), (5.4, floor, 2.6), (4.6, floor, 1.4))),
     ]
     for index, (start, tail) in enumerate(bank):
-        cable_route(lab, "CableBank%d" % index, (start,) + tail, radius=0.013, sag=0.0)
+        cable_route(lab, "CableBank%d" % index, (start,) + tail, radius=0.028, sag=0.0)
 
     # --- the north wall's sockets and the hood's duct, running down to the floor ---
     cable_route(
         lab, "CableHood",
         ((1.95, 1.02, -5.42), (1.7, 0.12, -5.4), (1.9, floor, -4.6), (2.6, floor, -3.4), (3.2, floor, -2.0), (3.6, floor, -0.2)),
-        radius=0.012, sag=0.05,
+        radius=0.026, sag=0.05,
     )
     cable_route(
         lab, "CableBoard",
         ((1.4, 1.2, -5.4), (1.2, 0.1, -5.4), (1.5, floor, -4.4), (2.4, floor, -2.9), (3.1, floor, -1.0), (3.5, floor, 0.4)),
-        radius=0.016, sag=0.04,
+        radius=0.03, sag=0.04,
     )
 
     # --- the island's instruments and the bench lamp, west to east across the room ---
     cable_route(
         lab, "CableCentrifuge",
         ((-2.4, 0.95, -3.34), (-2.5, 0.1, -3.4), (-2.2, floor, -2.9), (-1.0, floor, -1.6), (0.6, floor, -0.4), (1.5, floor, 0.3)),
-        radius=0.011, sag=0.06,
+        radius=0.026, sag=0.06,
     )
     cable_route(
         lab, "CableBenchLamp",
         ((-7.05, 1.85, -1.9), (-7.2, 0.6, -1.95), (-7.1, floor, -1.4), (-6.0, floor, 0.3), (-3.6, floor, 0.42), (-2.2, floor, 0.4), (0.4, floor, 0.42), (1.45, floor, 0.5)),
-        radius=0.010, sag=0.05,
+        radius=0.024, sag=0.05,
     )
     cable_route(
         lab, "CableBalance",
         ((-6.6, 0.95, -3.9), (-6.7, 0.2, -3.7), (-6.4, floor, -2.9), (-4.4, floor, -0.6), (-2.0, floor, 0.3), (0.5, floor, 0.35)),
-        radius=0.010, sag=0.06,
+        radius=0.024, sag=0.06,
     )
     # The overflow: three cables that belong to nothing in particular and go the same way.
     cable_route(
         lab, "CableLoose0",
         ((-0.6, 3.0, -3.4), (-0.9, 1.6, -2.6), (-1.2, 0.5, -1.6), (-0.4, floor, -0.5), (0.9, floor, 0.15), (1.5, floor, 0.42)),
-        radius=0.009, sag=0.22,
+        radius=0.022, sag=0.22,
     )
     cable_route(
         lab, "CableLoose1",
         ((1.9, 1.0, -5.4), (1.6, 0.4, -5.0), (1.2, floor, -3.8), (1.4, floor, -2.0), (1.6, floor, -0.6), (1.7, floor, 0.2)),
-        radius=0.009, sag=0.18,
+        radius=0.022, sag=0.18,
     )
     cable_route(
         lab, "CableLoose2",
         ((4.4, 2.36, 2.8), (4.6, 1.2, 2.6), (4.2, 0.4, 2.0), (3.6, floor, 1.4), (2.4, floor, 0.9), (1.7, floor, 0.5)),
-        radius=0.008, sag=0.2,
+        radius=0.02, sag=0.2,
     )
 
     # --- the mixer's own feed, and the drop from the ceiling fixture ---
     cable_route(
         lab, "CableMixer",
         ((1.48, 1.5, 0.7), (1.6, 0.4, 0.8), (1.8, floor, 0.9), (2.2, floor, 0.6), (1.9, floor, 0.2)),
-        radius=0.014, sag=0.05,
+        radius=0.028, sag=0.05,
     )
     cable_route(
         lab, "CableCeilingDrop",
         ((-1.7, 2.98, 0.9), (-1.75, 2.2, 0.85), (-1.9, 1.2, 0.7), (-1.8, 0.4, 0.5), (-1.5, 0.12, 0.2), (-1.2, floor, -0.2), (0.2, floor, -0.1), (1.2, floor, 0.3)),
-        radius=0.010, sag=0.3,
+        radius=0.024, sag=0.3,
     )
 
     # --- the crossing: one run over the main aisle, under a steel ramp ---
     cable_route(
         lab, "CableCrossing",
         ((-6.9, floor, 2.7), (-4.4, floor, 2.62), (-2.9, floor, 2.55), (-2.0, floor, 1.9), (-1.9, floor, 1.1), (-1.9, floor, 0.5)),
-        radius=0.012, sag=0.02,
+        radius=0.026, sag=0.02,
     )
     slab(lab, "CrossingRamp", (-4.4, 0.03, 2.64), (1.5, 0.06, 0.62), "metal_frame")
     prop(lab, "CrossingRampLipA", (-5.2, 0.015, 2.64), (0.2, 0.03, 0.62), "metal_frame")
@@ -736,7 +753,7 @@ def build_cables(lab: Lab) -> None:
         for step in range(13):
             angle = step / 12.0 * math.tau
             points.append((cx + r * math.cos(angle), 0.06 + 0.01 * math.sin(angle * 3), cz + r * math.sin(angle)))
-        cable_route(lab, "CableCoil%d" % index, points, radius=0.011, step=0.2, sag=0.0)
+        cable_route(lab, "CableCoil%d" % index, points, radius=0.026, step=0.2, sag=0.0)
 
     # The bundle: eight cables side by side, north along the partition to the narrow door.
     bundle = (
@@ -747,14 +764,14 @@ def build_cables(lab: Lab) -> None:
         offset = -0.05 + 0.014 * index
         points = [(x + offset, 0.045 + 0.004 * (index % 3), z + offset * 0.6) for x, z in bundle]
         mat = "cable_ink" if index % 3 else ("cable_pale" if index % 2 else "cable_oxide")
-        cable_route(lab, "CableBundle%d" % index, points, radius=0.011, step=0.62, sag=0.0)
+        cable_route(lab, "CableBundle%d" % index, points, radius=0.022, step=0.62, sag=0.0)
 
     # Out of the shaft and down its far wall, so the vertical run is visible from below.
     for index in range(3):
         cable_route(
             lab, "CableRiser%d" % index,
             ((6.9 + 0.05 * index, 0.1, -2.2), (7.4, 0.1, -3.5), (7.4, 2.0, -3.6), (7.1, 4.6, -3.6)),
-            radius=0.011, step=0.7, sag=0.0,
+            radius=0.02, step=0.7, sag=0.0,
         )
 
 
@@ -843,7 +860,7 @@ def build_interactables(lab: Lab) -> None:
         },
     ]
     lab.spawns = [
-        {"name": "Entry", "pos": (-4.4, 0.0, 4.4)},
+        {"name": "Entry", "pos": (-2.4, 0.0, 2.8)},
         {"name": "FromAnnex", "pos": (3.4, 0.0, -2.85)},
     ]
 
@@ -927,12 +944,12 @@ def build_scene(lab: Lab) -> str:
                 "background_mode = 1",
                 "background_color = Color(0.0314, 0.0353, 0.0392, 1)",
                 "ambient_light_source = 2",
-                "ambient_light_color = Color(0.5765, 0.6118, 0.6510, 1)",
-                "ambient_light_energy = 0.62",
+                "ambient_light_color = Color(0.6000, 0.5922, 0.5765, 1)",
+                "ambient_light_energy = 0.45",
                 "tonemap_mode = 2",
                 "adjustment_enabled = true",
                 "adjustment_saturation = 0.88",
-                "adjustment_brightness = 1.02",
+                "adjustment_brightness = 1.0",
             ],
         )
     ]

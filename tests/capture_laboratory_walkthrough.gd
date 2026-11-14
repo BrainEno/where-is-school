@@ -6,8 +6,8 @@ extends SceneTree
 ## movie maker, which renders at a fixed step and writes every frame to a file, so the
 ## result is reproducible frame for frame:
 ##
-##   xvfb-run -a godot --path . --resolution 1280x720 --rendering-driver opengl3 \
-##     --write-movie build/laboratory_walkthrough.avi --fixed-fps 24 \
+##   xvfb-run -a godot --path . --resolution 960x540 --rendering-driver opengl3 \
+##     --write-movie build/walkthrough/frame.png --fixed-fps 24 \
 ##     --script res://tests/capture_laboratory_walkthrough.gd
 ##
 ## The camera is the game's own: the *player* is moved along the waypoints below and the
@@ -25,8 +25,8 @@ const LABORATORY := "res://scenes/locations/laboratory/laboratory.tscn"
 const FPS := 24.0
 ## feet, then what the player is looking at. Seconds after the previous waypoint.
 const WAYPOINTS := [
-	{"feet": Vector3(-4.4, 0.0, 4.4), "look": Vector3(0.7, 1.4, 1.0), "hold": 0.0},
-	{"feet": Vector3(-3.4, 0.0, 3.6), "look": Vector3(-0.6, 1.3, 0.9), "hold": 2.6},
+	{"feet": Vector3(-2.4, 0.0, 2.8), "look": Vector3(0.7, 1.4, 1.0), "hold": 0.0},
+	{"feet": Vector3(-3.1, 0.0, 2.6), "look": Vector3(-0.6, 1.3, 0.9), "hold": 2.6},
 	{"feet": Vector3(-1.2, 0.0, 2.8), "look": Vector3(0.7, 1.3, 1.0), "hold": 2.4},
 	{"feet": Vector3(1.3, 0.0, 2.3), "look": Vector3(1.4, 0.2, 0.2), "hold": 2.4},
 	{"feet": Vector3(1.75, 0.0, 0.3), "look": Vector3(1.9, 0.4, -1.6), "hold": 2.6},

@@ -38,9 +38,10 @@ The five zone footprints are asserted to be separate floor rectangles
 than a description.
 
 **The second room.** A partition across the north-east corner, with a 1.5 m opening in it
-that the steel jambs narrow to 1.3 m of visible door. Behind it: the floor a step down, the
-ceiling at 2.6 m instead of 3.4 m, one bulb on a cord, a shaft that leaves that ceiling and
-climbs to 5.5 m (past the top of the building), a floor hatch where the cables end, and a
+that the steel jambs narrow to 1.3 m of visible door. Behind it: the floor a step down, a
+soffit that brings the ceiling down to 2.6 m instead of 3.4 m, one bulb on a cord, a shaft
+that leaves that soffit and climbs to 5.5 m (past the top of the building), a floor hatch
+where the cables end, and a
 second doorway in the north wall whose corridor runs on past the building's own footprint
 and stops at an unshaded black wall. Nothing in the room explains any of it, and the room
 adds no text of its own.
@@ -57,9 +58,26 @@ the annex floor and ends in the hatch.
 - 401 segments, 28 runs, none of them above the walls.
 - The five zone -> knot runs and the knot -> hatch bundle are the path a player can follow
   with their eyes at any point; there is no cable that exists only as decoration on a wall.
-- They are not solid. A cable is 12 mm; a collider would carve the navigation mesh and turn
-  a thing to look at into a thing to trip on. The one run that crosses the main aisle is
-  covered by a walkable steel ramp, and the ramp keeps no collider above the floor line.
+- **The first version of them was 12 mm thick and did not read at all.** At the follow
+  camera's seven-odd metres a 12 mm cylinder is under a pixel across, and a run only shows
+  the part of itself that faces the camera — its drops and its ends — so the frames showed
+  a floor with a scattering of short black pegs on it instead of wire. They are 20-28 mm
+  now: a cable, still, and a line you can follow from machine to knot to door.
+- A leg already on the floor no longer sags. Sag is applied only while both ends of a leg
+  are above 0.35 m, so what hangs from a fixture hangs and what lies down stays flat
+  instead of sinking into the slab and surfacing as those same pegs.
+- They are not solid. A cable is 20-28 mm; a collider would carve the navigation mesh and
+  turn a thing to look at into a thing to trip on. The one run that crosses the main aisle
+  is covered by a walkable steel ramp, and the ramp keeps no collider above the floor line.
+
+## Light
+
+Eight lights, no global illumination and no glow: five tube fixtures at 2.86 m (two of them
+cast shadows, the rest do not, so the frame keeps a direction without ten shadow maps), the
+annex bulb, the bench lamp and one weak light in the far corridor. The environment fills at
+0.45 with a *neutral-warm* ambient — the first pass filled at 0.62 with a blue-grey one, and
+the plaster, the resin bench top and the tile all came out as one pale blue field with no
+shadow left in it. The coldness belongs to the tubes; the room it lights is grey and beige.
 
 ## Navigation and collision
 
@@ -126,7 +144,8 @@ godot --headless --path . --script res://tests/laboratory_visual_slice_test.gd
   seventh entry there belongs with the change that decides where the room sits in the story.
 - The far corridor is 2.8 m of walkable floor that ends in black. It is a deliberate dead
   end, not an unfinished area, and the acceptance frames show it as one.
-- The FollowCamera's occluder fade covers the walls and the annex ceiling
-  (`camera_occluder` group). The shaft and the far corridor walls are props outside the
-  group: standing inside the annex, the camera can see through them, and they are dark
-  enough that the frame is unaffected in the evidence shots.
+- The FollowCamera's occluder fade covers the walls (`camera_occluder` group). Nothing in
+  the annex is a lid: the low ceiling is a perimeter soffit at 2.6 m, with the middle open,
+  because the camera looks down into the room from above and a full ceiling would hide the
+  player from it — no other interior in the project has one either. The soffits, the shaft
+  and the far corridor walls are props outside the group.

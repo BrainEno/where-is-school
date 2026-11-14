@@ -18,8 +18,8 @@ extends SceneTree
 ##    fixtures - gather at one knot on the floor, and the bundle leaves the working room
 ##    through the narrow door in the partition. Every run is at working height or on the
 ##    floor: none of them float.
-## 4. **The unknown room is a room.** Behind the partition the ceiling drops from 3.4 m to
-##    2.6 m, the floor is a step down, there is one bulb, a shaft that climbs past the top of
+## 4. **The unknown room is a room.** Behind the partition the soffit brings the ceiling
+##    down from 3.4 m to 2.6 m, the floor is a step down, there is one bulb, a shaft that climbs past the top of
 ##    the building, a hatch where the bundle ends, and a corridor that runs on past the north
 ##    wall into black. Nothing in the room explains any of it.
 ## 5. **You can walk all of it.** The bake reaches every interactable, the annex and the far
@@ -361,17 +361,19 @@ func _check_cables() -> void:
 
 
 func _check_annex() -> void:
-	var ceiling := _box_bottom(_room.get_node_or_null(^"AnnexCeilingWest") as Node3D)
+	# The low ceiling is carried by a perimeter soffit rather than by a lid over the room:
+	# every interior here is open above the working area so the follow camera can look in.
+	var ceiling := _box_bottom(_room.get_node_or_null(^"AnnexSoffitSpine") as Node3D)
 	var annex_floor := _room.get_node_or_null(^"AnnexFloor") as Node3D
 	if annex_floor == null:
 		_failures.append("The annex has lost its floor.")
 	elif not is_equal_approx(annex_floor.position.y, -0.06):
 		_failures.append("The annex floor is no longer the step down it was.")
 	if ceiling == null:
-		_failures.append("The annex has no ceiling; the space no longer reads as a second room.")
+		_failures.append("The annex has no soffit; the space no longer reads as a lower room.")
 	elif absf(ceiling - ANNEX_CEILING_HEIGHT) > 0.06:
 		_failures.append(
-			"The annex ceiling is at %.2f m, not the %.1f m that makes it a lower room."
+			"The annex soffit is at %.2f m, not the %.1f m that makes it a lower room."
 			% [ceiling, ANNEX_CEILING_HEIGHT]
 		)
 	# The shaft leaves that ceiling and goes past the top of the building.
