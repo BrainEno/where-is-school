@@ -767,6 +767,18 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 			"%s wrapper ended the get-up on '%s' instead of idle."
 			% [label, String(visual.call("get_current_clip"))]
 		)
+	# A caller may fit the whole profiled action to a shorter duration without
+	# changing the shared clip resource or leaving locomotion at that playback speed.
+	if not bool(visual.call("play_action", "get_up", 0.35)):
+		_failures.append("%s wrapper refused a duration-controlled get-up." % label)
+	elif not is_equal_approx(player.speed_scale, action_length / 0.35):
+		_failures.append("%s action playback ignored the profiled clip's actual length." % label)
+	await _wait_seconds(0.6)
+	if bool(visual.call("is_playing_action")) or String(visual.call("get_current_clip")) != "idle":
+		_failures.append("%s duration-controlled action did not hand back to idle." % label)
+	if not is_equal_approx(player.speed_scale, 1.0) \
+			or not is_equal_approx(player.get_animation("char/get_up").length, action_length):
+		_failures.append("%s action changed a shared resource or leaked its playback speed." % label)
 	_notes.append(
 		"%s runtime wrapper plays seven clips: locomotion by speed, seated, and a one-shot "
 		% label
