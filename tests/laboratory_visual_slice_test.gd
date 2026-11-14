@@ -238,7 +238,7 @@ func _check_room() -> void:
 		for other in range(index + 1, names.size()):
 			var a: Array = ZONES[names[index]]
 			var b: Array = ZONES[names[other]]
-			var overlaps := a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+			var overlaps: bool = a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 			if overlaps:
 				_failures.append("'%s' and '%s' occupy the same floor." % [names[index], names[other]])
 	for id: String in INTERACTABLES:
@@ -689,11 +689,24 @@ func _check_standalone() -> void:
 	var catalog := LocationCatalog.load_all()
 	if not catalog.is_valid():
 		_failures.append("locations: " + catalog.describe_errors())
-	if catalog.has(&"laboratory"):
-		_failures.append(
-			"The laboratory was added to data/story/locations.json; this slice is not wired "
-			+ "into the main line yet."
-		)
+		return
+	# It is described, because `location_catalog_test` fails on any scene folder the catalog
+	# does not know. Described is not the same as wired in: nothing points here, the entry
+	# claims no objective and no arrival line, and it is not the start location.
+	if not catalog.has(&"laboratory"):
+		_failures.append("The laboratory is not described in data/story/locations.json.")
+		return
+	var described := catalog.get_entry(&"laboratory")
+	if described.scene != "res://scenes/locations/laboratory/laboratory.tscn":
+		_failures.append("data/story/locations.json points 'laboratory' at '%s'." % described.scene)
+	if not String(described.objective).is_empty():
+		_failures.append("The laboratory claims objective '%s'; it is not in the story yet." % described.objective)
+	if not String(described.arrival_conversation).is_empty():
+		_failures.append("The laboratory claims an arrival conversation; it is not in the story yet.")
+	if described.is_start:
+		_failures.append("The laboratory is marked as the location the game opens in.")
+	if not _has_spawn(described.spawn):
+		_failures.append("The catalog spawn '%s' is not a marker in this room." % described.spawn)
 	# No exit: the entrance is a door, and the room declares no destination.
 	for node in _descendants(_room):
 		if node is LocationExit:
@@ -711,6 +724,15 @@ func _box_size(node: Node3D) -> Vector3:
 		return Vector3.ZERO
 	var box := shape_node.shape as BoxShape3D
 	return box.size if box != null else Vector3.ZERO
+
+
+## Whether this room has a spawn marker of that name, in the group spawn points live in.
+func _has_spawn(spawn_id: StringName) -> bool:
+	for node in _descendants(_room):
+		var marker := node as Marker3D
+		if marker != null and String(marker.name) == String(spawn_id):
+			return marker.is_in_group("spawn_point")
+	return false
 
 
 ## The underside of a box: its centre minus half its own height.

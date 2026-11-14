@@ -118,6 +118,11 @@ over the switch — and none of them names a character, gives a reason, or draws
 - **No exit.** The entrance door on the south wall is a door, not a `LocationExit`. The
   scene has nothing to lead back to, and adding an exit would wire it into the main line.
 - **No dialogue and no story flags.** Reading an object records nothing and sets nothing.
+- **Described, not wired in.** `data/story/locations.json` has a `laboratory` entry, because
+  `location_catalog_test.gd` fails any scene folder the catalog does not know. The entry is
+  deliberately empty of story: no objective, no arrival line, no flag, not the start
+  location, and no exit anywhere points at it. Where the room sits in the narrative is the
+  owner's decision, and it is one field in that file when it is made.
 - **No music.** `assets/audio/laboratory_hum.wav` is a 6 s looped bed: 54/55 Hz beating
   against each other with two partials above and a filtered noise floor.
 
@@ -125,7 +130,7 @@ over the switch — and none of them names a character, gives a reason, or draws
 
 | What | Where | Why it is there |
 |---|---|---|
-| The room, its zones, walls, solids, cables, annex geometry, material ownership, textures, texts, the spinner, navigation, the game camera, and that the scene stays unregistered | `tests/laboratory_visual_slice_test.gd` | `godot-ci.yml`, `run_check laboratory_visual_slice` |
+| The room, its zones, walls, solids, cables, annex geometry, material ownership, textures, texts, the spinner, navigation, the game camera, and that the catalog entry stays unwired | `tests/laboratory_visual_slice_test.gd` | `godot-ci.yml`, `run_check laboratory_visual_slice` |
 | Inspection ids resolve in both languages | `tests/content_integrity_test.gd` (`LOCATIONS` now includes `laboratory`) | the same test that checks every other scene's anchors |
 | The scene and the materials match their generator | `tools/build_laboratory.py --check`, `art/laboratory/paint_laboratory_textures.py --check` | `godot-ci.yml`, next to the model and music reproducibility checks |
 | Frames and the recording | `tests/capture_laboratory.gd`, `tests/capture_laboratory_walkthrough.gd` | `.github/workflows/laboratory-capture.yml` |

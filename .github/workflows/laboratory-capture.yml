@@ -274,14 +274,44 @@ jobs:
             tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
             exit 1
           fi
-          ffmpeg -y -framerate 24 -pattern_type glob -i 'build/walkthrough/*.png' \
-            -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart \
-            build/laboratory_walkthrough.mp4 > "${RUNNER_TEMP}/ffmpeg.log" 2>&1
-          ffmpeg_code=$?
-          ls -l build/laboratory_walkthrough.mp4 2>/dev/null || true
-          if [ "${ffmpeg_code}" -ne 0 ] || [ ! -s build/laboratory_walkthrough.mp4 ]; then
-            echo "::error title=laboratory walkthrough::ffmpeg could not transcode the recording"
-            tail -n 20 "${RUNNER_TEMP}/ffmpeg.log" | cut -c1-400 || true
+          # What the frames actually are, as an annotation: if the sequence is not what the
+          # encoder expects, the notice says so without needing the artifact.
+          first=$(find build/walkthrough -name '*.png' | sort | sed -n '1p')
+          python3 - "$first" <<'PY'
+          import struct, sys
+          path = sys.argv[1]
+          with open(path, 'rb') as handle:
+              data = handle.read(33)
+          signature = data[:8] == b"\x89PNG\r\n\x1a\n"
+          width, height, depth, colour = struct.unpack(">IIBB", data[16:26])
+          print("::notice title=laboratory walkthrough::first frame %d bytes, signature %s, "
+                "%dx%d, depth %d, colour type %d" % (len(open(path, 'rb').read()), signature,
+                                                     width, height, depth, colour))
+          PY
+          # Three encoders, in order. libx264 is not guaranteed even when ffmpeg is present,
+          # and the encoder is a far likelier point of failure here than the frames are.
+          encoded=""
+          : > "${RUNNER_TEMP}/ffmpeg.log"
+          for spec in "libx264:mp4:-preset slow -crf 24" "libvpx-vp9:webm:-b:v 0 -crf 34 -row-mt 1" "mpeg4:mp4:-q:v 4"; do
+            codec=${spec%%:*}
+            rest=${spec#*:}
+            container=${rest%%:*}
+            options=${rest#*:}
+            out="build/laboratory_walkthrough.${container}"
+            echo "--- trying ${codec} -> ${out}" >> "${RUNNER_TEMP}/ffmpeg.log"
+            # shellcheck disable=SC2086
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/walkthrough/*.png' \
+              -c:v "${codec}" ${options} -pix_fmt yuv420p -movflags +faststart \
+              "${out}" >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ $? -eq 0 ] && [ -s "${out}" ]; then
+              encoded="${out}"
+              echo "::notice title=laboratory walkthrough::encoded with ${codec} ($(stat -c%s "${out}") bytes)"
+              break
+            fi
+            rm -f "${out}"
+          done
+          if [ -z "${encoded}" ]; then
+            echo "::error title=laboratory walkthrough::no encoder accepted the recording: $(grep -iE 'error|unknown|invalid|no such|could not' "${RUNNER_TEMP}/ffmpeg.log" | head -n 3 | tr '\n' '|' | cut -c1-500)"
             exit 1
           fi
           # Two frames kept as stills: the route is also evidence, not only the video.
@@ -289,7 +319,7 @@ jobs:
           cp "$(find build/walkthrough -name '*.png' | sort | tail -n 1)" build/walkthrough_end.png
           rm -rf build/walkthrough
           ffprobe -v error -show_entries format=duration,size -of default=nw=1 \
-            build/laboratory_walkthrough.mp4 || true
+            "${encoded}" || true
 
       - name: Upload recording
         if: always()
@@ -298,6 +328,7 @@ jobs:
           name: laboratory-walkthrough-${{ github.run_attempt }}
           path: |
             build/laboratory_walkthrough.mp4
+            build/laboratory_walkthrough.webm
             build/walkthrough_start.png
             build/walkthrough_end.png
             ${{ runner.temp }}/record.log
