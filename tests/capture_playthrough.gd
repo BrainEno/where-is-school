@@ -191,7 +191,10 @@ func _run() -> void:
 		_failures.append("Q has no interaction point in the classroom.")
 	else:
 		await _wait_for_free(60.0)
-		_teleport(Vector3(-3.2, 0, 2.9), 0.0)
+		# Q has approached the protagonist (#160); resolve a real spot beside its
+		# current anchor rather than photographing the former scene-start position.
+		if not await _position_near(q, 0.8):
+			_failures.append("No reachable prompt position beside Q after the introduction.")
 		await _wait_for_free(30.0)
 		if await _wait_for_target(&"q_talk", 30.0):
 			await _shot("09_prompt_talk_chinese", "The prompt for a conversation, in Chinese.")

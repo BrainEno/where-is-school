@@ -511,12 +511,92 @@ func _beat_wake() -> void:
 		_hud.set_objective("objective.get_bearings")
 
 
-## Beat B: Q starts talking without being asked.
+## Beat B: Q comes over before speaking. The room owns Q's initial placement and
+## may provide a QOpeningTalk marker for the final composition (#159). This beat
+## never changes the protagonist's wake/seat pose, camera or location (#121).
 func _beat_q_wake() -> void:
-	await wait_seconds(0.9)
+	if _has_flag(StoryFlags.MET_Q):
+		return
+	# Hold the existing beat lock during the approach as well as during dialogue:
+	# an early E/click must not start a second q_wake while Q is coming over.
 	await begin_beat()
-	await play_conversation(&"q_wake")
+	if _has_flag(StoryFlags.MET_Q):
+		end_beat()
+		return
+	await wait_seconds(0.9)
+	if await _approach_q_for_intro():
+		await play_conversation(&"q_wake")
 	end_beat()
+
+
+## A native map route fed to the actor's existing staging/animation API, just as N's
+## entry uses walk_along(). No new locomotion system or classroom coordinates.
+func _approach_q_for_intro() -> bool:
+	var location := _locations.get_current()
+	var actor: NpcActor = location.find_actor(&"q") if location != null else null
+	var talk: Interactable = location.find_interactable(&"q_talk") if location != null else null
+	if actor == null or talk == null:
+		push_error("OpeningSequence: Q's introduction needs the room's Q actor and q_talk anchor.")
+		return false
+	var navigation: LocationNavigation = null
+	for child in location.get_children():
+		if child is LocationNavigation:
+			navigation = child as LocationNavigation
+			break
+	# A room's bake and server map synchronize after it enters the tree. Wait in
+	# story time (including pauses), with a bound, before issuing any path query.
+	var waited := 0.0
+	while navigation != null and not navigation.is_synchronized() and waited < 3.0:
+		await wait_seconds(0.05)
+		waited += 0.05
+	if navigation == null or not navigation.is_synchronized():
+		push_error("OpeningSequence: Q cannot approach before the classroom navigation is synchronized.")
+		return false
+
+	var initial := actor.global_position
+	var landing := location.find_child("QOpeningTalk", true, false) as Marker3D
+	var target := _player.global_position + _player.get_facing_direction() * 1.25
+	if landing != null:
+		target = landing.global_position
+	else:
+		# Respect an already-authored close/front position instead of moving Q to
+		# an old world coordinate when #159 changes the desk composition.
+		var offset := initial - _player.global_position
+		offset.y = 0.0
+		if offset.length() >= 0.9 and offset.length() <= 1.65 \
+				and offset.normalized().dot(_player.get_facing_direction()) > 0.25:
+			target = initial
+	var map := navigation.get_navigation_map()
+	var snapped := NavigationServer3D.map_get_closest_point(map, target)
+	var gap := Vector2(snapped.x - target.x, snapped.z - target.z).length()
+	var reach := Vector2(snapped.x - _player.global_position.x, snapped.z - _player.global_position.z).length()
+	if gap > 0.3 or reach < 0.85 or reach > 1.65:
+		push_error("OpeningSequence: QOpeningTalk must be reachable ground close to the protagonist.")
+		return false
+	var route := NavigationServer3D.map_get_path(map, initial, snapped, true)
+	if route.size() < 2 or route[-1].distance_to(snapped) > 0.15:
+		push_error("OpeningSequence: no complete navigation route for Q's introduction.")
+		return false
+	var points: Array[Vector3] = []
+	for point in route:
+		# Recast's floor is voxel-offset. The actor has no gravity of its own, so
+		# place its feet on the actual floor rather than tweening above that floor.
+		var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point + Vector3.DOWN * 2.0, 1)
+		var hit := actor.get_world_3d().direct_space_state.intersect_ray(ray)
+		if hit.is_empty():
+			push_error("OpeningSequence: Q's introduction route has no supporting floor.")
+			return false
+		points.append(hit["position"])
+	await actor.walk_along(points)
+	actor.face_towards(_player.global_position)
+	# QTalk is a sibling in the current scene. Move it by the same amount as Q;
+	# a future scene may parent it to Q already, in which case it followed naturally.
+	if not actor.is_ancestor_of(talk):
+		talk.global_position += actor.global_position - initial
+	# Its outline meshes turned as well as moved; refresh the existing pick boxes
+	# once, while interaction is still locked, instead of leaving a ghost hotspot.
+	talk.call_deferred("_build_pick_shapes")
+	return true
 
 
 ## Beats C/D: the bag reminder runs in the background while the player looks around.

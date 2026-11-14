@@ -11,7 +11,7 @@
         {
           "id": "q_1",
           "speaker": "q",
-          "text": "You're awake?",
+          "text": "Enjoy your nap, did you?",
           "next": "p_who",
           "effects": [
             {
@@ -307,7 +307,7 @@
         {
           "id": "q_end_1",
           "speaker": "q",
-          "text": "You should check your bag. You had it by your feet a minute ago.",
+          "text": "Have a look in your bag first.",
           "effects": [
             {
               "type": "set_objective",
@@ -319,7 +319,20 @@
         {
           "id": "q_end_2",
           "speaker": "q",
-          "text": "I need to find a pen, anyway.",
+          "text": "Anyway, I need to go over those biology points again. Talk later.",
+          "next": null
+        }
+      ]
+    },
+    "q_studying": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_studying_1",
+      "nodes": [
+        {
+          "id": "q_studying_1",
+          "speaker": "q",
+          "text": "Not now. I’m trying to get these biology points into my head.",
           "next": null
         }
       ]

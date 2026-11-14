@@ -664,12 +664,16 @@ func _check_end_card_restart() -> void:
 
 
 func _check_targeting() -> void:
+	# Q has walked over by now (#160); test the real final anchor, not the old
+	# scene-start coordinate. Keep the same facing-only target/prompt assertion.
+	var q := _host.get_current().find_actor(&"q")
+	var q_standing := q.global_position + Vector3.BACK * 0.75 if q != null else Vector3.ZERO
 	var cases := [
 		# Stand southeast of the bag and face diagonally across the aisle; the old
 		# west-side fixture was occluded after the room was expanded.
 		{"position": Vector3(-2.8, 0, 0.6), "yaw": 50.0, "expected": &"schoolbag"},
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
-		{"position": Vector3(-3.2, 0, 2.85), "yaw": 0.0, "expected": &"q_talk"},
+		{"position": q_standing, "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
 		{"position": Vector3(-3.2, 0, -1.0), "yaw": 61.0, "expected": &"set_square"},
 		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},

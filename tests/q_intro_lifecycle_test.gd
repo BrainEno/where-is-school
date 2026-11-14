@@ -136,8 +136,26 @@ func _completed_checkpoint() -> void:
 	_expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"The completed/legacy MET_Q save still routes to the long introduction.")
 	await _repeat_in_both_locales()
+	_played.clear()
+	await _sequence._beat_q_wake()
+	_expect(_played.is_empty(), "Re-entering a completed Q beat replayed the introduction.")
+	await _story_priority()
 	await _release_world()
 	Harness.clear_session_state(get_tree())
+
+
+func _story_priority() -> void:
+	_state.set_flag(StoryFlags.TEXTBOOK_MISSING, true)
+	for want: StringName in [&"q_after_bag", &"q_after_dismissal"]:
+		if want == &"q_after_dismissal":
+			_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+		_played.clear()
+		_interaction.request_activation(_room.find_interactable(&"q_talk"))
+		await _frames(1)
+		_expect(_dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == want,
+			"The studying reply overrode the later story route '%s'." % want)
+		await _finish_lines()
+		_expect(_played == [want], "The later Q story started an unexpected conversation.")
 
 
 func _repeat_in_both_locales() -> void:

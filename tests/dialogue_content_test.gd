@@ -293,7 +293,7 @@ func _check_q_branch(
 				or not bool(state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
 			_failures.append("%s lost the meeting/identity flags." % label)
 		for flag: StringName in [StoryFlags.ASKED_Q_DATE, StoryFlags.STAYED_SILENT, StoryFlags.DENIED_EXAM_MEMORY]:
-			var want := (flag == StoryFlags.ASKED_Q_DATE and picks[0] == 1) \
+			var want: bool = (flag == StoryFlags.ASKED_Q_DATE and picks[0] == 1) \
 				or (flag == StoryFlags.STAYED_SILENT and picks[0] == 2) \
 				or (flag == StoryFlags.DENIED_EXAM_MEMORY and picks[1] == 2)
 			if bool(state.get_flag(flag, false)) != want:
