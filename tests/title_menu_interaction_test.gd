@@ -242,22 +242,29 @@ func _check_page(title: TitleScreen, tag: String) -> void:
 	_expect(maxf(corner.r, maxf(corner.g, corner.b)) <= INK_CEILING,
 		"%s: the page behind the column is %s, not the project ink (the clear colour shows through)" % [tag, str(corner)])
 
+	# Each entry is compared with itself, before and after: the backdrop behind the column
+	# is not even (a warm cast from the upper right), so entries are not compared with
+	# each other.
 	var settings := title.get_entry(&"settings")
 	var quit := title.get_entry(&"quit")
-	var plain := _mean_warmth(image, _window_rect(settings))
+	var first := title.get_entry_ids()[0]
+	_expect(_focus_owner() == title.get_entry(first), "%s: the first entry does not have the focus" % tag)
+	var before := _warmth_by_entry(title, image)
 	await _hover(settings)
 	_expect(root.gui_get_hovered_control() == settings, "%s: the pointer over Settings hovers %s" % [tag, str(root.gui_get_hovered_control())])
 	_expect(_focus_owner() == settings, "%s: the pointer over Settings left the mark on %s" % [tag, str(_focus_owner())])
 	await _frames(1)
 	await RenderingServer.frame_post_draw
 	image = root.get_texture().get_image()
-	var marked := _mean_warmth(image, _window_rect(settings))
-	_expect(marked > plain + 0.01, "%s: the mark is not drawn under Settings (warmth %.3f, unmarked %.3f)" % [tag, marked, plain])
+	var after := _warmth_by_entry(title, image)
 	for id: StringName in title.get_entry_ids():
+		var change := float(after[id]) - float(before[id])
 		if id == &"settings":
-			continue
-		var other := _mean_warmth(image, _window_rect(title.get_entry(id)))
-		_expect(other < marked - 0.01, "%s: '%s' still looks marked while the pointer is on Settings (%.3f vs %.3f)" % [tag, id, other, marked])
+			_expect(change > 0.01, "%s: the mark is not drawn under Settings (warmth %.3f -> %.3f)" % [tag, before[id], after[id]])
+		elif id == first:
+			_expect(change < -0.01, "%s: '%s' still looks marked while the pointer is on Settings (warmth %.3f -> %.3f)" % [tag, id, before[id], after[id]])
+		else:
+			_expect(absf(change) <= 0.01, "%s: '%s' changed although neither the pointer nor the focus is on it (warmth %.3f -> %.3f)" % [tag, id, before[id], after[id]])
 	await _hover(quit)
 	_expect(_focus_owner() == quit, "%s: the mark did not follow the pointer to Quit" % tag)
 	# Back to where a player would start: the first entry, and the pointer off the list.
@@ -283,6 +290,8 @@ func _double_click_and_start(button: Button, title: TitleScreen, tag: String) ->
 	if is_instance_valid(title) and current_scene == title:
 		var entry := title.get_entry(&"new_game")
 		_expect(entry != null and entry.disabled, "%s: the list is still enabled while the game starts" % tag)
+		_expect(entry != null and entry.get_theme_stylebox(&"disabled") == entry.get_theme_stylebox(&"focus"),
+			"%s: New game lost its mark while the game starts: the player cannot see what is under way" % tag)
 	await _press_release(point, true)
 	await _wait_for_start(before, tag)
 	var new_game_activations := _activations.slice(before_activations).count(&"new_game")
@@ -482,6 +491,13 @@ func _set_locale(locale: String) -> void:
 		_loc.call("set_locale", locale)
 	else:
 		L10n.set_locale(locale)
+
+
+func _warmth_by_entry(title: TitleScreen, image: Image) -> Dictionary:
+	var warmth := {}
+	for id: StringName in title.get_entry_ids():
+		warmth[id] = _mean_warmth(image, _window_rect(title.get_entry(id)))
+	return warmth
 
 
 ## How much warmer than neutral a strip of the entry is: the ember mark (and its lit text)
