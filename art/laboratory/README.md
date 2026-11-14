@@ -18,7 +18,7 @@ instead of trusting a binary.
 | `tile_glaze.png` | 512 x 512 | 3,378 | the wet bench splashback and the instrument back tile, 4 x 4 tiles of glazed ceramic |
 | `bench_top.png` | 512 x 512 | 7,889 | the resin bench tops |
 
-66.9 KiB together, largest file 32 KiB — well inside `tools/verify_build.py`'s 512 KiB
+59.6 KiB together, largest file 25 KiB — well inside `tools/verify_build.py`'s 512 KiB
 warning budget for a texture.
 
 Three rules the fields follow, and the reason each exists:

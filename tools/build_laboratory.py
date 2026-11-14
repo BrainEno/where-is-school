@@ -654,10 +654,14 @@ def build_lights(lab: Lab) -> None:
     """Six ceiling fixtures - no ceiling over the working half, so they hang from the roof."""
     # Eight omni lights in the whole room, and no more: the Compatibility renderer shades an
     # object with eight of them, and a ninth would only be ignored per object anyway.
+    # One casting fixture, in the working half. Two of them put soft shadow blobs on the
+    # annex walls - an omni shadow map at this range is coarse, and a coarse edge on a flat
+    # wall reads as a stain. The rest of the room is lit without casting, and the drum keeps
+    # the one shadow that says the lights are where the fixtures are.
     fixtures = (
         ("A", (-4.9, -3.4), True),
         ("B", (-4.9, 0.9), False),
-        ("C", (-1.7, -3.4), True),
+        ("C", (-1.7, -3.4), False),
         ("D", (-1.7, 0.9), False),
         ("E", (4.5, 2.9), False),
     )

@@ -80,8 +80,10 @@ the annex floor and ends in the hatch.
 
 ## Light
 
-Eight lights, no global illumination and no glow: five tube fixtures at 2.86 m (two of them
-cast shadows, the rest do not, so the frame keeps a direction without ten shadow maps), the
+Eight lights, no global illumination and no glow: five tube fixtures at 2.86 m (one of them
+casts, the rest do not: a coarse omni shadow map at this range puts soft blobs on a flat wall,
+and a blob on a wall reads as a stain; the first pass had two casters and both the annex walls
+and the plaster showed it), the
 annex bulb, the bench lamp and one weak light in the far corridor. The environment fills at
 0.38 with a *neutral-warm* ambient — the first pass filled at 0.62 with a blue-grey one, and
 the plaster, the resin bench top and the tile all came out as one pale blue field with no

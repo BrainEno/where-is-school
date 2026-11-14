@@ -136,7 +136,9 @@ def wall_plaster(size: int = 1024) -> list[bytes]:
         drift = 0.006 * math.sin(2.0 * math.pi * (y / size) * 3.0)
         out = bytearray()
         for x in range(size):
-            value = 0.34 + 0.32 * broad_row[x] + columns[x] + drift
+            # What is left of the field: a quiet unevenness under the streaks. At the scale the
+            # walls are seen at, anything stronger than this reads as a stain on the plaster.
+            value = 0.5 + 0.16 * (broad_row[x] - 0.5) + columns[x] * 0.6 + drift
             colour = _mix(dark, light, value)
             out += bytes((_byte(colour[0]), _byte(colour[1]), _byte(colour[2])))
         rows.append(bytes(out))
