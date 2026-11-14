@@ -133,7 +133,10 @@ same way round the back window's hole. Two marker nodes, `WindowCurtainMount0` a
 `WindowCurtainMount1`, mark the curtain attachment points (the second is the blackout
 curtain's track). The projection screen (`WallNorth/ProjectorScreen`) is rolled up when
 the room loads; `Interactables/ProjectorScreenPull` rolls it down and up again, and
-nothing about it is saved. The stage and its step are actual colliders: the 0.12 m rise stays below the
+nothing about it is saved. The schoolbag hangs on the back of the protagonist's chair
+(`Furniture/DeskB2/Chair/Schoolbag`); the player wakes in that chair (`PlayerStart`), and
+Q starts a little way down the aisle and walks to `QOpeningTalk`, at the player's left,
+before the first line (the opening's Q beat, #160). The stage and its step are actual colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The high circular/curved lectern
 is separate from the retained inspection desk. Q/N states, inspection IDs, `Sun`,
 `WorldEnvironment` and the classroom-to-corridor transition remain in place.

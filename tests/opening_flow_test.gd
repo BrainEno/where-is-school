@@ -664,17 +664,21 @@ func _check_end_card_restart() -> void:
 
 
 func _check_targeting() -> void:
+	# Q has walked over by now (#160); test the real final anchor, not the old
+	# scene-start coordinate. Keep the same facing-only target/prompt assertion.
+	var q := _host.get_current().find_actor(&"q")
+	var q_standing := q.global_position + Vector3.BACK * 0.75 if q != null else Vector3.ZERO
 	var cases := [
 		# The bag hangs on the back of your chair (issue #159): stand in the aisle behind
 		# it and face the board.
 		{"position": Vector3(-1.6, 0, 2.75), "yaw": 0.0, "expected": &"schoolbag"},
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
-		# Q stands in the aisle at your left, facing you; face him from the west.
-		{"position": Vector3(-3.4, 0, 1.75), "yaw": -90.0, "expected": &"q_talk"},
+		{"position": q_standing, "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
 		{"position": Vector3(-3.2, 0, -1.0), "yaw": 61.0, "expected": &"set_square"},
 		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},
 		{"position": Vector3(0.0, 0, 3.7), "yaw": 180.0, "expected": &"timetable"},
+		# The front door is in the east wall (issue #159); face it from the room.
 		{"position": Vector3(5.6, 0, -3.55), "yaw": -90.0, "expected": &"classroom_door"},
 	]
 	if _interaction == null:

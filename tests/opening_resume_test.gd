@@ -48,6 +48,7 @@ extends SceneTree
 ##    later flags prove are over, instead of reopening them.
 
 const Harness = preload("res://tests/test_harness.gd")
+const QIntroLifecycle = preload("res://tests/q_intro_lifecycle_test.gd")
 
 const TIME_SCALE := 6.0
 ## Used while a run waits out the bag step's 95 s fallback, and while a restored world is
@@ -186,6 +187,12 @@ func _run() -> void:
 		Harness.finish(self, ["State autoloads are unavailable."], "")
 		return
 	Engine.time_scale = TIME_SCALE
+
+	var q_intro := QIntroLifecycle.new()
+	root.add_child(q_intro)
+	await q_intro.run()
+	_failures.append_array(q_intro.failures)
+	q_intro.queue_free()
 
 	for scenario: Dictionary in _scenarios():
 		await _run_scenario(scenario)

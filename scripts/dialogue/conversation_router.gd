@@ -17,6 +17,13 @@ const ROUTES: Dictionary = {
 			"conversation": &"q_after_bag",
 			"requires": {StoryFlags.TEXTBOOK_MISSING: true},
 		},
+		# MET_Q is set on the first line, but interaction stays locked until the
+		# conversation ends. Legal checkpoints are after that beat, never mid-line.
+		# Keep the older flag/save contract; bag and dismissal still win above it.
+		{
+			"conversation": &"q_studying",
+			"requires": {StoryFlags.MET_Q: true},
+		},
 		{
 			"conversation": &"q_wake",
 			"requires": {},

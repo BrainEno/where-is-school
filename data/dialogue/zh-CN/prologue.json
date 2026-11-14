@@ -11,7 +11,7 @@
         {
           "id": "q_1",
           "speaker": "q",
-          "text": "醒啦？",
+          "text": "你刚才睡得还挺好啊。",
           "next": "p_who",
           "effects": [
             {
@@ -307,7 +307,7 @@
         {
           "id": "q_end_1",
           "speaker": "q",
-          "text": "先看看书包吧。你刚才还把它放在脚边。",
+          "text": "你先看看书包吧。",
           "effects": [
             {
               "type": "set_objective",
@@ -319,7 +319,20 @@
         {
           "id": "q_end_2",
           "speaker": "q",
-          "text": "我也得找找我的笔了。",
+          "text": "好啦，先不跟你说了。我得把生物课那几个知识点再背一遍。",
+          "next": null
+        }
+      ]
+    },
+    "q_studying": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "q_studying_1",
+      "nodes": [
+        {
+          "id": "q_studying_1",
+          "speaker": "q",
+          "text": "我现在没空搭理你，正背书呢。",
           "next": null
         }
       ]

@@ -104,7 +104,8 @@
 都是所有者的门模型换上教室材质，门后有墙面；墙壳和墙面被切成长墙段、两端墙段和两块门楣，各自采样 `wall_east.png` 中对应的一段。
 `classroom_door` 保留原 ID、受阻检视文本和走廊转场，现在位于前门前方。西墙以同样方式围绕后窗墙洞切分。
 `WindowCurtainMount0` 与 `WindowCurtainMount1` 标记窗帘挂点（后者即遮光窗帘轨道）。投影幕（`WallNorth/ProjectorScreen`）在进入教室时是卷起的；
-`Interactables/ProjectorScreenPull` 可以把它拉下、再卷上去，其状态不会存档。讲台和台阶都有真实碰撞体：
+`Interactables/ProjectorScreenPull` 可以把它拉下、再卷上去，其状态不会存档。
+书包挂在主角椅背上（`Furniture/DeskB2/Chair/Schoolbag`）；玩家在这把椅子上醒来（`PlayerStart`），Q 从过道稍远处出发，在第一句台词前走到玩家左手边的 `QOpeningTalk`（开场 Q 段落，#160）。讲台和台阶都有真实碰撞体：
 抬高 0.12 米，低于玩家 0.25 米步高和导航网格 0.25 米爬升上限。高弧形讲桌独立于保留检视交互的普通教师桌。
 Q/N 状态、检视 ID、`Sun`、`WorldEnvironment` 和教室到走廊的转场均保留。
 

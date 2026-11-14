@@ -726,8 +726,8 @@ rotation_degrees = Vector3(0, 14, 0)
 [node name="Actors" type="Node3D" parent="."]
 
 [node name="Q" parent="Actors" instance=ExtResource("16_npc_actor")]
-position = Vector3(-2.5, 0, 1.75)
-rotation_degrees = Vector3(0, -90, 0)
+position = Vector3(-3.3, 0, 3.1)
+rotation_degrees = Vector3(0, -56, 0)
 npc_id = &"q"
 debug_name = "Q"
 body_color = Color(0.62, 0.55, 0.44, 1)
@@ -759,6 +759,9 @@ position = Vector3(2.0, 0, -1.7)
 
 [node name="AtFront" type="Marker3D" parent="NEntryPath"]
 position = Vector3(1.8, 0.12, -3.6)
+
+[node name="QOpeningTalk" type="Marker3D" parent="."]
+position = Vector3(-2.75, 0, 1.95)
 
 [node name="Interactables" type="Node3D" parent="."]
 
@@ -820,7 +823,7 @@ inspection_id = &"classroom_timetable_sheet"
 radius = 0.9
 
 [node name="QTalk" parent="Interactables" instance=ExtResource("17_interactable")]
-position = Vector3(-2.5, 0.8, 1.75)
+position = Vector3(-3.3, 0.8, 3.1)
 interact_id = &"q_talk"
 outline_paths = PackedStringArray("../../Actors/Q")
 prompt_text = "Talk to Q"
