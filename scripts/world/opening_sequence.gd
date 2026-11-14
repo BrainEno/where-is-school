@@ -72,6 +72,8 @@ var _control_allowed := false
 var _catalog: LocationCatalog = null
 ## Exits, transitions, arrival lines and the end card.
 var _flow: LocationFlow = null
+## When the biology teacher B may be presented, and whether a room's B is shown (#171).
+var _b_presence: BPresence = null
 ## The save file (autoload `Save`), when the host has one.
 var _save: Node = null
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
@@ -110,6 +112,8 @@ func _ready() -> void:
 	_flow = LocationFlow.new(
 		self, _locations, _catalog, _game_state(), _ui, _player, _dialogue, _companion
 	)
+	# Connected before the save is read and the first room is loaded, so both are seen.
+	_b_presence = BPresence.new(_game_state(), _locations, _dialogue)
 
 	_bind_save()
 
@@ -620,7 +624,11 @@ func _beat_bag() -> void:
 func _beat_expectation() -> void:
 	if _has_flag(StoryFlags.EXPECTATION_PLAYED):
 		return
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
+	# B speaks in this scene, so it also waits for Q to have told the player about the
+	# lesson first (#171). A Q talk that never finished (its approach could not run; a
+	# searched bag routes Q to `q_after_bag` from then on) passes the scene over exactly
+	# like an unsearched bag - it is never played ahead of Q.
+	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) or not is_b_introduced():
 		_game_state().set_flag(StoryFlags.EXPECTATION_SKIPPED, true)
 		return
 	await wait_seconds(EXPECTATION_LEAD_IN)
@@ -680,6 +688,22 @@ func _beat_substitute() -> void:
 	await play_conversation(&"n_class")
 	end_beat()
 	_flow.update_exit_prompt()
+
+
+## True once Q's first conversation has run to its end: the gate for presenting B.
+func is_b_introduced() -> bool:
+	return _b_presence != null and _b_presence.is_introduced()
+
+
+## True when a room's B may be visible: introduced, then explicitly brought in.
+func is_b_on_stage() -> bool:
+	return _b_presence != null and _b_presence.is_on_stage()
+
+
+## The explicit story trigger for B's entrance; see `BPresence.present()`. No beat of
+## this slice calls it - B is talked about and imagined, never on stage.
+func present_b(position_point: Vector3, facing_point: Vector3 = Vector3.ZERO) -> bool:
+	return _b_presence != null and _b_presence.present(position_point, facing_point)
 
 
 func _start_bag_reminder() -> void:
