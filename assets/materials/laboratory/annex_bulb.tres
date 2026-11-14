@@ -3,8 +3,8 @@
 [resource]
 shading_mode = 0
 resource_name = "lab_annex_bulb"
-albedo_color = Color(0.741, 0.855, 0.812, 1)
+albedo_color = Color(0.918, 0.859, 0.706, 1)
 emission_enabled = true
-emission = Color(0.741, 0.855, 0.812, 1)
+emission = Color(0.918, 0.859, 0.706, 1)
 emission_energy_multiplier = 1.6
 texture_filter = 3

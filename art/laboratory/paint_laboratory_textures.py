@@ -115,9 +115,12 @@ def _byte(value: float) -> int:
 
 def wall_plaster(size: int = 1024) -> list[bytes]:
     """Cold chalky plaster: broad planes, faint vertical trowel streaks, no stains."""
-    dark = (0.702, 0.708, 0.716)
-    light = (0.798, 0.802, 0.812)
-    broad = _lattice(size, size, 4, seed=7)
+    dark = (0.712, 0.718, 0.724)
+    light = (0.792, 0.796, 0.802)
+    # A 4-cell lattice put half-metre clouds on every wall: at triplanar scale that is the one
+    # pattern the eye finds first, and plaster does not have it. The field is finer now, and
+    # quieter, so what reads is the trowel streak rather than the noise behind it.
+    broad = _lattice(size, size, 16, seed=7)
     # One streak field per column, wrapping, so the trowel marks run up the wall as a
     # painter would leave them and never seam where the texture repeats.
     columns = []
@@ -133,7 +136,7 @@ def wall_plaster(size: int = 1024) -> list[bytes]:
         drift = 0.006 * math.sin(2.0 * math.pi * (y / size) * 3.0)
         out = bytearray()
         for x in range(size):
-            value = 0.25 + 0.5 * broad_row[x] + columns[x] + drift
+            value = 0.34 + 0.32 * broad_row[x] + columns[x] + drift
             colour = _mix(dark, light, value)
             out += bytes((_byte(colour[0]), _byte(colour[1]), _byte(colour[2])))
         rows.append(bytes(out))

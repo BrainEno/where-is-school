@@ -57,9 +57,9 @@ SHARED_MATERIALS = {
 
 MATERIALS = {
     # name: (albedo, texture, outline, unshaded, emission, uv_scale)
-    "wall_plaster": ((0.78, 0.80, 0.84), "wall_plaster", True, False, None, 0.36),
+    "wall_plaster": ((0.72, 0.735, 0.755), "wall_plaster", True, False, None, 0.36),
     "wall_tile": ((1.0, 1.0, 1.0), "tile_glaze", True, False, None, 1.0),
-    "floor_concrete": ((0.84, 0.85, 0.84), "floor_concrete", False, False, None, 0.46),
+    "floor_concrete": ((0.66, 0.67, 0.665), "floor_concrete", False, False, None, 0.46),
     "bench_resin": ((0.92, 0.93, 0.93), "bench_top", False, False, None, 1.4),
     "bench_steel": ((0.706, 0.729, 0.729), None, True, False, None, 0.0),
     "casework_pale": ((0.780, 0.792, 0.780), None, True, False, None, 0.0),
@@ -78,7 +78,7 @@ MATERIALS = {
     "annex_wall": ((0.478, 0.510, 0.502), None, True, False, None, 0.0),
     "annex_floor": ((0.322, 0.353, 0.361), None, False, False, None, 0.0),
     "lamp_panel": ((0.949, 0.973, 0.980), None, False, True, (0.94, 0.97, 1.0, 1.0), 0.0),
-    "annex_bulb": ((0.741, 0.855, 0.812), None, False, True, (0.741, 0.855, 0.812, 1.0), 0.0),
+    "annex_bulb": ((0.918, 0.859, 0.706), None, False, True, (0.918, 0.859, 0.706, 1.0), 0.0),
     "led_running": ((0.478, 1.0, 0.612), None, False, True, (0.478, 1.0, 0.612, 1.0), 0.0),
     "led_dial": ((1.0, 0.741, 0.365), None, False, True, (1.0, 0.741, 0.365, 1.0), 0.0),
     "void_black": ((0.024, 0.027, 0.031), None, False, True, None, 0.0),
@@ -607,7 +607,7 @@ def build_annex(lab: Lab) -> None:
     lab.cyl("AnnexCord", (5.1, 2.42, -3.3), 0.008, 0.5, "metal_frame", segments=6)
     lab.cyl("AnnexBulb", (5.1, 2.12, -3.3), 0.06, 0.12, "annex_bulb", top_radius=0.04, segments=10)
     prop(lab, "AnnexBulbCage", (5.1, 2.06, -3.3), (0.16, 0.02, 0.16), "metal_frame")
-    lab.light("AnnexBulbLight", (5.1, 2.0, -3.3), 1.05, 6.5, color=(0.757, 0.867, 0.816), shadow=True)
+    lab.light("AnnexBulbLight", (5.1, 2.0, -3.3), 0.9, 6.5, color=(1.0, 0.92, 0.78), shadow=False)
 
     # 2. The shaft: it leaves the annex ceiling and climbs past the top of the building.
     for name, pos, size in (
@@ -949,10 +949,10 @@ def build_scene(lab: Lab) -> str:
                 "background_color = Color(0.0314, 0.0353, 0.0392, 1)",
                 "ambient_light_source = 2",
                 "ambient_light_color = Color(0.6000, 0.5922, 0.5765, 1)",
-                "ambient_light_energy = 0.45",
+                "ambient_light_energy = 0.38",
                 "tonemap_mode = 2",
                 "adjustment_enabled = true",
-                "adjustment_saturation = 0.88",
+                "adjustment_saturation = 0.92",
                 "adjustment_brightness = 1.0",
             ],
         )

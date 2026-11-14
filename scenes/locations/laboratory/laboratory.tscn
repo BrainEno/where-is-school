@@ -39,10 +39,10 @@ background_mode = 1
 background_color = Color(0.0314, 0.0353, 0.0392, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.6000, 0.5922, 0.5765, 1)
-ambient_light_energy = 0.45
+ambient_light_energy = 0.38
 tonemap_mode = 2
 adjustment_enabled = true
-adjustment_saturation = 0.88
+adjustment_saturation = 0.92
 adjustment_brightness = 1.0
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_cable"]
@@ -883,11 +883,10 @@ omni_range = 3.4
 
 [node name="AnnexBulbLight" type="OmniLight3D" parent="Lights"]
 position = Vector3(5.1, 2, -3.3)
-light_color = Color(0.757, 0.867, 0.816, 1)
-light_energy = 1.05
+light_color = Color(1, 0.92, 0.78, 1)
+light_energy = 0.9
 light_specular = 0.0
 omni_range = 6.5
-shadow_enabled = true
 
 [node name="FarCorridorGlow" type="OmniLight3D" parent="Lights"]
 position = Vector3(4.3, 1.5, -7.6)

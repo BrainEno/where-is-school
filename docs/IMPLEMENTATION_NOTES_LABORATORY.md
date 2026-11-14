@@ -83,9 +83,16 @@ the annex floor and ends in the hatch.
 Eight lights, no global illumination and no glow: five tube fixtures at 2.86 m (two of them
 cast shadows, the rest do not, so the frame keeps a direction without ten shadow maps), the
 annex bulb, the bench lamp and one weak light in the far corridor. The environment fills at
-0.45 with a *neutral-warm* ambient — the first pass filled at 0.62 with a blue-grey one, and
+0.38 with a *neutral-warm* ambient — the first pass filled at 0.62 with a blue-grey one, and
 the plaster, the resin bench top and the tile all came out as one pale blue field with no
 shadow left in it. The coldness belongs to the tubes; the room it lights is grey and beige.
+
+Two more passes came out of looking at the frames rather than at the scene: the floor and the
+walls were within five percent of each other in value, so the room read as one lit box, and
+the floor is now the darker of the two; and the annex bulb's shadow map was striping that
+room's floor with acne, so the one bulb in the second room lights it without casting. The
+plaster texture's value noise was half-metre clouds, which is the one pattern an eye finds on
+a bare wall; it is a fine field now, quieter than the trowel streak over it.
 
 ## Navigation and collision
 
