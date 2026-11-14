@@ -297,7 +297,7 @@ func _check_line_change_does_not_flash(prose: String) -> void:
 	for _frame in 3:
 		await process_frame
 		observed_heights.append(_panel.get_global_rect().size.y)
-	var final_height := observed_heights.back()
+	var final_height: float = observed_heights[observed_heights.size() - 1]
 	if final_height <= initial_height + 24.0:
 		_failures.append(
 			"The line-change probe did not produce a taller final band (%.0f -> %.0f px)."
