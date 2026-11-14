@@ -75,7 +75,7 @@ jobs:
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
             --script res://tests/capture_laboratory.gd -- \
-            "label=compatibility" "only=${ONLY}" width=760 quality=0.72 \
+            "label=compatibility" "only=${ONLY}" width=960 quality=0.86 \
             > "${RUNNER_TEMP}/capture.log" 2>&1
           code=$?
           grep -E "LABORATORY_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 40
@@ -174,7 +174,7 @@ jobs:
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver vulkan \
             --script res://tests/capture_laboratory.gd -- \
-            "label=forward_plus" "only=room_wide,annex_inside" width=760 quality=0.72 \
+            "label=forward_plus" "only=room_wide,annex_inside" width=960 quality=0.86 \
             > "${RUNNER_TEMP}/capture.log" 2>&1
           code=$?
           grep -E "LABORATORY_CAPTURE|Vulkan|vulkan|PASS|FAIL|SCRIPT ERROR" "${RUNNER_TEMP}/capture.log" | head -n 40
