@@ -238,8 +238,10 @@ func _apply_type() -> void:
 	_speaker_label.uppercase = true
 	# A name that would push the role and the source label out of the band is trimmed
 	# with an ellipsis instead. The name is the anchor, not a reason to break the frame.
+	# It is as wide as its own text (`_fit_speaker_width`), so the role follows it and
+	# the two read as one identity; the spacer after them takes the rest of the row.
 	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_speaker_label.size_flags_horizontal = Control.SIZE_FILL
 	_role_label.add_theme_font_size_override("font_size", role_size)
 	_badge_label.add_theme_font_size_override("font_size", badge_size)
 	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label.get_theme_font("font"), 2))
@@ -394,6 +396,7 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	# In the same frame as the name, so a change of speaker never shows the new name
 	# beside the old face (or beside an empty slot) while the layout settles.
 	_place_portrait(_plan_portrait(size.x))
+	_fit_speaker_width(size.x)
 
 	var title := String(line.get("title", ""))
 	_title_label.text = title
@@ -777,6 +780,7 @@ func _settle_layout() -> void:
 			if is_instance_valid(button):
 				button.visible = true
 		_place_portrait(portrait_plan)
+		_fit_speaker_width(width)
 		_layout_stage = 1
 		_layout_dirty = true
 		return
@@ -798,6 +802,7 @@ func _settle_layout() -> void:
 	if was_windowed or _choice_window_count > 0:
 		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
+	_fit_speaker_width(width)
 	_layout_stage = 0
 	_layout_dirty = false
 
@@ -999,6 +1004,28 @@ func _plan_portrait(band_width: float) -> Dictionary:
 		_portrait_status = "ok"
 		_portrait_message = ""
 	return {"rect": Rect2(column_left, row_bottom - height, width, height)}
+
+
+## The name as wide as its text, or as the row leaves it: the text column less everything
+## else shown in the name row (the portrait slot, the role, the source label) and the
+## row's spacing. A name that does not fit is trimmed with an ellipsis by the label.
+func _fit_speaker_width(band_width: float) -> void:
+	var font := _speaker_label.get_theme_font(&"font")
+	var text := _speaker_label.text.to_upper()
+	var natural := 0.0
+	if font != null and not text.is_empty():
+		natural = ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, speaker_size).x)
+		natural += 2.0
+	var style := _frame.get_theme_stylebox(&"panel")
+	var room := band_width
+	if style != null:
+		room -= style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT)
+	var gap := float(_header_row.get_theme_constant(&"separation"))
+	for child in _header_row.get_children():
+		var control := child as Control
+		if control != null and control != _speaker_label and control.visible:
+			room -= control.get_combined_minimum_size().x + gap
+	_speaker_label.custom_minimum_size.x = clampf(natural, 0.0, maxf(room, 0.0))
 
 
 ## The name row's top edge in the band: the frame's top padding plus whatever the content

@@ -400,6 +400,14 @@ func _measure(label: String, size: Vector2i, expect_body_fits: bool) -> void:
 			)
 		if node_rect.end.y > rect.end.y + 0.5:
 			_failures.append("%s: %s hangs below the band (%s)." % [label, path, node_rect])
+	# The name and the role are one identity: the role follows the name, it does not float
+	# off into the middle of the row.
+	var speaker_label := _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel") as Control
+	var role_label := _panel.get_node("Frame/Content/HeaderRow/RoleLabel") as Control
+	if role_label.visible and speaker_label.visible:
+		var role_gap := role_label.get_global_rect().position.x - speaker_label.get_global_rect().end.x
+		if role_gap < -0.5 or role_gap > 24.0:
+			_failures.append("%s: the role is %.0f px from the name." % [label, role_gap])
 	_measure_portrait(label, rect, body_rect, viewport)
 
 
