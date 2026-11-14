@@ -130,10 +130,10 @@ height = 0.05
 radial_segments = 20
 
 [sub_resource type="BoxMesh" id="BoxMesh_30"]
-size = Vector3(0.02, 0.1, 0.01)
+size = Vector3(0.018, 0.105, 0.008)
 
 [sub_resource type="BoxMesh" id="BoxMesh_31"]
-size = Vector3(0.02, 0.15, 0.01)
+size = Vector3(0.013, 0.155, 0.008)
 
 [sub_resource type="BoxMesh" id="BoxMesh_32"]
 size = Vector3(0.5, 0.7, 0.02)
@@ -556,14 +556,20 @@ rotation_degrees = Vector3(90, 0, 0)
 mesh = SubResource("CylinderMesh_29")
 material_override = ExtResource("c_plaster_ivory")
 
-[node name="ClockHandHour" type="MeshInstance3D" parent="."]
-position = Vector3(1.45, 2.42, -4.71)
+[node name="ClockHourPivot" type="Node3D" parent="."]
+position = Vector3(1.45, 2.42, -4.714)
+rotation_degrees = Vector3(0, 0, 90)
+
+[node name="ClockHandHour" type="MeshInstance3D" parent="ClockHourPivot"]
+position = Vector3(0, 0.0525, 0)
 mesh = SubResource("BoxMesh_30")
 material_override = ExtResource("c_metal_ink")
 
-[node name="ClockHandMinute" type="MeshInstance3D" parent="."]
-position = Vector3(1.51, 2.42, -4.71)
-rotation_degrees = Vector3(0, 0, 90)
+[node name="ClockMinutePivot" type="Node3D" parent="."]
+position = Vector3(1.45, 2.42, -4.705)
+
+[node name="ClockHandMinute" type="MeshInstance3D" parent="ClockMinutePivot"]
+position = Vector3(0, 0.0775, 0)
 mesh = SubResource("BoxMesh_31")
 material_override = ExtResource("c_metal_ink")
 
