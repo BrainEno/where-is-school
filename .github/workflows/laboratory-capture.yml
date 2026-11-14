@@ -248,6 +248,24 @@ jobs:
           godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
 
+      - name: Transcoding tools
+        shell: bash
+        run: |
+          # The ubuntu-latest image no longer carries ffmpeg: the step that used it failed with
+          # `ffmpeg: command not found` and read as a transcoding error for two runs. Install it
+          # here, and say so loudly if it is not there, so the recording step knows which of its
+          # two jobs it is doing.
+          if command -v ffmpeg > /dev/null 2>&1; then
+            ffmpeg -version | head -n 1
+            exit 0
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg > /dev/null
+          if ! command -v ffmpeg > /dev/null 2>&1; then
+            echo "::warning title=laboratory walkthrough::ffmpeg is not available; the recording will be uploaded as the movie maker wrote it"
+          fi
+          ffmpeg -version | head -n 1 || true
+
       - name: Record
         shell: bash
         run: |
@@ -315,7 +333,8 @@ jobs:
           if [ -z "${encoded}" ]; then
             ffmpeg -y -framerate 24 -pattern_type glob -i 'build/walkthrough/*.png' \
               -vf "scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" \
-              build/laboratory_walkthrough.gif >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+              build/laboratory_walkthrough.gif
+            build/laboratory_walkthrough.avi >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
             if [ -s build/laboratory_walkthrough.gif ]; then
               encoded="build/laboratory_walkthrough.gif"
               echo "::warning title=laboratory walkthrough::no video encoder accepted the frames; the recording is a GIF"
@@ -324,6 +343,20 @@ jobs:
           # Whatever happened, the log says why: this line is the only way to read it without
           # downloading the artifact, which the run cannot do.
           echo "::notice title=laboratory walkthrough::$(grep -vE '^\s*$' "${RUNNER_TEMP}/ffmpeg.log" | tail -n 3 | tr '\n' '|' | cut -c1-450)"
+          if [ -z "${encoded}" ] && ! command -v ffmpeg > /dev/null 2>&1; then
+            # No ffmpeg on the runner and no encoder to fall back to: record what the movie
+            # maker can write on its own and ship that. It plays in a video player, not in a
+            # browser, which is worse than an mp4 and better than nothing.
+            xvfb-run -a --server-args="-screen 0 960x540x24" \
+              godot --path . --resolution 960x540 --rendering-driver opengl3 \
+              --write-movie build/laboratory_walkthrough.avi --fixed-fps 24 \
+              --script res://tests/capture_laboratory_walkthrough.gd \
+              > "${RUNNER_TEMP}/record-avi.log" 2>&1
+            if [ -s build/laboratory_walkthrough.avi ]; then
+              echo "::warning title=laboratory walkthrough::uploaded as AVI; no encoder was available"
+              encoded="build/laboratory_walkthrough.avi"
+            fi
+          fi
           if [ -z "${encoded}" ]; then
             echo "::error title=laboratory walkthrough::no encoder accepted the recording"
             exit 1
@@ -344,6 +377,7 @@ jobs:
             build/laboratory_walkthrough.mp4
             build/laboratory_walkthrough.webm
             build/laboratory_walkthrough.gif
+            build/laboratory_walkthrough.avi
             build/walkthrough_start.png
             build/walkthrough_end.png
             ${{ runner.temp }}/record.log
