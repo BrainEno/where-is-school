@@ -13,13 +13,15 @@ instead of trusting a binary.
 
 | Field | Size | Bytes | Where it is used |
 |---|---|---|---|
-| `wall_plaster.png` | 1024 x 1024 | 23,887 | the shell and the partition, world-triplanar |
-| `floor_concrete.png` | 1024 x 1024 | 25,078 | the laboratory floor, world-triplanar |
-| `tile_glaze.png` | 512 x 512 | 3,378 | the wet bench splashback and the instrument back tile, 4 x 4 tiles of glazed ceramic |
-| `bench_top.png` | 512 x 512 | 7,889 | the resin bench tops |
+| `wall_plaster.png` | 1024 x 1024 | 171,178 | the shell and the partition, world-triplanar |
+| `floor_concrete.png` | 1024 x 1024 | 31,283 | the laboratory floor, world-triplanar |
+| `tile_glaze.png` | 512 x 512 | 3,453 | the wet bench splashback and the instrument back tile, 4 x 4 tiles of glazed ceramic |
+| `bench_top.png` | 512 x 512 | 15,566 | the resin bench tops |
 
-59.6 KiB together, largest file 25 KiB — well inside `tools/verify_build.py`'s 512 KiB
-warning budget for a texture.
+221 KiB together, largest file 167 KiB — inside `tools/verify_build.py`'s 512 KiB warning
+budget for a texture. `wall_plaster` is the largest because it carries the tooth: a 128-cell
+lattice crossing six bands, which is what gives the wall a chalky surface instead of a pale
+field, and which costs about six times what a two-tone field costs.
 
 Three rules the fields follow, and the reason each exists:
 
@@ -32,9 +34,15 @@ Three rules the fields follow, and the reason each exists:
   drama in it would fight the one thing in the room meant to be strange. There is no dirt,
   no grime, no damage and no stain anywhere in these four fields: a laboratory that is
   worked in is still wiped down, and the unease in this room is the cabling.
-- **They quantise.** Colours are reduced to 18 levels per channel. Without that the
-  per-pixel noise does not compress, and `floor_concrete` alone came out at 673 KiB on the
-  first run — over the budget in `docs/ASSET_PIPELINE.md`, and visually no quieter.
+- **They band, and they band the scalar.** Each field is painted in six flat tones inside its
+  own ramp, not in 18 levels of absolute colour. Quantising the finished bytes was wrong twice
+  over: it threw away most of a surface's own range (a wall came out as two tones, and two
+  tones on a large plane is camouflage, not plaster), and because it quantises each channel on
+  its own, a ramp whose ends differ by a thousandth per channel steps red a class before green
+  and blue — a tenth of every wall came out cyan. Neutral ramps plus six bands inside them,
+  with the tint left to the material's `albedo_color`, is what the walls are now. The cost is
+  size: per-pixel white noise at that band count came to 395 KiB for one field, so the tooth is
+  a 128-cell lattice instead, and the whole set is 221 KiB.
 
 ## How to regenerate and check
 

@@ -89,6 +89,12 @@ annex bulb, the bench lamp and one weak light in the far corridor. The environme
 the plaster, the resin bench top and the tile all came out as one pale blue field with no
 shadow left in it. The coldness belongs to the tubes; the room it lights is grey and beige.
 
+One more thing came out of the frames: the teal blotches that two passes read as damp on the
+plaster were a rounding edge. The fields were posterised per channel on the finished bytes, so
+a ramp whose ends differ by a thousandth stepped red a class before green and blue. The fields
+band the scalar inside their own ramp now, in six tones, with neutral ramps and the tint on the
+material.
+
 Two more passes came out of looking at the frames rather than at the scene: the floor and the
 walls were within five percent of each other in value, so the room read as one lit box, and
 the floor is now the darker of the two; and the annex bulb's shadow map was striping that

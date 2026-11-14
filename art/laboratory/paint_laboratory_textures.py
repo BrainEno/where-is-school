@@ -98,29 +98,50 @@ def _mix(a: tuple[float, float, float], b: tuple[float, float, float], t: float)
     return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t)
 
 
-## The fields are posterized to this many levels per channel before they are written. It is
-## the project's surface language (flat painted planes, not photographic gradients), and it
-## is also what keeps a 1024 px field a few hundred kilobytes instead of a megabyte: the
-## remaining bands compress, per-pixel grain does not.
-QUANTIZE = 18
+## The fields are painted in a few flat tones rather than as gradients: it is the project's
+## surface language, and it is also what keeps a 1024 px field tens of kilobytes instead of a
+## megabyte.
+##
+## The banding happens on the *scalar* that builds each field, not on the finished bytes. Bands
+## on the bytes quantize absolute colour in steps of 1/18 of the whole range — wider than a
+## surface field's own ramp — so most of a wall collapses into one value and the rest step over
+## a whole class at a time, per channel: a ramp whose ends differ by a few thousandths steps
+## red one class before green and blue, and a tenth of the wall comes out cyan. That is where
+## the teal blotches on these walls came from. Six bands inside the ramp keeps every tone, and
+## a neutral ramp keeps every tone grey: the cold tint belongs to the material's albedo.
+BANDS = 6
+
+
+def _band(value: float) -> float:
+    return round(max(0.0, min(1.0, value)) * BANDS) / BANDS
 
 
 def _byte(value: float) -> int:
-    stepped = round(max(0.0, min(1.0, value)) * QUANTIZE) / QUANTIZE
-    return max(0, min(255, int(stepped * 255.0 + 0.5)))
+    return max(0, min(255, int(max(0.0, min(1.0, value)) * 255.0 + 0.5)))
 
 
 # --- the four fields ---------------------------------------------------------
 
 
 def wall_plaster(size: int = 1024) -> list[bytes]:
-    """Cold chalky plaster: broad planes, faint vertical trowel streaks, no stains."""
-    dark = (0.712, 0.718, 0.724)
-    light = (0.792, 0.796, 0.802)
+    """Cold chalky plaster: broad planes, faint vertical trowel streaks, no stains.
+
+    The two ends of the ramp are exactly neutral on purpose. `_byte` posterizes each channel
+    on its own, so a ramp whose ends are a few thousandths apart per channel steps R one class
+    before it steps G and B — and a tenth of the wall comes out cyan. That is what the teal
+    blotches on these walls were: not a stain, not a shadow, a rounding edge. The cold grey
+    the room reads as is the material's `albedo_color`, which tints the whole plane evenly.
+    """
+    dark = (0.660, 0.660, 0.660)
+    light = (0.840, 0.840, 0.840)
     # A 4-cell lattice put half-metre clouds on every wall: at triplanar scale that is the one
-    # pattern the eye finds first, and plaster does not have it. The field is finer now, and
-    # quieter, so what reads is the trowel streak rather than the noise behind it.
+    # pattern the eye finds first, and plaster does not have it. What crosses a band here is
+    # per-pixel tooth, which averages to a chalky plane at any distance, over a slow unevenness
+    # that does not survive as a shape.
     broad = _lattice(size, size, 16, seed=7)
+    # The tooth is a lattice, not per-pixel white noise: the same roughness at this triplanar
+    # scale, and a field that still compresses. White noise here cost 395 KiB for the wall.
+    tooth = _lattice(size, size, 128, seed=19)
     # One streak field per column, wrapping, so the trowel marks run up the wall as a
     # painter would leave them and never seam where the texture repeats.
     columns = []
@@ -128,27 +149,36 @@ def wall_plaster(size: int = 1024) -> list[bytes]:
         column_seed = _hash(x, 0, 11)
         # The trowel leaves a light catch, not a stain: the streaks are faint and, on
         # average, one step brighter than the plane they cross.
-        columns.append(0.004 + (column_seed - 0.5) * 0.016)
+        columns.append(0.02 + (column_seed - 0.5) * 0.10)
     rows: list[bytes] = []
     for y in range(size):
         broad_row = broad[y]
+        tooth_row = tooth[y]
         # A slow vertical drift keeps the streak length finite without a visible band.
         drift = 0.006 * math.sin(2.0 * math.pi * (y / size) * 3.0)
         out = bytearray()
         for x in range(size):
-            # What is left of the field: a quiet unevenness under the streaks. At the scale the
-            # walls are seen at, anything stronger than this reads as a stain on the plaster.
-            value = 0.5 + 0.16 * (broad_row[x] - 0.5) + columns[x] * 0.6 + drift
-            colour = _mix(dark, light, value)
+            value = (
+                0.5
+                + 0.62 * (tooth_row[x] - 0.5)
+                + 0.22 * (broad_row[x] - 0.5)
+                + columns[x]
+                + drift
+            )
+            colour = _mix(dark, light, _band(value))
             out += bytes((_byte(colour[0]), _byte(colour[1]), _byte(colour[2])))
         rows.append(bytes(out))
     return rows
 
 
 def floor_concrete(size: int = 1024) -> list[bytes]:
-    """Sealed concrete: cool, fine-grained, one colour with a slow mottle."""
-    dark = (0.478, 0.494, 0.510)
-    light = (0.590, 0.604, 0.616)
+    """Sealed concrete: cool, fine-grained, one colour with a slow mottle.
+
+    Neutral ramp, for the reason spelled out on `wall_plaster`: the tint belongs to the
+    material, not to a per-channel ramp that quantizes into stripes.
+    """
+    dark = (0.440, 0.440, 0.440)
+    light = (0.600, 0.600, 0.600)
     coarse = _lattice(size, size, 4, seed=23)
     fine = _lattice(size, size, 48, seed=29)
     rows: list[bytes] = []
@@ -157,16 +187,10 @@ def floor_concrete(size: int = 1024) -> list[bytes]:
         fine_row = fine[y]
         out = bytearray()
         for x in range(size):
-            grit = _hash(x, y, 41)
             # A sealed floor is a calm field: the broad mottle carries it, and the fine
             # grain is only enough to stop the plane looking like flat paint.
-            value = (
-                0.42
-                + 0.32 * coarse_row[x]
-                + 0.09 * fine_row[x]
-                + 0.02 * grit
-            )
-            colour = _mix(dark, light, value)
+            value = 0.26 + 0.48 * coarse_row[x] + 0.26 * fine_row[x]
+            colour = _mix(dark, light, _band(value))
             out += bytes((_byte(colour[0]), _byte(colour[1]), _byte(colour[2])))
         rows.append(bytes(out))
     return rows
@@ -191,7 +215,7 @@ def tile_glaze(size: int = 512, tiles: int = 4) -> list[bytes]:
             else:
                 # Top of each tile catches the tube light; the bottom sits a little darker.
                 bevel = 1.0 - min(1.0, (ty - grout_width) / max(1.0, cell * 0.35))
-                colour = _mix(shade, glaze, 0.35 + 0.65 * bevel)
+                colour = _mix(shade, glaze, _band(0.35 + 0.65 * bevel))
             out += bytes((_byte(colour[0]), _byte(colour[1]), _byte(colour[2])))
         rows.append(bytes(out))
     return rows
@@ -208,7 +232,7 @@ def bench_top(size: int = 512) -> list[bytes]:
         out = bytearray()
         for x in range(size):
             value = 0.15 + 0.5 * coarse_row[x]
-            colour = _mix(base, (0.250, 0.278, 0.284), value)
+            colour = _mix(base, (0.250, 0.278, 0.284), _band(value))
             grit = _hash(x, y, 59)
             if grit > 0.988:
                 colour = _mix(colour, speck, (grit - 0.988) / 0.012 * 0.8)
