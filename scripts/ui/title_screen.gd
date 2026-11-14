@@ -189,6 +189,7 @@ func _build_entries() -> void:
 		entry.name = String(id)
 		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
 		entry.pressed.connect(activate.bind(id))
+		entry.mouse_entered.connect(_on_entry_hovered.bind(id))
 		_entries_box.add_child(entry)
 		_entries[id] = entry
 		if id == &"continue":
@@ -265,6 +266,21 @@ func _ask_new_game() -> void:
 	)
 
 
+## The pointer carries the selection with it. Hover and focus draw the same mark, so an
+## entry under the pointer that did not take the focus would leave two entries marked - the
+## one the keys would act on and the one the mouse is on - and a player could not tell which
+## Enter or A would start. Moving the focus keeps one mark, and it is the entry a click,
+## Enter or A would all activate.
+func _on_entry_hovered(id: StringName) -> void:
+	var entry := get_entry(id)
+	if entry == null or entry.disabled or not entry.is_visible_in_tree():
+		return
+	if _settings_panel.is_open() or _confirm.visible:
+		return
+	if get_viewport().gui_get_focus_owner() != entry:
+		entry.grab_focus()
+
+
 func _on_new_game_confirmed() -> void:
 	_start_new_game()
 
@@ -280,8 +296,7 @@ func _start_new_game() -> void:
 	# A new attempt: the last failure no longer describes anything.
 	_start_failure = {}
 	_refresh_texts()
-	for entry: Button in _entries.values():
-		entry.disabled = true
+	_set_entries_waiting(true)
 	var session := get_node_or_null(^"/root/Session")
 	if session == null:
 		var error := get_tree().change_scene_to_file("res://scenes/main/main.tscn")
@@ -331,10 +346,26 @@ func _show_unshown_failure() -> void:
 		_show_start_failure(report)
 
 
+## While a new game starts the list cannot be pressed again (a second click, Enter or A
+## finds nothing to activate), and it says so: the other entries dim, and New game keeps its
+## mark, lit, so the player sees which choice is under way rather than a list that went dead.
+func _set_entries_waiting(waiting: bool) -> void:
+	for id: Variant in _entries.keys():
+		var entry := _entries[id] as Button
+		entry.disabled = waiting
+		if StringName(id) != &"new_game":
+			continue
+		if waiting:
+			entry.add_theme_stylebox_override(&"disabled", entry.get_theme_stylebox(&"focus"))
+			entry.add_theme_color_override(&"font_disabled_color", MenuStyle.PAGE_LIT)
+		else:
+			# The page entry's own look again, dimmed-when-disabled included.
+			MenuStyle.style_page_entry(entry)
+
+
 func _show_start_failure(report: Dictionary) -> void:
 	_starting = false
-	for entry: Button in _entries.values():
-		entry.disabled = false
+	_set_entries_waiting(false)
 	_start_failure = report.duplicate(true)
 	if _start_failure.is_empty():
 		_start_failure = {"reason": "unknown"}
