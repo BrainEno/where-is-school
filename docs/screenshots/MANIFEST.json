@@ -17,26 +17,27 @@
   ],
   "frames": [
     {
-      "file": "01_opening_line.png",
-      "status": "historical",
-      "caption": "The first line of the opening conversation, in English.",
+      "file": "01_opening_line.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
       "size": [
         1600,
         900
       ],
-      "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only.",
+      "sha256": "0901fd6d812e0cf930dc9c31aad4f5def5c3f0661140830a86cc271280c21e3d",
+      "ui_fingerprint": "d265457cdbc0d4f4",
       "shows": {
+        "conversation": "q_wake",
         "kind": "dialogue",
         "locale": "en",
-        "source": "data/dialogue/en/prologue.json",
-        "conversation": "q_wake",
         "node": "q_1",
-        "text": "Oh — you're up. I was starting to think I'd have to poke you."
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
       }
     },
     {
@@ -925,142 +926,148 @@
       ]
     },
     {
-      "file": "ui-dialogue-1280x720-en.png",
-      "status": "historical",
-      "caption": "The opening line in English at 1280x720.",
+      "file": "ui-dialogue-1280x720-en.jpg",
+      "status": "current",
       "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
-      "shows": {
-        "kind": "dialogue",
-        "locale": "en",
-        "source": "data/dialogue/en/prologue.json",
-        "conversation": "q_wake",
-        "node": "q_1",
-        "text": "Oh — you're up. I was starting to think I'd have to poke you."
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
       },
       "size": [
         1280,
         720
-      ]
+      ],
+      "sha256": "6e5f7dea35d2a0b4ec6bcc8a2bf4dc32199833eebbb034d8195746d1b7cf1297",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
     },
     {
-      "file": "ui-dialogue-1280x720-zh.png",
-      "status": "historical",
-      "caption": "The opening line in Chinese at 1280x720.",
+      "file": "ui-dialogue-1280x720-zh.jpg",
+      "status": "current",
       "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
-      "shows": {
-        "kind": "dialogue",
-        "locale": "zh-CN",
-        "source": "data/dialogue/zh-CN/prologue.json",
-        "conversation": "q_wake",
-        "node": "q_1",
-        "text": "哦——你醒了。我都在想是不是得戳你一下了。"
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
       },
       "size": [
         1280,
         720
-      ]
+      ],
+      "sha256": "5bb935abc5caa4ed667d525e13ed5a423eb1dd4619583b3df0aef70b53cd94dc",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "zh-CN",
+        "node": "q_1",
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
     },
     {
-      "file": "ui-dialogue-1600x900-en.png",
-      "status": "historical",
-      "caption": "The opening line in English at 1600x900.",
+      "file": "ui-dialogue-1600x900-en.jpg",
+      "status": "current",
       "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
-      "shows": {
-        "kind": "dialogue",
-        "locale": "en",
-        "source": "data/dialogue/en/prologue.json",
-        "conversation": "q_wake",
-        "node": "q_1",
-        "text": "Oh — you're up. I was starting to think I'd have to poke you."
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
       },
       "size": [
         1600,
         900
-      ]
+      ],
+      "sha256": "8511e0e072f4afc32aa162d3501e45fe70615416bb4c893d59ccb0db5d6ed5a0",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
     },
     {
-      "file": "ui-dialogue-1600x900-zh.png",
-      "status": "historical",
-      "caption": "The opening line in Chinese at 1600x900.",
+      "file": "ui-dialogue-1600x900-zh.jpg",
+      "status": "current",
       "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
-      "shows": {
-        "kind": "dialogue",
-        "locale": "zh-CN",
-        "source": "data/dialogue/zh-CN/prologue.json",
-        "conversation": "q_wake",
-        "node": "q_1",
-        "text": "哦——你醒了。我都在想是不是得戳你一下了。"
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
       },
       "size": [
         1600,
         900
-      ]
-    },
-    {
-      "file": "ui-dialogue-1920x1080-en.png",
-      "status": "historical",
-      "caption": "The opening line in English at 1920x1080.",
-      "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
+      ],
+      "sha256": "f8fa1a08f8c26ab5e21a806ff89894503bcb86ed2d444eea9cd07d3f960526f6",
+      "ui_fingerprint": "d265457cdbc0d4f4",
       "shows": {
-        "kind": "dialogue",
-        "locale": "en",
-        "source": "data/dialogue/en/prologue.json",
         "conversation": "q_wake",
-        "node": "q_1",
-        "text": "Oh — you're up. I was starting to think I'd have to poke you."
-      },
-      "size": [
-        1920,
-        1080
-      ]
-    },
-    {
-      "file": "ui-dialogue-1920x1080-zh.png",
-      "status": "historical",
-      "caption": "The opening line in Chinese at 1920x1080.",
-      "captured": {
-        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
-        "date": "2026-11-11",
-        "workflow": "Playthrough capture"
-      },
-      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
-      "shows": {
         "kind": "dialogue",
         "locale": "zh-CN",
-        "source": "data/dialogue/zh-CN/prologue.json",
-        "conversation": "q_wake",
         "node": "q_1",
-        "text": "哦——你醒了。我都在想是不是得戳你一下了。"
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
+    },
+    {
+      "file": "ui-dialogue-1920x1080-en.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
       },
       "size": [
         1920,
         1080
-      ]
+      ],
+      "sha256": "1e12d5d938f797c06c762da0102f6dd61c835269809d781674e5cc92e877058e",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
+    },
+    {
+      "file": "ui-dialogue-1920x1080-zh.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a8727bd71c63f12fb3c2a11278536c75be9eec9567e16fb6e6dcbbf8774edf4f",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "zh-CN",
+        "node": "q_1",
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
     },
     {
       "file": "ui-inspection-1600x900-zh.png",
