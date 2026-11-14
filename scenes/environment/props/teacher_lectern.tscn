@@ -1,0 +1,157 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_honey.tres" id="2_wood"]
+[ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="3_worn"]
+[ext_resource type="Material" path="res://assets/materials/classroom/lacquer_oxblood.tres" id="4_lacquer"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="5_metal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="6_paper"]
+[ext_resource type="Material" path="res://assets/materials/classroom/register_cover.tres" id="7_register"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.84, 1.04, 0.54)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+size = Vector3(0.03, 0.92, 0.44)
+
+[sub_resource type="PrismMesh" id="PrismMesh_cheek"]
+left_to_right = 1.0
+size = Vector3(0.44, 0.07, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_front"]
+size = Vector3(0.8, 0.99, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_front_band"]
+size = Vector3(0.74, 0.05, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plinth"]
+size = Vector3(0.8, 0.07, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shelf"]
+size = Vector3(0.74, 0.025, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_apron"]
+size = Vector3(0.74, 0.14, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_top"]
+size = Vector3(0.9, 0.03, 0.527)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lip"]
+size = Vector3(0.9, 0.035, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gallery_side"]
+size = Vector3(0.02, 0.03, 0.527)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gallery_back"]
+size = Vector3(0.9, 0.04, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_papers"]
+size = Vector3(0.21, 0.008, 0.29)
+
+[sub_resource type="BoxMesh" id="BoxMesh_register"]
+size = Vector3(0.24, 0.022, 0.31)
+
+[node name="TeacherLectern" type="Node3D"]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+position = Vector3(0, 0.52, 0)
+shape = SubResource("BoxShape3D_body")
+
+[node name="Plinth" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.035, -0.01)
+mesh = SubResource("BoxMesh_plinth")
+material_override = ExtResource("5_metal")
+
+[node name="SideLeft" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.385, 0.46, 0)
+mesh = SubResource("BoxMesh_side")
+material_override = ExtResource("2_wood")
+
+[node name="SideRight" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.385, 0.46, 0)
+mesh = SubResource("BoxMesh_side")
+material_override = ExtResource("2_wood")
+
+[node name="CheekLeft" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.385, 0.955, 0)
+rotation_degrees = Vector3(0, -90, 0)
+mesh = SubResource("PrismMesh_cheek")
+material_override = ExtResource("2_wood")
+
+[node name="CheekRight" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.385, 0.955, 0)
+rotation_degrees = Vector3(0, -90, 0)
+mesh = SubResource("PrismMesh_cheek")
+material_override = ExtResource("2_wood")
+
+[node name="FrontPanel" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.495, 0.2075)
+mesh = SubResource("BoxMesh_front")
+material_override = ExtResource("2_wood")
+
+[node name="FrontBand" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.82, 0.224)
+mesh = SubResource("BoxMesh_front_band")
+material_override = ExtResource("4_lacquer")
+
+[node name="ShelfBottom" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.0825, -0.01)
+mesh = SubResource("BoxMesh_shelf")
+material_override = ExtResource("2_wood")
+
+[node name="ShelfMiddle" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.42, -0.01)
+mesh = SubResource("BoxMesh_shelf")
+material_override = ExtResource("2_wood")
+
+[node name="Apron" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.85, -0.2075)
+mesh = SubResource("BoxMesh_apron")
+material_override = ExtResource("2_wood")
+
+[node name="Top" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.985, 0)
+rotation_degrees = Vector3(-8.75, 0, 0)
+mesh = SubResource("BoxMesh_top")
+material_override = ExtResource("3_worn")
+
+[node name="BookLip" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.972, -0.27)
+mesh = SubResource("BoxMesh_lip")
+material_override = ExtResource("4_lacquer")
+
+[node name="GalleryLeft" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.44, 1.015, 0)
+rotation_degrees = Vector3(-8.75, 0, 0)
+mesh = SubResource("BoxMesh_gallery_side")
+material_override = ExtResource("2_wood")
+
+[node name="GalleryRight" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.44, 1.015, 0)
+rotation_degrees = Vector3(-8.75, 0, 0)
+mesh = SubResource("BoxMesh_gallery_side")
+material_override = ExtResource("2_wood")
+
+[node name="GalleryBack" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 1.06, 0.255)
+mesh = SubResource("BoxMesh_gallery_back")
+material_override = ExtResource("2_wood")
+
+[node name="LessonPapers" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.17, 0.996, -0.05)
+rotation_degrees = Vector3(-8.75, 6, 0)
+mesh = SubResource("BoxMesh_papers")
+material_override = ExtResource("6_paper")
+
+[node name="Register" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.19, 1.002, -0.06)
+rotation_degrees = Vector3(-8.75, -4, 0)
+mesh = SubResource("BoxMesh_register")
+material_override = ExtResource("7_register")
+
+[node name="TeacherStand" type="Marker3D" parent="."]
+position = Vector3(0, 0, -0.54)
+
+[node name="WorkSurface" type="Marker3D" parent="."]
+position = Vector3(0, 0.96, -0.26)

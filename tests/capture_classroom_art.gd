@@ -92,9 +92,12 @@ func _run() -> void:
 
 	# The game's camera, lens and player location; N is staged at its existing front
 	# marker solely in this fixture, so all three characters can be assessed together.
+	# That marker is the lectern's TeacherStand (#172): N stands behind the lectern and,
+	# as the last step of its walk leaves it, faces the room.
 	var teacher := _room.find_actor(&"n")
 	teacher.visible = true
 	teacher.global_position = _room.get_node("NEntryPath/AtFront").global_position
+	teacher.face_towards(teacher.global_position + Vector3.BACK)
 	await _stand(Vector3(0.0, 0.0, 0.25), Vector3.FORWARD)
 	await _shot("01_gameplay.png")
 
@@ -128,9 +131,17 @@ func _run() -> void:
 	curtain.set_open_amount(1.0)
 	await _review_shot(review, Vector3(-2.2, 2.3, 2.2), Vector3(-6.9, 1.5, 2.2), "10_back_window_opening.png")
 	curtain.set_open_amount(0.0)
+	# The teacher's lectern with N at it (#172): from the room, from the side, and from
+	# the teacher's side with its open shelves.
+	await _review_shot(review, Vector3(0.7, 1.45, -1.25), Vector3(0.7, 0.85, -3.8), "11_lectern_front.png")
+	await _review_shot(review, Vector3(3.1, 1.25, -3.75), Vector3(0.7, 0.8, -3.85), "12_lectern_side.png")
+	await _review_shot(review, Vector3(2.2, 1.6, -4.55), Vector3(0.7, 0.6, -3.7), "13_lectern_teacher_side.png")
 	review.queue_free()
 	_rig.camera.current = true
 	await _frames(2)
+	# And through the game's own camera and lens, the player below the platform.
+	await _stand(Vector3(1.0, 0.0, -1.5), Vector3.FORWARD)
+	await _shot("14_lectern_gameplay.png")
 	var log_file := FileAccess.open(_out.path_join("CAPTURE.txt"), FileAccess.WRITE)
 	if log_file == null:
 		_failures.append("Cannot write capture manifest.")
@@ -143,7 +154,7 @@ func _run() -> void:
 	_main.queue_free()
 	await _frames(3)
 	Harness.finish(
-		self, _failures, "captured ten unmodified classroom viewport images and wall states."
+		self, _failures, "captured fourteen unmodified classroom viewport images and wall states."
 	)
 
 

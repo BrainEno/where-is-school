@@ -19,7 +19,7 @@ children of the bodies, so the camera occluder fades them along with their wall.
 ## Identity: what makes this room *this* classroom
 
 The classroom is a 14 × 10 m space with a quiet cool-gray concrete floor, a low concrete
-teacher's platform with a real step, and a curved high lectern. Twelve student desk/chair
+teacher's platform with a real step, and a boxed standing lectern. Twelve student desk/chair
 assemblies sit in four columns by three rows, leaving broad cross-aisles and routes to the
 board, doors and story props. Facing the board, both doors are in the right-hand (east)
 wall (issue #159): the grey front door near the board is the corridor exit, the white rear
@@ -137,15 +137,42 @@ nothing about it is saved. The schoolbag hangs on the back of the protagonist's 
 (`Furniture/DeskB2/Chair/Schoolbag`); the player wakes in that chair (`PlayerStart`), and
 Q starts a little way down the aisle and walks to `QOpeningTalk`, at the player's left,
 before the first line (the opening's Q beat, #160). The stage and its step are actual colliders: the 0.12 m rise stays below the
-player's 0.25 m step-up and the navmesh's 0.25 m climb. The high circular/curved lectern
+player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage
 is separate from the retained inspection desk. Q/N states, inspection IDs, `Sun`,
 `WorldEnvironment` and the classroom-to-corridor transition remain in place.
+
+### The teacher's lectern (#172)
+
+`Stage/Lectern` is an instance of `scenes/environment/props/teacher_lectern.tscn`, which
+replaced the round top on a tapering column the owner rejected. It is a standing lectern of
+the kind university classrooms use: a honey-wood carcass from the floor up (two sides, a
+closed front panel towards the room with an oxblood band, a dark toe), two open shelves and
+an apron on the teacher's side, and a reading board sloping towards the teacher with a
+book lip, side galleries and a back rail, carrying a stack of lesson papers and the blue
+register. Godot primitives and the room's own materials only.
+
+| Measure | Value | Basis |
+|---|---|---|
+| Carcass | 0.80 W × 0.44 D m; board 0.90 × 0.52 m | CSULB's Freedom One lectern, 36.25 in W × 30 in D, a little shallower so the stage keeps a walk behind it |
+| Reading surface | 0.96 m at the teacher's edge, 1.04 m at the room's (8.75° slope), above the stage | 36-42 in (0.91-1.07 m) lecterns (CSULB, MSU, UConn) for an adult of about 1.75 m, scaled to N's 1.65 m: 0.58 of N's height, just under the elbow |
+| Collision | `Body` box 0.84 × 1.04 × 0.54 m | it now carves the navmesh and stops the player; the old lectern had no collider |
+
+Two markers belong to the lectern, so nothing else carries its coordinates: `TeacherStand`
+(0.54 m behind its centre, on the stage) and `WorkSurface` (the teacher's edge of the
+board). `NEntryPath` now ends there: past the right side of the lectern (`BesideLectern`),
+along behind it (`BehindLectern`), and a last short step to `AtFront`, which is the
+`TeacherStand` spot - the step towards the room is the leg `NpcActor.walk_along` turns N
+to, so N ends facing the students instead of the board. `classroom_visual_slice_test.gd`
+pins `AtFront` to `TeacherStand` and checks N's height against the surface, that N does not
+overlap the lectern, that its head and shoulders stay above it and that the walk does not
+pass through it.
 
 `tests/classroom_visual_slice_test.gd` retains the previous colour, texture, inspection,
 wall-fade, camera and navigation checks, and now also asserts the expanded shell, all 12
 seats, the two east-wall doors, the unbroken blackboard wall, the screen and projector,
-physical step/platform, curved high lectern, curtain markers and all three initial story
-positions. `tests/capture_classroom_art.gd` produces ten real 1600 × 900 images, including
-the architectural views, the screen rolled down and the back window's opening; it rejects
-headless output. The `Classroom visual evidence` PR workflow renders the ten views
+physical step/platform, the standing lectern and N's place at it, curtain markers and all
+three initial story positions. `tests/capture_classroom_art.gd` produces fourteen real
+1600 × 900 images, including the architectural views, the screen rolled down, the back
+window's opening and four of the lectern (front, side, teacher's side, game camera); it
+rejects headless output. The `Classroom visual evidence` PR workflow renders the fourteen views
 under Godot 4.7.2 Stable and publishes them as a downloadable CI artifact.

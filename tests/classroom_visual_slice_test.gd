@@ -7,11 +7,12 @@ extends SceneTree
 ##
 ## 1. **A larger room.** A 14 x 10 m shell contains twelve desks, two doors on the east
 ##    wall (issue #159), a roll-down screen over the board, a ceiling projector, a
-##    step-up concrete platform, a curved lectern, the original story props and exits.
+##    step-up concrete platform, a boxed teacher's lectern (#172), the original story props
+##    and exits.
 ##    The blackboard wall is one unbroken wall; the schoolbag hangs on your chair.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
-##    door openings and the back window included), platform/step, twelve desk wrappers
-##    and teacher desk are the only scene-owned collision bodies.
+##    door openings and the back window included), platform/step, twelve desk wrappers,
+##    teacher desk and lectern are the only scene-owned collision bodies.
 ## 3. **Its own colour system.** Every surface of the room draws a material from
 ##    `assets/materials/classroom/` (the shared ceiling-light material is the one
 ##    exception), nothing reaches into another agent's shader folder, and the imported
@@ -39,6 +40,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const WallContract = preload("res://tests/classroom_wall_contract.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
+const LECTERN_SCENE := "res://scenes/environment/props/teacher_lectern.tscn"
 const CLASSROOM_MATERIALS := "res://assets/materials/classroom/"
 const CLASSROOM_TEXTURES := "res://assets/materials/classroom/textures/"
 ## Shared materials the room may still use, each for a reason: the ceiling fittings are
@@ -111,7 +113,7 @@ const SOLIDS: Array[String] = [
 	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
 	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
-	"Furniture/FrontDesk/Body",
+	"Furniture/FrontDesk/Body", "Stage/Lectern/Body",
 ]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
@@ -337,16 +339,7 @@ func _check_layout() -> void:
 		_failures.append("The raised concrete platform is missing its real 0.12 m collision surface.")
 	if step_box == null or step_box.size.y > _player.max_step_height:
 		_failures.append("The platform's physical front step is taller than the player's step-up limit.")
-	var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
-	var lectern_top := lectern.get_node_or_null(^"CurvedTop") as MeshInstance3D if lectern != null else null
-	if lectern_top == null or not lectern_top.mesh is CylinderMesh:
-		_failures.append("The raised platform lacks a distinctly curved high teacher's lectern.")
-	else:
-		var lectern_bounds := _subtree_aabb(lectern)
-		var desk_node := _room.get_node(^"Furniture/DeskB2") as Node3D
-		var desk_bounds := _subtree_aabb(desk_node.get_node(^"Desk"))
-		if lectern_bounds.end.y < desk_bounds.end.y + 0.15:
-			_failures.append("The curved lectern is not meaningfully taller than a student desk.")
+	_check_lectern()
 
 	var found := {}
 	var interactables := _room.get_node_or_null(^"Interactables")
@@ -366,6 +359,125 @@ func _check_layout() -> void:
 	for id: String in INTERACTABLES:
 		if not found.has(id):
 			_failures.append("The classroom lost the '%s' interactable." % id)
+
+
+## The teacher's lectern (#172): a standing lectern with a carcass from the floor up and a
+## wide reading surface, not the round top on a column it replaced. Proportioned to N, the
+## teacher who stands at it: the reading surface sits where a standing person's forearms
+## rest (just under the elbow, about 0.55-0.62 of their height - CSULB's and MSU's 36-42 in
+## lecterns for an adult of 1.75 m, scaled to N's 1.65 m), N's stand is the lectern's own
+## marker, and N there stands clear of it with the upper body above the top.
+func _check_lectern() -> void:
+	var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
+	if lectern == null or lectern.scene_file_path != LECTERN_SCENE:
+		_failures.append("The platform's lectern is not an instance of %s." % LECTERN_SCENE)
+		return
+	for node in _descendants(lectern):
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance != null and mesh_instance.mesh is CylinderMesh:
+			_failures.append("The lectern still has a round part: '%s'." % _relative(mesh_instance))
+	var shape_node := lectern.get_node_or_null(^"Body/CollisionShape3D") as CollisionShape3D
+	var box := shape_node.shape as BoxShape3D if shape_node != null else null
+	var stage_top := _room.to_global(Vector3(0.0, 0.12, 0.0)).y
+	var base := lectern.global_position.y
+	if absf(base - stage_top) > 0.005:
+		_failures.append("The lectern stands at %.3f m, not on the platform (%.3f m)." % [base, stage_top])
+	if box == null:
+		_failures.append("The lectern has no box collision: the player and the navmesh pass through it.")
+		return
+	# A body, not a column: wide and deep enough to hold a carcass and a reading surface.
+	if box.size.x < 0.7 or box.size.z < 0.45 or box.size.y < 0.95:
+		_failures.append("The lectern's body %s is not a standing lectern's carcass." % str(box.size))
+	var bounds := _subtree_aabb(lectern)
+	_notes.append("lectern %s" % str(bounds.size))
+	if bounds.size.x < 0.8 or bounds.size.x > 1.1 or bounds.size.z < 0.5 or bounds.size.z > 0.8:
+		_failures.append("The lectern's footprint %s is not a lectern's (0.8-1.1 x 0.5-0.8 m)." % str(bounds.size))
+	var desk_node := _room.get_node(^"Furniture/DeskB2") as Node3D
+	var desk_bounds := _subtree_aabb(desk_node.get_node(^"Desk"))
+	if bounds.end.y < desk_bounds.end.y + 0.15:
+		_failures.append("The lectern is not meaningfully taller than a student desk.")
+
+	var stand := lectern.get_node_or_null(^"TeacherStand") as Marker3D
+	var surface := lectern.get_node_or_null(^"WorkSurface") as Marker3D
+	if stand == null or surface == null:
+		_failures.append("The lectern lost its TeacherStand or WorkSurface marker.")
+		return
+	# N walks to the lectern's own stand: the last marker of its entry path is that spot.
+	var path := _room.get_node_or_null(^"NEntryPath") as Node3D
+	var markers: Array[Marker3D] = []
+	if path != null:
+		for child in path.get_children():
+			if child is Marker3D:
+				markers.append(child as Marker3D)
+	if markers.size() < 2:
+		_failures.append("NEntryPath lost its markers.")
+		return
+	var last := markers[markers.size() - 1]
+	if Vector2(last.global_position.x - stand.global_position.x, last.global_position.z - stand.global_position.z).length() > 0.02 \
+			or absf(last.global_position.y - stage_top) > 0.005:
+		_failures.append("N's path ends at %s, not at the lectern's TeacherStand %s." % [
+			str(last.global_position), str(stand.global_position)
+		])
+	# Behind the lectern means on the blackboard side of it, and facing the room: the last
+	# leg (whose direction `NpcActor.walk_along` turns N to) goes towards the students.
+	var behind := lectern.global_transform.basis.z.normalized()
+	if (lectern.global_position - stand.global_position).dot(behind) < 0.3:
+		_failures.append("The TeacherStand is not behind the lectern.")
+	var final_leg := last.global_position - markers[markers.size() - 2].global_position
+	final_leg.y = 0.0
+	if final_leg.length() < 0.02 or final_leg.normalized().dot(behind) < 0.9:
+		_failures.append("N's last step to the lectern does not face the room (%s)." % str(final_leg))
+	# The walk itself never passes through the lectern (a person's half-width around the
+	# straight legs the tween follows).
+	var solid := lectern.global_transform * AABB(shape_node.position - box.size * 0.5, box.size)
+	var walking_room := solid.grow(0.18)
+	for index in range(1, markers.size()):
+		var from := markers[index - 1].global_position
+		var to := markers[index].global_position
+		for step in 21:
+			var point := from.lerp(to, float(step) / 20.0)
+			point.y = solid.position.y + 0.5
+			if walking_room.has_point(point):
+				_failures.append("N's walk from '%s' to '%s' passes through the lectern at %s." % [
+					markers[index - 1].name, markers[index].name, str(point)
+				])
+				break
+
+	# N at the stand: the reading surface at forearm height for N's own height, no part of
+	# N inside the lectern, and the head and shoulders above the top.
+	var teacher := _room.call("find_actor", &"n") as NpcActor
+	if teacher == null:
+		_failures.append("The classroom has no N to stand at the lectern.")
+		return
+	var was_visible := teacher.visible
+	var was_transform := teacher.global_transform
+	teacher.global_position = stand.global_position
+	teacher.face_towards(stand.global_position + behind)
+	teacher.visible = true
+	var body := _subtree_aabb(teacher)
+	var height := body.size.y
+	var surface_height := surface.global_position.y - base
+	var share := surface_height / maxf(height, 0.01)
+	_notes.append("N %.2f m, lectern surface %.2f m (%.2f of N)" % [height, surface_height, share])
+	if height < 1.4 or height > 2.0:
+		_failures.append("N measures %.2f m at the lectern; the check cannot judge the proportion." % height)
+	elif share < 0.55 or share > 0.62:
+		_failures.append(
+			"The lectern's reading surface is %.2f m, %.2f of N's %.2f m; a standing teacher's forearms rest at 0.55-0.62."
+			% [surface_height, share, height]
+		)
+	var solid_top := _subtree_aabb(lectern).end.y
+	if body.intersects(solid.grow(-0.005)):
+		_failures.append("N at the lectern overlaps it: N %s, lectern %s." % [str(body), str(solid)])
+	if body.end.y - solid_top < 0.45:
+		_failures.append("The lectern hides N's upper body: only %.2f m of N shows above it." % (body.end.y - solid_top))
+	var reach := (lectern.global_position - stand.global_position)
+	reach.y = 0.0
+	var gap := reach.length() - box.size.z * 0.5 - body.size.z * 0.5
+	if gap > 0.25:
+		_failures.append("N stands %.2f m back from the lectern; the hands do not reach the top." % gap)
+	teacher.global_transform = was_transform
+	teacher.visible = was_visible
 
 
 func _expect_at(path: String, expected: Vector3) -> void:

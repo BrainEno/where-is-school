@@ -1,10 +1,11 @@
-[gd_scene load_steps=110 format=3]
+[gd_scene load_steps=109 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/light_panel.tres" id="9_light_panel"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_desk.tscn" id="11_classroom_desk"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_desk.tscn" id="12_teacher_desk"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_lectern.tscn" id="12_teacher_lectern"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/blackboard.tscn" id="13_blackboard"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/set_square.tscn" id="14_set_square"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/schoolbag.tscn" id="15_schoolbag"]
@@ -179,18 +180,6 @@ size = Vector3(6.8, 0.06, 0.36)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_StageStep"]
 size = Vector3(6.8, 0.06, 0.36)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_LecternBody"]
-top_radius = 0.43
-bottom_radius = 0.54
-height = 0.86
-radial_segments = 28
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_LecternTop"]
-top_radius = 0.68
-bottom_radius = 0.68
-height = 0.10
-radial_segments = 32
 
 [sub_resource type="BoxMesh" id="BoxMesh_CurtainRod"]
 size = Vector3(0.06, 0.045, 1.82)
@@ -706,19 +695,8 @@ position = Vector3(0, -0.03, 1.42)
 mesh = SubResource("BoxMesh_StageStep")
 material_override = ExtResource("c_cement_stage")
 
-[node name="Lectern" type="Node3D" parent="Stage"]
-position = Vector3(0.7, 0, -0.2)
-
-[node name="CurvedBody" type="MeshInstance3D" parent="Stage/Lectern"]
-position = Vector3(0, 0.49, 0)
-mesh = SubResource("CylinderMesh_LecternBody")
-material_override = ExtResource("c_wall_section")
-
-[node name="CurvedTop" type="MeshInstance3D" parent="Stage/Lectern"]
-position = Vector3(0, 0.94, -0.02)
-scale = Vector3(1.0, 1.0, 0.78)
-mesh = SubResource("CylinderMesh_LecternTop")
-material_override = ExtResource("c_lacquer_oxblood")
+[node name="Lectern" parent="Stage" instance=ExtResource("12_teacher_lectern")]
+position = Vector3(0.7, 0.06, 0)
 
 [node name="Props" type="Node3D" parent="."]
 
@@ -763,8 +741,14 @@ position = Vector3(4.2, 0, -2.0)
 [node name="FrontAisle" type="Marker3D" parent="NEntryPath"]
 position = Vector3(2.0, 0, -1.7)
 
+[node name="BesideLectern" type="Marker3D" parent="NEntryPath"]
+position = Vector3(1.5, 0.12, -4.19)
+
+[node name="BehindLectern" type="Marker3D" parent="NEntryPath"]
+position = Vector3(0.7, 0.12, -4.25)
+
 [node name="AtFront" type="Marker3D" parent="NEntryPath"]
-position = Vector3(1.8, 0.12, -3.6)
+position = Vector3(0.7, 0.12, -4.19)
 
 [node name="QOpeningTalk" type="Marker3D" parent="."]
 position = Vector3(-2.75, 0, 1.95)
