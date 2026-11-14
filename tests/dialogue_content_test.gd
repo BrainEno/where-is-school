@@ -107,6 +107,7 @@ func _inspect_conversations(library: DialogueLibrary) -> void:
 	# Each inspected narrative id must be unique across the content.
 	_check_unique_narrative_ids(library)
 	_check_free_period_gate(library)
+	_check_q_studying(library, characters)
 
 
 func _check_unique_narrative_ids(library: DialogueLibrary) -> void:
@@ -207,3 +208,100 @@ func _check_free_period_gate(library: DialogueLibrary) -> void:
 			choice_hub_found = node.choices.size() >= 4
 	if not choice_hub_found:
 		_failures.append("Q's invitation needs accept, defer, decline and silent choices.")
+
+
+## #160: the meeting flag means Q has spoken, not that every later interaction is
+## another wake-up. Exhaust every existing combination of the three choice hubs in
+## both locales, through the real runtime, so no branch can lose the shared ending or
+## its own consequences while the first/last lines are edited.
+func _check_q_studying(library: DialogueLibrary, characters: CharacterDirectory) -> void:
+	var routes := [
+		{"flags": {}, "want": &"q_wake"},
+		{"flags": {StoryFlags.MET_Q: false}, "want": &"q_wake"},
+		{"flags": {StoryFlags.MET_Q: true}, "want": &"q_studying"},
+		{"flags": {StoryFlags.TEXTBOOK_MISSING: true}, "want": &"q_after_bag"},
+		{"flags": {StoryFlags.MET_Q: true, StoryFlags.TEXTBOOK_MISSING: true}, "want": &"q_after_bag"},
+		{"flags": {StoryFlags.MET_Q: true, StoryFlags.CLASS_DISMISSED: true}, "want": &"q_after_dismissal"},
+		{"flags": {StoryFlags.TEXTBOOK_MISSING: true, StoryFlags.CLASS_DISMISSED: true}, "want": &"q_after_dismissal"},
+		{"flags": {StoryFlags.BAG_WAIT_EXPIRED: true, StoryFlags.MET_Q: true}, "want": &"q_studying"},
+	]
+	for case: Dictionary in routes:
+		var got := ConversationRouter.select(&"q", case["flags"])
+		if got != case["want"]:
+			_failures.append("Q route %s selected '%s', wanted '%s'." % [case["flags"], got, case["want"]])
+
+	for locale: String in L10n.LOCALES:
+		library.set_locale(locale)
+		var opening := library.get_conversation(OPENING_CONVERSATION)
+		var first: DialogueGraph.DialogueNode = opening.nodes[&"q_1"]
+		var ending: DialogueGraph.DialogueNode = opening.nodes[&"q_end_2"]
+		if (locale == "zh-CN" and not first.text.contains("睡得")) \
+				or (locale == "en" and not first.text.to_lower().contains("nap")):
+			_failures.append("%s: Q's first line is not the familiar teasing greeting (#160)." % locale)
+		if (locale == "zh-CN" and not ending.text.contains("知识点")) \
+				or (locale == "en" and not ending.text.to_lower().contains("biology")):
+			_failures.append("%s: Q does not end by returning to biology revision." % locale)
+		var busy := library.get_conversation(&"q_studying")
+		if busy == null:
+			_failures.append("%s: the independent q_studying response is missing." % locale)
+		else:
+			if busy.order.is_empty() or busy.order.size() > 2:
+				_failures.append("%s: q_studying is not a short response." % locale)
+			for node: DialogueGraph.DialogueNode in busy.nodes.values():
+				if node.speaker_id != &"q" or not node.choices.is_empty() or not node.effects.is_empty():
+					_failures.append("%s: q_studying changes state or is not Q's short reply." % locale)
+				if node.text.contains("醒") or node.text.to_lower().contains("wake"):
+					_failures.append("%s: q_studying repeats the wake-up greeting." % locale)
+		for identity in 3:
+			for exam in 3:
+				for topic in 3:
+					_check_q_branch(library, characters, locale, [identity, exam, topic])
+	library.set_locale(L10n.DEFAULT_LOCALE)
+
+
+func _check_q_branch(
+	library: DialogueLibrary, characters: CharacterDirectory, locale: String, picks: Array
+) -> void:
+	var state: Node = load(Harness.GAME_STATE_SCRIPT).new()
+	var narrative: Node = load(Harness.NARRATIVE_STATE_SCRIPT).new()
+	var runtime := DialogueRuntime.new(state, narrative, characters)
+	var seen: Array[StringName] = []
+	runtime.line_changed.connect(func(line: Dictionary) -> void: seen.append(line["node_id"]))
+	var label := "%s Q choices %s" % [locale, str(picks)]
+	if not runtime.start(library.get_graph(OPENING_CONVERSATION), OPENING_CONVERSATION):
+		_failures.append("%s could not start." % label)
+	else:
+		var hubs := 0
+		var steps := 0
+		while runtime.is_active() and steps < 100:
+			if runtime.is_awaiting_choice():
+				var expected := [
+					[&"who", &"day", &"silent"], [&"blank", &"absent", &"none"],
+					[&"ask", &"silent", &"search"],
+				]
+				if hubs >= picks.size() or runtime.get_available_choice_ids() != expected[hubs]:
+					_failures.append("%s: choice hub %d lost its original options." % [label, hubs])
+					break
+				runtime.choose(int(picks[hubs]))
+				hubs += 1
+			else:
+				runtime.advance()
+			steps += 1
+		if runtime.is_active() or hubs != 3 or seen.is_empty() or seen[-1] != &"q_end_2":
+			_failures.append("%s did not reach the shared closing node (hubs=%d, steps=%d)." % [label, hubs, steps])
+		if not bool(state.get_flag(StoryFlags.MET_Q, false)) \
+				or not bool(state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
+			_failures.append("%s lost the meeting/identity flags." % label)
+		for flag: StringName in [StoryFlags.ASKED_Q_DATE, StoryFlags.STAYED_SILENT, StoryFlags.DENIED_EXAM_MEMORY]:
+			var want := (flag == StoryFlags.ASKED_Q_DATE and picks[0] == 1) \
+				or (flag == StoryFlags.STAYED_SILENT and picks[0] == 2) \
+				or (flag == StoryFlags.DENIED_EXAM_MEMORY and picks[1] == 2)
+			if bool(state.get_flag(flag, false)) != want:
+				_failures.append("%s: consequence '%s' does not match the chosen branch." % [label, flag])
+		if String(state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
+			_failures.append("%s lost the schoolbag objective." % label)
+		var entry: NarrativeEntry = narrative.get_entry(&"q_claims_blank_exam")
+		if entry == null or entry.source != NarrativeEntry.Source.REPORTED:
+			_failures.append("%s lost Q's uncertain exam account or made it fact." % label)
+	state.free()
+	narrative.free()
