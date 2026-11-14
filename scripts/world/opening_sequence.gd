@@ -498,12 +498,15 @@ func _after_opening() -> void:
 	autosave(&"opening_done")
 
 
-## Beat A: wake up. Slow fade in, camera roll settling, body straightening.
+## Beat A: wake up. Fade in and settle into an upright seated pose; the first deliberate
+## movement is what starts the existing get-up transition.
 func _beat_wake() -> void:
 	_wake_audio.play()
 	await _ui.fade.fade_from_black(WAKE_FADE_SECONDS)
-	_player.settle_wake_pose(WAKE_SETTLE_SECONDS)
+	var pose_tween := _player.settle_wake_seated_pose(WAKE_SETTLE_SECONDS)
 	_player.settle_camera_roll(WAKE_SETTLE_SECONDS)
+	if pose_tween != null:
+		await pose_tween.finished
 	await wait_seconds(0.4)
 	_control_allowed = true
 	sync_player_locks()

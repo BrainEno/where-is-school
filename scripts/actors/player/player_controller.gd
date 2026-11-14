@@ -74,6 +74,8 @@ const STEP_PROBE_MARGIN := 0.15
 ## Slump above which the model is *sitting* rather than standing: the protagonist wakes at a
 ## desk, so the fade-in happens in the seated pose and the settle is the get-up.
 const SEATED_WAKE_POSE := 0.5
+## The posture tween and `get_up` action share the authored transition's 1.5 s length.
+const WAKE_GET_UP_SECONDS := 1.5
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 
@@ -171,6 +173,9 @@ func _physics_process(delta: float) -> void:
 	var input_vector := Vector2.ZERO
 	if _control_enabled:
 		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+
+	if _wake_seated and (input_vector.length_squared() > 0.0001 or _path_active):
+		_begin_get_up_from_seat()
 
 	if _path_active and input_vector.length() > manual_cancel_threshold:
 		# A hand on the keys always wins over an automatic walk.
@@ -494,6 +499,42 @@ func settle_wake_pose(duration: float) -> void:
 	tween.tween_property(visual, "rotation_degrees:x", 0.0, duration)
 	tween.tween_property(visual, "position:y", 0.9, duration)
 	await tween.finished
+
+
+## Straightens the protagonist from the waking slump into an upright seated pose. Returns
+## the posture tween so the opening director can keep control locked until it finishes.
+func settle_wake_seated_pose(duration: float) -> Tween:
+	if visual == null:
+		return null
+	_set_wake_seated(true)
+	var amount := SEATED_WAKE_POSE
+	var target_tilt := wake_tilt_degrees * amount
+	var target_height := 0.9 - 0.06 * amount
+	if duration <= 0.0:
+		visual.rotation_degrees.x = target_tilt
+		visual.position.y = target_height
+		return null
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(visual, "rotation_degrees:x", target_tilt, duration)
+	tween.tween_property(visual, "position:y", target_height, duration)
+	return tween
+
+
+## A deliberate first move gets the protagonist out of the chair. The bone action and the
+## pivot tween use the same authored duration, then locomotion resumes from a standing pose.
+func _begin_get_up_from_seat() -> void:
+	if not _wake_seated:
+		return
+	_set_wake_seated(false)
+	if visual == null:
+		return
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(visual, "rotation_degrees:x", 0.0, WAKE_GET_UP_SECONDS)
+	tween.tween_property(visual, "position:y", 0.9, WAKE_GET_UP_SECONDS)
 
 
 ## Moves the model between the seated pose and the get-up. Ignored on a model that has no
