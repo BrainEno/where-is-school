@@ -14,13 +14,14 @@ const MET_Q: StringName = &"met_q"
 ## finishes, and is `false` (present, not absent) while it is still on screen. It is the
 ## gate for anything that presents the biology teacher B - the imagined `expected_b` scene
 ## included: the player hears about the lesson and its teacher from Q first (#171).
-## Absent in saves written before #171; the director then reads `met_q` (a checkpoint
-## is never taken in the middle of a conversation).
+## Absent in saves written before #171; `BPresence` then reads `met_q` instead (a
+## checkpoint is never taken in the middle of a conversation) and writes nothing back.
 const Q_FIRST_TALK_DONE: StringName = &"q_first_talk_done"
 ## bool: B has been brought into the room by an explicit story trigger
 ## (`OpeningSequence.present_b()`). No beat of this slice sets it: B is talked about, and
 ## imagined, but never on stage. A room that ever holds an actor with npc_id `b` keeps it
-## hidden and disabled until this is set and `q_first_talk_done` is true (#171).
+## hidden and disabled until this is set and Q's first conversation counts as finished
+## (`BPresence.is_introduced()`) (#171).
 const B_ON_STAGE: StringName = &"b_on_stage"
 ## bool: the schoolbag has been searched and the textbook is missing.
 const TEXTBOOK_MISSING: StringName = &"textbook_missing"

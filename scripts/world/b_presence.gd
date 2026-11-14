@@ -13,7 +13,7 @@ extends RefCounted
 ##
 ## - `q_first_talk_done`: `false` from Q's first line (when `met_q` is written) until the
 ##   conversation finishes, then `true`. Absent in saves from before #171 - see
-##   `adopt_legacy_flags()`.
+##   `is_introduced()`.
 ## - `b_on_stage`: written by `present()` only.
 ##
 ## A room that holds an actor with npc_id `b` keeps it hidden, not processing (no
@@ -47,8 +47,19 @@ func _init(game_state: Node, locations: LocationHost, dialogue: DialogueControll
 
 ## True once Q's first conversation has run to its end in this run (or in the run an
 ## older save came from). The gate for everything that presents B.
+##
+## Saves and snapshots written before #171 have `met_q` but no word on whether Q's first
+## conversation ended. A checkpoint is never taken mid-conversation (Session refuses one,
+## and autosaves happen between steps), so for them `met_q` means it did. A run that has
+## the flag at all - even as `false`, which is what an unfinished talk leaves - is already
+## in the new format and is believed as it stands. This is read, not written back: loading
+## an older save changes none of its flags.
 func is_introduced() -> bool:
-	return _flag(StoryFlags.Q_FIRST_TALK_DONE)
+	if _game_state == null:
+		return false
+	if _game_state.has_flag(StoryFlags.Q_FIRST_TALK_DONE):
+		return _flag(StoryFlags.Q_FIRST_TALK_DONE)
+	return _flag(StoryFlags.MET_Q)
 
 
 ## True when B is allowed to be visible in a room: introduced, then explicitly brought in.
@@ -87,18 +98,6 @@ func sync() -> void:
 		_apply(actor, is_on_stage())
 
 
-## Saves and snapshots written before #171 have `met_q` but no word on whether Q's first
-## conversation ended. A checkpoint is never taken mid-conversation (Session refuses one,
-## and autosaves happen between steps), so for them `met_q` means it did. A run that has
-## the flag at all - even as `false`, which is what an unfinished talk leaves - is
-## already in the new format and is believed as it stands.
-func adopt_legacy_flags() -> void:
-	if _game_state == null:
-		return
-	if _flag(StoryFlags.MET_Q) and not _game_state.has_flag(StoryFlags.Q_FIRST_TALK_DONE):
-		_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
-
-
 func _apply(actor: NpcActor, present_now: bool) -> void:
 	actor.set_visible_actor(present_now)
 	actor.process_mode = Node.PROCESS_MODE_INHERIT if present_now else Node.PROCESS_MODE_DISABLED
@@ -120,8 +119,9 @@ func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant
 	if flag == StoryFlags.MET_Q:
 		# Q has started talking: until the last line the talk is on record as begun but
 		# not finished, which keeps B back if the run stops in between.
-		if bool(value) and not _flag(StoryFlags.Q_FIRST_TALK_DONE):
+		if bool(value) and not _game_state.has_flag(StoryFlags.Q_FIRST_TALK_DONE):
 			_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, false)
+		sync()
 	elif flag == StoryFlags.Q_FIRST_TALK_DONE or flag == StoryFlags.B_ON_STAGE:
 		sync()
 
@@ -131,7 +131,6 @@ func _on_location_entered(_location: LocationRoot, _spawn_id: StringName) -> voi
 
 
 func _on_story_state_replaced() -> void:
-	adopt_legacy_flags()
 	sync()
 
 

@@ -13,7 +13,8 @@ extends SceneTree
 ## 2. **No Q talk, no B.** A searched bag without Q's finished conversation - the approach
 ##    could not run, or the run stopped mid-talk and was resumed - passes the scene over
 ##    (`expectation_skipped`) instead of playing it ahead of Q. An older save that only has
-##    `met_q` (written at a checkpoint, so after the talk) keeps playing it.
+##    `met_q` (written at a checkpoint, so after the talk) keeps playing it, and is not
+##    rewritten for it.
 ## 3. **Repeat talks.** A Q talk started by the player instead of the beat also counts; the
 ##    repeat reply changes nothing and presents no B.
 ## 4. **An actor of hers is scheduled, not automatic.** A classroom that holds a `b` actor
@@ -153,8 +154,10 @@ func _check_gate_snapshots() -> void:
 	Harness.stage = "the expectation gate: an older save"
 	await _boot(false, {StoryFlags.MET_Q: true, StoryFlags.TEXTBOOK_MISSING: true})
 	if _world != null:
-		_expect(_sequence.is_b_introduced() and _flag(StoryFlags.Q_FIRST_TALK_DONE),
-			"An older save's met_q (always written after Q's talk) was not adopted.")
+		_expect(_sequence.is_b_introduced(),
+			"An older save's met_q (always written after Q's talk) does not count as the talk.")
+		_expect(not _state.has_flag(StoryFlags.Q_FIRST_TALK_DONE),
+			"Reading an older save wrote a flag into it.")
 		_expect(not _sequence.is_b_on_stage(), "Adopting an older save put B on stage.")
 		await _release()
 

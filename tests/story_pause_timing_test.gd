@@ -163,6 +163,8 @@ func _check_flag_wait() -> void:
 
 
 func _check_expectation_beat() -> void:
+	# Q's first conversation is over: B's imagined scene is only played after it (#171).
+	_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
 	_game_state.set_flag(StoryFlags.TEXTBOOK_MISSING, true)
 	_game_state.set_flag(StoryFlags.EXPECTATION_PLAYED, false)
 	_expect(not _sequence.is_beat_active(), "A beat was already active before the check.")

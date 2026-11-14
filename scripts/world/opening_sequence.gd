@@ -122,8 +122,6 @@ func _ready() -> void:
 	# wrong step. A file that cannot be trusted is refused loudly and the run starts
 	# from the beginning - the file itself is kept (ADR 0005 §6).
 	var restored := _restore_save()
-	# Flags from an older save (or a test snapshot) predate the Q-first gate (#171).
-	_b_presence.adopt_legacy_flags()
 	if _restored_from_save:
 		# A save with no `world` block still restored the flags; `_start_from_save` puts
 		# the player at the start marker because there is no place to put them back in.
