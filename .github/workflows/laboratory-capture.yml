@@ -4,10 +4,9 @@ name: Laboratory capture
 # game itself, plus a recorded walkthrough. `tests/capture_laboratory.gd` takes the frames
 # and `tests/capture_laboratory_walkthrough.gd` records the route; see their headers.
 #
-# Why four jobs for twelve frames: the frames are published inline as base64 `::notice`
-# annotations so they can be read through the REST API from places that cannot reach the
-# artifact store, and GitHub keeps 50 annotations per job. Three frames per job stays
-# inside that budget. The artifact of each job holds the same frames at full size.
+# Six two-frame jobs keep the inline images below GitHub's 50-annotation-per-job limit.
+# The annotations let a reviewer read the frames through the REST API even where the artifact
+# store cannot be reached; each job also uploads the same frames at full size.
 #
 # `rendering` runs the whole set on the Compatibility renderer (opengl3, what the school
 # slice ships on) and a smaller pair on Forward+ (vulkan through lavapipe, installed
@@ -41,13 +40,17 @@ jobs:
       matrix:
         include:
           - group: room
-            only: "room_wide,entrance_view,bench_detail"
-          - group: cables
-            only: "cable_origin,cable_knot,wet_bench"
-          - group: unknown
-            only: "annex_door,annex_inside,explore_to_unknown"
-          - group: route
-            only: "route_aisle,far_corridor,drum_close"
+            only: "room_wide,entrance_view"
+          - group: bench_cable_origin
+            only: "wet_bench,cable_origin"
+          - group: detail_route
+            only: "bench_detail,route_aisle"
+          - group: cable_drum
+            only: "cable_knot,drum_close"
+          - group: door_corridor
+            only: "annex_door,far_corridor"
+          - group: annex_walk
+            only: "annex_inside,explore_to_unknown"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 

@@ -18,7 +18,7 @@ instead of trusting a binary.
 | `tile_glaze.png` | 512 x 512 | 3,453 | the wet bench splashback and the instrument back tile, 4 x 4 tiles of glazed ceramic |
 | `bench_top.png` | 512 x 512 | 15,566 | the resin bench tops |
 
-221 KiB together, largest file 167 KiB — inside `tools/verify_build.py`'s 512 KiB warning
+216 KiB together, largest file 167 KiB — inside `tools/verify_build.py`'s 512 KiB warning
 budget for a texture. `wall_plaster` is the largest because it carries the tooth: a 128-cell
 lattice crossing six bands, which is what gives the wall a chalky surface instead of a pale
 field, and which costs about six times what a two-tone field costs.
@@ -42,7 +42,7 @@ Three rules the fields follow, and the reason each exists:
   and blue — a tenth of every wall came out cyan. Neutral ramps plus six bands inside them,
   with the tint left to the material's `albedo_color`, is what the walls are now. The cost is
   size: per-pixel white noise at that band count came to 395 KiB for one field, so the tooth is
-  a 128-cell lattice instead, and the whole set is 221 KiB.
+  a 128-cell lattice instead, and the whole set is 216 KiB.
 
 ## How to regenerate and check
 
