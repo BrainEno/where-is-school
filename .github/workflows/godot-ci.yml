@@ -240,6 +240,10 @@ jobs:
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.
           run_check opening_resume 300 godot --headless --path . --script res://tests/opening_resume_test.gd || status=1
+          # Issue #171: B is heard about from Q before anything presents her - the imagined
+          # expected_b scene waits for Q's finished first conversation, and a room's B actor
+          # stays hidden until an explicit entrance, across repeat talks, reloads and re-entry.
+          run_check b_reveal_timing 360 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || status=1
           # The prologue's waits are story time: the pause menu pauses the tree, and a beat
           # must not time itself out (or start its conversation) behind it.
           run_check story_pause_timing 180 godot --headless --path . --script res://tests/story_pause_timing_test.gd || status=1
