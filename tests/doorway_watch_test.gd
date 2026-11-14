@@ -2,8 +2,8 @@ extends SceneTree
 ## #174: when the classroom door refuses the player, the person its text says is watching
 ## them really turns and watches - and stops again.
 ##
-## Run it at the game's resolution (`--resolution 1600x900`): the framing claim is about
-## what the player sees.
+## The window is set to the game's 1600x900 (a headless run starts at 64x64): the
+## framing claim is about what the player sees.
 ##
 ## The real main scene, with the prologue's beats off (`autostart = false`) and Q's first
 ## talk already behind the player (`met_q`), so the door is blocked (`class_dismissed` is
@@ -76,6 +76,8 @@ func _run() -> void:
 	state.set_flag(StoryFlags.MET_Q, true)
 	state.set_flag(StoryFlags.OBJECTIVE_KEY, "objective.check_bag")
 
+	# The game's view, not the headless default: whether a face is on screen depends on it.
+	root.size = Vector2i(1600, 900)
 	_world = (load(MAIN) as PackedScene).instantiate()
 	_sequence = _world.get_node(^"OpeningSequence") as OpeningSequence
 	_sequence.autostart = false
@@ -149,7 +151,7 @@ func _check_trigger() -> void:
 	# What the player sees is the game's 1600x900 view; a headless default (64x64) would
 	# judge the framing of a square window nobody plays in.
 	if camera.get_viewport().get_visible_rect().size != Vector2(1600.0, 900.0):
-		_failures.append("Trigger: the view is %s, not the game's 1600x900; run with --resolution 1600x900." % str(camera.get_viewport().get_visible_rect().size))
+		_failures.append("Trigger: the view is %s, not the game's 1600x900." % str(camera.get_viewport().get_visible_rect().size))
 	var q_seen_before := camera.is_position_in_frustum(_q.global_position + Vector3.UP * EYE)
 	_interaction.request_activation(_door)
 	await process_frame
