@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" load_steps=1 format=3]
+
+[resource]
+shading_mode = 0
+resource_name = "lab_void_black"
+albedo_color = Color(0.024, 0.027, 0.031, 1)
+texture_filter = 3

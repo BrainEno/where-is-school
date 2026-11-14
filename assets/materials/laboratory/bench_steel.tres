@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ink_outline.tres" id="2_ink"]
+
+[resource]
+next_pass = ExtResource("2_ink")
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+resource_name = "lab_bench_steel"
+albedo_color = Color(0.706, 0.729, 0.729, 1)
+texture_filter = 3

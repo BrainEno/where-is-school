@@ -91,11 +91,40 @@ def wake_thud(duration: float = 1.6) -> list[float]:
     return samples
 
 
+def laboratory_hum(duration: float = 6.0) -> list[float]:
+    """The laboratory's bed: a mixer running somewhere, and the room it is in.
+
+    Lower and heavier than the school's room tones, with a slow beat between two nearly
+    equal low partials so the bed seems to turn over every few seconds. The room it belongs
+    to has a large machine in the middle of it that nobody switches off, and this is the
+    sound of that fact rather than a piece of music: no melody, no rhythm to speak of.
+    """
+    rng = random.Random(23)
+    total = int(duration * SAMPLE_RATE)
+    samples = []
+    for index in range(total):
+        time = index / SAMPLE_RATE
+        # 54 and 55 Hz beat against each other about once a second; 108 and 162 give the
+        # hum a body without turning it into a chord.
+        hum = (
+            0.55 * math.sin(2 * math.pi * 54.0 * time)
+            + 0.30 * math.sin(2 * math.pi * 55.0 * time + 0.7)
+            + 0.18 * math.sin(2 * math.pi * 108.0 * time + 0.3)
+            + 0.08 * math.sin(2 * math.pi * 162.0 * time + 1.9)
+        )
+        # Air: a low-passed noise floor, quieter than the school tones' air so the hum reads.
+        flutter = 0.06 * math.sin(2 * math.pi * 0.5 * time)
+        noise = rng.uniform(-1.0, 1.0) * 0.22
+        samples.append(0.075 * (hum * (0.85 + flutter) + noise))
+    return crossfade_loop(samples)
+
+
 def main() -> None:
     write_wav(OUTPUT_DIR / "room_tone_classroom.wav", room_tone())
     write_wav(OUTPUT_DIR / "room_tone_walkway.wav", room_tone(level=0.04, air=0.9))
     write_wav(OUTPUT_DIR / "bell_second.wav", bell())
     write_wav(OUTPUT_DIR / "wake_thud.wav", wake_thud())
+    write_wav(OUTPUT_DIR / "laboratory_hum.wav", laboratory_hum())
     print("Wrote placeholder audio to", OUTPUT_DIR)
 
 

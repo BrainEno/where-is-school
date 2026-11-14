@@ -1,0 +1,4457 @@
+[gd_scene load_steps=268 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="2_navigation"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="3_interactable"]
+[ext_resource type="Script" path="res://scenes/locations/laboratory/spinner.gd" id="4_spinner"]
+[ext_resource type="AudioStream" path="res://assets/audio/laboratory_hum.wav" id="5_ambience"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="6_ambience_player"]
+[ext_resource type="Material" path="res://assets/materials/glass_pane.tres" id="7_glass"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/wall_plaster.tres" id="m00_wall_plaster"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/wall_tile.tres" id="m01_wall_tile"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/floor_concrete.tres" id="m02_floor_concrete"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/bench_resin.tres" id="m03_bench_resin"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/bench_steel.tres" id="m04_bench_steel"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/casework_pale.tres" id="m05_casework_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/metal_dark.tres" id="m06_metal_dark"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/metal_pale.tres" id="m07_metal_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/metal_frame.tres" id="m08_metal_frame"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/instrument_cream.tres" id="m09_instrument_cream"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/instrument_grey.tres" id="m10_instrument_grey"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/glassware.tres" id="m11_glassware"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/ceramic_white.tres" id="m12_ceramic_white"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/accent_oxide.tres" id="m13_accent_oxide"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/paper_pale.tres" id="m14_paper_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/cable_ink.tres" id="m15_cable_ink"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/cable_pale.tres" id="m16_cable_pale"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/cable_oxide.tres" id="m17_cable_oxide"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/annex_wall.tres" id="m18_annex_wall"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/annex_floor.tres" id="m19_annex_floor"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/lamp_panel.tres" id="m20_lamp_panel"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/annex_bulb.tres" id="m21_annex_bulb"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/led_running.tres" id="m22_led_running"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/led_dial.tres" id="m23_led_dial"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/void_black.tres" id="m24_void_black"]
+[ext_resource type="StandardMaterial3D" path="res://assets/materials/laboratory/gauge_face.tres" id="m25_gauge_face"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.0314, 0.0353, 0.0392, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.6000, 0.5922, 0.5765, 1)
+ambient_light_energy = 0.38
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_saturation = 0.92
+adjustment_brightness = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cable"]
+top_radius = 0.5
+bottom_radius = 0.5
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_000"]
+size = Vector3(15.6, 0.2, 11.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_000"]
+size = Vector3(15.6, 0.2, 11.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_001"]
+size = Vector3(11.35, 3.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_001"]
+size = Vector3(11.35, 3.4, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_002"]
+size = Vector3(2.75, 3.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_002"]
+size = Vector3(2.75, 3.4, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_003"]
+size = Vector3(1.5, 0.95, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_003"]
+size = Vector3(1.5, 0.95, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_004"]
+size = Vector3(15.6, 3.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_004"]
+size = Vector3(15.6, 3.4, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_005"]
+size = Vector3(0.2, 3.4, 11.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_005"]
+size = Vector3(0.2, 3.4, 11.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_006"]
+size = Vector3(0.2, 3.4, 11.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_006"]
+size = Vector3(0.2, 3.4, 11.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_007"]
+size = Vector3(15.2, 0.12, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_008"]
+size = Vector3(0.05, 0.12, 11.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_009"]
+size = Vector3(0.05, 0.12, 11.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_010"]
+size = Vector3(15.2, 0.12, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_011"]
+size = Vector3(1.9, 2.1, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_012"]
+size = Vector3(0.86, 2, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_013"]
+size = Vector3(0.86, 2, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_014"]
+size = Vector3(1.4, 0.06, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_015"]
+size = Vector3(1.7, 0.18, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_016"]
+size = Vector3(0.92, 0.06, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_017"]
+size = Vector3(0.86, 0.9, 5.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_007"]
+size = Vector3(0.86, 0.9, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_018"]
+size = Vector3(0.8, 0.08, 5.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_019"]
+size = Vector3(0.05, 1, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_020"]
+size = Vector3(0.34, 0.04, 3.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_021"]
+size = Vector3(0.04, 0.1, 3.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_022"]
+size = Vector3(0.52, 0.05, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_023"]
+size = Vector3(0.42, 0.12, 0.52)
+
+[sub_resource type="BoxMesh" id="BoxMesh_024"]
+size = Vector3(0.06, 0.05, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_025"]
+size = Vector3(0.52, 0.05, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_026"]
+size = Vector3(0.42, 0.12, 0.52)
+
+[sub_resource type="BoxMesh" id="BoxMesh_027"]
+size = Vector3(0.06, 0.05, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_028"]
+size = Vector3(0.5, 0.03, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_029"]
+size = Vector3(0.01, 0.09, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_030"]
+size = Vector3(0.03, 0.5, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_031"]
+size = Vector3(0.22, 0.08, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_032"]
+size = Vector3(0.2, 0.02, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_033"]
+size = Vector3(0.1, 2.3, 0.86)
+
+[sub_resource type="BoxMesh" id="BoxMesh_034"]
+size = Vector3(0.1, 2.3, 0.86)
+
+[sub_resource type="BoxMesh" id="BoxMesh_035"]
+size = Vector3(2.6, 0.16, 0.86)
+
+[sub_resource type="BoxMesh" id="BoxMesh_036"]
+size = Vector3(2.5, 1.5, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_037"]
+size = Vector3(2.4, 0.07, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_038"]
+size = Vector3(2.4, 0.18, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_039"]
+size = Vector3(2.3, 0.5, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_040"]
+size = Vector3(2.5, 0.07, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_041"]
+size = Vector3(2.5, 0.06, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_042"]
+size = Vector3(0.7, 0.04, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_043"]
+size = Vector3(0.44, 1, 0.44)
+
+[sub_resource type="BoxMesh" id="BoxMesh_044"]
+size = Vector3(0.5, 0.06, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_045"]
+size = Vector3(0.03, 0.62, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_046"]
+size = Vector3(0.24, 0.04, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_047"]
+size = Vector3(1.7, 2.1, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_008"]
+size = Vector3(1.7, 2.1, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_048"]
+size = Vector3(1.74, 2.14, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_049"]
+size = Vector3(0.05, 2, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_050"]
+size = Vector3(1.6, 0.03, 0.36)
+
+[sub_resource type="BoxMesh" id="BoxMesh_051"]
+size = Vector3(1.6, 0.03, 0.36)
+
+[sub_resource type="BoxMesh" id="BoxMesh_052"]
+size = Vector3(1.6, 0.03, 0.36)
+
+[sub_resource type="BoxMesh" id="BoxMesh_053"]
+size = Vector3(4.6, 0.14, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_054"]
+size = Vector3(0.16, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_055"]
+size = Vector3(0.16, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_056"]
+size = Vector3(0.16, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_057"]
+size = Vector3(0.16, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_058"]
+size = Vector3(0.16, 0.16, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_059"]
+size = Vector3(0.7, 0.9, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_060"]
+size = Vector3(0.62, 0.8, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_061"]
+size = Vector3(0.05, 0.03, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_062"]
+size = Vector3(3.4, 0.06, 1.15)
+
+[sub_resource type="BoxMesh" id="BoxMesh_063"]
+size = Vector3(3.2, 0.9, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_009"]
+size = Vector3(3.2, 0.9, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_064"]
+size = Vector3(3.1, 0.08, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_065"]
+size = Vector3(3.2, 0.16, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_066"]
+size = Vector3(3.2, 0.03, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_067"]
+size = Vector3(0.24, 0.06, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_068"]
+size = Vector3(0.07, 0.42, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_069"]
+size = Vector3(0.16, 0.02, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_070"]
+size = Vector3(0.04, 0.04, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_071"]
+size = Vector3(0.24, 0.06, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_072"]
+size = Vector3(0.07, 0.42, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_073"]
+size = Vector3(0.16, 0.02, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_074"]
+size = Vector3(0.04, 0.04, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_075"]
+size = Vector3(0.1, 0.05, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_076"]
+size = Vector3(0.03, 0.02, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_077"]
+size = Vector3(0.24, 0.03, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_078"]
+size = Vector3(0.24, 0.03, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_079"]
+size = Vector3(0.2, 0.002, 0.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_080"]
+size = Vector3(0.22, 0.08, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_081"]
+size = Vector3(0.05, 0.03, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_082"]
+size = Vector3(0.05, 0.03, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_083"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_010"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_084"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_011"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_085"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_012"]
+size = Vector3(0.34, 0.06, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_086"]
+size = Vector3(0.87, 0.06, 4.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_087"]
+size = Vector3(0.8, 0.9, 4.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_013"]
+size = Vector3(0.8, 0.9, 4.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_088"]
+size = Vector3(0.74, 0.08, 4.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_089"]
+size = Vector3(0.05, 1.1, 4.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_090"]
+size = Vector3(0.34, 0.04, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_091"]
+size = Vector3(0.72, 0.8, 0.66)
+
+[sub_resource type="BoxMesh" id="BoxMesh_092"]
+size = Vector3(0.05, 0.66, 0.56)
+
+[sub_resource type="BoxMesh" id="BoxMesh_093"]
+size = Vector3(0.04, 0.1, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_094"]
+size = Vector3(0.02, 0.025, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_095"]
+size = Vector3(0.02, 0.02, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_096"]
+size = Vector3(0.56, 0.4, 0.46)
+
+[sub_resource type="BoxMesh" id="BoxMesh_097"]
+size = Vector3(0.3, 0.14, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_098"]
+size = Vector3(0.62, 0.46, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_099"]
+size = Vector3(0.02, 0.1, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_100"]
+size = Vector3(0.02, 0.02, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_101"]
+size = Vector3(0.3, 0.08, 4.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_102"]
+size = Vector3(0.22, 0.24, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_103"]
+size = Vector3(0.22, 0.24, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_104"]
+size = Vector3(0.12, 1.2, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_105"]
+size = Vector3(2, 0.06, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_106"]
+size = Vector3(0.11, 1.2, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_107"]
+size = Vector3(0.11, 1.2, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_108"]
+size = Vector3(0.11, 1.2, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_109"]
+size = Vector3(0.11, 1.2, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_110"]
+size = Vector3(1.34, 0.1, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_111"]
+size = Vector3(1.34, 0.1, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_112"]
+size = Vector3(0.08, 0.1, 1.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_113"]
+size = Vector3(0.08, 0.1, 1.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_114"]
+size = Vector3(1.2, 1.1, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_014"]
+size = Vector3(1.2, 1.1, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_115"]
+size = Vector3(0.46, 0.4, 0.46)
+
+[sub_resource type="BoxMesh" id="BoxMesh_116"]
+size = Vector3(0.34, 0.34, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_117"]
+size = Vector3(0.32, 0.03, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_118"]
+size = Vector3(0.12, 0.06, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_119"]
+size = Vector3(0.2, 0.34, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_120"]
+size = Vector3(0.02, 0.025, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_121"]
+size = Vector3(0.02, 0.16, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_122"]
+size = Vector3(0.18, 3.4, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_015"]
+size = Vector3(0.18, 3.4, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_123"]
+size = Vector3(0.18, 3.4, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_016"]
+size = Vector3(0.18, 3.4, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_124"]
+size = Vector3(0.18, 0.95, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_017"]
+size = Vector3(0.18, 0.95, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_125"]
+size = Vector3(5.4, 3.4, 0.18)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_018"]
+size = Vector3(5.4, 3.4, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_126"]
+size = Vector3(0.24, 2.3, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_127"]
+size = Vector3(0.24, 2.3, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_128"]
+size = Vector3(0.24, 0.14, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_129"]
+size = Vector3(0.3, 0.05, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_130"]
+size = Vector3(5.3, 0.12, 4.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_019"]
+size = Vector3(5.3, 0.12, 4.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_131"]
+size = Vector3(0.24, 0.08, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_132"]
+size = Vector3(3.7, 0.24, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_133"]
+size = Vector3(3.8, 0.24, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_134"]
+size = Vector3(3.8, 0.24, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_135"]
+size = Vector3(0.04, 0.12, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_136"]
+size = Vector3(0.16, 0.02, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_137"]
+size = Vector3(0.12, 2.9, 1.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_138"]
+size = Vector3(1.6, 2.9, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_139"]
+size = Vector3(1.6, 2.9, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_140"]
+size = Vector3(0.12, 2.9, 1.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_141"]
+size = Vector3(1.3, 0.03, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_142"]
+size = Vector3(1.3, 0.06, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_143"]
+size = Vector3(0.1, 2.2, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_144"]
+size = Vector3(0.1, 2.2, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_145"]
+size = Vector3(1.5, 0.14, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_146"]
+size = Vector3(1.8, 0.12, 2.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_020"]
+size = Vector3(1.8, 0.12, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_147"]
+size = Vector3(0.1, 2.4, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_148"]
+size = Vector3(0.1, 2.4, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_149"]
+size = Vector3(0.16, 0.14, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_150"]
+size = Vector3(0.16, 0.14, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_151"]
+size = Vector3(1.9, 2.6, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_021"]
+size = Vector3(1.9, 2.6, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_152"]
+size = Vector3(0.7, 0.06, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_153"]
+size = Vector3(0.5, 0.05, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_154"]
+size = Vector3(1.5, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_155"]
+size = Vector3(1.4, 0.04, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_156"]
+size = Vector3(1.5, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_157"]
+size = Vector3(1.4, 0.04, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_158"]
+size = Vector3(1.5, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_159"]
+size = Vector3(1.4, 0.04, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_160"]
+size = Vector3(1.5, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_161"]
+size = Vector3(1.4, 0.04, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_162"]
+size = Vector3(1.5, 0.12, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_163"]
+size = Vector3(1.4, 0.04, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_164"]
+size = Vector3(1.5, 0.06, 0.62)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_022"]
+size = Vector3(1.5, 0.06, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_165"]
+size = Vector3(0.2, 0.03, 0.62)
+
+[sub_resource type="BoxMesh" id="BoxMesh_166"]
+size = Vector3(0.2, 0.03, 0.62)
+
+[sub_resource type="QuadMesh" id="QuadMesh_000"]
+size = Vector2(2.4, 0.5)
+
+[sub_resource type="QuadMesh" id="QuadMesh_001"]
+size = Vector2(0.78, 1.96)
+
+[sub_resource type="QuadMesh" id="QuadMesh_002"]
+size = Vector2(0.78, 1.96)
+
+[sub_resource type="QuadMesh" id="QuadMesh_003"]
+size = Vector2(0.5, 0.5)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_000"]
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.42
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_001"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.3
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_002"]
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.16
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_003"]
+top_radius = 0.026
+bottom_radius = 0.072
+height = 0.17
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_004"]
+top_radius = 0.028
+bottom_radius = 0.075
+height = 0.18
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_005"]
+top_radius = 0.05
+bottom_radius = 0.046
+height = 0.14
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_006"]
+top_radius = 0.019
+bottom_radius = 0.019
+height = 0.28
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_007"]
+top_radius = 0.13
+bottom_radius = 0.13
+height = 0.28
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_008"]
+top_radius = 0.135
+bottom_radius = 0.135
+height = 0.05
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_009"]
+top_radius = 0.032
+bottom_radius = 0.05
+height = 0.2
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_010"]
+top_radius = 0.05
+bottom_radius = 0.045
+height = 0.16
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_011"]
+top_radius = 0.02
+bottom_radius = 0.045
+height = 0.16
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_012"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.3
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_013"]
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.09
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_014"]
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.3
+radial_segments = 14
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_015"]
+top_radius = 0.21
+bottom_radius = 0.21
+height = 0.05
+radial_segments = 14
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_016"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.15
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_017"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.14
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_018"]
+top_radius = 0.036
+bottom_radius = 0.055
+height = 0.22
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_019"]
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.6
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_020"]
+top_radius = 0.28
+bottom_radius = 0.28
+height = 0.38
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_021"]
+top_radius = 0.29
+bottom_radius = 0.29
+height = 0.06
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_022"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.03
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_023"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.5
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_024"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.22
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_025"]
+top_radius = 0.06
+bottom_radius = 0.06
+height = 0.04
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_026"]
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.03
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_027"]
+top_radius = 0.63
+bottom_radius = 0.63
+height = 1.12
+radial_segments = 18
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_028"]
+top_radius = 0.645
+bottom_radius = 0.645
+height = 0.08
+radial_segments = 18
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_029"]
+top_radius = 0.62
+bottom_radius = 0.62
+height = 0.07
+radial_segments = 18
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_030"]
+top_radius = 0.04
+bottom_radius = 0.04
+height = 0.14
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_031"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 0.5
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_032"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 4.2
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_033"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 2.7
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_034"]
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.5
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_035"]
+top_radius = 0.04
+bottom_radius = 0.06
+height = 0.12
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_036"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 2.7
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_037"]
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.26
+radial_segments = 6
+
+[node name="Laboratory" type="Node3D"]
+script = ExtResource("1_location_root")
+location_id = &"laboratory"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("2_navigation")
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="BenchLampLight" type="OmniLight3D" parent="Lights"]
+position = Vector3(-7.05, 1.9, -1.9)
+light_color = Color(1, 0.87, 0.71, 1)
+light_energy = 0.55
+light_specular = 0.0
+omni_range = 3.4
+
+[node name="AnnexBulbLight" type="OmniLight3D" parent="Lights"]
+position = Vector3(5.1, 2, -3.3)
+light_color = Color(1, 0.92, 0.78, 1)
+light_energy = 0.9
+light_specular = 0.0
+omni_range = 6.5
+
+[node name="FarCorridorGlow" type="OmniLight3D" parent="Lights"]
+position = Vector3(4.3, 1.5, -7.6)
+light_color = Color(0.62, 0.74, 0.72, 1)
+light_energy = 0.3
+light_specular = 0.0
+omni_range = 3.2
+
+[node name="CeilingLightA" type="OmniLight3D" parent="Lights"]
+position = Vector3(-4.9, 2.86, -3.4)
+light_color = Color(0.94, 0.97, 1, 1)
+light_energy = 1.2
+light_specular = 0.0
+omni_range = 7.5
+shadow_enabled = true
+
+[node name="CeilingLightB" type="OmniLight3D" parent="Lights"]
+position = Vector3(-4.9, 2.86, 0.9)
+light_color = Color(0.94, 0.97, 1, 1)
+light_energy = 1.2
+light_specular = 0.0
+omni_range = 7.5
+
+[node name="CeilingLightC" type="OmniLight3D" parent="Lights"]
+position = Vector3(-1.7, 2.86, -3.4)
+light_color = Color(0.94, 0.97, 1, 1)
+light_energy = 1.2
+light_specular = 0.0
+omni_range = 7.5
+
+[node name="CeilingLightD" type="OmniLight3D" parent="Lights"]
+position = Vector3(-1.7, 2.86, 0.9)
+light_color = Color(0.94, 0.97, 1, 1)
+light_energy = 1.2
+light_specular = 0.0
+omni_range = 7.5
+
+[node name="CeilingLightE" type="OmniLight3D" parent="Lights"]
+position = Vector3(4.5, 2.86, 2.9)
+light_color = Color(0.94, 0.97, 1, 1)
+light_energy = 1.2
+light_specular = 0.0
+omni_range = 7.5
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_000")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_000")
+material_override = ExtResource("m02_floor_concrete")
+
+[node name="WallNorthLeft" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-2.125, 1.7, -5.7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallNorthLeft"]
+shape = SubResource("BoxShape3D_001")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallNorthLeft"]
+mesh = SubResource("BoxMesh_001")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="WallNorthRight" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(6.425, 1.7, -5.7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallNorthRight"]
+shape = SubResource("BoxShape3D_002")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallNorthRight"]
+mesh = SubResource("BoxMesh_002")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="WallNorthLintel" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.3, 2.925, -5.7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallNorthLintel"]
+shape = SubResource("BoxShape3D_003")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallNorthLintel"]
+mesh = SubResource("BoxMesh_003")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="WallSouth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 1.7, 5.7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallSouth"]
+shape = SubResource("BoxShape3D_004")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallSouth"]
+mesh = SubResource("BoxMesh_004")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="WallWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-7.7, 1.7, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallWest"]
+shape = SubResource("BoxShape3D_005")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallWest"]
+mesh = SubResource("BoxMesh_005")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="WallEast" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(7.7, 1.7, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallEast"]
+shape = SubResource("BoxShape3D_006")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WallEast"]
+mesh = SubResource("BoxMesh_006")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="SkirtingNorth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.06, -5.55)
+mesh = SubResource("BoxMesh_007")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="SkirtingWest" type="MeshInstance3D" parent="."]
+position = Vector3(-7.55, 0.06, 0)
+mesh = SubResource("BoxMesh_008")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="SkirtingEast" type="MeshInstance3D" parent="."]
+position = Vector3(7.55, 0.06, 0)
+mesh = SubResource("BoxMesh_009")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="SkirtingSouth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.06, 5.55)
+mesh = SubResource("BoxMesh_010")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="EntranceFrame" type="MeshInstance3D" parent="."]
+position = Vector3(-4.4, 1.05, 5.54)
+mesh = SubResource("BoxMesh_011")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="EntranceLeafLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-5.05, 1.02, 5.5)
+mesh = SubResource("BoxMesh_012")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="EntranceLeafRight" type="MeshInstance3D" parent="."]
+position = Vector3(-3.75, 1.02, 5.5)
+mesh = SubResource("BoxMesh_013")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="EntrancePushBar" type="MeshInstance3D" parent="."]
+position = Vector3(-4.4, 1, 5.45)
+mesh = SubResource("BoxMesh_014")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="EntranceKickPlate" type="MeshInstance3D" parent="."]
+position = Vector3(-4.4, 0.24, 5.45)
+mesh = SubResource("BoxMesh_015")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="WetBenchTop" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.92, -1.4)
+mesh = SubResource("BoxMesh_016")
+material_override = ExtResource("m03_bench_resin")
+
+[node name="WetBenchBody" type="StaticBody3D" parent="."]
+position = Vector3(-7.08, 0.45, -1.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WetBenchBody"]
+shape = SubResource("BoxShape3D_007")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WetBenchBody"]
+mesh = SubResource("BoxMesh_017")
+material_override = ExtResource("m04_bench_steel")
+
+[node name="WetBenchPlinth" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.04, -1.4)
+mesh = SubResource("BoxMesh_018")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="WetBenchTile" type="MeshInstance3D" parent="."]
+position = Vector3(-7.55, 1.42, -1.4)
+mesh = SubResource("BoxMesh_019")
+material_override = ExtResource("m01_wall_tile")
+
+[node name="WetBenchShelf" type="MeshInstance3D" parent="."]
+position = Vector3(-7.35, 1.98, -1.4)
+mesh = SubResource("BoxMesh_020")
+material_override = ExtResource("m04_bench_steel")
+
+[node name="WetBenchShelfLip" type="MeshInstance3D" parent="."]
+position = Vector3(-7.2, 2.02, -1.4)
+mesh = SubResource("BoxMesh_021")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="SinkRim0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.94, -2.9)
+mesh = SubResource("BoxMesh_022")
+material_override = ExtResource("m12_ceramic_white")
+
+[node name="SinkBowl0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.9, -2.9)
+mesh = SubResource("BoxMesh_023")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="TapHandle0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.4, 1.36, -2.9)
+mesh = SubResource("BoxMesh_024")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="SinkRim1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.94, 1.1)
+mesh = SubResource("BoxMesh_025")
+material_override = ExtResource("m12_ceramic_white")
+
+[node name="SinkBowl1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.9, 1.1)
+mesh = SubResource("BoxMesh_026")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="TapHandle1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.4, 1.36, 1.1)
+mesh = SubResource("BoxMesh_027")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="DryingRackTray" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 0.97, -0.5)
+mesh = SubResource("BoxMesh_028")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="WasteJarLabel" type="MeshInstance3D" parent="."]
+position = Vector3(-6.97, 0.15, 2.75)
+mesh = SubResource("BoxMesh_029")
+material_override = ExtResource("m14_paper_pale")
+
+[node name="BenchLampArm" type="MeshInstance3D" parent="."]
+position = Vector3(-7.3, 2.28, -1.9)
+mesh = SubResource("BoxMesh_030")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="BenchLampShade" type="MeshInstance3D" parent="."]
+position = Vector3(-7.15, 2.05, -1.9)
+mesh = SubResource("BoxMesh_031")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="BenchLampGlow" type="MeshInstance3D" parent="."]
+position = Vector3(-7.15, 2, -1.9)
+mesh = SubResource("BoxMesh_032")
+material_override = ExtResource("m23_led_dial")
+
+[node name="HoodSideWest" type="MeshInstance3D" parent="."]
+position = Vector3(-5.86, 1.28, -5.16)
+mesh = SubResource("BoxMesh_033")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="HoodSideEast" type="MeshInstance3D" parent="."]
+position = Vector3(-3.34, 1.28, -5.16)
+mesh = SubResource("BoxMesh_034")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="HoodCanopy" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 2.42, -5.16)
+mesh = SubResource("BoxMesh_035")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="HoodBackTile" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.2, -5.56)
+mesh = SubResource("BoxMesh_036")
+material_override = ExtResource("m01_wall_tile")
+
+[node name="HoodDeck" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 0.95, -5.16)
+mesh = SubResource("BoxMesh_037")
+material_override = ExtResource("m03_bench_resin")
+
+[node name="HoodDeckFront" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 0.86, -4.78)
+mesh = SubResource("BoxMesh_038")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="HoodBaffle" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.72, -5.46)
+mesh = SubResource("BoxMesh_039")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="HoodSashFrameTop" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 2.2, -4.78)
+mesh = SubResource("BoxMesh_040")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="HoodSashFrameBottom" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.66, -4.78)
+mesh = SubResource("BoxMesh_041")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="HoodSashHandle" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.5, -4.78)
+mesh = SubResource("BoxMesh_042")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="HoodDuct" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 3.16, -5.3)
+mesh = SubResource("BoxMesh_043")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="HoodDuctRing" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 2.68, -5.3)
+mesh = SubResource("BoxMesh_044")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="HoodStand" type="MeshInstance3D" parent="."]
+position = Vector3(-4.2, 1.3, -5.3)
+mesh = SubResource("BoxMesh_045")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="HoodStandBase" type="MeshInstance3D" parent="."]
+position = Vector3(-4.2, 1, -5.3)
+mesh = SubResource("BoxMesh_046")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="GlassCabinetBody" type="StaticBody3D" parent="."]
+position = Vector3(-1.8, 1.05, -5.36)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GlassCabinetBody"]
+shape = SubResource("BoxShape3D_008")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GlassCabinetBody"]
+mesh = SubResource("BoxMesh_047")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="GlassCabinetDoorFrame" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.05, -5.14)
+mesh = SubResource("BoxMesh_048")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="GlassCabinetMullion" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.05, -5.1)
+mesh = SubResource("BoxMesh_049")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="GlassCabinetShelf0" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 0.5, -5.34)
+mesh = SubResource("BoxMesh_050")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="GlassCabinetShelf1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.05, -5.34)
+mesh = SubResource("BoxMesh_051")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="GlassCabinetShelf2" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.6, -5.34)
+mesh = SubResource("BoxMesh_052")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="SocketTrunking" type="MeshInstance3D" parent="."]
+position = Vector3(-3, 1.02, -5.5)
+mesh = SubResource("BoxMesh_053")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="SocketFace0" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.02, -5.44)
+mesh = SubResource("BoxMesh_054")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="SocketFace1" type="MeshInstance3D" parent="."]
+position = Vector3(-3.6, 1.02, -5.44)
+mesh = SubResource("BoxMesh_055")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="SocketFace2" type="MeshInstance3D" parent="."]
+position = Vector3(-2.6, 1.02, -5.44)
+mesh = SubResource("BoxMesh_056")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="SocketFace3" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 1.02, -5.44)
+mesh = SubResource("BoxMesh_057")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="SocketFace4" type="MeshInstance3D" parent="."]
+position = Vector3(-0.6, 1.02, -5.44)
+mesh = SubResource("BoxMesh_058")
+material_override = ExtResource("m05_casework_pale")
+
+[node name="DistributionBoard" type="MeshInstance3D" parent="."]
+position = Vector3(1.4, 1.62, -5.5)
+mesh = SubResource("BoxMesh_059")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="DistributionBoardDoor" type="MeshInstance3D" parent="."]
+position = Vector3(1.4, 1.62, -5.43)
+mesh = SubResource("BoxMesh_060")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="DistributionLed" type="MeshInstance3D" parent="."]
+position = Vector3(1.16, 1.94, -5.41)
+mesh = SubResource("BoxMesh_061")
+material_override = ExtResource("m22_led_running")
+
+[node name="IslandTop" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.92, -2.9)
+mesh = SubResource("BoxMesh_062")
+material_override = ExtResource("m03_bench_resin")
+
+[node name="IslandBody" type="StaticBody3D" parent="."]
+position = Vector3(-2.4, 0.45, -2.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="IslandBody"]
+shape = SubResource("BoxShape3D_009")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="IslandBody"]
+mesh = SubResource("BoxMesh_063")
+material_override = ExtResource("m04_bench_steel")
+
+[node name="IslandPlinth" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.04, -2.9)
+mesh = SubResource("BoxMesh_064")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="IslandKick" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.82, -2.36)
+mesh = SubResource("BoxMesh_065")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="IslandCableRail" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.98, -3.44)
+mesh = SubResource("BoxMesh_066")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="MicroBase0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 0.95, -3.05)
+mesh = SubResource("BoxMesh_067")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="MicroColumn0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 1.16, -3.14)
+mesh = SubResource("BoxMesh_068")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="MicroStage0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 1.06, -3)
+mesh = SubResource("BoxMesh_069")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MicroKnob0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.2, 1.12, -3.12)
+mesh = SubResource("BoxMesh_070")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MicroBase1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 0.95, -3.05)
+mesh = SubResource("BoxMesh_071")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="MicroColumn1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 1.16, -3.14)
+mesh = SubResource("BoxMesh_072")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="MicroStage1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 1.06, -3)
+mesh = SubResource("BoxMesh_073")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MicroKnob1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 1.12, -3.12)
+mesh = SubResource("BoxMesh_074")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CentrifugeLatch" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 1.2, -2.92)
+mesh = SubResource("BoxMesh_075")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CentrifugeLed" type="MeshInstance3D" parent="."]
+position = Vector3(-2.55, 1.12, -2.92)
+mesh = SubResource("BoxMesh_076")
+material_override = ExtResource("m22_led_running")
+
+[node name="LogBookLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-1.1, 0.955, -2.62)
+mesh = SubResource("BoxMesh_077")
+material_override = ExtResource("m14_paper_pale")
+
+[node name="LogBookRight" type="MeshInstance3D" parent="."]
+position = Vector3(-0.86, 0.96, -2.62)
+mesh = SubResource("BoxMesh_078")
+material_override = ExtResource("m14_paper_pale")
+
+[node name="LogBookRuled" type="MeshInstance3D" parent="."]
+position = Vector3(-1.1, 0.972, -2.62)
+mesh = SubResource("BoxMesh_079")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="TubeRackBase" type="MeshInstance3D" parent="."]
+position = Vector3(-1.9, 0.96, -2.6)
+mesh = SubResource("BoxMesh_080")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="IslandBottleCap0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.05, 1.15, -2.55)
+mesh = SubResource("BoxMesh_081")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="IslandBottleCap1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.95, 1.15, -2.72)
+mesh = SubResource("BoxMesh_082")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="StoolSeat0" type="StaticBody3D" parent="."]
+position = Vector3(-3.2, 0.62, -2.1)
+rotation_degrees = Vector3(0, 8, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StoolSeat0"]
+shape = SubResource("BoxShape3D_010")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StoolSeat0"]
+mesh = SubResource("BoxMesh_083")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="StoolSeat1" type="StaticBody3D" parent="."]
+position = Vector3(-2.4, 0.62, -2.05)
+rotation_degrees = Vector3(0, -14, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StoolSeat1"]
+shape = SubResource("BoxShape3D_011")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StoolSeat1"]
+mesh = SubResource("BoxMesh_084")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="StoolSeat2" type="StaticBody3D" parent="."]
+position = Vector3(-1.6, 0.62, -2.1)
+rotation_degrees = Vector3(0, 4, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StoolSeat2"]
+shape = SubResource("BoxShape3D_012")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StoolSeat2"]
+mesh = SubResource("BoxMesh_085")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="InstrumentBenchTop" type="MeshInstance3D" parent="."]
+position = Vector3(7.14, 0.92, 2.8)
+mesh = SubResource("BoxMesh_086")
+material_override = ExtResource("m03_bench_resin")
+
+[node name="InstrumentBenchBody" type="StaticBody3D" parent="."]
+position = Vector3(7.18, 0.45, 2.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InstrumentBenchBody"]
+shape = SubResource("BoxShape3D_013")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InstrumentBenchBody"]
+mesh = SubResource("BoxMesh_087")
+material_override = ExtResource("m04_bench_steel")
+
+[node name="InstrumentBenchPlinth" type="MeshInstance3D" parent="."]
+position = Vector3(7.14, 0.04, 2.8)
+mesh = SubResource("BoxMesh_088")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="InstrumentBackTile" type="MeshInstance3D" parent="."]
+position = Vector3(7.55, 1.5, 2.8)
+mesh = SubResource("BoxMesh_089")
+material_override = ExtResource("m01_wall_tile")
+
+[node name="InstrumentShelf" type="MeshInstance3D" parent="."]
+position = Vector3(7.36, 2.02, 2.8)
+mesh = SubResource("BoxMesh_090")
+material_override = ExtResource("m04_bench_steel")
+
+[node name="IncubatorBody" type="MeshInstance3D" parent="."]
+position = Vector3(7.16, 1.32, 1.02)
+mesh = SubResource("BoxMesh_091")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="IncubatorDoor" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 1.32, 1.02)
+mesh = SubResource("BoxMesh_092")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="IncubatorPanel" type="MeshInstance3D" parent="."]
+position = Vector3(6.83, 1.64, 0.72)
+mesh = SubResource("BoxMesh_093")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="IncubatorLed" type="MeshInstance3D" parent="."]
+position = Vector3(6.8, 1.66, 0.68)
+mesh = SubResource("BoxMesh_094")
+material_override = ExtResource("m22_led_running")
+
+[node name="BankCentrifugeLed" type="MeshInstance3D" parent="."]
+position = Vector3(6.9, 1.14, 2.34)
+mesh = SubResource("BoxMesh_095")
+material_override = ExtResource("m23_led_dial")
+
+[node name="PumpBody" type="MeshInstance3D" parent="."]
+position = Vector3(7.14, 1.11, 3.2)
+mesh = SubResource("BoxMesh_096")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="PumpHead" type="MeshInstance3D" parent="."]
+position = Vector3(7.02, 1.36, 3.2)
+mesh = SubResource("BoxMesh_097")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="ControllerBody" type="MeshInstance3D" parent="."]
+position = Vector3(7.16, 1.14, 4.1)
+mesh = SubResource("BoxMesh_098")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="ControllerBlank" type="MeshInstance3D" parent="."]
+position = Vector3(6.83, 1.06, 4.1)
+mesh = SubResource("BoxMesh_099")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="ControllerLed" type="MeshInstance3D" parent="."]
+position = Vector3(6.83, 1.06, 3.94)
+mesh = SubResource("BoxMesh_100")
+material_override = ExtResource("m22_led_running")
+
+[node name="CableTrayEast" type="MeshInstance3D" parent="."]
+position = Vector3(7.3, 2.42, 2.8)
+mesh = SubResource("BoxMesh_101")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="CableTrayBracketA" type="MeshInstance3D" parent="."]
+position = Vector3(7.36, 2.3, 1.2)
+mesh = SubResource("BoxMesh_102")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="CableTrayBracketB" type="MeshInstance3D" parent="."]
+position = Vector3(7.36, 2.3, 4.3)
+mesh = SubResource("BoxMesh_103")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="ConduitDropWest" type="MeshInstance3D" parent="."]
+position = Vector3(7.44, 1.82, 0.78)
+mesh = SubResource("BoxMesh_104")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerTray" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 0.03, 1)
+mesh = SubResource("BoxMesh_105")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="MixerLeg0" type="MeshInstance3D" parent="."]
+position = Vector3(0.08, 0.62, 0.38)
+mesh = SubResource("BoxMesh_106")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerLeg1" type="MeshInstance3D" parent="."]
+position = Vector3(1.32, 0.62, 0.38)
+mesh = SubResource("BoxMesh_107")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerLeg2" type="MeshInstance3D" parent="."]
+position = Vector3(0.08, 0.62, 1.62)
+mesh = SubResource("BoxMesh_108")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerLeg3" type="MeshInstance3D" parent="."]
+position = Vector3(1.32, 0.62, 1.62)
+mesh = SubResource("BoxMesh_109")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerCrossA" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 1.06, 0.38)
+mesh = SubResource("BoxMesh_110")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerCrossB" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 1.06, 1.62)
+mesh = SubResource("BoxMesh_111")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerCrossC" type="MeshInstance3D" parent="."]
+position = Vector3(0.08, 1.06, 1)
+mesh = SubResource("BoxMesh_112")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerCrossD" type="MeshInstance3D" parent="."]
+position = Vector3(1.32, 1.06, 1)
+mesh = SubResource("BoxMesh_113")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerDrum" type="StaticBody3D" parent="."]
+position = Vector3(0.7, 1.62, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MixerDrum"]
+shape = SubResource("BoxShape3D_014")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MixerDrum"]
+mesh = SubResource("BoxMesh_114")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerMotor" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.45, 1)
+mesh = SubResource("BoxMesh_115")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerMotorFan" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.45, 0.76)
+mesh = SubResource("BoxMesh_116")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="MixerBlade" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.74, 1)
+mesh = SubResource("BoxMesh_117")
+material_override = ExtResource("m07_metal_pale")
+script = ExtResource("4_spinner")
+
+[node name="MixerShaftCoupling" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.82, 1)
+mesh = SubResource("BoxMesh_118")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="MixerControlBox" type="MeshInstance3D" parent="."]
+position = Vector3(1.48, 1.62, 0.7)
+mesh = SubResource("BoxMesh_119")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="MixerControlLed" type="MeshInstance3D" parent="."]
+position = Vector3(1.59, 1.7, 0.64)
+mesh = SubResource("BoxMesh_120")
+material_override = ExtResource("m22_led_running")
+
+[node name="MixerControlPlate" type="MeshInstance3D" parent="."]
+position = Vector3(1.59, 1.56, 0.74)
+mesh = SubResource("BoxMesh_121")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="PartitionWestA" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(2.2, 1.7, -4.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PartitionWestA"]
+shape = SubResource("BoxShape3D_015")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PartitionWestA"]
+mesh = SubResource("BoxMesh_122")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="PartitionWestB" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(2.2, 1.7, -1.35)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PartitionWestB"]
+shape = SubResource("BoxShape3D_016")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PartitionWestB"]
+mesh = SubResource("BoxMesh_123")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="PartitionLintel" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(2.2, 2.925, -2.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PartitionLintel"]
+shape = SubResource("BoxShape3D_017")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PartitionLintel"]
+mesh = SubResource("BoxMesh_124")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="PartitionSouth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.9, 1.7, -0.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PartitionSouth"]
+shape = SubResource("BoxShape3D_018")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PartitionSouth"]
+mesh = SubResource("BoxMesh_125")
+material_override = ExtResource("m00_wall_plaster")
+
+[node name="AnnexDoorJambA" type="MeshInstance3D" parent="."]
+position = Vector3(2.2, 1.15, -3.55)
+mesh = SubResource("BoxMesh_126")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexDoorJambB" type="MeshInstance3D" parent="."]
+position = Vector3(2.2, 1.15, -2.15)
+mesh = SubResource("BoxMesh_127")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexDoorHead" type="MeshInstance3D" parent="."]
+position = Vector3(2.2, 2.42, -2.85)
+mesh = SubResource("BoxMesh_128")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexDoorSill" type="MeshInstance3D" parent="."]
+position = Vector3(2.2, 0.03, -2.85)
+mesh = SubResource("BoxMesh_129")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexFloor" type="StaticBody3D" parent="."]
+position = Vector3(4.9, -0.06, -3.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AnnexFloor"]
+shape = SubResource("BoxShape3D_019")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="AnnexFloor"]
+mesh = SubResource("BoxMesh_130")
+material_override = ExtResource("m19_annex_floor")
+
+[node name="AnnexStep" type="MeshInstance3D" parent="."]
+position = Vector3(2.32, 0.04, -2.85)
+mesh = SubResource("BoxMesh_131")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexSoffitSpine" type="MeshInstance3D" parent="."]
+position = Vector3(4.2, 2.72, -3.1)
+mesh = SubResource("BoxMesh_132")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="AnnexSoffitNorth" type="MeshInstance3D" parent="."]
+position = Vector3(4.2, 2.72, -5.35)
+mesh = SubResource("BoxMesh_133")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="AnnexSoffitSouth" type="MeshInstance3D" parent="."]
+position = Vector3(4.2, 2.72, -0.85)
+mesh = SubResource("BoxMesh_134")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="AnnexCordStem" type="MeshInstance3D" parent="."]
+position = Vector3(5.1, 2.58, -3.3)
+mesh = SubResource("BoxMesh_135")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexBulbCage" type="MeshInstance3D" parent="."]
+position = Vector3(5.1, 2.06, -3.3)
+mesh = SubResource("BoxMesh_136")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="ShaftWest" type="MeshInstance3D" parent="."]
+position = Vector3(6.1, 4.05, -3.5)
+mesh = SubResource("BoxMesh_137")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="ShaftNorth" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 4.05, -4.4)
+mesh = SubResource("BoxMesh_138")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="ShaftSouth" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 4.05, -2.6)
+mesh = SubResource("BoxMesh_139")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="ShaftEast" type="MeshInstance3D" parent="."]
+position = Vector3(7.56, 4.05, -3.5)
+mesh = SubResource("BoxMesh_140")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="ShaftGlow" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 5.42, -3.5)
+mesh = SubResource("BoxMesh_141")
+material_override = ExtResource("m21_annex_bulb")
+
+[node name="ShaftLedge" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 2.72, -3.5)
+mesh = SubResource("BoxMesh_142")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FarDoorJambA" type="MeshInstance3D" parent="."]
+position = Vector3(3.58, 1.1, -5.58)
+mesh = SubResource("BoxMesh_143")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FarDoorJambB" type="MeshInstance3D" parent="."]
+position = Vector3(5.02, 1.1, -5.58)
+mesh = SubResource("BoxMesh_144")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FarDoorHead" type="MeshInstance3D" parent="."]
+position = Vector3(4.3, 2.42, -5.58)
+mesh = SubResource("BoxMesh_145")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FarCorridorFloor" type="StaticBody3D" parent="."]
+position = Vector3(4.3, -0.06, -7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FarCorridorFloor"]
+shape = SubResource("BoxShape3D_020")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="FarCorridorFloor"]
+mesh = SubResource("BoxMesh_146")
+material_override = ExtResource("m19_annex_floor")
+
+[node name="FarCorridorWallA" type="MeshInstance3D" parent="."]
+position = Vector3(3.42, 1.2, -7)
+mesh = SubResource("BoxMesh_147")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="FarCorridorWallB" type="MeshInstance3D" parent="."]
+position = Vector3(5.18, 1.2, -7)
+mesh = SubResource("BoxMesh_148")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="FarCorridorRibA" type="MeshInstance3D" parent="."]
+position = Vector3(3.5, 2.44, -7)
+mesh = SubResource("BoxMesh_149")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="FarCorridorRibB" type="MeshInstance3D" parent="."]
+position = Vector3(5.1, 2.44, -7)
+mesh = SubResource("BoxMesh_150")
+material_override = ExtResource("m18_annex_wall")
+
+[node name="FarCorridorEnd" type="StaticBody3D" parent="."]
+position = Vector3(4.3, 1.2, -8.42)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FarCorridorEnd"]
+shape = SubResource("BoxShape3D_021")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="FarCorridorEnd"]
+mesh = SubResource("BoxMesh_151")
+material_override = ExtResource("m24_void_black")
+
+[node name="AnnexHatchRim" type="MeshInstance3D" parent="."]
+position = Vector3(6.5, 0.02, -1.5)
+mesh = SubResource("BoxMesh_152")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexHatchVoid" type="MeshInstance3D" parent="."]
+position = Vector3(6.5, -0.02, -1.5)
+mesh = SubResource("BoxMesh_153")
+material_override = ExtResource("m24_void_black")
+
+[node name="CeilingFixtureA" type="MeshInstance3D" parent="."]
+position = Vector3(-4.9, 3.06, -3.4)
+mesh = SubResource("BoxMesh_154")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CeilingTubeA" type="MeshInstance3D" parent="."]
+position = Vector3(-4.9, 2.99, -3.4)
+mesh = SubResource("BoxMesh_155")
+material_override = ExtResource("m20_lamp_panel")
+
+[node name="CeilingFixtureB" type="MeshInstance3D" parent="."]
+position = Vector3(-4.9, 3.06, 0.9)
+mesh = SubResource("BoxMesh_156")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CeilingTubeB" type="MeshInstance3D" parent="."]
+position = Vector3(-4.9, 2.99, 0.9)
+mesh = SubResource("BoxMesh_157")
+material_override = ExtResource("m20_lamp_panel")
+
+[node name="CeilingFixtureC" type="MeshInstance3D" parent="."]
+position = Vector3(-1.7, 3.06, -3.4)
+mesh = SubResource("BoxMesh_158")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CeilingTubeC" type="MeshInstance3D" parent="."]
+position = Vector3(-1.7, 2.99, -3.4)
+mesh = SubResource("BoxMesh_159")
+material_override = ExtResource("m20_lamp_panel")
+
+[node name="CeilingFixtureD" type="MeshInstance3D" parent="."]
+position = Vector3(-1.7, 3.06, 0.9)
+mesh = SubResource("BoxMesh_160")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CeilingTubeD" type="MeshInstance3D" parent="."]
+position = Vector3(-1.7, 2.99, 0.9)
+mesh = SubResource("BoxMesh_161")
+material_override = ExtResource("m20_lamp_panel")
+
+[node name="CeilingFixtureE" type="MeshInstance3D" parent="."]
+position = Vector3(4.5, 3.06, 2.9)
+mesh = SubResource("BoxMesh_162")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CeilingTubeE" type="MeshInstance3D" parent="."]
+position = Vector3(4.5, 2.99, 2.9)
+mesh = SubResource("BoxMesh_163")
+material_override = ExtResource("m20_lamp_panel")
+
+[node name="CrossingRamp" type="StaticBody3D" parent="."]
+position = Vector3(-4.4, 0.03, 2.64)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrossingRamp"]
+shape = SubResource("BoxShape3D_022")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CrossingRamp"]
+mesh = SubResource("BoxMesh_164")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="CrossingRampLipA" type="MeshInstance3D" parent="."]
+position = Vector3(-5.2, 0.015, 2.64)
+mesh = SubResource("BoxMesh_165")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="CrossingRampLipB" type="MeshInstance3D" parent="."]
+position = Vector3(-3.6, 0.015, 2.64)
+mesh = SubResource("BoxMesh_166")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="HoodSashGlass" type="MeshInstance3D" parent="."]
+position = Vector3(-4.6, 1.93, -4.785)
+mesh = SubResource("QuadMesh_000")
+material_override = ExtResource("7_glass")
+
+[node name="GlassCabinetDoorLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-2.22, 1.05, -5.11)
+mesh = SubResource("QuadMesh_001")
+material_override = ExtResource("7_glass")
+
+[node name="GlassCabinetDoorRight" type="MeshInstance3D" parent="."]
+position = Vector3(-1.38, 1.05, -5.11)
+mesh = SubResource("QuadMesh_002")
+material_override = ExtResource("7_glass")
+
+[node name="IncubatorGlass" type="MeshInstance3D" parent="."]
+position = Vector3(6.79, 1.34, 1.02)
+rotation_degrees = Vector3(0, -90, 0)
+mesh = SubResource("QuadMesh_003")
+material_override = ExtResource("7_glass")
+
+[node name="TapStem0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.4, 1.12, -2.9)
+mesh = SubResource("CylinderMesh_000")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="TapSpout0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.24, 1.32, -2.9)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_001")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="TapStem1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.4, 1.12, 1.1)
+mesh = SubResource("CylinderMesh_000")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="TapSpout1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.24, 1.32, 1.1)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_001")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.19, 1.06, -0.8)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 1.06, -0.8)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg2" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.06, -0.8)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg3" type="MeshInstance3D" parent="."]
+position = Vector3(-7.19, 1.06, -0.5)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg4" type="MeshInstance3D" parent="."]
+position = Vector3(-7.05, 1.06, -0.5)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingPeg5" type="MeshInstance3D" parent="."]
+position = Vector3(-6.91, 1.06, -0.5)
+mesh = SubResource("CylinderMesh_002")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="DryingFlask0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.15, 1.07, -0.75)
+mesh = SubResource("CylinderMesh_003")
+material_override = ExtResource("m11_glassware")
+
+[node name="DryingFlask1" type="MeshInstance3D" parent="."]
+position = Vector3(-6.95, 1.07, -0.45)
+mesh = SubResource("CylinderMesh_003")
+material_override = ExtResource("m11_glassware")
+
+[node name="DryingFlask2" type="MeshInstance3D" parent="."]
+position = Vector3(-7.1, 1.07, -0.2)
+mesh = SubResource("CylinderMesh_003")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassFlask0" type="MeshInstance3D" parent="."]
+position = Vector3(-6.85, 1.01, -3.5)
+mesh = SubResource("CylinderMesh_004")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassFlask1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.15, 1.01, -3.35)
+mesh = SubResource("CylinderMesh_004")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassBeaker2" type="MeshInstance3D" parent="."]
+position = Vector3(-6.7, 0.99, -3.25)
+mesh = SubResource("CylinderMesh_005")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassBeaker3" type="MeshInstance3D" parent="."]
+position = Vector3(-7.3, 0.99, -3.6)
+mesh = SubResource("CylinderMesh_005")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassFlask4" type="MeshInstance3D" parent="."]
+position = Vector3(-6.78, 1.01, 1.8)
+mesh = SubResource("CylinderMesh_004")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassCylinder5" type="MeshInstance3D" parent="."]
+position = Vector3(-7.12, 1.06, 1.95)
+mesh = SubResource("CylinderMesh_006")
+material_override = ExtResource("m11_glassware")
+
+[node name="GlassBeaker6" type="MeshInstance3D" parent="."]
+position = Vector3(-6.9, 0.99, 2.15)
+mesh = SubResource("CylinderMesh_005")
+material_override = ExtResource("m11_glassware")
+
+[node name="WasteJar" type="MeshInstance3D" parent="."]
+position = Vector3(-7.1, 0.14, 2.75)
+mesh = SubResource("CylinderMesh_007")
+material_override = ExtResource("m11_glassware")
+
+[node name="WasteJarLid" type="MeshInstance3D" parent="."]
+position = Vector3(-7.1, 0.3, 2.75)
+mesh = SubResource("CylinderMesh_008")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="HoodBottle0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.2, 1.09, -5.2)
+mesh = SubResource("CylinderMesh_009")
+material_override = ExtResource("m11_glassware")
+
+[node name="HoodBottle1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.9, 1.09, -5.3)
+mesh = SubResource("CylinderMesh_009")
+material_override = ExtResource("m11_glassware")
+
+[node name="HoodBottle2" type="MeshInstance3D" parent="."]
+position = Vector3(-4.1, 1.09, -5.25)
+mesh = SubResource("CylinderMesh_009")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 0.59, -5.34)
+mesh = SubResource("CylinderMesh_010")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.25, 1.14, -5.34)
+mesh = SubResource("CylinderMesh_011")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass2" type="MeshInstance3D" parent="."]
+position = Vector3(-2.1, 1.69, -5.34)
+mesh = SubResource("CylinderMesh_010")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass3" type="MeshInstance3D" parent="."]
+position = Vector3(-1.95, 0.59, -5.34)
+mesh = SubResource("CylinderMesh_011")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass4" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.14, -5.34)
+mesh = SubResource("CylinderMesh_010")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass5" type="MeshInstance3D" parent="."]
+position = Vector3(-1.65, 1.69, -5.34)
+mesh = SubResource("CylinderMesh_011")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass6" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5, 0.59, -5.34)
+mesh = SubResource("CylinderMesh_010")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass7" type="MeshInstance3D" parent="."]
+position = Vector3(-1.35, 1.14, -5.34)
+mesh = SubResource("CylinderMesh_011")
+material_override = ExtResource("m11_glassware")
+
+[node name="CabinetGlass8" type="MeshInstance3D" parent="."]
+position = Vector3(-1.2, 1.69, -5.34)
+mesh = SubResource("CylinderMesh_010")
+material_override = ExtResource("m11_glassware")
+
+[node name="MicroTube0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 1.26, -3)
+rotation_degrees = Vector3(28, 0, 0)
+mesh = SubResource("CylinderMesh_012")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="MicroEye0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 1.39, -2.94)
+rotation_degrees = Vector3(28, 0, 0)
+mesh = SubResource("CylinderMesh_013")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MicroTube1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 1.26, -3)
+rotation_degrees = Vector3(28, 0, 0)
+mesh = SubResource("CylinderMesh_012")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="MicroEye1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6, 1.39, -2.94)
+rotation_degrees = Vector3(28, 0, 0)
+mesh = SubResource("CylinderMesh_013")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="CentrifugeBody" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 1.07, -3.1)
+mesh = SubResource("CylinderMesh_014")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="CentrifugeLid" type="MeshInstance3D" parent="."]
+position = Vector3(-2.4, 1.24, -3.1)
+mesh = SubResource("CylinderMesh_015")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="LogPen" type="MeshInstance3D" parent="."]
+position = Vector3(-1.05, 1.01, -2.52)
+rotation_degrees = Vector3(0, 0, 82)
+mesh = SubResource("CylinderMesh_016")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="RackTube0" type="MeshInstance3D" parent="."]
+position = Vector3(-2, 1.04, -2.6)
+mesh = SubResource("CylinderMesh_017")
+material_override = ExtResource("m11_glassware")
+
+[node name="RackTube1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.95, 1.04, -2.6)
+mesh = SubResource("CylinderMesh_017")
+material_override = ExtResource("m11_glassware")
+
+[node name="RackTube2" type="MeshInstance3D" parent="."]
+position = Vector3(-1.9, 1.04, -2.6)
+mesh = SubResource("CylinderMesh_017")
+material_override = ExtResource("m11_glassware")
+
+[node name="RackTube3" type="MeshInstance3D" parent="."]
+position = Vector3(-1.85, 1.04, -2.6)
+mesh = SubResource("CylinderMesh_017")
+material_override = ExtResource("m11_glassware")
+
+[node name="RackTube4" type="MeshInstance3D" parent="."]
+position = Vector3(-1.8, 1.04, -2.6)
+mesh = SubResource("CylinderMesh_017")
+material_override = ExtResource("m11_glassware")
+
+[node name="IslandBottle0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.05, 1.03, -2.55)
+mesh = SubResource("CylinderMesh_018")
+material_override = ExtResource("m11_glassware")
+
+[node name="IslandBottle1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.95, 1.03, -2.72)
+mesh = SubResource("CylinderMesh_018")
+material_override = ExtResource("m11_glassware")
+
+[node name="StoolLeg0_0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.101, 0.31, -2.0861)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg0_1" type="MeshInstance3D" parent="."]
+position = Vector3(-3.2139, 0.31, -2.001)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg0_2" type="MeshInstance3D" parent="."]
+position = Vector3(-3.299, 0.31, -2.1139)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg1_0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.303, 0.31, -2.0742)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg1_1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.3758, 0.31, -1.953)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg1_2" type="MeshInstance3D" parent="."]
+position = Vector3(-2.497, 0.31, -2.0258)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg2_0" type="MeshInstance3D" parent="."]
+position = Vector3(-1.5002, 0.31, -2.093)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg2_1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.607, 0.31, -2.0002)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="StoolLeg2_2" type="MeshInstance3D" parent="."]
+position = Vector3(-1.6998, 0.31, -2.107)
+mesh = SubResource("CylinderMesh_019")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="BankCentrifugeBody" type="MeshInstance3D" parent="."]
+position = Vector3(7.16, 1.11, 2.1)
+mesh = SubResource("CylinderMesh_020")
+material_override = ExtResource("m10_instrument_grey")
+
+[node name="BankCentrifugeLid" type="MeshInstance3D" parent="."]
+position = Vector3(7.16, 1.33, 2.1)
+mesh = SubResource("CylinderMesh_021")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="BankCentrifugeDial" type="MeshInstance3D" parent="."]
+position = Vector3(6.9, 1.22, 2.34)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_022")
+material_override = ExtResource("m09_instrument_cream")
+
+[node name="PumpPipe" type="MeshInstance3D" parent="."]
+position = Vector3(7.32, 1.54, 3.2)
+mesh = SubResource("CylinderMesh_023")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="PumpPipeElbow" type="MeshInstance3D" parent="."]
+position = Vector3(7.32, 1.78, 3.2)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_024")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="ControllerDialA" type="MeshInstance3D" parent="."]
+position = Vector3(6.84, 1.22, 3.98)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_025")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="ControllerDialB" type="MeshInstance3D" parent="."]
+position = Vector3(6.84, 1.22, 4.22)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_025")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="ControllerGauge" type="MeshInstance3D" parent="."]
+position = Vector3(6.84, 1.34, 4.1)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_026")
+material_override = ExtResource("m25_gauge_face")
+
+[node name="MixerDrumSkin" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 1.62, 1)
+mesh = SubResource("CylinderMesh_027")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerBandLow" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 1.2, 1)
+mesh = SubResource("CylinderMesh_028")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerBandHigh" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2, 1)
+mesh = SubResource("CylinderMesh_028")
+material_override = ExtResource("m06_metal_dark")
+
+[node name="MixerLid" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.2, 1)
+mesh = SubResource("CylinderMesh_029")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerShaft" type="MeshInstance3D" parent="."]
+position = Vector3(0.7, 2.66, 1)
+mesh = SubResource("CylinderMesh_030")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerPipeUp" type="MeshInstance3D" parent="."]
+position = Vector3(0.6, 2.5, 0.8)
+mesh = SubResource("CylinderMesh_031")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerPipeRun" type="MeshInstance3D" parent="."]
+position = Vector3(-2.2, 2.72, 0.8)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_032")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="MixerPipeDrop" type="MeshInstance3D" parent="."]
+position = Vector3(-4.3, 1.4, 0.8)
+mesh = SubResource("CylinderMesh_033")
+material_override = ExtResource("m07_metal_pale")
+
+[node name="AnnexCord" type="MeshInstance3D" parent="."]
+position = Vector3(5.1, 2.42, -3.3)
+mesh = SubResource("CylinderMesh_034")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="AnnexBulb" type="MeshInstance3D" parent="."]
+position = Vector3(5.1, 2.12, -3.3)
+mesh = SubResource("CylinderMesh_035")
+material_override = ExtResource("m21_annex_bulb")
+
+[node name="ShaftCable0" type="MeshInstance3D" parent="."]
+position = Vector3(6.5, 4, -3.4)
+mesh = SubResource("CylinderMesh_036")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="ShaftCable1" type="MeshInstance3D" parent="."]
+position = Vector3(6.66, 4, -3.26)
+mesh = SubResource("CylinderMesh_036")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="ShaftCable2" type="MeshInstance3D" parent="."]
+position = Vector3(6.82, 4, -3.12)
+mesh = SubResource("CylinderMesh_036")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="ShaftCable3" type="MeshInstance3D" parent="."]
+position = Vector3(6.98, 4, -2.98)
+mesh = SubResource("CylinderMesh_036")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="FixtureHangerA0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.45, 3.24, -3.4)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerA1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.35, 3.24, -3.4)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerB0" type="MeshInstance3D" parent="."]
+position = Vector3(-5.45, 3.24, 0.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerB1" type="MeshInstance3D" parent="."]
+position = Vector3(-4.35, 3.24, 0.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerC0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.25, 3.24, -3.4)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerC1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.15, 3.24, -3.4)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerD0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.25, 3.24, 0.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerD1" type="MeshInstance3D" parent="."]
+position = Vector3(-1.15, 3.24, 0.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerE0" type="MeshInstance3D" parent="."]
+position = Vector3(3.95, 3.24, 2.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="FixtureHangerE1" type="MeshInstance3D" parent="."]
+position = Vector3(5.05, 3.24, 2.9)
+mesh = SubResource("CylinderMesh_037")
+material_override = ExtResource("m08_metal_frame")
+
+[node name="Cables" type="Node3D" parent="."]
+
+[node name="CableBank0_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.03, 0.0559, 0, -0.42, 0.004, 0.056, 0, 0, 6.965, 0.51, 1.02)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank0_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0538, -0.08, -0.0104, 0, -0.265, 0.0414, -0.0154, 0.28, 0.0362, 6.94, 0.1675, 1.16)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank0_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0188, -0.35, 0, 0, 0, 0.056, -0.0527, -0.125, 0, 6.725, 0.035, 1.2375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank0_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0188, -0.35, 0, 0, 0, 0.056, -0.0527, -0.125, 0, 6.375, 0.035, 1.1125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank0_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0221, -0.5, 0, 0, 0, 0.056, -0.0514, -0.215, 0, 5.95, 0.035, 0.9425)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank0_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0221, -0.5, 0, 0, 0, 0.056, -0.0514, -0.215, 0, 5.45, 0.035, 0.7275)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.03, 0.0558, 0, -0.36, 0.0047, 0.056, 0, 0, 6.965, 0.48, 2.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, -0.08, -0.0315, 0, -0.265, 0.0244, -0.035, 0.1, 0.0394, 6.94, 0.1675, 2.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0344, -0.45, 0, 0, 0, 0.056, -0.0442, -0.35, 0, 6.675, 0.035, 2.025)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0344, -0.45, 0, 0, 0, 0.056, -0.0442, -0.35, 0, 6.225, 0.035, 1.675)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.035, -0.4, 0, 0, 0, 0.056, -0.0437, -0.32, 0, 5.8, 0.035, 1.34)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank1_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.035, -0.4, 0, 0, 0, 0.056, -0.0437, -0.32, 0, 5.4, 0.035, 1.02)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.03, 0.0558, 0, -0.4, 0.0042, 0.056, 0, 0, 6.965, 0.5, 3.2)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0437, -0.12, -0.0283, 0, -0.265, 0.0329, -0.035, -0.15, -0.0354, 6.92, 0.1675, 3.125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0378, -0.42, 0, 0, 0, 0.056, -0.0414, -0.3833, 0, 6.65, 0.035, 2.8583)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0378, -0.42, 0, 0, 0, 0.056, -0.0414, -0.3833, 0, 6.23, 0.035, 2.475)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0378, -0.42, 0, 0, 0, 0.056, -0.0414, -0.3833, 0, 5.81, 0.035, 2.0917)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0463, -0.3, 0, 0, 0, 0.056, -0.0315, -0.44, 0, 5.45, 0.035, 1.68)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank2_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0463, -0.3, 0, 0, 0, 0.056, -0.0315, -0.44, 0, 5.15, 0.035, 1.24)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.03, 0.0559, 0, -0.46, 0.0036, 0.056, 0, 0, 6.965, 0.53, 4.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0454, -0.18, -0.0213, 0, -0.265, 0.0425, -0.0327, -0.25, -0.0296, 6.89, 0.1675, 3.975)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, -0.35, 0, 0, 0, 0.056, -0.0418, -0.3125, 0, 6.625, 0.035, 3.6938)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, -0.35, 0, 0, 0, 0.056, -0.0418, -0.3125, 0, 6.275, 0.035, 3.3813)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, -0.35, 0, 0, 0, 0.056, -0.0418, -0.3125, 0, 5.925, 0.035, 3.0688)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, -0.35, 0, 0, 0, 0.056, -0.0418, -0.3125, 0, 5.575, 0.035, 2.7563)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0466, -0.2667, 0, 0, 0, 0.056, -0.0311, -0.4, 0, 5.2667, 0.035, 2.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0466, -0.2667, 0, 0, 0, 0.056, -0.0311, -0.4, 0, 5, 0.035, 2)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBank3_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0466, -0.2667, 0, 0, 0, 0.056, -0.0311, -0.4, 0, 4.7333, 0.035, 1.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.125, 0.0501, 0.0012, -0.45, -0.0139, 0.052, 0.01, 0.0003, 1.8875, 0.795, -5.415)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.125, 0.0501, 0.0012, -0.45, -0.0139, 0.052, 0.01, 0.0003, 1.7625, 0.345, -5.405)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0504, 0.1, 0.0013, 0, -0.0425, 0.0517, 0.0126, 0.4, 0.0052, 1.75, 0.0988, -5.2)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0504, 0.1, 0.0013, 0, -0.0425, 0.0517, 0.0126, 0.4, 0.0052, 1.85, 0.0563, -4.8)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0449, 0.2333, 0, 0, 0, 0.052, 0.0262, 0.4, 0, 2.0167, 0.035, -4.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0449, 0.2333, 0, 0, 0, 0.052, 0.0262, 0.4, 0, 2.25, 0.035, -4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0449, 0.2333, 0, 0, 0, 0.052, 0.0262, 0.4, 0, 2.4833, 0.035, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0478, 0.2, 0, 0, 0, 0.052, 0.0205, 0.4667, 0, 2.7, 0.035, -3.1667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0478, 0.2, 0, 0, 0, 0.052, 0.0205, 0.4667, 0, 2.9, 0.035, -2.7)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0478, 0.2, 0, 0, 0, 0.052, 0.0205, 0.4667, 0, 3.1, 0.035, -2.2333)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0508, 0.1333, 0, 0, 0, 0.052, 0.0113, 0.6, 0, 3.2667, 0.035, -1.7)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0508, 0.1333, 0, 0, 0, 0.052, 0.0113, 0.6, 0, 3.4, 0.035, -1.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableHood_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0508, 0.1333, 0, 0, 0, 0.052, 0.0113, 0.6, 0, 3.5333, 0.035, -0.5)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.1, 0.059, 0, -0.55, -0.0107, 0.06, 0, 0, 1.35, 0.925, -5.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.1, 0.059, 0, -0.55, -0.0107, 0.06, 0, 0, 1.25, 0.375, -5.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0575, 0.15, 0.0011, 0, -0.0325, 0.0599, 0.0172, 0.5, 0.0036, 1.275, 0.0838, -5.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0575, 0.15, 0.0011, 0, -0.0325, 0.0599, 0.0172, 0.5, 0.0036, 1.425, 0.0513, -4.65)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0514, 0.3, 0, 0, 0, 0.06, 0.0309, 0.5, 0, 1.65, 0.035, -4.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0514, 0.3, 0, 0, 0, 0.06, 0.0309, 0.5, 0, 1.95, 0.035, -3.65)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0514, 0.3, 0, 0, 0, 0.06, 0.0309, 0.5, 0, 2.25, 0.035, -3.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0563, 0.175, 0, 0, 0, 0.06, 0.0207, 0.475, 0, 2.4875, 0.035, -2.6625)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0563, 0.175, 0, 0, 0, 0.06, 0.0207, 0.475, 0, 2.6625, 0.035, -2.1875)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0563, 0.175, 0, 0, 0, 0.06, 0.0207, 0.475, 0, 2.8375, 0.035, -1.7125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0563, 0.175, 0, 0, 0, 0.06, 0.0207, 0.475, 0, 3.0125, 0.035, -1.2375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0577, 0.1333, 0, 0, 0, 0.06, 0.0165, 0.4667, 0, 3.1667, 0.035, -0.7667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0577, 0.1333, 0, 0, 0, 0.06, 0.0165, 0.4667, 0, 3.3, 0.035, -0.3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBoard_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0577, 0.1333, 0, 0, 0, 0.06, 0.0165, 0.4667, 0, 3.4333, 0.035, 0.1667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0516, -0.0037, -0.425, -0.006, 0.0519, -0.03, -0.0004, -2.425, 0.7375, -3.355)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0516, -0.0037, -0.425, -0.006, 0.0519, -0.03, -0.0004, -2.475, 0.3125, -3.385)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0446, 0.3, 0.003, 0, -0.065, 0.0517, 0.0268, 0.5, 0.0049, -2.35, 0.0675, -3.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0382, 0.4, 0, 0, 0, 0.052, 0.0353, 0.4333, 0, -2, 0.035, -2.6833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0382, 0.4, 0, 0, 0, 0.052, 0.0353, 0.4333, 0, -1.6, 0.035, -2.25)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0382, 0.4, 0, 0, 0, 0.052, 0.0353, 0.4333, 0, -1.2, 0.035, -1.8167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0312, 0.4, 0, 0, 0, 0.052, 0.0416, 0.3, 0, -0.8, 0.035, -1.45)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0312, 0.4, 0, 0, 0, 0.052, 0.0416, 0.3, 0, -0.4, 0.035, -1.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0312, 0.4, 0, 0, 0, 0.052, 0.0416, 0.3, 0, 0, 0.035, -0.85)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0312, 0.4, 0, 0, 0, 0.052, 0.0416, 0.3, 0, 0.4, 0.035, -0.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0319, 0.45, 0, 0, 0, 0.052, 0.041, 0.35, 0, 0.825, 0.035, -0.225)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCentrifuge_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0319, 0.45, 0, 0, 0, 0.052, 0.041, 0.35, 0, 1.275, 0.035, 0.125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0477, -0.0017, -0.4611, -0.0052, 0.048, -0.0167, -0.0002, -7.075, 1.6194, -1.9083)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0477, -0.0019, -0.4167, -0.0057, 0.048, -0.0167, -0.0002, -7.125, 1.1806, -1.925)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0476, -0.0021, -0.3722, -0.0064, 0.048, -0.0167, -0.0003, -7.175, 0.7861, -1.9417)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0472, 0.05, 0.0061, 0, -0.2825, 0.0338, 0.0086, 0.275, 0.0336, -7.175, 0.4587, -1.8125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0472, 0.05, 0.0061, 0, -0.2825, 0.0338, 0.0086, 0.275, 0.0336, -7.125, 0.1763, -1.5375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0403, 0.275, 0, 0, 0, 0.048, 0.0261, 0.425, 0, -6.9625, 0.035, -1.1875)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0403, 0.275, 0, 0, 0, 0.048, 0.0261, 0.425, 0, -6.6875, 0.035, -0.7625)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0403, 0.275, 0, 0, 0, 0.048, 0.0261, 0.425, 0, -6.4125, 0.035, -0.3375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0403, 0.275, 0, 0, 0, 0.048, 0.0261, 0.425, 0, -6.1375, 0.035, 0.0875)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0024, 0.6, 0, 0, 0, 0.048, 0.0479, 0.03, 0, -5.7, 0.035, 0.315)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0024, 0.6, 0, 0, 0, 0.048, 0.0479, 0.03, 0, -5.1, 0.035, 0.345)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0024, 0.6, 0, 0, 0, 0.048, 0.0479, 0.03, 0, -4.5, 0.035, 0.375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0024, 0.6, 0, 0, 0, 0.048, 0.0479, 0.03, 0, -3.9, 0.035, 0.405)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0007, 0.4667, 0, 0, 0, 0.048, 0.048, -0.0067, 0, -3.3667, 0.035, 0.4167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0007, 0.4667, 0, 0, 0, 0.048, 0.048, -0.0067, 0, -2.9, 0.035, 0.41)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0007, 0.4667, 0, 0, 0, 0.048, 0.048, -0.0067, 0, -2.4333, 0.035, 0.4033)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0004, 0.52, 0, 0, 0, 0.048, 0.048, 0.004, 0, -1.94, 0.035, 0.402)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0004, 0.52, 0, 0, 0, 0.048, 0.048, 0.004, 0, -1.42, 0.035, 0.406)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0004, 0.52, 0, 0, 0, 0.048, 0.048, 0.004, 0, -0.9, 0.035, 0.41)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0004, 0.52, 0, 0, 0, 0.048, 0.048, 0.004, 0, -0.38, 0.035, 0.414)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_020" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0004, 0.52, 0, 0, 0, 0.048, 0.048, 0.004, 0, 0.14, 0.035, 0.418)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_021" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0036, 0.525, 0, 0, 0, 0.048, 0.0479, 0.04, 0, 0.6625, 0.035, 0.44)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBenchLamp_022" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0036, 0.525, 0, 0, 0, 0.048, 0.0479, 0.04, 0, 1.1875, 0.035, 0.48)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0476, 0.0124, -0.375, -0.0059, 0.0464, 0.1, 0.0016, -6.625, 0.7625, -3.85)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.05, 0.0476, 0.0124, -0.375, -0.0059, 0.0464, 0.1, 0.0016, -6.675, 0.3875, -3.75)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0449, 0.15, 0.0032, 0, -0.0825, 0.0471, 0.0169, 0.4, 0.0085, -6.625, 0.1588, -3.5)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0449, 0.15, 0.0032, 0, -0.0825, 0.0471, 0.0169, 0.4, 0.0085, -6.475, 0.0763, -3.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0362, 0.4, 0, 0, 0, 0.048, 0.0315, 0.46, 0, -6.2, 0.035, -2.67)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0362, 0.4, 0, 0, 0, 0.048, 0.0315, 0.46, 0, -5.8, 0.035, -2.21)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0362, 0.4, 0, 0, 0, 0.048, 0.0315, 0.46, 0, -5.4, 0.035, -1.75)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0362, 0.4, 0, 0, 0, 0.048, 0.0315, 0.46, 0, -5, 0.035, -1.29)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0362, 0.4, 0, 0, 0, 0.048, 0.0315, 0.46, 0, -4.6, 0.035, -0.83)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0169, 0.48, 0, 0, 0, 0.048, 0.0449, 0.18, 0, -4.16, 0.035, -0.51)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0169, 0.48, 0, 0, 0, 0.048, 0.0449, 0.18, 0, -3.68, 0.035, -0.33)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0169, 0.48, 0, 0, 0, 0.048, 0.0449, 0.18, 0, -3.2, 0.035, -0.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0169, 0.48, 0, 0, 0, 0.048, 0.0449, 0.18, 0, -2.72, 0.035, 0.03)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0169, 0.48, 0, 0, 0, 0.048, 0.0449, 0.18, 0, -2.24, 0.035, 0.21)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.001, 0.5, 0, 0, 0, 0.048, 0.048, 0.01, 0, -1.75, 0.035, 0.305)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.001, 0.5, 0, 0, 0, 0.048, 0.048, 0.01, 0, -1.25, 0.035, 0.315)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.001, 0.5, 0, 0, 0, 0.048, 0.048, 0.01, 0, -0.75, 0.035, 0.325)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.001, 0.5, 0, 0, 0, 0.048, 0.048, 0.01, 0, -0.25, 0.035, 0.335)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBalance_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.001, 0.5, 0, 0, 0, 0.048, 0.048, 0.01, 0, 0.25, 0.035, 0.345)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0412, -0.1, -0.0142, 0, -0.6622, 0.0174, -0.0154, 0.2667, 0.0378, -0.65, 2.6689, -3.2667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0412, -0.1, -0.0132, 0, -0.4667, 0.0229, -0.0154, 0.2667, 0.0352, -0.75, 2.1044, -3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0412, -0.1, -0.0107, 0, -0.2711, 0.0319, -0.0154, 0.2667, 0.0284, -0.85, 1.7356, -2.7333)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0421, -0.1, -0.0108, 0, -0.5622, 0.0232, -0.0126, 0.3333, 0.0358, -0.95, 1.3189, -2.4333)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0421, -0.1, -0.0092, 0, -0.3667, 0.0303, -0.0126, 0.3333, 0.0306, -1.05, 0.8544, -2.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0421, -0.1, -0.0056, 0, -0.1711, 0.0395, -0.0126, 0.3333, 0.0186, -1.15, 0.5856, -1.7667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0356, 0.2667, 0.0084, 0, -0.155, 0.0416, 0.0259, 0.3667, 0.0115, -1.0667, 0.4225, -1.4167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0356, 0.2667, 0.0084, 0, -0.155, 0.0416, 0.0259, 0.3667, 0.0115, -0.8, 0.2675, -1.05)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0356, 0.2667, 0.0084, 0, -0.155, 0.0416, 0.0259, 0.3667, 0.0115, -0.5333, 0.1125, -0.6833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0197, 0.4333, 0, 0, 0, 0.044, 0.0394, 0.2167, 0, -0.1833, 0.035, -0.3917)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0197, 0.4333, 0, 0, 0, 0.044, 0.0394, 0.2167, 0, 0.25, 0.035, -0.175)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0197, 0.4333, 0, 0, 0, 0.044, 0.0394, 0.2167, 0, 0.6833, 0.035, 0.0417)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0181, 0.3, 0, 0, 0, 0.044, 0.0401, 0.135, 0, 1.05, 0.035, 0.2175)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose0_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0181, 0.3, 0, 0, 0, 0.044, 0.0401, 0.135, 0, 1.35, 0.035, 0.3525)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0352, -0.15, -0.0234, 0, -0.48, 0.0203, -0.0264, 0.2, 0.0312, 1.825, 0.76, -5.3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0352, -0.15, -0.0114, 0, -0.12, 0.0397, -0.0264, 0.2, 0.0152, 1.675, 0.46, -5.1)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0417, -0.1333, -0.0039, 0, -0.1217, 0.0423, -0.0139, 0.4, 0.0116, 1.5333, 0.3392, -4.8)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0417, -0.1333, -0.0039, 0, -0.1217, 0.0423, -0.0139, 0.4, 0.0116, 1.4, 0.2175, -4.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0417, -0.1333, -0.0039, 0, -0.1217, 0.0423, -0.0139, 0.4, 0.0116, 1.2667, 0.0958, -4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, 0.0667, 0, 0, 0, 0.044, 0.0049, 0.6, 0, 1.2333, 0.035, -3.5)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, 0.0667, 0, 0, 0, 0.044, 0.0049, 0.6, 0, 1.3, 0.035, -2.9)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, 0.0667, 0, 0, 0, 0.044, 0.0049, 0.6, 0, 1.3667, 0.035, -2.3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0436, 0.0667, 0, 0, 0, 0.044, 0.0062, 0.4667, 0, 1.4333, 0.035, -1.7667)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0436, 0.0667, 0, 0, 0, 0.044, 0.0062, 0.4667, 0, 1.5, 0.035, -1.3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0436, 0.0667, 0, 0, 0, 0.044, 0.0062, 0.4667, 0, 1.5667, 0.035, -0.8333)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, 0.05, 0, 0, 0, 0.044, 0.0055, 0.4, 0, 1.625, 0.035, -0.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose1_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0437, 0.05, 0, 0, 0, 0.044, 0.0055, 0.4, 0, 1.675, 0.035, 0)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.1, 0.0397, -0.0051, -0.78, 0.005, 0.0397, -0.1, 0.0006, 4.45, 1.97, 2.75)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0283, 0.1, 0.0265, 0, -0.38, 0.014, 0.0283, -0.1, -0.0265, 4.55, 1.39, 2.65)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0333, -0.2, -0.019, 0, -0.6, 0.0206, -0.0222, -0.3, -0.0285, 4.5, 0.9, 2.45)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0333, -0.2, -0.0108, 0, -0.2, 0.035, -0.0222, -0.3, -0.0161, 4.3, 0.5, 2.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0283, -0.3, -0.0112, 0, -0.1825, 0.0367, -0.0283, -0.3, -0.0112, 4.05, 0.3088, 1.85)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0283, -0.3, -0.0112, 0, -0.1825, 0.0367, -0.0283, -0.3, -0.0112, 3.75, 0.1263, 1.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0154, -0.4, 0, 0, 0, 0.04, -0.0369, -0.1667, 0, 3.4, 0.035, 1.3167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0154, -0.4, 0, 0, 0, 0.04, -0.0369, -0.1667, 0, 3, 0.035, 1.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0154, -0.4, 0, 0, 0, 0.04, -0.0369, -0.1667, 0, 2.6, 0.035, 0.9833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0198, -0.35, 0, 0, 0, 0.04, -0.0347, -0.2, 0, 2.225, 0.035, 0.8)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableLoose2_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0198, -0.35, 0, 0, 0, 0.04, -0.0347, -0.2, 0, 1.875, 0.035, 0.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableMixer_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.06, 0.0557, 0.0047, -0.6, 0.0055, 0.0558, 0.05, -0.0005, 1.51, 1.2, 0.725)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableMixer_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.06, 0.0556, 0.0056, -0.5, 0.0066, 0.0557, 0.05, -0.0007, 1.57, 0.65, 0.775)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableMixer_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.025, 0.2, 0.0427, 0, -0.365, 0.0293, 0.0501, 0.1, 0.0214, 1.7, 0.2175, 0.85)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableMixer_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0336, 0.4, 0, 0, 0, 0.056, 0.0448, -0.3, 0, 2, 0.035, 0.75)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableMixer_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0448, -0.3, 0, 0, 0, 0.056, -0.0336, -0.4, 0, 2.05, 0.035, 0.4)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.025, 0.048, -0.0017, -0.69, -0.0017, 0.048, -0.025, -0.0001, -1.7125, 2.635, 0.8875)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0339, -0.025, -0.0316, 0, -0.09, 0.0176, -0.0339, -0.025, -0.0316, -1.7375, 2.245, 0.8625)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0478, -0.0045, -0.8, -0.0044, 0.0478, -0.075, -0.0004, -1.7875, 1.8, 0.8125)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0339, -0.075, -0.03, 0, -0.2, 0.0225, -0.0339, -0.075, -0.03, -1.8625, 1.3, 0.7375)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0.05, 0.0479, -0.0068, -0.7, 0.0034, 0.0475, -0.1, 0.0005, -1.875, 0.85, 0.65)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0429, 0.05, 0.0143, 0, -0.1, 0.0358, 0.0215, -0.1, -0.0286, -1.825, 0.45, 0.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0339, 0.3, 0.0187, 0, -0.28, 0.0401, 0.0339, -0.3, -0.0187, -1.65, 0.26, 0.35)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0384, 0.3, 0.0048, 0, -0.085, 0.0473, 0.0288, -0.4, -0.0064, -1.35, 0.0775, 0)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0034, 0.4667, 0, 0, 0, 0.048, 0.0479, 0.0333, 0, -0.9667, 0.035, -0.1833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0034, 0.4667, 0, 0, 0, 0.048, 0.0479, 0.0333, 0, -0.5, 0.035, -0.15)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0034, 0.4667, 0, 0, 0, 0.048, 0.0479, 0.0333, 0, -0.0333, 0.035, -0.1167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0178, 0.5, 0, 0, 0, 0.048, 0.0446, 0.2, 0, 0.45, 0.035, 0)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCeilingDrop_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0178, 0.5, 0, 0, 0, 0.048, 0.0446, 0.2, 0, 0.95, 0.035, 0.2)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0017, 0.5, 0, 0, 0, 0.052, 0.052, -0.016, 0, -6.65, 0.035, 2.692)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0017, 0.5, 0, 0, 0, 0.052, 0.052, -0.016, 0, -6.15, 0.035, 2.676)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0017, 0.5, 0, 0, 0, 0.052, 0.052, -0.016, 0, -5.65, 0.035, 2.66)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0017, 0.5, 0, 0, 0, 0.052, 0.052, -0.016, 0, -5.15, 0.035, 2.644)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0017, 0.5, 0, 0, 0, 0.052, 0.052, -0.016, 0, -4.65, 0.035, 2.628)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0024, 0.5, 0, 0, 0, 0.052, 0.0519, -0.0233, 0, -4.15, 0.035, 2.6083)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0024, 0.5, 0, 0, 0, 0.052, 0.0519, -0.0233, 0, -3.65, 0.035, 2.585)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0024, 0.5, 0, 0, 0, 0.052, 0.0519, -0.0233, 0, -3.15, 0.035, 2.5617)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0304, 0.45, 0, 0, 0, 0.052, 0.0422, -0.325, 0, -2.675, 0.035, 2.3875)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0304, 0.45, 0, 0, 0, 0.052, 0.0422, -0.325, 0, -2.225, 0.035, 2.0625)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0516, 0.05, 0, 0, 0, 0.052, 0.0064, -0.4, 0, -1.975, 0.035, 1.7)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0516, 0.05, 0, 0, 0, 0.052, 0.0064, -0.4, 0, -1.925, 0.035, 1.3)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCrossing_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.052, 0, 0, 0, 0, 0.052, 0, -0.6, 0, -1.9, 0.035, 0.8)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, -0.0456, 0.0008, 0, 0.01, 0.0519, -0.0135, 0.17, -0.0028, 1.4672, 0.065, 0.135)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, -0.1244, -0.0021, 0, -0.01, 0.0519, -0.0368, 0.1244, 0.0021, 1.3822, 0.065, 0.2822)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, -0.17, -0.0028, 0, -0.01, 0.0519, -0.0502, 0.0456, 0.0008, 1.235, 0.055, 0.3672)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, -0.17, 0.0028, 0, 0.01, 0.0519, -0.0502, -0.0456, 0.0008, 1.065, 0.055, 0.3672)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, -0.1244, 0.0021, 0, 0.01, 0.0519, -0.0368, -0.1244, 0.0021, 0.9178, 0.065, 0.2822)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, -0.0456, -0.0008, 0, -0.01, 0.0519, -0.0135, -0.17, -0.0028, 0.8328, 0.065, 0.135)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, 0.0456, 0.0008, 0, -0.01, 0.0519, 0.0135, -0.17, -0.0028, 0.8328, 0.055, -0.035)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, 0.1244, -0.0021, 0, 0.01, 0.0519, 0.0368, -0.1244, 0.0021, 0.9178, 0.055, -0.1822)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, 0.17, -0.0028, 0, 0.01, 0.0519, 0.0502, -0.0456, 0.0008, 1.065, 0.065, -0.2672)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, 0.17, 0.0028, 0, -0.01, 0.0519, 0.0502, 0.0456, 0.0008, 1.235, 0.065, -0.2672)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, 0.1244, 0.0021, 0, -0.01, 0.0519, 0.0368, 0.1244, 0.0021, 1.3822, 0.055, -0.1822)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil0_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, 0.0456, -0.0008, 0, 0.01, 0.0519, 0.0135, 0.17, -0.0028, 1.4672, 0.055, -0.035)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, -0.0375, 0.0009, 0, 0.01, 0.0519, -0.0135, 0.14, -0.0035, 1.6112, 0.065, -0.18)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, -0.1025, -0.0025, 0, -0.01, 0.0519, -0.0368, 0.1025, 0.0025, 1.5412, 0.065, -0.0588)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, -0.14, -0.0035, 0, -0.01, 0.0519, -0.0502, 0.0375, 0.0009, 1.42, 0.055, 0.0112)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, -0.14, 0.0035, 0, 0.01, 0.0519, -0.0502, -0.0375, 0.0009, 1.28, 0.055, 0.0112)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, -0.1025, 0.0025, 0, 0.01, 0.0519, -0.0368, -0.1025, 0.0025, 1.1588, 0.065, -0.0588)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, -0.0375, -0.0009, 0, -0.01, 0.0519, -0.0135, -0.14, -0.0035, 1.0888, 0.065, -0.18)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, 0.0375, 0.0009, 0, -0.01, 0.0519, 0.0135, -0.14, -0.0035, 1.0888, 0.055, -0.32)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, 0.1025, -0.0025, 0, 0.01, 0.0519, 0.0368, -0.1025, 0.0025, 1.1588, 0.055, -0.4412)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, 0.14, -0.0035, 0, 0.01, 0.0519, 0.0502, -0.0375, 0.0009, 1.28, 0.065, -0.5112)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, 0.14, 0.0035, 0, -0.01, 0.0519, 0.0502, 0.0375, 0.0009, 1.42, 0.065, -0.5112)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, 0.1025, 0.0025, 0, -0.01, 0.0519, 0.0368, 0.1025, 0.0025, 1.5412, 0.055, -0.4412)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil1_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, 0.0375, -0.0009, 0, 0.01, 0.0519, 0.0135, 0.14, -0.0035, 1.6112, 0.055, -0.32)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, -0.0322, 0.0011, 0, 0.01, 0.0518, -0.0135, 0.12, -0.004, 1.8239, 0.065, 0.61)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, -0.0878, -0.003, 0, -0.01, 0.0518, -0.0368, 0.0878, 0.003, 1.7639, 0.065, 0.7139)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, -0.12, -0.004, 0, -0.01, 0.0518, -0.0502, 0.0322, 0.0011, 1.66, 0.055, 0.7739)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, -0.12, 0.004, 0, 0.01, 0.0518, -0.0502, -0.0322, 0.0011, 1.54, 0.055, 0.7739)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, -0.0878, 0.003, 0, 0.01, 0.0518, -0.0368, -0.0878, 0.003, 1.4361, 0.065, 0.7139)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, -0.0322, -0.0011, 0, -0.01, 0.0518, -0.0135, -0.12, -0.004, 1.3761, 0.065, 0.61)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0502, 0.0322, 0.0011, 0, -0.01, 0.0518, 0.0135, -0.12, -0.004, 1.3761, 0.055, 0.49)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0368, 0.0878, -0.003, 0, 0.01, 0.0518, 0.0368, -0.0878, 0.003, 1.4361, 0.055, 0.3861)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0135, 0.12, -0.004, 0, 0.01, 0.0518, 0.0502, -0.0322, 0.0011, 1.54, 0.065, 0.3261)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0135, 0.12, 0.004, 0, -0.01, 0.0518, 0.0502, 0.0322, 0.0011, 1.66, 0.065, 0.3261)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0368, 0.0878, 0.003, 0, -0.01, 0.0518, 0.0368, 0.0878, 0.003, 1.7639, 0.055, 0.3861)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableCoil2_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0502, 0.0322, -0.0011, 0, 0.01, 0.0518, 0.0135, 0.12, -0.004, 1.8239, 0.055, 0.49)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.725, 0.045, 0.12)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.775, 0.045, -0.38)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8125, 0.045, -0.83)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8375, 0.045, -1.23)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.85, 0.045, -1.63)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.85, 0.045, -2.03)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8625, 0.045, -2.43)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8875, 0.045, -2.83)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.075, 0.045, -3.08)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.425, 0.045, -3.155)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.775, 0.045, -3.205)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.2, 0.045, -3.255)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.7, 0.045, -3.305)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.2, 0.045, -3.3425)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.7, 0.045, -3.3675)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.1, 0.045, -3.1612)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.4, 0.045, -2.7237)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.7, 0.045, -2.2862)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6, 0.045, -1.8487)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle0_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.3, 0.045, -1.58)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.739, 0.049, 0.1284)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.789, 0.049, -0.3716)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8265, 0.049, -0.8216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8515, 0.049, -1.2216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.864, 0.049, -1.6216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.864, 0.049, -2.0216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8765, 0.049, -2.4216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9015, 0.049, -2.8216)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.089, 0.049, -3.0716)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.439, 0.049, -3.1466)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.789, 0.049, -3.1966)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.214, 0.049, -3.2466)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.714, 0.049, -3.2966)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.214, 0.049, -3.3341)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.714, 0.049, -3.3591)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.114, 0.049, -3.1528)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.414, 0.049, -2.7153)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.714, 0.049, -2.2778)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.014, 0.049, -1.8403)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle1_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.314, 0.049, -1.5716)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.753, 0.053, 0.1368)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.803, 0.053, -0.3632)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8405, 0.053, -0.8132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8655, 0.053, -1.2132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.878, 0.053, -1.6132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.878, 0.053, -2.0132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8905, 0.053, -2.4132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9155, 0.053, -2.8132)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.103, 0.053, -3.0632)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.453, 0.053, -3.1382)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.803, 0.053, -3.1882)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.228, 0.053, -3.2382)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.728, 0.053, -3.2882)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.228, 0.053, -3.3257)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.728, 0.053, -3.3507)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.128, 0.053, -3.1444)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.428, 0.053, -2.7069)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.728, 0.053, -2.2694)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.028, 0.053, -1.8319)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle2_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.328, 0.053, -1.5632)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.767, 0.045, 0.1452)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.817, 0.045, -0.3548)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8545, 0.045, -0.8048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8795, 0.045, -1.2048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.892, 0.045, -1.6048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.892, 0.045, -2.0048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9045, 0.045, -2.4048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9295, 0.045, -2.8048)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.117, 0.045, -3.0548)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.467, 0.045, -3.1298)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.817, 0.045, -3.1798)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.242, 0.045, -3.2298)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.742, 0.045, -3.2798)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.242, 0.045, -3.3173)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.742, 0.045, -3.3423)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.142, 0.045, -3.1361)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.442, 0.045, -2.6986)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.742, 0.045, -2.2611)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.042, 0.045, -1.8236)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle3_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.342, 0.045, -1.5548)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.781, 0.049, 0.1536)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.831, 0.049, -0.3464)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8685, 0.049, -0.7964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8935, 0.049, -1.1964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.906, 0.049, -1.5964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.906, 0.049, -1.9964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9185, 0.049, -2.3964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9435, 0.049, -2.7964)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.131, 0.049, -3.0464)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.481, 0.049, -3.1214)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.831, 0.049, -3.1714)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.256, 0.049, -3.2214)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.756, 0.049, -3.2714)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.256, 0.049, -3.3089)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.756, 0.049, -3.3339)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.156, 0.049, -3.1277)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.456, 0.049, -2.6902)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.756, 0.049, -2.2527)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.056, 0.049, -1.8152)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle4_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.356, 0.049, -1.5464)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.795, 0.053, 0.162)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.845, 0.053, -0.338)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8825, 0.053, -0.788)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9075, 0.053, -1.188)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.92, 0.053, -1.588)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.92, 0.053, -1.988)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9325, 0.053, -2.388)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9575, 0.053, -2.788)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.145, 0.053, -3.038)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.495, 0.053, -3.113)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.845, 0.053, -3.163)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.27, 0.053, -3.213)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.77, 0.053, -3.263)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.27, 0.053, -3.3005)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.77, 0.053, -3.3255)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.17, 0.053, -3.1193)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.47, 0.053, -2.6818)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.77, 0.053, -2.2443)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.07, 0.053, -1.8068)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle5_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.37, 0.053, -1.538)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.809, 0.045, 0.1704)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.859, 0.045, -0.3296)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.8965, 0.045, -0.7796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9215, 0.045, -1.1796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.934, 0.045, -1.5796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.934, 0.045, -1.9796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9465, 0.045, -2.3796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9715, 0.045, -2.7796)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.159, 0.045, -3.0296)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.509, 0.045, -3.1046)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.859, 0.045, -3.1546)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.284, 0.045, -3.2046)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.784, 0.045, -3.2546)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.284, 0.045, -3.2921)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.784, 0.045, -3.3171)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.184, 0.045, -3.1109)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.484, 0.045, -2.6734)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.784, 0.045, -2.2359)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.084, 0.045, -1.7984)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle6_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.384, 0.045, -1.5296)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.823, 0.049, 0.1788)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0438, 0.05, 0, 0, 0, 0.044, 0.0044, -0.5, 0, 1.873, 0.049, -0.3212)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9105, 0.049, -0.7712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9355, 0.049, -1.1712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.948, 0.049, -1.5712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.044, 0, 0, 0, 0, 0.044, 0, -0.4, 0, 1.948, 0.049, -1.9712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9605, 0.049, -2.3712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0439, 0.025, 0, 0, 0, 0.044, 0.0027, -0.4, 0, 1.9855, 0.049, -2.7712)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0121, 0.35, 0, 0, 0, 0.044, 0.0423, -0.1, 0, 2.173, 0.049, -3.0212)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_009" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.523, 0.049, -3.0962)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_010" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0062, 0.35, 0, 0, 0, 0.044, 0.0436, -0.05, 0, 2.873, 0.049, -3.1462)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_011" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.298, 0.049, -3.1962)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_012" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0044, 0.5, 0, 0, 0, 0.044, 0.0438, -0.05, 0, 3.798, 0.049, -3.2462)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_013" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.298, 0.049, -3.2837)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_014" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0022, 0.5, 0, 0, 0, 0.044, 0.0439, -0.025, 0, 4.798, 0.049, -3.3087)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_015" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.198, 0.049, -3.1025)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_016" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.498, 0.049, -2.665)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_017" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 5.798, 0.049, -2.2275)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_018" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0363, 0.3, 0, 0, 0, 0.044, 0.0249, 0.4375, 0, 6.098, 0.049, -1.79)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableBundle7_019" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(-0.0139, 0.3, 0, 0, 0, 0.044, 0.0417, 0.1, 0, 6.398, 0.049, -1.5212)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, 0.25, 0, 0, 0, 0.04, 0.0144, -0.65, 0, 7.025, 0.1, -2.525)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0373, 0.25, 0, 0, 0, 0.04, 0.0144, -0.65, 0, 7.275, 0.1, -3.175)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 0.4167, -3.5167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.05, -3.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.6833, -3.5833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.3625, 2.325, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2875, 2.975, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2125, 3.625, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser0_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.1375, 4.275, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0378, 0.225, 0, 0, 0, 0.04, 0.0131, -0.65, 0, 7.0625, 0.1, -2.525)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0378, 0.225, 0, 0, 0, 0.04, 0.0131, -0.65, 0, 7.2875, 0.1, -3.175)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 0.4167, -3.5167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.05, -3.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.6833, -3.5833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.3625, 2.325, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2875, 2.975, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2125, 3.625, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser1_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.1375, 4.275, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_000" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0382, 0.2, 0, 0, 0, 0.04, 0.0118, -0.65, 0, 7.1, 0.1, -2.525)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_001" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0.0382, 0.2, 0, 0, 0, 0.04, 0.0118, -0.65, 0, 7.3, 0.1, -3.175)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_002" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 0.4167, -3.5167)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_003" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.05, -3.55)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_004" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, 0, 0.04, -0.0021, 0.6333, 0, -0.0399, -0.0333, 0, 7.4, 1.6833, -3.5833)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_005" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.3625, 2.325, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_006" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2875, 2.975, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_007" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.2125, 3.625, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="CableRiser2_008" type="MeshInstance3D" parent="Cables"]
+transform = Transform3D(0, -0.075, 0.0397, 0, 0.65, 0.0046, -0.04, 0, 0, 7.1375, 4.275, -3.6)
+mesh = SubResource("CylinderMesh_cable")
+material_override = ExtResource("m15_cable_ink")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_ambience")
+script = ExtResource("6_ambience_player")
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="WetBenchLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(-6.75, 1.05, -3.35)
+interact_id = &"laboratory_wet_bench"
+inspection_id = &"laboratory_wet_bench"
+radius = 1.5
+support_paths = PackedStringArray("../../WetBenchBody")
+outline_paths = PackedStringArray("../../WetBenchTop", "../../GlassFlask0", "../../GlassBeaker2", "../../DryingRackTray")
+
+[node name="HoodLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(-4.6, 1.35, -4.7)
+interact_id = &"laboratory_fume_hood"
+inspection_id = &"laboratory_fume_hood"
+radius = 1.4
+support_paths = PackedStringArray("../../HoodSideWest", "../../HoodSideEast")
+outline_paths = PackedStringArray("../../HoodSashFrameTop", "../../HoodSashHandle", "../../HoodDeck")
+
+[node name="GlassCabinetLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(-1.8, 1.2, -4.85)
+interact_id = &"laboratory_glass_cabinet"
+inspection_id = &"laboratory_glass_cabinet"
+radius = 1.3
+support_paths = PackedStringArray("../../GlassCabinetBody")
+outline_paths = PackedStringArray("../../GlassCabinetDoorLeft", "../../GlassCabinetDoorRight", "../../GlassCabinetMullion")
+
+[node name="LogBookLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(-1, 1.1, -2.55)
+interact_id = &"laboratory_log_book"
+inspection_id = &"laboratory_log_book"
+radius = 1.3
+support_paths = PackedStringArray("../../IslandBody")
+outline_paths = PackedStringArray("../../LogBookLeft", "../../LogBookRight", "../../LogPen")
+
+[node name="MicroscopeLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(-3.3, 1.15, -2.95)
+interact_id = &"laboratory_microscope"
+inspection_id = &"laboratory_microscope"
+radius = 1.3
+support_paths = PackedStringArray("../../IslandTop")
+outline_paths = PackedStringArray("../../MicroBase0", "../../MicroColumn0", "../../MicroTube0", "../../MicroStage0")
+
+[node name="MixerLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(0.7, 1.35, 1.95)
+interact_id = &"laboratory_mixer"
+inspection_id = &"laboratory_mixer"
+radius = 1.7
+support_paths = PackedStringArray("../../MixerCrossA", "../../MixerCrossB")
+outline_paths = PackedStringArray("../../MixerDrumSkin", "../../MixerMotor", "../../MixerControlBox", "../../MixerBandHigh")
+
+[node name="InstrumentBankLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(6.6, 1.2, 2.1)
+interact_id = &"laboratory_instruments"
+inspection_id = &"laboratory_instruments"
+radius = 1.5
+support_paths = PackedStringArray("../../InstrumentBenchBody")
+outline_paths = PackedStringArray("../../BankCentrifugeBody", "../../BankCentrifugeLid", "../../IncubatorBody", "../../ControllerBody")
+
+[node name="CableKnotLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(1.35, 0.55, 0.35)
+interact_id = &"laboratory_cable_knot"
+inspection_id = &"laboratory_cable_knot"
+radius = 1.4
+outline_paths = PackedStringArray("../../CableCoil0_000", "../../CableCoil1_000", "../../CableCoil2_000", "../../CableBundle0_004")
+
+[node name="AnnexDoorLook" parent="Interactables" instance=ExtResource("3_interactable")]
+position = Vector3(1.95, 1.15, -2.85)
+interact_id = &"laboratory_annex_door"
+inspection_id = &"laboratory_annex_door"
+radius = 1.3
+support_paths = PackedStringArray("../../PartitionWestA", "../../PartitionWestB")
+outline_paths = PackedStringArray("../../AnnexDoorJambA", "../../AnnexDoorJambB", "../../AnnexDoorHead")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="Entry" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-2.4, 0, 2.8)
+
+[node name="FromAnnex" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(3.4, 0, -2.85)

@@ -36,6 +36,10 @@
       "objective": "objective.playground",
       "arrival_conversation": "playground_arrival",
       "arrival_flag": "playground_arrived"
+    },
+    "laboratory": {
+      "scene": "res://scenes/locations/laboratory/laboratory.tscn",
+      "spawn": "Entry"
     }
   }
 }
