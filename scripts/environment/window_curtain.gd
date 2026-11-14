@@ -217,7 +217,9 @@ func _make_panel(
 			var d := a + stride
 			var e := d + 1
 			# Wound so the room side (+z) is the front face whichever way the panel runs.
-			var triangles: Array[int] = [a, b, d, b, e, d] if inward > 0.0 else [a, d, b, b, d, e]
+			var triangles: Array[int] = [a, b, d, b, e, d]
+			if inward < 0.0:
+				triangles = [a, d, b, b, d, e]
 			for index in triangles:
 				indices.append(index)
 	var arrays := []
