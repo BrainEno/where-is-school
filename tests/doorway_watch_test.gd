@@ -210,6 +210,9 @@ func _check_follow() -> void:
 	if _player.camera_rig.get_frame_weight() > 0.001:
 		_failures.append("Follow: the view did not go back to the player after the text.")
 	var gaze := _q.get_gaze()
+	if gaze == null:
+		_failures.append("Follow: Q has no head-turn modifier.")
+		return
 	var first := gaze.get_applied_yaw_degrees()
 	_stand(DOORWAY_B)
 	await _seconds(0.5)
@@ -236,7 +239,7 @@ func _check_leave() -> void:
 		_failures.append("Leave: Q kept watching after the player walked out of the doorway.")
 	await _seconds(0.5)
 	var gaze := _q.get_gaze()
-	if gaze.get_weight() > 0.0 or not is_zero_approx(gaze.get_applied_yaw_degrees()):
+	if gaze != null and (gaze.get_weight() > 0.0 or not is_zero_approx(gaze.get_applied_yaw_degrees())):
 		_failures.append("Leave: Q's head is still turned (%.1f°)." % gaze.get_applied_yaw_degrees())
 	if _q.global_position != place or absf(angle_difference(_q.rotation.y, yaw)) > 0.0001:
 		_failures.append("Leave: Q is not where and how he stood before the door was tried.")
@@ -251,6 +254,10 @@ func _check_body_turn() -> void:
 	_q.watch(_player, EYE)
 	await _seconds(1.4)
 	var gaze := _q.get_gaze()
+	if gaze == null:
+		_failures.append("Body: Q has no head-turn modifier.")
+		_q.stop_watching()
+		return
 	var body := rad_to_deg(angle_difference(rest, _q.rotation.y))
 	_notes.append("body: turned %.1f°, head %.1f°" % [body, gaze.get_applied_yaw_degrees()])
 	if absf(body) < 10.0:
