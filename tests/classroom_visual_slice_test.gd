@@ -31,6 +31,9 @@ extends SceneTree
 ##    size next to the characters.
 ## 9. **Navigation.** The baked mesh reaches every desk and every interactable from the
 ##    spawn.
+## 10. **The clock says nine.** Q's biology class starts at nine, and the wall clock's
+##    hands say 9:00 - read from the transforms in the scene, with each hand hanging off a
+##    pivot at the dial's centre instead of lying across it.
 
 const Harness = preload("res://tests/test_harness.gd")
 const WallContract = preload("res://tests/classroom_wall_contract.gd")
@@ -164,7 +167,7 @@ const NEVER_FADED: Array[String] = [
 	"Props/Blackboard", "WindowGlow0", "WindowGlass0", "WindowFrameTop0",
 	"WindowFrameBottom0", "WindowFrameLeft0", "WindowFrameRight0", "WindowMullion0",
 	"ClockFace",
-	"ClockHandHour", "ClockHandMinute", "Fitting0", "Fitting1",
+	"ClockHourPivot", "ClockMinutePivot", "Fitting0", "Fitting1",
 ]
 ## Body points sampled from the camera: shins, waist, eye line.
 const BODY_HEIGHTS: Array[float] = [0.3, 0.9, 1.5]
@@ -250,14 +253,16 @@ func _run() -> void:
 	await WallContract.verify(self, _main, _room, _failures)
 	Harness.stage = "game camera"
 	await _check_game_camera(navigation)
+	Harness.stage = "wall clock"
+	await _check_clock(navigation)
 
 	print("::notice title=classroom visual slice::%s" % " | ".join(_notes))
 	Harness.finish(
 		self,
 		_failures,
 		"the expanded classroom layout, colliders, interactables and navigation satisfy the slice, "
-		+ "draws only its own materials and keeps the board and windows out of the "
-		+ "camera's way.",
+		+ "draws only its own materials, keeps the board and windows out of the "
+		+ "camera's way, and tells the time the class starts at.",
 	)
 
 
@@ -896,6 +901,214 @@ func _check_projector_thins(spots: Array[Vector3]) -> void:
 		if piece.material_override != authored[piece]:
 			_failures.append("Projector piece '%s' did not get its material back." % piece.name)
 			break
+
+
+# --- 10. the wall clock -------------------------------------------------------------
+
+
+## The clock says what the story says. Q's biology class starts at nine, so the hands stand
+## at 9:00 - the minute hand on the twelve, the hour hand on the nine - and each one hangs
+## off a pivot at the dial's centre instead of lying across it.
+##
+## The reading is taken from the transforms that ship in the scene rather than compared
+## with a constant the scene could quietly drift away from: a hand's outer tip minus the
+## dial's centre, in the plane of the dial, is the direction a player sees. A hand centred
+## on its pivot points two ways at once, which is how this clock used to read a quarter past
+## twelve whatever time anyone meant to set (issue #173).
+const CLOCK_BODY := ^"ClockFace"
+const CLOCK_DIAL := ^"WallNorth/FrontWallDressing/ClockDial"
+const CLOCK_HOUR_PIVOT := ^"ClockHourPivot"
+const CLOCK_MINUTE_PIVOT := ^"ClockMinutePivot"
+const CLOCK_HOUR_HAND := ^"ClockHourPivot/ClockHandHour"
+const CLOCK_MINUTE_HAND := ^"ClockMinutePivot/ClockHandMinute"
+## Minutes past twelve the hands have to show; 540 is nine o'clock on a twelve-hour dial.
+const CLOCK_MINUTES := 540.0
+## A minute of slack either way still reads as "just gone nine" on a 0.46 m dial.
+const CLOCK_SLACK_MINUTES := 1.0
+## The minute hand is the longer, thinner one, by enough to tell the two apart at a glance.
+const CLOCK_HAND_LENGTH_RATIO := 1.25
+## How far a hand may miss its own pivot, and how far it may lean out of the dial's plane.
+const CLOCK_PIVOT_SLACK := 0.005
+## The hands sit in front of the painted dial, inside this gap, hour hand behind minute;
+## the least air between the face and a hand is what keeps them from z-fighting.
+const CLOCK_HAND_GAP := 0.04
+const CLOCK_DIAL_GAP := 0.002
+## The dial across, on a 900-line screen, from the best standing spot in front of it.
+const CLOCK_MIN_PIXELS := 30.0
+## Where a player stands to read it: the aisle in front of the board, under the clock.
+const CLOCK_STAND_X: Array[float] = [0.45, 1.45, 2.45]
+const CLOCK_STAND_Z: Array[float] = [-3.9, -3.4, -2.9, -2.4]
+
+
+func _check_clock(navigation: LocationNavigation) -> void:
+	var body := _room.get_node_or_null(CLOCK_BODY) as MeshInstance3D
+	var dial := _room.get_node_or_null(CLOCK_DIAL) as MeshInstance3D
+	var hour_pivot := _room.get_node_or_null(CLOCK_HOUR_PIVOT) as Node3D
+	var minute_pivot := _room.get_node_or_null(CLOCK_MINUTE_PIVOT) as Node3D
+	var hour_hand := _room.get_node_or_null(CLOCK_HOUR_HAND) as MeshInstance3D
+	var minute_hand := _room.get_node_or_null(CLOCK_MINUTE_HAND) as MeshInstance3D
+	var missing: Array[String] = []
+	for entry: Array in [
+		["ClockFace", body],
+		["the painted dial", dial],
+		["the hour pivot", hour_pivot],
+		["the minute pivot", minute_pivot],
+		["the hour hand", hour_hand],
+		["the minute hand", minute_hand],
+	]:
+		if entry[1] == null:
+			missing.append(entry[0])
+	if not missing.is_empty():
+		_failures.append("The wall clock lost %s." % ", ".join(missing))
+		return
+	var body_mesh := body.mesh as CylinderMesh
+	var dial_mesh := dial.mesh as QuadMesh
+	var hour_box := hour_hand.mesh as BoxMesh
+	var minute_box := minute_hand.mesh as BoxMesh
+	if body_mesh == null or dial_mesh == null or hour_box == null or minute_box == null:
+		_failures.append("The wall clock is no longer built from the primitives its hands turn on.")
+		return
+
+	# One face, one centre: the painted dial is the front of the cylinder, and both hands
+	# turn about the middle of it.
+	var centre := dial.global_position
+	var diameter := body_mesh.top_radius * 2.0
+	if absf(dial_mesh.size.x - diameter) > 0.01 or absf(dial_mesh.size.y - diameter) > 0.01:
+		_failures.append(
+			"The painted dial is %.2f x %.2f m on a %.2f m body; the face no longer fits the clock."
+			% [dial_mesh.size.x, dial_mesh.size.y, diameter]
+		)
+	if Vector2(body.global_position.x - centre.x, body.global_position.y - centre.y).length() > 0.01:
+		_failures.append("The clock body and its painted dial no longer share a centre.")
+	for entry: Array in [["hour", hour_pivot], ["minute", minute_pivot]]:
+		var pivot: Node3D = entry[1]
+		var offset := Vector2(pivot.global_position.x - centre.x, pivot.global_position.y - centre.y)
+		if offset.length() > 0.01:
+			_failures.append("The %s hand does not turn about the middle of the dial." % entry[0])
+	if absf(body.global_position.z - centre.z) > 0.05:
+		_failures.append("The painted dial no longer sits on the front of the clock body.")
+
+	# The hands, read the way a player reads them.
+	var hour_degrees := _hand_clock_degrees("hour", hour_hand, hour_box, centre)
+	var minute_degrees := _hand_clock_degrees("minute", minute_hand, minute_box, centre)
+	if is_nan(hour_degrees) or is_nan(minute_degrees):
+		return
+	# The hour hand advances half a degree a minute, the minute hand six; at nine o'clock
+	# they agree, and each is checked against the dial it turns on.
+	var shown_hour := int(fposmod(floor(hour_degrees / 30.0), 12.0))
+	var shown_minute := int(round(fposmod(minute_degrees, 360.0) / 6.0)) % 60
+	for entry: Array in [
+		["hour", hour_degrees / 0.5, CLOCK_MINUTES, 720.0],
+		["minute", minute_degrees / 6.0, 0.0, 60.0],
+	]:
+		var off := _dial_minutes_off(entry[1], entry[2], entry[3])
+		if off > CLOCK_SLACK_MINUTES:
+			_failures.append(
+				"The clock's %s hand stands %.1f minutes off nine o'clock (together they read %d:%02d); "
+				% [entry[0], off, shown_hour, shown_minute]
+				+ "Q's biology class starts at nine."
+			)
+
+	# Proportions: the minute hand is the longer and thinner of the two, so neither hand
+	# can be mistaken for the other.
+	if minute_box.size.y < hour_box.size.y * CLOCK_HAND_LENGTH_RATIO:
+		_failures.append(
+			"The minute hand is %.3f m and the hour hand %.3f m; the longer hand is the one "
+			% [minute_box.size.y, hour_box.size.y]
+			+ "that has to be told apart at a glance."
+		)
+	if minute_box.size.x > hour_box.size.x:
+		_failures.append(
+			"The minute hand is %.3f m wide against an hour hand of %.3f m; the thin hand is the long one."
+			% [minute_box.size.x, hour_box.size.x]
+		)
+
+	# Draw order: both in front of the painted dial, the hour hand behind the minute hand.
+	for entry: Array in [["hour", hour_hand, hour_box], ["minute", minute_hand, minute_box]]:
+		var hand: MeshInstance3D = entry[1]
+		var hand_mesh: BoxMesh = entry[2]
+		var back := hand.global_position.z - hand_mesh.size.z * 0.5
+		var front := hand.global_position.z + hand_mesh.size.z * 0.5
+		if back <= centre.z + CLOCK_DIAL_GAP:
+			_failures.append("The %s hand is inside or behind the painted dial." % entry[0])
+		if front > centre.z + CLOCK_HAND_GAP:
+			_failures.append(
+				"The %s hand stands %.0f mm off the dial; it no longer looks painted onto it."
+				% [entry[0], (front - centre.z) * 1000.0]
+			)
+	if hour_hand.global_position.z >= minute_hand.global_position.z:
+		_failures.append("The hour and minute hands share a plane and fight over the same pixels.")
+
+	# From the game camera, standing in the aisle in front of the board, the face has to be
+	# big enough to read the time off without walking into the wall.
+	var rig := _main.get_node_or_null(^"CameraRig") as CameraRig
+	if rig == null or rig.camera == null:
+		_failures.append("Main has no CameraRig to read the clock through.")
+		return
+	var start_position := _player.global_position
+	var start_yaw := _player.global_rotation.y
+	var map := navigation.get_navigation_map() if navigation != null else RID()
+	var best := 0.0
+	var read_from := Vector3.ZERO
+	for x in CLOCK_STAND_X:
+		for z in CLOCK_STAND_Z:
+			var point := _room.to_global(Vector3(x, 0.0, z))
+			if map.is_valid():
+				point = NavigationServer3D.map_get_closest_point(map, point)
+			_player.teleport(Transform3D(Basis(), point))
+			rig.snap()
+			if not rig.camera.is_position_in_frustum(centre):
+				continue
+			var pixels := _screen_height(rig.camera, centre - Vector3(0.0, diameter * 0.5, 0.0), diameter)
+			if pixels > best:
+				best = pixels
+				read_from = point
+	_player.teleport(Transform3D(Basis(Vector3.UP, start_yaw), start_position))
+	rig.snap()
+	await _physics_frames(1)
+	if best <= 0.0:
+		_failures.append("From no standing spot in front of the board does the game camera see the clock.")
+	elif best < CLOCK_MIN_PIXELS:
+		_failures.append(
+			"The clock's face is %.0f px across on a 900-line screen from %s; the time on it "
+			% [best, str(read_from)]
+			+ "cannot be read from where a player stands."
+		)
+	_notes.append(
+		"clock reads %d:%02d, its face %.0f px across from the aisle" % [shown_hour, shown_minute, best]
+	)
+
+
+## The direction a hand runs in, in degrees clockwise from twelve, measured on the dial:
+## the hand's outer tip minus the dial's centre. A hand lying across its pivot fails here,
+## because it shows one time at one end and another at the other.
+func _hand_clock_degrees(label: String, hand: MeshInstance3D, box: BoxMesh, centre: Vector3) -> float:
+	var half := box.size.y * 0.5
+	var inner := hand.global_transform * Vector3(0.0, -half, 0.0)
+	var outer := hand.global_transform * Vector3(0.0, half, 0.0)
+	var start := Vector2(inner.x - centre.x, inner.y - centre.y)
+	if start.length() > CLOCK_PIVOT_SLACK:
+		_failures.append(
+			"The %s hand starts %.0f mm off the dial's centre; it turns about its middle, so "
+			% [label, start.length() * 1000.0]
+			+ "both of its ends point at a time."
+		)
+		return NAN
+	if absf(outer.z - inner.z) > CLOCK_PIVOT_SLACK:
+		_failures.append("The %s hand leans out of the plane of the dial." % label)
+		return NAN
+	var direction := Vector2(outer.x - centre.x, outer.y - centre.y)
+	if direction.length() < 0.01:
+		_failures.append("The %s hand has no length left to read." % label)
+		return NAN
+	direction = direction.normalized()
+	return fposmod(rad_to_deg(atan2(direction.x, direction.y)), 360.0)
+
+
+## How far a dial reading sits from its target, in minutes, around a dial that wraps every
+## `period` minutes and never more than half a turn off.
+func _dial_minutes_off(minutes: float, target: float, period: float) -> float:
+	return absf(fposmod(minutes - target + period * 0.5, period) - period * 0.5)
 
 
 func _never_faded_boxes() -> Array:
