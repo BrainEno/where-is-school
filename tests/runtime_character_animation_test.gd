@@ -176,7 +176,7 @@ func _check_wake(sequence: OpeningSequence, animator: CharacterVisualAnimation) 
 				_failures.append("Seated, the protagonist's shin does not hang down (foot %.2f m below the knee)." % -shin.y)
 
 	Input.action_press(&"move_right")
-	await _physics_frames(1)
+	await _physics_frames(2)
 	Input.action_release(&"move_right")
 	if not animator.is_playing_action() or animator.get_current_clip() != "get_up":
 		_failures.append("The first deliberate movement did not start the get-up (clip '%s')." % animator.get_current_clip())
