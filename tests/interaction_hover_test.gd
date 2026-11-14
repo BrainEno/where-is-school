@@ -249,8 +249,9 @@ func _check_real_prop() -> void:
 		_failures.append("The classroom lost the door or the timetable.")
 		_interaction.mouse_targeting = mouse_targeting
 		return
+	# The front door is in the east wall (issue #159): stand in front of it, facing +x.
 	_player.teleport(
-		Transform3D(Basis(Vector3.UP, deg_to_rad(0.01)), Vector3(3.0, 0, -3.0))
+		Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(5.6, 0, -3.55))
 	)
 	await _physics_frames(4)
 	if _interaction.get_current_target() != door:

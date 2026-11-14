@@ -59,7 +59,8 @@ func dress() -> void:
 		mesh.material_override = material
 
 
-## The leaf meshes (leaf, panels, vision panel): what an interactable outlines.
+## The leaf meshes (leaf, inset panels, vision panel), in the leaf's colour; the panel
+## shadow lines are not part of it.
 func get_leaf_meshes() -> Array[MeshInstance3D]:
 	var meshes: Array[MeshInstance3D] = []
 	var model := get_node_or_null(model_path) as Node3D
@@ -69,7 +70,7 @@ func get_leaf_meshes() -> Array[MeshInstance3D]:
 		var part := String(node.name)
 		if (
 			part.begins_with("Door_leaf")
-			or part.begins_with("Door_panel")
+			or part.begins_with("Door_panel_inset")
 			or part.begins_with("Door_vision")
 		):
 			meshes.append(node as MeshInstance3D)
