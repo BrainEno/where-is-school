@@ -155,6 +155,9 @@ var _portrait_side: String = ""
 var _portrait_source_size: Vector2 = Vector2.ZERO
 ## Each distinct problem is warned about once per panel, not once per line.
 var _portrait_warned: Dictionary = {}
+## Portrait resolutions keyed by profile instance id, so first-use resource loads happen
+## during panel initialization rather than while opening a line.
+var _portrait_resolution_cache: Dictionary = {}
 ## The type sizes as authored, before the player's text size multiplies them.
 var _base_type: Dictionary = {}
 var _text_scale: float = 1.0
@@ -305,7 +308,15 @@ func _warm_portrait_resources() -> void:
 	for character_id: StringName in directory.get_ids():
 		var profile := directory.get_profile(character_id)
 		if profile != null and profile.has_portrait():
-			profile.resolve_portrait()
+			_portrait_resolution_cache[profile.get_instance_id()] = profile.resolve_portrait()
+
+
+func _resolve_profile_portrait(profile: CharacterProfile) -> Dictionary:
+	var profile_id := profile.get_instance_id()
+	if _portrait_resolution_cache.has(profile_id):
+		var cached: Dictionary = _portrait_resolution_cache[profile_id]
+		return cached
+	return profile.resolve_portrait()
 
 
 func _connect_settings() -> void:
@@ -918,7 +929,7 @@ func _resolve_portrait(line: Dictionary) -> void:
 	var profile := _portrait_profile_for(line)
 	if profile == null:
 		return
-	var resolved := profile.resolve_portrait()
+	var resolved := _resolve_profile_portrait(profile)
 	_portrait_status = String(resolved.get("status", "none"))
 	_portrait_message = String(resolved.get("message", ""))
 	_portrait_source_size = resolved.get("source_size", Vector2.ZERO)

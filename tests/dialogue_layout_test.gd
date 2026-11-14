@@ -272,7 +272,7 @@ func _check_portrait_resources_are_warm() -> void:
 		var profile := directory.get_profile(character_id)
 		if profile == null or not profile.has_portrait():
 			continue
-		if not ResourceLoader.has_cached(profile.portrait_path):
+		if not _panel._portrait_resolution_cache.has(profile.get_instance_id()):
 			_failures.append(
 				"The %s portrait was not resolved before dialogue was opened."
 				% character_id
