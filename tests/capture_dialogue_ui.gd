@@ -16,6 +16,7 @@ extends SceneTree
 ## evidence of a run is one folder.
 
 const Harness = preload("res://tests/test_harness.gd")
+const EvidenceContract = preload("res://tests/evidence_contract.gd")
 const OUT_DIR := "res://docs/screenshots"
 const LOG_PATH := "res://docs/screenshots/UI_CAPTURE.log"
 
@@ -82,10 +83,10 @@ func _run() -> void:
 		await _resize(size)
 		loc.set_locale("en")
 		await _frames(4)
-		await _shot("ui-dialogue-%dx%d-en.png" % [size.x, size.y], size)
+		await _opening_shot("ui-dialogue-%dx%d-en.png" % [size.x, size.y], size, "en")
 		loc.set_locale("zh-CN")
 		await _frames(4)
-		await _shot("ui-dialogue-%dx%d-zh.png" % [size.x, size.y], size)
+		await _opening_shot("ui-dialogue-%dx%d-zh.png" % [size.x, size.y], size, "zh-CN")
 
 	# The same real line, on a controller: the hint should use the InputMap's A and Y
 	# bindings, not retain the keyboard's Space and Tab after the display-size changes.
@@ -161,6 +162,33 @@ func _resize(size: Vector2i) -> void:
 	await _frames(6)
 
 
+## A frame of the opening line (#186). These are the frames the repository keeps as the
+## picture of the reading band, so before one is written the panel has to be drawing the
+## authored sentence of the opening's first node in `locale`; afterwards the frame's
+## `EVIDENCE` record is printed for the relay workflow and `MANIFEST.json`.
+func _opening_shot(name: String, size: Vector2i, locale: String) -> void:
+	# Half a sentence is not the sentence: wait for the reveal (a language switch can
+	# start it again) rather than photograph the line cut off.
+	var waited := 0
+	while _ui.dialogue_panel.is_revealing() and waited < 600:
+		await _frames(1)
+		waited += 1
+	var problem := EvidenceContract.compare_panel(
+		_ui.dialogue_panel, _dialogue, locale,
+		EvidenceContract.OPENING_SOURCE, EvidenceContract.OPENING_CONVERSATION
+	)
+	if not problem.is_empty():
+		_failures.append("%s does not show the authored opening line: %s" % [name, problem])
+		return
+	var before := _shots.size()
+	await _shot(name, size)
+	if _shots.size() == before:
+		return
+	print(EvidenceContract.evidence_line(EvidenceContract.evidence_record(
+		name, size, locale, EvidenceContract.OPENING_SOURCE, EvidenceContract.OPENING_CONVERSATION
+	)))
+
+
 func _shot(name: String, size: Vector2i) -> void:
 	var report := _ui.dialogue_panel.get_layout_report()
 	var path := "%s/%s" % [OUT_DIR, name]
@@ -174,6 +202,7 @@ func _shot(name: String, size: Vector2i) -> void:
 		_failures.append("Could not write %s (error %d)." % [path, error])
 		return
 	_shots.append(name)
+	EvidenceContract.write_jpeg_copy(image, path)
 	if INLINE_FRAMES.has(name):
 		var small := image.duplicate() as Image
 		small.convert(Image.FORMAT_RGB8)

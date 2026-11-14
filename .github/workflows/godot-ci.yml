@@ -154,6 +154,18 @@ jobs:
           python3 tools/check_workflow_action_pins.py
           python3 tests/workflow_action_pins_test.py
 
+      - name: Check the committed screenshots are labelled
+        shell: bash
+        run: |
+          # Issue #186: a frame of the opening stayed in docs/screenshots for days after the
+          # line it showed had been rewritten. docs/screenshots/MANIFEST.json says which frames
+          # are current evidence and which are history; the check holds every current frame to
+          # the authored text it claims to show, its recorded bytes and size, and the run that
+          # took it, and fails on any frame the manifest does not account for. Its test builds
+          # the cases where it must fail (a rewritten line, a retouched frame, an unlisted one).
+          python3 tools/screenshot_evidence.py --check
+          python3 tests/screenshot_evidence_test.py
+
       - name: Check the bundled font covers the current text
         shell: bash
         run: |
@@ -261,6 +273,10 @@ jobs:
           # Issue #166: N, once the story has walked her in, stays at the lectern through her
           # conversation, a pause, leaving and re-entering the room and a continued save.
           run_check n_presence 300 godot --headless --path . --script res://tests/n_presence_test.gd || status=1
+          # Issue #186: the first line on screen is the authored start of the opening in both
+          # languages, and every current frame of it in docs/screenshots/MANIFEST.json shows
+          # that sentence - rewrite the line and this fails until the frames are recaptured.
+          run_check opening_line_evidence 240 godot --headless --path . --script res://tests/opening_line_evidence_test.gd || status=1
           # The prologue's waits are story time: the pause menu pauses the tree, and a beat
           # must not time itself out (or start its conversation) behind it.
           run_check story_pause_timing 180 godot --headless --path . --script res://tests/story_pause_timing_test.gd || status=1

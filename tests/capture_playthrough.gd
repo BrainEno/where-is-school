@@ -14,6 +14,7 @@ extends SceneTree
 ## the log.
 
 const Harness = preload("res://tests/test_harness.gd")
+const EvidenceContract = preload("res://tests/evidence_contract.gd")
 const SHOT_DIR := "res://docs/screenshots"
 const LOG_PATH := "res://docs/screenshots/PLAYTHROUGH.log"
 
@@ -85,7 +86,32 @@ func _run() -> void:
 		await _fail("the opening conversation never showed a line")
 		return
 	await _wait(0.7)
+	# #186: the frame is evidence of *this* opening line, so it has to be the authored one.
+	# A frame of another sentence (the repository once kept one of an older draft for
+	# days) fails here instead of being saved under a caption that is no longer true.
+	var opening_problem := EvidenceContract.compare_panel(
+		_panel, _dialogue, L10n.current,
+		EvidenceContract.OPENING_SOURCE, EvidenceContract.OPENING_CONVERSATION
+	)
+	if not opening_problem.is_empty():
+		await _fail("01_opening_line does not show the authored opening line: %s" % opening_problem)
+		return
 	await _shot("01_opening_line", "The first line of the opening conversation, in English.")
+	var opening_record := EvidenceContract.evidence_record(
+		"01_opening_line", root.get_texture().get_image().get_size(), L10n.current,
+		EvidenceContract.OPENING_SOURCE, EvidenceContract.OPENING_CONVERSATION
+	)
+	print(EvidenceContract.evidence_line(opening_record))
+	_note("opening line on screen: %s/%s \"%s\"" % [
+		opening_record["shows"]["conversation"], opening_record["shows"]["node"],
+		opening_record["shows"]["text"],
+	])
+	# The dialogue evidence relay needs this one frame, not the whole slice.
+	if OS.get_environment("WIS_CAPTURE_ONLY_OPENING") == "1":
+		_note("RESULT: opening line captured; the rest of the slice was not driven (WIS_CAPTURE_ONLY_OPENING=1).")
+		_write_log()
+		quit(0)
+		return
 
 	# 3. Finish the opening conversation with the keyboard only.
 	if not await _drive_until(
@@ -2142,6 +2168,7 @@ func _shot(shot_name: String, caption: String) -> void:
 		_failures.append("Screenshot %s could not be saved (error %d)." % [shot_name, err])
 		return
 	_shot_index += 1
+	EvidenceContract.write_jpeg_copy(image, path)
 	_note("screenshot %s: %s (%dx%d)" % [shot_name, caption, image.get_width(), image.get_height()])
 
 
