@@ -248,7 +248,13 @@ jobs:
           # stood; a new game from the title leaves no leftover of the old run to recover.
           run_check save_quit 300 godot --headless --path . --script res://tests/save_quit_test.gd || status=1
           # Synthetic pointer events need a real GUI viewport; run this standalone test under Xvfb.
-          run_check title_menu_interaction 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd || status=1
+          # The title menu, by real mouse, key and pad input (#121): the mouse and key/pad parts
+          # at the design size, and the clicks again at 1280x720 and 1920x1080 in Chinese at the
+          # largest text size.
+          run_check title_menu_interaction 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd -- --part=mouse || status=1
+          run_check title_menu_keys 240 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd -- --part=keys || status=1
+          run_check title_menu_720 240 xvfb-run -a --server-args="-screen 0 1280x720x24" godot --resolution 1280x720 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd -- --part=matrix || status=1
+          run_check title_menu_1080 240 xvfb-run -a --server-args="-screen 0 1920x1080x24" godot --resolution 1920x1080 --rendering-driver opengl3 --path . --script res://tests/title_menu_interaction_test.gd -- --part=matrix || status=1
           # A new game that fails from the pause menu, the end card or the title is shown once, localised, with working focus (#146).
           run_check new_game_failure_ui 300 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/new_game_failure_ui_test.gd || status=1
           # The settings themselves (#105, #106): every preference survives a restart without
