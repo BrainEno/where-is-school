@@ -8,24 +8,30 @@ extends SceneTree
 ## about portraits:
 ##
 ## 1. Every shipped `CharacterProfile` still loads. Exactly the approved speakers ask for
-##    a portrait, from the approved file, entering from the right; every other profile
-##    (B, the inner voice) reads as "no portrait".
+##    a portrait, from the approved file, with a crop that frames the face; every other
+##    profile (B, the inner voice) reads as "no portrait".
 ## 2. No portrait means no change. A line shown without a portrait has exactly the
 ##    rects it had before portraits existed (band, body, name, hint, options), and
 ##    showing a portrait in between leaves nothing behind.
 ## 3. With a portrait, at 1280x720, 1600x900 and 1920x1080 and in English and
-##    Chinese, with a long paragraph, short and long names and 0 / 1 / 2 / 4 options:
-##    the portrait stays inside the screen, is drawn behind the band, overlaps none of
-##    the name, role, source label, title, body, options or hint, is not stretched,
-##    never takes a click, and the band keeps its width and its type size.
+##    Chinese, with a long paragraph, short and long names and 0 / 1 / 2 / 4 options,
+##    the portrait is the identity block of #167: it leads the name row on the text
+##    column, stands on the name row's bottom, reaches the band's top edge without leaving
+##    the wash, sits right beside the name, and is small (a fraction of the old 72%-high
+##    figure). It overlaps none of the name, role, source label, title, body, options or
+##    hint, is not stretched and never takes a click. The band, the body, the hint and
+##    the options keep exactly the rects they have without a portrait, and the type size.
 ## 4. A portrait that cannot be used (bad path, missing file, not a texture, no
 ##    pixels, absurd proportions, a crop that leaves nothing) is reported with a status
 ##    and a message naming the character, and the line is laid out exactly as if the
 ##    speaker had no portrait.
 ## 5. The shipped portraits, through the real character directory: at all three sizes
-##    and in both languages each one is drawn at the right edge, whole and unstretched,
-##    clear of every word and option, without narrowing the band; and the sentence, the
-##    name and the options are set in the dialogue serif.
+##    and in both languages each one is drawn beside the name, face-cropped by its
+##    profile and unstretched, clear of every word and option, without moving the band
+##    or the body; and the sentence, the name and the options are set in the dialogue
+##    serif.
+## 6. A change of speaker changes the portrait in the same frame as the name, and a line
+##    with no portrait (B, narration) has no slot: the name starts on the text column.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -116,6 +122,7 @@ func _run() -> void:
 	await _run_edge_cases()
 	await _run_click_case()
 	await _run_shipped_portraits()
+	await _run_speaker_switch_case()
 
 	_panel.close()
 	await process_frame
@@ -124,7 +131,11 @@ func _run() -> void:
 	Harness.finish(
 		self,
 		_failures,
-		"optional dialogue portraits leave the text layout untouched when absent, stay clear of the text at 1280x720, 1600x900 and 1920x1080 in en and zh-CN when present, fail visibly but harmlessly when unusable, and the three approved portraits ship that way."
+		"optional dialogue portraits leave the text layout untouched when absent; when present they "
+		+ "lead the name row as a small identity portrait beside the name at 1280x720, 1600x900 "
+		+ "and 1920x1080 in en and zh-CN, without moving the band, the body or the options; they "
+		+ "fail visibly but harmlessly when unusable, follow a change of speaker in the same "
+		+ "frame, and the three approved portraits ship face-cropped that way."
 	)
 
 
@@ -182,17 +193,21 @@ func _check_shipped_profiles() -> void:
 			_failures.append("The approved portrait speaker '%s' has no profile." % character_id)
 
 
-## An approved portrait: the approved file, from the right, the default height, uncropped
-## (the crop is made once, in tools/prepare_portraits.py), and it resolves.
+## An approved portrait: the approved file, and a crop that frames the face for the small
+## identity portrait (#167). The file itself is not touched: the shipped picture is cut
+## once, in tools/prepare_portraits.py, and the profile only chooses what part of it to
+## show beside the name. The fields the panel no longer reads keep their defaults.
 func _check_approved_profile(path: String, profile: CharacterProfile) -> void:
 	var expected := String(APPROVED_PORTRAITS[profile.character_id])
 	if profile.portrait != null or profile.portrait_path != expected:
 		_failures.append("%s points at '%s', expected '%s'." % [path, profile.portrait_path, expected])
-	if profile.portrait_side != CharacterProfile.PortraitSide.RIGHT:
-		_failures.append("%s: the portrait does not enter from the right." % path)
-	if not is_equal_approx(profile.portrait_height_ratio, 0.72) \
-			or profile.portrait_crop != Rect2(0.0, 0.0, 1.0, 1.0):
-		_failures.append("%s: the portrait height or crop was changed in the profile." % path)
+	if profile.portrait_side != CharacterProfile.PortraitSide.LEFT \
+			or not is_equal_approx(profile.portrait_height_ratio, 0.72):
+		_failures.append("%s: still sets the side or height of the old full-height figure." % path)
+	var crop := profile.portrait_crop
+	var unit := Rect2(0.0, 0.0, 1.0, 1.0)
+	if crop == unit or not unit.encloses(crop) or crop.get_area() > 0.6:
+		_failures.append("%s: portrait_crop %s does not frame the face." % [path, crop])
 	var resolved := profile.resolve_portrait()
 	if String(resolved["status"]) != "ok" or resolved["texture"] == null:
 		_failures.append("%s: the approved portrait does not resolve: %s." % [path, resolved])
@@ -203,6 +218,10 @@ func _check_approved_profile(path: String, profile: CharacterProfile) -> void:
 			"%s: the portrait is %s; tools/prepare_portraits.py cuts them %.0f px high."
 			% [path, source_size, SHIPPED_PORTRAIT_HEIGHT]
 		)
+	# A head and shoulders, upright: not a strip of the figure and not a landscape.
+	var aspect := float(resolved["aspect"])
+	if aspect < 0.6 or aspect > 1.0:
+		_failures.append("%s: the face crop is drawn at aspect %.2f." % [path, aspect])
 
 
 ## `resolve_portrait()` on its own, without the panel.
@@ -242,16 +261,24 @@ func _check_profile_resolution() -> void:
 # --- Panel layout -----------------------------------------------------------
 
 
-## The node is part of the scene, behind the band, and transparent to the mouse.
+## The node is part of the scene, drawn over the band's ink (it is part of the identity
+## block, not a figure behind the band), with a slot in the name row, and neither takes
+## the mouse.
 func _check_scene_contract() -> void:
 	var portrait := _panel.get_node_or_null("Portrait") as TextureRect
 	var frame := _panel.get_node_or_null("Frame") as Control
 	var wash := _panel.get_node_or_null("Wash") as Control
-	if portrait == null or frame == null or wash == null:
-		_failures.append("The dialogue panel has no Portrait / Frame / Wash node.")
+	var slot := _panel.get_node_or_null("Frame/Content/HeaderRow/PortraitSlot") as Control
+	var speaker := _panel.get_node_or_null("Frame/Content/HeaderRow/SpeakerLabel") as Control
+	if portrait == null or frame == null or wash == null or slot == null or speaker == null:
+		_failures.append("The dialogue panel has no Portrait / Frame / Wash / PortraitSlot node.")
 		return
-	if portrait.get_index() > wash.get_index() or portrait.get_index() > frame.get_index():
-		_failures.append("The portrait is not drawn behind the wash and the frame.")
+	if portrait.get_index() < wash.get_index() or portrait.get_index() < frame.get_index():
+		_failures.append("The portrait is drawn under the band's ink instead of over it.")
+	if slot.get_index() > speaker.get_index():
+		_failures.append("The portrait slot does not lead the name row.")
+	if slot.visible or slot.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		_failures.append("The portrait slot is shown before any line, or takes the mouse.")
 	if portrait.mouse_filter != Control.MOUSE_FILTER_IGNORE:
 		_failures.append("The portrait node takes the mouse.")
 	if portrait.visible:
@@ -371,16 +398,16 @@ func _run_edge_cases() -> void:
 	await _show(plain, [])
 	var baseline := _snapshot()
 
-	# A landscape portrait is capped at the width ratio and scaled as a whole.
+	# A landscape portrait is capped at its share of the text column and scaled as a whole.
 	var wide := _line(prose, PLAIN_ID, PLAIN_NAME)
 	wide["portrait_profile"] = _profile(_wide_texture, CharacterProfile.PortraitSide.LEFT)
 	await _show(wide, [])
 	_check_portrait_layout("wide portrait", size, baseline, _wide_texture.get_size().aspect())
 	var rect: Rect2 = _panel.get_portrait_report()["rect"]
-	if rect.size.x > float(size.x) * _panel.portrait_max_width_ratio + TOLERANCE:
+	if rect.size.x > _column_width() * _panel.portrait_max_column_ratio + TOLERANCE:
 		_failures.append("wide portrait: %.0f px wide, over the width cap." % rect.size.x)
 
-	# A hand-edited height ratio far out of range is clamped, never drawn off screen.
+	# The old height ratio is no longer read: a hand-edited value changes nothing.
 	var tall_profile := _profile(_tall_texture, CharacterProfile.PortraitSide.RIGHT)
 	tall_profile.portrait_height_ratio = 4.0
 	var tall := _line(prose, PLAIN_ID, PLAIN_NAME)
@@ -396,8 +423,23 @@ func _run_edge_cases() -> void:
 	await _show(cropped, [])
 	_check_portrait_layout("cropped portrait", size, baseline, (600.0 * 0.6) / (1000.0 * 0.8))
 
-	# A viewport too narrow for both: the band keeps its minimum width and the portrait
-	# steps aside (status "no_room") instead of squeezing the text.
+	# Less room than the portrait needs: it steps aside (status "no_room") and the name row
+	# is exactly what it is without one - no empty slot is left behind.
+	var min_width := _panel.portrait_min_width
+	_panel.portrait_min_width = 100000.0
+	var crowded := _line(prose, PLAIN_ID, PLAIN_NAME)
+	crowded["portrait_profile"] = _profile(_tall_texture, CharacterProfile.PortraitSide.LEFT)
+	await _show(crowded, [])
+	var crowded_report := _panel.get_portrait_report()
+	if String(crowded_report["status"]) != "no_room" or bool(crowded_report["visible"]):
+		_failures.append("no room: the portrait was not stepped aside (%s)." % crowded_report)
+	if (_panel.get_node("Frame/Content/HeaderRow/PortraitSlot") as Control).visible:
+		_failures.append("no room: the name row kept an empty portrait slot.")
+	_compare("no room", baseline, _snapshot())
+	_panel.portrait_min_width = min_width
+
+	# A narrow viewport: the band keeps its minimum width, and the portrait either fits
+	# beside the name or steps aside; it never squeezes the text.
 	await _resize(Vector2i(760, 720))
 	var narrow := _line(prose, PLAIN_ID, PLAIN_NAME)
 	narrow["portrait_profile"] = _profile(_tall_texture, CharacterProfile.PortraitSide.LEFT)
@@ -417,7 +459,9 @@ func _run_edge_cases() -> void:
 	L10n.set_locale("en")
 
 
-## Clicking the portrait does nothing; clicking the band still continues.
+## The portrait never takes a click. It sits in the band, so a click on it is a click on
+## the band and continues once; the part that rises above the band into the wash is
+## outside the band, so a click there does nothing at all.
 func _run_click_case() -> void:
 	var prose := String(_samples["en"])
 	var line := _line(prose, PLAIN_ID, PLAIN_NAME)
@@ -431,22 +475,32 @@ func _run_click_case() -> void:
 		_failures.append("click case: the portrait takes the mouse.")
 	var portrait_rect: Rect2 = report["rect"]
 	var band: Rect2 = _panel.get_layout_report()["panel_rect"]
-	# A point on the figure that is clear of the band: left of it and above the wash.
-	var point := Vector2(
-		minf(portrait_rect.position.x + portrait_rect.size.x * 0.4, band.position.x - 12.0),
-		maxf(portrait_rect.position.y + 20.0, band.position.y - 90.0)
-	)
-	if not portrait_rect.has_point(point) or band.grow(60.0).has_point(point):
-		_failures.append("click case: could not find a point on the portrait clear of the band.")
+	var inside := Vector2(portrait_rect.get_center().x, portrait_rect.end.y - 4.0)
+	if not band.has_point(inside):
+		_failures.append("click case: the portrait's foot %s is not inside the band %s." % [inside, band])
 		return
 	_advance_count = 0
-	await _click_at(point)
+	await _click_at(inside)
 	var hovered := root.gui_get_hovered_control()
-	if hovered != null and hovered.name == "Portrait":
+	if hovered != null and (hovered.name == "Portrait" or hovered.name == "PortraitSlot"):
 		_failures.append("click case: the portrait is the hovered control.")
-	if _advance_count != 0:
-		_failures.append("click case: clicking the portrait advanced the dialogue.")
+	if _advance_count != 1:
+		_failures.append(
+			"click case: clicking the portrait in the band advanced %d time(s), expected 1."
+			% _advance_count
+		)
+	# Back to a line that has not been continued, then the part above the band, if any.
+	await _show(line, [])
+	portrait_rect = _panel.get_portrait_report()["rect"]
+	band = _panel.get_layout_report()["panel_rect"]
+	if portrait_rect.position.y < band.position.y - 4.0:
+		var above := Vector2(portrait_rect.get_center().x, portrait_rect.position.y + 2.0)
+		_advance_count = 0
+		await _click_at(above)
+		if _advance_count != 0:
+			_failures.append("click case: a click above the band, on the portrait, advanced.")
 	var body := _panel.get_body_label()
+	_advance_count = 0
 	await _click_at(body.get_global_rect().get_center())
 	if _advance_count != 1:
 		_failures.append(
@@ -490,7 +544,15 @@ func _check_shipped_portrait(
 		_failures.append("%s: no texture is drawn (%s)." % [label, report])
 		return
 	_check_portrait_layout(label, size, baseline, texture.get_size().aspect())
-	if String(report["side"]) != "right" or String(report["speaker_id"]) != String(speaker_id):
+	# The face crop from the profile is what is drawn, not the whole painting.
+	var profile := CharacterDirectory.load_cached().get_profile(speaker_id)
+	var atlas := texture as AtlasTexture
+	if profile == null or atlas == null or not atlas.region.is_equal_approx(
+		Rect2(profile.portrait_crop.position * atlas.atlas.get_size(),
+			profile.portrait_crop.size * atlas.atlas.get_size())
+	):
+		_failures.append("%s: the profile's face crop is not what is drawn." % label)
+	if String(report["side"]) != "left" or String(report["speaker_id"]) != String(speaker_id):
 		_failures.append(
 			"%s: drawn on side '%s' for '%s'." % [label, report["side"], report["speaker_id"]]
 		)
@@ -557,47 +619,129 @@ func _check_portrait_layout(label: String, size: Vector2i, baseline: Dictionary,
 	if rect.position.x < -TOLERANCE or rect.position.y < -TOLERANCE \
 			or rect.end.x > viewport.x + TOLERANCE or rect.end.y > viewport.y + TOLERANCE:
 		_failures.append("%s: the portrait leaves the screen (%s in %s)." % [label, rect, viewport])
-	# It enters from an edge: it stands on the bottom and touches its side.
-	if absf(rect.end.y - viewport.y) > TOLERANCE:
-		_failures.append("%s: the portrait does not stand on the bottom edge (%s)." % [label, rect])
-	var touches_side := absf(rect.position.x) <= TOLERANCE or absf(rect.end.x - viewport.x) <= TOLERANCE
-	if not touches_side:
-		_failures.append("%s: the portrait floats away from the screen edge (%s)." % [label, rect])
 	if absf(rect.size.x / rect.size.y - aspect) > 0.01:
 		_failures.append(
 			"%s: the portrait is drawn at aspect %.3f, the texture is %.3f."
 			% [label, rect.size.x / rect.size.y, aspect]
 		)
-	if rect.size.x > viewport.x * _panel.portrait_max_width_ratio + TOLERANCE:
-		_failures.append("%s: the portrait is wider than the cap (%s)." % [label, rect])
-	_check_clear_of_text(label, rect)
 
 	var layout := _panel.get_layout_report()
 	var panel_rect: Rect2 = layout["panel_rect"]
-	var base_panel: Rect2 = baseline["panel"]
-	if panel_rect.position.x < -TOLERANCE or panel_rect.end.x > viewport.x + TOLERANCE \
-			or panel_rect.position.y < -TOLERANCE or panel_rect.end.y > viewport.y + TOLERANCE:
-		_failures.append("%s: the band leaves the screen (%s)." % [label, panel_rect])
-	# At these sizes there is room for both, so the text column keeps its full width:
-	# the band moves, it does not narrow.
-	if panel_rect.size.x < base_panel.size.x - TOLERANCE:
+	var body_rect: Rect2 = layout["body_rect"]
+	var row := (_panel.get_node("Frame/Content/HeaderRow") as Control).get_global_rect()
+	var frame := (_panel.get_node("Frame") as Control).get_global_rect()
+	var wash := (_panel.get_node("Wash") as Control).get_global_rect()
+	var speaker_node := _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel") as Control
+	var speaker := speaker_node.get_global_rect()
+	# The identity block: on the text column, standing on the name row, right before the
+	# name, reaching the band's top edge (unless the width cap scaled it down) and never
+	# rising out of the wash.
+	if absf(rect.position.x - body_rect.position.x) > TOLERANCE:
 		_failures.append(
-			"%s: the band narrowed from %.0f to %.0f px although there was room."
-			% [label, base_panel.size.x, panel_rect.size.x]
+			"%s: the portrait %s is off the text column (body %s)." % [label, rect, body_rect]
 		)
+	if absf(rect.end.y - row.end.y) > TOLERANCE:
+		_failures.append("%s: the portrait %s does not stand on the name row %s." % [label, rect, row])
+	var gap := speaker.position.x - rect.end.x
+	if gap < -TOLERANCE or gap > 24.0:
+		_failures.append("%s: the name is %.0f px from the portrait, not beside it." % [label, gap])
+	var capped := rect.size.x >= _column_width() * _panel.portrait_max_column_ratio - TOLERANCE
+	if not capped and rect.position.y > frame.position.y + TOLERANCE:
+		_failures.append("%s: the portrait %s stops below the band's top %s." % [label, rect, frame])
+	if rect.position.y < wash.position.y - TOLERANCE:
+		_failures.append("%s: the portrait %s rises out of the wash %s." % [label, rect, wash])
+	if rect.end.x > panel_rect.end.x + TOLERANCE or rect.end.y > panel_rect.end.y + TOLERANCE:
+		_failures.append("%s: the portrait %s leaves the band %s." % [label, rect, panel_rect])
+	# Small: the old figure was 72% of the window high and up to 30% of it wide.
+	if rect.size.y > viewport.y * 0.2 + TOLERANCE or rect.size.x > viewport.x * 0.1 + TOLERANCE:
+		_failures.append("%s: the portrait %s is not a small identity portrait." % [label, rect])
+	if rect.size.x > _column_width() * _panel.portrait_max_column_ratio + TOLERANCE:
+		_failures.append("%s: the portrait is wider than its share of the column (%s)." % [label, rect])
+	_check_clear_of_text(label, rect)
+
+	# Nothing but the name row's start moves: the band, the body, the hint and every option
+	# keep the rects they have without a portrait, and the name row keeps its height.
+	var actual := _snapshot()
+	for key in ["panel", "body", "frame", "wash", "hint"]:
+		if not _rect_close(baseline[key], actual[key]):
+			_failures.append("%s: %s moved from %s to %s." % [label, key, baseline[key], actual[key]])
+	var base_speaker: Rect2 = baseline["speaker"]
+	if absf(speaker.position.y - base_speaker.position.y) > TOLERANCE \
+			or absf(speaker.size.y - base_speaker.size.y) > TOLERANCE:
+		_failures.append("%s: the name row changed height (%s -> %s)." % [label, base_speaker, speaker])
+	var base_choices: Array = baseline["choices"]
+	var choices: Array = actual["choices"]
+	if base_choices.size() != choices.size():
+		_failures.append("%s: the options changed with a portrait." % label)
+	else:
+		for index in choices.size():
+			if not _rect_close(base_choices[index], choices[index]):
+				_failures.append("%s: option %d moved with a portrait." % [label, index + 1])
 	if int(layout["body_font_size"]) != _panel.body_size \
 			or int(layout["speaker_font_size"]) != _panel.speaker_size:
 		_failures.append("%s: the type size changed with a portrait." % label)
 	if float(layout["covers_width"]) > 0.72 or float(layout["covers_height"]) > 0.66:
 		_failures.append("%s: the band grew past its share of the screen." % label)
-	var body_rect: Rect2 = layout["body_rect"]
 	var content_height := float(layout["body_content_height"])
 	if not bool(layout["body_scrolling"]) and content_height > body_rect.size.y + 2.0:
 		_failures.append("%s: the body is clipped with a portrait." % label)
 	if bool(layout["body_scrolling"]) and not bool(baseline["scrolling"]):
 		_failures.append("%s: a portrait made a paragraph that fitted scroll." % label)
-	if int(layout["choice_count"]) != int(baseline["choices"].size()):
-		_failures.append("%s: the options changed with a portrait." % label)
+
+
+## Width of the band's text column (the band less the frame's side padding).
+func _column_width() -> float:
+	var frame := _panel.get_node("Frame") as Control
+	var style := frame.get_theme_stylebox(&"panel")
+	var width := frame.size.x
+	if style != null:
+		width -= style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT)
+	return width
+
+
+## A change of speaker changes the portrait in the same frame as the name: no frame shows
+## the new name beside the old face. Lines with no portrait (B, narration with no
+## speaker) leave no slot, so the name, or the sentence, starts on the text column.
+func _run_speaker_switch_case() -> void:
+	await _resize(Vector2i(1600, 900))
+	L10n.set_locale("zh-CN")
+	var prose := String(_samples["zh-CN"])
+	var directory := CharacterDirectory.load_cached()
+	await _show(_line(prose, &"q", "Q"), [])
+	var order: Array[StringName] = [&"n", &"protagonist", PLAIN_ID, &"", &"q"]
+	for speaker_id in order:
+		var label := "switch to '%s'" % String(speaker_id)
+		var shown_name := String(speaker_id).to_upper() if speaker_id != &"" else ""
+		_panel.show_line(_line(prose, speaker_id, shown_name))
+		# No frame has passed: what is on screen now is what the next draw shows.
+		var report := _panel.get_portrait_report()
+		var node := _panel.get_node("Portrait") as TextureRect
+		var slot := _panel.get_node("Frame/Content/HeaderRow/PortraitSlot") as Control
+		if String(report["speaker_id"]) != String(speaker_id):
+			_failures.append("%s: the portrait still belongs to '%s'." % [label, report["speaker_id"]])
+		if APPROVED_PORTRAITS.has(speaker_id):
+			var profile := directory.get_profile(speaker_id)
+			var cached: Dictionary = _panel._portrait_resolution_cache.get(profile.get_instance_id(), {})
+			if not bool(report["visible"]) or node.texture == null \
+					or node.texture != cached.get("texture", null) or not slot.visible:
+				_failures.append("%s: the new face is not shown with the new name (%s)." % [label, report])
+		elif bool(report["visible"]) or node.texture != null or slot.visible:
+			_failures.append("%s: a line without a portrait still shows one or its slot." % label)
+		await process_frame
+		await process_frame
+		await process_frame
+		if not APPROVED_PORTRAITS.has(speaker_id):
+			var speaker := (_panel.get_node("Frame/Content/HeaderRow/SpeakerLabel") as Control)
+			var body := _panel.get_body_label().get_global_rect()
+			if absf(speaker.get_global_rect().position.x - body.position.x) > TOLERANCE:
+				_failures.append("%s: the name does not start on the text column." % label)
+	_panel.close()
+	await process_frame
+	var closed := _panel.get_portrait_report()
+	if bool(closed["visible"]) or (_panel.get_node("Portrait") as TextureRect).texture != null:
+		_failures.append("A closed panel still holds a portrait.")
+	await _resize(RESOLUTIONS[0])
+	L10n.set_locale("en")
 
 
 ## The portrait may sit under the band's padding, never under a word or an option.

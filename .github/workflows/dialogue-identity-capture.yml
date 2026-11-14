@@ -1,0 +1,142 @@
+name: Dialogue identity capture
+
+# Photographs the dialogue identity block of #167 (the small portrait that leads the
+# speaker's name) in the running game, so the layout can be judged on frames rather than
+# on descriptions. `tests/capture_dialogue_identity.gd` takes the frames; see its header.
+#
+# Like `Location art capture`, nothing is committed by Actions. Each job uploads the full
+# frames as an artifact and publishes its group of small JPEGs as notice annotations (an
+# annotation holds about 4 KB, so each image is base64 split into numbered parts:
+# concatenate the parts of one file in order and decode them), because annotations can be
+# read through the REST API from places that cannot reach the artifact store. One job per
+# group, so each group has its own annotation budget; every job takes all the frames and
+# publishes only its own.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_dialogue_identity.gd"
+      - ".github/workflows/dialogue-identity-capture.yml"
+      - "scenes/ui/dialogue_panel.tscn"
+      - "scripts/ui/dialogue_panel.gd"
+      - "scripts/narrative/character_profile.gd"
+      - "data/characters/**"
+      - "assets/ui/portraits/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Dialogue identity (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: speakers
+            frames: "id-protagonist-1600x900-zh id-q-1600x900-zh id-n-1600x900-zh"
+          - group: long
+            frames: "id-long-zh-1600x900 id-long-en-1600x900 id-choices-1600x900-zh"
+          - group: absent
+            frames: "id-b-1600x900-zh id-narration-1600x900-zh"
+          - group: sizes
+            frames: "id-q-1280x720-full id-q-1600x900-full id-q-1920x1080-full"
+          - group: extra
+            frames: "id-long-name-1600x900-en id-q-1280x720-largest"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          # `--import` waits for the queue to drain; its exit code is not the verdict (the
+          # project theme can load before its font is imported). The second pass is.
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          FRAMES: ${{ matrix.frames }}
+        run: |
+          set +e -uo pipefail
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_dialogue_identity.gd \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "SHOT|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
+          # The layout of every frame, readable through the REST API.
+          for name in ${FRAMES}; do
+            grep -E "^SHOT ${name} " "${RUNNER_TEMP}/capture.log" | head -n 1 | cut -c1-300 \
+              | while IFS= read -r line; do echo "::notice title=identity layout::${line}"; done
+          done
+          out="docs/screenshots/dialogue_identity"
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}"/*.png "${out}"/*.jpg "${out}"/*.log "${RUNNER_TEMP}/frames/" 2>/dev/null || true
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          missing=0
+          for name in ${FRAMES}; do
+            file="${out}/${name}.jpg"
+            if [ ! -f "${file}" ]; then
+              echo "::error title=identity capture::${name}.jpg was not written (exit ${code})"
+              missing=$(( missing + 1 ))
+              continue
+            fi
+            data=$(base64 -w0 "${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${name}.jpg ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s); exit ${code}"
+          if [ "${code}" -ne 0 ] || [ "${missing}" -gt 0 ]; then
+            tail -n 12 "${RUNNER_TEMP}/capture.log" | cut -c1-300 \
+              | while IFS= read -r line; do echo "::warning title=identity capture tail::${line}"; done
+            exit 1
+          fi
+
+      # GitHub keeps at most 10 notices per step and 50 annotations per job, so the parts
+      # are spread over four steps of ten. A frame whose parts do not all fit is
+      # incomplete in the annotations; the artifact still has it.
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dialogue-identity-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn

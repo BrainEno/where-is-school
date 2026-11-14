@@ -13,7 +13,12 @@ extends SceneTree
 ## - the type never shrinks to make room: the body keeps its configured size at every
 ##   resolution;
 ## - every option, the name, the role, the source label, the title and the hint stay
-##   inside the panel, with the options above the bottom edge at every size.
+##   inside the panel, with the options above the bottom edge at every size;
+## - a speaker's portrait (the protagonist, Q and N have one) is the small identity
+##   portrait of #167: on the text column at the start of the name row, beside the name,
+##   inside the band and its wash, clear of every word and option, at the standard and
+##   the largest text size; a line with no portrait (narration, the inner voice) has no
+##   slot, so the name and the sentence start on the same column.
 ##
 ## The text it uses is read from the shipped content, so the sizes measured are the
 ## sizes the game really has to draw.
@@ -163,6 +168,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 		_line(prose_en, "protagonist", "You", "", NarrativeEntry.Source.OBSERVED, false)
 	)
 	_measure("%s long English prose" % tag, layout_size, true)
+	_expect_portrait("%s long English prose" % tag, true)
 
 	# 2. A long Chinese paragraph, heard. Chinese is the script's own language and the
 	#    one whose line lengths the layout has to survive.
@@ -171,6 +177,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 		_line(prose_zh, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false)
 	)
 	_measure("%s long Chinese prose" % tag, layout_size, true)
+	_expect_portrait("%s long Chinese prose" % tag, true)
 
 	# 3. One paragraph long enough that no fixed box could hold it: the scroll path.
 	L10n.set_locale("zh-CN")
@@ -207,6 +214,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	await process_frame
 	await process_frame
 	_measure("%s four long options" % tag, layout_size, false)
+	_expect_portrait("%s four long options" % tag, true)
 	await _measure_options("%s four long options" % tag, layout_size)
 
 	# 6. A name and a role that are both too long, plus a title.
@@ -217,6 +225,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	long_line["title"] = "一个同样很长的标题，用来检查标题行会不会越过面板"
 	await _show(long_line)
 	_measure("%s overlong name and role" % tag, layout_size, true)
+	_expect_portrait("%s overlong name and role" % tag, true)
 
 	# 7. Consecutive inner voices: subjective, imagined, no role.
 	var voice_line := _line(
@@ -227,6 +236,13 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	if _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel").get_theme_color("font_color") \
 			== Color(0.898, 0.871, 0.804, 1.0):
 		_failures.append("%s inner voice: the subjective tint was not applied." % tag)
+	_expect_portrait("%s inner voice" % tag, false)
+
+	# 8. Narration: no speaker at all, so no name and no portrait slot.
+	L10n.set_locale("zh-CN")
+	await _show(_line(prose_zh, "", "", "", NarrativeEntry.Source.OBSERVED, false))
+	_measure("%s narration" % tag, layout_size, true)
+	_expect_portrait("%s narration" % tag, false)
 
 	_panel.set_choices([])
 	_panel.close()
@@ -384,6 +400,64 @@ func _measure(label: String, size: Vector2i, expect_body_fits: bool) -> void:
 			)
 		if node_rect.end.y > rect.end.y + 0.5:
 			_failures.append("%s: %s hangs below the band (%s)." % [label, path, node_rect])
+	_measure_portrait(label, rect, body_rect, viewport)
+
+
+## The identity portrait, when the line has one: small, on the text column at the start of
+## the name row, beside the name, inside the band (rising at most into its wash) and clear
+## of every word and option.
+func _measure_portrait(label: String, band: Rect2, body_rect: Rect2, viewport: Vector2) -> void:
+	var report := _panel.get_portrait_report()
+	if not bool(report["visible"]):
+		return
+	var rect: Rect2 = report["rect"]
+	var row := (_panel.get_node("Frame/Content/HeaderRow") as Control).get_global_rect()
+	var wash := (_panel.get_node("Wash") as Control).get_global_rect()
+	var speaker_node := _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel") as Control
+	var speaker := speaker_node.get_global_rect()
+	if absf(rect.position.x - body_rect.position.x) > 0.5 or absf(rect.end.y - row.end.y) > 0.5:
+		_failures.append(
+			"%s: the portrait %s is not at the start of the name row %s." % [label, rect, row]
+		)
+	if speaker.position.x - rect.end.x < -0.5 or speaker.position.x - rect.end.x > 24.0:
+		_failures.append("%s: the name %s is not beside the portrait %s." % [label, speaker, rect])
+	if rect.position.y < wash.position.y - 0.5 or rect.end.x > band.end.x + 0.5 \
+			or rect.end.y > band.end.y + 0.5:
+		_failures.append("%s: the portrait %s leaves the band and its wash." % [label, rect])
+	if rect.size.y > viewport.y * 0.2 + 0.5 or rect.size.x > viewport.x * 0.1 + 0.5:
+		_failures.append("%s: the portrait %s is not a small identity portrait." % [label, rect])
+	var texts: Array[Control] = []
+	for path in [
+		"Frame/Content/HeaderRow/SpeakerLabel",
+		"Frame/Content/HeaderRow/RoleLabel",
+		"Frame/Content/HeaderRow/SourceBadge",
+		"Frame/Content/TitleLabel",
+		"Frame/Content/BodyLabel",
+		"Frame/Content/HintLabel",
+	]:
+		texts.append(_panel.get_node(path) as Control)
+	for button in _panel.get_choice_buttons():
+		texts.append(button)
+	for node in texts:
+		if node.is_visible_in_tree() and rect.intersects(node.get_global_rect()):
+			_failures.append("%s: the portrait %s overlaps %s." % [label, rect, node.name])
+
+
+## Whether the line on screen has a portrait, and with it a slot in the name row.
+func _expect_portrait(label: String, expected: bool) -> void:
+	var shown := bool(_panel.get_portrait_report()["visible"])
+	var slot := _panel.get_node("Frame/Content/HeaderRow/PortraitSlot") as Control
+	if shown != expected or slot.visible != expected:
+		_failures.append(
+			"%s: portrait shown %s, slot shown %s, expected %s."
+			% [label, shown, slot.visible, expected]
+		)
+	if expected:
+		return
+	var speaker := _panel.get_node("Frame/Content/HeaderRow/SpeakerLabel") as Control
+	var body := _panel.get_body_label()
+	if absf(speaker.get_global_rect().position.x - body.get_global_rect().position.x) > 0.5:
+		_failures.append("%s: without a portrait the name is off the text column." % label)
 
 
 func _measure_options(label: String, size: Vector2i) -> void:
