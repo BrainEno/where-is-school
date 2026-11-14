@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/materials/laboratory/textures/tile_glaze.png" id="1_tex"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ink_outline.tres" id="2_ink"]
+
+[resource]
+next_pass = ExtResource("2_ink")
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+resource_name = "lab_wall_tile"
+albedo_color = Color(1, 1, 1, 1)
+texture_filter = 3
+albedo_texture = ExtResource("1_tex")
+uv1_scale = Vector3(1, 1, 1)

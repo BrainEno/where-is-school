@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/materials/laboratory/textures/floor_concrete.png" id="1_tex"]
+
+[resource]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+resource_name = "lab_floor_concrete"
+albedo_color = Color(1, 1, 1, 1)
+texture_filter = 3
+albedo_texture = ExtResource("1_tex")
+uv1_scale = Vector3(0.16, 0.16, 0.16)
+uv1_triplanar = true
+uv1_world_triplanar = true
