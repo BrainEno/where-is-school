@@ -1,0 +1,76 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "laboratory_wet_bench": {
+    "title": "The wet bench",
+    "prompt": "Look at the bench",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two sinks, and one tap still open at a quarter turn. A flask stands upside down on the drying rack, wet inside; the rest are dry and put away. The bench has been wiped to the far end and not past it.",
+    "repeat_text": "Two sinks, one tap open, one wet flask."
+  },
+  "laboratory_fume_hood": {
+    "title": "The fume hood",
+    "prompt": "Look into the hood",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The sash is pulled down to working height and the glass is clean. Three bottles stand inside with their labels turned to the wall. Above the hood the duct goes up, and keeps going after the ceiling has stopped.",
+    "repeat_text": "The sash, the three bottles, the duct."
+  },
+  "laboratory_glass_cabinet": {
+    "title": "The glass cabinet",
+    "prompt": "Look at the glass",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Clean glass behind glass. Flasks ranked by size, beakers stacked in threes, and one shelf with nothing on it at all. The doors are shut and not locked.",
+    "repeat_text": "Ranked flasks, stacked beakers, one empty shelf."
+  },
+  "laboratory_log_book": {
+    "title": "The log book",
+    "prompt": "Read the log",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A ring binder open at the day's page. Times down the left column, figures down the right, every row filled in. Halfway down the page the writing changes and the pen does not.",
+    "repeat_text": "Times, figures, and a change of hand in the middle of the page."
+  },
+  "laboratory_microscope": {
+    "title": "The microscope",
+    "prompt": "Look down the microscope",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A slide is still on the stage: grit and water under the cover glass, nothing arranged. The lens is racked all the way up and the lamp is off. Whoever was looking left it where it is.",
+    "repeat_text": "A slide of grit and water, the lens up, the lamp off."
+  },
+  "laboratory_mixer": {
+    "title": "The mixing drum",
+    "prompt": "Look at the drum",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The drum is warm through the paint. The motor turns, the vane on the shaft goes round, and the light on the control box is green. Where a switch should be there is a steel plate, screwed flat, with nothing written on it.",
+    "repeat_text": "Warm drum, turning motor, a screwed-down plate and no switch."
+  },
+  "laboratory_instruments": {
+    "title": "The instruments",
+    "prompt": "Look at the instruments",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Four machines, four cables leaving the back of them. The incubator holds thirty-four degrees, the centrifuge is empty, the pump is dry, and the gauge on the controller sits at zero with its needle trembling.",
+    "repeat_text": "Thirty-four degrees, an empty centrifuge, a trembling needle."
+  },
+  "laboratory_cable_knot": {
+    "title": "The cables",
+    "prompt": "Follow the cables",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Cables come here from every machine in the room and leave as one bundle. They are not in a tray and not in a coil: they are tied to each other. There is more cable here than there are things to plug in.",
+    "repeat_text": "Everything in the room, tied into one bundle."
+  },
+  "laboratory_annex_door": {
+    "title": "The narrow door",
+    "prompt": "Look through the door",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A narrow door in a plain partition: steel frame, no sign, no lock, standing open. The bundle goes through it and drags a little on the sill. Past the frame the ceiling is lower, and the light is not the light in here.",
+    "repeat_text": "Steel frame, no sign, a lower ceiling beyond it."
+  }
+}

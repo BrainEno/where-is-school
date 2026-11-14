@@ -7,7 +7,7 @@ extends RefCounted
 ## without reading a paragraph.
 
 const CHAPTERS: Array[String] = [
-	"classroom", "corridor", "street", "residential", "alley", "playground",
+	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory",
 ]
 const INSPECTION_DIR := "res://data/inspections"
 

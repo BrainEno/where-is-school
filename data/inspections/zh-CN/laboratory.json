@@ -1,0 +1,76 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "laboratory_wet_bench": {
+    "title": "洗涤台",
+    "prompt": "看一下洗涤台",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两个水槽，一个龙头还开在四分之一圈上。晾瓶架上倒扣着一只锥形瓶，里面还是湿的，其余的都干了、收好了。台面擦到了另一头，就没再往下擦。",
+    "repeat_text": "两个水槽，一个龙头开着，一只湿的瓶子。"
+  },
+  "laboratory_fume_hood": {
+    "title": "通风柜",
+    "prompt": "看看通风柜里",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "拉门停在工作高度，玻璃很干净。里面立着三只瓶子，标签全都朝着墙。柜子上方的排风管往上走，天花板断了以后它还在往上。",
+    "repeat_text": "拉门，三只瓶子，那根管子。"
+  },
+  "laboratory_glass_cabinet": {
+    "title": "玻璃器皿柜",
+    "prompt": "看看柜里的玻璃",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "玻璃后面是干净的玻璃。锥形瓶按大小排好，烧杯三个一摞，有一层架子上一件东西也没有。门关着，没有锁。",
+    "repeat_text": "排好的锥形瓶、摞好的烧杯、一层空架子。"
+  },
+  "laboratory_log_book": {
+    "title": "实验记录本",
+    "prompt": "读一下记录",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一本活页夹摊在今天这一页。左栏是时间，右栏是数字，每一行都填满了。写到一半，字迹变了，笔没变。",
+    "repeat_text": "时间、数字，还有一张纸上换了个人写字。"
+  },
+  "laboratory_microscope": {
+    "title": "显微镜",
+    "prompt": "看看显微镜",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "载物台上还夹着一片玻片：盖玻片下面是一层沙子和水，没有摆好任何东西。镜头摇到了最上面，灯是灭的。看的人就把它留在那儿了。",
+    "repeat_text": "一片沙和水的玻片，镜头在最上面，灯是灭的。"
+  },
+  "laboratory_mixer": {
+    "title": "搅拌罐",
+    "prompt": "看看这个罐子",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "罐体隔着漆还是温的。电机在转，轴上的叶片一圈一圈地转，控制箱上的灯是绿的。本该是开关的地方是一块钢板，四角用螺丝拧平，上面什么也没写。",
+    "repeat_text": "温的罐子、转着的电机、一块拧死的板，没有开关。"
+  },
+  "laboratory_instruments": {
+    "title": "仪器",
+    "prompt": "看看这些仪器",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "四台机器，四根电线从背面通出来。培养箱停在三十四度，离心机是空的，泵是干的，控制器上的表针停在零上，一直在抖。",
+    "repeat_text": "三十四度、空离心机、一直在抖的表针。"
+  },
+  "laboratory_cable_knot": {
+    "title": "电线",
+    "prompt": "顺着电线看",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "电线从这间屋子里每一台机器过来，在这里并成一股。它们不在线槽里，也不成卷：它们互相系在一起。这里的线，比要插电的东西多得多。",
+    "repeat_text": "整间屋子的东西，系成了一股。"
+  },
+  "laboratory_annex_door": {
+    "title": "窄门",
+    "prompt": "从门里看进去",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "隔墙上一道窄门：钢框，没有牌子，没有锁，就那么开着。那一股线从门里穿过去，在门槛上拖了一下。门框过去，天花板更低，里面的光不是这里的光。",
+    "repeat_text": "钢框，没有牌子，里面天花板更低。"
+  }
+}
