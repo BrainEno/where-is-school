@@ -246,7 +246,7 @@ jobs:
           run_check b_reveal_timing 360 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || status=1
           # Issue #174: the blocked classroom door turns its watcher (Q, and only Q) to look at
           # the player in the same frame as the text, follows them in the doorway, and lets go.
-          run_check doorway_watch 240 godot --headless --path . --script res://tests/doorway_watch_test.gd || status=1
+          run_check doorway_watch 240 godot --headless --resolution 1600x900 --path . --script res://tests/doorway_watch_test.gd || status=1
           # The prologue's waits are story time: the pause menu pauses the tree, and a beat
           # must not time itself out (or start its conversation) behind it.
           run_check story_pause_timing 180 godot --headless --path . --script res://tests/story_pause_timing_test.gd || status=1

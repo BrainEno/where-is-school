@@ -2,6 +2,9 @@ extends SceneTree
 ## #174: when the classroom door refuses the player, the person its text says is watching
 ## them really turns and watches - and stops again.
 ##
+## Run it at the game's resolution (`--resolution 1600x900`): the framing claim is about
+## what the player sees.
+##
 ## The real main scene, with the prologue's beats off (`autostart = false`) and Q's first
 ## talk already behind the player (`met_q`), so the door is blocked (`class_dismissed` is
 ## not set) and nothing else moves Q. Q is put where the opening leaves him (at
@@ -143,6 +146,10 @@ func _check_trigger() -> void:
 	var place := _q.global_position
 	var yaw := _q.rotation.y
 	var camera := _player.camera_rig.camera
+	# What the player sees is the game's 1600x900 view; a headless default (64x64) would
+	# judge the framing of a square window nobody plays in.
+	if camera.get_viewport().get_visible_rect().size != Vector2(1600.0, 900.0):
+		_failures.append("Trigger: the view is %s, not the game's 1600x900; run with --resolution 1600x900." % str(camera.get_viewport().get_visible_rect().size))
 	var q_seen_before := camera.is_position_in_frustum(_q.global_position + Vector3.UP * EYE)
 	_interaction.request_activation(_door)
 	await process_frame
