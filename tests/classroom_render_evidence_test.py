@@ -159,7 +159,7 @@ def build(root: Path, method: str, driver: str) -> None:
     (capture / "CAPTURE.txt").write_text("\n".join(notes) + "\n")
     (root / ("classroom_capture_%s.log" % method)).write_text(
         "".join("CLASSROOM_CAPTURE %s\n" % note for note in notes)
-        + "PASS: captured ten unmodified classroom viewport images and wall states.\n"
+        + "PASS: captured fourteen unmodified classroom viewport images and wall states.\n"
     )
 
 
@@ -404,7 +404,7 @@ def main() -> int:
         failures.append("capture shot list")
         print("FAIL: the capture no longer writes %s" % ", ".join(missing_shots))
     else:
-        print("ok: the capture writes the eight frames the verifier requires")
+        print("ok: the capture writes every frame the verifier requires")
 
     print()
     print("%d check(s), %d failure(s)" % (count, len(failures)))
