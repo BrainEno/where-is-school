@@ -1025,7 +1025,9 @@ func _fit_speaker_width(band_width: float) -> void:
 		var control := child as Control
 		if control != null and control != _speaker_label and control.visible:
 			room -= control.get_combined_minimum_size().x + gap
-	_speaker_label.custom_minimum_size.x = clampf(natural, 0.0, maxf(room, 0.0))
+	# Whole pixels, with a little to spare: the container rounds each child it places, and
+	# a row a fraction too wide would widen the frame (and with it the body) by a pixel.
+	_speaker_label.custom_minimum_size.x = clampf(natural, 0.0, maxf(floorf(room) - 2.0, 0.0))
 
 
 ## The name row's top edge in the band: the frame's top padding plus whatever the content
@@ -1055,7 +1057,7 @@ func _place_portrait(plan: Dictionary) -> void:
 	_portrait.texture = _portrait_texture
 	_portrait.position = rect.position
 	_portrait.size = rect.size
-	_portrait_slot.custom_minimum_size = Vector2(rect.size.x, 0.0)
+	_portrait_slot.custom_minimum_size = Vector2(ceilf(rect.size.x), 0.0)
 	_portrait_slot.visible = true
 	var fade := _portrait.material as ShaderMaterial
 	if fade != null:
