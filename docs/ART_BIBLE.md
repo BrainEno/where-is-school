@@ -419,3 +419,114 @@ These are a growing catalogue of motifs, not a checklist to implement all at onc
 - Performance, accessibility, asset licensing, and maintainability remain requirements regardless of style.
 
 **Updated visual principle:** The world may change its medium, scale, and physical laws from one place to another. The work should still feel like one literary experience because its spaces share a sensibility of estrangement, restraint, and human vulnerability.
+
+## Procedural geometry, vertex masks, and shader-authored surfaces
+
+This is an approved **production technique to explore**, not a requirement to replace Blender or hand-authored assets. Its purpose is to let a small team create distinctive, editable geometry and rich surface character without depending on a large library of image textures, UV layouts, or purchased materials.
+
+### Parametric mesh generation
+
+A small project-owned mesh generator may create selected props, architectural details, organic forms, and non-deforming character accessories directly as Godot `ArrayMesh` resources.
+
+Useful starting operations include:
+
+- **Lathe / rotational profiles:** define a 2D radius-height profile and revolve it around an axis to create turned wood, handles, columns, bottles, chair legs, laboratory glassware, and deliberately distorted organic forms.
+- **Loft / swept profiles:** define a sequence of cross-sections along a curve or path, then interpolate position, scale, and optional twist to create cables, pipes, rails, mouldings, roots, tendrils, and irregular architectural connections.
+- **Extrusion and bevelled profiles:** create boards, frames, trim, signs, simple furniture parts, and graphic architectural planes from readable 2D outlines.
+- **Controlled deformation:** allow profile offsets, asymmetry, taper, waviness, and seeded variation where they support the scene's authored visual language.
+
+The generator should expose a small set of meaningful parameters rather than become a general-purpose modelling package. It must produce predictable topology, valid normals, sensible winding, optional tangents when required, and deliberate end caps. Use a fixed seed for any variation so the same parameters regenerate the same asset.
+
+Prefer **editor-time generation** for authored props and static environment pieces: save the resulting mesh/resource or scene so the shipped game does not need to rebuild it every launch. Runtime generation is reserved for a real gameplay need, not merely because it is possible.
+
+Generated meshes must remain compatible with Godot's scene, collision, navigation, and interaction workflows. Keep render geometry separate from simplified collision geometry. Never let decorative subdivisions or shader displacement change the walkable surface or interaction target unexpectedly.
+
+### Vertex colour as a material mask
+
+For suitable meshes, vertex colour can carry semantic material masks instead of relying on a painted texture or UV atlas. Treat RGBA as four authored channels with documented meanings for that asset family—for example:
+
+- **R:** primary material or pigment region;
+- **G:** secondary material, clothing panel, or painted overlay;
+- **B:** wear, edge emphasis, or a secondary procedural treatment;
+- **A:** optional special mask, transition, or effect control.
+
+These meanings are conventions, not a universal project-wide channel contract. Document the channel mapping beside each generator or material preset. A shader can read the interpolated vertex colour and combine it with object/local coordinates, triplanar projections, analytic patterns, and restrained procedural noise to produce pigment variation, brush-like marks, bands, mottling, edge treatment, or material transitions without a conventional UV texture.
+
+**Important limitation:** vertex colours are interpolated between vertices. They are excellent for broad regions and smoothly blended masks, but cannot create a crisp, detailed boundary on a low-resolution mesh by themselves. Add geometry where a boundary needs to be sharp, increase local vertex density selectively, or use a procedural shader mask based on coordinates. Do not subdivide every mesh indiscriminately.
+
+No-UV does not mean no design. Choose coordinate space deliberately:
+
+- object/local coordinates keep a pattern attached to a moving or rotated object;
+- world coordinates can make marks cross adjacent surfaces, but may look as if the material slides when an object moves;
+- triplanar projection avoids hand-authored UVs on irregular forms, but must be checked at corners and changes of scale;
+- mesh UVs remain appropriate when a specific hand-painted image, decal layout, or authored graphic is important.
+
+The shader should establish a few legible material layers, not cover every surface in generic noise. Keep the existing painterly shader library as reviewed, read-only building blocks where appropriate; location-owned materials should own their palette and parameters. Do not globally migrate all classroom materials or characters to one procedural shader.
+
+### Character and environment applications
+
+Good first candidates include:
+
+- **Environment:** cables and cable bundles in the laboratory, pipes, rails, roots, tree limbs, turned furniture parts, sculptural door handles, irregular frames, and selected architectural transitions.
+- **Props:** glassware silhouettes, bottles, jars, tool handles, paper/wooden objects, and small repeated components where a generated profile is faster to iterate than manual modelling.
+- **Characters:** selected non-deforming details such as stylised hair clumps, buttons, seams, accessories, and deliberately graphic clothing overlays—only where the existing model topology and rig allow it.
+
+Do not use a first mesh-generator experiment to replace the protagonist's or an NPC's complete Blender model, skeleton, skinning, facial rig, or authored animation. Character silhouette, posture, expression, and stable deformation remain more important than procedural complexity. Keep the dialogue portraits as independent 2D artworks.
+
+### Prototype and acceptance sequence
+
+1. Build one small editor-time lathe generator and one loft generator; do not build a universal node-based modelling suite.
+2. Test them on a low-risk prop and on the laboratory cable system before applying them to a hero character.
+3. Add vertex-colour mask output and one deliberately restrained shader preset.
+4. Compare the result in the actual game camera, under the location's real lighting, at normal gameplay distance.
+5. Check seams, normals, winding, underside visibility, material transitions, collision, navigation, interaction picking, and both Forward+ and Compatibility renderers.
+6. Record generator parameters, fixed seeds, shader version, source ownership, and regeneration steps. Generated assets still need provenance and rights records where any external source is involved.
+
+The success criterion is not maximum procedural detail. It is a repeatable way to create a few memorable forms and surface treatments that would otherwise require unavailable textures or excessive manual asset work.
+
+## Procedural sound design
+
+The project may use synthesis to create original sound effects without a sample library. This is already an established technique in the interaction system: `scripts/audio/cue_audio.gd` builds four deterministic, quiet cue buffers at startup and plays them through reusable `AudioStreamPlayer` voices. Preserve that design as the baseline rather than introducing a second audio architecture unnecessarily.
+
+### Choose the stream type for the job
+
+- **Short, fixed sound effects:** prefer generating sample data into an `AudioStreamWAV` buffer once, then reusing it. This suits clicks, knocks, soft impacts, small UI sounds, short mechanical movements, and other repeatable cues. It avoids generating the same samples every time the sound plays.
+- **Continuous or changing procedural sound:** consider `AudioStreamGenerator` when samples genuinely need to be produced while audio is playing—for example, evolving electrical hums, unstable fluorescent lights, distant machinery, a changing resonant drone, or a sound whose pitch/timbre follows a live gameplay parameter.
+- **Designed music, long ambience, or complex authored performances:** do not assume procedural synthesis is automatically better. A properly licensed recorded or composed asset may be more expressive, easier to mix, and cheaper to maintain.
+
+`AudioStreamGenerator` is a playback buffer interface, not a complete sound-design system. Its producer must keep the playback buffer supplied at a controlled rate. Avoid allocating large arrays, doing expensive scene work, or generating unbounded noise in a per-frame gameplay callback. Keep synthesis bounded, deterministic where repeatability matters, and isolated from gameplay state.
+
+### A small synthesis vocabulary
+
+Build sounds from a few controllable ingredients:
+
+- sine and other simple oscillators for tonal bodies;
+- harmonics and inharmonic partials for metal, glass, wood, and mechanical character;
+- filtered or shaped noise for air, friction, static, paper, and impact texture;
+- short attack/decay envelopes to avoid clicks and keep events concise;
+- pitch bends, amplitude modulation, and restrained frequency modulation for movement and instability;
+- resonant filters, short delays, and carefully limited reverb where the sound needs a sense of space.
+
+The point is not to make every sound electronic. A short wooden knock can be built from a low transient, a few inharmonic resonances, and a fast decay; a glass object can use brighter partials and a longer, quieter tail. The synthesis should communicate the material and action, not advertise the algorithm.
+
+### Audio design rules
+
+- Keep effects subordinate to dialogue and important environmental sounds; use deliberate headroom and avoid clipping.
+- Use attack/release envelopes or equivalent smoothing to prevent clicks at buffer boundaries.
+- Clamp or otherwise control output levels; test peaks and perceived loudness, not just numeric amplitude.
+- Rate-limit sounds that can be triggered rapidly by pointer movement or repeated overlap.
+- Reuse streams and voices; do not create a new player and a new buffer for every interaction.
+- Keep sound generation separate from the code that decides what happened. Gameplay sends a semantic cue; the audio layer decides how that cue sounds.
+- Respect the existing Master, Music, and SFX volume controls and mute behavior. Do not add an autoload for a small local sound generator unless several independent scenes genuinely need a shared lifecycle.
+- Prefer deterministic seeds for authored procedural sounds so tests, captures, and repeated events remain comparable.
+- Test on actual Windows speakers/headphones at the intended mix level. Headless tests can verify stream format, duration, peak, determinism, rate limiting, and routing, but cannot replace listening.
+
+### First useful sound experiments
+
+- A small set of classroom and laboratory object interactions: paper, wood, glass, metal, switches, drawers, and cables.
+- Low-level room tones that can subtly change with the space, rather than a constant generic horror drone.
+- A fluorescent light or electrical device whose hum changes slightly when approached or inspected.
+- A cable/pipe resonance that supports the laboratory's visual trail without turning it into a loud puzzle indicator.
+- Restrained scene-transition and spatial-event sounds that make impossible changes feel physical but not magical.
+
+Each sound should have a clear gameplay or narrative reason to exist. Silence remains a valid and often preferable sound-design choice.
