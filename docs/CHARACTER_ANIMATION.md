@@ -31,8 +31,8 @@ rotation; it does not add to the rest, and `Skeleton3D.get_bone_pose_rotation()`
 returns the rest rotation, not identity. On both rigs every limb hangs down its own −Y with
 a rest rotation of roughly 170–180° from its parent. A key of "3° about X" written as an
 absolute rotation therefore throws the arm straight up. The first runtime wiring did exactly
-that, and both characters idled with their arms raised (`docs/screenshots/03j_protagonist.png`
-and `03k_q_in_the_classroom.png` from before this fix).
+that, and both characters idled with their arms raised (the historical frames `docs/screenshots/03j_protagonist.png`
+and `03k_q_in_the_classroom.png`, from before this fix).
 
 The sign convention, measured from the GLB joints and checked by the runtime test, is that
 **+X moves the far end of a hanging limb backward**:
