@@ -86,7 +86,6 @@ func _run() -> void:
 	if _host == null or _player == null or _companion == null or sequence == null or _navigator == null:
 		Harness.finish(self, ["main.tscn did not expose the host, player, companion, director and pointer."], "")
 		return
-	sequence.allow_player_control()
 	# The passive inner voice can open a conversation at any time, which locks the player
 	# mid-walk and turns every timing below into a race. It has its own test.
 	var voice := _main.get_node_or_null("InnerVoiceDirector")
@@ -111,7 +110,7 @@ func _run() -> void:
 	_check_in_game_look("protagonist", player_animator)
 
 	Harness.stage = "wake"
-	await _check_wake(player_animator)
+	await _check_wake(sequence, player_animator)
 
 	Harness.stage = "player idle"
 	await _seconds(0.6)
@@ -148,16 +147,18 @@ func _run() -> void:
 # --- the player -------------------------------------------------------------
 
 
-## A new game opens asleep at the desk: the director's `set_wake_pose(1.0)` seats the
-## model, and the settle back to 0 is the get-up. Measured, so a seated pose that folded the
-## legs backwards (the wrong hip sign) fails here rather than in a screenshot.
-func _check_wake(animator: CharacterVisualAnimation) -> void:
+## Exercise the real new-game wake beat: the slumped opening settles upright but seated, and
+## only the player's first deliberate move starts the existing get-up action.
+func _check_wake(sequence: OpeningSequence, animator: CharacterVisualAnimation) -> void:
+	await sequence._beat_wake()
 	await _frames(2)
 	if not animator.is_seated() or animator.get_current_clip() != CharacterVisualAnimation.SEATED_CLIP:
 		_failures.append(
-			"A new game should open with the protagonist seated (wake pending), but the model is on '%s'."
+			"The completed wake beat should leave the protagonist seated, but the model is on '%s'."
 			% animator.get_current_clip()
 		)
+	if not _player.is_control_enabled():
+		_failures.append("The wake beat did not return movement control.")
 	else:
 		var hip := _bone(animator, "thigh.L")
 		var knee := _bone(animator, "shin.L")
@@ -165,7 +166,7 @@ func _check_wake(animator: CharacterVisualAnimation) -> void:
 		if hip >= 0 and knee >= 0 and foot >= 0:
 			var thigh := _joint(animator, knee) - _joint(animator, hip)
 			var shin := _joint(animator, foot) - _joint(animator, knee)
-			_notes.append("seated: knee %+.2f m ahead of the hip, foot %.2f m below the knee" % [thigh.z, -shin.y])
+			_notes.append("seated after wake: knee %+.2f m ahead of the hip, foot %.2f m below the knee" % [thigh.z, -shin.y])
 			if thigh.z < 0.2:
 				_failures.append(
 					"Seated, the protagonist's knee is %+.2f m ahead of the hip: the thighs are not forward."
@@ -173,11 +174,12 @@ func _check_wake(animator: CharacterVisualAnimation) -> void:
 				)
 			if -shin.y < 0.2:
 				_failures.append("Seated, the protagonist's shin does not hang down (foot %.2f m below the knee)." % -shin.y)
-	_player.set_wake_pose(0.0)
-	_player.set_camera_roll(0.0)
-	await _frames(1)
+
+	Input.action_press(&"move_right")
+	await _physics_frames(1)
+	Input.action_release(&"move_right")
 	if not animator.is_playing_action() or animator.get_current_clip() != "get_up":
-		_failures.append("Settling the wake pose did not play the get-up (clip '%s')." % animator.get_current_clip())
+		_failures.append("The first deliberate movement did not start the get-up (clip '%s')." % animator.get_current_clip())
 	var waited := 0.0
 	while animator.is_playing_action() and waited < 4.0:
 		await _seconds(0.1)
@@ -185,7 +187,10 @@ func _check_wake(animator: CharacterVisualAnimation) -> void:
 	if animator.is_playing_action():
 		_failures.append("The get-up never finished.")
 	elif animator.is_seated() or animator.get_current_clip() != String(CharacterVisualAnimation.STATE_IDLE):
-		_failures.append("After the get-up the protagonist is on '%s', not idle." % animator.get_current_clip())
+		_failures.append("After the first movement's get-up the protagonist is on '%s', not idle." % animator.get_current_clip())
+	if not is_zero_approx(_player.visual.rotation_degrees.x) \
+			or not is_equal_approx(_player.visual.position.y, 0.9):
+		_failures.append("The first movement did not settle the whole wake pose to standing.")
 
 
 func _check_keyboard_walk(animator: CharacterVisualAnimation) -> void:

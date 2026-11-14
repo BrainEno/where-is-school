@@ -95,9 +95,14 @@ func _run() -> void:
 		func() -> bool: return bool(_game_state.get_flag(StoryFlags.MET_Q, false)),
 		45.0, "Q to start talking"
 	):
+		var wake_animator := _player.get_character_animator()
+		if wake_animator == null or not wake_animator.is_seated():
+			_failures.append("The real new-game opening did not keep the protagonist seated when Q began talking.")
 		# met_q is set by the conversation's first line, so the flags below only
 		# exist once the director has handed control back.
 		await _settle(90.0, "Q's opening conversation to finish")
+		if wake_animator == null or not wake_animator.is_seated():
+			_failures.append("The protagonist stood up during Q's first conversation instead of remaining seated.")
 		if not bool(_game_state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
 			_failures.append("The first choice did not produce its story flag.")
 		if String(_game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
