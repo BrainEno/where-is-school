@@ -192,6 +192,7 @@ func _ready() -> void:
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
 	_make_band_clickable()
+	_warm_portrait_resources()
 	_queue_fit()
 
 
@@ -294,6 +295,17 @@ func set_reveal_speed(cps: float) -> void:
 		characters_per_second = cps
 	if instant_reveal and _revealing:
 		complete_reveal()
+
+
+## Portraits are small UI assets, but resolving a path performs a synchronous
+## ResourceLoader.load(). Warm the ordinary speaker portraits while the panel is
+## initialized, not on the first click that opens a conversation.
+func _warm_portrait_resources() -> void:
+	var directory := CharacterDirectory.load_cached()
+	for character_id: StringName in directory.get_ids():
+		var profile := directory.get_profile(character_id)
+		if profile != null and profile.has_portrait():
+			profile.resolve_portrait()
 
 
 func _connect_settings() -> void:
@@ -730,13 +742,14 @@ func _settle_layout() -> void:
 		width = float(portrait_plan["band_width"])
 
 	if _layout_stage == 0:
-		# Give the frame the width the text will really wrap at, and the tallest height
-		# it is allowed. What the content measures under those two constraints is what
-		# the band should be.
+		# Give the frame the width the text will really wrap at, but keep its current
+		# height while the containers settle. Expanding to max_height here and shrinking
+		# on the next frame made the visible band flash on every line change.
+		var retained_height := minf(size.y, max_height)
 		offset_left = left
 		offset_right = left + width
 		offset_bottom = -bottom_margin
-		offset_top = -bottom_margin - max_height
+		offset_top = -bottom_margin - retained_height
 		_body_label.fit_content = true
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
