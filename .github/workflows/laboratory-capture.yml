@@ -1,0 +1,295 @@
+name: Laboratory capture
+
+# Evidence for the laboratory (#163): the frames the acceptance asks for, rendered by the
+# game itself, plus a recorded walkthrough. `tests/capture_laboratory.gd` takes the frames
+# and `tests/capture_laboratory_walkthrough.gd` records the route; see their headers.
+#
+# Why four jobs for twelve frames: the frames are published inline as base64 `::notice`
+# annotations so they can be read through the REST API from places that cannot reach the
+# artifact store, and GitHub keeps 50 annotations per job. Three frames per job stays
+# inside that budget. The artifact of each job holds the same frames at full size.
+#
+# `rendering` runs the whole set on the Compatibility renderer (opengl3, what the school
+# slice ships on) and a smaller pair on Forward+ (vulkan through lavapipe, installed
+# here). Both are required to render the room, not one of them.
+
+on:
+  pull_request:
+    paths:
+      - "scenes/locations/laboratory/**"
+      - "assets/materials/laboratory/**"
+      - "assets/audio/laboratory_hum.wav"
+      - "data/inspections/*/laboratory.json"
+      - "scripts/laboratory/**"
+      - "tools/build_laboratory.py"
+      - "art/laboratory/**"
+      - "tests/capture_laboratory.gd"
+      - "tests/capture_laboratory_walkthrough.gd"
+      - ".github/workflows/laboratory-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    name: frames (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: room
+            only: "room_wide,entrance_view,bench_detail"
+          - group: cables
+            only: "cable_origin,cable_knot,wet_bench"
+          - group: unknown
+            only: "annex_door,annex_inside,explore_to_unknown"
+          - group: route
+            only: "route_aisle,far_corridor,drum_close"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          # `--import` waits for the queue to drain; its exit code is not the verdict (the
+          # project theme can load before its font is imported). The second pass is.
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+          ONLY: ${{ matrix.only }}
+        run: |
+          set +e -uo pipefail
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_laboratory.gd -- \
+            "label=compatibility" "only=${ONLY}" width=760 quality=0.72 \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "LABORATORY_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 40
+          out="docs/screenshots/laboratory/compatibility"
+          ls -l "${out}" || true
+          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" | wc -l)
+          echo "frames=${frames} exit=${code}"
+          if [ "${frames}" -lt 1 ]; then
+            echo "::error title=laboratory capture::${GROUP} wrote ${frames} frame(s), exit ${code}"
+            tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}"/*.jpg "${RUNNER_TEMP}/frames/"
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls "${RUNNER_TEMP}/frames" | sort); do
+            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+
+      # GitHub keeps at most 10 notices per step and 50 annotations per job: five steps of
+      # ten. A frame whose parts do not all fit is incomplete in the annotations; the
+      # artifact still has it, and so does the next job's.
+      - name: Publish frames 1/5
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/5
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/5
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/5
+        if: always()
+        shell: bash
+        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 5/5
+        if: always()
+        shell: bash
+        run: |
+          sed -n '41,50p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 50 ]; then
+            echo "${total} parts queued, 50 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: laboratory-frames-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
+
+  forward_plus:
+    name: forward+ (vulkan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Install a software Vulkan driver
+        shell: bash
+        run: |
+          # The runner has no GPU. Forward+ needs Vulkan, and lavapipe (Mesa's software
+          # Vulkan) renders it; this is the same trick `xvfb-run` plays for OpenGL.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary 2>&1 | head -n 20 || true
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+
+      - name: Capture on Forward+
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver vulkan \
+            --script res://tests/capture_laboratory.gd -- \
+            "label=forward_plus" "only=room_wide,annex_inside" width=760 quality=0.72 \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "LABORATORY_CAPTURE|Vulkan|vulkan|PASS|FAIL|SCRIPT ERROR" "${RUNNER_TEMP}/capture.log" | head -n 40
+          out="docs/screenshots/laboratory/forward_plus"
+          ls -l "${out}" || true
+          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" 2>/dev/null | wc -l)
+          echo "frames=${frames} exit=${code}"
+          if [ "${frames}" -lt 1 ]; then
+            echo "::error title=forward+ capture::Forward+ wrote ${frames} frame(s), exit ${code}"
+            tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}"/*.jpg "${RUNNER_TEMP}/frames/"
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls "${RUNNER_TEMP}/frames" | sort); do
+            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "fp_${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+
+      - name: Publish Forward+ frames 1/5
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish Forward+ frames 2/5
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish Forward+ frames 3/5
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish Forward+ frames 4/5
+        if: always()
+        shell: bash
+        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish Forward+ frames 5/5
+        if: always()
+        shell: bash
+        run: sed -n '41,50p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+
+      - name: Upload Forward+ frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: laboratory-frames-forward-plus-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
+
+  walkthrough:
+    name: walkthrough (recording)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+
+      - name: Record
+        shell: bash
+        run: |
+          # Movie maker renders at a fixed step and writes every frame, so the recording is
+          # the same on every run. AVI (MJPEG) is what Godot writes; ffmpeg turns it into
+          # something that plays in a browser.
+          set +e -uo pipefail
+          mkdir -p build
+          ffmpeg -version | head -n 1
+          xvfb-run -a --server-args="-screen 0 1280x720x24" \
+            godot --path . --resolution 1280x720 --rendering-driver opengl3 \
+            --write-movie build/laboratory_walkthrough.avi --fixed-fps 24 \
+            --script res://tests/capture_laboratory_walkthrough.gd \
+            > "${RUNNER_TEMP}/record.log" 2>&1
+          code=$?
+          grep -E "LABORATORY_WALKTHROUGH|PASS|FAIL|SCRIPT ERROR|Movie" "${RUNNER_TEMP}/record.log" | head -n 30
+          ls -l build/ || true
+          if [ ! -f build/laboratory_walkthrough.avi ]; then
+            echo "::error title=laboratory walkthrough::no recording was written (exit ${code})"
+            tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
+            exit 1
+          fi
+          ffmpeg -y -i build/laboratory_walkthrough.avi \
+            -vf "scale=960:-2:flags=lanczos" -c:v libx264 -preset slow -crf 26 \
+            -pix_fmt yuv420p -movflags +faststart \
+            build/laboratory_walkthrough.mp4 > "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+          ffmpeg_code=$?
+          ls -l build/laboratory_walkthrough.mp4 2>/dev/null || true
+          if [ "${ffmpeg_code}" -ne 0 ] || [ ! -s build/laboratory_walkthrough.mp4 ]; then
+            echo "::error title=laboratory walkthrough::ffmpeg could not transcode the recording"
+            tail -n 20 "${RUNNER_TEMP}/ffmpeg.log" | cut -c1-400 || true
+            exit 1
+          fi
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 \
+            build/laboratory_walkthrough.mp4 || true
+
+      - name: Upload recording
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: laboratory-walkthrough-${{ github.run_attempt }}
+          path: |
+            build/laboratory_walkthrough.mp4
+            ${{ runner.temp }}/record.log
+          if-no-files-found: warn

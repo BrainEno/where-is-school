@@ -94,6 +94,17 @@ jobs:
           # so replacing the source without re-deriving it fails here.
           python3 tools/build_music_loop.py --check
 
+      - name: Check the laboratory is reproducible
+        shell: bash
+        run: |
+          # The laboratory (#163) is generated twice over: its four painted texture fields
+          # come from `art/laboratory/paint_laboratory_textures.py` and its 26 materials and
+          # 188 KiB scene from `tools/build_laboratory.py`. Both are deterministic, so a
+          # committed file that no longer matches its generator is a file nobody can
+          # rebuild, and that is exactly what `--check` refuses.
+          python3 art/laboratory/paint_laboratory_textures.py --check
+          python3 tools/build_laboratory.py --check
+
       - name: Check the CI verdict itself
         shell: bash
         run: |
@@ -289,6 +300,11 @@ jobs:
           run_check imported_placement 300 godot --headless --path . --script res://tests/imported_placement_test.gd || status=1
           # Classroom visual acceptance: layout, collisions, material ownership, navigation, and real-camera visibility.
           run_check classroom_visual_slice 240 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || status=1
+          # Laboratory visual slice (#163): five working zones around a running drum, every cable
+          # from a real machine to the room behind the partition, and all of it reachable from the
+          # entrance without a prop in the way. The room is not registered in the story catalogue
+          # and this test asserts that it stays that way until the owner wires it in.
+          run_check laboratory_visual_slice 300 godot --headless --path . --script res://tests/laboratory_visual_slice_test.gd || status=1
           # The biology classroom's anomalies: the curtained window that opens on nothing and drops the
           # player into the yard, and the rear door that puts an unsupported staircase in the room.
           run_check classroom_anomaly 300 godot --headless --path . --script res://tests/classroom_anomaly_test.gd || status=1
