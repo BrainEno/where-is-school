@@ -37,6 +37,8 @@ var _player: PlayerController = null
 var _dialogue: DialogueController = null
 var _companion: CompanionController = null
 var _hud: GameHud = null
+## The people a refusing exit names turn and watch the player (#174).
+var _watch: ExitWatch = null
 
 var _finished := false
 
@@ -61,11 +63,23 @@ func _init(
 	_companion = companion
 	if _ui != null:
 		_hud = _ui.hud
+	# A node, because a watch follows the player every frame; a child of the host, so it
+	# goes when the host does.
+	if _host != null:
+		_watch = ExitWatch.new()
+		_watch.name = "ExitWatch"
+		_watch.setup(_player, _dialogue, _host)
+		_host.add_child(_watch)
 
 
 ## True once the milestone card is up: the slice is over and nothing should start.
 func is_finished() -> bool:
 	return _finished
+
+
+## The watch a refusing exit starts, for tests and diagnostics (null without a host).
+func get_exit_watch() -> ExitWatch:
+	return _watch
 
 
 # --- Exits ------------------------------------------------------------------
@@ -80,6 +94,9 @@ func is_finished() -> bool:
 func handle_exit(exit: LocationExit) -> void:
 	if not String(exit.blocked_inspection_id).is_empty() and not exit.is_open():
 		_dialogue.present_inspection(exit.blocked_inspection_id)
+		# Same frame as the text: whoever it says is watching is seen to be.
+		if _watch != null:
+			_watch.begin(exit, _locations.get_current() if _locations != null else null)
 		return
 	if not exit.is_open():
 		push_warning(

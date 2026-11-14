@@ -15,6 +15,10 @@ extends Interactable
 @export var required_flag: StringName = &""
 ## Inspection shown while the exit is still blocked.
 @export var blocked_inspection_id: StringName = &""
+## `npc_id`s of the people whose attention keeps the player from leaving, when the blocked
+## text says someone does. While the exit refuses the player they turn and watch them
+## (`ExitWatch`); nobody else in the room reacts. Empty: no one is watching this door.
+@export var blocked_watcher_ids: Array[StringName] = []
 
 @export_category("Milestone end")
 ## When true the exit does not change location: it ends the implemented slice
