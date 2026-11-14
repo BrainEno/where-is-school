@@ -1,20 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/environment/window_curtain.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://assets/models/classroom/classroom_window_curtains.glb" id="2_model"]
-[ext_resource type="Material" path="res://assets/materials/classroom/curtain_ochre.tres" id="3_ochre"]
-[ext_resource type="Material" path="res://assets/materials/classroom/curtain_blue.tres" id="4_blue"]
-[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="5_trim"]
-[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="6_metal"]
-[ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="7_wood"]
+[ext_resource type="Material" path="res://assets/materials/classroom/curtain_blackout.tres" id="2_fabric"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="3_track"]
 
 [node name="WindowCurtain" type="Node3D"]
 script = ExtResource("1_script")
-left_fabric = ExtResource("3_ochre")
-right_fabric = ExtResource("4_blue")
-trim_material = ExtResource("5_trim")
-rail_material = ExtResource("6_metal")
-finial_material = ExtResource("7_wood")
-ring_material = ExtResource("6_metal")
-
-[node name="Model" parent="." instance=ExtResource("2_model")]
+fabric_material = ExtResource("2_fabric")
+track_material = ExtResource("3_track")

@@ -665,16 +665,17 @@ func _check_end_card_restart() -> void:
 
 func _check_targeting() -> void:
 	var cases := [
-		# Stand southeast of the bag and face diagonally across the aisle; the old
-		# west-side fixture was occluded after the room was expanded.
-		{"position": Vector3(-2.8, 0, 0.6), "yaw": 50.0, "expected": &"schoolbag"},
+		# The bag hangs on the back of your chair (issue #159): stand in the aisle behind
+		# it and face the board.
+		{"position": Vector3(-1.6, 0, 2.75), "yaw": 0.0, "expected": &"schoolbag"},
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
-		{"position": Vector3(-3.2, 0, 2.85), "yaw": 0.0, "expected": &"q_talk"},
+		# Q stands in the aisle at your left, facing you; face him from the west.
+		{"position": Vector3(-3.4, 0, 1.75), "yaw": -90.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
 		{"position": Vector3(-3.2, 0, -1.0), "yaw": 61.0, "expected": &"set_square"},
 		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},
 		{"position": Vector3(0.0, 0, 3.7), "yaw": 180.0, "expected": &"timetable"},
-		{"position": Vector3(3.0, 0.12, -3.1), "yaw": 0.0, "expected": &"classroom_door"},
+		{"position": Vector3(5.6, 0, -3.55), "yaw": -90.0, "expected": &"classroom_door"},
 	]
 	if _interaction == null:
 		_failures.append("The player has no InteractionController to test.")

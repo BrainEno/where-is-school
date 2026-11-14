@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/projector_screen.gd" id="1_script"]
+[ext_resource type="Material" path="res://assets/materials/classroom/screen_matte.tres" id="2_screen"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="3_case"]
+
+[node name="ProjectorScreen" type="Node3D"]
+script = ExtResource("1_script")
+screen_material = ExtResource("2_screen")
+case_material = ExtResource("3_case")

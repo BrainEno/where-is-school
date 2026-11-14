@@ -5,10 +5,13 @@ extends SceneTree
 ## system of its own, restyled board, windows and teacher's desk - and none of that is
 ## allowed to cost the room anything a player relies on. The claims under test:
 ##
-## 1. **A larger room.** A 14 x 10 m shell contains twelve desks, two same-wall doors, a
+## 1. **A larger room.** A 14 x 10 m shell contains twelve desks, two doors on the east
+##    wall (issue #159), a roll-down screen over the board, a ceiling projector, a
 ##    step-up concrete platform, a curved lectern, the original story props and exits.
-## 2. **Only purposeful solids.** The floor, segmented walls, two lintels, platform/step,
-##    twelve desk wrappers and teacher desk are the only scene-owned collision bodies.
+##    The blackboard wall is one unbroken wall; the schoolbag hangs on your chair.
+## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
+##    door openings and the back window included), platform/step, twelve desk wrappers
+##    and teacher desk are the only scene-owned collision bodies.
 ## 3. **Its own colour system.** Every surface of the room draws a material from
 ##    `assets/materials/classroom/` (the shared ceiling-light material is the one
 ##    exception), nothing reaches into another agent's shader folder, and the imported
@@ -23,8 +26,9 @@ extends SceneTree
 ##    the clip, the cracked pane, the teacher's chair, the marks on your desk, the taped
 ##    set square, the one strap - is in the scene.
 ## 8. **The real camera.** From the game's own camera rig, at every standing spot in the
-##    room, the board and the windows never stand between the camera and the player; the
-##    furniture reads at a sensible size next to the characters.
+##    room, the board and the windows never stand between the camera and the player, and
+##    the ceiling projector thins out wherever it would; the furniture reads at a sensible
+##    size next to the characters.
 ## 9. **Navigation.** The baked mesh reaches every desk and every interactable from the
 ##    spawn.
 
@@ -52,8 +56,6 @@ const WALLS := {
 	"WallEast": Vector3(6.9, 1.6, 0.0),
 	"WallSouthLeft": Vector3(-3.5, 1.6, 4.9),
 	"WallSouthRight": Vector3(3.5, 1.6, 4.9),
-	"DoorLintel": Vector3(3.0, 2.65, -4.9),
-	"AnomalyDoorLintel": Vector3(5.0, 2.65, -4.9),
 }
 const DESKS := {
 	"DeskA1": Vector3(-4.8, 0.0, -0.8),
@@ -73,11 +75,16 @@ const PROPS := {
 	"Furniture/FrontDesk": Vector3(-4.65, 0.0, -2.2),
 	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
 	"Props/SetSquare": Vector3(-4.25, 0.81, -2.1),
-	"Props/Schoolbag": Vector3(-4.0, 0.0, -0.45),
-	"Actors/Q": Vector3(-3.2, 0.0, 2.1),
+	"Furniture/DeskB2/Chair/Schoolbag": Vector3(0.0, 0.5, 0.34),
+	"Actors/Q": Vector3(-2.5, 0.0, 1.75),
 	"Actors/N": Vector3(3.2, 0.0, 4.2),
-	"SpawnPoints/PlayerStart": Vector3(0.0, 0.0, 0.25),
-	"SpawnPoints/FromCorridor": Vector3(3.0, 0.12, -4.3),
+	"SpawnPoints/PlayerStart": Vector3(-1.6, 0.0, 1.95),
+	"SpawnPoints/FromCorridor": Vector3(6.25, 0.0, -3.55),
+	"WallEast/FrontDoor": Vector3(-0.04, -1.6, -3.55),
+	"WallEast/RearDoor": Vector3(-0.04, -1.6, 3.55),
+	"WallNorth/ProjectorScreen": Vector3(-2.9, 1.02, 0.35),
+	"CeilingProjector": Vector3(-2.9, 3.2, -0.9),
+	"Anomalies/BackCurtain": Vector3(-6.62, 3.14, 2.2),
 }
 const INTERACTABLES := {
 	"blackboard": Vector3(-1.6, 0.6, -4.25),
@@ -85,14 +92,17 @@ const INTERACTABLES := {
 	"front_desk": Vector3(-4.4, 0.5, -1.7),
 	"window": Vector3(-6.0, 0.6, 0.0),
 	"own_desk": Vector3(-1.6, 0.4, 1.3),
-	"schoolbag": Vector3(-4.0, 0.2, -0.45),
+	"schoolbag": Vector3(-1.6, 0.55, 2.3),
 	"timetable": Vector3(0.0, 0.6, 4.3),
-	"q_talk": Vector3(-3.2, 0.8, 2.1),
-	"classroom_door": Vector3(3.0, 0.6, -4.35),
+	"q_talk": Vector3(-2.5, 0.8, 1.75),
+	"classroom_door": Vector3(6.35, 0.6, -3.55),
+	"rear_door": Vector3(6.35, 0.6, 3.55),
+	"curtain": Vector3(-5.95, 0.6, 2.2),
+	"projector_screen": Vector3(-2.9, 0.7, -4.15),
 }
 const SOLIDS: Array[String] = [
 	"Floor", "WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight",
-	"DoorLintel", "AnomalyDoorLintel", "Stage",
+	"Stage",
 	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
 	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
@@ -105,18 +115,36 @@ const WALL_PAINT := {
 	"WallEast": "wall_east.tres",
 	"WallSouthLeft": "wall_south_left.tres",
 	"WallSouthRight": "wall_south_right.tres",
-	"DoorLintel": "wall_north_door.tres",
-	"AnomalyDoorLintel": "wall_north_anomaly.tres",
+}
+## The east and west walls' extra painted pieces around their openings: each samples its
+## own slice of the wall's painted texture (art/classroom/paint_classroom_textures.py).
+const WALL_PAINT_SEGMENTS := {
+	"WallEast/PaintFront": "wall_east_front.tres",
+	"WallEast/PaintBack": "wall_east_back.tres",
+	"WallEast/PaintLintelFront": "wall_east_lintel_front.tres",
+	"WallEast/PaintLintelBack": "wall_east_lintel_back.tres",
+	"WallWest/PaintSouth": "wall_west_south.tres",
+	"WallWest/PaintSill": "wall_west_sill.tres",
+	"WallWest/PaintHeader": "wall_west_header.tres",
+}
+## Each wall's one collision box: the openings are visual only.
+const WALL_COLLISION := {
+	"WallNorth": Vector3(14.0, 3.2, 0.2),
+	"WallWest": Vector3(0.2, 3.2, 10.0),
+	"WallEast": Vector3(0.2, 3.2, 10.0),
 }
 
 const HIERARCHY_PAIRS := [
 	["board_face", "wall_north", "the board against the front wall"],
 	["lacquer_oxblood", "wall_north", "the board frame and the teacher's desk front"],
-	["canvas_mustard", "floor_paint", "the schoolbag on the floor"],
+	["canvas_mustard", "wood_worn", "the schoolbag on the chair back"],
 	["window_view_front", "wall_west", "the window against its wall"],
 	["varnish_pale", "wood_honey", "the set square on the teacher's desk top"],
 	["register_cover", "wood_honey", "the register on the teacher's desk top"],
-	["lacquer_oxblood", "wall_north", "the door frame against the blackboard wall"],
+	["trim_teal", "wall_east", "the door frames against the east wall"],
+	["door_white", "wall_east", "the white rear door against the east wall"],
+	["curtain_blackout", "wall_west", "the blackout curtain against the west wall"],
+	["screen_matte", "board_face", "the rolled-down screen over the board"],
 ]
 const HIERARCHY_MIN := 0.15
 ## Broad planes stay quiet: walls and floor below this colourfulness (max - min, sRGB).
@@ -133,8 +161,7 @@ const FOCUS_OVER_CHAIRS := "canvas_mustard"
 const NEVER_FADED: Array[String] = [
 	"Props/Blackboard", "WindowGlow0", "WindowGlass0", "WindowFrameTop0",
 	"WindowFrameBottom0", "WindowFrameLeft0", "WindowFrameRight0", "WindowMullion0",
-	"WindowGlow1", "WindowGlass1", "WindowFrameTop1", "WindowFrameBottom1",
-	"WindowFrameLeft1", "WindowFrameRight1", "WindowMullion1", "ClockFace",
+	"ClockFace",
 	"ClockHandHour", "ClockHandMinute", "Fitting0", "Fitting1",
 ]
 ## Body points sampled from the camera: shins, waist, eye line.
@@ -251,46 +278,46 @@ func _check_layout() -> void:
 		_expect_at("Furniture/%s" % desk_name, DESKS[desk_name])
 	for path: String in PROPS:
 		_expect_at(path, PROPS[path])
-	var north_left := _room.get_node_or_null(^"WallNorth/CollisionShape3D") as CollisionShape3D
-	var north_middle := _room.get_node_or_null(^"WallNorth/NorthCenterCollision") as CollisionShape3D
-	var north_right := _room.get_node_or_null(^"WallNorth/NorthRightCollision") as CollisionShape3D
-	var left_box := north_left.shape as BoxShape3D if north_left != null else null
-	var middle_box := north_middle.shape as BoxShape3D if north_middle != null else null
-	var right_box := north_right.shape as BoxShape3D if north_right != null else null
-	if left_box == null or middle_box == null or right_box == null:
-		_failures.append("The blackboard wall no longer has its three solid piers and two real door gaps.")
-	else:
-		var normal_gap := north_middle.position.x - middle_box.size.x * 0.5 - (north_left.position.x + left_box.size.x * 0.5)
-		var anomaly_gap := north_right.position.x - right_box.size.x * 0.5 - (north_middle.position.x + middle_box.size.x * 0.5)
-		if not is_equal_approx(normal_gap, 1.2) or not is_equal_approx(anomaly_gap, 1.2):
-			_failures.append("The shared blackboard wall must contain two separate 1.2 m door openings.")
-	var normal_head := _room.get_node_or_null(^"DoorFrameHead") as Node3D
-	var anomaly_head := _room.get_node_or_null(^"AnomalyDoorFrameHead") as Node3D
-	if normal_head == null or anomaly_head == null or normal_head.position.x >= anomaly_head.position.x:
-		_failures.append("The ordinary exit and anomaly doorway are not separately framed side by side.")
-	elif absf(normal_head.position.z + 4.78) > 0.02 or absf(anomaly_head.position.z + 4.78) > 0.02:
-		_failures.append("The two door frames have left the blackboard wall.")
+	for wall_name: String in WALL_COLLISION:
+		var shapes := _room.get_node(NodePath(wall_name)).find_children(
+			"*", "CollisionShape3D", true, false
+		)
+		var box := (shapes[0] as CollisionShape3D).shape as BoxShape3D if shapes.size() == 1 else null
+		if box == null or not box.size.is_equal_approx(WALL_COLLISION[wall_name]):
+			_failures.append("'%s' is no longer one whole collision box." % wall_name)
+	for removed: String in [
+		"DoorLintel", "AnomalyDoorLintel", "DoorFrameHead", "AnomalyDoorFrameHead", "Threshold",
+		"WallNorth/RearDoorAnomalyMount", "WallNorth/PaintCenter", "WallNorth/PaintRight",
+		"WindowGlass1", "Anomalies/Staircase",
+	]:
+		if _room.get_node_or_null(NodePath(removed)) != null:
+			_failures.append("'%s' is still in the room; issue #159 took it out." % removed)
 	var glass0 := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
-	var glass1 := _room.get_node_or_null(^"WindowGlass1") as MeshInstance3D
-	if glass0 == null or glass1 == null or not is_equal_approx(glass0.position.x, -6.74) or not is_equal_approx(glass1.position.x, -6.74):
-		_failures.append("Both west-wall windows must remain in the expanded room shell.")
+	if glass0 == null or not is_equal_approx(glass0.position.x, -6.74):
+		_failures.append("The front west-wall window must remain in the room shell.")
 	if DESKS.size() < 12:
 		_failures.append("The layout has only %d authored student desks; twelve are required." % DESKS.size())
-	var anomaly := _room.get_node_or_null(^"WallNorth/RearDoorAnomalyMount") as Node3D
-	if anomaly == null:
-		_failures.append("The stable WallNorth/RearDoorAnomalyMount integration point is missing.")
-	else:
-		var normal_door := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
-		if normal_door == null or normal_door.interact_id != &"classroom_door":
-			_failures.append("The normal exit lost its classroom_door ID.")
-		elif normal_door.destination_id != &"corridor" or normal_door.destination_scene != "res://scenes/locations/corridor/corridor.tscn":
-			_failures.append("classroom_door no longer routes to the corridor.")
-		var board := _room.get_node_or_null(^"Props/Blackboard") as Node3D
-		if board != null and (float(_room.get_node(^"DoorFrameHead").position.x) <= board.position.x or anomaly.global_position.x <= board.global_position.x):
-			_failures.append("Both blackboard-wall doors must sit to the board's right.")
+	var normal_door := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
+	if normal_door == null or normal_door.interact_id != &"classroom_door":
+		_failures.append("The normal exit lost its classroom_door ID.")
+	elif normal_door.destination_id != &"corridor" or normal_door.destination_scene != "res://scenes/locations/corridor/corridor.tscn":
+		_failures.append("classroom_door no longer routes to the corridor.")
+	var front_door := _room.get_node_or_null(^"WallEast/FrontDoor") as ClassroomDoorDressing
+	var rear_door := _room.get_node_or_null(^"WallEast/RearDoor") as ClassroomDoorDressing
+	if front_door == null or rear_door == null:
+		_failures.append("The east wall lost one of its two dressed doors.")
+	elif front_door.global_position.z >= rear_door.global_position.z:
+		_failures.append("The grey door is not the front (blackboard-end) door.")
+	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Chair/Schoolbag") as Node3D
+	if bag != null:
+		var bag_box := _subtree_aabb(bag)
+		if bag_box.position.y < 0.3:
+			_failures.append("The schoolbag %s is on the floor, not on the chair back." % str(bag_box))
+	if _room.get_node_or_null(^"Props/Schoolbag") != null:
+		_failures.append("A schoolbag is still on the floor.")
 	for mount: Array in [
 		["WindowCurtainMount0", Vector3(-6.55, 2.5, -2.4)],
-		["WindowCurtainMount1", Vector3(-6.55, 2.5, 2.2)],
+		["WindowCurtainMount1", Vector3(-6.62, 3.14, 2.2)],
 	]:
 		var marker := _room.get_node_or_null(NodePath(mount[0])) as Marker3D
 		if marker == null or not marker.position.is_equal_approx(mount[1]):
@@ -451,15 +478,14 @@ func _check_wall_dressing() -> void:
 		var expected: String = CLASSROOM_MATERIALS + WALL_PAINT[wall_name]
 		if material == null or material.resource_path != expected:
 			_failures.append("'%s/Paint' does not carry %s." % [wall_name, expected])
-	for pair: Array in [["PaintCenter", "wall_north_center.tres"], ["PaintRight", "wall_north_right.tres"]]:
-		var segment := _room.get_node_or_null(NodePath("WallNorth/%s" % pair[0])) as MeshInstance3D
-		if segment == null or segment.material_override == null or not segment.material_override.resource_path.ends_with(pair[1]):
-			_failures.append("The segmented north wall panel '%s' does not keep metric UV sampling." % pair[0])
-	for pair: Array in [["DoorLintel", "wall_north_door.tres"], ["AnomalyDoorLintel", "wall_north_anomaly.tres"]]:
-		var lintel_paint := _room.get_node_or_null(NodePath("%s/Paint" % pair[0])) as MeshInstance3D
-		if lintel_paint == null or lintel_paint.material_override == null or not lintel_paint.material_override.resource_path.ends_with(pair[1]):
-			_failures.append("The '%s' header lost its matching hand-painted wall section." % pair[0])
-	for pair: Array in [["WallNorth", "FrontWallDressing"], ["WallSouthLeft", "BackBoard"]]:
+	for path: String in WALL_PAINT_SEGMENTS:
+		var segment := _room.get_node_or_null(NodePath(path)) as MeshInstance3D
+		if segment == null or segment.material_override == null or not segment.material_override.resource_path.ends_with(WALL_PAINT_SEGMENTS[path]):
+			_failures.append("The wall piece '%s' does not keep its metric UV slice." % path)
+	for pair: Array in [
+		["WallNorth", "FrontWallDressing"], ["WallSouthLeft", "BackBoard"],
+		["WallNorth", "ProjectorScreen"], ["WallEast", "FrontDoor"], ["WallEast", "RearDoor"],
+	]:
 		var dressing := _room.get_node_or_null(NodePath("%s/%s" % [pair[0], pair[1]]))
 		if dressing == null:
 			_failures.append(
@@ -469,10 +495,10 @@ func _check_wall_dressing() -> void:
 	var north := _room.get_node_or_null(^"WallNorth")
 	if north != null:
 		var geometry := north.find_children("*", "GeometryInstance3D", true, false)
-		# Segmented wall shells, face panels, one clock dial, and the mounted rear door.
+		# The shell, its painted face, one clock dial and the screen's pieces.
 		# The red pseudo-writing banner AND pins stay absent, not hidden in the tree.
-		if geometry.size() < 9:
-			_failures.append("WallNorth has only %d meshes; segmented face or anomaly mount is missing." % geometry.size())
+		if geometry.size() < 6:
+			_failures.append("WallNorth has only %d meshes; its face or the screen is missing." % geometry.size())
 		var dressing := north.get_node("FrontWallDressing")
 		if dressing.get_child_count() != 1 or not dressing.has_node("ClockDial"):
 			_failures.append("FrontWallDressing must retain only the meaningful clock dial.")
@@ -659,7 +685,7 @@ func _check_inspection_agreement() -> void:
 	var glass := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
 	if glass == null or glass.material_override == null or not glass.material_override.resource_path.ends_with("glass_cracked.tres"):
 		_failures.append("The window's cracked, taped pane is not drawn.")
-	var bag := _room.get_node_or_null(^"Props/Schoolbag")
+	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Chair/Schoolbag")
 	var q_talk := _room.get_node_or_null(^"Interactables/QTalk")
 	if q_talk == null or StringName(q_talk.get("conversation_route")) != &"q":
 		_failures.append("The original Q conversation interaction no longer routes to Q.")
@@ -790,6 +816,7 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 				var box: AABB = entry[1]
 				if box.intersects_segment(eye, target):
 					blocked.append("%s hides the player at %s (h %.1f)" % [entry[0], str(spot), height])
+	await _check_projector_thins(spots)
 	for line in blocked.slice(0, 6):
 		_failures.append(line)
 	if blocked.size() > 6:
@@ -828,6 +855,45 @@ func _check_game_camera(navigation: LocationNavigation) -> void:
 	_player.teleport(Transform3D(Basis(Vector3.UP, start_yaw), start_position))
 	rig.snap()
 	await _physics_frames(1)
+
+
+## The ceiling projector hangs where the camera looks down past it; wherever it would
+## hide the player it has to thin out, and come back exactly as authored afterwards.
+func _check_projector_thins(spots: Array[Vector3]) -> void:
+	var projector := _room.get_node_or_null(^"CeilingProjector") as SeeThroughProp
+	if projector == null:
+		_failures.append("The ceiling projector is missing or does not thin out.")
+		return
+	var authored: Dictionary = {}
+	for piece in projector.get_pieces():
+		authored[piece] = piece.material_override
+	var hiding := Vector3.INF
+	for spot in spots:
+		_player.teleport(Transform3D(Basis(), spot))
+		var rig := _main.get_node(^"CameraRig") as CameraRig
+		rig.snap()
+		if projector.is_hiding(_player):
+			hiding = spot
+			break
+	if hiding == Vector3.INF:
+		_notes.append("the projector hides no standing spot")
+		return
+	await _physics_frames(30)
+	if projector.get_opacity() > projector.see_through_alpha + 0.05:
+		_failures.append(
+			"Behind the projector at %s it stayed at %.2f opacity." % [str(hiding), projector.get_opacity()]
+		)
+	_notes.append("behind the projector at %s: opacity %.2f" % [str(hiding), projector.get_opacity()])
+	var start := _room.get_node(^"SpawnPoints/PlayerStart") as Node3D
+	_player.teleport(Transform3D(Basis(), start.global_position))
+	(_main.get_node(^"CameraRig") as CameraRig).snap()
+	await _physics_frames(40)
+	if projector.get_opacity() < 0.999:
+		_failures.append("The projector stayed thinned (%.2f) after the player left." % projector.get_opacity())
+	for piece: MeshInstance3D in authored:
+		if piece.material_override != authored[piece]:
+			_failures.append("Projector piece '%s' did not get its material back." % piece.name)
+			break
 
 
 func _never_faded_boxes() -> Array:

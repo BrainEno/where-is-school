@@ -2,6 +2,9 @@ class_name SwingDoor
 extends Node3D
 ## A hinge for a door leaf that is already in the room.
 ##
+## Not used since issue #159 (the classroom's doors moved to the east wall and the rear
+## door never opens); the description below is of the room before that.
+##
 ## The classroom's blackboard wall has a second, framed doorway with its own leaf
 ## (`WallNorth/RearDoorAnomalyMount`: `DoorLeaf` and `AnomalyDoorInlay`). The leaf is
 ## authored shut and has no pivot of its own, so it cannot swing as it comes. A

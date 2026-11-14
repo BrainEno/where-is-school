@@ -1,8 +1,8 @@
 extends SceneTree
 ## Photographs the biology-classroom anomalies from the game's own camera, so the round
-## can be judged on frames: the two windows (one ordinary, one curtained), the rear door
-## with the staircase it put in the room, the window once the curtain is drawn, and the
-## body going over the sill.
+## can be judged on frames: the two windows (one ordinary, one behind its blackout
+## curtain), the two doors on the east wall (the rear one never opens), the hole in the
+## wall once the curtain is drawn, and the body going over the sill (issue #159).
 ##
 ## `classroom_anomaly_test.gd` proves the behaviour headless; this script only takes the
 ## pictures. It needs a display (Xvfb in CI):
@@ -68,32 +68,36 @@ func _run() -> void:
 	await _quiet(20.0)
 	var room := _host.get_current()
 	var anomalies := room.get_node_or_null(^"Anomalies")
-	var stair := room.get_node_or_null(^"Anomalies/Staircase") as SuspendedStair
-	if anomalies == null or stair == null:
-		_finish(["The classroom has no Anomalies/Staircase."])
+	var rear_door := room.get_node_or_null(^"WallEast/RearDoor") as Node3D
+	if anomalies == null or rear_door == null:
+		_finish(["The classroom has no Anomalies or no rear door."])
 		return
 
 	# 1. Both windows: the front one ordinary (the washing), the back one curtained.
 	await _stand(Vector3(-5.9, 0.0, -0.1), Vector3.LEFT)
 	await _shot("01-windows.png")
 
-	# 2. The second door open, in the blackboard wall right of the classroom door.
-	await anomalies.call("open_rear_door", false)
-	stair.reveal(false)
-	await _stand(Vector3(4.6, 0.0, -3.4), Vector3.FORWARD)
+	# 2. The white rear door, shut, from the game camera: the east wall fades round it.
+	await _stand(Vector3(5.7, 0.0, 3.55), Vector3.RIGHT)
 	await _shot("02-rear-door.png")
 
-	# 3. The staircase in front of the lectern, with the framing the beat uses.
-	await _stand(Vector3(4.85, 0.0, -3.5), Vector3.FORWARD)
-	var rig := _player.camera_rig
-	if rig != null:
-		await rig.frame_point(anomalies.call("stair_frame_point"), 0.3)
-		await _frames(20)
-	await _shot("03-staircase.png")
-	if rig != null:
-		await rig.release_frame(0.2)
+	# 3. Both doors from inside the room, with a camera of its own: the game camera sits
+	# east of the player, so it only ever sees this wall faded.
+	var player_camera := root.get_camera_3d()
+	var camera := Camera3D.new()
+	camera.fov = 60.0
+	room.add_child(camera)
+	camera.global_position = Vector3(1.2, 1.7, 0.0)
+	camera.look_at(Vector3(6.9, 1.1, 0.0), Vector3.UP)
+	camera.current = true
+	await _frames(10)
+	await _shot("03-east-doors.png")
+	camera.current = false
+	camera.queue_free()
+	if player_camera != null:
+		player_camera.current = true
 
-	# 4. The back window once the curtain is drawn: no glass, no view.
+	# 4. The back window once the curtain is drawn: a hole, no glass, no view.
 	await anomalies.call("draw_curtain", false)
 	await _stand(Vector3(-5.6, 0.0, 0.9), Vector3.LEFT)
 	await _shot("04-void.png")
@@ -110,7 +114,7 @@ func _run() -> void:
 func _stand(where: Vector3, facing: Vector3) -> void:
 	_player.teleport(Transform3D(Basis(), where))
 	_player.face_toward(facing)
-	# Long enough for the occlusion fader and the staircase's see-through to settle.
+	# Long enough for the occlusion fader and the projector's see-through to settle.
 	await _frames(45)
 
 

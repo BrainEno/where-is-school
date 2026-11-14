@@ -1,6 +1,9 @@
 class_name SuspendedStair
 extends Node3D
-## The staircase that is in the classroom once the rear door has been opened.
+## The staircase that was in the classroom once the rear door had been opened.
+##
+## Since issue #159 it is not placed anywhere: the classroom's rear door never opens.
+## The scene and script are kept for whatever the "special means" turn out to be.
 ##
 ## It comes down out of the ceiling plane, crosses the room over the front of the
 ## teacher's lectern and stops in the air, two metres up. Nothing holds it: no posts, no
