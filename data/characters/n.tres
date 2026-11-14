@@ -9,4 +9,4 @@ display_name = "N"
 short_role = "covering the lesson"
 accent_color = Color(0.616, 0.663, 0.686, 1)
 portrait_path = "res://assets/ui/portraits/n.webp"
-portrait_side = 1
+portrait_crop = Rect2(0.23, 0, 0.364, 0.3)

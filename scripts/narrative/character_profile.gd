@@ -31,14 +31,18 @@ const PORTRAIT_MAX_HEIGHT_RATIO := 0.95
 ## still loads, and the panel can report what is wrong instead of failing the whole
 ## resource. Ignored when `portrait` is set.
 @export_file("*.png", "*.webp", "*.jpg", "*.tres") var portrait_path: String = ""
-## Screen edge the portrait enters from. The text band moves away from it only as far
-## as it has to.
+## Kept so older profiles and editor tooling still load; the dialogue panel no longer
+## reads it. Since #167 the portrait is a small identity portrait that always leads the
+## speaker's name, on the left of the name row.
 @export var portrait_side: PortraitSide = PortraitSide.LEFT
-## Height of the portrait as a fraction of the viewport height. The portrait stands on
-## the bottom edge of the screen and is scaled down further if it would crowd the text.
+## Kept so older profiles still load; the dialogue panel no longer reads it. The identity
+## portrait is sized from the name row and the window (`DialoguePanel._plan_portrait`).
 @export_range(0.3, 0.95, 0.01) var portrait_height_ratio: float = 0.72
 ## Part of the texture to show, in normalised texture coordinates (0..1). The default
-## is the whole image. Use it to frame a figure, never to letterbox it into a card.
+## is the whole image. The dialogue panel draws the portrait small, beside the name, so
+## a profile whose painting is a half or full figure frames the face here (each shipped
+## portrait is composed differently, so each profile has its own). Never use it to
+## letterbox a picture into a card; the drawn proportion always follows the crop.
 @export var portrait_crop: Rect2 = Rect2(0.0, 0.0, 1.0, 1.0)
 
 

@@ -37,18 +37,21 @@ extends Control
 ## panel keeps the Sans; anything the serif subset cannot draw falls back to it.
 ##
 ## A speaker *may* have an approved 2D portrait (`CharacterProfile.portrait`). Most do
-## not, and then nothing here changes: no column is reserved, the band sits where it
-## always sat and every rect is the same. When one exists it is part of the same
-## picture rather than a card pinned to the box: it stands on the bottom edge of the
-## screen, enters from the side the profile names, is drawn behind the band, and the
-## band moves away from it only as far as the text needs. It never covers the name,
-## the sentence, the options or the hint, and it never takes a click. A portrait that
-## cannot be used (missing file, not a texture, no pixels, absurd proportions) is
-## reported by `get_portrait_report()` and a warning, and the line is shown as if the
-## speaker had none. The portraits are painted rectangles with their own grounds, so the
-## two edges that face the picture (the top and the side towards the text) dissolve into
-## the scene through `assets/shaders/ui/portrait_fade.gdshader`; the edge on the screen
-## border and the bottom stay hard.
+## not, and then nothing here changes: no slot is reserved and every rect is the same as
+## it is without portraits. When one exists it is the first part of the **identity
+## block** (#167): a small painted head at the start of the name row, aligned with the
+## text column, with the name and the role right beside it. It stands on the bottom of the
+## name row and reaches up to the band's top edge, a little past it on a tall screen,
+## where its top dissolves into the wash. The band itself does not move or narrow and the
+## sentence keeps the full column below: only the name row gives up the portrait's width.
+## The portrait never covers the name, the sentence, the options or the hint, and it never
+## takes a click. Its size is measured from the name row and the window (see
+## `_plan_portrait`), and the profile's `portrait_crop` frames the face so a full-length
+## painting still reads at that size. A portrait that cannot be used (missing file, not a
+## texture, no pixels, absurd proportions) is reported by `get_portrait_report()` and a
+## warning, and the line is shown as if the speaker had none. The edge towards the name and
+## the top dissolve through `assets/shaders/ui/portrait_fade.gdshader`; the edge on the
+## text column and the bottom, on the name's line, stay hard.
 
 signal advance_requested
 signal choice_selected(index: int)
@@ -85,18 +88,22 @@ signal backlog_requested
 @export var hint_size: int = 13
 
 @export_category("Portrait")
-## Largest share of the viewport width an optional portrait may take. A portrait that
-## would be wider is scaled down as a whole, never cropped into a box.
-@export_range(0.1, 0.4, 0.01) var portrait_max_width_ratio: float = 0.3
-## How far the band's own padding may slide over the inner edge of the portrait, so
-## the two read as one composition. Kept below the frame's content margins (36 px on
-## the left, 32 px on the right) so the text itself never reaches the figure.
-@export_range(0.0, 30.0, 1.0) var portrait_overlap: float = 24.0
-## Narrowest a portrait may be drawn. With less room than this the portrait is left
-## out (status "no_room") instead of being shown as a sliver.
-@export var portrait_min_width: float = 48.0
-## How far the top edge and the edge facing the text fade into the scene, as fractions of
-## the drawn portrait (see `assets/shaders/ui/portrait_fade.gdshader`).
+## Preferred height of the identity portrait, as a fraction of the viewport height. It is
+## never shorter than the distance from the band's top edge to the bottom of the name row
+## (so it always reaches the top of the band) and never rises more than
+## `portrait_overhang_max` above that edge.
+@export_range(0.04, 0.2, 0.005) var portrait_screen_ratio: float = 0.1
+## How far the portrait may rise above the band's top edge, into the wash. Kept inside the
+## wash, which starts 54 px above the band.
+@export_range(0.0, 48.0, 1.0) var portrait_overhang_max: float = 32.0
+## Widest the portrait may be, as a share of the band's text column. A wider picture is
+## scaled down as a whole, never cropped into a box or stretched.
+@export_range(0.1, 0.4, 0.01) var portrait_max_column_ratio: float = 0.25
+## Narrowest a portrait may be drawn. With less room than this the portrait is left out
+## (status "no_room") and the name row is laid out as if the speaker had none.
+@export var portrait_min_width: float = 24.0
+## How far the edge facing the name and the top edge fade, as fractions of the drawn
+## portrait (see `assets/shaders/ui/portrait_fade.gdshader`).
 @export_range(0.0, 0.5, 0.01) var portrait_inner_fade: float = 0.14
 @export_range(0.0, 0.5, 0.01) var portrait_top_fade: float = 0.1
 
@@ -112,6 +119,9 @@ signal backlog_requested
 @onready var _choice_rule: ColorRect = %ChoiceRule
 @onready var _wash: TextureRect = %Wash
 @onready var _portrait: TextureRect = %Portrait
+@onready var _portrait_slot: Control = %PortraitSlot
+@onready var _content: VBoxContainer = $Frame/Content
+@onready var _header_row: HBoxContainer = $Frame/Content/HeaderRow
 
 const SOURCE_COLORS: Dictionary = {
 	NarrativeEntry.Source.OBSERVED: Color(0.776, 0.733, 0.643, 1.0),
@@ -151,7 +161,6 @@ var _portrait_profile: CharacterProfile = null
 var _portrait_status: String = "none"
 var _portrait_message: String = ""
 var _portrait_speaker: String = ""
-var _portrait_side: String = ""
 var _portrait_source_size: Vector2 = Vector2.ZERO
 ## Each distinct problem is warned about once per panel, not once per line.
 var _portrait_warned: Dictionary = {}
@@ -229,8 +238,10 @@ func _apply_type() -> void:
 	_speaker_label.uppercase = true
 	# A name that would push the role and the source label out of the band is trimmed
 	# with an ellipsis instead. The name is the anchor, not a reason to break the frame.
+	# It is as wide as its own text (`_fit_speaker_width`), so the role follows it and
+	# the two read as one identity; the spacer after them takes the rest of the row.
 	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_speaker_label.size_flags_horizontal = Control.SIZE_FILL
 	_role_label.add_theme_font_size_override("font_size", role_size)
 	_badge_label.add_theme_font_size_override("font_size", badge_size)
 	_badge_label.add_theme_font_override("font", _tracked_font(_badge_label.get_theme_font("font"), 2))
@@ -382,6 +393,10 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	_accent = _accent_for(line)
 	_apply_accent(_accent)
 	_resolve_portrait(line)
+	# In the same frame as the name, so a change of speaker never shows the new name
+	# beside the old face (or beside an empty slot) while the layout settles.
+	_place_portrait(_plan_portrait(size.x))
+	_fit_speaker_width(size.x)
 
 	var title := String(line.get("title", ""))
 	_title_label.text = title
@@ -745,12 +760,8 @@ func _settle_layout() -> void:
 	var width := clampf(viewport_size.x * width_ratio, band_min_width, band_max_width * grow)
 	width = minf(width, viewport_size.x - left * 2.0)
 	var max_height := viewport_size.y * height_ratio
-	# Without a portrait the plan is empty and `left` / `width` are exactly what they
-	# were before portraits existed.
-	var portrait_plan := _plan_portrait(viewport_size, left, width)
-	if not portrait_plan.is_empty():
-		left = float(portrait_plan["band_left"])
-		width = float(portrait_plan["band_width"])
+	# The portrait lives in the name row, so the band is where it is without one.
+	var portrait_plan := _plan_portrait(width)
 
 	if _layout_stage == 0:
 		# Give the frame the width the text will really wrap at, but keep its current
@@ -769,6 +780,7 @@ func _settle_layout() -> void:
 			if is_instance_valid(button):
 				button.visible = true
 		_place_portrait(portrait_plan)
+		_fit_speaker_width(width)
 		_layout_stage = 1
 		_layout_dirty = true
 		return
@@ -790,6 +802,7 @@ func _settle_layout() -> void:
 	if was_windowed or _choice_window_count > 0:
 		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
+	_fit_speaker_width(width)
 	_layout_stage = 0
 	_layout_dirty = false
 
@@ -892,7 +905,8 @@ func _font_path(font: Font) -> String:
 ##   code from `CharacterProfile.resolve_portrait()`;
 ## - `message`: why, when the status is not "none" or "ok";
 ## - `visible` / `rect`: whether it is drawn and where, in viewport coordinates;
-## - `side`: "left", "right" or "" when nothing is drawn;
+## - `side`: "left" (it leads the name row) or "" when nothing is drawn;
+## - `slot_width`: the width the name row gives up for it, 0 when nothing is drawn;
 ## - `mouse_filter`: always `MOUSE_FILTER_IGNORE` - the portrait never takes a click.
 func get_portrait_report() -> Dictionary:
 	var shown := _portrait != null and _portrait.visible and visible
@@ -902,7 +916,8 @@ func get_portrait_report() -> Dictionary:
 		"speaker_id": _portrait_speaker,
 		"visible": shown,
 		"rect": _portrait.get_global_rect() if shown else Rect2(),
-		"side": _portrait_side if shown else "",
+		"side": "left" if shown else "",
+		"slot_width": _portrait_slot.custom_minimum_size.x if shown else 0.0,
 		"source_size": _portrait_source_size,
 		"mouse_filter": _portrait.mouse_filter if _portrait != null else -1,
 	}
@@ -920,11 +935,8 @@ func _resolve_portrait(line: Dictionary) -> void:
 	_portrait_profile = null
 	_portrait_status = "none"
 	_portrait_message = ""
-	_portrait_side = ""
 	_portrait_source_size = Vector2.ZERO
 	_portrait_speaker = String(line.get("speaker_id", ""))
-	_portrait.texture = null
-	_portrait.visible = false
 
 	var profile := _portrait_profile_for(line)
 	if profile == null:
@@ -936,10 +948,6 @@ func _resolve_portrait(line: Dictionary) -> void:
 	if _portrait_status == "ok":
 		_portrait_texture = resolved.get("texture", null)
 		_portrait_profile = profile
-		_portrait.texture = _portrait_texture
-		_portrait_side = (
-			"right" if profile.portrait_side == CharacterProfile.PortraitSide.RIGHT else "left"
-		)
 	elif _portrait_status != "none":
 		_warn_portrait(_portrait_message)
 
@@ -954,77 +962,109 @@ func _portrait_profile_for(line: Dictionary) -> CharacterProfile:
 	return CharacterDirectory.load_cached().get_profile(speaker_id)
 
 
-## Where the portrait goes and where that leaves the band, or {} for no portrait.
+## Where the identity portrait goes, in the band's own coordinates, or {} for none.
 ##
-## The band keeps its own width: when the screen has no room for both, the portrait is
-## scaled down instead, and below `portrait_min_width` it is left out. The type is never
-## touched. (The band used to give up width down to `band_min_width` first; with the
-## larger dialogue type that turned a paragraph that fits into one that scrolls, at the
-## largest text size in a 1280x720 window, so the text now wins outright.)
-func _plan_portrait(viewport_size: Vector2, left: float, width: float) -> Dictionary:
+## Nothing here is a fixed pixel size. The bottom is the bottom of the name row and the
+## top is at least the band's top edge, so the portrait grows with the name's type (and
+## the player's text size); on a taller window it may rise into the wash, up to
+## `portrait_screen_ratio` of the window height and never more than
+## `portrait_overhang_max` above the band. The width follows the picture's own proportion
+## (after the profile's crop), capped at a share of the text column; a picture that would
+## be wider is scaled down as a whole. The band and the body are not part of the plan:
+## they are the same with and without a portrait.
+func _plan_portrait(band_width: float) -> Dictionary:
 	if _portrait_texture == null or _portrait_profile == null:
 		return {}
 	var texture_size := _portrait_texture.get_size()
 	if texture_size.x < 1.0 or texture_size.y < 1.0:
 		return {}
-	var aspect := texture_size.x / texture_size.y
-	var height := viewport_size.y * _portrait_profile.get_portrait_height_ratio()
-	var portrait_width := height * aspect
-	# The band keeps its width and its outer margin on the far side: whatever is left is
-	# the portrait's.
-	var keep_width := width
-	var max_width := minf(
-		viewport_size.x * portrait_max_width_ratio,
-		viewport_size.x - left - keep_width + portrait_overlap
+	var style := _frame.get_theme_stylebox(&"panel")
+	var column_left := style.get_margin(SIDE_LEFT) if style != null else 0.0
+	var column := band_width - column_left - (style.get_margin(SIDE_RIGHT) if style != null else 0.0)
+	var row_bottom := _header_row_top(style) + _header_row.get_combined_minimum_size().y
+	var overhang := minf(portrait_overhang_max, maxf(-_wash.offset_top, 0.0))
+	var height := clampf(
+		get_viewport_rect().size.y * portrait_screen_ratio, row_bottom, row_bottom + overhang
 	)
-	if portrait_width > max_width:
-		height *= max_width / portrait_width
-		portrait_width = max_width
-	if portrait_width < portrait_min_width:
+	var width := height * texture_size.x / texture_size.y
+	var max_width := column * portrait_max_column_ratio
+	if width > max_width:
+		height *= max_width / width
+		width = max_width
+	if width < portrait_min_width:
 		if _portrait_status != "no_room":
 			_portrait_status = "no_room"
 			_portrait_message = (
-				"Character '%s': only %.0f px of the %.0f px screen are left for the portrait; it is not shown."
-				% [String(_portrait_profile.character_id), maxf(portrait_width, 0.0), viewport_size.x]
+				"Character '%s': only %.0f px of the %.0f px band are left for the portrait; it is not shown."
+				% [String(_portrait_profile.character_id), maxf(width, 0.0), band_width]
 			)
 			_warn_portrait(_portrait_message)
 		return {}
 	if _portrait_status == "no_room":
 		_portrait_status = "ok"
 		_portrait_message = ""
-
-	var band_left := left
-	var band_width := width
-	var rect := Rect2()
-	if _portrait_profile.portrait_side == CharacterProfile.PortraitSide.RIGHT:
-		rect = Rect2(
-			viewport_size.x - portrait_width, viewport_size.y - height, portrait_width, height
-		)
-		band_width = minf(width, rect.position.x + portrait_overlap - band_left)
-	else:
-		rect = Rect2(0.0, viewport_size.y - height, portrait_width, height)
-		band_left = maxf(left, rect.end.x - portrait_overlap)
-		band_width = minf(width, viewport_size.x - left - band_left)
-	return {"rect": rect, "band_left": band_left, "band_width": band_width}
+	return {"rect": Rect2(column_left, row_bottom - height, width, height)}
 
 
-## Puts the portrait where the plan says, in viewport coordinates. The node is a child
-## of the band (so it is drawn behind the wash and the frame), which means its position
-## is relative to wherever the band has just been moved to.
+## The name as wide as its text, or as the row leaves it: the text column less everything
+## else shown in the name row (the portrait slot, the role, the source label) and the
+## row's spacing. A name that does not fit is trimmed with an ellipsis by the label.
+func _fit_speaker_width(band_width: float) -> void:
+	var font := _speaker_label.get_theme_font(&"font")
+	var text := _speaker_label.text.to_upper()
+	var natural := 0.0
+	if font != null and not text.is_empty():
+		natural = ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, speaker_size).x)
+		natural += 2.0
+	var style := _frame.get_theme_stylebox(&"panel")
+	var room := band_width
+	if style != null:
+		room -= style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT)
+	var gap := float(_header_row.get_theme_constant(&"separation"))
+	for child in _header_row.get_children():
+		var control := child as Control
+		if control != null and control != _speaker_label and control.visible:
+			room -= control.get_combined_minimum_size().x + gap
+	# Whole pixels, with a little to spare: the container rounds each child it places, and
+	# a row a fraction too wide would widen the frame (and with it the body) by a pixel.
+	_speaker_label.custom_minimum_size.x = clampf(natural, 0.0, maxf(floorf(room) - 2.0, 0.0))
+
+
+## The name row's top edge in the band: the frame's top padding plus whatever the content
+## column stacks above the row (the source hairline), each with the column's spacing.
+func _header_row_top(style: StyleBox) -> float:
+	var top := style.get_margin(SIDE_TOP) if style != null else 0.0
+	var gap := float(_content.get_theme_constant(&"separation"))
+	for child in _content.get_children():
+		if child == _header_row:
+			break
+		var control := child as Control
+		if control != null and control.visible:
+			top += control.get_combined_minimum_size().y + gap
+	return top
+
+
+## Puts the portrait where the plan says and gives the name row the room for it. Without
+## a plan the slot is hidden, so the name row is exactly what it is without portraits.
 func _place_portrait(plan: Dictionary) -> void:
 	if plan.is_empty():
 		_portrait.visible = false
+		_portrait.texture = null
+		_portrait_slot.visible = false
+		_portrait_slot.custom_minimum_size = Vector2.ZERO
 		return
 	var rect: Rect2 = plan["rect"]
-	var to_local := get_global_transform().affine_inverse()
-	_portrait.position = to_local * rect.position
+	_portrait.texture = _portrait_texture
+	_portrait.position = rect.position
 	_portrait.size = rect.size
+	_portrait_slot.custom_minimum_size = Vector2(ceilf(rect.size.x), 0.0)
+	_portrait_slot.visible = true
 	var fade := _portrait.material as ShaderMaterial
 	if fade != null:
-		# Only the edge that faces the text fades; the one on the screen border stays hard.
-		var right := _portrait_side == "right"
-		fade.set_shader_parameter("fade_left", portrait_inner_fade if right else 0.0)
-		fade.set_shader_parameter("fade_right", 0.0 if right else portrait_inner_fade)
+		# The edge towards the name and the top dissolve; the edge on the text column and
+		# the bottom, on the name's line, stay hard.
+		fade.set_shader_parameter("fade_left", 0.0)
+		fade.set_shader_parameter("fade_right", portrait_inner_fade)
 		fade.set_shader_parameter("fade_top", portrait_top_fade)
 	_portrait.visible = true
 
@@ -1034,12 +1074,10 @@ func _clear_portrait() -> void:
 	_portrait_profile = null
 	_portrait_status = "none"
 	_portrait_message = ""
-	_portrait_side = ""
 	_portrait_speaker = ""
 	_portrait_source_size = Vector2.ZERO
 	if _portrait != null:
-		_portrait.texture = null
-		_portrait.visible = false
+		_place_portrait({})
 
 
 func _warn_portrait(message: String) -> void:

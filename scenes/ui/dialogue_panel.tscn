@@ -6,7 +6,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_portrait"]
 shader = ExtResource("2_portrait_fade")
 shader_parameter/fade_left = 0.0
-shader_parameter/fade_right = 0.0
+shader_parameter/fade_right = 0.14
 shader_parameter/fade_top = 0.1
 
 [sub_resource type="Gradient" id="Gradient_wash"]
@@ -37,15 +37,6 @@ offset_bottom = -38.0
 grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("1_dialogue_panel")
-
-[node name="Portrait" type="TextureRect" parent="."]
-unique_name_in_owner = true
-visible = false
-texture_filter = 4
-material = SubResource("ShaderMaterial_portrait")
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 6
 
 [node name="Wash" type="TextureRect" parent="."]
 unique_name_in_owner = true
@@ -82,6 +73,12 @@ color = Color(0.776, 0.733, 0.643, 0.55)
 [node name="HeaderRow" type="HBoxContainer" parent="Frame/Content"]
 clip_contents = true
 theme_override_constants/separation = 12
+
+[node name="PortraitSlot" type="Control" parent="Frame/Content/HeaderRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
 
 [node name="SpeakerLabel" type="Label" parent="Frame/Content/HeaderRow"]
 unique_name_in_owner = true
@@ -150,3 +147,12 @@ theme_override_colors/font_color = Color(0.6, 0.588, 0.549, 0.62)
 theme_override_font_sizes/font_size = 13
 text = "[Space] continue"
 horizontal_alignment = 2
+
+[node name="Portrait" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+texture_filter = 4
+material = SubResource("ShaderMaterial_portrait")
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
