@@ -30,6 +30,7 @@ func _run() -> void:
 		for message: String in inspections.errors:
 			print("DIAG inspection: %s" % message)
 	_check_inspections(inspections)
+	_check_blocked_door_text(inspections)
 
 	Harness.finish(self, _failures, "dialogue and inspection content are consistent.")
 
@@ -184,6 +185,38 @@ func _check_inspections(inspections: InspectionLibrary) -> void:
 		_failures.append("The blocked-door text is missing.")
 	if not inspections.has_inspection(&"classroom_schoolbag"):
 		_failures.append("The schoolbag text is missing.")
+
+
+## #181: structural parity cannot detect a translated line losing the reason the
+## player stops. Pin the open door, felt gaze and withdrawal in both languages,
+## without fixing the entire prose or attributing the gaze to a named character.
+func _check_blocked_door_text(inspections: InspectionLibrary) -> void:
+	var previous_locale := inspections.get_locale()
+	var facts := {
+		"zh-CN": ["没有关", "没有反锁", "感觉到有人在看你", "把手从门上拿开"],
+		"en": ["isn't shut", "let alone locked", "feel someone watching", "take your hand off"],
+	}
+	var named_character := RegEx.create_from_string("(^|[^a-zA-Z])[QBN]([^a-zA-Z]|$)")
+	for locale: String in L10n.LOCALES:
+		if not inspections.set_locale(locale):
+			_failures.append("%s: could not select the inspection language." % locale)
+			continue
+		var door := inspections.get_inspection(&"classroom_door_blocked")
+		if door == null:
+			_failures.append("%s: the blocked-door text is missing." % locale)
+			continue
+		for fragment: String in facts[locale]:
+			if not door.text.contains(fragment):
+				_failures.append(
+					"%s: blocked-door text lost narrative fact '%s' (#181)." % [locale, fragment]
+				)
+		if named_character.search(door.text) != null:
+			_failures.append("%s: blocked-door text must leave the watcher unnamed." % locale)
+		if door.source != NarrativeEntry.Source.OBSERVED or not door.effects.is_empty() \
+				or not String(door.record_entry_id).is_empty() \
+				or not String(door.recall_entry_id).is_empty():
+			_failures.append("%s: blocked-door text changed source or adds state/knowledge." % locale)
+	inspections.set_locale(previous_locale)
 
 
 func _check_free_period_gate(library: DialogueLibrary) -> void:
