@@ -79,6 +79,10 @@ func _interrupted_checkpoint() -> void:
 		return
 	var initial := actor.global_position
 	_sequence._beat_q_wake()
+	_expect(not _player.is_control_enabled() and not _interaction.is_enabled(),
+		"Q's approach did not acquire the beat lock before the first line.")
+	_interaction.request_activation(_room.find_interactable(&"q_talk"))
+	_expect(_played.is_empty(), "An early interaction bypassed Q's locked approach.")
 	if not await _wait_for_q():
 		return
 	_expect(bool(_state.get_flag(StoryFlags.MET_Q, false)), "Q's first line no longer sets MET_Q.")
@@ -187,7 +191,9 @@ func _authored_landing_and_seat() -> void:
 	var marker := Marker3D.new()
 	marker.name = "QOpeningTalk"
 	_room.add_child(marker)
-	marker.global_position = _player.global_position + _player.get_facing_direction() * 1.25
+	# Intentionally distinct from the default 1.25 m fallback: ignoring the
+	# authored marker must fail this check, not accidentally land on the same point.
+	marker.global_position = _player.global_position + _player.get_facing_direction()
 	var actor := _room.find_actor(&"q")
 	if actor == null:
 		_expect(false, "The marker fixture has no Q actor.")
