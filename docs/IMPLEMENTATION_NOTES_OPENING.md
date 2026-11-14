@@ -191,7 +191,15 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
    inside it (`CameraRig.frame_point()`), and returns when the text closes.
    `tests/doorway_watch_test.gd` covers it.
 7. **Substitute** — N walks an authored marker path to the front and takes the
-   register; the conversation sets `class_dismissed` and a new objective.
+   register; the conversation sets `class_dismissed` and a new objective. She stays
+   there (#166): every room is a fresh instance of its scene, and the classroom authors
+   N hidden off stage for her entrance, so `NPresence` reads `n_arrived` whenever a room
+   is entered (and when the flags are replaced) and shows that room's N at the last
+   marker of `NEntryPath` - the lectern's TeacherStand - facing the way the walk's last
+   leg does. It never hides N before `n_arrived` (the beat shows her walking in before
+   writing it), never moves a visible N and never creates one. Before this, leaving and
+   re-entering the classroom, or continuing a save made there, brought the room back
+   without her. `tests/n_presence_test.gd` covers it.
 8. **Exit** — the door becomes usable, the player crosses the walkway, and the
    school exit drops them into the street with an arrival line.
 9. **Street** — the school wall, the notice on its pole, the gutter, the shutter,

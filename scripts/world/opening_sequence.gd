@@ -74,6 +74,8 @@ var _catalog: LocationCatalog = null
 var _flow: LocationFlow = null
 ## When the biology teacher B may be presented, and whether a room's B is shown (#171).
 var _b_presence: BPresence = null
+## Puts N back at the lectern in a room built after she has walked in (#166).
+var _n_presence: NPresence = null
 ## The save file (autoload `Save`), when the host has one.
 var _save: Node = null
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
@@ -114,6 +116,7 @@ func _ready() -> void:
 	)
 	# Connected before the save is read and the first room is loaded, so both are seen.
 	_b_presence = BPresence.new(_game_state(), _locations, _dialogue)
+	_n_presence = NPresence.new(_game_state(), _locations)
 
 	_bind_save()
 
@@ -674,7 +677,8 @@ func _beat_substitute() -> void:
 		return
 
 	# A resumed game may already have walked N in; the flag says so, and walking the
-	# same path again would put a second N at the front of the room.
+	# same path again would put a second N at the front of the room. `NPresence` has
+	# already put that N at the lectern, when the room was entered.
 	if not _has_flag(StoryFlags.N_ARRIVED):
 		await begin_beat()
 		actor.place_at(points[0], points[1])
