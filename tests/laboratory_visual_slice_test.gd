@@ -409,14 +409,16 @@ func _check_annex() -> void:
 			"The annex soffit is at %.2f m, not the %.1f m that makes it a lower room."
 			% [ceiling, ANNEX_CEILING_HEIGHT]
 		)
-	# The shaft leaves that ceiling and goes past the top of the building.
+	# The shaft leaves that ceiling and goes past the top of the building, so it is measured
+	# to its top: its bottom is the soffit it starts from.
 	var shaft := _room.get_node_or_null(^"ShaftWest") as Node3D
 	if shaft == null:
 		_failures.append("The shaft is missing.")
-	else:
-		var top := _box_bottom(shaft)
-		if top == null or top <= ROOM_WALL_HEIGHT:
-			_failures.append("The shaft stops at the building's height instead of climbing past it.")
+	elif _box_top(shaft) <= ROOM_WALL_HEIGHT:
+		_failures.append(
+			"The shaft stops at %.2f m instead of climbing past the walls."
+			% _box_top(shaft)
+		)
 	# The corridor runs on behind the north wall: floor beyond the room's own footprint.
 	var corridor := _room.get_node_or_null(^"FarCorridorFloor") as Node3D
 	if corridor == null or corridor.global_position.z > -5.8:
@@ -788,21 +790,37 @@ func _has_spawn(spawn_id: StringName) -> bool:
 	return false
 
 
-## The underside of a box: its centre minus half its own height. A prop has no collider to
-## measure, so its own box mesh answers — a prop *is* the mesh it draws.
+## The size of a box as it is drawn: a body's collider is the box it shows, and a prop has
+## no collider to measure, so its own box mesh answers — a prop *is* the mesh it draws.
+func _box_extent(node: Node3D) -> Vector3:
+	var size := _box_size(node)
+	if size != Vector3.ZERO:
+		return size
+	var mesh_node := node as MeshInstance3D
+	if mesh_node == null or mesh_node.mesh == null:
+		mesh_node = node.get_node_or_null(^"MeshInstance3D") as MeshInstance3D
+	var mesh := mesh_node.mesh as BoxMesh if mesh_node != null else null
+	return mesh.size if mesh != null else Vector3.ZERO
+
+
+## The underside of a box: its centre minus half its own height.
 func _box_bottom(node: Node3D) -> float:
 	if node == null:
 		return -1.0
-	var size := _box_size(node)
-	if size == Vector3.ZERO:
-		var mesh_node := node as MeshInstance3D
-		if mesh_node == null or mesh_node.mesh == null:
-			mesh_node = node.get_node_or_null(^"MeshInstance3D") as MeshInstance3D
-		var mesh := mesh_node.mesh as BoxMesh if mesh_node != null else null
-		if mesh == null:
-			return -1.0
-		size = mesh.size
-	return node.global_position.y - size.y * 0.5
+	var extent := _box_extent(node)
+	if extent == Vector3.ZERO:
+		return -1.0
+	return node.global_position.y - extent.y * 0.5
+
+
+## The top of a box, measured the same way.
+func _box_top(node: Node3D) -> float:
+	if node == null:
+		return -1.0
+	var extent := _box_extent(node)
+	if extent == Vector3.ZERO:
+		return -1.0
+	return node.global_position.y + extent.y * 0.5
 
 
 func _descendants(node: Node) -> Array[Node]:
