@@ -835,7 +835,6 @@ destination_spawn = &"FromClassroom"
 destination_id = &"corridor"
 required_flag = &"class_dismissed"
 blocked_inspection_id = &"classroom_door_blocked"
-blocked_watcher_ids = Array[StringName]([&"q"])
 
 [node name="CurtainDraw" parent="Interactables" instance=ExtResource("17_interactable")]
 script = ExtResource("c_staged")
