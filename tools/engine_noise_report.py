@@ -366,6 +366,23 @@ def _chunked(title: str, items: list[str], limit: int = 2400) -> list[str]:
     ]
 
 
+def noise_by_check(reports: list[LogReport]) -> list[str]:
+    """One entry per log that left any engine line, quiet logs left out: its counts, its
+    buckets and its leak count, so "which check still leaks?" is answered by name."""
+    entries = []
+    for report in reports:
+        if not (report.errors or report.warnings or report.script_errors or report.leak_count):
+            continue
+        parts = ["%d ERROR, %d WARNING" % (report.errors, report.warnings)]
+        if report.script_errors:
+            parts.append("%d SCRIPT ERROR" % report.script_errors)
+        if report.leak_count:
+            parts.append("leak %s" % _leak_text(report.leak_count))
+        buckets = ", ".join("%s %d" % item for item in sorted(report.buckets.items()))
+        entries.append("%s: %s%s" % (report.name, ", ".join(parts), " (%s)" % buckets if buckets else ""))
+    return entries
+
+
 def format_github(reports: list[LogReport]) -> list[str]:
     """At most a handful of notices: the ladder, the leaked instances, the buckets."""
     rungs = [
@@ -391,7 +408,8 @@ def format_github(reports: list[LogReport]) -> list[str]:
         if report.resources_in_use
     ]
     unread = sorted({line for report in reports for line in report.unread_leak_lines})
-    out = _chunked("leak probe ladder", rungs) + _chunked("leaked at exit", leaks)
+    out = _chunked("leak probe ladder", rungs) + _chunked("noise by check", noise_by_check(reports))
+    out += _chunked("leaked at exit", leaks)
     out += _chunked("still in use at exit", in_use)
     out += _chunked("unread leak lines", unread[:12])
     out.append(_notice(

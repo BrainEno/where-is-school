@@ -460,19 +460,14 @@ jobs:
           # An `ERROR:` line is not automatically a bug: a test that checks how the game
           # refuses something makes the engine print one on purpose. The line is reported,
           # with the check it came from, and the judgement is left to a reader.
-          total=0
-          for log in $(ls ci-logs/*.log 2>/dev/null | sort); do
-            name=$(basename "${log}" .log)
-            errors=$(grep -c "ERROR:" "${log}" || true)
-            warnings=$(grep -c "WARNING:" "${log}" || true)
-            scripts=$(grep -c "SCRIPT ERROR" "${log}" || true)
-            if [ "${errors:-0}" -gt 0 ] || [ "${warnings:-0}" -gt 0 ]; then
-              first=$(grep -m1 -E "ERROR:|WARNING:" "${log}" | cut -c1-240)
-              echo "::notice title=engine noise (${name})::${errors:-0} ERROR, ${warnings:-0} WARNING, ${scripts:-0} SCRIPT ERROR - first: ${first}"
-              total=$((total + ${errors:-0} + ${warnings:-0}))
-            fi
-          done
-          echo "::notice title=engine noise::${total} ERROR/WARNING line(s) across the run"
+          #
+          # One notice per check used to be printed here, but a runner keeps about ten
+          # notices from a step, so most checks never reached the annotations (#67).
+          # `tools/engine_noise_report.py` packs one line per noisy check - counts, the
+          # bucket each line falls in, the leak count - into a few numbered notices, and
+          # writes the full table (with the `at:` locations) to the step summary.
+          python3 tools/engine_noise_report.py ci-logs --github --summary "${GITHUB_STEP_SUMMARY}" \
+            | grep '^::' || true
 
       - name: Measure the text corpus, the locations and the bake
         shell: bash

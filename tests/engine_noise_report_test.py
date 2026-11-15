@@ -163,6 +163,23 @@ def github_output_is_bounded() -> None:
     check(markdown.count("| check_") == 40, "every log has a row")
 
 
+def noise_by_check() -> None:
+    reports = [
+        noise.read_log("quiet", "PASS: nothing\n"),
+        noise.read_log("doorway_watch", LEAK_2),
+        noise.read_log("panel", PORTRAIT + "SCRIPT ERROR: boom\n"),
+    ]
+    entries = noise.noise_by_check(reports)
+    check(entries == [
+        "doorway_watch: 0 ERROR, 1 WARNING, leak 2 (objectdb_leak 1)",
+        "panel: 0 ERROR, 1 WARNING, 1 SCRIPT ERROR (portrait_no_room 1)",
+    ], "one entry per noisy log, quiet ones left out: %s" % entries)
+    many = [noise.read_log("check_%03d" % i, LEAK_2 + PORTRAIT) for i in range(150)]
+    notices = [n for n in noise.format_github(many) if "title=noise by check" in n]
+    check(1 < len(notices) <= 6, "150 noisy checks in a few notices, got %d" % len(notices))
+    check(all(("check_%03d:" % i) in "".join(notices) for i in range(150)), "none dropped")
+
+
 def command_line() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -194,6 +211,7 @@ def main() -> int:
     buckets_and_locations()
     ladder()
     github_output_is_bounded()
+    noise_by_check()
     command_line()
     if FAILURES:
         for failure in FAILURES:
