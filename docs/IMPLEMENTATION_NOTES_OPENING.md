@@ -167,7 +167,17 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
 1. **Wake** — black fade over 3 s, camera roll settles, the body straightens, and
    only then does control return. Objectives start as "Get your bearings".
 2. **Q** — starts on its own ~0.9 s later; three choice points set distinct flags
-   and produce distinct replies; the last line sets the bag objective.
+   and produce distinct replies; the last line sets the bag objective. Before the first
+   line Q walks from his seat to the room's `QOpeningTalk` marker, turns to the
+   protagonist's seat and takes `q_talk` with him. He stays there: like N below, the
+   walk is state on one room instance, so `QPresence` reads `met_q` whenever a room is
+   entered (and when the flags are replaced) and puts that room's Q on the marker,
+   facing `PlayerStart`, moving `q_talk` by the same offset (`QPresence.carry_talk()`,
+   which the beat itself uses). It leaves a Q already on the marker alone, does not
+   react to `met_q` being written (the beat has walked him by then), and keeps the
+   authored Q in a room without the marker. Before this, re-entering the classroom or
+   continuing a save made after the talk put Q and his hotspot back at the seat, about
+   1.3 m away. No NPC state is saved (ADR 0005 §3). `tests/q_presence_test.gd` covers it.
 3. **Schoolbag** — a real interaction; it records observed knowledge, sets
    `textbook_missing`, and shows different text on repeat visits.
 4. **Inspections** — eight objects in the classroom (`classroom_blackboard`,
