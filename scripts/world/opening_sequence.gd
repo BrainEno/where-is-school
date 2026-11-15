@@ -76,6 +76,8 @@ var _flow: LocationFlow = null
 var _b_presence: BPresence = null
 ## Puts N back at the lectern in a room built after she has walked in (#166).
 var _n_presence: NPresence = null
+## Puts Q back on his talk spot in a room built after his first talk (`met_q`).
+var _q_presence: QPresence = null
 ## The save file (autoload `Save`), when the host has one.
 var _save: Node = null
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
@@ -117,6 +119,7 @@ func _ready() -> void:
 	# Connected before the save is read and the first room is loaded, so both are seen.
 	_b_presence = BPresence.new(_game_state(), _locations, _dialogue)
 	_n_presence = NPresence.new(_game_state(), _locations)
+	_q_presence = QPresence.new(_game_state(), _locations)
 
 	_bind_save()
 
@@ -599,13 +602,11 @@ func _approach_q_for_intro() -> bool:
 		points.append(hit["position"])
 	await actor.walk_along(points)
 	actor.face_towards(_player.global_position)
-	# QTalk is a sibling in the current scene. Move it by the same amount as Q;
-	# a future scene may parent it to Q already, in which case it followed naturally.
-	if not actor.is_ancestor_of(talk):
-		talk.global_position += actor.global_position - initial
-	# Its outline meshes turned as well as moved; refresh the existing pick boxes
-	# once, while interaction is still locked, instead of leaving a ghost hotspot.
-	talk.call_deferred("_build_pick_shapes")
+	# QTalk is a sibling in the current scene and moves by the same amount as Q (a
+	# future scene may parent it to Q, in which case it followed naturally). The same
+	# helper puts it back in a room built later, so the two cannot disagree (#160).
+	# Its pick boxes are rebuilt once, while interaction is still locked.
+	QPresence.carry_talk(location, actor, initial)
 	return true
 
 

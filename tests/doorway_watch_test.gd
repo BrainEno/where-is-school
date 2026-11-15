@@ -107,12 +107,20 @@ func _run() -> void:
 		_failures.append("The door is open before the class is dismissed; nothing to test.")
 	if _door.blocked_watcher_ids.size() != 1 or _door.blocked_watcher_ids[0] != &"q":
 		_failures.append("The classroom door names %s as its watchers, not Q alone." % str(_door.blocked_watcher_ids))
-	# Where the opening leaves Q: at his talk marker, turned to the player's seat.
+	# Where the opening leaves Q: at his talk marker, turned to the player's seat. A room
+	# built with `met_q` already set puts him there itself (`QPresence`); this used to be
+	# done by hand here. It is still done when the room did not, so the watch below is
+	# tested from the right spot either way and the failure names the real cause.
 	var talk := _room.find_child("QOpeningTalk", true, false) as Marker3D
 	var seat := _room.find_child("PlayerStart", true, false) as Marker3D
 	if talk != null and seat != null:
-		_q.global_position = talk.global_position
-		_q.face_towards(seat.global_position)
+		if _q.global_position.distance_to(talk.global_position) > 0.05:
+			_failures.append(
+				"Setup: a classroom built after met_q has Q at %s, not at QOpeningTalk %s."
+				% [str(_q.global_position), str(talk.global_position)]
+			)
+			_q.global_position = talk.global_position
+			_q.face_towards(seat.global_position)
 	await _seconds(0.3)
 
 	await _check_approach()

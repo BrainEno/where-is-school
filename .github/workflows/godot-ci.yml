@@ -261,6 +261,9 @@ jobs:
           # Issue #166: N, once the story has walked her in, stays at the lectern through her
           # conversation, a pause, leaving and re-entering the room and a continued save.
           run_check n_presence 300 godot --headless --path . --script res://tests/n_presence_test.gd || status=1
+          # Q, once the opening has walked him to QOpeningTalk, is still there (with q_talk on
+          # him) when the classroom is built again: re-entry and a continued save.
+          run_check q_presence 300 godot --headless --path . --script res://tests/q_presence_test.gd || status=1
           # The prologue's waits are story time: the pause menu pauses the tree, and a beat
           # must not time itself out (or start its conversation) behind it.
           run_check story_pause_timing 180 godot --headless --path . --script res://tests/story_pause_timing_test.gd || status=1
