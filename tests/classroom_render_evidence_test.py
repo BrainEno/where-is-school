@@ -178,7 +178,7 @@ def clock_record(frame: str, method: str, reads: str = "9:00", measured: str = "
             "view": frame.rsplit("_", 1)[-1],
             "reads": reads,
             "measured": {"reads": measured, "face_px": 412.0 if "closeup" in frame else 41.5,
-                         "hour_degrees": 270.4, "minute_degrees": 359.6},
+                         "hour_degrees": 270.4, "minute_degrees": 359.6, "verdict": "PASS"},
         },
     }
 
@@ -375,6 +375,9 @@ CASES = [
      clock_scene_moved),
     ("a clock record from another renderer", "was rendered on 'gl_compatibility'",
      clock_record_renderer),
+    ("a clock record the capture failed", "did not pass clock_closeup",
+     lambda d: edit(d / KLOG, '"minute_degrees": 359.6, "verdict": "PASS"}}}\nEVIDENCE {"frame": "clock_gameplay_rows"',
+                    '"minute_degrees": 359.6, "verdict": "FAIL"}}}\nEVIDENCE {"frame": "clock_gameplay_rows"')),
     ("a clock frame without an EVIDENCE record", "no EVIDENCE record for clock_gameplay_rows",
      drop_clock_record),
 ]

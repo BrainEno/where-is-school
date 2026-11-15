@@ -64,7 +64,7 @@ const MIN_LENGTH_RATIO := 1.1
 const MIN_HAND_PIXELS := 5.0
 ## A hand is seen whole when its pixels reach at least this share of the length its geometry
 ## projects to on screen; less, and something in the room is in front of it.
-const MIN_VISIBLE := 0.75
+const MIN_VISIBLE := 0.9
 ## The face is at least this many pixels across from the aisle (as `classroom_visual_slice`).
 const MIN_AISLE_FACE := 30.0
 ## Two renders of the same view may differ in this many pixels inside the dial and still be
@@ -412,6 +412,8 @@ func _view(
 		"hour_contrast": snappedf(float(hour.get("contrast", 0.0)), 0.001),
 		"minute_contrast": snappedf(float(minute.get("contrast", 0.0)), 0.001),
 		"slack_degrees": slack,
+		# Whether this frame passed every check above: only a PASS frame may become evidence.
+		"verdict": "PASS" if problems.is_empty() else "FAIL",
 	}
 	var engine := Engine.get_version_info()
 	var record := {

@@ -70,15 +70,20 @@ real 1600 × 900 render:
 |---|---|
 | `clock_closeup` | a camera square to the dial |
 | `clock_gameplay_rows` | the game camera, standing in the aisle beside the front row of desks |
-| `clock_gameplay_aisle` | the game camera, from the spot in the aisle under the board where the face is largest |
+| `clock_gameplay_aisle` | the game camera, from the spot in the aisle under the board where the face is largest and both hands can be seen whole |
 
 For each view it renders the same frame again with the hands hidden, with only the hour
 hand and with only the minute hand. A hand's pixels are the ones that change when it
 appears, so nothing painted on the dial can be read as a hand. `tests/clock_reading.gd`
 maps those pixels back onto the dial (a dial seen at an angle is read as the dial, not as
 the ellipse on the screen) and reports where each hand points, how long and how dark it
-looks. The capture fails unless every view reads `9:00`, both hands stand out from the
-dial, and the minute hand looks the longer one. Close up a hand may miss nine by 3°; through
+looks, and how much of its length is in sight (measured reach over the reach its geometry
+projects to). The capture fails unless every view reads `9:00`, both hands stand out from
+the dial, at least 90% of each hand is in sight, and the minute hand looks the longer one.
+Aisle spots from which part of a hand is hidden are passed over and listed as `occluded`
+in `CLOCK.txt`. Each record carries the capture's `verdict`; only a `PASS` frame can be
+recorded as current (`fetch --apply` and `screenshot_evidence.py` both refuse the rest, and
+`fetch --out <folder>` writes a failed run's frames somewhere to look at them). Close up a hand may miss nine by 3°; through
 the game camera, where the face is a few dozen pixels across, by 15° (a quarter of an
 hour on the hour hand, two and a half minutes on the minute hand).
 

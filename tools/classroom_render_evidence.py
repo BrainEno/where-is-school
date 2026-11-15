@@ -483,6 +483,8 @@ def verify_clock(root: Path, method: str, driver: str, evidence: Evidence) -> No
         if measured.get("reads") != CLOCK_TARGET:
             evidence.fail("the EVIDENCE record for %s reads %r off the pixels, not %s"
                           % (stem, measured.get("reads"), CLOCK_TARGET))
+        if measured.get("verdict") != "PASS":
+            evidence.fail("the clock capture did not pass %s (verdict %r)" % (stem, measured.get("verdict")))
         if shown is not None and measured.get("reads") != shown:
             evidence.fail("CLOCK.txt and the EVIDENCE record disagree about %s (%s against %r)"
                           % (stem, shown, measured.get("reads")))

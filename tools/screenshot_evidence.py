@@ -480,6 +480,12 @@ def _check_clock(root: Path, label: str, shows: dict, result: Result, verdict: s
             "capture it with tests/capture_classroom_clock.gd"
         )
         return "unread"
+    if str(measured.get("verdict", "")) != "PASS":
+        result.errors.append(
+            f"{label}: the capture did not pass this frame (shows.measured.verdict is "
+            f"{measured.get('verdict')!r}); it is not evidence"
+        )
+        return "failed"
     if str(measured.get("reads")) != recorded:
         result.errors.append(
             f"{label}: the frame's pixels read {measured.get('reads')}, but the scene said {recorded} "

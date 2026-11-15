@@ -374,7 +374,12 @@ def not_evidence(index: dict) -> list[str]:
         if not isinstance(shows, dict) or shows.get("kind") != "clock":
             continue
         measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else {}
-        if measured.get("reads") != shows.get("reads"):
+        if measured.get("verdict") != "PASS":
+            problems.append(
+                f"{frame.get('file')}: the capture failed it (verdict {measured.get('verdict')!r}); "
+                "not evidence (look at it with --out instead)"
+            )
+        elif measured.get("reads") != shows.get("reads"):
             problems.append(
                 f"{frame.get('file')}: its pixels read {measured.get('reads')!r}, the scene was set to "
                 f"{shows.get('reads')!r}; not evidence (look at it with --out instead)"

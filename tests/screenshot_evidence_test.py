@@ -552,7 +552,8 @@ def write_clock(root: Path, text: str) -> None:
 def clock_entry(fx: Fixture, name: str, reads: str = "9:00", measured: str | None = "9:00") -> dict:
     shows: dict = {"kind": "clock", "scene": CLOCK_SCENE, "view": "closeup", "reads": reads}
     if measured is not None:
-        shows["measured"] = {"reads": measured, "face_px": 412.0, "hour_degrees": 270.1, "minute_degrees": 0.2}
+        shows["measured"] = {"reads": measured, "face_px": 412.0, "hour_degrees": 270.1, "minute_degrees": 0.2,
+                             "verdict": "PASS"}
     return {
         "file": name,
         "status": "current",
@@ -651,6 +652,18 @@ def a_misread_clock_frame_is_not_evidence(fx: Fixture) -> None:
 
 
 @with_fixture
+def a_failed_clock_frame_is_not_evidence(fx: Fixture) -> None:
+    # It read nine, but the capture failed it for another reason (a hidden hand, say).
+    entry = with_clock(fx)
+    entry["shows"]["measured"]["verdict"] = "FAIL"
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "did not pass", "not evidence"), f"a failed frame passed: {result.errors}")
+    del entry["shows"]["measured"]["verdict"]
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "did not pass"), f"a frame without a verdict passed: {result.errors}")
+
+
+@with_fixture
 def a_clock_frame_must_carry_its_reading(fx: Fixture) -> None:
     with_clock(fx, measured=None)
     result = fx.check()
@@ -698,7 +711,7 @@ def a_relayed_clock_frame_becomes_current(fx: Fixture) -> None:
     record = {
         "frame": "clock_closeup", "size": [1600, 900], "godot": "4.7.2", "renderer": "forward_plus",
         "shows": {"kind": "clock", "scene": CLOCK_SCENE, "view": "closeup", "reads": "9:00",
-                  "measured": {"reads": "9:00", "face_px": 412.0}},
+                  "measured": {"reads": "9:00", "face_px": 412.0, "verdict": "PASS"}},
     }
     changes = evidence.apply_relay(
         fx.manifest, [record], run_id=77, commit="e" * 40, workflow="Classroom visual evidence",
@@ -746,7 +759,8 @@ def the_relay_carries_the_clock_set() -> None:
             (frames / f"{stem}.jpg").write_bytes(jpeg_bytes(1600, 900, filler=stem.encode() * 30))
             record = {"frame": stem, "size": [1600, 900], "godot": "4.7.2", "renderer": "forward_plus",
                       "shows": {"kind": "clock", "scene": CLOCK_SCENE, "view": stem.rsplit("_", 1)[-1],
-                                "reads": "9:00", "measured": {"reads": "9:00", "face_px": 40.5}}}
+                                "reads": "9:00", "measured": {"reads": "9:00", "face_px": 40.5,
+                                                              "verdict": "PASS"}}}
             lines.append("EVIDENCE " + json.dumps(record))
         (root / "clock.log").write_text("CLOCK_CAPTURE noise\n" + "\n".join(lines) + "\n", encoding="utf-8")
         code = quietly(relay.main, ["pack", "--set", "clock", "--log", str(root / "clock.log"),
@@ -763,6 +777,10 @@ def the_relay_carries_the_clock_set() -> None:
         misread["frames"][1]["record"]["shows"]["measured"]["reads"] = "8:45"
         expect(has(relay.not_evidence(misread), misread["frames"][1]["file"], "'8:45'", "not evidence"),
                "a clock frame whose pixels read another time would have been applied")
+        failed = copy.deepcopy(index)
+        failed["frames"][2]["record"]["shows"]["measured"]["verdict"] = "FAIL"
+        expect(has(relay.not_evidence(failed), failed["frames"][2]["file"], "the capture failed it"),
+               "a clock frame the capture failed would have been applied")
         described = relay.describe(index["frames"][0]["record"])
         expect("the scene says 9:00" in described and "the pixels read 9:00" in described,
                f"fetch would describe a clock frame as {described!r}")
@@ -807,6 +825,7 @@ TESTS = [
     a_current_clock_frame_passes,
     turned_hands_make_the_clock_frame_stale,
     a_misread_clock_frame_is_not_evidence,
+    a_failed_clock_frame_is_not_evidence,
     a_clock_frame_must_carry_its_reading,
     a_clock_frame_must_name_a_time_scene_and_view,
     a_changed_clock_frame_is_caught,
