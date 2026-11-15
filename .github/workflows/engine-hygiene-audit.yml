@@ -1,0 +1,144 @@
+name: Engine hygiene audit
+
+# Issue #67's two remaining questions, answered by the engine rather than by a count carried
+# over from an older comment:
+#
+# 1. **UID sidecars.** Which tracked scripts and shaders does Godot 4.7.2 itself give a
+#    `.uid` file on a clean import, which tracked UID values would it rewrite, and are any
+#    malformed, duplicated or orphaned? `tools/godot_sidecars.py --check` reads the tree;
+#    after `godot --import` on this fresh checkout, `--after-import` reads `git status`
+#    and publishes every sidecar the engine created *with the value it chose*, so the ones
+#    that belong in the repository can be committed exactly as the engine wrote them.
+# 2. **"N ObjectDB instances were leaked at exit".** `tests/engine_hygiene/leak_probe.gd`
+#    is a ladder of the set-up steps every check shares, and each rung runs with
+#    `--verbose`, as do the checks that leaked on main. `tools/engine_noise_report.py`
+#    names the leaked objects and the rung that adds them.
+#
+# Nothing here changes a verdict in `godot-ci.yml`, and nothing is committed by Actions.
+# The findings are published as notice annotations (readable through the REST API) and
+# the full logs as an artifact. A probe rung that does not print `PASS:` fails its job,
+# the same rule every check follows (`tools/ci_run_check.sh`).
+
+on:
+  pull_request:
+    paths:
+      - "tools/godot_sidecars.py"
+      - "tools/engine_noise_report.py"
+      - "tests/engine_hygiene/**"
+      - "tests/test_harness.gd"
+      - "project.godot"
+      - ".github/workflows/engine-hygiene-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sidecars:
+    name: UID sidecars on a clean import
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Read the tracked UIDs before the engine sees them
+        shell: bash
+        run: |
+          # Malformed, duplicate and orphaned declarations fail here; non-canonical values,
+          # stale references and scripts without a sidecar are listed, not failed.
+          python3 tools/godot_sidecars.py --report >> "${GITHUB_STEP_SUMMARY}"
+          python3 tools/godot_sidecars.py --check --github
+
+      - name: Import the project, as godot-ci.yml does
+        shell: bash
+        run: |
+          # The same blocking import the gameplay checks run after. Its exit code is not a
+          # verdict (the theme loads before its font is imported); what it changed is.
+          set -uo pipefail
+          mkdir -p hygiene-logs
+          timeout 420 godot --headless --path . --import > hygiene-logs/import.log 2>&1 || true
+          tail -n 20 hygiene-logs/import.log
+
+      - name: Publish what the import created and rewrote
+        shell: bash
+        run: |
+          python3 tools/godot_sidecars.py --after-import --github | tee hygiene-logs/sidecars-after-import.txt
+          # The created files themselves, for the artifact: the notices carry the same values.
+          git status --porcelain=v1 --untracked-files=all -- ':!.godot' > hygiene-logs/git-status-after-import.txt
+          mkdir -p hygiene-logs/created
+          git ls-files --others --exclude-standard -- '*.uid' | while IFS= read -r path; do
+            mkdir -p "hygiene-logs/created/$(dirname "${path}")"
+            cp "${path}" "hygiene-logs/created/${path}"
+          done
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: engine-hygiene-sidecars-${{ github.run_attempt }}
+          path: hygiene-logs/
+          retention-days: 14
+          if-no-files-found: warn
+
+  leaks:
+    name: ObjectDB leak at exit, attributed
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Run the probe ladder and the leaking checks with --verbose
+        shell: bash
+        run: |
+          set -uo pipefail
+          export CI_LOG_DIR=hygiene-logs
+          source tools/ci_run_check.sh
+          run_check import 420 godot --headless --path . --import || true
+          # The ladder: one more shared set-up step per rung (see the script's header).
+          run_check probe_0_bare 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=0 || status=1
+          run_check probe_1_watchdog 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=1 || status=1
+          run_check probe_2_state_autoloads 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=2 || status=1
+          run_check probe_3_ui_autoloads 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=3 || status=1
+          run_check probe_4_main_scene 180 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=4 || status=1
+          # Only the probes decide this step: `run_check` sets the shared `status` for any
+          # failure, so the ladder's verdict is kept before the checks below run.
+          probe_status="${status}"
+          # The checks that reported the leak on main (9d8ffbd), from the smallest up. Their
+          # verdicts are godot-ci.yml's business; here only what they leave behind matters,
+          # so a failure is reported (as an ::error) and does not stop the others.
+          for check in check_resolver ability_validation camera_rig character_animation classroom_visual_slice companion_obstacle; do
+            run_check "${check}" 300 godot --headless --verbose --path . --script "res://tests/${check}_test.gd" || true
+          done
+          echo "probe ladder status: ${probe_status}; ${checks} run(s); passed: ${passed}"
+          exit "${probe_status}"
+
+      - name: Attribute the engine noise
+        if: always()
+        shell: bash
+        run: |
+          rm -f hygiene-logs/import.log
+          python3 tools/engine_noise_report.py hygiene-logs --github --summary "${GITHUB_STEP_SUMMARY}" > hygiene-logs/report.md
+          echo "report: hygiene-logs/report.md ($(wc -l < hygiene-logs/report.md) lines)"
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: engine-hygiene-leaks-${{ github.run_attempt }}
+          path: hygiene-logs/
+          retention-days: 14
+          if-no-files-found: warn

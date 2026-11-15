@@ -142,6 +142,20 @@ jobs:
           # sidecar, a sidecar left behind by a move, and a duplicated model name.
           python3 tests/model_library_test.py
 
+      - name: Check the Godot UID declarations
+        shell: bash
+        run: |
+          # Issue #67. Every tracked UID - scene and resource headers, `.import` files, `.uid`
+          # sidecars - is read the way the engine reads it (`core/io/resource_uid.cpp`):
+          # malformed values, two files with one UID (compared as decoded numbers, since two
+          # texts can decode to one) and sidecars left behind by a deleted script fail here.
+          # Non-canonical values and scripts without a sidecar are listed, not failed: which
+          # sidecars the engine asks for is measured by `engine-hygiene-audit.yml`'s import.
+          python3 tools/godot_sidecars.py --check --github
+          python3 tests/godot_sidecars_test.py
+          # The reader `engine-hygiene-audit.yml` attributes leaks and engine noise with.
+          python3 tests/engine_noise_report_test.py
+
       - name: Check the workflow actions are pinned by commit
         shell: bash
         run: |
