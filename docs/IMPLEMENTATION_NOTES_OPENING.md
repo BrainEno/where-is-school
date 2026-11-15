@@ -167,7 +167,17 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
 1. **Wake** — black fade over 3 s, camera roll settles, the body straightens, and
    only then does control return. Objectives start as "Get your bearings".
 2. **Q** — starts on its own ~0.9 s later; three choice points set distinct flags
-   and produce distinct replies; the last line sets the bag objective.
+   and produce distinct replies; the last line sets the bag objective. Before the first
+   line Q walks from his seat to the room's `QOpeningTalk` marker, turns to the
+   protagonist's seat and takes `q_talk` with him. He stays there: like N below, the
+   walk is state on one room instance, so `QPresence` reads `met_q` whenever a room is
+   entered (and when the flags are replaced) and puts that room's Q on the marker,
+   facing `PlayerStart`, moving `q_talk` by the same offset (`QPresence.carry_talk()`,
+   which the beat itself uses). It leaves a Q already on the marker alone, does not
+   react to `met_q` being written (the beat has walked him by then), and keeps the
+   authored Q in a room without the marker. Before this, re-entering the classroom or
+   continuing a save made after the talk put Q and his hotspot back at the seat, about
+   1.3 m away. No NPC state is saved (ADR 0005 §3). `tests/q_presence_test.gd` covers it.
 3. **Schoolbag** — a real interaction; it records observed knowledge, sets
    `textbook_missing`, and shows different text on repeat visits.
 4. **Inspections** — eight objects in the classroom (`classroom_blackboard`,
@@ -332,10 +342,17 @@ shows half a sentence.
   comfort and walking feel are unverified.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
-- The tests that build the main scene print Godot's "2 ObjectDB instances were
-  leaked at exit" and "1 resource still in use at exit" warnings. They are
-  cosmetic (the engine reports them while the tree is torn down), do not fail the
-  run, and have not been chased down.
+- The "2 ObjectDB instances were leaked at exit" and "1 resources still in use at
+  exit" warnings that every headless run used to print are gone (#67). They were
+  traced with `engine-hygiene-audit.yml` (a ladder of `--verbose` probes, the first
+  of which only quits) to sound left playing at quit: a stopped playback is freed
+  only after the audio thread mixes once more, and quitting stops the audio driver
+  before that mix. The `Music` autoload now waits for one mix when it is freed -
+  at quit that is after the scene, so the room's sounds are covered too - and
+  `CueAudio`, freed after it, waits for a cue still sounding (`AudioRelease`). The
+  engine lines that remain in a run are listed per check by the "Report the engine
+  noise" step of `godot-ci.yml`; most are refusals a test provokes on purpose, and
+  the portrait warning is the headless 64x64 window leaving the panel no room.
 - The alley behind the animal, the gate out of the estate, and the courtyard the
   animal walks towards are still to be built; the slice ends at a card.
 

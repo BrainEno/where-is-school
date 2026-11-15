@@ -142,6 +142,20 @@ jobs:
           # sidecar, a sidecar left behind by a move, and a duplicated model name.
           python3 tests/model_library_test.py
 
+      - name: Check the Godot UID declarations
+        shell: bash
+        run: |
+          # Issue #67. Every tracked UID - scene and resource headers, `.import` files, `.uid`
+          # sidecars - is read the way the engine reads it (`core/io/resource_uid.cpp`):
+          # malformed values, two files with one UID (compared as decoded numbers, since two
+          # texts can decode to one) and sidecars left behind by a deleted script fail here.
+          # Non-canonical values and scripts without a sidecar are listed, not failed: which
+          # sidecars the engine asks for is measured by `engine-hygiene-audit.yml`'s import.
+          python3 tools/godot_sidecars.py --check --github
+          python3 tests/godot_sidecars_test.py
+          # The reader `engine-hygiene-audit.yml` attributes leaks and engine noise with.
+          python3 tests/engine_noise_report_test.py
+
       - name: Check the workflow actions are pinned by commit
         shell: bash
         run: |
@@ -273,6 +287,9 @@ jobs:
           # Issue #166: N, once the story has walked her in, stays at the lectern through her
           # conversation, a pause, leaving and re-entering the room and a continued save.
           run_check n_presence 300 godot --headless --path . --script res://tests/n_presence_test.gd || status=1
+          # Q, once the opening has walked him to QOpeningTalk, is still there (with q_talk on
+          # him) when the classroom is built again: re-entry and a continued save.
+          run_check q_presence 300 godot --headless --path . --script res://tests/q_presence_test.gd || status=1
           # Issue #186: the first line on screen is the authored start of the opening in both
           # languages, and every current frame of it in docs/screenshots/MANIFEST.json shows
           # that sentence - rewrite the line and this fails until the frames are recaptured.
@@ -443,19 +460,14 @@ jobs:
           # An `ERROR:` line is not automatically a bug: a test that checks how the game
           # refuses something makes the engine print one on purpose. The line is reported,
           # with the check it came from, and the judgement is left to a reader.
-          total=0
-          for log in $(ls ci-logs/*.log 2>/dev/null | sort); do
-            name=$(basename "${log}" .log)
-            errors=$(grep -c "ERROR:" "${log}" || true)
-            warnings=$(grep -c "WARNING:" "${log}" || true)
-            scripts=$(grep -c "SCRIPT ERROR" "${log}" || true)
-            if [ "${errors:-0}" -gt 0 ] || [ "${warnings:-0}" -gt 0 ]; then
-              first=$(grep -m1 -E "ERROR:|WARNING:" "${log}" | cut -c1-240)
-              echo "::notice title=engine noise (${name})::${errors:-0} ERROR, ${warnings:-0} WARNING, ${scripts:-0} SCRIPT ERROR - first: ${first}"
-              total=$((total + ${errors:-0} + ${warnings:-0}))
-            fi
-          done
-          echo "::notice title=engine noise::${total} ERROR/WARNING line(s) across the run"
+          #
+          # One notice per check used to be printed here, but a runner keeps about ten
+          # notices from a step, so most checks never reached the annotations (#67).
+          # `tools/engine_noise_report.py` packs one line per noisy check - counts, the
+          # bucket each line falls in, the leak count - into a few numbered notices, and
+          # writes the full table (with the `at:` locations) to the step summary.
+          python3 tools/engine_noise_report.py ci-logs --github --summary "${GITHUB_STEP_SUMMARY}" \
+            | grep '^::' || true
 
       - name: Measure the text corpus, the locations and the bake
         shell: bash

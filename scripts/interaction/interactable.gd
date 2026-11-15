@@ -120,6 +120,13 @@ func _watch_visibility(node: Node) -> void:
 	spatial.visibility_changed.connect(_queue_pick_rebuild)
 
 
+## Rebuilds the pointer boxes around the outline meshes on the next idle frame. For a
+## caller that moved the object this interactable outlines (Q walking to his talk spot):
+## the boxes are local to this node, so they otherwise stay where the meshes used to be.
+func rebuild_pick_shapes() -> void:
+	_queue_pick_rebuild()
+
+
 func _queue_pick_rebuild() -> void:
 	if _pick_rebuild_queued:
 		return

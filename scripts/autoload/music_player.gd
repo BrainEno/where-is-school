@@ -21,6 +21,17 @@ extends Node
 ##
 ## Loaded as the `Music` autoload. Callers look it up by path (`/root/Music`) or use the
 ## `Music` global, exactly as they do with `CueAudio`.
+##
+## It also lets go of the track when the game quits (#67). A stopped playback is only freed
+## after the audio thread has mixed once more, and quitting stops the driver before that
+## mix, so a track still playing at quit outlived everything: every run, the game's and
+## each headless check's, ended with "2 ObjectDB instances were leaked"
+## (`AudioStreamPlaybackWAV` and this `AudioStreamWAV`) and "1 resources still in use"
+## naming this file. When this node is freed it stops the music and waits for that mix
+## (`AudioRelease`). It always waits, even when the music is off: at quit a node's children
+## are freed last to first, so the scene and the autoloads after this one in
+## `project.godot` are gone already, and this one mix lets go of whatever they stopped too.
+## `CueAudio`, freed after this, waits for its own voices.
 
 ## The one track. A `res://` path, so no machine's absolute path can leak into a build.
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
@@ -133,6 +144,26 @@ func get_track_path() -> String:
 func get_track_length() -> float:
 	_build()
 	return _player.stream.get_length() if _player.stream != null else 0.0
+
+
+func _notification(what: int) -> void:
+	# Freed, not merely taken out of the tree: a node moved between parents keeps playing.
+	# The player child still exists here; it is freed after this node's notification.
+	if what != NOTIFICATION_PREDELETE:
+		return
+	_kill_tween()
+	if _player != null:
+		# A player that has only left the tree (as at quit) has *paused* its playback, and
+		# a paused playback is never deleted; stopping hands it to the server.
+		_player.stop()
+	if not AudioRelease.wait_for_mix():
+		# Not an error the player can act on (the audio driver is not mixing), and not
+		# hidden either: the engine's own leak warning follows, and this says why.
+		print_verbose(
+			"Music: no audio mix within %d ms of the stop; the playback may be reported as"
+			% AudioRelease.TIMEOUT_MSEC
+			+ " leaked at exit."
+		)
 
 
 func _build() -> void:
