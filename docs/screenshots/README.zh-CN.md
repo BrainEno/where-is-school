@@ -62,6 +62,8 @@ Q 告诉玩家生物课九点开始，所以教室前墙上的时钟指向九点
 2. `python3 tools/dialogue_evidence_relay.py fetch --run <运行 ID> --apply`
 3. 运行 `python3 tools/screenshot_evidence.py --check`，再提交画面和清单。
 
+**观察到，未修改。** 在运行 43668432193 中（两个渲染器结果一致），黑板上方的天花板灯具在离黑板最近的三个过道位置遮住了部分分针（房间坐标 x 0.45；z −2.9：分针可见 77%，−3.4：43%，−3.9：0%）——恰好是表盘最大的位置。因此过道画面取自 z −2.4。移动灯具或时钟需要修改 `classroom.tscn`（#151 协调范围），留给 owner 决定。
+
 这是 Linux 软件渲染（Mesa lavapipe/llvmpipe）。九点在 Windows 屏幕上是否清楚可读、owner 是否接受这些画面，仍由 owner 在 #173 中决定。
 
 ## 历史画面

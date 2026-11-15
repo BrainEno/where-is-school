@@ -99,6 +99,13 @@ To commit the frames:
 2. `python3 tools/dialogue_evidence_relay.py fetch --run <run id> --apply`
 3. `python3 tools/screenshot_evidence.py --check`, then commit the frames and the manifest.
 
+**Observed, not changed.** In run 43668432193 (both renderers alike) the ceiling light
+fitting above the board hides part of the minute hand from the three aisle spots closest
+to the board (room x 0.45; z −2.9: 77% of the hand in sight, −3.4: 43%, −3.9: 0%) —
+the spots where the face is largest. The aisle frame is therefore taken from z −2.4.
+Moving the fitting or the clock means editing `classroom.tscn` (#151 coordination) and is
+left to the owner.
+
 This is Linux software rendering (Mesa lavapipe/llvmpipe). Whether nine o'clock reads well
 on a Windows screen, and whether the owner accepts the frames, is still the owner's call
 on #173.

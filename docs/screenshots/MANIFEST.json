@@ -791,6 +791,114 @@
       "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
     },
     {
+      "file": "clock_closeup.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "e5ddae2d98aa8ec995fc66a56bc0f9d893ff950c",
+        "run_id": 43668432193,
+        "workflow": "Classroom visual evidence",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "c21914313dd66914eccdbb7bc64ef42509d8d1ea3369b9ade081587d805ccfe8",
+      "shows": {
+        "kind": "clock",
+        "measured": {
+          "face_px": 686.9,
+          "hour_contrast": 0.704,
+          "hour_degrees": 270.0,
+          "hour_length_px": 155.5,
+          "hour_visible": 0.98,
+          "minute_contrast": 0.696,
+          "minute_degrees": 0.0,
+          "minute_length_px": 231.5,
+          "minute_visible": 0.98,
+          "nearest": "9:00",
+          "reads": "9:00",
+          "slack_degrees": 3.0,
+          "verdict": "PASS"
+        },
+        "reads": "9:00",
+        "scene": "scenes/locations/classroom/classroom.tscn",
+        "view": "closeup"
+      }
+    },
+    {
+      "file": "clock_gameplay_aisle.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "e5ddae2d98aa8ec995fc66a56bc0f9d893ff950c",
+        "run_id": 43668432193,
+        "workflow": "Classroom visual evidence",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "034751a7d751cbeee9e173ebd5606ef1a079305c2d81887458e1517c55a5e852",
+      "shows": {
+        "kind": "clock",
+        "measured": {
+          "face_px": 50.9,
+          "hour_contrast": 0.719,
+          "hour_degrees": 267.55,
+          "hour_length_px": 11.8,
+          "hour_visible": 1.04,
+          "minute_contrast": 0.732,
+          "minute_degrees": 359.46,
+          "minute_length_px": 15.8,
+          "minute_visible": 1.0,
+          "nearest": "9:00",
+          "reads": "9:00",
+          "slack_degrees": 15.0,
+          "verdict": "PASS"
+        },
+        "reads": "9:00",
+        "scene": "scenes/locations/classroom/classroom.tscn",
+        "view": "aisle"
+      }
+    },
+    {
+      "file": "clock_gameplay_rows.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "e5ddae2d98aa8ec995fc66a56bc0f9d893ff950c",
+        "run_id": 43668432193,
+        "workflow": "Classroom visual evidence",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "17a9b3b4f04ce052b75c2b46a743e811efa62b8db9bba663c2681e2f21f7afe0",
+      "shows": {
+        "kind": "clock",
+        "measured": {
+          "face_px": 51.0,
+          "hour_contrast": 0.719,
+          "hour_degrees": 268.14,
+          "hour_length_px": 11.4,
+          "hour_visible": 1.0,
+          "minute_contrast": 0.724,
+          "minute_degrees": 359.7,
+          "minute_length_px": 16.6,
+          "minute_visible": 1.01,
+          "nearest": "9:00",
+          "reads": "9:00",
+          "slack_degrees": 15.0,
+          "verdict": "PASS"
+        },
+        "reads": "9:00",
+        "scene": "scenes/locations/classroom/classroom.tscn",
+        "view": "rows"
+      }
+    },
+    {
       "file": "cue_candidate_brackets.png",
       "status": "historical",
       "caption": "Candidate brackets: the floor-click mark, from the player's own camera at 2.4 m.",
