@@ -63,7 +63,7 @@ const DEVICE_GAMEPAD := &"gamepad"
 ## Everything the settings screen lets the player rebind, in the order it lists them.
 const REBINDABLE_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right", &"sprint",
-	&"interact", &"dialogue_advance", &"backlog", &"cancel", &"pause",
+	&"interact", &"dialogue_advance", &"backlog", &"journal", &"cancel", &"pause",
 	&"toggle_language", &"toggle_fullscreen",
 ]
 ## Pairs that may share an input because they never listen at the same time: the same

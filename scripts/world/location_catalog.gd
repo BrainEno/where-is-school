@@ -150,6 +150,15 @@ func get_ids() -> Array[StringName]:
 	return ids
 
 
+## The ids in the order `locations.json` lists them, which is the order the story walks
+## them in. `get_ids()` sorts; a view that wants the route wants this.
+func get_ids_in_file_order() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for key: Variant in _entries.keys():
+		ids.append(key)
+	return ids
+
+
 func get_start() -> Entry:
 	for key: Variant in _entries.keys():
 		var entry: Entry = _entries[key]

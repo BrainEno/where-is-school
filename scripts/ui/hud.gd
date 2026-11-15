@@ -1,7 +1,8 @@
 class_name GameHud
 extends Control
 ## Non-dialogue HUD: the current objective line, the contextual interaction
-## prompt, and the language switch hint. Thin views over state the sequence
+## prompt, the language switch hint, and a short "noted" line when something new goes
+## into the notebook. Thin views over state the sequence
 ## director owns; every string it shows is resolved through L10n at draw time so
 ## a language switch only has to ask for a redraw.
 
@@ -26,12 +27,27 @@ var _prompt_action: String = ""
 ## prompt is also information the player is waiting for.
 const PROMPT_FADE_IN_SECONDS := 0.12
 const PROMPT_FADE_OUT_SECONDS := 0.1
+## The "noted" line: top right, under where the imagination banner and the objective sit,
+## in the colour of the kind of knowledge it names. It says what kind of thing was
+## learned and which key opens the notebook - never the entry itself, which the player
+## has just read - and goes away by itself.
+const NOTED_FADE_SECONDS := 0.25
+const NOTED_HOLD_SECONDS := 2.6
+const NOTED_FONT_SIZE := 16
+const NOTED_TOP := 112.0
+const NOTED_RIGHT := 40.0
+
+## The source whose name the "noted" line shows, or -1 while it is not showing.
+var _noted_source: int = -1
+var _noted_label: Label = null
+var _noted_tween: Tween = null
 
 
 func _ready() -> void:
 	_prompt_label.hide()
 	_prompt_label.text = ""
 	_prompt_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_build_noted_label()
 	refresh_language_text()
 	var loc := _loc()
 	if loc != null:
@@ -41,6 +57,11 @@ func _ready() -> void:
 		settings.connect("setting_changed", _on_setting_changed)
 		settings.connect("input_device_changed", _on_input_changed)
 		settings.connect("bindings_changed", _on_input_changed.bind(&""))
+	var narrative := get_node_or_null(^"/root/NarrativeState")
+	if narrative != null:
+		narrative.connect("entry_recorded", _on_entry_recorded)
+		narrative.connect("entries_cleared", clear_noted)
+		narrative.connect("entries_restored", _on_entries_restored)
 	set_text_scale(UiTextScale.current(self))
 
 
@@ -57,6 +78,7 @@ func _on_setting_changed(key: StringName) -> void:
 ## Another device or binding: the prompt and the language hint name the new key.
 func _on_input_changed(_device: StringName) -> void:
 	refresh_language_text()
+	_refresh_noted_text()
 	if _prompt_label.visible and not _prompt_action.is_empty():
 		_prompt_label.text = "[%s] %s" % [_interact_key_label(), _prompt_action]
 
@@ -68,6 +90,7 @@ func _loc() -> Node:
 func _on_locale_changed(_locale: String) -> void:
 	refresh_language_text()
 	set_objective(_objective_key)
+	_refresh_noted_text()
 
 
 ## Shows the objective by locale key. Empty clears the line.
@@ -166,3 +189,87 @@ func set_dialogue_open(open: bool) -> void:
 ## Shared device-aware presentation; no scene-local device branching or binding lookup.
 func _interact_key_label() -> String:
 	return InputHint.action_key(self, &"interact")
+
+
+# --- The "noted" line ------------------------------------------------------------------
+
+
+func _build_noted_label() -> void:
+	_noted_label = Label.new()
+	_noted_label.name = "NotedLabel"
+	_noted_label.anchor_left = 1.0
+	_noted_label.anchor_right = 1.0
+	_noted_label.offset_left = -NOTED_RIGHT
+	_noted_label.offset_right = -NOTED_RIGHT
+	_noted_label.offset_top = NOTED_TOP
+	_noted_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_noted_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_noted_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_noted_label.add_theme_color_override(&"font_shadow_color", Color(0.0, 0.0, 0.0, 0.65))
+	_noted_label.add_theme_constant_override(&"shadow_offset_x", 1)
+	_noted_label.add_theme_constant_override(&"shadow_offset_y", 1)
+	UiTextScale.set_base(_noted_label, NOTED_FONT_SIZE, UiTextScale.current(self))
+	_noted_label.hide()
+	add_child(_noted_label)
+
+
+## Shows "Noted: SEEN  [N] notebook" for a moment. A second entry while the line is up
+## replaces it and restarts the hold, so a run of records reads as one notice.
+func show_noted(source: int) -> void:
+	if _noted_label == null:
+		return
+	_noted_source = source
+	_refresh_noted_text()
+	_noted_label.add_theme_color_override(
+		&"font_color", JournalPanel.SOURCE_COLORS.get(source, Color(0.776, 0.733, 0.643, 1.0))
+	)
+	_kill_noted_tween()
+	_noted_label.show()
+	_noted_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_noted_tween = create_tween()
+	_noted_tween.tween_property(_noted_label, "modulate:a", 1.0, NOTED_FADE_SECONDS)
+	_noted_tween.tween_interval(NOTED_HOLD_SECONDS)
+	_noted_tween.tween_property(_noted_label, "modulate:a", 0.0, NOTED_FADE_SECONDS)
+	_noted_tween.tween_callback(clear_noted)
+
+
+## Removes the line at once.
+func clear_noted() -> void:
+	_kill_noted_tween()
+	_noted_source = -1
+	if _noted_label != null:
+		_noted_label.text = ""
+		_noted_label.hide()
+
+
+func get_noted_text() -> String:
+	return _noted_label.text if _noted_label != null and _noted_label.visible else ""
+
+
+func get_noted_label() -> Label:
+	return _noted_label
+
+
+func _refresh_noted_text() -> void:
+	if _noted_label == null or _noted_source < 0:
+		return
+	_noted_label.text = L10n.t("hud.noted", {
+		"badge": L10n.t(NarrativeEntry.badge_key_for(_noted_source)),
+		"key": InputHint.action_key(self, &"journal"),
+	})
+
+
+func _kill_noted_tween() -> void:
+	if _noted_tween != null and _noted_tween.is_valid():
+		_noted_tween.kill()
+	_noted_tween = null
+
+
+func _on_entry_recorded(entry: NarrativeEntry) -> void:
+	if entry != null:
+		show_noted(entry.source)
+
+
+## A restored log is the run picked up again: nothing was just noted.
+func _on_entries_restored(_count: int) -> void:
+	clear_noted()

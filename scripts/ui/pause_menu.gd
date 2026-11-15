@@ -2,7 +2,7 @@ class_name PauseMenu
 extends CanvasLayer
 ## The menu during play: Esc or Start.
 ##
-## Resume / Save and quit / Settings / New game. The world is paused while it is open (the
+## Resume / Notebook / Settings / New game / Save and quit. The world is paused while it is open (the
 ## tree is, and this layer runs anyway); the settings screen is the same one the title
 ## screen opens. New game asks first and then hands over to `Session.start_new_game()`,
 ## which stops this world's autosave before anything is deleted.
@@ -18,13 +18,20 @@ extends CanvasLayer
 ## last save's room and time under the heading.
 ##
 ## It never takes Esc from something that is already using it: with the log open, Esc
-## closes the log; with a confirmation or the settings up, Esc closes those first.
+## closes the log; with a confirmation, the settings or the notebook up, Esc closes those
+## first.
+##
+## The notebook (`JournalPanel`) opens from its entry here or, during play, straight from
+## the notebook key: then the menu is only its frame - the world pauses behind it, and
+## closing the notebook goes back to the game rather than to this list. The entry says how
+## many entries are new since the notebook was last read.
 
 signal opened
 signal closed
 
-# Settings stays second (Down, Enter reaches it from Resume) and the way out comes last.
-const ENTRIES: Array[StringName] = [&"resume", &"settings", &"new_game", &"save_quit"]
+# The notebook sits right under Resume, the thing most often opened from here; Settings
+# follows it (Down, Down, Enter from Resume) and the way out comes last.
+const ENTRIES: Array[StringName] = [&"resume", &"journal", &"settings", &"new_game", &"save_quit"]
 
 
 ## The paused world behind a wash, and the sheet the menu is set on: dark, its right edge
@@ -71,6 +78,11 @@ var _sheet: Sheet = null
 var _hint: Label = null
 var _entries: Dictionary = {}
 var _settings_panel: SettingsPanel = null
+var _journal: JournalPanel = null
+## True while the menu is open only as the notebook's frame (the notebook key during
+## play): closing the notebook then closes the menu too.
+var _journal_only := false
+var _closing := false
 var _confirm: ConfirmPrompt = null
 var _was_paused := false
 ## What the open question is about: `new_game` or `quit_unsaved`.
@@ -125,6 +137,9 @@ func _ready() -> void:
 	_settings_panel = SettingsPanel.new()
 	_root.add_child(_settings_panel)
 	_settings_panel.closed.connect(focus_entry.bind(&"settings"))
+	_journal = JournalPanel.new()
+	_root.add_child(_journal)
+	_journal.closed.connect(_on_journal_closed)
 	_confirm = ConfirmPrompt.new()
 	_root.add_child(_confirm)
 	_confirm.confirmed.connect(_on_confirmed)
@@ -163,13 +178,60 @@ func open() -> void:
 
 
 func close() -> void:
-	if not is_open():
+	if not is_open() or _closing:
 		return
+	_closing = true
 	_settings_panel.close()
+	_journal.close()
+	_journal_only = false
 	_confirm.hide()
 	_root.hide()
+	_closing = false
 	get_tree().paused = _was_paused
 	closed.emit()
+
+
+## Opens the notebook. `from_play` is the notebook key during play: the menu opens as the
+## notebook's frame only, and closing the notebook returns to the game.
+func open_journal(from_play: bool = false) -> void:
+	if not is_open():
+		open()
+		_journal_only = from_play
+	_ensure_journal_catalog()
+	_journal.open()
+
+
+func get_journal_panel() -> JournalPanel:
+	return _journal
+
+
+## The notebook words its rows from the content the world's dialogue controller has
+## already loaded; built once, the first time it is wanted.
+func _ensure_journal_catalog() -> void:
+	if _journal.has_catalog():
+		return
+	var world := _world()
+	var dialogue := world.get_node_or_null(^"DialogueController") if world != null else null
+	if dialogue == null or not dialogue.has_method("get_dialogue_library"):
+		return
+	var library := dialogue.call("get_dialogue_library") as DialogueLibrary
+	var inspections := dialogue.call("get_inspection_library") as InspectionLibrary
+	if library == null and inspections == null:
+		return
+	var catalog := JournalCatalog.build(library, inspections)
+	for problem: String in catalog.problems():
+		push_warning("JournalCatalog: %s" % problem)
+	_journal.set_catalog(catalog)
+
+
+func _on_journal_closed() -> void:
+	if _closing:
+		return
+	if _journal_only:
+		close()
+		return
+	_refresh_texts()
+	focus_entry(&"journal")
 
 
 func get_entry(id: StringName) -> Button:
@@ -207,6 +269,8 @@ func activate(id: StringName) -> void:
 			_save_and_quit()
 		&"settings":
 			_settings_panel.open()
+		&"journal":
+			open_journal()
 		&"new_game":
 			_pending = &"new_game"
 			_confirm.ask(
@@ -345,11 +409,15 @@ static func _caption(status: Dictionary) -> String:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if is_open():
-		if _settings_panel.is_open() or _confirm.visible:
+		if _settings_panel.is_open() or _confirm.visible or _journal.is_open():
 			return
 		if event.is_action_pressed(&"pause") or event.is_action_pressed(&"ui_cancel"):
 			get_viewport().set_input_as_handled()
 			close()
+			return
+		if InputMap.has_action(&"journal") and event.is_action_pressed(&"journal"):
+			get_viewport().set_input_as_handled()
+			open_journal()
 			return
 		# The world is paused, but autoloads that run anyway must not act through the menu.
 		if event is InputEventKey or event is InputEventJoypadButton:
@@ -357,14 +425,18 @@ func _unhandled_input(event: InputEvent) -> void:
 					and not event.is_action_pressed(&"toggle_fullscreen"):
 				get_viewport().set_input_as_handled()
 		return
-	if not event.is_action_pressed(&"pause"):
+	var wants_journal := InputMap.has_action(&"journal") and event.is_action_pressed(&"journal")
+	if not event.is_action_pressed(&"pause") and not wants_journal:
 		return
 	if event is InputEventKey and (event as InputEventKey).echo:
 		return
 	if _something_else_owns_cancel():
 		return
 	get_viewport().set_input_as_handled()
-	open()
+	if wants_journal:
+		open_journal(true)
+	else:
+		open()
 
 
 ## The log closes on Esc; the session may be swapping worlds.
@@ -389,6 +461,9 @@ func _refresh_texts() -> void:
 		_notice.text = NewGameFailureText.describe(_failure)
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
+	var unread := _journal.get_unread_count() if _journal != null else 0
+	if unread > 0:
+		(_entries[&"journal"] as Button).text = L10n.t("menu.journal_unread", {"count": unread})
 	var keys := {
 		"key": MenuStyle.key(self, &"pause"),
 		"cancel": MenuStyle.key(self, &"ui_cancel"),

@@ -175,9 +175,11 @@ func _check_pause_menu_staging_failure() -> void:
 	await _key(KEY_ESCAPE)
 	await _frames(2)
 	_expect(menu.is_open(), "%s: Esc did not open the pause menu." % _case)
+	# Resume, Notebook, Settings, New game.
 	await _key(KEY_DOWN)
 	await _key(KEY_DOWN)
-	_expect_focus(menu.get_entry(&"new_game"), "Down, Down did not reach New game")
+	await _key(KEY_DOWN)
+	_expect_focus(menu.get_entry(&"new_game"), "Down x3 did not reach New game")
 	# Back first: Cancel keeps everything and returns the focus.
 	await _key(KEY_ENTER)
 	await _frames(2)
@@ -269,6 +271,7 @@ func _check_pause_menu_scene_failure() -> void:
 	await _pad(JOY_BUTTON_START)
 	await _frames(2)
 	_expect(menu.is_open(), "%s: Start did not open the pause menu." % _case)
+	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	_expect_focus(menu.get_entry(&"new_game"), "the D-pad did not reach New game")
