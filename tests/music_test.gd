@@ -22,7 +22,8 @@ extends SceneTree
 ##    playback behind `play_track()`'s back, and after leaving the tree first (which only
 ##    pauses a playback), `free()` returns within the bound, having seen the audio thread
 ##    mix, and nothing it played is alive once the main thread's next audio update has run.
-##    Before, every run ended with the track leaked at exit.
+##    The cue player does the same for a cue still sounding. Before, every run ended with
+##    the track leaked at exit.
 ##
 ## What it cannot check: whether the loop *sounds* seamless, or how loud the guitar actually
 ## is in the mix. The seam is measured by `tools/build_music_loop.py` (the step across the
@@ -69,6 +70,7 @@ func _run() -> void:
 	await _check_release_on_free("playing", false, false)
 	await _check_release_on_free("after a seek", true, false)
 	await _check_release_on_free("out of the tree", false, true)
+	await _check_cue_release_on_free()
 	_report()
 
 
@@ -343,8 +345,36 @@ func _check_release_on_free(label: String, seek_first: bool, leave_tree_first: b
 		# Quitting takes the whole tree out before freeing anything: the player pauses.
 		root.remove_child(extra)
 		await process_frame
+	await _free_and_watch(extra, watches, label)
+
+
+## A cue player built from the autoload's script, freed while its longest cue sounds.
+func _check_cue_release_on_free() -> void:
+	var cues: Node = CueAudioScript.new()
+	cues.name = "CueReleaseProbe"
+	root.add_child(cues)
+	await process_frame
+	cues.call("set_silent", false)
+	cues.call("play_refused")
+	var watches: Array[WeakRef] = []
+	for voice: AudioStreamPlayer in _audio_players(cues):
+		if voice.has_stream_playback():
+			# No local holds the playback: a strong reference left in a variable across the
+			# wait below would keep it alive and fail this for the wrong reason.
+			watches.append(weakref(voice.get_stream_playback()))
+	if watches.is_empty():
+		_fail("cue player: the refusal cue did not start; the release is not measured")
+		cues.free()
+		return
+	await _free_and_watch(cues, watches, "cue player")
+
+
+## Frees `node` and checks the two halves of the release: `free()` comes back within the
+## bound (it waited for a mix, or gave up), and every playback in `watches` is gone once
+## the main thread has had its audio updates.
+func _free_and_watch(node: Node, watches: Array[WeakRef], label: String) -> void:
 	var started := Time.get_ticks_msec()
-	extra.free()
+	node.free()
 	var took := Time.get_ticks_msec() - started
 	# The main thread frees what the audio thread took off its list at its next audio
 	# update, once per frame - skipping a frame in which the audio thread is mid-list - and
@@ -358,15 +388,12 @@ func _check_release_on_free(label: String, seek_first: bool, leave_tree_first: b
 	_expect(
 		alive == 0,
 		(
-			"%s: %d of %d playback(s) were still alive %d frames after the music player was"
-			+ " freed; at quit that is the ObjectDB leak of #67"
+			"%s: %d of %d playback(s) were still alive %d frames after it was freed; at quit"
+			+ " that is the ObjectDB leak of #67"
 		) % [label, alive, watches.size(), frames]
 	)
-	var limit: int = MusicScript.RELEASE_TIMEOUT_MSEC + 50
-	_expect(
-		took <= limit,
-		"%s: freeing the music player took %d ms, over the %d ms bound" % [label, took, limit]
-	)
+	var limit: int = AudioRelease.TIMEOUT_MSEC + 50
+	_expect(took <= limit, "%s: freeing it took %d ms, over the %d ms bound" % [label, took, limit])
 	_notes.append(
 		"release on free (%s): free() %d ms, %d playback(s) gone after %d frame(s)"
 		% [label, took, watches.size(), frames]

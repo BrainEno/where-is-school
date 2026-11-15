@@ -122,10 +122,10 @@ jobs:
           # failure, so the ladder's verdict is kept before the checks below run.
           probe_status="${status}"
           # The checks that reported the leak on main (9d8ffbd), from the smallest up, and
-          # doorway_watch, which still did after the music's release was fixed. Their
+          # doorway_watch and interaction_audio, which still did after the music was fixed. Their
           # verdicts are godot-ci.yml's business; here only what they leave behind matters,
           # so a failure is reported (as an ::error) and does not stop the others.
-          for check in check_resolver ability_validation camera_rig character_animation classroom_visual_slice companion_obstacle doorway_watch; do
+          for check in check_resolver ability_validation camera_rig character_animation classroom_visual_slice companion_obstacle doorway_watch interaction_audio; do
             run_check "${check}" 300 godot --headless --verbose --path . --script "res://tests/${check}_test.gd" || true
           done
           echo "probe ladder status: ${probe_status}; ${checks} run(s); passed: ${passed}"

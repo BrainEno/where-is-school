@@ -26,6 +26,11 @@ extends Node
 ## Loaded as the `CueAudio` autoload. Callers look it up by node path (`/root/CueAudio`)
 ## rather than by a global constant, so a headless test that never registers autoloads
 ## simply gets silence instead of a compile error.
+##
+## A cue still sounding when this node is freed - at quit, a click's tick is 0.15 s long -
+## is stopped and waited for (`AudioRelease`, #67): otherwise its playback and its buffer
+## are reported as leaked at exit. The `Music` autoload waits for everything freed before
+## it; this one is freed after it, so it waits for its own voices.
 
 const SAMPLE_RATE := 22050
 
@@ -73,6 +78,21 @@ var _gain_db := 0.0
 
 func _ready() -> void:
 	_build()
+
+
+func _notification(what: int) -> void:
+	# The voices are children, still alive here; they are freed after this notification.
+	if what != NOTIFICATION_PREDELETE:
+		return
+	var voices: Array = []
+	for kind: StringName in _players:
+		voices.append_array(_players[kind] as Array)
+	if AudioRelease.stop_all(voices) > 0 and not AudioRelease.wait_for_mix():
+		print_verbose(
+			"CueAudio: no audio mix within %d ms of the stop; a cue may be reported as"
+			% AudioRelease.TIMEOUT_MSEC
+			+ " leaked at exit."
+		)
 
 
 ## Everything the node can play, in or out of the tree, quiet or not: the streams are pure
