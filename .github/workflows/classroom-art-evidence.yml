@@ -10,6 +10,16 @@ name: Classroom visual evidence
 #                              the limit, timeout, one renderer failing
 #   verdict                    green only if both renderers and the self-tests passed
 #
+# Each render job also runs tests/capture_classroom_clock.gd (#173): three frames of the
+# classroom clock - square on, and through the game camera from beside the front desks and from
+# the aisle - from which the time is read back off the pixels. Every frame has to read nine
+# o'clock, the hour Q names for biology, and the verifier re-reads that from the capture's
+# own records.
+#
+# Dispatched with relay_clock_evidence=true, two more jobs carry those three frames into
+# the run's annotations so they can be committed to docs/screenshots without the artifact
+# store (see the relay section at the end).
+#
 # Each render job is judged twice: tests/run_classroom_checks.sh (strict run_check: exit
 # code, PASS line, no script error, time limit) and tools/classroom_render_evidence.py
 # (re-reads RESULT.txt, CAPTURE.txt and the raw PNGs: renderer, driver, engine, adapter,
@@ -31,6 +41,9 @@ on:
       - 'scenes/locations/classroom/**'
       - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
+      - 'tests/capture_classroom_clock.gd'
+      - 'tests/clock_reading.gd'
+      - 'tests/clock_reading_test.gd'
       - 'tests/classroom_wall_render_test.gd'
       - 'tests/classroom_visual_slice_test.gd'
       - 'tests/classroom_wall_contract.gd'
@@ -44,6 +57,11 @@ on:
       - 'tools/classroom_render_evidence.py'
       - '.github/workflows/classroom-art-evidence.yml'
   workflow_dispatch:
+    inputs:
+      relay_clock_evidence:
+        description: "Also photograph the classroom clock on Forward+ and publish the frames as annotations (#173)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -206,3 +224,156 @@ jobs:
             status=1
           fi
           exit "${status}"
+
+  # --- Clock evidence relay (#173) ---------------------------------------------------
+  # Dispatch-only: `gh workflow run classroom-art-evidence.yml --ref <branch> -f
+  # relay_clock_evidence=true`. The same clock capture as the render job, on Forward+
+  # (the project's renderer), asked for a full-size JPEG beside each PNG. The capture
+  # refuses to pass unless every frame reads nine o'clock off its own pixels, and prints an
+  # EVIDENCE record for each; `tools/dialogue_evidence_relay.py pack --set clock` checks
+  # every frame has a record and a JPEG of the recorded size and splits them into parts,
+  # which `relay-publish` prints as `relay <file> <i>/<n>` notices (45 per job).
+  # `python3 tools/dialogue_evidence_relay.py fetch --run <id> --apply` rebuilds the files,
+  # checks each against the SHA-256 the capture recorded, and records them as current in
+  # docs/screenshots/MANIFEST.json, where tools/screenshot_evidence.py keeps them tied to the
+  # time the scene's hands show. Nothing is committed by Actions (#88).
+  relay-capture:
+    name: Relay - photograph the classroom clock
+    if: github.event_name == 'workflow_dispatch' && inputs.relay_clock_evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      shards: ${{ steps.pack.outputs.shards }}
+      parts: ${{ steps.pack.outputs.parts }}
+    env:
+      RELAY_COMMIT: ${{ github.sha }}
+      CLOCK_DIR: build/clock-relay
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ env.RELAY_COMMIT }}
+
+      - name: Install Xvfb and Mesa (lavapipe Vulkan)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            xvfb xauth mesa-vulkan-drivers libgl1-mesa-dri libvulkan1
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import project resources
+        run: godot --headless --path . --import
+
+      - name: Photograph the clock and read it
+        id: capture
+        shell: bash
+        env:
+          WIS_EVIDENCE_JPEG_QUALITY: "0.9"
+        run: |
+          set +e -uo pipefail
+          xvfb-run -a --server-args='-screen 0 1920x1080x24' \
+            godot --path . --audio-driver Dummy --resolution 1600x900 \
+              --rendering-method forward_plus --rendering-driver vulkan \
+              --script res://tests/capture_classroom_clock.gd \
+              -- "--output=${CLOCK_DIR}" --expect-renderer=forward_plus --expect-driver=vulkan \
+              > "${RUNNER_TEMP}/clock.log" 2>&1
+          code=$?
+          grep -E "^CLOCK_CAPTURE |^EVIDENCE |TEST FAILURE|SCRIPT ERROR|^PASS:|^FAIL:" "${RUNNER_TEMP}/clock.log" | head -n 60
+          grep -E "^CLOCK_CAPTURE .*reads " "${RUNNER_TEMP}/clock.log" | cut -c1-900 \
+            | while IFS= read -r line; do echo "::notice title=clock reading::${line#CLOCK_CAPTURE }"; done
+          grep -E "^CLOCK_CAPTURE (occluded|aisle|start=)" "${RUNNER_TEMP}/clock.log" | cut -c1-900 \
+            | while IFS= read -r line; do echo "::notice title=clock view::${line#CLOCK_CAPTURE }"; done
+          grep -E "TEST FAILURE|SCRIPT ERROR" "${RUNNER_TEMP}/clock.log" | head -n 8 | cut -c1-600 \
+            | while IFS= read -r line; do echo "::error title=clock capture::${line}"; done
+          # The verdict is given by the last step, after the frames are packed: a clock that
+          # does not read nine is still published, so it can be looked at - the job stays
+          # red, and `fetch --apply` refuses frames whose pixels did not read the scene's time.
+          if [ "${code}" -eq 0 ] && grep -q "^PASS:" "${RUNNER_TEMP}/clock.log"; then
+            echo "clock_ok=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "clock_ok=false" >> "${GITHUB_OUTPUT}"
+            echo "::error title=clock capture::exit ${code}; the clock did not read nine o'clock from every view"
+          fi
+
+      - name: Pack the frames into annotation parts
+        id: pack
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 tools/dialogue_evidence_relay.py pack --set clock \
+            --log "${RUNNER_TEMP}/clock.log" --frames "${CLOCK_DIR}" --out "${RUNNER_TEMP}/relay"
+          ls -l "${RUNNER_TEMP}/relay"
+
+      - name: Upload the frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: clock-evidence-relay-${{ github.run_attempt }}
+          path: |
+            ${{ env.CLOCK_DIR }}/
+            ${{ runner.temp }}/relay/
+            ${{ runner.temp }}/clock.log
+          if-no-files-found: warn
+
+      - name: Verdict - every view reads nine o'clock
+        shell: bash
+        env:
+          CLOCK_OK: ${{ steps.capture.outputs.clock_ok }}
+        run: |
+          if [ "${CLOCK_OK}" != "true" ]; then
+            echo "::error title=clock capture::the frames were published for inspection, but they are not evidence of nine o'clock"
+            exit 1
+          fi
+          echo "every view reads nine o'clock"
+
+  relay-publish:
+    name: Relay - publish parts (shard ${{ matrix.shard }})
+    needs: relay-capture
+    # Also after a failed reading, as long as the frames were packed: see the verdict step.
+    if: always() && needs.relay-capture.outputs.shards != '' && needs.relay-capture.outputs.shards != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.relay-capture.outputs.shards) }}
+    env:
+      PER_JOB: 45
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: clock-evidence-relay-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/evidence
+
+      - name: Select this shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          queue=$(find "${RUNNER_TEMP}/evidence" -name queue.txt | head -n 1)
+          first=$(( SHARD * PER_JOB + 1 ))
+          last=$(( first + PER_JOB - 1 ))
+          sed -n "${first},${last}p" "${queue}" > "${RUNNER_TEMP}/shard.txt"
+          echo "shard ${SHARD}: lines ${first}-${last} of $(wc -l < "${queue}"), $(wc -l < "${RUNNER_TEMP}/shard.txt") here"
+
+      # Ten notices per step, five steps: 45 parts and room for nothing else to be dropped.
+      - name: Publish 1/5
+        shell: bash
+        run: sed -n '1,9p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 2/5
+        shell: bash
+        run: sed -n '10,18p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 3/5
+        shell: bash
+        run: sed -n '19,27p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 4/5
+        shell: bash
+        run: sed -n '28,36p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 5/5
+        shell: bash
+        run: sed -n '37,45p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done

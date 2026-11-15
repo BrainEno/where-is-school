@@ -336,6 +336,9 @@ jobs:
           run_check imported_placement 300 godot --headless --path . --script res://tests/imported_placement_test.gd || status=1
           # Classroom visual acceptance: layout, collisions, material ownership, navigation, and real-camera visibility.
           run_check classroom_visual_slice 240 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || status=1
+          # #173: the reader that says what time the classroom clock shows in a frame, on
+          # frames it draws itself (every way of failing), and on the clock's own nodes.
+          run_check clock_reading 180 godot --headless --path . --script res://tests/clock_reading_test.gd || status=1
           # Laboratory visual slice (#163): five working zones around a running drum, every cable
           # from a real machine to the room behind the partition, and all of it reachable from the
           # entrance without a prop in the way. The room is not registered in the story catalogue

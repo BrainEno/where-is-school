@@ -23,6 +23,12 @@ known.
 - the relay: parts survive being shuffled, a missing part or a changed byte is refused,
   `pack` refuses a frame without its record or of the wrong size, `frames.json` travels
   first, and `apply_relay` records current frames and retires the PNGs they replace;
+- a clock frame (#173): the scene reader turns hand nodes into the time a person reads -
+  from rotations, from transforms, with a hand hung either side of its pivot - and refuses
+  a clock it cannot read from the text; a current clock frame passes while the hands still
+  show its time, goes stale when they are turned, and is no evidence at all when its own
+  pixels read another time; the relay carries the clock set and records it without a band
+  fingerprint;
 - the repository itself passes.
 
 Run it with ``python3 tests/screenshot_evidence_test.py`` (CI does). Standard library only.
@@ -31,9 +37,12 @@ Run it with ``python3 tests/screenshot_evidence_test.py`` (CI does). Standard li
 from __future__ import annotations
 
 import base64
+import contextlib
 import copy
 import hashlib
+import io
 import json
+import math
 import random
 import re
 import struct
@@ -482,6 +491,309 @@ def apply_relay_records_and_retires() -> None:
     expect(has(changes, "retired 01_opening_line.png"), f"the replaced PNG was not retired: {changes}")
 
 
+# --- the classroom clock (#173) -------------------------------------------------------
+
+CLOCK_SCENE = "scenes/locations/classroom/classroom.tscn"
+
+
+def clock_scene(
+    hour_z: float = 90.0,
+    minute_z: float = 0.0,
+    *,
+    hour_y: float = 0.0525,
+    minute_y: float = 0.0775,
+    hour_pivot_extra: str = "",
+    hand_extra: str = "",
+    key: str = "rotation_degrees",
+) -> str:
+    """A scene with a clock the way classroom.tscn builds it: two pivots turned about Z,
+    each with a box hand hung along its local Y."""
+    def turn(z: float) -> str:
+        if key == "transform":
+            c, s_ = math.cos(math.radians(z)), math.sin(math.radians(z))
+            return f"transform = Transform3D({c:.6f}, {-s_:.6f}, 0, {s_:.6f}, {c:.6f}, 0, 0, 0, 1, 1.45, 2.42, -4.714)"
+        value = math.radians(z) if key == "rotation" else z
+        return f"{key} = Vector3(0, 0, {value})"
+
+    return "\n".join([
+        '[gd_scene load_steps=2 format=3]',
+        '',
+        '[node name="Classroom" type="Node3D"]',
+        '',
+        '[node name="ClockFace" type="MeshInstance3D" parent="."]',
+        'position = Vector3(1.45, 2.42, -4.75)',
+        'rotation_degrees = Vector3(90, 0, 0)',
+        '',
+        '[node name="ClockHourPivot" type="Node3D" parent="."]',
+        'position = Vector3(1.45, 2.42, -4.714)',
+        turn(hour_z),
+        hour_pivot_extra,
+        '',
+        '[node name="ClockHandHour" type="MeshInstance3D" parent="ClockHourPivot"]',
+        f'position = Vector3(0, {hour_y}, 0)',
+        hand_extra,
+        '',
+        '[node name="ClockMinutePivot" type="Node3D" parent="."]',
+        'position = Vector3(1.45, 2.42, -4.705)',
+        turn(minute_z),
+        '',
+        '[node name="ClockHandMinute" type="MeshInstance3D" parent="ClockMinutePivot"]',
+        f'position = Vector3(0, {minute_y}, 0)',
+        '',
+    ])
+
+
+def write_clock(root: Path, text: str) -> None:
+    path = root / CLOCK_SCENE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def clock_entry(fx: Fixture, name: str, reads: str = "9:00", measured: str | None = "9:00") -> dict:
+    shows: dict = {"kind": "clock", "scene": CLOCK_SCENE, "view": "closeup", "reads": reads}
+    if measured is not None:
+        shows["measured"] = {"reads": measured, "face_px": 412.0, "hour_degrees": 270.1, "minute_degrees": 0.2,
+                             "verdict": "PASS"}
+    return {
+        "file": name,
+        "status": "current",
+        "captured": {"commit": "b" * 40, "run_id": 43, "workflow": "Classroom visual evidence"},
+        "size": [12, 8],
+        "sha256": hashlib.sha256((fx.shots / name).read_bytes()).hexdigest(),
+        "shows": shows,
+    }
+
+
+def with_clock(fx: Fixture, **frame) -> dict:
+    write_clock(fx.root, clock_scene())
+    (fx.shots / "clock.png").write_bytes(png_bytes(12, 8, 90))
+    entry = clock_entry(fx, "clock.png", **frame)
+    fx.manifest["frames"].append(entry)
+    return entry
+
+
+def clock_scene_reader() -> None:
+    with tempfile.TemporaryDirectory() as folder:
+        root = Path(folder)
+        cases = [
+            ("nine, as the classroom sets it", clock_scene(), "9:00"),
+            ("three", clock_scene(-90.0, 0.0), "3:00"),
+            ("half past nine", clock_scene(75.0, 180.0), "9:30"),
+            ("a quarter past twelve", clock_scene(-7.5, -90.0), "12:15"),
+            ("nine from transforms", clock_scene(key="transform"), "9:00"),
+            ("nine from radians", clock_scene(key="rotation"), "9:00"),
+            # A hand hung below its pivot points the other way: nine becomes three.
+            ("an hour hand hung the other side", clock_scene(hour_y=-0.0525), "3:00"),
+        ]
+        for label, text, wanted in cases:
+            write_clock(root, text)
+            reads, problem = evidence.scene_clock_reading(root, CLOCK_SCENE)
+            expect(reads == wanted, f"{label}: the scene reads {reads!r} ({problem}), expected {wanted}")
+        refusals = [
+            (
+                "a pivot tilted out of the dial",
+                clock_scene().replace("rotation_degrees = Vector3(0, 0, 90.0)", "rotation_degrees = Vector3(15, 0, 90)"),
+                "turns about more",
+            ),
+            ("a hand turned on its pivot", clock_scene(hand_extra="rotation_degrees = Vector3(0, 0, 10)"), "only the pivot may turn"),
+            ("a hand on its pivot", clock_scene(minute_y=0.0), "does not hang along"),
+            ("a clock without its minute hand", clock_scene().replace('[node name="ClockHandMinute"', '[node name="Gone"'), "has no node ClockMinutePivot/ClockHandMinute"),
+        ]
+        for label, text, needle in refusals:
+            write_clock(root, text)
+            reads, problem = evidence.scene_clock_reading(root, CLOCK_SCENE)
+            expect(reads is None and needle in problem, f"{label} was read as {reads!r} ({problem})")
+        reads, problem = evidence.scene_clock_reading(root, "scenes/locations/corridor/corridor.tscn")
+        expect(reads is None and "not a scene with a clock" in problem, f"an unknown scene was read: {problem}")
+        (root / CLOCK_SCENE).unlink()
+        reads, problem = evidence.scene_clock_reading(root, CLOCK_SCENE)
+        expect(reads is None and "does not exist" in problem, f"a missing scene was read: {problem}")
+    # The same rule as `reading()` in tests/clock_reading.gd.
+    for hour, minute, wanted in ((270.0, 0.0, "9:00"), (0.0, 359.0, "12:00"), (269.6, 355.0, "8:59"), (285.0, 180.0, "9:30")):
+        shown = evidence.clock_reading(hour, minute)
+        expect(shown == wanted, f"hands at {hour}/{minute} read {shown}, expected {wanted}")
+    source = (REPO / "tests" / "clock_reading.gd").read_text(encoding="utf-8")
+    expect(
+        "int(round(fposmod(minute_degrees, 360.0) / 6.0)) % 60" in source
+        and "int(round(fposmod(hour_degrees - minute * 0.5, 360.0) / 30.0)) % 12" in source,
+        "tests/clock_reading.gd no longer reads the hands the way screenshot_evidence.clock_reading does",
+    )
+
+
+def the_classroom_clock_reads_nine() -> None:
+    reads, problem = evidence.scene_clock_reading(REPO, CLOCK_SCENE)
+    expect(reads == "9:00", f"the classroom's clock nodes read {reads!r} ({problem}); Q's class is at nine")
+
+
+@with_fixture
+def a_current_clock_frame_passes(fx: Fixture) -> None:
+    with_clock(fx)
+    result = fx.check()
+    expect(result.ok(strict=True), f"a clock frame that reads its scene failed: {result.errors + result.warnings}")
+    expect(any(row[0] == "clock.png" and "clock 9:00 (closeup)" in row[3] for row in result.rows),
+           f"the report does not say what the clock shows: {result.rows}")
+
+
+@with_fixture
+def turned_hands_make_the_clock_frame_stale(fx: Fixture) -> None:
+    with_clock(fx)
+    write_clock(fx.root, clock_scene(60.0, 0.0))  # the hour hand turned back to ten
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "stale", "9:00", "10:00", "relay_clock_evidence=true"),
+           f"turning the hands did not make the frame stale: {result.errors}")
+    expect(any(row[0] == "clock.png" and row[3].startswith("stale") for row in result.rows), "the report does not say stale")
+
+
+@with_fixture
+def a_misread_clock_frame_is_not_evidence(fx: Fixture) -> None:
+    with_clock(fx, measured="9:15")
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "pixels read 9:15", "not evidence"), f"a misread frame passed: {result.errors}")
+
+
+@with_fixture
+def a_failed_clock_frame_is_not_evidence(fx: Fixture) -> None:
+    # It read nine, but the capture failed it for another reason (a hidden hand, say).
+    entry = with_clock(fx)
+    entry["shows"]["measured"]["verdict"] = "FAIL"
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "did not pass", "not evidence"), f"a failed frame passed: {result.errors}")
+    del entry["shows"]["measured"]["verdict"]
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "did not pass"), f"a frame without a verdict passed: {result.errors}")
+
+
+@with_fixture
+def a_clock_frame_must_carry_its_reading(fx: Fixture) -> None:
+    with_clock(fx, measured=None)
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "shows.measured.reads"), f"a frame nobody read passed: {result.errors}")
+
+
+@with_fixture
+def a_clock_frame_must_name_a_time_scene_and_view(fx: Fixture) -> None:
+    entry = with_clock(fx, reads="nine")
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "like 9:00"), f"a time that is not a time passed: {result.errors}")
+    entry["shows"]["reads"] = "9:00"
+    entry["shows"]["scene"] = "scenes/locations/corridor/corridor.tscn"
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "not a scene with a clock"), f"an unknown scene passed: {result.errors}")
+    entry["shows"]["scene"] = CLOCK_SCENE
+    entry["shows"]["view"] = ""
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "shows.view"), f"a frame without its view passed: {result.errors}")
+
+
+@with_fixture
+def a_changed_clock_frame_is_caught(fx: Fixture) -> None:
+    with_clock(fx)
+    (fx.shots / "clock.png").write_bytes(png_bytes(12, 8, 91))
+    result = fx.check()
+    expect(has(result.errors, "clock.png", "SHA-256 differs"), f"a retouched clock frame passed: {result.errors}")
+
+
+@with_fixture
+def a_historical_clock_frame_notes_the_new_time(fx: Fixture) -> None:
+    entry = with_clock(fx)
+    entry.update({"status": "historical", "reason": "before the hands were set to ten"})
+    write_clock(fx.root, clock_scene(60.0, 0.0))
+    result = fx.check()
+    expect(result.ok(), f"a historical clock frame failed: {result.errors}")
+    expect(has(result.notes, "clock.png", "since been set to 10:00"), f"the new time is not noted: {result.notes}")
+
+
+@with_fixture
+def a_relayed_clock_frame_becomes_current(fx: Fixture) -> None:
+    write_clock(fx.root, clock_scene())
+    (fx.shots / "clock_closeup.jpg").write_bytes(jpeg_bytes(1600, 900))
+    digest = hashlib.sha256((fx.shots / "clock_closeup.jpg").read_bytes()).hexdigest()
+    record = {
+        "frame": "clock_closeup", "size": [1600, 900], "godot": "4.7.2", "renderer": "forward_plus",
+        "shows": {"kind": "clock", "scene": CLOCK_SCENE, "view": "closeup", "reads": "9:00",
+                  "measured": {"reads": "9:00", "face_px": 412.0, "verdict": "PASS"}},
+    }
+    changes = evidence.apply_relay(
+        fx.manifest, [record], run_id=77, commit="e" * 40, workflow="Classroom visual evidence",
+        files={"clock_closeup.jpg": digest},
+    )
+    entry = fx.frame("clock_closeup.jpg")
+    expect(changes == ["added clock_closeup.jpg"], f"unexpected changes: {changes}")
+    expect("ui_fingerprint" not in entry, "a clock frame was given a reading-band fingerprint")
+    expect(entry["shows"]["measured"]["reads"] == "9:00", "the relayed clock frame lost its reading")
+    result = fx.check()
+    expect(result.ok(strict=True), f"a relayed clock frame does not pass: {result.errors + result.warnings}")
+    # A dialogue record still gets its fingerprint.
+    dialogue = {"frame": "now-en", "size": [8, 4], "godot": "4.7.2", "ui_fingerprint": "f00",
+                "shows": {"kind": "dialogue"}}
+    evidence.apply_relay(fx.manifest, [dialogue], run_id=1, commit="f" * 40, workflow="w",
+                         files={"now-en.png": "0" * 64})
+    expect(fx.frame("now-en.png").get("ui_fingerprint") == "f00", "a dialogue frame lost its fingerprint")
+
+
+def quietly(function, argv: list[str]) -> int:
+    """Runs a command-line entry point without letting its `::error` lines reach the CI log,
+    where they would become annotations on a run that passed."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        return function(argv)
+
+
+def the_relay_carries_the_clock_set() -> None:
+    expect(relay.FRAME_SETS["clock"] == relay.CLOCK_FRAMES, "the clock set is not the clock frames")
+    expect(relay.FRAME_SETS["dialogue"] == relay.WANTED_FRAMES, "the default set changed")
+    capture = (REPO / "tests" / "capture_classroom_clock.gd").read_text(encoding="utf-8")
+    missing = [stem for stem in relay.CLOCK_FRAMES if f'"{stem}"' not in capture]
+    expect(not missing, f"the clock capture does not write {missing}")
+    sys.path.insert(0, str(REPO / "tools"))
+    import classroom_render_evidence as render  # noqa: E402 - only this test needs it
+    expect(
+        tuple(name.rsplit(".", 1)[0] for name in render.CLOCK_SHOTS) == relay.CLOCK_FRAMES,
+        "the render verifier and the relay disagree about which clock frames exist",
+    )
+    with tempfile.TemporaryDirectory() as folder:
+        root = Path(folder)
+        frames = root / "frames"
+        frames.mkdir()
+        lines = []
+        for stem in relay.CLOCK_FRAMES:
+            (frames / f"{stem}.jpg").write_bytes(jpeg_bytes(1600, 900, filler=stem.encode() * 30))
+            record = {"frame": stem, "size": [1600, 900], "godot": "4.7.2", "renderer": "forward_plus",
+                      "shows": {"kind": "clock", "scene": CLOCK_SCENE, "view": stem.rsplit("_", 1)[-1],
+                                "reads": "9:00", "measured": {"reads": "9:00", "face_px": 40.5,
+                                                              "verdict": "PASS"}}}
+            lines.append("EVIDENCE " + json.dumps(record))
+        (root / "clock.log").write_text("CLOCK_CAPTURE noise\n" + "\n".join(lines) + "\n", encoding="utf-8")
+        code = quietly(relay.main, ["pack", "--set", "clock", "--log", str(root / "clock.log"),
+                                    "--frames", str(frames), "--out", str(root / "out")])
+        expect(code == 0, "pack --set clock refused a complete clock capture")
+        queue = (root / "out" / "queue.txt").read_text(encoding="ascii").splitlines()
+        files, problems = relay.reassemble(as_annotations(queue))
+        index, more = relay.verify(files)
+        expect(not problems and not more and index is not None, f"the clock relay did not verify: {problems + more}")
+        names = sorted(frame["file"] for frame in index["frames"])
+        expect(names == sorted(f"{stem}.jpg" for stem in relay.CLOCK_FRAMES), f"the clock relay carried {names}")
+        expect(relay.not_evidence(index) == [], f"frames that read nine were refused: {relay.not_evidence(index)}")
+        misread = copy.deepcopy(index)
+        misread["frames"][1]["record"]["shows"]["measured"]["reads"] = "8:45"
+        expect(has(relay.not_evidence(misread), misread["frames"][1]["file"], "'8:45'", "not evidence"),
+               "a clock frame whose pixels read another time would have been applied")
+        failed = copy.deepcopy(index)
+        failed["frames"][2]["record"]["shows"]["measured"]["verdict"] = "FAIL"
+        expect(has(relay.not_evidence(failed), failed["frames"][2]["file"], "the capture failed it"),
+               "a clock frame the capture failed would have been applied")
+        described = relay.describe(index["frames"][0]["record"])
+        expect("the scene says 9:00" in described and "the pixels read 9:00" in described,
+               f"fetch would describe a clock frame as {described!r}")
+        # The dialogue set is still the default, and a clock log does not satisfy it.
+        code = quietly(relay.main, ["pack", "--log", str(root / "clock.log"), "--frames", str(frames),
+                                    "--out", str(root / "o2")])
+        expect(code == 1 and not (root / "o2").exists(), "a clock capture passed for the dialogue set")
+        (frames / "clock_gameplay_aisle.jpg").unlink()
+        code = quietly(relay.main, ["pack", "--set", "clock", "--log", str(root / "clock.log"),
+                                    "--frames", str(frames), "--out", str(root / "o3")])
+        expect(code == 1 and not (root / "o3").exists(), "a clock relay with a frame missing packed")
+
+
 def the_repository_passes() -> None:
     result = evidence.check(REPO)
     expect(result.ok(), "the repository's own screenshots fail the check:\n  " + "\n  ".join(result.errors))
@@ -508,6 +820,18 @@ TESTS = [
     parts_survive_shuffling_and_refuse_damage,
     pack_and_verify_round_trip,
     apply_relay_records_and_retires,
+    clock_scene_reader,
+    the_classroom_clock_reads_nine,
+    a_current_clock_frame_passes,
+    turned_hands_make_the_clock_frame_stale,
+    a_misread_clock_frame_is_not_evidence,
+    a_failed_clock_frame_is_not_evidence,
+    a_clock_frame_must_carry_its_reading,
+    a_clock_frame_must_name_a_time_scene_and_view,
+    a_changed_clock_frame_is_caught,
+    a_historical_clock_frame_notes_the_new_time,
+    a_relayed_clock_frame_becomes_current,
+    the_relay_carries_the_clock_set,
     the_repository_passes,
 ]
 

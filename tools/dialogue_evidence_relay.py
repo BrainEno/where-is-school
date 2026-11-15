@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Carry the dialogue evidence frames from a CI run into `docs/screenshots/` (#186).
+"""Carry evidence frames from a CI run into `docs/screenshots/` (#186, #173).
 
 Actions does not commit frames back to Git (#88), and from some places the artifact store
 cannot be reached at all - a download there ends in `EOF`. What can always be read is a
@@ -22,12 +22,21 @@ split the frames into annotation-sized parts, and this tool puts them back toget
     `docs/screenshots/`, removes the PNGs they replace, and records them as current in
     `MANIFEST.json` through `tools/screenshot_evidence.apply_relay()`.
 
+Two sets of frames travel this way (``pack --set``): ``dialogue`` (the default; the opening
+line and the reading band, from `Playthrough capture` dispatched with
+``relay_dialogue_evidence=true``) and ``clock`` (the classroom clock, #173, from
+`Classroom visual evidence` dispatched with ``relay_clock_evidence=true``). ``fetch`` needs
+no set: ``frames.json`` says which frames the run carried.
+
 Usage:
 
     python3 tools/dialogue_evidence_relay.py pack --log opening.log --log ui.log \\
         --frames docs/screenshots --out "$RUNNER_TEMP/relay"
+    python3 tools/dialogue_evidence_relay.py pack --set clock --log clock.log \\
+        --frames build/clock --out "$RUNNER_TEMP/relay"
     python3 tools/dialogue_evidence_relay.py fetch --run 123456789            # verify only
     python3 tools/dialogue_evidence_relay.py fetch --run 123456789 --apply    # and write
+    python3 tools/dialogue_evidence_relay.py fetch --run 123456789 --out /tmp/frames  # just look
 """
 
 from __future__ import annotations
@@ -60,6 +69,15 @@ WANTED_FRAMES = (
     "ui-dialogue-1920x1080-en",
     "ui-dialogue-1920x1080-zh",
 )
+# The classroom clock (#173), photographed by tests/capture_classroom_clock.gd and relayed
+# by `Classroom visual evidence` dispatched with relay_clock_evidence=true.
+CLOCK_FRAMES = (
+    "clock_closeup",
+    "clock_gameplay_rows",
+    "clock_gameplay_aisle",
+)
+# `pack --set <name>`: which frames a relay run has to carry.
+FRAME_SETS = {"dialogue": WANTED_FRAMES, "clock": CLOCK_FRAMES}
 PART_SIZE = 4000
 PER_JOB = 45
 INDEX_FILE = "frames.json"
@@ -256,6 +274,18 @@ def apply(index: dict, files: dict[str, bytes], *, run: dict, root: Path = ROOT)
     return changes
 
 
+def describe(record: dict) -> str:
+    """One line on what a relayed frame shows, for whoever runs `fetch`."""
+    shows = record.get("shows", {}) if isinstance(record.get("shows"), dict) else {}
+    if shows.get("kind") == "clock":
+        measured = shows.get("measured", {}) if isinstance(shows.get("measured"), dict) else {}
+        return (
+            f"clock {shows.get('view')} - the scene says {shows.get('reads')}, "
+            f"the pixels read {measured.get('reads')} (face {measured.get('face_px')} px)"
+        )
+    return f"{shows.get('locale')} \"{shows.get('text')}\""
+
+
 # --- command line --------------------------------------------------------------------
 
 
@@ -267,9 +297,17 @@ def main(argv: list[str] | None = None) -> int:
     pack_parser.add_argument("--frames", type=Path, required=True)
     pack_parser.add_argument("--out", type=Path, required=True)
     pack_parser.add_argument("--per-job", type=int, default=PER_JOB)
+    pack_parser.add_argument(
+        "--set", dest="frame_set", choices=sorted(FRAME_SETS), default="dialogue",
+        help="which frames this run must carry (default: dialogue)",
+    )
     fetch_parser = sub.add_parser("fetch", help="rebuild the frames from a run's annotations")
     fetch_parser.add_argument("--run", type=int, required=True)
     fetch_parser.add_argument("--apply", action="store_true", help="write them into docs/screenshots")
+    fetch_parser.add_argument(
+        "--out", type=Path, default=None,
+        help="write the rebuilt files into this folder to look at, without touching docs/screenshots",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "pack":
@@ -277,6 +315,7 @@ def main(argv: list[str] | None = None) -> int:
             args.log,
             args.frames,
             args.out,
+            wanted=FRAME_SETS[args.frame_set],
             # The workflow checks out the pull request's head (not the merge ref) and says
             # so here, so the frames name a commit that exists on the branch.
             commit=os.environ.get("RELAY_COMMIT") or os.environ.get("GITHUB_SHA", ""),
@@ -284,7 +323,7 @@ def main(argv: list[str] | None = None) -> int:
             per_job=args.per_job,
         )
         for problem in problems:
-            print(f"::error title=dialogue evidence relay::{problem}")
+            print(f"::error title={args.frame_set} evidence relay::{problem}")
         if problems:
             return 1
         queue = (args.out / "queue.txt").read_text(encoding="ascii").splitlines()
@@ -305,15 +344,47 @@ def main(argv: list[str] | None = None) -> int:
     if index is None or problems:
         return 1
     for frame in index["frames"]:
-        shows = frame["record"].get("shows", {})
-        print(f"{frame['file']}: {frame['bytes']} bytes, {shows.get('locale')} \"{shows.get('text')}\"")
+        print(f"{frame['file']}: {frame['bytes']} bytes, {describe(frame['record'])}")
     if run.get("head_sha") and index.get("commit") and run["head_sha"] != index["commit"]:
         print(f"error: the frames say commit {index['commit']}, the run is {run['head_sha']}", file=sys.stderr)
         return 1
+    if args.out is not None:
+        args.out.mkdir(parents=True, exist_ok=True)
+        for name, data in sorted(files.items()):
+            (args.out / name).write_bytes(data)
+        print(f"wrote {len(files)} file(s) to {args.out}")
     if args.apply:
+        refused = not_evidence(index)
+        for problem in refused:
+            print(f"error: {problem}", file=sys.stderr)
+        if refused:
+            return 1
         for change in apply(index, files, run=run):
             print(change)
     return 0
+
+
+def not_evidence(index: dict) -> list[str]:
+    """Frames a run carried that must not become current evidence: a clock frame whose own
+    pixels did not read the time its scene was set to (#173). The relay publishes those too,
+    so a failed reading can be looked at (`fetch --out`), but `--apply` refuses them."""
+    problems = []
+    for frame in index.get("frames", []):
+        shows = frame.get("record", {}).get("shows", {})
+        if not isinstance(shows, dict) or shows.get("kind") != "clock":
+            continue
+        measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else {}
+        if measured.get("verdict") != "PASS":
+            problems.append(
+                f"{frame.get('file')}: the capture failed it (verdict {measured.get('verdict')!r}); "
+                "not evidence (look at it with --out instead)"
+            )
+        elif measured.get("reads") != shows.get("reads"):
+            problems.append(
+                f"{frame.get('file')}: its pixels read {measured.get('reads')!r}, the scene was set to "
+                f"{shows.get('reads')!r}; not evidence (look at it with --out instead)"
+            )
+    return problems
 
 
 if __name__ == "__main__":

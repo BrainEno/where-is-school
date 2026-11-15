@@ -14,7 +14,7 @@ Every image directly in this folder is listed in [`MANIFEST.json`](MANIFEST.json
 
 | status | means | must carry |
 |---|---|---|
-| `current` | evidence of the game as it is | the commit and CI run that took it (`captured`), its SHA-256, its size, the reading band's `ui_fingerprint`, and — when it shows dialogue — the line it shows (`shows`: locale, source file, conversation, node, text) |
+| `current` | evidence of the game as it is | the commit and CI run that took it (`captured`), its SHA-256, its size, and what it shows: for dialogue, the reading band's `ui_fingerprint` and the line (`shows`: locale, source file, conversation, node, text); for the classroom clock, the scene, the view, the time the hands were set to and the time read off the frame's own pixels (`shows`: `kind: "clock"`, scene, view, reads, measured) |
 | `historical` | kept for comparison only | a `reason`; optionally `superseded_by`, naming the current frame that replaced it |
 
 Subfolders are their own reviews (`collections`), each with the document that owns it.
@@ -23,6 +23,9 @@ Subfolders are their own reviews (`collections`), each with the document that ow
 
 - a current frame's line is no longer the authored one — **rewrite the opening line and
   CI fails until the frames are captured again or relabelled**;
+- a current clock frame shows a time the scene's hands no longer show (the hands are read
+  from `scenes/locations/classroom/classroom.tscn`), or its pixels were read as a different
+  time from the one the scene had when it was taken;
 - a current frame's bytes, size or provenance do not match its entry (frames are captured,
   never retouched by hand);
 - an image is in the folder but not in the manifest, or listed but missing;
@@ -56,6 +59,56 @@ To take them again (for example after the opening line or the dialogue panel cha
 
 The capture scripts refuse to save these frames unless the panel draws the authored
 sentence (`tests/evidence_contract.gd`), so a relayed frame cannot be of another line.
+
+### The classroom clock (#173)
+
+Q tells the player that biology starts at nine, so the clock on the classroom's front wall
+reads nine o'clock. `tests/capture_classroom_clock.gd` photographs it three ways, each a
+real 1600 × 900 render:
+
+| frame | view |
+|---|---|
+| `clock_closeup` | a camera square to the dial |
+| `clock_gameplay_rows` | the game camera, standing in the aisle beside the front row of desks |
+| `clock_gameplay_aisle` | the game camera, from the spot in the aisle under the board where the face is largest and both hands can be seen whole |
+
+For each view it renders the same frame again with the hands hidden, with only the hour
+hand and with only the minute hand. A hand's pixels are the ones that change when it
+appears, so nothing painted on the dial can be read as a hand. `tests/clock_reading.gd`
+maps those pixels back onto the dial (a dial seen at an angle is read as the dial, not as
+the ellipse on the screen) and reports where each hand points, how long and how dark it
+looks, and how much of its length is in sight (measured reach over the reach its geometry
+projects to). The capture fails unless every view reads `9:00`, both hands stand out from
+the dial, at least 90% of each hand is in sight, and the minute hand looks the longer one.
+Aisle spots from which part of a hand is hidden are passed over and listed as `occluded`
+in `CLOCK.txt`. Each record carries the capture's `verdict`; only a `PASS` frame can be
+recorded as current (`fetch --apply` and `screenshot_evidence.py` both refuse the rest, and
+`fetch --out <folder>` writes a failed run's frames somewhere to look at them). Close up a hand may miss nine by 3°; through
+the game camera, where the face is a few dozen pixels across, by 15° (a quarter of an
+hour on the hour hand, two and a half minutes on the minute hand).
+
+The clock capture runs in every `Classroom visual evidence` render job, on Forward+ and
+on Compatibility, and `tools/classroom_render_evidence.py` re-reads its readings.
+`tests/clock_reading_test.gd` (Godot CI, headless) runs the reader on dials it draws
+itself — front on, foreshortened, 40 px across, missing hands, faint hands, smudges, an
+edge-on dial — and checks that the classroom's hand nodes read nine.
+
+To commit the frames:
+
+1. `gh workflow run classroom-art-evidence.yml --ref <branch> -f relay_clock_evidence=true`
+2. `python3 tools/dialogue_evidence_relay.py fetch --run <run id> --apply`
+3. `python3 tools/screenshot_evidence.py --check`, then commit the frames and the manifest.
+
+**Observed, not changed.** In run 43668432193 (both renderers alike) the ceiling light
+fitting above the board hides part of the minute hand from the three aisle spots closest
+to the board (room x 0.45; z −2.9: 77% of the hand in sight, −3.4: 43%, −3.9: 0%) —
+the spots where the face is largest. The aisle frame is therefore taken from z −2.4.
+Moving the fitting or the clock means editing `classroom.tscn` (#151 coordination) and is
+left to the owner.
+
+This is Linux software rendering (Mesa lavapipe/llvmpipe). Whether nine o'clock reads well
+on a Windows screen, and whether the owner accepts the frames, is still the owner's call
+on #173.
 
 ## Historical frames
 
