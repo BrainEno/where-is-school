@@ -19,6 +19,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import io
+import json
 import re
 import shutil
 import struct
@@ -161,6 +162,53 @@ def build(root: Path, method: str, driver: str) -> None:
         "".join("CLASSROOM_CAPTURE %s\n" % note for note in notes)
         + "PASS: captured fourteen unmodified classroom viewport images and wall states.\n"
     )
+    build_clock(root, method, driver)
+
+
+def clock_record(frame: str, method: str, reads: str = "9:00", measured: str = "9:00") -> dict:
+    """An EVIDENCE record shaped like the ones tests/capture_classroom_clock.gd prints."""
+    return {
+        "frame": frame,
+        "size": [1600, 900],
+        "godot": "4.7.2",
+        "renderer": method,
+        "shows": {
+            "kind": "clock",
+            "scene": "scenes/locations/classroom/classroom.tscn",
+            "view": frame.rsplit("_", 1)[-1],
+            "reads": reads,
+            "measured": {"reads": measured, "face_px": 412.0 if "closeup" in frame else 41.5,
+                         "hour_degrees": 270.4, "minute_degrees": 359.6},
+        },
+    }
+
+
+def build_clock(root: Path, method: str, driver: str) -> None:
+    clock = root / ("clock-%s" % method)
+    clock.mkdir()
+    notes = [
+        "engine=%s renderer=%s display=X11" % (ENGINE_INFO, method),
+        "adapter=llvmpipe (LLVM 19.1.1, 256 bits)",
+        "driver=%s" % driver,
+        "viewport=(1600, 900)",
+        "scene reads 9:00 (hour 270.00, minute 0.00)",
+    ]
+    records = []
+    for index, name in enumerate(evidence.CLOCK_SHOTS):
+        shot = clock / name
+        # Each frame different, so a hash recorded for one cannot pass for another.
+        png(1600, 900, lambda x, y, shift=index: room((x + shift * 7) % 1600, y), shot)
+        stem = name.rsplit(".", 1)[0]
+        notes.append("shot=%s sha256=%s" % (name, sha256(shot)))
+        notes.append("reading=%s reads=9:00 hour=270.4 minute=359.6 face=41.5" % stem)
+        records.append(clock_record(stem, method))
+    notes.append("verdict=PASS")
+    (clock / "CLOCK.txt").write_text("\n".join(notes) + "\n")
+    (root / ("classroom_clock_%s.log" % method)).write_text(
+        "".join("CLOCK_CAPTURE %s\n" % note for note in notes)
+        + "".join("EVIDENCE %s\n" % json.dumps(record) for record in records)
+        + "PASS: the classroom clock reads 9:00 off the pixels from every view.\n"
+    )
 
 
 def run_verify(folder: Path, method: str, head: str = SHA, checked_out: str = SHA) -> tuple[int, str]:
@@ -188,6 +236,34 @@ P = "pixels-forward_plus"
 C = "capture-forward_plus"
 PLOG = "classroom_pixels_forward_plus.log"
 CLOG = "classroom_capture_forward_plus.log"
+K = "clock-forward_plus"
+KLOG = "classroom_clock_forward_plus.log"
+
+
+def misread_clock(d: Path) -> None:
+    # The capture read a quarter past nine off the aisle frame and still said PASS.
+    edit(d / K / "CLOCK.txt", "reading=clock_gameplay_aisle reads=9:00", "reading=clock_gameplay_aisle reads=9:15")
+
+
+def misread_record(d: Path) -> None:
+    edit(d / KLOG, '"measured": {"reads": "9:00", "face_px": 41.5', '"measured": {"reads": "3:45", "face_px": 41.5')
+
+
+def clock_scene_moved(d: Path) -> None:
+    # Every record says the scene's hands were set to a different hour than the one read.
+    text = (d / KLOG).read_text().replace('"reads": "9:00", "measured"', '"reads": "10:00", "measured"')
+    (d / KLOG).write_text(text)
+
+
+def clock_record_renderer(d: Path) -> None:
+    edit(d / KLOG, '"frame": "clock_closeup", "size": [1600, 900], "godot": "4.7.2", "renderer": "forward_plus"',
+         '"frame": "clock_closeup", "size": [1600, 900], "godot": "4.7.2", "renderer": "gl_compatibility"')
+
+
+def drop_clock_record(d: Path) -> None:
+    lines = [line for line in (d / KLOG).read_text().splitlines()
+             if not (line.startswith("EVIDENCE ") and "clock_gameplay_rows" in line)]
+    (d / KLOG).write_text("\n".join(lines) + "\n")
 
 
 def fallback_renderer(d: Path) -> None:
@@ -269,6 +345,38 @@ CASES = [
     ("a capture failure line", "capture: The renderer is",
      lambda d: edit(d / C / "CAPTURE.txt", "verdict=PASS",
                     "failure=The renderer is 'gl_compatibility', not the expected 'forward_plus'.\nverdict=PASS")),
+    # --- the clock capture (#173) ---
+    ("a missing clock log", "clock log is missing",
+     lambda d: (d / KLOG).unlink()),
+    ("a missing PASS verdict in the clock log", "clock log has no PASS verdict",
+     lambda d: edit(d / KLOG, "PASS: the classroom clock", "the classroom clock")),
+    ("a clock capture on another renderer", "clock capture ran on renderer 'gl_compatibility'",
+     lambda d: edit(d / K / "CLOCK.txt", "renderer=forward_plus", "renderer=gl_compatibility")),
+    ("verdict=FAIL in CLOCK.txt", "CLOCK.txt verdict is 'FAIL'",
+     lambda d: edit(d / K / "CLOCK.txt", "verdict=PASS", "verdict=FAIL")),
+    ("a clock failure line", "clock: clock_closeup: the hour hand",
+     lambda d: edit(d / K / "CLOCK.txt", "verdict=PASS",
+                    "failure=clock_closeup: the hour hand points 31.0 degrees from where nine o'clock puts it.\nverdict=PASS")),
+    ("a missing clock frame", "clock_gameplay_aisle.png is missing",
+     lambda d: (d / K / "clock_gameplay_aisle.png").unlink()),
+    ("a black clock frame", "clock clock_closeup.png is blank",
+     lambda d: png(1600, 900, flat(0), d / K / "clock_closeup.png")),
+    ("a clock frame that does not match its hash", "does not match the hash the clock capture recorded",
+     lambda d: png(1600, 900, lambda x, y: room(x, 899 - y), d / K / "clock_gameplay_rows.png")),
+    ("a clock frame read as another time", "clock_gameplay_aisle reads 9:15 off the pixels, not 9:00",
+     misread_clock),
+    ("a clock frame with no reading", "CLOCK.txt records no reading for clock_closeup",
+     lambda d: edit(d / K / "CLOCK.txt", "reading=clock_closeup reads=9:00", "reading_skipped=clock_closeup")),
+    ("an EVIDENCE record read as another time", "reads '3:45' off the pixels",
+     misread_record),
+    ("CLOCK.txt and the record disagree", "CLOCK.txt and the EVIDENCE record disagree",
+     misread_record),
+    ("a clock scene set to another hour", "the scene's clock reads '10:00'",
+     clock_scene_moved),
+    ("a clock record from another renderer", "was rendered on 'gl_compatibility'",
+     clock_record_renderer),
+    ("a clock frame without an EVIDENCE record", "no EVIDENCE record for clock_gameplay_rows",
+     drop_clock_record),
 ]
 
 
@@ -296,7 +404,10 @@ def main() -> int:
         check("complete Forward+ evidence passes", code == 0, out)
         manifest = (good / "MANIFEST.json").read_text()
         check("the manifest names the head SHA and every file",
-              SHA in manifest and "fader.png" in manifest and "08_twelve_student_desks.png" in manifest)
+              SHA in manifest and "fader.png" in manifest and "08_twelve_student_desks.png" in manifest
+              and "clock_gameplay_aisle.png" in manifest)
+        check("the verdict records what the clock read",
+              "clock_clock_gameplay_aisle=9:00" in (good / "VERDICT.txt").read_text())
         code, out = run_verify(good_compat, "gl_compatibility")
         check("complete Compatibility evidence passes", code == 0, out)
 
@@ -405,6 +516,25 @@ def main() -> int:
         print("FAIL: the capture no longer writes %s" % ", ".join(missing_shots))
     else:
         print("ok: the capture writes every frame the verifier requires")
+
+    # The clock capture writes the frames, the reading lines and the time the verifier expects.
+    clock_capture = (ROOT / "tests" / "capture_classroom_clock.gd").read_text()
+    count += 1
+    missing_clock = [name for name in evidence.CLOCK_SHOTS
+                     if '"%s"' % name.rsplit(".", 1)[0] not in clock_capture]
+    if missing_clock or 'const TARGET_TEXT := "%s"' % evidence.CLOCK_TARGET not in clock_capture:
+        failures.append("clock capture contract")
+        print("FAIL: the clock capture no longer writes %s or reads %s"
+              % (", ".join(missing_clock) or "every frame", evidence.CLOCK_TARGET))
+    else:
+        print("ok: the clock capture writes every frame the verifier requires and reads %s" % evidence.CLOCK_TARGET)
+    for marker in ('"reading=%s reads=%s', '"shot=%s sha256=%s"', "if highest - lowest < 0.15:"):
+        count += 1
+        if marker not in clock_capture:
+            failures.append("clock capture line %s" % marker)
+            print("FAIL: the clock capture no longer writes %r" % marker)
+        else:
+            print("ok: the clock capture writes %r" % marker)
 
     print()
     print("%d check(s), %d failure(s)" % (count, len(failures)))

@@ -30,6 +30,13 @@ It also checks every Markdown file in the repository for references to a frame u
 and warns when a document cites a historical frame as if it were current (a citation on a
 line that itself says "historical" / "历史" is citing history on purpose).
 
+A current frame of the classroom clock (``shows.kind: "clock"``, #173) names the scene and
+the time the clock showed (``shows.reads``, e.g. ``"9:00"``) and what was read off the
+frame's own pixels (``shows.measured.reads``, written by `tests/capture_classroom_clock.gd`).
+The time is read again from the scene's hand nodes (`scene_clock_reading()`): turn the hands
+and this check fails until the clock is photographed again, exactly like a changed line of
+dialogue. A frame whose pixels did not read what its scene said is not evidence at all.
+
 A current dialogue frame also records ``ui_fingerprint``: a hash of the files that draw
 the reading band (`UI_FINGERPRINT_FILES`, computed exactly like
 `tests/evidence_contract.gd`). When the panel changes after the frame was taken, that is a
@@ -51,6 +58,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import struct
@@ -70,6 +78,15 @@ UI_FINGERPRINT_FILES = (
     "scenes/ui/dialogue_panel.tscn",
     "scripts/ui/dialogue_panel.gd",
 )
+# The clocks a `shows.kind: "clock"` frame can name: scene -> (hour hand, minute hand), each
+# `<pivot>/<hand>` directly under the scene root. The face looks along the room's +Z.
+CLOCK_SCENES = {
+    "scenes/locations/classroom/classroom.tscn": (
+        "ClockHourPivot/ClockHandHour",
+        "ClockMinutePivot/ClockHandMinute",
+    ),
+}
+CLOCK_READS_RE = re.compile(r"^(1[0-2]|[1-9]):[0-5][0-9]$")
 SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
 # `docs/screenshots/<file>` anywhere in a Markdown file; stops at characters a path here
@@ -154,6 +171,106 @@ def authored_node(root: Path, source: str, conversation: str, node: str) -> tupl
         if isinstance(entry, dict) and str(entry.get("id", "")) == wanted:
             return str(entry.get("text", "")), ""
     return None, f"'{conversation}' in {source} has no node '{wanted}'"
+
+
+_NODE_RE = re.compile(r'^\[node name="([^"]+)"(?P<rest>[^\]]*)\]\s*$')
+_PARENT_RE = re.compile(r'parent="([^"]*)"')
+_NUMBERS_RE = re.compile(r"-?\d+(?:\.\d+)?(?:e-?\d+)?")
+
+
+def scene_nodes(text: str) -> dict[str, dict[str, str]]:
+    """Every node of a `.tscn` by its path from the root (`Parent/Child`), with its
+    properties as raw text. The root itself is `"."`."""
+    nodes: dict[str, dict[str, str]] = {}
+    current: dict[str, str] | None = None
+    for line in text.splitlines():
+        if line.startswith("["):
+            current = None
+            match = _NODE_RE.match(line)
+            if match is None:
+                continue
+            parent = _PARENT_RE.search(match.group("rest"))
+            if parent is None:
+                path = "."
+            elif parent.group(1) == ".":
+                path = match.group(1)
+            else:
+                path = f"{parent.group(1)}/{match.group(1)}"
+            current = nodes.setdefault(path, {})
+        elif current is not None and " = " in line:
+            key, _, value = line.partition(" = ")
+            current[key.strip()] = value.strip()
+    return nodes
+
+
+def _numbers(value: str, kind: str, count: int) -> list[float] | None:
+    if not value.startswith(kind + "("):
+        return None
+    found = [float(number) for number in _NUMBERS_RE.findall(value[len(kind) :])]
+    return found if len(found) == count else None
+
+
+def _hand_degrees(nodes: dict[str, dict[str, str]], path: str) -> tuple[float | None, str]:
+    """Degrees clockwise from twelve, seen from +Z, that the hand at `<pivot>/<hand>` points;
+    or None and why it cannot be read from the text alone."""
+    pivot_path, _, _hand = path.partition("/")
+    pivot = nodes.get(pivot_path)
+    hand = nodes.get(path)
+    if pivot is None or hand is None:
+        return None, f"has no node {path}"
+    # The pivot's local +Y, in the room: from `rotation_degrees` turned about Z only, or
+    # from the second column of a `transform` basis (Godot writes the basis row by row).
+    up_x, up_y = 0.0, 1.0
+    if "transform" in pivot:
+        values = _numbers(pivot["transform"], "Transform3D", 12)
+        if values is None:
+            return None, f"{pivot_path} has a transform this check cannot read"
+        up_x, up_y, up_z = values[1], values[4], values[7]
+        if abs(up_z) > 1e-3:
+            return None, f"{pivot_path} tilts its hand out of the dial's plane"
+    elif "rotation_degrees" in pivot or "rotation" in pivot:
+        key = "rotation_degrees" if "rotation_degrees" in pivot else "rotation"
+        values = _numbers(pivot[key], "Vector3", 3)
+        if values is None:
+            return None, f"{pivot_path} has a rotation this check cannot read"
+        if abs(values[0]) > 1e-6 or abs(values[1]) > 1e-6:
+            return None, f"{pivot_path} turns about more than the dial's axis"
+        angle = math.radians(values[2]) if key == "rotation_degrees" else values[2]
+        up_x, up_y = -math.sin(angle), math.cos(angle)
+    offset = _numbers(hand.get("position", "Vector3(0, 0, 0)"), "Vector3", 3)
+    if offset is None:
+        return None, f"{path} has a position this check cannot read"
+    if "rotation_degrees" in hand or "rotation" in hand or "transform" in hand:
+        return None, f"{path} is turned on its pivot; only the pivot may turn"
+    if abs(offset[0]) > 1e-6 or abs(offset[1]) < 1e-6:
+        return None, f"{path} does not hang along its pivot's axis"
+    sign = 1.0 if offset[1] > 0 else -1.0
+    return math.degrees(math.atan2(up_x * sign, up_y * sign)) % 360.0, ""
+
+
+def clock_reading(hour_degrees: float, minute_degrees: float) -> str:
+    """The hands as a person reads them, `H:MM` (as `reading()` in tests/clock_reading.gd)."""
+    minute = int(round((minute_degrees % 360.0) / 6.0)) % 60
+    hour = int(round(((hour_degrees - minute * 0.5) % 360.0) / 30.0)) % 12
+    return f"{12 if hour == 0 else hour}:{minute:02d}"
+
+
+def scene_clock_reading(root: Path, scene: str) -> tuple[str | None, str]:
+    """(time, error): what the clock in `scene` shows according to its hand nodes."""
+    hands = CLOCK_SCENES.get(scene)
+    if hands is None:
+        return None, f"'{scene}' is not a scene with a clock this check knows ({', '.join(CLOCK_SCENES)})"
+    path = root / scene
+    if not path.is_file():
+        return None, f"{scene} does not exist"
+    nodes = scene_nodes(path.read_text(encoding="utf-8", errors="replace"))
+    degrees = []
+    for hand in hands:
+        value, problem = _hand_degrees(nodes, hand)
+        if value is None:
+            return None, f"{scene} {problem}"
+        degrees.append(value)
+    return clock_reading(degrees[0], degrees[1]), ""
 
 
 def tracked_files(root: Path, folder: str) -> list[str] | None:
@@ -262,6 +379,8 @@ def _check_frame(root: Path, frame: dict, by_file: dict[str, dict], result: Resu
     excerpt = ""
     if shows is not None and shows.get("kind") == "dialogue":
         excerpt = str(shows.get("text", ""))[:40]
+    elif shows is not None and shows.get("kind") == "clock":
+        excerpt = f"clock {shows.get('reads', '?')} ({shows.get('view', '?')})"
 
     if status == "current":
         if not commit:
@@ -309,6 +428,8 @@ def _check_frame(root: Path, frame: dict, by_file: dict[str, dict], result: Resu
                 )
                 if verdict == "ok":
                     verdict = "band changed"
+        elif shows is not None and shows.get("kind") == "clock":
+            verdict = _check_clock(root, label, shows, result, verdict)
         elif shows is not None:
             result.errors.append(f"{label}: shows.kind '{shows.get('kind')}' is not one this check can verify")
     elif status == "historical":
@@ -328,10 +449,51 @@ def _check_frame(root: Path, frame: dict, by_file: dict[str, dict], result: Resu
             )
             if text is not None and text != str(shows.get("text", "")):
                 result.notes.append(f"{label}: historical, and its line has since changed to \"{text}\"")
+        elif shows is not None and shows.get("kind") == "clock":
+            reads, _problem = scene_clock_reading(root, str(shows.get("scene", "")))
+            if reads is not None and reads != str(shows.get("reads", "")):
+                result.notes.append(f"{label}: historical, and the clock has since been set to {reads}")
     else:
         result.errors.append(f"{label}: status must be one of {', '.join(STATUSES)}, not {status!r}")
         verdict = "invalid"
     result.rows.append((name, str(status), commit[:7] or "-", f"{verdict}  {excerpt}".rstrip()))
+
+
+def _check_clock(root: Path, label: str, shows: dict, result: Result, verdict: str) -> str:
+    """A current clock frame: the time it shows is the time the scene's hands show now, and
+    the frame's own pixels were read as that time when it was taken."""
+    scene = str(shows.get("scene", ""))
+    recorded = str(shows.get("reads", ""))
+    measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else None
+    if not CLOCK_READS_RE.match(recorded):
+        result.errors.append(f"{label}: shows.reads must be a time like 9:00, not {recorded!r}")
+        return "invalid"
+    if not str(shows.get("view", "")):
+        result.errors.append(f"{label}: a clock frame must say which view it is (shows.view)")
+    reads, problem = scene_clock_reading(root, scene)
+    if reads is None:
+        result.errors.append(f"{label}: {problem}")
+        return "unbound"
+    if measured is None or not str(measured.get("reads", "")):
+        result.errors.append(
+            f"{label}: a clock frame must carry what was read off its pixels (shows.measured.reads); "
+            "capture it with tests/capture_classroom_clock.gd"
+        )
+        return "unread"
+    if str(measured.get("reads")) != recorded:
+        result.errors.append(
+            f"{label}: the frame's pixels read {measured.get('reads')}, but the scene said {recorded} "
+            "when it was taken; it does not show that time and is not evidence of it"
+        )
+        return "misread"
+    if reads != recorded:
+        result.errors.append(
+            f"{label}: stale - the frame shows the clock at {recorded} but {scene} now sets it to {reads}. "
+            "Capture it again (Classroom visual evidence dispatched with relay_clock_evidence=true) "
+            "or mark it historical."
+        )
+        return "stale"
+    return verdict
 
 
 def _check_references(root: Path, by_file: dict[str, dict], result: Result) -> None:
@@ -479,7 +641,12 @@ def apply_relay(
                 },
                 "size": list(record.get("size", [])),
                 "sha256": files[target],
-                "ui_fingerprint": str(record.get("ui_fingerprint", "")),
+                # Only a dialogue frame photographs the reading band; a clock frame has none.
+                **(
+                    {"ui_fingerprint": str(record.get("ui_fingerprint", ""))}
+                    if dict(record.get("shows", {})).get("kind", "dialogue") == "dialogue"
+                    else {}
+                ),
                 "shows": dict(record.get("shows", {})),
             }
         )

@@ -23,7 +23,8 @@ fake="${work}/godot"
 cat > "${fake}" <<'PY'
 #!/usr/bin/env python3
 """A stand-in for `godot` with the command lines tests/run_classroom_checks.sh uses.
-FAKE_GODOT_<METHOD> picks the behaviour: pass, fail, hang, script_error, or lie (prints
+FAKE_GODOT_<METHOD> picks the behaviour: pass, fail, hang, script_error, clock_misread
+(only the clock capture fails, #173), or lie (prints
 PASS while recording the other renderer, as a run after Godot's Vulkan fallback would if
 the script did not check)."""
 import os, sys, time
@@ -42,6 +43,13 @@ script = value("--script")
 user = args[args.index("--") + 1:] if "--" in args else []
 out = next(a.split("=", 1)[1] for a in user if a.startswith("--output="))
 mode = os.environ.get("FAKE_GODOT_" + method.upper(), "pass")
+if mode == "clock_misread":
+    # Only the clock capture fails: the pixel test and the classroom capture pass.
+    mode = "fail" if script.endswith("capture_classroom_clock.gd") else "pass"
+    if mode == "fail":
+        print("ERROR: TEST FAILURE: clock_gameplay_aisle: the frame reads 9:15, not 9:00.")
+        print("FAIL: 1 problem(s) found.")
+        sys.exit(1)
 if mode == "hang":
     time.sleep(60)
 if mode == "fail":
@@ -54,7 +62,12 @@ if mode == "lie":
 driver = fixture.evidence.EXPECTED_DRIVERS[recorded]
 staging = Path(out).parent / ("staging-" + Path(out).name)
 fixture.build(staging, recorded, driver)
-kind = "pixels" if script.endswith("classroom_wall_render_test.gd") else "capture"
+if script.endswith("classroom_wall_render_test.gd"):
+    kind = "pixels"
+elif script.endswith("capture_classroom_clock.gd"):
+    kind = "clock"
+else:
+    kind = "capture"
 Path(out).parent.mkdir(parents=True, exist_ok=True)
 (staging / ("%s-%s" % (kind, recorded))).rename(out)
 log = (staging / ("classroom_%s_%s.log" % (kind, recorded))).read_text()
@@ -112,6 +125,8 @@ scenario "a script error behind a PASS is red" fail fail FAKE_GODOT_GL_COMPATIBI
 # run_check alone cannot see this one: the script printed PASS and exited 0. The evidence
 # verifier has to.
 scenario "a Forward+ run that recorded another renderer is red" pass fail FAKE_GODOT_FORWARD_PLUS=lie
+# #173: the wall and the capture are fine, but the clock does not read nine.
+scenario "a clock that does not read nine is red" fail fail FAKE_GODOT_GL_COMPATIBILITY=clock_misread
 scenario "an unknown renderer name is red" fail fail CLASSROOM_RENDER_METHODS=vulkan_plus
 scenario "an empty renderer list is red" fail fail CLASSROOM_RENDER_METHODS=" "
 

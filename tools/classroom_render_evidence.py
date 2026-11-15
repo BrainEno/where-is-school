@@ -11,6 +11,9 @@ rendering method and leaves their evidence in one folder:
     <evidence>/pixels-<method>/{reference,fader}.png   the raw 256 x 256 viewport frames
     <evidence>/capture-<method>/CAPTURE.txt        renderer, adapter, wall states, shot hashes
     <evidence>/capture-<method>/0N_*.png           the raw 1600 x 900 viewport frames
+    <evidence>/classroom_clock_<method>.log        full engine log of the clock capture (#173)
+    <evidence>/clock-<method>/CLOCK.txt            renderer, adapter, readings, shot hashes
+    <evidence>/clock-<method>/clock_*.png          the raw 1600 x 900 clock frames
 
 `run_check` already judges each script by its log. This tool judges the evidence itself,
 without trusting any single line of it:
@@ -25,7 +28,9 @@ without trusting any single line of it:
   * the wall is measured again from the saved PNGs with the test's own limits
     (centre 32 x 32 red mean; control within [0.1, 0.7]; |control - fader| <= 0.025),
     and must agree with the numbers the test reported;
-  * each capture frame's SHA-256 must match the one the capture recorded.
+  * each capture frame's SHA-256 must match the one the capture recorded;
+  * the clock capture (#173) must have read nine o'clock off every one of its frames, in
+    CLOCK.txt and in its `EVIDENCE` records alike, on the renderer the job asked for.
 
 `verify` writes VERDICT.txt and MANIFEST.json (head SHA, run, renderer, verdict, reasons,
 and the SHA-256 of every file) into the evidence folder and exits 1 on any failure.
@@ -79,6 +84,13 @@ CAPTURE_SHOTS = (
     "13_lectern_teacher_side.png",
     "14_lectern_gameplay.png",
 )
+# The clock capture (#173): tests/capture_classroom_clock.gd reads the time off each frame.
+CLOCK_SHOTS = (
+    "clock_closeup.png",
+    "clock_gameplay_rows.png",
+    "clock_gameplay_aisle.png",
+)
+CLOCK_TARGET = "9:00"
 EXPECTED_DRIVERS = {"forward_plus": "vulkan", "gl_compatibility": "opengl3"}
 ENGINE_MARK = "4.7.2 stable"
 # `godot --version` prints "4.7.2.stable.official.<hash>"; Engine.get_version_info().string,
@@ -389,6 +401,96 @@ def verify_capture(root: Path, method: str, driver: str, evidence: Evidence) -> 
             evidence.fail("%s does not match the hash the capture recorded" % name)
 
 
+def evidence_records(text: str) -> dict[str, dict]:
+    """The `EVIDENCE {json}` records a log printed, by frame name (the last one wins)."""
+    records: dict[str, dict] = {}
+    for line in text.splitlines():
+        at = line.find("EVIDENCE {")
+        if at < 0:
+            continue
+        try:
+            record = json.loads(line[at + len("EVIDENCE "):])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(record, dict) and record.get("frame"):
+            records[str(record["frame"])] = record
+    return records
+
+
+def verify_clock(root: Path, method: str, driver: str, evidence: Evidence) -> None:
+    """The clock capture (#173): it ran on the asked-for renderer, passed, saved every frame
+    it hashed, and - read again from its own records - every frame reads nine o'clock off
+    the pixels, from a face that is really in the picture."""
+    log = check_log(root / ("classroom_clock_%s.log" % method), evidence, "clock log")
+    folder = root / ("clock-%s" % method)
+    text = read_text(folder / "CLOCK.txt", evidence, "CLOCK.txt")
+    recorded: dict[str, str] = {}
+    readings: dict[str, str] = {}
+    if text is not None:
+        values = key_values(text)
+        merged: dict[str, list[str]] = {}
+        for line in text.splitlines():
+            for key, value in re.findall(r"(\w+)=(\S+)", line):
+                if key in ("engine", "renderer", "display"):
+                    merged.setdefault(key, []).append(value)
+        for key in ("adapter", "driver", "verdict"):
+            if key in values:
+                merged[key] = values[key]
+        check_environment(merged, evidence, "clock capture", method, driver)
+        verdict = first(merged, "verdict")
+        if verdict != "PASS":
+            evidence.fail("CLOCK.txt verdict is %r, not PASS" % verdict)
+        for failure in values.get("failure", []):
+            evidence.fail("clock: %s" % failure)
+        for name, digest in re.findall(r"shot=(\S+) sha256=([0-9a-f]{64})", text):
+            recorded[name] = digest
+        for frame, shown in re.findall(r"reading=(\S+) reads=(\S+)", text):
+            readings[frame] = shown
+    records = evidence_records(log or "")
+    for name in CLOCK_SHOTS:
+        stem = name.rsplit(".", 1)[0]
+        path = folder / name
+        image = load_image(path, CAPTURE_SIZE, evidence, "clock %s" % name)
+        if image is not None:
+            digest = recorded.get(name)
+            if digest is None:
+                evidence.fail("CLOCK.txt records no hash for %s" % name)
+            elif digest != sha256(path):
+                evidence.fail("%s does not match the hash the clock capture recorded" % name)
+        shown = readings.get(stem)
+        if shown is None:
+            evidence.fail("CLOCK.txt records no reading for %s" % stem)
+        elif shown != CLOCK_TARGET:
+            evidence.fail("%s reads %s off the pixels, not %s" % (stem, shown, CLOCK_TARGET))
+        else:
+            evidence.facts["clock_%s" % stem] = shown
+        record = records.get(stem)
+        if record is None:
+            evidence.fail("the clock log has no EVIDENCE record for %s" % stem)
+            continue
+        shows = record.get("shows") if isinstance(record.get("shows"), dict) else {}
+        measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else {}
+        if shows.get("kind") != "clock":
+            evidence.fail("the EVIDENCE record for %s is not a clock record" % stem)
+        if record.get("renderer") != method:
+            evidence.fail("the EVIDENCE record for %s was rendered on %r, not %r"
+                          % (stem, record.get("renderer"), method))
+        if list(record.get("size", [])) != list(CAPTURE_SIZE):
+            evidence.fail("the EVIDENCE record for %s says %s, not %dx%d"
+                          % (stem, record.get("size"), CAPTURE_SIZE[0], CAPTURE_SIZE[1]))
+        if shows.get("reads") != CLOCK_TARGET:
+            evidence.fail("the scene's clock reads %r for %s, not %s" % (shows.get("reads"), stem, CLOCK_TARGET))
+        if measured.get("reads") != CLOCK_TARGET:
+            evidence.fail("the EVIDENCE record for %s reads %r off the pixels, not %s"
+                          % (stem, measured.get("reads"), CLOCK_TARGET))
+        if shown is not None and measured.get("reads") != shown:
+            evidence.fail("CLOCK.txt and the EVIDENCE record disagree about %s (%s against %r)"
+                          % (stem, shown, measured.get("reads")))
+        face = measured.get("face_px")
+        if isinstance(face, (int, float)):
+            evidence.facts["clock_%s_face_px" % stem] = "%.1f" % face
+
+
 def verify_engine(root: Path, evidence: Evidence) -> None:
     text = read_text(root / "ENGINE.txt", evidence, "ENGINE.txt")
     if text is not None:
@@ -419,6 +521,7 @@ def verify(args: argparse.Namespace) -> int:
         verify_engine(root, evidence)
         verify_pixels(root, method, driver, evidence)
         verify_capture(root, method, driver, evidence)
+        verify_clock(root, method, driver, evidence)
     checked_out = args.checked_out_sha or git_head(Path.cwd())
     if args.head_sha and checked_out and checked_out != args.head_sha:
         evidence.fail("evidence was produced from %s, not the PR head %s" % (checked_out, args.head_sha))

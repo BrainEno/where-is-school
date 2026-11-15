@@ -11,6 +11,8 @@
 #   GODOT_GL_DRIVER            Compatibility driver (default opengl3).
 #   CLASSROOM_PIXEL_TIMEOUT    seconds for the wall pixel test (default 240).
 #   CLASSROOM_CAPTURE_TIMEOUT  seconds for the classroom capture (default 300).
+#   CLASSROOM_CLOCK_TIMEOUT    seconds for the clock capture, which reads the time off
+#                              its frames (#173; default: the capture's limit).
 # Each render check is told which renderer and driver it must be running on
 # (--expect-renderer / --expect-driver) and fails on any other, so Godot's own
 # Vulkan-to-OpenGL fallback can never turn a Forward+ failure into a pass.
@@ -42,7 +44,8 @@ if [ "${headless}" -eq 1 ]; then
     interaction_occlusion interaction_visibility_sweep interaction_outline_content \
     interaction_hover interaction_cue automatic_interaction pointer_target_switch \
     opening_flow opening_resume free_period subjective_isolation \
-    location_transition companion_route companion_obstacle dialogue_content content_integrity
+    location_transition companion_route companion_obstacle dialogue_content content_integrity \
+    clock_reading
   do
     run_check "${test}" 540 "${godot}" --headless --path . \
       --script "res://tests/${test}_test.gd" || status=1
@@ -53,6 +56,9 @@ if [ "${render}" -eq 1 ]; then
   methods="${CLASSROOM_RENDER_METHODS:-forward_plus gl_compatibility}"
   pixel_limit="${CLASSROOM_PIXEL_TIMEOUT:-240}"
   capture_limit="${CLASSROOM_CAPTURE_TIMEOUT:-300}"
+  # The clock capture (#173) renders five frames per view; it shares the capture's limit
+  # unless told otherwise.
+  clock_limit="${CLASSROOM_CLOCK_TIMEOUT:-${capture_limit}}"
   if [ -z "${methods// /}" ]; then
     echo "::error title=no renderer selected::CLASSROOM_RENDER_METHODS is empty"
     status=1
@@ -77,6 +83,12 @@ if [ "${render}" -eq 1 ]; then
       --rendering-method "${method}" --rendering-driver "${driver}" \
       --script res://tests/capture_classroom_art.gd \
       -- "--output=${CI_LOG_DIR}/capture-${method}" \
+      "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
+    run_check "classroom_clock_${method}" "${clock_limit}" "${godot}" --path . \
+      --audio-driver Dummy --resolution 1600x900 \
+      --rendering-method "${method}" --rendering-driver "${driver}" \
+      --script res://tests/capture_classroom_clock.gd \
+      -- "--output=${CI_LOG_DIR}/clock-${method}" \
       "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
   done
 fi
