@@ -342,10 +342,17 @@ shows half a sentence.
   comfort and walking feel are unverified.
 - `.import` files for the generated audio are intentionally not committed; the
   ambience loop is enabled at runtime instead.
-- The tests that build the main scene print Godot's "2 ObjectDB instances were
-  leaked at exit" and "1 resource still in use at exit" warnings. They are
-  cosmetic (the engine reports them while the tree is torn down), do not fail the
-  run, and have not been chased down.
+- The "2 ObjectDB instances were leaked at exit" and "1 resources still in use at
+  exit" warnings that every headless run used to print are gone (#67). They were
+  traced with `engine-hygiene-audit.yml` (a ladder of `--verbose` probes, the first
+  of which only quits) to sound left playing at quit: a stopped playback is freed
+  only after the audio thread mixes once more, and quitting stops the audio driver
+  before that mix. The `Music` autoload now waits for one mix when it is freed -
+  at quit that is after the scene, so the room's sounds are covered too - and
+  `CueAudio`, freed after it, waits for a cue still sounding (`AudioRelease`). The
+  engine lines that remain in a run are listed per check by the "Report the engine
+  noise" step of `godot-ci.yml`; most are refusals a test provokes on purpose, and
+  the portrait warning is the headless 64x64 window leaving the panel no room.
 - The alley behind the animal, the gate out of the estate, and the courtyard the
   animal walks towards are still to be built; the slice ends at a card.
 
