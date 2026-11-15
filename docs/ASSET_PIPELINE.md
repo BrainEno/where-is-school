@@ -178,6 +178,37 @@ through `.godot/imported/…` and stop falling back to the source file:
   filesystem with `art/props/.gdignore`: Godot's `.blend` importer needs a Blender
   binary, and neither a clean checkout nor CI has one.
 
+### UIDs: what is tracked and how it is checked (#67)
+
+Godot 4.4+ gives every resource a 63-bit UID, written as `uid://` plus base-34 digits
+(`core/io/resource_uid.cpp`). The tree carries them in four places: `.uid` sidecars next
+to scripts and shaders, `uid="…"` in `.import` files, and the `[gd_scene]`/`[gd_resource]`
+header of `.tscn`/`.tres` files. No scene here refers to another resource by UID: every
+`ext_resource` uses its `path`, so a UID can be wrong without breaking a load, which is
+why it is checked rather than trusted.
+
+- `tools/godot_sidecars.py --check` decodes every tracked UID the way the engine does,
+  including its leniency: a 13-digit text past the 63-bit range wraps and is masked
+  rather than refused, and `z` reads as 25 like `0`. It fails on a value the engine
+  cannot read, two files with one UID (compared as decoded numbers, since two texts can
+  decode to one), and a `.uid` left behind by a deleted script. It runs in the static
+  step of `godot-ci.yml`, with `tests/godot_sidecars_test.py`.
+- What it *lists*, without failing: values not in the form the engine writes, and
+  scripts or shaders with no sidecar. Which sidecars the engine actually wants is a
+  measurement, not a rule: `engine-hygiene-audit.yml` imports a clean checkout with the
+  pinned Godot and `--after-import` reports every `.uid` it created and every tracked
+  file it rewrote, with the UID before and after and the `[section] key` lines changed.
+
+The first measurement (Godot 4.7.2, run 43675129261) created a sidecar for 60 scripts and
+shaders and asked for none anywhere else; those 60, with the engine's values, are now
+tracked. The second (run 43676116899) created none, and rewrote 35 `.import` files, each
+changing only `[remap] uid` to the canonical text of the same number (an older generator
+had written digits the engine reads but never writes). Those are now stored in the
+engine's form, so an import leaves the tree clean. Eight `.gd.uid` sidecars are still
+non-canonical: the import reads them and leaves them alone, so they are listed, not
+rewritten by hand. A new script picks up its sidecar from the editor or the import; if
+CI's static step lists it as missing, commit the one the engine made.
+
 ## 8. Not in this round
 
 - Character locomotion is supplied by the project's code-authored idle/walk/jog clips and

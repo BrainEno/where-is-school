@@ -16,7 +16,12 @@ extends SceneTree
 ##    the interaction cues stay on `Master` at their own levels;
 ## 6. the default level is a bed: at least 10 dB below the bus's own trim;
 ## 7. `stop()` stops and `play_track()` starts again, and seeking past the loop end wraps
-##    instead of falling silent.
+##    instead of falling silent;
+## 8. a music player that is freed - which is what quitting does to the autoload - waits
+##    until the audio server has dropped its playback (#67): freed while playing, after a
+##    `seek()` restarted the playback behind `play_track()`'s back, and after leaving the
+##    tree first (which only pauses a playback), nothing it played is left alive when
+##    `free()` returns. Before, every run ended with the track leaked at exit.
 ##
 ## What it cannot check: whether the loop *sounds* seamless, or how loud the guitar actually
 ## is in the mix. The seam is measured by `tools/build_music_loop.py` (the step across the
@@ -57,6 +62,9 @@ func _run() -> void:
 	await _check_volume_is_independent()
 	await _check_loop_wraps()
 	await _check_stop_and_restart()
+	await _check_release_on_free("playing", false, false)
+	await _check_release_on_free("after a seek", true, false)
+	await _check_release_on_free("out of the tree", false, true)
 	_report()
 
 
@@ -300,6 +308,59 @@ func _check_stop_and_restart() -> void:
 	_checks += 1
 
 
+# --- 8. a freed player lets go of the track ---------------------------------------
+
+
+## A second player, built from the autoload's script, freed the way quitting frees the real
+## one. The checks run on the weak references this test holds, not on the player's own
+## bookkeeping, so a release that only cleared its list would still fail here.
+func _check_release_on_free(label: String, seek_first: bool, leave_tree_first: bool) -> void:
+	var extra: Node = MusicScript.new()
+	extra.name = "MusicReleaseProbe"
+	root.add_child(extra)
+	await _wait(0.1)
+	var player: AudioStreamPlayer = extra.get_player()
+	if not player.playing or not player.has_stream_playback():
+		_fail("%s: a second music player did not start; the release is not measured" % label)
+		extra.free()
+		return
+	var watches: Array[WeakRef] = []
+	var first: AudioStreamPlayback = player.get_stream_playback()
+	watches.append(weakref(first))
+	first = null
+	if seek_first:
+		# A seek replaces the playback; the old one goes through the server on its own.
+		player.seek(1.0)
+		await process_frame
+		var replaced: AudioStreamPlayback = player.get_stream_playback()
+		watches.append(weakref(replaced))
+		replaced = null
+	if leave_tree_first:
+		# Quitting takes the whole tree out before freeing anything: the player pauses.
+		root.remove_child(extra)
+		await process_frame
+	var started := Time.get_ticks_msec()
+	extra.free()
+	var took := Time.get_ticks_msec() - started
+	var alive := 0
+	for watch: WeakRef in watches:
+		if watch.get_ref() != null:
+			alive += 1
+	_expect(
+		alive == 0,
+		(
+			"%s: %d of %d playback(s) were still alive after the music player was freed; at"
+			+ " quit that is the ObjectDB leak of #67"
+		) % [label, alive, watches.size()]
+	)
+	var limit: int = MusicScript.RELEASE_TIMEOUT_MSEC + 50
+	_expect(
+		took <= limit,
+		"%s: freeing the music player took %d ms, over the %d ms bound" % [label, took, limit]
+	)
+	_notes.append("release on free (%s): %d playback(s) gone in %d ms" % [label, watches.size(), took])
+
+
 # --- helpers -----------------------------------------------------------------------
 
 
@@ -351,5 +412,5 @@ func _report() -> void:
 		_failures,
 		"%d check(s): the recording imports as a loop, one player survives a scene change, "
 		% _checks
-		+ "the music dial moves nothing else, and the loop wraps."
+		+ "the music dial moves nothing else, the loop wraps, and a freed player lets go of it."
 	)

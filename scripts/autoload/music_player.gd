@@ -21,6 +21,17 @@ extends Node
 ##
 ## Loaded as the `Music` autoload. Callers look it up by path (`/root/Music`) or use the
 ## `Music` global, exactly as they do with `CueAudio`.
+##
+## It also lets go of the track when the game quits (#67). Stopping a player only marks its
+## playback for removal; the audio thread drops it on its next mix step, a few tens of
+## milliseconds later. On quit the engine frees the scene tree and then shuts the audio
+## server down (`AudioServer::finish()`), which does not drain that list, so a track still
+## playing at quit outlived the tree: every run, the game's and each headless check's,
+## ended with "2 ObjectDB instances were leaked" (`AudioStreamPlaybackWAV` and this
+## `AudioStreamWAV`) and "1 resources still in use" naming this file. When this node is
+## freed it stops the music and waits, bounded by `RELEASE_TIMEOUT_MSEC`, until the audio
+## thread has dropped every playback it started - a weak reference to each says when -
+## so the leak is removed at its source instead of filtered out of the log.
 
 ## The one track. A `res://` path, so no machine's absolute path can leak into a build.
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
@@ -39,11 +50,19 @@ const SILENT_DB := -60.0
 const FADE_IN_SECONDS := 3.0
 const FADE_OUT_SECONDS := 1.2
 
+## The longest quitting waits for the audio thread to drop the music. One mix step is about
+## 23 ms at the dummy driver's 1024 frames / 44.1 kHz; a real driver's buffer is similar.
+const RELEASE_TIMEOUT_MSEC := 250
+const RELEASE_POLL_MSEC := 2
+
 var _player: AudioStreamPlayer
 var _tween: Tween
 var _volume_db := DEFAULT_VOLUME_DB
 var _bus: StringName = BUS_NAME
 var _bus_missing_warned := false
+## A weak reference to every playback `play_track()` started that may still be alive. Weak,
+## so watching a playback never keeps it alive; pruned on each start.
+var _playbacks: Array[WeakRef] = []
 
 
 func _ready() -> void:
@@ -80,6 +99,7 @@ func play_track(path: String = TRACK_PATH) -> bool:
 	_player.stream = stream
 	_player.volume_db = SILENT_DB
 	_player.play()
+	_watch_playback()
 	_fade_to(_volume_db, FADE_IN_SECONDS)
 	return true
 
@@ -133,6 +153,69 @@ func get_track_path() -> String:
 func get_track_length() -> float:
 	_build()
 	return _player.stream.get_length() if _player.stream != null else 0.0
+
+
+## Stops the music at once and waits, at most `timeout_msec` and on the calling thread, until
+## the audio server has dropped every playback this player started. Returns how many it
+## still held when the wait ended: 0 is the clean case. Freeing this node calls it, so a
+## quit cannot leave the track to the engine's shutdown; a caller may also use it to make
+## sure the track is gone before something that must not hear it.
+func release_playbacks(timeout_msec: int = RELEASE_TIMEOUT_MSEC) -> int:
+	_kill_tween()
+	if _player != null:
+		# `seek()` and a caller's own `play()` start playbacks `play_track()` never saw, so
+		# what the player holds now is watched too. Then stop, which hands each playback to
+		# the audio server for deletion; a player that has only left the tree has *paused*
+		# its playback, and a paused one is never deleted.
+		_watch_playback()
+		_player.stop()
+	var deadline := Time.get_ticks_msec() + maxi(timeout_msec, 0)
+	var held := held_playbacks()
+	while held > 0 and Time.get_ticks_msec() < deadline:
+		OS.delay_msec(RELEASE_POLL_MSEC)
+		held = held_playbacks()
+	if held == 0:
+		_playbacks.clear()
+	return held
+
+
+## How many playbacks started here are still alive (playing, fading or awaiting the audio
+## thread). Public for the check that the release works.
+func held_playbacks() -> int:
+	var held := 0
+	for watch: WeakRef in _playbacks:
+		if watch.get_ref() != null:
+			held += 1
+	return held
+
+
+func _notification(what: int) -> void:
+	# Freed, not merely taken out of the tree: a node moved between parents keeps playing.
+	# The player child still exists here; it is freed after this node's notification.
+	if what == NOTIFICATION_PREDELETE:
+		var held := release_playbacks()
+		if held > 0:
+			# Not an error the player can act on, and not hidden either: the engine's own
+			# leak warning follows, and this says where it comes from.
+			print_verbose(
+				"Music: %d playback(s) still held by the audio server after %d ms."
+				% [held, RELEASE_TIMEOUT_MSEC]
+			)
+
+
+func _watch_playback() -> void:
+	var alive: Array[WeakRef] = []
+	var current: AudioStreamPlayback = null
+	if _player.has_stream_playback():
+		current = _player.get_stream_playback()
+	for watch: WeakRef in _playbacks:
+		var playback: Variant = watch.get_ref()
+		if playback != null and playback != current:
+			alive.append(watch)
+	if current != null:
+		var watch: WeakRef = weakref(current)
+		alive.append(watch)
+	_playbacks = alive
 
 
 func _build() -> void:
