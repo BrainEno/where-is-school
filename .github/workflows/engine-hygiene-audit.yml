@@ -27,6 +27,10 @@ on:
       - "tests/engine_hygiene/**"
       - "tests/test_harness.gd"
       - "project.godot"
+      # The exit leak this audit attributed was the music's playback (#67); the autoloads'
+      # teardown is where a new one would come from.
+      - "scripts/autoload/**"
+      - "scripts/audio/**"
       - ".github/workflows/engine-hygiene-audit.yml"
   workflow_dispatch:
 
