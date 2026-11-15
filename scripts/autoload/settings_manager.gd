@@ -9,8 +9,11 @@ extends Node
 ##
 ## - `[text] size` — one of `TEXT_SIZES`; every on-screen text is multiplied by its scale.
 ## - `[text] speed` — one of `TEXT_SPEEDS`; how fast a line types itself out.
+## - `[text] auto_speed` — one of `AUTO_SPEEDS`; how long auto waits on a finished line.
+## - `[text] skip_scope` — one of `SKIP_SCOPES`; whether skip stops at a line not yet read.
 ## - `[audio] master|music|sfx` — whole percentages, 0..100.
 ## - `[display] ui_scale` — one of `UI_SCALES`, "auto" by default (see `effective_ui_scale`).
+## - `[controls] sprint_mode` — one of `SPRINT_MODES`; hold the sprint input, or press it once.
 ## - `[input] <action>` — every event of a rebound action, as short strings
 ##   (`key:69`, `joy_button:0`, `joy_axis:1:-`, `mouse:1`). An action whose stored list
 ##   does not decode completely is put back to its defaults, never half-applied.
@@ -32,6 +35,7 @@ const SECTION_AUDIO := "audio"
 const SECTION_DISPLAY := "display"
 const SECTION_INPUT := "input"
 const SECTION_META := "settings"
+const SECTION_CONTROLS := "controls"
 const FORMAT_VERSION := 1
 
 const TEXT_SIZES: Array[StringName] = [&"standard", &"large", &"largest"]
@@ -42,6 +46,18 @@ const TEXT_SPEEDS: Array[StringName] = [&"slow", &"normal", &"fast", &"instant"]
 ## Characters per second. 0 means the whole line appears at once.
 const TEXT_SPEED_CPS: Dictionary = {&"slow": 28.0, &"normal": 55.0, &"fast": 110.0, &"instant": 0.0}
 const DEFAULT_TEXT_SPEED := &"normal"
+
+## The reading modes' settings. The values are `DialoguePlayback`'s, which owns their meaning.
+const AUTO_SPEEDS: Array[StringName] = [&"slow", &"normal", &"fast"]
+const DEFAULT_AUTO_SPEED := &"normal"
+## "read": skip stops at the first line not read before. "all": skip passes every line.
+const SKIP_SCOPES: Array[StringName] = [&"read", &"all"]
+const DEFAULT_SKIP_SCOPE := &"read"
+
+## "hold": jog only while the sprint input is down. "toggle": one press starts jogging and
+## the next one stops it, for a player who cannot hold a key and steer at the same time.
+const SPRINT_MODES: Array[StringName] = [&"hold", &"toggle"]
+const DEFAULT_SPRINT_MODE := &"hold"
 
 const VOLUME_KEYS: Array[StringName] = [&"master", &"music", &"sfx"]
 const VOLUME_BUS: Dictionary = {&"master": &"Master", &"music": &"Music", &"sfx": &"SFX"}
@@ -64,7 +80,7 @@ const DEVICE_GAMEPAD := &"gamepad"
 const REBINDABLE_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right", &"sprint",
 	&"interact", &"dialogue_advance", &"backlog", &"journal", &"cancel", &"pause",
-	&"toggle_language", &"toggle_fullscreen",
+	&"toggle_language", &"toggle_fullscreen", &"dialogue_auto", &"dialogue_skip",
 ]
 ## Pairs that may share an input because they never listen at the same time: the same
 ## button uses a thing in the room and continues a line of dialogue, and Esc both closes
@@ -91,6 +107,9 @@ const JOY_BUTTON_NAMES: Dictionary = {
 
 var _text_size: StringName = DEFAULT_TEXT_SIZE
 var _text_speed: StringName = DEFAULT_TEXT_SPEED
+var _auto_speed: StringName = DEFAULT_AUTO_SPEED
+var _skip_scope: StringName = DEFAULT_SKIP_SCOPE
+var _sprint_mode: StringName = DEFAULT_SPRINT_MODE
 var _ui_scale: StringName = DEFAULT_UI_SCALE
 var _volumes: Dictionary = {}
 ## The bus levels `default_bus_layout.tres` sets, read once: 100 % means "as mixed".
@@ -164,6 +183,42 @@ func set_text_speed(value: StringName) -> void:
 ## Characters per second for the dialogue reveal; 0 means "show the whole line at once".
 func reveal_characters_per_second() -> float:
 	return float(TEXT_SPEED_CPS.get(_text_speed, 55.0))
+
+
+func get_auto_speed() -> StringName:
+	return _auto_speed
+
+
+func set_auto_speed(value: StringName) -> void:
+	if not AUTO_SPEEDS.has(value) or value == _auto_speed:
+		return
+	_auto_speed = value
+	_store(SECTION_TEXT, "auto_speed", String(value))
+	setting_changed.emit(&"auto_speed")
+
+
+func get_skip_scope() -> StringName:
+	return _skip_scope
+
+
+func set_skip_scope(value: StringName) -> void:
+	if not SKIP_SCOPES.has(value) or value == _skip_scope:
+		return
+	_skip_scope = value
+	_store(SECTION_TEXT, "skip_scope", String(value))
+	setting_changed.emit(&"skip_scope")
+
+
+func get_sprint_mode() -> StringName:
+	return _sprint_mode
+
+
+func set_sprint_mode(value: StringName) -> void:
+	if not SPRINT_MODES.has(value) or value == _sprint_mode:
+		return
+	_sprint_mode = value
+	_store(SECTION_CONTROLS, "sprint_mode", String(value))
+	setting_changed.emit(&"sprint_mode")
 
 
 # --- Sound -------------------------------------------------------------------
@@ -706,6 +761,9 @@ func load_settings() -> void:
 		)
 	_text_size = DEFAULT_TEXT_SIZE
 	_text_speed = DEFAULT_TEXT_SPEED
+	_auto_speed = DEFAULT_AUTO_SPEED
+	_skip_scope = DEFAULT_SKIP_SCOPE
+	_sprint_mode = DEFAULT_SPRINT_MODE
 	_ui_scale = DEFAULT_UI_SCALE
 	for key: StringName in VOLUME_KEYS:
 		_volumes[key] = DEFAULT_VOLUME
@@ -714,6 +772,11 @@ func load_settings() -> void:
 	if loaded == OK:
 		_text_size = _read_choice(config, SECTION_TEXT, "size", TEXT_SIZES, DEFAULT_TEXT_SIZE)
 		_text_speed = _read_choice(config, SECTION_TEXT, "speed", TEXT_SPEEDS, DEFAULT_TEXT_SPEED)
+		_auto_speed = _read_choice(config, SECTION_TEXT, "auto_speed", AUTO_SPEEDS, DEFAULT_AUTO_SPEED)
+		_skip_scope = _read_choice(config, SECTION_TEXT, "skip_scope", SKIP_SCOPES, DEFAULT_SKIP_SCOPE)
+		_sprint_mode = _read_choice(
+			config, SECTION_CONTROLS, "sprint_mode", SPRINT_MODES, DEFAULT_SPRINT_MODE
+		)
 		_ui_scale = _read_choice(config, SECTION_DISPLAY, "ui_scale", UI_SCALES, DEFAULT_UI_SCALE)
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
@@ -874,7 +937,7 @@ func _decode_list(value: Variant) -> Array:
 ## and stays. Used by the tests so one check never inherits another's preferences.
 func reset_to_defaults() -> void:
 	var config := _open()
-	for section: String in [SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_META]:
+	for section: String in [SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_CONTROLS, SECTION_META]:
 		if config.has_section(section):
 			config.erase_section(section)
 	if config.has_section_key(SECTION_DISPLAY, "ui_scale"):

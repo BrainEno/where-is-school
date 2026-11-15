@@ -21,6 +21,8 @@ extends Control
 signal closed
 
 const CAPTURE_SECONDS := 6.0
+## How long the first press of "Forget what was read" waits for the second.
+const CLEAR_CONFIRM_SECONDS := 4.0
 const PANEL_MAX_WIDTH := 980.0
 const OUTER_MARGIN := 40.0
 
@@ -36,6 +38,9 @@ var _controls: Dictionary = {}
 var _capture_action := StringName()
 var _capture_device := StringName()
 var _capture_deadline_msec := 0
+## The read log the "forget" row shows and clears; the shared one unless a test sets another.
+var _read_log: ReadLog = null
+var _clear_armed_until_msec := 0
 var _rebuild_queued := false
 var _focus_after_rebuild := StringName()
 
@@ -123,7 +128,8 @@ func is_open() -> bool:
 	return visible
 
 
-## The focusable control of a row: `text_size`, `text_speed`, `volume_master`,
+## The focusable control of a row: `text_size`, `text_speed`, `auto_speed`, `skip_scope`,
+## `clear_read_log`, `sprint_mode`, `volume_master`,
 ## `volume_music`, `volume_sfx`, `ui_scale`, `fullscreen`, `language`,
 ## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`.
 func get_row_control(id: StringName) -> Control:
@@ -193,6 +199,9 @@ func _rebuild() -> void:
 	_heading("settings.section.text", true)
 	_choice_row(&"text_size", "settings.text_size", _text_size_options(), _current(&"text_size"))
 	_choice_row(&"text_speed", "settings.text_speed", _text_speed_options(), _current(&"text_speed"))
+	_choice_row(&"auto_speed", "settings.auto_speed", _auto_speed_options(), _current(&"auto_speed"))
+	_choice_row(&"skip_scope", "settings.skip_scope", _skip_scope_options(), _current(&"skip_scope"))
+	_clear_read_log_row()
 	_heading("settings.section.sound")
 	for key: StringName in [&"master", &"music", &"sfx"]:
 		_volume_row(key)
@@ -201,6 +210,7 @@ func _rebuild() -> void:
 	_choice_row(&"fullscreen", "settings.fullscreen", _on_off_options(), _current(&"fullscreen"))
 	_choice_row(&"language", "settings.language", _language_options(), _current(&"language"))
 	_heading("settings.section.controls")
+	_choice_row(&"sprint_mode", "settings.sprint_mode", _sprint_mode_options(), _current(&"sprint_mode"))
 	_binding_header()
 	for action: StringName in _rebindable():
 		_binding_row(action)
@@ -237,8 +247,9 @@ func _rebuild() -> void:
 func _link_focus() -> void:
 	var grid: Array[Array] = []
 	for id: StringName in [
-		&"text_size", &"text_speed", &"volume_master", &"volume_music", &"volume_sfx",
-		&"ui_scale", &"fullscreen", &"language",
+		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log",
+		&"volume_master", &"volume_music", &"volume_sfx", &"ui_scale", &"fullscreen", &"language",
+		&"sprint_mode",
 	]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -472,6 +483,27 @@ func _text_speed_options() -> Array:
 	return out
 
 
+func _auto_speed_options() -> Array:
+	var out: Array = []
+	for value: String in ["slow", "normal", "fast"]:
+		out.append({"value": value, "label": L10n.t("settings.auto_speed.%s" % value)})
+	return out
+
+
+func _skip_scope_options() -> Array:
+	var out: Array = []
+	for value: String in ["read", "all"]:
+		out.append({"value": value, "label": L10n.t("settings.skip_scope.%s" % value)})
+	return out
+
+
+func _sprint_mode_options() -> Array:
+	var out: Array = []
+	for value: String in ["hold", "toggle"]:
+		out.append({"value": value, "label": L10n.t("settings.sprint_mode.%s" % value)})
+	return out
+
+
 func _ui_scale_options() -> Array:
 	var out: Array = [{"value": "auto", "label": L10n.t("settings.ui_scale.auto")}]
 	for value: String in ["100", "125", "150", "200"]:
@@ -500,6 +532,12 @@ func _current(id: StringName) -> int:
 			return _index_of(_text_size_options(), _setting_string(settings, "get_text_size", "standard"))
 		&"text_speed":
 			return _index_of(_text_speed_options(), _setting_string(settings, "get_text_speed", "normal"))
+		&"auto_speed":
+			return _index_of(_auto_speed_options(), _setting_string(settings, "get_auto_speed", "normal"))
+		&"skip_scope":
+			return _index_of(_skip_scope_options(), _setting_string(settings, "get_skip_scope", "read"))
+		&"sprint_mode":
+			return _index_of(_sprint_mode_options(), _setting_string(settings, "get_sprint_mode", "hold"))
 		&"ui_scale":
 			return _index_of(_ui_scale_options(), _setting_string(settings, "get_ui_scale", "auto"))
 		&"fullscreen":
@@ -561,6 +599,15 @@ func _apply_choice(id: StringName, value: String) -> void:
 		&"text_speed":
 			if settings != null:
 				settings.call("set_text_speed", StringName(value))
+		&"auto_speed":
+			if settings != null:
+				settings.call("set_auto_speed", StringName(value))
+		&"skip_scope":
+			if settings != null:
+				settings.call("set_skip_scope", StringName(value))
+		&"sprint_mode":
+			if settings != null:
+				settings.call("set_sprint_mode", StringName(value))
 		&"ui_scale":
 			if settings != null:
 				settings.call("set_ui_scale", StringName(value))
@@ -590,6 +637,80 @@ func _on_volume_changed(value: float, key: StringName, readout: Label) -> void:
 	var settings := _settings()
 	if settings != null:
 		settings.call("set_volume", key, int(value))
+
+
+# --- Forgetting what was read ------------------------------------------------------
+
+
+## Uses `read_log` for the "forget what was read" row instead of the shared log. For tests.
+func set_read_log(read_log: ReadLog) -> void:
+	_read_log = read_log
+	_clear_armed_until_msec = 0
+	_refresh_clear_read_log()
+
+
+func get_read_log() -> ReadLog:
+	if _read_log == null:
+		_read_log = ReadLog.shared()
+	return _read_log
+
+
+## True between the first press of "Forget what was read" and the second.
+func is_clear_read_log_armed() -> bool:
+	return _clear_armed_until_msec > Time.get_ticks_msec()
+
+
+## The row that forgets every line read and every option taken. Forgetting cannot be
+## undone and skip depends on it, so it asks for a second press (within
+## `CLEAR_CONFIRM_SECONDS`, and without the focus leaving the row) instead of a dialog.
+func _clear_read_log_row() -> void:
+	var button := MenuStyle.entry_button("", MenuStyle.BODY_SIZE, _factor)
+	button.name = "ClearReadLog"
+	MenuStyle.style_form_entry(button)
+	button.autowrap_mode = TextServer.AUTOWRAP_OFF
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.pressed.connect(_on_clear_read_log_pressed)
+	button.focus_exited.connect(_disarm_clear_read_log)
+	_rows.add_child(button)
+	_controls[&"clear_read_log"] = button
+	_refresh_clear_read_log()
+
+
+func _refresh_clear_read_log() -> void:
+	var button := _controls.get(&"clear_read_log") as Button
+	if button == null:
+		return
+	if is_clear_read_log_armed():
+		button.text = L10n.t("settings.clear_read_log_confirm")
+		return
+	button.text = L10n.t("settings.clear_read_log", {"count": get_read_log().line_count()})
+
+
+func _on_clear_read_log_pressed() -> void:
+	var read_log := get_read_log()
+	if read_log.line_count() == 0 and read_log.choice_count() == 0:
+		_clear_armed_until_msec = 0
+		_status.text = L10n.t("settings.read_log_empty")
+		_refresh_clear_read_log()
+		return
+	if not is_clear_read_log_armed():
+		_clear_armed_until_msec = Time.get_ticks_msec() + int(CLEAR_CONFIRM_SECONDS * 1000.0)
+		_status.text = L10n.t("settings.clear_read_log_ask")
+		_refresh_clear_read_log()
+		return
+	_clear_armed_until_msec = 0
+	var result := read_log.forget_all()
+	_status.text = L10n.t(
+		"settings.read_log_cleared" if bool(result.get("ok", false)) else "settings.read_log_clear_failed"
+	)
+	_refresh_clear_read_log()
+
+
+func _disarm_clear_read_log() -> void:
+	if _clear_armed_until_msec == 0:
+		return
+	_clear_armed_until_msec = 0
+	_refresh_clear_read_log()
 
 
 func _on_restore_pressed() -> void:
@@ -680,6 +801,11 @@ func _capture_pad(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _clear_armed_until_msec != 0 and not is_clear_read_log_armed():
+		# The second press did not come: back to the row's count and the usual hint.
+		_clear_armed_until_msec = 0
+		_refresh_status_hint()
+		_refresh_clear_read_log()
 	if is_capturing() and Time.get_ticks_msec() > _capture_deadline_msec:
 		_cancel_capture()
 		_status.text = L10n.t("settings.capture_timeout")

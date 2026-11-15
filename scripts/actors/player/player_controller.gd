@@ -79,6 +79,9 @@ const SEATED_WAKE_POSE := 0.5
 const WAKE_GET_UP_SECONDS := 0.75
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
+## In toggle mode, a jog that was switched on ends by itself after the player has stood
+## still this long, so walking off after a conversation or a look around is a walk again.
+const SPRINT_LATCH_IDLE_SECONDS := 0.6
 
 @onready var camera_rig: CameraRig = get_node_or_null(camera_rig_path) as CameraRig
 @onready var visual_pivot: Node3D = %VisualPivot
@@ -138,6 +141,13 @@ var _path_legs := PackedVector3Array()
 var _path_index: int = 0
 ## The protagonist model's idle/walk animator, found under `%Visual`.
 var _character_animator: CharacterVisualAnimation = null
+## How the sprint input works (`Settings.SPRINT_MODES`): "hold" (the default; jog while it
+## is down) or "toggle" (one press jogs, the next walks). Followed from the setting.
+var sprint_mode: StringName = &"hold"
+## In toggle mode: whether the jog is on.
+var _sprint_latched := false
+## In toggle mode: how long the body has stood still with the jog on.
+var _sprint_idle := 0.0
 
 
 func _ready() -> void:
@@ -148,6 +158,7 @@ func _ready() -> void:
 		_character_animator.action_finished.connect(_on_get_up_action_finished)
 	elif visual != null:
 		push_warning("PlayerController: the model under %Visual has no CharacterVisualAnimation; the protagonist will not animate.")
+	_follow_sprint_setting()
 
 
 func _find_character_animator() -> CharacterVisualAnimation:
@@ -186,6 +197,7 @@ func _physics_process(delta: float) -> void:
 	if _path_active and input_vector.length() > manual_cancel_threshold:
 		# A hand on the keys always wins, including while a path awaits standing.
 		cancel_path()
+	update_sprint_latch(input_vector, delta)
 
 	if _wake_seated and (input_vector.length_squared() > 0.0001 or _path_active):
 		_begin_get_up_from_seat()
@@ -211,7 +223,64 @@ func _physics_process(delta: float) -> void:
 ## The speed `_apply_movement()` aims for right now: `move_speed`, or `jog_speed` while the
 ## sprint input is held. Public so the difference can be asserted without a floor to run on.
 func target_speed() -> float:
+	if sprint_mode == &"toggle":
+		return jog_speed if _sprint_latched else move_speed
 	return jog_speed if Input.is_action_pressed(SPRINT_ACTION) else move_speed
+
+
+## Switches between holding the sprint input and pressing it once. Any jog that was on stops.
+func set_sprint_mode(mode: StringName) -> void:
+	if mode != &"hold" and mode != &"toggle":
+		return
+	sprint_mode = mode
+	_sprint_latched = false
+	_sprint_idle = 0.0
+
+
+## In toggle mode, whether a press has switched the jog on.
+func is_sprint_latched() -> bool:
+	return _sprint_latched
+
+
+## Toggle mode: a press flips the jog; standing still for `SPRINT_LATCH_IDLE_SECONDS`, or
+## losing control to a conversation or a scene, ends it. Called every physics frame;
+## public so a test can drive it with a fake clock and no floor to run on.
+func update_sprint_latch(input_vector: Vector2, delta: float) -> void:
+	if sprint_mode != &"toggle":
+		_sprint_latched = false
+		return
+	if not _control_enabled:
+		_sprint_latched = false
+		_sprint_idle = 0.0
+		return
+	if Input.is_action_just_pressed(SPRINT_ACTION):
+		_sprint_latched = not _sprint_latched
+		_sprint_idle = 0.0
+	if not _sprint_latched:
+		return
+	if input_vector.length_squared() > 0.0001 or _path_active:
+		_sprint_idle = 0.0
+		return
+	_sprint_idle += delta
+	if _sprint_idle >= SPRINT_LATCH_IDLE_SECONDS:
+		_sprint_latched = false
+		_sprint_idle = 0.0
+
+
+func _follow_sprint_setting() -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null or not settings.has_method("get_sprint_mode"):
+		return
+	set_sprint_mode(StringName(settings.call("get_sprint_mode")))
+	if not settings.is_connected("setting_changed", _on_setting_changed):
+		settings.connect("setting_changed", _on_setting_changed)
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if key == &"sprint_mode" or key == &"all":
+		var settings := get_node_or_null(^"/root/Settings")
+		if settings != null:
+			set_sprint_mode(StringName(settings.call("get_sprint_mode")))
 
 
 ## Turns stick input into a camera-relative world direction.
