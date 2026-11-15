@@ -593,12 +593,9 @@ func _check_auto_in_game() -> void:
 	_backlog.close()
 	await _frames(2)
 
-	var first := String(_dialogue.get_current_line().get("text", ""))
-	var moved := await _wait_until(
-		func() -> bool: return String(_dialogue.get_current_line().get("text", "")) != first
-			or _dialogue.has_pending_choices(),
-		DialoguePlayback.MAX_PAUSE / Engine.time_scale + 3.0
-	)
+	var first := _line_text()
+	var line_moved := func() -> bool: return _line_text() != first or _dialogue.has_pending_choices()
+	var moved := await _wait_until(line_moved, DialoguePlayback.MAX_PAUSE / Engine.time_scale + 3.0)
 	_expect(moved, "D: auto did not pass a line by itself.")
 	var reached := await _wait_until(func() -> bool: return _dialogue.has_pending_choices(), 60.0)
 	_expect(reached, "D: auto did not carry the conversation to its choice.")
@@ -772,6 +769,10 @@ func _tap_sprint(player: PlayerController, moving: Vector2) -> void:
 
 
 # --- helpers ----------------------------------------------------------------------------
+
+
+func _line_text() -> String:
+	return String(_dialogue.get_current_line().get("text", ""))
 
 
 func _mode_keys() -> Dictionary:
