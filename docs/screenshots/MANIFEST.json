@@ -1,0 +1,1118 @@
+{
+  "format_version": 1,
+  "about": "Which frames in docs/screenshots are evidence of the current game and which are kept as history (#186). Checked by tools/screenshot_evidence.py; see docs/screenshots/README.md.",
+  "collections": [
+    {
+      "path": "classroom_art_review",
+      "owner": "docs/screenshots/classroom_art_review/README.md"
+    },
+    {
+      "path": "dialogue_identity",
+      "owner": "tests/capture_dialogue_identity.gd"
+    },
+    {
+      "path": "map_art",
+      "owner": "docs/screenshots/map_art/README.md"
+    }
+  ],
+  "frames": [
+    {
+      "file": "01_opening_line.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "0901fd6d812e0cf930dc9c31aad4f5def5c3f0661140830a86cc271280c21e3d",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
+    },
+    {
+      "file": "02_walking.png",
+      "status": "historical",
+      "caption": "The player after holding the forward key.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03_world_after_opening.png",
+      "status": "historical",
+      "caption": "The classroom with control returned and the objective set.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03a_click_destination.png",
+      "status": "historical",
+      "caption": "A left click on the floor: the destination ring and the walk starting.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03b_click_walking.png",
+      "status": "historical",
+      "caption": "Mid-walk, after one click on the floor: no keys held.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03c_wasd_cancels.png",
+      "status": "historical",
+      "caption": "Holding a movement key during an automatic walk: the keys take over.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03d_hover_cue.png",
+      "status": "historical",
+      "caption": "The hover cue on the timetable sheet: a dashed ring on the floor, a wider halo, and a shard floating above the object.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03f_click_inspect.png",
+      "status": "historical",
+      "caption": "The timetable sheet opened by a click, with no key pressed.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03g_refused_click.png",
+      "status": "historical",
+      "caption": "A click on a wall: the cue collapses inward in the refusal colour and fades, and no walk starts.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03h_classroom_desks.png",
+      "status": "historical",
+      "caption": "The classroom from the back: six student desks with the imported model and their chairs, at the positions the room has always had.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03i_own_desk_stationery.png",
+      "status": "historical",
+      "caption": "The player's own desk (DeskB2) from the sitting side: the stationery set on the top.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03j_protagonist.png",
+      "status": "historical",
+      "caption": "The player's authored protagonist, standing on the classroom floor, head to feet, under the nameplate the game shows.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "03k_q_in_the_classroom.png",
+      "status": "historical",
+      "caption": "Q in the classroom, wearing the authored model, from the side Q faces, under the nameplate the game shows.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "04_prompt_schoolbag.png",
+      "status": "historical",
+      "caption": "The interaction prompt with the key that is bound in the input map.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "05_inspection_text.png",
+      "status": "historical",
+      "caption": "The schoolbag description, reached by pressing E.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "06_chinese_world.png",
+      "status": "historical",
+      "caption": "The same classroom after switching to simplified Chinese at runtime.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "07_prompt_chinese.png",
+      "status": "historical",
+      "caption": "The interaction prompt after the switch: the prompt text is translated.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "08_repeat_read_chinese.png",
+      "status": "historical",
+      "caption": "The second read of the same object, in Chinese.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "09_prompt_talk_chinese.png",
+      "status": "historical",
+      "caption": "The prompt for a conversation, in Chinese.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "09b_click_person_approach.png",
+      "status": "historical",
+      "caption": "Q clicked from out of reach: the character walks over to them.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "10_conversation_chinese.png",
+      "status": "historical",
+      "caption": "A conversation line in Chinese, started by clicking Q from a distance.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "11_back_to_english.png",
+      "status": "historical",
+      "caption": "The same scene after switching back to English.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "12_door_prompt.png",
+      "status": "historical",
+      "caption": "The classroom door is open: its prompt changed with the story.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "12b_click_door.png",
+      "status": "historical",
+      "caption": "The door clicked with the mouse: the transition starts without a key.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13_corridor.png",
+      "status": "historical",
+      "caption": "The walkway outside the classroom.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13a_q_following.png",
+      "status": "historical",
+      "caption": "Q walking with the player in the walkway, at a natural distance.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13b_hover_trolley.png",
+      "status": "historical",
+      "caption": "The pointer resting on the cleaning trolley: the cue ring, the prompt, and the object E would use are the same thing.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13c_trolley_line.png",
+      "status": "historical",
+      "caption": "Looking at the trolley, with Q's comment because Q is there.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13d_corridor_speaker.png",
+      "status": "historical",
+      "caption": "The wall speaker: a short noise cue of its own, and a line about the class behind the wall.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13e_yard_door_prompt.png",
+      "status": "historical",
+      "caption": "The end door of the walkway, reached on foot.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13f_schoolyard_from_corridor.png",
+      "status": "historical",
+      "caption": "The yard entered from the school side, with Q arriving beside the player.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "13g_back_in_the_walkway.png",
+      "status": "historical",
+      "caption": "Back inside the walkway through the fire door.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "14_street.png",
+      "status": "historical",
+      "caption": "The street outside the school gate, with the arrival line finished.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "15_street_prompt.png",
+      "status": "historical",
+      "caption": "A street object with its prompt.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "15b_stair_prompt.png",
+      "status": "historical",
+      "caption": "The way up to the residential area.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "16_street_inspection.png",
+      "status": "historical",
+      "caption": "The street object's description.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "17_residential.png",
+      "status": "historical",
+      "caption": "The courtyard behind the school: three blocks and the stair.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "17b_mouse_choice_prompt.png",
+      "status": "historical",
+      "caption": "The stair conversation with its two options, opened by a mouse click.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "17c_mouse_choice_taken.png",
+      "status": "historical",
+      "caption": "The second option taken with the mouse; the panel shows the line it leads to.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "18_animal_prompt.png",
+      "status": "historical",
+      "caption": "The green animal, with the prompt to look at it.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "19_animal_conversation.png",
+      "status": "historical",
+      "caption": "Meeting the animal: the first line.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "20_alley.png",
+      "status": "historical",
+      "caption": "The lane behind the flats, with its arrival line finished.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "21_alley_notices_prompt.png",
+      "status": "historical",
+      "caption": "The notice wall in the alley, with its prompt.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "22_alley_notice_line.png",
+      "status": "historical",
+      "caption": "Reading the alley notices.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "f2a879f64d9da613c7db6486afed67843003e25a",
+        "date": "2026-11-09",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit f2a879f, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "24_gate_prompt.png",
+      "status": "historical",
+      "caption": "The estate gate at the end of the alley.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "25_playground_wide.png",
+      "status": "historical",
+      "caption": "The open yard from the gate: court, hoops, bench, climbing frame, shed.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "26_hoop_prompt.png",
+      "status": "historical",
+      "caption": "The near hoop, with its prompt.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "27_hoop_inspection.png",
+      "status": "historical",
+      "caption": "The hoop's description.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "28_shed_prompt.png",
+      "status": "historical",
+      "caption": "The equipment shed, with its prompt.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "32_far_gap_prompt.png",
+      "status": "historical",
+      "caption": "The gap in the fence at the far end of the yard.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "33_end_card.png",
+      "status": "historical",
+      "caption": "The end-of-slice card, now at the far end of the yard instead of the alley mouth.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "cue_candidate_brackets.png",
+      "status": "historical",
+      "caption": "Candidate brackets: the floor-click mark, from the player's own camera at 2.4 m.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "cue_candidate_commas.png",
+      "status": "historical",
+      "caption": "Candidate commas: the floor-click mark, from the player's own camera at 2.4 m.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "cue_candidate_tick.png",
+      "status": "historical",
+      "caption": "Candidate tick: the floor-click mark, from the player's own camera at 2.4 m.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "cue_candidates_abc.png",
+      "status": "historical",
+      "caption": "The three candidates side by side on the same floor, from one camera: A tick, B brackets, C commas. The shipped one is A.",
+      "size": [
+        1600,
+        900
+      ],
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_playthrough.gd (commit 359ed4a, before #88 stopped Actions committing frames). Later changes to the rooms, the people and the dialogue box are not in it; current frames are the artifacts of each Playthrough capture run. Comparison only."
+    },
+    {
+      "file": "editor-dock-abilities-1600x1000.png",
+      "status": "historical",
+      "caption": "The content editor dock: inner-voice abilities.",
+      "captured": {
+        "commit": "e20fced1c3c635fb254aa965a9fb81a966f225a7",
+        "date": "2026-11-09",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "Written back by the Playthrough capture workflow (EDITOR_CAPTURE.log) before #88 stopped Actions committing frames. The editor dock has not been photographed into the repository since; comparison only.",
+      "size": [
+        1600,
+        1000
+      ]
+    },
+    {
+      "file": "editor-dock-dialogue-1600x1000.png",
+      "status": "historical",
+      "caption": "The content editor dock: a dialogue graph.",
+      "captured": {
+        "commit": "281cbc30765fd3c9ab1dcc8328f02a726118d3d6",
+        "date": "2026-11-10",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "Written back by the Playthrough capture workflow (EDITOR_CAPTURE.log) before #88 stopped Actions committing frames. The editor dock has not been photographed into the repository since; comparison only.",
+      "size": [
+        1600,
+        1000
+      ]
+    },
+    {
+      "file": "editor-dock-inspection-1600x1000.png",
+      "status": "historical",
+      "caption": "The content editor dock: inspection text.",
+      "captured": {
+        "commit": "281cbc30765fd3c9ab1dcc8328f02a726118d3d6",
+        "date": "2026-11-10",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "Written back by the Playthrough capture workflow (EDITOR_CAPTURE.log) before #88 stopped Actions committing frames. The editor dock has not been photographed into the repository since; comparison only.",
+      "size": [
+        1600,
+        1000
+      ]
+    },
+    {
+      "file": "editor-dock-unsaved-1600x1000.png",
+      "status": "historical",
+      "caption": "The content editor dock with unsaved edits.",
+      "captured": {
+        "commit": "281cbc30765fd3c9ab1dcc8328f02a726118d3d6",
+        "date": "2026-11-10",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "Written back by the Playthrough capture workflow (EDITOR_CAPTURE.log) before #88 stopped Actions committing frames. The editor dock has not been photographed into the repository since; comparison only.",
+      "size": [
+        1600,
+        1000
+      ]
+    },
+    {
+      "file": "ui-choices-1600x900-zh.png",
+      "status": "historical",
+      "caption": "A real choice list (the class conversation), in Chinese.",
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
+      "size": [
+        1600,
+        900
+      ]
+    },
+    {
+      "file": "ui-dialogue-1280x720-en.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "6e5f7dea35d2a0b4ec6bcc8a2bf4dc32199833eebbb034d8195746d1b7cf1297",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
+    },
+    {
+      "file": "ui-dialogue-1280x720-zh.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "5bb935abc5caa4ed667d525e13ed5a423eb1dd4619583b3df0aef70b53cd94dc",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "zh-CN",
+        "node": "q_1",
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
+    },
+    {
+      "file": "ui-dialogue-1600x900-en.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "8511e0e072f4afc32aa162d3501e45fe70615416bb4c893d59ccb0db5d6ed5a0",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
+    },
+    {
+      "file": "ui-dialogue-1600x900-zh.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1600,
+        900
+      ],
+      "sha256": "f8fa1a08f8c26ab5e21a806ff89894503bcb86ed2d444eea9cd07d3f960526f6",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "zh-CN",
+        "node": "q_1",
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
+    },
+    {
+      "file": "ui-dialogue-1920x1080-en.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "1e12d5d938f797c06c762da0102f6dd61c835269809d781674e5cc92e877058e",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "en",
+        "node": "q_1",
+        "source": "data/dialogue/en/prologue.json",
+        "text": "Enjoy your nap, did you?"
+      }
+    },
+    {
+      "file": "ui-dialogue-1920x1080-zh.jpg",
+      "status": "current",
+      "captured": {
+        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
+        "run_id": 43610328784,
+        "workflow": "Playthrough capture",
+        "godot": "4.7.2"
+      },
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a8727bd71c63f12fb3c2a11278536c75be9eec9567e16fb6e6dcbbf8774edf4f",
+      "ui_fingerprint": "d265457cdbc0d4f4",
+      "shows": {
+        "conversation": "q_wake",
+        "kind": "dialogue",
+        "locale": "zh-CN",
+        "node": "q_1",
+        "source": "data/dialogue/zh-CN/prologue.json",
+        "text": "你刚才睡得还挺好啊。"
+      }
+    },
+    {
+      "file": "ui-inspection-1600x900-zh.png",
+      "status": "historical",
+      "caption": "The set square inspection, in Chinese.",
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
+      "size": [
+        1600,
+        900
+      ]
+    },
+    {
+      "file": "ui-log-1600x900-en.png",
+      "status": "historical",
+      "caption": "The dialogue log, in English.",
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
+      "size": [
+        1600,
+        900
+      ]
+    },
+    {
+      "file": "ui-recall-1600x900-zh.png",
+      "status": "historical",
+      "caption": "The set square recollection, in Chinese.",
+      "captured": {
+        "commit": "359ed4ad1d57f02490a09048ed4536405a82e6a6",
+        "date": "2026-11-11",
+        "workflow": "Playthrough capture"
+      },
+      "reason": "The last write-back of tests/capture_dialogue_ui.gd (commit 359ed4a, before #88 stopped Actions committing frames). It shows the dialogue box as it was then, with the source label at the right and no identity block (#167); comparison only.",
+      "size": [
+        1600,
+        900
+      ]
+    }
+  ]
+}

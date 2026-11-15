@@ -89,6 +89,13 @@ reason `docs/` is the largest directory in the tree — 28.9 MiB for 73 files. T
 acceptable because each file is small, but a new capture pass that commits a hundred frames
 is not: replace, do not accumulate.
 
+*Addendum (#186, proposal pending owner review):* frames that stopped being re-captured
+drifted from the game while still looking current. `docs/screenshots/MANIFEST.json` now
+labels every committed frame `current` or `historical`, and `tools/screenshot_evidence.py
+--check` (Godot CI) holds each current frame to its bytes, its size, the run that took it
+and the authored line it shows. Current frames are full-size JPEG re-encodings, which keeps
+the replacement smaller than the PNGs it retires.
+
 ### 5. Clones for collaborators and agents use a partial clone
 
 The history carries what this ADR cannot remove without a rewrite, so a working copy that

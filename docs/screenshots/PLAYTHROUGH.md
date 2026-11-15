@@ -1,5 +1,10 @@
 # Playthrough screenshots
 
+> **Historical.** This index and its frames are the last run written back to Git
+> (`359ed4a`, 2026-11-11), before #88. They show the game as it was then; see
+> `MANIFEST.json` and `README.md` in this folder for what is current. The opening line's
+> current frame is `01_opening_line.jpg`.
+
 Captured by `tests/capture_playthrough.gd` in a real Godot window under
 Xvfb (`--rendering-driver opengl3`, 1600x900). Interaction, dialogue
 advance, choice selection and the language switch were produced with
@@ -9,9 +14,11 @@ teleports so the capture fits in CI. Regenerate with the
 
 ## 01_opening_line
 
-The first line of the opening conversation, in English.
+The first line of the opening conversation, in English. The frame of this run showed a
+line the game no longer has and was replaced by a current capture (#186); the image below
+is that capture, not this run's.
 
-![01_opening_line](01_opening_line.png)
+![01_opening_line](01_opening_line.jpg)
 
 ## 02_walking
 
