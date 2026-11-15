@@ -218,9 +218,19 @@ def rewrite_details() -> None:
     check(rewrite.uid_before == "uid://bz" and rewrite.uid_after == "uid://b0", "scene header uid")
     check(rewrite.changed_keys == [], "the header's uid is not an INI key: %s" % rewrite.changed_keys)
     sidecar = uids.describe_rewrite("a.gd.uid", "uid://bz\n", "uid://b0\n")
-    check(sidecar.describe() == "a.gd.uid: uid uid://bz -> uid://b0; no key changed", sidecar.describe())
+    check(sidecar.describe() == "a.gd.uid: uid uid://bz -> uid://b0; nothing else changed",
+          sidecar.describe())
     fresh = uids.describe_rewrite("n.png.import", "", '[remap]\nuid="uid://b0"\n')
     check(fresh.describe() == "n.png.import: uid (none) -> uid://b0; [remap] uid", fresh.describe())
+    nested = uids.describe_rewrite(
+        "m.glb.import",
+        '[params]\n_subresources={\n"a": 1\n}\n',
+        '[params]\n_subresources={\n"a": 2\n}\n',
+    )
+    check(nested.describe() == "m.glb.import: uid kept; changed outside single-line keys "
+          "(a multi-line value or formatting)", nested.describe())
+    unchanged = uids.describe_rewrite("u.png.import", "[params]\na=1\n", "[params]\na=1\n")
+    check(unchanged.describe() == "u.png.import: uid kept; no change", unchanged.describe())
     same = uids.describe_rewrite("s.png.import", "[params]\na=1\n", "[params]\na=1\nb=2\n")
     check(not same.uid_changed and same.changed_keys == ["[params] b"], same.describe())
 

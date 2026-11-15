@@ -318,6 +318,7 @@ class Rewrite:
     uid_before: str  # "" when the committed file declared none
     uid_after: str
     changed_keys: list[str] = field(default_factory=list)  # "[section] key", sorted
+    text_changed: bool = True
 
     @property
     def uid_changed(self) -> bool:
@@ -328,7 +329,14 @@ class Rewrite:
             uid = "uid %s -> %s" % (self.uid_before or "(none)", self.uid_after or "(none)")
         else:
             uid = "uid kept"
-        keys = ", ".join(self.changed_keys) if self.changed_keys else "no key changed"
+        if self.changed_keys:
+            keys = ", ".join(self.changed_keys)
+        elif self.text_changed:
+            # `.glb.import` files keep their import options in multi-line values
+            # (`_subresources={...}`), whose inner lines are not `key=value` pairs.
+            keys = "changed outside single-line keys (a multi-line value or formatting)"
+        else:
+            keys = "nothing else changed" if self.uid_changed else "no change"
         return "%s: %s; %s" % (self.path, uid, keys)
 
 
@@ -401,7 +409,11 @@ def describe_rewrite(rel: str, before: str, after: str) -> Rewrite:
     """What changed between the committed and the imported text of one file."""
     old, new = _keyed_lines(before), _keyed_lines(after)
     changed = sorted(key for key in set(old) | set(new) if old.get(key) != new.get(key))
-    return Rewrite(rel, _declared_uid(rel, before), _declared_uid(rel, after), changed)
+    uid_before, uid_after = _declared_uid(rel, before), _declared_uid(rel, after)
+    # Whether anything besides the uid itself changed: in a sidecar the uid is the text.
+    rest_before = before.replace(uid_before, "") if uid_before else before
+    rest_after = after.replace(uid_after, "") if uid_after else after
+    return Rewrite(rel, uid_before, uid_after, changed, rest_before != rest_after)
 
 
 def import_delta(root: str, status: list[tuple[str, str]]) -> ImportDelta:
