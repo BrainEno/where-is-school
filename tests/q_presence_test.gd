@@ -201,6 +201,12 @@ func _check_play_through() -> void:
 
 ## 5 and 6: a save written in the classroom after Q's first talk, continued.
 func _check_continue(with_talk_done: bool, label: String) -> void:
+	# The previous case's world goes first: its director still listens to the flags, and
+	# `BPresence` answers `met_q` being *written* with `q_first_talk_done = false` (a talk
+	# begun, not finished). That is right in play and would put the flag into this
+	# fixture's save; a real pre-#171 file is applied with `replace_snapshot()`, which
+	# writes nothing.
+	await _free_world()
 	Harness.clear_session_state(self)
 	_state.set_flag(StoryFlags.MET_Q, true)
 	if with_talk_done:
