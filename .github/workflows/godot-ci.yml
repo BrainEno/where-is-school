@@ -260,6 +260,10 @@ jobs:
           # filed and filtered in reading order, opened from its key and the pause menu,
           # re-worded on a language switch, "new" tracked without saving, the HUD's note.
           run_check journal 240 godot --headless --resolution 1600x900 --path . --script res://tests/journal_test.gd || status=1
+          # Auto-advance and "skip read text": the read log survives damage, auto waits for
+          # the text and never makes a choice, skip passes only read lines and says why it
+          # stops, and the notebook's reading progress counts the shipped lines.
+          run_check dialogue_autoplay 240 godot --headless --resolution 1600x900 --path . --script res://tests/dialogue_autoplay_test.gd || status=1
           # The save file: what it refuses, and that a refused file changes nothing. No
           # scene here, so it is the fast place to look when saving breaks.
           run_check save_validation 180 godot --headless --path . --script res://tests/save_validation_test.gd || status=1

@@ -34,6 +34,8 @@ enum Mode { NONE, CONVERSATION, INSPECTION }
 @export var panel_path: NodePath = ^"../GameUI/DialoguePanel"
 @export var backlog_path: NodePath = ^"../GameUI/BacklogPanel"
 @export var check_overlay_path: NodePath = ^"../GameUI/CheckOverlay"
+## Where the auto/skip indicator lives. Optional: a scene without a HUD reads the same.
+@export var hud_path: NodePath = ^"../GameUI/HUD"
 
 var _game_state: Node = null
 var _narrative_state: Node = null
@@ -46,6 +48,8 @@ var _backlog: BacklogPanel = null
 var _overlay: CheckOverlay = null
 var _abilities: InnerAbilities = null
 var _resolver: CheckResolver = null
+## Auto-advance and "skip read text" (`DialogueAutoplay`), and the read log they share.
+var _autoplay: DialogueAutoplay = null
 
 var _mode: Mode = Mode.NONE
 var _queue: Array = []
@@ -62,6 +66,10 @@ var _history := DialogueHistory.new()
 ## tell a rebind from a new node, so the controller says so explicitly instead of
 ## guessing from the text.
 var _republishing: bool = false
+## Every line identity the content can show, counted once for the reading progress.
+var _reading_identities: Array[String] = []
+## The same identities by area, for "unread text left in ...".
+var _reading_areas: Dictionary = {}
 
 
 func _ready() -> void:
@@ -116,6 +124,8 @@ func _ready() -> void:
 	_runtime.conversation_started.connect(_on_runtime_conversation_started)
 	_runtime.conversation_finished.connect(_on_runtime_conversation_finished)
 
+	_setup_autoplay()
+
 	_panel.advance_requested.connect(_on_advance_requested)
 	_panel.choice_selected.connect(_on_choice_selected)
 	_panel.backlog_requested.connect(_on_backlog_requested)
@@ -131,6 +141,38 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null and loc.has_signal("locale_changed"):
 		loc.locale_changed.connect(apply_locale)
+
+
+## Auto and skip press continue for the player through `advance_presentation()`, so they
+## are a child of this node and nothing else in the game has to know about them. The read
+## log is the player's, not the run's: it is opened here and never touches the save.
+func _setup_autoplay() -> void:
+	_autoplay = DialogueAutoplay.new()
+	add_child(_autoplay)
+	_autoplay.bind(self, _panel, _backlog, _overlay, ReadLog.open())
+	for problem: String in _autoplay.get_read_log().get_problems():
+		push_warning("DialogueController: read log: %s" % problem)
+	var hud := get_node_or_null(hud_path)
+	if hud != null and hud.has_method("bind_reading_modes"):
+		hud.call("bind_reading_modes", _autoplay)
+
+
+func get_autoplay() -> DialogueAutoplay:
+	return _autoplay
+
+
+func get_read_log() -> ReadLog:
+	return _autoplay.get_read_log() if _autoplay != null else null
+
+
+## How much of the text the player has read, across every run, and which started areas
+## still have unread lines (see `ReadingProgress`). The content is counted once.
+func get_reading_progress() -> Dictionary:
+	if _reading_identities.is_empty():
+		_reading_areas = ReadingProgress.identities_by_area(_library, _inspections)
+		for area: String in _reading_areas.keys():
+			_reading_identities.append_array(_reading_areas[area] as Array[String])
+	return ReadingProgress.measure(get_read_log(), _reading_identities, _reading_areas)
 
 
 func is_busy() -> bool:

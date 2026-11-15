@@ -69,6 +69,11 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   source font) or is missing the game (dialogue data, theme, audio). The bundled CJK font
   ships as a 376 KiB subset of the text the game can draw, rebuilt by
   `tools/subset_font.py` and verified in both CI workflows.
+- Reading modes: auto-advance with an *Auto speed* setting, "skip read text" (held or
+  toggled, read text only or all), a read log kept outside the save
+  (`user://read_lines.json`) with a two-press reset in Settings, and a reading-progress
+  line in the notebook. See `docs/ARCHITECTURE.md` §5g "Reading modes" and
+  `tests/dialogue_autoplay_test.gd`.
 
 ### Planned, but deliberately not implemented yet
 - ~~Journal and unreliable route notebook.~~ Implemented: the notebook

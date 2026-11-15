@@ -696,6 +696,41 @@ JSON, the page, the panel inside the real pause menu, the HUD line, the route) a
 `tests/hud_layout_test.gd`, which fills the notebook with every entry the content can
 record and measures it at the largest text size at all five window sizes.
 
+### Reading modes: auto, skip and the read log (implemented contract)
+
+`scripts/dialogue/dialogue_autoplay.gd` is a child the `DialogueController` creates for
+itself. It presses continue for the player and does nothing else: every step goes through
+`DialogueController.advance_presentation()`, so effects, records, the backlog and the
+sequence director see exactly what a key press would have produced.
+
+- **Auto** (`dialogue_auto`, V / LT, a toggle) waits until a line has finished typing,
+  then for a pause plus a reading time (Latin 18 and CJK 7 characters per second, scaled
+  by the *Auto speed* setting) and continues. It waits indefinitely at a choice (it never
+  chooses), 1.5 s longer under a visible check, and not at all while the log is open.
+- **Skip** (`dialogue_skip`, Ctrl / RT, held or toggled per the *Skip key* setting)
+  finishes and continues lines every 0.06 s, but only lines read before in any run unless
+  *Skip* is set to all text. It stops at the first unread line, at a choice and at a
+  visible check, and the HUD says which. A toggled skip ends where it stops.
+- Neither runs while the tree is paused (pause menu, notebook, settings).
+
+`scripts/dialogue/read_log.gd` remembers which lines were read, by the identity
+`DialogueHistory.identify()` gives them (`conv:<conversation>/<node>`,
+`inspection:<id>/<variant>`). Lines without a stable identity are never marked. It is a
+player-profile file, `user://read_lines.json`, like `settings.cfg`: **not part of the save**
+(ADR 0005 is unchanged, and a new game does not forget what was read). A write goes to a
+`.tmp`, is read back, then replaces the file; a leftover `.tmp` is finished on load, and a
+file that does not parse is moved to `.broken` and reported, never deleted. Settings has a
+two-press *Clear reading history*.
+
+`scripts/dialogue/reading_progress.gd` counts every line the content can show (conversation
+nodes with text, inspection first reads and recollections; repeat reads are left out) and
+the notebook prints "Text read: N% (read of total lines)", plus the areas the player has
+started but not finished. An area with nothing read is never named, so the line cannot
+spoil a place. The HUD's top-right reading line names the keys during dialogue and shows
+the active mode or why skip stopped.
+
+Proven by `tests/dialogue_autoplay_test.gd`.
+
 ### Character name labels (`scripts/actors/character_nameplate.gd`)
 
 Grey-box people have no faces, so each actor scene carries a `CharacterNameplate`

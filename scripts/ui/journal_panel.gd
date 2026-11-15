@@ -48,6 +48,10 @@ var _title: Label = null
 var _subtitle: Label = null
 var _route: Label = null
 var _objective: Label = null
+## "Text read: 37% (120 of 324 lines)", across every run (`ReadingProgress`).
+var _progress: Label = null
+## Returns `ReadingProgress.measure()`'s dictionary; empty until the world provides one.
+var _progress_source: Callable = Callable()
 var _filters: HFlowContainer = null
 var _caveat: Label = null
 var _scroll: ScrollContainer = null
@@ -108,6 +112,10 @@ func _ready() -> void:
 	_objective = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.PAGE_TEXT)
 	_objective.name = "Objective"
 	column.add_child(_objective)
+	_progress = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
+	_progress.name = "ReadingProgress"
+	_progress.visible = false
+	column.add_child(_progress)
 	column.add_child(MenuStyle.rule(56.0))
 
 	_filters = HFlowContainer.new()
@@ -215,6 +223,22 @@ func get_route_text() -> String:
 
 func get_objective_text() -> String:
 	return _objective.text if _objective != null and _objective.visible else ""
+
+
+## Where the reading progress comes from: the dialogue controller's
+## `get_reading_progress`, which knows the content and the read log.
+func set_progress_source(source: Callable) -> void:
+	_progress_source = source
+	if visible:
+		_queue_rebuild()
+
+
+func has_progress_source() -> bool:
+	return _progress_source.is_valid()
+
+
+func get_progress_text() -> String:
+	return _progress.text if _progress != null and _progress.visible else ""
 
 
 ## Names for "Q said so". Defaults to the shared cached directory.
@@ -480,6 +504,19 @@ func _refresh_route() -> void:
 	_objective.text = L10n.t("journal.objective", {"objective": objective}) \
 		if not objective.is_empty() else ""
 	_objective.visible = not _objective.text.is_empty()
+	_refresh_progress()
+
+
+func _refresh_progress() -> void:
+	if _progress == null:
+		return
+	var progress: Dictionary = {}
+	if _progress_source.is_valid():
+		var value: Variant = _progress_source.call()
+		if value is Dictionary:
+			progress = value
+	_progress.text = ReadingProgress.describe(progress)
+	_progress.visible = not _progress.text.is_empty()
 
 
 func _refresh_hint() -> void:

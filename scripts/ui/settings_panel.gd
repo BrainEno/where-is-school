@@ -22,6 +22,10 @@ signal closed
 
 const CAPTURE_SECONDS := 6.0
 const PANEL_MAX_WIDTH := 980.0
+## "Clear reading history": not yet pressed, pressed once (asking), done.
+const FORGET_IDLE := 0
+const FORGET_ARMED := 1
+const FORGET_DONE := 2
 const OUTER_MARGIN := 40.0
 
 var _factor := 1.0
@@ -33,6 +37,9 @@ var _title: Label = null
 var _back: Button = null
 ## id -> the focusable control for that row.
 var _controls: Dictionary = {}
+var _forget_state := FORGET_IDLE
+## Lines in the read log file when no world is running; -1 until it is read.
+var _file_read_count := -1
 var _capture_action := StringName()
 var _capture_device := StringName()
 var _capture_deadline_msec := 0
@@ -105,6 +112,8 @@ func _ready() -> void:
 
 func open() -> void:
 	_cancel_capture()
+	_forget_state = FORGET_IDLE
+	_file_read_count = -1
 	_rebuild()
 	show()
 	_fit()
@@ -123,8 +132,9 @@ func is_open() -> bool:
 	return visible
 
 
-## The focusable control of a row: `text_size`, `text_speed`, `volume_master`,
-## `volume_music`, `volume_sfx`, `ui_scale`, `fullscreen`, `language`,
+## The focusable control of a row: `text_size`, `text_speed`, `auto_speed`, `skip_scope`,
+## `skip_mode`, `forget_read`, `volume_master`, `volume_music`, `volume_sfx`, `ui_scale`,
+## `fullscreen`, `language`,
 ## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`.
 func get_row_control(id: StringName) -> Control:
 	if id == &"back":
@@ -193,6 +203,16 @@ func _rebuild() -> void:
 	_heading("settings.section.text", true)
 	_choice_row(&"text_size", "settings.text_size", _text_size_options(), _current(&"text_size"))
 	_choice_row(&"text_speed", "settings.text_speed", _text_speed_options(), _current(&"text_speed"))
+	_choice_row(
+		&"auto_speed", "settings.auto_speed", _auto_speed_options(), _current(&"auto_speed")
+	)
+	_choice_row(
+		&"skip_scope", "settings.skip_scope", _skip_scope_options(), _current(&"skip_scope")
+	)
+	_choice_row(
+		&"skip_mode", "settings.skip_mode", _skip_mode_options(), _current(&"skip_mode")
+	)
+	_forget_read_row()
 	_heading("settings.section.sound")
 	for key: StringName in [&"master", &"music", &"sfx"]:
 		_volume_row(key)
@@ -237,8 +257,9 @@ func _rebuild() -> void:
 func _link_focus() -> void:
 	var grid: Array[Array] = []
 	for id: StringName in [
-		&"text_size", &"text_speed", &"volume_master", &"volume_music", &"volume_sfx",
-		&"ui_scale", &"fullscreen", &"language",
+		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"skip_mode",
+		&"forget_read", &"volume_master", &"volume_music", &"volume_sfx", &"ui_scale",
+		&"fullscreen", &"language",
 	]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -472,6 +493,27 @@ func _text_speed_options() -> Array:
 	return out
 
 
+func _auto_speed_options() -> Array:
+	var out: Array = []
+	for value: String in ["slow", "normal", "fast"]:
+		out.append({"value": value, "label": L10n.t("settings.auto_speed.%s" % value)})
+	return out
+
+
+func _skip_scope_options() -> Array:
+	var out: Array = []
+	for value: String in ["read", "all"]:
+		out.append({"value": value, "label": L10n.t("settings.skip_scope.%s" % value)})
+	return out
+
+
+func _skip_mode_options() -> Array:
+	var out: Array = []
+	for value: String in ["hold", "toggle"]:
+		out.append({"value": value, "label": L10n.t("settings.skip_mode.%s" % value)})
+	return out
+
+
 func _ui_scale_options() -> Array:
 	var out: Array = [{"value": "auto", "label": L10n.t("settings.ui_scale.auto")}]
 	for value: String in ["100", "125", "150", "200"]:
@@ -500,6 +542,18 @@ func _current(id: StringName) -> int:
 			return _index_of(_text_size_options(), _setting_string(settings, "get_text_size", "standard"))
 		&"text_speed":
 			return _index_of(_text_speed_options(), _setting_string(settings, "get_text_speed", "normal"))
+		&"auto_speed":
+			return _index_of(
+				_auto_speed_options(), _setting_string(settings, "get_auto_speed", "normal")
+			)
+		&"skip_scope":
+			return _index_of(
+				_skip_scope_options(), _setting_string(settings, "get_skip_scope", "read")
+			)
+		&"skip_mode":
+			return _index_of(
+				_skip_mode_options(), _setting_string(settings, "get_skip_mode", "hold")
+			)
 		&"ui_scale":
 			return _index_of(_ui_scale_options(), _setting_string(settings, "get_ui_scale", "auto"))
 		&"fullscreen":
@@ -561,6 +615,15 @@ func _apply_choice(id: StringName, value: String) -> void:
 		&"text_speed":
 			if settings != null:
 				settings.call("set_text_speed", StringName(value))
+		&"auto_speed":
+			if settings != null:
+				settings.call("set_auto_speed", StringName(value))
+		&"skip_scope":
+			if settings != null:
+				settings.call("set_skip_scope", StringName(value))
+		&"skip_mode":
+			if settings != null:
+				settings.call("set_skip_mode", StringName(value))
 		&"ui_scale":
 			if settings != null:
 				settings.call("set_ui_scale", StringName(value))
@@ -590,6 +653,87 @@ func _on_volume_changed(value: float, key: StringName, readout: Label) -> void:
 	var settings := _settings()
 	if settings != null:
 		settings.call("set_volume", key, int(value))
+
+
+# --- Reading history --------------------------------------------------------------
+# "Clear reading history" forgets which lines were read (`ReadLog`), so skip stops at
+# everything again and the notebook's progress starts over. It is the only thing on this
+# screen that cannot be undone, so it takes two presses: the first says what will go,
+# the second does it. Moving away disarms it. The save is never touched.
+
+
+func _forget_read_row() -> void:
+	var button := MenuStyle.entry_button("", MenuStyle.BODY_SIZE, _factor)
+	button.name = "ForgetRead"
+	MenuStyle.style_form_entry(button)
+	button.autowrap_mode = TextServer.AUTOWRAP_OFF
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.pressed.connect(_on_forget_read_pressed)
+	button.focus_exited.connect(_disarm_forget_read)
+	button.mouse_exited.connect(_disarm_forget_read)
+	_rows.add_child(button)
+	_controls[&"forget_read"] = button
+	_refresh_forget_read()
+
+
+func _on_forget_read_pressed() -> void:
+	if _forget_state == FORGET_ARMED:
+		_forget_read_log()
+		_forget_state = FORGET_DONE
+	elif _read_line_count() > 0:
+		_forget_state = FORGET_ARMED
+	_refresh_forget_read()
+
+
+func _disarm_forget_read() -> void:
+	if _forget_state == FORGET_ARMED:
+		_forget_state = FORGET_IDLE
+		_refresh_forget_read()
+
+
+func _refresh_forget_read() -> void:
+	var button := get_row_control(&"forget_read") as Button
+	if button == null:
+		return
+	var count := _read_line_count()
+	match _forget_state:
+		FORGET_ARMED:
+			button.text = L10n.t("settings.forget_read.confirm", {"count": count})
+		FORGET_DONE:
+			button.text = L10n.t("settings.forget_read.done")
+		_:
+			button.text = L10n.t("settings.forget_read", {"count": count})
+
+
+## The live log when a world is running (so the running game forgets too), else the file.
+func _read_log() -> ReadLog:
+	for node: Node in get_tree().get_nodes_in_group(DialogueAutoplay.GROUP):
+		var modes := node as DialogueAutoplay
+		if modes != null and modes.get_read_log() != null:
+			return modes.get_read_log()
+	return null
+
+
+func _read_line_count() -> int:
+	var live := _read_log()
+	if live != null:
+		return live.size()
+	if _file_read_count < 0:
+		_file_read_count = ReadLog.open().size()
+	return _file_read_count
+
+
+func _forget_read_log() -> void:
+	var live := _read_log()
+	if live != null:
+		live.forget()
+	else:
+		ReadLog.new().forget()
+	_file_read_count = 0
+
+
+func get_forget_read_state() -> int:
+	return _forget_state
 
 
 func _on_restore_pressed() -> void:

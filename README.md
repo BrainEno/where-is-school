@@ -147,6 +147,13 @@ controls, architecture, and the older known limitations.
 - **1–9** — pick a dialogue choice by number.
 - **Tab** — open or close the dialogue log. Entries keep their identity and their order
   when the language changes; only their words do.
+- **V** (controller: LT) — auto: once a line has finished typing, wait long enough to
+  read it and continue. Never makes a choice; pauses while the log is open. Press again
+  to stop. The speed is in Settings.
+- **Ctrl, held** (controller: RT) — skip text already read, in this run or any earlier
+  one. Stops at the first new line, at a choice and at a check, and says which. Settings
+  can make it skip everything, make it a press-to-start/press-to-stop key, or clear the
+  reading history (kept in its own file, never in the save).
 - **N** (controller: left stick click) — open the notebook: everything learned so far,
   filed by place and marked as seen, heard, remembered or imagined, with the places this
   run has reached. It pauses the game; Esc, B or N again closes it. It is also the

@@ -37,6 +37,20 @@ const NOTED_FONT_SIZE := 16
 const NOTED_TOP := 112.0
 const NOTED_RIGHT := 40.0
 
+## The reading-mode line: top right, above the "noted" line. While a conversation is up it
+## names the auto and skip keys in a quiet colour; when auto or skip is running it says
+## so in the accent colour; when held skip has stopped it says why. Outside dialogue it
+## only shows while auto is on, so the player knows the next conversation will play itself.
+const READING_FONT_SIZE := 15
+const READING_TOP := 76.0
+const READING_RIGHT := 40.0
+const READING_ACTIVE_COLOR := Color(0.851, 0.396, 0.255, 1.0)
+const READING_STOPPED_COLOR := Color(0.82, 0.553, 0.349, 1.0)
+const READING_HINT_COLOR := Color(0.611, 0.6, 0.561, 0.85)
+
+var _reading_label: Label = null
+var _reading_modes: DialogueAutoplay = null
+
 ## The source whose name the "noted" line shows, or -1 while it is not showing.
 var _noted_source: int = -1
 var _noted_label: Label = null
@@ -48,6 +62,7 @@ func _ready() -> void:
 	_prompt_label.text = ""
 	_prompt_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	_build_noted_label()
+	_build_reading_label()
 	refresh_language_text()
 	var loc := _loc()
 	if loc != null:
@@ -73,12 +88,15 @@ func set_text_scale(factor: float) -> void:
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key):
 		set_text_scale(UiTextScale.current(self))
+	if key in [&"skip_scope", &"skip_mode", &"all"]:
+		refresh_reading_text()
 
 
 ## Another device or binding: the prompt and the language hint name the new key.
 func _on_input_changed(_device: StringName) -> void:
 	refresh_language_text()
 	_refresh_noted_text()
+	refresh_reading_text()
 	if _prompt_label.visible and not _prompt_action.is_empty():
 		_prompt_label.text = "[%s] %s" % [_interact_key_label(), _prompt_action]
 
@@ -91,6 +109,7 @@ func _on_locale_changed(_locale: String) -> void:
 	refresh_language_text()
 	set_objective(_objective_key)
 	_refresh_noted_text()
+	refresh_reading_text()
 
 
 ## Shows the objective by locale key. Empty clears the line.
@@ -184,6 +203,7 @@ func set_dialogue_open(open: bool) -> void:
 	_dialogue_open = open
 	if _language_label != null:
 		_language_label.visible = not open
+	refresh_reading_text()
 
 
 ## Shared device-aware presentation; no scene-local device branching or binding lookup.
@@ -273,3 +293,89 @@ func _on_entry_recorded(entry: NarrativeEntry) -> void:
 ## A restored log is the run picked up again: nothing was just noted.
 func _on_entries_restored(_count: int) -> void:
 	clear_noted()
+
+
+# --- The reading-mode line --------------------------------------------------------------
+
+
+func _build_reading_label() -> void:
+	_reading_label = Label.new()
+	_reading_label.name = "ReadingModeLabel"
+	_reading_label.anchor_left = 1.0
+	_reading_label.anchor_right = 1.0
+	_reading_label.offset_left = -READING_RIGHT
+	_reading_label.offset_right = -READING_RIGHT
+	_reading_label.offset_top = READING_TOP
+	_reading_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_reading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_reading_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_reading_label.add_theme_color_override(&"font_shadow_color", Color(0.0, 0.0, 0.0, 0.65))
+	_reading_label.add_theme_constant_override(&"shadow_offset_x", 1)
+	_reading_label.add_theme_constant_override(&"shadow_offset_y", 1)
+	UiTextScale.set_base(_reading_label, READING_FONT_SIZE, UiTextScale.current(self))
+	_reading_label.hide()
+	add_child(_reading_label)
+
+
+## The dialogue controller hands over its auto/skip driver once it exists.
+func bind_reading_modes(modes: DialogueAutoplay) -> void:
+	if _reading_modes != null and is_instance_valid(_reading_modes) \
+			and _reading_modes.state_changed.is_connected(refresh_reading_text):
+		_reading_modes.state_changed.disconnect(refresh_reading_text)
+	_reading_modes = modes
+	if _reading_modes != null \
+			and not _reading_modes.state_changed.is_connected(refresh_reading_text):
+		_reading_modes.state_changed.connect(refresh_reading_text)
+	refresh_reading_text()
+
+
+func get_reading_text() -> String:
+	return _reading_label.text if _reading_label != null and _reading_label.visible else ""
+
+
+func get_reading_label() -> Label:
+	return _reading_label
+
+
+func refresh_reading_text() -> void:
+	if _reading_label == null:
+		return
+	var modes: DialogueAutoplay = null
+	if _reading_modes != null and is_instance_valid(_reading_modes):
+		modes = _reading_modes
+	var mode: StringName = modes.get_mode() if modes != null else DialogueAutoplay.MODE_OFF
+	var stopped: StringName = modes.get_stop_reason() if modes != null else &""
+	var keys := {
+		"auto": InputHint.action_key(self, &"dialogue_auto"),
+		"skip": InputHint.action_key(self, &"dialogue_skip"),
+	}
+	var text := ""
+	var color := READING_HINT_COLOR
+	if not String(stopped).is_empty() and _dialogue_open:
+		text = L10n.t("hud.reading_stopped.%s" % stopped, keys)
+		color = READING_STOPPED_COLOR
+	elif mode == DialogueAutoplay.MODE_SKIP:
+		var everything := modes != null and modes.get_skip_scope() == &"all"
+		text = L10n.t("hud.reading_skip_all" if everything else "hud.reading_skip", keys)
+		color = READING_ACTIVE_COLOR
+	elif mode == DialogueAutoplay.MODE_AUTO:
+		text = L10n.t("hud.reading_auto", keys)
+		color = READING_ACTIVE_COLOR
+	elif _dialogue_open and modes != null:
+		# A controller with nothing bound to skip is not told to press a keyboard key.
+		var skip_reachable := not MenuStyle.using_gamepad(self) or _has_pad_input(&"dialogue_skip")
+		var toggles := modes.get_skip_mode() == DialogueAutoplay.SKIP_TOGGLE
+		var hint := "hud.reading_hint_auto"
+		if skip_reachable:
+			hint = "hud.reading_hint_toggle" if toggles else "hud.reading_hint"
+		text = L10n.t(hint, keys)
+	_reading_label.text = text
+	_reading_label.add_theme_color_override(&"font_color", color)
+	_reading_label.visible = not text.is_empty()
+
+
+func _has_pad_input(action: StringName) -> bool:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null or not settings.has_method("primary_event"):
+		return true
+	return settings.call("primary_event", action, &"gamepad") != null

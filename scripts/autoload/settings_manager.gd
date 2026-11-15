@@ -43,6 +43,17 @@ const TEXT_SPEEDS: Array[StringName] = [&"slow", &"normal", &"fast", &"instant"]
 const TEXT_SPEED_CPS: Dictionary = {&"slow": 28.0, &"normal": 55.0, &"fast": 110.0, &"instant": 0.0}
 const DEFAULT_TEXT_SPEED := &"normal"
 
+## How long auto-advance waits on a finished line (`DialogueAutoplay.hold_seconds`).
+const AUTO_SPEEDS: Array[StringName] = [&"slow", &"normal", &"fast"]
+const DEFAULT_AUTO_SPEED := &"normal"
+## What holding skip passes over: only lines read before (in any run), or every line.
+const SKIP_SCOPES: Array[StringName] = [&"read", &"all"]
+const DEFAULT_SKIP_SCOPE := &"read"
+## How the skip key works: held down, or pressed once to start and once to stop (for
+## players who cannot comfortably hold a key or a trigger).
+const SKIP_MODES: Array[StringName] = [&"hold", &"toggle"]
+const DEFAULT_SKIP_MODE := &"hold"
+
 const VOLUME_KEYS: Array[StringName] = [&"master", &"music", &"sfx"]
 const VOLUME_BUS: Dictionary = {&"master": &"Master", &"music": &"Music", &"sfx": &"SFX"}
 const DEFAULT_VOLUME := 100
@@ -63,7 +74,8 @@ const DEVICE_GAMEPAD := &"gamepad"
 ## Everything the settings screen lets the player rebind, in the order it lists them.
 const REBINDABLE_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right", &"sprint",
-	&"interact", &"dialogue_advance", &"backlog", &"journal", &"cancel", &"pause",
+	&"interact", &"dialogue_advance", &"dialogue_auto", &"dialogue_skip", &"backlog",
+	&"journal", &"cancel", &"pause",
 	&"toggle_language", &"toggle_fullscreen",
 ]
 ## Pairs that may share an input because they never listen at the same time: the same
@@ -91,6 +103,9 @@ const JOY_BUTTON_NAMES: Dictionary = {
 
 var _text_size: StringName = DEFAULT_TEXT_SIZE
 var _text_speed: StringName = DEFAULT_TEXT_SPEED
+var _auto_speed: StringName = DEFAULT_AUTO_SPEED
+var _skip_scope: StringName = DEFAULT_SKIP_SCOPE
+var _skip_mode: StringName = DEFAULT_SKIP_MODE
 var _ui_scale: StringName = DEFAULT_UI_SCALE
 var _volumes: Dictionary = {}
 ## The bus levels `default_bus_layout.tres` sets, read once: 100 % means "as mixed".
@@ -164,6 +179,42 @@ func set_text_speed(value: StringName) -> void:
 ## Characters per second for the dialogue reveal; 0 means "show the whole line at once".
 func reveal_characters_per_second() -> float:
 	return float(TEXT_SPEED_CPS.get(_text_speed, 55.0))
+
+
+func get_auto_speed() -> StringName:
+	return _auto_speed
+
+
+func set_auto_speed(value: StringName) -> void:
+	if not AUTO_SPEEDS.has(value) or value == _auto_speed:
+		return
+	_auto_speed = value
+	_store(SECTION_TEXT, "auto_speed", String(value))
+	setting_changed.emit(&"auto_speed")
+
+
+func get_skip_scope() -> StringName:
+	return _skip_scope
+
+
+func set_skip_scope(value: StringName) -> void:
+	if not SKIP_SCOPES.has(value) or value == _skip_scope:
+		return
+	_skip_scope = value
+	_store(SECTION_TEXT, "skip", String(value))
+	setting_changed.emit(&"skip_scope")
+
+
+func get_skip_mode() -> StringName:
+	return _skip_mode
+
+
+func set_skip_mode(value: StringName) -> void:
+	if not SKIP_MODES.has(value) or value == _skip_mode:
+		return
+	_skip_mode = value
+	_store(SECTION_TEXT, "skip_mode", String(value))
+	setting_changed.emit(&"skip_mode")
 
 
 # --- Sound -------------------------------------------------------------------
@@ -706,6 +757,9 @@ func load_settings() -> void:
 		)
 	_text_size = DEFAULT_TEXT_SIZE
 	_text_speed = DEFAULT_TEXT_SPEED
+	_auto_speed = DEFAULT_AUTO_SPEED
+	_skip_scope = DEFAULT_SKIP_SCOPE
+	_skip_mode = DEFAULT_SKIP_MODE
 	_ui_scale = DEFAULT_UI_SCALE
 	for key: StringName in VOLUME_KEYS:
 		_volumes[key] = DEFAULT_VOLUME
@@ -714,6 +768,13 @@ func load_settings() -> void:
 	if loaded == OK:
 		_text_size = _read_choice(config, SECTION_TEXT, "size", TEXT_SIZES, DEFAULT_TEXT_SIZE)
 		_text_speed = _read_choice(config, SECTION_TEXT, "speed", TEXT_SPEEDS, DEFAULT_TEXT_SPEED)
+		_auto_speed = _read_choice(
+			config, SECTION_TEXT, "auto_speed", AUTO_SPEEDS, DEFAULT_AUTO_SPEED
+		)
+		_skip_scope = _read_choice(config, SECTION_TEXT, "skip", SKIP_SCOPES, DEFAULT_SKIP_SCOPE)
+		_skip_mode = _read_choice(
+			config, SECTION_TEXT, "skip_mode", SKIP_MODES, DEFAULT_SKIP_MODE
+		)
 		_ui_scale = _read_choice(config, SECTION_DISPLAY, "ui_scale", UI_SCALES, DEFAULT_UI_SCALE)
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
