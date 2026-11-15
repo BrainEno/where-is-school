@@ -46,7 +46,9 @@ LEAK_1 = (
 )
 VERBOSE = (
     "Leaked instance: Timer:9223372094867727394 - Node path: \n"
-    "Leaked instance: GDScript:9223372061229581301 - Resource path: res://tests/test_harness.gd\n"
+    # Resources are reference-counted, and the engine's later class test wins: a leaked
+    # script is named by its reference count, not its path.
+    "Leaked instance: GDScript:9223372061229581301 - Reference count: 2\n"
     "Leaked instance: Object:27195279376\n"
     "Hint: Leaked instances typically happen when nodes are removed from the scene tree "
     "(with `remove_child()`) but not freed (with `free()` or `queue_free()`).\n"
@@ -81,9 +83,18 @@ def leak_counts() -> None:
 def verbose_detail() -> None:
     report = noise.read_log("v", LEAK_2 + VERBOSE + IN_USE)
     check(report.leaked["Timer"] == 1, "a node outside the tree has an empty path: by class")
-    check(report.leaked["GDScript @ res://tests/test_harness.gd"] == 1, "a resource by its path")
+    check(report.leaked["GDScript (refs 2)"] == 1, "a reference-counted object by its count")
     check(report.leaked["Object"] == 1, "a bare object by its class")
     check(sum(report.leaked.values()) == 3, "three instances, the hint line is not one")
+    check(report.unread_leak_lines == [] and not report.missing_detail, "all detail read")
+    node = noise.read_log("n", LEAK_1 + "Leaked instance: Timer:12 - Node path: /root/Main/T\n")
+    check(node.leaked["Timer @ /root/Main/T"] == 1, "a node in a tree by its path")
+    odd = noise.read_log("o", LEAK_1 + "Leaked instance: Timer:12 - Owner: somewhere\n")
+    check(odd.leaked == {} and odd.unread_leak_lines == ["Leaked instance: Timer:12 - Owner: somewhere"],
+          "a shape the engine did not use to print is kept as unread, not dropped")
+    check(not odd.missing_detail, "an unread line is still detail")
+    check(noise.read_log("q", LEAK_2).missing_detail, "a count without detail is said to be one")
+    check(not noise.read_log("c", "PASS\n").missing_detail, "no leak, nothing missing")
     check(report.resources_in_use["res://tests/test_harness.gd (GDScript)"] == 1, "in use")
     check(report.orphan_stringnames == 1, "orphan StringName counted")
     check(report.buckets["resources_in_use"] == 1, "the in-use ERROR is bucketed")
@@ -119,7 +130,7 @@ def ladder() -> None:
     )
     rung2 = noise.read_log("probe_2_state_autoloads", LEAK_2 + "Leaked instance: Object:1\n"
                            "Leaked instance: GDScript:2 - Resource path: res://t.gd\n")
-    other = noise.read_log("camera_rig", LEAK_2)
+    other = noise.read_log("camera_rig", LEAK_2 + "Leaked instance: Object:1\n" + IN_USE)
     steps = noise.probe_ladder([rung2, other, rung0, rung1])
     check([s[0] for s in steps] == ["probe_0_bare", "probe_1_watchdog", "probe_2_state_autoloads"],
           "rungs in order, other logs left out: %s" % [s[0] for s in steps])
@@ -129,7 +140,15 @@ def ladder() -> None:
     markdown = "\n".join(noise.format_markdown([rung0, rung1, rung2, other]))
     check("## Minimal reproduction (probe ladder)" in markdown, "the ladder section is written")
     check("| probe_1_watchdog | 2 | `GDScript @ res://t.gd` x1 |" in markdown, "a rung row: " + markdown)
-    check("| `Object` | 3 |" in markdown, "an instance across logs")
+    check("| `Object` | 4 |" in markdown, "an instance across logs")
+    terse = noise.read_log("probe_0_bare", LEAK_2)
+    notices = "\n".join(noise.format_github([terse, other]))
+    check("probe_0_bare: leak 2, adds no --verbose detail" in notices,
+          "a rung without detail says so, not 'adds nothing': " + notices)
+    check("::notice title=still in use at exit 1/1::camera_rig: res://tests/test_harness.gd (GDScript)"
+          in notices, "resources still in use are published")
+    check("| probe_0_bare | 2 | no --verbose detail |" in "\n".join(noise.format_markdown([terse])),
+          "and the Markdown says so too")
 
 
 def github_output_is_bounded() -> None:

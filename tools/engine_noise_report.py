@@ -15,9 +15,13 @@ What it reads, per log:
 - every engine `ERROR:` / `WARNING:` line (a `SCRIPT ERROR` is counted as well, but it is
   already a failure in `tools/ci_run_check.sh`, so it is reported, not attributed), with
   the `at: function (file:line)` line the engine prints under it;
-- `--verbose` leak detail: `Leaked instance: Class:id - Node path: ...` /
-  `- Resource path: ...` (ObjectDB), `Resource still in use: res://... (Class)`, and
-  `Orphan StringName: ...`.
+- `--verbose` leak detail: `Leaked instance: Class:id` with at most one suffix, as
+  `ObjectDB::cleanup()` writes it - ` - Node path: ...` for a node, ` - Reference count: N`
+  for anything reference-counted (every Resource, so a leaked script or texture is named by
+  class and count, never by path), ` - Resource path: ...` otherwise - plus
+  `Resource still in use: res://... (Class)` and `Orphan StringName: ...`. A
+  `Leaked instance:` line in any other shape is counted as unread rather than skipped, so a
+  change in the engine's wording shows up as such instead of as "no leak detail".
 
 What it writes:
 
@@ -53,10 +57,12 @@ AT_RE = re.compile(r"^\s+at: (.*)$")
 OBJECTDB_RE = re.compile(r"(?:(\d+) )?ObjectDB instances? (?:were |was )?leaked at exit")
 LEAKED_INSTANCE_RE = re.compile(
     r"^Leaked instance: ([A-Za-z0-9_]+):(\d+)"
-    # A node outside the tree prints an empty path, and the line is stripped, so the
-    # space after the colon is optional.
-    r"(?: - Node path:\s*(.*?))?(?: - Resource path:\s*(.*?))?\s*$"
+    # One suffix at most: the engine assigns `extra_info` per class test, and the later
+    # test wins. A node outside the tree prints an empty path, and the line is stripped,
+    # so the space after the colon is optional.
+    r"(?: - (Node path|Resource path|Reference count):\s*(.*?))?\s*$"
 )
+LEAKED_ANY_RE = re.compile(r"^Leaked instance: ")
 RESOURCE_IN_USE_RE = re.compile(r"^Resource still in use: (.*?) \(([A-Za-z0-9_]+)\)\s*$")
 ORPHAN_STRINGNAME_RE = re.compile(r"^Orphan StringName: (.*)$")
 
@@ -116,22 +122,34 @@ class LogReport:
     warnings: int = 0
     script_errors: int = 0
     leak_count: int | None = None
-    leaked: Counter = field(default_factory=Counter)  # "Class @ path" -> count
+    leaked: Counter = field(default_factory=Counter)  # "Class @ path" / "Class (refs N)"
+    unread_leak_lines: list[str] = field(default_factory=list)
     resources_in_use: Counter = field(default_factory=Counter)
     orphan_stringnames: int = 0
     buckets: Counter = field(default_factory=Counter)
     unclassified: list[str] = field(default_factory=list)
     locations: dict[str, Counter] = field(default_factory=dict)  # bucket -> "at:" lines
 
+    @property
+    def leak_detail(self) -> int:
+        """How many leaked instances the `--verbose` detail named."""
+        return sum(self.leaked.values()) + len(self.unread_leak_lines)
+
+    @property
+    def missing_detail(self) -> bool:
+        """A leak was reported but no instance was named: the run was not verbose."""
+        return bool(self.leak_count) and self.leak_detail == 0
+
 
 def _instance_key(match: re.Match) -> str:
-    cls = match.group(1)
-    node_path = (match.group(3) or "").strip()
-    resource_path = (match.group(4) or "").strip()
-    if node_path:
-        return "%s @ %s" % (cls, node_path)
-    if resource_path:
-        return "%s @ %s" % (cls, resource_path)
+    """`Class @ path` for a node in a tree or a path-carrying resource, `Class (refs N)` for
+    a reference-counted object, plain `Class` otherwise (a node outside any tree included).
+    The instance id is left out on purpose: it differs between runs, the class does not."""
+    cls, kind, value = match.group(1), match.group(3), (match.group(4) or "").strip()
+    if kind == "Reference count" and value:
+        return "%s (refs %s)" % (cls, value)
+    if kind in ("Node path", "Resource path") and value:
+        return "%s @ %s" % (cls, value)
     return cls
 
 
@@ -171,6 +189,9 @@ def read_log(name: str, text: str) -> LogReport:
         instance = LEAKED_INSTANCE_RE.match(line.strip())
         if instance:
             report.leaked[_instance_key(instance)] += 1
+            continue
+        if LEAKED_ANY_RE.match(line.strip()):
+            report.unread_leak_lines.append(line.strip())
             continue
         resource = RESOURCE_IN_USE_RE.match(line.strip())
         if resource:
@@ -214,7 +235,20 @@ def probe_ladder(reports: list[LogReport]) -> list[tuple[str, int | None, Counte
     return ladder
 
 
+def _missing(reports: list[LogReport], name: str) -> bool:
+    return any(report.name == name and report.missing_detail for report in reports)
+
+
 # --- Output -----------------------------------------------------------------
+
+
+def _added_text(report_missing: bool, added: Counter, separator: str, code: bool) -> str:
+    if report_missing:
+        return "no --verbose detail"
+    template = "`%s` x%d" if code else "%s x%d"
+    return separator.join(template % item for item in sorted(added.items())) or (
+        "-" if code else "nothing"
+    )
 
 
 def _leak_text(count: int | None) -> str:
@@ -263,8 +297,7 @@ def format_markdown(reports: list[LogReport]) -> list[str]:
         ]
         for name, count, _instances, added in ladder:
             lines.append("| %s | %s | %s |" % (
-                name, _leak_text(count),
-                "<br>".join("`%s` x%d" % item for item in sorted(added.items())) or "-",
+                name, _leak_text(count), _added_text(_missing(reports, name), added, "<br>", True),
             ))
         lines.append("")
 
@@ -337,8 +370,7 @@ def format_github(reports: list[LogReport]) -> list[str]:
     """At most a handful of notices: the ladder, the leaked instances, the buckets."""
     rungs = [
         "%s: leak %s, adds %s" % (
-            name, _leak_text(count),
-            ", ".join("%s x%d" % item for item in sorted(added.items())) or "nothing",
+            name, _leak_text(count), _added_text(_missing(reports, name), added, ", ", False),
         )
         for name, count, _instances, added in probe_ladder(reports)
     ]
@@ -353,7 +385,15 @@ def format_github(reports: list[LogReport]) -> list[str]:
     unclassified = [
         "%s: %s" % (report.name, sample) for report in reports for sample in report.unclassified[:2]
     ]
+    in_use = [
+        "%s: %s" % (report.name, ", ".join(sorted(report.resources_in_use)))
+        for report in reports
+        if report.resources_in_use
+    ]
+    unread = sorted({line for report in reports for line in report.unread_leak_lines})
     out = _chunked("leak probe ladder", rungs) + _chunked("leaked at exit", leaks)
+    out += _chunked("still in use at exit", in_use)
+    out += _chunked("unread leak lines", unread[:12])
     out.append(_notice(
         "engine noise buckets", ", ".join("%s %d" % item for item in total.most_common()) or "none"
     ))
