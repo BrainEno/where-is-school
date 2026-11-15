@@ -14,6 +14,9 @@ const INSPECTION_DIR := "res://data/inspections"
 
 class InspectionData extends RefCounted:
 	var inspection_id: StringName = &""
+	## The chapter file it was read from (`classroom`, `street`, ...), so a view can say
+	## where a thing was seen without a second table of places.
+	var chapter: String = ""
 	var title: String = ""
 	## Short contextual prompt shown next to the interact key.
 	var prompt: String = "Look"
@@ -180,6 +183,12 @@ func get_inspection(inspection_id: StringName) -> InspectionData:
 	return _entries.get(_locale, {}).get(inspection_id, null)
 
 
+## The same inspection in a named language, whatever language is on screen. Null when
+## that language has no such inspection.
+func get_inspection_in(locale: String, inspection_id: StringName) -> InspectionData:
+	return _entries.get(L10n.normalize(locale), {}).get(inspection_id, null)
+
+
 func get_ids(locale: String = "") -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for key: Variant in _entries.get(locale if not locale.is_empty() else _locale, {}).keys():
@@ -248,6 +257,7 @@ func _parse_file(path: String, locale: String) -> void:
 			continue
 		var entry := _parse_entry(inspection_id, raw as Dictionary, path, locale)
 		if entry != null:
+			entry.chapter = path.get_file().get_basename()
 			entries[inspection_id] = entry
 
 

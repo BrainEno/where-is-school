@@ -654,6 +654,48 @@ Consequences:
 - `DialogueController._history` is the narrative record and
   `BacklogPanel.get_entry_identities()` must always agree with it.
 
+### The notebook (`scripts/ui/journal_panel.gd`, implemented contract)
+
+The backlog answers "what was said, in order"; the notebook answers "what do I know, and
+how do I know it". It reads `NarrativeState` and nothing else of the story, and writes to
+neither the log nor the flags.
+
+- **Words by identity.** An entry stores the words of the language it was recorded in.
+  `JournalCatalog` (`scripts/narrative/journal_catalog.gd`) is built once from the
+  `DialogueLibrary` and `InspectionLibrary` the dialogue controller already loaded and
+  indexes every `record` effect and inspection `record`/`recall` per language by
+  `entry_id`, so a row is worded in the language on screen and a language switch re-words
+  the page without adding or losing a row. An id the content no longer has keeps its
+  stored words. The catalog also reports what the content contract forbids: one id with
+  two sources, an id one language records and the other does not.
+- **Filed by place, in the player's order.** `JournalPage`
+  (`scripts/narrative/journal_page.gd`) is pure: entries in, plain dictionaries out.
+  Each entry is filed under the place its content belongs to (`place.<chapter>`; the
+  prologue is the classroom; inner-voice and unknown entries are "elsewhere"); sections
+  appear in the order their first entry was learned and rows keep the log's order. The
+  four kinds can be filtered, each with a one-line caveat on what it can be trusted for.
+  Someone else's account is attributed ("Q said so").
+- **Route line.** `JournalRoute` (`scripts/narrative/journal_route.gd`) lists the places
+  this run has reached from flags the story already keeps — the start location, a
+  location's `arrival_flags`/`arrival_flag` from `data/story/locations.json`, the
+  `current_location`, or a place something was learned in — in the catalog's file order,
+  never a place not reached, plus the objective on screen.
+- **"New" is presentation only.** Entries in the log when the notebook is created (a
+  Continue) or restored later are not news; entries recorded after are, until the
+  notebook is closed with them in it. The pause-menu entry counts them; the HUD shows a
+  short "noted" line naming the kind and the notebook key when one arrives. None of it is
+  saved — the save format is unchanged (ADR 0005).
+- **Opening it.** The `journal` action (N / left stick click, rebindable) during play
+  opens the pause menu as the notebook's frame: the world pauses, and closing the
+  notebook returns to the game. From the pause menu's Notebook entry, closing returns to
+  the menu. Esc/B, the menu button and the notebook key close it; ←/→ choose a kind,
+  ↑/↓ and Page Up/Down scroll.
+
+Proven by `tests/journal_test.gd` (catalog against an independent scan of the content
+JSON, the page, the panel inside the real pause menu, the HUD line, the route) and by
+`tests/hud_layout_test.gd`, which fills the notebook with every entry the content can
+record and measures it at the largest text size at all five window sizes.
+
 ### Character name labels (`scripts/actors/character_nameplate.gd`)
 
 Grey-box people have no faces, so each actor scene carries a `CharacterNameplate`

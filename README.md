@@ -147,6 +147,10 @@ controls, architecture, and the older known limitations.
 - **1–9** — pick a dialogue choice by number.
 - **Tab** — open or close the dialogue log. Entries keep their identity and their order
   when the language changes; only their words do.
+- **N** (controller: left stick click) — open the notebook: everything learned so far,
+  filed by place and marked as seen, heard, remembered or imagined, with the places this
+  run has reached. It pauses the game; Esc, B or N again closes it. It is also the
+  second entry of the pause menu, which says how many entries are new.
 - **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
 - **F11** — switch between windowed and fullscreen. The game opens in a 1600×900
   window, centred, and can be resized down to 1280×720. Leaving fullscreen puts the

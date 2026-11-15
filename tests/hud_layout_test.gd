@@ -251,6 +251,7 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 		_expect_controls_fit(panel, viewport, tag % "settings screen, scrolled")
 		panel.close()
 		await _frames(2)
+		await _measure_journal(menu, viewport, tag % "notebook")
 		menu.activate(&"new_game")
 		await _frames(3)
 		_expect(menu.get_confirm().visible, "%s: New game did not ask." % (tag % "pause menu"))
@@ -270,6 +271,43 @@ func _measure_menus(main: Node, viewport: Vector2, factor: float) -> void:
 	var save := root.get_node_or_null(^"Save")
 	if save != null:
 		save.delete_save()
+
+
+## The notebook with the real content in it: every entry the content can record, in the
+## order it was authored, so the longest lines and every place heading are on the page.
+func _measure_journal(menu: PauseMenu, viewport: Vector2, tag: String) -> void:
+	var narrative := root.get_node_or_null(^"NarrativeState")
+	if narrative == null:
+		_failures.append("%s: there is no NarrativeState to fill the notebook from." % tag)
+		return
+	menu.open_journal()
+	await _frames(2)
+	var journal := menu.get_journal_panel()
+	var catalog := journal.get_catalog() if journal != null else null
+	if journal == null or catalog == null:
+		_failures.append("%s: the notebook did not open with a content catalog." % tag)
+		return
+	narrative.clear()
+	for entry_id: StringName in catalog.get_entry_ids(L10n.current):
+		var found := catalog.lookup(entry_id, L10n.current)
+		narrative.record(
+			entry_id, int(found["source"]), StringName(found["speaker_id"]), String(found["text"])
+		)
+	journal.set_filter(JournalPage.ALL)
+	await _frames(4)
+	_expect(
+		journal.get_row_ids().size() == catalog.size(L10n.current),
+		"%s: %d rows for %d entries." % [tag, journal.get_row_ids().size(), catalog.size()]
+	)
+	_expect_controls_fit(journal, viewport, tag)
+	var scroll := journal.get_scroll()
+	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+	await _frames(2)
+	_expect_controls_fit(journal, viewport, tag + ", scrolled")
+	journal.close()
+	await _frames(2)
+	narrative.clear()
+	await _frames(1)
 
 
 func _measure_title(viewport: Vector2, factor: float) -> void:

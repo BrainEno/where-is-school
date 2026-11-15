@@ -71,7 +71,11 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   `tools/subset_font.py` and verified in both CI workflows.
 
 ### Planned, but deliberately not implemented yet
-- Journal and unreliable route notebook.
+- ~~Journal and unreliable route notebook.~~ Implemented: the notebook
+  (`scripts/ui/journal_panel.gd`, see `docs/ARCHITECTURE.md` §5g "The notebook") reads the
+  knowledge log by identity, files it by place, filters the four kinds and shows the
+  places reached. Still not built: any notebook *content* of its own (annotations,
+  contradictions the player can mark), which is a writing decision, not a system.
 - Dialogue portrait **art**. The contract exists (see the requirements table in §3):
   `CharacterProfile` has optional `portrait` / `portrait_path` and composition fields,
   and the dialogue panel has a layout for them. No profile sets one, because no 2D
@@ -558,8 +562,9 @@ reference is Disco Elysium: the usable object's own contour is outlined.
   are, new trigger rules, a way to tell them apart in the typography, and a rewrite of
   the three hidden checks that ship now — and it is not started.
 - Retuning the dice against real playtest data.
-- A journal/notebook for what the protagonist knows, once there is enough of it
-  to be worth reading.
+- ~~A journal/notebook for what the protagonist knows, once there is enough of it
+  to be worth reading.~~ Done: 55 entries per language is enough; see §2 and
+  `tests/journal_test.gd`.
 
 ### Phase 7 — Production readiness (planned, not started)
 - Versioned persistence, settings, accessibility.
