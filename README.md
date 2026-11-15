@@ -150,7 +150,7 @@ controls, architecture, and the older known limitations.
 - **V** (controller: LT) — auto: once a line has finished typing, wait long enough to
   read it and continue. Never makes a choice; pauses while the log is open. Press again
   to stop. The speed is in Settings.
-- **Ctrl, held** (controller: RT) — skip text already read, in this run or any earlier
+- **Ctrl, held** (controller: LB) — skip text already read, in this run or any earlier
   one. Stops at the first new line, at a choice and at a check, and says which. Settings
   can make it skip everything, make it a press-to-start/press-to-stop key, or clear the
   reading history (kept in its own file, never in the save).

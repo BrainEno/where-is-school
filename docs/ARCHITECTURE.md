@@ -707,7 +707,7 @@ sequence director see exactly what a key press would have produced.
   then for a pause plus a reading time (Latin 18 and CJK 7 characters per second, scaled
   by the *Auto speed* setting) and continues. It waits indefinitely at a choice (it never
   chooses), 1.5 s longer under a visible check, and not at all while the log is open.
-- **Skip** (`dialogue_skip`, Ctrl / RT, held or toggled per the *Skip key* setting)
+- **Skip** (`dialogue_skip`, Ctrl / LB, held or toggled per the *Skip key* setting)
   finishes and continues lines every 0.06 s, but only lines read before in any run unless
   *Skip* is set to all text. It stops at the first unread line, at a choice and at a
   visible check, and the HUD says which. A toggled skip ends where it stops.

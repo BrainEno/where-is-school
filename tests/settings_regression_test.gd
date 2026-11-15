@@ -479,7 +479,8 @@ func _check_restore_defaults() -> void:
 	_expect_rebound(&"sprint", _key(KEY_K), "B: sprint on K")
 	_expect_rebound(&"move_forward", _motion(JOY_AXIS_RIGHT_Y, -1.0), "B: forward on RS up")
 	_expect_rebound(&"backlog", _joy(JOY_BUTTON_X), "B: the log on X")
-	_expect_rebound(&"pause", _joy(JOY_BUTTON_LEFT_SHOULDER), "B: pause on LB")
+	# LB is skip's default controller input (dialogue_skip); Share is still free.
+	_expect_rebound(&"pause", _joy(JOY_BUTTON_MISC1), "B: pause on Share")
 	_expect(_read_file().has_section("input"), "B: the rebindings were not saved.")
 	_settings.call("restore_default_bindings")
 	var actions: Array = _settings.call("get_rebindable_actions")

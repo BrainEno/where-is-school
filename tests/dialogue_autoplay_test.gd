@@ -366,8 +366,8 @@ func _check_settings() -> void:
 		"D: auto's default key is not V.")
 	_expect(_settings.call("binding_label", &"dialogue_auto", &"gamepad") == "LT",
 		"D: auto's default controller input is not LT.")
-	_expect(_settings.call("binding_label", &"dialogue_skip", &"gamepad") == "RT",
-		"D: skip's default controller input is not RT.")
+	_expect(_settings.call("binding_label", &"dialogue_skip", &"gamepad") == "LB",
+		"D: skip's default controller input is not LB.")
 	var seen: Dictionary = {}
 	for action: Variant in actions:
 		for event: InputEvent in InputMap.action_get_events(StringName(action)):

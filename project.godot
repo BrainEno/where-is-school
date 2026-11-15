@@ -76,8 +76,8 @@ dialogue_auto={
 "events": [Object(InputEventKey, "physical_keycode": 86), Object(InputEventJoypadMotion, "device": -1, "axis": 4, "axis_value": 1.0)]
 }
 dialogue_skip={
-"deadzone": 0.5,
-"events": [Object(InputEventKey, "physical_keycode": 4194326), Object(InputEventJoypadMotion, "device": -1, "axis": 5, "axis_value": 1.0)]
+"deadzone": 0.2,
+"events": [Object(InputEventKey, "physical_keycode": 4194326), Object(InputEventJoypadButton, "device": -1, "button_index": 9, "pressed": true)]
 }
 backlog={
 "deadzone": 0.2,
