@@ -17,11 +17,12 @@ extends SceneTree
 ## 6. the default level is a bed: at least 10 dB below the bus's own trim;
 ## 7. `stop()` stops and `play_track()` starts again, and seeking past the loop end wraps
 ##    instead of falling silent;
-## 8. a music player that is freed - which is what quitting does to the autoload - waits
-##    until the audio server has dropped its playback (#67): freed while playing, after a
-##    `seek()` restarted the playback behind `play_track()`'s back, and after leaving the
-##    tree first (which only pauses a playback), nothing it played is left alive when
-##    `free()` returns. Before, every run ended with the track leaked at exit.
+## 8. a music player that is freed - which is what quitting does to the autoload - hands
+##    its playbacks back (#67): freed while playing, after a `seek()` restarted the
+##    playback behind `play_track()`'s back, and after leaving the tree first (which only
+##    pauses a playback), `free()` returns within the bound, having seen the audio thread
+##    mix, and nothing it played is alive once the main thread's next audio update has run.
+##    Before, every run ended with the track leaked at exit.
 ##
 ## What it cannot check: whether the loop *sounds* seamless, or how loud the guitar actually
 ## is in the mix. The seam is measured by `tools/build_music_loop.py` (the step across the
@@ -41,6 +42,9 @@ const SAMPLE_RATE := 48000
 const LENGTH_TOLERANCE := 0.05
 
 const TIMEOUT_SECONDS := 120.0
+
+## Frames a freed music player's playbacks may take to be gone (see `_check_release_on_free`).
+const RELEASE_FRAMES := 10
 
 var _failures: Array[String] = []
 var _checks: int = 0
@@ -342,23 +346,39 @@ func _check_release_on_free(label: String, seek_first: bool, leave_tree_first: b
 	var started := Time.get_ticks_msec()
 	extra.free()
 	var took := Time.get_ticks_msec() - started
-	var alive := 0
-	for watch: WeakRef in watches:
-		if watch.get_ref() != null:
-			alive += 1
+	# The main thread frees what the audio thread took off its list at its next audio
+	# update, once per frame - skipping a frame in which the audio thread is mid-list - and
+	# at quit the audio server's destruction does the same.
+	var frames := 0
+	var alive := _alive(watches)
+	while alive > 0 and frames < RELEASE_FRAMES:
+		await process_frame
+		frames += 1
+		alive = _alive(watches)
 	_expect(
 		alive == 0,
 		(
-			"%s: %d of %d playback(s) were still alive after the music player was freed; at"
-			+ " quit that is the ObjectDB leak of #67"
-		) % [label, alive, watches.size()]
+			"%s: %d of %d playback(s) were still alive %d frames after the music player was"
+			+ " freed; at quit that is the ObjectDB leak of #67"
+		) % [label, alive, watches.size(), frames]
 	)
 	var limit: int = MusicScript.RELEASE_TIMEOUT_MSEC + 50
 	_expect(
 		took <= limit,
 		"%s: freeing the music player took %d ms, over the %d ms bound" % [label, took, limit]
 	)
-	_notes.append("release on free (%s): %d playback(s) gone in %d ms" % [label, watches.size(), took])
+	_notes.append(
+		"release on free (%s): free() %d ms, %d playback(s) gone after %d frame(s)"
+		% [label, took, watches.size(), frames]
+	)
+
+
+func _alive(watches: Array[WeakRef]) -> int:
+	var alive := 0
+	for watch: WeakRef in watches:
+		if watch.get_ref() != null:
+			alive += 1
+	return alive
 
 
 # --- helpers -----------------------------------------------------------------------

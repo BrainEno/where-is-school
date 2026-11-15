@@ -23,15 +23,16 @@ extends Node
 ## `Music` global, exactly as they do with `CueAudio`.
 ##
 ## It also lets go of the track when the game quits (#67). Stopping a player only marks its
-## playback for removal; the audio thread drops it on its next mix step, a few tens of
-## milliseconds later. On quit the engine frees the scene tree and then shuts the audio
-## server down (`AudioServer::finish()`), which does not drain that list, so a track still
-## playing at quit outlived the tree: every run, the game's and each headless check's,
-## ended with "2 ObjectDB instances were leaked" (`AudioStreamPlaybackWAV` and this
-## `AudioStreamWAV`) and "1 resources still in use" naming this file. When this node is
-## freed it stops the music and waits, bounded by `RELEASE_TIMEOUT_MSEC`, until the audio
-## thread has dropped every playback it started - a weak reference to each says when -
-## so the leak is removed at its source instead of filtered out of the log.
+## playback for removal: the audio thread takes it off the server's list on its next mix,
+## a few tens of milliseconds later, and the main thread frees it at its next audio update
+## (or when the audio server is destroyed). On quit the engine frees the scene tree and
+## then stops the audio driver (`AudioServer::finish()`) without that mix having run, so a
+## track still playing at quit outlived everything: every run, the game's and each
+## headless check's, ended with "2 ObjectDB instances were leaked"
+## (`AudioStreamPlaybackWAV` and this `AudioStreamWAV`) and "1 resources still in use"
+## naming this file. When this node is freed it stops the music and waits, bounded by
+## `RELEASE_TIMEOUT_MSEC`, for one mix to run after the stop, so the leak is removed at its
+## source instead of filtered out of the log.
 
 ## The one track. A `res://` path, so no machine's absolute path can leak into a build.
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
@@ -50,8 +51,8 @@ const SILENT_DB := -60.0
 const FADE_IN_SECONDS := 3.0
 const FADE_OUT_SECONDS := 1.2
 
-## The longest quitting waits for the audio thread to drop the music. One mix step is about
-## 23 ms at the dummy driver's 1024 frames / 44.1 kHz; a real driver's buffer is similar.
+## The longest quitting waits for the audio thread to mix once more. One mix is about 23 ms
+## at the dummy driver's 1024 frames / 44.1 kHz; a real driver's buffer is similar.
 const RELEASE_TIMEOUT_MSEC := 250
 const RELEASE_POLL_MSEC := 2
 
@@ -156,11 +157,15 @@ func get_track_length() -> float:
 
 
 ## Stops the music at once and waits, at most `timeout_msec` and on the calling thread, until
-## the audio server has dropped every playback this player started. Returns how many it
-## still held when the wait ended: 0 is the clean case. Freeing this node calls it, so a
-## quit cannot leave the track to the engine's shutdown; a caller may also use it to make
-## sure the track is gone before something that must not hear it.
-func release_playbacks(timeout_msec: int = RELEASE_TIMEOUT_MSEC) -> int:
+## the audio thread has mixed once since the stop. That mix takes every stopped playback
+## off the audio server's list; the main thread then frees them at its next audio update,
+## or, at quit, when the audio server is destroyed - before the engine counts leaked
+## objects. Returns whether that mix was seen (`true` too when nothing was playing).
+## Freeing this node calls it, so a quit cannot leave the track to the engine's shutdown.
+##
+## The playbacks themselves cannot be watched to the end from here: the server holds them
+## until the main thread's own cleanup, which cannot run while this waits on it.
+func release_playbacks(timeout_msec: int = RELEASE_TIMEOUT_MSEC) -> bool:
 	_kill_tween()
 	if _player != null:
 		# `seek()` and a caller's own `play()` start playbacks `play_track()` never saw, so
@@ -169,18 +174,20 @@ func release_playbacks(timeout_msec: int = RELEASE_TIMEOUT_MSEC) -> int:
 		# its playback, and a paused one is never deleted.
 		_watch_playback()
 		_player.stop()
-	var deadline := Time.get_ticks_msec() + maxi(timeout_msec, 0)
-	var held := held_playbacks()
-	while held > 0 and Time.get_ticks_msec() < deadline:
-		OS.delay_msec(RELEASE_POLL_MSEC)
-		held = held_playbacks()
-	if held == 0:
+	if held_playbacks() == 0:
 		_playbacks.clear()
-	return held
+		return true
+	var stopped_usec := Time.get_ticks_usec()
+	var deadline := Time.get_ticks_msec() + maxi(timeout_msec, 0)
+	while not _mixed_since(stopped_usec):
+		if Time.get_ticks_msec() >= deadline:
+			return false
+		OS.delay_msec(RELEASE_POLL_MSEC)
+	return true
 
 
-## How many playbacks started here are still alive (playing, fading or awaiting the audio
-## thread). Public for the check that the release works.
+## How many playbacks started here are still alive: playing, fading, or waiting for the
+## audio thread or the main thread's cleanup.
 func held_playbacks() -> int:
 	var held := 0
 	for watch: WeakRef in _playbacks:
@@ -192,15 +199,25 @@ func held_playbacks() -> int:
 func _notification(what: int) -> void:
 	# Freed, not merely taken out of the tree: a node moved between parents keeps playing.
 	# The player child still exists here; it is freed after this node's notification.
-	if what == NOTIFICATION_PREDELETE:
-		var held := release_playbacks()
-		if held > 0:
-			# Not an error the player can act on, and not hidden either: the engine's own
-			# leak warning follows, and this says where it comes from.
-			print_verbose(
-				"Music: %d playback(s) still held by the audio server after %d ms."
-				% [held, RELEASE_TIMEOUT_MSEC]
-			)
+	if what == NOTIFICATION_PREDELETE and not release_playbacks():
+		# Not an error the player can act on (no mix in the time allowed: the audio driver
+		# is not running), and not hidden either: the engine's own leak warning follows,
+		# and this says where it comes from.
+		print_verbose(
+			"Music: the audio thread did not mix within %d ms of the stop; the playback may"
+			% RELEASE_TIMEOUT_MSEC
+			+ " be reported as leaked at exit."
+		)
+
+
+## Whether a mix has started since `usec` (`Time.get_ticks_usec()`) and finished. The driver
+## stamps the start of each mix under its lock, and reading the stamp takes the same lock,
+## so a mix in progress ends before this returns; `now` is read first, which can only make
+## the stamp look earlier than it was, never later.
+static func _mixed_since(usec: int) -> bool:
+	var now := Time.get_ticks_usec()
+	var since := AudioServer.get_time_since_last_mix()
+	return now - int(since * 1000000.0) > usec
 
 
 func _watch_playback() -> void:
