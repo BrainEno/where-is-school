@@ -314,7 +314,8 @@ shows half a sentence.
   rather than as a creature; its design is deliberately undecided.
 - Outdoor lighting is only tuned to be readable: strong flat shadows and a fog
   layer stand in for real dusk lighting. The courtyard's arrival framing is
-  sparse (`docs/screenshots/17_residential.png`).
+  sparse (the historical frame `docs/screenshots/17_residential.png`; current frames are the
+  Playthrough capture artifacts).
 - Following `docs/ARCHITECTURE.md` §5, the dialogue technology spike was not run
   and no addon is installed; this milestone uses the small project-owned layer.
 - One session save exists (#60, ADR 0005): `user://save.json` holds the flags, the

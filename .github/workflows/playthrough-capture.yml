@@ -42,6 +42,8 @@ on:
       - "tests/capture_editor_dock.gd"
       - "tests/interaction_outline_occlusion_test.gd"
       - "tests/capture_n_presence.gd"
+      - "tests/evidence_contract.gd"
+      - "tools/dialogue_evidence_relay.py"
   # `pull_request` has no branch filter: a pull request whose base is another
   # branch - a stacked one - is still a pull request, and until this was removed the
   # only place it could be tested was the branch it was stacked on, or a manual
@@ -64,7 +66,14 @@ on:
       - "tests/capture_editor_dock.gd"
       - "tests/interaction_outline_occlusion_test.gd"
       - "tests/capture_n_presence.gd"
+      - "tests/evidence_contract.gd"
+      - "tools/dialogue_evidence_relay.py"
   workflow_dispatch:
+    inputs:
+      relay_dialogue_evidence:
+        description: "Also capture the opening line and dialogue frames and publish them as annotations (#186)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -730,3 +739,169 @@ jobs:
         uses: ./.github/actions/evidence-check
         with:
           evidence: ${{ runner.temp }}/evidence
+
+  # --- Dialogue evidence relay (#186) -------------------------------------------------
+  # Dispatch-only: `gh workflow run playthrough-capture.yml --ref <branch> -f
+  # relay_dialogue_evidence=true`. It takes again the frames docs/screenshots keeps as the
+  # picture of the opening line and the reading band (`01_opening_line`,
+  # `ui-dialogue-<size>-<en|zh>`) and carries them somewhere a reviewer - or an agent that
+  # cannot reach the artifact store, where a download ends in EOF - can read them: the
+  # run's annotations. Nothing is committed by Actions (#88).
+  #
+  # - `relay-capture` runs the opening of tests/capture_playthrough.gd (stopping after its
+  #   first frame, WIS_CAPTURE_ONLY_OPENING=1) and tests/capture_dialogue_ui.gd, both asked
+  #   for a full-size JPEG beside each PNG (WIS_EVIDENCE_JPEG_QUALITY). Both refuse to save
+  #   these frames unless the panel draws the authored sentence of the opening's first node
+  #   in that language (tests/evidence_contract.gd), and print an EVIDENCE record for each.
+  #   `tools/dialogue_evidence_relay.py pack` checks every wanted frame has a record and a
+  #   JPEG of the recorded size, then splits frames.json and the JPEGs into 4000-character
+  #   base64 parts.
+  # - `relay-publish` is one job per 45 parts (GitHub keeps at most 50 annotations per job
+  #   and 10 notices per step); each prints its share as notices titled
+  #   `relay <file> <i>/<n>`. The number of jobs follows the size of the frames.
+  #
+  # `python3 tools/dialogue_evidence_relay.py fetch --run <id> --apply` rebuilds the files,
+  # checks each against the SHA-256 the capture recorded, and records them as current in
+  # docs/screenshots/MANIFEST.json.
+  relay-capture:
+    name: Relay - capture the opening line and the reading band
+    if: github.event_name == 'workflow_dispatch' && inputs.relay_dialogue_evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      shards: ${{ steps.pack.outputs.shards }}
+      parts: ${{ steps.pack.outputs.parts }}
+    env:
+      # The commit the dispatch ran on: the frames name it in the manifest.
+      RELAY_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ env.RELAY_COMMIT }}
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          set -uo pipefail
+          # `--import` waits for the queue to drain; the second pass starts from a populated
+          # cache and is the one whose script errors count.
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          if grep -qE "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log"; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 8 | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=import reported script errors::${summary}"
+            exit 1
+          fi
+
+      - name: Capture
+        id: capture
+        shell: bash
+        env:
+          WIS_EVIDENCE_JPEG_QUALITY: "0.9"
+        run: |
+          set +e -uo pipefail
+          # The committed copies of these frames live in the same folder the captures
+          # write to. Remove them first, so a frame this run failed to write cannot be
+          # relayed in its place.
+          for stem in 01_opening_line ui-dialogue-1280x720-en ui-dialogue-1280x720-zh \
+              ui-dialogue-1600x900-en ui-dialogue-1600x900-zh ui-dialogue-1920x1080-en \
+              ui-dialogue-1920x1080-zh; do
+            rm -f "docs/screenshots/${stem}.png" "docs/screenshots/${stem}.jpg"
+          done
+          WIS_CAPTURE_ONLY_OPENING=1 xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_playthrough.gd > "${RUNNER_TEMP}/opening.log" 2>&1
+          opening=$?
+          xvfb-run -a --server-args="-screen 0 3840x2160x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_dialogue_ui.gd > "${RUNNER_TEMP}/ui.log" 2>&1
+          ui=$?
+          echo "opening exit=${opening}, dialogue ui exit=${ui}"
+          for log in opening ui; do
+            grep -E "^EVIDENCE |FAILURE|RESULT|SCRIPT ERROR|^SHOT " "${RUNNER_TEMP}/${log}.log" | head -n 40
+            grep -E "FAILURE|SCRIPT ERROR" "${RUNNER_TEMP}/${log}.log" | head -n 5 | cut -c1-600 \
+              | while IFS= read -r line; do echo "::error title=${log} capture::${line}"; done
+          done
+          # What each frame shows, readable from the run report without the artifact.
+          cat "${RUNNER_TEMP}/opening.log" "${RUNNER_TEMP}/ui.log" | grep -E "^EVIDENCE " | cut -c1-900 \
+            | while IFS= read -r line; do echo "::notice title=evidence record::${line#EVIDENCE }"; done
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp docs/screenshots/01_opening_line.* docs/screenshots/ui-dialogue-*.* "${RUNNER_TEMP}/frames/" 2>/dev/null || true
+          cp docs/screenshots/PLAYTHROUGH.log docs/screenshots/UI_CAPTURE.log "${RUNNER_TEMP}/frames/" 2>/dev/null || true
+          if [ "${opening}" -ne 0 ] || [ "${ui}" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Pack the frames into annotation parts
+        id: pack
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 tools/dialogue_evidence_relay.py pack \
+            --log "${RUNNER_TEMP}/opening.log" --log "${RUNNER_TEMP}/ui.log" \
+            --frames docs/screenshots --out "${RUNNER_TEMP}/relay"
+          ls -l "${RUNNER_TEMP}/relay"
+
+      - name: Upload the frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dialogue-evidence-relay-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/relay/
+            ${{ runner.temp }}/opening.log
+            ${{ runner.temp }}/ui.log
+            ${{ runner.temp }}/import-2.log
+          if-no-files-found: warn
+
+  relay-publish:
+    name: Relay - publish parts (shard ${{ matrix.shard }})
+    needs: relay-capture
+    if: needs.relay-capture.result == 'success' && needs.relay-capture.outputs.shards != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.relay-capture.outputs.shards) }}
+    env:
+      PER_JOB: 45
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dialogue-evidence-relay-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/evidence
+
+      - name: Select this shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          queue=$(find "${RUNNER_TEMP}/evidence" -name queue.txt | head -n 1)
+          first=$(( SHARD * PER_JOB + 1 ))
+          last=$(( first + PER_JOB - 1 ))
+          sed -n "${first},${last}p" "${queue}" > "${RUNNER_TEMP}/shard.txt"
+          echo "shard ${SHARD}: lines ${first}-${last} of $(wc -l < "${queue}"), $(wc -l < "${RUNNER_TEMP}/shard.txt") here"
+
+      # Ten notices per step, five steps: 45 parts and room for nothing else to be dropped.
+      - name: Publish 1/5
+        shell: bash
+        run: sed -n '1,9p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 2/5
+        shell: bash
+        run: sed -n '10,18p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 3/5
+        shell: bash
+        run: sed -n '19,27p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 4/5
+        shell: bash
+        run: sed -n '28,36p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 5/5
+        shell: bash
+        run: sed -n '37,45p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
