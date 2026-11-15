@@ -131,7 +131,9 @@ jobs:
         shell: bash
         run: |
           rm -f hygiene-logs/import.log
-          python3 tools/engine_noise_report.py hygiene-logs --github --summary "${GITHUB_STEP_SUMMARY}" > hygiene-logs/report.md
+          # The runner reads `::notice` commands from this step's own output, so the report
+          # goes through `tee`: redirected into the file alone, the annotations never reach it.
+          python3 tools/engine_noise_report.py hygiene-logs --github --summary "${GITHUB_STEP_SUMMARY}" | tee hygiene-logs/report.md
           echo "report: hygiene-logs/report.md ($(wc -l < hygiene-logs/report.md) lines)"
 
       - name: Keep the logs

@@ -185,24 +185,44 @@ def after_import() -> None:
         write(root, "kept.gd", "")
         write(root, "made.gd", "")
         write(root, "skipped.gd", "")
-        write(root, "m.png.import", 'uid="%s"\n' % uids.encode(3))
+        write(root, "m.png.import", '[remap]\n\nuid="%s"\n' % uids.encode(3))
+        # Non-canonical on purpose: whether an import rewrites such a value is the question.
+        write(root, "z.png.import", '[remap]\n\nuid="uid://bz"\n\n[params]\nmipmaps=false\n')
         subprocess.run(git + ["add", "-A"], check=True)
         subprocess.run(git + ["commit", "-q", "-m", "fixture"], check=True)
         # What an engine import does: create one sidecar, rewrite one .import, and leave
         # `.godot/` behind (which is not the repository's business).
         write(root, "made.gd.uid", uids.encode(31337) + "\n")
-        write(root, "m.png.import", 'uid="%s"\ndest_files=[]\n' % uids.encode(3))
+        write(root, "m.png.import", '[remap]\n\nuid="%s"\n\n[deps]\ndest_files=[]\n' % uids.encode(3))
+        write(root, "z.png.import", '[remap]\n\nuid="uid://b0"\n\n[params]\nmipmaps=false\n')
         write(root, ".godot/imported/x.ctex", "x")
         code, out = run(root, "--after-import", "--github")
         check(code == 0, "--after-import reports, never fails")
-        check("1 sidecar(s) created by the engine, 1 tracked UID file(s) rewritten, "
+        check("1 sidecar(s) created by the engine, 2 tracked UID file(s) rewritten, "
               "2 script/shader file(s) still without one" in out, "delta counts: " + out)
+        check("REWRITTEN m.png.import: uid kept; [deps] dest_files" in out,
+              "a rewrite that keeps the uid names the keys it changed: " + out)
+        check("REWRITTEN z.png.import: uid uid://bz -> uid://b0; [remap] uid" in out,
+              "a normalised uid is shown with both values")
+        check("2 rewritten (1 with a new uid)" in out, "the summary notice counts uid changes")
         check("CREATED made.gd.uid %s" % uids.encode(31337) in out, "the engine's value is kept")
-        check("REWRITTEN m.png.import" in out, "the rewritten .import is listed")
         check("NOT REQUESTED kept.gd" in out and "NOT REQUESTED skipped.gd" in out, "untouched scripts")
         check(".godot" not in out, ".godot/ is ignored")
         check("::notice title=engine sidecars 1/1::made.gd.uid=%s" % uids.encode(31337) in out,
               "the created sidecar is published as a notice")
+
+
+def rewrite_details() -> None:
+    header = '[gd_scene load_steps=2 format=3 uid="%s"]\n\n[node name="R" type="Node3D"]\n'
+    rewrite = uids.describe_rewrite("a.tscn", header % "uid://bz", header % "uid://b0")
+    check(rewrite.uid_before == "uid://bz" and rewrite.uid_after == "uid://b0", "scene header uid")
+    check(rewrite.changed_keys == [], "the header's uid is not an INI key: %s" % rewrite.changed_keys)
+    sidecar = uids.describe_rewrite("a.gd.uid", "uid://bz\n", "uid://b0\n")
+    check(sidecar.describe() == "a.gd.uid: uid uid://bz -> uid://b0; no key changed", sidecar.describe())
+    fresh = uids.describe_rewrite("n.png.import", "", '[remap]\nuid="uid://b0"\n')
+    check(fresh.describe() == "n.png.import: uid (none) -> uid://b0; [remap] uid", fresh.describe())
+    same = uids.describe_rewrite("s.png.import", "[params]\na=1\n", "[params]\na=1\nb=2\n")
+    check(not same.uid_changed and same.changed_keys == ["[params] b"], same.describe())
 
 
 def notices_are_chunked() -> None:
@@ -228,6 +248,7 @@ def main() -> int:
     same_owner_twice_is_one_identity()
     findings_do_not_fail()
     after_import()
+    rewrite_details()
     notices_are_chunked()
     this_repository()
     if FAILURES:

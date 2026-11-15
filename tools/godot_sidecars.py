@@ -311,9 +311,31 @@ def audit(inventory: Inventory) -> Audit:
 
 
 @dataclass
+class Rewrite:
+    """One tracked UID-bearing file the import changed, and how."""
+
+    path: str
+    uid_before: str  # "" when the committed file declared none
+    uid_after: str
+    changed_keys: list[str] = field(default_factory=list)  # "[section] key", sorted
+
+    @property
+    def uid_changed(self) -> bool:
+        return self.uid_before != self.uid_after
+
+    def describe(self) -> str:
+        if self.uid_changed:
+            uid = "uid %s -> %s" % (self.uid_before or "(none)", self.uid_after or "(none)")
+        else:
+            uid = "uid kept"
+        keys = ", ".join(self.changed_keys) if self.changed_keys else "no key changed"
+        return "%s: %s; %s" % (self.path, uid, keys)
+
+
+@dataclass
 class ImportDelta:
     created: list[tuple[str, str]] = field(default_factory=list)  # (sidecar, value)
-    rewritten: list[str] = field(default_factory=list)
+    rewritten: list[Rewrite] = field(default_factory=list)
     still_missing: list[str] = field(default_factory=list)
 
 
@@ -337,6 +359,51 @@ def git_status(root: str) -> list[tuple[str, str]]:
     return entries
 
 
+def _declared_uid(rel: str, text: str) -> str:
+    """The UID a file's own text declares, or "" (sidecar, `.import` or resource header)."""
+    if rel.endswith(".uid"):
+        return text.strip()
+    for line in text.splitlines():
+        match = IMPORT_UID_RE.match(line) if rel.endswith(".import") else HEADER_RE.match(line)
+        if match:
+            return match.group(1)
+    return ""
+
+
+def _keyed_lines(text: str) -> dict[str, str]:
+    """`"[section] key"` -> value for an INI-like Godot file (`.import`, `.tscn` header).
+
+    A key repeated in one section keeps its last value; lines that are not `key=value`
+    (headers of `.tscn` nodes, blank lines) only change the section.
+    """
+    section = ""
+    lines: dict[str, str] = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            section = stripped.split()[0].strip("[]")
+            continue
+        key, sep, value = stripped.partition("=")
+        if sep and key and " " not in key:
+            lines["[%s] %s" % (section, key)] = value
+    return lines
+
+
+def committed_text(root: str, rel: str) -> str:
+    """`rel` as HEAD has it, or "" when it is not in HEAD."""
+    result = subprocess.run(
+        ["git", "-C", root, "show", "HEAD:" + rel], capture_output=True, check=False
+    )
+    return result.stdout.decode("utf-8", errors="replace") if result.returncode == 0 else ""
+
+
+def describe_rewrite(rel: str, before: str, after: str) -> Rewrite:
+    """What changed between the committed and the imported text of one file."""
+    old, new = _keyed_lines(before), _keyed_lines(after)
+    changed = sorted(key for key in set(old) | set(new) if old.get(key) != new.get(key))
+    return Rewrite(rel, _declared_uid(rel, before), _declared_uid(rel, after), changed)
+
+
 def import_delta(root: str, status: list[tuple[str, str]]) -> ImportDelta:
     delta = ImportDelta()
     created_owners = set()
@@ -345,7 +412,9 @@ def import_delta(root: str, status: list[tuple[str, str]]) -> ImportDelta:
             delta.created.append((path, _read_text(root, path).strip()))
             created_owners.add(path[: -len(".uid")])
         elif code != "??" and path.endswith(UID_BEARING):
-            delta.rewritten.append(path)
+            delta.rewritten.append(
+                describe_rewrite(path, committed_text(root, path), _read_text(root, path))
+            )
     inventory = read_inventory(root)
     before = audit(inventory).missing_sidecars
     delta.still_missing = [rel for rel in before if rel not in created_owners]
@@ -472,18 +541,24 @@ def format_delta(delta: ImportDelta, github: bool) -> list[str]:
         % (len(delta.created), len(delta.rewritten), len(delta.still_missing))
     ]
     lines += ["CREATED %s %s" % (path, value) for path, value in delta.created]
-    lines += ["REWRITTEN %s" % path for path in delta.rewritten]
+    lines += ["REWRITTEN %s" % rewrite.describe() for rewrite in delta.rewritten]
     lines += ["NOT REQUESTED %s" % path for path in delta.still_missing]
     if github:
+        uid_changes = [rewrite for rewrite in delta.rewritten if rewrite.uid_changed]
         lines.append(_github(
             "notice", "UID sidecars after import",
-            "%d created, %d rewritten, %d not requested by the engine"
-            % (len(delta.created), len(delta.rewritten), len(delta.still_missing)),
+            "%d created, %d rewritten (%d with a new uid), %d not requested by the engine"
+            % (
+                len(delta.created), len(delta.rewritten), len(uid_changes),
+                len(delta.still_missing),
+            ),
         ))
         lines += chunked_notices(
             "engine sidecars", ["%s=%s" % (path, value) for path, value in delta.created]
         )
-        lines += chunked_notices("import rewrote", delta.rewritten)
+        lines += chunked_notices(
+            "import rewrote", [rewrite.describe() for rewrite in delta.rewritten]
+        )
         lines += chunked_notices("sidecar not requested", delta.still_missing)
     return lines
 
