@@ -111,7 +111,11 @@ Do not multiply both. `tests/classroom_wall_render_test.gd` compares actual pixe
 a single-alpha control; `tests/capture_classroom_art.gd` records the actual classroom. Both run on
 Forward+ and Compatibility in `.github/workflows/classroom-art-evidence.yml`, each with its own
 verdict (issue #150; see `docs/screenshots/classroom_art_review/README.md`, section 8).
-Glass remains the deliberate surface-alpha exception.
+Glass remains the deliberate surface-alpha exception. The same jobs run
+`tests/capture_classroom_clock.gd` (#173), which reads the time back off rendered frames of
+the front-wall clock and fails unless it reads nine o'clock from every view; repainting the
+dial (`assets/materials/classroom/clock_dial.tres`) or the hands' material keeps that check
+honest (`docs/screenshots/README.md`, "The classroom clock").
 
 The generator uses Godot 4.7.2's canonical 34-character UID encoding; check the sidecars
 again after a real import to catch editor rewrites. Curated actual before/after frames,

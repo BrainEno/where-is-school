@@ -36,6 +36,7 @@ Usage:
         --frames build/clock --out "$RUNNER_TEMP/relay"
     python3 tools/dialogue_evidence_relay.py fetch --run 123456789            # verify only
     python3 tools/dialogue_evidence_relay.py fetch --run 123456789 --apply    # and write
+    python3 tools/dialogue_evidence_relay.py fetch --run 123456789 --out /tmp/frames  # just look
 """
 
 from __future__ import annotations
@@ -303,6 +304,10 @@ def main(argv: list[str] | None = None) -> int:
     fetch_parser = sub.add_parser("fetch", help="rebuild the frames from a run's annotations")
     fetch_parser.add_argument("--run", type=int, required=True)
     fetch_parser.add_argument("--apply", action="store_true", help="write them into docs/screenshots")
+    fetch_parser.add_argument(
+        "--out", type=Path, default=None,
+        help="write the rebuilt files into this folder to look at, without touching docs/screenshots",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "pack":
@@ -343,10 +348,38 @@ def main(argv: list[str] | None = None) -> int:
     if run.get("head_sha") and index.get("commit") and run["head_sha"] != index["commit"]:
         print(f"error: the frames say commit {index['commit']}, the run is {run['head_sha']}", file=sys.stderr)
         return 1
+    if args.out is not None:
+        args.out.mkdir(parents=True, exist_ok=True)
+        for name, data in sorted(files.items()):
+            (args.out / name).write_bytes(data)
+        print(f"wrote {len(files)} file(s) to {args.out}")
     if args.apply:
+        refused = not_evidence(index)
+        for problem in refused:
+            print(f"error: {problem}", file=sys.stderr)
+        if refused:
+            return 1
         for change in apply(index, files, run=run):
             print(change)
     return 0
+
+
+def not_evidence(index: dict) -> list[str]:
+    """Frames a run carried that must not become current evidence: a clock frame whose own
+    pixels did not read the time its scene was set to (#173). The relay publishes those too,
+    so a failed reading can be looked at (`fetch --out`), but `--apply` refuses them."""
+    problems = []
+    for frame in index.get("frames", []):
+        shows = frame.get("record", {}).get("shows", {})
+        if not isinstance(shows, dict) or shows.get("kind") != "clock":
+            continue
+        measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else {}
+        if measured.get("reads") != shows.get("reads"):
+            problems.append(
+                f"{frame.get('file')}: its pixels read {measured.get('reads')!r}, the scene was set to "
+                f"{shows.get('reads')!r}; not evidence (look at it with --out instead)"
+            )
+    return problems
 
 
 if __name__ == "__main__":

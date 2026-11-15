@@ -62,6 +62,9 @@ const MIN_CONTRAST := 0.2
 const MIN_LENGTH_RATIO := 1.1
 ## A hand shorter than this on screen is a dot, not a direction.
 const MIN_HAND_PIXELS := 5.0
+## A hand is seen whole when its pixels reach at least this share of the length its geometry
+## projects to on screen; less, and something in the room is in front of it.
+const MIN_VISIBLE := 0.75
 ## The face is at least this many pixels across from the aisle (as `classroom_visual_slice`).
 const MIN_AISLE_FACE := 30.0
 ## Two renders of the same view may differ in this many pixels inside the dial and still be
@@ -196,10 +199,12 @@ func _run() -> void:
 	await _physics(35)
 	await _view("clock_gameplay_rows", "rows", _rig.camera, GAMEPLAY_SLACK, 0.0, scene_reading)
 
-	# 3. Through the game camera, from the best place in the aisle under the board.
-	var best := -1.0
-	var stand := Vector3.ZERO
+	# 3. Through the game camera, from the aisle under the board: the standing spot where the
+	# face is largest **and both hands can be seen whole**. The spots are tried largest face
+	# first; any spot from which part of a hand is hidden behind something in the room is
+	# recorded (`occluded` notes) and passed over, so a hidden hand is reported, never read.
 	var map := navigation.get_navigation_map()
+	var stands: Array[Array] = []
 	for x in STAND_X:
 		for z in STAND_Z:
 			var point := _room.to_global(Vector3(x, 0.0, z))
@@ -208,39 +213,51 @@ func _run() -> void:
 			_player.teleport(Transform3D(Basis(), point))
 			_rig.snap()
 			var face := _face_pixels(_rig.camera)
-			if face > best:
-				best = face
-				stand = point
-	if best <= 0.0:
-		_failures.append("From no standing spot in the aisle does the game camera see the clock.")
-	else:
-		_player.teleport(Transform3D(Basis(), stand))
+			if face >= MIN_AISLE_FACE:
+				stands.append([face, point, Vector2(x, z)])
+	stands.sort_custom(func(a: Array, b: Array) -> bool: return float(a[0]) > float(b[0]))
+	_note("aisle spots with a face of at least %.0f px: %d of %d" % [MIN_AISLE_FACE, stands.size(), STAND_X.size() * STAND_Z.size()])
+	var chosen := false
+	for stand: Array in stands:
+		_player.teleport(Transform3D(Basis(), stand[1] as Vector3))
 		_rig.snap()
-		await _physics(35)
+		await _physics(20)
+		var probe := await _read(_rig.camera)
+		var hidden := _hidden_hands(probe)
+		if hidden.is_empty():
+			chosen = true
+			_note("aisle spot (%.2f, %.2f) chosen: face %.0f px, both hands whole" % [stand[2].x, stand[2].y, stand[0]])
+			break
+		_note("occluded aisle spot (%.2f, %.2f), face %.0f px: %s" % [stand[2].x, stand[2].y, stand[0], ", ".join(hidden)])
+	if stands.is_empty():
+		_failures.append("From no standing spot in the aisle is the clock's face %.0f px across." % MIN_AISLE_FACE)
+	elif not chosen:
+		_failures.append(
+			"From every aisle spot where the face is at least %.0f px across, part of a hand is hidden; "
+			% MIN_AISLE_FACE
+			+ "see the `occluded` notes in CLOCK.txt."
+		)
+	else:
 		await _view("clock_gameplay_aisle", "aisle", _rig.camera, GAMEPLAY_SLACK, MIN_AISLE_FACE, scene_reading)
 	await _end(_failures)
 
 
-## Renders one view, reads both hands off it, saves the unmodified frame and prints its record.
-func _view(
-	frame: String, view: String, camera: Camera3D, slack: float, min_face: float, scene_reading: Dictionary
-) -> void:
-	var centre_3d := _dial.global_position
-	if not camera.is_position_in_frustum(centre_3d):
-		_failures.append("%s: the clock is not in the frame." % frame)
-		return
-	var geometry := _dial_on_screen(camera)
-	var centre: Vector2 = geometry["centre"]
-	var twelve: Vector2 = geometry["twelve"]
-	var three: Vector2 = geometry["three"]
-	var face := _face_pixels(camera)
-	var shot: Image = null
-	var hour := {}
-	var minute := {}
-	var still := false
+## Renders the current view five times - as it is, with both hands hidden, with only the
+## hour hand, with only the minute hand, and with both hidden again - and reads each hand.
+## Returns `{ok, error, shot, hour, minute, face}`; retried when the two hands-hidden renders
+## disagree inside the dial (the room moved between them).
+func _read(camera: Camera3D) -> Dictionary:
+	var result := {"ok": false, "error": "", "shot": null, "hour": {}, "minute": {}, "face": 0.0}
+	if not camera.is_position_in_frustum(_dial.global_position):
+		result["error"] = "the clock is not in the frame"
+		return result
+	result["face"] = _face_pixels(camera)
+	var dial := _plane_on_screen(camera, _dial.global_position)
+	var hour_plane := _plane_on_screen(camera, (_hour.get_parent() as Node3D).global_position)
+	var minute_plane := _plane_on_screen(camera, (_minute.get_parent() as Node3D).global_position)
 	for attempt in ATTEMPTS:
 		_show_hands(true, true, false)
-		shot = await _render()
+		var shot := await _render()
 		_show_hands(false, false)
 		var bare := await _render()
 		_show_hands(true, false)
@@ -251,19 +268,71 @@ func _view(
 		var bare_again := await _render()
 		_show_hands(true, true, false)
 		if shot == null or bare == null or hour_only == null or minute_only == null or bare_again == null:
-			_failures.append("%s: a render came back empty." % frame)
-			return
-		var drift := ClockReading.dial_change(bare, bare_again, centre, twelve, three)
+			result["error"] = "a render came back empty"
+			return result
+		var drift := ClockReading.dial_change(bare, bare_again, dial["centre"], dial["twelve"], dial["three"])
 		if int(drift["pixels"]) > STILL_PIXELS:
-			_note("%s attempt %d: the dial changed in %d pixels between two identical renders; again" % [frame, attempt + 1, drift["pixels"]])
+			_note("attempt %d: the dial changed in %d pixels between two identical renders; again" % [attempt + 1, drift["pixels"]])
 			continue
-		hour = ClockReading.measure_hand(bare, hour_only, centre, twelve, three)
-		minute = ClockReading.measure_hand(bare, minute_only, centre, twelve, three)
-		still = true
-		break
-	if not still:
-		_failures.append("%s: the dial would not hold still across %d attempts; nothing was read." % [frame, ATTEMPTS])
+		# Each hand is read in its own plane: the hands stand off the dial, and seen at an
+		# angle a hand drawn on the dial's plane would lean (parallax).
+		var hour := ClockReading.measure_hand(bare, hour_only, hour_plane["centre"], hour_plane["twelve"], hour_plane["three"])
+		var minute := ClockReading.measure_hand(bare, minute_only, minute_plane["centre"], minute_plane["twelve"], minute_plane["three"])
+		hour["visible"] = _visible_fraction(camera, _hour, hour)
+		minute["visible"] = _visible_fraction(camera, _minute, minute)
+		result["ok"] = true
+		result["shot"] = shot
+		result["hour"] = hour
+		result["minute"] = minute
+		return result
+	result["error"] = "the dial would not hold still across %d attempts" % ATTEMPTS
+	return result
+
+
+## Which hands are not seen whole in a reading ("the minute hand, 0% of it visible").
+func _hidden_hands(read: Dictionary) -> Array[String]:
+	var hidden: Array[String] = []
+	if not bool(read.get("ok", false)):
+		hidden.append(String(read.get("error", "nothing was read")))
+		return hidden
+	for entry: Array in [["hour", read["hour"]], ["minute", read["minute"]]]:
+		var measured: Dictionary = entry[1]
+		var seen := float(measured.get("visible", 0.0))
+		if not bool(measured.get("ok", false)) or seen < MIN_VISIBLE:
+			hidden.append("the %s hand, %.0f%% of its length visible" % [entry[0], seen * 100.0])
+	return hidden
+
+
+## How much of a hand's length the frame shows: the reach measured in its pixels over the
+## reach its geometry projects to (pivot to tip on screen). A hand partly behind something
+## in the room reads short; 1.0 is the whole hand.
+func _visible_fraction(camera: Camera3D, hand: MeshInstance3D, measured: Dictionary) -> float:
+	if not bool(measured.get("ok", false)):
+		return 0.0
+	var pivot := (hand.get_parent() as Node3D).global_position
+	var length := (hand.mesh as BoxMesh).size.y
+	var inner := hand.global_transform * Vector3(0.0, -length * 0.5, 0.0)
+	var outer := hand.global_transform * Vector3(0.0, length * 0.5, 0.0)
+	var tip := outer if outer.distance_to(pivot) >= inner.distance_to(pivot) else inner
+	var scale := _screen_scale()
+	var expected := (camera.unproject_position(tip) * scale - camera.unproject_position(pivot) * scale).length()
+	if expected <= 0.0:
+		return 0.0
+	return clampf(float(measured["length_px"]) / expected, 0.0, 1.5)
+
+
+## Renders one view, reads both hands off it, saves the unmodified frame and prints its record.
+func _view(
+	frame: String, view: String, camera: Camera3D, slack: float, min_face: float, scene_reading: Dictionary
+) -> void:
+	var read := await _read(camera)
+	if not bool(read["ok"]):
+		_failures.append("%s: %s." % [frame, read["error"]])
 		return
+	var shot: Image = read["shot"]
+	var hour: Dictionary = read["hour"]
+	var minute: Dictionary = read["minute"]
+	var face := float(read["face"])
 	if not _real_frame(frame, shot):
 		return
 	var path := _out.path_join(frame + ".png")
@@ -294,16 +363,30 @@ func _view(
 			problems.append("the %s hand is %.1f px long, a dot rather than a direction" % [entry[0], measured["length_px"]])
 		if float(measured["concentration"]) < 0.6:
 			problems.append("the %s hand reads as a smudge, not a line (%.2f)" % [entry[0], measured["concentration"]])
-	var shown := {"text": "?"}
-	if problems.is_empty():
-		shown = ClockReading.reading(float(hour["degrees"]), float(minute["degrees"]))
+		if float(measured.get("visible", 0.0)) < MIN_VISIBLE:
+			problems.append(
+				"only %.0f%% of the %s hand's length can be seen; something is in front of it"
+				% [float(measured.get("visible", 0.0)) * 100.0, entry[0]]
+			)
+	# `nearest` is the minute the two angles round to; `reads` is the time the frame is read
+	# as: nine o'clock when both hands lie within this view's slack of nine, else `nearest`.
+	var nearest := "?"
+	var reads := "?"
+	if hour.get("ok", false) and minute.get("ok", false):
+		nearest = String(ClockReading.reading(float(hour["degrees"]), float(minute["degrees"]))["text"])
+		reads = nearest
+		if (
+			ClockReading.degrees_off(float(hour["degrees"]), float(wanted["hour"])) <= slack
+			and ClockReading.degrees_off(float(minute["degrees"]), float(wanted["minute"])) <= slack
+		):
+			reads = TARGET_TEXT
 		if float(minute["length_px"]) < float(hour["length_px"]) * MIN_LENGTH_RATIO:
 			problems.append(
 				"the minute hand looks %.1f px long and the hour hand %.1f px; they cannot be told apart"
 				% [minute["length_px"], hour["length_px"]]
 			)
-		if String(shown["text"]) != TARGET_TEXT:
-			problems.append("the frame reads %s, not %s" % [shown["text"], TARGET_TEXT])
+		if reads != TARGET_TEXT:
+			problems.append("the frame reads %s, not %s" % [reads, TARGET_TEXT])
 	if min_face > 0.0 and face < min_face:
 		problems.append("the face is %.0f px across; it cannot be read from here (needs %.0f)" % [face, min_face])
 	for problem in problems:
@@ -317,12 +400,15 @@ func _view(
 	if bool(minute.get("ok", false)):
 		minute_angle = snappedf(float(minute["degrees"]), 0.01)
 	var measured_record := {
-		"reads": String(shown["text"]),
+		"reads": reads,
+		"nearest": nearest,
 		"face_px": snappedf(face, 0.1),
 		"hour_degrees": hour_angle,
 		"minute_degrees": minute_angle,
 		"hour_length_px": snappedf(float(hour.get("length_px", 0.0)), 0.1),
 		"minute_length_px": snappedf(float(minute.get("length_px", 0.0)), 0.1),
+		"hour_visible": snappedf(float(hour.get("visible", 0.0)), 0.01),
+		"minute_visible": snappedf(float(minute.get("visible", 0.0)), 0.01),
 		"hour_contrast": snappedf(float(hour.get("contrast", 0.0)), 0.001),
 		"minute_contrast": snappedf(float(minute.get("contrast", 0.0)), 0.001),
 		"slack_degrees": slack,
@@ -343,14 +429,15 @@ func _view(
 	}
 	print(EvidenceContract.evidence_line(record))
 	_note(
-		"reading=%s reads=%s hour=%s minute=%s face=%.1f"
-		% [frame, shown["text"], measured_record["hour_degrees"], measured_record["minute_degrees"], face]
+		"reading=%s reads=%s nearest=%s hour=%s minute=%s face=%.1f"
+		% [frame, reads, nearest, hour_angle, minute_angle, face]
 	)
 	_note(
-		"%s: reads %s off the pixels (hour %s, minute %s), face %.0f px, hands %.1f / %.1f px, contrast %.2f / %.2f%s"
+		"%s: reads %s off the pixels (nearest %s; hour %s, minute %s), face %.0f px, hands %.1f / %.1f px, "
+		% [frame, reads, nearest, hour_angle, minute_angle, face, measured_record["hour_length_px"], measured_record["minute_length_px"]]
+		+ "%.0f%% / %.0f%% visible, contrast %.2f / %.2f%s"
 		% [
-			frame, shown["text"], measured_record["hour_degrees"], measured_record["minute_degrees"], face,
-			measured_record["hour_length_px"], measured_record["minute_length_px"],
+			float(measured_record["hour_visible"]) * 100.0, float(measured_record["minute_visible"]) * 100.0,
 			measured_record["hour_contrast"], measured_record["minute_contrast"],
 			"" if problems.is_empty() else " - FAILED",
 		]
@@ -359,11 +446,16 @@ func _view(
 
 ## The dial's centre on screen and the screen offsets from it to the rim at twelve and three.
 func _dial_on_screen(camera: Camera3D) -> Dictionary:
+	return _plane_on_screen(camera, _dial.global_position)
+
+
+## Like `_dial_on_screen()`, for a plane parallel to the dial through `centre_3d` - where a
+## hand turns, a few millimetres in front of the face.
+func _plane_on_screen(camera: Camera3D, centre_3d: Vector3) -> Dictionary:
 	var basis := _dial.global_transform.basis
 	var radius := (_dial.mesh as QuadMesh).size.x * 0.5
 	var up := basis.y.normalized()
 	var right := up.cross(_dial_normal()).normalized()
-	var centre_3d := _dial.global_position
 	var scale := _screen_scale()
 	var centre := camera.unproject_position(centre_3d) * scale
 	return {

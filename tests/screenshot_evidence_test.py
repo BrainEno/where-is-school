@@ -758,6 +758,11 @@ def the_relay_carries_the_clock_set() -> None:
         expect(not problems and not more and index is not None, f"the clock relay did not verify: {problems + more}")
         names = sorted(frame["file"] for frame in index["frames"])
         expect(names == sorted(f"{stem}.jpg" for stem in relay.CLOCK_FRAMES), f"the clock relay carried {names}")
+        expect(relay.not_evidence(index) == [], f"frames that read nine were refused: {relay.not_evidence(index)}")
+        misread = copy.deepcopy(index)
+        misread["frames"][1]["record"]["shows"]["measured"]["reads"] = "8:45"
+        expect(has(relay.not_evidence(misread), misread["frames"][1]["file"], "'8:45'", "not evidence"),
+               "a clock frame whose pixels read another time would have been applied")
         described = relay.describe(index["frames"][0]["record"])
         expect("the scene says 9:00" in described and "the pixels read 9:00" in described,
                f"fetch would describe a clock frame as {described!r}")

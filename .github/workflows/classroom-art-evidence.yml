@@ -270,6 +270,7 @@ jobs:
         run: godot --headless --path . --import
 
       - name: Photograph the clock and read it
+        id: capture
         shell: bash
         env:
           WIS_EVIDENCE_JPEG_QUALITY: "0.9"
@@ -285,11 +286,18 @@ jobs:
           grep -E "^CLOCK_CAPTURE |^EVIDENCE |TEST FAILURE|SCRIPT ERROR|^PASS:|^FAIL:" "${RUNNER_TEMP}/clock.log" | head -n 60
           grep -E "^CLOCK_CAPTURE .*reads " "${RUNNER_TEMP}/clock.log" | cut -c1-900 \
             | while IFS= read -r line; do echo "::notice title=clock reading::${line#CLOCK_CAPTURE }"; done
+          grep -E "^CLOCK_CAPTURE (occluded|aisle|start=)" "${RUNNER_TEMP}/clock.log" | cut -c1-900 \
+            | while IFS= read -r line; do echo "::notice title=clock view::${line#CLOCK_CAPTURE }"; done
           grep -E "TEST FAILURE|SCRIPT ERROR" "${RUNNER_TEMP}/clock.log" | head -n 8 | cut -c1-600 \
             | while IFS= read -r line; do echo "::error title=clock capture::${line}"; done
-          if [ "${code}" -ne 0 ] || ! grep -q "^PASS:" "${RUNNER_TEMP}/clock.log"; then
+          # The verdict is given by the last step, after the frames are packed: a clock that
+          # does not read nine is still published, so it can be looked at - the job stays
+          # red, and `fetch --apply` refuses frames whose pixels did not read the scene's time.
+          if [ "${code}" -eq 0 ] && grep -q "^PASS:" "${RUNNER_TEMP}/clock.log"; then
+            echo "clock_ok=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "clock_ok=false" >> "${GITHUB_OUTPUT}"
             echo "::error title=clock capture::exit ${code}; the clock did not read nine o'clock from every view"
-            exit 1
           fi
 
       - name: Pack the frames into annotation parts
@@ -312,10 +320,22 @@ jobs:
             ${{ runner.temp }}/clock.log
           if-no-files-found: warn
 
+      - name: Verdict - every view reads nine o'clock
+        shell: bash
+        env:
+          CLOCK_OK: ${{ steps.capture.outputs.clock_ok }}
+        run: |
+          if [ "${CLOCK_OK}" != "true" ]; then
+            echo "::error title=clock capture::the frames were published for inspection, but they are not evidence of nine o'clock"
+            exit 1
+          fi
+          echo "every view reads nine o'clock"
+
   relay-publish:
     name: Relay - publish parts (shard ${{ matrix.shard }})
     needs: relay-capture
-    if: needs.relay-capture.result == 'success' && needs.relay-capture.outputs.shards != '[]'
+    # Also after a failed reading, as long as the frames were packed: see the verdict step.
+    if: always() && needs.relay-capture.outputs.shards != '' && needs.relay-capture.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
