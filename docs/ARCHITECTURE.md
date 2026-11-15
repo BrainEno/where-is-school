@@ -999,6 +999,81 @@ player, the scene change, the independent dial, and that seeking past the loop e
 instead of stopping. It cannot hear the result: whether the loop is seamless to an ear, and
 whether −18 dB is the right level in a real room, are reviews for the owner.
 
+## 5n. Reading modes, the read log, and sprint as a toggle (implemented contract)
+
+Three accessibility controls the roadmap listed as missing (§3 of
+`docs/TECHNICAL_ROADMAP.md`). None of them adds an autoload.
+
+**The read log** (`scripts/dialogue/read_log.gd`, `class_name ReadLog`). What the player
+has read in *any* run, and which options they have taken. It is the cross-run sibling of
+`DialogueHistory` (which is this run's backlog) and uses the same line identity
+(`DialogueHistory.identify`: `conv:<conversation>/<node>`, `inspection:<id>/<variant>`).
+Beside each identity it keeps a 16-character SHA-256 prefix of the text, per language it
+was read in. A line counts as read if the identity is known and the line was either never
+read in the current language, or still has the fingerprint it was read with. So an edited
+line is unread again, and a line read in Chinese counts as read in English. Lines without
+an identity (`unidentified:…`) are never read. Options are `choice:<conversation>/<node>/<choice_id>`;
+the runtime now includes `choice_id` in each presented option for this.
+
+- **Where it lives:** `user://read_log.json`, *not* the save. New game, deleting the save
+  and loading a save leave it alone. ADR 0005's single-slot save format is unchanged.
+- **The file:** `{format: "where-is-school/read-log", version: 1, lines, choices}`.
+- **Writes:** to a temporary file, read back and compared, then renamed into place. The
+  controller writes once per closed presentation and on quit, not once per line.
+- **Damage:** a file that is not JSON, not an object or not this format is copied to
+  `read_log.broken.json` and the log starts empty. Single bad entries are dropped and
+  listed in `problems`.
+- **Newer files:** a file from a newer version is read for what this version understands
+  and never written back, unless the player asks to forget everything.
+- **Size:** capped at `MAX_LINES` / `MAX_CHOICES`.
+- **Who uses it:** one shared instance (`ReadLog.shared()`) serves the dialogue controller
+  and the settings screen; tests replace it with `ReadLog.use_shared()`.
+
+**Playback** (`scripts/dialogue/dialogue_playback.gd`, `class_name DialoguePlayback`). A
+small state machine that decides and never acts. The controller tells it what is on screen
+(`begin_line`, then a `view` each frame: presenting, revealing, choices, blocked, check). It
+answers nothing, `complete` or `advance`, and the controller carries that out through
+`_on_advance_requested()`, the same path a key press takes.
+
+| Mode | What it does | When it stops |
+|---|---|---|
+| Manual | The default. Nothing moves on by itself. | — |
+| Auto | Waits until the line has finished typing, then for `BASE_PAUSE` plus the line's length at a per-language reading rate. The total is scaled by the auto-speed setting, clamped to 1.2–14 s, plus 1.6 s while a check's numbers are showing. Then it advances. | Only when switched off. It never picks an option, and it stays on into the next conversation. |
+| Skip | Shows each read line whole and passes it after 0.07 s. | At the first unread line (unless set to skip all text), at a choice, when the presentation closes, or on a second press. Holding the input past 0.4 s makes it momentary. If auto was on, it comes back afterwards. |
+
+`blocked` (the backlog is open, or the window has lost focus) freezes the clock in both
+modes. The pause menu pauses the tree, which stops the controller.
+
+**The panel.** The dialogue panel turns the `dialogue_auto` (R, right stick →) and
+`dialogue_skip` (F, left trigger) inputs into intents and shows the state it is given:
+
+- **Hint line:** unchanged in manual mode. While auto or skip is on it names the mode and
+  the input that stops it. When skip stops at unread text, it says so for 2.6 s.
+- **Mode words** (`scripts/ui/dialogue_mode_bar.gd`): two clickable words at the start of
+  the hint line, "[R] Auto" and "[F] Skip" (just "Auto" and "Skip" on the mouse), lit
+  while their mode is on. The bar is a child of the hint label, not a row, so it never
+  changes the band's measured layout (`tests/dialogue_layout_test.gd`). It hides itself
+  when the hint text needs the room.
+- **Options taken before** are set in a quieter vermilion (`CHOICE_SEEN`).
+
+**Settings.**
+
+| Row | Stored as | Values |
+|---|---|---|
+| Auto speed | `[text] auto_speed` | slow, normal, fast |
+| What skip passes | `[text] skip_scope` | read text only, all text |
+| Forget read text ({count} lines) | `user://read_log.json` | needs a second press within 4 s, without the focus leaving the row |
+| Running | `[controls] sprint_mode` | hold (default), press to switch |
+
+Both new inputs are rebindable, and `project.godot` declares their defaults. Restore
+defaults puts them back, and they share no input with any other action.
+
+**Sprint as a toggle** (`PlayerController.sprint_mode`, followed from the setting). In
+toggle mode, one press of `sprint` starts the jog and the next press ends it. Losing
+control (a conversation, a beat) or standing still for `SPRINT_LATCH_IDLE_SECONDS` (0.6 s)
+also ends it. Hold mode is unchanged. `tests/dialogue_playback_test.gd` (Godot CI) covers
+all of the above.
+
 ## 6. Persistent identifiers and data
 
 - Use stable IDs for dialogue nodes, characters, items, locations, and story flags.

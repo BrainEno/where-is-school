@@ -110,6 +110,17 @@ GitHub release, if one exists). Record at the top:
       rooms, and the player must not end up outside the geometry.
 - [ ] Switch language, then inspect something with a long line: no missing characters
       (boxes), no clipped final punctuation.
+- [ ] In a conversation press **R** (auto): lines move on by themselves, longer lines
+      wait longer, a choice waits for you, and opening the log (Tab) holds the line.
+      Press **R** again: back to pressing for every line.
+- [ ] Start a new game and replay the first conversation, then press **F** (skip): the
+      lines read in the first run fly past and skip stops at the first choice; the option
+      you took last time is drawn in a quieter colour. In a conversation never read, F
+      stops at once and the hint says the text is unread.
+- [ ] Settings → "Forget read text": the first press asks, the second clears; F then
+      stops at once again.
+- [ ] Settings → Running → "Press to switch": one Shift press runs, the next walks;
+      stopping for a moment also walks.
 - [ ] Quit with Alt+F4 and relaunch: no crash, no leftover window, and the game comes back
       in the room you left, on the marker you came in through, at the spot you stood
       (the save is written when a location is entered and when a beat finishes).
