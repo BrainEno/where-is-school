@@ -25,6 +25,7 @@ const SETTINGS_SCRIPT := "res://scripts/autoload/settings_manager.gd"
 const LOC_SCRIPT := "res://scripts/i18n/loc.gd"
 const PAUSE_MENU_SCENE := "res://scenes/ui/pause_menu.tscn"
 const GAME_UI_SCENE := "res://scenes/ui/game_ui.tscn"
+const WINDOW_SIZE := Vector2i(1600, 900)
 
 var _failures: Array[String] = []
 var _narrative: Node = null
@@ -55,6 +56,11 @@ func _run() -> void:
 		settings.call("reset_to_defaults")
 	L10n.load_tables()
 	_set_locale("zh-CN")
+	# A headless run without `--resolution` gets a 64 px window: the row of kinds would
+	# wrap into a column and the HUD line could not fit. Lay out at a real size.
+	root.min_size = Vector2i.ZERO
+	root.size = WINDOW_SIZE
+	await _frames(2)
 	if _narrative == null:
 		Harness.finish(self, ["NarrativeState could not be created."], "")
 		return
@@ -379,7 +385,13 @@ func _check_panel() -> void:
 	await _frames(2)
 
 	# The kinds from the keyboard: Right, Enter picks Seen.
+	if not journal.get_filter_button(JournalPage.ALL).has_focus():
+		_failures.append("C: after the language switch the focus is on %s, not All." % [
+			root.gui_get_focus_owner()])
+		journal.focus_filter(JournalPage.ALL)
 	await _key(KEY_RIGHT)
+	_expect(journal.get_filter_button(NarrativeEntry.Source.OBSERVED).has_focus(),
+		"C: Right went to %s, not Seen." % [root.gui_get_focus_owner()])
 	await _key(KEY_ENTER)
 	await _frames(1)
 	_expect(journal.get_filter() == NarrativeEntry.Source.OBSERVED,

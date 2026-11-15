@@ -259,7 +259,7 @@ jobs:
           # The notebook (journal): every recorded entry indexed in both languages, the log
           # filed and filtered in reading order, opened from its key and the pause menu,
           # re-worded on a language switch, "new" tracked without saving, the HUD's note.
-          run_check journal 240 godot --headless --path . --script res://tests/journal_test.gd || status=1
+          run_check journal 240 godot --headless --resolution 1600x900 --path . --script res://tests/journal_test.gd || status=1
           # The save file: what it refuses, and that a refused file changes nothing. No
           # scene here, so it is the fast place to look when saving breaks.
           run_check save_validation 180 godot --headless --path . --script res://tests/save_validation_test.gd || status=1

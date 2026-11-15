@@ -127,6 +127,7 @@ func _ready() -> void:
 		button.gui_input.connect(_on_filter_gui_input)
 		_filters.add_child(button)
 		_filter_buttons[filter] = button
+	_link_filter_focus(order)
 
 	_caveat = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_caveat.name = "Caveat"
@@ -539,6 +540,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not event.is_action_pressed(&"toggle_language") \
 				and not event.is_action_pressed(&"toggle_fullscreen"):
 			get_viewport().set_input_as_handled()
+
+
+## ←/→ walk the kinds in order and wrap, whatever the row looks like: at a narrow window
+## or the largest text the flow wraps, and the nearest button to the right on screen is
+## then not the next kind. ↑/↓ stay put, because they scroll (see below).
+func _link_filter_focus(order: Array[int]) -> void:
+	var count := order.size()
+	for index in count:
+		var button: Button = _filter_buttons[order[index]]
+		var next: Button = _filter_buttons[order[(index + 1) % count]]
+		var previous: Button = _filter_buttons[order[(index - 1 + count) % count]]
+		button.focus_neighbor_right = button.get_path_to(next)
+		button.focus_neighbor_left = button.get_path_to(previous)
+		button.focus_neighbor_top = button.get_path_to(button)
+		button.focus_neighbor_bottom = button.get_path_to(button)
+		button.focus_next = button.focus_neighbor_right
+		button.focus_previous = button.focus_neighbor_left
 
 
 ## ↑/↓ on a kind scroll the page instead of leaving the row of kinds: the rows are text,
