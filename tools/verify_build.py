@@ -78,11 +78,29 @@ FORBIDDEN_PREFIXES = (
     # game; the export preset excludes them and this list keeps that honest, the same way
     # it does for addons/.
     "res://scenes/dev/",
+    "res://scripts/dev/",
     "res://.github/",
     # The narrative editor is an EditorPlugin. The game never loads it, and a player's
     # build has no business carrying the author's tooling.
     "res://addons/",
 )
+
+# The UAL source and its baked derivative are quarantined by policy, not merely because
+# of their current directory. Imported/exported data keeps the source basename even when
+# Godot moves it under .godot/, and an accidental copy into assets/ must still fail. These
+# names cover format changes and preview derivatives too. This is not content recognition:
+# renaming/re-authoring the payload still requires a provenance review (issue #64).
+DEVELOPMENT_ONLY_ASSET_STEMS = ("ual1_standard", "protagonist_ual")
+
+
+def _is_development_only_asset(path: str) -> bool:
+    name = path.rsplit("/", 1)[-1].casefold()
+    name = name.removeprefix("export-")  # Godot's converted-resource basename
+    return any(
+        name == stem or any(name.startswith(stem + separator) for separator in (".", "-", "_"))
+        for stem in DEVELOPMENT_ONLY_ASSET_STEMS
+    )
+
 
 # Things whose absence means the build would start and immediately misbehave or crash.
 # Imported resources (the font, the audio) appear as a `.import` stub plus data under
@@ -396,6 +414,10 @@ def verify_contents(entries: list[tuple[str, int]]) -> list[str]:
                 f"{len(leaked)} file(s) under {prefix} reached the build, "
                 f"first: {leaked[0]}"
             )
+
+    for path in paths:
+        if _is_development_only_asset(path):
+            problems.append(f"{path} is a development-only asset; UAL sources and derivatives must not ship")
 
     for prefix in REQUIRED_PREFIXES:
         if not any(path.startswith(prefix) for path in paths):
@@ -921,6 +943,8 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
         for name in sorted(present):
             if name.startswith(PACKAGE_FORBIDDEN_PREFIXES):
                 package.problems.append(f"{path.name} carries {name}, which is not part of a release")
+            elif _is_development_only_asset(name):
+                package.problems.append(f"{path.name} carries {name}, a development-only asset that must not ship")
             elif name.rsplit("/", 1)[-1] in PACKAGE_FORBIDDEN_NAMES:
                 package.problems.append(f"{path.name} carries {name}, a leftover from a working tree")
             elif name.endswith(PACKAGE_FORBIDDEN_SUFFIXES):
@@ -1079,14 +1103,18 @@ def verify_presets(path: Path, expect_version: str | None) -> tuple[list[str], l
     for preset in (windows, linux):
         if not preset:
             continue
-        excluded = preset.exclude_filter
-        # tests/, tools/, docs/ and art/ are development material. scenes/dev/ and
-        # scripts/dev/ additionally carry third-party development-only assets (the
-        # animation library in docs/ASSET_PROVENANCE.md), so a preset that stops
-        # excluding them would ship someone else's work.
-        for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/"):
-            if where.rstrip("/") not in excluded:
-                problems.append(f"the {preset.name} preset does not exclude {where} from the pack")
+        excluded = {
+            pattern.strip().casefold().removeprefix("res://")
+            for pattern in preset.exclude_filter.split(",")
+        }
+        # Require explicit whole-directory wildcards, not substrings: scenes/dev/*.tscn
+        # leaves GLBs and .res libraries eligible, and unrelated/scenes/dev/* excludes
+        # the wrong tree. This deliberately fails closed rather than trying to prove
+        # equivalence of arbitrary Godot globs. Keep the pre-flight and pack rules aligned.
+        for prefix in FORBIDDEN_PREFIXES:
+            where = prefix.removeprefix("res://")
+            if where + "*" not in excluded:
+                problems.append(f"the {preset.name} preset does not exclude {where} from the pack (requires {where}*)")
     return problems, notes
 
 def main(argv: list[str]) -> int:
