@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=19 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
@@ -23,20 +23,10 @@ shader_parameter/half_tone = 0.35
 shader_parameter/light_edge = 0.12
 shader_parameter/light_strength = 0.78
 shader_parameter/light_tint = Color(1.0000, 0.9451, 0.8627, 1)
-shader_parameter/mark_across = Vector3(0.7, 0.7, 0)
-shader_parameter/mark_color = Color(0.5412, 0.3686, 0.2667, 1)
-shader_parameter/mark_contour = 0.4
-shader_parameter/mark_contour_power = 1.5
-shader_parameter/mark_coverage = 0.25
-shader_parameter/mark_jitter = 0.15
-shader_parameter/mark_length = 30
-shader_parameter/mark_scale = 120
-shader_parameter/mark_strength = 0.35
-shader_parameter/mark_width = 0.28
 shader_parameter/mirror_center_x = 0
-shader_parameter/patch2_center = Vector3(0.03, 1.668, 0.1)
+shader_parameter/patch2_center = Vector3(0.031, 1.676, 0.103)
 shader_parameter/patch2_color = Color(0.4314, 0.2902, 0.2275, 1)
-shader_parameter/patch2_radius = Vector3(0.03, 0.02, 0.035)
+shader_parameter/patch2_radius = Vector3(0.017, 0.009, 0.02)
 shader_parameter/patch2_strength = 0.6
 shader_parameter/patch_center = Vector3(0.044, 1.628, 0.105)
 shader_parameter/patch_color = Color(0.7843, 0.4000, 0.3059, 1)
@@ -64,16 +54,6 @@ shader_parameter/half_tone = 0.35
 shader_parameter/light_edge = 0.12
 shader_parameter/light_strength = 0.78
 shader_parameter/light_tint = Color(1.0000, 0.9451, 0.8627, 1)
-shader_parameter/mark_across = Vector3(0.7, 0.7, 0)
-shader_parameter/mark_color = Color(0.5412, 0.3686, 0.2667, 1)
-shader_parameter/mark_contour = 0.4
-shader_parameter/mark_contour_power = 1.5
-shader_parameter/mark_coverage = 0.25
-shader_parameter/mark_jitter = 0.15
-shader_parameter/mark_length = 30
-shader_parameter/mark_scale = 120
-shader_parameter/mark_strength = 0.35
-shader_parameter/mark_width = 0.28
 shader_parameter/pigment_a = Color(0.8510, 0.6039, 0.4706, 1)
 shader_parameter/pigment_b = Color(0.7608, 0.6353, 0.4549, 1)
 shader_parameter/pigment_mix = 0.1
@@ -95,16 +75,6 @@ shader_parameter/half_tone = 0.35
 shader_parameter/light_edge = 0.12
 shader_parameter/light_strength = 0.78
 shader_parameter/light_tint = Color(1.0000, 0.9451, 0.8627, 1)
-shader_parameter/mark_across = Vector3(0.7, 0.7, 0)
-shader_parameter/mark_color = Color(0.5412, 0.3686, 0.2667, 1)
-shader_parameter/mark_contour = 0.4
-shader_parameter/mark_contour_power = 1.5
-shader_parameter/mark_coverage = 0.25
-shader_parameter/mark_jitter = 0.15
-shader_parameter/mark_length = 30
-shader_parameter/mark_scale = 120
-shader_parameter/mark_strength = 0.35
-shader_parameter/mark_width = 0.28
 shader_parameter/pigment_a = Color(0.8510, 0.6039, 0.4706, 1)
 shader_parameter/pigment_b = Color(0.7608, 0.6353, 0.4549, 1)
 shader_parameter/pigment_mix = 0.1
@@ -364,6 +334,32 @@ shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.3
 
+[sub_resource type="ShaderMaterial" id="m_q_body__q_mat_skinbody"]
+resource_name = "q_body/q_mat_skinbody (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8510, 0.6627, 0.4863, 1)
+shader_parameter/edge_break = 0.05
+shader_parameter/edge_softness = 0.015
+shader_parameter/half_tone = 0.35
+shader_parameter/light_edge = 0.12
+shader_parameter/light_strength = 0.78
+shader_parameter/light_tint = Color(1.0000, 0.9451, 0.8627, 1)
+shader_parameter/mirror_center_x = 0
+shader_parameter/patch_center = Vector3(0.24, 1.38, 0)
+shader_parameter/patch_color = Color(0.3686, 0.4549, 0.2745, 1)
+shader_parameter/patch_radius = Vector3(0.13, 0.1, 0.14)
+shader_parameter/patch_strength = 1
+shader_parameter/pigment_a = Color(0.8510, 0.6039, 0.4706, 1)
+shader_parameter/pigment_b = Color(0.7608, 0.6353, 0.4549, 1)
+shader_parameter/pigment_mix = 0.1
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.04
+shader_parameter/shade_tint = Color(0.6902, 0.6039, 0.5255, 1)
+shader_parameter/shadow_edge = 0.05
+shader_parameter/shadow_fill = 0.4
+
 [resource]
 script = ExtResource("1_look")
 materials = {
@@ -380,7 +376,8 @@ materials = {
 "q_mat_hoodierib": SubResource("m_q_mat_hoodierib"),
 "q_mat_trousers": SubResource("m_q_mat_trousers"),
 "q_mat_shoes": SubResource("m_q_mat_shoes"),
-"q_mat_sole": SubResource("m_q_mat_sole")
+"q_mat_sole": SubResource("m_q_mat_sole"),
+"q_body/q_mat_skinbody": SubResource("m_q_body__q_mat_skinbody")
 }
 expression = {}
 blink_shapes = PackedStringArray("Eye_Blink_L", "Eye_Blink_R")

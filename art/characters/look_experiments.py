@@ -78,7 +78,7 @@ def protagonist_charcoal(base: dict) -> dict:
     }
     parts["protagonist_mat_jacket"] = with_marks(
         {
-            "albedo": "#3F4956",
+            "albedo": "#44505E",
             "pigment_a": "#34405A",
             "pigment_b": "#56604F",
             "pigment_mix": 0.45,
@@ -88,8 +88,9 @@ def protagonist_charcoal(base: dict) -> dict:
             "shade_tint": "#8C86B8",
             "light_tint": "#FFE6C4",
             "shadow_fill": 0.4,
-            "light_strength": 0.9,
-            "light_edge": 0.3,
+            "light_strength": 0.95,
+            # Shoulders and back catch the sun from the gameplay camera above (v1: 0.3).
+            "light_edge": 0.2,
             "outline": True,
         },
         **erased,
@@ -122,14 +123,15 @@ def protagonist_charcoal(base: dict) -> dict:
             "light_strength": 0.85,
             "outline": True,
         },
-        strength=0.6,
-        color="#76707E",
+        # v1 (0.6 strength, 0.25 coverage) cluttered the face in close-up.
+        strength=0.5,
+        color="#6A6474",
         scale=110.0,
         across=(1.0, 0.0, 0.6),
         width=0.25,
         length=12.0,
-        coverage=0.25,
-        contour=0.5,
+        coverage=0.12,
+        contour=0.35,
         jitter=0.4,
     )
     parts["protagonist_mat_shirt"] = dict(parts["protagonist_mat_shirt"], albedo="#D8CFB8")
@@ -138,7 +140,27 @@ def protagonist_charcoal(base: dict) -> dict:
 
 # --- Q: oil ----------------------------------------------------------------------------
 
-Q_EYE_SOCKET = {"center": (0.03, 1.668, 0.1), "radius": (0.03, 0.02, 0.035)}
+# The hollow under each brow, over the upper lid (his eyes span |x| 0.014-0.046, centres
+# y 1.661): it stops 1.4 cm from the middle, so the two never meet over the bridge of the
+# nose (v1, centred lower and 3 cm wide, painted one smudge across it).
+Q_EYE_SOCKET = {"center": (0.031, 1.676, 0.103), "radius": (0.017, 0.009, 0.02)}
+# new-Q's body skin pokes through the hoodie at the shoulder seams (docs/Q_MODEL_MIGRATION.md
+# §8): the vertices lie at |x| 0.2-0.3, y 1.33-1.46. Body skin is never meant to be seen
+# there, so it is painted the hoodie's colour and carries no ink; the approved source
+# geometry is not touched. The neck (|x| < 0.07, y > 1.425) is outside the patch.
+Q_SHOULDER = {"center": (0.24, 1.38, 0.0), "radius": (0.13, 0.1, 0.14)}
+
+
+def q_body_skin(skin: dict, hoodie: str) -> dict:
+    return dict(
+        skin,
+        patch_center=Q_SHOULDER["center"],
+        patch_radius=Q_SHOULDER["radius"],
+        patch_color=hoodie,
+        patch_strength=1.0,
+        mirror_center_x=0.0,
+        outline=False,
+    )
 
 
 def q_oil(base: dict) -> dict:
@@ -171,12 +193,13 @@ def q_oil(base: dict) -> dict:
         patch_strength=0.45,
         patch2_center=Q_EYE_SOCKET["center"],
         patch2_radius=Q_EYE_SOCKET["radius"],
-        patch2_color="#7A5340",
-        patch2_strength=0.55,
+        patch2_color="#7E5642",
+        patch2_strength=0.5,
         mirror_center_x=0.0,
         outline=True,
     )
     parts["q_mat_skinbody"] = dict(skin, outline=True)
+    parts["q_body/q_mat_skinbody"] = q_body_skin(skin, "#56693F")
     parts["q_hands/q_mat_skinbody"] = dict(skin, outline=False)
     parts["q_mat_hair"] = with_marks(
         {
@@ -274,7 +297,6 @@ def q_paper(base: dict) -> dict:
         light_tint="#FFF1DC",
         shadow_fill=0.4,
         light_strength=0.78,
-        **hatch("#8A5E44", strength=0.35, coverage=0.25),
     )
     parts["q_mat_skin"] = dict(
         skin,
@@ -290,6 +312,7 @@ def q_paper(base: dict) -> dict:
         outline=True,
     )
     parts["q_mat_skinbody"] = dict(skin, outline=True)
+    parts["q_body/q_mat_skinbody"] = q_body_skin(skin, "#5E7446")
     parts["q_hands/q_mat_skinbody"] = dict(skin, outline=False)
     parts["q_mat_hair"] = dict(
         PRINT_BANDS,
@@ -337,7 +360,9 @@ def q_paper(base: dict) -> dict:
 # --- N: the parts both her schemes share -----------------------------------------------
 # Her GLB's seventeen materials (tools/prepare_teacher_n.py keeps the owner's names).
 
-N_EYE_SOCKET = {"center": (0.032, 1.536, -0.084), "radius": (0.026, 0.017, 0.03)}
+# Over each upper lid (eyes at |x| 0.032, y 1.531, front at z -0.09). v1 was centred on the
+# eye and 2.6 cm wide: it drew a ring round the eyeball that read as round spectacles.
+N_EYE_SOCKET = {"center": (0.032, 1.543, -0.084), "radius": (0.016, 0.008, 0.02)}
 N_CHEEK = {"center": (0.05, 1.49, -0.07), "radius": (0.025, 0.02, 0.04)}
 # The cardigan's flared hem (y 0.82-0.93, 0.136 m deep): the torso only, not the sleeves,
 # which hang at |x| > 0.25.
@@ -431,12 +456,12 @@ def n_chalk() -> dict:
             skin,
             patch_center=N_EYE_SOCKET["center"],
             patch_radius=N_EYE_SOCKET["radius"],
-            patch_color="#9A8AA0",
-            patch_strength=0.5,
+            patch_color="#8E7E90",
+            patch_strength=0.45,
             patch2_center=N_CHEEK["center"],
             patch2_radius=N_CHEEK["radius"],
             patch2_color="#D69A8C",
-            patch2_strength=0.35,
+            patch2_strength=0.25,
             outline=True,
         ),
         "m_st_hair": hair,
@@ -490,7 +515,7 @@ def n_chalk() -> dict:
         "m_st_shoes": dict(soft, albedo="#3A2A22", pigment_mix=0.2, outline=True),
         "m_st_sole": dict(FLAT, albedo="#4A403A", outline=False),
     }
-    look["parts"].update(n_face_parts(lip="#B07468", brow="#2A201C"))
+    look["parts"].update(n_face_parts(lip="#9A6A62", brow="#2A201C"))
     return look
 
 
@@ -596,15 +621,31 @@ def n_woodcut() -> dict:
         "m_st_shoes": dict(cut, albedo="#2E221C", outline=True),
         "m_st_sole": dict(FLAT, albedo="#3E3632", outline=False),
     }
-    look["parts"].update(n_face_parts(lip="#9A5E58", brow="#1C1513"))
+    look["parts"].update(n_face_parts(lip="#8E5A54", brow="#1C1513"))
     return look
 
 
-def experiments(protagonist: dict, q: dict) -> dict:
+def integrated(look: dict, label: str) -> dict:
+    """An experiment promoted to what the game ships, under its own label."""
+    result = copy.deepcopy(look)
+    result["label"] = label
+    return result
+
+
+def shipped(protagonist: dict, q: dict) -> dict:
+    """What the wrappers carry after the integration: the scheme that won for each."""
     return {
-        LAB + "protagonist_charcoal.tres": protagonist_charcoal(protagonist),
-        LAB + "q_oil.tres": q_oil(q),
+        "assets/characters/protagonist/protagonist_look.tres": integrated(
+            protagonist_charcoal(protagonist), "protagonist: charcoal (integrated)"
+        ),
+        "assets/characters/q/q_look.tres": integrated(q_oil(q), "Q: oil (integrated)"),
+        "assets/characters/teacher_n/teacher_n_look.tres": integrated(n_chalk(), "N: chalk (integrated)"),
+    }
+
+
+def experiments(protagonist: dict, q: dict) -> dict:
+    """The schemes that were tried and not shipped, kept for the comparison."""
+    return {
         LAB + "q_paper.tres": q_paper(q),
-        LAB + "n_chalk.tres": n_chalk(),
         LAB + "n_woodcut.tres": n_woodcut(),
     }

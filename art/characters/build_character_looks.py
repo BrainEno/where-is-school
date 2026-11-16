@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the protagonist's and Q's look resources from the palette below.
+"""Writes the protagonist's, Q's and N's look resources from the palettes below.
 
     python3 art/characters/build_character_looks.py          # write both
     python3 art/characters/build_character_looks.py --check  # fail if they are out of date
@@ -7,6 +7,8 @@
 Output (committed, read by the game):
     assets/characters/protagonist/protagonist_look.tres
     assets/characters/q/q_look.tres
+    assets/characters/teacher_n/teacher_n_look.tres
+and the character integration's unshipped experiments under scenes/dev/character_lab/looks/.
 
 Each is a `CharacterLook` (scripts/actors/character_look.gd): one ShaderMaterial per GLB
 material, on `assets/shaders/characters/character_paint.gdshader`, with the ink hull
@@ -316,14 +318,14 @@ Q = {
     "blink_duration": 0.16,
 }
 
-TARGETS = {
-    "assets/characters/protagonist/protagonist_look.tres": PROTAGONIST,
-    "assets/characters/q/q_look.tres": Q,
-}
+# PROTAGONIST and Q above are option C, the painted looks the game shipped before the
+# character integration (docs/CHARACTER_INTEGRATION.md). The looks the wrappers carry now
+# are built on them by look_experiments.py: the protagonist's charcoal, Q's oil and N's
+# chalk. A frozen copy of each option C file is in scenes/dev/character_lab/looks/before/.
+TARGETS = look_experiments.shipped(PROTAGONIST, Q)
 
-# The character integration's experiments (look_experiments.py), written next to the
-# frozen copies of the looks main shipped before it, for the in-game comparison. They live
-# under scenes/dev/, which no export carries.
+# The schemes that were tried and not shipped, written under scenes/dev/ (which no export
+# carries) for the in-game comparison.
 EXPERIMENTS = look_experiments.experiments(PROTAGONIST, Q)
 
 
