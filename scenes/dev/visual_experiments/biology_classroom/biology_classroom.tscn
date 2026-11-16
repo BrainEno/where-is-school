@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/biology_classroom.gd" id="1_experiment"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/room.gd" id="2_room"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/paper_switch.gd" id="3_paper"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/observer.gd" id="4_observer"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="5_protagonist"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_observer"]
+radius = 0.3
+height = 1.7
+
+[node name="BiologyClassroom" type="Node3D"]
+script = ExtResource("1_experiment")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+light_color = Color(1, 0.86, 0.66, 1)
+shadow_enabled = true
+
+[node name="Room" type="Node3D" parent="."]
+script = ExtResource("2_room")
+
+[node name="PaperSwitch" type="Node" parent="."]
+script = ExtResource("3_paper")
+
+[node name="Observer" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0, 2.25)
+floor_snap_length = 0.3
+script = ExtResource("4_observer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Observer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_observer")
+
+[node name="Visual" type="Node3D" parent="Observer"]
+
+[node name="Character" parent="Observer/Visual" instance=ExtResource("5_protagonist")]
+
+[node name="CameraRig" type="Node3D" parent="Observer"]
+
+[node name="Camera3D" type="Camera3D" parent="Observer/CameraRig"]
+current = true
+fov = 55.0
+near = 0.1
+far = 200.0
