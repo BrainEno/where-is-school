@@ -42,6 +42,8 @@ func _run() -> void:
 	q.queue_free()
 	await process_frame
 
+	Harness.stage = "Q native diagnostics in the existing preview"
+	await _check_preview()
 	Harness.stage = "Q in main.tscn"
 	await _check_game_integration()
 	for note in _notes:
@@ -209,6 +211,50 @@ func _rotation_span(q: CharacterVisualAnimation, clip: String, bone: String) -> 
 		player.seek(length * float(sample) / 16.0, true)
 		span = maxf(span, rad_to_deg(first.angle_to(skeleton.get_bone_pose_rotation(index))))
 	return span
+
+
+## Exercise the actual existing preview, including face ownership and safe rebind.
+func _check_preview() -> void:
+	var packed := load("res://scenes/dev/animation_retarget_test/animation_preview.tscn") as PackedScene
+	var preview := packed.instantiate()
+	root.add_child(preview)
+	await _frames(2)
+	var q := preview.get_node("Q") as CharacterVisualAnimation
+	var bound := q.get_animation_player()
+	var source := q.get_node("Model").find_child("AnimationPlayer", true, false) as AnimationPlayer
+	var head := q.get_node("Model").find_child("Q_Head", true, false) as MeshInstance3D
+	var look := q.get_node("Look") as CharacterLookApplier
+	var values := PackedFloat32Array()
+	for index in head.mesh.get_blend_shape_count():
+		values.append(head.get_blend_shape_value(index))
+	preview.call("_play", "face_test")
+	_expect(source.is_playing() and source.current_animation == "Q_Face_Test",
+		"The preview did not play Q's supplied facial diagnostic.")
+	_expect(not look.is_processing(), "Q's blink writer competes with the explicit facial diagnostic.")
+	var face := source.get_animation("Q_Face_Test")
+	var moved := 0.0
+	for sample in 17:
+		source.seek(face.length * float(sample) / 16.0, true)
+		for index in values.size():
+			moved = maxf(moved, absf(head.get_blend_shape_value(index) - values[index]))
+	_expect(moved > 0.2, "Q's preserved face diagnostic does not move its real imported morphs.")
+	preview.call("_play", "walk")
+	_expect(not source.is_playing() and look.is_processing(), "Leaving the face diagnostic did not restore writer ownership.")
+	for index in values.size():
+		_expect(is_equal_approx(head.get_blend_shape_value(index), values[index]),
+			"Leaving the face diagnostic stranded a Q facial morph.")
+	for clip: String in ["head_movement", "hand_gesture", "body_lean", "pose_preview"]:
+		preview.call("_play", clip)
+		_expect(bound.current_animation == "char/%s" % clip, "The preview cannot select Q's '%s'." % clip)
+	preview.call("_bind_all")
+	preview.call("_bind_all")
+	preview.call("_play", "idle")
+	_expect(is_instance_valid(bound) and bound == q.get_animation_player(), "Preview rebind destroyed Q's production-owned player.")
+	_expect(bound.get_animation_library(&"char").get_animation_list().size() == BOUND_CLIPS.size(),
+		"Preview rebind lost a native Q action.")
+	_notes.append("preview: four native diagnostics and real face morphs play; blink/values restored and Q player survives repeated rebind")
+	preview.queue_free()
+	await _frames(2)
 
 
 func _check_game_integration() -> void:

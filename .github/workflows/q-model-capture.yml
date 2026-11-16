@@ -44,6 +44,14 @@ jobs:
           version: 4.7.2
           use-dotnet: false
 
+      - name: Install capture encoder
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+
       - name: Select capture project without changing branches
         id: project
         shell: bash
@@ -76,15 +84,15 @@ jobs:
         run: |
           set -uo pipefail
           timeout 240 godot --headless --path "$PROJECT" --import > import-1.log 2>&1 || true
-          timeout 120 godot --headless --editor --path "$PROJECT" --quit > import-2.log 2>&1
-          code=$?
+          code=0
+          timeout 120 godot --headless --editor --path "$PROJECT" --quit > import-2.log 2>&1 || code=$?
           if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error|^ERROR:' import-2.log; then
             head -n 100 import-2.log
             exit 1
           fi
+          code=0
           timeout 60 godot --headless --path "$PROJECT" --check-only \
-            --script res://tests/capture_q_migration.gd > compile.log 2>&1
-          code=$?
+            --script res://tests/capture_q_migration.gd > compile.log 2>&1 || code=$?
           cat compile.log
           if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error' compile.log; then exit 1; fi
 
@@ -99,13 +107,14 @@ jobs:
           set -uo pipefail
           output="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE"
           mkdir -p "$output"
+          code=0
           LIBGL_ALWAYS_SOFTWARE=1 timeout 400 xvfb-run -a --server-args="-screen 0 1280x720x24" \
             godot --path "$PROJECT" --resolution 1280x720 --fixed-fps 24 \
               --rendering-method gl_compatibility --rendering-driver opengl3 \
               --script res://tests/capture_q_migration.gd -- \
-              "--phase=$PHASE" "--output=$output" "--source-sha=$SOURCE_SHA" > capture.log 2>&1
-          code=$?
+              "--phase=$PHASE" "--output=$output" "--source-sha=$SOURCE_SHA" > capture.log 2>&1 || code=$?
           grep -E '^ARTNOTE:|^Q_CAPTURE|SCRIPT ERROR|ERROR:|WARNING:' capture.log | cut -c1-900 | tail -n 100 || true
+          grep '^::notice ' capture.log | head -n 5 || true
           python3 - <<'PY'
           from pathlib import Path
           parts = []
@@ -121,7 +130,8 @@ jobs:
           PY
           if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error|^ERROR:|Q_CAPTURE_FAILURE:' capture.log \
             || ! grep -q '^Q_CAPTURE_RESULT: PASS' capture.log; then
-            echo "::error title=Q 实际渲染失败::请检查 capture.log；引擎退出码 $code，不以截图存在代替成功。"
+            summary=$(grep -E 'SCRIPT ERROR|Parse Error|^ERROR:|Q_CAPTURE_FAILURE:|Q_CAPTURE_RESULT:' capture.log | sed -n '1,10p' | tr '\n' '|' | cut -c1-3000)
+            echo "::error title=Q 实际渲染失败::引擎退出码 $code；${summary:-没有结果行}"
             exit 1
           fi
 

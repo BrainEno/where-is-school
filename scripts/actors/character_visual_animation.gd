@@ -161,6 +161,24 @@ func _ready() -> void:
 			])
 	_bind_report["authored_clips"] = authored_clips
 	CharacterAnimation.complete_pose_resets(self, _player)
+	if not authored_clips.is_empty():
+		# Diagnostics must describe the final native library, not the procedural
+		# clips it replaced (which have different durations and no finger tracks).
+		var library := _player.get_animation_library(CharacterAnimation.LIBRARY_NAME)
+		var clips: Dictionary = _bind_report["clips"]
+		for clip_name in library.get_animation_list():
+			var animation := library.get_animation(clip_name)
+			var info: Dictionary = clips.get(clip_name, {})
+			if authored_clips.has(clip_name) and bool(authored_clips[clip_name].get("ok", false)):
+				var bones: Array = authored_clips[clip_name]["bones"]
+				info["tracks"] = bones.size()
+				info["requested"] = bones.size()
+				info["authored_layers"] = authored_clips[clip_name]["layers"]
+			info["total_tracks"] = animation.get_track_count()
+			info["held"] = animation.get_track_count() - int(info.get("tracks", 0))
+			info["length"] = animation.length
+			info["loops"] = animation.loop_mode != Animation.LOOP_NONE
+			clips[clip_name] = info
 	_player.animation_finished.connect(_on_animation_finished)
 	print("CharacterVisualAnimation: %s — %s" % [name, CharacterAnimation.describe(_bind_report)])
 	if _body == null:

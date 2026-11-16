@@ -53,6 +53,12 @@ func _run() -> void:
 		_pose(_q, String(entry[0]), float(entry[1]))
 		await _body_shot(String(entry[2]))
 	if _phase == "after":
+		# Diagnose supplied garment/shoulder structure separately from calibration.
+		# This rest-only frame is labelled diagnostic, never locomotion evidence.
+		_q.get_animation_player().stop()
+		_q.get_skeleton().reset_bone_poses()
+		await _neck_shot("19_supplied_rest_shoulders")
+		await _body_shot("20_supplied_rest_diagnostic")
 		_pose(_q, "head_movement", 0.45)
 		await _neck_shot("16_authored_head_turn")
 		_pose(_q, "talk", 0.45)
@@ -73,6 +79,14 @@ func _run() -> void:
 	await _finish_migration()
 
 
+## The inherited capture spot predates the classroom's 4-column desk grid. Use the
+## real centre aisle so foreground furniture does not hide the sole in either phase.
+func _solo(subject: CharacterVisualAnimation, facing: float) -> void:
+	await super._solo(subject, facing)
+	_place(subject, Vector3(0.0, 0.0, -2.55), facing)
+	await process_frame
+
+
 func _body_shot(tag: String) -> void:
 	var base := _q.global_position
 	var frame := await _frame_from(base + Vector3(0, 1.2, 2.7), base + Vector3.UP * 0.88)
@@ -86,11 +100,27 @@ func _body_shot(tag: String) -> void:
 func _hand_shot(tag: String, canonical: String) -> void:
 	var skeleton := _q.get_skeleton()
 	var resolved: Dictionary = _q.get_bind_report()["resolved"]
-	var index := skeleton.find_bone(String(resolved[canonical]))
+	var hand_name := String(resolved[canonical])
+	var index := skeleton.find_bone(hand_name)
 	var bone := skeleton.get_bone_global_pose(index)
+	var wrist := skeleton.global_transform * bone.origin
 	var centre := skeleton.global_transform * (bone.origin + bone.basis.y * 0.065)
-	# Photograph the actual skinned hand, not an enlarged model or bone overlay.
-	await _shot_from(tag, centre + Vector3(0, 0.035, 0.44), centre)
+	var outward := wrist - _q.global_position
+	outward.y = 0.0
+	outward = outward.normalized()
+	var normal := outward
+	var suffix := hand_name.trim_prefix("Hand")
+	var knuckle_index := skeleton.find_bone("Index_01%s" % suffix)
+	var knuckle_little := skeleton.find_bone("Little_01%s" % suffix)
+	if knuckle_index >= 0 and knuckle_little >= 0:
+		var a := skeleton.global_transform * skeleton.get_bone_global_pose(knuckle_index).origin
+		var b := skeleton.global_transform * skeleton.get_bone_global_pose(knuckle_little).origin
+		normal = ((a + b) * 0.5 - wrist).cross(a - b).normalized()
+		if normal.dot(outward) < 0.0:
+			normal = -normal
+	# Photograph across the actual palm plane. A +Z camera sees these correctly
+	# inward-facing hands edge-on and cannot show their four separate long fingers.
+	await _shot_from(tag, centre + normal * 0.44, centre)
 
 
 func _neck_shot(tag: String) -> void:
@@ -176,7 +206,7 @@ func _save_image(tag: String, image: Image) -> void:
 		return
 	_records.append({"file": "%s.jpg" % tag, "width": image.get_width(), "height": image.get_height(),
 		"sha256": FileAccess.get_sha256(path), "clip": String(_q.get_animation_player().current_animation)})
-	if int(tag.get_slice("_", 0)) <= 12:
+	if int(tag.get_slice("_", 0)) <= 12 or tag == "19_supplied_rest_shoulders":
 		_previews.append({"name": tag, "image": image})
 
 
@@ -205,6 +235,10 @@ func _finish_migration() -> void:
 		file.store_string(JSON.stringify(metadata, "\t") + "\n")
 	for failure: String in _failures:
 		print("Q_CAPTURE_FAILURE: %s" % failure)
+	print("::notice title=Q 实际取证 %s::源 %s；引擎 %s；原图 %d 张；%s" % [
+		_phase, _source_sha, Engine.get_version_info()["string"], _records.size(),
+		" | ".join(_failures) if not _failures.is_empty() else "脚本断言通过，人工视觉未签收"])
+
 	print("Q_CAPTURE_RESULT: %s" % ("PASS" if _failures.is_empty() else "FAIL"))
 	if _main != null:
 		_main.queue_free()

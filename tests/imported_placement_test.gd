@@ -88,10 +88,10 @@ const VISUAL_PIVOT_Y := 0.9
 const NPC_TURN := PI
 ## The half turn the +Z characters need on their own visual node.
 const VISUAL_CORRECTION := PI
-## 1.6466 m, the rigged Q: the rig bake dropped the ~9° authored tilt on Q's head and hair
-## nodes instead of applying it to the vertices, so the crown is 1.5 cm lower than the
-## unrigged 1.662 m. `imported_assets_test.gd` records the same number for the same reason.
-const Q_HEIGHT := 1.6466
+## Approved new-Q, sole to crown at unit scale, as independently measured from its
+## supplied POSITION arrays. Keep the original tolerance and test BOTH placements;
+## 1.6466 m described the retired Q mesh, not a placement contract to shrink this one to.
+const Q_HEIGHT := 1.78449
 ## 1.654 m, substitute teacher N as exported (`teacher-n.glb`, sole to crown). N is the one
 ## character exported the way `docs/ASSET_PIPELINE.md` §1 asks — looking down −Z — so its
 ## visual needs no correction at all.
@@ -626,6 +626,12 @@ func _check_q(holder: Node3D) -> void:
 			var body_shape := companion.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
 			if body_shape == null or not (body_shape.shape is CapsuleShape3D):
 				_failures.append("The companion's body has no capsule any more.")
+			else:
+				var capsule := body_shape.shape as CapsuleShape3D
+				if not is_equal_approx(capsule.height, 1.8) or not is_equal_approx(capsule.radius, 0.34):
+					_failures.append("The new Q companion lost its 1.8 m capsule or widened its navigation footprint.")
+				if absf(body_shape.position.y - capsule.height * 0.5) > CONTACT_TOLERANCE:
+					_failures.append("The new Q companion's capsule no longer rests on the actor's floor.")
 			if actor != null:
 				for node in _descendants(actor):
 					if node is CollisionObject3D or node is CollisionShape3D:
