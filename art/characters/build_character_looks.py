@@ -352,8 +352,11 @@ def parameter(value: object) -> str:
 
 
 def shape_keys(part: dict) -> dict:
-    """A part's silhouette shaping, which its ink hull has to follow."""
-    return {key: value for key, value in part.items() if key.startswith("shape")}
+    """What a part's own ink hull needs: its silhouette shaping, which the hull has to
+    follow, and its `hull_*` settings (written to the hull without the prefix)."""
+    keys = {key: value for key, value in part.items() if key.startswith("shape")}
+    keys.update({key[len("hull_"):]: value for key, value in part.items() if key.startswith("hull_")})
+    return keys
 
 
 def sub_id(name: str) -> str:
@@ -394,7 +397,7 @@ def render(look: dict) -> str:
             lines.extend(outline_block("outline_" + sub_id(name), look, shape_keys(parts[name])))
     for name, part in parts.items():
         settings = dict(PART_DEFAULTS)
-        settings.update(part)
+        settings.update({key: value for key, value in part.items() if not key.startswith("hull_")})
         outline = bool(settings.pop("outline"))
         lines.append(f'[sub_resource type="ShaderMaterial" id="{sub_id(name)}"]')
         lines.append(f'resource_name = "{name} (painted)"')

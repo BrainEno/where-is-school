@@ -363,6 +363,8 @@ def q_paper(base: dict) -> dict:
 # Over each upper lid (eyes at |x| 0.032, y 1.531, front at z -0.09). v1 was centred on the
 # eye and 2.6 cm wide: it drew a ring round the eyeball that read as round spectacles.
 N_EYE_SOCKET = {"center": (0.032, 1.543, -0.084), "radius": (0.016, 0.008, 0.02)}
+# No ink round the eyes (see character_outline.gdshader, `gap_*`): the sockets at |x| 0.032.
+N_EYE_GAP = {"hull_gap_center": (0.032, 1.532, -0.082), "hull_gap_radius": (0.024, 0.017, 0.03)}
 N_CHEEK = {"center": (0.05, 1.49, -0.07), "radius": (0.025, 0.02, 0.04)}
 # The cardigan's flared hem (y 0.82-0.93, 0.136 m deep): the torso only, not the sleeves,
 # which hang at |x| > 0.25.
@@ -463,6 +465,7 @@ def n_chalk() -> dict:
             patch2_color="#D69A8C",
             patch2_strength=0.25,
             outline=True,
+            **N_EYE_GAP,
         ),
         "m_st_hair": hair,
         # The light strands were the striping on her bob; one tone, the marks do the rest.
@@ -583,6 +586,7 @@ def n_woodcut() -> dict:
                 patch2_color="#C88A80",
                 patch2_strength=0.3,
                 outline=True,
+                **N_EYE_GAP,
             ),
             strength=0.5,
             color="#6A5060",

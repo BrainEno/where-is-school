@@ -12,6 +12,9 @@ shader_type spatial;
 // Optional (off by default): `wobble` varies the width along the form with a rest-space
 // noise, so the line is cut by hand rather than ruled, and the part's `shape_*` push
 // (character_shape.gdshaderinc) is applied first so the hull follows a reshaped part.
+// `gap_*` is a rest-space ellipsoid, mirrored across x = `gap_mirror_x`, where the hull
+// does not grow: around the eyes, the head skin's hull grows out of the sockets' inner rims
+// and draws a ring round each eyeball that reads as spectacles.
 render_mode unshaded, cull_front, depth_draw_opaque, shadows_disabled;
 
 #include "res://assets/shaders/characters/character_shape.gdshaderinc"
@@ -27,6 +30,9 @@ uniform float max_scale : hint_range(0.5, 4.0) = 1.7;
 uniform float wobble : hint_range(0.0, 1.0) = 0.0;
 // Swings per metre.
 uniform float wobble_scale : hint_range(1.0, 80.0) = 14.0;
+uniform vec3 gap_center = vec3(0.0);
+uniform vec3 gap_radius = vec3(0.0);
+uniform float gap_mirror_x = 0.0;
 
 float outline_hash(vec3 p) {
 	vec3 q = fract(p * vec3(0.1031, 0.1030, 0.0973));
@@ -54,7 +60,13 @@ void vertex() {
 	if (wobble > 0.0) {
 		swing = 1.0 + (outline_noise(rest * wobble_scale) - 0.5) * 2.0 * wobble;
 	}
-	VERTEX += normalize(NORMAL) * width * distance_scale * swing;
+	float keep = 1.0;
+	if (gap_radius.x > 0.0 && gap_radius.y > 0.0 && gap_radius.z > 0.0) {
+		vec3 q = rest;
+		q.x = gap_mirror_x + abs(q.x - gap_mirror_x);
+		keep = smoothstep(0.7, 1.0, length((q - gap_center) / gap_radius));
+	}
+	VERTEX += normalize(NORMAL) * width * distance_scale * swing * keep;
 }
 
 void fragment() {

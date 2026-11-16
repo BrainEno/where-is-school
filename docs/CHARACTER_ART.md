@@ -13,6 +13,14 @@ protagonist dejected, cold, tired and uneasy, between youth and adult, not a han
 not anime; Q an ordinary, talkative, overweight, over-familiar classmate, not a guide.
 Substitute teacher N and the seated classroom student are out of scope and unchanged.
 
+**Character integration update.** The protagonist's and Q's option C palettes below are now
+the *base* the shipped looks are built on, not the shipped looks themselves: the character
+integration ([CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) moved the protagonist to
+a charcoal treatment, Q to an oil treatment (with the shoulder-seam skin painted over), and
+gave N a look of her own (chalk) on the same shader. Option C's files are kept, frozen, in
+`scenes/dev/character_lab/looks/before/` for comparison. The seated classroom student is
+still out of scope.
+
 ## Q replacement note
 
 The Q-specific measurements and review statements in sections 1–2 below are **historical**:

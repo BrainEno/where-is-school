@@ -1,5 +1,6 @@
 shader_type spatial;
-// The protagonist's and Q's painted surface (option C in docs/CHARACTER_ART.md).
+// The characters' painted surface: option C in docs/CHARACTER_ART.md, and the protagonist's
+// charcoal, Q's oil and N's chalk looks of docs/CHARACTER_INTEGRATION.md.
 //
 // The classroom around them is toon-lit, specular-free and painted in broad strokes with an
 // ink line. A character in the GLBs' own materials is a smooth Burley/PBR gradient with a

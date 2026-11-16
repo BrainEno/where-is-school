@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
@@ -9,6 +9,16 @@ resource_name = "character_ink_outline"
 shader = ExtResource("3_outline")
 shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
 shader_parameter/width = 0.014
+shader_parameter/wobble = 0.7
+shader_parameter/wobble_scale = 9
+
+[sub_resource type="ShaderMaterial" id="outline_m_m_st_skin"]
+resource_name = "character_ink_outline"
+shader = ExtResource("3_outline")
+shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
+shader_parameter/width = 0.014
+shader_parameter/gap_center = Vector3(0.032, 1.532, -0.082)
+shader_parameter/gap_radius = Vector3(0.024, 0.017, 0.03)
 shader_parameter/wobble = 0.7
 shader_parameter/wobble_scale = 9
 
@@ -47,7 +57,7 @@ shader_parameter/wobble_scale = 9
 
 [sub_resource type="ShaderMaterial" id="m_m_st_skin"]
 resource_name = "m_st_skin (painted)"
-next_pass = SubResource("outline")
+next_pass = SubResource("outline_m_m_st_skin")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.8784, 0.7843, 0.6902, 1)
 shader_parameter/edge_break = 0.1
