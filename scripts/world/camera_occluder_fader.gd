@@ -79,6 +79,12 @@ func _physics_process(delta: float) -> void:
 	var facing := _target_facing()
 	if facing != Vector3.ZERO:
 		blockers.append(_first_occluder(space, eye + facing * facing_reach))
+	# A camera focus (`CameraRig.focus_on`) centres the rig between the player and what
+	# they are using, so the rig is no longer where the player is: the player's own eye
+	# gets a ray too, or a wall behind them could hide them for the whole conversation.
+	var followed := _focused_body()
+	if followed != null:
+		blockers.append(_first_occluder(space, followed.global_position + Vector3(0.0, target_eye_height, 0.0)))
 
 	# Rebuild the set every frame instead of appending to it. Each ray has at most one
 	# blocker, and "what blocks the view now" is the whole truth. Appending made the set a
@@ -92,6 +98,14 @@ func _physics_process(delta: float) -> void:
 			_faded.append(blocker)
 
 	_update_materials(delta)
+
+
+## The body the rig follows, while a camera focus has moved the rig off it; else null.
+func _focused_body() -> Node3D:
+	var rig := _target as CameraRig
+	if rig == null or rig.get_focus_weight() <= 0.0:
+		return null
+	return rig.get_target()
 
 
 ## The occluder (group root) a ray from the camera to `to` meets first, or null. The

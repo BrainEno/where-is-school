@@ -36,6 +36,7 @@
 - An `Interactable` may carry a `camera_shot`. In the classroom: Q (`q_talk`), the curtain, the window and the blackboard. Shots live in `assets/camera/shots/`.
 - **When:** engaged when the player activates such an interactable, held while the player is locked by what it started (beat, conversation, inspection), released when control comes back. Walking, hovering and highlighting never move the camera. A location change drops the shot at once (`LocationFlow._stand_player_up`).
 - **How:** relative to the default framing - the view centre moves part of the way to the subject, the camera comes closer, swings a few degrees and narrows the lens. A critically damped spring glides each shot's weight (no overshoot); two shots cross-fade without dipping home. `frame_point` (ExitWatch) still has the last word on what is centred. Movement keys stay on the default axes.
+- **Walls:** a shot centres the rig between the player and the subject, so `CameraOccluderFader` casts one more ray, to the player's own eye, while a focus holds: a wall behind the player is faded as it would be in the default framing.
 - **Default pose unchanged:** with no shot the rig is exactly what it was (`camera_rig_test`, `doorway_watch_test`).
 
 ## 4. Known limits
