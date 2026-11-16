@@ -1,0 +1,247 @@
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://scenes/dev/character_art_review/shaders/review_stage_light.gdshader" id="2_surface"]
+[ext_resource type="Shader" path="res://scenes/dev/character_art_review/shaders/review_outline.gdshader" id="3_outline"]
+
+[sub_resource type="ShaderMaterial" id="outline"]
+resource_name = "review_outline"
+shader = ExtResource("3_outline")
+shader_parameter/ink = Color(0.0706, 0.0549, 0.0784, 1)
+shader_parameter/width = 0.012
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_skin"]
+resource_name = "protagonist_mat_skin (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.8471, 0.8039, 0.7059, 1)
+shader_parameter/edge_color = Color(0.5490, 0.2275, 0.2902, 1)
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/patch2_center = Vector3(0.052, 1.528, 0.088)
+shader_parameter/patch2_color = Color(0.4863, 0.5412, 0.4706, 1)
+shader_parameter/patch2_radius = Vector3(0.022, 0.03, 0.04)
+shader_parameter/patch2_strength = 0.5
+shader_parameter/patch_center = Vector3(0.034, 1.565, 0.104)
+shader_parameter/patch_color = Color(0.2902, 0.2275, 0.4000, 1)
+shader_parameter/patch_radius = Vector3(0.03, 0.02, 0.034)
+shader_parameter/patch_strength = 0.8
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1569, 0.1922, 0.3098, 1)
+shader_parameter/shadow_local = 0.35
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_skinbody"]
+resource_name = "protagonist_mat_skinbody (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.7961, 0.7490, 0.6510, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1569, 0.1922, 0.3098, 1)
+shader_parameter/shadow_local = 0.35
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_hair"]
+resource_name = "protagonist_mat_hair (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.1647, 0.1490, 0.1882, 1)
+shader_parameter/edge_color = Color(0.2275, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0.4
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.0549, 0.0588, 0.1098, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_head__protagonist_mat_hair"]
+resource_name = "protagonist_head/protagonist_mat_hair (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.1647, 0.1412, 0.1529, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.0784, 0.0784, 0.1255, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_jacket"]
+resource_name = "protagonist_mat_jacket (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.2431, 0.2902, 0.3608, 1)
+shader_parameter/edge_color = Color(0.3529, 0.2275, 0.4157, 1)
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.0784, 0.1020, 0.1804, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_button"]
+resource_name = "protagonist_mat_button (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.6039, 0.4784, 0.2902, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1569, 0.1922, 0.3098, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_shirt"]
+resource_name = "protagonist_mat_shirt (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.8471, 0.8235, 0.7451, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1569, 0.1922, 0.3098, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_trousers"]
+resource_name = "protagonist_mat_trousers (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.3529, 0.2902, 0.2431, 1)
+shader_parameter/edge_color = Color(0.4157, 0.2275, 0.1882, 1)
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1098, 0.0941, 0.1255, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_shoes"]
+resource_name = "protagonist_mat_shoes (review)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.1647, 0.1333, 0.1255, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0.2
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.0627, 0.0471, 0.0471, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_sclera"]
+resource_name = "protagonist_mat_sclera (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.8784, 0.8549, 0.7922, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.4157, 0.4392, 0.5333, 1)
+shader_parameter/shadow_local = 0.5
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_iris"]
+resource_name = "protagonist_mat_iris (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.2314, 0.1686, 0.1373, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1020, 0.0784, 0.0784, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_pupil"]
+resource_name = "protagonist_mat_pupil (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.0588, 0.0471, 0.0431, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.0196, 0.0157, 0.0157, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[sub_resource type="ShaderMaterial" id="m_protagonist_mat_mouthinner"]
+resource_name = "protagonist_mat_mouthinner (review)"
+shader = ExtResource("2_surface")
+shader_parameter/albedo = Color(0.2902, 0.1255, 0.1137, 1)
+shader_parameter/edge_color = Color(0.4784, 0.2078, 0.3137, 1)
+shader_parameter/edge_strength = 0
+shader_parameter/key_color = Color(0.9490, 0.9412, 0.9020, 1)
+shader_parameter/key_direction = Vector3(0.15, 1, 0.3)
+shader_parameter/pool_floor = 0.5
+shader_parameter/pool_high = 1.5
+shader_parameter/pool_low = 0.35
+shader_parameter/shadow_color = Color(0.1020, 0.0392, 0.0392, 1)
+shader_parameter/stage_share = 0.72
+shader_parameter/threshold = 0.22
+
+[resource]
+script = ExtResource("1_look")
+materials = {
+"protagonist_mat_skin": SubResource("m_protagonist_mat_skin"),
+"protagonist_mat_skinbody": SubResource("m_protagonist_mat_skinbody"),
+"protagonist_mat_hair": SubResource("m_protagonist_mat_hair"),
+"protagonist_head/protagonist_mat_hair": SubResource("m_protagonist_head__protagonist_mat_hair"),
+"protagonist_mat_jacket": SubResource("m_protagonist_mat_jacket"),
+"protagonist_mat_button": SubResource("m_protagonist_mat_button"),
+"protagonist_mat_shirt": SubResource("m_protagonist_mat_shirt"),
+"protagonist_mat_trousers": SubResource("m_protagonist_mat_trousers"),
+"protagonist_mat_shoes": SubResource("m_protagonist_mat_shoes"),
+"protagonist_mat_sclera": SubResource("m_protagonist_mat_sclera"),
+"protagonist_mat_iris": SubResource("m_protagonist_mat_iris"),
+"protagonist_mat_pupil": SubResource("m_protagonist_mat_pupil"),
+"protagonist_mat_mouthinner": SubResource("m_protagonist_mat_mouthinner")
+}
+expression = {
+"BrowCompress": 0.62,
+"LipTension": 0.52,
+"Frown": 0.24,
+"Blink_L": 0.2,
+"Blink_R": 0.26
+}
+blink_shapes = PackedStringArray("Blink_L", "Blink_R")
+blink_interval = Vector2(1.6, 3.8)
+blink_duration = 0.15
+label = "review D1 stage light: protagonist"

@@ -323,6 +323,9 @@ jobs:
           # Auto, skip and the read log: what was read is remembered by identity, language
           # and text; skip stops at unread text and at choices; auto never picks an option.
           run_check dialogue_playback 300 godot --headless --path . --script res://tests/dialogue_playback_test.gd || status=1
+          # Reading progress: every presentable line once, in any language, against the text on
+          # screen now; a line is read once shown whole; a new game keeps the log; the notebook.
+          run_check reading_progress 360 godot --headless --resolution 1600x900 --path . --script res://tests/reading_progress_test.gd || status=1
           # Every room on disk is described by data/story/locations.json, every door
           # points at a described room, and every key exists in both languages.
           run_check location_catalog 180 godot --headless --path . --script res://tests/location_catalog_test.gd || status=1
@@ -357,6 +360,11 @@ jobs:
           run_check playground_art_slice 480 godot --headless --path . --script res://tests/playground_art_slice_test.gd || status=1
           # This lab is isolated from the shipping scene; still compile and assert its actual resources in CI.
           run_check painterly_rendering 240 godot --headless --path . --script res://tests/painterly_rendering_test.gd || status=1
+          # The standalone visual experiments lab (scenes/dev/visual_experiments/, never
+          # exported): under a real renderer so its four shaders are parsed; the lab's
+          # structure, the corridor loop, the medium switch and its teardown; and that
+          # nothing in the game refers to it.
+          run_check visual_experiments 300 xvfb-run -a --server-args="-screen 0 1280x720x24" godot --resolution 1280x720 --rendering-driver opengl3 --path . --script res://tests/visual_experiments_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
           # The corridor's three library models (#90): wrapper, wall/parapet contact,

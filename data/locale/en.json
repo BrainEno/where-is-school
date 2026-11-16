@@ -227,6 +227,10 @@
     "journal.route_here": "{place} (now)",
     "journal.route_count": "{place} ({count})",
     "journal.route_separator": " · ",
-    "journal.objective": "Right now: {objective}"
+    "journal.objective": "Right now: {objective}",
+    "journal.read_progress": "Text read: {percent}% ({read} / {total})",
+    "journal.read_areas": "Not yet read through: {areas}",
+    "journal.read_area_left": "{place}: {count} still unread",
+    "journal.read_areas_more": "{count} more"
   }
 }
