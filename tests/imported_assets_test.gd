@@ -28,8 +28,10 @@ extends SceneTree
 ## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
-## The painted looks and motion profiles the protagonist's and Q's wrappers carry
-## (docs/CHARACTER_ART.md), by asset name. N and the classroom student have neither.
+## The painted looks and motion profiles the character wrappers carry (docs/CHARACTER_ART.md,
+## docs/CHARACTER_INTEGRATION.md), by asset name. N has a look and no motion profile: her
+## wrapper plays the four loops her author made (`authored_idle_layers`), and the empty
+## "motion" says the wrapper must not carry one. The classroom student has neither.
 const CHARACTER_LOOKS := {
 	"protagonist": {
 		"look": "res://assets/characters/protagonist/protagonist_look.tres",
@@ -38,6 +40,10 @@ const CHARACTER_LOOKS := {
 	"q": {
 		"look": "res://assets/characters/q/q_look.tres",
 		"motion": "res://assets/characters/q/q_motion.tres",
+	},
+	"teacher n": {
+		"look": "res://assets/characters/teacher_n/teacher_n_look.tres",
+		"motion": "",
 	},
 }
 const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
@@ -573,7 +579,7 @@ func _check_character_wrapper(
 		_check_character_look(label, wrapper, asset)
 
 
-## The protagonist's and Q's painted look: the wrapper carries its motion profile and a
+## A character's painted look: the wrapper carries its motion profile (or, for N, none) and a
 ## `Look` applier, and the applier repaints every surface of the GLB — none left in its
 ## smooth PBR material — with the painted shader, without touching what the model *is*:
 ## the same meshes, surfaces, vertex counts, skins and skeleton. The other two treatments
@@ -584,6 +590,12 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 	var animator := wrapper as CharacterVisualAnimation
 	if animator == null:
 		_failures.append("The wrapper for %s is not driven by CharacterVisualAnimation." % label)
+	elif String(paths["motion"]).is_empty():
+		if animator.motion_profile != null:
+			_failures.append(
+				"The wrapper for %s carries a motion profile (%s); it plays its authored loops."
+				% [label, animator.motion_profile.resource_path]
+			)
 	elif animator.motion_profile == null or animator.motion_profile.resource_path != String(paths["motion"]):
 		_failures.append("The wrapper for %s does not carry its motion profile %s." % [label, String(paths["motion"])])
 	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
