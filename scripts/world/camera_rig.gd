@@ -26,6 +26,19 @@ extends Node3D
 ## target to a point in the world and back again (`release_frame`). The angle and the
 ## distance never change, only what the camera is centred on - a staged discovery shows
 ## the player where to look without cutting away from the game camera.
+##
+## **Focus on important interactions** (`focus_on` / `release_focus` / `clear_focus`,
+## driven by `CameraFocusDirector`): a `CameraShot` moves the view centre toward the
+## subject, brings the camera closer, swings it a little and narrows the lens. Each shot is
+## a layer with a weight that glides by a critically damped spring - it eases in, never
+## overshoots, and keeps its velocity when a new target arrives mid-glide, so walking from
+## one important point straight to the next cross-fades the two shots instead of dipping
+## back to the default in between. The layers compose under `frame_point`, which still has
+## the last word on what is centred (ExitWatch uses it at the blocked door). With no layer
+## the pose is exactly the default one, and `camera.fov == fov`.
+##
+## Movement is read against the default framing (`planar_right` / `planar_forward`), not
+## against a shot, so a focus never turns the controls.
 
 ## What the rig frames. The player, in the game scene.
 @export var target_path: NodePath = ^"../Player"
@@ -45,6 +58,9 @@ var _roll_degrees: float = 0.0
 var _frame_point := Vector3.ZERO
 var _frame_weight := 0.0
 var _frame_tween: Tween = null
+## Focus layers: {"subject": Node3D (may be freed), "shot": CameraShot, "point": Vector3
+## (the last known look point), "weight": float, "velocity": float, "target": 0.0 or 1.0}.
+var _focus_layers: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -70,20 +86,39 @@ func snap() -> void:
 	if _target == null or camera == null:
 		return
 	var anchor := _target.global_position
+	var camera_offset := offset
+	var lens := fov
+	var total := 0.0
+	for layer: Dictionary in _focus_layers:
+		total += float(layer["weight"])
+	if total > 0.0:
+		# Cross-fading layers can briefly add up past 1; they then share the full move.
+		var share := 1.0 / maxf(total, 1.0)
+		var base_anchor := anchor
+		for layer: Dictionary in _focus_layers:
+			var weight := float(layer["weight"]) * share
+			if weight <= 0.0:
+				continue
+			var shot := layer["shot"] as CameraShot
+			var point := _focus_point(layer, base_anchor)
+			anchor += (base_anchor.lerp(point, shot.subject_mix) - base_anchor) * weight
+			camera_offset += (_shot_offset(shot) - offset) * weight
+			lens += (shot.fov - fov) * weight
 	if _frame_weight > 0.0:
 		anchor = anchor.lerp(_frame_point, _frame_weight)
 	global_position = anchor
-	camera.position = offset
-	camera.fov = fov
+	camera.position = camera_offset
+	camera.fov = lens
 	camera.look_at(anchor + Vector3(0.0, target_height, 0.0), Vector3.UP)
 	if not is_zero_approx(_roll_degrees):
 		camera.rotate_object_local(Vector3(0.0, 0.0, 1.0), deg_to_rad(_roll_degrees))
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	# The body moves in its own `_physics_process`, which runs first because the rig
 	# is a later sibling. Following here therefore reads this frame's position, not
 	# the previous one, and the rendered frame is the one the player is standing in.
+	_step_focus(delta)
 	snap()
 
 
@@ -143,21 +178,153 @@ func _set_frame_weight(weight: float) -> void:
 	snap()
 
 
-## The horizontal axis the camera shows as "right", which is the axis player
-## movement is expressed in. Falls back to world axes when the rig has no camera,
-## so a scene that instantiates the player without one still moves.
+## The horizontal axis the camera shows as "right" in the default framing, which is the
+## axis player movement is expressed in (a focus swing does not turn it). Falls back to
+## world axes when the rig has no camera, so a scene that instantiates the player without
+## one still moves.
 func planar_right() -> Vector3:
 	if camera == null:
 		return Vector3.RIGHT
-	var right := camera.global_basis.x
+	var right := _default_basis().x
 	right.y = 0.0
 	return right.normalized()
 
 
-## The horizontal axis the camera shows as "forward" (away from the viewer).
+## The horizontal axis the camera shows as "forward" (away from the viewer), in the
+## default framing.
 func planar_forward() -> Vector3:
 	if camera == null:
 		return Vector3.FORWARD
-	var forward := -camera.global_basis.z
+	var forward := -_default_basis().z
 	forward.y = 0.0
 	return forward.normalized()
+
+
+## The camera's orientation with no focus and no framed point: looking from `offset` at
+## the eye, with the current roll.
+func _default_basis() -> Basis:
+	var look := Vector3(0.0, target_height, 0.0) - offset
+	var view := Basis.looking_at(look, Vector3.UP)
+	if not is_zero_approx(_roll_degrees):
+		view = view * Basis(Vector3(0.0, 0.0, 1.0), deg_to_rad(_roll_degrees))
+	return global_basis * view
+
+
+# --- Focus on important interactions ---------------------------------------------------
+
+
+## Glides the view to `shot` of `subject` (an interactable). Any other shot fades out at
+## the same time, from wherever it is. Calling it again for the subject already in focus
+## changes nothing.
+func focus_on(subject: Node3D, shot: CameraShot) -> void:
+	if subject == null or shot == null:
+		release_focus()
+		return
+	var found := false
+	for layer: Dictionary in _focus_layers:
+		if layer["subject"] == subject and layer["shot"] == shot:
+			layer["target"] = 1.0
+			found = true
+		else:
+			layer["target"] = 0.0
+	if not found:
+		_focus_layers.append({
+			"subject": subject,
+			"shot": shot,
+			"point": subject.global_position,
+			"weight": 0.0,
+			"velocity": 0.0,
+			"target": 1.0,
+		})
+
+
+## Glides the view back to the default framing.
+func release_focus() -> void:
+	for layer: Dictionary in _focus_layers:
+		layer["target"] = 0.0
+
+
+## Back to the default framing at once (a location change: nothing to glide from).
+func clear_focus() -> void:
+	_focus_layers.clear()
+	snap()
+
+
+## How far the view is in a focus: 0 = the default framing, 1 = fully in a shot.
+func get_focus_weight() -> float:
+	var total := 0.0
+	for layer: Dictionary in _focus_layers:
+		total += float(layer["weight"])
+	return minf(total, 1.0)
+
+
+## The subject the view is gliding to or holding (null while none, or while releasing).
+func get_focus_subject() -> Node3D:
+	for layer: Dictionary in _focus_layers:
+		if float(layer["target"]) > 0.0 and is_instance_valid(layer["subject"]):
+			return layer["subject"] as Node3D
+	return null
+
+
+## The lens the camera is drawing with right now (`fov` unless a shot narrows it).
+func get_effective_fov() -> float:
+	return camera.fov if camera != null else fov
+
+
+func _step_focus(delta: float) -> void:
+	if _focus_layers.is_empty() or delta <= 0.0:
+		return
+	var kept: Array[Dictionary] = []
+	for layer: Dictionary in _focus_layers:
+		var shot := layer["shot"] as CameraShot
+		if not is_instance_valid(layer["subject"]):
+			# A freed subject (the room went away under a shot) fades from its last point.
+			layer["target"] = 0.0
+		var target := float(layer["target"])
+		var seconds := shot.glide_seconds if target > 0.0 else shot.release_seconds
+		var stepped := _smooth_damp(float(layer["weight"]), target, float(layer["velocity"]), seconds, delta)
+		layer["weight"] = stepped.x
+		layer["velocity"] = stepped.y
+		if target > 0.0 or stepped.x > 0.0:
+			kept.append(layer)
+	_focus_layers = kept
+
+
+## A critically damped step toward `target` that reaches ~95% in `seconds` and never
+## crosses the target. Returns (value, velocity). Settles exactly on the target.
+static func _smooth_damp(current: float, target: float, velocity: float, seconds: float, delta: float) -> Vector2:
+	var smooth_time := maxf(0.0001, seconds * 0.42)
+	var omega := 2.0 / smooth_time
+	var x := omega * delta
+	var decay := 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x)
+	var change := current - target
+	var temp := (velocity + omega * change) * delta
+	var next_velocity := (velocity - omega * temp) * decay
+	var value := target + (change + temp) * decay
+	if (target - current > 0.0) == (value > target):
+		value = target
+		next_velocity = 0.0
+	# The tail of a critically damped approach is long; the last 0.2% is not worth a second.
+	if absf(value - target) < 0.002 and absf(next_velocity) < 0.05:
+		value = target
+		next_velocity = 0.0
+	return Vector2(clampf(value, 0.0, 1.0), next_velocity)
+
+
+## Where a layer looks, on the target's floor: the subject's position plus the shot's
+## offset (remembered, so a freed subject leaves the view where it was).
+func _focus_point(layer: Dictionary, base_anchor: Vector3) -> Vector3:
+	var shot := layer["shot"] as CameraShot
+	if is_instance_valid(layer["subject"]):
+		var subject := layer["subject"] as Node3D
+		layer["point"] = subject.global_position + shot.look_offset
+	var point: Vector3 = layer["point"]
+	point.y = base_anchor.y
+	return point
+
+
+## The camera's offset from the view centre under a shot.
+func _shot_offset(shot: CameraShot) -> Vector3:
+	var swung := offset.rotated(Vector3.UP, deg_to_rad(shot.yaw_degrees)) * shot.distance_scale
+	swung.y *= shot.height_scale
+	return swung

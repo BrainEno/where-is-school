@@ -49,6 +49,9 @@ const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 	set(value):
 		radius = value
 		_apply_radius()
+## How the camera frames this interaction while it runs (null = the default framing).
+## Only important moments carry one; see `CameraShot` and `CameraFocusDirector`.
+@export var camera_shot: CameraShot = null
 @export var interaction_enabled: bool = true:
 	set(value):
 		interaction_enabled = value

@@ -152,8 +152,8 @@ colour families as the models and portraits, no part recoloured into another ide
 ### 4.2 The ink line (`character_outline.gdshader`)
 
 An inverted hull drawn as the `next_pass` of the outer parts, in the classroom's ink
-(#2B2622). The classroom's hull grows a fixed 1.6 cm; a person is seen from under a metre in a
-close-up and from six metres in play, so this hull grows with view distance (`width` 9 mm at
+(#292433, the biology-classroom experiment's pen since the prologue art migration). The classroom's hull grows a fixed 1.6 cm; a person is seen from under a metre in a
+close-up and from six metres in play, so this hull grows with view distance (`width` 10 mm at
 4 m, clamped ×0.55–×1.7). It stays thin enough not to swallow the eyes in a close-up and thick
 enough to hold the silhouette against the board. Eyes, mouth, brows, buttons, collar, shirt
 and soles carry no hull. Being a material pass, it adds no node, mesh or surface: the wrapper's

@@ -15,6 +15,10 @@
       "owner": "docs/screenshots/map_art/README.md"
     },
     {
+      "path": "prologue_art",
+      "owner": "docs/PROLOGUE_ART_MIGRATION.md"
+    },
+    {
       "path": "visual_experiments",
       "owner": "docs/VISUAL_EXPERIMENTS.md"
     }

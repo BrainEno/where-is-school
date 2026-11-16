@@ -364,6 +364,11 @@ jobs:
           # The biology classroom's anomalies: the curtained window that opens on nothing and drops the
           # player into the yard, and the rear door that puts an unsupported staircase in the room.
           run_check classroom_anomaly 300 godot --headless --path . --script res://tests/classroom_anomaly_test.gd || status=1
+          # The prologue's art migration in the real game: the classroom's concrete and paper
+          # shaders compiled for real (Xvfb), nothing in the game naming the experiment, the
+          # cut open floor to wall top with the blank sheet in it, the paper anomaly local and
+          # removable and driven by the curtain, and the camera focus on important moments.
+          run_check prologue_art 300 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --resolution 1600x900 --rendering-driver opengl3 --path . --script res://tests/prologue_art_test.gd || status=1
           run_check playground_art_slice 480 godot --headless --path . --script res://tests/playground_art_slice_test.gd || status=1
           # This lab is isolated from the shipping scene; still compile and assert its actual resources in CI.
           run_check painterly_rendering 240 godot --headless --path . --script res://tests/painterly_rendering_test.gd || status=1

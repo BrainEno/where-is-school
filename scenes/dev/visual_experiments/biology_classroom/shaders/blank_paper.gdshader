@@ -9,6 +9,9 @@
 // `reveal` spreads the paper outward from `origin` (the opening, in UV) with a ragged
 // torn front, so the change is something seen arriving from the window.
 //
+// Its noise and hatching live in `res://assets/materials/classroom/shaders/paper_marks.gdshaderinc`,
+// shared with the game's local paper anomaly (the experiment's migration).
+//
 // Developed from the visual lab's medium switch (`../../shaders/painting_filter.gdshader`):
 // it reads only its own TEXTURE (a SubViewport of the same world), never the screen
 // texture or the depth buffer, so it runs unchanged on Forward+, Mobile and Compatibility.
@@ -27,34 +30,10 @@ uniform vec4 red_pencil : source_color = vec4(0.84, 0.14, 0.1, 1.0);
 uniform float hatch_scale = 190.0;
 uniform float edge_gain = 5.0;
 
-float hash12(vec2 p) {
-	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-	p3 += dot(p3, p3.yzx + 33.33);
-	return fract((p3.x + p3.y) * p3.z);
-}
-
-float value_noise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	return mix(
-		mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
-		mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x),
-		u.y
-	);
-}
+#include "res://assets/materials/classroom/shaders/paper_marks.gdshaderinc"
 
 float luma(vec3 c) {
 	return dot(c, vec3(0.299, 0.587, 0.114));
-}
-
-// A family of parallel pencil lines at `angle`, `density` per unit, with breaks.
-float hatch(vec2 p, float angle, float density, float seed) {
-	vec2 dir = vec2(cos(angle), sin(angle));
-	float along = dot(p, vec2(-dir.y, dir.x)) * density;
-	float line = abs(fract(along) - 0.5) * 2.0;
-	float broken = step(0.18, value_noise(vec2(dot(p, dir) * 3.0, floor(along) + seed)));
-	return (1.0 - smoothstep(0.0, 0.42, line)) * broken;
 }
 
 void fragment() {

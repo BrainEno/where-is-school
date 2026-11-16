@@ -35,7 +35,7 @@
 | 灰泥 | `#CEC2BB` / 亮 `#E9D5AB` / 暗 `#9697A7` | 上半墙，宽大的竖向笔触色块 |
 | 墙裙 | `#47656F` / 深 `#364555` | 1.05 m 以下的色带、踢脚线、窗框 |
 | 地板 | `#7E848C` 基色／冷矿物灰 | 断续抹刀笔触、浅色磨损和柔和水泥斑驳；没有木板纹 |
-| 水泥讲台 | 冷灰水泥（`cement_stage.tres`） | 实际抬高 0.12 m，并带宽大的低台阶 |
+| 水泥讲台 | 生物课教室实验的现浇水泥，不带地面的横线（`platform_concrete.tres`、`shaders/concrete.gdshader`） | 实际抬高 0.12 m，并带宽大的低台阶 |
 | 黑板 | `#243D3F` + 粉笔 `#D6DCCE` | 前黑板（擦过又没擦干净）、后墙的旧黑板报 |
 | 牛血红漆 | `#6E3C36` | 黑板框、讲桌侧板，也就是代表“权威”的物件 |
 | 门灰／门白 | `#7D8287` / `#E6E3D9` | 两扇门的门板（`door_gray`、`door_white`），门框为墨青色（`trim_teal`） |
@@ -77,7 +77,7 @@
 | 黑板擦过又没擦干净；粉笔槽里有一截断粉笔和一个夹子 | `Board/Face` 贴图、`ChalkBrokenEnd`、`Clip`、粉笔槽上的粉笔灰 |
 | 两块玻璃，一块裂了、用胶带补过；窗外是湿水泥地、矮墙、一排垃圾桶；傍晚的光 | `WindowGlass0`（裂纹 + 胶带）、`window_view.png` |
 | （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain`（程序生成的 `WindowCurtain`，`curtain_blackout`）挂在离西墙 0.18 m 的轨道上，宽 3.3 m，从 3.14 m 垂到地面，遮住 z 0.95–3.45 的墙洞 |
-| （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `WallWest` 上真实的洞（y 0.50–2.75）：墙壳和墙面被切成 `SouthShell`/`SillShell`/`HeaderShell` 与 `PaintSouth`/`PaintSill`/`PaintHeader`，洞后没有玻璃、窗框、窗景或背景板。`Anomalies/VoidOpening` 只是洞里的定位点。墙的碰撞体保持完整 |
+| （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `WallWest` 上真实的洞，从地面一直到墙顶（y 0–3.2；美术迁移时去掉了窗台和过梁，`paint_classroom_textures.py` 的 `WEST_VOID_OPENING` 只剩 z 范围仍有效）：墙壳和墙面只剩 `MeshInstance3D`（北段墙壳）/`SouthShell` 与 `Paint`/`PaintSouth`，洞后没有玻璃、窗框、窗景或背景板。窗帘拉开后，`Anomalies/VoidOpening/BlankSheet` 用实验里的空白纸（`void_sheet.tres`，不受光的纸面）填满墙洞，`Anomalies/PaperZone`（`scripts/environment/paper_zone.gd`、`paper_zone.tres`）把墙洞 2.6 m 以内的教室变成答题纸上的铅笔画——以覆盖层实现，窗帘复位时会撤掉；人物（`Actors`）永远不会被覆盖。墙的碰撞体保持完整 |
 | 另一扇门从来不会打开，除非使用特殊的手段 | `WallEast/RearDoor`（`classroom_door.tscn`，白色门板），只是普通检视（`classroom_rear_door`）；不会打开，本教室不放置楼梯 |
 | 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度 |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |

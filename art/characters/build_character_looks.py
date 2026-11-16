@@ -33,7 +33,9 @@ PAINT_SHADER = "res://assets/shaders/characters/character_paint.gdshader"
 OUTLINE_SHADER = "res://assets/shaders/characters/character_outline.gdshader"
 SCRIPT = "res://scripts/actors/character_look.gd"
 
-INK = "#2B2622"
+# The biology-classroom experiment's ink (0.16, 0.14, 0.2), since the prologue art
+# migration: the characters' contour is drawn with the same pen as the room's.
+INK = "#292433"
 
 # Shared defaults for character_paint.gdshader; a part overrides what it needs.
 PART_DEFAULTS = {
@@ -44,7 +46,8 @@ PART_DEFAULTS = {
     "light_strength": 0.76,
     "shadow_edge": -0.05,
     "light_edge": 0.42,
-    "edge_softness": 0.05,
+    # The room's two-step terminator is hard (room_tone: ±0.03); the characters follow it.
+    "edge_softness": 0.03,
     "edge_break": 0.18,
     "pigment_scale": 9.0,
     "pigment_stretch": (1.0, 2.2, 1.0),
@@ -79,7 +82,7 @@ PROTAGONIST_SKIN = {
 }
 PROTAGONIST = {
     "label": "protagonist: painted (option C)",
-    "outline_width": 0.009,
+    "outline_width": 0.01,
     "parts": {
         "protagonist_mat_skin": dict(
             PROTAGONIST_SKIN,
@@ -226,7 +229,7 @@ Q_SKIN = {
 }
 Q = {
     "label": "Q: painted (option C)",
-    "outline_width": 0.009,
+    "outline_width": 0.01,
     "parts": {
         "q_mat_skin": dict(
             Q_SKIN,

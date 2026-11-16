@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/classroom/shaders/concrete.gdshader" id="1_concrete"]
+
+[resource]
+resource_name = "floor_concrete — poured against an answer sheet (biology-classroom experiment floor)"
+shader = ExtResource("1_concrete")
+shader_parameter/base_color = Color(0.55, 0.54, 0.52, 1)
+shader_parameter/ruled_lines = 1.0
+shader_parameter/formwork = 0.0
+shader_parameter/joint_spacing = 2.3
+shader_parameter/margin_x = -6.2

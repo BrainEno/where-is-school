@@ -252,6 +252,12 @@ func _stand_player_up() -> void:
 	_player.set_camera_roll(0.0)
 	if _player.camera_rig != null:
 		_player.camera_rig.release_frame(0.0)
+	# A shot belongs to the room it was taken in.
+	var focus: CameraFocusDirector = _host.get_camera_focus() if _host.has_method(&"get_camera_focus") else null
+	if focus != null:
+		focus.clear()
+	elif _player.camera_rig != null:
+		_player.camera_rig.clear_focus()
 
 
 ## The part of arriving that is data: the objective line, the flags this room sets,
