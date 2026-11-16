@@ -127,7 +127,7 @@ func _build_environments() -> void:
 	# [zone, background, ambient colour, ambient energy, sun energy, fog density]
 	var moods: Array = [
 		[ZONE_OUTSIDE, Color(0.1, 0.095, 0.09), Color(0.8, 0.76, 0.7), 0.6, 1.0, 0.0],
-		[ZONE_COLLAGE, Color(0.16, 0.14, 0.12), Color(0.95, 0.88, 0.75), 0.85, 1.1, 0.0],
+		[ZONE_COLLAGE, Color(0.16, 0.14, 0.12), Color(0.95, 0.88, 0.75), 0.45, 0.85, 0.0],
 		[ZONE_CORRIDOR, Color(0.11, 0.14, 0.12), Color(0.62, 0.7, 0.65), 0.55, 0.8, 0.045],
 		[ZONE_EXPRESSION, Color(0.04, 0.06, 0.18), Color(0.16, 0.24, 0.62), 0.6, 0.35, 0.0],
 		[ZONE_CLASSROOM, Color(0.13, 0.13, 0.12), Color(0.82, 0.82, 0.78), 0.7, 1.0, 0.0],

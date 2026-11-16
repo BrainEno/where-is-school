@@ -277,4 +277,5 @@ func _light() -> void:
 	add_child(spot)
 	# Low enough that the beam passes through the slot (y 2.35..3.05 at the wall).
 	spot.position = Vector3(HALF_X + 5.0, 4.8, -0.2)
-	spot.look_at_from_position(spot.position, Vector3(0.4, 0.0, -0.8), Vector3.UP)
+	# look_at() takes a world-space target; the room may be anywhere in the lab.
+	spot.look_at(to_global(Vector3(0.4, 0.0, -0.8)), Vector3.UP)

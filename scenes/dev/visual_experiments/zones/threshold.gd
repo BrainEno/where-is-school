@@ -276,7 +276,10 @@ func _place_actor() -> void:
 	stage_spot.spot_angle = 24.0
 	stage_spot.shadow_enabled = true
 	add_child(stage_spot)
-	stage_spot.look_at_from_position(Vector3(8.0, 5.6, 3.2), Vector3(17.0, 1.2, 0.4), Vector3.UP)
+	# Both points are in the zone's frame; look_at_from_position() wants world space.
+	stage_spot.look_at_from_position(
+		to_global(Vector3(8.0, 5.6, 3.2)), to_global(Vector3(17.0, 1.2, 0.4)), Vector3.UP
+	)
 
 
 ## A picture on the classroom's south wall that is a live view of the stage.

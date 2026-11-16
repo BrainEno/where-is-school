@@ -36,9 +36,9 @@ const FRAMES := [
 		"note": "The whole lab from the flies: collage room (front), the 44 m corridor, the staff room, the classroom and the stage of flats (far right).",
 	},
 	{
-		"name": "collage_room", "eye": Vector3(0.0, 1.55, 4.2), "look": Vector3(0.0, 1.5, -6.0),
-		"fov": 62.0, "fly": false,
-		"note": "A - Standing in the doorway of the collage room: walls of torn paper, the reprinted clock and timetable, cut-out desks and pupils.",
+		"name": "collage_room", "eye": Vector3(0.0, 1.6, -0.8), "look": Vector3(0.0, 1.5, -11.5),
+		"fov": 66.0, "fly": false,
+		"note": "A - Just inside the collage room: walls of torn paper, the reprinted clock and timetable, cut-out desks and pupils.",
 	},
 	{
 		"name": "collage_detail", "eye": Vector3(4.6, 1.8, -1.6), "look": Vector3(1.6, 0.5, -4.6),
@@ -56,8 +56,8 @@ const FRAMES := [
 		"note": "B - The corridor: every door numbered 2-3, each 85% of the last, fog swallowing the far end.",
 	},
 	{
-		"name": "corridor_giant_door", "eye": Vector3(-1.0, 1.55, -35.5), "look": Vector3(1.4, 3.2, -40.2),
-		"fov": 72.0, "fly": false,
+		"name": "corridor_giant_door", "eye": Vector3(-0.9, 1.55, -34.0), "look": Vector3(1.3, 2.9, -40.0),
+		"fov": 66.0, "fly": false,
 		"note": "B - The one doorway taller than the wall it is cut into (the staircase to nowhere is behind the camera).",
 	},
 	{
@@ -91,7 +91,7 @@ const FRAMES := [
 		"note": "D - The picture on the classroom wall is a live view of the stage next door, banded like a cheap print.",
 	},
 	{
-		"name": "backstage", "eye": Vector3(52.5, 2.2, -45.8), "look": Vector3(46.0, 1.2, -39.5),
+		"name": "backstage", "eye": Vector3(55.5, 3.0, -47.5), "look": Vector3(48.5, 1.4, -38.5),
 		"fov": 62.0, "fly": true,
 		"note": "D - Behind the painting: plywood backs, braces and stage weights, back in 3D.",
 	},

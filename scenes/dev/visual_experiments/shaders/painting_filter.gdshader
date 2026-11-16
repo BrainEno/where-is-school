@@ -18,7 +18,8 @@ uniform float mount_tilt = 0.018;
 uniform float mount_scale = 1.07;
 uniform vec4 paper_color : source_color = vec4(0.9, 0.86, 0.76, 1.0);
 uniform vec4 ink_color : source_color = vec4(0.12, 0.1, 0.12, 1.0);
-uniform vec2 texel = vec2(1.0 / 800.0, 1.0 / 450.0);
+// A uniform default must be a literal: `1.0 / 800.0` is not folded and fails to parse.
+uniform vec2 texel = vec2(0.00125, 0.00222);
 uniform float screen_aspect = 1.7778;
 
 float hash12(vec2 p) {
