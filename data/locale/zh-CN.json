@@ -227,6 +227,10 @@
     "journal.route_here": "{place}（现在）",
     "journal.route_count": "{place}（{count}）",
     "journal.route_separator": " · ",
-    "journal.objective": "眼下：{objective}"
+    "journal.objective": "眼下：{objective}",
+    "journal.read_progress": "已读文字：{percent}%（{read} / {total}）",
+    "journal.read_areas": "尚未读完的区域：{areas}",
+    "journal.read_area_left": "{place}：还有 {count} 句",
+    "journal.read_areas_more": "另有 {count} 处"
   }
 }
