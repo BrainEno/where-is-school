@@ -39,8 +39,28 @@
 - **Walls:** a shot centres the rig between the player and the subject, so `CameraOccluderFader` casts one more ray, to the player's own eye, while a focus holds: a wall behind the player is faded as it would be in the default framing.
 - **Default pose unchanged:** with no shot the rig is exactly what it was (`camera_rig_test`, `doorway_watch_test`).
 
-## 4. Known limits
+## 4. Evidence
+
+Before: commit `00ed8dc` (no art change), run [43853974466](https://github.com/BrainEno/where-is-school/actions/runs/43853974466). After: commit `287df94`, run [43859730557](https://github.com/BrainEno/where-is-school/actions/runs/43859730557). Both `prologue-art-capture.yml`, decoded from the run's annotations (640×360 JPEG), not retouched. The full 1600×900 PNGs are the runs' artifacts.
+
+| Frame | Before | After |
+|---|---|---|
+| Start: the protagonist's desk | ![](screenshots/prologue_art/before/00_start.jpg) | ![](screenshots/prologue_art/after/00_start.jpg) |
+| The window wall, curtain closed | ![](screenshots/prologue_art/before/01_window_wall.jpg) | ![](screenshots/prologue_art/after/01_window_wall.jpg) |
+| The teacher's corner | ![](screenshots/prologue_art/before/02_front.jpg) | ![](screenshots/prologue_art/after/02_front.jpg) |
+| Q at his desk (default framing) | ![](screenshots/prologue_art/before/03_q.jpg) | ![](screenshots/prologue_art/after/03_q.jpg) |
+| Q close up (capture camera) | ![](screenshots/prologue_art/before/04_q_close.jpg) | ![](screenshots/prologue_art/after/04_q_close.jpg) |
+| Looking out of the window (focus) | ![](screenshots/prologue_art/before/05_focus_window.jpg) | ![](screenshots/prologue_art/after/05_focus_window.jpg) |
+| Using the curtain (focus) | ![](screenshots/prologue_art/before/06_focus_curtain.jpg) | ![](screenshots/prologue_art/after/06_focus_curtain.jpg) |
+| Curtain drawn: the cut and the paper, near | ![](screenshots/prologue_art/before/07_void_near.jpg) | ![](screenshots/prologue_art/after/07_void_near.jpg) |
+| The paper stays at the window (far) | ![](screenshots/prologue_art/before/08_void_far.jpg) | ![](screenshots/prologue_art/after/08_void_far.jpg) |
+| A third spot: no seam, no slide | ![](screenshots/prologue_art/before/09_void_walk.jpg) | ![](screenshots/prologue_art/after/09_void_walk.jpg) |
+| Eye height: the cut floor to wall top | ![](screenshots/prologue_art/before/10_void_inside.jpg) | ![](screenshots/prologue_art/after/10_void_inside.jpg) |
+| Talking to Q (focus; new frame) | — | ![](screenshots/prologue_art/after/11_focus_q.jpg) |
+
+## 5. Known limits
 
 - The wall textures still carry the old window opening in `paint_classroom_textures.py` (`WEST_VOID_OPENING`, y 0.50–2.75); the quads that would show it were removed, so it is never drawn. `floor.png` is no longer sampled but is still produced by the script.
 - The paper's hatching in `light()` is faded by camera distance per vertex (no derivatives there); on the large floor quad that is an approximation.
+- The south wall's top cap is not faded by `CameraOccluderFader` when the player stands right by that wall; the bar is visible in the default framing too (before: `09_void_walk`) and so in Q's focus frame.
 - Q's known model issues (shoulder skin gap, low-poly hands, PR #202) are unchanged.
