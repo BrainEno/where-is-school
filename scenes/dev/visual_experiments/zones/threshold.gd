@@ -232,6 +232,15 @@ func _build_flats() -> void:
 	var back := Kit.backdrop(Vector2(0.5, 0.48), BACK_FLAT_SIZE.x / BACK_FLAT_SIZE.y, 1.0)
 	# The back flat faces -X, toward the doorway.
 	_flat("BackFlat", BACK_FLAT_SIZE, Vector3(BACK_FLAT_X, 0, 0), -PI * 0.5, back)
+	# A bare work lamp behind the back flat, so the plywood side reads from the follow
+	# camera. No shadow: it costs one light and lights only the backstage strip.
+	var lamp := OmniLight3D.new()
+	lamp.name = "WorkLamp"
+	lamp.light_color = Color(1.0, 0.86, 0.62)
+	lamp.light_energy = 2.2
+	lamp.omni_range = 7.0
+	lamp.position = Vector3(BACK_FLAT_X + 2.2, 3.2, -3.0)
+	add_child(lamp)
 	# The wings disagree: each paints its own vanishing point.
 	var wings: Array = [
 		["WingNorthNear", Vector3(9.0, 0, -5.4), -PI * 0.5 + 0.55, Vector2(0.9, 0.42)],
