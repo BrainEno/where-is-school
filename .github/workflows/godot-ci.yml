@@ -60,6 +60,13 @@ jobs:
           # describing a file nobody can rebuild.
           python3 tools/build_sample_models.py --check
 
+      - name: Check approved Q preparation and retirement
+        shell: bash
+        run: |
+          python3 tools/prepare_q.py --check
+          python3 tests/q_model_prepare_test.py
+          python3 art/characters/build_character_looks.py --check
+
       - name: Check the model library against the pipeline contract
         shell: bash
         run: |
@@ -383,6 +390,9 @@ jobs:
           # all three rigs, the player scene, the former protagonist seated in the classroom
           # as a plain student, and Q binding exactly as before.
           run_check protagonist_model 240 godot --headless --path . --script res://tests/protagonist_model_test.gd || status=1
+          # The approved replacement Q: imported skin/morph/material paths, native hands,
+          # reset-complete cross-state tracks and the real dialogue presentation.
+          run_check q_model 240 godot --headless --resolution 1600x900 --path . --script res://tests/q_model_test.gd || status=1
           # The animation library retargeted onto the protagonist: the bones pair up, the
           # baked clip actually moves the character, and the retarget is rest-relative (the
           # source's rotation change and the target's are the same rotation). Then the

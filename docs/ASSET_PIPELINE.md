@@ -306,7 +306,7 @@ hidden. The companion record is
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
 | Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
 | Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
-| Q | `assets/models/q/q.glb` | `scenes/environment/characters/q.tscn` | 0.726 × 1.647 × 0.607 | 35,432 | `Node3D` + `InteractionAnchor`; 16-bone rig |
+| Q | `assets/models/q/new-Q.glb` (reproducible from `art/character_models/q/new-Q_source.glb` via `tools/prepare_q.py`) | `scenes/environment/characters/q.tscn` | 1.30945 × 1.78449 × 0.37586 (rest A-pose) | 17,918 | `Node3D` + `InteractionAnchor`; 60 joints, 30 weighted finger joints, six supplied actions |
 | Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 57,460 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
@@ -354,15 +354,14 @@ with it.
    arrangement — its lowest point is 7.4 cm below it — so the raw GLB is not drop-in
    placeable. `stationery_supplies.tscn` re-origins it to its base, which is why the
    wrapper, not the model, is what a scene instantiates.
-3. **`q.glb` no longer carries a node scale.** It used to: the collar was authored at
-   1 × 0.7 × 0.9 on its node, the one exception to §1's "no node scale", and the test
-   recorded it by node name so a second one could not appear unnoticed. The rigging pass
-   that gave Q its 16-bone armature baked that scale into the collar's vertices, so the
-   exception is gone and the record is empty — the size, base and facing assertions above
-   did not move, which is the evidence that the bake changed nothing on screen. The
-   former protagonist's origin sitting 1.7 cm above its sole is still recorded at 5 mm
-   tolerance, so a re-export that moves it fails the test rather than a placement. The
-   protagonist that replaced it (PR #118) stands on its origin.
+3. **Q now has a separately approved replacement, not a re-export of the 16-bone Q.**
+   `new-Q.glb` has unit node scales, a floor origin and +Z facing. The wide rest bounds
+   include the A-pose arms; the wrapper calibrates their standing posture without scaling
+   or baking the rig. `tools/prepare_q.py --check` and `tests/q_model_prepare_test.py`
+   verify the exact approved source and the lossless preparation; the bone, material,
+   action and placement migration is recorded in [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
+   No old-Q fallback remains. The former protagonist's origin remains 1.7 cm above its
+   sole; the production protagonist (PR #118) stands on its origin, unchanged.
 
 ### 10.2a The protagonist's and Q's painted look lives beside the model
 

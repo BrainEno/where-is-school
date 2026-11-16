@@ -23,12 +23,12 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 
-const RIGGED_Q := "res://scenes/dev/animation_retarget_test/q_rigged.glb"
+const RIGGED_Q := "res://assets/models/q/new-Q.glb"
 const RETARGETED_PROTAGONIST := "res://scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb"
 const PRODUCTION_PROTAGONIST := "res://assets/models/protagonist/Protagonist_Character.glb"
 ## The first protagonist model, now a classroom student (`classroom_student.tscn`).
 const FORMER_PROTAGONIST := "res://assets/models/protagonist/protagonist.glb"
-const PRODUCTION_Q := "res://assets/models/q/q.glb"
+const PRODUCTION_Q := "res://assets/models/q/new-Q.glb"
 ## Substitute teacher N: the one character exported facing −Z.
 const PRODUCTION_N := "res://assets/models/teacher-n/teacher-n.glb"
 ## How far, in metres, a thigh raised for sitting has to carry the knee along the facing axis.
@@ -480,7 +480,7 @@ func _check_negative_z_binding() -> void:
 
 ## `adopt_authored_layers()` either replaces the idle with the model's own loops or leaves the
 ## procedural idle exactly as it was. Three cases: N's four loops (replaced, looping, every
-## track applied); a list naming a clip N does not have (refused, idle untouched); Q, which
+## track applied); a list naming a clip N does not have (refused, idle untouched); the classroom student, which
 ## carries no clips of its own (refused, idle untouched). A half-built idle is the failure
 ## this guards against.
 func _check_authored_idle() -> void:
@@ -488,7 +488,7 @@ func _check_authored_idle() -> void:
 		["N, its four loops", PRODUCTION_N, true, PackedStringArray(N_IDLE_LAYERS), true],
 		["N, a clip it does not have", PRODUCTION_N, true,
 			PackedStringArray(["ST_Idle_Breathing", "No_Such_Clip"]), false],
-		["Q, no clips of its own", PRODUCTION_Q, false, PackedStringArray(N_IDLE_LAYERS), false],
+		["classroom student, no clips of its own", FORMER_PROTAGONIST, false, PackedStringArray(N_IDLE_LAYERS), false],
 	]
 	for case: Array in cases:
 		var label := String(case[0])

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/dev/animation_preview.gd" id="1_preview"]
 [ext_resource type="PackedScene" path="res://scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb" id="2_protagonist"]
-[ext_resource type="PackedScene" path="res://scenes/dev/animation_retarget_test/q_rigged.glb" id="3_q"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/q.tscn" id="3_q"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1

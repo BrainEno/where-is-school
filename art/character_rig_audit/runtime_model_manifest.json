@@ -1355,312 +1355,955 @@
       "animations": []
     },
     {
-      "path": "assets/models/q/q.glb",
+      "path": "assets/models/q/new-Q.glb",
       "wrapper": "scenes/environment/characters/q.tscn",
-      "note": "The second rigged character. Q_Humanoid_Skeleton carries 16 joints with the same names and parentage as the protagonist's rig, which is what lets one set of semantic clips bind to both; 7 mesh nodes and 15 primitives, 14 materials, no embedded animation. This is the runtime asset: art/character_rigging/q/q_unrigged_source.glb and art/character_rig_audit/q_rig_audit.json describe the unrigged stage, and scenes/dev/animation_retarget_test/q_rigged.glb is a development retarget asset — none of those are what the game loads.",
+      "note": "The approved new Q, prepared deterministically from art/character_models/q/new-Q_source.glb by tools/prepare_q.py. One 60-joint skin, 30 weighted finger bones, 9 skinned meshes, 16 primitives, 12 materials, 13 facial morphs and all six supplied actions. Source preview mesh is omitted; only constant-at-rest animation channels are removed. Native idle/talk and shared locomotion use one runtime animator; old Q resources are retired.",
       "counts": {
-        "nodes": 25,
-        "meshes": 7,
-        "primitives": 15,
-        "materials": 14,
+        "nodes": 70,
+        "meshes": 9,
+        "primitives": 16,
+        "materials": 12,
         "skins": 1,
-        "joints": 16,
-        "animations": 0,
-        "animation_channels": 0
+        "joints": 60,
+        "animations": 6,
+        "animation_channels": 70
       },
       "scene_roots": [
-        "Q_Root"
+        "Q_Armature"
       ],
       "nodes": [
         {
-          "path": "Q_Root",
-          "name": "Q_Root",
+          "path": "Q_Armature",
+          "name": "Q_Armature",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton",
-          "name": "Q_Humanoid_Skeleton",
-          "mesh": null,
-          "skin": null
-        },
-        {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Collar",
-          "name": "Q_Collar",
-          "mesh": "Torus.001",
+          "path": "Q_Armature/Q_Body",
+          "name": "Q_Body",
+          "mesh": "Q_Body",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Hair",
+          "path": "Q_Armature/Q_Eyes",
+          "name": "Q_Eyes",
+          "mesh": "Q_Eyes",
+          "skin": 0
+        },
+        {
+          "path": "Q_Armature/Q_Feet",
+          "name": "Q_Feet",
+          "mesh": "Q_Feet",
+          "skin": 0
+        },
+        {
+          "path": "Q_Armature/Q_Hair",
           "name": "Q_Hair",
-          "mesh": "Q_Hair_mesh.001",
+          "mesh": "Q_Hair",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Head",
+          "path": "Q_Armature/Q_Hands",
+          "name": "Q_Hands",
+          "mesh": "Q_Hands",
+          "skin": 0
+        },
+        {
+          "path": "Q_Armature/Q_Head",
           "name": "Q_Head",
-          "mesh": "Q_Head_mesh.001",
+          "mesh": "Q_Head",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Neck_Hands",
-          "name": "Q_Neck_Hands",
-          "mesh": "Q_Neck_Hands_mesh.001",
+          "path": "Q_Armature/Q_Hood",
+          "name": "Q_Hood",
+          "mesh": "Q_Hood",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Pants",
-          "name": "Q_Pants",
-          "mesh": "Q_Pants_mesh.001",
+          "path": "Q_Armature/Q_Hoodie",
+          "name": "Q_Hoodie",
+          "mesh": "Q_Hoodie",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Shoes",
-          "name": "Q_Shoes",
-          "mesh": "Q_Shoes_mesh.001",
+          "path": "Q_Armature/Q_HoodieDetails",
+          "name": "Q_HoodieDetails",
+          "mesh": "Q_HoodieDetails",
           "skin": 0
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Q_Top",
-          "name": "Q_Top",
-          "mesh": "Q_Top_mesh.001",
-          "skin": 0
-        },
-        {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root",
+          "path": "Q_Armature/Root",
           "name": "Root",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine",
+          "path": "Q_Armature/Root/IK_Foot_L",
+          "name": "IK_Foot_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/IK_Foot_R",
+          "name": "IK_Foot_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/IK_Hand_L",
+          "name": "IK_Hand_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/IK_Hand_R",
+          "name": "IK_Hand_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis",
+          "name": "Pelvis",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine",
           "name": "Spine",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/Neck",
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01",
+          "name": "Spine_01",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+          "name": "Spine_02",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+          "name": "Chest",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+          "name": "Clavicle_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+          "name": "UpperArm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+          "name": "Forearm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+          "name": "Hand_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+          "name": "Index_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+          "name": "Index_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+          "name": "Index_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+          "name": "Little_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+          "name": "Little_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+          "name": "Little_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+          "name": "Middle_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+          "name": "Middle_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+          "name": "Middle_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+          "name": "Ring_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+          "name": "Ring_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+          "name": "Ring_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+          "name": "Thumb_01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+          "name": "Thumb_02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+          "name": "Thumb_03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+          "name": "Clavicle_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+          "name": "UpperArm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+          "name": "Forearm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+          "name": "Hand_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+          "name": "Index_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+          "name": "Index_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+          "name": "Index_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+          "name": "Little_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+          "name": "Little_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+          "name": "Little_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+          "name": "Middle_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+          "name": "Middle_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+          "name": "Middle_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+          "name": "Ring_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+          "name": "Ring_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+          "name": "Ring_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+          "name": "Thumb_01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+          "name": "Thumb_02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+          "name": "Thumb_03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
           "name": "Neck",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/Neck/Head",
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
           "name": "Head",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L",
-          "name": "UpperArm.L",
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+          "name": "Eye_L",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L/LowerArm.L",
-          "name": "LowerArm.L",
+          "path": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+          "name": "Eye_R",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L/LowerArm.L/Hand.L",
-          "name": "Hand.L",
+          "path": "Q_Armature/Root/Pelvis/Thigh_L",
+          "name": "Thigh_L",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R",
-          "name": "UpperArm.R",
+          "path": "Q_Armature/Root/Pelvis/Thigh_L/Shin_L",
+          "name": "Shin_L",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R/LowerArm.R",
-          "name": "LowerArm.R",
+          "path": "Q_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+          "name": "Foot_L",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R/LowerArm.R/Hand.R",
-          "name": "Hand.R",
+          "path": "Q_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+          "name": "Toe_L",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L",
-          "name": "Thigh.L",
+          "path": "Q_Armature/Root/Pelvis/Thigh_R",
+          "name": "Thigh_R",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L/Shin.L",
-          "name": "Shin.L",
+          "path": "Q_Armature/Root/Pelvis/Thigh_R/Shin_R",
+          "name": "Shin_R",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L/Shin.L/Foot.L",
-          "name": "Foot.L",
+          "path": "Q_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+          "name": "Foot_R",
           "mesh": null,
           "skin": null
         },
         {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R",
-          "name": "Thigh.R",
-          "mesh": null,
-          "skin": null
-        },
-        {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R/Shin.R",
-          "name": "Shin.R",
-          "mesh": null,
-          "skin": null
-        },
-        {
-          "path": "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R/Shin.R/Foot.R",
-          "name": "Foot.R",
+          "path": "Q_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R",
+          "name": "Toe_R",
           "mesh": null,
           "skin": null
         }
       ],
       "meshes": [
         {
-          "name": "Q_Hair_mesh.001",
+          "name": "Q_Body",
           "primitives": [
             {
-              "material": "Q_Mat_hair",
+              "material": "Q_Mat_SkinBody",
+              "skinned": true
+            },
+            {
+              "material": "Q_Mat_Trousers",
               "skinned": true
             }
           ]
         },
         {
-          "name": "Q_Head_mesh.001",
+          "name": "Q_Eyes",
           "primitives": [
             {
-              "material": "Q_Mat_skin",
+              "material": "Q_Mat_Sclera",
               "skinned": true
             },
             {
-              "material": "Q_Mat_eye",
+              "material": "Q_Mat_Iris",
               "skinned": true
             },
             {
-              "material": "Q_Mat_iris",
-              "skinned": true
-            },
-            {
-              "material": "Q_Mat_pupil",
-              "skinned": true
-            },
-            {
-              "material": "Q_Mat_lip",
-              "skinned": true
-            },
-            {
-              "material": "Q_Mat_mouthdark",
-              "skinned": true
-            },
-            {
-              "material": "Q_Mat_brow",
-              "skinned": true
-            },
-            {
-              "material": "Q_Mat_teeth",
+              "material": "Q_Mat_Pupil",
               "skinned": true
             }
           ]
         },
         {
-          "name": "Q_Neck_Hands_mesh.001",
+          "name": "Q_Feet",
           "primitives": [
             {
-              "material": "Q_Mat_skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Q_Pants_mesh.001",
-          "primitives": [
-            {
-              "material": "Q_Mat_pants",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Q_Shoes_mesh.001",
-          "primitives": [
-            {
-              "material": "Q_Mat_shoes",
+              "material": "Q_Mat_Shoes",
               "skinned": true
             },
             {
-              "material": "Q_Mat_sole",
+              "material": "Q_Mat_Sole",
               "skinned": true
             }
           ]
         },
         {
-          "name": "Q_Top_mesh.001",
+          "name": "Q_Hair",
           "primitives": [
             {
-              "material": "Q_Mat_cloth",
+              "material": "Q_Mat_Hair",
               "skinned": true
             }
           ]
         },
         {
-          "name": "Torus.001",
+          "name": "Q_Hands",
           "primitives": [
             {
-              "material": "Q_Mat_collar",
+              "material": "Q_Mat_SkinBody",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Q_Head",
+          "primitives": [
+            {
+              "material": "Q_Mat_Skin",
+              "skinned": true
+            },
+            {
+              "material": "Q_Mat_Hair",
+              "skinned": true
+            },
+            {
+              "material": "Q_Mat_MouthInner",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Q_Hood",
+          "primitives": [
+            {
+              "material": "Q_Mat_Hoodie",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Q_Hoodie",
+          "primitives": [
+            {
+              "material": "Q_Mat_Hoodie",
+              "skinned": true
+            },
+            {
+              "material": "Q_Mat_HoodieRib",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "Q_HoodieDetails",
+          "primitives": [
+            {
+              "material": "Q_Mat_Hoodie",
               "skinned": true
             }
           ]
         }
       ],
       "materials": [
-        "Q_Mat_brow",
-        "Q_Mat_cloth",
-        "Q_Mat_collar",
-        "Q_Mat_eye",
-        "Q_Mat_hair",
-        "Q_Mat_iris",
-        "Q_Mat_lip",
-        "Q_Mat_mouthdark",
-        "Q_Mat_pants",
-        "Q_Mat_pupil",
-        "Q_Mat_shoes",
-        "Q_Mat_skin",
-        "Q_Mat_sole",
-        "Q_Mat_teeth"
+        "Q_Mat_Hair",
+        "Q_Mat_Hoodie",
+        "Q_Mat_HoodieRib",
+        "Q_Mat_Iris",
+        "Q_Mat_MouthInner",
+        "Q_Mat_Pupil",
+        "Q_Mat_Sclera",
+        "Q_Mat_Shoes",
+        "Q_Mat_Skin",
+        "Q_Mat_SkinBody",
+        "Q_Mat_Sole",
+        "Q_Mat_Trousers"
       ],
       "skins": [
         {
-          "name": "Q_Humanoid_Skeleton",
+          "name": "Q_Armature",
           "skeleton": null,
           "joints": [
-            "Q_Root/Q_Humanoid_Skeleton/Root",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/Neck",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/Neck/Head",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L/LowerArm.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.L/LowerArm.L/Hand.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R/LowerArm.R",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Spine/UpperArm.R/LowerArm.R/Hand.R",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L/Shin.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.L/Shin.L/Foot.L",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R/Shin.R",
-            "Q_Root/Q_Humanoid_Skeleton/Root/Thigh.R/Shin.R/Foot.R"
+            "Q_Armature/Root",
+            "Q_Armature/Root/IK_Foot_L",
+            "Q_Armature/Root/IK_Foot_R",
+            "Q_Armature/Root/IK_Hand_L",
+            "Q_Armature/Root/IK_Hand_R",
+            "Q_Armature/Root/Pelvis",
+            "Q_Armature/Root/Pelvis/Spine",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+            "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+            "Q_Armature/Root/Pelvis/Thigh_L",
+            "Q_Armature/Root/Pelvis/Thigh_L/Shin_L",
+            "Q_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L",
+            "Q_Armature/Root/Pelvis/Thigh_L/Shin_L/Foot_L/Toe_L",
+            "Q_Armature/Root/Pelvis/Thigh_R",
+            "Q_Armature/Root/Pelvis/Thigh_R/Shin_R",
+            "Q_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R",
+            "Q_Armature/Root/Pelvis/Thigh_R/Shin_R/Foot_R/Toe_R"
           ]
         }
       ],
-      "animations": []
+      "animations": [
+        {
+          "name": "Q_Casual_Hand_Gesture",
+          "channels": 21,
+          "targets": [
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Index_01_R/Index_02_R/Index_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Little_01_R/Little_02_R/Little_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Middle_01_R/Middle_02_R/Middle_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Ring_01_R/Ring_02_R/Ring_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R/Hand_R/Thumb_01_R/Thumb_02_R/Thumb_03_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "Q_Face_Test",
+          "channels": 1,
+          "targets": [
+            {
+              "node": "Q_Armature/Q_Head",
+              "path": "weights"
+            }
+          ]
+        },
+        {
+          "name": "Q_Head_Movement",
+          "channels": 3,
+          "targets": [
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "Q_Idle_Breathing",
+          "channels": 7,
+          "targets": [
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "Q_Pose_Preview",
+          "channels": 29,
+          "targets": [
+            {
+              "node": "Q_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Index_01_L/Index_02_L/Index_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Little_01_L/Little_02_L/Little_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Middle_01_L/Middle_02_L/Middle_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Ring_01_L/Ring_02_L/Ring_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L/UpperArm_L/Forearm_L/Hand_L/Thumb_01_L/Thumb_02_L/Thumb_03_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R/UpperArm_R/Forearm_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        },
+        {
+          "name": "Q_Slight_Body_Lean",
+          "channels": 9,
+          "targets": [
+            {
+              "node": "Q_Armature/Root/Pelvis",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_L",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Clavicle_R",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck",
+              "path": "rotation"
+            },
+            {
+              "node": "Q_Armature/Root/Pelvis/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+              "path": "rotation"
+            }
+          ]
+        }
+      ]
     },
     {
       "path": "assets/models/protagonist/Protagonist_Character.glb",

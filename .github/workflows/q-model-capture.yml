@@ -1,0 +1,233 @@
+name: Q model migration evidence
+
+# Focused migration evidence only. No character-art-review experiment, shader or
+# alternate production model is introduced. The old Q exists only in a read-only
+# archive of the exact task base, for genuine before/after game captures.
+on:
+  pull_request:
+    paths:
+      - "assets/models/q/**"
+      - "assets/characters/q/**"
+      - "scripts/actors/**"
+      - "scenes/environment/characters/q.tscn"
+      - "scenes/actors/npc/companion.tscn"
+      - "scenes/main/main.tscn"
+      - "tests/capture_q_migration.gd"
+      - "tests/q_model_test.gd"
+      - ".github/workflows/q-model-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Q migration (${{ matrix.phase }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [before, after]
+    env:
+      BASE_SHA: c4e6bfa450153b84a823eaa5c8ece1ff28964691
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Install pinned standard Godot
+        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Install capture encoder
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+
+      - name: Select capture project without changing branches
+        id: project
+        shell: bash
+        env:
+          PHASE: ${{ matrix.phase }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/q-model-migration
+          printf 'Ignored local evidence.\n' > build/.gdignore
+          project="$GITHUB_WORKSPACE"
+          sha=$(git rev-parse HEAD)
+          if [ "$PHASE" = before ]; then
+            project="$GITHUB_WORKSPACE/build/q-model-migration/baseline"
+            mkdir -p "$project"
+            git archive "$BASE_SHA" | tar -x -C "$project"
+            # Same camera/walk/conversation script; no production baseline file edits.
+            cp tests/capture_q_migration.gd "$project/tests/"
+            cp tests/capture_q_migration.gd.uid "$project/tests/"
+            sha="$BASE_SHA"
+          fi
+          echo "path=$project" >> "$GITHUB_OUTPUT"
+          echo "source=$sha" >> "$GITHUB_OUTPUT"
+          godot --version
+          printf 'head=%s\nbase=%s\nphase=%s\nsource=%s\n' "$(git rev-parse HEAD)" "$BASE_SHA" "$PHASE" "$sha"
+
+      - name: Import and compile
+        shell: bash
+        env:
+          PROJECT: ${{ steps.project.outputs.path }}
+        run: |
+          set -uo pipefail
+          timeout 240 godot --headless --path "$PROJECT" --import > import-1.log 2>&1 || true
+          code=0
+          timeout 120 godot --headless --editor --path "$PROJECT" --quit > import-2.log 2>&1 || code=$?
+          if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error|^ERROR:' import-2.log; then
+            head -n 100 import-2.log
+            exit 1
+          fi
+          code=0
+          timeout 60 godot --headless --path "$PROJECT" --check-only \
+            --script res://tests/capture_q_migration.gd > compile.log 2>&1 || code=$?
+          cat compile.log
+          if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error' compile.log; then exit 1; fi
+
+      - name: Capture real game frames and walking sequence
+        id: capture
+        shell: bash
+        env:
+          PROJECT: ${{ steps.project.outputs.path }}
+          SOURCE_SHA: ${{ steps.project.outputs.source }}
+          PHASE: ${{ matrix.phase }}
+        run: |
+          set -uo pipefail
+          output="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE"
+          mkdir -p "$output"
+          # The runner has no ALSA device. Silence capture only, not the real renderer
+          # or animation; retain a strict ERROR gate instead of ignoring audio failures.
+          code=0
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 400 xvfb-run -a --server-args="-screen 0 1280x720x24" \
+            godot --path "$PROJECT" --resolution 1280x720 --fixed-fps 24 --audio-driver Dummy \
+              --rendering-method gl_compatibility --rendering-driver opengl3 \
+              --script res://tests/capture_q_migration.gd -- \
+              "--phase=$PHASE" "--output=$output" "--source-sha=$SOURCE_SHA" > capture.log 2>&1 || code=$?
+          grep -E '^ARTNOTE:|^Q_CAPTURE|SCRIPT ERROR|ERROR:|WARNING:' capture.log | cut -c1-900 | tail -n 100 || true
+          grep '^::notice ' capture.log | head -n 5 || true
+          python3 - <<'PY'
+          from pathlib import Path
+          parts = []
+          for line in Path('capture.log').read_text().splitlines():
+              if not line.startswith('QFRAME: '):
+                  continue
+              _, name, data = line.split(' ', 2)
+              count = (len(data) + 3999) // 4000
+              parts.extend(f'{name} {i + 1} {count} {data[i*4000:(i+1)*4000]}' for i in range(count))
+          if len(parts) > 40:
+              raise SystemExit(f'Preview annotation budget exceeded: {len(parts)} > 40')
+          Path('parts.txt').write_text('\n'.join(parts) + '\n')
+          PY
+          if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error|^ERROR:|Q_CAPTURE_FAILURE:' capture.log \
+            || ! grep -q '^Q_CAPTURE_RESULT: PASS' capture.log; then
+            summary=$(grep -E 'SCRIPT ERROR|Parse Error|^ERROR:|Q_CAPTURE_FAILURE:|Q_CAPTURE_RESULT:' capture.log | sed -n '1,10p' | tr '\n' '|' | cut -c1-3000)
+            echo "::error title=Q 实际渲染失败::引擎退出码 $code；${summary:-没有结果行}"
+            exit 1
+          fi
+
+      - name: Encode actual walk frames
+        if: always() && steps.capture.outcome != 'skipped'
+        shell: bash
+        env:
+          PHASE: ${{ matrix.phase }}
+        run: |
+          set -euo pipefail
+          folder="build/q-model-migration/$PHASE"
+          test -f "$folder/walk_frames/frame_047.jpg"
+          ffmpeg -hide_banner -loglevel error -framerate 24 -i "$folder/walk_frames/frame_%03d.jpg" \
+            -frames:v 48 -c:v libx264 -pix_fmt yuv420p -crf 19 "$folder/walk.mp4"
+          ffprobe -v error -count_frames -select_streams v:0 \
+            -show_entries stream=width,height,r_frame_rate,nb_read_frames -of json \
+            "$folder/walk.mp4" > "$folder/walk_video.json"
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          folder = Path('build/q-model-migration') / os.environ['PHASE']
+          metadata = json.loads((folder / 'walk_video.json').read_text())['streams'][0]
+          assert int(metadata['nb_read_frames']) == 48, metadata
+          assert metadata['r_frame_rate'] == '24/1', metadata
+          metadata['file'] = 'walk.mp4'
+          metadata['sha256'] = hashlib.sha256((folder / 'walk.mp4').read_bytes()).hexdigest()
+          (folder / 'walk_video.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          print(f"::notice title=Q walking video {os.environ['PHASE']}::{metadata}")
+          PY
+
+      - name: Attribute the unchanged click-marker regression
+        if: always() && steps.project.outputs.path != ''
+        shell: bash
+        env:
+          PROJECT: ${{ steps.project.outputs.path }}
+          SOURCE_SHA: ${{ steps.project.outputs.source }}
+          PHASE: ${{ matrix.phase }}
+        run: |
+          # The gameplay CI reported this failure. Run the identical existing test
+          # on the exact base too; do not weaken it or repair unrelated input code.
+          set -uo pipefail
+          export CI_LOG_DIR="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE/regression"
+          source "$PROJECT/tools/ci_run_check.sh"
+          echo "::notice title=Q regression attribution $PHASE::source $SOURCE_SHA; destination_cue_lifecycle_test.gd is unchanged"
+          run_check destination_cue_lifecycle 360 godot --headless --resolution 1600x900 \
+            --path "$PROJECT" --script res://tests/destination_cue_lifecycle_test.gd || status=1
+          run_check_summary
+
+      - name: Publish previews 1–10
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '1,10p' parts.txt | while read -r file i n data; do
+            echo "::notice title=Q migration ${{ matrix.phase }} ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish previews 11–20
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '11,20p' parts.txt | while read -r file i n data; do
+            echo "::notice title=Q migration ${{ matrix.phase }} ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish previews 21–30
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '21,30p' parts.txt | while read -r file i n data; do
+            echo "::notice title=Q migration ${{ matrix.phase }} ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish previews 31–40
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '31,40p' parts.txt | while read -r file i n data; do
+            echo "::notice title=Q migration ${{ matrix.phase }} ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Preserve full-size original evidence and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: q-migration-${{ matrix.phase }}-${{ github.run_attempt }}
+          path: |
+            build/q-model-migration/${{ matrix.phase }}/
+            capture.log
+            compile.log
+            import-1.log
+            import-2.log
+          if-no-files-found: warn
+          retention-days: 30

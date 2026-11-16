@@ -79,6 +79,13 @@ const SEATED_CLIP := "sit_idle"
 ## (`CharacterAnimation.adopt_authored_layers()`). Empty — every character but N — keeps the
 ## procedural one. A name the file does not carry is an error and the procedural idle stays.
 @export var authored_idle_layers: PackedStringArray = PackedStringArray()
+## Per-character native rotation layers, keyed by the bound state/action name. Q
+## supplies idle/talk and its extra authored actions. Empty leaves existing rigs
+## untouched; source AnimationPlayers never autoplay alongside the bound player.
+@export var authored_clip_layers: Dictionary[String, PackedStringArray] = {}
+## Optional standing speech state, requested by CharacterDialogueAnimation. Moving,
+## sitting and one-shot actions keep their existing precedence. Only Q opts in.
+@export var dialogue_clip: String = ""
 ## The character's own way of carrying the shared clips: tempo, amplitude, standing posture
 ## and small layers (`CharacterMotionProfile`, applied by `CharacterAnimation.bind()`). The
 ## protagonist and Q each have one (`assets/characters/*/…_motion.tres`); null — N, the classroom
@@ -96,6 +103,7 @@ var _body: CharacterBody3D = null
 var _reported_velocity := Vector3.ZERO
 var _reporting := false
 var _seated := false
+var _talking := false
 var _action := ""
 var _state: StringName = STATE_IDLE
 var _current_clip := ""
@@ -137,6 +145,40 @@ func _ready() -> void:
 					float(authored["length"]),
 				]
 			)
+	var authored_clips := {}
+	for clip_name: String in authored_clip_layers:
+		# Shared states keep the character's calibrated posture. The additional source
+		# actions are preserved in their authored frame for inspection/playback.
+		var profile := motion_profile if CharacterAnimation.CLIPS.has(clip_name) else null
+		var adopted := CharacterAnimation.adopt_authored_layers(
+			self, _player, clip_name, authored_clip_layers[clip_name], profile, faces_negative_z
+		)
+		authored_clips[clip_name] = adopted
+		if not bool(adopted.get("ok", false)):
+			_bound = false
+			push_error("CharacterVisualAnimation on '%s': '%s' failed: %s" % [
+				name, clip_name, String(adopted.get("reason", "unknown")),
+			])
+	_bind_report["authored_clips"] = authored_clips
+	CharacterAnimation.complete_pose_resets(self, _player)
+	if not authored_clips.is_empty():
+		# Diagnostics must describe the final native library, not the procedural
+		# clips it replaced (which have different durations and no finger tracks).
+		var library := _player.get_animation_library(CharacterAnimation.LIBRARY_NAME)
+		var clips: Dictionary = _bind_report["clips"]
+		for clip_name in library.get_animation_list():
+			var animation := library.get_animation(clip_name)
+			var info: Dictionary = clips.get(clip_name, {})
+			if authored_clips.has(clip_name) and bool(authored_clips[clip_name].get("ok", false)):
+				var bones: Array = authored_clips[clip_name]["bones"]
+				info["tracks"] = bones.size()
+				info["requested"] = bones.size()
+				info["authored_layers"] = authored_clips[clip_name]["layers"]
+			info["total_tracks"] = animation.get_track_count()
+			info["held"] = animation.get_track_count() - int(info.get("tracks", 0))
+			info["length"] = animation.length
+			info["loops"] = animation.loop_mode != Animation.LOOP_NONE
+			clips[clip_name] = info
 	_player.animation_finished.connect(_on_animation_finished)
 	print("CharacterVisualAnimation: %s — %s" % [name, CharacterAnimation.describe(_bind_report)])
 	if _body == null:
@@ -196,6 +238,21 @@ func set_seated(seated: bool) -> void:
 
 func is_seated() -> bool:
 	return _seated
+
+
+## Dialogue presentation requests speech, not a one-shot action: it can end on any
+## line and must yield immediately to walking. Other characters have no speech clip.
+func set_talking(talking: bool) -> void:
+	if dialogue_clip.is_empty() or _talking == talking:
+		return
+	_talking = talking
+	if _bound and _action.is_empty() and not _seated:
+		_show(_resume_clip(), blend_time)
+		_player.speed_scale = playback_for(_state, _planar_speed)
+
+
+func is_talking() -> bool:
+	return _talking
 
 
 ## Plays a transition clip once. Returns false when this rig cannot play it, so a caller can
@@ -258,7 +315,7 @@ func _update_locomotion(planar_velocity: Vector3) -> void:
 	# character comes out of either into what its body is doing now.
 	if not _action.is_empty() or _seated:
 		return
-	_show(String(_state), blend_time)
+	_show(_resume_clip(), blend_time)
 	_player.speed_scale = playback_for(_state, _planar_speed)
 
 
@@ -300,7 +357,11 @@ func walk_playback_for(speed: float) -> float:
 ## The clip that follows an action or the seated pose: sitting if the character still is,
 ## otherwise whatever the body is doing.
 func _resume_clip() -> String:
-	return SEATED_CLIP if _seated else String(_state)
+	if _seated:
+		return SEATED_CLIP
+	if _talking and _state == STATE_IDLE and not dialogue_clip.is_empty():
+		return dialogue_clip
+	return String(_state)
 
 
 func _on_animation_finished(clip_name: StringName) -> void:

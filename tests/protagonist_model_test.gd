@@ -1,6 +1,6 @@
 extends SceneTree
 ## The protagonist is `Protagonist_Character.glb` (PR #118), the first protagonist model is a
-## student sitting in the classroom, and Q is unchanged.
+## student sitting in the classroom, and Q uses its separately approved replacement.
 ##
 ##   godot --headless --path . --script res://tests/protagonist_model_test.gd
 ##
@@ -22,13 +22,13 @@ extends SceneTree
 ##      their own side of the body, and hands and feet do not twist about their own length;
 ##   6. the player scene shows the new model, the classroom seats the former protagonist as a
 ##      plain student (no controller, no input, no collision, no interaction), the old asset
-##      and its sidecar are still there, and Q binds exactly as before.
+##      and its sidecar are still there, and Q binds its current rig without losing a limb.
 
 const Harness = preload("res://tests/test_harness.gd")
 
 const NEW_MODEL := "res://assets/models/protagonist/Protagonist_Character.glb"
 const FORMER_MODEL := "res://assets/models/protagonist/protagonist.glb"
-const Q_MODEL := "res://assets/models/q/q.glb"
+const Q_MODEL := "res://assets/models/q/new-Q.glb"
 const PROTAGONIST_WRAPPER := "res://scenes/environment/characters/protagonist.tscn"
 const STUDENT_WRAPPER := "res://scenes/environment/characters/classroom_student.tscn"
 const Q_WRAPPER := "res://scenes/environment/characters/q.tscn"
@@ -125,26 +125,9 @@ const NEW_ANIMATED := [
 	"Foot_R",
 ]
 
-## What Q resolved to before the protagonist changed. Q has to bind exactly the same bones.
-const Q_MAPPING := {
-	"hips": "Root",
-	"spine": "Spine",
-	"neck": "Neck",
-	"head": "Head",
-	"upper_arm.L": "UpperArm.L",
-	"upper_arm.R": "UpperArm.R",
-	"fore_arm.L": "LowerArm.L",
-	"fore_arm.R": "LowerArm.R",
-	"hand.L": "Hand.L",
-	"hand.R": "Hand.R",
-	"thigh.L": "Thigh.L",
-	"thigh.R": "Thigh.R",
-	"shin.L": "Shin.L",
-	"shin.R": "Shin.R",
-	"foot.L": "Foot.L",
-	"foot.R": "Foot.R",
-}
-const Q_POSED := ["fore_arm.R", "hand.L", "hand.R"]
+## The approved new Q uses the same naming convention, not the old 16-bone rig.
+const Q_MAPPING := NEW_MAPPING
+const Q_POSED := []
 const FORMER_MAPPING := {
 	"hips": "Root",
 	"spine": "Spine",
@@ -194,7 +177,7 @@ func _run() -> void:
 	Harness.stage = "the bone mapping"
 	await _check_mapping("protagonist", NEW_MODEL, NEW_MAPPING, NEW_MIRRORED, [])
 	await _check_mapping("former protagonist", FORMER_MODEL, FORMER_MAPPING, [], [])
-	await _check_mapping("Q", Q_MODEL, Q_MAPPING, [], Q_POSED)
+	await _check_mapping("Q", Q_MODEL, Q_MAPPING, NEW_MIRRORED, Q_POSED)
 
 	Harness.stage = "the clips move the bodies the way they say"
 	for model_path: String in [NEW_MODEL, FORMER_MODEL, Q_MODEL]:

@@ -505,12 +505,12 @@ def test_manifest_format_errors() -> None:
         missing = runtime_character_library(tmp)
         os.remove(os.path.join(missing.root, ml.REQUIRED_RUNTIME_MODELS[1].replace("/", os.sep)))
         problems, _ = missing.check_manifest()
-        check(any("does not exist" in problem and "q.glb" in problem for problem in problems),
+        check(any("does not exist" in problem and "new-Q.glb" in problem for problem in problems),
               "a registered model that is not on disk must fail, got: %s" % problems)
 
         library.write_manifest({"schema": ml.MANIFEST_SCHEMA,
                                 "schema_version": ml.MANIFEST_SCHEMA_VERSION,
-                                "models": [{"path": "scenes/dev/animation_retarget_test/q_rigged.glb"}]})
+                                "models": [{"path": "scenes/dev/animation_retarget_test/protagonist_retarget_ready.glb"}]})
         problems, _ = library.check_manifest()
         check(any("only covers runtime models under assets/models/" in problem for problem in problems),
               "a development asset must not be registrable, got: %s" % problems)
@@ -601,7 +601,7 @@ def document_with(library: ManifestLibrary, mutate) -> dict:
 
 def test_manifest_requires_every_runtime_character() -> None:
     check(ml.REQUIRED_RUNTIME_MODELS == ("assets/models/protagonist/protagonist.glb",
-                                         "assets/models/q/q.glb",
+                                         "assets/models/q/new-Q.glb",
                                          "assets/models/protagonist/Protagonist_Character.glb",
                                          "assets/models/teacher-n/teacher-n.glb"),
           "the required set is the four runtime characters, got: %r" % (ml.REQUIRED_RUNTIME_MODELS,))

@@ -50,7 +50,7 @@ DialogueController、ReadLog 或其他 Agent 的美术实验。
 | `art/portraits/n.webp` → `assets/ui/portraits/n.webp` | 原供图名 `teacher-n.webp`；与 N 的 3D 模型是不同作品；E4/E5 | 生成工具/服务/模型 **UNKNOWN**；转换同上 | **UNKNOWN** | **UNKNOWN** | **UNKNOWN / NOT CLEARED** |
 | `scenes/dev/animation_retarget_test/UAL1_Standard.glb` | 第三方 Quaternius；记录为 Standard/free；E7/P1–P4 | 文件自报 exporter `Khronos glTF Blender I/O v4.5.48`；取得版本/日期 **UNKNOWN** | 当前公开页面均允许一定范围商用，但**此副本适用授权仍未定**；项目不放行生产使用 | **项目禁止**，不能因 QAL 允许完成品而擅自改变决定 | 资产本身再分发有冲突；**RESTRICTED / DEV_ONLY** |
 | 同目录 `protagonist_ual.res`，开发预览加载 | UAL 动作经 `tools/bake_animation_retarget.gd` 在目标骨架上重采样；E7/E8 | Godot / `AnimationRetarget.bake()`；脚本采样 30 fps。未在本轮重新 bake | 不因 retarget 获得新的独立许可 | **项目禁止**，包括转换格式或复制目录后 | 与上游相连；**RESTRICTED / DEV_ONLY** |
-| `assets/models/q/q.glb` | Owner 于记录中的 2026-11-12 确认 Blender + Python；E1/E6 | Blender + Owner 指导的 Python；rig build report 是技术旁证 | 按既有 Owner 作品记录，不新增第三方许可要求 | 按既有项目记录；美术签收另行 | `OWNER_CONFIRMED_RECORDED`；COPYRIGHT.md 不向公众开放复用 |
+| `assets/models/q/new-Q.glb` 与 `art/character_models/q/new-Q_source.glb` | 本次迁移中 Owner 明确确认为 **ChatGPT 为本项目生成的原创 Q**，并批准正式使用；上传 commit `f9aa19d4fa8ad56b0e4d2e46c48c799d10ffbb42` | ChatGPT AI 生成；确切模型/版本未提供；`tools/prepare_q.py` 仅做可复现技术整理 | Owner 已明确批准本项目正式使用，不再次要求来源确认 | 本批准仅涵盖 Q 3D；不覆盖 Q 肖像、主角或其他未清理素材 | `OWNER_APPROVED_AI_ORIGINAL`；新 Q 不是旧 Q Blender/Python 制作链的延续；美术/变形签收另行，#64 保持开放 |
 | `assets/models/protagonist/protagonist.glb`，现为坐姿学生 | 旧主角，已有 Owner 程序化 Blender 制作/导出记录；E6 | 记录为 Blender 5.2.3 LTS；本次未重新取得原始制作声明 | 沿用既有记录，不升级尽调等级 | 沿用既有记录 | `RECORDED_OWNER`；不能据此认定新玩家 GLB 为原创 |
 | `assets/models/teacher-n/teacher-n.glb` 与 source | PR #130 记为 Owner Blender 作品；源 hash 与处理链可核；E6 | Blender（交接记录）；`prepare_teacher_n.py` 为优化工具，不是原始作者证明 | 沿用既有记录 | 沿用既有记录，含 N 自带 4 个 idle loops | `RECORDED_OWNER`；原图肖像不在该确认范围 |
 | 16 个教室/走廊/操场模型 | Owner 确认自制，PR #102 / #64；E1/E6 | Blender（Owner 确认记录） | 已解决的既有子项 | 沿用既有项目记录 | `OWNER_CONFIRMED_RECORDED`；本轮仅有界交叉核对 |
@@ -202,7 +202,7 @@ tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/
 | Owner 画面签收、真实 Windows/Steam 客户端、Steam Deck 与法律签收 | **未进行**，不能由 headless/CI 代替 |
 
 `model_library.py` 的既有体积提示仍保留：窗帘 **482.6 KiB**、新主角 **852.3 KiB**、旧主角 **513.6 KiB**、
-Q **1008.8 KiB**、N **1334.7 KiB**，均超过 384 KiB 提示线但未过 1536 KiB 模型硬上限。
+新 Q **980.7 KiB**（旧审计时 Q 为 1008.8 KiB）、N **1334.7 KiB**，均超过 384 KiB 提示线但未过 1536 KiB 模型硬上限。
 实际导出包可能另有 packed-category/总包警告，必须在最终 CI 验证节照实列出，不能用本地源文件体积代算。
 
 **成品清单判据（须在最终 head 的 Release build 中读取，不从 preset 推定）：**

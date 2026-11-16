@@ -21,8 +21,8 @@ shader_parameter/half_tone = 0.62
 shader_parameter/light_edge = 0.42
 shader_parameter/light_strength = 0.72
 shader_parameter/light_tint = Color(1.0000, 0.9373, 0.8471, 1)
-shader_parameter/mirror_center_x = -0.012
-shader_parameter/patch_center = Vector3(0.044, 1.488, 0.112)
+shader_parameter/mirror_center_x = 0
+shader_parameter/patch_center = Vector3(0.044, 1.628, 0.105)
 shader_parameter/patch_color = Color(0.7882, 0.3882, 0.2980, 1)
 shader_parameter/patch_radius = Vector3(0.032, 0.026, 0.045)
 shader_parameter/patch_strength = 0.45
@@ -36,6 +36,68 @@ shader_parameter/pigment_value = 0.1
 shader_parameter/shade_tint = Color(0.7098, 0.7216, 0.5569, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.36
+
+[sub_resource type="ShaderMaterial" id="m_q_mat_skinbody"]
+resource_name = "q_mat_skinbody (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8078, 0.6039, 0.4392, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.05
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9373, 0.8471, 1)
+shader_parameter/pigment_a = Color(0.8392, 0.5412, 0.4157, 1)
+shader_parameter/pigment_b = Color(0.7098, 0.6000, 0.4078, 1)
+shader_parameter/pigment_mix = 0.36
+shader_parameter/pigment_scale = 20
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.1
+shader_parameter/shade_tint = Color(0.7098, 0.7216, 0.5569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.36
+
+[sub_resource type="ShaderMaterial" id="m_q_hands__q_mat_skinbody"]
+resource_name = "q_hands/q_mat_skinbody (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8078, 0.6039, 0.4392, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.05
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9373, 0.8471, 1)
+shader_parameter/pigment_a = Color(0.8392, 0.5412, 0.4157, 1)
+shader_parameter/pigment_b = Color(0.7098, 0.6000, 0.4078, 1)
+shader_parameter/pigment_mix = 0.36
+shader_parameter/pigment_scale = 20
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.1
+shader_parameter/shade_tint = Color(0.7098, 0.7216, 0.5569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.36
+
+[sub_resource type="ShaderMaterial" id="m_q_head__q_mat_hair"]
+resource_name = "q_head/q_mat_hair (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.1216, 0.1020, 0.1098, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.05
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9529, 0.8863, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
 
 [sub_resource type="ShaderMaterial" id="m_q_mat_hair"]
 resource_name = "q_mat_hair (painted)"
@@ -59,27 +121,8 @@ shader_parameter/shade_tint = Color(0.4863, 0.4863, 0.6118, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.4
 
-[sub_resource type="ShaderMaterial" id="m_q_mat_brow"]
-resource_name = "q_mat_brow (painted)"
-shader = ExtResource("2_paint")
-shader_parameter/albedo = Color(0.1216, 0.1020, 0.1098, 1)
-shader_parameter/edge_break = 0.18
-shader_parameter/edge_softness = 0.05
-shader_parameter/half_tone = 0.62
-shader_parameter/light_edge = 0.42
-shader_parameter/light_strength = 0.76
-shader_parameter/light_tint = Color(1.0000, 0.9529, 0.8863, 1)
-shader_parameter/pigment_mix = 0
-shader_parameter/pigment_scale = 9
-shader_parameter/pigment_steps = 4
-shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
-shader_parameter/pigment_value = 0
-shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
-shader_parameter/shadow_edge = -0.05
-shader_parameter/shadow_fill = 0.3
-
-[sub_resource type="ShaderMaterial" id="m_q_mat_eye"]
-resource_name = "q_mat_eye (painted)"
+[sub_resource type="ShaderMaterial" id="m_q_mat_sclera"]
+resource_name = "q_mat_sclera (painted)"
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.8627, 0.8235, 0.7294, 1)
 shader_parameter/edge_break = 0.18
@@ -135,27 +178,8 @@ shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.3
 
-[sub_resource type="ShaderMaterial" id="m_q_mat_lip"]
-resource_name = "q_mat_lip (painted)"
-shader = ExtResource("2_paint")
-shader_parameter/albedo = Color(0.6431, 0.2863, 0.2353, 1)
-shader_parameter/edge_break = 0.18
-shader_parameter/edge_softness = 0.05
-shader_parameter/half_tone = 0.62
-shader_parameter/light_edge = 0.42
-shader_parameter/light_strength = 0.76
-shader_parameter/light_tint = Color(1.0000, 0.9529, 0.8863, 1)
-shader_parameter/pigment_mix = 0
-shader_parameter/pigment_scale = 9
-shader_parameter/pigment_steps = 4
-shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
-shader_parameter/pigment_value = 0.05
-shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
-shader_parameter/shadow_edge = -0.05
-shader_parameter/shadow_fill = 0.3
-
-[sub_resource type="ShaderMaterial" id="m_q_mat_mouthdark"]
-resource_name = "q_mat_mouthdark (painted)"
+[sub_resource type="ShaderMaterial" id="m_q_mat_mouthinner"]
+resource_name = "q_mat_mouthinner (painted)"
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.2314, 0.0902, 0.0745, 1)
 shader_parameter/edge_break = 0.18
@@ -173,27 +197,8 @@ shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.3
 
-[sub_resource type="ShaderMaterial" id="m_q_mat_teeth"]
-resource_name = "q_mat_teeth (painted)"
-shader = ExtResource("2_paint")
-shader_parameter/albedo = Color(0.8471, 0.7961, 0.6824, 1)
-shader_parameter/edge_break = 0.18
-shader_parameter/edge_softness = 0.05
-shader_parameter/half_tone = 0.62
-shader_parameter/light_edge = 0.42
-shader_parameter/light_strength = 0.76
-shader_parameter/light_tint = Color(1.0000, 0.9529, 0.8863, 1)
-shader_parameter/pigment_mix = 0
-shader_parameter/pigment_scale = 9
-shader_parameter/pigment_steps = 4
-shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
-shader_parameter/pigment_value = 0
-shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
-shader_parameter/shadow_edge = -0.05
-shader_parameter/shadow_fill = 0.55
-
-[sub_resource type="ShaderMaterial" id="m_q_mat_cloth"]
-resource_name = "q_mat_cloth (painted)"
+[sub_resource type="ShaderMaterial" id="m_q_mat_hoodie"]
+resource_name = "q_mat_hoodie (painted)"
 next_pass = SubResource("outline")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.3176, 0.4353, 0.2980, 1)
@@ -214,8 +219,8 @@ shader_parameter/shade_tint = Color(0.5608, 0.5333, 0.6588, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.32
 
-[sub_resource type="ShaderMaterial" id="m_q_mat_collar"]
-resource_name = "q_mat_collar (painted)"
+[sub_resource type="ShaderMaterial" id="m_q_mat_hoodierib"]
+resource_name = "q_mat_hoodierib (painted)"
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.7020, 0.6039, 0.3725, 1)
 shader_parameter/edge_break = 0.18
@@ -233,8 +238,8 @@ shader_parameter/shade_tint = Color(0.6392, 0.6510, 0.7843, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.3
 
-[sub_resource type="ShaderMaterial" id="m_q_mat_pants"]
-resource_name = "q_mat_pants (painted)"
+[sub_resource type="ShaderMaterial" id="m_q_mat_trousers"]
+resource_name = "q_mat_trousers (painted)"
 next_pass = SubResource("outline")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.1922, 0.2392, 0.3216, 1)
@@ -300,22 +305,22 @@ shader_parameter/shadow_fill = 0.3
 script = ExtResource("1_look")
 materials = {
 "q_mat_skin": SubResource("m_q_mat_skin"),
+"q_mat_skinbody": SubResource("m_q_mat_skinbody"),
+"q_hands/q_mat_skinbody": SubResource("m_q_hands__q_mat_skinbody"),
+"q_head/q_mat_hair": SubResource("m_q_head__q_mat_hair"),
 "q_mat_hair": SubResource("m_q_mat_hair"),
-"q_mat_brow": SubResource("m_q_mat_brow"),
-"q_mat_eye": SubResource("m_q_mat_eye"),
+"q_mat_sclera": SubResource("m_q_mat_sclera"),
 "q_mat_iris": SubResource("m_q_mat_iris"),
 "q_mat_pupil": SubResource("m_q_mat_pupil"),
-"q_mat_lip": SubResource("m_q_mat_lip"),
-"q_mat_mouthdark": SubResource("m_q_mat_mouthdark"),
-"q_mat_teeth": SubResource("m_q_mat_teeth"),
-"q_mat_cloth": SubResource("m_q_mat_cloth"),
-"q_mat_collar": SubResource("m_q_mat_collar"),
-"q_mat_pants": SubResource("m_q_mat_pants"),
+"q_mat_mouthinner": SubResource("m_q_mat_mouthinner"),
+"q_mat_hoodie": SubResource("m_q_mat_hoodie"),
+"q_mat_hoodierib": SubResource("m_q_mat_hoodierib"),
+"q_mat_trousers": SubResource("m_q_mat_trousers"),
 "q_mat_shoes": SubResource("m_q_mat_shoes"),
 "q_mat_sole": SubResource("m_q_mat_sole")
 }
 expression = {}
-blink_shapes = PackedStringArray()
+blink_shapes = PackedStringArray("Eye_Blink_L", "Eye_Blink_R")
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16
 label = "Q: painted (option C)"
