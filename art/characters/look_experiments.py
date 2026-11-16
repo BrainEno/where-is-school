@@ -123,15 +123,17 @@ def protagonist_charcoal(base: dict) -> dict:
             "light_strength": 0.85,
             "outline": True,
         },
-        # v1 (0.6 strength, 0.25 coverage) cluttered the face in close-up.
-        strength=0.5,
-        color="#6A6474",
+        # v1 (0.6 strength, 0.25 coverage) cluttered the face in close-up. v2 (#6A6474, 0.5,
+        # contour 0.35) laid a pale grey veil along every spike: strands this fine fade to
+        # their average tone, and the contour weight put that tone on the edges.
+        strength=0.45,
+        color="#4C4656",
         scale=110.0,
         across=(1.0, 0.0, 0.6),
         width=0.25,
         length=12.0,
         coverage=0.12,
-        contour=0.35,
+        contour=0.12,
         jitter=0.4,
     )
     parts["protagonist_mat_shirt"] = dict(parts["protagonist_mat_shirt"], albedo="#D8CFB8")
