@@ -128,13 +128,27 @@ func _run() -> void:
 	if not await _wait_for_free(30.0):
 		_failures.append("The player never got control back to walk.")
 	else:
-		var start_position := _player.global_position
+		# The protagonist wakes seated (#164): the first press stands him up, and the body only
+		# moves once the get-up is over (`WAKE_GET_UP_SECONDS`, 0.75 s). Held for 0.8 s of wall
+		# clock, that left about one twentieth of a second to walk, and fewer still when a slow
+		# Xvfb frame ran fewer physics steps than the timer counted, so the check passed or
+		# failed on the runner's speed. The walk is now timed from the moment he is on his
+		# feet, in physics frames: the same 0.8 s, of the simulation the movement runs in.
 		Input.action_press("move_forward")
-		await _wait(0.8)
+		await _physics_frames(2)
+		var rose := _player.is_getting_up()
+		var stood := await _poll(func() -> bool: return not _player.is_getting_up(), 10.0)
+		if not stood:
+			_failures.append("Holding the forward key never finished standing the player up.")
+		var start_position := _player.global_position
+		var hold_frames := int(ceil(0.8 * Engine.physics_ticks_per_second))
+		await _physics_frames(hold_frames)
 		Input.action_release("move_forward")
 		await _wait(0.2)
 		var moved := _player.global_position.distance_to(start_position)
-		_note("held move_forward for 0.8 s: player moved %.2f m" % moved)
+		_note("held move_forward (%s): then %d physics frames on his feet moved %.2f m" % [
+			"stood up first" if rose else "already standing", hold_frames, moved,
+		])
 		if moved < 0.2:
 			_failures.append("Holding the forward key did not move the player.")
 	await _shot("02_walking", "The player after holding the forward key.")
