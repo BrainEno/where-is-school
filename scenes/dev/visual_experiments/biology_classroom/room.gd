@@ -276,12 +276,12 @@ func _make_materials() -> void:
 	lectern_material = _concrete(Color(0.6, 0.58, 0.55), 0.0, 1.0, 0.0)
 	lectern_material.set_shader_parameter("cool_color", Color(0.46, 0.5, 0.56))
 	lectern_material.set_shader_parameter("aggregate_density", 0.18)
-	# The east and south walls: the same colour fields, but the afternoon that falls into
-	# the room through the (shadowless) ceiling barely touches them. Lit at full gain their
-	# plaster went as pale as the sky, and from the window side the closed room read as
-	# open above the dado.
+	# The east and south walls: the same colour fields, in the shade they would be in. The
+	# afternoon that falls into the room through the (shadowless) ceiling does not reach
+	# them: lit, their plaster went as pale as the sky, and from the window side the closed
+	# room read as open above the dado. (Their outer faces look away from the sun anyway.)
 	near_wall_material = room_material.duplicate() as ShaderMaterial
-	near_wall_material.set_shader_parameter("light_gain", 0.3)
+	near_wall_material.set_shader_parameter("light_gain", 0.06)
 	register_materials = [room_material, floor_material, platform_material, lectern_material, near_wall_material]
 	lamp_material = StandardMaterial3D.new()
 	lamp_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
