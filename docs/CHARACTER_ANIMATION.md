@@ -1,9 +1,10 @@
 # Character animation
 
 The protagonist (`Protagonist_Character.glb` since PR #118), the former protagonist (now a
-seated classroom student), Q and substitute teacher N use the same seven code-authored clips
-(N's idle is the exception: it is built from N's own four loops, see "Substitute teacher N"
-below), built in
+seated classroom student), Q and substitute teacher N keep the same seven semantic states.
+Shared motion is built in `scripts/actors/character_animation.gd`; N's idle and new Q's
+idle/talk instead use layers supplied by their own models (see below). Q also exposes four
+native rotation actions without replacing locomotion. The shared clips are built in
 `scripts/actors/character_animation.gd` and resolved against each rig's own bone names at
 bind time. Their production wrapper scenes bind them when instantiated. In the game, every
 authored character goes through one state machine, `CharacterVisualAnimation`, fed by the
@@ -16,7 +17,7 @@ velocity its own controller already produces.
 | `jog` | 0.72 s | yes | the body moving faster than 4.4 m/s (leaves below 4.0): the player's sprint input |
 | `sit_idle` | 2.4 s | yes | `set_seated(true)`: the protagonist at the desk during the wake beat |
 | `wave` | 1.6 s | yes | a beat for an interaction, played by hand for now |
-| `talk` | 1.2 s | yes | a beat for dialogue, played by hand for now |
+| `talk` | 1.2 s shared; Q 3.2 s native | yes | Q: the visible speaker in real dialogue, only while standing still; other characters: explicit preview/action |
 | `get_up` | 1.5 s | **no** | a transition: `play_action("get_up")` stands the body up from `sit_idle` |
 
 ## How a clip becomes a pose
@@ -55,9 +56,10 @@ right.
 `bind()` checks the "hanging" assumption per rig instead of trusting it
 (`CharacterAnimation.posed_limbs()`). A limb whose rest direction is more than ~45° from
 straight down has a different axis under the same name, so the clips hold it at its
-modelled pose and the bind report lists it under `posed`. Rigged Q is modelled with its
-right forearm held out in front, so on Q `fore_arm.R`, `hand.L` and `hand.R` are held, and
-the right arm swings only from the shoulder. Neither protagonist has posed limbs.
+modelled pose and the bind report lists it under `posed`. The retired 16-joint Q needed
+that guard; the approved 60-joint replacement does **not**. Its forearm down-cosines exceed
+0.7, all semantic bones resolve, and neither arm nor hand is frozen. Neither protagonist
+has posed limbs either.
 
 ### Semantic frames and positional sides (PR #118)
 
@@ -77,7 +79,8 @@ at skeleton **+X**, while the clips' `.L` has always meant the −X side (the si
 is on in the first two rigs). `resolve_rig()` therefore assigns each pair by rest position,
 not by name: whichever of the two resolved bones is at −X is `.L`. On the new rig all seven
 pairs swap (`shoulder`, `upper_arm`, `fore_arm`, `hand`, `thigh`, `shin`, `foot`) and the
-bind report lists them under `mirrored`; on the other two rigs nothing swaps.
+bind report lists them under `mirrored`. New Q uses the same anatomical convention and
+also swaps all seven pairs; the former protagonist keeps its original sides.
 
 Applying the frame changes what the first two rigs' arms do, by up to 0.16 m at the hand
 (the arm swing is now in the sagittal plane instead of 16–25° off it). Their legs, spine
@@ -87,7 +90,7 @@ same limits.
 ### Substitute teacher N: a −Z model with motion of its own
 
 `assets/models/teacher-n/teacher-n.glb` is the first character exported facing **−Z**, as
-`docs/ASSET_PIPELINE.md` §1 asks; the other three face +Z. Its skeleton has Q's sixteen
+`docs/ASSET_PIPELINE.md` §1 asks; the other three face +Z. Its skeleton has the former Q's sixteen
 joint names, but turned half way round relative to the frame the keys were written in, so
 bound like the others its walk would swing the legs backwards and sitting would fold its
 knees forwards. `bind(model, player, faces_negative_z = true)` measures the side axis as
@@ -108,6 +111,40 @@ at 30 Hz over the 4.96 s the keys span. Bones no layer moves are held at rest, l
 bound clip, so leaving a walk puts the legs back. The state machine never knows the
 difference — it still plays `char/idle`. The keys are not retargeted, scaled or smoothed;
 the only reading is that they play together, which the owner can change in the wrapper.
+
+### Q: approved 60-joint replacement with native hands
+
+`assets/models/q/new-Q.glb` is the sole production Q. Its rig is measured independently,
+not inferred from the shared naming with the protagonist: root `Q_Armature`, 60 skin joints,
+`Root → Pelvis → Spine → Spine_01 → Spine_02 → Chest`, `Chest → Clavicle_L/R → UpperArm →
+Forearm → Hand`, five three-joint fingers per hand, and `Chest → Neck → Head`. Both hands'
+30 finger joints carry weights. The source, bind/rest comparison and old-Q retirement are
+recorded in [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
+
+The wrapper keeps all seven shared states and the existing `BoundAnimationPlayer` contract:
+
+| Bound state/action | Supplied layers / authoring |
+|---|---|
+| `idle` | `Q_Idle_Breathing` + `Q_Slight_Body_Lean`, with Q's standing calibration |
+| `talk` | `Q_Casual_Hand_Gesture` + `Q_Idle_Breathing`; shoulder, elbow, wrist and all fifteen right-finger joints move |
+| `walk`, `jog`, `sit_idle`, `get_up`, `wave` | Shared semantic/rest-relative clips rebound to the measured new rig; no old rig tracks reused by path |
+| `head_movement`, `hand_gesture`, `body_lean`, `pose_preview` | The corresponding native `Q_Head_Movement`, `Q_Casual_Hand_Gesture`, `Q_Slight_Body_Lean`, `Q_Pose_Preview`; preview is the supplied one-key diagnostic, never used for idle or locomotion |
+| `Q_Face_Test` (source player) | Supplied 13-morph facial diagnostic, retained in the imported model; explicit development preview only, not an automatic talking-mouth/lip-sync claim |
+
+`authored_clip_layers` opts in by bound name; old characters have an empty map.
+`adopt_authored_layers()` composes rotations relative to each bone's actual rest pose,
+not the old Q bind. `complete_pose_resets()` gives **every clip the union of animated
+bone tracks**, including both hands' fingers, clavicles and pelvis. Switching from a curled
+native gesture/pose into a shared walk therefore resets the extra joints instead of
+leaving stale rotations behind. No `AnimationTree`, root motion or new controller is added.
+
+`CharacterDialogueAnimation` listens to the existing presentation signals and matches
+`line.speaker_id` to the **visible** `NpcActor.npc_id`, including the companion. Subjective
+voices do not animate an onstage Q. `dialogue_clip = "talk"` opts Q in; the protagonist and
+other characters remain unchanged. Precedence is action → seated → moving walk/jog →
+standing speech → idle. Closing/changing a dialogue line clears speech; stopping during
+Q's line resumes talk. `NpcGaze` remains a post-animation skeletal modifier on the measured
+Spine/Neck/Head chain (the chest follows the spine); existing doorway-watch tests continue to cover it.
 
 ### The protagonist's rig
 
@@ -160,10 +197,10 @@ clips, their names, the bones they key, the state machine, the hysteresis and th
 rates are all unchanged. N, the classroom student and every test that binds a bare GLB pass
 no profile, which is the identity. The rules a profile keeps:
 
-- **No new joints.** Only bones the clips already animate are keyed. Anything else a profile
-  names is reported in the bind report's `profile_ignored` and not keyed. This is why Q's
-  profile has no `chest`: his rig does not have one.
-- **Posed limbs stay held.** Q's modelled forearm is still a held limb.
+- **No invented profile joints.** A shared clip only keys the bones it authors; unknown
+  profile names are reported as `profile_ignored`. Native Q layers may animate additional
+  real source bones, which are included in the reset union.
+- **Posed-limb guards remain per rig.** New Q has no held limbs; this is checked, not assumed.
 - **Loops still close.** A layer's last key repeats its first.
 - **`get_up` still starts on the `sit_idle` pose and ends standing.** Its posture weight runs
   from the seated weight to the standing one.
@@ -175,8 +212,8 @@ no profile, which is the identity. The rules a profile keeps:
 | | Protagonist (`assets/characters/protagonist/protagonist_motion.tres`) | Q (`assets/characters/q/q_motion.tres`) |
 |---|---|---|
 | Idea | tired, slumped, held in | loose, leaning back, weight on the heels |
-| Posture | spine +4°, chest +5°, neck +6° (forward); head −3° with a 1.5° tilt; upper arms drawn 14° in and 4° back; elbows 6° bent | spine −4.5° (back); neck +3°; head +1° and cocked 4°; thighs 2.5° apart (wide stance); left arm 2° out from the belly, left elbow 6° bent |
-| Tempo (× clip length) | idle 2.0 (4 s), get_up 1.35 (2.0 s), talk 1.4, wave 1.3, sit_idle 1.6, jog 1.05, walk 1.0 | idle 1.2, walk 0.92, jog 0.95, talk 0.8, wave 0.85, get_up 0.9 |
+| Posture | spine +4°, chest +5°, neck +6° (forward); head −3° with a 1.5° tilt; upper arms drawn 14° in and 4° back; elbows 6° bent | spine −4.5° (back); neck +3°; head +1° and cocked 4°; thighs 2.5° apart (wide stance); upper arms drawn 14° inward from the A-pose, left elbow 6° bent |
+| Tempo (× clip length) | idle 2.0 (4 s), get_up 1.35 (2.0 s), talk 1.4, wave 1.3, sit_idle 1.6, jog 1.05, walk 1.0 | idle 0.85 (native 3.4 s), walk 0.92, jog 0.95, talk 0.8, wave 0.85, get_up 0.9 |
 | Amplitude | idle ×1.3 (a deeper, slower breath); walk arms ×0.45, forearms ×0.6, head ×0.6, thighs ×0.9, shins ×0.85, feet ×0.75; jog arms ×0.6; talk ×0.5; wave ×0.6–0.75 | walk spine ×2, head ×1.4, arms ×1.2; jog spine ×1.6, arms ×1.1; talk ×1.5 |
 | Layers | idle: a sigh in the chest, a head that drops and recovers | idle: a sway of the spine and head, the free arm drifting; talk: the spine rocking side to side |
 
@@ -190,10 +227,10 @@ checks the same characters in the running game. How the characters look is in
 
 ## Runtime wiring
 
-- `assets/models/protagonist/Protagonist_Character.glb` (the player) has the 60-bone rig
-  above. `assets/models/protagonist/protagonist.glb` (the classroom student) and
-  `assets/models/q/q.glb` each have a 16-bone rigid-part skeleton. Q's unrigged input is
-  preserved at `art/character_rigging/q/q_unrigged_source.glb`.
+- `assets/models/protagonist/Protagonist_Character.glb` (the player) remains unchanged.
+  `assets/models/protagonist/protagonist.glb` (the classroom student) retains its 16-bone
+  rigid-part skeleton. Q alone uses the separately approved 60-joint `new-Q.glb`, built
+  reproducibly from `art/character_models/q/new-Q_source.glb` by `tools/prepare_q.py`.
 - `scenes/environment/characters/classroom_student.tscn` is the former protagonist as
   scenery: `start_seated = true` opens it on `sit_idle` with no body, and its `Model` is
   lowered 0.347 m so the seated soles are on the floor.
@@ -205,8 +242,9 @@ checks the same characters in the running game. How the characters look is in
   protagonist and Q) and logs the bind report.
 - Three things can hold a clip, in this order: a **one-shot action** (nothing else takes over
   until it reports `animation_finished`), then **seated** (`sit_idle`, which outranks the
-  body's velocity), then **locomotion**. The locomotion decision keeps running underneath, so
-  a character comes out of either into what its body is doing now.
+  body's velocity), then **locomotion**. Only an idle opted-in character can show standing
+  speech. Locomotion keeps running underneath, so a character comes out of an action/seat
+  into what its body and dialogue presentation are doing now.
 - Locomotion is one rule for everyone:
 
   ```
@@ -262,7 +300,8 @@ floor to run on.
 ## See it
 
 Open `scenes/dev/animation_retarget_test/animation_preview.tscn` and press **F6**.
-Keys **1** idle, **2** walk, **3** jog, **4** sit_idle, **5** get_up, **6** wave, **7** talk,
+Keys **1** idle, **2** walk, **3** jog, **4** sit_idle, **5** get_up, **6** wave, **7** talk;
+Q-only: **8** head movement, **9** hand gesture, **0** body lean, **P** pose preview, **F** face test;
 **space** pause, **R** re-bind after re-importing a model. Press **4** before **5** to see
 the movement the two halves make. In the game, walk around the classroom with WASD or a
 click, then leave the classroom during the free period with Q along.
@@ -313,8 +352,9 @@ run's *teacher N crop* annotations (base64, in numbered parts).
   +Z model would fold them backwards, so the flag is proven to matter.
   It also checks `adopt_authored_layers()` both ways: N's four loops replace the idle with a
   looping, rotation-only clip that applies every track; a list naming a clip N does not have,
-  and Q (which carries no clips of its own), are refused with a reason and leave the
-  procedural idle untouched.
+  and the former protagonist (which carries no clips of its own), are refused with a reason
+  and leave the procedural idle untouched. The no-clips negative control was moved from Q
+  because the approved replacement now genuinely contains six actions.
 - `tests/protagonist_model_test.gd` is about the model swap: the new GLB's skeleton,
   hierarchy, skinning and embedded clips; the exact bone mapping and mirrored pairs on all
   three rigs, and which of the 60 joints animate; every clip track pointing at a real bone;
@@ -323,6 +363,16 @@ run's *teacher N crop* annotations (base64, in numbered parts).
   below the shoulders and on their own side, no twist about a hand's or foot's length); the
   player scene showing the new model in idle; and the classroom student seated on its chair
   with no controller, collision or interaction.
+
+- `tests/q_model_prepare_test.py` proves approved-source hash, reproducibility, all mesh,
+  weight, bind and morph data, all non-rest action channels, five weighted fingers per
+  hand, and retirement of every obsolete Q-only model.
+- `tests/q_model_test.gd` checks the actual imported Q wrapper/skin/materials/native clips,
+  full cross-state reset tracks, moving finger/head/forearm joints, and the real `q_wake`
+  presentation through `main.tscn`, including talk → walk → talk → idle.
+- `tests/capture_q_migration.gd` and `q-model-capture.yml` capture actual before/after
+  `main.tscn` views at the fixed task base and current head, using one camera script,
+  plus a real route walk sequence. See [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
 
 The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
 baked onto the development protagonist (the library ships 43; `A_TPose` is a rest pose and
@@ -348,10 +398,12 @@ every build.
   move, and its five embedded clips and 9 blend shapes are unused (see above).
 - N walks with the procedural walk (its file has none) and its idle is the owner's; the two
   were not made for each other, so the change between them is a 0.18 s cross-fade and nothing
-  more. N's facial blend shapes are not shipped, and `talk` on N is as untriggered as on Q.
-- Q's right forearm is held at its modelled pose in every clip, so `wave` on Q raises the
-  upper arm with a rigid forearm. `wave` and `talk` are not triggered by anything in the game.
-- The rigs use mostly rigid-part weights. Q's trousers blend at the joints, but neither model
-  is a full deformation rig; knees, elbows and hands crease in motion.
+  more. N's facial blend shapes are not shipped, and N does not opt into standing speech.
+- Q's source gestures and the shared walk were not authored as one motion set; transitions
+  use the existing 0.18 s fade plus complete reset tracks, not foot planting or corrective
+  deformation. Wave is available as an explicit action/preview, not a new story beat.
+- No geometry, weights or large-shape sculpt was changed on Q. Head/neck, shoulder, palm,
+  thumb and finger shape quality still need owner review of the real motion frames; a
+  structural/import pass is not visual acceptance.
 - No facial animation, lip sync, foot IK, root motion or AnimationTree; cross-fades are the
   `AnimationPlayer`'s own.

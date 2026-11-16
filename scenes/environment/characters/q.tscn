@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="PackedScene" path="res://assets/models/q/q.glb" id="1_model"]
+[ext_resource type="PackedScene" path="res://assets/models/q/new-Q.glb" id="1_model"]
 [ext_resource type="Script" path="res://scripts/actors/character_visual_animation.gd" id="2_animation"]
 [ext_resource type="Resource" path="res://assets/characters/q/q_motion.tres" id="3_motion"]
 [ext_resource type="Script" path="res://scripts/actors/character_look_applier.gd" id="4_look_applier"]
@@ -9,6 +9,15 @@
 [node name="Q" type="Node3D"]
 script = ExtResource("2_animation")
 motion_profile = ExtResource("3_motion")
+authored_clip_layers = Dictionary[String, PackedStringArray]({
+"idle": PackedStringArray("Q_Idle_Breathing", "Q_Slight_Body_Lean"),
+"talk": PackedStringArray("Q_Casual_Hand_Gesture", "Q_Idle_Breathing"),
+"head_movement": PackedStringArray("Q_Head_Movement"),
+"hand_gesture": PackedStringArray("Q_Casual_Hand_Gesture"),
+"body_lean": PackedStringArray("Q_Slight_Body_Lean"),
+"pose_preview": PackedStringArray("Q_Pose_Preview")
+})
+dialogue_clip = "talk"
 
 [node name="Model" parent="." instance=ExtResource("1_model")]
 

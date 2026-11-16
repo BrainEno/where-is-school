@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bf24mp3o5v64r"
-path="res://.godot/imported/q_rigged.glb-6ce8f6c62e0b69694470891a69cc001f.scn"
+uid="uid://cfhelhtlmpkmv"
+path="res://.godot/imported/new-Q.glb-f0a38b0027e350f16a0b5f3fb9897eca.scn"
 
 [deps]
 
-source_file="res://scenes/dev/animation_retarget_test/q_rigged.glb"
-dest_files=["res://.godot/imported/q_rigged.glb-6ce8f6c62e0b69694470891a69cc001f.scn"]
+source_file="res://assets/models/q/new-Q.glb"
+dest_files=["res://.godot/imported/new-Q.glb-f0a38b0027e350f16a0b5f3fb9897eca.scn"]
 
 [params]
 

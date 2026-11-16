@@ -1,0 +1,213 @@
+extends "res://tests/capture_character_art.gd"
+## Focused Q migration evidence, not a character-art experiment. Reuses only the
+## existing main-game boot/framing helpers. Never changes a Look, shader or mesh.
+## Also runs inside an archive of the exact pre-migration base for real before views.
+## xvfb-run -a godot --path . --fixed-fps 24 --resolution 1280x720 \
+##   --rendering-method gl_compatibility --script res://tests/capture_q_migration.gd
+
+var _phase := "after"
+var _output := "res://build/q-model-migration/capture"
+var _source_sha := "unrecorded-local-worktree"
+var _records: Array[Dictionary] = []
+var _previews: Array[Dictionary] = []
+
+
+func _run() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--phase="):
+			_phase = argument.trim_prefix("--phase=")
+		if argument.begins_with("--output="):
+			_output = argument.trim_prefix("--output=")
+		if argument.begins_with("--source-sha="):
+			_source_sha = argument.trim_prefix("--source-sha=")
+	Harness.arm_watchdog(self, 360.0, "capture_q_migration.gd")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_output))
+	if not await _boot():
+		await _finish_migration()
+		return
+	# Stand by the real player's existing API; no protagonist asset/material edit.
+	_player.set_wake_pose(0.0)
+	_protagonist.set_seated(false)
+	await _wait(2.5)
+	_player.set_physics_process(false)
+	await _solo(_q, 0.0)
+	_pose(_q, "idle", 0.25)
+	await _body_shot("01_front_idle")
+	await _solo(_q, 90.0)
+	await _body_shot("02_side_idle")
+	await _solo(_q, 180.0)
+	await _body_shot("03_back_idle")
+	await _solo(_q, 0.0)
+	_pose(_q, "idle", 0.25)
+	await _hand_shot("04_hand_negative_x", "hand.L")
+	await _hand_shot("05_hand_positive_x", "hand.R")
+	await _neck_shot("06_neck_shoulders_front")
+	await _solo(_q, 90.0)
+	await _neck_shot("07_neck_shoulders_side")
+	await _solo(_q, 0.0)
+	await _walk_capture()
+
+	await _solo(_q, 0.0)
+	for entry: Array in [["wave", 0.5, "13_wave"], ["sit_idle", 0.0, "14_sit_idle"],
+		["get_up", 0.5, "15_get_up"]]:
+		_pose(_q, String(entry[0]), float(entry[1]))
+		await _body_shot(String(entry[2]))
+	if _phase == "after":
+		_pose(_q, "head_movement", 0.45)
+		await _neck_shot("16_authored_head_turn")
+		_pose(_q, "talk", 0.45)
+		await _hand_shot("17_gesturing_fingers", "hand.L")
+		_pose(_q, "pose_preview", 0.0)
+		await _body_shot("18_supplied_pose_preview")
+
+	await _place_pair(PAIR_PROTAGONIST, PAIR_Q, 25.0)
+	_pose(_protagonist, "idle", 0.25)
+	_pose(_q, "idle", 0.25)
+	var centre := (_protagonist.global_position + _q.global_position) * 0.5
+	await _shot_from("11_pair_close", centre + Vector3(0, 1.2, 3.1), centre + Vector3.UP * 0.88)
+	var camera := _main.get_node("CameraRig/Camera3D") as Camera3D
+	camera.current = true
+	await _wait(0.5)
+	_save_image("12_pair_game_camera", root.get_texture().get_image())
+	await _dialogue_capture()
+	await _finish_migration()
+
+
+func _body_shot(tag: String) -> void:
+	var base := _q.global_position
+	var frame := await _frame_from(base + Vector3(0, 1.2, 2.7), base + Vector3.UP * 0.88)
+	var image := frame["image"] as Image
+	var camera := frame["camera"] as Camera3D
+	await _measure_drawn(_q, camera, image, _screen_box(camera, _subtree_aabb(_q)), tag)
+	_save_image(tag, image)
+	camera.queue_free()
+
+
+func _hand_shot(tag: String, canonical: String) -> void:
+	var skeleton := _q.get_skeleton()
+	var resolved: Dictionary = _q.get_bind_report()["resolved"]
+	var index := skeleton.find_bone(String(resolved[canonical]))
+	var bone := skeleton.get_bone_global_pose(index)
+	var centre := skeleton.global_transform * (bone.origin + bone.basis.y * 0.065)
+	# Photograph the actual skinned hand, not an enlarged model or bone overlay.
+	await _shot_from(tag, centre + Vector3(0, 0.035, 0.44), centre)
+
+
+func _neck_shot(tag: String) -> void:
+	var centre := _head_point(_q) - Vector3.UP * 0.17
+	await _shot_from(tag, centre + Vector3(0, 0.07, 0.92), centre)
+
+
+func _shot_from(tag: String, eye: Vector3, target: Vector3) -> void:
+	var frame := await _frame_from(eye, target)
+	_save_image(tag, frame["image"] as Image)
+	(frame["camera"] as Camera3D).queue_free()
+
+
+func _walk_capture() -> void:
+	var actor := _q_holder as NpcActor
+	if actor == null:
+		_failures.append("Q's actual NpcActor is missing for the walk capture.")
+		return
+	var start := actor.global_position
+	_q.set_process(true)
+	actor.walk_along([start + Vector3.RIGHT * 3.0])
+	var camera := Camera3D.new()
+	camera.fov = 50.0
+	_main.add_child(camera)
+	camera.current = true
+	var frames_dir := "%s/walk_frames" % _output
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(frames_dir))
+	var walking := 0
+	for frame in 48:
+		await process_frame
+		var base := _q.global_position
+		camera.global_position = base + Vector3(0, 1.2, 2.7)
+		camera.look_at(base + Vector3.UP * 0.88)
+		RenderingServer.force_draw(true)
+		var image := root.get_texture().get_image()
+		image.save_jpg("%s/frame_%03d.jpg" % [frames_dir, frame], 0.9)
+		if _q.get_current_clip() == "walk":
+			walking += 1
+		if frame == 14:
+			_save_image("08_walking", image)
+		if frame == 30:
+			_save_image("09_walking_late", image)
+	var travelled := actor.global_position.distance_to(start)
+	_note("Q migration real walk: %.3f m travelled, %d/48 frames on walk" % [travelled, walking])
+	if travelled < 1.0 or walking < 20:
+		_failures.append("The walking evidence did not capture a real animated route walk.")
+	await _wait(2.2)
+	camera.queue_free()
+	_pose(_q, "idle", 0.25)
+
+
+func _dialogue_capture() -> void:
+	# A real speaker in the shipped bilingual conversation; no invented evidence text.
+	_q.set_process(true)
+	_q.report_velocity(Vector3.RIGHT)
+	_q.clear_reported_velocity()
+	var camera := _main.get_node("CameraRig/Camera3D") as Camera3D
+	camera.current = true
+	if not _dialogue.play_conversation(&"q_wake"):
+		_failures.append("The dialogue evidence could not start q_wake.")
+		return
+	for attempt in 32:
+		if String(_dialogue.get_current_line().get("speaker_id", "")) == "q":
+			break
+		_dialogue.advance_presentation()
+		await process_frame
+	await _wait(0.8)
+	_save_image("10_live_dialogue", root.get_texture().get_image())
+	_note("Q migration dialogue: speaker %s, actual clip %s" % [
+		str(_dialogue.get_current_line().get("speaker_id", "")), _q.get_current_clip()])
+	if _phase == "after" and _q.get_current_clip() != "talk":
+		_failures.append("The dialogue frame did not play Q's actual speech state.")
+
+
+func _save_image(tag: String, image: Image) -> void:
+	if image == null or image.is_empty():
+		_failures.append("The renderer produced no image for '%s'." % tag)
+		return
+	var path := "%s/%s.jpg" % [_output, tag]
+	var error := image.save_jpg(path, 0.92)
+	if error != OK:
+		_failures.append("Cannot save capture '%s' (error %d)." % [tag, error])
+		return
+	_records.append({"file": "%s.jpg" % tag, "width": image.get_width(), "height": image.get_height(),
+		"sha256": FileAccess.get_sha256(path), "clip": String(_q.get_animation_player().current_animation)})
+	if int(tag.get_slice("_", 0)) <= 12:
+		_previews.append({"name": tag, "image": image})
+
+
+func _finish_migration() -> void:
+	# Original frames are untouched; small *labelled previews* fit the API notice
+	# budget. The artifact retains full-size frames and 48 real walking frames.
+	var share := 144000 / maxi(_previews.size(), 1)
+	for entry: Dictionary in _previews:
+		var image := (entry["image"] as Image).duplicate() as Image
+		image.resize(640, 360, Image.INTERPOLATE_LANCZOS)
+		var encoded := ""
+		for attempt in 10:
+			var quality := maxf(0.8 - float(attempt) * 0.1, 0.3)
+			if attempt >= 5:
+				image.resize(int(image.get_width() * 0.85), int(image.get_height() * 0.85), Image.INTERPOLATE_LANCZOS)
+			encoded = Marshalls.raw_to_base64(image.save_jpg_to_buffer(quality))
+			if encoded.length() <= share:
+				break
+		print("QFRAME: %s.jpg %s" % [String(entry["name"]), encoded])
+	var metadata := {"phase": _phase, "source_commit": _source_sha,
+		"engine": Engine.get_version_info(), "renderer": RenderingServer.get_current_rendering_method(),
+		"rendering_driver": RenderingServer.get_current_rendering_driver_name(),
+		"frames": _records, "owner_visual_acceptance": "not performed"}
+	var file := FileAccess.open("%s/manifest.json" % _output, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(metadata, "\t") + "\n")
+	for failure: String in _failures:
+		print("Q_CAPTURE_FAILURE: %s" % failure)
+	print("Q_CAPTURE_RESULT: %s" % ("PASS" if _failures.is_empty() else "FAIL"))
+	if _main != null:
+		_main.queue_free()
+		await process_frame
+		await process_frame
+	quit(0 if _failures.is_empty() else 1)

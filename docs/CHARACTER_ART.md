@@ -13,6 +13,25 @@ protagonist dejected, cold, tired and uneasy, between youth and adult, not a han
 not anime; Q an ordinary, talkative, overweight, over-familiar classmate, not a guide.
 Substitute teacher N and the seated classroom student are out of scope and unchanged.
 
+## Q replacement note
+
+The Q-specific measurements and review statements in sections 1–2 below are **historical**:
+they describe the retired 16-joint model, not today's separately approved replacement.
+`assets/models/q/new-Q.glb` is now the sole production Q: 1.78449 m rest height, 9 skinned
+meshes / 16 surfaces / 12 materials, 60 joints, thirty weighted finger joints and thirteen
+head morphs. Its source is an original ChatGPT-generated Q explicitly approved by the owner
+for this project. This approval does not constitute visual signoff on the migration.
+
+The shipped C shader, protagonist model/hair/look and all unrelated art remain unchanged.
+Only Q's material-name map, face-patch coordinates, blink names and posture calibration
+are adapted: hoodie/hood/rib, body skin, sclera and inner mouth use their actual new names;
+the patch follows the raised face, both hands omit the large hull that would merge fingers,
+and the head's shared skin/hair surfaces are outlined selectively. Breathing/lean and
+hand/finger gestures now use Q's own supplied motion rather than a held old forearm.
+The complete structural comparison, reproducible source preparation, actual-engine evidence
+and remaining visual review are in [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
+Do not restart the rejected Character Art Review experiments to evaluate this migration.
+
 ## 1. What was wrong
 
 The protagonist and Q are lit with their GLB materials as imported: Godot's PBR path, with a

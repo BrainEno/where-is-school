@@ -6,7 +6,7 @@ extends RefCounted
 ##
 ##   protagonist (Protagonist_Character.glb)  Root, Pelvis, Spine, Chest, UpperArm_L, Shin_L, …
 ##   former protagonist (protagonist.glb)     Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
-##   rigged Q                                 Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
+##   approved Q (new-Q.glb)                 Root, Pelvis, Spine, Chest, UpperArm_L, Forearm_L, …
 ##   substitute teacher N (teacher-n.glb)     Root, Spine, Neck, Head, UpperArm.L, LowerArm.L, …
 ##   retargeted protagonist (dev test)        Root, Hips, Spine, Chest, UpperChest, …
 ##
@@ -40,8 +40,8 @@ extends RefCounted
 ##
 ## Sides are positional, not nominal: the clips' `.L` is the limb on the skeleton's −X side
 ## (the convention the clips were authored and measured in), whatever the rig calls it. The
-## former protagonist and Q name that side `.L`; the new protagonist names its limbs
-## anatomically and puts `UpperArm_L` at +X, so on that rig `upper_arm.L` binds to
+## former protagonist names that side `.L`; the new protagonist and approved Q name limbs
+## anatomically and put `UpperArm_L` at +X, so on those rigs `upper_arm.L` binds to
 ## `UpperArm_R`. `bind()` asks `resolve_rig()` to decide this from the rest positions and
 ## reports it. Retargeting (`AnimationRetarget`) keeps the names' meaning: there, anatomical
 ## left pairs with anatomical left on both rigs, wherever each one stands.
@@ -595,16 +595,19 @@ static func _animated_bones(resolved: Dictionary) -> Array[String]:
 ## exactly where it played the procedural clip. Like every bound clip it writes all the bones
 ## the other clips animate (the ones no layer moves are held at rest), so leaving a walk for
 ## this idle puts the arms and legs back where they belong instead of where the walk left
-## them. Call it after `bind()`. Returns a report; with `ok` false the procedural clip stays.
+## them. An optional profile applies standing calibration and scales the native duration
+## by its tempo; it does not multiply native gestures by procedural amplitude/layers again.
+## Call it after `bind()`. With `ok` false the existing clip stays and the reason is returned.
 static func adopt_authored_layers(
 		model_root: Node3D, player: AnimationPlayer, clip_name: String,
-		layer_names: PackedStringArray
+		layer_names: PackedStringArray, profile: CharacterMotionProfile = null,
+		faces_negative_z: bool = false
 ) -> Dictionary:
 	var failed := {"ok": false, "clip": clip_name, "layers": layer_names}
 	var library: AnimationLibrary = null
 	if player.has_animation_library(LIBRARY_NAME):
 		library = player.get_animation_library(LIBRARY_NAME)
-	if library == null or not library.has_animation(clip_name):
+	if library == null or not library.has_animation("idle"):
 		failed["reason"] = "'%s' is not bound on this player; call bind() first" % clip_name
 		return failed
 	if layer_names.is_empty():
@@ -654,14 +657,20 @@ static func adopt_authored_layers(
 			return failed
 		layers.append(layer)
 		layer_tracks.append(tracks)
-	var length := finish - start
-	if length <= 0.0:
-		failed["reason"] = "the layers span no time"
-		return failed
-	# Every bone the bound clip writes, plus every bone a layer moves.
+	# The supplied Q pose preview is a deliberate one-key pose, not locomotion. Retain
+	# it as a short inspectable clip; never substitute it for a moving state.
+	var source_span := finish - start
+	var tempo := profile.tempo_for(clip_name) if profile != null else 1.0
+	var length := maxf(source_span * tempo, 1.0 / AUTHORED_SAMPLE_RATE)
+	# Every bone the bound clip writes, plus every bone a layer moves. A new named
+	# authored action starts with the idle's reset set, not an empty partial pose.
 	var skeleton_path := String(model_root.get_path_to(skeleton))
 	var written: Array[String] = []
-	var bound := library.get_animation(clip_name)
+	var bound := library.get_animation(clip_name if library.has_animation(clip_name) else "idle")
+	var rig := resolve_rig(skeleton, true, faces_negative_z)
+	var canonical_for := {}
+	for canonical: String in rig["resolved"]:
+		canonical_for[rig["resolved"][canonical]] = canonical
 	for track in bound.get_track_count():
 		written.append(String(bound.track_get_path(track).get_concatenated_subnames()))
 	var authored: Array[String] = []
@@ -676,25 +685,33 @@ static func adopt_authored_layers(
 	animation.length = length
 	animation.loop_mode = Animation.LOOP_LINEAR
 	for bone: String in written:
-		var rest := skeleton.get_bone_rest(skeleton.find_bone(bone)).basis.get_rotation_quaternion()
+		var bone_index := skeleton.find_bone(bone)
+		var rest := skeleton.get_bone_rest(bone_index).basis.get_rotation_quaternion()
 		var track := animation.add_track(Animation.TYPE_ROTATION_3D)
 		animation.track_set_path(track, NodePath("%s:%s" % [skeleton_path, bone]))
+		var posture := Vector3.ZERO
+		if profile != null and canonical_for.has(bone):
+			posture = profile.posture_for(String(canonical_for[bone]))
+		var frame := semantic_frame(skeleton, bone_index, faces_negative_z)
+		var calibrated := (rest * frame * offset_rotation(posture) * frame.inverse()).normalized()
 		if not authored.has(bone):
-			animation.rotation_track_insert_key(track, 0.0, rest)
-			animation.rotation_track_insert_key(track, length, rest)
+			animation.rotation_track_insert_key(track, 0.0, calibrated)
+			animation.rotation_track_insert_key(track, length, calibrated)
 			continue
 		var inverse_rest := rest.inverse()
 		for sample in samples + 1:
 			var time := length * float(sample) / float(samples)
-			var pose := rest
+			var pose := calibrated
 			for index in layers.size():
 				var tracks: Dictionary = layer_tracks[index]
 				if not tracks.has(bone):
 					continue
-				var keyed := layers[index].rotation_track_interpolate(int(tracks[bone]), start + time)
+				var source_time := start + source_span * float(sample) / float(samples)
+				var keyed := layers[index].rotation_track_interpolate(int(tracks[bone]), source_time)
 				pose = pose * (inverse_rest * keyed)
 			animation.rotation_track_insert_key(track, time, pose.normalized())
-	library.remove_animation(clip_name)
+	if library.has_animation(clip_name):
+		library.remove_animation(clip_name)
 	library.add_animation(clip_name, animation)
 	return {
 		"ok": true,
@@ -706,6 +723,41 @@ static func adopt_authored_layers(
 		"samples": samples + 1,
 		"ignored_tracks": ignored,
 	}
+
+
+## Every bound clip resets the union of the library's animated bones. Authored Q
+## clips add fingers, clavicles and spine joints which the shared walk never named.
+## Without these reset tracks a talk -> walk transition strands a curled finger or
+## tilted pelvis at the last talk key. No source animation or controller is changed.
+static func complete_pose_resets(model_root: Node3D, player: AnimationPlayer) -> void:
+	if not player.has_animation_library(LIBRARY_NAME):
+		return
+	var skeletons := skeletons_in(model_root)
+	if skeletons.is_empty():
+		return
+	var skeleton := skeletons[0]
+	var library := player.get_animation_library(LIBRARY_NAME)
+	var paths: Array[NodePath] = []
+	for clip in library.get_animation_list():
+		var animation := library.get_animation(clip)
+		for track in animation.get_track_count():
+			var path := animation.track_get_path(track)
+			if animation.track_get_type(track) == Animation.TYPE_ROTATION_3D and not paths.has(path):
+				paths.append(path)
+	for clip in library.get_animation_list():
+		var animation := library.get_animation(clip)
+		for path in paths:
+			if animation.find_track(path, Animation.TYPE_ROTATION_3D) >= 0:
+				continue
+			var index := skeleton.find_bone(String(path.get_concatenated_subnames()))
+			if index < 0:
+				push_error("CharacterAnimation: authored reset points at missing bone '%s'." % path)
+				continue
+			var rest := skeleton.get_bone_rest(index).basis.get_rotation_quaternion()
+			var track := animation.add_track(Animation.TYPE_ROTATION_3D)
+			animation.track_set_path(track, path)
+			animation.rotation_track_insert_key(track, 0.0, rest)
+			animation.rotation_track_insert_key(track, animation.length, rest)
 
 
 ## The model's own `AnimationPlayer` (the one the importer made from the file), not `player`.

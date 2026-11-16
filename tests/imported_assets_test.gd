@@ -132,23 +132,19 @@ const ASSETS: Array[Dictionary] = [
 	},
 	{
 		"name": "q",
-		"file": "res://assets/models/q/q.glb",
+		"file": "res://assets/models/q/new-Q.glb",
 		"wrapper": "res://scenes/environment/characters/q.tscn",
-		# 1.6466 and not 1.6618: the rig bake dropped the ~9° authored tilt on Q's head and
-		# hair nodes instead of applying it to the vertices, which lowers the crown by 1.5 cm
-		# and leaves the rest of the silhouette where it was. See the note below.
-		"size": Vector3(0.7255, 1.6466, 0.6069),
-		"meshes": 7,
-		"surfaces": 15,
+		# Measured on the approved 60-joint A-pose, after removing its debug bone mesh.
+		"size": Vector3(1.30945, 1.78449, 0.37586),
+		"meshes": 9,
+		"surfaces": 16,
 		"model_base": 0.0,
-		# Baked into the vertices by the rigging pass; the collar occupies the same world box
-		# as before, so the baked scale is not a size change anywhere but in the file.
 		"scaled_nodes": {},
 		"kind": "character",
 		"shape": "",
 		"anchor_height": 1.2,
-		"note": "the classmate Q, flat-colour materials, no textures; rigged, and its head/hair "
-			+ "node tilt was dropped by the rig bake (crown 1.5 cm lower than the unrigged file)",
+		"note": "the approved new classmate Q: 60 joints, 30 weighted finger bones, 13 face morphs, "
+			+ "six embedded actions, no textures; production-only copy from tools/prepare_q.py",
 	},
 	{
 		"name": "teacher n",

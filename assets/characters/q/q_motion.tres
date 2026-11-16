@@ -7,7 +7,7 @@ script = ExtResource("1_profile")
 label = "Q: loose, leaning back, weight on the heels"
 tempo = {
 "get_up": 0.9,
-"idle": 1.2,
+"idle": 0.85,
 "jog": 0.95,
 "talk": 0.8,
 "walk": 0.92,
@@ -34,7 +34,8 @@ posture = {
 "spine": Vector3(-4.5, 0, 0),
 "thigh.L": Vector3(0, 0, 2.5),
 "thigh.R": Vector3(0, 0, -2.5),
-"upper_arm.L": Vector3(0, 0, 2)
+"upper_arm.L": Vector3(0, 0, -14),
+"upper_arm.R": Vector3(0, 0, 14)
 }
 posture_weight = {}
 layers = {

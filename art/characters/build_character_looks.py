@@ -231,15 +231,19 @@ Q = {
         "q_mat_skin": dict(
             Q_SKIN,
             # Flushed cheeks.
-            patch_center=(0.044, 1.488, 0.112),
+            patch_center=(0.044, 1.628, 0.105),
             patch_radius=(0.032, 0.026, 0.045),
             patch_color="#C9634C",
             patch_strength=0.45,
-            # His face is centred 1.2 cm to -X of the model's origin (eyes -0.061..0.041,
-            # lips -0.055..0.027), so the cheeks mirror across that, not x = 0.
-            mirror_center_x=-0.012,
+            # new-Q is centred on x = 0; only Q's mapping/coordinates change.
+            mirror_center_x=0.0,
             outline=True,
         ),
+        "q_mat_skinbody": dict(Q_SKIN, outline=True),
+        # A 9 mm hull on these 2 cm-wide fingers fills the gaps between them.
+        # Keep the source geometry; use the same paint without a hand hull.
+        "q_hands/q_mat_skinbody": dict(Q_SKIN, outline=False),
+        "q_head/q_mat_hair": {"albedo": "#1F1A1C", "pigment_mix": 0.0, "pigment_value": 0.0, "outline": False},
         "q_mat_hair": {
             "albedo": "#18151B",
             "pigment_a": "#272335",
@@ -251,8 +255,7 @@ Q = {
             "shadow_fill": 0.4,
             "outline": True,
         },
-        "q_mat_brow": {"albedo": "#1F1A1C", "pigment_mix": 0.0, "pigment_value": 0.0, "outline": False},
-        "q_mat_eye": {
+        "q_mat_sclera": {
             "albedo": "#DCD2BA",
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
@@ -262,10 +265,8 @@ Q = {
         },
         "q_mat_iris": {"albedo": "#2B1D15", "pigment_mix": 0.0, "pigment_value": 0.0, "shadow_fill": 0.6, "outline": False},
         "q_mat_pupil": {"albedo": "#0C0A09", "pigment_mix": 0.0, "pigment_value": 0.0, "outline": False},
-        "q_mat_lip": {"albedo": "#A4493C", "pigment_mix": 0.0, "pigment_value": 0.05, "outline": False},
-        "q_mat_mouthdark": {"albedo": "#3B1713", "pigment_mix": 0.0, "pigment_value": 0.0, "outline": False},
-        "q_mat_teeth": {"albedo": "#D8CBAE", "pigment_mix": 0.0, "pigment_value": 0.0, "shadow_fill": 0.55, "outline": False},
-        "q_mat_cloth": {
+        "q_mat_mouthinner": {"albedo": "#3B1713", "pigment_mix": 0.0, "pigment_value": 0.0, "outline": False},
+        "q_mat_hoodie": {
             "albedo": "#516F4C",
             "pigment_a": "#5F7C43",
             "pigment_b": "#3F5F5A",
@@ -278,8 +279,8 @@ Q = {
             "shadow_fill": 0.32,
             "outline": True,
         },
-        "q_mat_collar": {"albedo": "#B39A5F", "pigment_mix": 0.0, "pigment_value": 0.08, "outline": False},
-        "q_mat_pants": {
+        "q_mat_hoodierib": {"albedo": "#B39A5F", "pigment_mix": 0.0, "pigment_value": 0.08, "outline": False},
+        "q_mat_trousers": {
             "albedo": "#313D52",
             "pigment_a": "#2C3458",
             "pigment_b": "#3C4450",
@@ -301,7 +302,7 @@ Q = {
         "q_mat_sole": {"albedo": "#B4A585", "pigment_mix": 0.0, "pigment_value": 0.06, "outline": False},
     },
     "expression": {},
-    "blink_shapes": [],
+    "blink_shapes": ["Eye_Blink_L", "Eye_Blink_R"],
     "blink_interval": (2.5, 5.0),
     "blink_duration": 0.16,
 }

@@ -503,7 +503,7 @@ MANIFEST_PARTS = ("art", "character_rig_audit", "runtime_model_manifest.json")
 # tests address them by.
 REQUIRED_RUNTIME_MODELS = (
     "assets/models/protagonist/protagonist.glb",
-    "assets/models/q/q.glb",
+    "assets/models/q/new-Q.glb",
     "assets/models/protagonist/Protagonist_Character.glb",
     "assets/models/teacher-n/teacher-n.glb",
 )

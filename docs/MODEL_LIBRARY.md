@@ -235,7 +235,7 @@ instead of passing it.
 The four rigged models the game instantiates at run time —
 `assets/models/protagonist/Protagonist_Character.glb` (the player since PR #118),
 `assets/models/protagonist/protagonist.glb` (the former protagonist, now the seated
-classroom student), `assets/models/q/q.glb` and `assets/models/teacher-n/teacher-n.glb`
+classroom student), `assets/models/q/new-Q.glb` and `assets/models/teacher-n/teacher-n.glb`
 (substitute teacher N) — are also checked against a written-down structure,
 `art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py --check`
 reads it on every run and fails when a registered model does not match it; the other 22
@@ -252,39 +252,35 @@ a bug found while playing.
 Measured from the committed `.glb` files, not from the Blender sources and not from
 `art/character_rig_audit/*_rig_audit.json`:
 
-| | `Protagonist_Character.glb` | `protagonist.glb` | `q.glb` | `teacher-n.glb` |
+| | `Protagonist_Character.glb` | `protagonist.glb` | `new-Q.glb` | `teacher-n.glb` |
 |---|---|---|---|---|
-| nodes | 70 | 96 | 25 | 35 |
-| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Root` → `Q_Humanoid_Skeleton` | `CHR_Substitute_Teacher_Root` → its armature |
-| skin joints (bones) | 60 | 16 | 16 | 16 |
-| mesh nodes, all bound to skin 0 | 9 | 78 | 7 | 18 |
-| meshes / primitives | 9 / 15 | 78 / 78 | 7 / 15 | 18 / 28 |
-| materials | 12 | 22 | 14 | 17 |
-| embedded animations | 5 (721 channels; not played by the game) | 0 | 0 | 4 (8 channels; played together as N's idle) |
-| triangles | 15,782 | 12,388 | 35,432 | 57,460 |
-| file | 851.9 KiB | 513.6 KiB | 1008.8 KiB | 1334.7 KiB |
+| nodes | 70 | 96 | 70 | 35 |
+| scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Armature` (the root) | `CHR_Substitute_Teacher_Root` → its armature |
+| skin joints (bones) | 60 | 16 | 60 | 16 |
+| mesh nodes, all bound to skin 0 | 9 | 78 | 9 | 18 |
+| meshes / primitives | 9 / 15 | 78 / 78 | 9 / 16 | 18 / 28 |
+| materials | 12 | 22 | 12 | 17 |
+| embedded animations | 5 (721 channels; not played by the game) | 0 | 6 (70 channels; native idle/talk and named actions) | 4 (8 channels; played together as N's idle) |
+| triangles | 15,782 | 12,388 | 17,918 | 57,460 |
+| file | 851.9 KiB | 513.6 KiB | 980.7 KiB | 1334.7 KiB |
 
-The three 16-joint skeletons carry the **same joint names in the same parentage** —
-`Root`, `Spine`, `Neck`, `Head`, `UpperArm.L`/`LowerArm.L`/`Hand.L`, the same on the right,
-and `Thigh`/`Shin`/`Foot` — which is why one set of clips can bind to all of them.
+The former protagonist and N retain the 16-joint naming convention. Q no longer
+shares that hierarchy: its approved replacement has `Root → Pelvis → Spine → Spine_01
+→ Spine_02 → Chest`, clavicles, toes and thirty independently weighted finger bones.
+The semantic resolver checks rest-position sides rather than assuming identical rigs.
 
-**The former protagonist and Q contain zero embedded animations, and the manifest holds
-that as a fact.**
-The seven clips are composed at run time in `scripts/actors/character_animation.gd` against
-semantic bone names and written into an `AnimationLibrary` built in code; nothing in either
-`.glb` is an `Animation`. An animation appearing *inside* one of these files therefore means
-the source of animation changed without anyone saying so, and it fails the check. N is
-the exception on purpose: its four loops are the owner's, the manifest records each one's
-channels by target, and `teacher_n.tscn` names them as N's idle
-(`CharacterAnimation.adopt_authored_layers()`, `docs/CHARACTER_ANIMATION.md`). N's file is
-not the owner's export but what `tools/prepare_teacher_n.py` builds from it (kept under
-`art/character_models/teacher-n/`); the script's `--check` proves the two agree.
+The former protagonist alone has no embedded animation. Q carries six supplied actions;
+its native breathing/lean and hand gesture are used by the production idle/talk, four
+named rotation previews remain available, and the facial diagnostic remains in the source
+player. N's four loops remain its idle, unchanged. The manifest locks each action's name,
+channel count and target paths; adding/removing a channel is a reviewed structural change.
+Q and N are reproducibly prepared from immutable `.gdignore`d sources under
+`art/character_models/`; their respective preparation tools have `--check` modes.
 
-The bind is nearly rigid in both files, which is what this art is made of: all 7,591
-weighted vertices of the protagonist sit on exactly one bone, so a cardigan sleeve follows
-`LowerArm.L` as a single piece; Q has 17,433 vertices on one bone and 598 blended across
-two. The manifest does not record weights — it records that each primitive is *skinned at
-all*, which is the part whose loss is invisible everywhere else.
+The manifest verifies that every primitive remains skinned, not that skin deformation is
+artistically accepted. For Q, `tests/q_model_prepare_test.py` additionally compares all
+mesh/normal/weight/index/morph accessors and inverse binds against the approved source;
+engine motion and owner visual checks are separate evidence levels.
 
 ### 5.2 What it locks, and what it deliberately does not
 
@@ -316,15 +312,11 @@ why the manifest was built from the `.glb` files rather than from the audits:
   mesh nodes** and 12,388 triangles. The audit counts objects in the Blender scene; one of
   them does not reach the export, and a polygon count is not a triangle count. The manifest
   records the exported file, so its number is 78.
-- **`q_rig_audit.json`** describes `art/character_rigging/q/q_unrigged_source.glb` — 8 nodes,
-  7 meshes, **0 skins**, classification `UNRIGGED_NO_ARMATURE`. That is the *unrigged source*.
-  The runtime `assets/models/q/q.glb` is the rigged result: 25 nodes, 1 skin, 16 joints, and
-  every primitive weighted. Reading the Q audit as if it described what the game loads
-  under-reports the rig entirely, which is exactly the mistake this section exists to prevent.
-- **`scenes/dev/animation_retarget_test/q_rigged.glb`** is a development retarget asset
-  (25 nodes, the same 16-joint skeleton, 0 animations). It is not registered and must not be:
-  it is not what the game loads, and `tools/model_library.py --check_manifest` refuses a
-  manifest entry outside `assets/models/`.
+- **Former Q records** described an unrigged input and a separate 16-joint derivative,
+  not today's approved replacement. Those Q-only sources, workfiles, audit reports and
+  development duplicate have been removed with the retired production model. They can be
+  read at task base `580f6f34d3ff4e56f3d00d67cf115a98e63cfdbf` for historical comparison;
+  they are not a runtime fallback. See [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
 
 ### 5.4 Changing a character on purpose
 
@@ -359,7 +351,7 @@ a document before any `.glb` is opened (`validate_manifest` in `tools/model_libr
 called by both `--check` and `--update-manifest`):
 
 - **Every runtime character, once each, and nothing else.** The manifest registers
-  `assets/models/protagonist/protagonist.glb`, `assets/models/q/q.glb`,
+  `assets/models/protagonist/protagonist.glb`, `assets/models/q/new-Q.glb`,
   `assets/models/protagonist/Protagonist_Character.glb` and
   `assets/models/teacher-n/teacher-n.glb`. A missing entry, a duplicated
   entry, an entry for any other model and an empty `models` are all failures. "At least one
