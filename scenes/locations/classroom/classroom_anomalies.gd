@@ -5,9 +5,12 @@ extends Node3D
 ## **The curtained window.** The front window stays ordinary - the yard, the low wall,
 ## the washing on the line. The back window is a large opening hidden behind a
 ## floor-to-ceiling blackout curtain (issue #159). Drawing it aside (once the class has
-## been let go) shows no outside at all: the wall's own thickness, and after it nothing -
-## the opening is a real hole through the wall with no glass, no view and no backdrop.
-## The protagonist leans out, falls, and lands in the yard.
+## been let go) shows no outside at all: the wall is cut away from the floor to its top -
+## no sill, no header, no glass, no view - and in the cut there is only the blank sheet of
+## the biology-classroom experiment (`VoidOpening/BlankSheet`, unlit paper: nothing in it
+## can be lit). Round the cut the room itself turns into a pencil drawing on an answer
+## sheet (`PaperZone`), a few metres and no more: the rest of the room keeps its
+## materials. The protagonist leans out, falls, and lands in the yard.
 ##
 ## The curtain is a staged moment (`StagedInteractable`): the director runs the handler
 ## below inside a beat. The room's state lives in story flags, so a room loaded later - a
@@ -43,7 +46,9 @@ const LEAN_DEGREES := 38.0
 const DROP_SECONDS := 0.45
 const DROP_DEGREES := 85.0
 const DROP_DEPTH := 2.4
-const LEAN_RISE := 0.3
+## The cut has no sill since the art migration (the wall is open to the floor): the lean
+## no longer climbs onto one.
+const LEAN_RISE := 0.0
 const LEAN_REACH := 0.3
 const LEAN_REACH_MAX := 1.1
 const LEAN_SILL_GAP := 0.45
@@ -55,16 +60,20 @@ const FALL_ROLL_DEGREES := -9.0
 ## The middle of the hole through the wall: where the fall leans toward.
 @export var void_path: NodePath = ^"VoidOpening"
 @export var curtain_interactable_path: NodePath = ^"../Interactables/CurtainDraw"
+## The local paper anomaly round the cut (optional: a room without one still works).
+@export var paper_path: NodePath = ^"PaperZone"
 
 var _curtain: WindowCurtain = null
 var _void: Node3D = null
 var _curtain_interactable: StagedInteractable = null
+var _paper: PaperZone = null
 
 
 func _ready() -> void:
 	_curtain = get_node_or_null(curtain_path) as WindowCurtain
 	_void = get_node_or_null(void_path) as Node3D
 	_curtain_interactable = get_node_or_null(curtain_interactable_path) as StagedInteractable
+	_paper = get_node_or_null(paper_path) as PaperZone
 	for pair: Array in [
 		[_curtain, curtain_path], [_void, void_path],
 		[_curtain_interactable, curtain_interactable_path],
@@ -154,7 +163,7 @@ func draw_curtain(animated: bool = true) -> void:
 		return
 	# Marked open while the cloth still covers the whole opening, so it is the curtain
 	# moving that uncovers it.
-	_show_void(true)
+	_show_void(true, animated)
 	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 	await _curtain.open(animated)
 
@@ -171,12 +180,20 @@ func reset_curtain_after_failed_transition() -> void:
 	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
 
 
-func _show_void(open: bool) -> void:
+func _show_void(open: bool, animated: bool = false) -> void:
 	if _void != null:
 		_void.visible = open
+	if _paper != null:
+		_paper.set_drawn(open, animated)
 
 
-## The lean over the sill and the start of the drop. Plays while the classroom still
+## The local paper anomaly round the cut, or null.
+func get_paper_zone() -> PaperZone:
+	return _paper
+
+
+## The lean over the edge of the cut (the wall's thickness; the code keeps the word sill)
+## and the start of the drop. Plays while the classroom still
 ## exists; returns once the body has tipped over, and the drop runs on into the fade.
 ## The tween belongs to the player, so freeing the room does not cut it short.
 func _fall(player: PlayerController) -> void:
@@ -199,7 +216,7 @@ func _fall(player: PlayerController) -> void:
 	lean.set_parallel(true)
 	lean.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	lean.tween_property(visual, "rotation_degrees:x", LEAN_DEGREES, LEAN_SECONDS)
-	# Forward (the pivot's +Z, which faces the window now) and up onto the sill.
+	# Forward (the pivot's +Z, which faces the window now), over the edge of the floor.
 	lean.tween_property(visual, "position", rest + Vector3(0.0, LEAN_RISE, lean_reach), LEAN_SECONDS)
 	await lean.finished
 	# Over the sill and down behind the wall: the wall hides the body before the black does.

@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/classroom/shaders/paper_zone.gdshader" id="1_paper"]
+
+[resource]
+resource_name = "paper_zone — the local blank-paper anomaly (overlay, set up by PaperZone)"
+render_priority = 1
+shader = ExtResource("1_paper")
+shader_parameter/zone_radius = 2.6
+shader_parameter/reveal = 0.0

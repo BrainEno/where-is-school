@@ -43,6 +43,7 @@ const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const LECTERN_SCENE := "res://scenes/environment/props/teacher_lectern.tscn"
 const CLASSROOM_MATERIALS := "res://assets/materials/classroom/"
 const CLASSROOM_TEXTURES := "res://assets/materials/classroom/textures/"
+const CONCRETE_SHADER := "res://assets/materials/classroom/shaders/concrete.gdshader"
 ## Shared materials the room may still use, each for a reason: the ceiling fittings are
 ## the same light panels the corridor hangs, and they are not part of the colour system.
 const SHARED_MATERIALS: Array[String] = ["res://assets/materials/light_panel.tres"]
@@ -131,8 +132,6 @@ const WALL_PAINT_SEGMENTS := {
 	"WallEast/PaintLintelFront": "wall_east_lintel_front.tres",
 	"WallEast/PaintLintelBack": "wall_east_lintel_back.tres",
 	"WallWest/PaintSouth": "wall_west_south.tres",
-	"WallWest/PaintSill": "wall_west_sill.tres",
-	"WallWest/PaintHeader": "wall_west_header.tres",
 }
 ## Each wall's one collision box: the openings are visual only.
 const WALL_COLLISION := {
@@ -156,7 +155,7 @@ const HIERARCHY_PAIRS := [
 const HIERARCHY_MIN := 0.15
 ## Broad planes stay quiet: walls and floor below this colourfulness (max - min, sRGB).
 const BACKGROUND_PLANES: Array[String] = [
-	"wall_north", "wall_west", "wall_east", "wall_south_left", "floor_paint",
+	"wall_north", "wall_west", "wall_east", "wall_south_left", "floor_concrete",
 ]
 const BACKGROUND_CHROMA_MAX := 0.2
 ## Twelve chairs must not be louder than the one schoolbag.
@@ -663,24 +662,35 @@ func _check_textures() -> void:
 	_notes.append("%d textures, %d KiB source" % [textures.size(), total / 1024])
 
 
+## The floor is the biology-classroom experiment's poured concrete (art migration): made in
+## the shader from world position, so it has no texture to tile, and it was poured against
+## an answer sheet - faint ruled grooves and one margin line, which must land inside the
+## room. The teacher's platform is the same concrete without the sheet.
 func _check_floor_art() -> void:
-	var material := load(CLASSROOM_MATERIALS + "floor_paint.tres") as BaseMaterial3D
-	if material == null or material.albedo_texture == null:
-		_failures.append("The expanded room has no generated floor paint texture.")
+	var paint := _room.get_node_or_null(^"Floor/Paint") as MeshInstance3D
+	var material: ShaderMaterial = paint.material_override as ShaderMaterial if paint != null else null
+	if material == null or material.resource_path != CLASSROOM_MATERIALS + "floor_concrete.tres":
+		_failures.append("The floor does not draw the classroom's poured concrete (floor_concrete.tres).")
 		return
-	var texture := material.albedo_texture
-	if texture.resource_path != CLASSROOM_TEXTURES + "floor.png":
-		_failures.append("The floor stopped sampling its classroom-owned generated paint source.")
-	if not is_equal_approx(float(texture.get_width()) / float(texture.get_height()), 1.4):
-		_failures.append("The floor paint source no longer matches the 14 x 10 m room aspect.")
-	var mean := _texture_mean(texture.resource_path)
-	if mean.b <= mean.r or mean.r > 0.58 or _chroma(mean) > 0.14:
+	if material.shader == null or material.shader.resource_path != CONCRETE_SHADER:
+		_failures.append("The floor concrete does not use %s." % CONCRETE_SHADER)
+	if float(material.get_shader_parameter("ruled_lines")) <= 0.0:
+		_failures.append("The floor lost its answer-sheet ruling.")
+	var margin := float(material.get_shader_parameter("margin_x"))
+	if margin <= -7.0 or margin >= 7.0:
+		_failures.append("The floor's margin line (x %.2f) is outside the room." % margin)
+	var colour := _material_colour("floor_concrete", {})
+	if _chroma(colour) > 0.14 or _luminance(colour) < 0.35 or _luminance(colour) > 0.65:
 		_failures.append(
-			"The floor source is not low-saturation cool concrete (mean RGB %.2f, %.2f, %.2f)."
-			% [mean.r, mean.g, mean.b]
+			"The floor concrete is not a quiet mid grey (RGB %.2f, %.2f, %.2f)." % [colour.r, colour.g, colour.b]
 		)
 	else:
-		_notes.append("cool concrete floor %.2f/%.2f/%.2f" % [mean.r, mean.g, mean.b])
+		_notes.append("concrete floor %.2f/%.2f/%.2f" % [colour.r, colour.g, colour.b])
+	var platform := load(CLASSROOM_MATERIALS + "platform_concrete.tres") as ShaderMaterial
+	if platform == null or platform.shader == null or platform.shader.resource_path != CONCRETE_SHADER:
+		_failures.append("The teacher's platform is not the classroom concrete.")
+	elif float(platform.get_shader_parameter("ruled_lines")) > 0.0:
+		_failures.append("The answer-sheet ruling spread from the floor onto the platform.")
 
 
 func _classroom_material_paths() -> PackedStringArray:
@@ -738,6 +748,12 @@ func _material_colour(material_name: String, cache: Dictionary) -> Color:
 	if cache.has(material_name):
 		return cache[material_name]
 	var path := CLASSROOM_MATERIALS + material_name + ".tres"
+	var shaded := load(path) as ShaderMaterial
+	if shaded != null and shaded.shader != null and shaded.shader.resource_path == CONCRETE_SHADER:
+		# The concrete has no texture: what the eye averages is its base colour.
+		var base: Color = shaded.get_shader_parameter("base_color")
+		cache[material_name] = Color(base.r, base.g, base.b, 1.0)
+		return cache[material_name]
 	var material := load(path) as BaseMaterial3D
 	if material == null:
 		_failures.append("The colour system names '%s', which does not load." % path)

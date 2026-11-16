@@ -28,7 +28,7 @@ const INLINE_SIZE := Vector2i(640, 360)
 ## Frames in story order: `void_*` frames need the curtain drawn, so they come last.
 const FRAMES: Array[String] = [
 	"start", "window_wall", "front", "q", "q_close", "focus_window", "focus_curtain",
-	"void_near", "void_far", "void_walk", "void_inside",
+	"void_near", "void_far", "void_walk", "void_inside", "focus_q",
 ]
 const CURTAIN_SPOT := Vector3(-5.9, 0.0, 2.2)
 
@@ -134,17 +134,26 @@ func _frame_q_close() -> void:
 	await _with_camera(centre + Vector3(1.55, 1.45, 0.9), centre + Vector3(0.0, 1.05, 0.0), 45.0)
 
 
-## Standing at the ordinary front window: an important interaction, so the camera
-## settles into its focus framing.
+## Looking out of the ordinary front window: an important interaction, so while its text
+## is up the camera holds its focus framing (`CameraShot`). Where the game has no focus
+## (before the migration) this is the default framing at the same moment.
 func _frame_focus_window() -> void:
 	await _stand(Vector3(-5.4, 0.0, -0.4), Vector3.LEFT)
-	await create_timer(1.6).timeout
+	await _engage(&"window")
 
 
-## Standing at the curtain: the most important interaction in the room.
+## Using the curtain (during the lesson it only says so): the most important interaction
+## in the room.
 func _frame_focus_curtain() -> void:
 	await _stand(CURTAIN_SPOT, Vector3.LEFT)
-	await create_timer(1.6).timeout
+	await _engage(&"curtain")
+
+
+## Talking to Q, mid-conversation: the focus on the room's one other person. (Last, so
+## the conversation's flags cannot change any other frame.)
+func _frame_focus_q() -> void:
+	await _stand(Vector3(-3.3, 0.0, 4.2), Vector3.FORWARD)
+	await _engage(&"q_talk")
 
 
 ## The curtain drawn: the cut through the wall, the paper anomaly round it.
@@ -189,7 +198,29 @@ func _draw_curtain() -> void:
 	await create_timer(3.0).timeout
 
 
+## Uses an interactable the way a click does and holds on its first line (nothing is
+## advanced), long enough for a camera focus to settle. The next `_stand` finishes it.
+func _engage(id: StringName) -> void:
+	var interaction := _player.get_node_or_null(^"InteractionController") as InteractionController
+	var target: Interactable = (_room as LocationRoot).find_interactable(id) if _room is LocationRoot else null
+	if interaction == null or target == null:
+		_failures.append("Could not use '%s' for its frame." % id)
+		return
+	interaction.set_enabled(true)
+	interaction.request_activation(target)
+	await create_timer(2.2).timeout
+	var rig := _player.camera_rig
+	if rig != null and rig.has_method(&"get_focus_weight"):
+		print("PROLOGUE_ART_FOCUS %s weight=%.2f fov=%.1f" % [id, float(rig.call(&"get_focus_weight")), rig.camera.fov])
+
+
 func _stand(where: Vector3, facing: Vector3) -> void:
+	await _quiet(20.0)
+	var sequence := _main.get_node_or_null(^"OpeningSequence")
+	var waited := 0
+	while sequence != null and bool(sequence.call(&"is_beat_active")) and waited < 600:
+		waited += 1
+		await _frames(1)
 	_player.teleport(Transform3D(Basis(), where))
 	_player.face_toward(facing)
 	# Long enough for the occlusion fader, the projector's see-through and any camera

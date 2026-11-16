@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/classroom/shaders/paper_zone.gdshader" id="1_paper"]
+
+[resource]
+resource_name = "void_sheet — the blank sheet behind the curtain"
+shader = ExtResource("1_paper")
+shader_parameter/blank_sheet = true

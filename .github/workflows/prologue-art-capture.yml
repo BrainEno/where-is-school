@@ -22,6 +22,9 @@ on:
       - "scripts/environment/**"
       - "scripts/world/camera_rig.gd"
       - "scripts/world/camera_shot.gd"
+      - "scripts/world/camera_focus_director.gd"
+      - "scripts/world/opening_sequence.gd"
+      - "assets/camera/**"
       - "assets/materials/classroom/**"
       - "assets/characters/**"
   workflow_dispatch:
@@ -50,6 +53,8 @@ jobs:
             only: "void_far,void_walk"
           - group: void-inside
             only: "void_inside"
+          - group: focus-q
+            only: "focus_q"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 

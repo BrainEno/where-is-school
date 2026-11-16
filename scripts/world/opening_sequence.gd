@@ -78,6 +78,8 @@ var _b_presence: BPresence = null
 var _n_presence: NPresence = null
 ## Puts Q back on his talk spot in a room built after his first talk (`met_q`).
 var _q_presence: QPresence = null
+## Camera focus on important interactions (see `CameraShot`).
+var _focus: CameraFocusDirector = null
 ## The save file (autoload `Save`), when the host has one.
 var _save: Node = null
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
@@ -113,6 +115,7 @@ func _ready() -> void:
 		# Not fatal: a room the catalog cannot describe still runs, it just announces
 		# nothing. The error is loud because it is always an authoring mistake.
 		push_error("OpeningSequence: %s" % _catalog.describe_errors())
+	_focus = CameraFocusDirector.new(_player.camera_rig)
 	_flow = LocationFlow.new(
 		self, _locations, _catalog, _game_state(), _ui, _player, _dialogue, _companion
 	)
@@ -734,6 +737,10 @@ func _on_activation_requested(interactable: Interactable) -> void:
 		_handle_exit(exit)
 		return
 
+	# An important moment pulls the camera in for as long as it holds the player.
+	if _focus != null and not (_beat_active and interactable is StagedInteractable):
+		_focus.engage(interactable)
+
 	# A room that stages its own moment (see StagedInteractable) is asked before the
 	# object's declared route or text, which are then the room's to use.
 	var staged := interactable as StagedInteractable
@@ -893,6 +900,13 @@ func sync_player_locks() -> void:
 	_interaction.set_enabled(not locked)
 	if locked and _hud != null:
 		_hud.clear_prompt()
+	if _focus != null:
+		_focus.on_lock_changed(locked)
+
+
+## The camera focus director (tests and location changes use it).
+func get_camera_focus() -> CameraFocusDirector:
+	return _focus
 
 
 ## A language switch re-renders whatever is on screen (the dialogue controller does

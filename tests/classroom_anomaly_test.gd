@@ -53,8 +53,10 @@ const DOOR_GRAY := "res://assets/materials/classroom/door_gray.tres"
 const REAR_DOOR_TEXT := "这扇门从来不会打开，除非使用特殊的手段。"
 const REAR_DOOR_TEXT_EN := "This door never opens, unless special means are used."
 ## The hole through the west wall (art/classroom/paint_classroom_textures.py,
-## `WEST_VOID_OPENING`): z 0.95..3.45, y 0.50..2.75, through x -7.0..-6.8.
-const VOID_HOLE := AABB(Vector3(-7.0, 0.5, 0.95), Vector3(0.2, 2.25, 2.5))
+## `WEST_VOID_OPENING`, for z): z 0.95..3.45, through x -7.0..-6.8 - and, since the art
+## migration, from the floor to the top of the wall (y 0..3.2): no sill, no header, the
+## floor-to-ceiling cut of the biology-classroom experiment.
+const VOID_HOLE := AABB(Vector3(-7.0, 0.0, 0.95), Vector3(0.2, 3.2, 2.5))
 ## Window1's old glass, view, frame and tie-back curtain. None of it may come back.
 const REMOVED_WINDOW_PARTS: Array[String] = [
 	"WindowGlow1", "WindowGlass1", "WindowFrameTop1", "WindowFrameBottom1",
