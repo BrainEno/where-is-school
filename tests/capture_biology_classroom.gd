@@ -49,8 +49,8 @@ const FRAMES := [
 	{
 		"name": "classmates", "beat": 1, "feet": Vector3(0.6, 0.0, 1.0),
 		"face": Vector3(0.6, 0.0, -2.0),
-		"eye": Vector3(3.25, 1.45, -2.3), "look": Vector3(3.1, 0.8, 1.8), "settle": 0.8,
-		"note": "Detail (authored): the class from the front, cut paper in layers - dyed, kraft, newsprint, graph, magazine and sugar paper, torn and cut edges, the white core showing, folded at the shoulder; one asleep, one turned round, one with a hand up, one standing at the back board pinning a sheet.",
+		"eye": Vector3(5.9, 1.6, 4.3), "look": Vector3(2.8, 0.8, 1.0), "settle": 0.8,
+		"note": "Detail (authored): the class from behind and to the side, cut paper in layers - dyed, kraft, newsprint, graph, magazine and sugar paper, torn and cut edges, the white core showing, folded at the shoulder; one asleep, one turned round, one with a hand up, the reverse of each piece the same paper dyed through, lighter.",
 	},
 	{
 		"name": "waking", "beat": 1, "settle": 1.0,

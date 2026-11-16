@@ -12,14 +12,15 @@
 //        set a few millimetres behind and filled with the core colour, so the edge of the
 //        card shows when it is seen from the side
 //
-// The back of a piece (seen from the board) is the paper's reverse: pale, faintly the
-// colour of the dye that soaked through. Light and registers are the room's
+// The back of a piece (seen from the board) is the paper's reverse: the dye soaked
+// through, lighter and flatter than the face. Light and registers are the room's
 // (`room_tone.gdshader`): the two-step terminator, chill, dull, focus.
 shader_type spatial;
 render_mode cull_disabled, depth_draw_opaque, specular_disabled;
 
 uniform sampler2D paper_sheet : source_color, filter_linear_mipmap, repeat_disable;
 uniform vec4 reverse_color : source_color = vec4(0.9, 0.88, 0.82, 1.0);
+uniform float reverse_dye : hint_range(0.0, 1.0) = 0.62;
 uniform float grain = 0.08;
 uniform float flatness = 0.18;
 uniform float terminator = 0.12;
@@ -61,7 +62,9 @@ void fragment() {
 	}
 	vec3 colour = mix(COLOR.rgb, sampled.rgb * COLOR.rgb, COLOR.a);
 	if (!FRONT_FACING && COLOR.a > 0.5) {
-		colour = mix(reverse_color.rgb, sampled.rgb, 0.18);
+		// Dyed through: the reverse is the same paper, lighter and flatter, never a white
+		// card (a pupil seen from the board still reads as his own colours).
+		colour = mix(reverse_color.rgb, sampled.rgb * COLOR.rgb, reverse_dye);
 	}
 	// The tooth of the paper, in the sheet's own pixels so it stays with the piece.
 	float tooth = value_noise(UV * 900.0) - 0.5;
