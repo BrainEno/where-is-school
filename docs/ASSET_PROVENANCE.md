@@ -1,18 +1,24 @@
 # Asset Provenance Ledger
 
-The repository now carries a small, enumerated number of externally sourced production
-assets: two Poly Haven models, three owner-authored characters (the protagonist, Q and the
-substitute teacher N), two Noto fonts and three
-dialogue portraits supplied by the owner. Each is listed below with its exact source and
-licence. One further third-party asset — an animation library — is
-tracked as a development-only input under `scenes/dev/` and is covered in the notes below;
-it is not a production asset and cannot reach a build. Everything else was authored inside
-the repository from Godot primitives, plain data files, or the project's own synthesis
-script. The three dialogue portraits were described by the owner, when supplying them, as
-newly generated images; the tool and its terms are not recorded yet (row below), and they
-are the only assets in the repository described that way. Material that was offered for import but could not be
-cleared, or could not be converted on the machine doing the import, is recorded under
-"Not imported" instead of being silently dropped.
+This ledger records provenance evidence; it is **not blanket legal or release clearance**.
+Owner-supplied files are not necessarily owner-authored. A file header, Git author, import
+manifest, successful export or visual approval cannot establish commercial or redistribution
+rights. `COPYRIGHT.md` reserves the project's original rights; it does not grant rights in
+unknown or third-party inputs.
+
+**Issue #64 release blockers:** the current player model's authorship/tools and each of the
+three supplied portraits' creation service/model, applicable terms and output rights remain
+**UNKNOWN / NOT CLEARED for public or store distribution**. Q and the 16 environment models
+retain their recorded Owner confirmations; those do not clear the new protagonist or portraits.
+The Universal Animation Library (UAL), including retargeted derivatives, remains
+**RESTRICTED / DEVELOPMENT ONLY**, not a production input. Export exclusion is a technical
+control, not resolution of its licence conflict or of redistribution through Git/CI artifacts.
+
+See [the bounded character/portrait/animation audit](ASSET_LICENSE_AUDIT.md) for the per-asset
+rights table, exact hashes and source-to-runtime links, public licence evidence, verifier
+regressions, validation limits and the questions only the Owner can answer. Other entries
+below retain their existing provenance records; this review does not certify every asset in
+the repository. Material not imported is listed separately at the end.
 
 | Asset/path | Type | Creator/source | Source URL | License / terms | Attribution required | Modifications | Commercial-use checked | Approved by |
 |---|---|---|---|---|---|---|---|---|
@@ -37,9 +43,9 @@ cleared, or could not be converted on the machine doing the import, is recorded 
 | `assets/models/school_desk/school_desk.glb` | glTF 2.0 runtime model: one mesh, one material, three embedded 512² PBR maps (albedo, normal, occlusion-roughness-metallic) | Ethan Place, published by Poly Haven | https://polyhaven.com/a/SchoolDesk_01 | CC0 1.0 (public domain) | No | Converted from Poly Haven's glTF download (`.gltf` + `.bin` + six 1K JPEG maps) into one `.glb` with the maps embedded; the three maps were resampled 1024 → 512 with Godot's Lanczos filter and re-encoded as JPEG at quality 0.92, so the imported scene fits the release build's per-entry budget. Geometry, UVs, materials and node transforms are untouched — 3,206 vertices / 4,162 triangles, the same geometry as the download | Yes — CC0 permits commercial use, modification and redistribution with no attribution | Pending owner art review |
 | `assets/models/stationery_supplies/stationery_supplies.glb` | glTF 2.0 runtime model: nine meshes sharing one material, three embedded 512² PBR maps | Mateusz Sadek, published by Poly Haven | https://polyhaven.com/a/stationery_supplies | CC0 1.0 (public domain) | No | Same conversion and the same 1024 → 512 resample as the desk; geometry, UVs and materials untouched — 3,202 vertices / 4,412 triangles. The download is a *display line-up*: nine separate pens, pencils, an eraser and a cup, laid out around their own origin instead of standing on a floor | Yes — CC0 | Pending owner art review |
 | `assets/models/protagonist/protagonist.glb` | glTF 2.0 skinned character: 78 mesh nodes, 22 materials, one 16-joint armature with rigid-part weights and no animation. The player character until PR #118; since then the seated classroom student (`scenes/environment/characters/classroom_student.tscn`, placed at desk A1 in `classroom.tscn`). The file is unchanged and still the only copy | Owner-authored: generated procedurally in Blender 5.2.3 LTS and exported by the owner. The generation report stays in the owner's local asset folder and is not committed | — | Project-owned, see COPYRIGHT.md | No | None to the model — the committed file is the owner's export as supplied. Measured and recorded: 1.727 m tall, 12,388 triangles, origin 1.7 cm above the sole, faces +Z | n/a (owner's own work, no third-party source) | Pending owner art review |
-| `assets/models/protagonist/Protagonist_Character.glb` | glTF 2.0 skinned character, the player character since PR #118: 70 nodes, 9 skinned mesh nodes drawing 15 primitives from 12 flat-colour materials, no textures and no UVs, one 60-joint skin (`Protagonist_Armature`: root, four IK targets, pelvis, spine ×3, chest, clavicles, arms, 15 finger joints per hand, neck, head, eyes, legs, toes), 9 blend shapes on the head, five embedded animations (`Idle_Breathing`, `Protagonist_Idle_Breathing`, `Slight_Posture_Shift`, `Subtle_Head_Movement`, `Protagonist_Face_Test`) that the game does not play | Supplied by the owner (BrainEno) in PR #118 (`local/upload-new-protagonist`, commit `c7b6fa4`). The file header reads `Khronos glTF Blender I/O v5.2.41`, the same exporter as the owner's other Blender models. The owner has not yet stated in writing who made it and with what tools; until they do, the authorship is recorded as "supplied by the owner", not as confirmed | — | Project-owned, see COPYRIGHT.md (pending the owner's confirmation above) | No | Restored 12 missing glTF PBR `baseColorFactor` values using the project's muted protagonist palette; geometry, rigging, skinning, blend shapes and animations are unchanged. Added: the `.glb.import` sidecar, generated by Godot 4.7.2 in CI (it was missing from the upload). Measured and recorded: 1.767 m tall, 1.046 m wide (A-pose arms), 15,782 triangles, sole on the origin, faces +Z. Structure node by node: `art/character_rig_audit/runtime_model_manifest.json` | n/a if the owner confirms it as their own work; otherwise to be determined | Pending owner art review and authorship confirmation |
-| `assets/models/q/q.glb` | glTF 2.0 skinned character: 7 mesh nodes drawing 15 primitives from 14 flat-colour materials, no textures, one 16-joint skeleton (`Q_Humanoid_Skeleton`) with weights on every primitive, no animation | Owner-authored, confirmed by the owner on 2026-11-12: made in Blender, generated by a Python script the owner directed, so the work is the owner's own. As with the protagonist, the script and the generation report stay in the owner's local asset folder and are not committed. The rig this file ships was built by `art/character_rigging/q/q_rig_build_report.json` (Blender 5.2.3 LTS) from the owner's unrigged source | — | Project-owned, see COPYRIGHT.md | No | None — the committed file is the owner's export as supplied. Measured and recorded: 1.662 m tall, 35,432 triangles, feet on the origin, faces +Z, one authored non-uniform node scale (`Q_Collar`, 1 × 0.7 × 0.9). Structure node by node: `docs/MODEL_LIBRARY.md` §5 and `art/character_rig_audit/runtime_model_manifest.json` | n/a (owner's own work, no third-party source) | Pending owner art review |
-| `assets/models/teacher-n/teacher-n.glb` (shipped) and `art/character_models/teacher-n/teacher-n_source.glb` (source, `.gdignore`d, never imported or exported) | glTF 2.0 skinned character, substitute teacher N: 18 mesh nodes drawing 28 primitives from 17 flat-colour materials, no textures, one 16-joint skin (same joint names and hierarchy as Q), four embedded five-second loops (`ST_Idle_Breathing`, `ST_Nervous_Posture_Shift`, `ST_Slight_Hand_Movement`, `ST_Subtle_Head_Movement`). Shipped file 1,366,700 bytes (1334.7 KiB); source 2,990,912 bytes, sha256 `f2d8247f2367567a8ed64d0201d322602c0ff933b23c54f1846033d8418994b0` | Owner-authored: made by the owner (BrainEno) in Blender and supplied to the repository in PR #126 (2026-11-12) as `assets/models/teacher-n/teacher-n.glb`; that file is now the source above, byte for byte | — | Project-owned, see COPYRIGHT.md | No | Built from the source by `tools/prepare_teacher_n.py` so it fits the 1536 KiB runtime budget (`docs/ASSET_PIPELINE.md` §9.1); the script verifies the source hash and `--check` proves the committed file is exactly what it builds. Removed: the presentation floor (`ST_Stage` and `M_ST_Stage`), the 15 facial blend shapes (9 on the head, 3 on each eyebrow; nothing plays them), the 184 animation channels that never leave the rest pose, and the clearcoat/sheen/specular extensions Godot 4.7.2 does not import. Simplified, at a 0.2 mm error bound with the borders locked: the head skin (9,469 → 2,944 vertices) and the two scleras (1,633 → 273 and 281); measured against the source surface, no vertex moves by more than 0.32 mm. Skin weights stored as 8-bit normalised (largest change to any weight 0.005). Roughness set on six materials (skin 0.8, hair 0.75, hair highlight 0.72, brows and lashes 0.85, shoes 0.6) to match Q's flat-colour palette; no base colour, transform, joint or animated key changed. Faces −Z, 1.654 m tall, feet on the origin | n/a (owner's own work, no third-party source) | Pending owner art review |
+| `assets/models/protagonist/Protagonist_Character.glb` | Player's skinned glTF 2.0 character since PR #118: 70 nodes, 9 meshes / 15 primitives, 12 materials, no textures or UVs, one 60-joint skin, 9 head blend shapes and five embedded animations (not played by the game). These embedded components are part of the rights review even if unused | **Owner-supplied, authorship UNKNOWN.** PR #118 records supply via `local/upload-new-protagonist`, upload reference `c7b6fa4`; integrated snapshot `8056b8c`. Creation tools/process, third-party inputs and AI assistance are UNKNOWN. The declared exporter `Khronos glTF Blender I/O v5.2.41` is metadata, not proof of creation tool or ownership | https://github.com/BrainEno/where-is-school/pull/118 | **UNKNOWN — not established as project-owned.** Owner authorship/tool declaration or the actual upstream grant is still required; COPYRIGHT.md does not clear it | **UNKNOWN** | PR #126 (`ed16a02`) restored 12 `baseColorFactor` values. Compared with `8056b8c`, the BIN chunk is identical and the JSON differs only in those values. Godot import sidecar and structural manifest are technical records, not permission. See audit for current SHA-256 | **UNKNOWN / NOT CLEARED** for commercial use or game redistribution | Owner declaration and rights review outstanding; art acceptance is separate |
+| `assets/models/q/q.glb` | glTF 2.0 skinned character: 7 mesh nodes drawing 15 primitives from 14 flat-colour materials, no textures, one 16-joint skeleton (`Q_Humanoid_Skeleton`) with weights on every primitive, no animation | Owner-authored, confirmed by the owner on 2026-11-12: made in Blender, generated by a Python script the owner directed, so the work is the owner's own. The script and generation report are not committed. The confirmation is recorded in [PR #112](https://github.com/BrainEno/where-is-school/pull/112#issuecomment-6815295245) and the current [Issue #64](https://github.com/BrainEno/where-is-school/issues/64); it concerns Q only, not the newer protagonist or any portrait. The rig this file ships was built by `art/character_rigging/q/q_rig_build_report.json` (Blender 5.2.3 LTS) from the owner's unrigged source | — | Project-owned, see COPYRIGHT.md | No | None — the committed file is the owner's export as supplied. Measured and recorded: 1.662 m tall, 35,432 triangles, feet on the origin, faces +Z, one authored non-uniform node scale (`Q_Collar`, 1 × 0.7 × 0.9). Structure node by node: `docs/MODEL_LIBRARY.md` §5 and `art/character_rig_audit/runtime_model_manifest.json` | n/a (owner's own work, no third-party source) | Pending owner art review |
+| `assets/models/teacher-n/teacher-n.glb` (shipped) and `art/character_models/teacher-n/teacher-n_source.glb` (source, `.gdignore`d, never imported or exported) | glTF 2.0 skinned character, substitute teacher N: 18 mesh nodes drawing 28 primitives from 17 flat-colour materials, no textures, one 16-joint skin (same joint names and hierarchy as Q), four embedded five-second loops (`ST_Idle_Breathing`, `ST_Nervous_Posture_Shift`, `ST_Slight_Hand_Movement`, `ST_Subtle_Head_Movement`). Shipped file 1,366,700 bytes (1334.7 KiB); source 2,990,912 bytes, sha256 `f2d8247f2367567a8ed64d0201d322602c0ff933b23c54f1846033d8418994b0` | Recorded as Owner-authored in Blender in [PR #130](https://github.com/BrainEno/where-is-school/pull/130). Original upload snapshot `fcafc6d91dd07a703e9448dd7fdecd45dc2a559d`; integrated/processed in `1c10c6e`. The original upload is preserved as the source above. The older PR #126 reference was incorrect: that PR fixes protagonist colours, not the N upload | — | Project-owned, see COPYRIGHT.md | No | Built from the source by `tools/prepare_teacher_n.py` so it fits the 1536 KiB runtime budget (`docs/ASSET_PIPELINE.md` §9.1); the script verifies the source hash and `--check` proves the committed file is exactly what it builds. Removed: the presentation floor (`ST_Stage` and `M_ST_Stage`), the 15 facial blend shapes (9 on the head, 3 on each eyebrow; nothing plays them), the 184 animation channels that never leave the rest pose, and the clearcoat/sheen/specular extensions Godot 4.7.2 does not import. Simplified, at a 0.2 mm error bound with the borders locked: the head skin (9,469 → 2,944 vertices) and the two scleras (1,633 → 273 and 281); measured against the source surface, no vertex moves by more than 0.32 mm. Skin weights stored as 8-bit normalised (largest change to any weight 0.005). Roughness set on six materials (skin 0.8, hair 0.75, hair highlight 0.72, brows and lashes 0.85, shoes 0.6) to match Q's flat-colour palette; no base colour, transform, joint or animated key changed. Faces −Z, 1.654 m tall, feet on the origin | n/a (owner's own work, no third-party source) | Pending owner art review |
 | `scenes/environment/props/school_desk.tscn`, `scenes/environment/props/stationery_supplies.tscn`, `scenes/environment/characters/protagonist.tscn`, `scenes/environment/characters/classroom_student.tscn`, `scenes/environment/characters/q.tscn`, `scenes/environment/characters/teacher_n.tscn`, `scenes/dev/imported_assets_preview.tscn` | Hand-authored wrapper scenes around the six models above (collision, origin correction, interaction anchor; the classroom student is a seated visual with none of them), plus a development preview that composes the desk, the stationery, the protagonist (via `protagonist.tscn`, so now `Protagonist_Character.glb`) and Q | Authored for this repository from Godot primitive shapes and the assets above | — | Project-owned | No | — | n/a | Pending owner art review |
 | `assets/shaders/characters/character_paint.gdshader`, `assets/shaders/characters/character_outline.gdshader`, `assets/characters/protagonist/protagonist_look.tres`, `assets/characters/q/q_look.tres`, `assets/characters/protagonist/protagonist_motion.tres`, `assets/characters/q/q_motion.tres`, `art/characters/build_character_looks.py`, and the `Look` node and `motion_profile` added to `scenes/environment/characters/protagonist.tscn` and `scenes/environment/characters/q.tscn` | The protagonist's and Q's in-game look and motion: a painted spatial shader (three light bands, a painted shadow colour, posterised procedural pigment blocks sampled at the rest pose, mirrored face patches, no specular), an inverted-hull ink outline that scales with distance, one generated `CharacterLook` per character (a painted material per GLB material, a resting expression on the protagonist's own blend shapes, a blink), and one `CharacterMotionProfile` per character (tempo, amplitude, posture and layers over the shared clips). No texture, image or mesh: everything is code and plain data | Authored for this repository; the palette follows docs/ART_BIBLE.md and the owner's portraits and models, and the looks are written by the in-repo script `art/characters/build_character_looks.py` (stdlib Python), which is their provenance. The GLBs (`assets/models/protagonist/Protagonist_Character.glb`, `assets/models/q/q.glb`) and their Blender sources are not modified: the look replaces their materials at run time and rebuilds meshes only in memory (same geometry, with rest positions added in `CUSTOM0`) | — | Project-owned | No | — (new work; how it is made and checked is in docs/CHARACTER_ART.md) | n/a (no third-party source) | Pending owner art review |
 | `scenes/dev/character_art_review/**` (review shaders, six generated `CharacterLook` resources, pose overlay, review stage and scene, `build_review_looks.py`), `docs/character_art_review/sheets/*.jpg` | Development-only character art review experiments for issue #188 (excluded from the export by `scenes/dev/*` and `docs/*`): three painted spatial shaders (stage light, charcoal and oil pastel, expressionist colour planes), a variable broken outline, a `SkeletonModifier3D` body-language overlay, and an in-memory hair softening of the protagonist's mesh. Eight JPEG contact sheets (444 KiB in total, none over 60 KiB) | Authored for this repository; the looks are written by the in-repo stdlib script `scenes/dev/character_art_review/build_review_looks.py`. The sheets are frames rendered by Godot 4.7.2 in CI (`.github/workflows/character-art-review-capture.yml`, run 43801219041), reassembled from the job's published annotations without editing | — | Project-owned | No | No production file is changed: the GLBs, their Blender sources, the shipped looks and shaders, the clips and the motion profiles are used read-only; the review looks, pose and hair are applied at run time and removed again | n/a (no third-party source) | Pending owner art review (issue #188) |
@@ -49,7 +55,9 @@ cleared, or could not be converted on the machine doing the import, is recorded 
 | `scenes/environment/props/stage_art/textures/*.png` (+ `.import` sidecars), `scenes/environment/props/stage_art/materials/*.tres`, the stage pass on `corridor.tscn`, `street.tscn`, `residential.tscn`, `alley.tscn`, and the yard additions (`fence_far.tres`, the fence run, mast and chair in `playground.tscn`) | 11 hand-painted PNGs (walkway wall and terrazzo floor, road centre line and crossing, school window tile, hopscotch chalk, alley streak tile, four laid-flat distance skies), 175 KiB in total, none over 100 KiB; 45 StandardMaterial3D materials (toon diffuse, the yard's ink outline as next pass); mesh-only nodes | Painted procedurally by `scenes/environment/props/stage_art/source/paint_stage_textures.py` (fixed seeds 3101-3144) with the classroom painter's brush code; scenes dressed by `build_stage_art.py`. No downloaded, traced, photographed or model-generated imagery. Also reuses the yard's own textures (`playground_art/textures/`) | — | Project-owned | No | Visual-only: no collider, exit, spawn or interactable is added or moved (`tests/location_art_test.gd`) | n/a | Pending owner art review |
 | `assets/models/classroom/*.glb` (11), `assets/models/corridor/*.glb` (3), `assets/models/playground/*.glb` (2), with their `.glb.import` sidecars | glTF 2.0 runtime props: 16 files, 2.4 MiB and 60,908 triangles together, flat-colour materials only (55 names, no textures, nothing to extract). Classroom: blackboard, biology chart, door assembly, ceiling fan, wall clock, window module, curtains, student desk and chair, teacher chair and lectern. Corridor: noticeboard, cleaning trolley, fire extinguisher. Playground: tyre stack, sports duffel | Owner-authored in Blender. The owner confirmed on 2026-11-11 that they made these models themselves in Blender; the file headers agree (`Khronos glTF Blender I/O v5.2.41`), as do the project-prefixed material names (`WIS_B02_*`, `WIS_B03_*`, `WIS_*`). Supplied in PR #85 (`local/upload-models`) as one unclassified folder, `assets/models/new models/`, in the same folder as one third-party CC0 prop (the row below), which is not part of this confirmation. The `.blend` sources are not committed | — | Project-owned, see COPYRIGHT.md | No | None to the bytes: the files were sorted into `<kind>/` folders by the room each one belongs to and given the `.glb.import` sidecars the upload had none of. Measured and recorded in `docs/MODEL_LIBRARY.md`: sizes, triangle counts, bounding boxes, where each origin sits, which side each working face is on, and that none of them carries a camera, a light or a node scale | n/a (owner's own work, no third-party source) | Pending owner art review |
 | `art/fonts/NotoSerifSC-Regular.otf` (source) and `assets/fonts/NotoSerifSC-Regular.otf` (shipped subset) | Simplified-Chinese + Latin serif text font (static Regular, CFF outlines), used by the dialogue panel for the sentence, the speaker name, the title and the options, and by the title screen, the pause menu and their confirmation prompts for the game's name, headings, entries and questions (`scripts/ui/menu_style.gd`); no new font file was added for the menus. `art/` holds the untouched upstream file (11,625,800 bytes, sha256 `e8f396de…c83a1cd3`); the file under `assets/` is a glyph subset of it (421 KiB), produced by `tools/subset_font.py` from the text that can reach the dialogue panel | Adobe, for Google: Noto Serif SC 2.003 (name table: "© 2017-2024 Adobe"), obtained from the public notofonts/noto-cjk repository, `Serif/SubsetOTF/SC/` at commit `9b0f1436e455d902de067a2501422e5dc71ad16b` | https://github.com/notofonts/noto-cjk/tree/main/Serif/SubsetOTF/SC | SIL Open Font License 1.1 (full text committed as `assets/fonts/NotoSerifSC-OFL.txt`, from `Serif/LICENSE` at the same commit) | No (as for Noto Sans SC; the licence ships with the font and is copied into the release zip's `licences/NotoSerifSC-OFL.txt`) | Modified: the shipped file is a subset, which OFL §5 permits. The upstream licence declares no Reserved Font Name, so the original name is kept. Only Regular was added. The variable google/fonts build (25 MB) was not used because it is over the repository's 12 MiB per-file ceiling | Yes (OFL 1.1 permits commercial use and embedding) | Owner should confirm before a store build |
-| `art/portraits/protagonist.png`, `art/portraits/q.webp`, `art/portraits/n.webp` (sources) and `assets/ui/portraits/{protagonist,q,n}.webp` (+ `.import` sidecars, shipped) | 2D dialogue portraits, painted look (pastel and charcoal on cardboard/paper): the protagonist (bust, gakuran), Q (bust, pointing, white jacket) and N (standing figure, grey cardigan, light ground). Sources 1145×1374, 1254×1254 and 1280×1936 px, opaque RGB, sha256 `2b849499…5aad9c7b2b`, `993a6055…ca165d386`, `2417a5b7…5612679feae3d` (full hashes in `tools/prepare_portraits.py`). Shipped: cropped and scaled to 911×1100, 945×1100 and 726×1100 px, WebP quality 92 (409, 447 and 223 KiB), imported as lossy WebP 0.8 with mipmaps | Supplied by the owner (BrainEno) on 2026-11-12 as `protagonist.png`, `q-picture.webp` and `teacher-n.webp`, and described by the owner as newly generated portraits. **Not recorded yet:** which tool or service generated them, who prompted or edited them, and that tool's terms | — | **Unconfirmed.** Treated as project-owned only once the owner confirms that the generating tool's terms grant the project ownership or an unrestricted commercial licence for the outputs | No (pending the owner's answer above) | Cropped and downscaled by `tools/prepare_portraits.py`, which records each crop in source pixels. The protagonist loses only the ragged cardboard edge; Q loses the empty right edge (the pointing hand and the face are kept); N is cut just above the knees so that she reads at a useful size inside the panel's width cap. No retouching, no colour change, and no background removal. The sources are kept untouched under `art/portraits/` (`.gdignore`d) | **No, not yet checked**: owner to confirm the tool and its commercial-use terms before any public or store build | Owner supplied and asked for them in the dialogue box (2026-11-12); art review pending |
+| `art/portraits/protagonist.png` → `assets/ui/portraits/protagonist.webp` (+ `.import`, shipped) | Independent 2D dialogue portrait; source 1145×1374 RGB, runtime image 911×1100, 418,492 bytes | Owner-supplied as `protagonist.png`; PR #125 describes it as newly generated. Actual creator/prompting/editing role, generating tool/service/model, creation date/version and applicable terms: **UNKNOWN** | https://github.com/BrainEno/where-is-school/pull/125 | **UNKNOWN** — commercial output, modification, game/source redistribution and additional permissions not established | **UNKNOWN** | Cropped/scaled by `tools/prepare_portraits.py` (WebP quality 92); source hash, crop and output hash in the audit. Engine import and profile presentation are additional technical steps, not a new rights grant | **UNKNOWN / NOT CLEARED** before public or store distribution | Placement requested by Owner; not a licence or legal clearance |
+| `art/portraits/q.webp` → `assets/ui/portraits/q.webp` (+ `.import`, shipped) | Independent 2D dialogue portrait; source 1254×1254 RGB, runtime image 945×1100, 458,216 bytes | Owner-supplied as `q-picture.webp`, stored as `q.webp`; described as newly generated in PR #125. Generating tool/service/model, creator/editor, creation date/version and applicable terms: **UNKNOWN**. The Q **3D model** confirmation does not apply to this image | https://github.com/BrainEno/where-is-school/pull/125 | **UNKNOWN** — each portrait needs its own output-rights evidence | **UNKNOWN** | Same documented conversion script; not rendered from the 3D model. See audit for source/output hashes and crop | **UNKNOWN / NOT CLEARED** for commercial use or redistribution | Placement request is not rights approval |
+| `art/portraits/n.webp` → `assets/ui/portraits/n.webp` (+ `.import`, shipped) | Independent 2D dialogue portrait; source 1280×1936 RGB, runtime image 726×1100, 228,724 bytes | Owner-supplied as `teacher-n.webp`, stored as `n.webp`; described as newly generated in PR #125. Generating tool/service/model, creator/editor, creation date/version and applicable terms: **UNKNOWN**. N's **3D model** provenance does not clear this image | https://github.com/BrainEno/where-is-school/pull/125 | **UNKNOWN** — output ownership/licence, commercial use, modification, redistribution and extra permissions are unverified | **UNKNOWN** | Same documented conversion script; standing figure cropped above the knees. See audit for source/output hashes and crop | **UNKNOWN / NOT CLEARED** for public/store distribution | Placement request is not rights approval |
 | `dirty_football_4k.glb` (uploaded in PR #85; committed in PR #90; **removed in the issue #97 pull request**) | glTF 2.0 prop, 67.3 MiB: 35,210 vertices / 37,486 triangles, one material, three embedded 4096² maps (54.5 MiB PNG normal, 6.3 MiB PNG roughness, 5.3 MiB JPEG albedo). A 22 cm football | Poly Haven, "Dirty Football" | https://polyhaven.com/a/dirty_football | CC0 1.0 (public domain) | No | Committed once, at `art/props/dirty_football/dirty_football_4k.glb`, unmodified from the owner's export. Deleted from the tree because of its size — 5.6× the 12 MiB per-file ceiling of `tools/repo_size.py` — with the record, the measurements and the re-download route kept in `art/props/dirty_football/README.md`. The blob is still in the history; removing it there is an authorised rewrite, written up in `docs/adr/0007-large-binaries-and-repository-size.md` | Yes — CC0 permits commercial use, modification and redistribution with no attribution | Pending owner art review |
 
 ## Notes
@@ -64,7 +72,7 @@ cleared, or could not be converted on the machine doing the import, is recorded 
 - The four interaction cue sounds are not files at all: `scripts/audio/cue_audio.gd`
   synthesises them at startup, in the same additive style, from constants in that script. The
   script is therefore the whole provenance, and there is nothing to import, license or lose.
-- The bundled third-party assets are the two Noto fonts above. Noto Sans SC is needed
+- The bundled fonts are the two Noto faces above. Noto Sans SC is needed
   because Godot's built-in font has no CJK coverage, so simplified Chinese text cannot
   render without it. Noto Serif SC is the dialogue panel's reading face (owner's direction,
   2026-11-12), split and checked the same way by the same script; its licence is
@@ -73,25 +81,19 @@ cleared, or could not be converted on the machine doing the import, is recorded 
   game loads a subset built from the project's own text by `tools/subset_font.py`,
   which is the provenance of that modification, and CI fails when the committed
   subset and the current text disagree.
-- The two characters have been audited structurally, and the audits are committed:
-  `art/character_rig_audit/` holds a rig and a component audit for each, with a
-  `README.md` that reads them. Read each audit for the stage it describes. The Q audit
-  was run on `art/character_rigging/q/q_unrigged_source.glb`, the unrigged source, so its
-  "no rig, no armature, no vertex groups" is a fact about that file and not about the
-  character: the shipped `assets/models/q/q.glb` carries one 16-joint skeleton with
-  weights on every primitive, the same joint names and hierarchy as the protagonist's
-  (`docs/MODEL_LIBRARY.md` §5). The protagonist audit's 16-bone rigid-part rig holds for
-  the shipped file (7,591 of 7,633 vertices follow exactly one bone). Neither shipped
-  model contains an `Animation` — the clips the characters play are composed at run time
-  by `scripts/actors/character_animation.gd`. The audits were run on the owner's local
-  Blender scenes rather than on the committed exports: each scene carries one leftover
-  two-metre `Icosphere` with no material that the export leaves out, which is the whole
-  difference between the audits' counts and the files above. Q's authorship was settled
-  by the owner on 2026-11-12 — made in Blender with a Python script the owner directed, so
-  the work is the project's own (row above) — which replaces the earlier "owner to
-  confirm".
-- Substitute teacher N is the third owner-authored character and the first to arrive with
-  motion of its own: four five-second loops the owner made in Blender. The game plays them,
+- The rig/component audits under `art/character_rig_audit/` are **historical structural
+  evidence**, not licences or authorship declarations. The protagonist audit describes the
+  **old** `assets/models/protagonist/protagonist.glb` (now the seated student), not
+  `Protagonist_Character.glb`. Q's audit input was the unrigged source now preserved at
+  `art/character_rigging/q/q_unrigged_source.glb`, not the current 16-joint runtime Q.
+  Do not use the old audit's counts or its "no rig" statement for a later file. The current
+  runtime manifest explicitly covers all four GLBs (old protagonist, new protagonist, Q,
+  N); `tools/model_library.py --check` compares their structure, not their legal status.
+  Q's recorded Owner confirmation (Blender + Python, 2026-11-12; PR #112 / Issue #64)
+  supersedes the older pending-confirmation note. No new Owner declaration was obtained
+  during this audit, and that existing confirmation is not reopened.
+- Substitute teacher N is recorded as Owner-authored in PR #130, including four
+  five-second Blender loops. The game plays them,
   together, as N's idle (`CharacterAnimation.adopt_authored_layers()`); playing all four as
   layers of one idle is this repository's reading of four loops on the same key times,
   each moving a different part of the body, and the owner can change it in
@@ -100,72 +102,78 @@ cleared, or could not be converted on the machine doing the import, is recorded 
   `art/character_models/teacher-n/` and the shipped file is rebuilt from it by
   `tools/prepare_teacher_n.py`, which needs `numpy` and `meshoptimizer` (see the script's
   docstring); a re-export replaces the source, its hash in the script, and the output.
-- No marketplace packs or shader libraries are used, and no fonts other than the two Noto
-  faces above. The only generated imagery is the three dialogue portraits (row above),
-  whose tool and terms the owner has not recorded yet. The outdoor blockouts are authored by an in-repo script
-  (`tools/build_outdoor_locations.py`), which is the provenance.
+- In this bounded character/portrait/animation review, the supplied portraits are recorded
+  as generated images, with the generating service/model and AI involvement details still
+  UNKNOWN. Deterministic procedural assets are not evidence about an image service's terms.
+  No additional third-party character/portrait pack was identified in the inspected paths;
+  that is not a whole-repository clearance. The existing font and prop records remain above.
 - The two sample models are not third-party art and are not AI-generated: they are
   boxes written by `tools/build_sample_models.py`, which is their provenance. The
   import contract they prove is `docs/ASSET_PIPELINE.md`.
 - Two development-only derivatives of the characters exist under
   `scenes/dev/animation_retarget_test/`: `q_rigged.glb` (the owner's Q, rigged to the
-  protagonist's 16-bone hierarchy) and `protagonist_retarget_ready.glb` (the owner's
-  protagonist, re-exported on a humanoid skeleton). Both are derived from owner-supplied
+  old protagonist's 16-bone hierarchy) and `protagonist_retarget_ready.glb` (the
+  old protagonist, re-exported on a humanoid skeleton). Both are derived from owner-supplied
   files by the scripts that wrote the reports next to their `.blend` sources under
   `art/character_rigging/`, they are excluded from the export, and neither replaces the
   production models.
-- `scenes/dev/animation_retarget_test/UAL1_Standard.glb` is the **Universal Animation
-  Library** (Standard, free edition) by **Quaternius**, downloaded by the project owner and
-  kept as an animation *source*: one mesh, two materials, 43 clips on a 65-joint
-  `Armature`, 7.6 MiB, no licence metadata inside the file. It is third-party work, so its
-  licence is recorded here rather than assumed. Researched 2026-11-12, and the two
-  documents disagree:
-  - **As published for this pack**, every channel that distributes it states **CC0 1.0
-    Universal**: the pack page (`quaternius.com/packs/universalanimationlibrary.html`,
-    "License: CC0"), itch.io ("Asset license · Creative Commons Zero v1.0 Universal", the
-    free edition), the Godot Asset Store entry for this edition ("License: CC0 1.0
-    Universal") and OpenGameArt ("License(s): CC0 - 3D Art"). CC0 allows redistribution
-    and modification with no attribution.
-  - **Quaternius's own site-wide licence contradicts it.** The Asset License (QAL) v1.0,
-    last updated 2026-08-28, grants commercial use and modification but forbids selling or
-    redistributing the assets themselves, modified or not, "as a standalone asset, asset
-    pack, stock file, template or similar product", free or paid. Its §7 says the version
-    in effect when the assets were obtained governs and §9 says it supersedes earlier
-    understandings. This checkout is shallow, so when the owner obtained the file cannot
-    be established from the repository history; both documents have to be taken seriously.
-  - **Decision — development-only input, never shipped.** It stays in the repository on
-    the CC0 grant that the pack page shows today, and it is covered here so the two never
-    drift apart. Nothing the player sees depends on it: the clips the characters play are
-    authored in code (`scripts/actors/character_animation.gd`). The boundary is
-    machine-checked, not just written down: both export presets exclude `scenes/dev/*`,
-    `tools/verify_build.py` fails a pack that contains anything under `res://scenes/dev/`,
-    and it now fails a preset that stops excluding `scenes/dev/`.
-  - **If the stricter QAL reading is preferred**, the remedy is a history rewrite
-    (`docs/adr/0007-*.md` is the authorisation pattern for that kind of change), because a
-    plain `git rm` would leave the blob in every clone and change nothing.
-  - `protagonist_ual.res` in the same directory is derived from it — those clips resampled
-    onto the protagonist's bones by `tools/bake_animation_retarget.gd` — and is covered by
-    the same decision: development-only, not shipped.
-- The seven clips the game's characters actually use — `idle`, `walk`, `jog`, `sit_idle`,
-  `get_up`, `wave` and `talk` — are authored in code
-  (`scripts/actors/character_animation.gd`), not taken from the library; see
-  `docs/CHARACTER_ANIMATION.md`.
-- Every placeholder above is expected to be replaced by owner-approved art,
-  audio, and writing. Record replacement assets in this ledger as they land.
-- The two Poly Haven models and the animation library above are the third-party content in
-  the repository. They are
-  CC0, which is why they could be committed without a purchase or an attribution
-  obligation, but they are still recorded here with their source page and licence rather
-  than treated as project-owned. Their licence needs no file to travel with them; if a
-  future asset is *not* CC0, its licence text goes into `assets/` beside it, the way the
-  Noto Sans SC OFL text does.
+- `scenes/dev/animation_retarget_test/UAL1_Standard.glb` is Quaternius's third-party
+  **Universal Animation Library**, recorded as Standard/free: 7,618,436 bytes (7.27 MiB),
+  one mesh, two materials, 43 embedded clips, one 65-joint `Armature`; its `asset` metadata
+  contains only the generator and glTF version, not a licence. Its exact acquisition date,
+  downloaded package version and the grant supplied with that download are **UNKNOWN**.
+  Git introduction `7c975e3` is a custody record, not proof of acquisition or applicable terms.
+  - **Publicly rechecked:** the [pack page](https://quaternius.com/packs/universalanimationlibrary.html)
+    says CC0 and permits commercial projects;
+    [itch.io](https://quaternius.itch.io/universal-animation-library) labels the Standard
+    download CC0 1.0 Universal. [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode.en)
+    provides an irrevocable waiver/fallback within its scope, with disclaimers and without
+    clearing every possible third-party right.
+  - **Conflicting site terms:** [QAL v1.0](https://quaternius.com/license.html), labelled
+    last updated 2026-08-28, §2 allows commercial completed Products; §3(a) restricts
+    redistribution of the assets themselves, including modified forms, as assets/packs/
+    templates, free or paid. It explicitly does **not** prohibit a completed Product merely
+    incorporating them. §7 is non-retroactive and refers to the version at acquisition;
+    §9 contains an entire-agreement clause. This audit does not decide which grant governs
+    this copy or treat §9 as automatically revoking CC0. Obtain acquisition evidence and,
+    if needed, written licensor clarification/professional advice.
+  - **Project decision remains RESTRICTED / DEVELOPMENT ONLY.** Neither the source nor
+    resampled/retargeted/baked clips may ship with the game. This is a project restriction,
+    not a finding that a stricter reading bans all game use. `protagonist_ual.res` in the
+    same directory is an upstream-dependent derivative made by
+    `tools/bake_animation_retarget.gd`; changing skeleton, format or filename does not clear
+    its provenance. No new bake was run for this audit.
+  - Both presets exclude `scenes/dev/*` and `scripts/dev/*`. `verify_build.py` now requires
+    whole-directory filters (not matching substrings), rejects both directories in PCK,
+    and also rejects the known UAL/derivative basenames in PCK/import caches and loose ZIP
+    entries even if copied outside `scenes/dev/`. Tests reproduce the old bypasses. These
+    are path/name controls, **not detection of arbitrary renamed or embedded motion data**;
+    pack verification and source review are both necessary.
+  - **Other distribution surfaces remain unresolved:** the files are still in the current
+    Git tree/history, and `.github/workflows/bake-animation-retarget.yml` can upload
+    `protagonist_ual.res` as a downloadable standalone development artifact. This audit did
+    not dispatch that workflow, delete artifacts, change repository visibility or rewrite
+    history. Development-only export exclusion does not license these distribution routes.
+    Removing a file would stop its inclusion in future trees, not erase existing history,
+    artifacts or clones; any coordinated historical cleanup needs separate explicit Owner
+    authorisation and cannot recall already downloaded copies.
+- Production motion is a separate lineage: the seven procedural clips (`idle`, `walk`,
+  `jog`, `sit_idle`, `get_up`, `wave`, `talk`) come from
+  `scripts/actors/character_animation.gd`. N's idle instead adopts the four loops embedded
+  in N's own model. The new protagonist's five embedded animations are not played, but
+  still belong to the model's unresolved rights review. No production wrapper inspected
+  references the UAL source or baked library; see the audit for the exact scope and limits.
+- Every placeholder above still needs the appropriate Owner art/audio/writing acceptance.
+  Record replacements and their rights before using them. Existing Poly Haven CC0 and
+  Noto OFL records are not a blanket licence for UAL, unknown inputs or original project
+  work; preserve each component's own terms and required notices.
 - The stationery is one import carrying nine separate objects. A scene that wants one
   pencil should instance the node it wants out of `stationery_supplies.tscn` rather than
   the whole line-up; the line-up is a convenient way to see the set, not a prop that sits
   on a desk as a group.
-- The two characters carry no collision on purpose. They are visuals; the controller that
+- Character visuals carry no collision on purpose. They are visuals; the controller that
   drives them (the player's `CharacterBody3D`, an NPC actor) owns the capsule. See
-  `docs/ASSET_PIPELINE.md` §10 for the three places these four assets deviate from the
+  `docs/ASSET_PIPELINE.md` §10 for the documented ways the imported assets deviate from the
   pipeline contract and how each is pinned by `tests/imported_assets_test.gd`.
 
 ## Not imported

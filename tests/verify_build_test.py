@@ -185,9 +185,54 @@ def test_forbidden_prefixes() -> None:
         ("res://tools/", "res://tools/verify_build.py"),
         ("res://.github/", "res://.github/workflows/godot-ci.yml"),
         ("res://addons/", "res://addons/narrative_editor/plugin.cfg"),
+        ("res://scenes/dev/", "res://scenes/dev/animation_retarget_test/protagonist_ual.res"),
+        ("res://scripts/dev/", "res://scripts/dev/ual_preview.gdc"),
     ):
         problems = vb.verify_contents([(sample, 100)])
         expect_problem(problems, forbidden, f"{forbidden} files are accepted into the build")
+
+
+def game_entries() -> list[tuple[str, int]]:
+    """A minimal contents-valid pack, so unrelated missing files cannot mask a leak."""
+    return [
+        ("res://scenes/main/main.tscn", 100),
+        ("res://assets/ui/app_theme.tres", 100),
+        ("res://data/dialogue/en/prologue.json", 100),
+        ("res://data/dialogue/zh-CN/prologue.json", 100),
+        ("res://data/inspections/en/classroom.json", 100),
+        ("res://assets/audio/bell_second.wav.import", 100),
+        ("res://assets/fonts/NotoSansSC-Regular.ttf.import", 100),
+    ]
+
+
+def test_development_only_assets_outside_the_dev_directory() -> None:
+    entries = game_entries()
+    check(vb.verify_contents(entries) == [], "the clean pack fixture is not contents-valid")
+    for path in (
+        "res://assets/animations/UAL1_Standard.glb",
+        "res://assets/animations/UAL1_Standard.tres",
+        "res://assets/animations/protagonist_ual.res",
+        "res://assets/animations/protagonist_ual.tres",
+        "res://assets/previews/protagonist_ual_preview.tscn",
+        "res://.godot/imported/UAL1_Standard.glb-1d128ad5a152cd2ff20b21584ce0da72.scn",
+        "res://.godot/exported/abc/export-UAL1_Standard.glb-aabb.scn",
+        "res://.godot/exported/abc/protagonist_ual.res-aabb.res",
+        "res://.godot/exported/abc/export-protagonist_ual.res-aabb.res",
+        "res://assets/animations/ual1_standard.glb.import",
+        "res://assets/animations/PROTAGONIST_UAL.RES.remap",
+    ):
+        # Exercise the directory reader too: exported names are not the source paths.
+        blob = make_pack([(name.removeprefix("res://"), size) for name, size in entries + [(path, 100)]])
+        parsed, header = vb.load_blob(blob, embedded=False)
+        problems, _ = vb.verify(parsed, header)
+        expect_problem(problems, "development-only asset", f"{path} escaped the asset quarantine")
+
+    for path in (
+        "res://assets/characters/protagonist/protagonist_motion.tres",
+        "res://scripts/actors/animation_retarget.gdc",
+        "res://assets/animations/ual1_standards.glb",
+    ):
+        check(vb.verify_contents(entries + [(path, 100)]) == [], f"unrelated resource rejected: {path}")
 
 
 def test_required_prefixes() -> None:
@@ -628,6 +673,30 @@ def test_package_catches_development_files() -> None:
             check(bool(package.problems), f"{extra} in a package was accepted")
 
 
+def test_package_catches_relocated_development_only_assets() -> None:
+    for platform, factory in (("windows", windows_files), ("linux", linux_files)):
+        for extra in (
+            "UAL1_Standard.glb",
+            "assets/animations/protagonist_ual.res",
+            "assets/animations/protagonist_ual.tres",
+            ".godot/exported/abc/export-UAL1_Standard.glb-aabb.scn",
+            "assets/animations/PROTAGONIST_UAL.RES",
+        ):
+            with tempfile.TemporaryDirectory() as directory:
+                files = factory()
+                files.update(LICENCES)
+                files[extra] = b"synthetic asset fixture, not third-party content"
+                path = make_package(
+                    Path(directory), f"where-is-school-0.1.0-{platform}", files,
+                    modes={"where-is-school": 0o755},
+                )
+                package = vb.inspect_package(path, "0.1.0")
+                expect_problem(
+                    package.problems, "development-only asset",
+                    f"{extra} in a {platform} archive escaped the asset quarantine",
+                )
+
+
 def test_package_catches_a_version_that_disagrees_with_the_executable() -> None:
     with tempfile.TemporaryDirectory() as directory:
         files = windows_files()
@@ -678,7 +747,7 @@ def test_preset_checks() -> None:
     def preset_text(modify_resources: str = "true", icon: str = "res://assets/icon/app_icon.ico") -> str:
         return (
             "[preset.0]\n\nname=\"Windows Desktop\"\nplatform=\"Windows Desktop\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*"\n'
             'export_path="build/windows/where-is-school.exe"\n\n'
             "[preset.0.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -691,7 +760,7 @@ def test_preset_checks() -> None:
             'application/file_version="0.1.0.0"\n'
             'application/product_version="0.1.0.0"\n\n'
             "[preset.1]\n\nname=\"Linux\"\nplatform=\"Linux\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*"\n'
             'export_path="build/linux/where-is-school.x86_64"\n\n'
             "[preset.1.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -732,6 +801,25 @@ def test_preset_checks() -> None:
             "does not exclude scenes/dev/",
             "a preset that would ship the development-only third-party assets passed",
         )
+
+        # Only a whole, rooted directory wildcard proves this boundary. A substring,
+        # another directory's name or a .tscn-only filter must not pass. Break just one
+        # platform at a time: a correct Windows preset cannot conceal a broken Linux one.
+        for index, preset_name in enumerate(("Windows Desktop", "Linux")):
+            for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/", ".github/", "addons/"):
+                for replacement in ("", where + "*.tscn", "unrelated/" + where + "*"):
+                    sections = preset_text().split("[preset.1]")
+                    sections[index] = sections[index].replace(where + "*", replacement, 1)
+                    config.write_text("[preset.1]".join(sections))
+                    problems, _ = vb.verify_presets(config, "0.1.0")
+                    expect_problem(
+                        problems, f"the {preset_name} preset does not exclude {where}",
+                        f"{preset_name}: {replacement!r} counted as excluding {where}",
+                    )
+
+        config.write_text(preset_text().replace("tests/*, tools/*", " res://tests/* , res://tools/* "))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        check(problems == [], f"rooted filters with surrounding whitespace were rejected: {problems}")
 
 
 def test_preset_writer_keeps_the_rest_of_the_file() -> None:
