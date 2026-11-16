@@ -76,6 +76,7 @@ func _run() -> void:
 	await _wait(0.5)
 	_save_image("12_pair_game_camera", root.get_texture().get_image())
 	await _dialogue_capture()
+	await _companion_capture()
 	await _finish_migration()
 
 
@@ -172,15 +173,17 @@ func _walk_capture() -> void:
 	_pose(_q, "idle", 0.25)
 
 
-func _dialogue_capture() -> void:
+func _dialogue_capture(
+	conversation: StringName = &"q_wake", tag: String = "10_live_dialogue"
+) -> void:
 	# A real speaker in the shipped bilingual conversation; no invented evidence text.
 	_q.set_process(true)
 	_q.report_velocity(Vector3.RIGHT)
 	_q.clear_reported_velocity()
 	var camera := _main.get_node("CameraRig/Camera3D") as Camera3D
 	camera.current = true
-	if not _dialogue.play_conversation(&"q_wake"):
-		_failures.append("The dialogue evidence could not start q_wake.")
+	if not _dialogue.play_conversation(conversation):
+		_failures.append("The dialogue evidence could not start '%s'." % conversation)
 		return
 	for attempt in 32:
 		if String(_dialogue.get_current_line().get("speaker_id", "")) == "q":
@@ -188,11 +191,55 @@ func _dialogue_capture() -> void:
 		_dialogue.advance_presentation()
 		await process_frame
 	await _wait(0.8)
-	_save_image("10_live_dialogue", root.get_texture().get_image())
+	_save_image(tag, root.get_texture().get_image())
 	_note("Q migration dialogue: speaker %s, actual clip %s" % [
 		str(_dialogue.get_current_line().get("speaker_id", "")), _q.get_current_clip()])
+	if String(_dialogue.get_current_line().get("speaker_id", "")) != "q":
+		_failures.append("The dialogue frame did not reach an actual Q line.")
 	if _phase == "after" and _q.get_current_clip() != "talk":
 		_failures.append("The dialogue frame did not play Q's actual speech state.")
+
+
+## Photograph the second production placement, not a second copy in a studio.
+## LocationHost and CompanionController still own the spawn, capsule and following.
+func _companion_capture() -> void:
+	await _close_conversation()
+	if not _host.load_location(CORRIDOR, &"FromClassroom", _player):
+		_failures.append("The companion evidence could not enter the actual corridor.")
+		return
+	var companion := _main.get_node("Companion") as CompanionController
+	companion.join()
+	await _wait(1.0)
+	await _close_conversation()
+	if not companion.is_with_player():
+		_failures.append("The real companion placement did not become visible.")
+		return
+	_q_holder = companion.get_node("Actor") as NpcActor
+	_q = companion.get_character_animator()
+	_q_look = _q.get_node("Look") as CharacterLookApplier
+	_hide_nameplates()
+	_pose(_q, "idle", 0.25)
+	var camera := _main.get_node("CameraRig/Camera3D") as Camera3D
+	camera.current = true
+	await _wait(0.5)
+	_save_image("21_companion_game_camera", root.get_texture().get_image())
+	_note("Q migration companion: visible %s, source %s, placement %s" % [
+		str(companion.is_with_player()), (_q.get_node("Model") as Node3D).scene_file_path,
+		str(companion.get_placement_report())])
+	await _dialogue_capture(&"q_after_dismissal", "22_companion_live_dialogue")
+	await _close_conversation()
+
+
+func _close_conversation() -> void:
+	for attempt in 256:
+		if not _dialogue.is_busy():
+			return
+		if _dialogue.has_pending_choices():
+			_dialogue.select_choice(0)
+		else:
+			_dialogue.advance_presentation()
+		await process_frame
+	_failures.append("The evidence conversation did not close within its traversal bound.")
 
 
 func _save_image(tag: String, image: Image) -> void:
@@ -206,14 +253,19 @@ func _save_image(tag: String, image: Image) -> void:
 		return
 	_records.append({"file": "%s.jpg" % tag, "width": image.get_width(), "height": image.get_height(),
 		"sha256": FileAccess.get_sha256(path), "clip": String(_q.get_animation_player().current_animation)})
-	if int(tag.get_slice("_", 0)) <= 12 or tag == "19_supplied_rest_shoulders":
+	if int(tag.get_slice("_", 0)) <= 12 or tag in ["16_authored_head_turn", "17_gesturing_fingers",
+		"18_supplied_pose_preview", "19_supplied_rest_shoulders",
+		"21_companion_game_camera", "22_companion_live_dialogue"]:
 		_previews.append({"name": tag, "image": image})
 
 
 func _finish_migration() -> void:
 	# Original frames are untouched; small *labelled previews* fit the API notice
 	# budget. The artifact retains full-size frames and 48 real walking frames.
-	var share := 144000 / maxi(_previews.size(), 1)
+	# Allocate whole annotation parts: 18 images × at most 2 parts fits the same
+	# 40-part ceiling. A fractional per-image budget could round to 48 parts.
+	var share := mini(144000 / maxi(_previews.size(), 1),
+		(40 / maxi(_previews.size(), 1)) * 4000)
 	for entry: Dictionary in _previews:
 		var image := (entry["image"] as Image).duplicate() as Image
 		image.resize(640, 360, Image.INTERPOLATE_LANCZOS)
@@ -235,9 +287,9 @@ func _finish_migration() -> void:
 		file.store_string(JSON.stringify(metadata, "\t") + "\n")
 	for failure: String in _failures:
 		print("Q_CAPTURE_FAILURE: %s" % failure)
-	print("::notice title=Q 实际取证 %s::源 %s；引擎 %s；原图 %d 张；%s" % [
+	print("::notice title=Q capture %s::source %s; engine %s; %d original frames; %s" % [
 		_phase, _source_sha, Engine.get_version_info()["string"], _records.size(),
-		" | ".join(_failures) if not _failures.is_empty() else "脚本断言通过，人工视觉未签收"])
+		" | ".join(_failures) if not _failures.is_empty() else "script assertions pass; no owner visual acceptance"])
 
 	print("Q_CAPTURE_RESULT: %s" % ("PASS" if _failures.is_empty() else "FAIL"))
 	if _main != null:

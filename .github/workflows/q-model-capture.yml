@@ -30,7 +30,7 @@ jobs:
       matrix:
         phase: [before, after]
     env:
-      BASE_SHA: 580f6f34d3ff4e56f3d00d67cf115a98e63cfdbf
+      BASE_SHA: c4e6bfa450153b84a823eaa5c8ece1ff28964691
     steps:
       - name: Checkout exact PR head
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -107,9 +107,11 @@ jobs:
           set -uo pipefail
           output="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE"
           mkdir -p "$output"
+          # The runner has no ALSA device. Silence capture only, not the real renderer
+          # or animation; retain a strict ERROR gate instead of ignoring audio failures.
           code=0
           LIBGL_ALWAYS_SOFTWARE=1 timeout 400 xvfb-run -a --server-args="-screen 0 1280x720x24" \
-            godot --path "$PROJECT" --resolution 1280x720 --fixed-fps 24 \
+            godot --path "$PROJECT" --resolution 1280x720 --fixed-fps 24 --audio-driver Dummy \
               --rendering-method gl_compatibility --rendering-driver opengl3 \
               --script res://tests/capture_q_migration.gd -- \
               "--phase=$PHASE" "--output=$output" "--source-sha=$SOURCE_SHA" > capture.log 2>&1 || code=$?
@@ -143,10 +145,42 @@ jobs:
         run: |
           set -euo pipefail
           folder="build/q-model-migration/$PHASE"
-          if [ -f "$folder/walk_frames/frame_047.jpg" ]; then
-            ffmpeg -hide_banner -loglevel error -framerate 24 -i "$folder/walk_frames/frame_%03d.jpg" \
-              -c:v libx264 -pix_fmt yuv420p -crf 19 "$folder/walk.mp4"
-          fi
+          test -f "$folder/walk_frames/frame_047.jpg"
+          ffmpeg -hide_banner -loglevel error -framerate 24 -i "$folder/walk_frames/frame_%03d.jpg" \
+            -frames:v 48 -c:v libx264 -pix_fmt yuv420p -crf 19 "$folder/walk.mp4"
+          ffprobe -v error -count_frames -select_streams v:0 \
+            -show_entries stream=width,height,r_frame_rate,nb_read_frames -of json \
+            "$folder/walk.mp4" > "$folder/walk_video.json"
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          folder = Path('build/q-model-migration') / os.environ['PHASE']
+          metadata = json.loads((folder / 'walk_video.json').read_text())['streams'][0]
+          assert int(metadata['nb_read_frames']) == 48, metadata
+          assert metadata['r_frame_rate'] == '24/1', metadata
+          metadata['file'] = 'walk.mp4'
+          metadata['sha256'] = hashlib.sha256((folder / 'walk.mp4').read_bytes()).hexdigest()
+          (folder / 'walk_video.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          print(f"::notice title=Q walking video {os.environ['PHASE']}::{metadata}")
+          PY
+
+      - name: Attribute the unchanged click-marker regression
+        if: always() && steps.project.outputs.path != ''
+        shell: bash
+        env:
+          PROJECT: ${{ steps.project.outputs.path }}
+          SOURCE_SHA: ${{ steps.project.outputs.source }}
+          PHASE: ${{ matrix.phase }}
+        run: |
+          # The gameplay CI reported this failure. Run the identical existing test
+          # on the exact base too; do not weaken it or repair unrelated input code.
+          set -uo pipefail
+          export CI_LOG_DIR="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE/regression"
+          source "$PROJECT/tools/ci_run_check.sh"
+          echo "::notice title=Q regression attribution $PHASE::source $SOURCE_SHA; destination_cue_lifecycle_test.gd is unchanged"
+          run_check destination_cue_lifecycle 360 godot --headless --resolution 1600x900 \
+            --path "$PROJECT" --script res://tests/destination_cue_lifecycle_test.gd || status=1
+          run_check_summary
 
       - name: Publish previews 1–10
         if: always()
