@@ -147,17 +147,28 @@ func _check_pose(animator: CharacterVisualAnimation, profile: String) -> void:
 	var production := await _poses(skeleton)
 	var pose := ReviewStage.set_pose(animator, profile, 0.0)
 	var at_zero := await _poses(skeleton)
+	pose.set("active", false)
+	var production_again := await _poses(skeleton)
+	pose.set("active", true)
+	# Some bones move a little between frames even with the clip paused (the protagonist's
+	# IK targets drift by under a millimetre): what each bone does with no overlay at all is
+	# the tolerance, and the overlay at intensity 0 must stay inside it.
 	var worst := 0.0
 	var worst_bone := ""
+	var worst_noise := 0.0
 	for index in production.size():
-		var a: Transform3D = production[index]
-		var b: Transform3D = at_zero[index]
-		var drift := a.origin.distance_to(b.origin) + (a.basis.get_rotation_quaternion().angle_to(b.basis.get_rotation_quaternion()))
-		if drift > worst:
-			worst = drift
+		var noise := _drift(production[index], production_again[index])
+		var drift := minf(_drift(production[index], at_zero[index]), _drift(production_again[index], at_zero[index]))
+		if drift - noise > worst:
+			worst = drift - noise
 			worst_bone = skeleton.get_bone_name(index)
+			worst_noise = noise
+	print("%s at intensity 0: largest excess over the clip's own frame-to-frame drift %.6f (%s)" % [profile, worst, worst_bone])
 	if worst > 0.0005:
-		_failures.append("%s at intensity 0 moved %s by %.5f (should be the production pose)." % [profile, worst_bone, worst])
+		_failures.append(
+			"%s at intensity 0 moved %s by %.5f beyond its own drift of %.5f (should be the production pose)."
+			% [profile, worst_bone, worst + worst_noise, worst_noise]
+		)
 	pose.set("intensity", 1.0)
 	var posed := await _poses(skeleton)
 	var applied: Dictionary = pose.call("get_last_applied")
@@ -215,6 +226,10 @@ func _check_hesitation(animator: CharacterVisualAnimation) -> void:
 	animator.clear_reported_velocity()
 	ReviewStage.set_pose(animator, "", 0.0)
 	await process_frame
+
+
+func _drift(a: Transform3D, b: Transform3D) -> float:
+	return a.origin.distance_to(b.origin) + a.basis.get_rotation_quaternion().angle_to(b.basis.get_rotation_quaternion())
 
 
 func _hold(animator: CharacterVisualAnimation, clip: String, fraction: float) -> void:

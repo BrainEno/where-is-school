@@ -60,12 +60,12 @@ D1_P = {
     "key_direction": (0.15, 1.0, 0.3),
     "threshold": 0.22,
     "key_color": "#F2F0E6",
-    "shadow_color": "#1B2440",
+    "shadow_color": "#28314F",
     "edge_color": "#7A3550",
     "stage_share": 0.72,
     "pool_low": 0.35,
     "pool_high": 1.5,
-    "pool_floor": 0.32,
+    "pool_floor": 0.5,
 }
 D1_Q = {
     "key_direction": (-0.3, -0.6, 0.75),
@@ -172,6 +172,7 @@ D2_Q = {
     "grain_amount": 0.42,
 }
 NO_HATCH = {"hatch_start": 0.0, "cross_start": 0.0, "grain_amount": 0.0}
+SKIN_HATCH = {"hatch_start": 0.36, "cross_start": 0.0, "hatch_strength": 0.6}
 
 D2_PROTAGONIST = {
     "label": "review D2 charcoal and pastel: protagonist",
@@ -179,7 +180,7 @@ D2_PROTAGONIST = {
     "outline": {"ink": "#1A1A20", "width": 0.011, "width_variation": 0.85, "gap": 0.18, "boil_fps": 6.0},
     "parts": {
         "protagonist_mat_skin": part(
-            D2_P, albedo="#D9CFB8", pastel_b="#B8C4A8", grain_amount=0.3, shade_tint="#8FA0B8",
+            D2_P, SKIN_HATCH, albedo="#D9CFB8", pastel_b="#C8CCB0", grain_amount=0.25, shade_tint="#8FA0B8",
             **patch(1, P_UNDER_EYE, "#6A4A7A", 0.85), **patch(2, P_NOSE, "#C0503A", 0.55), outline=True,
         ),
         "protagonist_mat_skinbody": part(D2_P, albedo="#D2C6AC", pastel_b="#B8C4A8", grain_amount=0.3, shade_tint="#8FA0B8", outline=True),
@@ -189,7 +190,7 @@ D2_PROTAGONIST = {
         ),
         "protagonist_mat_hair": part(D2_P, albedo="#2A2628", pastel_b="#3A3448", grain_amount=0.4, shade_tint="#C0C0D0", outline=True),
         "protagonist_head/protagonist_mat_hair": part(D2_P, NO_HATCH, albedo="#2A2427", pastel_b="#2A2427", outline=False),
-        "protagonist_mat_jacket": part(D2_P, albedo="#4A5260", pastel_b="#3A4458", grain_amount=0.38, shade_tint="#8088A8", hatch_strength=0.9, outline=True),
+        "protagonist_mat_jacket": part(D2_P, albedo="#4A5260", pastel_b="#424B5E", grain_amount=0.25, shade_tint="#8088A8", hatch_strength=0.9, outline=True),
         "protagonist_mat_button": part(D2_P, NO_HATCH, albedo="#A08050", pastel_b="#A08050", outline=False),
         "protagonist_mat_shirt": part(D2_P, albedo="#E0D8C0", pastel_b="#D0D4C4", grain_amount=0.25, shade_tint="#A0A8B8", outline=False),
         "protagonist_mat_trousers": part(D2_P, albedo="#5A4E44", pastel_b="#4A4038", grain_amount=0.35, shade_tint="#8A86A0", outline=True),
@@ -210,7 +211,7 @@ D2_QLOOK = {
     "outline": {"ink": "#2E2018", "width": 0.011, "width_variation": 0.7, "gap": 0.1, "boil_fps": 6.0},
     "parts": {
         "q_mat_skin": part(
-            D2_Q, albedo="#EBB88A", pastel_b="#F0A070", shade_tint="#A0A878",
+            D2_Q, SKIN_HATCH, albedo="#EBB88A", pastel_b="#EDAA7C", grain_amount=0.25, shade_tint="#A0A878",
             **patch(1, Q_CHEEKS, "#D8503A", 0.7), **patch(2, Q_EARS, "#D05A40", 0.6),
             mirror_center_x=Q_MIRROR, outline=True,
         ),
@@ -222,9 +223,9 @@ D2_QLOOK = {
         "q_mat_lip": part(D2_Q, NO_HATCH, albedo="#B84838", pastel_b="#B84838", outline=False),
         "q_mat_mouthdark": part(D2_Q, NO_HATCH, albedo="#3B1713", pastel_b="#3B1713", outline=False),
         "q_mat_teeth": part(D2_Q, NO_HATCH, albedo="#E0D0B0", pastel_b="#E0D0B0", outline=False),
-        "q_mat_cloth": part(D2_Q, albedo="#7A9A4A", pastel_b="#C0B040", shade_tint="#7080A0", outline=True),
+        "q_mat_cloth": part(D2_Q, albedo="#7A9A4A", pastel_b="#93A852", grain_amount=0.22, shade_tint="#7080A0", outline=True),
         "q_mat_collar": part(D2_Q, NO_HATCH, albedo="#D0B070", pastel_b="#D0B070", outline=False),
-        "q_mat_pants": part(D2_Q, albedo="#3A4868", pastel_b="#4A5880", shade_tint="#8888A8", outline=True),
+        "q_mat_pants": part(D2_Q, albedo="#3A4868", pastel_b="#42517A", grain_amount=0.18, shade_tint="#8888A8", outline=True),
         "q_mat_shoes": part(D2_Q, albedo="#4A3428", pastel_b="#5A4030", outline=True),
         "q_mat_sole": part(D2_Q, NO_HATCH, albedo="#D0C0A0", pastel_b="#D0C0A0", outline=False),
     },
@@ -253,10 +254,10 @@ D3_PROTAGONIST = {
     "outline": {"ink": "#141018", "width": 0.013},
     "parts": {
         "protagonist_mat_skin": planes(
-            "#C8C49A", "#7FA49C", "#E2D6B0", "#6A4A6E", "#4A5A80", shade_tint="#6070A8",
+            "#CBC39E", "#9EAE9A", "#DED3AE", "#8E7282", "#76809A", shade_tint="#6070A8", jitter=0.2,
             **patch(1, P_UNDER_EYE, "#3A3070", 0.85), **patch(2, P_CHEEK_HOLLOW, "#5E8070", 0.5), outline=True,
         ),
-        "protagonist_mat_skinbody": planes("#BDB78E", "#76988F", "#D4C9A2", "#624566", "#445275", shade_tint="#6070A8", outline=True),
+        "protagonist_mat_skinbody": planes("#C2B994", "#97A693", "#D4C9A2", "#86697A", "#6E7892", shade_tint="#6070A8", jitter=0.2, outline=True),
         "protagonist_mat_hair": planes("#2C2A3A", "#1E2230", "#3A3A55", "#181418", "#141620", gouge_strength=0.3, outline=True),
         "protagonist_head/protagonist_mat_hair": flat("#2A2427", outline=False),
         "protagonist_mat_jacket": planes("#3E4E70", "#2A3048", "#56688C", "#1E1E30", "#22283E", shade_tint="#5058A0", outline=True),
@@ -280,7 +281,7 @@ D3_QLOOK = {
     "outline": {"ink": "#141018", "width": 0.013},
     "parts": {
         "q_mat_skin": planes(
-            "#F0A060", "#E07060", "#F8C880", "#8A9050", "#B06048", shade_tint="#7A8A60",
+            "#EDA46C", "#DC8268", "#F2BC84", "#B88E62", "#C27C5A", shade_tint="#7A8A60", jitter=0.18,
             **patch(1, Q_CHEEKS, "#E03A2A", 0.65), **patch(2, Q_EARS, "#D84030", 0.6),
             mirror_center_x=Q_MIRROR, outline=True,
         ),

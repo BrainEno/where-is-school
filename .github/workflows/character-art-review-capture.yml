@@ -66,8 +66,10 @@ jobs:
             --script res://tests/character_art_review_test.gd > check.log 2>&1
           code=$?
           cat check.log | cut -c1-400 | tail -n 150
-          lines=$(grep -vE "^(Godot Engine|OpenGL API|$)" check.log | grep -E "^(look |c on|d[123] on|protagonist|Q right|hair|hesitation|FAILURE|RESULT)" | tr '\n' '|')
+          lines=$(grep -vE "^(Godot Engine|OpenGL API|$)" check.log | grep -E "^(look |c on|d[123] on|protagonist|q_overfamiliar|Q right|hair|hesitation|FAILURE|RESULT)" | tr '\n' '|')
           echo "::notice title=character art review check::${lines:0:3900}"
+          engine=$(grep -E -A2 "^(ERROR|WARNING):" check.log | head -n 30 | tr '\n' '|' | cut -c1-3900)
+          [ -n "${engine}" ] && echo "::notice title=character art review check engine messages::${engine}"
           if grep -qE "SHADER ERROR|SCRIPT ERROR" check.log; then
             errors=$(grep -E -A3 "SHADER ERROR|SCRIPT ERROR" check.log | head -n 24 | tr '\n' '|' | cut -c1-1800)
             echo "::error title=character art review check: shader or script error::${errors}"

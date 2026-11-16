@@ -31,12 +31,12 @@ extends "res://tests/capture_character_art.gd"
 const ReviewStage = preload("res://scenes/dev/character_art_review/review_stage.gd")
 
 const VARIANTS: Array[String] = ["C", "C+A", "D1", "D2", "D3"]
-## Q at conversation distance: about 0.72 m from the protagonist, both in front of the board
+## Q at conversation distance: about 0.84 m from the protagonist, both in front of the board
 ## (the clear floor the production capture's own spots use), turned towards each other so the
 ## camera down the aisle sees them close to profile. The production capture keeps them apart;
 ## a conversation does not.
 const TALK_PROTAGONIST := Vector3(-1.25, 0.0, -2.6)
-const TALK_Q := Vector3(-0.55, 0.0, -2.75)
+const TALK_Q := Vector3(-0.43, 0.0, -2.8)
 
 
 func _run() -> void:
@@ -48,6 +48,7 @@ func _run() -> void:
 	if not await _boot():
 		await _finish()
 		return
+	await _stand_up()
 	match _group:
 		"review_bodies":
 			await _review_bodies()
@@ -148,10 +149,10 @@ func _review_faces() -> void:
 		await _variant(variant)
 		await _solo(_protagonist, 18.0)
 		await _wait(0.5)
-		faces.append(await _face_panel(_protagonist, _tag("protagonist_face", variant)))
+		faces.append(await _low_face_panel(_protagonist, _tag("protagonist_face", variant)))
 		await _solo(_q, -18.0)
 		await _wait(0.5)
-		q_faces.append(await _face_panel(_q, _tag("q_face", variant)))
+		q_faces.append(await _low_face_panel(_q, _tag("q_face", variant)))
 	faces.append_array(q_faces)
 	_sheet("review_faces_C_CA_D1_D2_D3_protagonist_then_q", faces, 5)
 	# A conversation: the two close and turned to each other, the pose's `converse` on.
@@ -215,6 +216,21 @@ func _review_light() -> void:
 # --- staging ------------------------------------------------------------------
 
 
+## The opening leaves the protagonist seated at his desk until the player's first deliberate
+## move (`PlayerController._wake_seated`); the production capture teleports him without that
+## move, so he holds `sit_idle` wherever he is placed. Here he is stood up through the
+## player's own public `settle_wake_pose()` (the get-up action, then upright), as the game
+## does on the first move.
+func _stand_up() -> void:
+	var before := _protagonist.get_current_clip()
+	await _player.settle_wake_pose(0.2)
+	await _poll(func() -> bool: return not _protagonist.is_playing_action(), 6.0)
+	await _wait(0.5)
+	_note("protagonist stood up: clip %s -> %s, seated %s" % [before, _protagonist.get_current_clip(), str(_protagonist.is_seated())])
+	if _protagonist.is_seated():
+		_failures.append("The protagonist is still seated after settle_wake_pose().")
+
+
 ## The two at conversation distance, turned towards each other.
 func _stage_talk() -> void:
 	_protagonist.visible = true
@@ -225,6 +241,21 @@ func _stage_talk() -> void:
 	_place(_q, TALK_Q, facing_q + 180.0)
 	await _wait(0.4)
 	_hide_nameplates()
+
+
+## The face at about 0.8 m from a little below the eyes, as a dialogue close-up frames a
+## lowered head (the production capture's face panel looks down at it from above and, with
+## the protagonist's head bowed, sees mostly hair).
+func _low_face_panel(subject: CharacterVisualAnimation, shot_name: String) -> Image:
+	var head := _head_point(subject) - Vector3.UP * 0.1
+	var frame := await _frame_from(head + Vector3.BACK * 0.8 - Vector3.UP * 0.08, head)
+	var camera := frame["camera"] as Camera3D
+	var image := frame["image"] as Image
+	camera.queue_free()
+	image.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
+	var side := int(image.get_height() * 0.62)
+	var rect := Rect2i(image.get_size() / 2 - Vector2i(side, side) / 2, Vector2i(side, side))
+	return _fit(image, rect, Vector2i(240, 240))
 
 
 ## Both, from down the aisle at dialogue distance, cropped to the heads and shoulders.
