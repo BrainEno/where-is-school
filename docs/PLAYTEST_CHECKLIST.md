@@ -119,6 +119,14 @@ GitHub release, if one exists). Record at the top:
       stops at once and the hint says the text is unread.
 - [ ] Settings → "Forget read text": the first press asks, the second clears; F then
       stops at once again.
+- [ ] Open the notebook (N, or Esc → Notebook): under the objective it says how much text
+      has been read ("Text read: 3% (7 / 228)"). Read a few more lines, reopen it: the
+      number went up. Look at the same thing twice: the second look adds nothing. Switch
+      language with the notebook open: same numbers, other words. After "Forget read text"
+      it reads 0%. It only names places you have read something in.
+- [ ] Start a conversation and start a new game from the menu while a line is still
+      typing; replay it and press F: skip passes the lines read whole and stops at the one
+      that was cut off.
 - [ ] Settings → Running → "Press to switch": one Shift press runs, the next walks;
       stopping for a moment also walks.
 - [ ] Quit with Alt+F4 and relaunch: no crash, no leftover window, and the game comes back

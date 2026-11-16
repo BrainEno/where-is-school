@@ -1028,6 +1028,33 @@ the runtime now includes `choice_id` in each presented option for this.
 - **Size:** capped at `MAX_LINES` / `MAX_CHOICES`.
 - **Who uses it:** one shared instance (`ReadLog.shared()`) serves the dialogue controller
   and the settings screen; tests replace it with `ReadLog.use_shared()`.
+- **When a line is read:** the controller asks `is_read` the moment a line appears (that is
+  the "read before" answer skip goes by), but records the line only once its whole text has
+  been on screen: on the frame the typing finishes or is completed, at once when text is
+  instant, or when the player moves on (an advance or a pick). A line taken off screen while
+  still typing (the world torn down by a new game, the window closed) is not recorded, and a
+  language switch in the middle of typing only queues the new text. Auto and skip both finish
+  the text before they pass a line, so neither records a line that was not shown whole.
+
+**Reading progress** (`scripts/dialogue/reading_progress.gd`, `class_name ReadingProgress`,
+a `RefCounted`). How much of the game's text has been read across runs, for the notebook.
+`ReadingProgress.build(dialogue, inspections)` lists every line the dialogue panel can show,
+once, from the content the controller already loaded: each conversation node with text, and
+each inspection's first reading and recollection. Repeat looks are not counted. The
+identities are `DialogueHistory.identify`'s, and the list is the union over every shipped
+language, so the total does not change with the language. `measure(read_log, locale)` asks
+`ReadLog.is_read` with each line's text in the language on screen, so an edited line counts
+as unread and a line read in two languages counts once. It returns `read`, `total`,
+`percent` (rounded down, so 100 means everything) and the `areas` that have been started and
+not finished. A line's area is where `JournalCatalog.place_key_for_chapter` files its chapter
+in the notebook. The prologue is the classroom; inner voices and rooms without a place name
+are "Elsewhere". An area with nothing read is never named. `DialogueController.get_reading_progress()`
+builds it once and measures on every call; the pause menu hands that callable to the notebook
+(`JournalPanel.set_progress_source`), which re-measures each time its page is built. The
+notebook shows one muted line under the objective, "Text read: 37% (120 / 324)", and a
+second naming up to three unfinished areas ("Classroom: 12 still unread · …"). The lines wrap,
+and nothing is shown when there is no content. `tests/reading_progress_test.gd` (Godot CI)
+covers this and the recording rule above.
 
 **Playback** (`scripts/dialogue/dialogue_playback.gd`, `class_name DialoguePlayback`). A
 small state machine that decides and never acts. The controller tells it what is on screen
