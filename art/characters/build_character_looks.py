@@ -39,6 +39,9 @@ ROOT = Path(__file__).resolve().parents[2]
 OUTLINE_ORDER = ["ink", "width"]
 PAINT_SHADER = "res://assets/shaders/characters/character_paint.gdshader"
 OUTLINE_SHADER = "res://assets/shaders/characters/character_outline.gdshader"
+# For a part marked `two_sided`: one whose GLB material is double-sided and whose triangles
+# face inward (N's eyeballs). The ext_resource is only written when a look uses it.
+TWO_SIDED_SHADER = "res://assets/shaders/characters/character_paint_two_sided.gdshader"
 SCRIPT = "res://scripts/actors/character_look.gd"
 
 # The biology-classroom experiment's ink (0.16, 0.14, 0.2), since the prologue art
@@ -352,11 +355,8 @@ def parameter(value: object) -> str:
 
 
 def shape_keys(part: dict) -> dict:
-    """What a part's own ink hull needs: its silhouette shaping, which the hull has to
-    follow, and its `hull_*` settings (written to the hull without the prefix)."""
-    keys = {key: value for key, value in part.items() if key.startswith("shape")}
-    keys.update({key[len("hull_"):]: value for key, value in part.items() if key.startswith("hull_")})
-    return keys
+    """A part's silhouette shaping, which its ink hull has to follow."""
+    return {key: value for key, value in part.items() if key.startswith("shape")}
 
 
 def sub_id(name: str) -> str:
@@ -382,7 +382,8 @@ def render(look: dict) -> str:
     parts: dict = look["parts"]
     shaped = {name for name, part in parts.items() if part.get("outline") and shape_keys(part)}
     lines: list[str] = []
-    load_steps = 3 + 1 + len(parts) + len(shaped) + 1
+    two_sided = any(part.get("two_sided") for part in parts.values())
+    load_steps = 3 + int(two_sided) + 1 + len(parts) + len(shaped) + 1
     lines.append(
         f'[gd_resource type="Resource" script_class="CharacterLook" load_steps={load_steps} format=3]'
     )
@@ -390,6 +391,8 @@ def render(look: dict) -> str:
     lines.append(f'[ext_resource type="Script" path="{SCRIPT}" id="1_look"]')
     lines.append(f'[ext_resource type="Shader" path="{PAINT_SHADER}" id="2_paint"]')
     lines.append(f'[ext_resource type="Shader" path="{OUTLINE_SHADER}" id="3_outline"]')
+    if two_sided:
+        lines.append(f'[ext_resource type="Shader" path="{TWO_SIDED_SHADER}" id="4_paint_two_sided"]')
     lines.append("")
     lines.extend(outline_block("outline", look, {}))
     for name in parts:
@@ -397,14 +400,15 @@ def render(look: dict) -> str:
             lines.extend(outline_block("outline_" + sub_id(name), look, shape_keys(parts[name])))
     for name, part in parts.items():
         settings = dict(PART_DEFAULTS)
-        settings.update({key: value for key, value in part.items() if not key.startswith("hull_")})
+        settings.update(part)
         outline = bool(settings.pop("outline"))
+        shader = "4_paint_two_sided" if settings.pop("two_sided", False) else "2_paint"
         lines.append(f'[sub_resource type="ShaderMaterial" id="{sub_id(name)}"]')
         lines.append(f'resource_name = "{name} (painted)"')
         if outline:
             hull = "outline_" + sub_id(name) if name in shaped else "outline"
             lines.append(f'next_pass = SubResource("{hull}")')
-        lines.append('shader = ExtResource("2_paint")')
+        lines.append(f'shader = ExtResource("{shader}")')
         for key in sorted(settings):
             lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
         lines.append("")

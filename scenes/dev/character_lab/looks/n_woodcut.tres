@@ -3,22 +3,13 @@
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_outline"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_paint_two_sided.gdshader" id="4_paint_two_sided"]
 
 [sub_resource type="ShaderMaterial" id="outline"]
 resource_name = "character_ink_outline"
 shader = ExtResource("3_outline")
 shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
 shader_parameter/width = 0.014
-shader_parameter/wobble = 0.7
-shader_parameter/wobble_scale = 9
-
-[sub_resource type="ShaderMaterial" id="outline_m_m_st_skin"]
-resource_name = "character_ink_outline"
-shader = ExtResource("3_outline")
-shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
-shader_parameter/width = 0.014
-shader_parameter/gap_center = Vector3(0.032, 1.532, -0.082)
-shader_parameter/gap_radius = Vector3(0.024, 0.017, 0.03)
 shader_parameter/wobble = 0.7
 shader_parameter/wobble_scale = 9
 
@@ -57,7 +48,7 @@ shader_parameter/wobble_scale = 9
 
 [sub_resource type="ShaderMaterial" id="m_m_st_skin"]
 resource_name = "m_st_skin (painted)"
-next_pass = SubResource("outline_m_m_st_skin")
+next_pass = SubResource("outline")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.8784, 0.7843, 0.6902, 1)
 shader_parameter/edge_break = 0.1
@@ -285,7 +276,7 @@ shader_parameter/shadow_fill = 0.3
 
 [sub_resource type="ShaderMaterial" id="m_m_st_sclera"]
 resource_name = "m_st_sclera (painted)"
-shader = ExtResource("2_paint")
+shader = ExtResource("4_paint_two_sided")
 shader_parameter/albedo = Color(0.8471, 0.8157, 0.7529, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
@@ -304,7 +295,7 @@ shader_parameter/shadow_fill = 0.6
 
 [sub_resource type="ShaderMaterial" id="m_m_st_iris"]
 resource_name = "m_st_iris (painted)"
-shader = ExtResource("2_paint")
+shader = ExtResource("4_paint_two_sided")
 shader_parameter/albedo = Color(0.2275, 0.1647, 0.1176, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
@@ -323,7 +314,7 @@ shader_parameter/shadow_fill = 0.6
 
 [sub_resource type="ShaderMaterial" id="m_m_st_pupil"]
 resource_name = "m_st_pupil (painted)"
-shader = ExtResource("2_paint")
+shader = ExtResource("4_paint_two_sided")
 shader_parameter/albedo = Color(0.0549, 0.0431, 0.0392, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
