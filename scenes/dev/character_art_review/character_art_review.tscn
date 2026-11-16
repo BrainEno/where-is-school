@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://scenes/dev/character_art_review/character_art_review.gd" id="1_review"]
-
-[node name="CharacterArtReview" type="Node3D"]
-script = ExtResource("1_review")
