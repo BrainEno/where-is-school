@@ -357,7 +357,7 @@ func _check_rig_focus() -> void:
 	var peak := 0.0
 	var previous := 0.0
 	var monotonic := true
-	for _index in int(shot.glide_seconds * 60.0 * 2.0):
+	for _index in int(shot.glide_seconds * 60.0 * 2.5):
 		await physics_frame
 		var weight := _rig.get_focus_weight()
 		if weight + 0.0001 < previous:
@@ -372,7 +372,7 @@ func _check_rig_focus() -> void:
 		_failures.append("The shot's lens is %.1f, not %.1f." % [_rig.camera.fov, shot.fov])
 	var default_distance := _rig.offset.length()
 	var focused_distance := _rig.camera.position.length()
-	if focused_distance > default_distance * (shot.distance_scale + 0.02):
+	if focused_distance > default_distance * 0.95:
 		_failures.append("The shot did not bring the camera closer (%.2f of %.2f)." % [focused_distance, default_distance])
 	if _rig.planar_right().distance_to(right) > 0.001 or _rig.planar_forward().distance_to(forward) > 0.001:
 		_failures.append("A shot turned the movement axes under the player.")

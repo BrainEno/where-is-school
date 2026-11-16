@@ -304,7 +304,8 @@ static func _smooth_damp(current: float, target: float, velocity: float, seconds
 	if (target - current > 0.0) == (value > target):
 		value = target
 		next_velocity = 0.0
-	if absf(value - target) < 0.0005 and absf(next_velocity) < 0.01:
+	# The tail of a critically damped approach is long; the last 0.2% is not worth a second.
+	if absf(value - target) < 0.002 and absf(next_velocity) < 0.05:
 		value = target
 		next_velocity = 0.0
 	return Vector2(clampf(value, 0.0, 1.0), next_velocity)
