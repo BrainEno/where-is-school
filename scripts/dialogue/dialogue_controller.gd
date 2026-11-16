@@ -71,6 +71,11 @@ var _read_log: ReadLog = null
 var _playback := DialoguePlayback.new()
 ## Whether the line on screen had been read before this showing: what skip goes by.
 var _current_was_read := false
+## The line on screen, not yet in the read log: {identity, locale, text}. A line is read once
+## its whole text has been on screen (or the player moved past it), not when it starts to type.
+var _pending_read: Dictionary = {}
+## How much of the game's text has been read; built from the loaded content when first asked.
+var _reading_progress: ReadingProgress = null
 ## The options on screen, with their ids, so a pick can be remembered.
 var _current_choices: Array = []
 ## False while the window has lost focus: nothing is passed while nobody is looking.
@@ -274,6 +279,14 @@ func set_read_log(replacement: ReadLog) -> void:
 
 
 ## Whether the line on screen had been read in an earlier showing.
+## How much of the game's text has been read, in any run, as `ReadingProgress.measure()`
+## gives it for the language on screen. Measured on every call, so it is always current.
+func get_reading_progress() -> Dictionary:
+	if _reading_progress == null:
+		_reading_progress = ReadingProgress.build(_library, _inspections)
+	return _reading_progress.measure(_read_log, L10n.current)
+
+
 func was_current_line_read() -> bool:
 	return _current_was_read
 
@@ -490,6 +503,7 @@ func _present_line(line: Dictionary, republished: bool = false) -> void:
 	_apply_line_state(line)
 	_remember_line(line, String(descriptor.get("identity", "")))
 	_panel.show_line(line)
+	_commit_read_if_shown()
 	if _backlog != null:
 		_backlog.add_entry(descriptor)
 	var is_subjective := bool(line.get("subjective", false))
@@ -507,11 +521,17 @@ func _publish_again(line: Dictionary) -> void:
 	_current_line = line
 	var descriptor := _descriptor(line)
 	_history.update_last(descriptor)
-	# The same line in the language now selected: remembered in that language too, but it
-	# is not a new line, so playback's clock and the "read before" answer stay as they were.
-	if _read_log != null:
-		_read_log.mark_read(String(descriptor.get("identity", "")), L10n.current, String(line.get("text", "")))
+	# The same line in the language now selected: remembered in that language too, once it
+	# is all on screen, but it is not a new line, so playback's clock and the "read before"
+	# answer stay as they were. If the old text was still typing, it was never read whole,
+	# so only the new one is waiting to be.
+	_pending_read = {
+		"identity": String(descriptor.get("identity", "")),
+		"locale": L10n.current,
+		"text": String(line.get("text", "")),
+	}
 	_panel.show_line(line, true)
+	_commit_read_if_shown()
 	if _backlog != null:
 		_backlog.replace_last(descriptor)
 
@@ -663,6 +683,9 @@ func _on_runtime_conversation_finished(conversation_id: StringName) -> void:
 func _close_presentation() -> void:
 	_queue.clear()
 	_current_choices = []
+	# A line taken off screen before it had finished typing was not read.
+	_commit_read_if_shown()
+	_pending_read = {}
 	# A presentation is a natural checkpoint for the read log: one write per conversation,
 	# not one per line.
 	if _read_log != null:
@@ -684,6 +707,9 @@ func _set_active(active: bool) -> void:
 
 
 func _on_advance_requested() -> void:
+	# Moving on is the player saying the line has been read. The panel and auto only ask once
+	# the text is all on screen; `advance_presentation()` from code is taken at its word.
+	_commit_read()
 	if _overlay != null:
 		_overlay.hide_check()
 	match _mode:
@@ -696,6 +722,7 @@ func _on_advance_requested() -> void:
 func _on_choice_selected(index: int) -> void:
 	if _mode != Mode.CONVERSATION:
 		return
+	_commit_read()
 	if _read_log != null and index >= 0 and index < _current_choices.size():
 		_read_log.mark_chosen(_choice_identity(_current_choices[index]))
 	_current_choices = []
@@ -715,16 +742,33 @@ func _on_backlog_requested() -> void:
 # --- Read log and reading modes ----------------------------------------------------
 
 
-## Records the line that just appeared and tells playback about it. The "read before"
-## answer is taken first, so the line that is being shown now does not count as its own
-## earlier reading.
+## Takes the line that just appeared and tells playback about it. The "read before" answer
+## is taken now, from the log as it was; the line itself goes into the log only once it has
+## been shown whole (`_commit_read_if_shown`).
 func _remember_line(line: Dictionary, identity: String) -> void:
 	var text := String(line.get("text", ""))
 	var locale := L10n.current
 	_current_was_read = _read_log != null and _read_log.is_read(identity, locale, text)
-	if _read_log != null:
-		_read_log.mark_read(identity, locale, text)
+	_pending_read = {"identity": identity, "locale": locale, "text": text}
 	_playback.begin_line(identity, text.length(), _current_was_read, locale)
+
+
+## Records the waiting line once the panel has finished typing it: at once with instant text,
+## otherwise on the frame the last character appears (or the player completes it).
+func _commit_read_if_shown() -> void:
+	if _pending_read.is_empty() or not is_instance_valid(_panel) or _panel.is_revealing():
+		return
+	_commit_read()
+
+
+func _commit_read() -> void:
+	if _pending_read.is_empty():
+		return
+	if _read_log != null:
+		_read_log.mark_read(
+			String(_pending_read["identity"]), String(_pending_read["locale"]), String(_pending_read["text"])
+		)
+	_pending_read = {}
 
 
 func _choice_identity(choice: Dictionary) -> String:
@@ -741,6 +785,7 @@ func _choice_identity(choice: Dictionary) -> String:
 func _process(delta: float) -> void:
 	if _panel == null:
 		return
+	_commit_read_if_shown()
 	if _playback.is_holding_skip() and not Input.is_action_pressed(&"dialogue_skip"):
 		_playback.release_skip()
 	var view := {
@@ -764,6 +809,7 @@ func _notification(what: int) -> void:
 		NOTIFICATION_APPLICATION_FOCUS_IN:
 			_window_focused = true
 		NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_EXIT_TREE:
+			_commit_read_if_shown()
 			if _read_log != null:
 				_read_log.flush()
 

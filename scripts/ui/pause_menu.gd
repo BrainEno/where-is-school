@@ -206,12 +206,16 @@ func get_journal_panel() -> JournalPanel:
 
 
 ## The notebook words its rows from the content the world's dialogue controller has
-## already loaded; built once, the first time it is wanted.
+## already loaded; built once, the first time it is wanted. Its reading progress comes from
+## the same controller, which holds the read log.
 func _ensure_journal_catalog() -> void:
-	if _journal.has_catalog():
-		return
 	var world := _world()
 	var dialogue := world.get_node_or_null(^"DialogueController") if world != null else null
+	if dialogue != null and dialogue.has_method("get_reading_progress") \
+			and not _journal.has_progress_source():
+		_journal.set_progress_source(Callable(dialogue, "get_reading_progress"))
+	if _journal.has_catalog():
+		return
 	if dialogue == null or not dialogue.has_method("get_dialogue_library"):
 		return
 	var library := dialogue.call("get_dialogue_library") as DialogueLibrary

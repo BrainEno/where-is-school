@@ -20,8 +20,8 @@
       "file": "01_opening_line.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -29,8 +29,8 @@
         1600,
         900
       ],
-      "sha256": "0901fd6d812e0cf930dc9c31aad4f5def5c3f0661140830a86cc271280c21e3d",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "9a94d4949cbb2a7bb104a90dac2f21515a39a256e3c8c04f02b6e8563ea0899b",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1037,8 +1037,8 @@
       "file": "ui-dialogue-1280x720-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1046,8 +1046,8 @@
         1280,
         720
       ],
-      "sha256": "6e5f7dea35d2a0b4ec6bcc8a2bf4dc32199833eebbb034d8195746d1b7cf1297",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "eea957cbeac6948406dbff50546986e7ee4e6266c4d1b7451f738ec352eb7398",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1061,8 +1061,8 @@
       "file": "ui-dialogue-1280x720-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1070,8 +1070,8 @@
         1280,
         720
       ],
-      "sha256": "5bb935abc5caa4ed667d525e13ed5a423eb1dd4619583b3df0aef70b53cd94dc",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "7092cf17242ada5d352233ee93054a4962f8b6b0bb6c6b1a1fd71e5308536860",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1085,8 +1085,8 @@
       "file": "ui-dialogue-1600x900-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1094,8 +1094,8 @@
         1600,
         900
       ],
-      "sha256": "8511e0e072f4afc32aa162d3501e45fe70615416bb4c893d59ccb0db5d6ed5a0",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "b790a0f1a0a0bbb989231af796b7b93315d1431bb92d72effd24048b91fe66af",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1109,8 +1109,8 @@
       "file": "ui-dialogue-1600x900-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1118,8 +1118,8 @@
         1600,
         900
       ],
-      "sha256": "f8fa1a08f8c26ab5e21a806ff89894503bcb86ed2d444eea9cd07d3f960526f6",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "f35d1c0d522a799f337d9cdf6e5a1294f57dd71ac11352301675d288f6c83ff4",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1133,8 +1133,8 @@
       "file": "ui-dialogue-1920x1080-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1142,8 +1142,8 @@
         1920,
         1080
       ],
-      "sha256": "1e12d5d938f797c06c762da0102f6dd61c835269809d781674e5cc92e877058e",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "687027954286820824f36278e6cb6535a9bb133d8cfa417fc47d9f49adb5d43b",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",
@@ -1157,8 +1157,8 @@
       "file": "ui-dialogue-1920x1080-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "0b80195c66e85ac2fa8c186c6e8d83c4e16a88d7",
-        "run_id": 43610328784,
+        "commit": "be396aa9756499a9302cc2c71ec7b0de107a49da",
+        "run_id": 43796455295,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1166,8 +1166,8 @@
         1920,
         1080
       ],
-      "sha256": "a8727bd71c63f12fb3c2a11278536c75be9eec9567e16fb6e6dcbbf8774edf4f",
-      "ui_fingerprint": "d265457cdbc0d4f4",
+      "sha256": "cd69c4bb0ab03e2df737749de593d4033fc79efa88810535f9e51982de3e8834",
+      "ui_fingerprint": "5dec275f260eee12",
       "shows": {
         "conversation": "q_wake",
         "kind": "dialogue",

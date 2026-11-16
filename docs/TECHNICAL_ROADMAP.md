@@ -74,7 +74,8 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
 - ~~Journal and unreliable route notebook.~~ Implemented: the notebook
   (`scripts/ui/journal_panel.gd`, see `docs/ARCHITECTURE.md` §5g "The notebook") reads the
   knowledge log by identity, files it by place, filters the four kinds and shows the
-  places reached. Still not built: any notebook *content* of its own (annotations,
+  places reached, and how much of the game's text has been read across runs
+  (`ReadingProgress`, `docs/ARCHITECTURE.md` §5n). Still not built: any notebook *content* of its own (annotations,
   contradictions the player can mark), which is a writing decision, not a system.
 - Dialogue portrait **art**. The contract exists (see the requirements table in §3):
   `CharacterProfile` has optional `portrait` / `portrait_path` and composition fields,
@@ -140,7 +141,7 @@ held to, and each is covered by an automated check:
 | Choices and conditional choices | `DialogueGraph` conditions, `tests/dialogue_runtime_test.gd` |
 | Story flags and explicit state changes | `StoryFlags`, effects, `tests/narrative_state_test.gd` |
 | History/backlog | `DialogueHistory`, `BacklogPanel`, `tests/language_switch_test.gd` |
-| Accessibility controls | **partly implemented**: text size and typing speed, the interface scale, volume and input rebinding (`Settings`); auto-advance, skip read text and the read log, and sprint as a toggle (`DialoguePlayback`, `ReadLog`, `PlayerController.sprint_mode`, `docs/ARCHITECTURE.md` §5n, `tests/dialogue_playback_test.gd`). Not implemented: reduced camera motion, high-contrast or opaque reading band, screen-reader output. |
+| Accessibility controls | **partly implemented**: text size and typing speed, the interface scale, volume and input rebinding (`Settings`); auto-advance, skip read text and the read log, and sprint as a toggle (`DialoguePlayback`, `ReadLog`, `PlayerController.sprint_mode`, `docs/ARCHITECTURE.md` §5n, `tests/dialogue_playback_test.gd`); cross-run reading progress in the notebook (`ReadingProgress`, `tests/reading_progress_test.gd`). Not implemented: reduced camera motion, high-contrast or opaque reading band, screen-reader output. |
 | Interruption by environmental events | `InnerVoiceDirector`, beat locking in `OpeningSequence` |
 | Deterministic serialization of conversation state | not required yet: mid-conversation saves are not implemented (save/load is in the planned list in §2). The dice core is seeded and replayable (`tests/check_resolver_test.gd`). |
 
