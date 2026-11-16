@@ -1,0 +1,359 @@
+name: Visual experiments capture
+
+# Evidence for the standalone visual experiments lab (scenes/dev/visual_experiments/): the
+# frames, rendered by the engine on three renderers, the renderer's own cost counters, and
+# a recorded walk through all four rooms. `tests/capture_visual_experiments.gd` takes the
+# frames and runs the probes; `tests/capture_visual_experiments_walkthrough.gd` records the
+# walk. See their headers.
+#
+# The lab is development-only (every export preset excludes scenes/dev/); this workflow
+# touches nothing the game ships and changes no project setting - Mobile is selected with
+# the `--rendering-method` command-line override.
+#
+# Frames are published inline as base64 `::notice` annotations (GitHub keeps 10 per step,
+# 50 per job; hence two frames per job), so they can be read through the REST API even where the artifact store
+# cannot be reached; every job also uploads its frames at full size.
+
+on:
+  pull_request:
+    paths:
+      - "scenes/dev/visual_experiments/**"
+      - "tests/capture_visual_experiments.gd"
+      - "tests/capture_visual_experiments_walkthrough.gd"
+      - ".github/workflows/visual-experiments-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    name: frames (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: compatibility-a
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "overview,collage_room"
+            flags: "probes=1"
+          - group: compatibility-b
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "collage_detail,collage_flatness"
+            flags: "perf=1"
+          - group: compatibility-c
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "corridor_long,corridor_giant_door"
+            flags: "perf=1"
+          - group: compatibility-d
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "corridor_window,expression_room"
+            flags: "perf=1"
+          - group: compatibility-e
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "expression_shadow,threshold_3d"
+            flags: "perf=1"
+          - group: compatibility-f
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "threshold_painted,classroom_picture"
+            flags: "perf=1"
+          - group: compatibility-g
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "backstage"
+            flags: "perf=1"
+          - group: forward-plus-a
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "overview,collage_detail"
+            flags: "probes=1"
+          - group: forward-plus-b
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "expression_room,threshold_painted"
+            flags: "perf=1"
+          - group: mobile-a
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "overview,collage_detail"
+            flags: "probes=1"
+          - group: mobile-b
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "expression_room,threshold_painted"
+            flags: "perf=1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Install a software Vulkan driver
+        if: matrix.driver == 'vulkan'
+        shell: bash
+        run: |
+          # The runner has no GPU. Forward+ and Mobile need Vulkan; lavapipe (Mesa's software
+          # Vulkan) renders both.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary 2>&1 | head -n 20 || true
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+          LABEL: ${{ matrix.label }}
+          DRIVER: ${{ matrix.driver }}
+          METHOD: ${{ matrix.method }}
+          ONLY: ${{ matrix.only }}
+          FLAGS: ${{ matrix.flags }}
+        run: |
+          set +e -uo pipefail
+          # The checkout carries the committed evidence frames; start from an empty folder so
+          # only this run's frames are published.
+          rm -rf "docs/screenshots/visual_experiments/${LABEL}"
+          method_args=()
+          if [ -n "${METHOD}" ]; then
+            method_args=(--rendering-method "${METHOD}")
+          fi
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver "${DRIVER}" "${method_args[@]}" \
+            --script res://tests/capture_visual_experiments.gd -- \
+            "label=${LABEL}" "only=${ONLY}" width=640 quality=0.7 ${FLAGS} \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "VISUAL_LAB|PASS|FAIL|SCRIPT ERROR|SHADER ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
+          out="docs/screenshots/visual_experiments/${LABEL}"
+          ls -l "${out}" || true
+          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" 2>/dev/null | wc -l)
+          echo "frames=${frames} exit=${code}"
+          if [ "${frames}" -lt 1 ]; then
+            echo "::error title=visual lab capture::${GROUP} wrote ${frames} frame(s), exit ${code}"
+            tail -n 30 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/frames"
+          for file in "${out}"/*.jpg; do
+            cp "${file}" "${RUNNER_TEMP}/frames/${LABEL}_$(basename "${file}")"
+          done
+          cp "${out}/FRAMES.md" "${RUNNER_TEMP}/frames/${GROUP}_FRAMES.md" 2>/dev/null || true
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls "${RUNNER_TEMP}/frames" | grep '\.jpg$' | sort); do
+            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+          # The renderer line, the per-frame counters and the probes, for the next step.
+          grep -E "^VISUAL_LAB_(CAPTURE|PERF|PROBE|ready)|^VISUAL_LAB ready|SHADER ERROR" \
+            "${RUNNER_TEMP}/capture.log" | cut -c1-3800 > "${RUNNER_TEMP}/perf.txt" || true
+
+      - name: Publish renderer and cost counters
+        if: always()
+        shell: bash
+        run: |
+          head -n 10 "${RUNNER_TEMP}/perf.txt" 2>/dev/null | while IFS= read -r line; do
+            echo "::notice title=visual lab ${{ matrix.group }}::${line}"
+          done
+
+      # Four steps of ten frame parts each: 40 of the 50 annotations a job may keep, the
+      # other ten being the counters above.
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: visual-experiments-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
+
+  walkthrough:
+    name: walkthrough (recording)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+
+      - name: Transcoding tools
+        shell: bash
+        run: |
+          if ! command -v ffmpeg > /dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq --no-install-recommends ffmpeg > /dev/null
+          fi
+          ffmpeg -version | head -n 1 || echo "::warning title=visual lab walkthrough::ffmpeg is not available"
+
+      - name: Record
+        shell: bash
+        run: |
+          # Movie maker renders at a fixed step and writes every frame, so the recording is
+          # the same on every run; the PNG sequence is encoded afterwards.
+          set +e -uo pipefail
+          mkdir -p build/visual_walk
+          xvfb-run -a --server-args="-screen 0 960x540x24" \
+            godot --path . --resolution 960x540 --rendering-driver opengl3 \
+            --write-movie build/visual_walk/frame.png --fixed-fps 24 \
+            --script res://tests/capture_visual_experiments_walkthrough.gd \
+            > "${RUNNER_TEMP}/record.log" 2>&1
+          code=$?
+          grep -E "VISUAL_LAB|PASS|FAIL|SCRIPT ERROR|SHADER ERROR|Movie" "${RUNNER_TEMP}/record.log" | head -n 30
+          frames=$(find build/visual_walk -name '*.png' | wc -l)
+          echo "recording: exit ${code}, ${frames} frames"
+          summary=$(grep -E "^VISUAL_LAB_WALKTHROUGH" "${RUNNER_TEMP}/record.log" | head -n 1)
+          echo "::notice title=visual lab walkthrough::exit ${code}, ${frames} PNG frames; ${summary}"
+          if [ "${frames}" -lt 240 ]; then
+            echo "::error title=visual lab walkthrough::${frames} frames were written (exit ${code})"
+            tail -n 30 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
+            exit 1
+          fi
+          encoded=""
+          : > "${RUNNER_TEMP}/ffmpeg.log"
+          for spec in "libx264:mp4:-preset slow -crf 24" "libvpx-vp9:webm:-b:v 0 -crf 34 -row-mt 1" "mpeg4:mp4:-q:v 4"; do
+            codec=${spec%%:*}
+            rest=${spec#*:}
+            container=${rest%%:*}
+            options=${rest#*:}
+            out="build/visual_experiments_walkthrough.${container}"
+            # shellcheck disable=SC2086
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/visual_walk/*.png' \
+              -c:v "${codec}" ${options} -pix_fmt yuv420p -movflags +faststart \
+              "${out}" >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ $? -eq 0 ] && [ -s "${out}" ]; then
+              encoded="${out}"
+              echo "::notice title=visual lab walkthrough::encoded with ${codec} ($(stat -c%s "${out}") bytes)"
+              break
+            fi
+            rm -f "${out}"
+          done
+          if [ -z "${encoded}" ]; then
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/visual_walk/*.png' \
+              -vf "scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" \
+              build/visual_experiments_walkthrough.gif >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ -s build/visual_experiments_walkthrough.gif ]; then
+              encoded="build/visual_experiments_walkthrough.gif"
+              echo "::warning title=visual lab walkthrough::no video encoder accepted the frames; the recording is a GIF"
+            fi
+          fi
+          if [ -z "${encoded}" ]; then
+            echo "::error title=visual lab walkthrough::no encoder accepted the recording"
+            exit 1
+          fi
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 "${encoded}" || true
+          # Four stills from the film as small JPEGs, published inline: the walk is evidence
+          # even where the artifact cannot be downloaded.
+          mkdir -p build/stills
+          total=${frames}
+          index=0
+          for fraction in 12 42 70 96; do
+            index=$((index + 1))
+            pick=$(find build/visual_walk -name '*.png' | sort | sed -n "$(( total * fraction / 100 ))p")
+            ffmpeg -y -loglevel error -i "${pick}" -vf "scale=480:-2:flags=lanczos" -q:v 6 \
+              "build/stills/walk_${index}_$(printf '%02d' "${fraction}")pct.jpg"
+          done
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls build/stills | sort); do
+            data=$(base64 -w0 "build/stills/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+          rm -rf build/visual_walk
+
+      - name: Publish stills 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish stills 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish stills 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish stills 4/4
+        if: always()
+        shell: bash
+        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+
+      - name: Upload recording
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: visual-experiments-walkthrough-${{ github.run_attempt }}
+          path: |
+            build/visual_experiments_walkthrough.mp4
+            build/visual_experiments_walkthrough.webm
+            build/visual_experiments_walkthrough.gif
+            build/stills/
+            ${{ runner.temp }}/record.log
+            ${{ runner.temp }}/ffmpeg.log
+          if-no-files-found: warn

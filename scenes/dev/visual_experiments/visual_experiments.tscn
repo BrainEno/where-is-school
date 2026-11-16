@@ -1,0 +1,85 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/visual_experiments.gd" id="1_lab"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/observer.gd" id="2_observer"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/collage_room.gd" id="3_collage"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/corridor.gd" id="4_corridor"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/expression_room.gd" id="5_expression"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/threshold.gd" id="6_threshold"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/medium_switch.gd" id="7_switch"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="8_protagonist"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_observer"]
+radius = 0.3
+height = 1.7
+
+[node name="VisualExperiments" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+light_color = Color(1, 0.96, 0.9, 1)
+shadow_enabled = true
+
+[node name="Zones" type="Node3D" parent="."]
+
+[node name="Collage" type="Node3D" parent="Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+script = ExtResource("3_collage")
+
+[node name="Corridor" type="Node3D" parent="Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+script = ExtResource("4_corridor")
+
+[node name="Expression" type="Node3D" parent="Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -40)
+script = ExtResource("5_expression")
+
+[node name="Threshold" type="Node3D" parent="Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 0, -40)
+script = ExtResource("6_threshold")
+
+[node name="MediumSwitch" type="Node" parent="."]
+script = ExtResource("7_switch")
+
+[node name="Observer" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.2)
+floor_snap_length = 0.3
+script = ExtResource("2_observer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Observer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_observer")
+
+[node name="Visual" type="Node3D" parent="Observer"]
+
+[node name="Character" parent="Observer/Visual" instance=ExtResource("8_protagonist")]
+
+[node name="CameraRig" type="Node3D" parent="Observer"]
+
+[node name="Camera3D" type="Camera3D" parent="Observer/CameraRig"]
+current = true
+fov = 55.0
+near = 0.1
+far = 400.0
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Panel" type="ColorRect" parent="HUD"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 940.0
+offset_bottom = 150.0
+color = Color(0.035, 0.04, 0.045, 0.82)
+mouse_filter = 2
+
+[node name="Text" type="Label" parent="HUD/Panel"]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 916.0
+offset_bottom = 132.0
+theme_override_colors/font_color = Color(0.94, 0.91, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "Visual experiments"
