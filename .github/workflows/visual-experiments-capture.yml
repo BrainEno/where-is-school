@@ -137,6 +137,9 @@ jobs:
           FLAGS: ${{ matrix.flags }}
         run: |
           set +e -uo pipefail
+          # The checkout carries the committed evidence frames; start from an empty folder so
+          # only this run's frames are published.
+          rm -rf "docs/screenshots/visual_experiments/${LABEL}"
           method_args=()
           if [ -n "${METHOD}" ]; then
             method_args=(--rendering-method "${METHOD}")

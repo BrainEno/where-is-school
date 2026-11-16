@@ -51,16 +51,20 @@ const ZONE_FRAMINGS := {
 	&"collage": Vector3(15.0, 50.0, 7.5),
 	&"corridor": Vector3(0.0, 16.0, 4.2),
 	&"expression": Vector3(-35.0, 58.0, 9.0),
-	&"classroom": Vector3(-40.0, 52.0, 7.5),
+	&"classroom": Vector3(-30.0, 58.0, 6.5),
 	&"stage": Vector3(-70.0, 32.0, 7.0),
 }
-## Passages too narrow to look into from above get a low chase framing, looking along
-## them: [Rect2(x, z, width, depth), framing]. Checked before the zone's framing.
+## Behind the flats the stage's own framing would look at their painted fronts from the
+## wrong side; this one looks back at the plywood from the east.
+const STAGE_FRAMING_BACK := Vector3(110.0, 40.0, 6.0)
+## Places inside a room that want another framing: [Rect2(x, z, width, depth), framing],
+## checked before the zone's. Passages too narrow to look into from above get a low chase
+## framing looking along them; the strip behind the flats looks back at them.
 const PASSAGE_FRAMINGS: Array = [
 	[Rect2(1.6, -41.2, 6.4, 2.4), Vector3(-90.0, 14.0, 4.5)],
 	[Rect2(20.1, -41.0, 6.0, 2.0), Vector3(-90.0, 14.0, 4.5)],
+	[Rect2(49.8, -47.5, 2.5, 15.0), STAGE_FRAMING_BACK],
 ]
-const STAGE_FRAMING_BACK := Vector3(110.0, 40.0, 6.0)
 
 ## Stations: id, the character's feet, where it faces, the camera (a framing, or
 ## `Vector3.ZERO` for the room's own; the overview is a free camera: [eye, look]).
@@ -73,7 +77,7 @@ const STATIONS: Array = [
 	[&"expression", Vector3(11.0, 0.0, -37.6), Vector3(15.0, 0.0, -41.0), Vector3.ZERO],
 	[&"threshold", Vector3(31.5, 0.0, -40.0), Vector3(40.0, 0.0, -40.0), Vector3.ZERO],
 	[&"stage", Vector3(41.0, 0.0, -39.6), Vector3(48.0, 0.0, -40.5), Vector3.ZERO],
-	[&"backstage", Vector3(51.6, 0.0, -45.6), Vector3(45.0, 0.0, -39.0), STAGE_FRAMING_BACK],
+	[&"backstage", Vector3(51.6, 0.0, -45.6), Vector3(45.0, 0.0, -39.0), Vector3.ZERO],
 ]
 
 const ZONE_NOTES := {

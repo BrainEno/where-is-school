@@ -15,24 +15,57 @@ The lab sits outside the game on purpose. It touches no production scene or shad
 `project.godot`, player controller, dialogue, read log or location data. Its own test
 enforces this: no file under `scenes/`, `scripts/`, `data/`, `assets/` or `addons/` (outside
 `scenes/dev/`) names it, and the lab names no production code. Production *assets* (two
-classroom GLBs, four classroom textures, two laboratory textures, the protagonist) are
-instanced read-only. The release is guarded by the existing rule: both export presets
+classroom GLBs, four classroom textures, two laboratory textures, the protagonist and Q)
+are instanced read-only. The release is guarded by the existing rule: both export presets
 exclude `scenes/dev/*`, and `tools/verify_build.py` fails a package that contains it.
 
 ## 1. Walking it
 
 | Key | |
 |---|---|
-| WASD / arrows | walk (Shift faster); click to capture the mouse and look |
-| F | fly; then Q / E down / up, N passes through walls |
+| WASD / arrows | walk, relative to the camera (Shift jogs) |
+| Q / E | turn the view round the character |
+| mouse | orbit the view while captured (click to capture, Esc releases); wheel zooms; R resets |
+| F | free camera on/off (WASD fly, Q / E down / up, mouse look); the character waits |
 | 1–8 | stations: overview, start, collage, corridor, staff room, classroom, stage, backstage |
 | M | switch the medium by hand |
 | P | print a performance sample (`VISUAL_LAB_PERF`) |
 | H | hide the HUD (which shows renderer, draw calls, primitives, video memory) |
 
-The observer is the lab's own `CharacterBody3D` (`observer.gd`), not the game's player.
-It walks, collides and is moved by triggers like any body would be, so every effect is
-tested by walking into it.
+**Third person (owner decision, 2026-11-11).** You walk the lab as the game's protagonist,
+seen from behind and above, as in the game. The visitor is the lab's own
+`CharacterBody3D` (`observer.gd`), not the game's player. The character on it is the
+production `protagonist.tscn`, instanced read-only, and it animates itself from the
+body's velocity (idle / walk / jog). The camera is a lab-local follow camera modelled on
+the game's `CameraRig` (which the lab must not use):
+
+- **Framing per room.** Each room asks for its own (yaw, pitch, distance) and the camera
+  glides to it, the way each game location authors its camera angle:
+
+  | Room | Framing |
+  |---|---|
+  | Between rooms | (30°, 50°, 8 m) |
+  | Collage room | (15°, 50°, 7.5 m) |
+  | Corridor | low chase, (0°, 16°, 4.2 m), under the beams |
+  | Staff room | (−35°, 58°, 9 m), through the ceiling that is culled from above |
+  | Classroom | (−30°, 58°, 6.5 m) |
+  | Stage | (−70°, 32°, 7 m) |
+  | Behind the flats | (110°, 40°, 6 m), looking back at the plywood |
+
+  The two narrow passages (corridor → staff room, staff room → classroom) get a low chase
+  framing looking along them. The game's own framing is about (45°, 53°, 8 m).
+- **Walls.** The rooms are open-topped sets, so when a wall comes between the character
+  and the camera, the camera cranes up over it. It pushes in only if nothing clears.
+- **Walking is camera-relative,** and the character turns toward where it walks. While a
+  key is held, "forward" keeps the meaning it had when the key was pressed, so a room that
+  swings the camera round does not steer you.
+- **The corridor loop moves the camera with the character,** so the view is identical
+  before and after.
+
+The body walks, collides and is moved by triggers like any body would be, so every effect
+is still tested by walking into it. Zones, the medium switch and the room environments
+all follow the character's position, not the camera's. The figure on the stage is now Q,
+so the visitor does not meet a copy of itself.
 
 ## 2. What is in it
 
@@ -109,21 +142,21 @@ The plan view runs from the south (the start) northward:
 
 A plain classroom, made of the game's own desks and chairs on plaster and concrete, opens
 on a stage of theatre flats. The flats paint a corridor on plywood, and each wing
-paints its own vanishing point. The protagonist stands on the stage with a paper chair.
+paints its own vanishing point. Q stands on the stage with a paper chair.
 
-**Crossing the threshold changes the medium of everything you see.** When the observer's
+**Crossing the threshold changes the medium of everything you see.** When the character's
 body enters the stage's `Area3D`:
 
 1. The root viewport stops drawing 3D (`Viewport.disable_3d = true`).
 2. A `SubViewport` at half resolution, sharing the same `World3D`, renders the scene from a
-   camera that copies the observer's camera every frame.
+   camera that copies the follow camera every frame.
 3. A `TextureRect` on a `CanvasLayer` shows that texture through
    `shaders/painting_filter.gdshader`, a `canvas_item` shader. The shader smears along a
    noise stroke field, lifts saturation, posterises, inks Sobel edges and lays the painting
    crookedly on a paper mount.
 4. The painting *tears in* from the left over 0.7 s, so the change is seen happening.
 
-It is still a world. The flats keep their colliders, and the test sweeps the observer's
+It is still a world. The flats keep their colliders, and the test sweeps the character's
 capsule at the back flat while painted and it stops. Walk round behind the flats and you
 leave the trigger: the tear runs backwards and you see plywood, braces and stage weights in 3D
 (`12_backstage.jpg`). In the classroom, a framed picture on the wall is a *live* view of
@@ -232,6 +265,12 @@ source to the repository and the evidence frames about 0.6 MiB.
   Production rooms would keep one shadowed light.
 
 ## 6. Three ideas that could become real scenes
+
+**Approved for production by the owner on 2026-11-11.** The project proposals (in
+Chinese) are in [`docs/scene_proposals/`](scene_proposals/README.zh-CN.md). Each covers
+the goal, story beats, player verbs, layout, the technique taken from this lab, renderer
+caveats, budget, assets, risks, open owner questions and milestones. The text below is the
+original idea as the lab proposed it.
 
 1. **"The Thirteenth Chair" (staff-room interview).** A conversation scene in the staff room's
    language: colour fields, one shadowed slot light, twelve chairs and one, a painted shadow
