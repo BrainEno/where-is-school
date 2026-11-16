@@ -54,7 +54,7 @@ const SHADER_UNIFORMS := {
 	"ink_mark.gdshader": ["mark", "tint", "amount", "opacity", "mode"],
 	"blank_paper.gdshader": ["reveal", "origin", "texel", "screen_aspect"],
 	"concrete.gdshader": ["base_color", "aggregate_density", "formwork", "ruled_lines", "chill", "focus_amount"],
-	"cut_paper.gdshader": ["paper_sheet", "reverse_color", "grain", "chill", "focus_amount"],
+	"cut_paper.gdshader": ["paper_sheet", "reverse_color", "reverse_dye", "reverse_shade", "grain", "chill", "focus_amount"],
 }
 const CAPTURE_SCRIPTS: Array[String] = ["res://tests/capture_biology_classroom.gd"]
 const FORBIDDEN: Array[String] = [

@@ -13,7 +13,7 @@
 //        card shows when it is seen from the side
 //
 // The back of a piece (seen from the board) is the paper's reverse: the dye soaked
-// through, lighter and flatter than the face - for the thickness layer too, which is the
+// through, flatter and a touch darker than the face - for the thickness layer too, which is the
 // one in front from that side. Light and registers are the room's
 // (`room_tone.gdshader`): the two-step terminator, chill, dull, focus.
 shader_type spatial;
@@ -21,7 +21,9 @@ render_mode cull_disabled, depth_draw_opaque, specular_disabled;
 
 uniform sampler2D paper_sheet : source_color, filter_linear_mipmap, repeat_disable;
 uniform vec4 reverse_color : source_color = vec4(0.9, 0.88, 0.82, 1.0);
-uniform float reverse_dye : hint_range(0.0, 1.0) = 0.62;
+uniform float reverse_dye : hint_range(0.0, 1.0) = 0.9;
+// How much darker the reverse is than the face: flatter, a little in its own shade.
+uniform float reverse_shade : hint_range(0.0, 1.0) = 0.8;
 uniform float grain = 0.08;
 uniform float flatness = 0.18;
 uniform float terminator = 0.12;
@@ -74,7 +76,7 @@ void fragment() {
 		// the face, so from that side it is the one in front; its core colour shows only as
 		// the sliver round the cut, seen from the face side.
 		vec3 dyed = COLOR.a > 0.5 ? sampled.rgb * COLOR.rgb : sampled.rgb;
-		colour = mix(reverse_color.rgb, dyed, reverse_dye);
+		colour = mix(reverse_color.rgb, dyed, reverse_dye) * reverse_shade;
 	}
 	// The tooth of the paper, in the sheet's own pixels so it stays with the piece.
 	float tooth = value_noise(UV * 900.0) - 0.5;
