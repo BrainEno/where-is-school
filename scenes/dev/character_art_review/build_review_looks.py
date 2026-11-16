@@ -170,9 +170,10 @@ D2_Q = {
     "spacing_px": 8.0,
     "hatch_strength": 0.75,
     "grain_amount": 0.42,
+    "paper_glow": 0.04,
 }
 NO_HATCH = {"hatch_start": 0.0, "cross_start": 0.0, "grain_amount": 0.0}
-SKIN_HATCH = {"hatch_start": 0.36, "cross_start": 0.0, "hatch_strength": 0.6}
+SKIN_HATCH = {"hatch_start": 0.3, "cross_start": 0.0, "hatch_strength": 0.45}
 
 D2_PROTAGONIST = {
     "label": "review D2 charcoal and pastel: protagonist",
@@ -223,7 +224,7 @@ D2_QLOOK = {
         "q_mat_lip": part(D2_Q, NO_HATCH, albedo="#B84838", pastel_b="#B84838", outline=False),
         "q_mat_mouthdark": part(D2_Q, NO_HATCH, albedo="#3B1713", pastel_b="#3B1713", outline=False),
         "q_mat_teeth": part(D2_Q, NO_HATCH, albedo="#E0D0B0", pastel_b="#E0D0B0", outline=False),
-        "q_mat_cloth": part(D2_Q, albedo="#7A9A4A", pastel_b="#93A852", grain_amount=0.22, shade_tint="#7080A0", outline=True),
+        "q_mat_cloth": part(D2_Q, albedo="#6A8642", pastel_b="#7E9A4C", grain_amount=0.22, shade_tint="#7080A0", outline=True),
         "q_mat_collar": part(D2_Q, NO_HATCH, albedo="#D0B070", pastel_b="#D0B070", outline=False),
         "q_mat_pants": part(D2_Q, albedo="#3A4868", pastel_b="#42517A", grain_amount=0.18, shade_tint="#8888A8", outline=True),
         "q_mat_shoes": part(D2_Q, albedo="#4A3428", pastel_b="#5A4030", outline=True),
@@ -281,7 +282,7 @@ D3_QLOOK = {
     "outline": {"ink": "#141018", "width": 0.013},
     "parts": {
         "q_mat_skin": planes(
-            "#EDA46C", "#DC8268", "#F2BC84", "#B88E62", "#C27C5A", shade_tint="#7A8A60", jitter=0.18,
+            "#EDA46C", "#DC8268", "#F2BC84", "#B88E62", "#C27C5A", shade_tint="#7A8A60", jitter=0.08,
             **patch(1, Q_CHEEKS, "#E03A2A", 0.65), **patch(2, Q_EARS, "#D84030", 0.6),
             mirror_center_x=Q_MIRROR, outline=True,
         ),
@@ -293,7 +294,7 @@ D3_QLOOK = {
         "q_mat_lip": flat("#C03A2A", outline=False),
         "q_mat_mouthdark": flat("#3B1713", outline=False),
         "q_mat_teeth": flat("#E0D0B0", shadow_fill=0.6, outline=False),
-        "q_mat_cloth": planes("#8AB040", "#4A8060", "#C0C858", "#2E4A3A", "#3A5A50", shade_tint="#5A6A90", outline=True),
+        "q_mat_cloth": planes("#76983C", "#4A7A5C", "#A4B04E", "#2E4A3A", "#3A5A50", shade_tint="#5A6A90", outline=True),
         "q_mat_collar": flat("#D0A850", outline=False),
         "q_mat_pants": planes("#3A4E80", "#2A3460", "#5068A0", "#1A2038", "#222A48", outline=True),
         "q_mat_shoes": planes("#5A3A26", "#3E2A1E", "#6A4A30", "#22160E", "#2A1C14", gouge_strength=0.0, outline=True),

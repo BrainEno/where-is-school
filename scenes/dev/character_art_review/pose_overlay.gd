@@ -298,9 +298,9 @@ func _apply_reach(skeleton: Skeleton3D, profile: Dictionary) -> void:
 		return
 	var arm: int = _bones[arm_name]
 	var hand: int = _bones[hand_name]
-	# The partner's shoulder on Q's side, a little above.
+	# The partner's upper arm on Q's side: a hand put on someone, not a point at their face.
 	var toward_q := (Vector3(-local.x, 0.0, -local.z)).normalized()
-	var target := local + Vector3.UP * 1.36 + toward_q * 0.16 + Vector3(side * -0.04, 0.0, 0.0)
+	var target := local + Vector3.UP * 1.18 + toward_q * 0.18
 	var shoulder := skeleton.get_bone_global_pose(arm).origin
 	var hand_at := skeleton.get_bone_global_pose(hand).origin
 	var current := (hand_at - shoulder).normalized()
@@ -308,7 +308,7 @@ func _apply_reach(skeleton: Skeleton3D, profile: Dictionary) -> void:
 	if current.length_squared() < 0.0001 or wanted.length_squared() < 0.0001:
 		return
 	var arc := Quaternion(current, wanted)
-	var weighted := Quaternion.IDENTITY.slerp(arc, _converse_weight * clampf(intensity, 0.0, 1.0))
+	var weighted := Quaternion.IDENTITY.slerp(arc, 0.85 * _converse_weight * clampf(intensity, 0.0, 1.0))
 	var pose := skeleton.get_bone_global_pose(arm)
 	pose.basis = Basis(weighted) * pose.basis
 	skeleton.set_bone_global_pose(arm, pose)
