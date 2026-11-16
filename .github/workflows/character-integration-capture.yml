@@ -3,8 +3,9 @@ name: Character integration capture
 # Evidence for the character integration work (docs/CHARACTER_INTEGRATION.md): the
 # protagonist, Q and substitute teacher N photographed in the real classroom, through the
 # game's own scenes, lights and camera, by `tests/capture_character_integration.gd`. Every
-# sheet has one column per look variant: `before` (main before this work), the visual
-# experiments under scenes/dev/character_lab/looks/, and `after` (what the wrappers ship).
+# sheet has one column per look variant: `before` (main before this work), the second
+# schemes that were tried and not shipped (scenes/dev/character_lab/looks/), and `after`
+# (what the wrappers ship).
 #
 # Same publishing as `Character art capture`: each sheet is a JPEG, base64, split into
 # numbered 4000-character notices (concatenate the parts of one file in order and decode).
@@ -41,15 +42,15 @@ jobs:
         include:
           - name: protagonist
             group: protagonist
-            variants: "before,p_charcoal,after"
+            variants: "before,after"
             frames: ""
           - name: q-body
             group: q
-            variants: "before,q_oil,q_paper,after"
+            variants: "before,q_paper,after"
             frames: "body_sun,body_backlit"
           - name: q-face
             group: q
-            variants: "before,q_oil,q_paper,after"
+            variants: "before,q_paper,after"
             frames: "face,face_three_quarter"
           - name: q-motion
             group: q
@@ -57,11 +58,11 @@ jobs:
             frames: "talk,walk"
           - name: n-body
             group: n
-            variants: "before,n_chalk,n_woodcut,after"
+            variants: "before,n_woodcut,after"
             frames: "body_sun,body_shade"
           - name: n-face
             group: n
-            variants: "before,n_chalk,n_woodcut,after"
+            variants: "before,n_woodcut,after"
             frames: "face,lectern"
           - name: lineup
             group: lineup

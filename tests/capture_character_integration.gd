@@ -17,7 +17,9 @@ extends SceneTree
 ## Variants (see VARIANTS): `before` is main before this work - the protagonist's and Q's
 ## painted looks as they were (frozen copies under scenes/dev/character_lab/looks/before/) and
 ## N in her GLB's own materials, which is what she shipped with. `after` is whatever the
-## wrappers carry. The rest are the experiments under scenes/dev/character_lab/looks/.
+## wrappers carry (the protagonist's charcoal, Q's oil, N's chalk). `q_paper` and
+## `n_woodcut` are the second schemes, tried and not shipped, under
+## scenes/dev/character_lab/looks/.
 ##
 ## Groups (one CI job each, so each has its own annotation budget):
 ##   protagonist  head to feet in the sun and in the west wall's shade, the face, and the
@@ -52,10 +54,7 @@ const VARIANTS := {
 		"n": "original",
 	},
 	"after": {},
-	"p_charcoal": {"protagonist": LAB + "protagonist_charcoal.tres"},
-	"q_oil": {"q": LAB + "q_oil.tres"},
 	"q_paper": {"q": LAB + "q_paper.tres"},
-	"n_chalk": {"n": LAB + "n_chalk.tres"},
 	"n_woodcut": {"n": LAB + "n_woodcut.tres"},
 }
 const GROUP_FRAMES := {
@@ -74,7 +73,9 @@ const SUN_SPOT := Vector3(-1.25, 0.0, -2.6)
 const SHADE_SPOT := Vector3(-5.75, 0.0, 0.2)
 ## Three in a row for the shared-light frames (protagonist, Q, N, left to right as seen).
 const LINEUP_SUN := [Vector3(-2.15, 0.0, -2.75), Vector3(-1.25, 0.0, -2.55), Vector3(-0.35, 0.0, -2.75)]
-const LINEUP_SHADE := [Vector3(-5.8, 0.0, -0.45), Vector3(-5.8, 0.0, 0.25), Vector3(-5.8, 0.0, 0.95)]
+## Behind the second row, against the west wall: clear of the seated classmate (z -0.22)
+## and of desks B1 and C1, so the camera in the aisle sees all three head to foot.
+const LINEUP_SHADE := [Vector3(-5.85, 0.0, 2.0), Vector3(-5.85, 0.0, 2.45), Vector3(-5.85, 0.0, 2.9)]
 ## The protagonist's desk (the prologue's start), Q at his own, N at the lectern.
 const GAME_PLAYER := Vector3(-1.6, 0.0, 1.95)
 const LECTERN := Vector3(0.7, 0.12, -4.19)
@@ -264,12 +265,12 @@ func _apply_variant(variant: String) -> bool:
 		applier.look = look
 		var report := applier.apply_treatment(treatment)
 		_note(
-			"%s / %s: %s %s, %d of %d surfaces replaced, outlined %d, %d meshes rebuilt, kept %s"
+			"%s / %s: %s %s, %d of %d surfaces replaced, outlined %d, %d meshes rebuilt, %d kept"
 			% [
 				variant, label, String(report.get("treatment", "?")), String(report.get("look", "")),
 				int(report.get("replaced", 0)), int(report.get("surfaces", 0)),
 				(report.get("outlined", []) as Array).size(), (report.get("rebuilt_meshes", []) as Array).size(),
-				str(report.get("kept", [])),
+				(report.get("kept", []) as Array).size(),
 			]
 		)
 		if treatment == CharacterLookApplier.Treatment.PAINTED and not (report.get("kept", []) as Array).is_empty():
@@ -347,13 +348,13 @@ func _frame_lectern(variant: String) -> Image:
 	await _stage_room()
 	var n: CharacterVisualAnimation = _cast["n"]["animator"]
 	var head := _head_point(n)
-	var frame := await _frame_from(head + Vector3(1.6, 0.25, 3.2), head + Vector3(-0.2, -0.45, 0.0), 45.0)
+	var frame := await _frame_from(head + Vector3(0.9, 0.15, 2.2), head + Vector3(-0.1, -0.4, 0.0), 42.0)
 	var image: Image = frame["image"]
 	var box := _screen_box(frame["camera"], _subtree_aabb(n))
 	await _measure_drawn(n, frame["camera"], image, box, "%s_lectern_%s" % [_group, variant])
 	_drop_camera()
 	image.save_png("%s/%s_lectern_%s.png" % [SHOT_DIR, _group, variant])
-	return _fit(image, box.grow(int(box.size.y * 0.9)), WIDE_PANEL)
+	return _fit(image, box.grow(int(box.size.y * 0.3)), WIDE_PANEL)
 
 
 func _frame_lineup_sun(variant: String) -> Image:
@@ -535,8 +536,19 @@ func _set_interaction(enabled: bool) -> void:
 
 
 func _set_ui(shown: bool) -> void:
-	if _ui != null:
-		_ui.visible = shown
+	if _ui == null:
+		return
+	_ui.visible = shown
+	if shown:
+		# Without the opening, the wake-up fade is never lifted and the end card never
+		# hidden by the story: clear both, or the dialogue frames are a black screen.
+		var fade := _ui.get_node_or_null(^"FadeLayer") as FadeLayer
+		if fade != null:
+			fade.set_clear()
+			fade.visible = false
+		var end_card := _ui.get_node_or_null(^"EndCard") as Control
+		if end_card != null:
+			end_card.visible = false
 
 
 # --- cameras and panels ---------------------------------------------------------
@@ -628,6 +640,16 @@ func _grab(shot_name: String) -> Image:
 	await RenderingServer.frame_post_draw
 	var image := root.get_texture().get_image()
 	image.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
+	var total := 0.0
+	var count := 0
+	for y in range(0, image.get_height(), 16):
+		for x in range(0, image.get_width(), 16):
+			total += image.get_pixel(x, y).get_luminance()
+			count += 1
+	var mean := total / float(maxi(count, 1))
+	_note("%s: mean luminance %.3f" % [shot_name, mean])
+	if mean < 0.04:
+		_failures.append("%s is black (mean luminance %.3f): something covers the view." % [shot_name, mean])
 	return image
 
 
@@ -658,7 +680,10 @@ func _measure_drawn(subject: Node3D, camera: Camera3D, frame: Image, box: Rect2i
 				lum_sum += a.get_luminance()
 	var share := float(changed) / float(maxi(total, 1))
 	_note("%s: model draws %.0f%% of its box, mean luminance %.3f" % [shot_name, share * 100.0, lum_sum / float(maxi(changed, 1))])
-	if share < 0.1:
+	# The skinned AABB keeps the bind pose's arm span (the protagonist's is 0.98 m wide),
+	# so a correctly drawn figure fills only a tenth of it; this catches a model that is
+	# missing or transparent, not a thin one.
+	if share < 0.05:
 		_failures.append("%s draws only %.0f%% of its screen box in %s." % [subject.name, share * 100.0, shot_name])
 
 
