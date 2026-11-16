@@ -7,7 +7,7 @@ shader_type spatial;
 //   - every fragment is assigned to one of five planes by its skinned model-space normal
 //     (left-front "key", right-front "side", top, underside, back), with the boundary broken
 //     by rest-pose noise so the planes have cut, angular edges rather than smooth ones;
-//   - each plane has its own authored colour, fixed to the body (the protagonist's left
+//   - each plane has its own authored colour, fixed to the body (the protagonist's right
 //     cheek is always the green one), so colour describes the person, not the lamp;
 //   - plane boundaries are cut in with a thin gouge line (`gouge_*`), faded out at gameplay
 //     distance so the small figure does not turn into a net of lines;
