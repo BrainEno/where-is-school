@@ -28,7 +28,13 @@ import argparse
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import look_experiments  # noqa: E402  (the experiments' palettes, next to this file)
+
 ROOT = Path(__file__).resolve().parents[2]
+# The hull's first two parameters keep the order the looks were first written in, so a
+# look that sets nothing new is the same file as before.
+OUTLINE_ORDER = ["ink", "width"]
 PAINT_SHADER = "res://assets/shaders/characters/character_paint.gdshader"
 OUTLINE_SHADER = "res://assets/shaders/characters/character_outline.gdshader"
 SCRIPT = "res://scripts/actors/character_look.gd"
@@ -315,6 +321,11 @@ TARGETS = {
     "assets/characters/q/q_look.tres": Q,
 }
 
+# The character integration's experiments (look_experiments.py), written next to the
+# frozen copies of the looks main shipped before it, for the in-game comparison. They live
+# under scenes/dev/, which no export carries.
+EXPERIMENTS = look_experiments.experiments(PROTAGONIST, Q)
+
 
 def colour(hex_value: str) -> str:
     value = hex_value.lstrip("#")
@@ -338,14 +349,35 @@ def parameter(value: object) -> str:
     return str(value)
 
 
+def shape_keys(part: dict) -> dict:
+    """A part's silhouette shaping, which its ink hull has to follow."""
+    return {key: value for key, value in part.items() if key.startswith("shape")}
+
+
 def sub_id(name: str) -> str:
     return "m_" + name.replace("/", "__")
 
 
+def outline_block(sub: str, look: dict, extra: dict) -> list[str]:
+    """One ink hull material: the look's shared settings plus a part's own (its shape)."""
+    settings = {"ink": INK, "width": look["outline_width"]}
+    settings.update(look.get("outline", {}))
+    settings.update(extra)
+    lines = [f'[sub_resource type="ShaderMaterial" id="{sub}"]']
+    lines.append('resource_name = "character_ink_outline"')
+    lines.append('shader = ExtResource("3_outline")')
+    for key in OUTLINE_ORDER + sorted(k for k in settings if k not in OUTLINE_ORDER):
+        if key in settings:
+            lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
+    lines.append("")
+    return lines
+
+
 def render(look: dict) -> str:
     parts: dict = look["parts"]
+    shaped = {name for name, part in parts.items() if part.get("outline") and shape_keys(part)}
     lines: list[str] = []
-    load_steps = 3 + 1 + len(parts) + 1
+    load_steps = 3 + 1 + len(parts) + len(shaped) + 1
     lines.append(
         f'[gd_resource type="Resource" script_class="CharacterLook" load_steps={load_steps} format=3]'
     )
@@ -354,12 +386,10 @@ def render(look: dict) -> str:
     lines.append(f'[ext_resource type="Shader" path="{PAINT_SHADER}" id="2_paint"]')
     lines.append(f'[ext_resource type="Shader" path="{OUTLINE_SHADER}" id="3_outline"]')
     lines.append("")
-    lines.append('[sub_resource type="ShaderMaterial" id="outline"]')
-    lines.append('resource_name = "character_ink_outline"')
-    lines.append('shader = ExtResource("3_outline")')
-    lines.append(f"shader_parameter/ink = {colour(INK)}")
-    lines.append(f"shader_parameter/width = {look['outline_width']:g}")
-    lines.append("")
+    lines.extend(outline_block("outline", look, {}))
+    for name in parts:
+        if name in shaped:
+            lines.extend(outline_block("outline_" + sub_id(name), look, shape_keys(parts[name])))
     for name, part in parts.items():
         settings = dict(PART_DEFAULTS)
         settings.update(part)
@@ -367,7 +397,8 @@ def render(look: dict) -> str:
         lines.append(f'[sub_resource type="ShaderMaterial" id="{sub_id(name)}"]')
         lines.append(f'resource_name = "{name} (painted)"')
         if outline:
-            lines.append('next_pass = SubResource("outline")')
+            hull = "outline_" + sub_id(name) if name in shaped else "outline"
+            lines.append(f'next_pass = SubResource("{hull}")')
         lines.append('shader = ExtResource("2_paint")')
         for key in sorted(settings):
             lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
@@ -392,7 +423,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="fail if a written file differs")
     args = parser.parse_args()
     stale = []
-    for relative, look in TARGETS.items():
+    for relative, look in {**TARGETS, **EXPERIMENTS}.items():
         path = ROOT / relative
         text = render(look)
         if args.check:
