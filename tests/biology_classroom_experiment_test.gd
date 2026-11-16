@@ -330,6 +330,10 @@ func _check_closed(scene: Node3D) -> void:
 	var near := room.get_node_or_null("ShellNear") as GeometryInstance3D
 	if near != null:
 		_expect(near.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "The near walls shade the corridor.")
+		# Lit at full gain through the shadowless ceiling, the near walls went as pale as the
+		# sky and read as open.
+		var near_material := near.material_override as ShaderMaterial
+		_expect(near_material != null and float(near_material.get_shader_parameter("light_gain")) <= 0.5, "The near walls take the full sun and read as sky.")
 	if found == 0:
 		occluder.free()
 		return

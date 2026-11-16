@@ -141,6 +141,8 @@ const PROJECTION := Rect2(-1.55, 1.08, 2.3, 1.45)
 var room_material: ShaderMaterial = null
 ## Poured concrete: the floor, the platform laid on it, the lectern cast from it.
 var floor_material: ShaderMaterial = null
+## The east and south walls' own copy of the room's material (less sun; see _make_materials).
+var near_wall_material: ShaderMaterial = null
 var platform_material: ShaderMaterial = null
 var lectern_material: ShaderMaterial = null
 ## Every interior material the registers drive (chill, dull, focus).
@@ -262,8 +264,8 @@ func _make_materials() -> void:
 	ink_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ink_material.vertex_color_use_as_albedo = true
 	ink_material.albedo_color = Color.WHITE
-	# A pen line close to the lens would be a bar across the picture (the follow camera
-	# often sits beyond the drawn walls): it dissolves within a few metres of the camera.
+	# A pen line close to the lens would be a bar across the picture (a fixed shot stands
+	# against a wall, beside the corner lines): it dissolves within a few metres of the camera.
 	ink_material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_DITHER
 	ink_material.distance_fade_min_distance = 2.2
 	ink_material.distance_fade_max_distance = 4.6
@@ -274,7 +276,13 @@ func _make_materials() -> void:
 	lectern_material = _concrete(Color(0.6, 0.58, 0.55), 0.0, 1.0, 0.0)
 	lectern_material.set_shader_parameter("cool_color", Color(0.46, 0.5, 0.56))
 	lectern_material.set_shader_parameter("aggregate_density", 0.18)
-	register_materials = [room_material, floor_material, platform_material, lectern_material]
+	# The east and south walls: the same colour fields, but the afternoon that falls into
+	# the room through the (shadowless) ceiling barely touches them. Lit at full gain their
+	# plaster went as pale as the sky, and from the window side the closed room read as
+	# open above the dado.
+	near_wall_material = room_material.duplicate() as ShaderMaterial
+	near_wall_material.set_shader_parameter("light_gain", 0.3)
+	register_materials = [room_material, floor_material, platform_material, lectern_material, near_wall_material]
 	lamp_material = StandardMaterial3D.new()
 	lamp_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	lamp_material.albedo_color = Color(0.46, 0.48, 0.47)
@@ -403,7 +411,7 @@ func _build_shell() -> void:
 	# The threshold strip under the east wall, so the doorway has a floor.
 	_box(tool, Vector3(x1, -0.2, z0 - WALL), Vector3(x1 + WALL, 0.0, z1 + WALL), C_FLOOR_LINE)
 	_commit("Shell", tool, room_material)
-	var near_walls := _commit("ShellNear", near, room_material)
+	var near_walls := _commit("ShellNear", near, near_wall_material)
 	near_walls.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# The ceiling: plaster, the room's lid. It casts no shadow, so the afternoon still
 	# falls into the room the way it is painted.
