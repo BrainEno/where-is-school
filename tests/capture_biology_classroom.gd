@@ -54,7 +54,7 @@ const FRAMES := [
 	},
 	{
 		"name": "curtain_tearing", "beat": 3, "feet": Vector3(-5.9, 0.0, 2.2),
-		"face": Vector3(-7.0, 0.0, 2.2), "curtain": "animate", "settle": 1.25,
+		"face": Vector3(-7.0, 0.0, 2.2), "curtain": "animate", "settle": 0.3,
 		"note": "Drawing it: behind the curtain is a blank sheet, and the picture starts turning into a pencil drawing on an answer sheet, torn open from the window outward.",
 	},
 	{

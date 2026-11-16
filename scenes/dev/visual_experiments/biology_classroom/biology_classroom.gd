@@ -488,11 +488,12 @@ func _apply_registers() -> void:
 	var cold := Color(0.72, 0.8, 1.0)
 	var fluorescent := Color(0.94, 0.98, 0.95)
 	sun.light_color = warm.lerp(cold, b_weight).lerp(fluorescent, dull * 0.6)
-	sun.light_energy = lerpf(1.35, 0.95, b_weight)
+	# Outside is daylight, not glare: the yard's pale ground needs less light than the room.
+	sun.light_energy = lerpf(lerpf(1.35, 0.95, b_weight), 0.9, outside)
 	var environment := world_environment.environment
 	var inside_ambient := Color(0.44, 0.38, 0.52).lerp(Color(0.22, 0.26, 0.44), b_weight)
 	inside_ambient = inside_ambient.lerp(Color(0.5, 0.52, 0.5), dull)
-	environment.ambient_light_color = inside_ambient.lerp(Color(0.62, 0.66, 0.72), outside)
+	environment.ambient_light_color = inside_ambient.lerp(Color(0.4, 0.44, 0.52), outside)
 	var inside_background := Color(0.11, 0.09, 0.15).lerp(Color(0.05, 0.06, 0.12), b_weight)
 	inside_background = inside_background.lerp(Color(0.16, 0.17, 0.16), dull)
 	environment.background_color = inside_background.lerp(Color(0.72, 0.8, 0.86), outside)

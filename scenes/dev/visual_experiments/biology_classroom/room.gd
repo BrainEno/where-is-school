@@ -471,7 +471,7 @@ func _build_outside() -> void:
 		var where := Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(-16.0, YARD_Y + 1.78, -3.0 + index * 1.5))
 		Kit.sheet(self, "Washing%d" % index, Vector2(0.7, 0.7), where, material)
 	var trees: Array = [
-		[Vector3(-13.0, YARD_Y, -8.6), -PI * 0.5], [Vector3(-15.0, YARD_Y, 6.4), -PI * 0.5],
+		[Vector3(-13.0, YARD_Y, -8.6), -PI * 0.5], [Vector3(-11.5, YARD_Y, 7.2), -PI * 0.5],
 		[Vector3(13.6, YARD_Y, -8.0), PI * 0.5], [Vector3(14.2, YARD_Y, 12.0), PI * 0.5],
 		[Vector3(15.0, YARD_Y, 2.0), PI * 0.5],
 	]
