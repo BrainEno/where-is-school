@@ -209,7 +209,9 @@ func get_current_choices() -> Array:
 	var available := _available_choices(_node)
 	for index in available.size():
 		var choice: DialogueGraph.DialogueChoice = available[index]
-		presented.append({"index": index, "text": choice.text})
+		# The id lets the controller remember an option across runs (`ReadLog`); the index
+		# is still what `choose()` takes.
+		presented.append({"index": index, "text": choice.text, "choice_id": choice.choice_id})
 	return presented
 
 

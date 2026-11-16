@@ -81,7 +81,9 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   and the dialogue panel has a layout for them. No profile sets one, because no 2D
   portrait has been approved; the game shows names only until one is.
 - Versioned save/load, slot management, and schema migration.
-- Accessibility settings, audio mixing, and input rebinding.
+- Further accessibility settings (reduced camera motion, a high-contrast or opaque reading
+  band, screen-reader output). Auto-advance, skip, the read log and sprint as a toggle
+  exist (`docs/ARCHITECTURE.md` §5n).
 - A code-signed, icon-carrying installer, and Linux/macOS presets. The Windows
   executable exists (Phase 5d) but is unsigned and carries the default engine icon.
 - Populating the yard with people, events and further checks, now that the space
@@ -138,7 +140,7 @@ held to, and each is covered by an automated check:
 | Choices and conditional choices | `DialogueGraph` conditions, `tests/dialogue_runtime_test.gd` |
 | Story flags and explicit state changes | `StoryFlags`, effects, `tests/narrative_state_test.gd` |
 | History/backlog | `DialogueHistory`, `BacklogPanel`, `tests/language_switch_test.gd` |
-| Accessibility controls | **not implemented**: listed in the planned items below; the spike requirement is unmet and is not claimed otherwise |
+| Accessibility controls | **partly implemented**: text size and typing speed, the interface scale, volume and input rebinding (`Settings`); auto-advance, skip read text and the read log, and sprint as a toggle (`DialoguePlayback`, `ReadLog`, `PlayerController.sprint_mode`, `docs/ARCHITECTURE.md` §5n, `tests/dialogue_playback_test.gd`). Not implemented: reduced camera motion, high-contrast or opaque reading band, screen-reader output. |
 | Interruption by environmental events | `InnerVoiceDirector`, beat locking in `OpeningSequence` |
 | Deterministic serialization of conversation state | not required yet: mid-conversation saves are not implemented (save/load is in the planned list in §2). The dice core is seeded and replayable (`tests/check_resolver_test.gd`). |
 

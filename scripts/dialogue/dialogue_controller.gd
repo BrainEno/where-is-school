@@ -10,7 +10,10 @@ extends Node
 ##   object's state changes;
 ## - keep the backlog complete;
 ## - keep what is on screen in the language the player selected, including
-##   halfway through a line.
+##   halfway through a line;
+## - remember, across runs, which lines were read and which options were taken
+##   (`ReadLog`), and run the two reading modes, auto and skip (`DialoguePlayback`), by
+##   calling the same advance path a key press calls.
 ##
 ## It does not move the player, load scenes, or decide story progression: the
 ## sequence director listens to `presentation_active_changed`.
@@ -62,6 +65,16 @@ var _history := DialogueHistory.new()
 ## tell a rebind from a new node, so the controller says so explicitly instead of
 ## guessing from the text.
 var _republishing: bool = false
+## Lines read and options taken in any run. Shared with the settings screen.
+var _read_log: ReadLog = null
+## Auto and skip. Off (manual) until the player switches one on.
+var _playback := DialoguePlayback.new()
+## Whether the line on screen had been read before this showing: what skip goes by.
+var _current_was_read := false
+## The options on screen, with their ids, so a pick can be remembered.
+var _current_choices: Array = []
+## False while the window has lost focus: nothing is passed while nobody is looking.
+var _window_focused := true
 
 
 func _ready() -> void:
@@ -119,6 +132,12 @@ func _ready() -> void:
 	_panel.advance_requested.connect(_on_advance_requested)
 	_panel.choice_selected.connect(_on_choice_selected)
 	_panel.backlog_requested.connect(_on_backlog_requested)
+	_panel.auto_toggle_requested.connect(_on_auto_toggle_requested)
+	_panel.skip_requested.connect(_on_skip_requested)
+	if _read_log == null:
+		_read_log = ReadLog.shared()
+	_playback.mode_changed.connect(_on_playback_mode_changed)
+	_connect_playback_settings()
 	if _backlog != null:
 		_backlog.hide()
 		# The backlog rebuilds past lines from their content ids; the controller knows
@@ -229,6 +248,34 @@ func advance_presentation() -> void:
 
 func select_choice(index: int) -> void:
 	_on_choice_selected(index)
+
+
+## The reading modes. Tests switch them through the same intents the panel sends.
+func get_playback() -> DialoguePlayback:
+	return _playback
+
+
+func toggle_auto() -> void:
+	_on_auto_toggle_requested()
+
+
+func request_skip() -> void:
+	_on_skip_requested()
+
+
+func get_read_log() -> ReadLog:
+	return _read_log
+
+
+## Uses `log` for what was read, instead of the shared one. For tests that must not touch
+## the player's file.
+func set_read_log(replacement: ReadLog) -> void:
+	_read_log = replacement if replacement != null else ReadLog.shared()
+
+
+## Whether the line on screen had been read in an earlier showing.
+func was_current_line_read() -> bool:
+	return _current_was_read
 
 
 ## The line the player is currently reading, if any. Used by tests and by the
@@ -441,6 +488,7 @@ func _present_line(line: Dictionary, republished: bool = false) -> void:
 	var descriptor := _descriptor(line)
 	_history.record(descriptor)
 	_apply_line_state(line)
+	_remember_line(line, String(descriptor.get("identity", "")))
 	_panel.show_line(line)
 	if _backlog != null:
 		_backlog.add_entry(descriptor)
@@ -459,6 +507,10 @@ func _publish_again(line: Dictionary) -> void:
 	_current_line = line
 	var descriptor := _descriptor(line)
 	_history.update_last(descriptor)
+	# The same line in the language now selected: remembered in that language too, but it
+	# is not a new line, so playback's clock and the "read before" answer stay as they were.
+	if _read_log != null:
+		_read_log.mark_read(String(descriptor.get("identity", "")), L10n.current, String(line.get("text", "")))
 	_panel.show_line(line, true)
 	if _backlog != null:
 		_backlog.replace_last(descriptor)
@@ -591,7 +643,12 @@ func _on_check_resolved(result: Dictionary) -> void:
 
 
 func _on_choices_changed(choices: Array) -> void:
-	_panel.set_choices(choices)
+	_current_choices = []
+	for choice: Variant in choices:
+		var entry: Dictionary = (choice as Dictionary).duplicate()
+		entry["chosen_before"] = _read_log != null and _read_log.has_chosen(_choice_identity(entry))
+		_current_choices.append(entry)
+	_panel.set_choices(_current_choices)
 
 
 func _on_runtime_conversation_started(conversation_id: StringName) -> void:
@@ -605,6 +662,11 @@ func _on_runtime_conversation_finished(conversation_id: StringName) -> void:
 
 func _close_presentation() -> void:
 	_queue.clear()
+	_current_choices = []
+	# A presentation is a natural checkpoint for the read log: one write per conversation,
+	# not one per line.
+	if _read_log != null:
+		_read_log.flush()
 	if _overlay != null:
 		_overlay.hide_check()
 	_mode = Mode.NONE
@@ -634,6 +696,9 @@ func _on_advance_requested() -> void:
 func _on_choice_selected(index: int) -> void:
 	if _mode != Mode.CONVERSATION:
 		return
+	if _read_log != null and index >= 0 and index < _current_choices.size():
+		_read_log.mark_chosen(_choice_identity(_current_choices[index]))
+	_current_choices = []
 	_panel.set_choices([])
 	_runtime.choose(index)
 
@@ -645,3 +710,94 @@ func _on_backlog_requested() -> void:
 		_backlog.close()
 	else:
 		_backlog.open()
+
+
+# --- Read log and reading modes ----------------------------------------------------
+
+
+## Records the line that just appeared and tells playback about it. The "read before"
+## answer is taken first, so the line that is being shown now does not count as its own
+## earlier reading.
+func _remember_line(line: Dictionary, identity: String) -> void:
+	var text := String(line.get("text", ""))
+	var locale := L10n.current
+	_current_was_read = _read_log != null and _read_log.is_read(identity, locale, text)
+	if _read_log != null:
+		_read_log.mark_read(identity, locale, text)
+	_playback.begin_line(identity, text.length(), _current_was_read, locale)
+
+
+func _choice_identity(choice: Dictionary) -> String:
+	if _runtime == null:
+		return ""
+	var line := _runtime.get_current_line()
+	return ReadLog.choice_identity(
+		_runtime.get_active_conversation_id(),
+		StringName(String(line.get("node_id", ""))),
+		StringName(String(choice.get("choice_id", "choice_%d" % int(choice.get("index", 0)))))
+	)
+
+
+func _process(delta: float) -> void:
+	if _panel == null:
+		return
+	if _playback.is_holding_skip() and not Input.is_action_pressed(&"dialogue_skip"):
+		_playback.release_skip()
+	var view := {
+		"presenting": _mode != Mode.NONE and _panel.visible,
+		"revealing": _panel.is_revealing(),
+		"choices": _panel.has_choices(),
+		"blocked": not _window_focused or (_backlog != null and _backlog.is_open()),
+		"check": _overlay != null and _overlay.visible,
+	}
+	match _playback.tick(delta, view):
+		DialoguePlayback.COMPLETE:
+			_panel.complete_reveal()
+		DialoguePlayback.ADVANCE:
+			_on_advance_requested()
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT:
+			_window_focused = false
+		NOTIFICATION_APPLICATION_FOCUS_IN:
+			_window_focused = true
+		NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_EXIT_TREE:
+			if _read_log != null:
+				_read_log.flush()
+
+
+func _on_auto_toggle_requested() -> void:
+	_playback.toggle_auto()
+
+
+func _on_skip_requested() -> void:
+	_playback.press_skip()
+
+
+func _on_playback_mode_changed(mode: int, reason: StringName) -> void:
+	var notice := ""
+	if reason == DialoguePlayback.REASON_UNREAD:
+		notice = L10n.t("ui.dialogue_skip_stopped")
+	if _panel != null:
+		_panel.set_playback_state(mode, notice)
+
+
+func _connect_playback_settings() -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null:
+		return
+	if not settings.is_connected("setting_changed", _on_playback_setting_changed):
+		settings.connect("setting_changed", _on_playback_setting_changed)
+	_on_playback_setting_changed(&"all")
+
+
+func _on_playback_setting_changed(key: StringName) -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings == null:
+		return
+	if (key == &"all" or key == &"auto_speed") and settings.has_method("get_auto_speed"):
+		_playback.set_auto_speed(StringName(settings.call("get_auto_speed")))
+	if (key == &"all" or key == &"skip_scope") and settings.has_method("get_skip_scope"):
+		_playback.set_skip_scope(StringName(settings.call("get_skip_scope")))

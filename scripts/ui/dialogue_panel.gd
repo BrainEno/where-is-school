@@ -52,10 +52,23 @@ extends Control
 ## warning, and the line is shown as if the speaker had none. The edge towards the name and
 ## the top dissolve through `assets/shaders/ui/portrait_fade.gdshader`; the edge on the
 ## text column and the bottom, on the name's line, stay hard.
+##
+## The band also carries the two reading modes (`DialoguePlayback`): **auto** passes a line by
+## itself after a reading pause, **skip** runs through lines already read. The panel only
+## turns their inputs into intents (`auto_toggle_requested`, `skip_requested`) and shows the
+## state the controller hands back (`set_playback_state`): the hint line names the inputs, or
+## says which mode is on, or for a moment why skip stopped; and two small words at the start
+## of the hint line (`DialogueModeBar`) switch the modes for a player on the mouse. An option
+## the player took in an earlier run (`chosen_before` on the choice) is set a quieter
+## vermilion, lit like any other under the pointer.
 
 signal advance_requested
 signal choice_selected(index: int)
 signal backlog_requested
+## The auto input or the "Auto" word was used.
+signal auto_toggle_requested
+## The skip input went down, or the "Skip" word was clicked.
+signal skip_requested
 
 ## Characters revealed per second. Raising it also raises the "instant" feel.
 @export var characters_per_second: float = 55.0
@@ -137,6 +150,10 @@ const INK := Color(0.035, 0.038, 0.04, 0.9)
 ## The options: a warm vermilion at rest, a pale apricot under the pointer or the cursor.
 const CHOICE_COLOR := Color(0.851, 0.447, 0.271, 1.0)
 const CHOICE_LIT := Color(0.976, 0.792, 0.643, 1.0)
+## An option taken in an earlier run: the same hue, quieter, so the untried ones stand out.
+const CHOICE_SEEN := Color(0.627, 0.42, 0.333, 1.0)
+## How long the hint says why skip stopped before it goes back to naming the inputs.
+const PLAYBACK_NOTICE_SECONDS := 2.6
 ## The serif the sentence, the name, the title and the options are set in. Everything else
 ## in the panel (role, source label, hint) stays in the project's Sans.
 const DIALOGUE_FONT: FontFile = preload("res://assets/fonts/NotoSerifSC-Regular.otf")
@@ -187,6 +204,13 @@ var _stick_frame: int = -1
 ## The serif with the project Sans behind it as a fallback, built once in `_ready`.
 var _serif: FontVariation = null
 
+## What the controller last said about the reading modes (`DialoguePlayback.Mode`).
+var _playback_mode: int = 0
+## A short sentence on the hint line (why skip stopped), and until when it stays.
+var _playback_notice := ""
+var _playback_notice_until_msec := 0
+var _mode_bar: DialogueModeBar = null
+
 
 func _ready() -> void:
 	hide()
@@ -204,6 +228,7 @@ func _ready() -> void:
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
 	_make_band_clickable()
+	_build_mode_bar()
 	_warm_portrait_resources()
 	_queue_fit()
 
@@ -452,6 +477,7 @@ func set_choices(choices: Array) -> void:
 		button.add_theme_font_override("font", _dialogue_font())
 		button.add_theme_constant_override("outline_size", 0)
 		button.custom_minimum_size = Vector2(0.0, _choice_min_height())
+		button.set_meta(&"chosen_before", bool(choice.get("chosen_before", false)))
 		_apply_choice_colors(button)
 		button.add_theme_stylebox_override("normal", _style_normal)
 		button.add_theme_stylebox_override("hover", _style_hover)
@@ -526,7 +552,7 @@ func _set_choice_cursor(index: int) -> void:
 			continue
 		var marked := i == _choice_cursor
 		button.add_theme_stylebox_override("normal", _style_hover if marked else _style_normal)
-		var color := CHOICE_LIT if marked else CHOICE_COLOR
+		var color := CHOICE_LIT if marked else _choice_rest_color(button)
 		button.add_theme_color_override("font_color", color)
 	if _choice_window_count > 0:
 		reveal_choice(_choice_cursor)
@@ -577,6 +603,8 @@ func refresh_static_text() -> void:
 	if _hint_label == null:
 		return
 	_hint_label.text = _hint_text()
+	_refresh_mode_bar()
+	_fit_mode_bar()
 	if _line.is_empty():
 		return
 	_badge_label.text = _badge_text(_line)
@@ -605,9 +633,25 @@ func _hint_text() -> String:
 				_choice_buttons.size(),
 			]
 		return text
-	if InputHint.device(self) == InputHint.DEVICE_MOUSE:
+	var modes := {
+		"auto": MenuStyle.key(self, &"dialogue_auto"),
+		"skip": MenuStyle.key(self, &"dialogue_skip"),
+	}
+	if not _playback_notice.is_empty():
+		return _playback_notice
+	if _playback_mode == DialoguePlayback.Mode.AUTO:
+		return L10n.t("ui.dialogue_auto_on_mouse" if _on_mouse() else "ui.dialogue_auto_on", modes)
+	if _playback_mode == DialoguePlayback.Mode.SKIP:
+		return L10n.t("ui.dialogue_skip_on_mouse" if _on_mouse() else "ui.dialogue_skip_on", modes)
+	# In manual mode the hint is exactly what it always was: the inputs for auto and skip
+	# are named by the mode bar at the start of the line, which never widens the band.
+	if _on_mouse():
 		return L10n.t("ui.dialogue_continue_mouse", keys)
 	return L10n.t("ui.dialogue_continue_pad" if pad else "ui.dialogue_continue", keys)
+
+
+func _on_mouse() -> bool:
+	return InputHint.device(self) == InputHint.DEVICE_MOUSE
 
 
 ## Redraws the line that is already on screen, used by a language switch. The reveal
@@ -620,6 +664,9 @@ func redraw_current_line() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _playback_notice.is_empty() and Time.get_ticks_msec() >= _playback_notice_until_msec:
+		_playback_notice = ""
+		refresh_static_text()
 	if _layout_dirty and visible:
 		_settle_layout()
 	if not _revealing:
@@ -666,6 +713,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("backlog"):
 		get_viewport().set_input_as_handled()
 		backlog_requested.emit()
+		return
+
+	# The reading modes answer during a choice as well: auto can be switched on while the
+	# options wait, and skip simply stops there again.
+	if _is_pressed(event, [&"dialogue_auto"]):
+		get_viewport().set_input_as_handled()
+		auto_toggle_requested.emit()
+		return
+	if _is_pressed(event, [&"dialogue_skip"]):
+		get_viewport().set_input_as_handled()
+		skip_requested.emit()
 		return
 
 	# A left click that reaches this point landed outside the band. With the panel up it
@@ -737,6 +795,81 @@ func _queue_fit() -> void:
 	_layout_dirty = true
 
 
+# --- Reading modes ---------------------------------------------------------------
+
+
+## The reading mode the controller is in (`DialoguePlayback.Mode`), and optionally a short
+## sentence to show on the hint line for a moment (why skip stopped).
+func set_playback_state(mode: int, notice: String = "") -> void:
+	_playback_mode = mode
+	if not notice.is_empty():
+		_playback_notice = notice
+		_playback_notice_until_msec = Time.get_ticks_msec() + int(PLAYBACK_NOTICE_SECONDS * 1000.0)
+	elif mode != DialoguePlayback.Mode.MANUAL:
+		_playback_notice = ""
+	refresh_static_text()
+	_fit_mode_bar()
+
+
+func get_playback_mode() -> int:
+	return _playback_mode
+
+
+## The sentence on the hint line about the reading modes, or "" when there is none.
+func get_playback_notice() -> String:
+	return _playback_notice
+
+
+## The hint line as it is shown, for the tests.
+func get_hint_text() -> String:
+	return _hint_label.text if _hint_label != null else ""
+
+
+## The "Auto" / "Skip" words, for the tests that click them.
+func get_mode_bar() -> DialogueModeBar:
+	return _mode_bar
+
+
+func _build_mode_bar() -> void:
+	_mode_bar = DialogueModeBar.new()
+	_hint_label.add_child(_mode_bar)
+	# The room at the start of the hint line changes with the band's width and the text.
+	_hint_label.resized.connect(_fit_mode_bar)
+	_mode_bar.auto_pressed.connect(func() -> void: auto_toggle_requested.emit())
+	_mode_bar.skip_pressed.connect(func() -> void: skip_requested.emit())
+	_refresh_mode_bar()
+
+
+func _refresh_mode_bar() -> void:
+	if _mode_bar == null:
+		return
+	if _on_mouse():
+		_mode_bar.set_labels(L10n.t("ui.dialogue_mode_auto"), L10n.t("ui.dialogue_mode_skip"))
+	else:
+		_mode_bar.set_labels(
+			L10n.t("ui.dialogue_mode_auto_key", {"key": MenuStyle.key(self, &"dialogue_auto")}),
+			L10n.t("ui.dialogue_mode_skip_key", {"key": MenuStyle.key(self, &"dialogue_skip")}),
+		)
+	_mode_bar.set_state(
+		_playback_mode == DialoguePlayback.Mode.AUTO, _playback_mode == DialoguePlayback.Mode.SKIP
+	)
+
+
+## Puts the two words at the start of the hint line when the hint's own text leaves room.
+func _fit_mode_bar() -> void:
+	if _mode_bar == null or _hint_label == null:
+		return
+	var font := _hint_label.get_theme_font(&"font")
+	var font_size := _hint_label.get_theme_font_size(&"font_size")
+	_mode_bar.set_type(font, font_size)
+	var text_width := 0.0
+	if font != null:
+		text_width = font.get_string_size(
+			_hint_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size
+		).x
+	_mode_bar.fit_into(_hint_label.size, text_width)
+
+
 # --- Layout -----------------------------------------------------------------
 
 
@@ -805,6 +938,7 @@ func _settle_layout() -> void:
 	_fit_speaker_width(width)
 	_layout_stage = 0
 	_layout_dirty = false
+	_fit_mode_bar()
 
 
 ## When the line and all of its options cannot share the band, the body keeps two lines
@@ -1146,11 +1280,23 @@ func _apply_accent(accent: Color) -> void:
 
 
 func _apply_choice_colors(button: Button) -> void:
-	button.add_theme_color_override("font_color", CHOICE_COLOR)
+	button.add_theme_color_override("font_color", _choice_rest_color(button))
 	button.add_theme_color_override("font_hover_color", CHOICE_LIT)
 	button.add_theme_color_override("font_pressed_color", CHOICE_LIT)
 	button.add_theme_color_override("font_hover_pressed_color", CHOICE_LIT)
 	button.add_theme_color_override("font_focus_color", CHOICE_LIT)
+
+
+## The colour of an option nobody points at: quieter for one taken in an earlier run.
+func _choice_rest_color(button: Button) -> Color:
+	return CHOICE_SEEN if bool(button.get_meta(&"chosen_before", false)) else CHOICE_COLOR
+
+
+## Whether option `index` was taken in an earlier run, as the panel shows it.
+func is_choice_marked_chosen(index: int) -> bool:
+	if index < 0 or index >= _choice_buttons.size() or not is_instance_valid(_choice_buttons[index]):
+		return false
+	return bool(_choice_buttons[index].get_meta(&"chosen_before", false))
 
 
 ## Option styling lives in one place so every rebuilt list looks the same after a

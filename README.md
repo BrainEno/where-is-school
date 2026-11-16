@@ -123,6 +123,9 @@ controls, architecture, and the older known limitations.
 
 - **WASD / arrow keys** — walk (camera-relative). Holding any of them also stops an
   automatic walk in progress: the keys always win.
+- **Shift** (controller: RB) — run while held. Settings → Running → "Press to switch"
+  makes one press run and the next walk; standing still or a conversation also ends the
+  run.
 - **Left click on the floor** — walk there. The route follows the location's
   navigation mesh, so it goes around desks, walls and fences; a small mark on the floor
   — a few uneven strokes, not a ring — shows the spot and fades when the walk ends.
@@ -147,6 +150,15 @@ controls, architecture, and the older known limitations.
 - **1–9** — pick a dialogue choice by number.
 - **Tab** — open or close the dialogue log. Entries keep their identity and their order
   when the language changes; only their words do.
+- **R** (controller: right stick →, or click "Auto" at the start of the hint line) —
+  auto: each line moves on by itself after a reading pause that grows with its length.
+  It never picks an option, waits while the log is open, and stays on until switched off.
+  Settings → Auto speed makes the pause longer or shorter.
+- **F** (controller: left trigger, or click "Skip") — skip through text already read in
+  an earlier run. It stops at the first unread line and says so, and at every choice.
+  A tap leaves it on; holding the key skips only while held. Settings → "What skip
+  passes" can include unread text, and "Forget read text" clears the record (it asks
+  twice). Options taken in an earlier run are drawn in a quieter colour.
 - **N** (controller: left stick click) — open the notebook: everything learned so far,
   filed by place and marked as seen, heard, remembered or imagined, with the places this
   run has reached. It pauses the game; Esc, B or N again closes it. It is also the
