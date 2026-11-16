@@ -100,6 +100,12 @@ jobs:
             method: ""
             only: "bell_n"
             flags: "perf=1"
+          - group: compatibility-l
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "classmates_front"
+            flags: "perf=1"
           - group: forward-plus-a
             label: forward_plus
             driver: vulkan

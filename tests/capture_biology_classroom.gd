@@ -106,6 +106,12 @@ const FRAMES := [
 		"face": Vector3(0.6, 0.0, -3.2), "q": 3, "settle": 1.6,
 		"note": "Beat 4. The bell: the fluorescent tubes come on and drain the colour, the projector drops to standby, the clock reads 11:00, and N stands on the platform beside the lectern, not at it. Q is back in his seat.",
 	},
+	{
+		"name": "classmates_front", "beat": 1, "feet": Vector3(0.6, 0.0, 1.0),
+		"face": Vector3(0.6, 0.0, -2.0),
+		"eye": Vector3(3.25, 1.45, -2.3), "look": Vector3(3.1, 0.8, 1.8), "settle": 0.8,
+		"note": "Detail (authored): the class from the board - the side the lectern sees. Each piece's reverse is its own paper dyed through, lighter and flatter; no white card behind anyone. The pupil at the back board shows his printed side.",
+	},
 ]
 
 var _scene: Node3D = null
