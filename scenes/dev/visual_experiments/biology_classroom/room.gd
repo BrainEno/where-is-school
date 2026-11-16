@@ -82,8 +82,8 @@ const CORRIDOR_MAX := Vector2(10.4, 10.2)
 const STAIR_MIN := Vector2(7.2, -7.2)
 const STAIR_MAX := Vector2(9.2, -5.6)
 const NEIGHBOUR_DOOR_Z := 7.6
-const YARD_MIN := Vector2(-20.0, -7.2)
-const YARD_MAX := Vector2(-7.2, 10.2)
+const YARD_MIN := Vector2(-20.0, -5.2)
+const YARD_MAX := Vector2(-7.2, 5.2)
 const YARD_DOOR_Z := -3.5
 const LANDING := Vector3(-9.2, YARD_Y, 2.2)
 
@@ -228,6 +228,11 @@ func _make_materials() -> void:
 	ink_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ink_material.vertex_color_use_as_albedo = true
 	ink_material.albedo_color = Color.WHITE
+	# A pen line close to the lens would be a bar across the picture (the follow camera
+	# often sits beyond the drawn walls): it dissolves within a few metres of the camera.
+	ink_material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_DITHER
+	ink_material.distance_fade_min_distance = 2.2
+	ink_material.distance_fade_max_distance = 4.6
 	lamp_material = StandardMaterial3D.new()
 	lamp_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	lamp_material.albedo_color = Color(0.46, 0.48, 0.47)
@@ -397,9 +402,13 @@ func _build_outside() -> void:
 	var x0 := ROOM_MIN.x - WALL
 	# The storey below: the classroom and corridor stand on it; its west face is the
 	# building the yard looks at.
-	_box(tool, Vector3(x0, YARD_Y, CORRIDOR_MIN.y), Vector3(CORRIDOR_MAX.x, -0.2, CORRIDOR_MAX.y), C_FACADE)
+	# Under the classroom it is exactly as deep as the room (so nothing reaches south past
+	# the drawn wall); under the corridor it runs the corridor's length.
+	_box(tool, Vector3(x0, YARD_Y, YARD_MIN.y), Vector3(ROOM_MAX.x + WALL, -0.2, YARD_MAX.y), C_FACADE)
+	_box(tool, Vector3(ROOM_MAX.x + WALL, YARD_Y, CORRIDOR_MIN.y), Vector3(CORRIDOR_MAX.x, -0.2, CORRIDOR_MAX.y),
+		C_FACADE)
 	# Ground-floor windows and the stair door, west face (the yard) and east face.
-	for z: float in [-0.6, 3.2, 7.0]:
+	for z: float in [-0.6, 3.2]:
 		_box(tool, Vector3(x0 - 0.02, YARD_Y + 1.1, z - 0.7), Vector3(x0, YARD_Y + 2.5, z + 0.7), C_FACADE_DARK)
 	_box(tool, Vector3(x0 - 0.02, YARD_Y, YARD_DOOR_Z - 0.55), Vector3(x0, YARD_Y + 2.2, YARD_DOOR_Z + 0.55), C_WOOD)
 	for z: float in [-4.0, 0.0, 4.0, 8.0]:
@@ -462,7 +471,7 @@ func _build_outside() -> void:
 		var where := Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(-16.0, YARD_Y + 1.78, -3.0 + index * 1.5))
 		Kit.sheet(self, "Washing%d" % index, Vector2(0.7, 0.7), where, material)
 	var trees: Array = [
-		[Vector3(-13.0, YARD_Y, -8.6), -PI * 0.5], [Vector3(-15.0, YARD_Y, 10.4), -PI * 0.5],
+		[Vector3(-13.0, YARD_Y, -8.6), -PI * 0.5], [Vector3(-15.0, YARD_Y, 6.4), -PI * 0.5],
 		[Vector3(13.6, YARD_Y, -8.0), PI * 0.5], [Vector3(14.2, YARD_Y, 12.0), PI * 0.5],
 		[Vector3(15.0, YARD_Y, 2.0), PI * 0.5],
 	]
@@ -865,7 +874,10 @@ func _build_lamps() -> void:
 		wire_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
+## The tubes are not there until the bell: they catch into being with their own flicker.
 func set_lamps(level: float) -> void:
+	for tube: MeshInstance3D in lamps:
+		tube.visible = level > 0.0
 	lamp_material.albedo_color = Color(0.46, 0.48, 0.47).lerp(Color(1.0, 1.0, 0.94), clampf(level, 0.0, 1.0))
 
 

@@ -10,8 +10,9 @@ name: Biology classroom experiment capture
 # selected with the `--rendering-method` command-line override.
 #
 # Frames are published inline as base64 `::notice` annotations (GitHub keeps 10 per step,
-# 50 per job; hence two frames per job), so they can be read through the REST API even
-# where the artifact store cannot be reached; every job also uploads its frames.
+# 50 per job): at most two frames per job, and a paper frame - all hatching, so large -
+# alone. They can be read through the REST API even where the artifact store cannot be
+# reached; every job also uploads its frames.
 
 on:
   pull_request:
@@ -49,15 +50,21 @@ jobs:
             label: compatibility
             driver: opengl3
             method: ""
-            only: "curtain_closed,curtain_tearing"
+            only: "curtain_closed,yard_landing"
             flags: "perf=1"
           - group: compatibility-d
             label: compatibility
             driver: opengl3
             method: ""
-            only: "curtain_paper,yard_landing"
+            only: "curtain_tearing"
             flags: "perf=1"
           - group: compatibility-e
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_paper"
+            flags: "perf=1"
+          - group: compatibility-f
             label: compatibility
             driver: opengl3
             method: ""
@@ -67,13 +74,25 @@ jobs:
             label: forward_plus
             driver: vulkan
             method: ""
-            only: "overview,curtain_paper"
+            only: "overview,lesson_b"
+            flags: "perf=1"
+          - group: forward-plus-b
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "curtain_paper"
             flags: "perf=1"
           - group: mobile-a
             label: mobile
             driver: vulkan
             method: "mobile"
-            only: "overview,curtain_paper"
+            only: "overview,lesson_b"
+            flags: "perf=1"
+          - group: mobile-b
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "curtain_paper"
             flags: "perf=1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

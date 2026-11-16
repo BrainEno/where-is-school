@@ -370,10 +370,11 @@ func _check_door_and_q(scene: Node3D) -> void:
 	q.set("distance_walked", 0.0)
 	q.set("largest_step", 0.0)
 	var q_start := q.global_position
+	var started := Time.get_ticks_msec()
 	scene.call("observe", Vector3(8.8, 0.0, -2.0), Vector3(8.8, 0.0, 2.0))
 	await _physics(3)
 	_expect(String(scene.call("current_zone")) == "corridor", "The corridor is not its own zone.")
-	_expect(q.global_position.distance_to(q_start) < 0.3, "Q jumped when the protagonist went out.")
+	_expect_walked(q, q_start, started, "Q jumped when the protagonist went out.")
 	var waited := 0.0
 	while bool(q.call("is_walking")) and waited < 16.0:
 		await _wait(0.5)
@@ -411,6 +412,7 @@ func _check_curtain_and_fall(scene: Node3D) -> void:
 	_expect(String(scene.call("current_zone")) == "curtain", "Standing at the curtain is not the curtain's zone.")
 	_expect(StringName(scene.call("current_interaction")[0]) == &"curtain", "The curtain is not an interaction here.")
 	var q_before := q.global_position
+	var curtain_started := Time.get_ticks_msec()
 	scene.call("open_curtain", true)
 	await _frames(3)
 	_expect(bool(paper.call("is_on")), "Drawing the curtain did not put the picture on paper.")
@@ -421,7 +423,7 @@ func _check_curtain_and_fall(scene: Node3D) -> void:
 	var ring := room.get("ring_mark") as MeshInstance3D
 	_expect(ring.visible, "The red ring was not drawn.")
 	_expect(Vector2(ring.global_position.x - observer.global_position.x, ring.global_position.z - observer.global_position.z).length() < 0.05, "The red ring is not where the protagonist stands.")
-	_expect(q.global_position.distance_to(q_before) < 0.3, "Q jumped to the window.")
+	_expect_walked(q, q_before, curtain_started, "Q jumped to the window.")
 	_expect(int(q.get("place")) == 1 and bool(q.call("is_walking")), "Q does not walk over to the window.")
 	_expect(StringName(scene.call("current_interaction")[0]) == &"curtain", "The open curtain offers no way to lean out.")
 	scene.call("_fall")
@@ -463,6 +465,15 @@ func _check_bell(scene: Node3D) -> void:
 
 
 # --- Helpers ----------------------------------------------------------------------------
+
+
+## Q may have walked since `since_msec` (a software rasteriser's frame can take 0.1 s or
+## more), but no further than walking allows.
+func _expect_walked(q: Node3D, from: Vector3, since_msec: int, message: String) -> void:
+	var seconds := float(Time.get_ticks_msec() - since_msec) / 1000.0
+	var speed: float = _script_const(q, "WALK_SPEED")
+	var moved := q.global_position.distance_to(from)
+	_expect(moved <= speed * seconds + 0.1, "%s (%.2f m in %.2f s)" % [message, moved, seconds])
 
 
 func _room_const(constant: String) -> Variant:
