@@ -7,7 +7,7 @@
 [sub_resource type="ShaderMaterial" id="outline"]
 resource_name = "character_ink_outline"
 shader = ExtResource("3_outline")
-shader_parameter/ink = Color(0.16, 0.14, 0.2, 1)
+shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
 shader_parameter/width = 0.01
 
 [sub_resource type="ShaderMaterial" id="m_protagonist_mat_skin"]
