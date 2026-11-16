@@ -235,7 +235,8 @@ checks the same characters in the running game. How the characters look is in
   scenery: `start_seated = true` opens it on `sit_idle` with no body, and its `Model` is
   lowered 0.347 m so the seated soles are on the floor.
 - `assets/models/teacher-n/teacher-n.glb` (substitute teacher N) has the same 16 joint
-  names, faces −Z and carries four authored loops (above).
+  names, faces −Z and carries four authored loops (above). Its wrapper has a `Look` applier
+  like the other two, and still no motion profile ([CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)).
 - `scenes/environment/characters/protagonist.tscn`, `q.tscn` and `teacher_n.tscn` attach
   `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
   `AnimationPlayer`, binds the clips (with the wrapper's `motion_profile`, set on the
