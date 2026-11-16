@@ -13,6 +13,10 @@
     {
       "path": "map_art",
       "owner": "docs/screenshots/map_art/README.md"
+    },
+    {
+      "path": "visual_experiments",
+      "owner": "docs/VISUAL_EXPERIMENTS.md"
     }
   ],
   "frames": [
