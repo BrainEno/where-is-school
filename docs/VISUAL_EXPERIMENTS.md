@@ -218,50 +218,56 @@ Measured by `sample_performance()` (the renderer's own monitors, averaged over 2
 at 1600×900 on CI. The renderers are **software** (llvmpipe / lavapipe), so frame times are
 CPU time and only comparable within one run. Draw calls, primitives and memory are the
 renderer's own counts and do carry over to real hardware.
-Source: run [43800746336](https://github.com/BrainEno/where-is-school/actions/runs/43800746336),
-commit `3b2a5f9`.
+Source: run [43810099163](https://github.com/BrainEno/where-is-school/actions/runs/43810099163),
+commit `e1b2d70`, with the third-person camera. The views are the frames in
+`docs/screenshots/visual_experiments/`, so they are not the same views as the first-person
+run (43800746336, commit `3b2a5f9`) that earlier revisions of this report quoted. The
+protagonist and Q, both full game models, add about 138k primitives to the overview
+compared with that run; draw calls barely moved.
 
 **Per view (draw calls / primitives):**
 
 | View | Compatibility | Forward+ | Mobile |
 |---|---|---|---|
-| Overview (everything) | 1216 / 87k | 641 / 87k | 501 / 87k |
-| Collage detail | 393 / 20k | 381 / 20k | 193 / 20k |
-| Collage room (doorway) | 1494 / 103k | — | — |
-| Corridor long | 1365 / 75k | — | — |
-| Staff room | 1055 / 92k | 412 / 92k | 356 / 92k |
-| Classroom → stage (3D) | 480 / 132k | — | — |
-| Stage, painted | 163 / 63k | 131 / 63k | 53 / 63k |
+| Overview (everything) | 1210 / 225k | 635 / 225k | 497 / 225k |
+| Collage detail | 803 / 133k | 632 / 133k | 466 / 133k |
+| Collage room (follow camera) | 1140 / 216k | — | — |
+| Corridor long (chase) | 1830 / 374k | — | — |
+| Staff room | 1134 / 362k | 712 / 362k | 102 / 362k |
+| Classroom → stage (3D) | 803 / 472k | — | — |
+| Stage, painted | 333 / 338k | 269 / 338k | 77 / 338k |
 
 **A/B probes:** each one switches a single experiment off and on in the same view.
 
 | Probe | Compatibility | Forward+ | Mobile |
 |---|---|---|---|
-| Corridor window SubViewport, live vs frozen | +699 draws, +30 ms (788 vs 89) | +522 draws, +25 ms | +521 draws, +151 ms |
-| 56 paper sheets, shown vs hidden | +56 draws, +112 tris, ~0 ms | +56 draws, +7 ms | +56 draws, +5 ms |
-| Decal, shown vs hidden | no change (not drawn) | 0 draws, +4 ms | 0 draws, +3 ms |
-| Medium switch, painted vs 3D | +1 draw, −4 ms | +1 draw, −11 ms | +1 draw, −21 ms |
+| Corridor window SubViewport, live vs frozen | +743 draws, +40 ms (1391 vs 648) | +566 draws, +39 ms | +528 draws, +176 ms |
+| Paper sheets in view, shown vs hidden | +29 draws, +58 tris, +12 ms | +29 draws, +2 ms | +29 draws, ~0 ms |
+| Decal, shown vs hidden | no change (not drawn) | 0 draws, +8 ms | 0 draws, +4 ms |
+| Medium switch, painted vs 3D | +1 draw, −20 ms | +1 draw, −20 ms | +1 draw, −27 ms |
 
-**Memory:** video memory is 36.9 MiB on Compatibility, 147.6 MiB on Forward+ and
-120.3 MiB on Mobile (the difference is renderer baseline buffers). Painted mode adds
-2.7 MiB on Compatibility and 23 MiB on Forward+ (the half-size SubViewport's targets).
-Generated textures: 3.7 MiB. The lab adds about 0.15 MiB of
+**Memory:** video memory is 39.5 MiB on Compatibility, 150.1 MiB on Forward+ and
+122.8 MiB on Mobile (the difference is renderer baseline buffers). Painted mode adds
+2.7 MiB on Compatibility, 23 MiB on Forward+ and about 16 MiB on Mobile (the half-size
+SubViewport's targets). Generated textures: 3.7 MiB. The lab adds about 0.12 MiB of
 source to the repository and the evidence frames about 0.6 MiB.
 
 **What this says:**
 
 - **Paper is nearly free.** Each sheet costs one draw call and two triangles; the torn edge
   is in the fragment shader. A room papered with 56 sheets costs less than one shadowed light.
+  (From the follow camera at the start, 29 of the 56 are in view.)
 - **The medium switch is cheaper than 3D.** At half resolution the painted view shades a
   quarter of the pixels, and the filter's 12 texture taps cost less than that saving. On every
   renderer, painted mode was faster than the same view in 3D.
 - **SubViewport windows are the expensive item.** Each one renders the shared world again
-  from another camera, including shadow passes. On Compatibility that is ~9× the draw calls
-  of the same view with the window frozen. The lab renders them only while you are in the room
+  from another camera, including shadow passes. On Compatibility the live window adds about
+  740 draw calls: 2.1× the frozen view from the third-person camera, and 9× in the
+  first-person close-up of the first run. The lab renders them only while you are in the room
   that has them. Production would need the same rule, or `UPDATE_ONCE` snapshots.
 - **Compatibility draws more.** It renders each shadowed light in its own pass, so
-  Compatibility issues up to 2.6× the draw calls of Forward+ for the same view. The lab's worst
-  view (1494) is within reach of a desktop GPU but not of the game's 1–2 lights per room.
+  Compatibility issues up to 1.9× the draw calls of Forward+ for the same view (2.6× in the
+  first-person run). The lab's worst view (1830, the corridor) is within reach of a desktop GPU but not of the game's 1–2 lights per room.
   Production rooms would keep one shadowed light.
 
 ## 6. Three ideas that could become real scenes
@@ -311,7 +317,8 @@ original idea as the lab proposed it.
   seconds and then reads as a technical shortcut. The game's characters are 3D, and mixing
   them in would undercut the protagonist.
 - **Live SubViewport windows everywhere.** They are the most expensive item measured, about
-  9× the draw calls on Compatibility. Keep them to one authored moment, or use snapshots.
+  740 extra draw calls on Compatibility (2–9× the frozen view, depending on the view). Keep
+  them to one authored moment, or use snapshots.
 - **Decals as a storytelling tool.** They are missing on Compatibility, so anything the story
   depends on cannot be a decal if Compatibility is a target.
 - **The endless corridor as ambient décor.** It works only as a puzzle with an exit. As
@@ -336,7 +343,9 @@ xvfb-run -a godot --path . --resolution 960x540 --rendering-driver opengl3 \
 ```
 
 The committed frames are 640 px JPEGs decoded from the capture run's annotations (run
-43800746336, commit `3b2a5f9`). The 60-second walkthrough film (1436 frames at 24 fps, one
-corridor loop, two medium switches) is 14.7 MB. That is over the repository's per-file
-budget (ADR 0007), so it lives only as the run's artifact `visual-experiments-walkthrough-1`.
+43810099163, commit `e1b2d70`, third person). The capture workflow clears each label's
+folder before capturing, so only that run's frames are published. The 40-second
+walkthrough film (969 frames at 24 fps, the protagonist walking the whole lab, one corridor
+loop, two medium switches) is 11.9 MB. That is too large for the repository (ADR 0007), so
+it lives only as the run's artifact `visual-experiments-walkthrough-1`.
 Four stills from it are in `walkthrough/`.
