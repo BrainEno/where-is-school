@@ -8,7 +8,7 @@ extends Node3D
 ## Through the east doorway is a stage built of theatre flats: a back flat painted with a
 ## corridor in one-point perspective, four wings painted with vanishing points that do not
 ## agree with it or with each other, plywood backs and braces you can walk round to see,
-## the game's protagonist model standing in front of the painting under a real spotlight,
+## Q (the game's model) standing in front of the painting under a real spotlight,
 ## and a paper chair with a real collider. Every flat, wing and brace is solid: the stage is
 ## paint to the eye and furniture to the body.
 ##
@@ -37,7 +37,8 @@ const BACK_FLAT_SIZE := Vector2(12.0, 6.0)
 
 const REAL_DESK := "res://assets/models/classroom/classroom_student_desk.glb"
 const REAL_CHAIR := "res://assets/models/classroom/classroom_student_chair.glb"
-const PROTAGONIST := "res://scenes/environment/characters/protagonist.tscn"
+## You walk in as the protagonist, so the figure on the stage is someone else: Q.
+const STAGE_ACTOR := "res://scenes/environment/characters/q.tscn"
 const PLASTER := "res://assets/materials/laboratory/textures/wall_plaster.png"
 const CONCRETE := "res://assets/materials/laboratory/textures/floor_concrete.png"
 const BOARD := "res://assets/materials/classroom/textures/board_front.png"
@@ -246,7 +247,7 @@ func _build_flats() -> void:
 
 
 func _place_actor() -> void:
-	var packed := load(PROTAGONIST) as PackedScene
+	var packed := load(STAGE_ACTOR) as PackedScene
 	if packed != null:
 		actor = packed.instantiate() as Node3D
 		actor.name = "Actor"
@@ -256,7 +257,7 @@ func _place_actor() -> void:
 		add_child(actor)
 		Kit.solid(self, "ActorBody", Vector3(0.5, 1.7, 0.5), Vector3(16.6, 0.85, 0.9))
 	else:
-		push_warning("Visual lab: the protagonist scene is missing; the stage is empty.")
+		push_warning("Visual lab: the stage actor scene is missing; the stage is empty.")
 	# A paper chair with a real collider, set on the floor-cloth like a prop.
 	var chair := Sprite3D.new()
 	chair.name = "PaperChair"

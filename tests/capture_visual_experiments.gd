@@ -8,9 +8,12 @@ extends SceneTree
 ## Forward+ and Mobile are the same command with `--rendering-driver vulkan` (plus
 ## `--rendering-method mobile`); the project setting is not touched.
 ##
-## Every frame is taken by the lab's own observer, standing (or flying) where a person
-## exploring the lab could stand, so the rooms' environments and the medium switch respond
-## exactly as they do by hand. The HUD is hidden.
+## Every frame shows the lab the way it is played: the protagonist standing where a person
+## exploring the lab could stand, and the third-person follow camera in the room's own
+## framing (or a framing given here). A few frames use a free camera ("eye"/"look") for
+## a detail; the character is still in the scene. The rooms' environments and the medium
+## switch respond to where the character stands, exactly as they do by hand. The HUD is
+## hidden.
 ##
 ## Output: res://docs/screenshots/visual_experiments/<label>/NN_<name>.jpg and FRAMES.md.
 ## `docs/` is not imported by the engine.
@@ -26,74 +29,75 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const LAB := "res://scenes/dev/visual_experiments/visual_experiments.tscn"
 const OUT_ROOT := "res://docs/screenshots/visual_experiments"
-const EYE := 1.55
+const CAMERA := "Observer/CameraRig/Camera3D"
 
-## name, eye, look, fov, fly, settle seconds, note.
+## name, feet, face (where the character looks), and either a framing (yaw, pitch,
+## distance; omitted = the room's own) or a free camera eye/look; fov, settle, note.
 const FRAMES := [
 	{
-		"name": "overview", "eye": Vector3(-14.0, 30.0, 14.0), "look": Vector3(22.0, 0.0, -28.0),
-		"fov": 50.0, "fly": true,
-		"note": "The whole lab from the flies: collage room (front), the 44 m corridor, the staff room, the classroom and the stage of flats (far right).",
+		"name": "overview", "feet": Vector3(0.0, 0.0, 4.2), "face": Vector3(0.0, 0.0, -6.0),
+		"eye": Vector3(-14.0, 30.0, 14.0), "look": Vector3(22.0, 0.0, -28.0), "fov": 50.0,
+		"note": "The whole lab from the flies: collage room (front), the 44 m corridor, the staff room, the classroom and the stage of flats (far right). The protagonist waits at the start.",
 	},
 	{
-		"name": "collage_room", "eye": Vector3(0.0, 1.6, -0.8), "look": Vector3(0.0, 1.5, -11.5),
-		"fov": 66.0, "fly": false,
-		"note": "A - Just inside the collage room: walls of torn paper, the reprinted clock and timetable, cut-out desks and pupils.",
+		"name": "collage_room", "feet": Vector3(0.0, 0.0, -2.6), "face": Vector3(0.0, 0.0, -11.0),
+		"fov": 58.0,
+		"note": "A - The follow camera's framing for the collage room: the protagonist among walls of torn paper, the reprinted clock and timetable, cut-out desks and pupils.",
 	},
 	{
-		"name": "collage_detail", "eye": Vector3(4.6, 1.8, -1.6), "look": Vector3(1.6, 0.5, -4.6),
-		"fov": 55.0, "fly": true,
-		"note": "A - Mixed media up close: the real 3D desk and chair among paper desks drawn in oblique projection, the Decal seal stamped across desk and floor, the reprinted window.",
+		"name": "collage_detail", "feet": Vector3(3.6, 0.0, -4.4), "face": Vector3(1.6, 0.0, -4.6),
+		"eye": Vector3(5.2, 2.6, -0.8), "look": Vector3(1.8, 0.5, -4.6), "fov": 55.0,
+		"note": "A - Mixed media up close: the real 3D desk and chair among paper desks drawn in oblique projection, the Decal seal stamped across desk and floor, the reprinted window; the protagonist is a real model among them.",
 	},
 	{
-		"name": "collage_flatness", "eye": Vector3(-5.5, 1.6, -5.8), "look": Vector3(4.0, 0.7, -6.4),
-		"fov": 60.0, "fly": true,
-		"note": "A - From the side the paper desks vanish to a line; the Y-billboard pupils have turned to face you.",
+		"name": "collage_flatness", "feet": Vector3(-3.8, 0.0, -6.6), "face": Vector3(3.0, 0.0, -6.4),
+		"eye": Vector3(-5.6, 2.0, -5.2), "look": Vector3(3.0, 0.8, -6.4), "fov": 60.0,
+		"note": "A - From the side the paper desks vanish to a line; the Y-billboard pupils have turned to face the camera.",
 	},
 	{
-		"name": "corridor_long", "eye": Vector3(0.0, 1.55, -13.2), "look": Vector3(0.0, 1.3, -56.0),
-		"fov": 60.0, "fly": false,
-		"note": "B - The corridor: every door numbered 2-3, each 85% of the last, fog swallowing the far end.",
+		"name": "corridor_long", "feet": Vector3(0.0, 0.0, -16.5), "face": Vector3(0.0, 0.0, -56.0),
+		"fov": 60.0,
+		"note": "B - The corridor's low chase framing: every door numbered 2-3, each 85% of the last, fog swallowing the far end.",
 	},
 	{
-		"name": "corridor_giant_door", "eye": Vector3(-0.9, 1.55, -34.0), "look": Vector3(1.3, 2.9, -40.0),
-		"fov": 66.0, "fly": false,
-		"note": "B - The one doorway taller than the wall it is cut into (the staircase to nowhere is behind the camera).",
+		"name": "corridor_giant_door", "feet": Vector3(-0.3, 0.0, -37.0), "face": Vector3(1.3, 0.0, -40.0),
+		"framing": Vector3(-10.0, 18.0, 4.6), "fov": 64.0,
+		"note": "B - The one doorway taller than the wall it is cut into, beside the character for scale.",
 	},
 	{
-		"name": "corridor_window", "eye": Vector3(0.9, 1.6, -23.4), "look": Vector3(-1.3, 1.55, -26.0),
-		"fov": 58.0, "fly": false,
+		"name": "corridor_window", "feet": Vector3(0.5, 0.0, -24.2), "face": Vector3(-1.3, 0.0, -26.0),
+		"framing": Vector3(8.0, 16.0, 3.6), "fov": 58.0,
 		"note": "B - A window in the corridor that looks down into the collage room (a live SubViewport, rendered only while you are in the corridor).",
 	},
 	{
-		"name": "expression_room", "eye": Vector3(8.8, 1.7, -34.4), "look": Vector3(16.5, 0.6, -41.5),
-		"fov": 66.0, "fly": true,
-		"note": "C - The staff room: viridian and ochre floor, Prussian blue and cadmium walls leaning in, one barred light, twelve chairs and one.",
+		"name": "expression_room", "feet": Vector3(10.5, 0.0, -37.2), "face": Vector3(15.0, 0.0, -41.0),
+		"fov": 55.0,
+		"note": "C - The staff room from its framing, through the ceiling that is culled from above: viridian and ochre floor, Prussian blue and cadmium walls leaning in, one barred light, twelve chairs and one.",
 	},
 	{
-		"name": "expression_shadow", "eye": Vector3(11.5, 3.2, -36.5), "look": Vector3(15.5, 0.0, -40.6),
-		"fov": 58.0, "fly": true,
+		"name": "expression_shadow", "feet": Vector3(13.2, 0.0, -38.6), "face": Vector3(15.5, 0.0, -40.6),
+		"framing": Vector3(-30.0, 62.0, 6.0), "fov": 55.0,
 		"note": "C - The single chair: its real shadow falls west, its painted shadow runs east toward the light; painted sunlight on the wall from no window.",
 	},
 	{
-		"name": "threshold_3d", "eye": Vector3(29.7, 1.55, -38.0), "look": Vector3(40.0, 1.4, -40.2),
-		"fov": 62.0, "fly": false,
-		"note": "D - The ordinary classroom (the game's own desks and chairs), and through the doorway, the stage of flats - still in 3D.",
+		"name": "threshold_3d", "feet": Vector3(31.5, 0.0, -40.0), "face": Vector3(40.0, 0.0, -40.0),
+		"framing": Vector3(-90.0, 18.0, 4.8), "fov": 60.0,
+		"note": "D - The ordinary classroom (the game's own desks and chairs), and through the doorway ahead of the protagonist, the stage of flats - still in 3D.",
 	},
 	{
-		"name": "threshold_painted", "eye": Vector3(40.5, 1.55, -38.8), "look": Vector3(48.5, 1.5, -40.3),
-		"fov": 62.0, "fly": false, "settle": 1.4,
-		"note": "D - One step past the threshold: the same 3D world, now rendered at half size and painted onto a crooked paper mount. The protagonist stands in the painting; the flats are still solid.",
+		"name": "threshold_painted", "feet": Vector3(41.0, 0.0, -39.6), "face": Vector3(48.0, 0.0, -40.5),
+		"fov": 58.0, "settle": 1.4,
+		"note": "D - One step past the threshold: the same 3D world, protagonist included, now rendered at half size and painted onto a crooked paper mount. Q stands in the painting; the flats are still solid.",
 	},
 	{
-		"name": "classroom_picture", "eye": Vector3(30.4, 1.6, -36.6), "look": Vector3(30.0, 1.7, -34.1),
-		"fov": 55.0, "fly": false,
+		"name": "classroom_picture", "feet": Vector3(30.2, 0.0, -36.2), "face": Vector3(30.0, 0.0, -34.0),
+		"framing": Vector3(180.0, 28.0, 3.8), "fov": 55.0,
 		"note": "D - The picture on the classroom wall is a live view of the stage next door, banded like a cheap print.",
 	},
 	{
-		"name": "backstage", "eye": Vector3(55.5, 3.0, -47.5), "look": Vector3(48.5, 1.4, -38.5),
-		"fov": 62.0, "fly": true,
-		"note": "D - Behind the painting: plywood backs, braces and stage weights, back in 3D.",
+		"name": "backstage", "feet": Vector3(51.4, 0.0, -45.2), "face": Vector3(45.0, 0.0, -39.0),
+		"framing": Vector3(110.0, 40.0, 6.0), "fov": 60.0,
+		"note": "D - Behind the painting: plywood backs, braces and stage weights, back in 3D (the backstage station's framing, from the east).",
 	},
 ]
 
@@ -169,23 +173,26 @@ func _run() -> void:
 
 
 func _shoot(frame: Dictionary, out_dir: String, shot_name: String) -> void:
-	var eye: Vector3 = frame["eye"]
-	var camera := _lab.get_node("Observer/Head/Camera3D") as Camera3D
-	camera.fov = float(frame.get("fov", 62.0))
-	_lab.call("observe", eye - Vector3(0, EYE, 0), frame["look"], bool(frame.get("fly", false)))
+	var camera := _lab.get_node(CAMERA) as Camera3D
+	camera.fov = float(frame.get("fov", 55.0))
+	var framing: Vector3 = frame.get("framing", Vector3.ZERO)
+	_lab.call("observe", frame["feet"], frame["face"], framing)
+	if frame.has("eye"):
+		_lab.call("look_from", frame["eye"], frame["look"])
 	await _physics(4)
 	await _wait(float(frame.get("settle", 0.6)))
 	_save(out_dir, shot_name)
 	var painted := bool(_lab.get_node("MediumSwitch").call("is_painted"))
 	_lines.append(
-		"  - eye %s, looking at %s, fov %.0f, zone `%s`, medium %s"
-		% [str(eye), str(frame["look"]), camera.fov, String(_lab.call("current_zone")),
-			"painted" if painted else "3D"]
+		"  - character at %s, camera at %s (%s), fov %.0f, zone `%s`, medium %s"
+		% [str(frame["feet"]), str(camera.global_position.snapped(Vector3.ONE * 0.01)),
+			"free camera" if frame.has("eye") else "follow camera", camera.fov,
+			String(_lab.call("current_zone")), "painted" if painted else "3D"]
 	)
 	if _perf:
 		var sample: Dictionary = await _lab.call("sample_performance", 20)
 		print("VISUAL_LAB_PERF %s %s" % [shot_name, JSON.stringify(sample)])
-	camera.fov = 62.0
+	camera.fov = 55.0
 
 
 ## Switches one experiment off and on in the same view and reports both samples.
@@ -194,18 +201,18 @@ func _run_probes() -> void:
 	var collage := _lab.get_node("Zones/Collage")
 	var corridor := _lab.get_node("Zones/Corridor")
 	# The medium switch, standing on the stage.
-	_lab.call("observe", Vector3(40.5, 0, -38.8), Vector3(48.5, 1.5, -40.3))
+	_lab.call("observe", Vector3(41.0, 0, -39.6), Vector3(48.0, 0, -40.5))
 	await _physics(4)
 	await _wait(1.2)
 	var toggle_medium := func(enabled: bool) -> void: switch.call("set_painted", enabled, true)
 	await _probe("medium_switch", "painted", "3d", toggle_medium)
 	# The corridor window's SubViewport.
-	_lab.call("observe", Vector3(0.9, 0, -23.4), Vector3(-1.3, 1.55, -26.0))
+	_lab.call("observe", Vector3(0.5, 0, -24.2), Vector3(-1.3, 0, -26.0), Vector3(8.0, 16.0, 3.6))
 	await _physics(2)
 	var toggle_window := func(enabled: bool) -> void: corridor.call("set_window_live", enabled)
 	await _probe("corridor_window", "live", "frozen", toggle_window)
 	# The paper sheets, from the collage room's doorway.
-	_lab.call("observe", Vector3(0.0, 0, 4.2), Vector3(0.0, 1.5, -6.0))
+	_lab.call("observe", Vector3(0.0, 0, 4.2), Vector3(0.0, 0, -6.0))
 	await _physics(2)
 	var sheets: Array = collage.get("sheets")
 	var toggle_sheets := func(enabled: bool) -> void:
@@ -213,7 +220,8 @@ func _run_probes() -> void:
 			sheet.visible = enabled
 	await _probe("paper_sheets_%d" % sheets.size(), "shown", "hidden", toggle_sheets)
 	# The Decal, where it lands on the real desk.
-	_lab.call("observe", Vector3(4.6, 0.25, -1.6), Vector3(1.6, 0.5, -4.6), true)
+	_lab.call("observe", Vector3(3.6, 0, -4.4), Vector3(1.6, 0, -4.6))
+	_lab.call("look_from", Vector3(4.6, 1.8, -1.6), Vector3(1.6, 0.5, -4.6))
 	await _physics(2)
 	var decal := collage.get("decal") as Decal
 	var toggle_decal := func(enabled: bool) -> void: decal.visible = enabled

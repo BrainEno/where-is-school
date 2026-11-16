@@ -14,9 +14,14 @@ extends Node3D
 ## all. Each room swaps the WorldEnvironment as you enter it — a separate "renderer mood"
 ## per space, at the cost of one property assignment.
 ##
-## Controls (also on the HUD): WASD walk, mouse look (click), F fly, Q/E down/up, N pass
-## through walls while flying, 1-8 stations, M force the medium switch, H hide the HUD,
-## P print a performance sample to the log.
+## You walk through it as the game's protagonist, in third person (`observer.gd`): each
+## room asks the follow camera for its own framing, the way every location in the game
+## authors its camera angle. Narrow passages get a low chase framing so the walls do not
+## hide the character.
+##
+## Controls (also on the HUD): WASD walk relative to the camera, Shift jog, Q/E turn the
+## view, mouse orbits (click; Esc releases), wheel zoom, R reset the view, F free camera,
+## 1-8 stations, M force the medium switch, H hide the HUD, P print a performance sample.
 ##
 ## Nothing in the game references this scene. It lives under `scenes/dev/`, which every
 ## export preset excludes; `tests/visual_experiments_test.gd` checks both.
@@ -39,16 +44,36 @@ const ZONE_RECTS: Array = [
 	[&"stage", Rect2(36.3, -47.5, 16.0, 15.0)],
 ]
 
-## Stations: id, observer feet, what it looks at, flying.
+## The follow camera's framing per room: (yaw, pitch, distance). Yaw 0 puts the camera
+## south of the character (+Z), 90 east, -90 west. The game's own is (45, 53, 8).
+const ZONE_FRAMINGS := {
+	&"outside": Vector3(30.0, 50.0, 8.0),
+	&"collage": Vector3(15.0, 50.0, 7.5),
+	&"corridor": Vector3(0.0, 16.0, 4.2),
+	&"expression": Vector3(-35.0, 58.0, 9.0),
+	&"classroom": Vector3(-40.0, 52.0, 7.5),
+	&"stage": Vector3(-70.0, 32.0, 7.0),
+}
+## Passages too narrow to look into from above get a low chase framing, looking along
+## them: [Rect2(x, z, width, depth), framing]. Checked before the zone's framing.
+const PASSAGE_FRAMINGS: Array = [
+	[Rect2(1.6, -41.2, 6.4, 2.4), Vector3(-90.0, 14.0, 4.5)],
+	[Rect2(20.1, -41.0, 6.0, 2.0), Vector3(-90.0, 14.0, 4.5)],
+]
+const STAGE_FRAMING_BACK := Vector3(110.0, 40.0, 6.0)
+
+## Stations: id, the character's feet, where it faces, the camera (a framing, or
+## `Vector3.ZERO` for the room's own; the overview is a free camera: [eye, look]).
 const STATIONS: Array = [
-	[&"overview", Vector3(-12.0, 32.0, 16.0), Vector3(22.0, 0.0, -28.0), true],
-	[&"start", Vector3(0.0, 0.0, 4.2), Vector3(0.0, 1.4, -6.0), false],
-	[&"collage", Vector3(4.4, 0.0, -1.6), Vector3(-2.5, 1.3, -9.0), false],
-	[&"corridor", Vector3(0.0, 0.0, -13.5), Vector3(0.0, 1.3, -50.0), false],
-	[&"expression", Vector3(9.0, 0.0, -35.4), Vector3(16.0, 0.8, -41.0), false],
-	[&"threshold", Vector3(29.4, 0.0, -38.2), Vector3(40.0, 1.4, -40.0), false],
-	[&"stage", Vector3(40.0, 0.0, -38.6), Vector3(48.0, 1.6, -40.5), false],
-	[&"backstage", Vector3(51.6, 0.0, -45.6), Vector3(45.0, 1.4, -39.0), false],
+	[&"overview", Vector3(0.0, 0.0, 4.2), Vector3(0.0, 0.0, -6.0),
+		[Vector3(-14.0, 30.0, 14.0), Vector3(22.0, 0.0, -28.0)]],
+	[&"start", Vector3(0.0, 0.0, 4.2), Vector3(0.0, 0.0, -6.0), Vector3.ZERO],
+	[&"collage", Vector3(2.4, 0.0, -3.4), Vector3(-2.0, 0.0, -8.0), Vector3.ZERO],
+	[&"corridor", Vector3(0.0, 0.0, -16.5), Vector3(0.0, 0.0, -50.0), Vector3.ZERO],
+	[&"expression", Vector3(11.0, 0.0, -37.6), Vector3(15.0, 0.0, -41.0), Vector3.ZERO],
+	[&"threshold", Vector3(31.5, 0.0, -40.0), Vector3(40.0, 0.0, -40.0), Vector3.ZERO],
+	[&"stage", Vector3(41.0, 0.0, -39.6), Vector3(48.0, 0.0, -40.5), Vector3.ZERO],
+	[&"backstage", Vector3(51.6, 0.0, -45.6), Vector3(45.0, 0.0, -39.0), STAGE_FRAMING_BACK],
 ]
 
 const ZONE_NOTES := {
@@ -65,6 +90,7 @@ var _sun_energy: Dictionary = {}
 var _zone: StringName = &""
 var _hud_clock: float = 0.0
 var _manual_medium: bool = false
+var _framing_key: Vector3 = Vector3(-1.0, -1.0, -1.0)
 
 @onready var observer: CharacterBody3D = $Observer
 @onready var medium_switch: Node = $MediumSwitch
@@ -89,7 +115,6 @@ func _ready() -> void:
 	corridor.call("aim_window", Vector3(0.0, 10.5, -1.0), Vector3(0.0, 0.0, -6.5))
 	threshold.call("aim_stage_window")
 	go_to_station(&"start")
-	_update_zone()
 	print(
 		(
 			"VISUAL_LAB ready renderer=%s driver=%s sheets=%d cut_outs=%d generated_textures=%d"
@@ -152,6 +177,7 @@ func _build_environments() -> void:
 
 func _process(delta: float) -> void:
 	_update_zone()
+	_update_framing(false)
 	_hud_clock += delta
 	if _hud_clock >= 0.25 and _hud.visible:
 		_hud_clock = 0.0
@@ -182,22 +208,48 @@ func _print_sample() -> void:
 	print("VISUAL_LAB_PERF zone=%s %s" % [String(_zone), JSON.stringify(sample)])
 
 
-## Puts the observer at a named station. Returns false for an unknown id.
+## Puts the character at a named station. Returns false for an unknown id.
 func go_to_station(id: StringName) -> bool:
 	for station: Array in STATIONS:
-		if station[0] == id:
-			observer.call("set_flying", bool(station[3]))
-			observer.call("place", station[1], station[2])
-			_update_zone()
-			return true
+		if station[0] != id:
+			continue
+		var feet: Vector3 = station[1]
+		var facing: Vector3 = station[2]
+		if station[3] is Array:
+			var shot: Array = station[3]
+			observe(feet, facing)
+			look_from(shot[0], shot[1])
+		else:
+			var framing: Vector3 = station[3]
+			observe(feet, facing, framing)
+		return true
 	return false
 
 
-## Places the observer anywhere (captures, walkthrough, tests).
-func observe(feet: Vector3, target: Vector3, flying: bool = false) -> void:
-	observer.call("set_flying", flying)
+## Stands the character at `feet` facing `target`, with the follow camera behind it in
+## the room's framing, or in `framing` (yaw, pitch, distance) until it enters another
+## room (captures, walkthrough, tests).
+func observe(feet: Vector3, target: Vector3, framing: Vector3 = Vector3.ZERO) -> void:
 	observer.call("place", feet, target)
 	_update_zone()
+	_update_framing(true)
+	if framing != Vector3.ZERO:
+		observer.call("set_framing", framing, true)
+
+
+## A free camera at `eye` looking at `target`; the character stays where it is.
+func look_from(eye: Vector3, target: Vector3) -> void:
+	observer.call("director", eye, target)
+
+
+## The framing the room (or passage) at `point` asks for.
+func framing_at(point: Vector3) -> Vector3:
+	var flat := Vector2(point.x, point.z)
+	for entry: Array in PASSAGE_FRAMINGS:
+		if (entry[0] as Rect2).has_point(flat):
+			return entry[1]
+	var framing: Vector3 = ZONE_FRAMINGS.get(zone_at(point), ZONE_FRAMINGS[ZONE_OUTSIDE])
+	return framing
 
 
 func current_zone() -> StringName:
@@ -218,6 +270,16 @@ func environment_for(zone: StringName) -> Environment:
 
 func set_hud_visible(shown: bool) -> void:
 	_hud.visible = shown
+
+
+## Asks the camera for a new framing when the character crosses into a room or passage
+## that wants a different one (and only then, so a station's framing holds until you leave).
+func _update_framing(instant: bool) -> void:
+	var framing := framing_at(observer.global_position)
+	if not instant and framing == _framing_key:
+		return
+	_framing_key = framing
+	observer.call("set_framing", framing, instant)
 
 
 func _update_zone() -> void:
@@ -261,8 +323,8 @@ func _update_hud() -> void:
 			int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 			Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
 		],
-		"WASD walk  mouse look (click)  F fly  Q/E down/up  N through walls  1-8 stations",
-		"M switch medium  P log a perf sample  H hide this",
+		"WASD walk  Shift jog  Q/E turn view  mouse orbit (click)  wheel zoom  R reset view",
+		"F free camera (WASD fly, Q/E down/up)  1-8 stations  M switch medium  P perf  H hide",
 	]
 	_hud_text.text = "\n".join(lines)
 

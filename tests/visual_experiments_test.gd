@@ -15,7 +15,13 @@ extends SceneTree
 ## 2. **It stays out of the game.** Both export presets exclude `scenes/dev/`; no production
 ##    scene, script or data file names the lab; the lab does not reach for the player
 ##    controller, camera rig, dialogue, locations or production shaders.
-## 3. **Structure.** A free observer of its own (not the player), four zones, the switch.
+## 3. **Structure.** A visitor of its own (not the player), four zones, the switch.
+## 3b. **Third person.** The visitor is the game's protagonist scene, animated by the
+##    visitor's own body; the follow camera stands behind and above it and looks at it;
+##    the character turns to face where it is going; WASD walks relative to the camera;
+##    each room (and each narrow passage) has its own framing, the corridor's staying
+##    under the beams; a free camera can take over and hands back; the corridor's loop
+##    moves the camera with the character.
 ## 4. **A — collage.** Paper sheets in at least six patterns, four reprinted game textures,
 ##    flat and Y-billboard cut-outs with alpha-cut edges, a Decal, generated textures
 ##    within budget.
@@ -62,6 +68,8 @@ const FORBIDDEN_IN_LAB: Array[String] = [
 const PRODUCTION_ROOTS: Array[String] = [
 	"res://scenes/", "res://scripts/", "res://data/", "res://assets/", "res://addons/"
 ]
+const PROTAGONIST_SCENE := "res://scenes/environment/characters/protagonist.tscn"
+const CAMERA_PATH := "Observer/CameraRig/Camera3D"
 const STAGE_FEET := Vector3(40.0, 0.0, -40.0)
 const CLASSROOM_FEET := Vector3(29.0, 0.0, -40.0)
 ## The corridor starts at z -12; its loop trigger is 42.6 m in.
@@ -102,6 +110,8 @@ func _run() -> void:
 
 	Harness.stage = "structure"
 	_check_structure(lab)
+	Harness.stage = "third person"
+	await _check_third_person(lab)
 	Harness.stage = "collage"
 	_check_collage(lab.get_node("Zones/Collage") as Node3D)
 	Harness.stage = "corridor"
@@ -209,7 +219,7 @@ func _check_capture_scripts() -> void:
 
 func _check_structure(lab: Node3D) -> void:
 	for node_path: String in [
-		"Observer", "Observer/Head/Camera3D", "Zones/Collage", "Zones/Corridor",
+		"Observer", CAMERA_PATH, "Observer/Visual/Character", "Zones/Collage", "Zones/Corridor",
 		"Zones/Expression", "Zones/Threshold", "MediumSwitch", "WorldEnvironment", "HUD", "Ground",
 	]:
 		_expect(lab.get_node_or_null(node_path) != null, "The lab has no %s." % node_path)
@@ -218,10 +228,100 @@ func _check_structure(lab: Node3D) -> void:
 		var script := observer.get_script() as Script
 		_expect(
 			script != null and script.resource_path.begins_with(LAB_DIR),
-			"The lab's observer is not its own free observer."
+			"The lab's visitor is not its own (it must not be the game's player)."
 		)
-	var camera := lab.get_node_or_null("Observer/Head/Camera3D") as Camera3D
+	var camera := lab.get_node_or_null(CAMERA_PATH) as Camera3D
 	_expect(camera != null and camera.current, "The observer's camera is not current.")
+
+
+func _check_third_person(lab: Node3D) -> void:
+	var observer := lab.get_node("Observer") as CharacterBody3D
+	var camera := lab.get_node(CAMERA_PATH) as Camera3D
+	var character := lab.get_node_or_null("Observer/Visual/Character") as Node3D
+	_expect(
+		character != null and character.scene_file_path == PROTAGONIST_SCENE,
+		"The visitor is not the game's protagonist scene."
+	)
+	if character == null:
+		return
+	_expect(bool(character.call("is_bound")), "The protagonist's animation did not bind.")
+	# Its locomotion reads the visitor's body.
+	observer.velocity = Vector3(2.0, 0.0, 0.0)
+	var planar: Vector3 = character.call("get_planar_velocity")
+	_expect(planar.is_equal_approx(Vector3(2.0, 0.0, 0.0)), "The protagonist does not animate from the visitor's body.")
+	observer.velocity = Vector3.ZERO
+
+	# Standing at the start: the camera is behind and above, looking at the character.
+	_expect(bool(lab.call("go_to_station", &"start")), "There is no start station.")
+	await _physics(2)
+	var head := observer.global_position + Vector3(0.0, 1.1, 0.0)
+	var to_head := head - camera.global_position
+	_expect(camera.current, "The follow camera is not the current camera.")
+	_expect(
+		to_head.length() > 3.0,
+		"The camera is %.1f m from the character; expected a third-person distance." % to_head.length()
+	)
+	_expect(camera.global_position.y > head.y + 1.0, "The follow camera is not above the character.")
+	_expect(
+		(-camera.global_basis.z).dot(to_head.normalized()) > 0.98,
+		"The follow camera does not look at the character."
+	)
+	var facing: Vector3 = observer.call("facing")
+	_expect(facing.dot(Vector3(0.0, 0.0, -1.0)) > 0.98, "The character does not face where it was placed to look.")
+	var framing: Vector3 = observer.call("get_framing")
+	_expect(
+		framing == lab.call("framing_at", observer.global_position),
+		"The start station is not in the room's framing."
+	)
+
+	# WASD walks relative to the camera: W goes where the camera looks.
+	var forward := -camera.global_basis.z
+	forward.y = 0.0
+	forward = forward.normalized()
+	var before := observer.global_position
+	_press(KEY_W, true)
+	await _physics(12)
+	_press(KEY_W, false)
+	await _physics(2)
+	var walked := observer.global_position - before
+	walked.y = 0.0
+	_expect(walked.length() > 0.3, "Holding W moved the character only %.2f m." % walked.length())
+	if walked.length() > 0.0:
+		_expect(walked.normalized().dot(forward) > 0.95, "W does not walk the way the camera looks.")
+	facing = observer.call("facing")
+	_expect(facing.dot(forward) > 0.8, "The character did not turn toward where it walked.")
+
+	# Rooms ask for their own framing; the corridor's is a low chase under the beams.
+	lab.call("go_to_station", &"corridor")
+	await _physics(2)
+	var corridor_framing: Vector3 = lab.call("framing_at", observer.global_position)
+	_expect(observer.call("get_framing") == corridor_framing, "The corridor did not set its framing.")
+	_expect(
+		camera.global_position.y < float(lab.get_node("Zones/Corridor").call("wall_height")),
+		"The corridor camera is above the corridor's walls (%.2f m)." % camera.global_position.y
+	)
+	_expect(camera.global_position.z > observer.global_position.z + 2.0, "The corridor camera is not behind the character.")
+	var collage_framing: Vector3 = lab.call("framing_at", Vector3(0.0, 0.0, -6.0))
+	var passage_framing: Vector3 = lab.call("framing_at", Vector3(5.0, 0.0, -40.0))
+	_expect(collage_framing != corridor_framing, "The collage room and the corridor share a framing.")
+	_expect(passage_framing.y < 30.0, "The passage into the staff room is not framed low along it.")
+
+	# A free camera takes over and hands back.
+	lab.call("look_from", Vector3(0.0, 20.0, 10.0), Vector3(0.0, 0.0, -20.0))
+	await _physics(2)
+	_expect(bool(observer.get("free_camera")), "look_from() did not free the camera.")
+	_expect(camera.global_position.distance_to(Vector3(0.0, 20.0, 10.0)) < 0.05, "The free camera is not where it was put.")
+	lab.call("go_to_station", &"start")
+	await _physics(2)
+	_expect(not bool(observer.get("free_camera")), "A station did not hand the camera back to the character.")
+
+
+func _press(keycode: Key, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = keycode
+	event.physical_keycode = keycode
+	event.pressed = pressed
+	Input.parse_input_event(event)
 
 
 func _check_collage(collage: Node3D) -> void:
@@ -309,6 +409,12 @@ func _check_corridor(lab: Node3D) -> void:
 		observer.global_position.z > -20.0 and observer.global_position.z < -12.0,
 		"The loop left the observer at z %.2f, not at the corridor's near end." % observer.global_position.z
 	)
+	var loop_camera := lab.get_node(CAMERA_PATH) as Camera3D
+	_expect(
+		loop_camera.global_position.distance_to(observer.global_position) < 8.0,
+		"The loop moved the character but left the camera %.1f m away."
+		% loop_camera.global_position.distance_to(observer.global_position)
+	)
 	lab.call("go_to_station", &"start")
 	await _frames(2)
 	_expect(view.render_target_update_mode == SubViewport.UPDATE_DISABLED, "The corridor window keeps rendering after you leave.")
@@ -360,7 +466,7 @@ func _check_threshold(lab: Node3D) -> void:
 	var threshold := lab.get_node("Zones/Threshold") as Node3D
 	var switch := lab.get_node("MediumSwitch")
 	var observer := lab.get_node("Observer") as CharacterBody3D
-	var observer_camera := lab.get_node("Observer/Head/Camera3D") as Camera3D
+	var observer_camera := lab.get_node(CAMERA_PATH) as Camera3D
 	var view := switch.call("get_view") as SubViewport
 	var canvas := switch.call("get_canvas") as CanvasLayer
 	var painted_camera := switch.call("get_painted_camera") as Camera3D

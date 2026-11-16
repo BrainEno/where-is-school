@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/visual_experiments.gd" id="1_lab"]
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/observer.gd" id="2_observer"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/expression_room.gd" id="5_expression"]
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/zones/threshold.gd" id="6_threshold"]
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/medium_switch.gd" id="7_switch"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="8_protagonist"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_observer"]
 radius = 0.3
@@ -51,13 +52,16 @@ script = ExtResource("2_observer")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_observer")
 
-[node name="Head" type="Node3D" parent="Observer"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+[node name="Visual" type="Node3D" parent="Observer"]
 
-[node name="Camera3D" type="Camera3D" parent="Observer/Head"]
+[node name="Character" parent="Observer/Visual" instance=ExtResource("8_protagonist")]
+
+[node name="CameraRig" type="Node3D" parent="Observer"]
+
+[node name="Camera3D" type="Camera3D" parent="Observer/CameraRig"]
 current = true
-fov = 62.0
-near = 0.05
+fov = 55.0
+near = 0.1
 far = 400.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
