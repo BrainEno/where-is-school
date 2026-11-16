@@ -152,7 +152,7 @@ Round 1's overview was 179 draw calls and 193 k primitives. The closed shell, th
 - **The paper medium** costs a second scene render at 0.6 scale (with the root's 3D off, the net cost is the filter). It is entered only near the open curtain.
 - **Fixed shots are hand-placed.** A new piece of furniture or a new zone needs its shot checked (the test's frame-margin sweep catches a place left out of frame, not a poor composition). First person is not built; the director can take it as one more shot.
 - **The projector shows one slide.** `set_projection` exists, but no story use is wired.
-- **The cut-paper class is static.** The pupils do not move; their reverse side is lighter (the dye soaked through), which is visible in shots from the front.
+- **The cut-paper class is static.** The pupils do not move; from the board they show their reverse: the same paper, flatter and darker, with the back of the head instead of a face.
 - **Software rasteriser timings** in the evidence are CPU-bound and only comparable within one run. Draw calls and memory carry over.
 - **Generated textures** (about 12.6 MiB uncompressed) are built at load and never written to disk. They could be halved if this went further.
 - **No audio.** The bell is a stage note and the tubes' flicker.
