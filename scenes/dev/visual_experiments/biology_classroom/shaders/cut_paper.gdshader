@@ -34,6 +34,10 @@ uniform float focus_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float focus_radius = 3.0;
 
 varying vec3 world_position;
+// The piece's own normal in world space, before the renderer flips it for a back face:
+// which side of the paper the camera is on is worked out from it, not from FRONT_FACING
+// (whose sense is not the same on every renderer).
+varying vec3 world_normal;
 
 float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -54,6 +58,7 @@ float value_noise(vec2 p) {
 
 void vertex() {
 	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	world_normal = (MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz;
 }
 
 void fragment() {
@@ -62,7 +67,8 @@ void fragment() {
 		discard;
 	}
 	vec3 colour = mix(COLOR.rgb, sampled.rgb * COLOR.rgb, COLOR.a);
-	if (!FRONT_FACING) {
+	bool face_side = dot(world_normal, INV_VIEW_MATRIX[3].xyz - world_position) > 0.0;
+	if (!face_side) {
 		// Either layer seen from behind (from the board) is the paper's reverse, dyed
 		// through: lighter and flatter, never a white card. The thickness layer sits behind
 		// the face, so from that side it is the one in front; its core colour shows only as
