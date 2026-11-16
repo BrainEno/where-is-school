@@ -6,9 +6,9 @@
 script = ExtResource("1_shot")
 look_offset = Vector3(0, 0, 0)
 subject_mix = 0.5
-distance_scale = 0.72
-height_scale = 0.9
-yaw_degrees = -14.0
+distance_scale = 0.75
+height_scale = 1.1
+yaw_degrees = 8.0
 fov = 50.0
 glide_seconds = 0.9
 release_seconds = 0.8
