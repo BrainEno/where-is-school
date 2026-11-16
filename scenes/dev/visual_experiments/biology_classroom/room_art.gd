@@ -267,6 +267,53 @@ static func classmate(uniform_colour: Color, hair: Color, seed_value: int) -> Im
 	return _done(image)
 
 
+## The projector's slide: the lesson's experiment (the jar of beans on the window sill),
+## four stages of a bean sprouting, drawn in pen on a warm white; the slide's own frame,
+## a little keystoned, and the dust a projector puts in every corner. No words.
+static func projection_slide() -> ImageTexture:
+	var rng := _rng(311)
+	var image := _blank(Vector2i(320, 208), Color(0.97, 0.95, 0.88, 1))
+	var ink := Color(0.18, 0.2, 0.26, 1)
+	var green := Color(0.42, 0.6, 0.3, 1)
+	var bean := Color(0.86, 0.78, 0.52, 1)
+	# The frame: thick at the top where the slide sits in its holder.
+	image.fill_rect(Rect2i(0, 0, 320, 14), Color(0.3, 0.3, 0.32, 1))
+	image.fill_rect(Rect2i(0, 200, 320, 8), Color(0.42, 0.42, 0.44, 1))
+	# Two grey bars where a title would be (no words: the script is not ours).
+	image.fill_rect(Rect2i(24, 28, 150, 9), Color(0.7, 0.7, 0.72, 1))
+	image.fill_rect(Rect2i(24, 42, 96, 6), Color(0.8, 0.8, 0.8, 1))
+	# The soil line, and four beans: whole, split, rooted, sprouted.
+	Kit.stroke(image, Vector2(16, 150), Vector2(304, 152), 2.0, ink, rng)
+	for stage in 4:
+		var x := 52.0 + stage * 72.0
+		var seed_at := Vector2(x, 140.0)
+		Kit.fill_polygon(image, Kit.ellipse(seed_at, Vector2(15, 10)), bean, rng)
+		_circle_stroke(image, seed_at, 13.0, 1.5, ink, rng, 1.0, 1.0)
+		if stage >= 1:
+			Kit.stroke(image, seed_at + Vector2(-4, -8), seed_at + Vector2(4, 8), 1.5, ink, rng)
+		if stage >= 2:
+			var root := PackedVector2Array([seed_at + Vector2(4, 8), seed_at + Vector2(6, 22),
+				seed_at + Vector2(2, 34), seed_at + Vector2(5, 48)])
+			_polyline(image, root, 1.5, ink, rng)
+			Kit.stroke(image, seed_at + Vector2(3, 30), seed_at + Vector2(-8, 40), 1.0, ink, rng)
+		if stage >= 3:
+			var stem := PackedVector2Array([seed_at + Vector2(-2, -9), seed_at + Vector2(-6, -40),
+				seed_at + Vector2(0, -70)])
+			_polyline(image, stem, 2.0, green, rng)
+			Kit.fill_polygon(image, Kit.ellipse(seed_at + Vector2(-10, -72), Vector2(11, 5)), green, rng)
+			Kit.fill_polygon(image, Kit.ellipse(seed_at + Vector2(10, -74), Vector2(11, 5)), green, rng)
+		# The stage's number, as tally marks.
+		for tally in stage + 1:
+			Kit.stroke(image, Vector2(x - 8 + tally * 5, 176), Vector2(x - 9 + tally * 5, 188), 1.5, ink, rng)
+	# Dust and a hair on the slide.
+	for speck in 40:
+		var at := Vector2i(rng.randi_range(4, 315), rng.randi_range(16, 196))
+		image.fill_rect(Rect2i(at, Vector2i(1 + speck % 2, 1 + speck % 2)), Color(0.5, 0.48, 0.44, 1))
+	_polyline(image, PackedVector2Array([Vector2(250, 30), Vector2(262, 44), Vector2(258, 64)]), 1.0,
+		Color(0.4, 0.38, 0.36, 1), rng)
+	return _done(image)
+
+
 ## The torn strip the dialogue sits on.
 static func dialogue_paper() -> ImageTexture:
 	var rng := _rng(5)

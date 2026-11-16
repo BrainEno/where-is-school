@@ -31,14 +31,23 @@ extends Node3D
 ## The dialogue strip at the bottom shows *where* lines would sit and how the impression
 ## of B presses on them; it carries stage notes, never lines (the script is not ours).
 ##
-## Controls (also on the HUD): WASD walk (relative to the camera), Shift faster, Q / E turn
-## the view, wheel zoom, R reset the view, F free camera, Space interact, 1-4 jump to a
-## beat, 0 start over, M paper on/off, H hide the HUD, P print a performance sample.
+## The camera (round 2) is a set of **fixed shots** (`fixed_camera.gd`), not a follow
+## camera: one shot holds while you move inside the space it frames; when you walk into
+## another part of the room the camera glides (once, eased) to that part's shot, and when
+## you go through a door or down the stairs it cuts behind a short dip to dark. It never
+## follows, turns by itself, shakes or zooms. A story moment may take a shot of its own:
+## seated at the desk, looking at the lectern, N's entrance at the bell, the fall.
+##
+## Controls (also on the HUD): WASD walk (relative to the shot on screen; a held key keeps
+## its direction across a change of shot until you let go), Shift faster, Space interact,
+## 1-4 jump to a beat, 0 start over, M paper on/off, H hide the HUD, P print a
+## performance sample.
 
 const Room := preload("res://scenes/dev/visual_experiments/biology_classroom/room.gd")
 const Art := preload("res://scenes/dev/visual_experiments/biology_classroom/room_art.gd")
 const QPresence := preload("res://scenes/dev/visual_experiments/biology_classroom/q_presence.gd")
 const Kit := preload("res://scenes/dev/visual_experiments/collage_kit.gd")
+const Classmates := preload("res://scenes/dev/visual_experiments/biology_classroom/classmates.gd")
 const N_SCENE := preload("res://scenes/environment/characters/teacher_n.tscn")
 
 const WAKE := 1
@@ -52,14 +61,39 @@ const BEAT_TITLES := {
 	BELL: "第 4 段 · 铃声与 N",
 }
 
-## Framings: (yaw degrees, pitch degrees, distance). Yaw 0 = camera south looking north,
-## 90 = camera east looking west (the visual lab's observer).
-const FRAMING_ROOM := Vector3(40.0, 50.0, 9.5)
-const FRAMING_SEATED := Vector3(26.0, 34.0, 4.6)
-const FRAMING_LECTERN := Vector3(24.0, 15.0, 4.8)
-const FRAMING_CURTAIN := Vector3(100.0, 28.0, 6.2)
-const FRAMING_CORRIDOR := Vector3(90.0, 36.0, 7.5)
-const FRAMING_YARD := Vector3(-90.0, 12.0, 10.0)
+## The shots: name -> [eye, look at, space]. Every shot stands inside the closed room (or
+## in the corridor's air, or the yard's), under the ceiling. Their framings were laid out
+## so each shot's zone (`shot_for`) lies inside its frame with a margin at 16:9, feet and
+## head; `tests/biology_classroom_experiment_test.gd` walks the zones to check it.
+const SHOTS := {
+	# The whole room from its south-east corner: the board, the projector, the lectern by
+	# the window, the curtain, the desks. The default.
+	&"classroom": [Vector3(6.6, 2.85, 4.65), Vector3(-3.2, 0.3, -2.4), &"room"],
+	# The east aisle and both doors, from by the front window.
+	&"east": [Vector3(-6.6, 2.85, -1.0), Vector3(4.6, 0.3, 0.4), &"room"],
+	# The back of the room, its board and the rear door, from the front.
+	&"rear": [Vector3(2.6, 2.8, -4.6), Vector3(-0.8, 0.0, 3.6), &"room"],
+	# The curtain and the opening, Q's desk beside it.
+	&"curtain": [Vector3(-1.0, 2.7, 3.8), Vector3(-6.8, 0.8, 1.8), &"room"],
+	# The teaching corner: lectern, board, screen, the projector's beam overhead.
+	&"lectern": [Vector3(1.6, 2.8, 1.8), Vector3(-4.2, 0.6, -3.0), &"room"],
+	# Story shots.
+	&"seated": [Vector3(1.0, 2.3, 4.4), Vector3(-1.8, 0.75, 1.4), &"room"],
+	&"lectern_close": [Vector3(-3.2, 2.2, -1.05), Vector3(-4.8, 1.3, -2.55), &"room"],
+	&"bell": [Vector3(-5.8, 2.8, 4.4), Vector3(3.5, 0.6, -3.0), &"room"],
+	# Outside.
+	&"corridor": [Vector3(10.0, 3.1, 9.9), Vector3(8.6, 0.0, -2.0), &"corridor"],
+	&"corridor_south": [Vector3(9.6, 3.0, 1.0), Vector3(8.4, 0.0, 9.0), &"corridor"],
+	&"yard": [Vector3(-19.4, 0.4, 0.0), Vector3(-9.0, -3.0, 0.5), &"yard"],
+	&"yard_far": [Vector3(-7.6, -0.2, -4.6), Vector3(-17.0, -3.2, 1.0), &"yard"],
+}
+## How far inside the frame (in half-frames, 0 = edge) the protagonist must stay for a
+## shot to keep holding him.
+const FRAME_MARGIN := 0.04
+const DIP_OUT := 0.16
+const DIP_IN := 0.3
+const GLIDE_MAX_TURN := 75.0
+const GLIDE_MAX_TRAVEL := 9.0
 
 const INTERACT_RADIUS := 1.5
 const PAPER_ON_DISTANCE := 4.5
@@ -71,7 +105,6 @@ const LEAN_DEGREES := 38.0
 const DROP_SECONDS := 0.45
 const DROP_DEGREES := 85.0
 const DROP_DEPTH := 2.4
-const FALL_ROLL_DEGREES := -9.0
 const N_WALK_SPEED := 1.3
 const N_SPOT := Vector3(0.6, Room.PLATFORM_HEIGHT, -3.2)
 const N_ROUTE: Array[Vector3] = [
@@ -107,7 +140,11 @@ var _forced_b: float = -1.0
 var _bell_timer: float = -1.0
 var _flicker: float = 0.0
 var _observing: bool = false
-var _framing_key: Vector3 = Vector3.ZERO
+## The shot a story moment asked for (empty = the zones decide).
+var _story_shot: StringName = &""
+var _dipping: bool = false
+## True while an authored camera (`look_from`) holds; moving hands it back to the shots.
+var _authored: bool = false
 var _say_timer: float = 0.0
 var _n: Node3D = null
 var _n_route: Array[Vector3] = []
@@ -116,8 +153,8 @@ var _n_standing: bool = false
 var _hud_shown: bool = true
 
 @onready var room: Node3D = $Room
-@onready var observer: CharacterBody3D = $Observer
-@onready var camera: Camera3D = $Observer/CameraRig/Camera3D
+@onready var visitor: CharacterBody3D = $Visitor
+@onready var camera: Camera3D = $ShotCamera
 @onready var paper: Node = $PaperSwitch
 @onready var sun: DirectionalLight3D = $Sun
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
@@ -151,6 +188,8 @@ func _ready() -> void:
 func reset_experiment() -> void:
 	locked = false
 	_observing = false
+	_authored = false
+	_story_shot = &""
 	curtain_open = false
 	searched = false
 	door_open = false
@@ -168,6 +207,7 @@ func reset_experiment() -> void:
 	paper.call("set_paper", false, true)
 	_remove_n()
 	beat = WAKE
+	_sync_projector()
 	q.call("set_place_instant", QPresence.Place.HOME)
 	room.call("set_clock", 10, 52)
 	_sit_down(true)
@@ -187,23 +227,34 @@ func set_beat(value: int, instant: bool = false) -> void:
 		q.call("go", QPresence.Place.HOME)
 	if beat < NO_BOOK:
 		searched = false
+	_sync_projector()
 	if instant:
 		snap_registers()
 
 
-## Places the protagonist (standing) and asks for the framing of where he is.
-func observe(feet: Vector3, target: Vector3, framing: Vector3 = Vector3.ZERO) -> void:
+## The projector runs through the lesson (beats 2 and 3), whoever is teaching it; on
+## standby before, and after the bell (N has not prepared anything).
+func _sync_projector() -> void:
+	room.call("set_projector", beat == LESSON or beat == NO_BOOK)
+
+
+## Places the protagonist (standing) and cuts to the shot of where he is, or to `shot`.
+func observe(feet: Vector3, target: Vector3, shot: StringName = &"") -> void:
 	if seated:
 		_stand_up(true)
-	observer.call("place", feet, target)
-	_update_framing(true)
-	if framing != Vector3.ZERO:
-		observer.call("set_framing", framing, true)
+	_observing = false
+	_authored = false
+	_story_shot = shot
+	visitor.call("place", feet, target)
+	_direct(true)
 
 
-## A free camera at `eye` looking at `target`; the character stays where it is.
+## An authored camera at `eye` looking at `target` (captures); the character stays where
+## it is. The next change of zone hands the camera back to the shots.
 func look_from(eye: Vector3, target: Vector3) -> void:
-	observer.call("director", eye, target)
+	_authored = true
+	camera.call("frame", &"authored", eye, target, true)
+	visitor.set("view_yaw", float(camera.call("view_yaw")))
 
 
 func set_hud_visible(shown: bool) -> void:
@@ -272,31 +323,132 @@ func snap_registers() -> void:
 	_apply_registers()
 
 
-func framing_at(point: Vector3) -> Vector3:
+## The shot the zones give for `point` (the protagonist's feet), holding the current one
+## while he is still inside its hold area and its frame.
+func shot_for(point: Vector3) -> StringName:
+	var current: StringName = camera.get("shot")
+	if SHOTS.has(current) and _holds(current, point):
+		return current
+	var zoned := _zone_shot(point)
+	if frame_margin(zoned, point) >= FRAME_MARGIN:
+		return zoned
+	# Nowhere a zone has thought of (a doorway, the stairs): the shot of this space that
+	# frames him best.
+	var space := _space_at(point)
+	var best := zoned
+	var best_margin := -INF
+	for shot: StringName in SHOTS:
+		if SHOTS[shot][2] != space or shot == &"seated" or shot == &"lectern_close" or shot == &"bell":
+			continue
+		var margin := frame_margin(shot, point)
+		if margin > best_margin:
+			best_margin = margin
+			best = shot
+	return best
+
+
+## Where each zone's shot takes over (enter) and how far it holds (hold, a little wider):
+## the gap between the two keeps the camera from swapping back and forth on a line.
+func _zone_shot(point: Vector3) -> StringName:
 	if Room.is_in_yard(point):
-		return FRAMING_YARD
+		return &"yard_far" if point.x < -13.5 else &"yard"
 	if Room.is_in_corridor(point):
-		return FRAMING_CORRIDOR
+		return &"corridor_south" if point.z > 6.0 else &"corridor"
 	if seated:
-		return FRAMING_SEATED
-	if point.x < -2.8 and point.z < -0.9:
-		return FRAMING_LECTERN
-	if point.x < -4.4 and point.z > 0.2 and point.z < 4.2:
-		return FRAMING_CURTAIN
-	return FRAMING_ROOM
+		return &"seated"
+	if point.x <= -4.4 and point.z >= 0.2:
+		return &"curtain"
+	if point.x <= -2.2 and point.z <= -0.9:
+		return &"lectern"
+	if point.x >= 4.0:
+		return &"east"
+	if point.z >= 2.6:
+		return &"rear"
+	return &"classroom"
+
+
+func _holds(shot: StringName, point: Vector3) -> bool:
+	if SHOTS[shot][2] != _space_at(point):
+		return false
+	if seated != (shot == &"seated"):
+		return false
+	if frame_margin(shot, point) < FRAME_MARGIN:
+		return false
+	match shot:
+		&"seated":
+			return seated
+		&"lectern_close":
+			return _observing
+		&"bell":
+			return _story_shot == &"bell"
+		&"curtain":
+			return point.x <= -4.0 and point.z >= -0.1
+		&"lectern":
+			return point.x <= -1.7 and point.z <= -0.4
+		&"east":
+			return point.x >= 3.6
+		&"rear":
+			return point.z >= 2.3 and point.x > -4.4 and point.x < 4.3
+		&"classroom":
+			return point.x <= 4.15 and point.z <= 2.7 and not (point.x <= -4.4 and point.z >= 0.2) \
+				and not (point.x <= -2.2 and point.z <= -0.9)
+		&"corridor":
+			return point.z <= 6.6
+		&"corridor_south":
+			return point.z >= 5.2
+		&"yard":
+			return point.x >= -14.2
+		&"yard_far":
+			return point.x <= -12.5
+	return false
+
+
+func _space_at(point: Vector3) -> StringName:
+	if Room.is_in_yard(point):
+		return &"yard"
+	if Room.is_in_corridor(point):
+		return &"corridor"
+	return &"room"
+
+
+## How far inside `shot`'s frame the protagonist standing at `feet` is: 1 = the centre,
+## 0 = touching the edge, negative = (partly) out. Feet and head both count.
+func frame_margin(shot: StringName, feet: Vector3) -> float:
+	if not SHOTS.has(shot):
+		return -1.0
+	var entry: Array = SHOTS[shot]
+	var eye: Vector3 = entry[0]
+	var look: Vector3 = entry[1]
+	var view := Basis.looking_at(look - eye, Vector3.UP).inverse()
+	var tan_y := tan(deg_to_rad(camera.fov * 0.5))
+	var size := get_viewport().get_visible_rect().size
+	var aspect := size.x / size.y if size.y > 0.0 and size.x > 0.0 else 16.0 / 9.0
+	var worst := 1.0
+	for height: float in [0.05, 1.75]:
+		var local := view * (feet + Vector3(0.0, height, 0.0) - eye)
+		var depth := -local.z
+		if depth < 0.2:
+			return -1.0
+		var x := local.x / (depth * tan_y * aspect)
+		var y := local.y / (depth * tan_y)
+		worst = minf(worst, 1.0 - maxf(absf(x), absf(y)))
+	return worst
+
+
+func current_shot() -> StringName:
+	return camera.get("shot")
 
 
 func current_zone() -> StringName:
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	if Room.is_in_yard(feet):
 		return &"yard"
 	if Room.is_in_corridor(feet):
 		return &"corridor"
-	var framing := framing_at(feet)
-	if framing == FRAMING_LECTERN:
-		return &"lectern"
-	if framing == FRAMING_CURTAIN:
+	if feet.x <= -4.4 and feet.z >= 0.2:
 		return &"curtain"
+	if feet.x <= -2.2 and feet.z <= -0.9:
+		return &"lectern"
 	return &"classroom"
 
 
@@ -337,7 +489,7 @@ func sample_performance(frames: int = 30) -> Dictionary:
 		"worst_ms": snappedf(worst_ms, 0.01),
 		"video_mem_mib": snappedf(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0, 0.1),
 		"texture_mem_mib": snappedf(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, 0.1),
-		"generated_texture_kib": int((Art.generated_bytes() + Kit.generated_bytes()) / 1024),
+		"generated_texture_kib": int((Art.generated_bytes() + Kit.generated_bytes() + Classmates.generated_bytes()) / 1024),
 		"paper": bool(paper.call("is_on")),
 		"beat": beat,
 	}
@@ -388,8 +540,10 @@ func _physics_process(_delta: float) -> void:
 		_stand_up(false)
 	if _observing and _moving_keys_held():
 		_observing = false
-		observer.call("set_free_camera", false)
-	var feet := observer.global_position
+		_story_shot = &""
+	if _authored and _moving_keys_held():
+		_authored = false
+	var feet := visitor.global_position
 	q.set("look_target", feet)
 	q.set("has_look_target", true)
 	# Q's place follows what the protagonist does, never where he is: he comes to the
@@ -406,8 +560,8 @@ func _physics_process(_delta: float) -> void:
 				paper.call("set_paper", false)
 		elif _near_opening(PAPER_ON_DISTANCE):
 			paper.call("set_paper", true)
-	if not locked and not _observing:
-		_update_framing(false)
+	if not locked and not _dipping and not _authored:
+		_direct(false)
 
 
 func _process(delta: float) -> void:
@@ -445,7 +599,7 @@ func _process(delta: float) -> void:
 
 
 func _lectern_nearness() -> float:
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	var distance := Vector2(feet.x - Room.LECTERN.x, feet.z - Room.LECTERN.z).length()
 	return clampf(1.0 - (distance - 1.3) / 3.2, 0.0, 1.0)
 
@@ -453,7 +607,7 @@ func _lectern_nearness() -> float:
 func _b_target() -> float:
 	if _forced_b >= 0.0:
 		return _forced_b
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	if not Room.is_inside_room(feet):
 		return 0.0
 	var near := _lectern_nearness()
@@ -475,15 +629,16 @@ func _focus_target() -> float:
 
 
 func _outside_target() -> float:
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	return 1.0 if Room.is_in_corridor(feet) or Room.is_in_yard(feet) else 0.0
 
 
 func _apply_registers() -> void:
-	var material := room.get("room_material") as ShaderMaterial
-	material.set_shader_parameter("chill", b_weight * 0.85)
-	material.set_shader_parameter("dull", dull * 0.6)
-	material.set_shader_parameter("focus_amount", focus * 0.85)
+	var materials: Array[ShaderMaterial] = room.get("register_materials")
+	for material: ShaderMaterial in materials:
+		material.set_shader_parameter("chill", b_weight * 0.85)
+		material.set_shader_parameter("dull", dull * 0.6)
+		material.set_shader_parameter("focus_amount", focus * 0.85)
 	var warm := Color(1.0, 0.86, 0.66)
 	var cold := Color(0.72, 0.8, 1.0)
 	var fluorescent := Color(0.94, 0.98, 0.95)
@@ -524,12 +679,58 @@ func _update_lamps(delta: float) -> void:
 		room.call("set_lamps", 1.0)
 
 
-func _update_framing(instant: bool) -> void:
-	var framing := framing_at(observer.global_position)
-	if not instant and framing == _framing_key:
+## Gives the camera the shot it should have now: a story moment's, or the zones'. Same
+## space: a glide (or a cut if `instant`); another space: a cut behind a dip to dark.
+func _direct(instant: bool) -> void:
+	var feet := visitor.global_position
+	var wanted := _story_shot
+	if wanted != &"" and SHOTS.has(wanted) and SHOTS[wanted][2] != _space_at(feet):
+		_observing = false
+		wanted = &""
+	if wanted == &"" or not SHOTS.has(wanted) or frame_margin(wanted, feet) < FRAME_MARGIN:
+		if wanted != &"lectern_close" or not _observing:
+			_story_shot = &""
+			wanted = shot_for(feet)
+	var current: StringName = camera.get("shot")
+	if wanted == current and not instant:
 		return
-	_framing_key = framing
-	observer.call("set_framing", framing, instant)
+	var entry: Array = SHOTS[wanted]
+	var from_space: StringName = &""
+	if SHOTS.has(current):
+		from_space = SHOTS[current][2]
+	if instant:
+		camera.call("frame", wanted, entry[0], entry[1], true)
+	elif from_space != entry[2] or not _glides_to(wanted):
+		_dip_cut(wanted)
+		return
+	else:
+		camera.call("frame", wanted, entry[0], entry[1], false)
+	visitor.set("view_yaw", float(camera.call("view_yaw")))
+
+
+## A glide only between shots that look roughly the same way from not too far apart: a
+## reverse angle is a cut (a swing of 150 degrees through the room is what makes people
+## dizzy), and so is anything through a wall.
+func _glides_to(shot: StringName) -> bool:
+	var target: Transform3D = camera.call("target_transform")
+	var entry: Array = SHOTS[shot]
+	var eye: Vector3 = entry[0]
+	var look: Vector3 = entry[1]
+	var forward := (look - eye).normalized()
+	var current := -target.basis.z
+	return forward.dot(current) > cos(deg_to_rad(GLIDE_MAX_TURN)) and eye.distance_to(target.origin) < GLIDE_MAX_TRAVEL
+
+
+func _dip_cut(shot: StringName) -> void:
+	if _dipping:
+		return
+	_dipping = true
+	await _fade_to(0.92, DIP_OUT)
+	var entry: Array = SHOTS[shot]
+	camera.call("frame", shot, entry[0], entry[1], true)
+	visitor.set("view_yaw", float(camera.call("view_yaw")))
+	await _fade_to(0.0, DIP_IN)
+	_dipping = false
 
 
 # --- Interactions --------------------------------------------------------------------------
@@ -537,7 +738,7 @@ func _update_framing(instant: bool) -> void:
 
 ## What Space would do here, as a key and a prompt; empty key = nothing.
 func current_interaction() -> Array:
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	if seated:
 		return [&"", "移动键 站起来"]
 	if Room.is_in_yard(feet):
@@ -611,16 +812,17 @@ func _talk_to_q() -> void:
 func _observe_lectern() -> void:
 	if _observing:
 		_observing = false
-		observer.call("set_free_camera", false)
+		_story_shot = &""
+		_direct(false)
 		return
 	_observing = true
-	var top := Room.LECTERN + Vector3(0.0, Room.LECTERN_SIZE.y, 0.0)
-	look_from(top + Vector3(1.5, 0.9, 1.5), top + Vector3(-0.1, 0.0, 0.0))
+	_story_shot = &"lectern_close"
+	_direct(false)
 	_say("讲台", "三角尺（裂过，用胶带缠着），点名册和一支红笔，粉笔盒，靠在一边的教杆。")
 
 
 func _near_opening(distance: float) -> bool:
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	return Room.is_inside_room(feet) and _flat_distance(feet, Room.opening_centre()) < distance
 
 
@@ -630,7 +832,7 @@ func _flat_distance(a: Vector3, b: Vector3) -> float:
 
 func _place_ring() -> void:
 	var ring := room.get("ring_mark") as MeshInstance3D
-	var feet := observer.global_position
+	var feet := visitor.global_position
 	ring.global_position = Vector3(feet.x, feet.y + 0.008, feet.z)
 	ring.visible = true
 	_ring_amount = 0.0
@@ -643,16 +845,16 @@ func _place_ring() -> void:
 func _sit_down(instant: bool) -> void:
 	var feet := Room.seat_feet(Room.PLAYER_DESK)
 	_observing = false
-	observer.call("set_framing", FRAMING_SEATED, true)
-	observer.call("place", feet, feet + Vector3(0.0, 0.0, -2.0))
-	observer.set_physics_process(false)
+	_story_shot = &""
+	visitor.call("place", feet, feet + Vector3(0.0, 0.0, -2.0))
+	visitor.set_physics_process(false)
 	seated = true
-	var visual := observer.get("visual") as Node3D
+	var visual := visitor.get("visual") as Node3D
 	visual.rotation_degrees.x = SLUMP_DEGREES
-	var character := observer.call("character") as Node3D
+	var character := visitor.call("character") as Node3D
 	if character != null and character.has_method("set_seated"):
 		character.call("set_seated", true)
-	_framing_key = FRAMING_SEATED
+	_direct(instant)
 	if not instant:
 		focus = maxf(focus, 0.5)
 
@@ -661,13 +863,13 @@ func _stand_up(instant: bool) -> void:
 	if not seated:
 		return
 	seated = false
-	var visual := observer.get("visual") as Node3D
-	var character := observer.call("character") as Node3D
+	var visual := visitor.get("visual") as Node3D
+	var character := visitor.call("character") as Node3D
 	if character != null and character.has_method("set_seated"):
 		character.call("set_seated", false)
 	if instant:
 		visual.rotation_degrees.x = 0.0
-		observer.set_physics_process(true)
+		visitor.set_physics_process(true)
 		return
 	locked = true
 	if character != null and character.has_method("play_action"):
@@ -675,9 +877,9 @@ func _stand_up(instant: bool) -> void:
 	var tween := create_tween()
 	tween.tween_property(visual, "rotation_degrees:x", 0.0, GET_UP_SECONDS)
 	await tween.finished
-	observer.set_physics_process(true)
+	visitor.set_physics_process(true)
 	locked = false
-	_update_framing(false)
+	_direct(false)
 
 
 # --- The fall, and the ways back -----------------------------------------------------------
@@ -686,10 +888,10 @@ func _stand_up(instant: bool) -> void:
 func _fall() -> void:
 	locked = true
 	falls += 1
-	observer.set_physics_process(false)
-	observer.call("stop_gliding")
-	var visual := observer.get("visual") as Node3D
-	var feet := observer.global_position
+	visitor.set_physics_process(false)
+	visitor.call("stop_gliding")
+	var visual := visitor.get("visual") as Node3D
+	var feet := visitor.global_position
 	var toward := Room.opening_centre() - feet
 	toward.y = 0.0
 	var yaw := atan2(toward.x, toward.z)
@@ -712,23 +914,21 @@ func _fall() -> void:
 	drop.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	drop.tween_property(visual, "rotation_degrees:x", DROP_DEGREES, DROP_SECONDS)
 	drop.tween_property(visual, "position", rest + Vector3(0.0, -DROP_DEPTH, 0.0) + forward * (distance + 0.6), DROP_SECONDS)
-	drop.tween_property(camera, "rotation_degrees:z", FALL_ROLL_DEGREES, DROP_SECONDS)
 	await _fade_to(1.0, 0.6)
 	paper.call("set_paper", false, true)
 	visual.rotation = Vector3.ZERO
 	visual.position = rest
-	camera.rotation = Vector3.ZERO
 	(room.get("blank_sheet") as Node3D).visible = true
-	observer.call("set_framing", FRAMING_YARD, true)
-	observer.call("place", Room.LANDING, Room.LANDING + Vector3(-3.0, 0.0, 0.0))
-	_framing_key = FRAMING_YARD
-	var character := observer.call("character") as Node3D
+	_story_shot = &""
+	visitor.call("place", Room.LANDING, Room.LANDING + Vector3(-3.0, 0.0, 0.0))
+	_direct(true)
+	var character := visitor.call("character") as Node3D
 	if character != null and character.has_method("set_seated"):
 		character.call("set_seated", true)
 		character.call("set_seated", false)
 		character.call("play_action", "get_up", GET_UP_SECONDS)
 	await _fade_to(0.0, 0.9)
-	observer.set_physics_process(true)
+	visitor.set_physics_process(true)
 	locked = false
 
 
@@ -736,8 +936,8 @@ func _fall() -> void:
 func _travel(feet: Vector3, target: Vector3) -> void:
 	locked = true
 	await _fade_to(1.0, 0.45)
-	observer.call("place", feet, target)
-	_update_framing(true)
+	visitor.call("place", feet, target)
+	_direct(true)
 	await _fade_to(0.0, 0.55)
 	locked = false
 
@@ -800,6 +1000,8 @@ func _remove_n() -> void:
 	_n = null
 	_n_route.clear()
 	_n_standing = false
+	if _story_shot == &"bell":
+		_story_shot = &""
 
 
 func _update_n(delta: float) -> void:
@@ -810,6 +1012,10 @@ func _update_n(delta: float) -> void:
 		if _n_delay <= 0.0:
 			_n.visible = true
 			door_open = true
+			# A character's entrance: the camera takes the shot that sees the door and the
+			# platform, if he is in the room to see it, and holds it while N walks in.
+			if Room.is_inside_room(visitor.global_position) and not seated:
+				_story_shot = &"bell"
 		return
 	var goal: Vector3 = _n_route[0]
 	var to_goal := goal - _n.position
@@ -830,6 +1036,8 @@ func _update_n(delta: float) -> void:
 	if _n.has_method("report_velocity"):
 		_n.call("report_velocity", moved / maxf(delta, 0.0001))
 	if _n_route.is_empty():
+		if _story_shot == &"bell":
+			_story_shot = &""
 		if _n.has_method("report_velocity"):
 			_n.call("report_velocity", Vector3.ZERO)
 		_n_standing = true
@@ -1003,7 +1211,7 @@ func _update_hud(delta: float) -> void:
 		"生物课教室 · 重画实验      %s      位置：%s" % [
 			String(BEAT_TITLES.get(beat, "")), String(place.get(current_zone(), "教室"))
 		],
-		"WASD 移动   Shift 快走   Q/E 转视角   滚轮 缩放   R 复位视角   F 自由镜头",
+		"WASD 移动（按画面方向）   Shift 快走   镜头：%s（定点机位，不跟随）" % String(current_shot()),
 		"空格 互动   1–4 切换剧情段   0 重新开始   M 纸面开关   H 隐藏界面",
 		"B 的印象 %.2f   褪色 %.2f   纸面 %s   Q：%s" % [
 			b_weight, dull, "开" if bool(paper.call("is_on")) else "关", _q_state_text()

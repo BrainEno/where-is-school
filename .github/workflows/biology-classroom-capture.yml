@@ -11,7 +11,7 @@ name: Biology classroom experiment capture
 #
 # Frames are published inline as base64 `::notice` annotations (GitHub keeps 10 per step,
 # 50 per job): at most two frames per job, and a paper frame - all hatching, so large -
-# alone. They can be read through the REST API even where the artifact store cannot be
+# or a detail frame full of texture (the concrete, the cut paper) alone. They can be read through the REST API even where the artifact store cannot be
 # reached; every job also uploads its frames.
 
 on:
@@ -38,45 +38,81 @@ jobs:
             label: compatibility
             driver: opengl3
             method: ""
-            only: "overview,waking"
+            only: "overview"
             flags: "perf=1"
           - group: compatibility-b
             label: compatibility
             driver: opengl3
             method: ""
-            only: "lectern_set,lesson_b"
+            only: "projector"
             flags: "perf=1"
           - group: compatibility-c
             label: compatibility
             driver: opengl3
             method: ""
-            only: "curtain_closed,yard_landing"
+            only: "floor_lectern"
             flags: "perf=1"
           - group: compatibility-d
             label: compatibility
             driver: opengl3
             method: ""
-            only: "curtain_tearing"
+            only: "classmates"
             flags: "perf=1"
           - group: compatibility-e
             label: compatibility
             driver: opengl3
             method: ""
-            only: "curtain_paper"
+            only: "waking,lesson_b"
             flags: "perf=1"
           - group: compatibility-f
             label: compatibility
             driver: opengl3
             method: ""
-            only: "corridor_q,bell_n"
+            only: "curtain_closed,yard_landing"
+            flags: "perf=1"
+          - group: compatibility-g
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_tearing"
+            flags: "perf=1"
+          - group: compatibility-h
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_paper"
+            flags: "perf=1"
+          - group: compatibility-i
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "walk_start,walk_moved"
+            flags: "perf=1"
+          - group: compatibility-j
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "walk_east,corridor_q"
+            flags: "perf=1"
+          - group: compatibility-k
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "bell_n"
             flags: "perf=1"
           - group: forward-plus-a
             label: forward_plus
             driver: vulkan
             method: ""
-            only: "overview,lesson_b"
+            only: "overview"
             flags: "perf=1"
           - group: forward-plus-b
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "floor_lectern"
+            flags: "perf=1"
+          - group: forward-plus-c
             label: forward_plus
             driver: vulkan
             method: ""
@@ -86,9 +122,15 @@ jobs:
             label: mobile
             driver: vulkan
             method: "mobile"
-            only: "overview,lesson_b"
+            only: "overview"
             flags: "perf=1"
           - group: mobile-b
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "classmates"
+            flags: "perf=1"
+          - group: mobile-c
             label: mobile
             driver: vulkan
             method: "mobile"
@@ -169,7 +211,7 @@ jobs:
           done
           echo "queued $(wc -l < "${queue}") annotation part(s)"
           # The renderer line, the per-frame counters and the probes, for the next step.
-          grep -E "^BIOLOGY_CLASSROOM_(CAPTURE|PERF)|SHADER ERROR" \
+          grep -E "^BIOLOGY_CLASSROOM_(CAPTURE|PERF|SHOT)|SHADER ERROR|SCRIPT ERROR" \
             "${RUNNER_TEMP}/capture.log" | cut -c1-3800 > "${RUNNER_TEMP}/perf.txt" || true
 
       - name: Publish renderer and cost counters

@@ -19,38 +19,52 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const SCENE := "res://scenes/dev/visual_experiments/biology_classroom/biology_classroom.tscn"
 const OUT_ROOT := "res://docs/screenshots/visual_experiments/biology_classroom"
-const CAMERA := "Observer/CameraRig/Camera3D"
+const CAMERA := "ShotCamera"
 
-## Each frame: `feet` and `face` (omitted = left seated at the desk), optional `framing`
-## (yaw, pitch, distance) or free camera `eye`/`look`; then what to do before the shot:
-## `beat` (1-4), `door`, `q` (a Place, put there instantly), `curtain` ("instant" or
-## "animate"), `fall`, `note_line` (show the beat's stage note); `settle` seconds.
+## Each frame: `feet` and `face` (omitted = left seated at the desk); then what to do before
+## the shot: `beat` (1-4), `door`, `q` (a Place, put there instantly), `curtain` ("instant"
+## or "animate"), `fall`, `note_line` (show the beat's stage note), `keys` (movement keys
+## held for so many seconds, as a player would); `settle` seconds. A frame with `eye`/`look`
+## is an authored detail shot (`look_from`, the kind a story beat would ask for); every
+## other frame is the fixed shot the room itself gives for where he stands. The lens is the
+## camera's own (60 degrees) in every frame.
 const FRAMES := [
 	{
-		"name": "overview", "beat": 1, "feet": Vector3(-1.6, 0.0, 2.25),
-		"face": Vector3(-1.6, 0.0, 0.0),
-		"eye": Vector3(13.5, 15.0, 13.0), "look": Vector3(-3.0, -1.2, -0.6), "fov": 52.0,
-		"note": "The whole set from above the missing corner: the classroom with its south and east walls stopped at the dado and drawn in pen above, the platform and the tall lectern at the window end, the open corridor (right) and the yard one floor down (left).",
+		"name": "overview", "beat": 2, "feet": Vector3(1.0, 0.0, 0.9),
+		"face": Vector3(-0.4, 0.0, -4.0), "settle": 1.0,
+		"note": "Beat 2, the classroom's own fixed shot (from the rear door corner): four closed walls and a ceiling, the cast-concrete floor, the projector hanging over the front with its picture on the board, the high concrete lectern at the window end, the cut-paper class at their desks, the curtain (right of the lectern, west wall) the only opening.",
 	},
 	{
-		"name": "waking", "beat": 1, "fov": 55.0, "settle": 1.0,
-		"note": "Beat 1. Seated at his desk, slumped; the room beyond the next desk is lost in the dark (the focus register). Q sits across the aisle.",
+		"name": "projector", "beat": 2, "feet": Vector3(0.2, 0.0, -1.7),
+		"face": Vector3(-0.4, 0.0, -5.0),
+		"eye": Vector3(3.4, 1.75, 1.6), "look": Vector3(-1.4, 1.75, -3.6), "settle": 1.0,
+		"note": "Detail (authored): the projector on its ceiling rod in front of the board, tipped down at the front wall; its beam, the screen half pulled down and the picture spilling past it onto the blackboard; the cable down the front wall to the switch on the lectern.",
 	},
 	{
-		"name": "lectern_set", "beat": 3, "feet": Vector3(-1.2, 0.0, -0.9),
-		"face": Vector3(-4.7, 0.0, -2.55),
-		"eye": Vector3(-1.4, 2.0, 0.2), "look": Vector3(-4.9, 1.0, -2.9), "fov": 55.0,
-		"note": "The high lectern where the low desk stood: on the platform, at the window end, the set square (taped across its crack), the register and red pencil, the chalk box, the pointer leaning on it; the board, the wing chart and the clock behind.",
+		"name": "floor_lectern", "beat": 3, "feet": Vector3(1.0, 0.0, 0.9),
+		"face": Vector3(1.0, 0.0, -2.0),
+		"eye": Vector3(-1.5, 1.55, -0.2), "look": Vector3(-4.6, 0.55, -2.5), "settle": 0.8,
+		"note": "Detail (authored): the poured floor - aggregate, pores, warm and cool drift, the joints, the ruled lines and red margin cast into it - and the board-formed concrete lectern on the platform, set square, register, red pencil, chalk, pointer and projector switch on it.",
+	},
+	{
+		"name": "classmates", "beat": 1, "feet": Vector3(0.6, 0.0, 1.0),
+		"face": Vector3(0.6, 0.0, -2.0),
+		"eye": Vector3(3.25, 1.45, -2.3), "look": Vector3(3.1, 0.8, 1.8), "settle": 0.8,
+		"note": "Detail (authored): the class from the front, cut paper in layers - dyed, kraft, newsprint, graph, magazine and sugar paper, torn and cut edges, the white core showing, folded at the shoulder; one asleep, one turned round, one with a hand up, one standing at the back board pinning a sheet.",
+	},
+	{
+		"name": "waking", "beat": 1, "settle": 1.0,
+		"note": "Beat 1. Seated at his desk, slumped: the seated shot. The room beyond the next desk is lost in the dark (the focus register). Q sits across the aisle.",
 	},
 	{
 		"name": "lesson_b", "beat": 2, "feet": Vector3(-3.4, 0.0, -1.2),
 		"face": Vector3(-4.7, 0.0, -2.55), "note_line": true, "settle": 1.0,
-		"note": "Beat 2, near the lectern. B is not there; the impression of B is: the room turns ink blue, a shadow nobody casts climbs the front wall, the lectern stands taller than it is, the set square's shadow crosses the floor toward his desk, and its wedge cuts into the dialogue strip.",
+		"note": "Beat 2, near the lectern: the lectern zone's fixed shot. B is not there; the impression of B is: the room turns ink blue, a shadow nobody casts climbs the front wall, the lectern stands taller than it is, the set square's shadow crosses the floor toward his desk, and its wedge cuts into the dialogue strip.",
 	},
 	{
 		"name": "curtain_closed", "beat": 3, "feet": Vector3(-5.2, 0.0, 2.2),
-		"face": Vector3(-7.0, 0.0, 2.2),
-		"note": "Beat 3, at the curtain: deep blue pleats over the west opening, Q's desk beside it.",
+		"face": Vector3(-7.0, 0.0, 2.2), "settle": 0.8,
+		"note": "Beat 3, the curtain zone's fixed shot: deep blue pleats over the west opening, daylight leaking round their edges onto the floor - the one part of the room that is not wall.",
 	},
 	{
 		"name": "curtain_tearing", "beat": 3, "feet": Vector3(-5.9, 0.0, 2.2),
@@ -65,17 +79,32 @@ const FRAMES := [
 	{
 		"name": "yard_landing", "beat": 3, "feet": Vector3(-5.9, 0.0, 2.2),
 		"face": Vector3(-7.0, 0.0, 2.2), "curtain": "instant", "fall": true, "settle": 0.4,
-		"note": "Leaning out: the blank gives way, the paper lifts, and he lands in colour in the yard below, getting up. The opening is a white rectangle in the face of the building; Q is still upstairs.",
+		"note": "Leaning out: the blank gives way, the paper lifts, and he lands in colour in the yard below, getting up; the yard's fixed shot. The opening is a white rectangle in the face of the building; Q is still upstairs.",
+	},
+	{
+		"name": "walk_start", "beat": 2, "feet": Vector3(-0.4, 0.0, 0.4),
+		"face": Vector3(-0.4, 0.0, -2.0), "settle": 0.6,
+		"note": "Runtime, fixed camera 1/3: standing in the aisle, the classroom shot.",
+	},
+	{
+		"name": "walk_moved", "beat": 2, "feet": Vector3(-0.4, 0.0, 0.4),
+		"face": Vector3(-0.4, 0.0, -2.0), "keys": [[KEY_D, 0.45], [KEY_W, 0.3]], "settle": 0.1,
+		"note": "Runtime, fixed camera 2/3: the same start, then A and W held (as a player would): he has walked about two metres across the aisle; the camera has not moved, turned or zoomed (compare its position in the line below with frame 1/3).",
+	},
+	{
+		"name": "walk_east", "beat": 2, "feet": Vector3(3.0, 0.0, 0.2),
+		"face": Vector3(4.0, 0.0, 1.0), "keys": [[KEY_S, 0.7]], "settle": 2.0,
+		"note": "Runtime, fixed camera 3/3: walking on into the east side of the room crosses into another zone; the camera cut once (a short dip) to that zone's fixed shot, from the window wall, and is still again.",
 	},
 	{
 		"name": "corridor_q", "beat": 3, "feet": Vector3(8.6, 0.0, -1.4),
 		"face": Vector3(8.6, 0.0, 3.0), "door": true, "q": 2, "settle": 1.0,
-		"note": "Out of the front door into the open corridor. Q has come to the doorway (put there for the frame; in play he walks) and stays on the classroom side; he does not follow.",
+		"note": "Out of the front door into the open corridor: the corridor's fixed shot. Q has come to the doorway (put there for the frame; in play he walks) and stays on the classroom side; he does not follow.",
 	},
 	{
 		"name": "bell_n", "beat": 4, "feet": Vector3(2.4, 0.0, 0.6),
 		"face": Vector3(0.6, 0.0, -3.2), "q": 3, "settle": 1.6,
-		"note": "Beat 4. The bell: the fluorescent tubes come on and drain the colour, the clock reads 11:00, and N stands on the platform beside the lectern, not at it. Q is back in his seat.",
+		"note": "Beat 4. The bell: the fluorescent tubes come on and drain the colour, the projector drops to standby, the clock reads 11:00, and N stands on the platform beside the lectern, not at it. Q is back in his seat.",
 	},
 ]
 
@@ -150,7 +179,7 @@ func _shoot(frame: Dictionary, out_dir: String, shot_name: String) -> void:
 	await _physics(2)
 	_scene.call("set_beat", int(frame.get("beat", 1)), true)
 	if frame.has("feet"):
-		_scene.call("observe", frame["feet"], frame["face"], frame.get("framing", Vector3.ZERO))
+		_scene.call("observe", frame["feet"], frame["face"])
 	if bool(frame.get("door", false)):
 		_scene.call("open_door", true)
 	if frame.has("q"):
@@ -168,27 +197,34 @@ func _shoot(frame: Dictionary, out_dir: String, shot_name: String) -> void:
 		await _wait(3.4)
 	if bool(frame.get("note_line", false)):
 		_scene.call("show_note_for_beat")
-	camera.fov = float(frame.get("fov", 55.0))
 	if frame.has("eye"):
 		_scene.call("look_from", frame["eye"], frame["look"])
 	await _physics(4)
+	var camera_before := camera.global_transform
+	for held: Array in frame.get("keys", []):
+		_press(int(held[0]), true)
+		await _wait(float(held[1]))
+		_press(int(held[0]), false)
+		await _physics(1)
 	await _wait(float(frame.get("settle", 0.6)))
 	_save(out_dir, shot_name)
 	var paper := _scene.get_node("PaperSwitch")
 	_lines.append(
-		"  - character at %s, camera at %s (%s), fov %.0f, zone `%s`, beat %d, paper %s"
+		"  - character at %s, camera at %s looking %s (shot `%s`%s), fov %.0f, zone `%s`, beat %d, paper %s%s"
 		% [
-			str((_scene.get_node("Observer") as Node3D).global_position.snapped(Vector3.ONE * 0.01)),
+			str((_scene.get_node("Visitor") as Node3D).global_position.snapped(Vector3.ONE * 0.01)),
 			str(camera.global_position.snapped(Vector3.ONE * 0.01)),
-			"free camera" if frame.has("eye") else "follow camera", camera.fov,
-			String(_scene.call("current_zone")), int(_scene.get("beat")),
+			str((-camera.global_basis.z).snapped(Vector3.ONE * 0.01)),
+			String(_scene.call("current_shot")), ", authored detail" if frame.has("eye") else "",
+			camera.fov, String(_scene.call("current_zone")), int(_scene.get("beat")),
 			"on" if bool(paper.call("is_on")) else "off",
+			"" if not frame.has("keys") else (", camera unmoved while walking" if camera.global_transform.is_equal_approx(camera_before) else ", camera changed shot"),
 		]
 	)
+	print("BIOLOGY_CLASSROOM_SHOT %s %s" % [shot_name, _lines[_lines.size() - 1].strip_edges().trim_prefix("- ")])
 	if _perf:
 		var sample: Dictionary = await _scene.call("sample_performance", 20)
 		print("BIOLOGY_CLASSROOM_PERF %s %s" % [shot_name, JSON.stringify(sample)])
-	camera.fov = 55.0
 
 
 func _save(out_dir: String, shot_name: String) -> void:
@@ -205,6 +241,14 @@ func _save(out_dir: String, shot_name: String) -> void:
 		_failures.append("%s could not be saved (error %d)" % [shot_name, err])
 		return
 	print("BIOLOGY_CLASSROOM_FRAME %s (%dx%d)" % [shot_name, image.get_width(), image.get_height()])
+
+
+func _press(keycode: int, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = keycode as Key
+	event.physical_keycode = keycode as Key
+	event.pressed = pressed
+	Input.parse_input_event(event)
 
 
 func _wait(seconds: float) -> void:

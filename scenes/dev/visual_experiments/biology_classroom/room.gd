@@ -18,14 +18,21 @@ extends Node3D
 ##
 ## How it is drawn (the visual language of the experiment):
 ##
-## * **Colour fields, not materials.** Every surface is a flat field of vertex colour lit
-##   by a two-step terminator (`room_tone.gdshader`); shade is the room's ambient colour.
-##   The whole static room is three meshes: the shell, the furniture, the ink.
-## * **The fourth wall is drawn.** The two walls nearest the camera (south and east) are
-##   built only to the dado line; above it they are a pencil contour: the top edge, the
-##   corners, the door frames. The camera looks into the room the way one looks into a
-##   drawing of it, and nothing has to fade out of the way.
-## * **Furniture is outlined** (`ink_hull.gdshader`), the room's shell is not.
+## * **Colour fields, not materials.** Walls, desks and things are flat fields of vertex
+##   colour lit by a two-step terminator (`room_tone.gdshader`); shade is the room's
+##   ambient colour.
+## * **Except the concrete.** The floor, the platform and the lectern are poured concrete
+##   (`concrete.gdshader`): blotched, grained, stony, and wrong for a school: the floor was
+##   poured against an answer sheet (its ruled grooves and red margin run under the
+##   desks), the lectern still carries the boards it was cast in.
+## * **The room is closed** (round 2): four full walls and a ceiling, the doors cut
+##   through the east wall. The fixed cameras (`fixed_camera.gd`) stand inside it. The
+##   one place it is not closed is the curtained opening: light leaks round it.
+## * **The class is cut paper** (`classmates.gd`): layered, folded, different papers, no
+##   card behind them.
+## * **The projector** hangs over the front aisle, a collage machine wired to the lectern.
+## * **Furniture is outlined** (`ink_hull.gdshader`), the room's shell is not; its corners
+##   and frames are drawn in pen.
 ## * **The real light is the sun through the west wall**: the wall's shadow covers the
 ##   window side of the room, the front window lays a bright patch across the lectern.
 ##   The painted marks (`ink_mark.gdshader`) are the light and shadow that are not real.
@@ -34,11 +41,15 @@ extends Node3D
 
 const Kit := preload("res://scenes/dev/visual_experiments/collage_kit.gd")
 const Art := preload("res://scenes/dev/visual_experiments/biology_classroom/room_art.gd")
+const Classmates := preload("res://scenes/dev/visual_experiments/biology_classroom/classmates.gd")
 const TONE_SHADER := preload(
 	"res://scenes/dev/visual_experiments/biology_classroom/shaders/room_tone.gdshader"
 )
 const HULL_SHADER := preload(
 	"res://scenes/dev/visual_experiments/biology_classroom/shaders/ink_hull.gdshader"
+)
+const CONCRETE_SHADER := preload(
+	"res://scenes/dev/visual_experiments/biology_classroom/shaders/concrete.gdshader"
 )
 const MARK_SHADER := preload(
 	"res://scenes/dev/visual_experiments/biology_classroom/shaders/ink_mark.gdshader"
@@ -95,15 +106,11 @@ const LANDING := Vector3(-9.2, YARD_Y, 2.2)
 const C_WALL := Color(0.6, 0.63, 0.7)
 const C_WALL_NORTH := Color(0.66, 0.66, 0.68)
 const C_DADO := Color(0.2, 0.28, 0.32)
-const C_FLOOR := Color(0.6, 0.51, 0.39)
 const C_FLOOR_LINE := Color(0.52, 0.43, 0.33)
-const C_PLATFORM := Color(0.36, 0.27, 0.24)
 const C_DESK_TOP := Color(0.86, 0.8, 0.67)
 const C_DESK_BODY := Color(0.7, 0.62, 0.5)
 const C_IRON := Color(0.2, 0.19, 0.23)
 const C_CHAIR := Color(0.58, 0.36, 0.3)
-const C_LECTERN := Color(0.6, 0.34, 0.4)
-const C_LECTERN_SIDE := Color(0.48, 0.27, 0.34)
 const C_BONE := Color(0.88, 0.83, 0.7)
 const C_BOARD := Color(0.13, 0.16, 0.2)
 const C_CURTAIN := Color(0.17, 0.21, 0.42)
@@ -116,15 +123,40 @@ const C_CORRIDOR := Color(0.66, 0.64, 0.6)
 const C_YARD := Color(0.74, 0.7, 0.6)
 const C_BRICK := Color(0.62, 0.44, 0.36)
 const C_WOOD := Color(0.66, 0.46, 0.28)
+const C_CEILING := Color(0.7, 0.7, 0.74)
+const C_ENAMEL := Color(0.86, 0.82, 0.66)
+const C_LIGHT_LEAK := Color(1.0, 0.98, 0.9)
+## The projector hangs here (the lens's centre), over the front aisle, aimed at the screen.
+const PROJECTOR := Vector3(-0.4, 2.62, -1.5)
+## The pull-down screen's case, over the middle of the board.
+const SCREEN_CENTRE_X := -0.4
+const SCREEN_WIDTH := 3.0
+## The screen is pulled down only this far: below it the slide falls on the board.
+const SCREEN_BOTTOM := 1.85
+## The projected image on the front wall: x and y (low corner), width and height.
+const PROJECTION := Rect2(-1.55, 1.08, 2.3, 1.45)
 
-## Seats with a cut-out classmate (column, row). Q's and the protagonist's are not here.
-const CLASSMATES: Array[Vector2i] = [
-	Vector2i(0, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(2, 1), Vector2i(3, 1),
-	Vector2i(1, 2), Vector2i(3, 2),
-]
 
 ## The interior's one material: its uniforms are the room's registers.
 var room_material: ShaderMaterial = null
+## Poured concrete: the floor, the platform laid on it, the lectern cast from it.
+var floor_material: ShaderMaterial = null
+var platform_material: ShaderMaterial = null
+var lectern_material: ShaderMaterial = null
+## Every interior material the registers drive (chill, dull, focus).
+var register_materials: Array[ShaderMaterial] = []
+var projector: Node3D = null
+var projector_body: MeshInstance3D = null
+var projector_on: bool = false
+var projection_screen: Node3D = null
+var projector_beam: MeshInstance3D = null
+var projected_image: MeshInstance3D = null
+var projection_material: StandardMaterial3D = null
+var pilot_light: MeshInstance3D = null
+var pilot_material: StandardMaterial3D = null
+## Light from the blank behind the curtain, round its edges and on the floor.
+var light_spill: MeshInstance3D = null
+var leak_material: StandardMaterial3D = null
 ## The outside's material: the same shader, never chilled.
 var outside_material: ShaderMaterial = null
 var hull_material: ShaderMaterial = null
@@ -170,6 +202,8 @@ func _ready() -> void:
 	_build_doors()
 	_build_lamps()
 	_build_classmates()
+	_build_back_wall()
+	_build_projector()
 	_build_marks()
 
 
@@ -233,9 +267,29 @@ func _make_materials() -> void:
 	ink_material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_DITHER
 	ink_material.distance_fade_min_distance = 2.2
 	ink_material.distance_fade_max_distance = 4.6
+	floor_material = _concrete(Color(0.55, 0.54, 0.52), 1.0, 0.0, 2.3)
+	platform_material = _concrete(Color(0.44, 0.42, 0.42), 0.0, 0.0, 0.0)
+	platform_material.set_shader_parameter("warm_color", Color(0.56, 0.42, 0.4))
+	platform_material.set_shader_parameter("aggregate_density", 0.42)
+	lectern_material = _concrete(Color(0.6, 0.58, 0.55), 0.0, 1.0, 0.0)
+	lectern_material.set_shader_parameter("cool_color", Color(0.46, 0.5, 0.56))
+	lectern_material.set_shader_parameter("aggregate_density", 0.18)
+	register_materials = [room_material, floor_material, platform_material, lectern_material]
 	lamp_material = StandardMaterial3D.new()
 	lamp_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	lamp_material.albedo_color = Color(0.46, 0.48, 0.47)
+
+
+func _concrete(base: Color, ruled: float, boards: float, joints: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = CONCRETE_SHADER
+	material.set_shader_parameter("base_color", base)
+	material.set_shader_parameter("ruled_lines", ruled)
+	material.set_shader_parameter("formwork", boards)
+	material.set_shader_parameter("joint_spacing", joints)
+	material.set_shader_parameter("margin_x", ROOM_MIN.x + 0.8)
+	material.set_shader_parameter("focus_point", seat_feet(PLAYER_DESK))
+	return material
 
 
 # --- Helpers -------------------------------------------------------------------------------
@@ -298,12 +352,6 @@ func _build_shell() -> void:
 	var x1 := ROOM_MAX.x
 	var z0 := ROOM_MIN.y
 	var z1 := ROOM_MAX.y
-	# Floor, and its boards: darker seams every 0.7 m, running toward the board.
-	_box(tool, Vector3(x0, -0.2, z0), Vector3(x1, 0.0, z1), C_FLOOR)
-	var seam := x0 + 0.7
-	while seam < x1:
-		_box(tool, Vector3(seam - 0.015, 0.0, z0), Vector3(seam + 0.015, 0.003, z1), C_FLOOR_LINE)
-		seam += 0.7
 	# North wall, full height, and its dado.
 	_box(tool, Vector3(x0 - WALL, 0.0, z0 - WALL), Vector3(x1 + WALL, WALL_HEIGHT, z0), C_WALL_NORTH)
 	_box(tool, Vector3(x0, 0.0, z0), Vector3(x1, DADO, z0 + 0.02), C_DADO)
@@ -328,43 +376,74 @@ func _build_shell() -> void:
 	# Sills: the front window's is deep enough for a jar.
 	_box(tool, Vector3(x0 - 0.05, FRONT_WINDOW.position.y - 0.04, FRONT_WINDOW.position.x - 0.05),
 		Vector3(x0 + 0.16, FRONT_WINDOW.position.y, FRONT_WINDOW.end.x + 0.05), C_BONE)
-	# East and south walls: only to the dado line. Above it they are drawn (_build_ink).
+	# East wall: full height, the two doorways cut into it, a lintel over each. The east
+	# and south walls are their own mesh and cast no shadow: the sun comes from the west,
+	# so their shadows would only fall outside, across the corridor that stays in daylight.
+	var near := Kit.begin_field()
 	var door_spans: Array = [
 		[z0 - WALL, FRONT_DOOR_Z - DOOR_WIDTH * 0.5],
 		[FRONT_DOOR_Z + DOOR_WIDTH * 0.5, REAR_DOOR_Z - DOOR_WIDTH * 0.5],
 		[REAR_DOOR_Z + DOOR_WIDTH * 0.5, z1 + WALL],
 	]
 	for span: Array in door_spans:
-		_box(tool, Vector3(x1, 0.0, float(span[0])), Vector3(x1 + WALL, DADO, float(span[1])), C_DADO)
-		_box(tool, Vector3(x1 - 0.01, DADO - 0.02, float(span[0])),
-			Vector3(x1 + WALL + 0.01, DADO + 0.02, float(span[1])), C_BONE)
-	_box(tool, Vector3(x0 - WALL, 0.0, z1), Vector3(x1 + WALL, DADO, z1 + WALL), C_DADO)
-	_box(tool, Vector3(x0 - WALL, DADO - 0.02, z1 - 0.01),
-		Vector3(x1 + WALL, DADO + 0.02, z1 + WALL + 0.01), C_BONE)
-	# The platform, its front and east edges bevelled down to the floor (the ramps the
-	# feet take).
-	var p_low := Vector3(PLATFORM_MIN.x, 0.0, PLATFORM_MIN.y)
-	var p_high := Vector3(PLATFORM_MAX.x, PLATFORM_HEIGHT, PLATFORM_MAX.y)
-	_box(tool, p_low, p_high, C_PLATFORM)
-	var top := PLATFORM_HEIGHT
-	var front: Array[Color] = [C_PLATFORM.darkened(0.15)]
-	Kit.field_quad(tool, Vector3(p_low.x, top, p_high.z), Vector3(p_low.x, 0.0, p_high.z + RAMP),
-		Vector3(p_high.x, 0.0, p_high.z + RAMP), Vector3(p_high.x, top, p_high.z), front)
-	Kit.field_quad(tool, Vector3(p_high.x, top, p_high.z), Vector3(p_high.x + RAMP, 0.0, p_high.z),
-		Vector3(p_high.x + RAMP, 0.0, p_low.z), Vector3(p_high.x, top, p_low.z), front)
+		_box(near, Vector3(x1, 0.0, float(span[0])), Vector3(x1 + WALL, WALL_HEIGHT, float(span[1])), C_WALL)
+		_box(near, Vector3(x1 - 0.02, 0.0, float(span[0])), Vector3(x1, DADO, float(span[1])), C_DADO)
+	for door_z: float in [FRONT_DOOR_Z, REAR_DOOR_Z]:
+		_box(near, Vector3(x1, DOOR_HEIGHT, door_z - DOOR_WIDTH * 0.5),
+			Vector3(x1 + WALL, WALL_HEIGHT, door_z + DOOR_WIDTH * 0.5), C_WALL)
+	# South wall: full height, with its dado.
+	_box(near, Vector3(x0 - WALL, 0.0, z1), Vector3(x1 + WALL, WALL_HEIGHT, z1 + WALL), C_WALL)
+	_box(near, Vector3(x0, 0.0, z1 - 0.02), Vector3(x1, DADO, z1), C_DADO)
+	# A bone-white picture rail round the three plain walls, at the dado line.
+	_box(near, Vector3(x0, DADO - 0.02, z1 - 0.03), Vector3(x1, DADO + 0.02, z1), C_BONE)
+	for span: Array in door_spans:
+		_box(near, Vector3(x1 - 0.03, DADO - 0.02, maxf(float(span[0]), z0)),
+			Vector3(x1, DADO + 0.02, minf(float(span[1]), z1)), C_BONE)
+	_box(tool, Vector3(x0, DADO - 0.02, z0), Vector3(x1, DADO + 0.02, z0 + 0.03), C_BONE)
 	# The threshold strip under the east wall, so the doorway has a floor.
 	_box(tool, Vector3(x1, -0.2, z0 - WALL), Vector3(x1 + WALL, 0.0, z1 + WALL), C_FLOOR_LINE)
 	_commit("Shell", tool, room_material)
-	# Colliders: the floor, the walls (the drawn walls collide only to their built height,
-	# so the camera's ray goes over them), the platform and its ramps.
+	var near_walls := _commit("ShellNear", near, room_material)
+	near_walls.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The ceiling: plaster, the room's lid. It casts no shadow, so the afternoon still
+	# falls into the room the way it is painted.
+	var lid := Kit.begin_field()
+	_box(lid, Vector3(x0 - WALL, WALL_HEIGHT, z0 - WALL), Vector3(x1 + WALL, WALL_HEIGHT + 0.12, z1 + WALL), C_CEILING)
+	var ceiling := _commit("Ceiling", lid, room_material)
+	ceiling.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The floor: poured concrete (concrete.gdshader), its own mesh.
+	var slab := Kit.begin_field()
+	_box(slab, Vector3(x0, -0.2, z0), Vector3(x1, 0.0, z1), Color.WHITE)
+	_commit("Floor", slab, floor_material)
+	# The platform, its front and east edges bevelled down to the floor (the ramps the
+	# feet take): a second pour, darker, laid on the first.
+	var p_low := Vector3(PLATFORM_MIN.x, 0.0, PLATFORM_MIN.y)
+	var p_high := Vector3(PLATFORM_MAX.x, PLATFORM_HEIGHT, PLATFORM_MAX.y)
+	var stage := Kit.begin_field()
+	_box(stage, p_low + Vector3(0.0, 0.002, 0.0), p_high, Color.WHITE)
+	var top := PLATFORM_HEIGHT
+	var front: Array[Color] = [Color(0.86, 0.86, 0.86)]
+	Kit.field_quad(stage, Vector3(p_low.x, top, p_high.z), Vector3(p_low.x, 0.0, p_high.z + RAMP),
+		Vector3(p_high.x, 0.0, p_high.z + RAMP), Vector3(p_high.x, top, p_high.z), front)
+	Kit.field_quad(stage, Vector3(p_high.x, top, p_high.z), Vector3(p_high.x + RAMP, 0.0, p_high.z),
+		Vector3(p_high.x + RAMP, 0.0, p_low.z), Vector3(p_high.x, top, p_low.z), front)
+	var platform := _commit("Platform", stage, platform_material)
+	platform.material_overlay = fine_hull_material
+	# Colliders: the floor, the walls (full height now: the room is closed), the lintels,
+	# the platform and its ramps.
 	_solid("Floor", Vector3(x0 - WALL, -0.4, CORRIDOR_MIN.y), Vector3(CORRIDOR_MAX.x, 0.0, CORRIDOR_MAX.y))
 	_solid("WallNorth", Vector3(x0 - WALL, 0.0, z0 - WALL), Vector3(x1 + WALL, WALL_HEIGHT, z0))
 	_solid("WallWest", Vector3(wx0, 0.0, z0 - WALL), Vector3(x0, WALL_HEIGHT, z1 + WALL))
-	_solid("WallSouth", Vector3(x0 - WALL, 0.0, z1), Vector3(x1 + WALL, DADO + 0.15, z1 + WALL))
+	_solid("WallSouth", Vector3(x0 - WALL, 0.0, z1), Vector3(x1 + WALL, WALL_HEIGHT, z1 + WALL))
 	for index in door_spans.size():
 		var span: Array = door_spans[index]
 		_solid("WallEast%d" % index, Vector3(x1, 0.0, float(span[0])),
-			Vector3(x1 + WALL, DADO + 0.15, float(span[1])))
+			Vector3(x1 + WALL, WALL_HEIGHT, float(span[1])))
+	var lintel := 0
+	for door_z: float in [FRONT_DOOR_Z, REAR_DOOR_Z]:
+		_solid("Lintel%d" % lintel, Vector3(x1, DOOR_HEIGHT, door_z - DOOR_WIDTH * 0.5),
+			Vector3(x1 + WALL, WALL_HEIGHT, door_z + DOOR_WIDTH * 0.5))
+		lintel += 1
 	_solid("Platform", p_low, p_high)
 	_ramp("RampFront", Vector3((p_low.x + p_high.x) * 0.5, 0.0, p_high.z + RAMP * 0.5),
 		p_high.x - p_low.x, Vector3.RIGHT, 1.0)
@@ -546,7 +625,7 @@ func _chair(tool: SurfaceTool, chair: Vector3) -> void:
 	_box(tool, chair + Vector3(0.17, 0.45, 0.17), chair + Vector3(0.2, 0.86, 0.2), C_IRON)
 
 
-# --- The drawn fourth wall and the other pen lines ------------------------------------------
+# --- Pen lines: corners, frames, the platform's lip ----------------------------------------
 
 
 func _build_ink() -> void:
@@ -554,32 +633,29 @@ func _build_ink() -> void:
 	rng.seed = 2026
 	var tool := Kit.begin_field()
 	var w := 0.03
-	var ex := ROOM_MAX.x + WALL * 0.5
-	var sz := ROOM_MAX.y + WALL * 0.5
-	var nz := ROOM_MIN.y - WALL
-	var wx := ROOM_MIN.x - WALL
 	var h := WALL_HEIGHT
-	# Where the east and south walls would be: their top edges and corners.
-	_ink_line(tool, Vector3(ex, h, nz), Vector3(ex, h, sz), w, rng)
-	_ink_line(tool, Vector3(wx, h, sz), Vector3(ex, h, sz), w, rng)
-	_ink_line(tool, Vector3(ex, DADO, nz), Vector3(ex, h, nz), w, rng)
-	_ink_line(tool, Vector3(ex, DADO, sz), Vector3(ex, h, sz), w, rng)
-	_ink_line(tool, Vector3(wx, DADO, sz), Vector3(wx, h, sz), w, rng)
-	# A ghost of the back board and the timetable that hang on the south wall.
-	_ink_line(tool, Vector3(-4.0, 1.4, sz), Vector3(2.0, 1.4, sz), 0.018, rng)
-	_ink_line(tool, Vector3(-4.0, 2.5, sz), Vector3(2.0, 2.5, sz), 0.018, rng)
-	_ink_line(tool, Vector3(-4.0, 1.4, sz), Vector3(-4.0, 2.5, sz), 0.018, rng)
-	_ink_line(tool, Vector3(2.0, 1.4, sz), Vector3(2.0, 2.5, sz), 0.018, rng)
-	# Door frames, in the drawn wall.
+	# The room's corners and the ceiling's edges, drawn on the inside: the closed room is
+	# still a drawing.
+	var ix0 := ROOM_MIN.x + 0.01
+	var ix1 := ROOM_MAX.x - 0.01
+	var iz0 := ROOM_MIN.y + 0.01
+	var iz1 := ROOM_MAX.y - 0.01
+	var top := h - 0.01
+	_ink_line(tool, Vector3(ix1, top, iz0), Vector3(ix1, top, iz1), w, rng)
+	_ink_line(tool, Vector3(ix0, top, iz1), Vector3(ix1, top, iz1), w, rng)
+	for corner: Vector2 in [Vector2(ix0, iz0), Vector2(ix1, iz0), Vector2(ix0, iz1), Vector2(ix1, iz1)]:
+		_ink_line(tool, Vector3(corner.x, 0.0, corner.y), Vector3(corner.x, top, corner.y), w, rng)
+	# Door frames, on the inside of the east wall.
 	for door_z: float in [FRONT_DOOR_Z, REAR_DOOR_Z]:
 		var a := door_z - DOOR_WIDTH * 0.5
 		var b := door_z + DOOR_WIDTH * 0.5
-		_ink_line(tool, Vector3(ex, 0.0, a), Vector3(ex, DOOR_HEIGHT + 0.05, a), w, rng)
-		_ink_line(tool, Vector3(ex, 0.0, b), Vector3(ex, DOOR_HEIGHT + 0.05, b), w, rng)
-		_ink_line(tool, Vector3(ex, DOOR_HEIGHT + 0.05, a), Vector3(ex, DOOR_HEIGHT + 0.05, b), w, rng)
+		var fx := ROOM_MAX.x - 0.012
+		_ink_line(tool, Vector3(fx, 0.0, a), Vector3(fx, DOOR_HEIGHT + 0.05, a), w, rng)
+		_ink_line(tool, Vector3(fx, 0.0, b), Vector3(fx, DOOR_HEIGHT + 0.05, b), w, rng)
+		_ink_line(tool, Vector3(fx, DOOR_HEIGHT + 0.05, a), Vector3(fx, DOOR_HEIGHT + 0.05, b), w, rng)
 	# The real walls' top edges, and the window and opening frames.
-	_ink_line(tool, Vector3(wx, h, nz), Vector3(ex, h, nz), 0.02, rng)
-	_ink_line(tool, Vector3(wx, h, nz), Vector3(wx, h, sz), 0.02, rng)
+	_ink_line(tool, Vector3(ix0, top, iz0), Vector3(ix1, top, iz0), 0.02, rng)
+	_ink_line(tool, Vector3(ix0, top, iz0), Vector3(ix0, top, iz1), 0.02, rng)
 	for rect: Rect2 in [FRONT_WINDOW, BACK_OPENING]:
 		var x := ROOM_MIN.x + 0.005
 		_ink_line(tool, Vector3(x, rect.position.y, rect.position.x), Vector3(x, rect.end.y, rect.position.x), 0.025, rng)
@@ -638,14 +714,19 @@ func _build_lectern() -> void:
 	lectern.position = LECTERN
 	add_child(lectern)
 	var size := LECTERN_SIZE
+	# Cast concrete (concrete.gdshader, board-formed): one block on a recessed plinth, a
+	# step cut out of its window-side back, a slot down the face toward the class. The same
+	# pour as the floor, a paler mix, and it carries the boards it was cast in.
 	var tool := Kit.begin_field()
-	_box(tool, Vector3(-0.44, 0.0, -0.25), Vector3(0.44, 0.08, 0.25), C_IRON)
-	_box(tool, Vector3(-size.x * 0.5, 0.08, -size.z * 0.5), Vector3(size.x * 0.5, size.y, size.z * 0.5), C_LECTERN)
-	_box(tool, Vector3(-size.x * 0.5 - 0.01, 0.08, -size.z * 0.5), Vector3(-size.x * 0.5 + 0.04, size.y, size.z * 0.5), C_LECTERN_SIDE)
-	_box(tool, Vector3(size.x * 0.5 - 0.04, 0.08, -size.z * 0.5), Vector3(size.x * 0.5 + 0.01, size.y, size.z * 0.5), C_LECTERN_SIDE)
-	# One bone stripe down the front, toward the class: the lectern's only ornament.
-	_box(tool, Vector3(-0.07, 0.12, size.z * 0.5), Vector3(0.07, size.y - 0.08, size.z * 0.5 + 0.012), C_BONE)
-	var body := _commit_into(lectern, "Body", tool, room_material)
+	var plinth := Color(0.5, 0.5, 0.54)
+	_box(tool, Vector3(-0.4, 0.0, -0.22), Vector3(0.4, 0.1, 0.22), plinth)
+	_box(tool, Vector3(-size.x * 0.5, 0.1, -size.z * 0.5), Vector3(size.x * 0.5, size.y, size.z * 0.5 - 0.12), Color.WHITE)
+	_box(tool, Vector3(-size.x * 0.5 + 0.16, 0.1, size.z * 0.5 - 0.12), Vector3(size.x * 0.5, size.y, size.z * 0.5), Color.WHITE)
+	_box(tool, Vector3(-size.x * 0.5, 0.1, size.z * 0.5 - 0.12), Vector3(-size.x * 0.5 + 0.16, 0.62, size.z * 0.5), Color(0.9, 0.9, 0.9))
+	# The slot, toward the class, and a strip of paper tape pasted down beside it.
+	_box(tool, Vector3(0.08, 0.16, size.z * 0.5), Vector3(0.12, size.y - 0.1, size.z * 0.5 + 0.004), Color(0.34, 0.34, 0.38))
+	_box(tool, Vector3(-0.12, 0.3, size.z * 0.5), Vector3(-0.04, size.y - 0.24, size.z * 0.5 + 0.006), Color(1.3, 1.26, 1.1))
+	var body := _commit_into(lectern, "Body", tool, lectern_material)
 	body.material_overlay = hull_material
 	lectern_body = body
 	# The pointer, leaning on the side that faces the room.
@@ -662,9 +743,9 @@ func _build_lectern() -> void:
 	lectern_top.position = Vector3(0.0, size.y, 0.0)
 	lectern.add_child(lectern_top)
 	var slab := Kit.begin_field()
-	_box(slab, Vector3(-0.56, 0.0, -0.36), Vector3(0.56, LECTERN_TOP, 0.36), C_BONE)
-	_box(slab, Vector3(-0.56, LECTERN_TOP, 0.33), Vector3(0.56, LECTERN_TOP + 0.03, 0.36), C_IRON)
-	var slab_mesh := _commit_into(lectern_top, "Slab", slab, room_material)
+	_box(slab, Vector3(-0.6, 0.0, -0.38), Vector3(0.6, LECTERN_TOP, 0.38), Color(1.08, 1.06, 1.02))
+	_box(slab, Vector3(-0.6, LECTERN_TOP, 0.35), Vector3(0.6, LECTERN_TOP + 0.03, 0.38), Color(0.62, 0.62, 0.64))
+	var slab_mesh := _commit_into(lectern_top, "Slab", slab, lectern_material)
 	slab_mesh.material_overlay = hull_material
 	set_square = _build_set_square()
 	var register := Kit.begin_field()
@@ -815,12 +896,55 @@ func _build_curtain() -> void:
 	var rod := Kit.begin_field()
 	_box(rod, Vector3(0.02, WALL_HEIGHT - 0.1, -width - 0.1), Vector3(0.06, WALL_HEIGHT - 0.06, 0.1), C_IRON)
 	_commit("CurtainRod", rod, room_material).position = curtain.position
+	_build_curtain_light()
+
+
+## The one place the room is not closed: the blank behind the curtain is brighter than the
+## afternoon, and it shows. A rim of its light round the opening's edges (where a curtain
+## never quite meets the wall) and a pale spill on the floor in front of it, stronger as
+## the curtain is drawn. Additive, unshaded, no shadows: light that is not the sun's.
+func _build_curtain_light() -> void:
+	leak_material = StandardMaterial3D.new()
+	leak_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	leak_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	leak_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	leak_material.vertex_color_use_as_albedo = true
+	leak_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	leak_material.no_depth_test = false
+	var x := ROOM_MIN.x + 0.006
+	var z0 := BACK_OPENING.position.x
+	var z1 := BACK_OPENING.end.x
+	var y0 := BACK_OPENING.position.y
+	var y1 := BACK_OPENING.end.y
+	var rim := 0.05
+	var bright: Array[Color] = [C_LIGHT_LEAK * 0.55]
+	var tool := Kit.begin_field()
+	Kit.field_quad(tool, Vector3(x, y1, z0 - rim), Vector3(x, y1, z1 + rim), Vector3(x, y1 + rim, z1 + rim), Vector3(x, y1 + rim, z0 - rim), bright)
+	Kit.field_quad(tool, Vector3(x, y0, z0 - rim), Vector3(x, y1, z0 - rim), Vector3(x, y1, z0), Vector3(x, y0, z0), bright)
+	Kit.field_quad(tool, Vector3(x, y0 - rim, z0 - rim), Vector3(x, y0 - rim, z1 + rim), Vector3(x, y0, z1 + rim), Vector3(x, y0, z0 - rim), bright)
+	# The spill: from the foot of the opening, fanning into the room and fading.
+	var near := C_LIGHT_LEAK * 0.42
+	var far := Color(0.0, 0.0, 0.0, 1.0)
+	var foot0 := Vector3(ROOM_MIN.x + 0.02, 0.004, z0)
+	var foot1 := Vector3(ROOM_MIN.x + 0.02, 0.004, z1)
+	var reach0 := Vector3(ROOM_MIN.x + 1.9, 0.004, z0 - 0.5)
+	var reach1 := Vector3(ROOM_MIN.x + 1.9, 0.004, z1 + 0.5)
+	var verts: Array[Vector3] = [foot0, reach1, reach0, foot0, foot1, reach1]
+	var tints: Array[Color] = [near, far, far, near, near, far]
+	for index in 6:
+		tool.set_color(tints[index])
+		tool.set_normal(Vector3.UP)
+		tool.add_vertex(verts[index])
+	light_spill = Kit.commit_field(self, "CurtainLight", tool, leak_material, false)
+	light_spill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## 0 = closed across the opening, 1 = drawn to its south end.
 func set_curtain_open(amount: float) -> void:
 	var open := clampf(amount, 0.0, 1.0)
 	curtain.scale = Vector3(1.0, 1.0, lerpf(1.0, 0.14, open))
+	if leak_material != null:
+		leak_material.albedo_color = Color.WHITE * lerpf(0.55, 1.6, open)
 
 
 # --- Doors ---------------------------------------------------------------------------------
@@ -885,19 +1009,247 @@ func set_lamps(level: float) -> void:
 
 
 func _build_classmates() -> void:
-	var uniforms: Array[Color] = [
-		Color(0.2, 0.26, 0.42), Color(0.3, 0.38, 0.36), Color(0.24, 0.24, 0.3), Color(0.36, 0.3, 0.4)
+	var built := Classmates.build(self, DESK_COLUMNS, DESK_ROWS, CHAIR_BACK, seat_feet(PLAYER_DESK))
+	var meshes: Array = built[0]
+	var materials: Array = built[1]
+	for mesh: MeshInstance3D in meshes:
+		classmates.append(mesh)
+	for material: ShaderMaterial in materials:
+		register_materials.append(material)
+	# The pupil who is not in his seat stands at the class board on the back wall.
+	var feet := Classmates.STANDING_AT
+	_solid("StandingPupil", feet + Vector3(-0.24, 0.0, -0.12), feet + Vector3(0.24, 1.7, 0.14))
+
+
+## The back wall: the class's own board (the wall newspaper), a timetable, papers pinned.
+func _build_back_wall() -> void:
+	var z := ROOM_MAX.y
+	var tool := Kit.begin_field()
+	_box(tool, Vector3(-4.0, 1.0, z - 0.04), Vector3(2.0, 2.4, z), C_BOARD.lightened(0.06))
+	_box(tool, Vector3(-4.04, 0.96, z - 0.08), Vector3(2.04, 1.0, z), C_WOOD)
+	var board := _commit("BackBoard", tool, room_material)
+	board.material_overlay = hull_material
+	var papers: Array = [
+		[1, Color(0.95, 0.94, 0.88), Vector2(0.62, 0.8), Vector3(-3.3, 1.75, z - 0.045), 3.0],
+		[2, Color(0.9, 0.93, 0.9), Vector2(0.7, 0.55), Vector3(-2.2, 1.95, z - 0.045), -4.0],
+		[3, Color(0.86, 0.84, 0.78), Vector2(0.9, 0.62), Vector3(-0.9, 1.6, z - 0.045), 2.0],
+		[4, Color(0.74, 0.6, 0.44), Vector2(0.5, 0.7), Vector3(1.3, 1.85, z - 0.045), -6.0],
+		# The sheet the standing pupil is pinning up, under his hands.
+		[1, Color(0.96, 0.95, 0.9), Vector2(0.56, 0.4), Vector3(0.45, 1.98, z - 0.05), 9.0],
 	]
-	var hairs: Array[Color] = [Color(0.1, 0.09, 0.1), Color(0.18, 0.13, 0.1)]
-	for index in CLASSMATES.size():
-		var seat: Vector2i = CLASSMATES[index]
-		var desk := Vector3(DESK_COLUMNS[seat.x], 0.0, DESK_ROWS[seat.y])
-		var texture := Art.classmate(uniforms[index % uniforms.size()], hairs[index % hairs.size()], 100 + index)
-		var material := Kit.textured_paper(texture, Vector2(0.62, 0.78), 80.0 + index, 0.0)
-		var tilt := deg_to_rad(float(index % 3 - 1) * 4.0)
-		var where := Transform3D(Basis(Vector3.UP, tilt), desk + Vector3(0.0, 0.84, CHAIR_BACK + 0.02))
-		var sheet := Kit.sheet(self, "Classmate%d" % index, Vector2(0.62, 0.78), where, material)
-		classmates.append(sheet)
+	for index in papers.size():
+		var entry: Array = papers[index]
+		var size: Vector2 = entry[2]
+		var material := Kit.paper(int(entry[0]), entry[1], C_INK, size, 120.0 + index)
+		var basis := Basis(Vector3.UP, PI) * Basis(Vector3.BACK, deg_to_rad(float(entry[4])))
+		Kit.sheet(self, "BackPaper%d" % index, size, Transform3D(basis, entry[3]), material)
+
+
+# --- The projector ------------------------------------------------------------------------
+
+
+## A teaching projector over the front aisle, aimed at the board; its screen half pulled
+## down over the board, so the slide lands partly on the screen and partly on the board
+## below it (the chalk ghosts show through). Collage: an enamel tin body with a pen-drawn
+## vent grille, a kraft cardboard side taped on, a specimen jar for a lens; its beam a
+## cone of tracing paper. Its cable runs along the ceiling, down the front wall's corner
+## and across the platform to a switch box on the lectern: it is the lectern's machine.
+## `set_projector` and `set_projection` are the hooks the story can use later.
+func _build_projector() -> void:
+	# The ceiling plate and the drop rod stay plumb; the body hangs from a pivot on the
+	# rod, tipped down at the image's centre.
+	var mount := Kit.begin_field()
+	var drop := WALL_HEIGHT - PROJECTOR.y
+	_box(mount, PROJECTOR + Vector3(-0.12, drop - 0.02, -0.02), PROJECTOR + Vector3(0.12, drop, 0.22), C_IRON)
+	_box(mount, PROJECTOR + Vector3(-0.018, 0.09, 0.08), PROJECTOR + Vector3(0.018, drop - 0.02, 0.116), C_IRON)
+	_box(mount, PROJECTOR + Vector3(-0.06, 0.07, 0.07), PROJECTOR + Vector3(0.06, 0.09, 0.126), C_IRON)
+	_commit("ProjectorMount", mount, room_material).material_overlay = fine_hull_material
+	projector = Node3D.new()
+	projector.name = "Projector"
+	projector.position = PROJECTOR
+	var aim := PROJECTION.get_center()
+	projector.rotation.x = -atan2(PROJECTOR.y - aim.y, PROJECTOR.z - ROOM_MIN.y)
+	add_child(projector)
+	var tool := Kit.begin_field()
+	# The body: enamel, lens end toward the board (-Z).
+	_box(tool, Vector3(-0.2, -0.065, 0.0), Vector3(0.2, 0.07, 0.34), C_ENAMEL)
+	_box(tool, Vector3(-0.21, -0.075, 0.3), Vector3(0.21, -0.065, 0.34), C_IRON)
+	# Pen-drawn grille on its top, and a strip of tape over the seam.
+	for slot in 6:
+		var x := -0.14 + slot * 0.05
+		_box(tool, Vector3(x, 0.07, 0.16), Vector3(x + 0.012, 0.0712, 0.3), C_INK)
+	_box(tool, Vector3(-0.21, -0.03, 0.12), Vector3(0.21, 0.072, 0.17), Color(0.93, 0.9, 0.78))
+	# The lens: a specimen jar laid on its side (the bean jar's twin), its lid the bezel.
+	var lens_centre := Vector3(0.0, 0.0, 0.0)
+	var glass: Array[Color] = [Color(0.72, 0.82, 0.8)]
+	var rim: Array[Color] = [C_IRON]
+	var sides := 10
+	for side in sides:
+		var a0 := TAU * float(side) / sides
+		var a1 := TAU * float(side + 1) / sides
+		var p0 := Vector3(cos(a0), sin(a0), 0.0) * 0.055
+		var p1 := Vector3(cos(a1), sin(a1), 0.0) * 0.055
+		var front := Vector3(0.0, 0.0, -0.09)
+		Kit.field_quad(tool, lens_centre + p0, lens_centre + p1, lens_centre + p1 + front, lens_centre + p0 + front, glass)
+		Kit.field_quad(tool, lens_centre + p0 * 1.12 + front, lens_centre + p1 * 1.12 + front,
+			lens_centre + p1 * 1.12 + front * 0.82, lens_centre + p0 * 1.12 + front * 0.82, rim)
+	var body := _commit_into(projector, "Body", tool, room_material)
+	body.material_overlay = fine_hull_material
+	projector_body = body
+	# The cardboard side, taped on (the lab's kraft paper), with a pen-drawn label.
+	var kraft := Kit.paper(4, Color(0.66, 0.52, 0.36), C_INK, Vector2(0.3, 0.12), 77.0)
+	Kit.sheet(projector, "Cardboard", Vector2(0.3, 0.12),
+		Transform3D(Basis(Vector3.UP, PI * 0.5) * Basis(Vector3.BACK, deg_to_rad(-3.0)), Vector3(0.208, 0.0, 0.17)), kraft)
+	# The pilot light: amber on standby, green when it is projecting.
+	var pilot := Kit.begin_field()
+	_box(pilot, Vector3(-0.012, -0.012, 0.0), Vector3(0.012, 0.012, 0.006), Color.WHITE)
+	pilot_material = StandardMaterial3D.new()
+	pilot_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pilot_light = Kit.commit_field(projector, "Pilot", pilot, pilot_material, false)
+	pilot_light.position = Vector3(0.14, 0.03, 0.341)
+	pilot_light.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_build_screen()
+	_build_projector_cable()
+	set_projection(Art.projection_slide())
+	set_projector(false)
+
+
+func _build_screen() -> void:
+	var z := ROOM_MIN.y
+	var left := SCREEN_CENTRE_X - SCREEN_WIDTH * 0.5
+	var right := SCREEN_CENTRE_X + SCREEN_WIDTH * 0.5
+	projection_screen = Node3D.new()
+	projection_screen.name = "ProjectionScreen"
+	add_child(projection_screen)
+	var tool := Kit.begin_field()
+	# The case under the ceiling, its brackets, and the half-lowered sheet with its bar.
+	_box(tool, Vector3(left - 0.08, 2.86, z), Vector3(right + 0.08, 2.98, z + 0.13), C_ENAMEL.darkened(0.08))
+	for x: float in [left - 0.06, right + 0.02]:
+		_box(tool, Vector3(x, 2.98, z), Vector3(x + 0.04, WALL_HEIGHT, z + 0.03), C_IRON)
+	_box(tool, Vector3(left + 0.05, SCREEN_BOTTOM, z + 0.07), Vector3(right - 0.05, 2.86, z + 0.075), Color(0.95, 0.94, 0.9))
+	_box(tool, Vector3(left + 0.03, SCREEN_BOTTOM - 0.03, z + 0.06), Vector3(right - 0.03, SCREEN_BOTTOM, z + 0.09), C_IRON)
+	# The pull cord, hanging from the bar.
+	_box(tool, Vector3(SCREEN_CENTRE_X - 0.004, SCREEN_BOTTOM - 0.32, z + 0.074), Vector3(SCREEN_CENTRE_X + 0.004, SCREEN_BOTTOM - 0.03, z + 0.078), C_INK)
+	_box(tool, Vector3(SCREEN_CENTRE_X - 0.02, SCREEN_BOTTOM - 0.36, z + 0.068), Vector3(SCREEN_CENTRE_X + 0.02, SCREEN_BOTTOM - 0.32, z + 0.084), C_WOOD)
+	var screen_mesh := Kit.commit_field(projection_screen, "Screen", tool, room_material, false)
+	screen_mesh.material_overlay = fine_hull_material
+	# The image: one sheet of light in two parts, bright on the screen, dim and green on
+	# the board below it. Unshaded, see-through enough for the chalk to show.
+	projection_material = StandardMaterial3D.new()
+	projection_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	projection_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	projection_material.vertex_color_use_as_albedo = true
+	projection_material.cull_mode = BaseMaterial3D.CULL_BACK
+	var image := Kit.begin_field()
+	var low := PROJECTION.position
+	var high := PROJECTION.end
+	var split := clampf((SCREEN_BOTTOM - low.y) / (high.y - low.y), 0.0, 1.0)
+	_uv_quad(image, Vector3(low.x, SCREEN_BOTTOM, z + 0.079), Vector3(high.x, SCREEN_BOTTOM, z + 0.079),
+		Vector3(high.x, high.y, z + 0.079), Vector3(low.x, high.y, z + 0.079),
+		Rect2(0.0, 0.0, 1.0, 1.0 - split), Color(1.0, 0.99, 0.94, 0.96))
+	_uv_quad(image, Vector3(low.x, low.y, z + 0.05), Vector3(high.x, low.y, z + 0.05),
+		Vector3(high.x, SCREEN_BOTTOM, z + 0.05), Vector3(low.x, SCREEN_BOTTOM, z + 0.05),
+		Rect2(0.0, 1.0 - split, 1.0, split), Color(0.56, 0.68, 0.6, 0.62))
+	projected_image = Kit.commit_field(projection_screen, "ProjectedImage", image, projection_material, false)
+	projected_image.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The beam: tracing paper, a cone from the lens to the image's corners, faint and warm,
+	# fading toward the wall.
+	var beam_material := StandardMaterial3D.new()
+	beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	beam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	beam_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	beam_material.vertex_color_use_as_albedo = true
+	beam_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var beam := Kit.begin_field()
+	var lens := PROJECTOR + Vector3(0.0, 0.0, -0.09)
+	var corners: Array[Vector3] = [
+		Vector3(low.x, low.y, z + 0.06), Vector3(high.x, low.y, z + 0.06),
+		Vector3(high.x, high.y, z + 0.06), Vector3(low.x, high.y, z + 0.06),
+	]
+	var near := Color(0.32, 0.3, 0.24, 1.0)
+	var far := Color(0.05, 0.05, 0.04, 1.0)
+	for index in 4:
+		var c0 := corners[index]
+		var c1 := corners[(index + 1) % 4]
+		var l0 := lens + (c0 - lens).normalized() * 0.04
+		var l1 := lens + (c1 - lens).normalized() * 0.04
+		var verts: Array[Vector3] = [l0, c0, c1, l0, c1, l1]
+		var tints: Array[Color] = [near, far, far, near, far, near]
+		for vertex in 6:
+			beam.set_color(tints[vertex])
+			beam.set_normal(Vector3.UP)
+			beam.add_vertex(verts[vertex])
+	projector_beam = Kit.commit_field(projection_screen, "Beam", beam, beam_material, false)
+	projector_beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## The cable: up the drop rod, along the ceiling to the window end, down the front wall's
+## corner in a bone trunking, and across the platform to the switch box on the lectern.
+func _build_projector_cable() -> void:
+	var tool := Kit.begin_field()
+	var ceiling := WALL_HEIGHT - 0.03
+	# Down the front wall between the wing chart (and B's shadow) and the board.
+	var wall_x := -3.2
+	var z0 := ROOM_MIN.y
+	_box(tool, Vector3(PROJECTOR.x - 0.02, ceiling, PROJECTOR.z + 0.15), Vector3(wall_x + 0.02, ceiling + 0.03, PROJECTOR.z + 0.19), C_BONE)
+	_box(tool, Vector3(wall_x - 0.02, ceiling, z0), Vector3(wall_x + 0.02, ceiling + 0.03, PROJECTOR.z + 0.19), C_BONE)
+	_box(tool, Vector3(wall_x - 0.025, PLATFORM_HEIGHT, z0), Vector3(wall_x + 0.025, ceiling, z0 + 0.035), C_BONE)
+	# Loose cable from the trunking's foot to the lectern's back, lying on the platform.
+	var foot := Vector3(wall_x, PLATFORM_HEIGHT, z0 + 0.03)
+	var back := LECTERN + Vector3(0.2, 0.0, -LECTERN_SIZE.z * 0.5)
+	var bend := Vector3(wall_x + 0.3, PLATFORM_HEIGHT, (foot.z + back.z) * 0.5)
+	var runs: Array = [[foot, bend], [bend, back]]
+	for index in runs.size():
+		var pair: Array = runs[index]
+		var from: Vector3 = pair[0]
+		var to: Vector3 = pair[1]
+		var mid := (from + to) * 0.5
+		var run := to - from
+		var length := Vector2(run.x, run.z).length()
+		var yaw := atan2(run.x, run.z)
+		var cable := Kit.begin_field()
+		Kit.field_box(cable, Vector3.ZERO, Vector3(0.016, 0.016, length), C_INK)
+		var piece := Kit.commit_field(self, "ProjectorCable%d" % index, cable, room_material, false)
+		piece.transform = Transform3D(Basis(Vector3.UP, yaw), mid + Vector3(0.0, 0.008, 0.0))
+	_box(tool, back + Vector3(-0.012, 0.0, -0.012), back + Vector3(0.012, LECTERN_SIZE.y, 0.012), C_INK)
+	_commit("ProjectorTrunking", tool, room_material)
+	# The switch box on the lectern's top, by the register: enamel, one black toggle.
+	var switch := Kit.begin_field()
+	_box(switch, Vector3(-0.05, 0.0, -0.035), Vector3(0.05, 0.045, 0.035), C_ENAMEL)
+	_box(switch, Vector3(-0.008, 0.045, -0.01), Vector3(0.008, 0.07, 0.01), C_IRON)
+	var switch_mesh := _commit_into(lectern_top, "ProjectorSwitch", switch, room_material)
+	switch_mesh.position = Vector3(0.38, LECTERN_TOP, -0.24)
+	switch_mesh.material_overlay = fine_hull_material
+
+
+## A quad with its own UV rectangle (v down) and vertex colour: a b c d counter-clockwise
+## from the front, starting bottom-left.
+func _uv_quad(tool: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, uv: Rect2, colour: Color) -> void:
+	var corners: Array[Vector3] = [a, b, c, d]
+	var uvs: Array[Vector2] = [
+		Vector2(uv.position.x, uv.end.y), Vector2(uv.end.x, uv.end.y),
+		Vector2(uv.end.x, uv.position.y), Vector2(uv.position.x, uv.position.y),
+	]
+	var normal := (b - a).cross(c - a).normalized()
+	var order: Array[int] = [0, 2, 1, 0, 3, 2]
+	for index: int in order:
+		tool.set_color(colour)
+		tool.set_normal(normal)
+		tool.set_uv(uvs[index])
+		tool.add_vertex(corners[index])
+
+
+## Turns the projector on (the beam and the image) or to standby.
+func set_projector(on: bool) -> void:
+	projector_on = on
+	projector_beam.visible = on
+	projected_image.visible = on
+	pilot_material.albedo_color = Color(0.4, 0.95, 0.5) if on else Color(1.0, 0.62, 0.2)
+
+
+## What the projector shows: a hook for the story (another medium could come through it).
+func set_projection(texture: Texture2D) -> void:
+	projection_material.albedo_texture = texture
 
 
 # --- Painted marks: the light and shadow that are not real ---------------------------------

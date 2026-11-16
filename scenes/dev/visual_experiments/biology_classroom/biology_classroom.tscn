@@ -1,12 +1,13 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/biology_classroom.gd" id="1_experiment"]
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/room.gd" id="2_room"]
 [ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/paper_switch.gd" id="3_paper"]
-[ext_resource type="Script" path="res://scenes/dev/visual_experiments/observer.gd" id="4_observer"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/visitor.gd" id="4_visitor"]
 [ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="5_protagonist"]
+[ext_resource type="Script" path="res://scenes/dev/visual_experiments/biology_classroom/fixed_camera.gd" id="6_camera"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_observer"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_visitor"]
 radius = 0.3
 height = 1.7
 
@@ -25,23 +26,23 @@ script = ExtResource("2_room")
 [node name="PaperSwitch" type="Node" parent="."]
 script = ExtResource("3_paper")
 
-[node name="Observer" type="CharacterBody3D" parent="."]
+[node name="Visitor" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0, 2.25)
 floor_snap_length = 0.3
-script = ExtResource("4_observer")
+script = ExtResource("4_visitor")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Observer"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Visitor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-shape = SubResource("CapsuleShape3D_observer")
+shape = SubResource("CapsuleShape3D_visitor")
 
-[node name="Visual" type="Node3D" parent="Observer"]
+[node name="Visual" type="Node3D" parent="Visitor"]
 
-[node name="Character" parent="Observer/Visual" instance=ExtResource("5_protagonist")]
+[node name="Character" parent="Visitor/Visual" instance=ExtResource("5_protagonist")]
 
-[node name="CameraRig" type="Node3D" parent="Observer"]
-
-[node name="Camera3D" type="Camera3D" parent="Observer/CameraRig"]
+[node name="ShotCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 2.3, 4.4)
 current = true
-fov = 55.0
-near = 0.1
+fov = 60.0
+near = 0.05
 far = 200.0
+script = ExtResource("6_camera")
