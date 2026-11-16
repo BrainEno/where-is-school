@@ -4,6 +4,7 @@
 - **Scene:** `scenes/dev/visual_experiments/visual_experiments.tscn`. Open it in the editor and press F6.
 - **Check:** `tests/visual_experiments_test.gd` (Godot CI, step `visual_experiments`)
 - **Evidence:** `docs/screenshots/visual_experiments/`, plus the workflow `.github/workflows/visual-experiments-capture.yml`
+- **Follow-up experiment:** the biology classroom art rework, `scenes/dev/visual_experiments/biology_classroom/` - see [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md). It uses this lab's kit (and, since round 2, its own fixed camera instead of the lab's following visitor) and changes none of the lab's files.
 - **Engine:** Godot 4.7.2. All numbers below come from GitHub-hosted runners (llvmpipe / lavapipe software rasterisers).
 
 This lab asks one question: can *Where Is School* let its spaces disagree with each other?

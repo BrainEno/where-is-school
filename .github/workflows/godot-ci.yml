@@ -372,6 +372,11 @@ jobs:
           # structure, the corridor loop, the medium switch and its teardown; and that
           # nothing in the game refers to it.
           run_check visual_experiments 300 xvfb-run -a --server-args="-screen 0 1280x720x24" godot --resolution 1280x720 --rendering-driver opengl3 --path . --script res://tests/visual_experiments_test.gd || status=1
+          # The biology classroom art experiment (scenes/dev/visual_experiments/biology_classroom/,
+          # never exported): its shaders under a real renderer, isolation, the high lectern and
+          # set, walking and collision, the registers, the door, Q walking (never jumping, never
+          # through the doorway), the curtain's paper and the fall, the bell and N.
+          run_check biology_classroom_experiment 360 xvfb-run -a --server-args="-screen 0 1280x720x24" godot --resolution 1280x720 --rendering-driver opengl3 --path . --script res://tests/biology_classroom_experiment_test.gd || status=1
           run_check prop_asset 180 godot --headless --path . --script res://tests/prop_asset_test.gd || status=1
           run_check prop_placement 300 godot --headless --path . --script res://tests/prop_placement_test.gd || status=1
           # The corridor's three library models (#90): wrapper, wall/parapet contact,

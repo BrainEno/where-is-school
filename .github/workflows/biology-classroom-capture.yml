@@ -1,0 +1,263 @@
+name: Biology classroom experiment capture
+
+# Evidence for the biology classroom art experiment
+# (scenes/dev/visual_experiments/biology_classroom/): the frames, rendered by the engine
+# on three renderers, and the renderer's own cost counters. `tests/capture_biology_classroom.gd`
+# sets each frame up through the scene's public calls and takes it; see its header.
+#
+# The experiment is development-only (every export preset excludes scenes/dev/); this
+# workflow touches nothing the game ships and changes no project setting - Mobile is
+# selected with the `--rendering-method` command-line override.
+#
+# Frames are published inline as base64 `::notice` annotations (GitHub keeps 10 per step,
+# 50 per job): at most two frames per job, and a paper frame - all hatching, so large -
+# or a detail frame full of texture (the concrete, the cut paper) alone. They can be read through the REST API even where the artifact store cannot be
+# reached; every job also uploads its frames.
+
+on:
+  pull_request:
+    paths:
+      - "scenes/dev/visual_experiments/biology_classroom/**"
+      - "tests/capture_biology_classroom.gd"
+      - ".github/workflows/biology-classroom-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    name: frames (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: compatibility-a
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "overview"
+            flags: "perf=1"
+          - group: compatibility-b
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "projector"
+            flags: "perf=1"
+          - group: compatibility-c
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "floor_lectern"
+            flags: "perf=1"
+          - group: compatibility-d
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "classmates"
+            flags: "perf=1"
+          - group: compatibility-e
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "waking,lesson_b"
+            flags: "perf=1"
+          - group: compatibility-f
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_closed,yard_landing"
+            flags: "perf=1"
+          - group: compatibility-g
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_tearing"
+            flags: "perf=1"
+          - group: compatibility-h
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "curtain_paper"
+            flags: "perf=1"
+          - group: compatibility-i
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "walk_start,walk_moved"
+            flags: "perf=1"
+          - group: compatibility-j
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "walk_east,corridor_q"
+            flags: "perf=1"
+          - group: compatibility-k
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "bell_n"
+            flags: "perf=1"
+          - group: compatibility-l
+            label: compatibility
+            driver: opengl3
+            method: ""
+            only: "classmates_front"
+            flags: "perf=1"
+          - group: forward-plus-a
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "overview"
+            flags: "perf=1"
+          - group: forward-plus-b
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "floor_lectern"
+            flags: "perf=1"
+          - group: forward-plus-c
+            label: forward_plus
+            driver: vulkan
+            method: ""
+            only: "curtain_paper"
+            flags: "perf=1"
+          - group: mobile-a
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "overview"
+            flags: "perf=1"
+          - group: mobile-b
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "classmates"
+            flags: "perf=1"
+          - group: mobile-c
+            label: mobile
+            driver: vulkan
+            method: "mobile"
+            only: "curtain_paper"
+            flags: "perf=1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Install a software Vulkan driver
+        if: matrix.driver == 'vulkan'
+        shell: bash
+        run: |
+          # The runner has no GPU. Forward+ and Mobile need Vulkan; lavapipe (Mesa's software
+          # Vulkan) renders both.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary 2>&1 | head -n 20 || true
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+          LABEL: ${{ matrix.label }}
+          DRIVER: ${{ matrix.driver }}
+          METHOD: ${{ matrix.method }}
+          ONLY: ${{ matrix.only }}
+          FLAGS: ${{ matrix.flags }}
+        run: |
+          set +e -uo pipefail
+          # The checkout carries the committed evidence frames; start from an empty folder so
+          # only this run's frames are published.
+          rm -rf "docs/screenshots/visual_experiments/biology_classroom/${LABEL}"
+          method_args=()
+          if [ -n "${METHOD}" ]; then
+            method_args=(--rendering-method "${METHOD}")
+          fi
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver "${DRIVER}" "${method_args[@]}" \
+            --script res://tests/capture_biology_classroom.gd -- \
+            "label=${LABEL}" "only=${ONLY}" width=800 quality=0.72 ${FLAGS} \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "BIOLOGY_CLASSROOM|PASS|FAIL|SCRIPT ERROR|SHADER ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
+          out="docs/screenshots/visual_experiments/biology_classroom/${LABEL}"
+          ls -l "${out}" || true
+          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" 2>/dev/null | wc -l)
+          echo "frames=${frames} exit=${code}"
+          if [ "${frames}" -lt 1 ]; then
+            echo "::error title=biology classroom capture::${GROUP} wrote ${frames} frame(s), exit ${code}"
+            tail -n 30 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/frames"
+          for file in "${out}"/*.jpg; do
+            cp "${file}" "${RUNNER_TEMP}/frames/${LABEL}_$(basename "${file}")"
+          done
+          cp "${out}/FRAMES.md" "${RUNNER_TEMP}/frames/${GROUP}_FRAMES.md" 2>/dev/null || true
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for file in $(ls "${RUNNER_TEMP}/frames" | grep '\.jpg$' | sort); do
+            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+          # The renderer line, the per-frame counters and the probes, for the next step.
+          grep -E "^BIOLOGY_CLASSROOM_(CAPTURE|PERF|SHOT)|SHADER ERROR|SCRIPT ERROR" \
+            "${RUNNER_TEMP}/capture.log" | cut -c1-3800 > "${RUNNER_TEMP}/perf.txt" || true
+
+      - name: Publish renderer and cost counters
+        if: always()
+        shell: bash
+        run: |
+          head -n 10 "${RUNNER_TEMP}/perf.txt" 2>/dev/null | while IFS= read -r line; do
+            echo "::notice title=biology classroom ${{ matrix.group }}::${line}"
+          done
+
+      # Four steps of ten frame parts each: 40 of the 50 annotations a job may keep, the
+      # other ten being the counters above.
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: biology-classroom-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
