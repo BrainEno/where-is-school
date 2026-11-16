@@ -19,10 +19,20 @@ shader_type spatial;
 //   few degrees) fall back to the object-space position;
 // - up to two painted patches per part, mirrored across the face: the protagonist's
 //   bruised under-eyes and Q's flushed cheeks;
-// - no specular, no reflections, no rim: nothing for a highlight to slide on.
+// - no specular, no reflections, no rim: nothing for a highlight to slide on;
+// - optional stroke marks (`mark_*`, off at the default `mark_strength` 0): short, broken,
+//   hand-placed-looking strokes in one colour, laid on in rest space so they stay on the
+//   cloth. They can cover a part evenly (`mark_coverage`, a dry-brush or chalk tooth) or
+//   gather where the form turns away from the eye (`mark_contour`, the carved line along a
+//   woodcut's edge), and fade to their average tone once a stroke is smaller than a pixel,
+//   so they never shimmer at gameplay distance;
+// - optional silhouette shaping (`shape_*`, character_shape.gdshaderinc), shared with the
+//   ink hull.
 //
 // The ink line is a separate pass, character_outline.gdshader, on the parts that need it.
 render_mode specular_disabled, cull_back, depth_draw_opaque;
+
+#include "res://assets/shaders/characters/character_shape.gdshaderinc"
 
 uniform vec3 albedo : source_color = vec3(0.5);
 // Multiplier for the shadow side's light: the colour shadows are painted in.
@@ -70,6 +80,26 @@ uniform bool patch_mirror_x = true;
 // The x the patches mirror across: the middle of the face (Q's sits 1.2 cm off x = 0).
 uniform float mirror_center_x = 0.0;
 
+// Stroke marks (all off while `mark_strength` is 0).
+uniform float mark_strength : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 mark_color : source_color = vec3(0.85, 0.8, 0.7);
+// Strokes per metre, counted across them.
+uniform float mark_scale : hint_range(5.0, 400.0) = 90.0;
+// The direction the strokes are counted across, in rest space: the strokes themselves run
+// at right angles to it. (1, 0.3, 0) gives near-vertical strokes leaning a little.
+uniform vec3 mark_across = vec3(1.0, 0.3, 0.0);
+// A stroke's thickness as a share of the spacing.
+uniform float mark_width : hint_range(0.02, 0.95) = 0.3;
+// How long a stroke runs before it breaks, in spacings.
+uniform float mark_length : hint_range(1.0, 60.0) = 6.0;
+// How much of the part carries strokes everywhere, and how much more towards the
+// silhouette (1 - |N·V|, raised to `mark_contour_power`).
+uniform float mark_coverage : hint_range(0.0, 1.0) = 0.0;
+uniform float mark_contour : hint_range(0.0, 1.0) = 0.0;
+uniform float mark_contour_power : hint_range(0.5, 8.0) = 2.0;
+// How far a stroke wanders off its straight line, in spacings.
+uniform float mark_jitter : hint_range(0.0, 1.5) = 0.5;
+
 varying vec3 paint_position;
 
 float hash31(vec3 p) {
@@ -108,8 +138,27 @@ float patch_mask(vec3 p, vec3 center, vec3 radius, float noise) {
 	return 1.0 - smoothstep(0.72, 0.9, d + (noise - 0.5) * 0.45);
 }
 
+// 0..1: how much stroke covers this fragment (already faded with distance to the
+// stroke's average coverage, see the header).
+float mark_mask(vec3 p, float facing) {
+	vec3 across = normalize(mark_across);
+	float wander = (value_noise(p * mark_scale * 0.11 + vec3(5.3, 1.7, 9.1)) - 0.5) * 2.0 * mark_jitter;
+	float s = dot(p, across) * mark_scale + wander;
+	float lane = floor(s);
+	float half_width = mark_width * 0.5;
+	float line = 1.0 - smoothstep(half_width - 0.07, half_width + 0.07, abs(fract(s) - 0.5));
+	float local = clamp(mark_coverage + mark_contour * pow(1.0 - facing, mark_contour_power), 0.0, 1.0);
+	float segment = value_noise(p * (mark_scale / mark_length) + vec3(lane * 7.13, lane * 3.71, lane * 1.37));
+	float present = smoothstep(1.0 - local - 0.06, 1.0 - local + 0.06, segment);
+	// Strokes thinner than about a pixel become their average tone.
+	float pixel = fwidth(s);
+	float resolved = 1.0 - smoothstep(0.3, 0.75, pixel);
+	return mix(local * mark_width, line * present, resolved);
+}
+
 void vertex() {
 	paint_position = CUSTOM0.w > 1.5 ? CUSTOM0.xyz : VERTEX;
+	VERTEX += character_shape_push(paint_position, NORMAL);
 }
 
 void fragment() {
@@ -122,6 +171,9 @@ void fragment() {
 	colour *= 1.0 + (block - 0.5) * 2.0 * pigment_value;
 	colour = mix(colour, patch_color, patch_mask(paint_position, patch_center, patch_radius, n) * patch_strength);
 	colour = mix(colour, patch2_color, patch_mask(paint_position, patch2_center, patch2_radius, n) * patch2_strength);
+	if (mark_strength > 0.0) {
+		colour = mix(colour, mark_color, mark_mask(paint_position, abs(dot(NORMAL, VIEW))) * mark_strength);
+	}
 	ALBEDO = clamp(colour, vec3(0.0), vec3(1.0));
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
