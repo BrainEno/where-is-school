@@ -3,6 +3,10 @@
   "about": "Which frames in docs/screenshots are evidence of the current game and which are kept as history (#186). Checked by tools/screenshot_evidence.py; see docs/screenshots/README.md.",
   "collections": [
     {
+      "path": "character_integration",
+      "owner": "docs/CHARACTER_INTEGRATION.md"
+    },
+    {
       "path": "classroom_art_review",
       "owner": "docs/screenshots/classroom_art_review/README.md"
     },

@@ -307,7 +307,7 @@ hidden. The companion record is
 | Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
 | Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
 | Q | `assets/models/q/new-Q.glb` (reproducible from `art/character_models/q/new-Q_source.glb` via `tools/prepare_q.py`) | `scenes/environment/characters/q.tscn` | 1.30945 × 1.78449 × 0.37586 (rest A-pose) | 17,918 | `Node3D` + `InteractionAnchor`; 60 joints, 30 weighted finger joints, six supplied actions |
-| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 57,460 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops |
+| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 57,460 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops; painted by a `Look` (`teacher_n_look.tres`, [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a

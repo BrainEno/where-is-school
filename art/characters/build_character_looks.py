@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the protagonist's and Q's look resources from the palette below.
+"""Writes the protagonist's, Q's and N's look resources from the palettes below.
 
     python3 art/characters/build_character_looks.py          # write both
     python3 art/characters/build_character_looks.py --check  # fail if they are out of date
@@ -7,6 +7,8 @@
 Output (committed, read by the game):
     assets/characters/protagonist/protagonist_look.tres
     assets/characters/q/q_look.tres
+    assets/characters/teacher_n/teacher_n_look.tres
+and the character integration's unshipped experiments under scenes/dev/character_lab/looks/.
 
 Each is a `CharacterLook` (scripts/actors/character_look.gd): one ShaderMaterial per GLB
 material, on `assets/shaders/characters/character_paint.gdshader`, with the ink hull
@@ -28,9 +30,18 @@ import argparse
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import look_experiments  # noqa: E402  (the experiments' palettes, next to this file)
+
 ROOT = Path(__file__).resolve().parents[2]
+# The hull's first two parameters keep the order the looks were first written in, so a
+# look that sets nothing new is the same file as before.
+OUTLINE_ORDER = ["ink", "width"]
 PAINT_SHADER = "res://assets/shaders/characters/character_paint.gdshader"
 OUTLINE_SHADER = "res://assets/shaders/characters/character_outline.gdshader"
+# For a part marked `two_sided`: one whose GLB material is double-sided and whose triangles
+# face inward (N's eyeballs). The ext_resource is only written when a look uses it.
+TWO_SIDED_SHADER = "res://assets/shaders/characters/character_paint_two_sided.gdshader"
 SCRIPT = "res://scripts/actors/character_look.gd"
 
 # The biology-classroom experiment's ink (0.16, 0.14, 0.2), since the prologue art
@@ -310,10 +321,15 @@ Q = {
     "blink_duration": 0.16,
 }
 
-TARGETS = {
-    "assets/characters/protagonist/protagonist_look.tres": PROTAGONIST,
-    "assets/characters/q/q_look.tres": Q,
-}
+# PROTAGONIST and Q above are option C, the painted looks the game shipped before the
+# character integration (docs/CHARACTER_INTEGRATION.md). The looks the wrappers carry now
+# are built on them by look_experiments.py: the protagonist's charcoal, Q's oil and N's
+# chalk. A frozen copy of each option C file is in scenes/dev/character_lab/looks/before/.
+TARGETS = look_experiments.shipped(PROTAGONIST, Q)
+
+# The schemes that were tried and not shipped, written under scenes/dev/ (which no export
+# carries) for the in-game comparison.
+EXPERIMENTS = look_experiments.experiments(PROTAGONIST, Q)
 
 
 def colour(hex_value: str) -> str:
@@ -338,14 +354,36 @@ def parameter(value: object) -> str:
     return str(value)
 
 
+def shape_keys(part: dict) -> dict:
+    """A part's silhouette shaping, which its ink hull has to follow."""
+    return {key: value for key, value in part.items() if key.startswith("shape")}
+
+
 def sub_id(name: str) -> str:
     return "m_" + name.replace("/", "__")
 
 
+def outline_block(sub: str, look: dict, extra: dict) -> list[str]:
+    """One ink hull material: the look's shared settings plus a part's own (its shape)."""
+    settings = {"ink": INK, "width": look["outline_width"]}
+    settings.update(look.get("outline", {}))
+    settings.update(extra)
+    lines = [f'[sub_resource type="ShaderMaterial" id="{sub}"]']
+    lines.append('resource_name = "character_ink_outline"')
+    lines.append('shader = ExtResource("3_outline")')
+    for key in OUTLINE_ORDER + sorted(k for k in settings if k not in OUTLINE_ORDER):
+        if key in settings:
+            lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
+    lines.append("")
+    return lines
+
+
 def render(look: dict) -> str:
     parts: dict = look["parts"]
+    shaped = {name for name, part in parts.items() if part.get("outline") and shape_keys(part)}
     lines: list[str] = []
-    load_steps = 3 + 1 + len(parts) + 1
+    two_sided = any(part.get("two_sided") for part in parts.values())
+    load_steps = 3 + int(two_sided) + 1 + len(parts) + len(shaped) + 1
     lines.append(
         f'[gd_resource type="Resource" script_class="CharacterLook" load_steps={load_steps} format=3]'
     )
@@ -353,22 +391,24 @@ def render(look: dict) -> str:
     lines.append(f'[ext_resource type="Script" path="{SCRIPT}" id="1_look"]')
     lines.append(f'[ext_resource type="Shader" path="{PAINT_SHADER}" id="2_paint"]')
     lines.append(f'[ext_resource type="Shader" path="{OUTLINE_SHADER}" id="3_outline"]')
+    if two_sided:
+        lines.append(f'[ext_resource type="Shader" path="{TWO_SIDED_SHADER}" id="4_paint_two_sided"]')
     lines.append("")
-    lines.append('[sub_resource type="ShaderMaterial" id="outline"]')
-    lines.append('resource_name = "character_ink_outline"')
-    lines.append('shader = ExtResource("3_outline")')
-    lines.append(f"shader_parameter/ink = {colour(INK)}")
-    lines.append(f"shader_parameter/width = {look['outline_width']:g}")
-    lines.append("")
+    lines.extend(outline_block("outline", look, {}))
+    for name in parts:
+        if name in shaped:
+            lines.extend(outline_block("outline_" + sub_id(name), look, shape_keys(parts[name])))
     for name, part in parts.items():
         settings = dict(PART_DEFAULTS)
         settings.update(part)
         outline = bool(settings.pop("outline"))
+        shader = "4_paint_two_sided" if settings.pop("two_sided", False) else "2_paint"
         lines.append(f'[sub_resource type="ShaderMaterial" id="{sub_id(name)}"]')
         lines.append(f'resource_name = "{name} (painted)"')
         if outline:
-            lines.append('next_pass = SubResource("outline")')
-        lines.append('shader = ExtResource("2_paint")')
+            hull = "outline_" + sub_id(name) if name in shaped else "outline"
+            lines.append(f'next_pass = SubResource("{hull}")')
+        lines.append(f'shader = ExtResource("{shader}")')
         for key in sorted(settings):
             lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
         lines.append("")
@@ -392,7 +432,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="fail if a written file differs")
     args = parser.parse_args()
     stale = []
-    for relative, look in TARGETS.items():
+    for relative, look in {**TARGETS, **EXPERIMENTS}.items():
         path = ROOT / relative
         text = render(look)
         if args.check:
