@@ -13,6 +13,15 @@ protagonist dejected, cold, tired and uneasy, between youth and adult, not a han
 not anime; Q an ordinary, talkative, overweight, over-familiar classmate, not a guide.
 Substitute teacher N and the seated classroom student are out of scope and unchanged.
 
+**Prologue art review update (2026-11).** The seated classroom student is now painted too:
+`assets/characters/classroom_student/student_look.tres` (`STUDENT` in
+`art/characters/build_character_looks.py`), a charcoal sibling of the protagonist's look in a
+plum-grey cardigan, with the ink line on its closed outer forms only (the 78 rigid pieces
+include every finger). Every shipped look (protagonist, Q, N, student) is also *room keyed*:
+each part's shade and light tint is moved 30 % towards the classroom's violet shadow
+(`#7E74B0`) and apricot light (`#FFE0B4`), so the figures read as lit by the same painting
+as the walls. The unshipped experiments keep their tints.
+
 **Character integration update.** The protagonist's and Q's option C palettes below are now
 the *base* the shipped looks are built on, not the shipped looks themselves: the character
 integration ([CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) moved the protagonist to

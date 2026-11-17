@@ -12,7 +12,8 @@ extends SceneTree
 ##    The blackboard wall is one unbroken wall; the schoolbag hangs on your chair.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
 ##    door openings and the back window included), platform/step, twelve desk wrappers,
-##    teacher desk and lectern are the only scene-owned collision bodies.
+##    and the lectern are the only scene-owned collision bodies (the low teacher's desk was
+##    taken out; its set square lies on the lectern).
 ## 3. **Its own colour system.** Every surface of the room draws a material from
 ##    `assets/materials/classroom/` (the shared ceiling-light material is the one
 ##    exception), nothing reaches into another agent's shader folder, and the imported
@@ -24,7 +25,7 @@ extends SceneTree
 ## 6. **Hierarchy.** The background planes are quiet, and each object the player is meant
 ##    to look at separates from what stands behind it in value or in colour.
 ## 7. **The inspection texts are true.** What the texts describe - the broken chalk and
-##    the clip, the cracked pane, the teacher's chair, the marks on your desk, the taped
+##    the clip, the cracked pane, the lectern's register, the marks on your desk, the taped
 ##    set square, the one strap - is in the scene.
 ## 8. **The real camera.** From the game's own camera rig, at every standing spot in the
 ##    room, the board and the windows never stand between the camera and the player, and
@@ -78,9 +79,9 @@ const DESKS := {
 	"DeskC4": Vector3(4.8, 0.0, 3.4),
 }
 const PROPS := {
-	"Furniture/FrontDesk": Vector3(-4.65, 0.0, -2.2),
 	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
-	"Props/SetSquare": Vector3(-4.25, 0.81, -2.1),
+	# On the lectern's sloped top (the low teacher's desk that held it is gone).
+	"Props/SetSquare": Vector3(0.65, 1.1377, -3.6904),
 	"Furniture/DeskB2/Chair/Schoolbag": Vector3(0.0, 0.5, 0.34),
 	"Actors/Q": Vector3(-3.3, 0.0, 3.1),
 	# Where Q walks to before the first line (OpeningSequence, #160): the aisle at your left.
@@ -96,8 +97,9 @@ const PROPS := {
 }
 const INTERACTABLES := {
 	"blackboard": Vector3(-1.6, 0.6, -4.25),
-	"set_square": Vector3(-4.0, 0.6, -1.45),
-	"front_desk": Vector3(-4.4, 0.5, -1.7),
+	"set_square": Vector3(0.6, 0.9, -3.3),
+	# The teacher's-desk inspection now describes the lectern (its zh text always did).
+	"front_desk": Vector3(1.05, 0.5, -3.65),
 	"window": Vector3(-6.0, 0.6, 0.0),
 	"own_desk": Vector3(-1.6, 0.4, 1.3),
 	"schoolbag": Vector3(-1.6, 0.55, 2.3),
@@ -114,7 +116,7 @@ const SOLIDS: Array[String] = [
 	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
 	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
-	"Furniture/FrontDesk/Body", "Stage/Lectern/Body",
+	"Stage/Lectern/Body",
 ]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
@@ -142,11 +144,11 @@ const WALL_COLLISION := {
 
 const HIERARCHY_PAIRS := [
 	["board_face", "wall_north", "the board against the front wall"],
-	["lacquer_oxblood", "wall_north", "the board frame and the teacher's desk front"],
+	["lacquer_oxblood", "wall_north", "the board frame and the lectern's front band"],
 	["canvas_mustard", "wood_worn", "the schoolbag on the chair back"],
 	["window_view_front", "wall_west", "the window against its wall"],
-	["varnish_pale", "wood_honey", "the set square on the teacher's desk top"],
-	["register_cover", "wood_honey", "the register on the teacher's desk top"],
+	["varnish_pale", "wood_worn", "the set square on the lectern top"],
+	["register_cover", "wood_worn", "the register on the lectern top"],
 	["trim_teal", "wall_east", "the door frames against the east wall"],
 	["door_white", "wall_east", "the white rear door against the east wall"],
 	["curtain_blackout", "wall_west", "the blackout curtain against the west wall"],
@@ -242,6 +244,8 @@ func _run() -> void:
 	_check_wall_dressing()
 	Harness.stage = "textures"
 	_check_textures()
+	Harness.stage = "painted absences"
+	_check_painted_marks()
 	Harness.stage = "cool concrete floor"
 	_check_floor_art()
 	Harness.stage = "hierarchy"
@@ -625,6 +629,53 @@ func _check_wall_dressing() -> void:
 			_failures.append("Removed decoration resource still exists: %s" % removed)
 
 
+## The biology-classroom experiment's absences, drawn rather than modelled: a shadow nobody
+## casts on the front wall (hung on the wall, so it fades with it) and the set square's
+## long shadow across the floor, from under the lectern towards your desk. Unshaded
+## alpha-blended ink: a painted shadow does not answer the real light, and it must never
+## hide what is behind it from the camera or the player.
+func _check_painted_marks() -> void:
+	var marks := {
+		"WallNorth/InkShadowFigure": CLASSROOM_MATERIALS + "ink_shadow_figure.tres",
+		"Props/InkShadowSquare": CLASSROOM_MATERIALS + "ink_shadow_square.tres",
+	}
+	for path: String in marks:
+		var mark := _room.get_node_or_null(NodePath(path)) as MeshInstance3D
+		if mark == null:
+			_failures.append("The painted mark '%s' is missing." % path)
+			continue
+		var material := mark.material_override as BaseMaterial3D
+		if material == null or material.resource_path != marks[path]:
+			_failures.append("'%s' does not draw %s." % [path, marks[path]])
+			continue
+		if material.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED:
+			_failures.append("'%s' is lit; a painted shadow does not answer the real light." % path)
+		if material.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA:
+			_failures.append("'%s' is not alpha-blended ink." % path)
+		if mark.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			_failures.append("'%s' casts a real shadow." % path)
+		if not mark.find_children("*", "CollisionObject3D", true, false).is_empty():
+			_failures.append("'%s' collides; it is paint." % path)
+	var square := _room.get_node_or_null(^"Props/InkShadowSquare") as MeshInstance3D
+	var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
+	var desk := _room.get_node_or_null(^"Furniture/DeskB2") as Node3D
+	if square != null and lectern != null and desk != null:
+		if absf(square.global_basis.z.normalized().dot(Vector3.UP) - 1.0) > 0.01:
+			_failures.append("The set square's shadow does not lie flat on the floor.")
+		if square.global_position.y < 0.003 or square.global_position.y > 0.03:
+			_failures.append("The set square's shadow is not on the floor (y=%.3f)." % square.global_position.y)
+		# Image top (local +Y) is the point: it aims from the lectern at your desk.
+		var point := square.global_transform * Vector3(0.0, 2.1, 0.0)
+		var base := square.global_transform * Vector3(0.0, -2.1, 0.0)
+		var to_desk := Vector2(point.x - desk.global_position.x, point.z - desk.global_position.z)
+		var to_lectern := Vector2(base.x - lectern.global_position.x, base.z - lectern.global_position.z)
+		if to_desk.length() > 0.8 or to_lectern.length() > 1.9:
+			_failures.append(
+				"The set square's shadow does not run from the lectern to your desk (%.2f, %.2f m off)."
+				% [to_lectern.length(), to_desk.length()]
+			)
+
+
 # --- 5. textures --------------------------------------------------------------------
 
 
@@ -804,10 +855,8 @@ func _check_inspection_agreement() -> void:
 		"Props/Blackboard/ChalkBrokenEnd": "the broken stick of chalk on the tray",
 		"Props/Blackboard/Clip": "the clip that has lost its board",
 		"Props/Blackboard/Board/Face": "the wiped-not-quite board face",
-		"Furniture/FrontDesk/Chair": "the teacher's chair, pushed in at an angle",
-		"Furniture/FrontDesk/Body/Register": "the register in its plastic cover",
-		"Furniture/FrontDesk/Body/Stapler": "the stapler",
-		"Furniture/FrontDesk/Body/Mug": "the mug of chalk",
+		"Stage/Lectern/Body/Register": "the register in its plastic cover",
+		"Stage/Lectern/Body/LessonPapers": "the lesson papers on the lectern",
 		"Furniture/DeskB2/DeskMarks": "the cut-in name, the sticker and the groove",
 		"Props/SetSquare/TapeRepair": "the browned tape on the split corner",
 		"TimetableSheet/Face": "the timetable's printed face",
@@ -838,15 +887,31 @@ func _check_inspection_agreement() -> void:
 				straps += 1
 		if straps != 1:
 			_failures.append("The schoolbag has %d straps; the text says one." % straps)
-	# The set square lies flat: forearm-long, a few centimetres thick.
+	# The set square lies flat: forearm-long, a few centimetres thick. It lies on the
+	# lectern's sloped top now, so its thickness is measured in its own frame, and it has to
+	# rest on that top: inside its footprint, just above the reading surface.
 	var square := _room.get_node_or_null(^"Props/SetSquare") as Node3D
 	if square != null:
-		var box := _subtree_aabb(square)
+		var box := _local_aabb(square)
 		if box.size.y > 0.08 or maxf(box.size.x, box.size.z) < 0.4:
 			_failures.append(
-				"The set square is %.2f x %.2f x %.2f m; it should lie flat on the desk corner."
+				"The set square is %.2f x %.2f x %.2f m; it should lie flat on the lectern top."
 				% [box.size.x, box.size.y, box.size.z]
 			)
+		var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
+		var top := lectern.get_node_or_null(^"Body/Top") as MeshInstance3D if lectern != null else null
+		if top == null:
+			_failures.append("The lectern lost its sloped Top, which the set square lies on.")
+		else:
+			var on_top := top.global_transform.affine_inverse() * square.global_position
+			var half := (top.mesh as BoxMesh).size * 0.5
+			if absf(on_top.x) > half.x or absf(on_top.z) > half.z or on_top.y < half.y - 0.005 or on_top.y > half.y + 0.04:
+				_failures.append(
+					"The set square is not lying on the lectern top (at %s in the top's frame)." % str(on_top)
+				)
+			var desk := _room.get_node_or_null(^"Furniture/FrontDesk")
+			if desk != null:
+				_failures.append("The low teacher's desk (Furniture/FrontDesk) is back in the classroom.")
 
 
 # --- 9. navigation ------------------------------------------------------------------
@@ -1282,6 +1347,21 @@ func _descendants(node: Node) -> Array[Node]:
 
 func _relative(node: Node) -> String:
 	return String(_room.get_path_to(node))
+
+
+## `node`'s drawn meshes boxed in `node`'s own frame (a tilted prop measured as authored).
+func _local_aabb(node: Node3D) -> AABB:
+	var result := AABB()
+	var first := true
+	var to_local := node.global_transform.affine_inverse()
+	for child in _descendants(node):
+		var mesh_instance := child as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null or not mesh_instance.is_visible_in_tree():
+			continue
+		var box := (to_local * mesh_instance.global_transform) * mesh_instance.get_aabb()
+		result = box if first else result.merge(box)
+		first = false
+	return result
 
 
 func _subtree_aabb(node: Node) -> AABB:

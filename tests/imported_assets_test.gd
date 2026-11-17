@@ -48,6 +48,13 @@ const CHARACTER_LOOKS := {
 		"motion": "",
 		"two_sided": 6,
 	},
+	# The seated classroom student (the first protagonist model): painted like the others so
+	# it is not the one figure in the room still in its GLB's PBR colours. No motion profile;
+	# it only sits.
+	"former protagonist": {
+		"look": "res://assets/characters/classroom_student/student_look.tres",
+		"motion": "",
+	},
 }
 const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
 const PAINT_TWO_SIDED_SHADER_PATH := "res://assets/shaders/characters/character_paint_two_sided.gdshader"
@@ -728,6 +735,8 @@ func _check_seated_wrapper(
 			"The wrapper for %s hangs its model at y=%.4f, recorded seated drop %.4f."
 			% [label, model.position.y, float(asset["seated_drop"])]
 		)
+	if CHARACTER_LOOKS.has(label):
+		_check_character_look(label, wrapper, asset)
 
 
 ## Desk dressing does not collide on purpose: it sits on furniture that already does, and

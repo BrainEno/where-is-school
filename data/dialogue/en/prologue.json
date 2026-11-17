@@ -650,7 +650,7 @@
         {
           "id": "rec_1",
           "speaker": "protagonist",
-          "text": "The set square going down on the front desk. Hard. You remember the sound. You are less sure about anything else.",
+          "text": "The set square going down on the lectern. Hard. You remember the sound. You are less sure about anything else.",
           "source": "recalled",
           "effects": [
             {
@@ -658,7 +658,7 @@
               "entry_id": "recall_set_square_sound",
               "source": "recalled",
               "speaker": "protagonist",
-              "text": "You half-remember the wooden set square being put down hard on the front desk, and you do not trust the memory."
+              "text": "You half-remember the wooden set square being put down hard on the lectern, and you do not trust the memory."
             }
           ]
         },

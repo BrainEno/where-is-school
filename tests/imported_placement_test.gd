@@ -322,28 +322,20 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		)
 
 
-## The teacher's desk is 1.9 m wide and is deliberately *not* the student model.
+## The low teacher's desk was taken out of the classroom (its set square lies on the
+## lectern now). Its wrapper stays in the project, but no instance of it may come back as a
+## second front desk beside the lectern.
 func _check_teacher_desk(location: Node3D) -> void:
-	var furniture := location.get_node_or_null(^"Furniture")
-	var teacher: Node3D = null
-	if furniture != null:
-		teacher = furniture.get_node_or_null(^"FrontDesk") as Node3D
-	if teacher == null:
-		_failures.append("The teacher's desk is gone from the classroom.")
-		return
-	if teacher.scene_file_path != TEACHER_DESK:
-		_failures.append(
-			"The teacher's desk instances '%s'; it is 1.9 m wide and is not a student desk."
-			% teacher.scene_file_path
-		)
-		return
-	var extent := _subtree_aabb(teacher)
-	if extent.size.x < 1.5:
-		_failures.append(
-			"The teacher's desk is %.2f m wide; the 0.71 m student desk has been put where "
-			% extent.size.x
-			+ "the 1.9 m one belongs."
-		)
+	for node in _descendants(location):
+		if node is Node3D and node.scene_file_path == TEACHER_DESK:
+			_failures.append(
+				"The classroom instances the low teacher's desk again at '%s'; the lectern is the "
+				% String(location.get_path_to(node))
+				+ "only teacher's furniture."
+			)
+	var lectern := location.get_node_or_null(^"Stage/Lectern") as Node3D
+	if lectern == null:
+		_failures.append("The classroom lost the lectern that replaced the teacher's desk.")
 
 
 func _check_stationery(location: Node3D) -> void:

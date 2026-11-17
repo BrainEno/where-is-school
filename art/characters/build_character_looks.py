@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the protagonist's, Q's and N's look resources from the palettes below.
+"""Writes the protagonist's, Q's, N's and the classroom student's look resources.
 
     python3 art/characters/build_character_looks.py          # write both
     python3 art/characters/build_character_looks.py --check  # fail if they are out of date
@@ -8,6 +8,7 @@ Output (committed, read by the game):
     assets/characters/protagonist/protagonist_look.tres
     assets/characters/q/q_look.tres
     assets/characters/teacher_n/teacher_n_look.tres
+    assets/characters/classroom_student/student_look.tres
 and the character integration's unshipped experiments under scenes/dev/character_lab/looks/.
 
 Each is a `CharacterLook` (scripts/actors/character_look.gd): one ShaderMaterial per GLB
@@ -321,11 +322,210 @@ Q = {
     "blink_duration": 0.16,
 }
 
+# --- the classroom student ---------------------------------------------------------------
+# The first protagonist model (`protagonist.glb`), seated at desk A1 since the protagonist was
+# replaced. Until now it was the one person in the room still in its GLB's smooth PBR
+# colours, which read as a toy beside the painted protagonist, Q and N. It gets the same
+# painted surface and ink hull as they do, in the protagonist's charcoal manner (wobbling
+# contour, pale erased strokes along the cardigan's turning edges), and a palette of its
+# own so it is nobody's double: a plum-grey cardigan that takes the room's violet shadows
+# (not the protagonist's slate, Q's moss or N's sage, and off the classroom's teal trim), a
+# cream shirt, navy-charcoal trousers, a warm ordinary skin with lilac shade.
+#
+# Its 78 meshes are small rigid pieces (each finger, each lock of hair, each lapel quad), so
+# the ink line goes only on the closed outer forms: cardigan body and sleeves, trousers,
+# shoes, the hair cap and back, and the head, ears and neck (named per mesh; the skin
+# material is also every finger, and a hull per finger would weld them into a mitten). The
+# lapels, pockets, collars, creases and the face's small planes carry none. Every GLB
+# material is listed, so no surface is left in its PBR colour.
+STUDENT_SKIN = {
+    "albedo": "#C9A084",
+    "pigment_a": "#C48E74",
+    "pigment_b": "#AFA07E",
+    "pigment_mix": 0.4,
+    "pigment_value": 0.12,
+    "pigment_scale": 18.0,
+    "pigment_stretch": (1.0, 1.4, 1.0),
+    "shade_tint": "#A7A3C6",
+    "light_tint": "#FFEBD4",
+    "shadow_fill": 0.34,
+    "half_tone": 0.55,
+    "edge_break": 0.22,
+    "light_edge": 0.5,
+    "light_strength": 0.72,
+}
+STUDENT_ERASED = {
+    "strength": 0.45,
+    "color": "#A99E8E",
+    "scale": 70.0,
+    "across": (1.0, 0.15, 0.3),
+    "width": 0.22,
+    "length": 9.0,
+    "coverage": 0.04,
+    "contour": 0.9,
+    "contour_power": 2.5,
+    "jitter": 0.6,
+}
+STUDENT_HAIR = {
+    "albedo": "#221D22",
+    "pigment_a": "#332F45",
+    "pigment_b": "#3E3029",
+    "pigment_mix": 0.5,
+    "pigment_value": 0.28,
+    "pigment_scale": 12.0,
+    "shade_tint": "#7C7C9C",
+    "shadow_fill": 0.45,
+    "light_strength": 0.85,
+}
+STUDENT_FLAT = {"pigment_mix": 0.0, "pigment_value": 0.0, "outline": False}
+STUDENT = {
+    "label": "classroom student: charcoal (integrated)",
+    "outline_width": 0.01,
+    "outline": {"wobble": 0.55, "wobble_scale": 11.0},
+    "parts": {
+        "wis_protagonist_skin": dict(STUDENT_SKIN, outline=False),
+        "head_main_mesh/wis_protagonist_skin": dict(STUDENT_SKIN, outline=True),
+        "neck/wis_protagonist_skin": dict(STUDENT_SKIN, outline=True),
+        "ear_l/wis_protagonist_skin": dict(STUDENT_SKIN, outline=True),
+        "ear_r/wis_protagonist_skin": dict(STUDENT_SKIN, outline=True),
+        "wis_protagonist_skin_light": dict(STUDENT_SKIN, albedo="#D8AE90", pigment_mix=0.2, outline=False),
+        "wis_protagonist_skin_shadow": dict(STUDENT_FLAT, albedo="#8E6658", shadow_fill=0.45),
+        # The tired under-eyes the first protagonist was modelled with, kept but quieter.
+        "wis_protagonist_undereye": dict(STUDENT_FLAT, albedo="#A27E74", shadow_fill=0.45),
+        "wis_protagonist_eye_offwhite": dict(STUDENT_FLAT, albedo="#DCD3BE", shadow_fill=0.6, half_tone=0.8),
+        "wis_protagonist_iris": dict(STUDENT_FLAT, albedo="#3A2A22", shadow_fill=0.6),
+        "wis_protagonist_pupil": dict(STUDENT_FLAT, albedo="#100C0B"),
+        "wis_protagonist_eye_glint": dict(STUDENT_FLAT, albedo="#F2EAD8", shadow_fill=0.85, half_tone=0.9),
+        "wis_protagonist_hair": look_experiments.with_marks(
+            dict(STUDENT_HAIR, outline=True),
+            strength=0.4,
+            color="#4C4656",
+            scale=110.0,
+            across=(1.0, 0.0, 0.6),
+            width=0.25,
+            length=12.0,
+            coverage=0.12,
+            contour=0.12,
+            jitter=0.4,
+        ),
+        "wis_protagonist_hair_warm": dict(STUDENT_HAIR, albedo="#2E2420", outline=False),
+        "wis_protagonist_cardigan": look_experiments.with_marks(
+            {
+                "albedo": "#5A4A5E",
+                "pigment_a": "#4A4060",
+                "pigment_b": "#64544E",
+                "pigment_mix": 0.45,
+                "pigment_value": 0.22,
+                "pigment_scale": 6.0,
+                "pigment_stretch": (1.0, 3.0, 1.0),
+                "shade_tint": "#8C86B8",
+                "light_tint": "#FFE6C4",
+                "shadow_fill": 0.4,
+                "light_strength": 0.9,
+                "light_edge": 0.25,
+                "outline": True,
+            },
+            **STUDENT_ERASED,
+        ),
+        "wis_protagonist_cardigan_light": {
+            "albedo": "#6E5D6C",
+            "pigment_a": "#5E5470",
+            "pigment_b": "#7A6A60",
+            "pigment_mix": 0.35,
+            "shade_tint": "#8C86B8",
+            "shadow_fill": 0.4,
+            "outline": False,
+        },
+        "wis_protagonist_cardigan_shadow": dict(STUDENT_FLAT, albedo="#3C3242", shade_tint="#8C86B8"),
+        "wis_protagonist_button": dict(STUDENT_FLAT, albedo="#8A6E46", shadow_fill=0.45),
+        "wis_protagonist_stitch": dict(STUDENT_FLAT, albedo="#8E7F6A"),
+        # The model's own dab of paint on the shoulder: an art-club student, kept rust.
+        "wis_protagonist_brush_rust": dict(STUDENT_FLAT, albedo="#8A4A36"),
+        "wis_protagonist_shirt": {
+            "albedo": "#D8CFB8",
+            "pigment_a": "#C9CCB8",
+            "pigment_b": "#DDCBA8",
+            "pigment_mix": 0.35,
+            "shade_tint": "#9894B8",
+            "shadow_fill": 0.36,
+            "outline": False,
+        },
+        "wis_protagonist_shirt_shadow": dict(STUDENT_FLAT, albedo="#B2A890", shade_tint="#9894B8", shadow_fill=0.36),
+        "wis_protagonist_trousers": look_experiments.with_marks(
+            {
+                "albedo": "#2F3340",
+                "pigment_a": "#2A2E48",
+                "pigment_b": "#3E3C3A",
+                "pigment_mix": 0.4,
+                "pigment_value": 0.18,
+                "pigment_scale": 6.0,
+                "pigment_stretch": (1.0, 3.4, 1.0),
+                "shade_tint": "#8D86A6",
+                "shadow_fill": 0.38,
+                "outline": True,
+            },
+            **dict(STUDENT_ERASED, strength=0.35),
+        ),
+        "wis_protagonist_trousers_light": dict(STUDENT_FLAT, albedo="#474B5A", shade_tint="#8D86A6"),
+        "wis_protagonist_shoes": {
+            "albedo": "#2B2321",
+            "pigment_a": "#2E2830",
+            "pigment_b": "#3A2C24",
+            "pigment_mix": 0.4,
+            "pigment_value": 0.15,
+            "outline": True,
+        },
+        "wis_protagonist_sole": dict(STUDENT_FLAT, albedo="#3E3632"),
+    },
+    # The first protagonist has no blend shapes: no expression and no blink.
+    "expression": {},
+    "blink_shapes": [],
+    "blink_interval": (2.5, 5.0),
+    "blink_duration": 0.16,
+}
+
 # PROTAGONIST and Q above are option C, the painted looks the game shipped before the
 # character integration (docs/CHARACTER_INTEGRATION.md). The looks the wrappers carry now
 # are built on them by look_experiments.py: the protagonist's charcoal, Q's oil and N's
 # chalk. A frozen copy of each option C file is in scenes/dev/character_lab/looks/before/.
+# --- the room key ------------------------------------------------------------------------
+# Everyone the game ships stands in the same painted room, so their shadows and lights are
+# keyed to it (item 2 of the prologue art review: the characters' style has to match the
+# environment). The room's shadows are a violet ink (the experiment's shadow marks are
+# (0.12, 0.10, 0.22)) and its light is the warm apricot of the windows and fittings
+# (art/classroom/README.md: APRICOT_PALE). Each part keeps its own direction - Q's moss
+# shadow, the protagonist's slate - and moves part of the way towards the room's, so the
+# figures stop reading as lit by a different lamp from the walls behind them. The unshipped
+# experiments keep their tints, for the comparison.
+ROOM_SHADE = "#7E74B0"
+ROOM_LIGHT = "#FFE0B4"
+ROOM_KEY = 0.3
+
+
+def _mix_hex(a: str, b: str, t: float) -> str:
+    ca = [int(a[i : i + 2], 16) for i in (1, 3, 5)]
+    cb = [int(b[i : i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02X}" for x, y in zip(ca, cb))
+
+
+def room_keyed(look: dict) -> dict:
+    """`look` with every part's shade and light tint moved towards the room's."""
+    result = dict(look)
+    parts = {}
+    for name, part in look["parts"].items():
+        keyed = dict(part)
+        keyed["shade_tint"] = _mix_hex(part.get("shade_tint", PART_DEFAULTS["shade_tint"]), ROOM_SHADE, ROOM_KEY)
+        keyed["light_tint"] = _mix_hex(part.get("light_tint", PART_DEFAULTS["light_tint"]), ROOM_LIGHT, ROOM_KEY)
+        parts[name] = keyed
+    result["parts"] = parts
+    return result
+
+
 TARGETS = look_experiments.shipped(PROTAGONIST, Q)
+# The seated classroom student is not part of the integration's comparison; it ships its
+# one look.
+TARGETS["assets/characters/classroom_student/student_look.tres"] = STUDENT
+TARGETS = {relative: room_keyed(look) for relative, look in TARGETS.items()}
 
 # The schemes that were tried and not shipped, written under scenes/dev/ (which no export
 # carries) for the in-game comparison.
