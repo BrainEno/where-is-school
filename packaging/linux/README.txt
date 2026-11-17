@@ -52,5 +52,11 @@ controls, the "what this build is" notes and the reporting notes apply here unch
 Licences
 --------
 licences/ carries the licences of the two bundled Chinese fonts (Noto Sans SC and Noto
-Serif SC) and the project's copyright notice. The rest of the build is the project's own
-work, apart from the three dialogue portraits, whose terms are still being confirmed.
+Serif SC) and the project's copyright notice:
+
+  licences/NotoSansSC-OFL.txt     Noto Sans SC, the interface font (SIL Open Font License)
+  licences/NotoSerifSC-OFL.txt    Noto Serif SC, the reading text (SIL Open Font License)
+  licences/COPYRIGHT.md           the project's copyright and permissions notice
+
+The rest of the build is the project's own work, apart from the three dialogue portraits,
+whose terms are still being confirmed, so treat them as not cleared for reuse.
