@@ -34,13 +34,14 @@ const PANEL_MAX_WIDTH := 940.0
 const OUTER_MARGIN := 40.0
 const SCROLL_STEP := 72.0
 
-## The notebook's colours for the four kinds, the same the dialogue panel uses for its
-## badges, so a kind looks the same wherever it is named.
+## The notebook's colours for the four kinds, so a kind looks the same wherever it is
+## named. The values live in `Palette`, which is the project's one palette: the HUD reads
+## this table instead of writing the bone literal a second time (issue #210).
 const SOURCE_COLORS: Dictionary = {
-	NarrativeEntry.Source.OBSERVED: Color(0.776, 0.733, 0.643, 1.0),
-	NarrativeEntry.Source.REPORTED: Color(0.561, 0.663, 0.710, 1.0),
-	NarrativeEntry.Source.RECALLED: Color(0.604, 0.639, 0.592, 1.0),
-	NarrativeEntry.Source.IMAGINED: Color(0.820, 0.553, 0.349, 1.0),
+	NarrativeEntry.Source.OBSERVED: Palette.SOURCE_OBSERVED,
+	NarrativeEntry.Source.REPORTED: Palette.SOURCE_REPORTED,
+	NarrativeEntry.Source.RECALLED: Palette.SOURCE_RECALLED,
+	NarrativeEntry.Source.IMAGINED: Palette.SOURCE_IMAGINED,
 }
 
 var _factor := 1.0

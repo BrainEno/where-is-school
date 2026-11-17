@@ -56,7 +56,7 @@ class Sheet:
 			Color(MenuStyle.OCHRE, 0.12), 17, 12.0, false, true
 		)
 		MenuStyle.draw_rough_slab(
-			self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(0.04, 0.047, 0.048, 0.96), 13,
+			self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(MenuStyle.SHEET, 0.96), 13,
 			8.0, false, true
 		)
 		if column_rect.size.y > 0.0:

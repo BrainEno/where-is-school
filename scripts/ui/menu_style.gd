@@ -16,23 +16,40 @@ extends RefCounted
 ## (`page_theme()`) and with the same ember mark, so it does not change typeface or accent
 ## when it opens over the menu that called it.
 
-const INK := Color(0.043, 0.051, 0.051, 1.0)
-const INK_WASH := Color(0.043, 0.051, 0.051, 0.86)
-const PANEL := Color(0.055, 0.065, 0.067, 0.96)
-const PAPER := Color(0.898, 0.871, 0.804, 1.0)
-const TEXT := Color(0.807, 0.788, 0.741, 0.92)
-const MUTED := Color(0.611, 0.6, 0.561, 0.9)
-const ACCENT := Color(0.776, 0.733, 0.643, 1.0)
-const WARN := Color(0.82, 0.553, 0.349, 1.0)
+## The colours are `Palette`'s, and this file re-exports them under the names the menus have
+## always used, so `MenuStyle.INK` and `Palette.INK` are the same value. They live there
+## because a colour has to be nameable from the dialogue and actor layers too, and
+## `Palette` imports nothing, while this file is UI (issue #210).
+const INK := Palette.INK
+const INK_WASH := Palette.INK_WASH
+const PANEL := Palette.PANEL
+const PAPER := Palette.PAPER
+const TEXT := Palette.TEXT
+const MUTED := Palette.MUTED
+## Bone: the accent every menu, the HUD and the dialogue name row already share. It used to
+## be written out as a literal in eight files; `tools/check_ui_palette.py` fails the build if
+## any file writes the value out again (issue #210).
+const ACCENT := Palette.ACCENT
+const WARN := Palette.WARN
+## The dark ground of a panel that is not the reading band: the pause menu's sheet, the
+## confirmation's, the settings box. The three used to carry three near-identical inks
+## written out as literals.
+const SHEET := Palette.SHEET
+## What a notebook entry of each kind is called in colour: seen, heard, remembered,
+## imagined. A kind has to look the same wherever it is named.
+const SOURCE_OBSERVED := Palette.SOURCE_OBSERVED
+const SOURCE_REPORTED := Palette.SOURCE_REPORTED
+const SOURCE_RECALLED := Palette.SOURCE_RECALLED
+const SOURCE_IMAGINED := Palette.SOURCE_IMAGINED
 ## The one warm accent of the title and pause menus: the selected entry, the margin rule.
-const EMBER := Color(0.851, 0.396, 0.255, 1.0)
+const EMBER := Palette.EMBER
 ## Entry text on a page, and the brighter, warmer white it turns when selected.
-const PAGE_TEXT := Color(0.86, 0.835, 0.776, 0.94)
-const PAGE_LIT := Color(1.0, 0.925, 0.851, 1.0)
+const PAGE_TEXT := Palette.PAGE_TEXT
+const PAGE_LIT := Palette.PAGE_LIT
 ## The colour fields behind the title: brick, ochre, and the dark of the ground.
-const BRICK := Color(0.4, 0.192, 0.133, 1.0)
-const OCHRE := Color(0.62, 0.471, 0.29, 1.0)
-const GROUND := Color(0.027, 0.033, 0.033, 1.0)
+const BRICK := Palette.BRICK
+const OCHRE := Palette.OCHRE
+const GROUND := Palette.GROUND
 
 const SERIF_PATH := "res://assets/fonts/NotoSerifSC-Regular.otf"
 
@@ -66,12 +83,12 @@ static func style_entry(button: Button) -> void:
 	var normal := StyleBoxEmpty.new()
 	_pad(normal)
 	var marked := StyleBoxFlat.new()
-	marked.bg_color = Color(0.776, 0.733, 0.643, 0.08)
+	marked.bg_color = Color(ACCENT, 0.08)
 	marked.border_width_left = 2
-	marked.border_color = Color(0.776, 0.733, 0.643, 0.7)
+	marked.border_color = Color(ACCENT, 0.7)
 	_pad(marked)
 	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = Color(0.776, 0.733, 0.643, 0.14)
+	pressed.bg_color = Color(ACCENT, 0.14)
 	pressed.border_width_left = 2
 	pressed.border_color = PAPER
 	_pad(pressed)
@@ -86,7 +103,7 @@ static func style_entry(button: Button) -> void:
 	button.add_theme_color_override(&"font_focus_color", PAPER)
 	button.add_theme_color_override(&"font_pressed_color", PAPER)
 	button.add_theme_color_override(&"font_hover_pressed_color", PAPER)
-	button.add_theme_color_override(&"font_disabled_color", Color(0.611, 0.6, 0.561, 0.45))
+	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.45))
 	button.add_theme_constant_override(&"outline_size", 0)
 
 
@@ -131,7 +148,7 @@ static func style_page_entry(button: Button) -> void:
 	button.add_theme_color_override(&"font_focus_color", PAGE_LIT)
 	button.add_theme_color_override(&"font_pressed_color", PAGE_LIT)
 	button.add_theme_color_override(&"font_hover_pressed_color", PAGE_LIT)
-	button.add_theme_color_override(&"font_disabled_color", Color(0.611, 0.6, 0.561, 0.4))
+	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.4))
 	button.add_theme_constant_override(&"outline_size", 0)
 
 
@@ -214,7 +231,7 @@ static func prompt_content_style() -> StyleBoxEmpty:
 ## The settings sheet: the same dark as the pause menu's, no frame, a soft shadow.
 static func sheet_style() -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.bg_color = Color(0.04, 0.047, 0.048, 0.97)
+	box.bg_color = Color(SHEET, 0.97)
 	box.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
 	box.shadow_size = 24
 	box.content_margin_left = 48.0
@@ -422,7 +439,7 @@ static func panel_style() -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = PANEL
 	box.border_width_left = 2
-	box.border_color = Color(0.776, 0.733, 0.643, 0.35)
+	box.border_color = Color(ACCENT, 0.35)
 	box.content_margin_left = 36.0
 	box.content_margin_right = 32.0
 	box.content_margin_top = 24.0

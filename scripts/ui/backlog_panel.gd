@@ -218,7 +218,7 @@ func _add_rows(lines: Array) -> void:
 		var body := Label.new()
 		body.name = "Body"
 		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		body.add_theme_color_override("font_color", Color(0.776, 0.733, 0.643, 1.0))
+		body.add_theme_color_override("font_color", MenuStyle.ACCENT)
 		UiTextScale.set_base(body, 20, _text_scale)
 		row.add_child(header)
 		row.add_child(body)

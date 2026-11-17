@@ -40,7 +40,7 @@ class Card:
 			self, Rect2(box.position + Vector2(10.0, 8.0), box.size),
 			Color(MenuStyle.OCHRE, 0.14), 29, 9.0
 		)
-		MenuStyle.draw_rough_slab(self, box, Color(0.04, 0.047, 0.048, 0.98), 23, 7.0)
+		MenuStyle.draw_rough_slab(self, box, Color(MenuStyle.SHEET, 0.98), 23, 7.0)
 		if heading != null and heading.visible:
 			var under := Rect2(heading.global_position - global_position, heading.size)
 			var y := under.end.y + 8.0

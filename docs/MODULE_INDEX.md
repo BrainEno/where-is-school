@@ -59,7 +59,8 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `ImaginationOverlay` | [`scripts/ui/imagination_overlay.gd`](../scripts/ui/imagination_overlay.gd) | Mark subjective beats visibly as imagined, not observed world events. |
 | `InputHint` | [`scripts/ui/input_hint.gd`](../scripts/ui/input_hint.gd) | Localized action labels from the active device and live bindings; do not hard-code key names in another UI. |
 | `JournalPanel` | [`scripts/ui/journal_panel.gd`](../scripts/ui/journal_panel.gd) | Render the notebook from existing knowledge, routes and reading progress; do not create a second knowledge store. |
-| `MenuStyle` | [`scripts/ui/menu_style.gd`](../scripts/ui/menu_style.gd) | Shared menu palette, type, entry buttons, labels and page/form styling; reuse instead of copying colors or control factories. |
+| `Palette` | [`scripts/theme/palette.gd`](../scripts/theme/palette.gd) | The project's colours as names: ink, paper, bone, ember, sheet, and the four source colours. A leaf module (imports nothing) so the dialogue and actor layers can name a colour without importing the interface; `tools/check_ui_palette.py` fails one value written in two files, and fails this file if it ever loads anything. |
+| `MenuStyle` | [`scripts/ui/menu_style.gd`](../scripts/ui/menu_style.gd) | Menu type, entry buttons, labels, page/form styling and control factories; it re-exports `Palette`'s names, so `MenuStyle.INK` and `Palette.INK` are one value. Do not add a colour here - add it to `Palette`. |
 | `NewGameFailureText` | [`scripts/ui/new_game_failure_text.gd`](../scripts/ui/new_game_failure_text.gd) | Turn a Session failure report into localized player-facing text; keep technical details in the log. |
 | `PauseMenu` | [`scripts/ui/pause_menu.gd`](../scripts/ui/pause_menu.gd) | In-game pause, notebook, settings and save/quit UI; Session owns the transactions. |
 | `SettingsPanel` | [`scripts/ui/settings_panel.gd`](../scripts/ui/settings_panel.gd) | Shared settings and binding editor; Settings applies and persists changes. |
@@ -247,6 +248,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Generated environments | [build_outdoor_locations.py](../tools/build_outdoor_locations.py), [build_laboratory.py](../tools/build_laboratory.py) | Regenerate scenes from their owner rather than editing generated locations. |
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
+| Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; report the reading band's pairs until #231 lands. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
 ## Keep this map current

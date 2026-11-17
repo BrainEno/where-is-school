@@ -221,7 +221,7 @@ func show_noted(source: int) -> void:
 	_noted_source = source
 	_refresh_noted_text()
 	_noted_label.add_theme_color_override(
-		&"font_color", JournalPanel.SOURCE_COLORS.get(source, Color(0.776, 0.733, 0.643, 1.0))
+		&"font_color", JournalPanel.SOURCE_COLORS.get(source, Palette.ACCENT)
 	)
 	_kill_noted_tween()
 	_noted_label.show()
