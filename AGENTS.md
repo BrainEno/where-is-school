@@ -49,7 +49,11 @@ The author's literary manuscripts are private source material and may be intende
 
 ## Technical constraints
 
-- Engine: Godot 4.7.2 Stable, standard build. Do not use beta/nightly APIs or silently upgrade the project version.
+- Engine: Godot 4.7.2 Stable, standard build. Do not use beta/nightly APIs or silently
+  upgrade the project version. The version is written once, in `.godot-version`; CI installs
+  the engine only through `.github/actions/setup-godot`, which reads that file, and
+  `python3 tools/check_workflow_action_pins.py` fails a workflow that writes a `version:`
+  literal of its own (issue #217). Bump the file and the whole CI moves with it.
 - Language: GDScript. Do not introduce C#, .NET, a second runtime, or a web backend without approval.
 - Presentation: 3D environments with a controlled 2.5D camera.
 - Use Godot scenes/resources for composition. Do not build the game as a pure-code renderer.
