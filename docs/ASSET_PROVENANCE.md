@@ -60,6 +60,24 @@ the repository. Material not imported is listed separately at the end.
 | `art/portraits/n.webp` → `assets/ui/portraits/n.webp` (+ `.import`, shipped) | Independent 2D dialogue portrait; source 1280×1936 RGB, runtime image 726×1100, 228,724 bytes | Owner-supplied as `teacher-n.webp`, stored as `n.webp`; described as newly generated in PR #125. Generating tool/service/model, creator/editor, creation date/version and applicable terms: **UNKNOWN**. N's **3D model** provenance does not clear this image | https://github.com/BrainEno/where-is-school/pull/125 | **UNKNOWN** — output ownership/licence, commercial use, modification, redistribution and extra permissions are unverified | **UNKNOWN** | Same documented conversion script; standing figure cropped above the knees. See audit for source/output hashes and crop | **UNKNOWN / NOT CLEARED** for public/store distribution | Placement request is not rights approval |
 | `dirty_football_4k.glb` (uploaded in PR #85; committed in PR #90; **removed in the issue #97 pull request**) | glTF 2.0 prop, 67.3 MiB: 35,210 vertices / 37,486 triangles, one material, three embedded 4096² maps (54.5 MiB PNG normal, 6.3 MiB PNG roughness, 5.3 MiB JPEG albedo). A 22 cm football | Poly Haven, "Dirty Football" | https://polyhaven.com/a/dirty_football | CC0 1.0 (public domain) | No | Committed once, at `art/props/dirty_football/dirty_football_4k.glb`, unmodified from the owner's export. Deleted from the tree because of its size — 5.6× the 12 MiB per-file ceiling of `tools/repo_size.py` — with the record, the measurements and the re-download route kept in `art/props/dirty_football/README.md`. The blob is still in the history; removing it there is an authorised rewrite, written up in `docs/adr/0007-large-binaries-and-repository-size.md` | Yes — CC0 permits commercial use, modification and redistribution with no attribution | Pending owner art review |
 
+## 2026-11-17 prologue detail pass
+
+- `scenes/environment/props/classroom_art/unbound_herbarium.tscn`: original, hand-authored
+  Godot paper polygons, leaf silhouettes, alignment marks and primitive meshes. No image
+  downloads, generated-image service, external botanical plate or manuscript input.
+- `scripts/ui/notebook_paper.gd`: original analytic Control drawing (paper, ruling, holes,
+  set square); no external texture or image-generation service.
+- `assets/characters/classroom_student/student_look.tres`: deterministic output of
+  `art/characters/build_character_looks.py` / `look_experiments.seated_student`, authored
+  colors and procedural paint using the existing character shaders. The underlying old
+  protagonist GLB, skeleton and seated animation are unchanged; this does not grant or
+  expand rights in that model. The same generator refines the existing three looks.
+- These new scene/drawing/palette contributions are project-original code/placeholder
+  assets under the existing project ownership convention (`COPYRIGHT.md`), with no new
+  third-party attribution obligation. Commercial rights in existing models, portraits and
+  animation remain subject to their existing audit; no blanket release clearance is claimed.
+- Art approval and in-engine visual acceptance of this pass remain pending Owner review.
+
 ## Notes
 
 - The laboratory scene and its materials are build artefacts of

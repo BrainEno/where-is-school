@@ -1,0 +1,170 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="1_ink"]
+[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="2_paper"]
+[ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="3_teal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/varnish_pale.tres" id="4_ochre"]
+[ext_resource type="Material" path="res://assets/materials/classroom/lacquer_oxblood.tres" id="5_red"]
+
+[sub_resource type="BoxMesh" id="Stem"]
+size = Vector3(0.014, 1.8, 0.012)
+
+[sub_resource type="CylinderMesh" id="Disk"]
+top_radius = 0.37
+bottom_radius = 0.37
+height = 0.008
+radial_segments = 32
+
+[node name="UnboundHerbarium" type="Node3D"]
+
+[node name="OchreDisk" type="MeshInstance3D" parent="."]
+position = Vector3(0.27, 0.35, -0.03)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("Disk")
+material_override = ExtResource("4_ochre")
+cast_shadow = 0
+
+[node name="TornLeaf" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(-0.58, -0.87, 0.49, -0.83, 0.56, -0.72, 0.52, 0.62, 0.42, 0.69, 0.48, 0.74, -0.51, 0.82, -0.56, 0.39, -0.52, 0.35, -0.57, -0.3)
+material = ExtResource("2_paper")
+rotation_degrees = Vector3(0, 0, -5)
+
+[node name="RegistrationStem" type="MeshInstance3D" parent="."]
+position = Vector3(0.045, 0.19, 0.024)
+rotation_degrees = Vector3(0, 0, -8)
+mesh = SubResource("Stem")
+material_override = ExtResource("5_red")
+cast_shadow = 0
+
+[node name="InkStem" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.19, 0.04)
+rotation_degrees = Vector3(0, 0, -8)
+mesh = SubResource("Stem")
+material_override = ExtResource("1_ink")
+cast_shadow = 0
+
+[node name="CutLeaf0" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.19, 0.05, -0.43, 0.3, -0.22, 0.29, -0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0, -0.48, 0.09)
+rotation_degrees = Vector3(0, -9, 7)
+
+[node name="Vein0" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.43, 0.3, -0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0, -0.48, 0.1)
+rotation_degrees = Vector3(0, -9, 7)
+
+[node name="CutLeaf1" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.19, 0.05, 0.43, 0.3, 0.22, 0.29, 0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0.04, -0.21, 0.102)
+rotation_degrees = Vector3(0, 11, -7)
+
+[node name="Vein1" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.43, 0.3, 0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0.04, -0.21, 0.112)
+rotation_degrees = Vector3(0, 11, -7)
+
+[node name="CutLeaf2" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.19, 0.05, -0.43, 0.3, -0.22, 0.29, -0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0.07, 0.09, 0.11399999999999999)
+rotation_degrees = Vector3(0, -13, 7)
+
+[node name="Vein2" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.43, 0.3, -0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0.07, 0.09, 0.124)
+rotation_degrees = Vector3(0, -13, 7)
+
+[node name="CutLeaf3" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.19, 0.05, 0.43, 0.3, 0.22, 0.29, 0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0.1, 0.36, 0.126)
+rotation_degrees = Vector3(0, 15, -7)
+
+[node name="Vein3" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.43, 0.3, 0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0.1, 0.36, 0.136)
+rotation_degrees = Vector3(0, 15, -7)
+
+[node name="CutLeaf4" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.19, 0.05, -0.43, 0.3, -0.22, 0.29, -0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0.14, 0.65, 0.138)
+rotation_degrees = Vector3(0, -17, 7)
+
+[node name="Vein4" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, -0.43, 0.3, -0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0.14, 0.65, 0.14800000000000002)
+rotation_degrees = Vector3(0, -17, 7)
+
+[node name="CutLeaf5" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.19, 0.05, 0.43, 0.3, 0.22, 0.29, 0.06, 0.13)
+material = ExtResource("3_teal")
+position = Vector3(0.18, 0.94, 0.15)
+rotation_degrees = Vector3(0, 19, -7)
+
+[node name="Vein5" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0, 0, 0.43, 0.3, 0.17, 0.11)
+material = ExtResource("1_ink")
+position = Vector3(0.18, 0.94, 0.16)
+rotation_degrees = Vector3(0, 19, -7)
+
+[node name="Index0" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0.33, -0.62, 0.46, -0.615, 0.46, -0.604, 0.33, -0.607)
+material = ExtResource("5_red")
+position = Vector3(0, 0, 0.06)
+
+[node name="Index1" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0.33, -0.22, 0.46, -0.215, 0.46, -0.20400000000000001, 0.33, -0.207)
+material = ExtResource("5_red")
+position = Vector3(0, 0, 0.06)
+
+[node name="Index2" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0.33, 0.18, 0.46, 0.185, 0.46, 0.196, 0.33, 0.193)
+material = ExtResource("5_red")
+position = Vector3(0, 0, 0.06)
+
+[node name="Index3" type="CSGPolygon3D" parent="."]
+use_collision = false
+depth = 0.008
+polygon = PackedVector2Array(0.33, 0.58, 0.46, 0.585, 0.46, 0.596, 0.33, 0.593)
+material = ExtResource("5_red")
+position = Vector3(0, 0, 0.06)

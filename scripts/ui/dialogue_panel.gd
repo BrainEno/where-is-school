@@ -1,66 +1,10 @@
 class_name DialoguePanel
 extends Control
-## View for dialogue and inspection text. Owns presentation only.
-##
-## The panel is a **reading surface at the edge of the world**, not a chat window:
-##
-## - it is a band in the lower left, never full width, so the room stays the main
-##   picture; a soft ink wash fades its top edge into the scene instead of drawing a
-##   heavy box around it;
-## - the speaker's name is the anchor, the role is quieter, and the sentence is the
-##   largest thing on screen;
-## - the narrative source (seen / heard / remembered / imagined) is a hairline and a
-##   small tracked label, not a badge that competes with the prose;
-## - choices sit on their own lines below a rule, left-aligned, with a margin mark on
-##   hover — text to read and pick, not a column of buttons.
-##
-## It still translates input into intents (`advance_requested`, `choice_selected`)
-## and leaves story state to the DialogueController.
-##
-## The band is also the surface that continues the line. A left click inside the box
-## advances (or finishes a line that is still typing); a left click anywhere else does
-## nothing while the panel is up. The old rule was the opposite — every unhandled click
-## anywhere on screen counted as "continue", while the box itself, covered by its frame
-## panel, swallowed the click and did nothing.
-##
-## Layout is measured, not guessed. The band width, the text column and the height are
-## computed from the viewport and from the text the panel is actually holding, so the
-## same scene reads correctly at 1280x720, 1600x900 and 1920x1080, and a long line
-## scrolls inside the body instead of growing past the screen. Nothing shrinks the type
-## to make text fit: the type sizes are fixed and the panel adapts around them.
-##
-## The reading voice follows Disco Elysium's dialogue column rather than a game's chat box
-## (owner's direction, 2026-11-12): a dark, almost opaque ink ground; the speaker's name in
-## tracked capitals in the speaker's colour; the sentence large, in a serif (Noto Serif SC,
-## `assets/fonts/NotoSerifSC-Regular.otf`), warm off-white on the dark; the options numbered
-## and set in a warm vermilion that brightens under the pointer. The interface outside the
-## panel keeps the Sans; anything the serif subset cannot draw falls back to it.
-##
-## A speaker *may* have an approved 2D portrait (`CharacterProfile.portrait`). Most do
-## not, and then nothing here changes: no slot is reserved and every rect is the same as
-## it is without portraits. When one exists it is the first part of the **identity
-## block** (#167): a small painted head at the start of the name row, aligned with the
-## text column, with the name and the role right beside it. It stands on the bottom of the
-## name row and reaches up to the band's top edge, a little past it on a tall screen,
-## where its top dissolves into the wash. The band itself does not move or narrow and the
-## sentence keeps the full column below: only the name row gives up the portrait's width.
-## The portrait never covers the name, the sentence, the options or the hint, and it never
-## takes a click. Its size is measured from the name row and the window (see
-## `_plan_portrait`), and the profile's `portrait_crop` frames the face so a full-length
-## painting still reads at that size. A portrait that cannot be used (missing file, not a
-## texture, no pixels, absurd proportions) is reported by `get_portrait_report()` and a
-## warning, and the line is shown as if the speaker had none. The edge towards the name and
-## the top dissolve through `assets/shaders/ui/portrait_fade.gdshader`; the edge on the
-## text column and the bottom, on the name's line, stay hard.
-##
-## The band also carries the two reading modes (`DialoguePlayback`): **auto** passes a line by
-## itself after a reading pause, **skip** runs through lines already read. The panel only
-## turns their inputs into intents (`auto_toggle_requested`, `skip_requested`) and shows the
-## state the controller hands back (`set_playback_state`): the hint line names the inputs, or
-## says which mode is on, or for a moment why skip stopped; and two small words at the start
-## of the hint line (`DialogueModeBar`) switch the modes for a player on the mouse. An option
-## the player took in an earlier run (`chosen_before` on the choice) is set a quieter
-## vermilion, lit like any other under the pointer.
+## Notebook reading surface. Owns presentation only; the controller owns story state.
+## A warm white loose leaf, quiet ruling and a wooden set square in the upper-left
+## replace the ink band. The existing measured layout, independent 2D portraits,
+## scrolling, input intents and playback controls remain unchanged. Decoration is
+## drawn beneath the transparent frame by NotebookPaper, outside the text column.
 
 signal advance_requested
 signal choice_selected(index: int)
@@ -143,15 +87,15 @@ const SOURCE_COLORS: Dictionary = {
 	NarrativeEntry.Source.IMAGINED: Color(0.820, 0.553, 0.349, 1.0),
 }
 
-const SUBJECTIVE_TINT := Color(0.717, 0.427, 0.286, 1.0)
+const SUBJECTIVE_TINT := Color(0.49, 0.23, 0.20, 1.0)
 const PAPER := Color(0.898, 0.871, 0.804, 1.0)
 const MUTED := Color(0.611, 0.6, 0.561, 1.0)
-const INK := Color(0.035, 0.038, 0.04, 0.9)
-## The options: a warm vermilion at rest, a pale apricot under the pointer or the cursor.
-const CHOICE_COLOR := Color(0.851, 0.447, 0.271, 1.0)
-const CHOICE_LIT := Color(0.976, 0.792, 0.643, 1.0)
+const INK := Color(0.19, 0.18, 0.22, 1.0)
+## Dark burnt-sienna ink on white, deepening under the pointer or keyboard cursor.
+const CHOICE_COLOR := Color(0.52, 0.24, 0.16, 1.0)
+const CHOICE_LIT := Color(0.30, 0.15, 0.12, 1.0)
 ## An option taken in an earlier run: the same hue, quieter, so the untried ones stand out.
-const CHOICE_SEEN := Color(0.627, 0.42, 0.333, 1.0)
+const CHOICE_SEEN := Color(0.43, 0.36, 0.33, 1.0)
 ## How long the hint says why skip stopped before it goes back to naming the inputs.
 const PLAYBACK_NOTICE_SECONDS := 2.6
 ## The serif the sentence, the name, the title and the options are set in. Everything else
@@ -1252,7 +1196,7 @@ func _badge_text(line: Dictionary) -> String:
 func _speaker_color(line: Dictionary) -> Color:
 	if line.get("subjective", false):
 		return SUBJECTIVE_TINT
-	return line.get("accent_color", PAPER)
+	return _paper_ink(line.get("accent_color", PAPER))
 
 
 func _accent_for(line: Dictionary) -> Color:
@@ -1262,15 +1206,23 @@ func _accent_for(line: Dictionary) -> Color:
 	return SOURCE_COLORS.get(source_value, PAPER)
 
 
-## The source is drawn twice, both times quietly: a hairline along the top edge and a
-## small tracked label. Neither is allowed to out-shout the sentence.
+## Adapt accents authored for the old dark surface to readable notebook ink.
+func _paper_ink(accent: Color) -> Color:
+	# Character accents were authored for a dark band. Retain their hue, not their
+	# old luminance: pale ochre on white otherwise loses speaker/source identity.
+	return Color(INK.r * 0.65 + accent.r * 0.35,
+		INK.g * 0.65 + accent.g * 0.35, INK.b * 0.65 + accent.b * 0.35, 1.0)
+
+
+## A source hairline and a small label, neither louder than the sentence.
 func _apply_accent(accent: Color) -> void:
-	_source_rule.color = Color(accent.r, accent.g, accent.b, 0.55)
+	var source_ink := _paper_ink(accent)
+	_source_rule.color = Color(source_ink.r, source_ink.g, source_ink.b, 0.42)
 	_badge_label.add_theme_color_override(
-		"font_color", Color(accent.r, accent.g, accent.b, 0.66)
+		"font_color", source_ink
 	)
 	var style := StyleBoxFlat.new()
-	style.bg_color = INK
+	style.bg_color = Color.TRANSPARENT
 	style.content_margin_left = 36.0
 	style.content_margin_top = 16.0
 	style.content_margin_right = 32.0

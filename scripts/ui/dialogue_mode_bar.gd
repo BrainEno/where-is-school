@@ -19,9 +19,9 @@ signal skip_pressed
 const GAP := 18.0
 const SPACING := 12.0
 
-const MUTED := Color(0.6, 0.588, 0.549, 0.62)
-const LIT := Color(0.976, 0.792, 0.643, 1.0)
-const HOVER := Color(0.851, 0.447, 0.271, 1.0)
+const MUTED := Color(0.37, 0.35, 0.38, 1.0)
+const LIT := Color(0.30, 0.15, 0.12, 1.0)
+const HOVER := Color(0.52, 0.24, 0.16, 1.0)
 
 var _auto: Button = null
 var _skip: Button = null

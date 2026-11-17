@@ -78,9 +78,8 @@ const DESKS := {
 	"DeskC4": Vector3(4.8, 0.0, 3.4),
 }
 const PROPS := {
-	"Furniture/FrontDesk": Vector3(-4.65, 0.0, -2.2),
 	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
-	"Props/SetSquare": Vector3(-4.25, 0.81, -2.1),
+	"Props/SetSquare": Vector3(0.7, 1.123, -3.65),
 	"Furniture/DeskB2/Chair/Schoolbag": Vector3(0.0, 0.5, 0.34),
 	"Actors/Q": Vector3(-3.3, 0.0, 3.1),
 	# Where Q walks to before the first line (OpeningSequence, #160): the aisle at your left.
@@ -96,8 +95,8 @@ const PROPS := {
 }
 const INTERACTABLES := {
 	"blackboard": Vector3(-1.6, 0.6, -4.25),
-	"set_square": Vector3(-4.0, 0.6, -1.45),
-	"front_desk": Vector3(-4.4, 0.5, -1.7),
+	"set_square": Vector3(0.7, 0.85, -3.03),
+	"front_desk": Vector3(1.25, 0.6, -3.05),
 	"window": Vector3(-6.0, 0.6, 0.0),
 	"own_desk": Vector3(-1.6, 0.4, 1.3),
 	"schoolbag": Vector3(-1.6, 0.55, 2.3),
@@ -114,7 +113,7 @@ const SOLIDS: Array[String] = [
 	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
 	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
-	"Furniture/FrontDesk/Body", "Stage/Lectern/Body",
+	"Stage/Lectern/Body",
 ]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
@@ -280,6 +279,8 @@ func _check_layout() -> void:
 		floor_box = floor_shape.shape as BoxShape3D
 	if floor_box == null or not floor_box.size.is_equal_approx(FLOOR_SIZE):
 		_failures.append("The classroom floor is no longer the 14 x 10 m room.")
+	if _room.get_node_or_null(^"Furniture/FrontDesk") != null:
+		_failures.append("The removed left teacher desk (including its collision) returned.")
 	for wall_name: String in WALLS:
 		_expect_at(wall_name, WALLS[wall_name])
 	for desk_name: String in DESKS:
@@ -804,11 +805,10 @@ func _check_inspection_agreement() -> void:
 		"Props/Blackboard/ChalkBrokenEnd": "the broken stick of chalk on the tray",
 		"Props/Blackboard/Clip": "the clip that has lost its board",
 		"Props/Blackboard/Board/Face": "the wiped-not-quite board face",
-		"Furniture/FrontDesk/Chair": "the teacher's chair, pushed in at an angle",
-		"Furniture/FrontDesk/Body/Register": "the register in its plastic cover",
-		"Furniture/FrontDesk/Body/Stapler": "the stapler",
-		"Furniture/FrontDesk/Body/Mug": "the mug of chalk",
 		"Furniture/DeskB2/DeskMarks": "the cut-in name, the sticker and the groove",
+		"Stage/Lectern/Body/Register": "the register on the lower shelf",
+		"Stage/Lectern/Body/LessonPapers": "the papers on the lower shelf",
+		"WallNorth/UnboundHerbarium/TornLeaf": "the torn biology teaching plate",
 		"Props/SetSquare/TapeRepair": "the browned tape on the split corner",
 		"TimetableSheet/Face": "the timetable's printed face",
 	}
@@ -842,11 +842,21 @@ func _check_inspection_agreement() -> void:
 	var square := _room.get_node_or_null(^"Props/SetSquare") as Node3D
 	if square != null:
 		var box := _subtree_aabb(square)
-		if box.size.y > 0.08 or maxf(box.size.x, box.size.z) < 0.4:
+		# Its world bounds include the lectern's 8.75-degree slope.
+		if box.size.y > 0.14 or maxf(box.size.x, box.size.z) < 0.4:
 			_failures.append(
-				"The set square is %.2f x %.2f x %.2f m; it should lie flat on the desk corner."
+				"The set square is %.2f x %.2f x %.2f m; it should lie on the sloped lectern."
 				% [box.size.x, box.size.y, box.size.z]
 			)
+		var lectern := _room.get_node(^"Stage/Lectern") as Node3D
+		var on_top := lectern.to_local(square.global_position)
+		if absf(on_top.x) > 0.15 or absf(on_top.z) > 0.1 or absf(on_top.y - 1.003) > 0.01:
+			_failures.append("The square is not supported by the lectern's top.")
+		if absf(square.rotation_degrees.x + 8.75) > 0.1:
+			_failures.append("The square no longer follows the lectern slope.")
+		var interaction := _room.get_node(^"Interactables/SetSquareInspect") as Interactable
+		if interaction.support_paths != PackedStringArray(["../../Stage/Lectern"]):
+			_failures.append("The square's occlusion support is not the lectern.")
 
 
 # --- 9. navigation ------------------------------------------------------------------

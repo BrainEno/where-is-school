@@ -35,6 +35,10 @@ const Harness = preload("res://tests/test_harness.gd")
 ## "two_sided" counts the surfaces painted with the two-sided shader: N's eyeballs (sclera,
 ## iris and pupil, both eyes) face inward in teacher-n.glb and go blank one-sided.
 const CHARACTER_LOOKS := {
+	"former protagonist": {
+		"look": "res://assets/characters/classroom_student/student_look.tres",
+		"motion": "",
+	},
 	"protagonist": {
 		"look": "res://assets/characters/protagonist/protagonist_look.tres",
 		"motion": "res://assets/characters/protagonist/protagonist_motion.tres",
@@ -728,6 +732,7 @@ func _check_seated_wrapper(
 			"The wrapper for %s hangs its model at y=%.4f, recorded seated drop %.4f."
 			% [label, model.position.y, float(asset["seated_drop"])]
 		)
+	_check_character_look(label, wrapper, asset)
 
 
 ## Desk dressing does not collide on purpose: it sits on furniture that already does, and

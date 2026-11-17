@@ -639,14 +639,75 @@ def integrated(look: dict, label: str) -> dict:
     return result
 
 
+def classroom_finish(look: dict) -> dict:
+    """One classroom light temperature, without erasing each character's medium."""
+    result = copy.deepcopy(look)
+    # Finer than the previous 9-12 mm contours: avoid a toy-like black casing.
+    result["outline_width"] = min(result["outline_width"], 0.008)
+    for part in result["parts"].values():
+        # Leave eyes/mouth and explicit local face patches alone.
+        if part.get("outline"):
+            part["shade_tint"] = "#9992B4"
+            part["light_tint"] = "#F4DFC0"
+            if "mark_strength" in part:
+                part["mark_strength"] *= 0.8
+    return result
+
+
+def seated_student() -> dict:
+    """A quiet, terracotta linocut classmate, not the old glossy protagonist."""
+    palette = {
+        "cardigan": "#715255", "button": "#AB9367",
+        "cardigan_light": "#896966", "cardigan_shadow": "#584855",
+        "skin_light": "#C3AD8D", "skin_shadow": "#8D807E", "skin": "#B39A80",
+        "eye_glint": "#C7BEAB", "iris": "#665A49", "pupil": "#302C36",
+        "eye_offwhite": "#BBB39F", "hair": "#35303A", "hair_warm": "#49404A",
+        "brush_rust": "#80605B", "stitch": "#B09B84", "shirt_shadow": "#97908A",
+        "shirt": "#CBC1A9", "shoes": "#39333B", "trousers_light": "#5B6370",
+        "sole": "#302B34", "trousers": "#48505F", "undereye": "#92817E",
+    }
+    parts = {}
+    for name, color in palette.items():
+        cloth = name.startswith(("cardigan", "trousers"))
+        part = dict(
+            albedo=color, pigment_a=color, pigment_b="#A19389",
+            pigment_mix=0.16 if cloth else 0.05, pigment_value=0.1 if cloth else 0.04,
+            pigment_scale=7.0, pigment_steps=3.0, shade_tint="#9992B4",
+            light_tint="#F4DFC0", shadow_fill=0.4, half_tone=0.6,
+            edge_softness=0.035, outline=False,
+        )
+        if cloth:
+            part = with_marks(part, strength=0.32, color="#B3A493", scale=55.0,
+                              across=(1.0, 0.22, 0.4), width=0.17, length=9.0,
+                              coverage=0.05, contour=0.55, jitter=0.45)
+        parts["wis_protagonist_" + name] = part
+    # Only major outside forms get ink: not all 78 separate pieces of the old model.
+    for mesh, material in {
+        "body_cardigan_torso": "cardigan", "head_main_mesh": "skin",
+        "hair_cap": "hair", "hair_back": "hair", "trousers_hip": "trousers",
+    }.items():
+        part = dict(parts["wis_protagonist_" + material], outline=True)
+        if mesh == "body_cardigan_torso":
+            part.update(shape_center=(0.0, 0.89, 0.0), shape_radius=(0.2, 0.12, 0.19),
+                        shape_offset=-0.008)
+        parts[mesh + "/wis_protagonist_" + material] = part
+    return {
+        "label": "seated student: terracotta linocut (integrated)",
+        "outline_width": 0.006, "outline": {"wobble": 0.32, "wobble_scale": 12.0},
+        "parts": parts, "expression": {}, "blink_shapes": [],
+        "blink_interval": (2.5, 5.0), "blink_duration": 0.16,
+    }
+
+
 def shipped(protagonist: dict, q: dict) -> dict:
     """What the wrappers carry after the integration: the scheme that won for each."""
     return {
+        "assets/characters/classroom_student/student_look.tres": seated_student(),
         "assets/characters/protagonist/protagonist_look.tres": integrated(
-            protagonist_charcoal(protagonist), "protagonist: charcoal (integrated)"
+            classroom_finish(protagonist_charcoal(protagonist)), "protagonist: charcoal (integrated)"
         ),
-        "assets/characters/q/q_look.tres": integrated(q_oil(q), "Q: oil (integrated)"),
-        "assets/characters/teacher_n/teacher_n_look.tres": integrated(n_chalk(), "N: chalk (integrated)"),
+        "assets/characters/q/q_look.tres": integrated(classroom_finish(q_oil(q)), "Q: oil (integrated)"),
+        "assets/characters/teacher_n/teacher_n_look.tres": integrated(classroom_finish(n_chalk()), "N: chalk (integrated)"),
     }
 
 

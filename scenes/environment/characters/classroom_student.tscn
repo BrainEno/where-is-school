@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://assets/models/protagonist/protagonist.glb" id="1_model"]
 [ext_resource type="Script" path="res://scripts/actors/character_visual_animation.gd" id="2_animation"]
+
+[ext_resource type="Script" path="res://scripts/actors/character_look_applier.gd" id="3_applier"]
+[ext_resource type="Resource" path="res://assets/characters/classroom_student/student_look.tres" id="4_look"]
 
 [node name="ClassroomStudent" type="Node3D"]
 script = ExtResource("2_animation")
@@ -9,3 +12,7 @@ start_seated = true
 
 [node name="Model" parent="." instance=ExtResource("1_model")]
 position = Vector3(0, -0.347, 0)
+
+[node name="Look" type="Node" parent="."]
+script = ExtResource("3_applier")
+look = ExtResource("4_look")

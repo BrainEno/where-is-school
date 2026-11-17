@@ -75,6 +75,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	_check_portrait_resources_are_warm()
+	_check_notebook_surface()
 
 	# The longest paragraphs the shipped content actually has, in both languages: the
 	# object descriptions are the long ones, the prologue supplies the shorter beats.
@@ -142,6 +143,29 @@ func _run() -> void:
 		"the dialogue panel keeps its hierarchy and its type at all five resolutions through 4K, "
 		+ "at the standard and the largest text size."
 	)
+
+
+func _check_notebook_surface() -> void:
+	var paper := _panel.get_node_or_null(^"NotebookPaper") as Control
+	if paper == null:
+		_failures.append("Dialogue lost its notebook paper.")
+		return
+	if paper.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		_failures.append("Notebook decoration must not take dialogue or choice clicks.")
+	var paper_script := paper.get_script() as Script
+	if paper_script == null:
+		_failures.append("Notebook paper has no drawing script.")
+		return
+	var color: Color = paper_script.get_script_constant_map().get("PAPER", Color.BLACK)
+	if color.get_luminance() < 0.9:
+		_failures.append("Dialogue paper is not a white reading surface.")
+	var body := _panel.get_node(^"Frame/Content/BodyLabel") as RichTextLabel
+	if body.get_theme_color(&"default_color").get_luminance() > 0.3:
+		_failures.append("The old pale dialogue ink is unreadable on the notebook.")
+	var frame := _panel.get_node(^"Frame") as PanelContainer
+	var style := frame.get_theme_stylebox(&"panel") as StyleBoxFlat
+	if style == null or style.bg_color.a > 0.0:
+		_failures.append("An opaque frame hides the notebook paper.")
 
 
 func size_smallest() -> Vector2i:

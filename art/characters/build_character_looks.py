@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the protagonist's, Q's and N's look resources from the palettes below.
+"""Writes the protagonist, Q, N and seated student looks from the authored palettes.
 
     python3 art/characters/build_character_looks.py          # write both
     python3 art/characters/build_character_looks.py --check  # fail if they are out of date
@@ -8,6 +8,7 @@ Output (committed, read by the game):
     assets/characters/protagonist/protagonist_look.tres
     assets/characters/q/q_look.tres
     assets/characters/teacher_n/teacher_n_look.tres
+    assets/characters/classroom_student/student_look.tres
 and the character integration's unshipped experiments under scenes/dev/character_lab/looks/.
 
 Each is a `CharacterLook` (scripts/actors/character_look.gd): one ShaderMaterial per GLB

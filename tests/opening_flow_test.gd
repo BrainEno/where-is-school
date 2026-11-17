@@ -680,7 +680,7 @@ func _check_targeting() -> void:
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
 		{"position": q_standing, "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},
-		{"position": Vector3(-3.2, 0, -1.0), "yaw": 61.0, "expected": &"set_square"},
+		{"position": Vector3(0.7, 0, -2.5), "yaw": 180.0, "expected": &"set_square"},
 		{"position": Vector3(-4.8, 0, 0.0), "yaw": 90.0, "expected": &"window"},
 		{"position": Vector3(0.0, 0, 3.7), "yaw": 180.0, "expected": &"timetable"},
 		# The front door is in the east wall (issue #159); face it from the room.

@@ -92,12 +92,12 @@
     "prompt": "看讲台",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "比学生的桌子高出很多，除了粉笔盒外上面没有放太多东西。当然了，还有一把三角尺。",
-    "repeat_text": "讲台比课桌高出很多，给老师提供了很好的视野和掩护。",
+    "text": "木讲台比课桌高出一截。台面上平放着一把断过的三角尺，下面的隔层里收着纸张和点名册。",
+    "repeat_text": "三角尺在台面上，点名册在下面的隔层里。",
     "record": {
       "entry_id": "saw_teacher_desk",
       "source": "observed",
-      "text": "讲台通常要比课桌高出很多，给老师提供了很好的视线和遮挡，遮挡了他们平时不想被人看到的部分，比如穿错的袜子或不合适的裤子之类的。"
+      "text": "木讲台的台面高出课桌，隔层里收着纸张和点名册。"
     }
   },
   "classroom_timetable_sheet": {

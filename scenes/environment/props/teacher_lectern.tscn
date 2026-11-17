@@ -139,14 +139,14 @@ mesh = SubResource("BoxMesh_gallery_back")
 material_override = ExtResource("2_wood")
 
 [node name="LessonPapers" type="MeshInstance3D" parent="Body"]
-position = Vector3(-0.17, 0.996, -0.05)
-rotation_degrees = Vector3(-8.75, 6, 0)
+position = Vector3(-0.17, 0.447, -0.05)
+rotation_degrees = Vector3(0, 6, 0)
 mesh = SubResource("BoxMesh_papers")
 material_override = ExtResource("6_paper")
 
 [node name="Register" type="MeshInstance3D" parent="Body"]
-position = Vector3(0.19, 1.002, -0.06)
-rotation_degrees = Vector3(-8.75, -4, 0)
+position = Vector3(0.19, 0.454, -0.06)
+rotation_degrees = Vector3(0, -4, 0)
 mesh = SubResource("BoxMesh_register")
 material_override = ExtResource("7_register")
 

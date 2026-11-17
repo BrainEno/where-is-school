@@ -66,6 +66,7 @@ jobs:
           python3 tools/prepare_q.py --check
           python3 tests/q_model_prepare_test.py
           python3 art/characters/build_character_looks.py --check
+          python3 tests/prologue_details_test.py
 
       - name: Check the model library against the pipeline contract
         shell: bash

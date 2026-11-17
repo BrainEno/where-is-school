@@ -6,8 +6,8 @@ extends Node
 ## Sits in the character wrapper (`protagonist.tscn`, `q.tscn`, `teacher_n.tscn`) beside
 ## `Model`. It changes what the surfaces are drawn with and nothing else: no node is added,
 ## moved or renamed, the skeleton, skin and bone names are the GLB's, and the animation
-## driver on the wrapper root never sees the difference. The classroom student has no
-## applier.
+## driver on the wrapper root never sees the difference. The classroom student uses the
+## same applier with its own terracotta linocut palette.
 ##
 ## Three treatments, so the treatment can be compared in the running game (the character art
 ## capture photographs all three; the game always uses `PAINTED`):
