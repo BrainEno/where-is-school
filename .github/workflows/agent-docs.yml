@@ -1,0 +1,27 @@
+name: Agent documentation
+
+# Keep discovery instructions and the public-type index current without an engine.
+# Run on every PR: a new class_name can appear in any GDScript directory.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Check agent entry points and module coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Check documentation contracts
+        run: python3 tools/check_agent_docs.py --check
+
+      - name: Test the documentation check
+        run: python3 tests/agent_docs_test.py

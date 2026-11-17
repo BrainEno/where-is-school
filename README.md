@@ -211,7 +211,9 @@ missing.
 
 ## Repository map
 
-- AGENTS.md — authoritative coding-agent instructions.
+- [AGENTS.md](AGENTS.md) — authoritative coding-agent entry point; read before editing.
+- [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md) — mandatory collaboration, reporting and PR rules.
+- [docs/MODULE_INDEX.md](docs/MODULE_INDEX.md) — search here before implementing: every global GDScript type, shared UI helpers, test harness, autoloads and editor/tool boundaries.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
 - docs/screenshots/ — frames captured from a real, running window by
