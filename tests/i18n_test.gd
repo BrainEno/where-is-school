@@ -23,6 +23,7 @@ func _run() -> void:
 	if not errors.is_empty():
 		_failures.append("\n".join(errors))
 
+	_check_profiles()
 	_check_tables()
 	_check_lookup()
 	await _check_loc_autoload()
@@ -34,6 +35,38 @@ func _run() -> void:
 func _reset_settings() -> void:
 	if FileAccess.file_exists(SETTINGS_PATH):
 		DirAccess.remove_absolute(SETTINGS_PATH)
+
+
+func _check_profiles() -> void:
+	if L10n.LOCALES != Locales.codes() or L10n.DEFAULT_LOCALE != Locales.DEFAULT_LOCALE:
+		_failures.append("L10n does not use the locale registry.")
+	for code: String in L10n.LOCALES:
+		if L10n.normalize(code) != code or Locales.reading_cps(code) <= 0.0:
+			_failures.append("Locale profile is not usable: %s." % code)
+	if L10n.normalize("unknown") != L10n.DEFAULT_LOCALE:
+		_failures.append("Unknown locale should fall back to the default.")
+	if Locales.reading_cps("unknown") != Locales.DEFAULT_READING_CPS:
+		_failures.append("Unknown reading speed should use the neutral fallback.")
+	var playback := DialoguePlayback.new()
+	for code: String in L10n.LOCALES + ["unknown"]:
+		playback.begin_line("test", 90, false, code)
+		var expected := clampf(
+			DialoguePlayback.BASE_PAUSE + 90.0 / Locales.reading_cps(code),
+			DialoguePlayback.MIN_PAUSE, DialoguePlayback.MAX_PAUSE
+		)
+		if not is_equal_approx(playback.auto_pause(), expected):
+			_failures.append("Playback did not use the registry speed for %s." % code)
+	# A temporary third language only needs one registry entry, not new branches in
+	# normalization or playback. Do not add a real language without its content.
+	var profiles := Locales.PROFILES.duplicate(true)
+	profiles["fr"] = {"reading_cps": 19.0, "prefixes": ["fr"], "aliases": []}
+	if not Locales.codes(profiles).has("fr") or Locales.normalize("fr-CA", profiles) != "fr":
+		_failures.append("The temporary language was not discovered or normalized.")
+	if Locales.reading_cps("fr", profiles) != 19.0:
+		_failures.append("The temporary language's reading speed was not used.")
+	profiles["fr"].erase("reading_cps")
+	if Locales.reading_cps("fr", profiles) != Locales.DEFAULT_READING_CPS:
+		_failures.append("A missing reading speed should use the neutral fallback.")
 
 
 func _check_tables() -> void:

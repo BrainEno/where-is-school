@@ -105,6 +105,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
+| `Locales` | [`scripts/i18n/locales.gd`](../scripts/i18n/locales.gd) | Supported locale profiles, aliases and reading speeds; add language metadata here. |
 | `L10n` | [`scripts/i18n/l10n.gd`](../scripts/i18n/l10n.gd) | Static interface-string lookup and locale tables; use Loc for persistent locale choice and change notifications. |
 
 ### Save encoding

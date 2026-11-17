@@ -9,7 +9,7 @@ extends RefCounted
 ## same path a key press takes, so neither mode can do anything a player could not.
 ##
 ## **Auto.** A line is given time once it is fully on screen: a short breath plus its length
-## at a reading speed for its language (`READING_CPS`), scaled by the player's choice
+## at a reading speed for its language (`Locales`), scaled by the player's choice
 ## (`AUTO_SPEED_FACTOR`), clamped to `MIN_PAUSE`..`MAX_PAUSE`, with `CHECK_PAUSE` more while a
 ## check's numbers are showing. Auto never picks an option: at a choice it waits. It stays on
 ## when a conversation ends - the next one plays the same way - until it is switched off.
@@ -42,8 +42,10 @@ const SKIP_SCOPES: Array[StringName] = [&"read", &"all"]
 const BASE_PAUSE := 0.9
 ## Characters a reader gets through per second at the normal speed. Chinese is counted in
 ## characters and read at roughly a third of the rate of English letters.
-const READING_CPS: Dictionary = {"zh-CN": 8.0, "en": 22.0}
-const DEFAULT_READING_CPS := 18.0
+static var READING_CPS: Dictionary:
+	get:
+		return Locales.reading_speeds()
+const DEFAULT_READING_CPS := Locales.DEFAULT_READING_CPS
 const MIN_PAUSE := 1.2
 const MAX_PAUSE := 14.0
 const CHECK_PAUSE := 1.6
@@ -166,7 +168,7 @@ func begin_line(identity: String, characters: int, was_read: bool, locale: Strin
 
 ## The pause auto gives the line on screen, in seconds, once it is fully shown.
 func auto_pause(check_showing: bool = false) -> float:
-	var cps := float(READING_CPS.get(_line_locale, DEFAULT_READING_CPS))
+	var cps := Locales.reading_cps(_line_locale)
 	var pause := BASE_PAUSE + float(_line_characters) / maxf(cps, 1.0)
 	pause *= float(AUTO_SPEED_FACTOR.get(auto_speed, 1.0))
 	pause = clampf(pause, MIN_PAUSE, MAX_PAUSE)
