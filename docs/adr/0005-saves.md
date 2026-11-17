@@ -276,11 +276,12 @@ destroys the save that was already there, and the result says so.
 ### 10. Preferences are not progress
 
 `user://settings.cfg` holds the preferences, owned by `Settings`
-(`scripts/autoload/settings_manager.gd`): `[text]` size, speed, auto_speed and skip_scope,
+(`scripts/autoload/settings_manager.gd`, `scripts/save/settings_store.gd`): `[text]` size, speed, auto_speed and skip_scope,
 `[audio]` master, music and sfx, `[display] ui_scale`, `[input]` one encoded list per
 rebound action, `[controls] sprint_mode`, and `[settings] version`. `[display] locale` in the same file belongs to `Loc` and is never
 written or removed by `Settings` — every write re-reads the file first and changes only
-its own key. New game does not touch this file. Unknown values fall back to the default
+its own key. The path and the key names are written once, in `SettingsStore` (issue #215):
+two owners of one file, one place that says which file. New game does not touch this file. Unknown values fall back to the default
 and are reported; a binding list with any undecodable entry is ignored as a whole, so an
 action is never left half-bound or unbound.
 

@@ -3,7 +3,7 @@ name: Engine hygiene audit
 # Issue #67's two remaining questions, answered by the engine rather than by a count carried
 # over from an older comment:
 #
-# 1. **UID sidecars.** Which tracked scripts and shaders does Godot 4.7.2 itself give a
+# 1. **UID sidecars.** Which tracked scripts and shaders does the engine itself give a
 #    `.uid` file on a clean import, which tracked UID values would it rewrite, and are any
 #    malformed, duplicated or orphaned? `tools/godot_sidecars.py --check` reads the tree;
 #    after `godot --import` on this fresh checkout, `--after-import` reads `git status`
@@ -46,11 +46,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Install Godot
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      - uses: ./.github/actions/setup-godot
 
       - name: Read the tracked UIDs before the engine sees them
         shell: bash
@@ -99,11 +95,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Install Godot
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      - uses: ./.github/actions/setup-godot
 
       - name: Run the probe ladder and the leaking checks with --verbose
         shell: bash

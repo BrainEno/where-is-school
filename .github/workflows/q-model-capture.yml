@@ -38,11 +38,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
-      - name: Install pinned standard Godot
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      # The engine, from `.godot-version` through the one local action that reads it
+      # (issue #217). Before that, the version was a literal in this file.
+      - uses: ./.github/actions/setup-godot
 
       - name: Install capture encoder
         shell: bash

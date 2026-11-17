@@ -580,10 +580,10 @@ func _current_mesh_is_ready() -> bool:
 	return navigation.is_synchronized()
 
 
+## The rule lives in `NavMapUtil`, which the companion and the pointer use too: a walk may
+## only be planned on a map that holds geometry (issue #212).
 func _map_has_geometry(map: RID) -> bool:
-	if not map.is_valid():
-		return false
-	return NavigationServer3D.map_get_regions(map).size() > 0
+	return NavMapUtil.has_geometry(map)
 
 
 ## Asks the map for a route from Q to the player. Returns false when there is no route

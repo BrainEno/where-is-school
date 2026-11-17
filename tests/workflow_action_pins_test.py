@@ -22,7 +22,14 @@ to ignore. So it is tested both ways, with workflow files this test writes:
 - composite actions under ``.github/actions/`` are scanned too, and ``.yaml`` is read like
   ``.yml``;
 - the command returns 1 on any finding, 1 when there is nothing to scan, and 0 on the
-  repository's own workflows, which also have to agree with ``release.yml``'s pins.
+  repository's own workflows, which also have to agree with ``release.yml``'s pins;
+- the engine version is written once (issue #217): ``./.github/actions/setup-godot`` passes
+  no ``version:`` at all, an expression passes, and a literal, a quoted literal, a value on
+  the next line, or a step that installs ``chickensoft-games/setup-godot`` directly each
+  fail with a message that names the line; a ``version:`` that is not an input of the
+  engine step (a job output, an unrelated action's input) is not reported; the wrapper
+  itself may call the upstream action, and every workflow in the repository does install
+  the engine through the wrapper, with ``.godot-version`` holding exactly one version.
 
 Run it with ``python3 tests/workflow_action_pins_test.py`` (CI does). It needs no network.
 """
@@ -307,6 +314,130 @@ def command_line() -> None:
         check("local ./.github/actions/local" in out, f"--list must show local uses: {out!r}")
 
 
+# --- the engine version, written once (issue #217) ----------------------------------
+
+ENGINE_SHA = "ac93246ea68518a384c1c280a496e5989341f2f6"
+ENGINE = f"chickensoft-games/setup-godot@{ENGINE_SHA} # v2.4.3"
+
+
+def engine_version_single_source() -> None:
+    expect_ok("the wrapper needs no version input",
+              "      - uses: ./.github/actions/setup-godot\n")
+    expect_ok("the wrapper with template and cache inputs",
+              "      - uses: ./.github/actions/setup-godot\n"
+              "        with:\n"
+              "          include-templates: true\n")
+    expect_ok("an expression is not a literal",
+              "      - uses: ./.github/actions/setup-godot\n"
+              "        with:\n"
+              "          version: ${{ steps.version.outputs.version }}\n")
+    expect_ok("a quoted expression",
+              "      - uses: ./.github/actions/setup-godot\n"
+              "        with:\n"
+              '          version: "${{ env.ENGINE }}"\n')
+
+    expect_rejected("a literal version",
+                    "      - uses: ./.github/actions/setup-godot\n"
+                    "        with:\n"
+                    "          version: 4.7.2\n",
+                    "engine `version: 4.7.2` is a literal")
+    expect_rejected("a quoted literal version",
+                    "      - uses: ./.github/actions/setup-godot\n"
+                    "        with:\n"
+                    '          version: "4.7.2"\n',
+                    "is a literal")
+    expect_rejected("a version on the next line",
+                    "      - uses: ./.github/actions/setup-godot\n"
+                    "        with:\n"
+                    "          version:\n"
+                    "            4.7.2\n",
+                    "is a literal")
+    expect_rejected("the upstream action called directly",
+                    f"      - uses: {ENGINE}\n"
+                    "        with:\n"
+                    "          version: ${{ env.GODOT_VERSION }}\n",
+                    "installs the engine directly")
+
+    # The message has to name the line, or a reviewer cannot find the copy.
+    uses, found = problems_in(workflow("      - uses: ./.github/actions/setup-godot\n"
+                                       "        with:\n"
+                                       "          version: 4.7.2\n"))
+    check(len(uses) == 1 and uses[0].version_lines == [(9, "4.7.2")],
+          f"the literal's line was not recorded: {[(u.version_lines) for u in uses]}")
+    check(any("line 9" in p for p in found), f"the failure must name the line: {found}")
+
+    # A version that is not an input of the engine step is somebody else's business: a job
+    # output, another action's input, or a `version:` after the next step has started.
+    expect_ok("a job output named version",
+              f"      - name: Install\n"
+              f"        uses: ./.github/actions/setup-godot\n"
+              f"      - name: Read the version\n"
+              f"        uses: actions/checkout@{SHA} # v6.1.0\n"
+              f"        with:\n"
+              f"          version: 4.7.2\n", count=2)
+    job_level = ("      - uses: ./.github/actions/setup-godot\n"
+                 "    outputs:\n"
+                 "      version: 4.7.2\n")
+    _, found = problems_in(workflow(job_level))
+    check(not found, f"a job-level `version:` is not the engine input: {found}")
+
+
+def wrapper_may_call_upstream() -> None:
+    """The wrapper is the one file allowed to name the upstream action."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        write_tree(root, {
+            ".github/workflows/a.yml": workflow("      - uses: ./.github/actions/setup-godot\n"),
+            pins.WRAPPER_FILE: (
+                "name: engine\nruns:\n  using: composite\n  steps:\n"
+                f"    - uses: {ENGINE}\n"
+                "      with:\n"
+                "        version: ${{ steps.version.outputs.version }}\n"),
+        })
+        _, problems = pins.audit(root)
+        check(not problems, f"the wrapper must be allowed to call the upstream action: {problems}")
+
+        # The same call in a workflow is not allowed, so the exemption cannot be widened
+        # by renaming a file.
+        write_tree(root, {
+            ".github/workflows/b.yml": workflow(f"      - uses: {ENGINE}\n"),
+        })
+        _, problems = pins.audit(root)
+        check(any("installs the engine directly" in p for p in problems),
+              f"a workflow calling the upstream action must fail: {problems}")
+
+
+def repository_engine_version() -> None:
+    """Every engine install in the repository goes through the wrapper, from one file."""
+    version_file = pins.ROOT / ".godot-version"
+    check(version_file.is_file(), ".godot-version must be tracked; it is the one source")
+    text = version_file.read_text(encoding="utf-8") if version_file.is_file() else ""
+    check(len(text.strip().splitlines()) == 1 and text.strip() == "4.7.2",
+          f".godot-version must hold one version, found {text!r}")
+
+    uses, problems = pins.audit(pins.ROOT)
+    check(not problems, f"the repository's workflows must pass:\n{problems}")
+    workflows = {u.path: u for u in uses if u.path.startswith(".github/workflows/")}
+    installs = [u for u in uses if u.installs_engine and u.path != pins.WRAPPER_FILE]
+    check(len(installs) >= 15, f"expected every workflow to install the engine, saw {len(installs)}")
+    for use in installs:
+        check(use.value == pins.ENGINE_WRAPPER,
+              f"{use.path}:{use.line} installs the engine as {use.value}, not the wrapper")
+        check(not [v for _, v in use.version_lines if not pins.EXPRESSION.match(v)],
+              f"{use.path}:{use.line} still writes the engine version inline")
+    sources = {u.path for u in installs}
+    for name in ("godot-ci.yml", "playthrough-capture.yml", "release.yml",
+                 "engine-hygiene-audit.yml", "laboratory-capture.yml"):
+        check(f".github/workflows/{name}" in sources, f"{name} does not install the engine")
+        check(f".github/workflows/{name}" in workflows, f"{name} was not scanned")
+
+    # And no workflow writes the number: not as an input, and not as prose that invites
+    # somebody to copy it back into one.
+    literals = [path for path in (pins.ROOT / ".github" / "workflows").rglob("*.y*ml")
+                if "4.7.2" in path.read_text(encoding="utf-8")]
+    check(not literals, f"the engine version is still written in {literals}")
+
+
 def this_repository() -> None:
     """The real workflows pass, and every external action agrees with release.yml's pin."""
     code, out = run_main([])
@@ -322,8 +453,20 @@ def this_repository() -> None:
         if use.is_local:
             check(use.value.startswith("./.github/"), f"unexpected local reference {use.value}")
             continue
+        if use.path == pins.WRAPPER_FILE:
+            # The wrapper is where the upstream engine action is named; release.yml does not
+            # name it any more (it goes through the wrapper like everything else), so this
+            # pin is checked by `repository_engine_version` and by `audit` itself.
+            continue
         check(release.get(use.repository) == (use.ref, use.version),
               f"{use.path}:{use.line} pins {use.repository} differently from release.yml")
+    # The release no longer installs the engine itself (it uses the wrapper), so the one pin
+    # it does not hold is the upstream action's, which only the wrapper names. That pin still
+    # has to be a full SHA with its version comment, which `audit` has already judged; here
+    # it only has to agree with itself.
+    upstream = {(u.ref, u.version) for u in uses
+                if u.path == pins.WRAPPER_FILE and u.repository == pins.ENGINE_ACTION}
+    check(len(upstream) == 1, f"{pins.WRAPPER_FILE} must pin the engine once: {upstream}")
     check(any(u.is_local for u in uses), "the local evidence-check action must be seen as local")
 
 
@@ -336,6 +479,9 @@ def main() -> int:
     drift_across_files()
     composite_actions_scanned()
     command_line()
+    engine_version_single_source()
+    wrapper_may_call_upstream()
+    repository_engine_version()
     this_repository()
 
     if FAILURES:

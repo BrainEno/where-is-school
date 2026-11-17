@@ -53,6 +53,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The engine is installed before either side of the matrix touches the working tree:
+      # `.github/actions/setup-godot` is a local action, and `actions/checkout` plus the
+      # `git checkout` below replace the tree it is read from. The "before" leg checks out
+      # the base commit, which predates this action (issue #217), so a local action after
+      # that point would not be found at all. Installing first keeps the engine identical
+      # for both sides, which is what makes the comparison mean anything.
+      - uses: ./.github/actions/setup-godot
+
       - name: Check out the "before" commit, keeping this branch's capture script
         if: matrix.side == 'before'
         shell: bash
@@ -65,11 +73,6 @@ jobs:
           git checkout --detach "${BASE_SHA}" 2>/dev/null || git checkout --detach "origin/${BASE_SHA}"
           cp "${RUNNER_TEMP}/capture_locations.gd" tests/capture_locations.gd
           echo "before = $(git rev-parse HEAD)"
-
-      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
 
       - name: Import
         shell: bash
@@ -161,10 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      - uses: ./.github/actions/setup-godot
 
       - name: Import
         shell: bash

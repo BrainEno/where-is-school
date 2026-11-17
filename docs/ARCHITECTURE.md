@@ -65,7 +65,7 @@ written down.
 |---|---|---|
 | `GameState` | `scripts/autoload/game_state.gd` | runtime story flags and snapshot/restore of those flags |
 | `NarrativeState` | `scripts/autoload/narrative_state.gd` | append-only narrative knowledge entries (observed / reported / recalled / imagined), de-duplicated by id, with snapshot/restore |
-| `Loc` | `scripts/i18n/loc.gd` | the current locale, the locale tables, and the `locale_changed` signal (see §5b) |
+| `Loc` | `scripts/i18n/loc.gd` | the current locale, the locale tables, and the `locale_changed` signal (see §5b). Writes only `[display] locale` of `SettingsStore.PATH` |
 | `CueAudio` | `scripts/audio/cue_audio.gd` | the four synthesised interaction cues, built once at startup (see §5e) |
 | `Music` | `scripts/autoload/music_player.gd` | the one background-music player, on its own `Music` bus, for the whole session (see §5m) |
 
