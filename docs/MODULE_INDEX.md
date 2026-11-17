@@ -112,6 +112,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `SaveCodec` | [`scripts/save/save_codec.gd`](../scripts/save/save_codec.gd) | Typed JSON envelope/value encoding and strict decoding; Save owns payload selection and file I/O. |
+| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. |
 
 ### Interaction and world cues
 
@@ -160,6 +161,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `LocationFlow` | [`scripts/world/location_flow.gd`](../scripts/world/location_flow.gd) | Coordinate exit, fade, transactional load, arrival and checkpoint through the host's existing beat lock. |
 | `LocationHost` | [`scripts/world/location_host.gd`](../scripts/world/location_host.gd) | Load/swap location scenes transactionally: validate scene/id/spawn/placement before replacing the old room. |
 | `LocationNavigation` | [`scripts/world/location_navigation.gd`](../scripts/world/location_navigation.gd) | Bake/query a location's own static-collider mesh and expose synchronization; never borrow a neighboring map. |
+| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `LocationRoot` | [`scripts/world/location_root.gd`](../scripts/world/location_root.gd) | Location-owned spawn, waypoint, actor and interactable lookup contract. |
 | `NPresence` | [`scripts/world/n_presence.gd`](../scripts/world/n_presence.gd) | Restore substitute N at the room's authored lectern path endpoint from n_arrived. |
 | `OpeningSequence` | [`scripts/world/opening_sequence.gd`](../scripts/world/opening_sequence.gd) | Flag-gated prologue sequencing, shared beat/player locks and checkpoint/resume coordination; do not copy its lock state. |
