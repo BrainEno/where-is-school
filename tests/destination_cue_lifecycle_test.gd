@@ -37,6 +37,10 @@ const DIALOGUE_LIMIT_SECONDS := 12.0
 const FADE_LIMIT_SECONDS := 1.0
 ## Game seconds after an arrival by which its fade (0.14 s) has certainly finished.
 const FADE_WINDOW_SECONDS := 0.3
+## Real seconds a newly drawn mark may take to become visible. Its fade-in lasts
+## `DestinationCue.LAND_SECONDS * 0.6` (0.12 game s, 0.03 real s at time scale 4); the
+## rest is margin for a slow CI frame, such as the first ones after a room load.
+const LAND_LIMIT_SECONDS := 1.0
 
 var _failures: Array[String] = []
 var _main: Node = null
@@ -374,7 +378,7 @@ func _check_object_click_still_approaches_and_activates() -> void:
 		_failures.append("object click: clicking an object out of reach did not start an approach.")
 		_free_probe(probe)
 		return
-	if _navigator.get_cue_role() != WorldCue.ROLE_TARGET or not _cue_drawn():
+	if not await _mark_appears(WorldCue.ROLE_TARGET):
 		_failures.append("object click: the approach is marked '%s', not with the target mark." % _navigator.get_cue_role())
 	if not await _wait_until(func() -> bool: return not _approaches_activated.is_empty(), WALK_LIMIT_SECONDS):
 		_failures.append("object click: the probe was never activated on arrival.")
@@ -572,6 +576,23 @@ func _cue_drawn() -> bool:
 	return cue.visible and cue.get_opacity() > 0.01
 
 
+## Whether the mark of a click that was just accepted comes up: it has the role at once,
+## and it is on screen as soon as its fade-in has stepped.
+##
+## Physics frames cannot time that. The fade-in is a Tween, which advances on process
+## frames, and at time scale 4 every process frame runs several physics steps (four at
+## 60 fps, up to `max_physics_steps_per_frame` after a slow frame such as a room load).
+## Two physics frames could pass before the Tween had stepped once, and the mark read as
+## not drawn at opacity 0 - which is how this test failed intermittently, always just
+## after a location change.
+func _mark_appears(role: String) -> bool:
+	if _navigator.get_cue_role() != role:
+		return false
+	return await _wait_until(
+		func() -> bool: return _navigator.get_cue_role() == role and _cue_drawn(), LAND_LIMIT_SECONDS
+	)
+
+
 ## Every DestinationCue in the scene tree, wherever it was put.
 func _cue_nodes() -> Array[Node3D]:
 	var found: Array[Node3D] = []
@@ -594,8 +615,8 @@ func _start_floor_walk(label: String, min_distance: float, max_distance: float) 
 	if not _player.is_path_active():
 		_failures.append("%s: a floor click did not start a walk (%s)." % [label, _navigator.get_last_rejection()])
 		return false
-	if not _cue_drawn():
-		_failures.append("%s: a floor click drew no mark." % label)
+	if not await _mark_appears(WorldCue.ROLE_DESTINATION):
+		_failures.append("%s: a floor click drew no mark (role '%s')." % [label, _navigator.get_cue_role()])
 	return true
 
 
