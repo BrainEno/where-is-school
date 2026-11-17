@@ -17,7 +17,7 @@ extends Node
 ## It cannot drown anything out, and it cannot be turned down by accident along with the
 ## rest: the player sits on its own `Music` bus (`default_bus_layout.tres`), so
 ## `set_volume_db()` moves the music and leaves `CueAudio`'s cues on `Master` where they are.
-## The default level is deliberately below the room tone's own peak: a bed, not a scene.
+## The shipped level is a bed, not a scene, and leaves the recording ample headroom.
 ##
 ## Loaded as the `Music` autoload. Callers look it up by path (`/root/Music`) or use the
 ## `Music` global, exactly as they do with `CueAudio`.
@@ -36,14 +36,14 @@ extends Node
 ## The one track. A `res://` path, so no machine's absolute path can leak into a build.
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
 
-## Bus the player is attached to. `default_bus_layout.tres` defines it and trims it by
-## `BUS_TRIM_DB`; the player's own `volume_db` is the independent music dial.
+## Bus the player is attached to. `default_bus_layout.tres` gives it a fixed -6 dB trim;
+## the player's own `volume_db` is the independent music dial.
 const BUS_NAME := &"Music"
 
-## Where the music dial starts, on top of the bus trim: about -18 dB against full scale for
-## a recording whose peak is already -8.7 dBFS. Quiet enough to talk over, loud enough to
-## hear the guitar.
-const DEFAULT_VOLUME_DB := -12.0
+## Where the music dial starts, on top of the -6 dB bus trim: -12 dB of total gain, which
+## puts the recording's -8.7 dBFS peak near -20.7 dBFS. Six decibels louder than the
+## original mix, while still leaving the guitar a background bed.
+const DEFAULT_VOLUME_DB := -6.0
 
 ## Floor the fade-in starts from, and the fade lengths.
 const SILENT_DB := -60.0

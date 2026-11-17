@@ -982,11 +982,13 @@ player to overlap with. `stop()` fades out; `stop(true)` cuts.
 
 **It cannot drown the game and cannot be turned down by accident.** The player sits on a
 `Music` bus defined in `default_bus_layout.tres` (trimmed −6 dB), and the player's own
-`volume_db` starts at −12 dB, so the music sits about 18 dB below the recording's −8.7 dBFS
-peak — under the room tone's own peak. Every other sound (`CueAudio`'s cues, the ambience
-beds, dialogue blips) is on `Master`, so `Music.set_volume_db()` moves the guitar and
-changes nothing else. `tests/music_test.gd` asserts both halves of that: the cue volumes do
-not move, and the cue players are not on the music bus.
+`volume_db` starts at −6 dB. The two gains add to −12 dB, putting the recording's −8.7 dBFS
+peak near −20.7 dBFS. That is 6 dB louder than the first shipped mix, after the owner reported
+it too quiet, while retaining 12 dB of attenuation as a background bed. Every other sound
+(`CueAudio`'s cues, the ambience beds, dialogue blips) is on `Master`, so
+`Music.set_volume_db()` moves the guitar and changes nothing else. `tests/music_test.gd`
+asserts both halves of that: the cue volumes do not move, and the cue players are not on the
+music bus.
 
 **What it does not do yet.** There is no playlist, no per-room music, and no ducking during
 dialogue — the game's dialogue is text, there is no voice track to talk over, and a ducking
@@ -997,7 +999,7 @@ path with nothing to duck for would be untested machinery. There is also no sett
 `tests/music_test.gd` covers the import settings, the stream's format and length, the single
 player, the scene change, the independent dial, and that seeking past the loop end wraps
 instead of stopping. It cannot hear the result: whether the loop is seamless to an ear, and
-whether −18 dB is the right level in a real room, are reviews for the owner.
+whether −12 dB of total gain is the right level in a real room, are reviews for the owner.
 
 ## 5n. Reading modes, the read log, and sprint as a toggle (implemented contract)
 
