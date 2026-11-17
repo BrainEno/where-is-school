@@ -25,3 +25,9 @@ jobs:
 
       - name: Test the documentation check
         run: python3 tests/agent_docs_test.py
+
+      - name: Check documentation index, states and local links
+        run: python3 tools/check_docs_index.py --check
+
+      - name: Test the documentation index check
+        run: python3 tests/docs_index_test.py
