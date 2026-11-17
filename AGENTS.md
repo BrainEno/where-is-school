@@ -53,7 +53,11 @@ The author's literary manuscripts are private source material and may be intende
   upgrade the project version. The version is written once, in `.godot-version`; CI installs
   the engine only through `.github/actions/setup-godot`, which reads that file, and
   `python3 tools/check_workflow_action_pins.py` fails a workflow that writes a `version:`
-  literal of its own (issue #217). Bump the file and the whole CI moves with it.
+  literal of its own (issue #217). Bump the file and the whole CI moves with it. Because
+  that action is local, it is read from the working tree when the step runs: install the
+  engine **before** any job checks out another commit (a "before" evidence leg), or the
+  step fails with "Can't find 'action.yml'". `python3 tools/check_ci_step_paths.py`, run in
+  `godot-ci.yml`, fails a workflow that gets that order wrong.
 - Language: GDScript. Do not introduce C#, .NET, a second runtime, or a web backend without approval.
 - Presentation: 3D environments with a controlled 2.5D camera.
 - Use Godot scenes/resources for composition. Do not build the game as a pure-code renderer.
