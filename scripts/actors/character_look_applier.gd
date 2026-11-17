@@ -3,10 +3,11 @@ extends Node
 ## Puts a `CharacterLook` on the model next to it: painted materials per surface, the ink
 ## line on the parts that carry one, the face's resting expression, and a blink.
 ##
-## Sits in the character wrapper (`protagonist.tscn`, `q.tscn`) beside `Model`. It changes
-## what the surfaces are drawn with and nothing else: no node is added, moved or renamed,
-## the skeleton, skin and bone names are the GLB's, and the animation driver on the wrapper
-## root never sees the difference. N and the classroom student have no applier.
+## Sits in the character wrapper (`protagonist.tscn`, `q.tscn`, `teacher_n.tscn`) beside
+## `Model`. It changes what the surfaces are drawn with and nothing else: no node is added,
+## moved or renamed, the skeleton, skin and bone names are the GLB's, and the animation
+## driver on the wrapper root never sees the difference. The classroom student has no
+## applier.
 ##
 ## Three treatments, so the treatment can be compared in the running game (the character art
 ## capture photographs all three; the game always uses `PAINTED`):

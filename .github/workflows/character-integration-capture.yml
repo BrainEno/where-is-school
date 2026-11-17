@@ -1,0 +1,195 @@
+name: Character integration capture
+
+# Evidence for the character integration work (docs/CHARACTER_INTEGRATION.md): the
+# protagonist, Q and substitute teacher N photographed in the real classroom, through the
+# game's own scenes, lights and camera, by `tests/capture_character_integration.gd`. Every
+# sheet has one column per look variant: `before` (main before this work), the second
+# schemes that were tried and not shipped (scenes/dev/character_lab/looks/), and `after`
+# (what the wrappers ship).
+#
+# Same publishing as `Character art capture`: each sheet is a JPEG, base64, split into
+# numbered 4000-character notices (concatenate the parts of one file in order and decode).
+# GitHub keeps 10 notices per step and 50 per job, so every job publishes over five steps
+# and each matrix entry is its own job. Full-size frames and the log are in the artifact.
+# Nothing is committed by Actions.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_character_integration.gd"
+      - ".github/workflows/character-integration-capture.yml"
+      - "assets/characters/**"
+      - "assets/shaders/characters/**"
+      - "assets/models/protagonist/**"
+      - "assets/models/q/**"
+      - "assets/models/teacher-n/**"
+      - "scenes/environment/characters/**"
+      - "scenes/dev/character_lab/**"
+      - "scripts/actors/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Character integration (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: protagonist
+            group: protagonist
+            variants: "before,after"
+            frames: ""
+          - name: q-body
+            group: q
+            variants: "before,q_paper,after"
+            frames: "body_sun,body_backlit"
+          - name: q-face
+            group: q
+            variants: "before,q_paper,after"
+            frames: "face,face_three_quarter"
+          - name: q-motion
+            group: q
+            variants: "before,after"
+            frames: "talk,walk"
+          - name: n-body
+            group: n
+            variants: "before,n_woodcut,after"
+            frames: "body_sun,body_shade"
+          - name: n-face
+            group: n
+            variants: "before,n_woodcut,after"
+            frames: "face,lectern"
+          - name: lineup
+            group: lineup
+            variants: "before,after"
+            frames: ""
+          - name: dialogue
+            group: dialogue
+            variants: "before,after"
+            frames: ""
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import project
+        shell: bash
+        run: |
+          set -uo pipefail
+          godot --headless --path . --import > import-1.log 2>&1 || true
+          godot --headless --editor --path . --quit > import-2.log 2>&1
+          code=$?
+          if [ "${code}" -ne 0 ] || grep -qE "SCRIPT ERROR|Parse Error" import-2.log; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=import failed (exit ${code})::${summary:-no summary}"
+            exit 1
+          fi
+
+      - name: Capture
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          mkdir -p docs/screenshots/character_integration
+          args="--group=${{ matrix.group }} --variants=${{ matrix.variants }}"
+          if [ -n "${{ matrix.frames }}" ]; then args="${args} --frames=${{ matrix.frames }}"; fi
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            --script res://tests/capture_character_integration.gd -- ${args} > capture.log 2>&1
+          code=$?
+          grep -E "^ARTNOTE: |^CHARACTER_INTEGRATION|SCRIPT ERROR|ERROR:|SHADER ERROR" capture.log | cut -c1-400 | tail -n 150 || true
+          grep -E "^ARTSHEET: " capture.log > sheets.txt || true
+          : > parts.txt
+          while read -r _ file data; do
+            n=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${n}"); do
+              echo "${file} ${i} ${n} ${data:$(( (i - 1) * 4000 )):4000}" >> parts.txt
+            done
+          done < sheets.txt
+          echo "sheet parts: $(wc -l < parts.txt)"
+          notes=$(grep -E "^ARTNOTE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' \
+            | grep -vE "^(published|sheet) " | tr '\n' '|')
+          echo "::notice title=character integration ${{ matrix.name }} notes 1::${notes:0:3900}"
+          [ "${#notes}" -gt 3900 ] && echo "::notice title=character integration ${{ matrix.name }} notes 2::${notes:3900:3900}"
+          shader_errors=$(grep -cE "SHADER ERROR" capture.log || true)
+          if [ "${shader_errors}" != "0" ]; then
+            first=$(grep -m 5 -A3 -E "SHADER ERROR" capture.log | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=character integration ${{ matrix.name }} shader errors (${shader_errors})::${first}"
+            exit 1
+          fi
+          if grep -qE "RESULT: FAILURE" capture.log; then
+            failures=$(grep -E "FAILURE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=character integration ${{ matrix.name }} failed (exit ${code})::${failures}"
+            exit 1
+          fi
+          if ! grep -qE "RESULT: SUCCESS" capture.log; then
+            tail_lines=$(grep -E "SCRIPT ERROR|ERROR:" capture.log | head -n 8 | tr '\n' '|' | cut -c1-1200)
+            echo "::error title=character integration ${{ matrix.name }} ended without a result (exit ${code})::${tail_lines:-no error lines}"
+            exit 1
+          fi
+
+      - name: Publish sheets (parts 1-10)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '1,10p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character integration crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 11-20)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '11,20p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character integration crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 21-30)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '21,30p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character integration crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 31-40)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '31,40p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character integration crop ${file} part ${i}/${n}::${data}"
+          done
+
+      - name: Publish sheets (parts 41-46)
+        if: always()
+        shell: bash
+        run: |
+          [ -s parts.txt ] || exit 0
+          sed -n '41,46p' parts.txt | while read -r file i n data; do
+            echo "::notice title=character integration crop ${file} part ${i}/${n}::${data}"
+          done
+          total=$(wc -l < parts.txt)
+          if [ "${total}" -gt 46 ]; then
+            echo "${total} parts queued, 46 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: character-integration-${{ matrix.name }}-${{ github.run_attempt }}
+          path: |
+            docs/screenshots/character_integration/
+            capture.log
+          if-no-files-found: warn

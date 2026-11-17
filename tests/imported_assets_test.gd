@@ -28,8 +28,12 @@ extends SceneTree
 ## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
-## The painted looks and motion profiles the protagonist's and Q's wrappers carry
-## (docs/CHARACTER_ART.md), by asset name. N and the classroom student have neither.
+## The painted looks and motion profiles the character wrappers carry (docs/CHARACTER_ART.md,
+## docs/CHARACTER_INTEGRATION.md), by asset name. N has a look and no motion profile: her
+## wrapper plays the four loops her author made (`authored_idle_layers`), and the empty
+## "motion" says the wrapper must not carry one. The classroom student has neither.
+## "two_sided" counts the surfaces painted with the two-sided shader: N's eyeballs (sclera,
+## iris and pupil, both eyes) face inward in teacher-n.glb and go blank one-sided.
 const CHARACTER_LOOKS := {
 	"protagonist": {
 		"look": "res://assets/characters/protagonist/protagonist_look.tres",
@@ -39,8 +43,14 @@ const CHARACTER_LOOKS := {
 		"look": "res://assets/characters/q/q_look.tres",
 		"motion": "res://assets/characters/q/q_motion.tres",
 	},
+	"teacher n": {
+		"look": "res://assets/characters/teacher_n/teacher_n_look.tres",
+		"motion": "",
+		"two_sided": 6,
+	},
 }
 const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
+const PAINT_TWO_SIDED_SHADER_PATH := "res://assets/shaders/characters/character_paint_two_sided.gdshader"
 const PIGMENT_SHADER_PATH := "res://assets/shaders/painterly/character_pigment.gdshader"
 
 const PIPELINE_DOC := "res://docs/ASSET_PIPELINE.md"
@@ -573,7 +583,7 @@ func _check_character_wrapper(
 		_check_character_look(label, wrapper, asset)
 
 
-## The protagonist's and Q's painted look: the wrapper carries its motion profile and a
+## A character's painted look: the wrapper carries its motion profile (or, for N, none) and a
 ## `Look` applier, and the applier repaints every surface of the GLB — none left in its
 ## smooth PBR material — with the painted shader, without touching what the model *is*:
 ## the same meshes, surfaces, vertex counts, skins and skeleton. The other two treatments
@@ -584,6 +594,12 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 	var animator := wrapper as CharacterVisualAnimation
 	if animator == null:
 		_failures.append("The wrapper for %s is not driven by CharacterVisualAnimation." % label)
+	elif String(paths["motion"]).is_empty():
+		if animator.motion_profile != null:
+			_failures.append(
+				"The wrapper for %s carries a motion profile (%s); it plays its authored loops."
+				% [label, animator.motion_profile.resource_path]
+			)
 	elif animator.motion_profile == null or animator.motion_profile.resource_path != String(paths["motion"]):
 		_failures.append("The wrapper for %s does not carry its motion profile %s." % [label, String(paths["motion"])])
 	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
@@ -608,16 +624,25 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 		)
 	var meshes := _meshes_under(model)
 	var outlined := 0
+	var two_sided := 0
 	for mesh_instance: MeshInstance3D in meshes:
 		for index in mesh_instance.mesh.get_surface_count():
 			var material := mesh_instance.get_surface_override_material(index) as ShaderMaterial
-			if material == null or material.shader == null or material.shader.resource_path != PAINT_SHADER_PATH:
+			var shader_path := material.shader.resource_path if material != null and material.shader != null else ""
+			if shader_path != PAINT_SHADER_PATH and shader_path != PAINT_TWO_SIDED_SHADER_PATH:
 				_failures.append(
 					"%s's %s surface %d is not painted with %s." % [label, mesh_instance.name, index, PAINT_SHADER_PATH]
 				)
 				continue
+			if shader_path == PAINT_TWO_SIDED_SHADER_PATH:
+				two_sided += 1
 			if material.next_pass != null:
 				outlined += 1
+	if two_sided != int(paths.get("two_sided", 0)):
+		_failures.append(
+			"%s has %d surfaces on the two-sided paint shader, expected %d (inward-facing eyeballs only)."
+			% [label, two_sided, int(paths.get("two_sided", 0))]
+		)
 	if outlined == 0 or outlined == expected_surfaces:
 		_failures.append(
 			"%s has %d of %d surfaces outlined; the ink line belongs on the outer forms only, not the eyes and mouth."
