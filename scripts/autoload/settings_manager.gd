@@ -1,7 +1,8 @@
 extends Node
 ## Autoload `Settings`: the player's text, sound, display and input preferences.
 ##
-## One file, `user://settings.cfg`, shared with `Loc` (which owns `[display] locale`).
+## One file, `user://settings.cfg` (`SettingsStore.PATH`), shared with `Loc` (which owns
+## `[display] locale`).
 ## Every write here loads the file first and only touches the keys this node owns, so a
 ## language choice is never lost to a volume change and the other way round.
 ##
@@ -29,10 +30,13 @@ signal setting_changed(key: StringName)
 signal bindings_changed
 signal input_device_changed(device: StringName)
 
-const SETTINGS_PATH := "user://settings.cfg"
+## The file, and the one place its path is written. `SettingsStore` is shared with `Loc`,
+## which owns `[display] locale`: two owners, one file, one path (issue #215). The constant
+## below is kept so the tests and this file's own diagnostics read like they always did.
+const SETTINGS_PATH := SettingsStore.PATH
 const SECTION_TEXT := "text"
 const SECTION_AUDIO := "audio"
-const SECTION_DISPLAY := "display"
+const SECTION_DISPLAY := SettingsStore.SECTION_DISPLAY
 const SECTION_INPUT := "input"
 const SECTION_META := "settings"
 const SECTION_CONTROLS := "controls"
@@ -955,12 +959,10 @@ func _store(section: String, key: String, value: Variant) -> void:
 
 ## The file as it is now, so a write never drops keys this node does not own.
 func _open() -> ConfigFile:
-	var config := ConfigFile.new()
-	config.load(SETTINGS_PATH)
-	return config
+	return SettingsStore.open()
 
 
 func _write(config: ConfigFile) -> void:
-	var error := config.save(SETTINGS_PATH)
+	var error := SettingsStore.write(config)
 	if error != OK:
 		push_error("Settings: could not write %s (error %d)." % [SETTINGS_PATH, error])

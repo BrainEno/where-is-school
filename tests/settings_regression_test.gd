@@ -13,6 +13,7 @@ extends SceneTree
 ##    values, an unreadable file and bindings that break the rules (Esc taken off the
 ##    menus, Esc given to an action, two actions on one input, a device left without a
 ##    binding) fall back to the defaults and are named by `get_load_problems()`.
+##    The file's path and the language keys are named once, in `SettingsStore` (#215).
 ## B. **Serialisation and the rebinding rules.** Keys, pad buttons and both directions of
 ##    every stick axis survive encode -> decode; everything else is refused; Esc never
 ##    becomes an ordinary binding and the Esc actions keep it; a conflict changes nothing;
@@ -176,6 +177,10 @@ func _check_persistence() -> void:
 	config.set_value("text", "future_option", "kept")
 	config.save(SETTINGS_PATH)
 
+	# Issue #215: the path is named once, in `SettingsStore`, and both owners read it from
+	# there. A copy in either autoload would be a file the other one never writes.
+	_check_settings_store()
+
 	_settings.call("set_text_size", &"large")
 	_settings.call("set_text_speed", &"fast")
 	_settings.call("set_ui_scale", &"125")
@@ -230,6 +235,43 @@ func _check_persistence() -> void:
 	_expect(
 		not config.has_section("input") and not config.has_section_key("display", "ui_scale"),
 		"A: reset_to_defaults() left [input] or [display] ui_scale behind."
+	)
+
+
+## The one place the file is named, and the one key each owner owns in it (issue #215).
+func _check_settings_store() -> void:
+	_expect(
+		SettingsStore.PATH == SETTINGS_PATH,
+		"#215: SettingsStore.PATH is '%s', not the '%s' the game writes." % [
+			SettingsStore.PATH, SETTINGS_PATH
+		]
+	)
+	_expect(
+		SettingsStore.SECTION_DISPLAY == "display" and SettingsStore.KEY_LOCALE == "locale",
+		"#215: SettingsStore names the language keys '%s' / '%s'." % [
+			SettingsStore.SECTION_DISPLAY, SettingsStore.KEY_LOCALE
+		]
+	)
+	_expect(
+		SettingsScript.SETTINGS_PATH == SettingsStore.PATH,
+		"#215: Settings keeps its own copy of the path: '%s'." % SettingsScript.SETTINGS_PATH
+	)
+	_expect(
+		SettingsScript.SECTION_DISPLAY == SettingsStore.SECTION_DISPLAY,
+		"#215: Settings names the display section separately."
+	)
+	_expect(SettingsStore.exists(), "#215: the preferences file is not where SettingsStore says.")
+	# The behaviour behind the rule: both owners have now written, and there is still
+	# exactly one preferences file. A second one is what two copies of the path produce.
+	var stray: Array[String] = []
+	var dir := DirAccess.open(SETTINGS_PATH.get_base_dir() + "/")
+	if dir != null:
+		for name: String in dir.get_files():
+			if name.ends_with(".cfg") and name != "settings.cfg":
+				stray.append(name)
+	_expect(
+		stray.is_empty(),
+		"#215: `Settings` and `Loc` left a second preferences file behind: %s" % str(stray)
 	)
 
 
