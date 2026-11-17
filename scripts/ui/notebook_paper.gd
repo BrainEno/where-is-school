@@ -14,8 +14,9 @@ extends Control
 ## body's own line pitch (`set_rules`), so the sentence sits on them as handwriting would.
 ##
 ## It never takes a click (the band itself does, see `DialoguePanel._make_band_clickable`).
-## The wedge reaches a little past the band's top-left corner and is kept in the corner the
-## text column never uses: left of the column's start and above the name row.
+## The set square lies over the band's top-left corner, its long leg down the sheet's left
+## edge and its short leg along the top, overhanging both edges. The portrait sits over its
+## top end; the rest stays in the strip the text column never uses, left of the red margin.
 
 const PAPER := Color(0.93, 0.9, 0.82, 1.0)
 ## The sheet's lower edge, a shade darker where the paper curls a little away from the light.
@@ -40,8 +41,8 @@ const SHADOW_OFFSET := Vector2(5.0, 7.0)
 @export var rule_pitch: float = 38.0
 ## The set square: the two legs of its right angle, and where that corner sits relative to
 ## the band's top-left corner (negative: past it, over the edge of the sheet).
-@export var wedge_legs: Vector2 = Vector2(128.0, 62.0)
-@export var wedge_corner: Vector2 = Vector2(-26.0, -24.0)
+@export var wedge_legs: Vector2 = Vector2(74.0, 150.0)
+@export var wedge_corner: Vector2 = Vector2(-34.0, -30.0)
 @export var tear_seed: int = 5
 
 
@@ -131,6 +132,10 @@ func _draw() -> void:
 func _draw_wedge() -> void:
 	var triangle := wedge_polygon()
 	draw_colored_polygon(triangle, WEDGE)
+	# A pale edge, so the ink still reads where it hangs over the dark scene.
+	var edge := PackedVector2Array(triangle)
+	edge.append(triangle[0])
+	draw_polyline(edge, WEDGE_TICK, 1.5, true)
 	var corner := wedge_corner
 	var legs := wedge_legs
 	# The hole: the same triangle, a third of the size, set in from the right angle.
@@ -143,10 +148,15 @@ func _draw_wedge() -> void:
 	])
 	draw_polyline(hole, WEDGE_HOLE, 2.0, true)
 	# Ruler ticks along the long leg, every 8 px, every fourth one longer.
+	var along_x := legs.x >= legs.y
+	var reach := maxf(legs.x, legs.y) * 0.78
 	var tick := 0
-	var x := 10.0
-	while x < legs.x * 0.78:
+	var at := 10.0
+	while at < reach:
 		var length := 7.0 if tick % 4 == 0 else 4.0
-		draw_line(corner + Vector2(x, 1.0), corner + Vector2(x, 1.0 + length), WEDGE_TICK, 1.0)
-		x += 8.0
+		if along_x:
+			draw_line(corner + Vector2(at, 2.0), corner + Vector2(at, 2.0 + length), WEDGE_TICK, 1.0)
+		else:
+			draw_line(corner + Vector2(2.0, at), corner + Vector2(2.0 + length, at), WEDGE_TICK, 1.0)
+		at += 8.0
 		tick += 1
