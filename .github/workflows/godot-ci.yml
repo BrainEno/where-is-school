@@ -181,6 +181,17 @@ jobs:
           python3 tools/check_workflow_action_pins.py
           python3 tests/workflow_action_pins_test.py
 
+      - name: Check no local action runs after the tree it lives in is replaced
+        shell: bash
+        run: |
+          # A composite action is read from the working tree at the moment the step runs, so a
+          # job that checks out an older commit and *then* installs the engine fails with
+          # "Can't find 'action.yml' ... .github/actions/setup-godot" - which is what the
+          # "before" legs of `location-art-capture.yml` did on PR #233. This check finds that
+          # shape statically, and its test proves it both ways with workflows it writes.
+          python3 tools/check_ci_step_paths.py
+          python3 tests/ci_step_paths_test.py
+
       - name: Check the committed screenshots are labelled
         shell: bash
         run: |
