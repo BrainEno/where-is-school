@@ -22,16 +22,26 @@ voices). That data cannot exist until a build exists.
 
 ## 2. The preset
 
-`export_presets.cfg` is committed. One preset, `Windows Desktop`, x86_64:
+> **Superseded in part.** This section was written when the build was one Windows preset.
+> `export_presets.cfg` now carries **two** presets, `Windows Desktop` and `Linux`, the export
+> carries an icon and a version resource (`tools/build_app_icon.py`,
+> `tools/stamp_release_version.py`), and `application/modify_resources` is `true`. The
+> release process as it is today is [docs/RELEASE.md](RELEASE.md); the rows below are kept
+> because they record why each setting was chosen, and the `modify_resources` row is the one
+> that describes a decision that was later reversed (the runner gets `rcedit` through the
+> action, so the icon and the version are stamped rather than skipped).
+
+`export_presets.cfg` is committed. Two presets — `Windows Desktop` and `Linux`, both
+x86_64 — with the same pack rules:
 
 | Setting | Value | Why |
 |---|---|---|
 | `binary_format/embed_pck` | `true` | One file to hand over. A loose `.pck` beside the executable is one more thing to lose, and the first question a playtester asks is "which file do I run". |
 | `binary_format/architecture` | `x86_64` | The baseline in `docs/TECHNICAL_ROADMAP.md` §1. A 32-bit build would run on nothing this game targets. |
-| `exclude_filter` | `tests/*, tools/*, docs/*, art/*, .github/*, packaging/*` | `docs/screenshots` alone is 9.4 MB of committed PNGs, and they are *imported textures*, so by default every one of them was going to be packed into the player's download. `art/` is source material (`.blend`, the full font) and is `.gdignore`d, but it is excluded by name too so a future `.gdignore` mistake cannot put a 10 MB font in a build. |
+| `exclude_filter` | `tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*` | `docs/screenshots` alone is 9.4 MB of committed PNGs, and they are *imported textures*, so by default every one of them was going to be packed into the player's download. `art/` is source material (`.blend`, the full font) and is `.gdignore`d, but it is excluded by name too so a future `.gdignore` mistake cannot put a 10 MB font in a build. |
 | `include_filter` | `""` | "All resources" already covers the dialogue JSON in `data/`. Verified rather than assumed — see §4. |
 | `script_export_mode` | `2` | Compressed binary tokens. Shipping readable GDScript in a narrative game is shipping the script of the twist in the same folder as the game. |
-| `application/modify_resources` | `false` | There is no `.ico` and no version metadata to stamp yet, and `rcedit` is not installed on the Linux runner. Turning it off means an export cannot fail on the runner because of a Windows-only tool. The cost is the default engine icon, which is listed in the run-me file. |
+| `application/modify_resources` | `true` | **Reversed since this note was written.** There is now an `.ico` (`assets/icon/app_icon.ico`, drawn by `tools/build_app_icon.py`) and version metadata (`tools/stamp_release_version.py` writes it from `packaging/version.txt`), so the Windows executable carries the project's icon and version. The row is kept to record the reason it used to be off: the icon had not been drawn yet and `rcedit` was not on the runner. |
 | `codesign/enable` | `false` | There is no certificate. This is a real limitation, not a setting: an unsigned executable gets a SmartScreen warning, and worse, some corporate machines quarantine it outright. That is recorded in `docs/PLAYTEST_CHECKLIST.md` §1 as something to report. |
 
 The preset used to be gitignored, on the theory that an export preset is a local file with
@@ -170,17 +180,17 @@ read-only-capture / publish-only-on-main arrangement.
 
 ## 6. Not in this round, and known limits
 
-- **No icon or version metadata** on the executable (default engine icon, no file
-  properties). Needs an `.ico` and `rcedit` on the runner, or `modify_resources` with a
-  Windows runner.
+- ~~**No icon or version metadata** on the executable.~~ **Done**: the icon is drawn by
+  `tools/build_app_icon.py` and the version resource is stamped by
+  `tools/stamp_release_version.py`; both are checked before an export.
 - **Unsigned.** SmartScreen warns; some managed machines quarantine. Only a certificate
   fixes this, and that is a purchasing decision, not a task.
-- **Windows only.** Linux and macOS presets, Steam and Steam Deck evaluation are Phase 7 in
-  `docs/TECHNICAL_ROADMAP.md` §5, and each needs its own packaging decisions (a macOS
-  `.app`/notarisation, a Linux tarball or AppImage).
-- **No save/load, no settings screen, no pause menu** — so a playtest is one sitting, and
-  the only persisted setting is the language. Both are Phase 7 items and both are listed in
-  the run-me file so a playtester does not report them as bugs.
+- ~~**Windows only.**~~ **Two platforms now**: `Windows Desktop` and `Linux` are exported and
+  packaged by `.github/workflows/release.yml` (see `docs/RELEASE.md`). macOS is still not
+  built: an `.app` needs notarisation, which needs a certificate.
+- ~~**No save/load, no settings screen, no pause menu.**~~ **All three exist now** (ADR 0005,
+  `scripts/autoload/settings_manager.gd`, `scripts/ui/pause_menu.gd`). This limit is kept
+  only as a record of what the first build did not have.
 - **The 10 MB source font stays in git.** It is the input to the subset, and a clone
   carrying it is the price of being able to rebuild the subset offline. Repo size is a
   separate decision from build size; if it ever matters, the source moves to a download

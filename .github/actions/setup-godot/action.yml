@@ -1,0 +1,67 @@
+name: Install the engine
+description: >-
+  Installs the project's one Godot version, read from `.godot-version` at the repository
+  root, and publishes it as an output so a step that has to name it does not repeat it.
+
+# Why this action exists (issue #217)
+#
+# The project pins one engine version, 4.7.2, and AGENTS.md forbids upgrading it quietly.
+# That version used to be a literal in fourteen workflows and twenty-three places: every
+# capture and evidence workflow installed the engine itself with `version: 4.7.2` inline.
+# Upgrading meant finding all of them, and missing one produced the worst kind of evidence -
+# screenshots and test verdicts taken on a different engine from the release, with no field
+# that says so.
+#
+# The version is now written once, in `.godot-version`, and this action is the only thing
+# that reads it. `tools/check_workflow_action_pins.py` refuses a `version:` literal in a
+# workflow's `setup-godot` step, so the copy cannot come back.
+
+inputs:
+  include-templates:
+    description: >-
+      Download the export template bundle too. Only `release.yml` needs it: the templates
+      are about 1.2 GB and are cached per runner generation by the action below.
+    required: false
+    default: "false"
+
+outputs:
+  version:
+    description: The engine version this step installed, as written in `.godot-version`.
+    value: ${{ steps.version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read the pinned engine version
+      id: version
+      shell: bash
+      run: |
+        set -euo pipefail
+        # `.godot-version` is one line, the same string every workflow installs. Read in
+        # shell rather than with a marketplace action: this has to work before anything is
+        # installed, and it has to fail loudly when the file is missing or empty.
+        file=".godot-version"
+        if [ ! -f "${file}" ]; then
+          echo "::error title=no engine version::${file} is missing; it is the only place the Godot version is written"
+          exit 1
+        fi
+        version="$(tr -d '[:space:]' < "${file}")"
+        if [ -z "${version}" ]; then
+          echo "::error title=no engine version::${file} is empty"
+          exit 1
+        fi
+        if ! printf '%s' "${version}" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?(-[0-9A-Za-z.-]+)?$'; then
+          echo "::error title=bad engine version::${file} holds '${version}', which is not a version"
+          exit 1
+        fi
+        echo "version=${version}" >> "${GITHUB_OUTPUT}"
+        echo "Godot ${version} (from ${file})"
+
+    - name: Install Godot
+      uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+      with:
+        # The value the step above read. No workflow writes this number any more.
+        version: ${{ steps.version.outputs.version }}
+        use-dotnet: false
+        include-templates: ${{ inputs.include-templates }}
+        cache: true

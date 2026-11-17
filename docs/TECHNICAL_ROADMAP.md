@@ -4,7 +4,7 @@
 
 | Area | Decision | Reason / boundary |
 |---|---|---|
-| Engine | Godot 4.7.2 Stable | Pin a known stable version. Do not follow 4.8 beta during prototype production. |
+| Engine | Godot 4.7.2 Stable | Pin a known stable version. Do not follow 4.8 beta during prototype production. The version is written once, in `.godot-version`, and CI installs it through `.github/actions/setup-godot` (issue #217). |
 | Build | Standard, non-.NET | The project uses GDScript; no Mono/.NET runtime is needed. |
 | Language | GDScript | Native editor workflow and fast iteration. |
 | Renderer | Forward+ for Windows PC baseline | The project is 3D and may need custom materials, lighting, and atmospheric effects. Profile on representative lower-end hardware before content scale-up. |
@@ -81,12 +81,21 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   `CharacterProfile` has optional `portrait` / `portrait_path` and composition fields,
   and the dialogue panel has a layout for them. No profile sets one, because no 2D
   portrait has been approved; the game shows names only until one is.
-- Versioned save/load, slot management, and schema migration.
+- ~~Versioned save/load~~ **Implemented**: ADR 0005, `scripts/autoload/save_manager.gd`
+  (verified write-and-swap, quarantine of an unreadable file, recovery of an interrupted
+  swap) and `scripts/save/save_codec.gd` (a versioned envelope the reader checks before it
+  looks at the payload). Still not built: **more than one slot**, and **migration of a
+  payload written by an older version** — the reader refuses a newer version rather than
+  guessing, and there is only one version so far. Those two remain planned.
 - Further accessibility settings (reduced camera motion, a high-contrast or opaque reading
   band, screen-reader output). Auto-advance, skip, the read log and sprint as a toggle
   exist (`docs/ARCHITECTURE.md` §5n).
-- A code-signed, icon-carrying installer, and Linux/macOS presets. The Windows
-  executable exists (Phase 5d) but is unsigned and carries the default engine icon.
+- ~~An icon-carrying build, and Linux presets.~~ **Done**: the Windows executable carries
+  the project icon and a version resource (`tools/build_app_icon.py`,
+  `tools/stamp_release_version.py`), and `export_presets.cfg` has a `Linux` preset that
+  `release.yml` exports and packages (`docs/RELEASE.md`). Still planned: **a code-signed
+  installer** (needs a certificate, a purchasing decision) and **a macOS preset** (needs
+  notarisation).
 - Populating the yard with people, events and further checks, now that the space
   and its interaction anchors exist.
 - Navigation features that click-to-move deliberately does **not** have yet: agent
@@ -466,8 +475,12 @@ versioned slot: see ADR 0005.)
   `docs/PLAYTEST_CHECKLIST.md` is the ordered hands-on pass the build exists for.
 - Evidence: the release workflow's export, verify and package steps, plus the annotations
   they publish (executable size, pack contents, zip size).
-  `docs/IMPLEMENTATION_NOTES_BUILD.md` records the decisions and the limits — no icon, no
-  signature, Windows only, no save/load or settings screen.
+  `docs/IMPLEMENTATION_NOTES_BUILD.md` records the decisions and the limits.
+- **What has changed since this phase was written** (a later round, so the paragraph above
+  is history rather than a description of the build): the export has an icon and a version
+  resource, it builds **two** platforms, and save/load, settings and the pause menu all
+  exist. `docs/RELEASE.md` is the current account; the limits that remain are the missing
+  signature and macOS.
 
 ### Phase 6a — Multi-voice foundation (delivered in this round)
 - The inner-voice plumbing now holds any number of voices instead of one, and the

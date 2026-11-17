@@ -22,11 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Install Godot
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      - uses: ./.github/actions/setup-godot
 
       - name: Static syntax check
         id: parse
@@ -140,6 +136,16 @@ jobs:
           # a blob a later commit deleted (which the history report must still find).
           python3 tests/repo_size_test.py
 
+      - name: Check the shared navigation rule is one function
+        shell: bash
+        run: |
+          # Issue #212: the "does this map hold geometry?" question was answered by three
+          # byte-identical copies (the player, the pointer, the companion) and the copies
+          # could drift. It is `NavMapUtil.has_geometry` now, and this check fails if a
+          # fourth copy appears or a wrapper stops being a delegation. The behaviour itself
+          # is checked against a real navigation server in `tests/navigation_test.gd`.
+          python3 tests/nav_map_util_test.py
+
       - name: Check the model library check itself
         shell: bash
         run: |
@@ -174,6 +180,17 @@ jobs:
           # directions: tags, branches and short SHAs fail; local actions and scripts don't.
           python3 tools/check_workflow_action_pins.py
           python3 tests/workflow_action_pins_test.py
+
+      - name: Check no local action runs after the tree it lives in is replaced
+        shell: bash
+        run: |
+          # A composite action is read from the working tree at the moment the step runs, so a
+          # job that checks out an older commit and *then* installs the engine fails with
+          # "Can't find 'action.yml' ... .github/actions/setup-godot" - which is what the
+          # "before" legs of `location-art-capture.yml` did on PR #233. This check finds that
+          # shape statically, and its test proves it both ways with workflows it writes.
+          python3 tools/check_ci_step_paths.py
+          python3 tests/ci_step_paths_test.py
 
       - name: Check the committed screenshots are labelled
         shell: bash
@@ -326,6 +343,8 @@ jobs:
           # touching `[display] locale`, damaged files and rule-breaking bindings fall back,
           # rebinding refuses what it must, a capture never traps or leaks input, the three
           # volume dials stay independent, and the screen is reachable by keyboard and pad.
+          # It also holds the file's path and language keys to the one place they are written
+          # (`SettingsStore`, #215), so `Settings` and `Loc` cannot start writing two files.
           run_check settings_regression 300 godot --headless --path . --script res://tests/settings_regression_test.gd || status=1
           # Auto, skip and the read log: what was read is remembered by identity, language
           # and text; skip stops at unread text and at choices; auto never picks an option.
@@ -563,11 +582,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Install Godot
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
-        with:
-          version: 4.7.2
-          use-dotnet: false
+      - uses: ./.github/actions/setup-godot
 
       - name: Import project resources
         shell: bash
