@@ -70,6 +70,10 @@ jobs:
             # Same camera/walk/conversation script; no production baseline file edits.
             cp tests/capture_q_migration.gd "$project/tests/"
             cp tests/capture_q_migration.gd.uid "$project/tests/"
+            # The click-marker attribution below runs one and the same test on both
+            # phases: the base's copy timed the mark's fade-in with physics frames and
+            # failed intermittently (#205). Only the test is replaced, no game file.
+            cp tests/destination_cue_lifecycle_test.gd "$project/tests/"
             sha="$BASE_SHA"
           fi
           echo "path=$project" >> "$GITHUB_OUTPUT"
@@ -177,7 +181,7 @@ jobs:
           set -uo pipefail
           export CI_LOG_DIR="$GITHUB_WORKSPACE/build/q-model-migration/$PHASE/regression"
           source "$PROJECT/tools/ci_run_check.sh"
-          echo "::notice title=Q regression attribution $PHASE::source $SOURCE_SHA; destination_cue_lifecycle_test.gd is unchanged"
+          echo "::notice title=Q regression attribution $PHASE::source $SOURCE_SHA; the same destination_cue_lifecycle_test.gd runs on both phases"
           run_check destination_cue_lifecycle 360 godot --headless --resolution 1600x900 \
             --path "$PROJECT" --script res://tests/destination_cue_lifecycle_test.gd || status=1
           run_check_summary
