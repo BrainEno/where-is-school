@@ -3,9 +3,8 @@ extends Control
 ## The dialogue band's ground: a sheet torn out of an exercise book, with the set square's
 ## corner lying over its top-left corner.
 ##
-## This is the dialogue strip of the biology-classroom experiment
-## (`scenes/dev/visual_experiments/biology_classroom/`, `room_art.gd` `dialogue_paper()` and
-## the ink wedge in `biology_classroom.gd`) brought to the production panel: warm white
+## This is the dialogue strip of the biology-classroom experiment (its torn paper and ink
+## wedge; see docs/BIOLOGY_CLASSROOM_EXPERIMENT.md) brought to the production panel: warm white
 ## paper with torn top and bottom edges, pale blue rules, a red margin line, and the set
 ## square as an ink-blue wedge with its pale hole drawn inside it.
 ##

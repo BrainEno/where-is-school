@@ -692,7 +692,7 @@ position = Vector3(0.7, 0.06, 0)
 [node name="Props" type="Node3D" parent="."]
 
 [node name="InkShadowSquare" type="MeshInstance3D" parent="Props"]
-transform = Transform3D(-0.7129, 0, -0.7013, -0.7013, 0, 0.7129, 0, 1, 0, -0.475, 0.009, -0.5)
+transform = Transform3D(-0.7129, -0.7013, 0, 0, 0, 1, -0.7013, 0.7129, 0, -0.475, 0.009, -0.5)
 mesh = SubResource("QuadMesh_ink_shadow_square")
 material_override = ExtResource("c_ink_shadow_square")
 cast_shadow = 0
