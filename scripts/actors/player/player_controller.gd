@@ -710,6 +710,20 @@ func _begin_get_up_from_seat() -> void:
 	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
 
 
+## Drops a stand-up that can no longer be finished where it started.
+##
+## Deliberately leaves the *pose* alone: this is not "the stand-up finished", it is "there
+## is no stand-up any more", and the next thing to set a pose (a wake beat, or the model's
+## own idle) owns it from here.
+func _abandon_get_up() -> void:
+	_getting_up = false
+	_get_up_animated = false
+	_get_up_elapsed = 0.0
+	_get_up_progress = 0.0
+	_get_up_travelling = false
+	_get_up_landing_pending = false
+
+
 func is_getting_up() -> bool:
 	return _getting_up
 
@@ -891,8 +905,11 @@ func teleport(target: Transform3D) -> void:
 	# dragged back towards the chair it was teleported away from, one frame later. Drop the
 	# travel instead of letting it interpolate from a place the body is no longer in.
 	cancel_path()
-	_get_up_travelling = false
-	_get_up_landing_pending = false
+	# A body that is teleported is a body that is no longer standing up out of that chair.
+	# Leaving the stand-up half-run would keep `_update_get_up_pose` owning the pivot and the
+	# `get_up` clip playing over a body that has been moved to another part of the room - which
+	# is what the capture fixtures do when they place a character for a frame.
+	_abandon_get_up()
 	global_position = target.origin
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):
