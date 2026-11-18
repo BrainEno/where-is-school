@@ -1,41 +1,29 @@
 extends SceneTree
-## The walkway that does not end (docs/CORRIDOR_ART.md), checked on the real corridor
-## scene. `location_art_test.gd` already holds every location to the stage rules (no
-## colliders in stage art, materials under `stage_art/materials/`, the camera's sight lines,
-## counts, exits and routes); this test holds the corridor to its own idea:
-##
-## 1. **The haze.** Depth fog whose colour is the clear colour, so nothing has an edge
-##    where it gives out; clear around the player (begins past the camera's own distance
-##    from the player), and gone to haze well inside the camera's far plane. Height fog
-##    lies below the walkway, never on it.
-## 2. **The walkway goes on.** `StageArt/Beyond` carries the floor, the wall, the
-##    parapet and the upper storey on past the yard door, lying wholly north of the end
-##    railing (no standing spot or sight line reaches it), at least 60 m of it, and the
-##    continuation's wall tile repeats a whole number of times along it.
-## 3. **The door is the only way on.** The end wall's picture is gone but its collider
-##    stays, full height; the railing either side leaves the yard door's opening clear;
-##    the door leaf is still there to be seen; the far block that closed the view across
-##    the yard is hidden.
-##
-## Godot CI runs it headless (`corridor_art`).
+## The school block is a playable loop, not scenery past a locked end. Run on the
+## shipped main scene: the production capsule, input, pointer, camera and transitions.
+## CI entry: corridor_art. The separate location_art suite checks the exterior art.
 
 const Harness = preload("res://tests/test_harness.gd")
-
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
-## The end railing's line (WallEndNorth at z -9.1, 0.2 m thick): the continuation starts here.
-const BEYOND_START_Z := -9.2
-const MIN_BEYOND := 60.0
-## The camera rig's offset (scripts/world/camera_rig.gd): its length is how far the camera
-## stands from the player, inside which the fog must not begin.
-const CAMERA_OFFSET := Vector3(3.4, 6.4, 3.4)
-## main.tscn's Camera3D.far.
-const CAMERA_FAR := 120.0
-## The yard door's opening, between its frame posts.
-const DOOR_HALF_WIDTH := 0.65
-const WALL_FAR_TILE := 8.0
-const EPS := 0.02
+const SCHOOL := ^"TeachingBlock"
+const UPPER := ^"TeachingBlock/UpperFloor"
+const LANDING := Vector3(2.2, 1.8, -35.75)
+const FIRST_BEND := Vector3(0, 0, -27.75)
+const SECOND_BEND := Vector3(-12, 3.6, -42.75)
+const UPPER_EAST := Vector3(11.2, 3.6, -42.75)
+const HALL_BY_WEST_STAIR := Vector3(0, 0, -8.45)
+const ROOM_WINDOW_Y := 2.15
+const FLOOR_RISE := 3.6
+const PLAYER_GLASS_LAYER := 4
 
 var _check := Harness.Checker.new()
+var _host: LocationHost
+var _player: PlayerController
+var _camera: Camera3D
+var _interaction: InteractionController
+var _pointer: PointerNavigator
+var _dialogue: DialogueController
+var _last_inspection: StringName = &""
 
 
 func _initialize() -> void:
@@ -45,107 +33,271 @@ func _initialize() -> void:
 
 func _run() -> void:
 	Harness.ensure_state_autoloads(self)
-	L10n.load_tables()
-	var packed := load(CORRIDOR) as PackedScene
-	if packed == null:
-		Harness.finish(self, ["corridor.tscn could not be loaded."], "")
+	Harness.clear_session_state(self)
+	var main := (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
+	var director := main.get_node(^"OpeningSequence") as OpeningSequence
+	director.autostart = false
+	root.add_child(main)
+	main.get_node(^"InnerVoiceDirector").set_process(false)
+	_host = main.get_node(^"LocationHost") as LocationHost
+	_player = main.get_node(^"Player") as PlayerController
+	_camera = main.get_node(^"CameraRig/Camera3D") as Camera3D
+	_dialogue = main.get_node(^"DialogueController") as DialogueController
+	_interaction = _player.get_node(^"InteractionController") as InteractionController
+	_pointer = _player.get_node(^"PointerNavigator") as PointerNavigator
+	_interaction.mouse_targeting = false # E uses facing; the pointer case uses the actual click path below.
+	_dialogue.inspection_presented.connect(func(id: StringName) -> void: _last_inspection = id)
+	var flags := root.get_node(^"GameState")
+	for flag in [StoryFlags.PLAYGROUND_ARRIVED, StoryFlags.STREET_ARRIVED]:
+		flags.set_flag(flag, true) # Arrival dialogue and Q are covered by companion_route.
+
+	var initial_nav := _host.get_current().get_node(^"Navigation") as LocationNavigation
+	if not await Harness.wait_until(initial_nav.is_routable, 5.0):
+		_check.fail("Initial classroom did not finish entering the navigation map.")
+		_finish()
 		return
-	var location := packed.instantiate() as Node3D
-	root.add_child(location)
-	await process_frame
 
-	Harness.stage = "haze"
-	_check_haze(location)
-	Harness.stage = "beyond"
-	_check_beyond(location)
-	Harness.stage = "end"
-	_check_end(location)
-
-	Harness.finish(self, _check.failures, "the corridor goes on into the haze, and the yard door is the only way on.")
-
-
-func _check_haze(location: Node) -> void:
-	var world := location.find_child("WorldEnvironment", true, false) as WorldEnvironment
-	if not _check.expect(world != null and world.environment != null, "The corridor has no WorldEnvironment."):
+	if not _check.expect(_host.load_location(CORRIDOR, &"FromClassroom", _player, &"corridor"), "Corridor failed to load."):
+		_finish()
 		return
-	var env := world.environment
-	_check.expect(env.fog_enabled, "The corridor's fog is off.")
-	_check.expect(env.fog_mode == Environment.FOG_MODE_DEPTH, "The corridor's fog is not depth fog.")
-	_check.expect(
-		_close(env.fog_light_color, env.background_color),
-		"The fog colour %s is not the clear colour %s: the haze would have an edge." % [env.fog_light_color, env.background_color]
-	)
-	_check.expect(
-		env.fog_depth_begin > CAMERA_OFFSET.length(),
-		"The fog begins at %.1f m, inside the camera's %.1f m from the player." % [env.fog_depth_begin, CAMERA_OFFSET.length()]
-	)
-	_check.expect(
-		env.fog_depth_end > env.fog_depth_begin and env.fog_depth_end < CAMERA_FAR * 0.5,
-		"The fog ends at %.1f m: it has to end past its begin and well inside the far plane." % env.fog_depth_end
-	)
-	_check.expect(env.fog_density >= 0.99, "The depth fog does not reach full haze (density %.2f)." % env.fog_density)
-	_check.expect(
-		env.fog_height_density > 0.0 and env.fog_height < 0.0,
-		"The height fog has to lie below the walkway (height %.2f, density %.2f)." % [env.fog_height, env.fog_height_density]
-	)
-
-
-func _check_beyond(location: Node) -> void:
-	var beyond := location.get_node_or_null("StageArt/Beyond") as Node3D
-	if not _check.expect(beyond != null, "The corridor has no StageArt/Beyond: the walkway stops at the yard door."):
+	director.allow_player_control()
+	var corridor := _host.get_current()
+	var nav := corridor.get_node(^"Navigation") as LocationNavigation
+	if not await Harness.wait_until(func() -> bool: return nav.is_routable() and _player.is_on_floor(), 5.0):
+		_check.fail("The new building never became routable: %s" % nav.get_bake_error())
+		_finish()
 		return
-	for piece: String in ["Floor", "Wall", "WallPaint", "Parapet", "Rail", "Upper", "Upper/Windows"]:
-		_check.expect(beyond.get_node_or_null(piece) is MeshInstance3D, "StageArt/Beyond has no %s." % piece)
-	var reach := 0.0
-	for mesh: MeshInstance3D in _meshes(beyond):
-		var box := mesh.global_transform * mesh.get_aabb()
-		_check.expect(
-			box.end.z <= BEYOND_START_Z + EPS,
-			"Beyond/%s reaches z %.2f, south of the end railing (%.1f)." % [beyond.get_path_to(mesh), box.end.z, BEYOND_START_Z]
-		)
-		reach = maxf(reach, BEYOND_START_Z - box.position.z)
-	_check.expect(reach >= MIN_BEYOND, "The walkway goes on only %.1f m past the yard door." % reach)
-	var paint := beyond.get_node_or_null("WallPaint") as MeshInstance3D
-	if paint != null and paint.material_override is BaseMaterial3D and paint.mesh is QuadMesh:
-		var length: float = (paint.mesh as QuadMesh).size.x
-		var tiles: float = (paint.material_override as BaseMaterial3D).uv1_scale.x
-		_check.expect(
-			is_equal_approx(tiles * WALL_FAR_TILE, length) and is_equal_approx(tiles, roundf(tiles)),
-			"The continuation's wall repeats %.2f times along %.1f m: it should be whole %.0f m tiles." % [tiles, length, WALL_FAR_TILE]
-		)
+
+	Harness.stage = "structure, glass and paths"
+	_check_structure(corridor, nav)
+	_check_yard_view(corridor)
+	await physics_frame
+	_check_glass_collision(corridor)
+
+	Harness.stage = "front-room jump with the existing interact input"
+	var peek := corridor.find_interactable(&"classroom_glass")
+	if await _walk(Vector3(-1.27, 0, -3.35), "biology high window"):
+		await _check_peek(peek, false)
+
+	Harness.stage = "walking the whole building"
+	if await _walk(HALL_BY_WEST_STAIR, "west stair foot") and await _climb_with_keys():
+		var next := Vector3(-11.2, 3.6, -14.4)
+		# A ground click must not stop at the nearer transparent pane, and it must
+		# choose the upper floor the player pointed at, not look through it to the yard.
+		_player.camera_rig.snap()
+		var screen := _camera.unproject_position(next)
+		var view_ray := PhysicsRayQueryParameters3D.create(_camera.project_ray_origin(screen), next, PLAYER_GLASS_LAYER)
+		var barrier := _player.get_world_3d().direct_space_state.intersect_ray(view_ray)
+		_check.expect(not barrier.is_empty() and (barrier["collider"] as Node).name == &"GlassSafety",
+			"The 02 floor click didn't actually aim through the safety glass.")
+		var hit: Variant = _pointer.get_ground_point_at(screen)
+		var nav_point := NavigationServer3D.map_get_closest_point(nav.get_navigation_map(), next)
+		if _check.expect(hit is Vector3 and (hit as Vector3).distance_to(nav_point) < 0.12,
+			"A floor click on 02 was lost behind glazing (hit %s, wanted %s)." % [hit, nav_point]):
+			_pointer.click_at_screen_position(screen)
+			await _arrive(next, "02 clicked floor")
+		var upper_peek := corridor.find_interactable(&"high_window_upperwest1")
+		if await _walk(Vector3(-13.25, 3.6, -12.2), "02 high window"):
+			await _check_peek(upper_peek, true)
+		await _walk(SECOND_BEND, "upper bend")
+		await _walk(UPPER_EAST, "upper east wing")
+		await _walk(LANDING, "dogleg half landing")
+		await _walk(FIRST_BEND, "ground floor via far stair")
+
+	Harness.stage = "yard fire stair and two-way exit"
+	var approach := corridor.get_spawn(&"FromSchoolyard")
+	if await _walk(approach.global_position, "fire stair bottom"):
+		if await _use_exit(&"to_schoolyard", &"playground", &"FromCorridor"):
+			await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
+	if _host.get_current().location_id == &"corridor":
+		await _walk(FIRST_BEND, "climb back from the yard")
+		# Both lower spawns are still on the original coordinate system for old saves.
+		await _walk(Vector3(-1.1, 0, 2), "return to biology door")
+		Harness.stage = "classroom and street returns"
+		if await _use_exit(&"back_to_classroom", &"classroom", &"FromCorridor"):
+			flags.set_flag(StoryFlags.CLASS_DISMISSED, true)
+			await _use_exit(&"classroom_door", &"corridor", &"FromClassroom")
+		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "school gate"):
+			if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
+				# The street spawn is across the pavement, not in reach of the gate.
+				if await _walk(Vector3(-8.15, 0, 15.2), "street side of the gate"):
+					await _use_exit(&"street_back_to_school", &"corridor", &"FromStreet")
+	_finish()
 
 
-func _check_end(location: Node) -> void:
-	var end_mesh := location.get_node_or_null("WallEndNorth/MeshInstance3D") as MeshInstance3D
-	_check.expect(end_mesh != null and not end_mesh.visible, "The end wall is still drawn across the walkway.")
-	var shape := location.get_node_or_null("WallEndNorth/CollisionShape3D") as CollisionShape3D
-	_check.expect(
-		shape != null and shape.shape is BoxShape3D and (shape.shape as BoxShape3D).size.y >= 3.0,
-		"The end wall's collider is gone or no longer full height."
-	)
-	var leaf := location.get_node_or_null("YardDoorLeaf") as MeshInstance3D
-	_check.expect(leaf != null and leaf.visible, "The yard door's leaf is gone.")
-	var far := location.get_node_or_null("FarBuilding") as MeshInstance3D
-	_check.expect(far == null or not far.visible, "The far block still closes the view across the yard.")
-	var railing := 0
-	for child: Node in location.get_node("WallEndNorth").get_children():
-		if not (child is MeshInstance3D) or not String(child.name).begins_with("StageEnd"):
-			continue
-		railing += 1
-		var box := (child as MeshInstance3D).global_transform * (child as MeshInstance3D).get_aabb()
-		_check.expect(
-			box.end.x <= -DOOR_HALF_WIDTH + EPS or box.position.x >= DOOR_HALF_WIDTH - EPS,
-			"WallEndNorth/%s (x %.2f..%.2f) blocks the yard door's opening." % [child.name, box.position.x, box.end.x]
-		)
-	_check.expect(railing >= 2, "The yard door stands in no railing (%d pieces)." % railing)
+func _finish() -> void:
+	Harness.finish(self, _check.failures, "the teaching block has ten bays, glazed courtside galleries, walkable stairs and two-way exits; both input paths hop to see through the high glass.")
 
 
-func _meshes(node: Node) -> Array[MeshInstance3D]:
-	var out: Array[MeshInstance3D] = []
-	for child: Node in node.find_children("*", "MeshInstance3D", true, false):
-		out.append(child as MeshInstance3D)
-	return out
+func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
+	_check.expect(corridor.get_node_or_null(^"StageArt/Beyond") == null, "The old inaccessible extension was left in.")
+	var env := (corridor.get_node(^"WorldEnvironment") as WorldEnvironment).environment
+	_check.expect(env.fog_enabled and env.fog_mode == Environment.FOG_MODE_DEPTH, "The hall lost its depth haze.")
+	_check.expect(env.fog_light_color.is_equal_approx(env.background_color), "Distance haze no longer meets the background colour.")
+	_check.expect(env.fog_depth_begin > _player.camera_rig.offset.length() and env.fog_depth_end < _camera.far * 0.5,
+		"Fog is in front of the player or too close to the far plane.")
+	_check.expect(env.tonemap_exposure < 0.68 and env.fog_height < -3.4,
+		"The hall is not darker than #243, or the height haze has risen above the lowest landing.")
+	var map := nav.get_navigation_map()
+	for floor in [corridor.get_node(SCHOOL).get_node(^"LowerFloor"), corridor.get_node(UPPER)]:
+		var count := 0
+		for bay in floor.get_children():
+			if not bay.is_in_group(&"teaching_bay"):
+				continue
+			count += 1
+			_check_bay(bay as StaticBody3D, map)
+		_check.expect(count >= 5, "%s has only %d classroom bays." % [floor.name, count])
+	var start := corridor.get_spawn(&"FromClassroom").global_position
+	var end := corridor.get_spawn(&"FromSchoolyard").global_position
+	var path := NavigationServer3D.map_get_path(map, start, end, true)
+	var length := 0.0
+	for i in range(1, path.size()):
+		length += path[i-1].distance_to(path[i])
+	print("corridor art: biology to fire door %.1f m on the baked map" % length)
+	_check.expect(not path.is_empty() and path[-1].distance_to(end) < 0.5 and length > 42.0,
+		"The original room to fire door no longer follows a long connected route (%.1f m)." % length)
 
 
-func _close(a: Color, b: Color) -> bool:
-	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
+func _check_bay(bay: StaticBody3D, map: RID) -> void:
+	var front := bay.get_node_or_null(^"FrontDoor") as Node3D
+	var rear := bay.get_node_or_null(^"RearDoor") as Node3D
+	var slit := bay.get_node_or_null(^"HighGlass") as MeshInstance3D
+	if not _check.expect(front != null and rear != null and slit != null, "%s lost a door or high window." % bay.name):
+		return
+	for door in [front, rear]:
+		var glass := bay.get_node_or_null(NodePath(String(door.name) + "Transom")) as MeshInstance3D
+		_check.expect(glass != null and is_equal_approx(glass.position.x, door.position.x) and glass.position.y > 2.4,
+			"%s/%s has no small glass above the door." % [bay.name, door.name])
+	var quad := slit.mesh as QuadMesh
+	_check.expect(quad != null and quad.size.x > quad.size.y * 5.0 and is_equal_approx(slit.position.y, ROOM_WINDOW_Y),
+		"%s's high window is not a narrow slit above standing eye height." % bay.name)
+	_check.expect(front.position.x < slit.position.x and slit.position.x < rear.position.x,
+		"%s's high window is not between the two doors." % bay.name)
+	var spot := bay.to_global(Vector3(slit.position.x, 0, 1.18))
+	var closest := NavigationServer3D.map_get_closest_point(map, spot)
+	var path := NavigationServer3D.map_get_path(map, _player.global_position, spot, true)
+	_check.expect(closest.distance_to(spot) < 0.55 and not path.is_empty() and path[-1].distance_to(spot) < 0.55,
+		"%s has no connected floor in front of its window." % bay.name)
+
+
+func _check_yard_view(corridor: LocationRoot) -> void:
+	var bay := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
+	var pane := bay.get_node(^"ClearGlass") as MeshInstance3D
+	var mat := pane.material_override as BaseMaterial3D
+	_check.expect(mat != null and mat.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA and mat.albedo_color.a < 0.25,
+		"The gallery no longer uses see-through glass.")
+	_check.expect(bay.is_in_group(&"camera_occluder") and bay.get_node_or_null(^"GlassSafety/Pane") is CollisionShape3D,
+		"Glazing lost its safety collision or its cutaway fade.")
+	var view := corridor.get_node(^"StageArt/Yard")
+	var yard := (load("res://scenes/locations/playground/playground.tscn") as PackedScene).instantiate()
+	for path in [^"CourtSurface", ^"HoopNearBoard", ^"ShedRoof", ^"PlaygroundArt/Court/LineCentre", ^"PlaygroundArt/Equipment/HoopFarRing"]:
+		var outside := yard.get_node(path) as MeshInstance3D
+		var inside_path := NodePath(String(path).trim_prefix("PlaygroundArt/"))
+		var seen := view.get_node_or_null(inside_path) as MeshInstance3D
+		_check.expect(seen != null and seen.position.is_equal_approx(outside.position)
+			and seen.get_aabb().is_equal_approx(outside.get_aabb()) and seen.material_override == outside.material_override,
+			"%s from the hall does not match the real yard." % path)
+	var fire_door := yard.get_node(^"FireDoor") as MeshInstance3D
+	var portal := corridor.get_node(^"TeachingBlock/YardPortal") as Node3D
+	_check.expect((view as Node3D).to_global(fire_door.position).distance_to(portal.global_position + Vector3.UP * 1.3) < 0.02,
+		"The fire stairs are not aligned with the fire door from the yard.")
+	yard.free()
+	_check.expect(corridor.get_node(^"StageArt").find_children("*", "CollisionObject3D", true, false).is_empty(),
+		"The yard view contains live yard physics or hotspots.")
+
+
+func _check_glass_collision(corridor: LocationRoot) -> void:
+	var glass := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_3/GlassSafety") as StaticBody3D
+	var from := _player.global_transform
+	# Sweep the actual player capsule above the opaque rail, where only glass can stop it.
+	from.origin = glass.to_global(Vector3(-0.5, 1.05, 1.0))
+	var hit := KinematicCollision3D.new()
+	var blocked := _player.test_move(from, -glass.global_basis.z * 2.0, hit)
+	_check.expect(blocked and hit.get_collider() == glass,
+		"The player capsule can pass through a glazed bay above the rail.")
+
+
+func _walk(destination: Vector3, label: String) -> bool:
+	if not _check.expect(_player.request_path_to(destination), "%s: path request refused from %s." % [label, _player.global_position]):
+		return false
+	return await _arrive(destination, label)
+
+
+func _arrive(destination: Vector3, label: String) -> bool:
+	var arrived := await Harness.wait_until(func() -> bool:
+		return not _player.is_path_active() and _player.is_on_floor(), 28.0)
+	_player.cancel_path()
+	print("corridor art: %s -> %s" % [label, _player.global_position])
+	return _check.expect(arrived and _player.global_position.distance_to(destination) < 0.8,
+		"%s: stayed at %s instead of walking to %s." % [label, _player.global_position, destination])
+
+
+func _climb_with_keys() -> bool:
+	# In the default 45-degree framing, these two inputs add up to due west.
+	Input.action_press(&"move_forward")
+	Input.action_press(&"move_left")
+	var reached := await Harness.wait_until(func() -> bool: return _player.global_position.x < -10.8, 7.0)
+	Input.action_release(&"move_forward")
+	Input.action_release(&"move_left")
+	return _check.expect(reached and absf(_player.global_position.y - 3.6) < 0.15,
+		"W+A did not take the player onto 02: %s" % _player.global_position)
+
+
+func _check_peek(peek: Interactable, by_mouse: bool) -> void:
+	if not _check.expect(peek is StagedInteractable and peek.has_method(&"can_peek_at"), "A high window is not staged."):
+		return
+	var feet := _player.global_position
+	_check.expect(not peek.call(&"can_peek_at", feet), "%s can be read standing on the hall floor." % peek.interact_id)
+	for other_floor in [-FLOOR_RISE, FLOOR_RISE]:
+		_check.expect(not peek.call(&"can_peek_at", feet + Vector3.UP * (other_floor + 0.55)),
+			"%s admits an eye at hop height on the wrong storey." % peek.interact_id)
+	_last_inspection = &""
+	_player.face_toward(peek.global_position - feet)
+	if by_mouse:
+		var pane := peek.get_outline_meshes()[0]
+		_pointer.click_at_screen_position(_camera.unproject_position(pane.global_position))
+		_check.expect(_pointer.was_last_click_accepted(), "Clicking the high glass was refused: %s" % _pointer.get_last_rejection())
+	else:
+		if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == peek, 3.0):
+			_check.fail("Facing the high window gave no prompt (got %s)." % _interaction.get_current_target())
+			return
+		_press_interact()
+	var apex := feet.y
+	var eyes_at_slit := false
+	var deadline := Time.get_ticks_msec() + 2800
+	while _last_inspection == &"" and Time.get_ticks_msec() < deadline:
+		await physics_frame
+		apex = maxf(apex, _player.global_position.y)
+		eyes_at_slit = eyes_at_slit or bool(peek.call(&"can_peek_at", _player.global_position))
+	_check.expect(apex > feet.y + 0.40 and eyes_at_slit and _player.is_on_floor()
+		and _last_inspection == peek.inspection_id, "%s did not hop and present the inspection on landing (rise %.2f, inspection %s)." %
+		[peek.interact_id, apex - feet.y, _last_inspection])
+	var end := Time.get_ticks_msec() + 3000
+	while _dialogue.is_busy() and Time.get_ticks_msec() < end:
+		_dialogue.advance_presentation()
+		await process_frame
+
+
+func _use_exit(id: StringName, destination: StringName, spawn: StringName) -> bool:
+	var exit := _host.get_current().find_interactable(id) as LocationExit
+	if not _check.expect(exit != null and exit.destination_id == destination and exit.destination_spawn == spawn,
+		"%s no longer leads to %s/%s." % [id, destination, spawn]):
+		return false
+	_player.face_toward(exit.global_position - _player.global_position)
+	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == exit, 3.0):
+		_check.fail("No %s prompt from %s (target %s)." % [id, _player.global_position, _interaction.get_current_target()])
+		return false
+	_press_interact()
+	var arrived := await Harness.wait_until(func() -> bool:
+		return _host.get_current().location_id == destination and _player.is_control_enabled() and _player.is_on_floor(), 10.0)
+	return _check.expect(arrived and _host.get_current_spawn() == spawn, "%s did not complete the transition." % id)
+
+
+func _press_interact() -> void:
+	var press := InputEventAction.new()
+	press.action = &"interact"
+	press.pressed = true
+	Input.parse_input_event(press)
+	var release := InputEventAction.new()
+	release.action = &"interact"
+	Input.parse_input_event(release)

@@ -1,56 +1,28 @@
-# The walkway that does not end: the corridor's art pass
+# The teaching block
 
-- **Status:** In review. Changes the shipping corridor (`scenes/locations/corridor/corridor.tscn`) through its generator; no collider, exit, spawn, interactable or library prop is added, moved or removed.
-- **Brief (owner):** the corridor has to feel *empty* and *endless*; done in the spirit of the art-style experiments ([VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md), [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md)), with the prologue classroom ([PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md)) as the room it leads out of.
-- **Generators:** `scenes/environment/props/stage_art/source/paint_stage_textures.py` (textures) and `build_stage_art.py corridor` (materials, environment, sun, stage nodes). Re-running both is idempotent; never hand-edit the stage nodes in the scene.
-- **Checks:** `tests/corridor_art_test.gd` (Godot CI step `corridor_art`) for this idea; `tests/location_art_test.gd` (the `location-art-capture` workflow) for the shared stage rules; `tests/corridor_props_test.gd` for the three library props.
-- **Evidence:** the `location-art-capture` workflow renders the corridor before and after at 1600×900 with the game's camera.
+The 16 m walkway and the inaccessible 96 m continuation from #243 are replaced by a two-floor building. The space is still called `corridor` in the location catalog, save files and story. The route gets strange because it is possible to walk around it, see the same room numbers twice, and come back at a different height, not because a painted façade gets longer.
 
-## 1. The idea
+## Walkable section
 
-The experiment's own corridor zone ended on a warning: *endless as pure decoration is a cliché; it needs an exit or a meaning.* So the endlessness here is not a painted backdrop but a real one, and it has a meaning: **the walkway goes on, and you cannot.** The end wall is gone; past the yard door the same walkway — floor, wall, classrooms, windows, parapet — carries on, at the same even pace, until the haze has made it the colour of the sky. The only way on is the door, which now stands in a railing in the middle of the walkway, closed, with the walkway visibly continuing around it.
-
-Emptiness comes from taking away: the far block across the yard is gone, the cut-out skyline of flats and a pylon is gone, the busy terrazzo and its brass strips are gone. What is left is a pale floor, a pale wall, a long low sun and the haze.
-
-## 2. What changed
-
-| Part | Before (stage pass) | Now |
-|---|---|---|
-| Light | purple dusk clear colour (0.25, 0.29, 0.39), sun (−24°, 62°) × 0.6, no fog | haze clear colour (0.88, 0.84, 0.81); a low afternoon sun from the stairs' end (−17°, 16°) × 0.55, so every shadow points down the walkway towards the door; ambient (0.60, 0.58, 0.72) × 0.85, exposure 0.68 (toon diffuse lights a lit face fully, and the albedos are pale: the first CI frames at sun × 1.25 blew the walkway out to white) |
-| Fog | none | **depth fog** (`fog_mode` 1), colour = clear colour, begins 11 m from the camera (the camera stands 8 m from the player, so the player is never fogged), full by 38 m, curve 1.2; **height fog** below y −0.6 (density 0.32) washes the yard out |
-| End wall | a 3.1 m wall with the yard door in it, its dado band | the wall's mesh hidden (`visible = false`); its collider is kept, full height. A railing — the parapet turned across the walkway — either side of the door; the door's frame, transom and closed leaf stand free |
-| Past the door | nothing (the wall) | `StageArt/Beyond`: 96 m more walkway — slab, ruled floor, wall with its painted rhythm, coping, the leaning upper storey with its windows, parapet and rail — all in phase with the walked 16 m |
-| Wall | cream plaster, pilasters closing up and the wainscot sinking towards the yard door (a forced perspective) | lilac-white plaster, a pilaster every 4 m, the classroom's deep wainscot (60, 64, 104) level at the classroom's 1.05 m line; even pacing, because an even pace is what does not end |
-| Floor | red-brown terrazzo, converging brass strips | pale cast floor ruled like an answer sheet (worn blue rules, the red margin 0.7 m out from the wall): the classroom's floor carried outside; saw cuts under every pilaster |
-| Upper storey | windows shrinking towards the door | one window every 2 m, all alike (an alpha-cut tile), continuing past the door |
-| Yard | court fragment, hoop | the same, warmer ground; under the height fog |
-| Distance | sky laid flat, flats and a pylon | the haze laid flat (`distance_corridor.png`, 320 m), a breath warmer near the building; no skyline |
-| Far building | dark block at x 15 | hidden |
-
-### The pacing
-
-Everything repeats at one pace, set by the walked wall: pilasters at s = 4k − 0.2 m from the stairs' end (clear of the glass, the classroom door, the extinguisher and the noticeboard), the floor's saw cuts under them. The continuation begins at z −9.2 (s = 16.2) and its 8 m wall tile (two bays, one classroom: door with a lit pane and a blank number plate, lit glass) starts in the same phase; the floor tile (4 m) and the window tile (2 m, offset by the 0.2 tile the walked storey ends on) likewise. The continuation is therefore the same building going on rather than a picture of one.
-
-### The palette
-
-| Role | sRGB |
+| Part | Layout |
 |---|---|
-| Haze (clear colour, fog, distance) | (224, 214, 207) |
-| Plaster / light / shade | (214, 210, 222) / (226, 222, 232) / (194, 190, 206) |
-| Pilaster | (184, 180, 200) |
-| Wainscot, rail, trims (ink outline) | (60, 64, 104) |
-| Floor | (200, 192, 184), rules (128, 146, 196), margin (188, 74, 62) |
-| Lit classroom glass (the only warm thing far away) | (236, 204, 160) |
+| Floor 01 | The original biology door, props and gate are at the south end. The west gallery runs north for 37 m, then turns east along the yard. Both runs have classrooms on the left and glazed bays on the right when walking away from the gate. |
+| Floor 02 | Set back west and north of 01, 3.6 m above it. The top of either stair opens into a gallery of five classrooms: three before the turn, two after it. There are five more bays on 01. |
+| West stair | A straight flight near the biology room, crossing between the set-back floors. |
+| North stair | Two flights, offset sideways by 4.5 m at the half landing. The opening at the top is not above the opening where the player set off. Both stairs work in both directions and form one continuous loop with the two galleries. |
+| Fire stair | Descends from the lower east wing to the red fire door at yard height. Its recessed landing is also the return spawn. The same door has a push bar inside and a pull handle on the yard side. The original school gate stairs still lead to the street. |
 
-## 3. Rules kept
+The navigation mesh is baked from the same slabs, guards and sloped stair colliders the body walks on. Visible steps are individually drawn; the continuous slope keeps auto-walk from tripping at every riser. The two floors do not sit directly over each other in the camera's sightline. A shallow ceiling return, balustrades and divided window frames give the gallery depth without putting a full roof between the default camera and the player.
 
-- **Stage rules** (`location_art_test.gd`): every new piece is mesh-only, under `StageArt` or named `Stage*`, with a `BaseMaterial3D` from `stage_art/materials/`; no shaders. The continuation lies wholly north of z −9.2, the railing at z −9.1: no standing spot or sight line reaches either, so the camera rule holds without new occluders. The collider count (87), the 9 interactables, the spawns, exits and routes are unchanged.
-- **Props:** the noticeboard, extinguisher and trolley are untouched (`corridor_props_test.gd`).
-- **Portability:** depth and height fog are supported by both Forward+ and the Compatibility renderer's `fog_process()`; the project uses Forward+, where fog is per pixel, so the 96 m quads fade smoothly.
-- **Budgets:** the stage textures stay under 100 KiB each (the floor is posterized onto its own palette plus fixed ink colours, so the thin rules keep their colour).
+## Readable repetition
 
-## 4. Known limits
+- Each bay has front and rear doors, with separate small glazed transoms, and a 1.98 m × 0.30 m slot between them. The slot starts 2 m above the hall. Use the normal **Interact** action facing it, or click the glass. Both paths stage a real physics hop; the observation is presented only after the eye has passed the opening and the body has landed. There is no new global jump action.
+- The other classrooms are observations, not destinations: desks, a lectern and a rear wall are modelled behind each slot, but the biology classroom remains the only open, fully playable interior. `104` and `202` repeat in different bays. Room depths and floor lines vary slightly behind otherwise familiar pairs of doors.
+- The right-hand glazing keeps the player inside but lets the camera and mouse see through. The court paint, hoops, shed and plinth share the playable yard’s source. Its concrete apron continues under the teaching block’s foundations, keeping the yard and the fire stair visually connected. This view adds no yard colliders, actors, nav or story triggers.
+- Cool low light, small pools of amber and a muted ruled floor extend the biology-room palette. The fog begins beyond the follow camera's offset, and the height component stays below the fire stair. It separates depth planes; it no longer hides the end of a fake corridor.
 
-- The haze is a single colour; with `BG_COLOR` there is no aerial perspective (that needs a sky). Fine for an empty look; a sky would be the next step if the far end should glow.
-- The three warm walkway lamps (`WalkwayLight*`) are left as they were.
-- Walking up to the railing, the player meets the end wall's invisible collider above it. It is the scene's end and the door is the exit, so this was kept rather than adding colliders.
+## Build and check
+
+- Edit `tools/build_teaching_block.py`, then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn` and `courtyard_view.tscn` in `scenes/locations/corridor/`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, three exits and stable spawn/interaction IDs.
+- Reuse `build_outdoor_locations.build_playground()` for the view's measurements and `build_playground_art.court_landmarks()` for its painted lines and rims. Rebuild the playground graybox and art pass first if changing those shared features. The old stage generator no longer rewrites `corridor.tscn`; its material/texture definitions keep the painted kit reproducible.
+- `godot --headless --resolution 1600x900 --path . --script res://tests/corridor_art_test.gd` checks the floor plan, window/yard alignment, input on the stairs and both ways of peeking, a player-capsule sweep against the glass, a click through the same glass, and round trips through the three original exits. `corridor_props_test.gd` covers the original placements and routes. `location_art_test.gd` checks the visual-only exterior against the stage rules.

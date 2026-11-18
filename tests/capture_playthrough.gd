@@ -465,7 +465,7 @@ func _run() -> void:
 ## The free period, from the walkway to the yard and back.
 ##
 ## Everything that can be walked is walked: the corridor-to-yard transition is made
-## by holding the forward key at the door, not by teleporting past it, and the
+## by walking the navigation route down to the fire door, not by teleporting past it, and the
 ## hover shot moves the real cursor with `Input.warp_mouse` so the highlight ring,
 ## the prompt and the E key are exercised together.
 func _capture_free_period() -> void:
@@ -553,17 +553,18 @@ func _capture_free_period() -> void:
 		_failures.append("The walkway has no door to the yard.")
 		return
 	await _wait_for_free(45.0)
-	# Camera-relative forward pulses drifted across the corridor instead of towards the
-	# end door. Ask the same navigation path used by click-to-move for a floor point just
-	# in front of it; the player still walks the route under normal movement physics.
-	if not _player.request_path_to(Vector3(0.0, 0.0, -6.6)):
+	# The return spawn is the floor spot in front of the fire door, down a flight of stairs.
+	# The normal click-to-move path takes the player all the way there on foot.
+	var approach := corridor.get_spawn(&"FromSchoolyard")
+	if approach == null or not _player.request_path_to(approach.global_position):
 		_failures.append("The walkway could not route the player to the end door.")
 		await _shot("FAIL_yard_door_path", "The navigation route to the end door was refused.")
 		return
-	if not await _poll(func() -> bool: return not _player.is_path_active(), 12.0):
+	if not await _poll(func() -> bool: return not _player.is_path_active(), 28.0):
 		_player.cancel_path()
 		_failures.append("Walking the navigation route to the end door did not finish.")
 		return
+	_player.face_toward(yard_door.global_position - _player.global_position)
 	if not await _wait_for_target(&"to_schoolyard", 8.0):
 		_failures.append("Walking to the end door did not offer it as a target.")
 	await _shot("13e_yard_door_prompt", "The end door of the walkway, reached on foot.")

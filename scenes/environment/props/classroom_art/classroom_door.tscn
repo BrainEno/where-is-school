@@ -4,23 +4,27 @@
 [ext_resource type="PackedScene" path="res://assets/models/classroom/classroom_door_assembly.glb" id="2_model"]
 [ext_resource type="Material" path="res://assets/materials/classroom/door_gray.tres" id="3_leaf"]
 [ext_resource type="Material" path="res://assets/materials/classroom/trim_teal.tres" id="4_frame"]
-[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="5_hardware"]
-[ext_resource type="Material" path="res://assets/materials/classroom/wall_section.tres" id="6_backing"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="5_reveal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/door_steel.tres" id="6_steel"]
+[ext_resource type="Material" path="res://assets/materials/classroom/door_glazing.tres" id="7_glazing"]
 
-[sub_resource type="QuadMesh" id="QuadMesh_backing"]
-size = Vector2(1.2, 2.2)
+[sub_resource type="BoxMesh" id="BoxMesh_rebate"]
+size = Vector3(1.195, 2.197, 0.022)
 
 [node name="ClassroomDoor" type="Node3D"]
 script = ExtResource("1_script")
 leaf_material = ExtResource("3_leaf")
 frame_material = ExtResource("4_frame")
-hardware_material = ExtResource("5_hardware")
-shadow_material = ExtResource("5_hardware")
+hardware_material = ExtResource("6_steel")
+shadow_material = ExtResource("5_reveal")
+glazing_material = ExtResource("7_glazing")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 
-[node name="Backing" type="MeshInstance3D" parent="."]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.1, 0.085)
-mesh = SubResource("QuadMesh_backing")
-material_override = ExtResource("6_backing")
+[node name="JambRebate" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.1, 0)
+mesh = SubResource("BoxMesh_rebate")
+material_override = ExtResource("5_reveal")
 cast_shadow = 0
+
+[node name="Reverse" type="Node3D" parent="."]

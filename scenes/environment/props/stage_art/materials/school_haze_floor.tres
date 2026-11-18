@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "school_haze_floor"
+shading_mode = 0
+albedo_color = Color(0.285, 0.307, 0.386, 1)

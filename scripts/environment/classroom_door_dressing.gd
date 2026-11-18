@@ -1,25 +1,21 @@
 class_name ClassroomDoorDressing
 extends Node3D
-## One of the biology classroom's two doors (issue #159): the owner's
+## The biology classroom's two doors and the corridor face of the front door: the owner's
 ## `classroom_door_assembly.glb` - frame, leaf, panels, hinges, lever handle - drawn in
 ## the classroom's own materials.
 ##
-## Both doors are the same model, so they share one design language; only the leaf
-## colour tells them apart (the front door grey, the rear door white). The model's own
-## blue paint and wood are replaced at load (`assets/materials/classroom/`): the room has
-## one colour system and `classroom_visual_slice_test.gd` holds every surface to it. The
-## two small wear marks the model carries are hidden - the brief asks for doors with no
-## marks on them - and the vision panel is painted as part of the leaf, because the
-## doors do not open onto anything the room shows.
-##
-## The model faces -Z (its handle side). Nothing here collides: the wall's collision is
-## whole across both openings, so neither door changes where anyone can walk.
+## The leaf stays grey in front and white at the rear. The vision light is opaque
+## painted glass, not a view into another location. The bare +Z face of the import
+## needs its own fittings in the classroom: the scene can see the door from both
+## sides of the wall. Nothing here collides or opens.
 
 @export var model_path: NodePath = ^"Model"
 @export var leaf_material: Material
 @export var frame_material: Material
 @export var hardware_material: Material
 @export var shadow_material: Material
+@export var glazing_material: Material
+@export var dress_reverse: bool = true
 
 var _dressed := false
 
@@ -38,40 +34,64 @@ func dress() -> void:
 		push_error("ClassroomDoorDressing '%s': model_path '%s' does not resolve." % [name, model_path])
 		return
 	_dressed = true
+	var reverse := get_node_or_null(^"Reverse") as Node3D
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
 		var part := String(mesh.name)
-		var material: Material = hardware_material
+		var material := shadow_material
 		if part.begins_with("Door_wear_mark"):
-			# Hidden, but still given a classroom material: the camera fader and the wall
-			# contract treat every mesh under a wall alike, drawn or not.
+			# The classroom doors are unmarked; keep even the hidden meshes in the palette.
 			mesh.visible = false
-		elif part.begins_with("Door_frame"):
+		elif part == "Door_vision_glass":
+			material = glazing_material
+		elif part.begins_with("Door_frame") or part.begins_with("Door_vision"):
 			material = frame_material
-		elif part.begins_with("Door_panel_shadow"):
-			material = shadow_material
-		elif (
-			part.begins_with("Door_leaf")
-			or part.begins_with("Door_panel_inset")
-			or part.begins_with("Door_vision")
-		):
+		elif _is_painted_leaf(part):
 			material = leaf_material
+		elif (
+			part.begins_with("Door_handle")
+			or part.begins_with("Door_hinge_barrel")
+			or part == "Door_kick_plate"
+		):
+			material = hardware_material
 		mesh.material_override = material
+		if dress_reverse and reverse != null and _is_face_fitting(part):
+			_add_reverse_fitting(reverse, mesh)
 
 
-## The leaf meshes (leaf, inset panels, vision panel), in the leaf's colour; the panel
-## shadow lines are not part of it.
+func _add_reverse_fitting(reverse: Node3D, front: MeshInstance3D) -> void:
+	# Turn the fitting in place and keep its X (latch/hinge side). Turning the whole
+	# assembly about its centre would put the two handles on different edges.
+	var fitting := MeshInstance3D.new()
+	fitting.name = front.name
+	fitting.mesh = front.mesh
+	fitting.material_override = front.material_override
+	fitting.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	fitting.transform = Transform3D(
+		Basis(Vector3.UP, PI) * front.basis,
+		Vector3(front.position.x, front.position.y, -front.position.z)
+	)
+	reverse.add_child(fitting)
+
+
+static func _is_painted_leaf(part: String) -> bool:
+	return part == "Door_leaf" or part.begins_with("Door_panel_inset")
+
+
+static func _is_face_fitting(part: String) -> bool:
+	return (
+		part.begins_with("Door_panel")
+		or part.begins_with("Door_vision")
+		or part.begins_with("Door_handle")
+		or part == "Door_lock_escutcheon"
+		or part == "Door_kick_plate"
+	)
+
+
+## The painted parts of the leaf, excluding the separate glass, gasket and fittings.
 func get_leaf_meshes() -> Array[MeshInstance3D]:
 	var meshes: Array[MeshInstance3D] = []
-	var model := get_node_or_null(model_path) as Node3D
-	if model == null:
-		return meshes
-	for node in model.find_children("Door_*", "MeshInstance3D", true, false):
-		var part := String(node.name)
-		if (
-			part.begins_with("Door_leaf")
-			or part.begins_with("Door_panel_inset")
-			or part.begins_with("Door_vision")
-		):
+	for node in find_children("Door_*", "MeshInstance3D", true, false):
+		if _is_painted_leaf(String(node.name)):
 			meshes.append(node as MeshInstance3D)
 	return meshes
