@@ -799,12 +799,7 @@ func _close() -> void:
 
 
 func _wait_until(condition: Callable, real_seconds: float) -> bool:
-	var deadline := Time.get_ticks_msec() + int(real_seconds * 1000.0)
-	while Time.get_ticks_msec() < deadline:
-		if bool(condition.call()):
-			return true
-		await process_frame
-	return bool(condition.call())
+	return await Harness.wait_until(condition, real_seconds)
 
 
 func _seconds(real_seconds: float) -> void:

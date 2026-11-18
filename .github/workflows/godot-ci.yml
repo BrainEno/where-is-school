@@ -204,6 +204,20 @@ jobs:
           python3 tools/check_ui_palette.py
           python3 tests/ui_palette_test.py
 
+      - name: Check no test waits a fixed number of frames on a fast clock
+        shell: bash
+        run: |
+          # Issue #207: Engine.time_scale speeds the clock up, not the machine. A test that
+          # scales time and then waits a fixed frame count is racing the frame rate; it
+          # passes on a quiet runner and fails on a busy one, which is how
+          # destination_cue_lifecycle reported "a floor click drew no mark" for months while
+          # the mark was fine. The check cannot tell a racy wait from a safe one - it does
+          # not try - so it freezes the structural fact instead: the 16 files that hold such
+          # a wait today may not grow, and a converted one must leave the baseline. Waits are
+          # replaced by TestHarness.wait_until, which counts seconds and polls a condition.
+          python3 tools/check_flaky_waits.py
+          python3 tests/check_flaky_waits_test.py
+
       - name: Check the committed screenshots are labelled
         shell: bash
         run: |
