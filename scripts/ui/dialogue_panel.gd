@@ -164,12 +164,12 @@ const PAPER := NotebookPaper.PAPER
 const SPEAKER_INK := Color(0.3, 0.16, 0.2, 1.0)
 ## The sentence: a blue-black ink.
 const BODY_INK := Color(0.16, 0.14, 0.2, 1.0)
-const MUTED := Color(0.36, 0.33, 0.35, 1.0)
+const MUTED := Palette.NOTEBOOK_MUTED
 ## The frame draws nothing of its own: the paper behind it is the ground.
-const INK := Color(0.93, 0.9, 0.82, 0.0)
+const INK := Color(NotebookPaper.PAPER, 0.0)
 ## The options: red ink at rest, a deeper red under the pointer or the cursor.
-const CHOICE_COLOR := Color(0.66, 0.24, 0.14, 1.0)
-const CHOICE_LIT := Color(0.44, 0.1, 0.06, 1.0)
+const CHOICE_COLOR := Palette.RED_INK
+const CHOICE_LIT := Palette.RED_INK_LIT
 ## An option taken in an earlier run: the same hue, faded, so the untried ones stand out.
 const CHOICE_SEEN := Color(0.58, 0.44, 0.4, 1.0)
 ## How long the hint says why skip stopped before it goes back to naming the inputs.

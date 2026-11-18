@@ -20,9 +20,9 @@ signal skip_pressed
 const GAP := 18.0
 const SPACING := 12.0
 
-const MUTED := Color(0.36, 0.33, 0.35, 0.72)
-const LIT := Color(0.44, 0.1, 0.06, 1.0)
-const HOVER := Color(0.66, 0.24, 0.14, 1.0)
+const MUTED := Color(Palette.NOTEBOOK_MUTED, 0.72)
+const LIT := Palette.RED_INK_LIT
+const HOVER := Palette.RED_INK
 
 var _auto: Button = null
 var _skip: Button = null

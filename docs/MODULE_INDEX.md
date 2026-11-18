@@ -164,7 +164,6 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `LocationFlow` | [`scripts/world/location_flow.gd`](../scripts/world/location_flow.gd) | Coordinate exit, fade, transactional load, arrival and checkpoint through the host's existing beat lock. |
 | `LocationHost` | [`scripts/world/location_host.gd`](../scripts/world/location_host.gd) | Load/swap location scenes transactionally: validate scene/id/spawn/placement before replacing the old room. |
 | `LocationNavigation` | [`scripts/world/location_navigation.gd`](../scripts/world/location_navigation.gd) | Bake/query a location's own static-collider mesh and expose synchronization; never borrow a neighboring map. |
-| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `LocationRoot` | [`scripts/world/location_root.gd`](../scripts/world/location_root.gd) | Location-owned spawn, waypoint, actor and interactable lookup contract. |
 | `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `NPresence` | [`scripts/world/n_presence.gd`](../scripts/world/n_presence.gd) | Restore substitute N at the room's authored lectern path endpoint from n_arrived. |
@@ -251,7 +250,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Generated environments | [build_outdoor_locations.py](../tools/build_outdoor_locations.py), [build_laboratory.py](../tools/build_laboratory.py) | Regenerate scenes from their owner rather than editing generated locations. |
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
-| Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; report the reading band's pairs until #231 lands. |
+| Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
 ## Keep this map current

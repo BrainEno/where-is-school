@@ -11,7 +11,7 @@ with the repository's current colours:
 - pure white, pure black and `Color(0, 0, 0, 0)` are tween endpoints, not palette entries;
 - a `#` comment does not count as a writer;
 - `tests/` is out of scope on purpose: a test that pins a colour *should* be able to;
-- the known pairs (the reading band, waiting on #231) are reported but do not fail, and a
+- pairs whose writers are all allowlisted are reported but do not fail, and a
   new pair *between* an allowlisted file and a file outside the allowlist still fails;
 - the palette file itself may not load anything or name a UI class: it is the leaf that lets
   the dialogue and actor layers name a colour without importing the interface;
@@ -95,7 +95,7 @@ class UiPaletteTest(unittest.TestCase):
     # --- the allowlist --------------------------------------------------------
 
     def test_a_known_pair_is_reported_but_passes(self) -> None:
-        allowed = "scripts/ui/dialogue_panel.gd"
+        allowed = "scripts/ui/check_overlay.gd"
         write(self.root, palette.PALETTE_FILE, f"const ACCENT := {BONE}\n")
         write(self.root, allowed, f"const PAPER := {BONE}\n")
         duplicates, _leaks, known = palette.findings(self.root)
@@ -104,7 +104,7 @@ class UiPaletteTest(unittest.TestCase):
 
     def test_an_allowlisted_file_does_not_license_a_third_writer(self) -> None:
         write(self.root, palette.PALETTE_FILE, f"const ACCENT := {BONE}\n")
-        write(self.root, "scripts/ui/dialogue_panel.gd", f"const PAPER := {BONE}\n")
+        write(self.root, "scripts/ui/check_overlay.gd", f"const PAPER := {BONE}\n")
         write(self.root, "scripts/ui/hud.gd", f"var c := {BONE}\n")
         # The third writer is not allowlisted, so every pair involving it is a failure again.
         messages = self.fail_messages()
@@ -160,8 +160,9 @@ class UiPaletteTest(unittest.TestCase):
         root = Path(__file__).resolve().parent.parent
         duplicates, _leaks, known = palette.findings(root)
         self.assertEqual(duplicates, [], "the palette regressed in the repository itself")
-        # The reading band is the only outstanding pair group, and it is #231's work.
-        self.assertTrue(known, "no known pairs left: remove them from the allowlist")
+        # The reading band was the last outstanding pair group; #231 merged and its shared
+        # inks moved into the palette, so nothing is waiting on the allowlist any more.
+        self.assertEqual(known, [], "an allowlisted pair came back: fold it into Palette")
 
 
 if __name__ == "__main__":

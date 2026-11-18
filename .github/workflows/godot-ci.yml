@@ -198,8 +198,9 @@ jobs:
           # Issue #210: the bone accent was typed out in eight files, and the reading band's
           # "ember" had already drifted from the menus' by the time anyone looked. The check
           # refuses the same RGB value in two files, ignores a colour reached through a name,
-          # and reports the reading band's outstanding pairs (PR #231 restyles it) without
-          # failing on them. Its test proves both directions on trees it writes.
+          # and reports pairs between allowlisted writers without failing on them (the
+          # reading band left the allowlist when #231 merged). Its test proves both
+          # directions on trees it writes.
           python3 tools/check_ui_palette.py
           python3 tests/ui_palette_test.py
 

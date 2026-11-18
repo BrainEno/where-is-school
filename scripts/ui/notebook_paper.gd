@@ -18,7 +18,7 @@ extends Control
 ## edge and its short leg along the top, overhanging both edges. The portrait sits over its
 ## top end; the rest stays in the strip the text column never uses, left of the red margin.
 
-const PAPER := Color(0.93, 0.9, 0.82, 1.0)
+const PAPER := Palette.NOTEBOOK_PAPER
 ## The sheet's lower edge, a shade darker where the paper curls a little away from the light.
 const PAPER_FOOT := Color(0.88, 0.845, 0.76, 1.0)
 const SHADOW := Color(0.02, 0.02, 0.05, 0.36)

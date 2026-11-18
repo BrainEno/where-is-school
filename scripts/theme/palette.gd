@@ -63,3 +63,14 @@ const SOURCE_OBSERVED := ACCENT
 const SOURCE_REPORTED := Color(0.561, 0.663, 0.710, 1.0)
 const SOURCE_RECALLED := Color(0.604, 0.639, 0.592, 1.0)
 const SOURCE_IMAGINED := WARN
+
+## The reading band (#231): the dialogue is written on a sheet torn from an exercise book, in
+## ink. Only the values the band's files share are here; each keeps its own one-off inks.
+## The sheet itself, warm white.
+const NOTEBOOK_PAPER := Color(0.93, 0.9, 0.82, 1.0)
+## Pencil-grey: a speaker with no colour, the hint line, the mode words at rest.
+const NOTEBOOK_MUTED := Color(0.36, 0.33, 0.35, 1.0)
+## Red ink: an option at rest, a mode word under the pointer.
+const RED_INK := Color(0.66, 0.24, 0.14, 1.0)
+## The deeper red of an option under the pointer and of a mode that is on.
+const RED_INK_LIT := Color(0.44, 0.1, 0.06, 1.0)

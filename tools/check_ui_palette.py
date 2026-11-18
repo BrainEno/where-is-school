@@ -41,13 +41,15 @@ What is out of scope, and why:
   a panel drew is doing the opposite of this problem: it is the tripwire that notices when
   the palette moves. `MenuStyle` is deliberately *not* imported there, so the expected value
   cannot follow the constant it is meant to check.
-- **`scripts/ui/dialogue_panel.gd` and `dialogue_mode_bar.gd`,** while the reading band is
-  being restyled on paper (#231). The band keeps its own values for one more release; the
-  allowlist below is the reminder to fold them in, not a licence to add a fifth.
+
+The reading band (`dialogue_panel.gd`, `dialogue_mode_bar.gd`, `notebook_paper.gd`) was on
+this list while #231 restyled it on paper; since that merged, the values its files share
+(the sheet, the pencil grey, the two red inks) are `Palette`'s and the band is checked like
+every other interface file.
 
 A pair whose every writer is the palette file or an allowlisted file is reported as *known*
-rather than failed, so the count of outstanding drift stays visible instead of the check
-being switched off until #231 merges.
+rather than failed, so any outstanding drift stays visible instead of the check being
+switched off.
 
 Standard library only, and it reads only GDScript: the palette question is about code.
 """
@@ -172,10 +174,6 @@ def findings(root: Path) -> tuple[list[str], list[str], list[str]]:
 
 
 ALLOWLIST = {
-    # The reading band is being restyled on paper in #231; its four source colours and its
-    # two choice colours move with that work, not before it.
-    "scripts/ui/dialogue_panel.gd",
-    "scripts/ui/dialogue_mode_bar.gd",
     # The world's cue ambers: chosen against brick and plaster under the game camera, not
     # against a page. They are not interface palette entries.
     "scripts/interaction/world_cue.gd",
@@ -223,7 +221,7 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
     print(
         "UI_PALETTE_OK: no colour value is written out twice outside the documented "
         f"allowlist; {len(leaks)} file(s) hold a literal of their own, "
-        f"{len(known)} pair(s) allowed for now (the reading band, #231), "
+        f"{len(known)} pair(s) between allowlisted writers, "
         f"{len(non_palette)} file(s) outside the allowlist: {', '.join(non_palette) or 'none'}."
     )
     return 0
