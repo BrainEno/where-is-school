@@ -556,7 +556,7 @@ def refined_teacher(look: dict) -> dict:
         pigment_blend=0.6, pigment_value=0.10, pigment_mix=0.34, pigment_scale=10.0,
         mark_strength=0.16, mark_coverage=0.12, mark_contour=0.12,
     )
-    surface_work(cardigan, 1, 110.0, "#A7AD94", 0.38)
+    surface_work(cardigan, 1, 160.0, "#A7AD94", 0.24)
     parts["m_st_blouse"].update(pigment_blend=0.7, pigment_value=0.04)
     surface_work(parts["m_st_blouse"], 2, 180.0, "#F4E7D1", 0.16)
     trousers = parts["m_st_trousers"]
@@ -598,7 +598,7 @@ def refined_student(look: dict) -> dict:
     for name in ("wis_protagonist_cardigan", "wis_protagonist_cardigan_light", "wis_protagonist_cardigan_shadow"):
         part = parts[name]
         part.update(pigment_blend=0.6, pigment_value=0.11, pigment_scale=10.0)
-        surface_work(part, 1, 100.0, "#A79A98", 0.34)
+        surface_work(part, 1, 150.0, "#A79A98", 0.22)
     parts["wis_protagonist_cardigan"].update(
         pigment_mix=0.35, mark_strength=0.18, mark_contour=0.45, mark_coverage=0.025,
     )
