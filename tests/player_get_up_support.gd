@@ -159,8 +159,17 @@ func _watch_get_up(mode: String) -> void:
 	checks.expect(seen and not _animator.is_playing_action(), "%s: get_up never started or finished." % mode)
 	checks.expect(elapsed >= 0.6 and elapsed <= 1.05,
 		"%s: get_up took %.3f story seconds, expected a brisk synchronized transition." % [mode, elapsed])
-	checks.expect(drift < 0.02 and speed < 0.001,
-		"%s: moving before standing (%.3f m drift, %.3f m/s)." % [mode, drift, speed])
+	# The stand-up is allowed to move the body, and in the classroom it has to: the body
+	# wakes at the chair's centre, and standing up without stepping clear leaves the capsule
+	# inside the seat, both posts, the rail and the back. What it may not do is *walk*. So
+	# the check is on velocity (exactly zero) and on the distance being no more than leaving
+	# a seat takes - not on the distance being small. This fixture sits in a clear aisle with
+	# no chair under it, so it also must not demand that the body move at all.
+	const SEAT_CLEARANCE_CEILING := 0.9
+	checks.expect(speed < 0.001,
+		"%s: the body walked before standing (%.3f m/s)." % [mode, speed])
+	checks.expect(drift <= SEAT_CLEARANCE_CEILING,
+		"%s: the stand-up travelled %.3f m, more than stepping clear of a seat." % [mode, drift])
 	checks.expect(not advanced, "%s: the path index/watchdog advanced during get_up." % mode)
 	checks.expect(phase_error < 0.045, "%s: pivot and bone clocks diverged (%.3f radians)." % [mode, phase_error])
 	print("note: get_up %s: %.3f s, %.4f m drift, %.4f m/s, phase error %.4f rad" % [mode, elapsed, drift, speed, phase_error])

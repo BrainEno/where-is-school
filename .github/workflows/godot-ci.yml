@@ -217,6 +217,18 @@ jobs:
           python3 tools/check_ui_literals.py
           python3 tests/ui_literals_test.py
 
+      - name: Check the protagonist's seat does not intersect its chair
+        shell: bash
+        run: |
+          # The protagonist wakes seated in a classroom chair. The spawn marker sat at the
+          # chair's centre, so the seat, both posts, the rail and the back were all inside
+          # the body's capsule, and the stand-up straightened the legs while the hip moved
+          # 3 cm. Nothing compared the spawn to the furniture, because they live in two
+          # different scenes - so the check does, and it follows the stand-up along its
+          # path rather than only looking at where it ends.
+          python3 tools/check_seat_clearance.py
+          python3 tests/seat_clearance_test.py
+
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash
         run: |
