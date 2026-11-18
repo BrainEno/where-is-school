@@ -90,6 +90,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `CharacterProfile` | [`scripts/narrative/character_profile.gd`](../scripts/narrative/character_profile.gd) | Speaker display/portrait resource; narrative text stays in content files. |
 | `InspectionLibrary` | [`scripts/narrative/inspection_library.gd`](../scripts/narrative/inspection_library.gd) | Load and validate localized inspectable-object content, records and first-read effects. |
+| `JsonTable` | [`scripts/narrative/json_table.gd`](../scripts/narrative/json_table.gd) | Standardised JSON file reading, syntax parsing, object validation and error reporting. |
 | `JournalCatalog` | [`scripts/narrative/journal_catalog.gd`](../scripts/narrative/journal_catalog.gd) | Resolve knowledge-entry identities back to content in the current locale. |
 | `JournalPage` | [`scripts/narrative/journal_page.gd`](../scripts/narrative/journal_page.gd) | Pure grouping/filtering of knowledge entries into notebook presentation dictionaries. |
 | `JournalRoute` | [`scripts/narrative/journal_route.gd`](../scripts/narrative/journal_route.gd) | Derive visited places from catalog arrival flags already stored by GameState. |
@@ -109,6 +110,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `Locales` | [`scripts/i18n/locales.gd`](../scripts/i18n/locales.gd) | Supported locale profiles, aliases and reading speeds; add language metadata here. |
 | `L10n` | [`scripts/i18n/l10n.gd`](../scripts/i18n/l10n.gd) | Static interface-string lookup and locale tables; use Loc for persistent locale choice and change notifications. |
+| `LocaleParity` | [`scripts/i18n/locale_parity.gd`](../scripts/i18n/locale_parity.gd) | Reusable key-set and entry parity comparison across languages. |
 
 ### Save encoding
 

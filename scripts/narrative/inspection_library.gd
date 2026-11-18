@@ -115,12 +115,7 @@ func _note_chapter(
 
 
 static func _file_bytes(path: String) -> int:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return 0
-	var length := file.get_length()
-	file.close()
-	return length
+	return JsonTable.file_bytes(path)
 
 
 func get_load_report() -> Dictionary:
@@ -215,38 +210,22 @@ func get_ids_for(locale: String) -> Array[StringName]:
 
 
 func describe_errors() -> String:
-	if errors.is_empty():
-		return "Inspection content loaded without errors."
-	return "Inspection content has %d error(s):\n%s" % [errors.size(), "\n".join(errors)]
+	return JsonTable.describe_errors("Inspection content", errors)
 
 
 # --- Parsing ----------------------------------------------------------------
 
 
 func _parse_file(path: String, locale: String) -> void:
-	if not FileAccess.file_exists(path):
-		errors.append("Inspection file not found: %s" % path)
+	var data := JsonTable.read_dict(
+		path,
+		errors,
+		"%s: root value must be an object.",
+		"Inspection file not found: %s",
+		"Inspection file could not be opened: %s (error %d)"
+	)
+	if data.is_empty() and not errors.is_empty():
 		return
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		errors.append(
-			"Inspection file could not be opened: %s (error %d)" % [path, FileAccess.get_open_error()]
-		)
-		return
-	var json := JSON.new()
-	if json.parse(file.get_as_text()) != OK:
-		errors.append(
-			"%s: invalid JSON at line %d: %s" % [path, json.get_error_line(), json.get_error_message()]
-		)
-		file.close()
-		return
-	file.close()
-
-	var root: Variant = json.data
-	if not (root is Dictionary):
-		errors.append("%s: root value must be an object." % path)
-		return
-	var data: Dictionary = root
 	if data.has("locale") and String(data["locale"]) != locale:
 		errors.append(
 			"%s: declares locale '%s' but is stored under '%s'." % [path, data["locale"], locale]

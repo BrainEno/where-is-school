@@ -53,16 +53,9 @@ var _entries: Dictionary = {}
 
 static func load_all(path: String = PATH) -> LocationCatalog:
 	var catalog := LocationCatalog.new()
-	var text := _file_text(path)
-	if text.is_empty():
-		catalog.errors.append("%s: could not be read." % path)
+	var data := JsonTable.read_dict(path, catalog.errors)
+	if data.is_empty() and not catalog.errors.is_empty():
 		return catalog
-
-	var parsed: Variant = JSON.parse_string(text)
-	if not (parsed is Dictionary):
-		catalog.errors.append("%s: not a JSON object." % path)
-		return catalog
-	var data: Dictionary = parsed
 
 	var version := int(data.get("format_version", 0))
 	if version != FORMAT_VERSION:
@@ -188,11 +181,4 @@ static func _known_flags() -> Dictionary:
 
 
 static func _file_text(path: String) -> String:
-	if not FileAccess.file_exists(path):
-		return ""
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return ""
-	var text := file.get_as_text()
-	file.close()
-	return text
+	return JsonTable.read_text(path)
