@@ -28,6 +28,7 @@ No third-party data. Standard library only.
 from __future__ import annotations
 
 import argparse
+import copy
 import sys
 from pathlib import Path
 
@@ -521,10 +522,101 @@ def room_keyed(look: dict) -> dict:
     return result
 
 
+def surface_work(part: dict, kind: int, scale: float, tint: str, strength: float) -> None:
+    """Fine diffuse-only work on an existing part, not a new material/mesh pipeline."""
+    part.update(detail_kind=kind, detail_scale=scale, detail_tint=tint, detail_strength=strength)
+
+
+def refined_teacher(look: dict) -> dict:
+    """Retain N's chalk/sage identity, with fine cloth and a quieter face/contour.
+
+    These are only the shipped look's overrides. The retired woodcut experiment and
+    the protagonist/Q are deliberately not restyled. Coordinates are measured on N's
+    immutable -Z-facing GLB, in the same bind space as the existing painted patches.
+    """
+    result = copy.deepcopy(look)
+    result["outline_width"] = 0.0055
+    result["outline"].update(wobble=0.18)
+    parts = result["parts"]
+    parts["m_st_skin"].update(
+        pigment_blend=0.82, pigment_scale=28.0, pigment_mix=0.28, pigment_value=0.055,
+        edge_break=0.10, edge_softness=0.14, patch_feather=0.9,
+        patch_strength=0.24, patch2_strength=0.18,
+    )
+    for name in ("m_st_hair", "m_st_hairlight"):
+        part = parts[name]
+        part.update(
+            pigment_blend=0.65, pigment_value=0.16, pigment_scale=20.0,
+            mark_strength=0.12, mark_coverage=0.08, mark_contour=0.1,
+            detail_origin=(0.0, 1.60, 0.01),
+        )
+        surface_work(part, 3, 160.0, "#665249", 0.42)
+    cardigan = parts["m_st_cardigan"]
+    cardigan.update(
+        pigment_blend=0.6, pigment_value=0.10, pigment_mix=0.34, pigment_scale=10.0,
+        mark_strength=0.16, mark_coverage=0.12, mark_contour=0.12,
+    )
+    surface_work(cardigan, 1, 110.0, "#A7AD94", 0.38)
+    parts["m_st_blouse"].update(pigment_blend=0.7, pigment_value=0.04)
+    surface_work(parts["m_st_blouse"], 2, 180.0, "#F4E7D1", 0.16)
+    trousers = parts["m_st_trousers"]
+    trousers.update(pigment_blend=0.5, pigment_value=0.10, mark_strength=0.10)
+    surface_work(trousers, 2, 160.0, "#6C6C7C", 0.22)
+    return result
+
+
+def refined_student(look: dict) -> dict:
+    """Keep the seated student's plum cardigan and rigid-piece model, not a player clone."""
+    result = copy.deepcopy(look)
+    result["outline_width"] = 0.0055
+    result["outline"].update(wobble=0.20)
+    parts = result["parts"]
+    for name, part in parts.items():
+        if name.endswith("/wis_protagonist_skin") or name in (
+            "wis_protagonist_skin", "wis_protagonist_skin_light"
+        ):
+            part.update(
+                pigment_blend=0.8, pigment_value=0.06, pigment_scale=24.0,
+                edge_break=0.10, edge_softness=0.08, half_tone=0.6,
+            )
+    parts["wis_protagonist_skin_light"]["albedo"] = "#CFAA8E"
+    parts["wis_protagonist_skin_shadow"]["albedo"] = "#947568"
+    parts["wis_protagonist_undereye"]["albedo"] = "#AB8E82"
+    parts["head_main_mesh/wis_protagonist_skin"].update(
+        patch_center=(0.045, 1.546, 0.132), patch_radius=(0.026, 0.012, 0.025),
+        patch_color="#8F7984", patch_strength=0.20,
+        patch2_center=(0.058, 1.521, 0.105), patch2_radius=(0.033, 0.025, 0.045),
+        patch2_color="#C68C78", patch2_strength=0.15, patch_feather=0.85,
+    )
+    for name in ("wis_protagonist_hair", "wis_protagonist_hair_warm"):
+        part = parts[name]
+        part.update(
+            pigment_blend=0.6, pigment_value=0.16, mark_strength=0.12,
+            detail_origin=(0.0, 1.64, 0.04),
+        )
+        surface_work(part, 3, 145.0, "#5C4E50", 0.36)
+    for name in ("wis_protagonist_cardigan", "wis_protagonist_cardigan_light", "wis_protagonist_cardigan_shadow"):
+        part = parts[name]
+        part.update(pigment_blend=0.6, pigment_value=0.11, pigment_scale=10.0)
+        surface_work(part, 1, 100.0, "#A79A98", 0.34)
+    parts["wis_protagonist_cardigan"].update(
+        pigment_mix=0.35, mark_strength=0.18, mark_contour=0.45, mark_coverage=0.025,
+    )
+    parts["wis_protagonist_cardigan_shadow"]["albedo"] = "#4C3D50"
+    for name in ("wis_protagonist_shirt", "wis_protagonist_shirt_shadow"):
+        parts[name].update(pigment_blend=0.7, pigment_value=0.04)
+        surface_work(parts[name], 2, 190.0, "#ECE0CC", 0.18)
+    for name in ("wis_protagonist_trousers", "wis_protagonist_trousers_light"):
+        parts[name].update(pigment_blend=0.55, pigment_value=0.10, mark_strength=0.10)
+        surface_work(parts[name], 2, 160.0, "#676C7C", 0.28)
+    return result
+
+
 TARGETS = look_experiments.shipped(PROTAGONIST, Q)
-# The seated classroom student is not part of the integration's comparison; it ships its
-# one look.
-TARGETS["assets/characters/classroom_student/student_look.tres"] = STUDENT
+TARGETS["assets/characters/teacher_n/teacher_n_look.tres"] = refined_teacher(
+    TARGETS["assets/characters/teacher_n/teacher_n_look.tres"]
+)
+TARGETS["assets/characters/classroom_student/student_look.tres"] = refined_student(STUDENT)
 TARGETS = {relative: room_keyed(look) for relative, look in TARGETS.items()}
 
 # The schemes that were tried and not shipped, written under scenes/dev/ (which no export

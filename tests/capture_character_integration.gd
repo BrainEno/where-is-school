@@ -31,7 +31,11 @@ extends SceneTree
 ##                with all three in the room
 ##   dialogue     talking to Q (the camera's focus, the dialogue panel up) and N's class
 ##                conversation, from the game's own camera
-## `--frames=a,b` limits a group to some of its frame kinds.
+##   student      the seated classroom student: face, clothing, own chair and game camera
+## `--frames=a,b` limits a group to some of its frame kinds. `--freeze-pose` holds the same
+## idle/sit pose in each variant (not for motion/dialogue captures). For a new material
+## change, `--variants=baseline,after --baseline-dir=<dir>` loads n.tres and student.tres
+## saved from that change's base; the historical `before` is NOT a current-look baseline.
 ##
 ## Every frame kind becomes one sheet, one column per variant, printed as
 ## `ARTSHEET: <name>.jpg <base64>` for the workflow to publish as annotations; full-size
@@ -54,13 +58,15 @@ const VARIANTS := {
 		"n": "original",
 	},
 	"after": {},
+	"baseline": {}, # Filled from --baseline-dir; never silently falls back to historical paint.
 	"q_paper": {"q": LAB + "q_paper.tres"},
 	"n_woodcut": {"n": LAB + "n_woodcut.tres"},
 }
 const GROUP_FRAMES := {
 	"protagonist": ["body_sun", "body_shade", "face", "gameplay"],
 	"q": ["body_sun", "body_backlit", "face", "face_three_quarter", "talk", "walk"],
-	"n": ["body_sun", "body_shade", "face", "lectern"],
+	"n": ["body_sun", "body_shade", "face", "cloth", "lectern"],
+	"student": ["face", "face_three_quarter", "cloth", "seated", "gameplay"],
 	"lineup": ["lineup_sun", "lineup_shade", "lineup_game"],
 	"dialogue": ["dialogue_q", "dialogue_n"],
 }
@@ -89,6 +95,9 @@ const WIDE_PANEL := Vector2i(480, 300)
 var _group := "lineup"
 var _variants: Array[String] = ["before", "after"]
 var _frames_only: Array[String] = []
+var _baseline_dir := ""
+var _freeze_pose := false
+var _student_authored := Transform3D()
 var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
@@ -125,6 +134,10 @@ func _run() -> void:
 		elif argument.begins_with("--frames="):
 			for name in argument.get_slice("=", 1).split(",", false):
 				_frames_only.append(name.strip_edges())
+		elif argument.begins_with("--baseline-dir="):
+			_baseline_dir = argument.trim_prefix("--baseline-dir=")
+		elif argument == "--freeze-pose":
+			_freeze_pose = true
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
 	_note("group %s, variants %s, started %s" % [_group, ",".join(_variants), Time.get_datetime_string_from_system()])
 	if not GROUP_FRAMES.has(_group):
@@ -134,6 +147,8 @@ func _run() -> void:
 	for variant in _variants:
 		if not VARIANTS.has(variant):
 			_failures.append("Unknown variant '%s'." % variant)
+	if _variants.has("baseline") and _baseline_dir.is_empty():
+		_failures.append("The baseline variant requires --baseline-dir with n.tres and student.tres from the base revision.")
 	if not _failures.is_empty() or not await _boot():
 		await _finish()
 		return
@@ -203,8 +218,9 @@ func _boot() -> bool:
 	var protagonist := _player.get_node_or_null(^"VisualPivot/Visual/Model") as CharacterVisualAnimation
 	var q_actor := _room.get_node_or_null(^"Actors/Q") as NpcActor
 	var n_actor := _room.get_node_or_null(^"Actors/N") as NpcActor
-	if protagonist == null or q_actor == null or n_actor == null:
-		_failures.append("The protagonist wrapper, Actors/Q or Actors/N is missing.")
+	var student := _room.get_node_or_null(^"Actors/SeatedStudent") as CharacterVisualAnimation
+	if protagonist == null or q_actor == null or n_actor == null or student == null:
+		_failures.append("The protagonist wrapper, Actors/Q, Actors/N or Actors/SeatedStudent is missing.")
 		return false
 	n_actor.visible = true
 	_q_authored = q_actor.global_transform
@@ -217,7 +233,9 @@ func _boot() -> bool:
 		"protagonist": {"animator": protagonist, "holder": _player},
 		"q": {"animator": q, "holder": q_actor},
 		"n": {"animator": n, "holder": n_actor},
+		"student": {"animator": student, "holder": student},
 	}
+	_student_authored = student.global_transform
 	for label: String in _cast:
 		var animator: CharacterVisualAnimation = _cast[label]["animator"]
 		var applier := animator.get_node_or_null(^"Look") as CharacterLookApplier
@@ -231,7 +249,7 @@ func _boot() -> bool:
 			animator.add_child(applier)
 			await _frames(1)
 		_cast[label]["applier"] = applier
-		if animator.is_seated():
+		if animator.is_seated() and label != "student":
 			animator.set_seated(false)
 	await _wait(3.0)
 	_hide_nameplates()
@@ -243,7 +261,10 @@ func _boot() -> bool:
 
 
 func _apply_variant(variant: String) -> bool:
-	var spec: Dictionary = VARIANTS[variant]
+	var spec: Dictionary = VARIANTS[variant].duplicate()
+	if variant == "baseline":
+		for label: String in ["n", "student"]:
+			spec[label] = _baseline_dir.path_join(label + ".tres")
 	var ok := true
 	for label: String in _cast:
 		var applier: CharacterLookApplier = _cast[label]["applier"]
@@ -276,6 +297,10 @@ func _apply_variant(variant: String) -> bool:
 		if treatment == CharacterLookApplier.Treatment.PAINTED and not (report.get("kept", []) as Array).is_empty():
 			_failures.append("Variant %s: %s kept GLB materials under a painted look: %s" % [variant, label, str(report["kept"])])
 			ok = false
+		if _freeze_pose:
+			var animator: CharacterVisualAnimation = _cast[label]["animator"]
+			_pose(animator, "sit_idle" if animator.is_seated() else "idle", 0.31)
+			applier.set_process(false) # Hold the blink too, not just the skeleton.
 	await _wait(0.4)
 	return ok
 
@@ -339,7 +364,38 @@ func _frame_walk(variant: String) -> Image:
 func _frame_gameplay(variant: String) -> Image:
 	_show_all()
 	await _stage_room()
-	return await _rig_panel("%s_gameplay_%s" % [_group, variant], ["protagonist"], WIDE_PANEL, 1.4)
+	var label := "student" if _group == "student" else "protagonist"
+	return await _rig_panel("%s_gameplay_%s" % [_group, variant], [label], WIDE_PANEL, 1.4)
+
+
+## The student's real chair and desk, not an unseated clone in an empty preview scene.
+func _frame_seated(variant: String) -> Image:
+	_show_all()
+	await _stage_room()
+	var student: CharacterVisualAnimation = _cast["student"]["animator"]
+	var base := student.global_position
+	var side := _forward(student).rotated(Vector3.UP, deg_to_rad(-35.0))
+	var shot_name := "%s_seated_%s" % [_group, variant]
+	var frame := await _frame_from(base + side * 2.2 + Vector3.UP * 1.3, base + Vector3.UP * 0.75, 45.0)
+	var image: Image = frame["image"]
+	var box := _screen_box(frame["camera"], _subtree_aabb(student))
+	await _measure_drawn(student, frame["camera"], image, box, shot_name)
+	_drop_camera()
+	image.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
+	return _fit(image, box.grow(int(box.size.y * 0.25)), WIDE_PANEL)
+
+
+## A closer look at the upper clothing under the same real classroom light.
+func _frame_cloth(variant: String) -> Image:
+	var subject := _subject_for_group()
+	await _solo(subject, SUN_SPOT, 15.0)
+	var centre := subject.global_position + Vector3.UP * (0.85 if subject.is_seated() else 1.12)
+	var frame := await _frame_from(centre + Vector3(0.0, 0.04, 0.8), centre, 45.0)
+	var image: Image = frame["image"]
+	_drop_camera()
+	image.save_png("%s/%s_cloth_%s.png" % [SHOT_DIR, _group, variant])
+	var size := int(image.get_height() * 0.8)
+	return _fit(image, Rect2i(image.get_size() / 2 - Vector2i(size, size) / 2, Vector2i(size, size)), FACE_PANEL)
 
 
 ## N at the lectern, from the room: a little above eye height, from the front desks.
@@ -448,6 +504,7 @@ func _stage_room() -> void:
 	_place(_cast["protagonist"]["animator"], GAME_PLAYER, 200.0)
 	(_cast["q"]["holder"] as Node3D).global_transform = _q_authored
 	_place(_cast["n"]["animator"], LECTERN, 0.0)
+	(_cast["student"]["holder"] as Node3D).global_transform = _student_authored
 	await _wait(1.4)
 	_hide_nameplates()
 
@@ -488,13 +545,17 @@ func _place(subject: CharacterVisualAnimation, at: Vector3, facing: float) -> vo
 				break
 			yaw += error
 		return
-	var holder: Node3D = _cast["q"]["holder"] if subject == _cast["q"]["animator"] else _cast["n"]["holder"]
-	holder.global_position = at
-	for attempt in 3:
-		var error := wrapf(wanted - _yaw_of(subject), -PI, PI)
-		if absf(error) < 0.01:
-			break
-		holder.rotation.y += error
+	for label: String in _cast:
+		if _cast[label]["animator"] != subject:
+			continue
+		var holder: Node3D = _cast[label]["holder"]
+		holder.global_position = at
+		for attempt in 3:
+			var error := wrapf(wanted - _yaw_of(subject), -PI, PI)
+			if absf(error) < 0.01:
+				break
+			holder.rotation.y += error
+		return
 
 
 func _yaw_of(subject: CharacterVisualAnimation) -> float:

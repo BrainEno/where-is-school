@@ -72,10 +72,34 @@ jobs:
             group: dialogue
             variants: "before,after"
             frames: ""
+          # Unlike historical `before`, these compare with the PR's actual base looks.
+          - name: refinement-n
+            group: n
+            variants: "baseline,after"
+            frames: "body_sun,body_shade,face,cloth,lectern"
+          - name: refinement-student
+            group: student
+            variants: "baseline,after"
+            frames: ""
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - uses: ./.github/actions/setup-godot
+
+      - name: Prepare material-refinement baseline
+        if: startsWith(matrix.name, 'refinement-')
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${BASE_SHA}"
+          mkdir -p "${RUNNER_TEMP}/character-look-baseline"
+          git show "${BASE_SHA}:assets/characters/teacher_n/teacher_n_look.tres" \
+            > "${RUNNER_TEMP}/character-look-baseline/n.tres"
+          git show "${BASE_SHA}:assets/characters/classroom_student/student_look.tres" \
+            > "${RUNNER_TEMP}/character-look-baseline/student.tres"
+          echo "Material baseline: ${BASE_SHA}; columns baseline,after; fixed idle/sit pose"
 
       - name: Import project
         shell: bash
@@ -97,6 +121,9 @@ jobs:
           mkdir -p docs/screenshots/character_integration
           args="--group=${{ matrix.group }} --variants=${{ matrix.variants }}"
           if [ -n "${{ matrix.frames }}" ]; then args="${args} --frames=${{ matrix.frames }}"; fi
+          if [[ "${{ matrix.name }}" == refinement-* ]]; then
+            args="${args} --freeze-pose --baseline-dir=${RUNNER_TEMP}/character-look-baseline"
+          fi
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 \
             --script res://tests/capture_character_integration.gd -- ${args} > capture.log 2>&1

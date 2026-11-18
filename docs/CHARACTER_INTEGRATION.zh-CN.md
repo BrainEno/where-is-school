@@ -156,4 +156,71 @@ Q 的两套方案、N 的两套方案，区别在于媒介（颜料与版画、�
 3. **N 的开衫色相。** 保留鼠尾草绿系。木刻方案提示了更暗更强的服装；本任务没有采用，因为会使她显得威严。若她的角色之后要变得强硬，由你决定。
 4. **N 的模型**眼球朝内，已在外观中绕过；在源文件中翻转只需一行，可留到下次模型修订。模型仍是 16 关节骨骼，没有面部形变（不能眨眼、没有表情），波波头网格呈头盔状。条纹已由统一的发色掩盖。如需重建模型，另开任务。
 5. **手部。** Q 的手套状手和 N 的简化手部未改动。
-6. 坐着的同学仍不在本次范围内。
+6. 坐着的同学不在上述集成的原始范围内；下文后续要求的表面细化已将其纳入，模型与坐姿放置保持不变。
+
+## 8. N 与坐椅同学的表面细化（2026-11-18）
+
+**范围/状态。** 相对基线 `42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6` 已实现的材质提案，
+不等于所有者视觉批准。这不是已退役的 #188 叠层实验。两人的生产外观已经接入绘画管线，
+这里的“粗糙”是色块与描边过粗、头发通用排线、衣料种类缺乏区分，不是要求降低 PBR
+粗糙度或增加油亮皮肤。N 没有 UV，学生主要衣料表面也没有；放大一张位图不能为它们补上细节。
+
+### 实现与边界
+
+- 在现有 `character_paint.gdshaderinc` 内新增可选的 `pigment_blend`（色阶间连续罩染）、
+  `patch_feather` 与 `detail_kind/strength/scale/tint/origin`。类型 1 为细 V 形针织、
+  2 为经纬斜纹、3 为角向弯曲发束。仅改变漫反射颜色：粗糙度仍为 1，金属度/镜面仍为 0；
+  不新增法线、纹理采样、几何、绘制 pass 或材质槽。
+- 衣料复用现有静止坐标的三向投影，混合权重来自静止位置导数，而非姿态/视角法线，避免
+  肩膀运动时织纹在衣服上转动。用 `fwidth` 在纹理变成亚像素前淡出对比度；这是抗锯齿措施，
+  不是已经实测的 FPS 提升。
+- `refined_teacher()` 保留 N 的鼠尾草绿开衫、米色衬衣和深色裤子，收敛大块粉笔笔触，
+  加入细针织/斜纹及弯曲棕色发束，减弱面部色块对比并柔化罩染。
+  `refined_student()` 保留灰紫/米色/藏蓝，缓和皮肤明暗插片与眼下对比，按材质角色分配
+  针织、斜纹和发束。两人描边改为 5.5 mm，减少摇摆；手指、面部插片与细小衣片仍不单独套描边壳。
+- 新参数默认关闭；仅两个生产外观在 `room_keyed()` 前启用。主角、Q 和保留的木刻/纸感
+  实验不重新定风格。用 `python3 art/characters/build_character_looks.py` 重生成，
+  `--check` 检查漂移；不要手改生成的 `.tres`。
+- 不改 GLB、法线、权重、骨骼、动画、形变、包装场景变换、碰撞、交互、对白或肖像。
+  N 的六个内向眼面仍使用现有双面 shader；这不是修复源模型，也没有新增面部表情。
+  学生模型原有的棱角仍属于模型几何。
+
+**表面来源。** 修改的现有 `.tres` 资源由仓库内 Python 调色参数表确定性生成，shader 是
+在 Arena 编程辅助下编写的一方代码；不新增下载、描摹、图像生成作品或运行资源文件。
+模型权利仍以 `ASSET_PROVENANCE.md` 原有记录为准，材质参数变更不为其他模型/肖像确立
+权利。该共享台账保持原样，以免与并行环境美术 PR #245 交叉修改。
+
+### 可复现对照与回归覆盖
+
+`capture_character_integration.gd` 现在纳入真实的 `Actors/SeatedStudent`，不把它站起来：
+提供正面/四分之三脸部、衣料、原位桌椅和游戏距离画面，N 增加衣料近景。
+`baseline` 明确区别于历史 `before`：用 `--baseline-dir` 加载**本次变更基线**的
+n.tres 和 student.tres。缺目录/资源会失败，不会偷换成更老或 raw 外观。
+`--freeze-pose` 固定已绑定的 idle/sit 姿态和眨眼，供材质 A/B；不能据此声称验证了运动。
+
+```sh
+baseline="$(mktemp -d)"
+base=42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+for group in n student; do
+  xvfb-run -a --server-args="-screen 0 1600x900x24" \
+    godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+    --script res://tests/capture_character_integration.gd -- \
+    --group="$group" --variants=baseline,after --baseline-dir="$baseline" --freeze-pose
+done
+```
+
+截图工作流的 `refinement-n`、`refinement-student` 作业从**实际 PR base SHA** 提取外观，
+记录该 SHA，发布双列图（左基线、右当前）与完整截图 artifact。手动 dispatch 时基线就是
+所 dispatch 的修订自身，不能作为历史改善证据。每列共享场景、灯光、镜头和姿态；基线使用
+当前 shader 但关闭新增选项。
+
+`tests/imported_assets_test.gd` 额外锁定细节材质角色与克制的强度，确认皮肤/眼睛及主角/Q
+所有材质不启用细节，主角/Q 也不启用新的罩染选项；现有几何/静止坐标、材质切换可逆性、
+坐椅包装场景、六个双面眼面的合同继续有效。实际执行结果与环境警告在 PR 中报告，
+不能在这里预先认定视觉验收通过。
+
+**所有者清单：** 对比日照/阴影下的脸和头发；检查两套衣料近景；查看讲台上的 N 与原位
+坐椅学生；移动/缩放游戏镜头观察闪烁和轮廓可读性；用未冻结的正常 idle、walk、sit 路径
+检查细节是否泳动。目标显卡 Forward+ 与 Windows 性能仍需目标硬件验证，软件/OpenGL 截图不等于该验证。
