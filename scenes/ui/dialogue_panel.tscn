@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/dialogue_panel.gd" id="1_dialogue_panel"]
 [ext_resource type="Shader" path="res://assets/shaders/ui/portrait_fade.gdshader" id="2_portrait_fade"]
+[ext_resource type="Script" path="res://scripts/ui/notebook_paper.gd" id="3_notebook_paper"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_portrait"]
 shader = ExtResource("2_portrait_fade")
@@ -11,7 +12,7 @@ shader_parameter/fade_top = 0.1
 
 [sub_resource type="Gradient" id="Gradient_wash"]
 offsets = PackedFloat32Array(0, 0.55, 1)
-colors = PackedColorArray(0.03, 0.032, 0.034, 0, 0.03, 0.032, 0.034, 0.5, 0.03, 0.032, 0.034, 0.92)
+colors = PackedColorArray(0.03, 0.028, 0.05, 0, 0.03, 0.028, 0.05, 0.16, 0.03, 0.028, 0.05, 0.34)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_wash"]
 gradient = SubResource("Gradient_wash")
@@ -25,7 +26,7 @@ content_margin_left = 36.0
 content_margin_top = 16.0
 content_margin_right = 32.0
 content_margin_bottom = 14.0
-bg_color = Color(0.035, 0.038, 0.04, 0.9)
+bg_color = Color(0.93, 0.9, 0.82, 0)
 
 [node name="DialoguePanel" type="Control"]
 anchor_top = 1.0
@@ -53,6 +54,15 @@ texture = SubResource("GradientTexture2D_wash")
 expand_mode = 1
 stretch_mode = 1
 
+[node name="Paper" type="Control" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_notebook_paper")
+
 [node name="Frame" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 anchor_right = 1.0
@@ -68,7 +78,7 @@ theme_override_constants/separation = 9
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
-color = Color(0.776, 0.733, 0.643, 0.55)
+color = Color(0.42, 0.35, 0.29, 0.55)
 
 [node name="HeaderRow" type="HBoxContainer" parent="Frame/Content"]
 clip_contents = true
@@ -83,7 +93,7 @@ mouse_filter = 2
 [node name="SpeakerLabel" type="Label" parent="Frame/Content/HeaderRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.898, 0.871, 0.804, 1)
+theme_override_colors/font_color = Color(0.3, 0.16, 0.2, 1)
 theme_override_font_sizes/font_size = 24
 text = "Speaker"
 uppercase = true
@@ -92,7 +102,7 @@ uppercase = true
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
-theme_override_colors/font_color = Color(0.611, 0.6, 0.561, 0.85)
+theme_override_colors/font_color = Color(0.36, 0.33, 0.35, 0.9)
 theme_override_font_sizes/font_size = 14
 text = "role"
 
@@ -104,14 +114,14 @@ size_flags_horizontal = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
-theme_override_colors/font_color = Color(0.611, 0.6, 0.561, 0.6)
+theme_override_colors/font_color = Color(0.36, 0.33, 0.35, 0.75)
 theme_override_font_sizes/font_size = 12
 text = "seen"
 
 [node name="TitleLabel" type="Label" parent="Frame/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.702, 0.671, 0.596, 0.9)
+theme_override_colors/font_color = Color(0.27, 0.24, 0.28, 0.92)
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 3
 text = "Title"
@@ -124,7 +134,7 @@ size_flags_vertical = 3
 bbcode_enabled = false
 fit_content = true
 scroll_active = false
-theme_override_colors/default_color = Color(0.91, 0.886, 0.827, 1)
+theme_override_colors/default_color = Color(0.16, 0.14, 0.2, 1)
 theme_override_constants/line_separation = 6
 theme_override_font_sizes/normal_font_size = 25
 text = "Body"
@@ -133,7 +143,7 @@ text = "Body"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-color = Color(0.851, 0.447, 0.271, 0.22)
+color = Color(0.66, 0.24, 0.14, 0.3)
 
 [node name="ChoicesContainer" type="VBoxContainer" parent="Frame/Content"]
 unique_name_in_owner = true
@@ -143,7 +153,7 @@ theme_override_constants/separation = 2
 [node name="HintLabel" type="Label" parent="Frame/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.588, 0.549, 0.62)
+theme_override_colors/font_color = Color(0.36, 0.33, 0.35, 0.8)
 theme_override_font_sizes/font_size = 13
 text = "[Space] continue"
 horizontal_alignment = 2

@@ -30,8 +30,8 @@
     "prompt": "Look at the set square",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A set square the length of your forearm, laid on the corner of the front desk. The varnish is pale where a hand would hold it. One corner has split, and someone has taped it with tape that has since gone brown.",
-    "repeat_text": "The set square, still on the corner of the desk. The taped corner faces the room.",
+    "text": "A set square the length of your forearm, laid across the top of the lectern. The varnish is pale where a hand would hold it. One corner has split, and someone has taped it with tape that has since gone brown.",
+    "repeat_text": "The set square, still on the lectern. The taped corner faces the room.",
     "recall": {
       "entry_id": "recall_set_square_placed",
       "text": "You remember this being put down on a desk. Twice, to be heard. You cannot say whether you were in the room when it happened."
@@ -39,7 +39,7 @@
     "record": {
       "entry_id": "saw_set_square",
       "source": "observed",
-      "text": "A damaged wooden set square sits on the corner of the biology teacher's desk."
+      "text": "A damaged wooden set square lies on the lectern before the biology lesson."
     },
     "effects": [
       {
@@ -88,16 +88,16 @@
     }
   },
   "classroom_teacher_desk": {
-    "title": "Teacher's desk",
-    "prompt": "Look at the front desk",
+    "title": "Lectern",
+    "prompt": "Look at the lectern",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "Bigger than the student desks and tidier by a small margin. A register in a plastic cover, a stapler, a mug being used to hold chalk. The chair is pushed in at an angle, as if the person leaving it had somewhere else to be first.",
-    "repeat_text": "Register, stapler, mug of chalk. The chair still at its angle.",
+    "text": "Much taller than the student desks, and not much on it: a register in a plastic cover, a few sheets of lesson notes. And, of course, a set square.",
+    "repeat_text": "The lectern stands well above the desks. It gives a teacher a good view, and good cover.",
     "record": {
       "entry_id": "saw_teacher_desk",
       "source": "observed",
-      "text": "The front desk is tidy in a way the student desks are not, and its chair is pushed in at an angle."
+      "text": "A lectern stands much higher than the desks: a good view for the teacher, and good cover for whatever they would rather nobody saw."
     }
   },
   "classroom_timetable_sheet": {

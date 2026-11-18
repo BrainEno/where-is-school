@@ -4,8 +4,9 @@ extends Control
 ##
 ## A keyboard or controller player has the `dialogue_auto` / `dialogue_skip` inputs and the
 ## hint names them; a player who only uses the mouse needs something to click, and this is
-## it: "Auto" and "Skip", set in the hint's own small size, lit in the options' apricot while
-## that mode is on and muted otherwise.
+## it: "Auto" and "Skip", set in the hint's own small size, in the options' deep red ink
+## while that mode is on and a muted pencil grey otherwise (the band is a sheet of notebook
+## paper, `NotebookPaper`, so every colour here is an ink on a light ground).
 ##
 ## It is a child of the hint label, not a row of its own, on purpose: the band's layout is
 ## measured and tested node by node (`tests/dialogue_layout_test.gd`), and a new row would
@@ -19,9 +20,9 @@ signal skip_pressed
 const GAP := 18.0
 const SPACING := 12.0
 
-const MUTED := Color(0.6, 0.588, 0.549, 0.62)
-const LIT := Color(0.976, 0.792, 0.643, 1.0)
-const HOVER := Color(0.851, 0.447, 0.271, 1.0)
+const MUTED := Color(0.36, 0.33, 0.35, 0.72)
+const LIT := Color(0.44, 0.1, 0.06, 1.0)
+const HOVER := Color(0.66, 0.24, 0.14, 1.0)
 
 var _auto: Button = null
 var _skip: Button = null

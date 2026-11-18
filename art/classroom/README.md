@@ -44,12 +44,12 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Floor | `#7E848C` base / cool mineral gray | Broken trowel strokes, light scuffs and soft concrete mottling; no plank grain |
 | Teacher's platform | Poured concrete from the biology-classroom experiment, without the floor's ruling (`platform_concrete.tres`, `shaders/concrete.gdshader`) | Physically raised 0.12 m, with a lower broad approach step |
 | Board | `#243D3F` + chalk `#D6DCCE` | The wiped-not-quite front board, the old chalk newspaper on the back wall |
-| Oxblood lacquer | `#6E3C36` | Board frame, teacher's desk panels: the *authority* objects |
+| Oxblood lacquer | `#6E3C36` | Board frame, the lectern's front band: the *authority* objects |
 | Door grey / door white | `#7D8287` / `#E6E3D9` | The two door leaves (`door_gray`, `door_white`) in teal frames (`trim_teal`) |
 | Blackout navy | `#1B2441` | The back window's floor-to-ceiling curtain (`curtain_blackout`) |
 | Screen matte | `#EDE6CC` | The roll-down projection screen (`screen_matte`) |
 | Apricot | `#E0A569` / pale `#EFCD97` | The impossible late light: the window view, its spill on the wall, its shapes on the floor |
-| Honey wood | `#A98458` | Teacher's desk top, chalk tray; the student desk pigment anchors |
+| Honey wood | `#A98458` | The lectern's carcass, chalk tray; the student desk pigment anchors |
 | Worn wood | `#998775` | Student chairs: deliberately quieter |
 | Mustard canvas | `#BE963E` | The schoolbag: the first thing the player is sent to |
 | Cobalt | `#40568C` | The register's cover, readable but matte rather than glossy |
@@ -84,6 +84,14 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
   inspection text (*LAST TERM — REVISION*, a date three weeks old). They are kept
   illegible on purpose, so the board needs no localisation.
 - **Above the board:** deliberate negative space; no replacement text or glyph decoration.
+- **Painted absences (from the biology-classroom experiment):** two flat violet-ink marks,
+  drawn unshaded so they do not answer the real light (`ink_shadow_*.tres`, textures from
+  `paint_classroom_textures.py`). `WallNorth/InkShadowFigure` is a shadow nobody in the room
+  casts: a tall, stooped figure with a set square raised, rising off the platform on the
+  front wall beside the lectern. `Props/InkShadowSquare` is the set square's long shadow,
+  from the platform's foot under the lectern across the floor to the front edge of your
+  desk (B2). They are scenery: no collision, no interaction, and the figure fades with
+  the wall it is painted on.
 
 ## Inspection texts → scene
 
@@ -94,9 +102,9 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | (curtain lines) The front window is ordinary, washing pegged out on a line; the back window has its curtain drawn | `window_view.png`, window 0's third only (s 3.0–4.5 m) carries the washing; `Anomalies/BackCurtain` (`WindowCurtain`, procedural, `curtain_blackout`) hangs from its track 0.18 m off the west wall, 3.3 m wide, from 3.14 m down to the floor, over the opening at z 0.95–3.45 |
 | (curtain lines) Behind the curtain: no glass, the wall's own thickness, then nothing | A real hole through `WallWest`, floor to wall top (y 0–3.2; the sill and header were removed in the art migration, so `paint_classroom_textures.py`'s `WEST_VOID_OPENING` only still gives its z range): the shell and paint stop at `MeshInstance3D` (north shell)/`SouthShell` and `Paint`/`PaintSouth`; there is no glass, frame, view or backdrop. Once the curtain is drawn, `Anomalies/VoidOpening/BlankSheet` fills the cut with the experiment's blank sheet (`void_sheet.tres`, unlit paper), and `Anomalies/PaperZone` (`scripts/environment/paper_zone.gd`, `paper_zone.tres`) turns the room within 2.6 m of the cut into a pencil drawing on an answer sheet, as an overlay that is removed again when the curtain is reset; the people (`Actors`) are never covered. The wall's collision stays whole |
 | The second door never opens, unless special means are used | `WallEast/RearDoor` (`classroom_door.tscn`, white leaf), a plain inspection (`classroom_rear_door`); nothing opens and no staircase is placed in this room |
-| Set square, forearm length, pale varnish, split corner taped with browned tape, taped corner faces the room | `set_square.tscn` now lies flat (0.55 × 0.42 m; the prism's size axes were swapped), `TapeRepair` in browned tape, ink ticks |
+| Set square, forearm length, pale varnish, split corner taped with browned tape, taped corner faces the room | `set_square.tscn` lies flat (0.55 × 0.42 m; the prism's size axes were swapped), `TapeRepair` in browned tape, ink ticks. It lies on the lectern's sloped top (`Props/SetSquare`, tilted with the reading surface, resting on the register), since the low teacher's desk was taken out |
 | Own desk: scratched-out name, half-peeled sticker, groove along the front edge | `Furniture/DeskB2/DeskMarks` decal |
-| Teacher's desk: register in plastic, stapler, mug of chalk, chair pushed in at an angle, tidier | `Register` + label, `Stapler`, `Mug` with three sticks, `Papers`, the new `Chair` |
+| Lectern (the `classroom_teacher_desk` inspection): much taller than the desks, a register in plastic, lesson notes, the set square | `Stage/Lectern` with `Body/Register`, `Body/LessonPapers` and the set square on top. The low teacher's desk (`teacher_desk.tscn`) is no longer placed in the classroom; the wrapper stays in the project |
 | Timetable: coffee ring, teacher's name lined out in biro | `TimetableSheet/Face` |
 | Schoolbag: canvas, one strap | Mustard canvas, one `Strap`, a side pocket; it hangs on the back of your chair (`Furniture/DeskB2/Chair/Schoolbag`), not on the floor |
 
@@ -142,7 +150,8 @@ nothing about it is saved. The schoolbag hangs on the back of the protagonist's 
 Q starts a little way down the aisle and walks to `QOpeningTalk`, at the player's left,
 before the first line (the opening's Q beat, #160). The stage and its step are actual colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage
-is separate from the retained inspection desk. Q/N states, inspection IDs, `Sun`,
+is the only teacher's furniture: the low teacher's desk was taken out and its inspection
+(`front_desk` / `classroom_teacher_desk`) now sits on the lectern (`Interactables/LecternInspect`). Q/N states, inspection IDs, `Sun`,
 `WorldEnvironment` and the classroom-to-corridor transition remain in place.
 
 ### The teacher's lectern (#172)
@@ -159,7 +168,7 @@ register. Godot primitives and the room's own materials only.
 |---|---|---|
 | Carcass | 0.80 W × 0.44 D m; board 0.90 × 0.52 m | CSULB's Freedom One lectern, 36.25 in W × 30 in D, a little shallower so the stage keeps a walk behind it |
 | Reading surface | 0.96 m at the teacher's edge, 1.04 m at the room's (8.75° slope), above the stage | 36-42 in (0.91-1.07 m) lecterns (CSULB, MSU, UConn) for an adult of about 1.75 m, scaled to N's 1.65 m: 0.58 of N's height, just under the elbow |
-| Collision | `Body` box 0.84 × 1.04 × 0.54 m | it now carves the navmesh and stops the player; the old lectern had no collider |
+| Collision | `Body` box 0.84 × 0.96 × 0.54 m | it carves the navmesh and stops the player; the old lectern had no collider. Its top stops at the low edge of the sloped reading surface, so the box never stands above the set square lying there and the camera's line to it stays clear |
 
 Two markers belong to the lectern, so nothing else carries its coordinates: `TeacherStand`
 (0.54 m behind its centre, on the stage) and `WorkSurface` (the teacher's edge of the

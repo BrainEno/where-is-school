@@ -8,7 +8,7 @@
 [ext_resource type="Material" path="res://assets/materials/classroom/register_cover.tres" id="7_register"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
-size = Vector3(0.84, 1.04, 0.54)
+size = Vector3(0.84, 0.96, 0.54)
 
 [sub_resource type="BoxMesh" id="BoxMesh_side"]
 size = Vector3(0.03, 0.92, 0.44)
@@ -55,7 +55,7 @@ size = Vector3(0.24, 0.022, 0.31)
 [node name="Body" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
-position = Vector3(0, 0.52, 0)
+position = Vector3(0, 0.48, 0)
 shape = SubResource("BoxShape3D_body")
 
 [node name="Plinth" type="MeshInstance3D" parent="Body"]

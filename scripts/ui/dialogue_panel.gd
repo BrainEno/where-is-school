@@ -5,8 +5,8 @@ extends Control
 ## The panel is a **reading surface at the edge of the world**, not a chat window:
 ##
 ## - it is a band in the lower left, never full width, so the room stays the main
-##   picture; a soft ink wash fades its top edge into the scene instead of drawing a
-##   heavy box around it;
+##   picture; it is a torn notebook sheet with soft shadow above it rather than a heavy
+##   box (see below);
 ## - the speaker's name is the anchor, the role is quieter, and the sentence is the
 ##   largest thing on screen;
 ## - the narrative source (seen / heard / remembered / imagined) is a hairline and a
@@ -29,12 +29,22 @@ extends Control
 ## scrolls inside the body instead of growing past the screen. Nothing shrinks the type
 ## to make text fit: the type sizes are fixed and the panel adapts around them.
 ##
-## The reading voice follows Disco Elysium's dialogue column rather than a game's chat box
-## (owner's direction, 2026-11-12): a dark, almost opaque ink ground; the speaker's name in
-## tracked capitals in the speaker's colour; the sentence large, in a serif (Noto Serif SC,
-## `assets/fonts/NotoSerifSC-Regular.otf`), warm off-white on the dark; the options numbered
-## and set in a warm vermilion that brightens under the pointer. The interface outside the
-## panel keeps the Sans; anything the serif subset cannot draw falls back to it.
+## The reading voice still follows Disco Elysium's dialogue column rather than a game's chat
+## box (owner's direction, 2026-11-12): the speaker's name in tracked capitals in the
+## speaker's colour; the sentence large, in a serif (Noto Serif SC,
+## `assets/fonts/NotoSerifSC-Regular.otf`); the options numbered and set in red ink that
+## deepens under the pointer. The interface outside the panel keeps the Sans; anything the
+## serif subset cannot draw falls back to it.
+##
+## The ground is no longer the dark ink band of that direction: by the owner's later
+## request the band is the notebook strip of the biology-classroom experiment, a torn sheet
+## of exercise-book paper (warm white, pale blue rules on the body's line pitch, a red
+## margin line) with the set square's ink-blue corner over its top-left corner
+## (`NotebookPaper`, the `Paper` node behind `Frame`). Everything on it is set in ink: the
+## sentence in a dark blue-black, the name in a dark plum, or in the speaker's own accent
+## colour taken down to an ink of the same hue (`_ink_for`), since the profiles' accents are
+## pale colours chosen for a dark ground. The `Wash` above the band is only a soft shadow
+## now; it keeps its rect, which is where a portrait may rise to.
 ##
 ## A speaker *may* have an approved 2D portrait (`CharacterProfile.portrait`). Most do
 ## not, and then nothing here changes: no slot is reserved and every rect is the same as
@@ -59,8 +69,8 @@ extends Control
 ## state the controller hands back (`set_playback_state`): the hint line names the inputs, or
 ## says which mode is on, or for a moment why skip stopped; and two small words at the start
 ## of the hint line (`DialogueModeBar`) switch the modes for a player on the mouse. An option
-## the player took in an earlier run (`chosen_before` on the choice) is set a quieter
-## vermilion, lit like any other under the pointer.
+## the player took in an earlier run (`chosen_before` on the choice) is set in a faded red
+## ink, lit like any other under the pointer.
 
 signal advance_requested
 signal choice_selected(index: int)
@@ -131,27 +141,37 @@ signal skip_requested
 @onready var _source_rule: ColorRect = %SourceRule
 @onready var _choice_rule: ColorRect = %ChoiceRule
 @onready var _wash: TextureRect = %Wash
+@onready var _paper: NotebookPaper = %Paper
 @onready var _portrait: TextureRect = %Portrait
 @onready var _portrait_slot: Control = %PortraitSlot
 @onready var _content: VBoxContainer = $Frame/Content
 @onready var _header_row: HBoxContainer = $Frame/Content/HeaderRow
 
+## The narrative source, as inks on the paper: brown-black for what was seen, a blue for
+## what was heard, a grey-green for what is remembered, a rust for what is imagined.
 const SOURCE_COLORS: Dictionary = {
-	NarrativeEntry.Source.OBSERVED: Color(0.776, 0.733, 0.643, 1.0),
-	NarrativeEntry.Source.REPORTED: Color(0.561, 0.663, 0.710, 1.0),
-	NarrativeEntry.Source.RECALLED: Color(0.604, 0.639, 0.592, 1.0),
-	NarrativeEntry.Source.IMAGINED: Color(0.820, 0.553, 0.349, 1.0),
+	NarrativeEntry.Source.OBSERVED: Color(0.42, 0.35, 0.29, 1.0),
+	NarrativeEntry.Source.REPORTED: Color(0.24, 0.37, 0.52, 1.0),
+	NarrativeEntry.Source.RECALLED: Color(0.32, 0.4, 0.34, 1.0),
+	NarrativeEntry.Source.IMAGINED: Color(0.64, 0.32, 0.15, 1.0),
 }
 
-const SUBJECTIVE_TINT := Color(0.717, 0.427, 0.286, 1.0)
-const PAPER := Color(0.898, 0.871, 0.804, 1.0)
-const MUTED := Color(0.611, 0.6, 0.561, 1.0)
-const INK := Color(0.035, 0.038, 0.04, 0.9)
-## The options: a warm vermilion at rest, a pale apricot under the pointer or the cursor.
-const CHOICE_COLOR := Color(0.851, 0.447, 0.271, 1.0)
-const CHOICE_LIT := Color(0.976, 0.792, 0.643, 1.0)
-## An option taken in an earlier run: the same hue, quieter, so the untried ones stand out.
-const CHOICE_SEEN := Color(0.627, 0.42, 0.333, 1.0)
+## The inner voices' name: a rust ink, warmer than any speaker's.
+const SUBJECTIVE_TINT := Color(0.62, 0.27, 0.13, 1.0)
+## The sheet the band is written on (`NotebookPaper.PAPER`).
+const PAPER := NotebookPaper.PAPER
+## A speaker without an accent colour: the experiment's dark plum.
+const SPEAKER_INK := Color(0.3, 0.16, 0.2, 1.0)
+## The sentence: a blue-black ink.
+const BODY_INK := Color(0.16, 0.14, 0.2, 1.0)
+const MUTED := Color(0.36, 0.33, 0.35, 1.0)
+## The frame draws nothing of its own: the paper behind it is the ground.
+const INK := Color(0.93, 0.9, 0.82, 0.0)
+## The options: red ink at rest, a deeper red under the pointer or the cursor.
+const CHOICE_COLOR := Color(0.66, 0.24, 0.14, 1.0)
+const CHOICE_LIT := Color(0.44, 0.1, 0.06, 1.0)
+## An option taken in an earlier run: the same hue, faded, so the untried ones stand out.
+const CHOICE_SEEN := Color(0.58, 0.44, 0.4, 1.0)
 ## How long the hint says why skip stopped before it goes back to naming the inputs.
 const PLAYBACK_NOTICE_SECONDS := 2.6
 ## The serif the sentence, the name, the title and the options are set in. Everything else
@@ -162,7 +182,7 @@ var _reveal_progress: float = 0.0
 var _revealing: bool = false
 var _choice_buttons: Array[Button] = []
 var _line: Dictionary = {}
-var _accent: Color = PAPER
+var _accent: Color = SPEAKER_INK
 var _style_normal: StyleBoxEmpty = StyleBoxEmpty.new()
 var _style_hover: StyleBoxFlat = StyleBoxFlat.new()
 var _style_pressed: StyleBoxFlat = StyleBoxFlat.new()
@@ -939,6 +959,21 @@ func _settle_layout() -> void:
 	_layout_stage = 0
 	_layout_dirty = false
 	_fit_mode_bar()
+	_rule_paper()
+
+
+## Puts the paper's rules under the body's lines: the first on the first line's baseline,
+## then one per line pitch (the serif's height plus the body's line separation), so the
+## sentence sits on the rules the way handwriting would.
+func _rule_paper() -> void:
+	if _paper == null:
+		return
+	var font := _body_label.get_theme_font(&"normal_font")
+	if font == null:
+		return
+	var pitch := font.get_height(body_size) + float(_body_label.get_theme_constant(&"line_separation"))
+	var top := _body_label.global_position.y - global_position.y
+	_paper.set_rules(top + font.get_ascent(body_size) + 3.0, pitch)
 
 
 ## When the line and all of its options cannot share the band, the body keeps two lines
@@ -1252,14 +1287,26 @@ func _badge_text(line: Dictionary) -> String:
 func _speaker_color(line: Dictionary) -> Color:
 	if line.get("subjective", false):
 		return SUBJECTIVE_TINT
-	return line.get("accent_color", PAPER)
+	if not line.has("accent_color"):
+		return SPEAKER_INK
+	return _ink_for(Color(line["accent_color"]))
+
+
+## A profile's accent colour (a pale colour, chosen for the dark backlog) as an ink of the
+## same hue that reads on the paper: dark, and a little more saturated so two speakers
+## whose accents differ mostly in hue still differ on the page. White, the runtime's
+## fallback for a speaker without a profile, becomes the plain speaker ink.
+static func _ink_for(accent: Color) -> Color:
+	if accent.s < 0.03:
+		return SPEAKER_INK
+	return Color.from_hsv(accent.h, clampf(accent.s * 1.6 + 0.2, 0.3, 0.75), 0.36, 1.0)
 
 
 func _accent_for(line: Dictionary) -> Color:
 	if line.get("subjective", false):
 		return SUBJECTIVE_TINT
 	var source_value := int(line.get("source", NarrativeEntry.Source.OBSERVED))
-	return SOURCE_COLORS.get(source_value, PAPER)
+	return SOURCE_COLORS.get(source_value, MUTED)
 
 
 ## The source is drawn twice, both times quietly: a hairline along the top edge and a
@@ -1277,6 +1324,7 @@ func _apply_accent(accent: Color) -> void:
 	style.content_margin_bottom = 14.0
 	_frame.add_theme_stylebox_override("panel", style)
 	_wash.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	_body_label.add_theme_color_override("default_color", BODY_INK)
 
 
 func _apply_choice_colors(button: Button) -> void:
@@ -1300,24 +1348,24 @@ func is_choice_marked_chosen(index: int) -> bool:
 
 
 ## Option styling lives in one place so every rebuilt list looks the same after a
-## language switch: flat by default; on hover a vermilion margin mark, a faint warm ground
-## and the text lit from vermilion to apricot. The
+## language switch: flat by default; on hover a red margin mark, a faint warm ground
+## and the text deepened from red ink to a darker red. The
 ## shapes are built once and shared by every option.
 func _build_choice_styles() -> void:
 	_style_normal.content_margin_left = 10.0
 	_style_normal.content_margin_right = 6.0
 	_style_normal.content_margin_top = 4.0
 	_style_normal.content_margin_bottom = 4.0
-	_style_hover.bg_color = Color(0.851, 0.447, 0.271, 0.08)
+	_style_hover.bg_color = Color(CHOICE_COLOR, 0.08)
 	_style_hover.border_width_left = 2
-	_style_hover.border_color = Color(0.851, 0.447, 0.271, 0.75)
+	_style_hover.border_color = Color(CHOICE_COLOR, 0.75)
 	_style_hover.content_margin_left = 10.0
 	_style_hover.content_margin_right = 6.0
 	_style_hover.content_margin_top = 4.0
 	_style_hover.content_margin_bottom = 4.0
-	_style_pressed.bg_color = Color(0.851, 0.447, 0.271, 0.14)
+	_style_pressed.bg_color = Color(CHOICE_COLOR, 0.14)
 	_style_pressed.border_width_left = 2
-	_style_pressed.border_color = Color(0.976, 0.792, 0.643, 0.85)
+	_style_pressed.border_color = Color(CHOICE_LIT, 0.85)
 	_style_pressed.content_margin_left = 10.0
 	_style_pressed.content_margin_right = 6.0
 	_style_pressed.content_margin_top = 4.0

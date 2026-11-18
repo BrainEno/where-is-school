@@ -37,12 +37,12 @@
 | 地板 | `#7E848C` 基色／冷矿物灰 | 断续抹刀笔触、浅色磨损和柔和水泥斑驳；没有木板纹 |
 | 水泥讲台 | 生物课教室实验的现浇水泥，不带地面的横线（`platform_concrete.tres`、`shaders/concrete.gdshader`） | 实际抬高 0.12 m，并带宽大的低台阶 |
 | 黑板 | `#243D3F` + 粉笔 `#D6DCCE` | 前黑板（擦过又没擦干净）、后墙的旧黑板报 |
-| 牛血红漆 | `#6E3C36` | 黑板框、讲桌侧板，也就是代表“权威”的物件 |
+| 牛血红漆 | `#6E3C36` | 黑板框、讲桌前装饰条，也就是代表“权威”的物件 |
 | 门灰／门白 | `#7D8287` / `#E6E3D9` | 两扇门的门板（`door_gray`、`door_white`），门框为墨青色（`trim_teal`） |
 | 遮光藏青 | `#1B2441` | 后窗落地遮光窗帘（`curtain_blackout`） |
 | 幕布哑白 | `#EDE6CC` | 可拉下的投影幕（`screen_matte`） |
 | 杏橙 | `#E0A569` / 浅 `#EFCD97` | 不合时宜的傍晚光：窗景、溢到墙上的光、地面上的光斑 |
-| 蜂蜜木 | `#A98458` | 讲桌面、粉笔槽，以及学生课桌的颜料锚点 |
+| 蜂蜜木 | `#A98458` | 讲桌柜体、粉笔槽，以及学生课桌的颜料锚点 |
 | 旧木 | `#998775` | 学生椅，刻意压低存在感 |
 | 芥末帆布 | `#BE963E` | 书包，玩家第一个要找的东西 |
 | 钴蓝 | `#40568C` | 点名册封皮，保持可辨认但不使用亮面高光 |
@@ -69,6 +69,7 @@
 - **前黑板**：板擦弧线下残留的标题和日期栏痕迹，与检视文本一致
   （*LAST TERM — REVISION*，以及一个三周前的日期）。这些字迹刻意保持不可辨认，因此黑板不需要本地化。
 - **黑板上方**：有意留白，不用另一组文字或符号装饰替换。
+- **画出来的“缺席”（来自生物教室美术实验）**：两处平涂的紫墨色标记，不受光照（`ink_shadow_*.tres`，贴图由 `paint_classroom_textures.py` 绘制），画出来的影子不回应真实的灯光。`WallNorth/InkShadowFigure` 是一个教室里没有人投下的影子：高而佝偻、举着三角尺的人形，从讲台台面上沿前墙升起，位于讲桌旁。`Props/InkShadowSquare` 是三角尺拖长的影子，从讲桌下方的台阶脚一路越过地面，指到你的课桌（B2）前沿。它们只是布景：没有碰撞、不可交互，墙上的人影会随墙一起淡出。
 
 ## 检视文本 → 场景
 
@@ -79,9 +80,9 @@
 | （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain`（程序生成的 `WindowCurtain`，`curtain_blackout`）挂在离西墙 0.18 m 的轨道上，宽 3.3 m，从 3.14 m 垂到地面，遮住 z 0.95–3.45 的墙洞 |
 | （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `WallWest` 上真实的洞，从地面一直到墙顶（y 0–3.2；美术迁移时去掉了窗台和过梁，`paint_classroom_textures.py` 的 `WEST_VOID_OPENING` 只剩 z 范围仍有效）：墙壳和墙面只剩 `MeshInstance3D`（北段墙壳）/`SouthShell` 与 `Paint`/`PaintSouth`，洞后没有玻璃、窗框、窗景或背景板。窗帘拉开后，`Anomalies/VoidOpening/BlankSheet` 用实验里的空白纸（`void_sheet.tres`，不受光的纸面）填满墙洞，`Anomalies/PaperZone`（`scripts/environment/paper_zone.gd`、`paper_zone.tres`）把墙洞 2.6 m 以内的教室变成答题纸上的铅笔画——以覆盖层实现，窗帘复位时会撤掉；人物（`Actors`）永远不会被覆盖。墙的碰撞体保持完整 |
 | 另一扇门从来不会打开，除非使用特殊的手段 | `WallEast/RearDoor`（`classroom_door.tscn`，白色门板），只是普通检视（`classroom_rear_door`）；不会打开，本教室不放置楼梯 |
-| 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度 |
+| 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度。低矮教师桌移除后，它放在讲桌倾斜的桌面上（`Props/SetSquare`，随桌面倾斜，压在点名册上） |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |
-| 讲桌上有塑料封皮的点名册、订书机、装粉笔的杯子；椅子斜着推进去；比其他桌子整洁 | `Register` 及标签、`Stapler`、插着三支粉笔的 `Mug`、`Papers`、新增的 `Chair` |
+| 讲台（`classroom_teacher_desk` 检视）：比课桌高很多，上面有塑料封皮的点名册、教案和三角尺 | `Stage/Lectern` 的 `Body/Register`、`Body/LessonPapers` 和放在上面的三角尺。低矮教师桌（`teacher_desk.tscn`）不再放进教室，包装场景仍保留在项目中 |
 | 课程表上有咖啡杯印，老师名字被圆珠笔划掉 | `TimetableSheet/Face` |
 | 书包是帆布的，只有一根背带 | 芥末色帆布、唯一的 `Strap`、一个侧袋；挂在你的椅背上（`Furniture/DeskB2/Chair/Schoolbag`），不在地上 |
 
@@ -106,7 +107,7 @@
 `WindowCurtainMount0` 与 `WindowCurtainMount1` 标记窗帘挂点（后者即遮光窗帘轨道）。投影幕（`WallNorth/ProjectorScreen`）在进入教室时是卷起的；
 `Interactables/ProjectorScreenPull` 可以把它拉下、再卷上去，其状态不会存档。
 书包挂在主角椅背上（`Furniture/DeskB2/Chair/Schoolbag`）；玩家在这把椅子上醒来（`PlayerStart`），Q 从过道稍远处出发，在第一句台词前走到玩家左手边的 `QOpeningTalk`（开场 Q 段落，#160）。讲台和台阶都有真实碰撞体：
-抬高 0.12 米，低于玩家 0.25 米步高和导航网格 0.25 米爬升上限。讲台上的站立式讲桌独立于保留检视交互的普通教师桌。
+抬高 0.12 米，低于玩家 0.25 米步高和导航网格 0.25 米爬升上限。低矮的普通教师桌已从教室移除，讲台上的站立式讲桌是唯一的教师家具；原教师桌检视（`front_desk` / `classroom_teacher_desk`）移到讲桌上（`Interactables/LecternInspect`），三角尺放在讲桌的倾斜阅读面上。
 Q/N 状态、检视 ID、`Sun`、`WorldEnvironment` 和教室到走廊的转场均保留。
 
 ### 教师讲桌（#172）
@@ -121,7 +122,7 @@ Q/N 状态、检视 ID、`Sun`、`WorldEnvironment` 和教室到走廊的转场�
 |---|---|---|
 | 柜体 | 0.80 宽 × 0.44 深 m；面板 0.90 × 0.52 m | CSULB Freedom One 讲桌 36.25 in 宽 × 30 in 深，略浅一些，让讲台后方留出通行空间 |
 | 工作面 | 讲台面以上，教师一侧 0.96 m、学生一侧 1.04 m（倾斜 8.75°） | 现实讲桌 36–42 in（0.91–1.07 m，CSULB、MSU、UConn）对应约 1.75 m 成人；按 N 的 1.65 m 缩放后为 N 身高的 0.58，正好在肘部下方 |
-| 碰撞 | `Body` 盒体 0.84 × 1.04 × 0.54 m | 现在会切出导航网格并挡住玩家；旧讲桌没有碰撞体 |
+| 碰撞 | `Body` 盒体 0.84 × 0.96 × 0.54 m | 会切出导航网格并挡住玩家；旧讲桌没有碰撞体。盒体顶部停在倾斜阅读面的低边，不会高出放在上面的三角尺，镜头到三角尺的视线保持通畅 |
 
 讲桌自带两个挂点，其他地方不再保存它的坐标：`TeacherStand`（中心后方 0.54 m，位于讲台面）和
 `WorkSurface`（阅读面教师一侧边缘）。`NEntryPath` 现在终止于此：先经过讲桌右侧（`BesideLectern`），

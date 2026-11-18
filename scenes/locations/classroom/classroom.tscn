@@ -1,10 +1,9 @@
-[gd_scene load_steps=110 format=3]
+[gd_scene load_steps=113 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/light_panel.tres" id="9_light_panel"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_desk.tscn" id="11_classroom_desk"]
-[ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_desk.tscn" id="12_teacher_desk"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teacher_lectern.tscn" id="12_teacher_lectern"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/blackboard.tscn" id="13_blackboard"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/set_square.tscn" id="14_set_square"]
@@ -36,6 +35,8 @@
 [ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="c_metal_ink"]
 [ext_resource type="Material" path="res://assets/materials/classroom/timetable_sheet.tres" id="c_timetable_sheet"]
 [ext_resource type="Material" path="res://assets/materials/classroom/desk_marks.tres" id="c_desk_marks"]
+[ext_resource type="Material" path="res://assets/materials/classroom/ink_shadow_figure.tres" id="c_ink_shadow_figure"]
+[ext_resource type="Material" path="res://assets/materials/classroom/ink_shadow_square.tres" id="c_ink_shadow_square"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/front_wall_dressing.tscn" id="c_front_wall"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/back_board.tscn" id="c_back_board"]
 
@@ -172,6 +173,12 @@ size = Vector2(0.5, 0.7)
 [sub_resource type="QuadMesh" id="QuadMesh_desk_marks"]
 size = Vector2(0.4, 0.26)
 
+[sub_resource type="QuadMesh" id="QuadMesh_ink_shadow_figure"]
+size = Vector2(1.6, 3)
+
+[sub_resource type="QuadMesh" id="QuadMesh_ink_shadow_square"]
+size = Vector2(0.9, 4.2)
+
 [sub_resource type="BoxMesh" id="BoxMesh_Stage"]
 size = Vector3(6.8, 0.12, 2.5)
 
@@ -274,6 +281,12 @@ position = Vector3(0, -1.6, 0.1)
 
 [node name="ProjectorScreen" parent="WallNorth" instance=ExtResource("c_screen")]
 position = Vector3(-2.9, 1.02, 0.35)
+
+[node name="InkShadowFigure" type="MeshInstance3D" parent="WallNorth"]
+position = Vector3(2.15, 0.02, 0.112)
+mesh = SubResource("QuadMesh_ink_shadow_figure")
+material_override = ExtResource("c_ink_shadow_figure")
+cast_shadow = 0
 
 [node name="WallWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-6.9, 1.6, 0)
@@ -654,10 +667,6 @@ position = Vector3(1.6, 0, 3.4)
 [node name="DeskC4" parent="Furniture" instance=ExtResource("11_classroom_desk")]
 position = Vector3(4.8, 0, 3.4)
 
-[node name="FrontDesk" parent="Furniture" instance=ExtResource("12_teacher_desk")]
-position = Vector3(-4.65, 0, -2.2)
-rotation_degrees = Vector3(0, 3, 0)
-
 [node name="Stage" type="StaticBody3D" parent="."]
 position = Vector3(0, 0.06, -3.65)
 
@@ -682,12 +691,17 @@ position = Vector3(0.7, 0.06, 0)
 
 [node name="Props" type="Node3D" parent="."]
 
+[node name="InkShadowSquare" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(-0.7129, -0.7013, 0, 0, 0, 1, -0.7013, 0.7129, 0, -0.475, 0.009, -0.5)
+mesh = SubResource("QuadMesh_ink_shadow_square")
+material_override = ExtResource("c_ink_shadow_square")
+cast_shadow = 0
+
 [node name="Blackboard" parent="Props" instance=ExtResource("13_blackboard")]
 position = Vector3(-1.6, 0, -4.75)
 
 [node name="SetSquare" parent="Props" instance=ExtResource("14_set_square")]
-position = Vector3(-4.25, 0.81, -2.1)
-rotation_degrees = Vector3(0, 14, 0)
+transform = Transform3D(0.99027, 0, -0.13917, 0.02117, 0.98836, 0.15064, 0.13755, -0.15212, 0.97874, 0.65, 1.1377, -3.6904)
 
 [node name="Actors" type="Node3D" parent="."]
 
@@ -747,21 +761,22 @@ radius = 1.5
 camera_shot = ExtResource("c_shot_blackboard")
 
 [node name="SetSquareInspect" parent="Interactables" instance=ExtResource("17_interactable")]
-position = Vector3(-4.0, 0.6, -1.45)
+position = Vector3(0.6, 0.9, -3.3)
 interact_id = &"set_square"
 outline_paths = PackedStringArray("../../Props/SetSquare")
-support_paths = PackedStringArray("../../Furniture/FrontDesk")
+support_paths = PackedStringArray("../../Stage/Lectern")
 prompt_text = "Look at the set square"
 inspection_id = &"classroom_set_square"
 radius = 0.8
 
-[node name="FrontDeskInspect" parent="Interactables" instance=ExtResource("17_interactable")]
-position = Vector3(-4.4, 0.5, -1.7)
+[node name="LecternInspect" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(1.05, 0.5, -3.65)
 interact_id = &"front_desk"
-outline_paths = PackedStringArray("../../Furniture/FrontDesk")
-prompt_text = "Look at the front desk"
+outline_paths = PackedStringArray("../../Stage/Lectern")
+support_paths = PackedStringArray("../../Stage/Lectern")
+prompt_text = "Look at the lectern"
 inspection_id = &"classroom_teacher_desk"
-radius = 1.3
+radius = 1.1
 
 [node name="WindowInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(-6.0, 0.6, 0.0)

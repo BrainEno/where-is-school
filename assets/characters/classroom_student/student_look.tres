@@ -1,0 +1,606 @@
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=31 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_outline"]
+
+[sub_resource type="ShaderMaterial" id="outline"]
+resource_name = "character_ink_outline"
+shader = ExtResource("3_outline")
+shader_parameter/ink = Color(0.1608, 0.1412, 0.2000, 1)
+shader_parameter/width = 0.01
+shader_parameter/wobble = 0.55
+shader_parameter/wobble_scale = 11
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_skin"]
+resource_name = "wis_protagonist_skin (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.7882, 0.6275, 0.5176, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_head_main_mesh__wis_protagonist_skin"]
+resource_name = "head_main_mesh/wis_protagonist_skin (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.7882, 0.6275, 0.5176, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_neck__wis_protagonist_skin"]
+resource_name = "neck/wis_protagonist_skin (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.7882, 0.6275, 0.5176, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_ear_l__wis_protagonist_skin"]
+resource_name = "ear_l/wis_protagonist_skin (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.7882, 0.6275, 0.5176, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_ear_r__wis_protagonist_skin"]
+resource_name = "ear_r/wis_protagonist_skin (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.7882, 0.6275, 0.5176, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_skin_light"]
+resource_name = "wis_protagonist_skin_light (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8471, 0.6824, 0.5647, 1)
+shader_parameter/edge_break = 0.22
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.55
+shader_parameter/light_edge = 0.5
+shader_parameter/light_strength = 0.72
+shader_parameter/light_tint = Color(1.0000, 0.9098, 0.7922, 1)
+shader_parameter/pigment_a = Color(0.7686, 0.5569, 0.4549, 1)
+shader_parameter/pigment_b = Color(0.6863, 0.6275, 0.4941, 1)
+shader_parameter/pigment_mix = 0.2
+shader_parameter/pigment_scale = 18
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 1.4, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.6078, 0.5843, 0.7490, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.34
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_skin_shadow"]
+resource_name = "wis_protagonist_skin_shadow (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.5569, 0.4000, 0.3451, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.45
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_undereye"]
+resource_name = "wis_protagonist_undereye (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.6353, 0.4941, 0.4549, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.45
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_eye_offwhite"]
+resource_name = "wis_protagonist_eye_offwhite (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8627, 0.8275, 0.7451, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.8
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.6
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_iris"]
+resource_name = "wis_protagonist_iris (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.2275, 0.1647, 0.1333, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.6
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_pupil"]
+resource_name = "wis_protagonist_pupil (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.0627, 0.0471, 0.0431, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_eye_glint"]
+resource_name = "wis_protagonist_eye_glint (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.9490, 0.9176, 0.8471, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.9
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.85
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_hair"]
+resource_name = "wis_protagonist_hair (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.1333, 0.1137, 0.1333, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.85
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/mark_across = Vector3(1, 0, 0.6)
+shader_parameter/mark_color = Color(0.2980, 0.2745, 0.3373, 1)
+shader_parameter/mark_contour = 0.12
+shader_parameter/mark_coverage = 0.12
+shader_parameter/mark_jitter = 0.4
+shader_parameter/mark_length = 12
+shader_parameter/mark_scale = 110
+shader_parameter/mark_strength = 0.4
+shader_parameter/mark_width = 0.25
+shader_parameter/pigment_a = Color(0.2000, 0.1843, 0.2706, 1)
+shader_parameter/pigment_b = Color(0.2431, 0.1882, 0.1608, 1)
+shader_parameter/pigment_mix = 0.5
+shader_parameter/pigment_scale = 12
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.28
+shader_parameter/shade_tint = Color(0.4902, 0.4784, 0.6353, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.45
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_hair_warm"]
+resource_name = "wis_protagonist_hair_warm (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.1804, 0.1412, 0.1255, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.85
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_a = Color(0.2000, 0.1843, 0.2706, 1)
+shader_parameter/pigment_b = Color(0.2431, 0.1882, 0.1608, 1)
+shader_parameter/pigment_mix = 0.5
+shader_parameter/pigment_scale = 12
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.28
+shader_parameter/shade_tint = Color(0.4902, 0.4784, 0.6353, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.45
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_cardigan"]
+resource_name = "wis_protagonist_cardigan (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.3529, 0.2902, 0.3686, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.25
+shader_parameter/light_strength = 0.9
+shader_parameter/light_tint = Color(1.0000, 0.8941, 0.7490, 1)
+shader_parameter/mark_across = Vector3(1, 0.15, 0.3)
+shader_parameter/mark_color = Color(0.6627, 0.6196, 0.5569, 1)
+shader_parameter/mark_contour = 0.9
+shader_parameter/mark_contour_power = 2.5
+shader_parameter/mark_coverage = 0.04
+shader_parameter/mark_jitter = 0.6
+shader_parameter/mark_length = 9
+shader_parameter/mark_scale = 70
+shader_parameter/mark_strength = 0.45
+shader_parameter/mark_width = 0.22
+shader_parameter/pigment_a = Color(0.2902, 0.2510, 0.3765, 1)
+shader_parameter/pigment_b = Color(0.3922, 0.3294, 0.3059, 1)
+shader_parameter/pigment_mix = 0.45
+shader_parameter/pigment_scale = 6
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 3, 1)
+shader_parameter/pigment_value = 0.22
+shader_parameter/shade_tint = Color(0.5333, 0.5059, 0.7137, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.4
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_cardigan_light"]
+resource_name = "wis_protagonist_cardigan_light (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.4314, 0.3647, 0.4235, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_a = Color(0.3686, 0.3294, 0.4392, 1)
+shader_parameter/pigment_b = Color(0.4784, 0.4157, 0.3765, 1)
+shader_parameter/pigment_mix = 0.35
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.5333, 0.5059, 0.7137, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.4
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_cardigan_shadow"]
+resource_name = "wis_protagonist_cardigan_shadow (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.2353, 0.1961, 0.2588, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5333, 0.5059, 0.7137, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_button"]
+resource_name = "wis_protagonist_button (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.5412, 0.4314, 0.2745, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.45
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_stitch"]
+resource_name = "wis_protagonist_stitch (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.5569, 0.4980, 0.4157, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_brush_rust"]
+resource_name = "wis_protagonist_brush_rust (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.5412, 0.2902, 0.2118, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_shirt"]
+resource_name = "wis_protagonist_shirt (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.8471, 0.8118, 0.7216, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_a = Color(0.7882, 0.8000, 0.7216, 1)
+shader_parameter/pigment_b = Color(0.8667, 0.7961, 0.6588, 1)
+shader_parameter/pigment_mix = 0.35
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.12
+shader_parameter/shade_tint = Color(0.5647, 0.5412, 0.7137, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.36
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_shirt_shadow"]
+resource_name = "wis_protagonist_shirt_shadow (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.6980, 0.6588, 0.5647, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5647, 0.5412, 0.7137, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.36
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_trousers"]
+resource_name = "wis_protagonist_trousers (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.1843, 0.2000, 0.2510, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/mark_across = Vector3(1, 0.15, 0.3)
+shader_parameter/mark_color = Color(0.6627, 0.6196, 0.5569, 1)
+shader_parameter/mark_contour = 0.9
+shader_parameter/mark_contour_power = 2.5
+shader_parameter/mark_coverage = 0.04
+shader_parameter/mark_jitter = 0.6
+shader_parameter/mark_length = 9
+shader_parameter/mark_scale = 70
+shader_parameter/mark_strength = 0.35
+shader_parameter/mark_width = 0.22
+shader_parameter/pigment_a = Color(0.1647, 0.1804, 0.2824, 1)
+shader_parameter/pigment_b = Color(0.2431, 0.2353, 0.2275, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 6
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 3.4, 1)
+shader_parameter/pigment_value = 0.18
+shader_parameter/shade_tint = Color(0.5333, 0.5059, 0.6627, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.38
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_trousers_light"]
+resource_name = "wis_protagonist_trousers_light (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.2784, 0.2941, 0.3529, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5333, 0.5059, 0.6627, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_shoes"]
+resource_name = "wis_protagonist_shoes (painted)"
+next_pass = SubResource("outline")
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.1686, 0.1373, 0.1294, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_a = Color(0.1804, 0.1569, 0.1882, 1)
+shader_parameter/pigment_b = Color(0.2275, 0.1725, 0.1412, 1)
+shader_parameter/pigment_mix = 0.4
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0.15
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[sub_resource type="ShaderMaterial" id="m_wis_protagonist_sole"]
+resource_name = "wis_protagonist_sole (painted)"
+shader = ExtResource("2_paint")
+shader_parameter/albedo = Color(0.2431, 0.2118, 0.1961, 1)
+shader_parameter/edge_break = 0.18
+shader_parameter/edge_softness = 0.03
+shader_parameter/half_tone = 0.62
+shader_parameter/light_edge = 0.42
+shader_parameter/light_strength = 0.76
+shader_parameter/light_tint = Color(1.0000, 0.9294, 0.8314, 1)
+shader_parameter/pigment_mix = 0
+shader_parameter/pigment_scale = 9
+shader_parameter/pigment_steps = 4
+shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
+shader_parameter/pigment_value = 0
+shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
+shader_parameter/shadow_edge = -0.05
+shader_parameter/shadow_fill = 0.3
+
+[resource]
+script = ExtResource("1_look")
+materials = {
+"wis_protagonist_skin": SubResource("m_wis_protagonist_skin"),
+"head_main_mesh/wis_protagonist_skin": SubResource("m_head_main_mesh__wis_protagonist_skin"),
+"neck/wis_protagonist_skin": SubResource("m_neck__wis_protagonist_skin"),
+"ear_l/wis_protagonist_skin": SubResource("m_ear_l__wis_protagonist_skin"),
+"ear_r/wis_protagonist_skin": SubResource("m_ear_r__wis_protagonist_skin"),
+"wis_protagonist_skin_light": SubResource("m_wis_protagonist_skin_light"),
+"wis_protagonist_skin_shadow": SubResource("m_wis_protagonist_skin_shadow"),
+"wis_protagonist_undereye": SubResource("m_wis_protagonist_undereye"),
+"wis_protagonist_eye_offwhite": SubResource("m_wis_protagonist_eye_offwhite"),
+"wis_protagonist_iris": SubResource("m_wis_protagonist_iris"),
+"wis_protagonist_pupil": SubResource("m_wis_protagonist_pupil"),
+"wis_protagonist_eye_glint": SubResource("m_wis_protagonist_eye_glint"),
+"wis_protagonist_hair": SubResource("m_wis_protagonist_hair"),
+"wis_protagonist_hair_warm": SubResource("m_wis_protagonist_hair_warm"),
+"wis_protagonist_cardigan": SubResource("m_wis_protagonist_cardigan"),
+"wis_protagonist_cardigan_light": SubResource("m_wis_protagonist_cardigan_light"),
+"wis_protagonist_cardigan_shadow": SubResource("m_wis_protagonist_cardigan_shadow"),
+"wis_protagonist_button": SubResource("m_wis_protagonist_button"),
+"wis_protagonist_stitch": SubResource("m_wis_protagonist_stitch"),
+"wis_protagonist_brush_rust": SubResource("m_wis_protagonist_brush_rust"),
+"wis_protagonist_shirt": SubResource("m_wis_protagonist_shirt"),
+"wis_protagonist_shirt_shadow": SubResource("m_wis_protagonist_shirt_shadow"),
+"wis_protagonist_trousers": SubResource("m_wis_protagonist_trousers"),
+"wis_protagonist_trousers_light": SubResource("m_wis_protagonist_trousers_light"),
+"wis_protagonist_shoes": SubResource("m_wis_protagonist_shoes"),
+"wis_protagonist_sole": SubResource("m_wis_protagonist_sole")
+}
+expression = {}
+blink_shapes = PackedStringArray()
+blink_interval = Vector2(2.5, 5)
+blink_duration = 0.16
+label = "classroom student: charcoal (integrated)"

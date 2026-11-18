@@ -855,6 +855,75 @@ def clock_face() -> Image.Image:
     return c.image(12, alpha="cut")
 
 
+# --- painted marks (the biology-classroom experiment's absences, brought in) -------------
+# What is missing is drawn, not modelled (docs/BIOLOGY_CLASSROOM_EXPERIMENT.md, "Absences
+# are ink marks"): a shadow nobody in the room casts, and the long shadow of the set square
+# on the lectern. Both are flat violet ink on a transparent sheet, drawn unshaded in the
+# room (`ink_shadow_*.tres`): a painted shadow does not answer the real light.
+
+SHADOW_INK = (31, 26, 56)  # the experiment's shadow ink, (0.12, 0.10, 0.22)
+
+
+def _shadow_canvas(width_m: float, height_m: float, ppm: float, seed: int) -> Canvas:
+    return Canvas(width_m, height_m, ppm, SHADOW_INK, seed=seed, alpha=0.0)
+
+
+def figure_shadow() -> Image.Image:
+    """The shadow on the front wall beside the lectern (1.6 x 3.0 m): tall and stooped,
+    the head thrust forward with a long nose, a bun, one arm up holding a set square.
+    Nobody in the room casts it. Only an impression: no face, no hands, no feet. The
+    experiment's silhouette (room_art.gd `b_shadow`), redrawn here with a cut edge."""
+    w, h = 1.6, 3.0
+    c = _shadow_canvas(w, h, 128.0, seed=1951)
+
+    def at(x: float, y: float) -> tuple[float, float]:
+        # The experiment's 512 x 1024 pixel drawing, y down -> metres, y up.
+        return x / 512.0 * w, h - y / 1024.0 * h
+
+    def poly(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+        return [at(x, y) for x, y in points]
+
+    def ellipse(cx: float, cy: float, rx: float, ry: float, n: int = 28) -> list[tuple[float, float]]:
+        return [at(cx + rx * math.cos(t), cy + ry * math.sin(t)) for t in np.linspace(0, math.tau, n, endpoint=False)]
+
+    shapes = [
+        poly([(150, 360), (116, 420), (124, 560), (146, 640), (112, 1024), (372, 1024),
+              (336, 640), (318, 420), (300, 340), (214, 318)]),
+        poly([(250, 236), (318, 226), (324, 340), (236, 352)]),
+        poly([(286, 352), (318, 336), (392, 446), (366, 466)]),
+        poly([(366, 466), (392, 446), (452, 352), (430, 336)]),
+        poly([(360, 178), (452, 214), (356, 230)]),
+        poly([(408, 344), (508, 344), (408, 206)]),
+        ellipse(308, 200, 60, 64),
+        ellipse(244, 150, 36, 30),
+    ]
+    body = np.zeros((c.h, c.w), np.float32)
+    for points in shapes:
+        body = np.maximum(body, c.polygon_mask(points, rough=0.3, cell_m=0.04, blur_m=0.006))
+    hole = c.polygon_mask(poly([(424, 328), (468, 328), (424, 266)]), rough=0.2, cell_m=0.02, blur_m=0.004)
+    body = body * (1.0 - hole)
+    # Thinner towards the feet, where it meets the platform: it rises out of the floor.
+    _, y = np.meshgrid(np.arange(c.w), np.arange(c.h))
+    rise = smoothstep(0.0, 0.12, 1.0 - y / float(c.h))
+    c.paint_alpha(SHADOW_INK, body * (0.55 + 0.45 * rise), 1.0)
+    return c.image(4, alpha="blend")
+
+
+def square_shadow() -> Image.Image:
+    """The set square's shadow on the floor (0.9 x 4.2 m): a long thin triangle with its
+    hole, the base at the bottom of the image (the platform's foot, under the lectern) and
+    the point at the top (the front edge of your desk)."""
+    w, h = 0.9, 4.2
+    c = _shadow_canvas(w, h, 100.0, seed=7)
+    outer = c.polygon_mask([(0.06, 0.02), (0.88, 0.02), (0.13, h - 0.03)], rough=0.25, cell_m=0.05, blur_m=0.008)
+    hole = c.polygon_mask([(0.2, 0.3), (0.6, 0.3), (0.23, h * 0.6)], rough=0.2, cell_m=0.04, blur_m=0.006)
+    _, y = np.meshgrid(np.arange(c.w), np.arange(c.h))
+    # Fading towards the point: the far end is where the shadow is least sure of itself.
+    fade = 0.45 + 0.55 * smoothstep(0.0, 0.9, y / float(c.h))
+    c.paint_alpha(SHADOW_INK, outer * (1.0 - hole) * fade, 1.0)
+    return c.image(4, alpha="blend")
+
+
 # --- sidecars ------------------------------------------------------------------------------
 
 
@@ -974,6 +1043,8 @@ def main() -> None:
     save(desk_marks(), "desk_marks.png")
     save(timetable(), "timetable.png")
     save(clock_face(), "clock_face.png")
+    save(figure_shadow(), "ink_shadow_figure.png")
+    save(square_shadow(), "ink_shadow_square.png")
 
 
 if __name__ == "__main__":
