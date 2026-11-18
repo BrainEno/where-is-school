@@ -117,7 +117,8 @@ alley mouth.
 
 The names above are the ones a player meets. The location **ids** in
 `data/story/locations.json` — the strings a scene, a door and a save file use — are
-different for three of them, and a search for the wrong one finds nothing:
+different for three of them, and a search for the wrong one finds nothing (see
+[docs/GLOSSARY.md](docs/GLOSSARY.md) for the complete terminology and autoload mapping):
 
 | Player-facing name | Location id | Scene |
 | --- | --- | --- |
@@ -246,6 +247,7 @@ missing.
 
 - [AGENTS.md](AGENTS.md) — authoritative coding-agent entry point; read before editing.
 - [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md) — mandatory collaboration, reporting and PR rules.
+- [docs/GLOSSARY.md](docs/GLOSSARY.md) — canonical terminology, location ID mappings, and autoload singleton names.
 - [docs/MODULE_INDEX.md](docs/MODULE_INDEX.md) — search here before implementing: every global GDScript type, shared UI helpers, test harness, autoloads and editor/tool boundaries.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.

@@ -7,8 +7,8 @@ extends Node
 ##
 ## Entries are append-only and de-duplicated by entry_id: re-reading the same
 ## prop does not create a second record and revisiting a scene stays consistent.
-## `to_snapshot()`/`restore_snapshot()` are the data shape `SaveManager` writes and
-## reads (ADR 0005); a restore validates every entry with the same rules `record()`
+## `to_snapshot()`/`restore_snapshot()` are the data shape `Save` (class `SaveManager`)
+## writes and reads (ADR 0005); a restore validates every entry with the same rules `record()`
 ## uses, so a save is never a second, more permissive way in.
 
 signal entry_recorded(entry: NarrativeEntry)

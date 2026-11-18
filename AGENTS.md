@@ -12,7 +12,7 @@ The primary experience is exploration, environmental observation, and literary d
 
 - Product and scope: docs/PRODUCT_BRIEF.md
 - Runtime boundaries: docs/ARCHITECTURE.md
-- Technical decisions: docs/TECHNICAL_ROADMAP.md
+- Technical decisions: docs/TECHNICAL_ROADMAP.md; terminology and location IDs: docs/GLOSSARY.md
 - Game-facing narrative constraints: docs/NARRATIVE_BIBLE.md
 - Visual direction (English source of truth): docs/ART_BIBLE.md and docs/CONCEPT_DIRECTION.md
 - Chinese reading copies: docs/ART_BIBLE.zh-CN.md and docs/CONCEPT_DIRECTION.zh-CN.md. Keep each English/Chinese pair synchronized; agents should use the English version as the canonical production instruction.
