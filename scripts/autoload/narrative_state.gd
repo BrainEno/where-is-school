@@ -11,6 +11,8 @@ extends Node
 ## reads (ADR 0005); a restore validates every entry with the same rules `record()`
 ## uses, so a save is never a second, more permissive way in.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal entry_recorded(entry: NarrativeEntry)
 signal entries_cleared
 ## Emitted after a restore, with how many entries the file produced. The restored
@@ -32,7 +34,7 @@ func record(
 ) -> bool:
 	var problem := validate(entry_id, source, text)
 	if not problem.is_empty():
-		Diagnostics.record("state.knowledge_write_refused")
+		OfflineDiagnostics.note("state.knowledge_write_refused")
 		push_error("NarrativeState.record: %s." % problem)
 		return false
 	if _by_id.has(entry_id):
@@ -106,7 +108,7 @@ func restore_snapshot(snapshot: Dictionary) -> Dictionary:
 		serialized = []
 	if not (serialized is Array):
 		var detail := "'entries' is not an array"
-		Diagnostics.record("state.restore_refused")
+		OfflineDiagnostics.note("state.restore_refused")
 		push_error("NarrativeState.restore_snapshot: %s; the log is unchanged." % detail)
 		return {"ok": false, "restored": 0, "rejected": [detail]}
 
@@ -134,7 +136,7 @@ func restore_snapshot(snapshot: Dictionary) -> Dictionary:
 		_entries.append(entry)
 		_by_id[entry.entry_id] = entry
 	if not rejected.is_empty():
-		Diagnostics.record("state.knowledge_refused", {"count": rejected.size()})
+		OfflineDiagnostics.note("state.knowledge_refused", {"count": rejected.size()})
 	for problem in rejected:
 		push_error("NarrativeState.restore_snapshot: rejected %s." % problem)
 	entries_restored.emit(_entries.size())

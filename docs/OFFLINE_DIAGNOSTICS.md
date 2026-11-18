@@ -21,8 +21,8 @@
 
 ## 添加或读取一个事件
 
-- `Diagnostics.record("world.transition_refused", {"reason": "scene_missing", "to_location": "corridor"})`：
-  只从**主线程的低频操作边界**调用。先在 `scripts/diagnostics/event_schema.gd` 登记事件、
+- `OfflineDiagnostics.note("world.transition_refused", {"reason": "scene_missing", "to_location": "corridor"})`：
+  通过 `preload("res://scripts/autoload/diagnostics.gd")` 获取 `OfflineDiagnostics`，只从**主线程的低频操作边界**调用。先在 `scripts/diagnostics/event_schema.gd` 登记事件、
   固定英文说明、等级、类别和必要字段。不能传入 `detail`、路径、对象、存档快照或玩家内容。
 - 等级 `DEBUG < INFO < WARNING < ERROR`；默认 `INFO` 及以上、所有类别。
   调试可调用 `Diagnostics.set_filter(Diagnostics.Level.DEBUG, ["assets"])`；空类别表代表全部。

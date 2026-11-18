@@ -3,10 +3,16 @@ extends SceneTree
 ## calls the export API: the settings buttons receive actual viewport key events.
 
 const Harness := preload("res://tests/test_harness.gd")
-const REPORT_PATH := Diagnostics.LOG_DIR + "/" + Diagnostics.EXPORT_NAME
+const Log := preload("res://scripts/autoload/diagnostics.gd")
+const SessionScript := preload("res://scripts/ui/game_session.gd")
+const SaveScript := preload("res://scripts/autoload/save_manager.gd")
+const REPORT_PATH := Log.LOG_DIR + "/" + Log.EXPORT_NAME
 const PRIVATE_MARKER := "MOCK_PRIVATE_DIAGNOSTICS_PATH"
 
 var checks := Harness.Checker.new()
+var _session: Node
+var _save: Node
+var _state: Node
 
 
 func _initialize() -> void:
@@ -27,8 +33,16 @@ func _run() -> void:
 			"Select exactly one phase: collect or export."):
 		_finish()
 		return
-	Loc.set_locale("zh-CN")
-	if not checks.expect(change_scene_to_file(Session.TITLE_SCENE) == OK, "Cannot load the actual title scene."):
+	_session = root.get_node_or_null(^"Session")
+	_save = root.get_node_or_null(^"Save")
+	_state = root.get_node_or_null(^"GameState")
+	var loc := root.get_node_or_null(^"Loc")
+	if not checks.expect(_session != null and _save != null and _state != null and loc != null,
+			"The game's autoloads are missing."):
+		_finish()
+		return
+	loc.set_locale("zh-CN")
+	if not checks.expect(change_scene_to_file(SessionScript.TITLE_SCENE) == OK, "Cannot load the actual title scene."):
 		_finish()
 		return
 	await scene_changed
@@ -44,7 +58,7 @@ func _run() -> void:
 
 
 func _collect(title: TitleScreen) -> void:
-	if not checks.expect(not FileAccess.file_exists(REPORT_PATH) and not Save.has_save(),
+	if not checks.expect(not FileAccess.file_exists(REPORT_PATH) and not _save.has_save(),
 			"The first launch must start with a fresh save and no export."):
 		return
 	title.focus_entry(&"new_game")
@@ -58,16 +72,16 @@ func _collect(title: TitleScreen) -> void:
 	var changed := host.load_location(missing, &"", current_scene.get_node("Player"), &"corridor")
 	checks.expect(not changed and host.get_current() == before, "The failed transition changed the world.")
 	# Use the real save system to create the warning, not a diagnostics-only test call.
-	GameState.set_flag(&"private_fixture", PRIVATE_MARKER)
-	GameState.set_flag(StoryFlags.LEFT_CLASSROOM, false)
-	if not checks.expect(Save.save_game()["ok"], "Could not write a real checkpoint for the recovery fixture."):
+	_state.set_flag(&"private_fixture", PRIVATE_MARKER)
+	_state.set_flag(StoryFlags.LEFT_CLASSROOM, false)
+	if not checks.expect(_save.save_game()["ok"], "Could not write a real checkpoint for the recovery fixture."):
 		return
-	var backup := Save.SAVE_PATH + ".diagnostics-fixture.bak"
-	if not checks.expect(DirAccess.rename_absolute(Save.SAVE_PATH, backup) == OK,
+	var backup := SaveScript.SAVE_PATH + ".diagnostics-fixture.bak"
+	if not checks.expect(DirAccess.rename_absolute(SaveScript.SAVE_PATH, backup) == OK,
 			"Could not simulate the interrupted save swap."):
 		return
-	checks.expect(Save.recover_pending_swap()["recovered"], "The real save recovery warning was not reached.")
-	checks.expect(Session.go_to_title()["ok"], "Could not return to the title.")
+	checks.expect(_save.recover_pending_swap()["recovered"], "The real save recovery warning was not reached.")
+	checks.expect(_session.go_to_title()["ok"], "Could not return to the title.")
 	await scene_changed
 	var exit_title := current_scene as TitleScreen
 	if not checks.expect(exit_title != null, "Could not reach the title's Quit entry."):
@@ -100,7 +114,7 @@ func _export_phase(title: TitleScreen) -> void:
 		"No real transition failure and reason survived restart.")
 	checks.expect(_has_event(events, "world.entered", "INFO") and _has_event(events, "save.written", "INFO"),
 		"The real location and checkpoint traces are missing.")
-	checks.expect(not FileAccess.file_exists(Diagnostics.LOG_DIR + "/godot.log"),
+	checks.expect(not FileAccess.file_exists(Log.LOG_DIR + "/godot.log"),
 		"The desktop engine wrote its unsanitized default log.")
 	checks.expect(String(report["game_version"]) != "unknown" and String(report["godot_version"]).begins_with("4.")
 		and report["os"] == OS.get_name() and report["privacy"]["local_only"],
@@ -134,7 +148,7 @@ func _use_export_button(panel: SettingsPanel) -> Dictionary:
 	await _tap(KEY_ENTER)
 	var text := FileAccess.get_file_as_string(REPORT_PATH)
 	var report: Variant = JSON.parse_string(text)
-	checks.expect(Diagnostics.EXPORT_NAME in panel.get_status_text(), "Settings did not report a successful export.")
+	checks.expect(Log.EXPORT_NAME in panel.get_status_text(), "Settings did not report a successful export.")
 	checks.expect(not PRIVATE_MARKER in text and not OS.get_user_data_dir() in text
 		and not "res://" in text and not "private_fixture" in text and not "save.json" in text,
 		"The exported package contains paths, raw console text, or save fixture data.")
@@ -144,10 +158,10 @@ func _use_export_button(panel: SettingsPanel) -> Dictionary:
 
 
 func _world_ready() -> bool:
-	if current_scene == null or current_scene.scene_file_path != Session.MAIN_SCENE:
+	if current_scene == null or current_scene.scene_file_path != SessionScript.MAIN_SCENE:
 		return false
 	var host := current_scene.get_node_or_null("LocationHost") as LocationHost
-	return host != null and host.get_current() != null and not Session.is_starting_new_game()
+	return host != null and host.get_current() != null and not _session.is_starting_new_game()
 
 
 func _has_event(events: Array, event: String, level: String, reason: String = "") -> bool:

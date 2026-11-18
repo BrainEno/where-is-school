@@ -1167,7 +1167,8 @@ below are from that tool, and the per-category policy is written in
 
 ## 7c. Offline troubleshooting (implemented, #224)
 
-`Diagnostics.record(event, context)` appends only events defined in the
+The preloadable `OfflineDiagnostics.note(event, context)` forwards to the active
+`Diagnostics` singleton when running a game, and appends only events defined in the
 [diagnostic schema](../scripts/diagnostics/event_schema.gd). World, save, dialogue,
 asset and state owners still make the decisions and retain their console errors and
 user-facing recovery flows. `Diagnostics` owns the process lifetime and bounded queue,

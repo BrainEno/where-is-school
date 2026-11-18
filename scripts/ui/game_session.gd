@@ -50,6 +50,8 @@ extends Node
 ## what it shows about the file through `get_save_status()`, which never recovers or
 ## quarantines anything while a run is live.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 ## Emitted once a new game has actually started: everything cleared, the opening entered.
 signal new_game_started(report: Dictionary)
 ## Emitted when a new game could not be started. The report is the same dictionary
@@ -477,7 +479,7 @@ func _conclude(report: Dictionary, steps: PackedStringArray) -> Dictionary:
 	if bool(report["ok"]):
 		new_game_started.emit(report.duplicate(true))
 	else:
-		Diagnostics.record("session.new_game_refused", {"reason": report["reason"]})
+		OfflineDiagnostics.note("session.new_game_refused", {"reason": report["reason"]})
 		push_error("Session: the new game did not start: %s" % str(report))
 		new_game_failed.emit(report.duplicate(true))
 	return report
@@ -646,7 +648,7 @@ func _go_to(scene: String, what: String) -> int:
 	var error := get_tree().change_scene_to_file(scene)
 	if error != OK:
 		var scene_id := "world" if scene == MAIN_SCENE else ("title" if scene == TITLE_SCENE else "other")
-		Diagnostics.record("session.scene_refused", {"scene": scene_id, "error_code": error})
+		OfflineDiagnostics.note("session.scene_refused", {"scene": scene_id, "error_code": error})
 		push_error("Session: could not enter %s (error %d)." % [what, error])
 	return error
 

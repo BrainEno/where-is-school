@@ -10,6 +10,8 @@ extends Node3D
 ## standing in the room they were already in, with the story flag that describes that
 ## room still correct, and the call still returns false.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal location_entered(location: LocationRoot, spawn_id: StringName)
 
 ## Kept for error messages and for tests that assert the old scene survived.
@@ -76,7 +78,7 @@ func load_location(
 	var ok := reason == &"entered"
 	_record(scene_path, spawn_id, ok, started)
 	if not ok:
-		Diagnostics.record("world.transition_refused", {
+		OfflineDiagnostics.note("world.transition_refused", {
 			"from_location": from_id, "to_location": expected_location_id, "reason": reason,
 		})
 	return ok
@@ -197,7 +199,7 @@ func _swap(
 		remove_child(previous)
 		previous.queue_free()
 	_mark("committed", started)
-	Diagnostics.record("world.entered", {
+	OfflineDiagnostics.note("world.entered", {
 		"from_location": previous.location_id if previous != null else &"",
 		"to_location": location.location_id,
 	})

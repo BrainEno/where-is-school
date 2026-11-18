@@ -20,6 +20,8 @@ extends Control
 
 signal closed
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 const CAPTURE_SECONDS := 6.0
 ## How long the first press of "Forget what was read" waits for the second.
 const CLEAR_CONFIRM_SECONDS := 4.0
@@ -721,7 +723,7 @@ func _diagnostics_rows() -> void:
 		L10n.t("settings.diagnostics_note"), MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
 	))
 	_rows.add_child(MenuStyle.paragraph(
-		L10n.t("settings.diagnostics_folder", {"path": Diagnostics.directory_path()}),
+		L10n.t("settings.diagnostics_folder", {"path": ProjectSettings.globalize_path(OfflineDiagnostics.LOG_DIR)}),
 		MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
 	))
 	_diagnostics_button(&"open_logs", "settings.open_logs", _on_open_logs)
@@ -739,16 +741,18 @@ func _diagnostics_button(id: StringName, label: String, action: Callable) -> voi
 
 
 func _on_open_logs() -> void:
-	var opened := Diagnostics.open_directory() == OK
+	var log := OfflineDiagnostics.active()
+	var opened: bool = log != null and log.open_directory() == OK
 	_status.text = L10n.t("settings.logs_opened" if opened else "settings.logs_open_failed")
 
 
 func _on_export_diagnostics() -> void:
-	var result := Diagnostics.export_report()
+	var log := OfflineDiagnostics.active()
+	var result: Dictionary = log.export_report() if log != null else {"ok": false}
 	var key := "settings.diagnostics_export_failed"
 	if result["ok"]:
 		key = "settings.diagnostics_export_partial" if result["partial"] else "settings.diagnostics_exported"
-	_status.text = L10n.t(key, {"file": Diagnostics.EXPORT_NAME})
+	_status.text = L10n.t(key, {"file": OfflineDiagnostics.EXPORT_NAME})
 
 
 func _on_restore_pressed() -> void:

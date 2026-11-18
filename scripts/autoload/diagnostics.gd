@@ -25,6 +25,19 @@ var _write_error := OK
 var _discarded_records := 0
 
 
+## Resolve the service at runtime: --script tests compile their dependencies before
+## Godot registers autoload globals. An isolated scene without the service still runs.
+static func active() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	return tree.root.get_node_or_null(^"Diagnostics") if tree != null and tree.root != null else null
+
+
+static func note(event: String, context: Dictionary = {}) -> void:
+	var log := active()
+	if log != null:
+		log.record(event, context)
+
+
 func _init(directory: String = LOG_DIR) -> void:
 	_directory = directory
 
