@@ -54,7 +54,7 @@ static func check_id_parity(
 static func check_table_parity(
 	reference_locale: String,
 	reference_table: Dictionary,
-	_target_locale: String,
+	target_locale: String,
 	target_table: Dictionary
 ) -> Array[String]:
 	var problems: Array[String] = []
