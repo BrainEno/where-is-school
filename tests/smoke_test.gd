@@ -16,6 +16,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_check_checker()
 	var autoloads := Harness.ensure_state_autoloads(self)
 	if autoloads["game_state"] == null:
 		_failures.append("GameState autoload could not be created.")
@@ -53,6 +54,31 @@ func _run() -> void:
 	main.queue_free()
 	await process_frame
 	Harness.finish(self, _failures, "main scene, classroom, player, UI, and content loaded.")
+
+
+## Do not use Checker as its own oracle: a broken expect() must not hide its
+## own failure. This runs in the existing registered smoke test, not as a second
+## engine installation/workflow or a Node mistaken for a SceneTree entry point.
+func _check_checker() -> void:
+	var checks := Harness.Checker.new()
+	var other := Harness.Checker.new()
+	if not checks.failures.is_empty():
+		_failures.append("A new Checker must start empty.")
+	if not checks.expect(true, "must not be recorded") or not checks.failures.is_empty():
+		_failures.append("Checker.expect(true) must return true without recording a failure.")
+	if checks.expect(false, "first failure"):
+		_failures.append("Checker.expect(false) must return false.")
+	checks.fail("explicit failure")
+	checks.expect(false, "first failure")
+	var expected: Array[String] = ["first failure", "explicit failure", "first failure"]
+	if checks.failures != expected:
+		_failures.append("Checker must retain ordered failures, including repeated messages.")
+	if not other.failures.is_empty():
+		_failures.append("Checker instances must not share a failure array.")
+	checks.failures.clear()
+	other.fail("independent failure")
+	if not checks.failures.is_empty() or other.failures != ["independent failure"]:
+		_failures.append("Clearing one Checker must not change another instance.")
 
 
 func _check_player(main: Node) -> void:

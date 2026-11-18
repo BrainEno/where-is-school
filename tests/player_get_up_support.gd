@@ -3,7 +3,9 @@ extends Node
 ## Real player, skeleton, PointerNavigator and dialogue locks; no controller mocks.
 ## The clear-aisle fixture isolates locomotion from the classroom author's chair layout.
 
-var failures: Array[String] = []
+const Harness = preload("res://tests/test_harness.gd")
+
+var checks := Harness.Checker.new()
 var _player: PlayerController
 var _navigator: PointerNavigator
 var _dialogue: DialogueController
@@ -39,7 +41,7 @@ func run(player: PlayerController, navigator: PointerNavigator, dialogue: Dialog
 			Input.action_press(_action)
 		else:
 			_navigator.click_at_screen_position(_screen)
-			_expect(_navigator.was_last_click_accepted() and _player.is_path_active(),
+			checks.expect(_navigator.was_last_click_accepted() and _player.is_path_active(),
 				"%s: the real floor click did not start a path." % mode)
 			_latest_target = _player.get_path_target()
 		await _watch_get_up(mode)
@@ -48,14 +50,14 @@ func run(player: PlayerController, navigator: PointerNavigator, dialogue: Dialog
 			while _flat_gap(_player.global_position) < 0.12 and waited < 1.0:
 				await get_tree().process_frame
 				waited += get_process_delta_time()
-			_expect(_flat_gap(_player.global_position) >= 0.12,
+			checks.expect(_flat_gap(_player.global_position) >= 0.12,
 				"%s: movement did not resume after standing." % mode)
 			if mode in ["click", "pause"]:
-				_expect(_player.get_path_target().distance_to(_latest_target) < 0.01,
+				checks.expect(_player.get_path_target().distance_to(_latest_target) < 0.01,
 					"%s: standing lost or replaced the requested destination." % mode)
 		else:
 			await _seconds(0.15)
-			_expect(not _player.is_path_active() and _flat_gap(_player.global_position) < 0.02,
+			checks.expect(not _player.is_path_active() and _flat_gap(_player.global_position) < 0.02,
 				"%s: a cancelled/locked path resumed after standing." % mode)
 		Input.action_release(_action)
 		_navigator.cancel()
@@ -63,16 +65,16 @@ func run(player: PlayerController, navigator: PointerNavigator, dialogue: Dialog
 			_dialogue.advance_presentation()
 			await get_tree().process_frame
 		await _seconds(0.2)
-		_expect(_player.is_control_enabled(), "%s: control did not return after unlock." % mode)
-		_expect(_starts == 1, "%s: repeated input restarted get_up %d times." % [mode, _starts])
-		_expect(absf(_finish_tilt) < 0.001 and absf(_finish_height - 0.9) < 0.001,
+		checks.expect(_player.is_control_enabled(), "%s: control did not return after unlock." % mode)
+		checks.expect(_starts == 1, "%s: repeated input restarted get_up %d times." % [mode, _starts])
+		checks.expect(absf(_finish_tilt) < 0.001 and absf(_finish_height - 0.9) < 0.001,
 			"%s: the pivot was not upright when the skeleton finished (%.3f / %.3f)."
 			% [mode, _finish_tilt, _finish_height])
-		_expect(_finish_hip < 12.0, "%s: get_up did not finish on standing legs (%.1f degrees)." % [mode, _finish_hip])
+		checks.expect(_finish_hip < 12.0, "%s: get_up did not finish on standing legs (%.1f degrees)." % [mode, _finish_hip])
 	await _locked_seat()
 	_player.teleport(Transform3D(Basis.looking_at(saved_facing, Vector3.UP), saved_position))
 	print("::notice title=player get-up regression::click, keys, repeat/replace, cancel, keyboard override, "
-		+ "dialogue lock and pause; %d problem(s)." % failures.size())
+		+ "dialogue lock and pause; %d problem(s)." % checks.failures.size())
 
 
 func _seat_in_clear_aisle() -> bool:
@@ -86,7 +88,7 @@ func _seat_in_clear_aisle() -> bool:
 	var point: Variant = _screen_point.call(2.2, 6.0)
 	_action = String(_clear_action.call(2.0))
 	if point == null or _action.is_empty():
-		_expect(false, "The get-up fixture has no visible floor click or clear movement key.")
+		checks.expect(false, "The get-up fixture has no visible floor click or clear movement key.")
 		return false
 	_screen = point
 	_origin = _player.global_position
@@ -94,7 +96,7 @@ func _seat_in_clear_aisle() -> bool:
 	_finish_tilt = INF
 	_finish_height = INF
 	_finish_hip = INF
-	_expect(_animator.is_seated(), "Preparing a seat did not hold sit_idle.")
+	checks.expect(_animator.is_seated(), "Preparing a seat did not hold sit_idle.")
 	return true
 
 
@@ -116,7 +118,7 @@ func _watch_get_up(mode: String) -> void:
 				break
 			continue
 		seen = true
-		_expect(_animator.get_current_clip() == "get_up", "%s: a different action replaced get_up." % mode)
+		checks.expect(_animator.get_current_clip() == "get_up", "%s: a different action replaced get_up." % mode)
 		drift = maxf(drift, _flat_gap(_player.global_position))
 		speed = maxf(speed, Vector2(_player.velocity.x, _player.velocity.z).length())
 		var fraction := ap.current_animation_position / maxf(ap.current_animation_length, 0.001)
@@ -135,7 +137,7 @@ func _watch_get_up(mode: String) -> void:
 					var keys := {"move_left": Vector2.LEFT, "move_right": Vector2.RIGHT,
 						"move_forward": Vector2.UP, "move_back": Vector2.DOWN}
 					var direction: Vector3 = _player._camera_relative(keys[_action])
-					_expect(_player.request_path_to(_origin + direction * 1.6), "Replacing the held path was refused.")
+					checks.expect(_player.request_path_to(_origin + direction * 1.6), "Replacing the held path was refused.")
 					_latest_target = _player.get_path_target()
 				"keyboard":
 					Input.action_press(_action)
@@ -146,21 +148,21 @@ func _watch_get_up(mode: String) -> void:
 				"override":
 					Input.action_press(_action)
 				"dialogue":
-					_expect(_dialogue.play_conversation(&"q_studying"), "The dialogue-lock fixture did not open.")
-					_expect(not _player.is_control_enabled(), "Dialogue did not lock the player during get_up.")
+					checks.expect(_dialogue.play_conversation(&"q_studying"), "The dialogue-lock fixture did not open.")
+					checks.expect(not _player.is_control_enabled(), "Dialogue did not lock the player during get_up.")
 				"pause":
 					var at := ap.current_animation_position
 					get_tree().paused = true
 					await get_tree().create_timer(0.1, true, false, true).timeout
-					_expect(is_equal_approx(at, ap.current_animation_position), "Pausing advanced the get_up clip.")
+					checks.expect(is_equal_approx(at, ap.current_animation_position), "Pausing advanced the get_up clip.")
 					get_tree().paused = false
-	_expect(seen and not _animator.is_playing_action(), "%s: get_up never started or finished." % mode)
-	_expect(elapsed >= 0.6 and elapsed <= 1.05,
+	checks.expect(seen and not _animator.is_playing_action(), "%s: get_up never started or finished." % mode)
+	checks.expect(elapsed >= 0.6 and elapsed <= 1.05,
 		"%s: get_up took %.3f story seconds, expected a brisk synchronized transition." % [mode, elapsed])
-	_expect(drift < 0.02 and speed < 0.001,
+	checks.expect(drift < 0.02 and speed < 0.001,
 		"%s: moving before standing (%.3f m drift, %.3f m/s)." % [mode, drift, speed])
-	_expect(not advanced, "%s: the path index/watchdog advanced during get_up." % mode)
-	_expect(phase_error < 0.045, "%s: pivot and bone clocks diverged (%.3f radians)." % [mode, phase_error])
+	checks.expect(not advanced, "%s: the path index/watchdog advanced during get_up." % mode)
+	checks.expect(phase_error < 0.045, "%s: pivot and bone clocks diverged (%.3f radians)." % [mode, phase_error])
 	print("note: get_up %s: %.3f s, %.4f m drift, %.4f m/s, phase error %.4f rad" % [mode, elapsed, drift, speed, phase_error])
 
 
@@ -169,14 +171,14 @@ func _locked_seat() -> void:
 		return
 	_player.set_control_enabled(false)
 	Input.action_press(_action)
-	_expect(not _player.request_path_to(_origin + Vector3.FORWARD * 2.0), "A locked seated player accepted a path.")
+	checks.expect(not _player.request_path_to(_origin + Vector3.FORWARD * 2.0), "A locked seated player accepted a path.")
 	await _seconds(0.15)
-	_expect(_animator.is_seated() and _starts == 0 and _flat_gap(_player.global_position) < 0.02,
+	checks.expect(_animator.is_seated() and _starts == 0 and _flat_gap(_player.global_position) < 0.02,
 		"A locked movement intention made the seated player get up.")
 	Input.action_release(_action)
 	_player.set_control_enabled(true)
 	await _seconds(0.1)
-	_expect(_animator.is_seated() and _starts == 0, "Unlocking replayed a stale movement intention.")
+	checks.expect(_animator.is_seated() and _starts == 0, "Unlocking replayed a stale movement intention.")
 	# Restore this runtime fixture for the pre-existing standing/walking checks.
 	_player.set_wake_pose(0.0)
 	await _seconds(2.5)
@@ -209,8 +211,3 @@ func _seconds(seconds: float) -> void:
 	while elapsed < seconds:
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
-
-
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)

@@ -9,7 +9,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
 const SAVE_PATH := "user://save.json"
 
-var failures: Array[String] = []
+var checks := Harness.Checker.new()
 var _state: Node
 var _narrative: Node
 var _save: Node
@@ -37,7 +37,7 @@ func run() -> void:
 	Harness.clear_session_state(get_tree())
 	print("::notice title=Q intro lifecycle::interrupted and completed disk checkpoints, "
 		+ "repeat interactions in both locales, and an authored Q landing/held seat checked; "
-		+ "%d problem(s)." % failures.size())
+		+ "%d problem(s)." % checks.failures.size())
 
 
 func _boot() -> bool:
@@ -59,7 +59,7 @@ func _boot() -> bool:
 	_sequence.allow_player_control()
 	(_world.get_node(^"GameUI") as GameUI).fade.set_clear()
 	await _frames(3)
-	_expect(_room != null, "Q fixture did not enter the classroom.")
+	checks.expect(_room != null, "Q fixture did not enter the classroom.")
 	return _room != null
 
 
@@ -71,50 +71,50 @@ func _interrupted_checkpoint() -> void:
 	if not await _boot():
 		return
 	var written: Dictionary = _sequence.autosave("wake")
-	_expect(written.get("ok", false), "The pre-Q checkpoint was not written.")
+	checks.expect(written.get("ok", false), "The pre-Q checkpoint was not written.")
 	var before := FileAccess.get_file_as_bytes(SAVE_PATH)
 	var actor := _room.find_actor(&"q")
 	if actor == null:
-		_expect(false, "The Q actor is missing.")
+		checks.expect(false, "The Q actor is missing.")
 		return
 	var initial := actor.global_position
 	_sequence._beat_q_wake()
-	_expect(not _player.is_control_enabled() and not _interaction.is_enabled(),
+	checks.expect(not _player.is_control_enabled() and not _interaction.is_enabled(),
 		"Q's approach did not acquire the beat lock before the first line.")
 	_interaction.request_activation(_room.find_interactable(&"q_talk"))
-	_expect(_played.is_empty(), "An early interaction bypassed Q's locked approach.")
+	checks.expect(_played.is_empty(), "An early interaction bypassed Q's locked approach.")
 	if not await _wait_for_q():
 		return
-	_expect(bool(_state.get_flag(StoryFlags.MET_Q, false)), "Q's first line no longer sets MET_Q.")
+	checks.expect(bool(_state.get_flag(StoryFlags.MET_Q, false)), "Q's first line no longer sets MET_Q.")
 	_check_arrival(actor, initial)
-	_expect(not _player.is_control_enabled() and not _interaction.is_enabled(),
+	checks.expect(not _player.is_control_enabled() and not _interaction.is_enabled(),
 		"The Q conversation failed to hold the existing control/interaction lock.")
 	var refused: Dictionary = await _session.save_and_quit(true, _world)
-	_expect(not bool(refused.get("ok", true)) and refused.get("reason") == "not_at_rest",
+	checks.expect(not bool(refused.get("ok", true)) and refused.get("reason") == "not_at_rest",
 		"Save and quit accepted a half-read Q intro: %s." % str(refused))
-	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before,
+	checks.expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before,
 		"Refusing a mid-intro save changed the checkpoint bytes.")
 	_interaction.request_activation(_room.find_interactable(&"q_talk"))
 	await _frames(2)
-	_expect(_played == [&"q_wake"], "An interaction interrupted/duplicated the locked Q intro.")
+	checks.expect(_played == [&"q_wake"], "An interaction interrupted/duplicated the locked Q intro.")
 	# Re-rendering a first line in another locale is not another meeting/event.
 	var old_node := _dialogue.get_runtime().get_current_node_id()
 	_dialogue.apply_locale("en")
 	_dialogue.apply_locale("zh-CN")
-	_expect(_dialogue.get_runtime().get_current_node_id() == old_node,
+	checks.expect(_dialogue.get_runtime().get_current_node_id() == old_node,
 		"Switching locale moved the Q intro to a different node.")
 	await _release_world()
-	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before,
+	checks.expect(FileAccess.get_file_as_bytes(SAVE_PATH) == before,
 		"Tearing down an interrupted conversation overwrote its checkpoint.")
 	if not await _boot():
 		return
-	_expect(not bool(_state.get_flag(StoryFlags.MET_Q, false)),
+	checks.expect(not bool(_state.get_flag(StoryFlags.MET_Q, false)),
 		"The interrupted first-line meeting leaked into the restored checkpoint.")
-	_expect(_sequence.next_step() == &"wake", "The pre-Q checkpoint skipped the pending intro.")
+	checks.expect(_sequence.next_step() == &"wake", "The pre-Q checkpoint skipped the pending intro.")
 	_sequence._beat_q_wake()
 	if await _wait_for_q():
 		await _finish_lines()
-	_expect(_played == [&"q_wake"], "Restoring the interrupted checkpoint skipped or duplicated Q.")
+	checks.expect(_played == [&"q_wake"], "Restoring the interrupted checkpoint skipped or duplicated Q.")
 
 
 ## This is the real q_wake boundary checkpoint, not just a synthetic MET_Q map.
@@ -123,26 +123,26 @@ func _interrupted_checkpoint() -> void:
 func _completed_checkpoint() -> void:
 	Harness.stage = "Q: completed introduction restores into the short studying reply"
 	if _world == null or _dialogue.is_busy():
-		_expect(false, "The introduction did not finish before the completed checkpoint check.")
+		checks.expect(false, "The introduction did not finish before the completed checkpoint check.")
 		return
-	_expect(_player.is_control_enabled() and _interaction.is_enabled() and not _sequence.is_beat_active(),
+	checks.expect(_player.is_control_enabled() and _interaction.is_enabled() and not _sequence.is_beat_active(),
 		"Q's ending did not release the beat and restore control.")
-	_expect(not bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false))
+	checks.expect(not bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false))
 		and not bool(_state.get_flag(StoryFlags.LEFT_CLASSROOM, false)),
 		"Q's ending advanced to dismissal or departure.")
 	await _repeat_in_both_locales()
 	var written: Dictionary = _sequence.autosave("q_wake")
-	_expect(written.get("ok", false), "The completed Q checkpoint was not written.")
+	checks.expect(written.get("ok", false), "The completed Q checkpoint was not written.")
 	await _release_world()
 	if not await _boot():
 		return
-	_expect(_sequence.next_step() == &"bag", "Restoring the Q boundary wants to replay the introduction.")
-	_expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
+	checks.expect(_sequence.next_step() == &"bag", "Restoring the Q boundary wants to replay the introduction.")
+	checks.expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"The completed/legacy MET_Q save still routes to the long introduction.")
 	await _repeat_in_both_locales()
 	_played.clear()
 	await _sequence._beat_q_wake()
-	_expect(_played.is_empty(), "Re-entering a completed Q beat replayed the introduction.")
+	checks.expect(_played.is_empty(), "Re-entering a completed Q beat replayed the introduction.")
 	await _story_priority()
 	await _release_world()
 	Harness.clear_session_state(get_tree())
@@ -156,10 +156,10 @@ func _story_priority() -> void:
 		_played.clear()
 		_interaction.request_activation(_room.find_interactable(&"q_talk"))
 		await _frames(1)
-		_expect(_dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == want,
+		checks.expect(_dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == want,
 			"The studying reply overrode the later story route '%s'." % want)
 		await _finish_lines()
-		_expect(_played == [want], "The later Q story started an unexpected conversation.")
+		checks.expect(_played == [want], "The later Q story started an unexpected conversation.")
 
 
 func _repeat_in_both_locales() -> void:
@@ -171,13 +171,13 @@ func _repeat_in_both_locales() -> void:
 		var entries: int = _narrative.get_entries().size()
 		_interaction.request_activation(_room.find_interactable(&"q_talk"))
 		await _frames(1)
-		_expect(_dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == &"q_studying",
+		checks.expect(_dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == &"q_studying",
 			"%s: re-interacting with Q did not enter q_studying." % locale)
 		await _finish_lines()
-		_expect(_played == [&"q_studying"] and _lines.size() >= 1 and _lines.size() <= 2,
+		checks.expect(_played == [&"q_studying"] and _lines.size() >= 1 and _lines.size() <= 2,
 			"%s: repeat interaction replayed the long greeting (%s / %d lines)."
 			% [locale, str(_played), _lines.size()])
-		_expect(_state.get_snapshot() == flags and _narrative.get_entries().size() == entries,
+		checks.expect(_state.get_snapshot() == flags and _narrative.get_entries().size() == entries,
 			"%s: the studying reply rewrote progress, choices, objectives or knowledge." % locale)
 
 
@@ -202,13 +202,13 @@ func _authored_landing_and_seat() -> void:
 	var authored := marker.global_position
 	var fixture: Vector3 = await _reachable_landing(authored)
 	if fixture == Vector3.INF:
-		_expect(false, "No reachable floor 1.2 m from the seat for the marker fixture.")
+		checks.expect(false, "No reachable floor 1.2 m from the seat for the marker fixture.")
 		await _release_world()
 		return
 	marker.global_position = fixture
 	var actor := _room.find_actor(&"q")
 	if actor == null:
-		_expect(false, "The marker fixture has no Q actor.")
+		checks.expect(false, "The marker fixture has no Q actor.")
 		return
 	var initial := actor.global_position
 	_player.set_wake_pose(1.0)
@@ -216,14 +216,14 @@ func _authored_landing_and_seat() -> void:
 	_sequence._beat_q_wake()
 	if await _wait_for_q():
 		_check_arrival(actor, initial)
-		_expect(actor.global_position.distance_to(marker.global_position) < 0.15,
+		checks.expect(actor.global_position.distance_to(marker.global_position) < 0.15,
 			"The Q intro ignored the classroom's QOpeningTalk landing.")
-		_expect(bool(_player.get("_wake_seated")) and is_equal_approx(_player.visual.rotation.x, tilt),
+		checks.expect(bool(_player.get("_wake_seated")) and is_equal_approx(_player.visual.rotation.x, tilt),
 			"Approaching Q made the protagonist stand up or changed the wake pose.")
 		await _finish_lines()
-		_expect(bool(_player.get("_wake_seated")) and is_equal_approx(_player.visual.rotation.x, tilt),
+		checks.expect(bool(_player.get("_wake_seated")) and is_equal_approx(_player.visual.rotation.x, tilt),
 			"Q's closing line made the protagonist stand up or changed the wake pose.")
-		_expect(_player.is_control_enabled(), "The held-seat Q beat did not return control.")
+		checks.expect(_player.is_control_enabled(), "The held-seat Q beat did not return control.")
 	await _release_world()
 
 
@@ -260,18 +260,18 @@ func _reachable_landing(avoid: Vector3) -> Vector3:
 func _check_arrival(actor: NpcActor, initial: Vector3) -> void:
 	var toward := _player.global_position - actor.global_position
 	toward.y = 0.0
-	_expect(actor.global_position.distance_to(initial) > 0.25,
+	checks.expect(actor.global_position.distance_to(initial) > 0.25,
 		"Q began talking without approaching from the authored initial position.")
-	_expect(toward.length() >= 0.85 and toward.length() <= 1.65,
+	checks.expect(toward.length() >= 0.85 and toward.length() <= 1.65,
 		"Q is not at a close, non-overlapping talking distance (%.2f m)." % toward.length())
-	_expect((-actor.global_basis.z).dot(toward.normalized()) > 0.98,
+	checks.expect((-actor.global_basis.z).dot(toward.normalized()) > 0.98,
 		"Q is not facing the protagonist when the first line begins.")
 	var talk := _room.find_interactable(&"q_talk")
 	if talk == null:
-		_expect(false, "The QTalk interaction is missing.")
+		checks.expect(false, "The QTalk interaction is missing.")
 	else:
 		var gap := talk.global_position - actor.global_position
-		_expect(Vector2(gap.x, gap.z).length() < 0.1,
+		checks.expect(Vector2(gap.x, gap.z).length() < 0.1,
 			"Q moved but left the interaction hotspot at the old position.")
 
 
@@ -281,7 +281,7 @@ func _wait_for_q() -> bool:
 		if _dialogue.is_busy() and _dialogue.get_runtime().get_active_conversation_id() == &"q_wake":
 			return true
 		await get_tree().process_frame
-	_expect(false, "Q never approached and started the introduction within 20 seconds.")
+	checks.expect(false, "Q never approached and started the introduction within 20 seconds.")
 	return false
 
 
@@ -293,7 +293,7 @@ func _finish_lines() -> void:
 		elif _dialogue.is_busy():
 			_dialogue.advance_presentation()
 		await get_tree().process_frame
-	_expect(not _dialogue.is_busy() and not _sequence.is_beat_active(), "Q's conversation did not finish.")
+	checks.expect(not _dialogue.is_busy() and not _sequence.is_beat_active(), "Q's conversation did not finish.")
 
 
 func _release_world() -> void:
@@ -309,8 +309,3 @@ func _release_world() -> void:
 func _frames(count: int) -> void:
 	for _index in count:
 		await get_tree().process_frame
-
-
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)

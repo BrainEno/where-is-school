@@ -178,6 +178,8 @@ subjective voice 不让台上 Q 假装发声。仅 Q 的 `dialogue_clip` 非空�
 0 problems，但输出既有 missing settings key / invalid UI polygon 等引擎 ERROR，
 不能写成「无错误运行」。误把 Node 型 `q_intro_lifecycle_test.gd` 当 SceneTree
 单独运行曾失败；正确入口是 `opening_resume_test.gd`，未修改测试继承来掩盖误用。
+该辅助库现已按 #216 更名为 `tests/q_intro_lifecycle_support.gd`，仍由上述入口调用；
+这里的旧文件名只记录当时的误用，不是运行指令。
 
 ### 官方 Godot 4.7.2 Stable standard 的阶段性 CI
 
