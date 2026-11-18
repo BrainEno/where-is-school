@@ -184,7 +184,7 @@ func get_short_role(character_id: StringName) -> String:
 func get_accent_color(character_id: StringName) -> Color:
 	var profile: CharacterProfile = get_profile(character_id)
 	if profile == null:
-		return Color(0.776, 0.733, 0.643, 1.0)
+		return Palette.ACCENT
 	return profile.accent_color
 
 

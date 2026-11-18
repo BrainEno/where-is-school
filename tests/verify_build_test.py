@@ -503,8 +503,18 @@ Categories=Game;AdventureGame;
 PNG_256 = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 256, 256) + b"\x08\x06\x00\x00\x00"
 
 
+NOTES = b"""where-is-school
+
+Licences
+--------
+licences/COPYRIGHT.md          the project's notice
+licences/NotoSansSC-OFL.txt    Noto Sans SC (SIL Open Font License)
+licences/NotoSerifSC-OFL.txt   Noto Serif SC (SIL Open Font License)
+"""
+
+
 def windows_files() -> dict[str, bytes]:
-    return {"where-is-school.exe": make_pe(complete_resources()), "HOW-TO-RUN.txt": b"run it"}
+    return {"where-is-school.exe": make_pe(complete_resources()), "HOW-TO-RUN.txt": NOTES}
 
 
 def linux_files() -> dict[str, bytes]:
@@ -512,8 +522,8 @@ def linux_files() -> dict[str, bytes]:
         "where-is-school": make_elf(),
         "where-is-school.desktop": DESKTOP,
         "where-is-school.png": PNG_256,
-        "README.txt": b"run it",
-        "HOW-TO-RUN.txt": b"controls",
+        "README.txt": NOTES,
+        "HOW-TO-RUN.txt": NOTES,
     }
 
 
@@ -651,6 +661,27 @@ def test_package_catches_a_desktop_entry_naming_a_missing_icon() -> None:
         path = make_package(Path(directory), "where-is-school-0.1.0-linux", files, modes={"where-is-school": 0o755})
         package = vb.inspect_package(path, "0.1.0")
         expect_problem(package.problems, "some-other-name", "a launcher pointing at no icon passed")
+
+
+def test_package_catches_run_notes_that_never_mention_the_licences() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = linux_files()
+        files.update(LICENCES)
+        files["HOW-TO-RUN.txt"] = b"where-is-school\n\nRun it\n------\nDouble-click it.\n"
+        path = make_package(Path(directory), "where-is-school-0.1.0-linux", files, modes={"where-is-school": 0o755})
+        package = vb.inspect_package(path, "0.1.0")
+        # README.txt is in agreement, so the failure has to name the notes that are not.
+        expect_problem(package.problems, "HOW-TO-RUN.txt has no Licences section", "silent licences passed")
+
+
+def test_package_catches_run_notes_that_name_a_different_file() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = windows_files()
+        files.update(LICENCES)
+        files["HOW-TO-RUN.txt"] = NOTES.replace(b"NotoSerifSC-OFL.txt", b"OFL.txt")
+        path = make_package(Path(directory), "where-is-school-0.1.0-windows", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(package.problems, "does not name NotoSerifSC-OFL.txt", "a wrong file name passed")
 
 
 def test_package_catches_a_missing_executable_bit() -> None:

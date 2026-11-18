@@ -18,7 +18,10 @@ const PORTRAIT_MAX_HEIGHT_RATIO := 0.95
 @export var display_name: String = ""
 ## Short role shown next to the name, e.g. "classmate". Not a title or diagnosis.
 @export var short_role: String = ""
-@export var accent_color: Color = Color(0.776, 0.733, 0.643, 1.0)
+## The speaker's colour in the reading band. The default is the shared bone accent, which is
+## what a profile that does not name one has always looked like; a `.tres` that does name one
+## keeps its own value (`data/characters/*.tres`).
+@export var accent_color: Color = Palette.ACCENT
 
 @export_group("Dialogue portrait (optional)")
 ## An approved 2D portrait for dialogue. Empty (the default) means the speaker is

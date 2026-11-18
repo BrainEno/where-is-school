@@ -866,6 +866,12 @@ PACKAGE_REQUIRED = {
 }
 PACKAGE_EXECUTABLE = {"windows": "where-is-school.exe", "linux": "where-is-school"}
 PACKAGE_SUFFIX = {"windows": "-windows", "linux": "-linux"}
+# The notes a player actually opens. Both platforms ship HOW-TO-RUN.txt; Linux ships its
+# own README.txt as well, and the release keeps the two in agreement on purpose.
+PACKAGE_RUN_NOTES = {
+    "windows": ("HOW-TO-RUN.txt",),
+    "linux": ("HOW-TO-RUN.txt", "README.txt"),
+}
 
 
 @dataclass
@@ -940,6 +946,10 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
             if required not in present:
                 package.problems.append(f"{path.name} is missing {required}")
 
+        note_problems, note_notes = _check_run_notes(archive, folder, platform, present)
+        package.problems.extend(note_problems)
+        package.notes.extend(note_notes)
+
         for name in sorted(present):
             if name.startswith(PACKAGE_FORBIDDEN_PREFIXES):
                 package.problems.append(f"{path.name} carries {name}, which is not part of a release")
@@ -976,6 +986,43 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
             package.problems.extend(launcher_problems)
             package.notes.extend(launcher_notes)
     return package
+
+
+def _check_run_notes(
+    archive: zipfile.ZipFile, folder: str, platform: str, present: set[str]
+) -> tuple[list[str], list[str]]:
+    """The licences ship in `licences/`, so the notes have to say that they do.
+
+    A player opening the folder sees three files they did not ask for. If the notes never
+    mention them, the only reading available is that the folder is clutter - and the one
+    asset whose terms are still open, the three portraits, goes unmentioned. This is a
+    text check on purpose: the release step copies the notes and the licences in the same
+    breath, so a disagreement between them is a mistake in this repository, not in a build.
+    """
+    problems: list[str] = []
+    notes: list[str] = []
+    shipped = sorted(name.rsplit("/", 1)[-1] for name in present if name.startswith("licences/"))
+    if not shipped:
+        return problems, notes
+    for name in PACKAGE_RUN_NOTES[platform]:
+        if name not in present:
+            continue
+        try:
+            text = archive.read(f"{folder}/{name}").decode("utf-8", "replace")
+        except KeyError:
+            continue
+        if not any(line.strip().lower() == "licences" for line in text.splitlines()):
+            problems.append(
+                f"{name} has no Licences section, but the package ships {', '.join(shipped)} "
+                "and a player is told nothing about them"
+            )
+        missing = [filenames for filenames in shipped if filenames not in text]
+        if missing:
+            problems.append(
+                f"{name} does not name {', '.join(missing)}, which travel with it in licences/"
+            )
+        notes.append(f"{name}: {len(text.splitlines())} lines")
+    return problems, notes
 
 
 def _check_desktop_entry(

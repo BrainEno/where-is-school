@@ -56,6 +56,15 @@ Keep dependencies moving from presentation toward application/domain logic:
 
 Use signals at clear boundaries. Do not create a global event bus by default; first consider a direct reference, a signal on the owning node, or a narrowly scoped controller.
 
+### Leaf modules
+
+A value that every layer needs - a colour, a locale tag, a file name - belongs in a **leaf**:
+a script that imports nothing and owns no state, so naming it from the dialogue or actor
+layer does not drag the interface in behind it. `Palette` (`scripts/theme/palette.gd`) is the
+first and is enforced: `tools/check_ui_palette.py` fails it if it loads anything or names a
+UI class, and fails any colour value written out in a second file (issue #210). `MenuStyle`
+re-exports `Palette`, so the menus keep their existing names.
+
 ## 3. Autoload policy
 
 The project contains **five** autoloads, and this list is the only place that number is

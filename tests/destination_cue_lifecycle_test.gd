@@ -156,7 +156,7 @@ func _check_arrival_fades_the_mark() -> void:
 		return
 	var cue := _navigator.get_cue()
 	if cue == null:
-		_failures.append("arrival: a floor click drew no mark at all.")
+		_failures.append("arrival: a floor click drew no mark at all (%s)." % _describe_mark())
 		return
 	if _navigator.get_cue_role() != WorldCue.ROLE_DESTINATION or not cue.is_shown():
 		_failures.append("arrival: the mark of a floor click has role '%s'." % _navigator.get_cue_role())
@@ -513,7 +513,7 @@ func _check_location_change_removes_the_mark() -> void:
 	if not await _start_floor_walk("corridor click", 1.8, 4.5):
 		return
 	if not _cue_drawn() or _navigator.get_cue_role() != WorldCue.ROLE_DESTINATION:
-		_failures.append("location change: a floor click in the corridor drew no mark.")
+		_failures.append("location change: a floor click in the corridor drew no mark (%s)." % _describe_mark())
 	if not await _wait_until(func() -> bool: return not _player.is_path_active(), WALK_LIMIT_SECONDS):
 		_failures.append("location change: the corridor walk never arrived.")
 		return
@@ -593,6 +593,26 @@ func _mark_appears(role: String) -> bool:
 	)
 
 
+## Everything that decides whether a mark is on screen right now, so that a failure says
+## which of them it was instead of only that nothing was drawn. The walk is over within a
+## frame or two of a short click, so `path` matters as much as the opacity.
+func _describe_mark() -> String:
+	var cue := _navigator.get_cue()
+	var drawn := "no cue"
+	if cue != null and is_instance_valid(cue):
+		drawn = "role '%s', shown %s, opacity %.2f, visible %s" % [
+			cue.get_role(), str(cue.is_shown()), cue.get_opacity(), str(cue.visible)
+		]
+	return "cue %s; navigator role '%s'; path active %s; controls on %s; %d cue node(s); time scale %.1f" % [
+		drawn,
+		_navigator.get_cue_role(),
+		str(_player.is_path_active()),
+		str(_player.is_control_enabled()),
+		_cue_nodes().size(),
+		Engine.time_scale,
+	]
+
+
 ## Every DestinationCue in the scene tree, wherever it was put.
 func _cue_nodes() -> Array[Node3D]:
 	var found: Array[Node3D] = []
@@ -616,7 +636,7 @@ func _start_floor_walk(label: String, min_distance: float, max_distance: float) 
 		_failures.append("%s: a floor click did not start a walk (%s)." % [label, _navigator.get_last_rejection()])
 		return false
 	if not await _mark_appears(WorldCue.ROLE_DESTINATION):
-		_failures.append("%s: a floor click drew no mark (role '%s')." % [label, _navigator.get_cue_role()])
+		_failures.append("%s: a floor click drew no mark (%s)." % [label, _describe_mark()])
 	return true
 
 

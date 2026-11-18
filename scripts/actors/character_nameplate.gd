@@ -47,8 +47,8 @@ func _configure() -> void:
 	pixel_size = 0.0042
 	font_size = 64
 	outline_size = 18
-	outline_modulate = Color(0.043, 0.051, 0.051, 0.92)
-	modulate = Color(0.898, 0.871, 0.804, 1.0)
+	outline_modulate = Color(Palette.INK, 0.92)
+	modulate = Palette.PAPER
 	render_priority = 1
 	texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var project_theme := _project_theme()
