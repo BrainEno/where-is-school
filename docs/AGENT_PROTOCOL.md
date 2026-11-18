@@ -102,6 +102,14 @@ The final handoff must link the PR and report its title, base/head SHA, changed-
 - Do not include private manuscripts, credentials, personal absolute paths, or unrelated personal information in branches, commits, issues, PRs, logs, or evidence.
 - Before opening a PR, compare the branch with the exact requested base, inspect the full diff, confirm no unrelated files changed, and rebase/refresh only when doing so is safe and authorized.
 
+### 6.1 Flaky tests
+
+- **A test that fails intermittently is a bug in the test until proven otherwise.** Report it; do not re-run CI until it goes green and call that a pass.
+- **Never loosen an assertion to make a test pass.** Widening a tolerance, deleting a case, or adding a retry changes the contract the test was written to hold. If the behavior is genuinely allowed to vary, say which variation is legitimate and why, in the PR.
+- **A test seen failing three times on the same commit gets an issue**, with the assertion text, the commit, and the CI run. Do not leave it as folklore.
+- **Time-sensitive assertions must not wait a fixed number of frames.** `Engine.time_scale` speeds up the clock, not the machine: `await _frames(2)` under a scaled clock waits for whatever the runner delivers, so the assertion races the frame rate. Use `TestHarness.wait_until(condition, limit_seconds)`, which counts real seconds and polls the condition. `tools/check_flaky_waits.py` refuses a new fixed wait in an accelerated test; its baseline lists the files still to convert and only ever shrinks.
+- A fixed wait is still correct for letting an input event propagate, or when the code under test is known to have finished. Prefer a condition anyway: it costs nothing when the condition is already true.
+
 ## 7. Ownership and merge boundary
 
 - Agents implement and provide evidence; the repository owner reviews and decides whether to merge.

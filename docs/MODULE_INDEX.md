@@ -206,7 +206,7 @@ policy. See [ARCHITECTURE.md](ARCHITECTURE.md) for the dependency/lifecycle boun
 
 | Entry point | Source | Reuse boundary |
 |---|---|---|
-| `TestHarness` (local preload alias) | [tests/test_harness.gd](../tests/test_harness.gd) | Reuse `ensure_autoload`, `ensure_state_autoloads`, `clear_session_state`, `arm_watchdog`, `finish`; setup clears shared test saves. Test-only, never a runtime dependency. |
+| `TestHarness` (local preload alias) | [tests/test_harness.gd](../tests/test_harness.gd) | Reuse `ensure_autoload`, `ensure_state_autoloads`, `clear_session_state`, `arm_watchdog`, `wait_until`, `finish`; setup clears shared test saves. `wait_until(condition, limit_seconds)` is the one place a test waits for a condition: it polls on process frames and reports the last observed state at the deadline, so a time-sensitive assertion does not race the frame rate (issue #207). Test-only, never a runtime dependency. |
 | Capture evidence contract | [tests/evidence_contract.gd](../tests/evidence_contract.gd) | Shared authored-line/panel comparison and evidence fingerprints; capture/test-only, not fabricated images. |
 | Classroom wall contract | [tests/classroom_wall_contract.gd](../tests/classroom_wall_contract.gd) | Reuse measured wall/render assertions rather than maintaining another wall specification. |
 | `GameState` | [scripts/autoload/game_state.gd](../scripts/autoload/game_state.gd) | Named runtime flags and snapshots, not UI or file I/O. |
@@ -251,6 +251,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
 | Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
+| Fixed-frame waits under a scaled clock | [check_flaky_waits.py](../tools/check_flaky_waits.py) | A ratchet on a structural fact, not a semantic verdict: no test whose `Engine.time_scale` exceeds 1.0 may add a fixed-frame wait, and a converted file must leave `BASELINE`. Waits for a condition use `TestHarness.wait_until`. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
 ## Keep this map current
