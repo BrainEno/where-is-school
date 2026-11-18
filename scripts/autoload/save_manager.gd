@@ -206,6 +206,7 @@ func write_payload(payload: Dictionary) -> Dictionary:
 	var leftovers: Array = replaced.get("leftovers", [])
 	leftovers.append_array(_cleanup_strays([temp_path, String(replaced.get("backup_path", ""))]))
 	if not leftovers.is_empty():
+		Diagnostics.record("save.cleanup_incomplete", {"count": leftovers.size()})
 		push_warning("Save: a save was written but %d file(s) could not be cleaned up: %s"
 			% [leftovers.size(), ", ".join(leftovers)])
 
@@ -223,6 +224,7 @@ func write_payload(payload: Dictionary) -> Dictionary:
 		"quarantined_to": "",
 		"version": SaveCodec.VERSION,
 	}
+	Diagnostics.record("save.written", {"version": SaveCodec.VERSION})
 	save_written.emit(SAVE_PATH)
 	return _last_result.duplicate(true)
 
@@ -433,6 +435,7 @@ func recover_pending_swap() -> Dictionary:
 			break
 	if restored.is_empty():
 		return {"ok": true, "recovered": false, "path": ""}
+	Diagnostics.record("save.recovered")
 	push_warning("Save: a save interrupted mid-write was put back from %s." % restored)
 	return {"ok": true, "recovered": true, "path": restored}
 
@@ -552,6 +555,7 @@ func read_save() -> Dictionary:
 		var unreadable := _refuse(
 			"unreadable", "could not read %s (%d byte(s))" % [SAVE_PATH, bytes.size()]
 		)
+		Diagnostics.record("save.read_refused", {"reason": "unreadable"})
 		unreadable["payload"] = {}
 		unreadable["quarantined_to"] = _quarantine()
 		return unreadable
@@ -562,6 +566,7 @@ func read_save() -> Dictionary:
 		var refused := _refuse(
 			String(envelope["reason"]), String(envelope["detail"])
 		)
+		Diagnostics.record("save.read_refused", {"reason": envelope["reason"]})
 		refused["payload"] = {}
 		refused["quarantined_to"] = _quarantine()
 		return refused
@@ -570,6 +575,7 @@ func read_save() -> Dictionary:
 	var problem := validate_payload(payload)
 	if not problem.is_empty():
 		var broken := _refuse("payload", problem)
+		Diagnostics.record("save.read_refused", {"reason": "payload"})
 		broken["payload"] = {}
 		broken["quarantined_to"] = _quarantine()
 		return broken
@@ -632,12 +638,14 @@ func load_game() -> Dictionary:
 		# disagree; fail closed rather than apply half a table.
 		var failed := _refuse("payload", String(flags_result["detail"]))
 		failed["payload"] = {}
+		Diagnostics.record("save.read_refused", {"reason": "payload"})
 		_last_result = failed
 		return _last_result
 
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state == null:
 		var no_state := _refuse("no_state", "GameState is not available")
+		Diagnostics.record("save.read_refused", {"reason": "no_state"})
 		_last_result = no_state
 		return _last_result
 	game_state.replace_snapshot(flags_result["flags"])
@@ -657,6 +665,7 @@ func load_game() -> Dictionary:
 	var seed_result := _apply_seed(int(payload.get("check_seed", 0)))
 	if not seed_result.is_empty():
 		var no_seed := _refuse("payload", seed_result)
+		Diagnostics.record("save.read_refused", {"reason": "seed"})
 		_last_result = no_seed
 		return _last_result
 
@@ -672,6 +681,7 @@ func load_game() -> Dictionary:
 	}
 	for problem: Variant in rejected:
 		push_error("Save: a knowledge entry was rejected: %s" % String(problem))
+	Diagnostics.record("save.loaded", {"version": _last_result["version"]})
 	save_loaded.emit(rejected)
 	return _last_result.duplicate(true)
 
@@ -839,6 +849,7 @@ func _world_child(child_name: String) -> Node:
 
 func _record_failure(reason: String, detail: String) -> Dictionary:
 	_last_result = _refuse(reason, detail)
+	Diagnostics.record("save.operation_failed", {"reason": reason})
 	push_error("Save: %s (%s)." % [detail, reason])
 	save_failed.emit(reason, detail)
 	return _last_result.duplicate(true)
@@ -878,6 +889,7 @@ func _quarantine() -> String:
 		return BROKEN_PATH
 	var written := _write_verified(BROKEN_PATH, bytes)
 	if not bool(written["ok"]):
+		Diagnostics.record("save.quarantine_failed")
 		push_error("Save: the unreadable save could not be copied aside: %s"
 			% String(written["detail"]))
 		return ""

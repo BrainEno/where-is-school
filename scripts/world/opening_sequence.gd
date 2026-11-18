@@ -114,6 +114,7 @@ func _ready() -> void:
 	if not _catalog.is_valid():
 		# Not fatal: a room the catalog cannot describe still runs, it just announces
 		# nothing. The error is loud because it is always an authoring mistake.
+		Diagnostics.record("assets.load_failed", {"kind": "locations"})
 		push_error("OpeningSequence: %s" % _catalog.describe_errors())
 	_focus = CameraFocusDirector.new(_player.camera_rig)
 	_flow = LocationFlow.new(

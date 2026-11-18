@@ -229,6 +229,7 @@ func _recover_from_refusal(on_failure: Callable, label: String) -> void:
 	var limit := _host.get_tree().create_timer(FAILURE_RECOVERY_LIMIT, false)
 	while not bool(state["done"]):
 		if limit.time_left <= 0.0:
+			Diagnostics.record("world.recovery_timeout")
 			push_error(
 				(
 					"LocationFlow: the failure recovery for %s did not finish within %.1f s; "

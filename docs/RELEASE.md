@@ -35,7 +35,7 @@ place that derives them:
 | Form | Example | Where it appears |
 | --- | --- | --- |
 | tag | `v0.1.0-rc.1` | the Git tag, the GitHub release |
-| label | `0.1.0-rc.1` | both archive names, the folder inside each archive |
+| label | `0.1.0-rc.1` | both archive names, the folder inside each archive, diagnostics `game_version` |
 | resource | `0.1.0.0` | `FileVersion` / `ProductVersion` inside the Windows executable |
 
 A Windows version resource holds four 16-bit integers, so the `-rc.1` tail cannot survive into
@@ -43,10 +43,10 @@ it; the executable carries the numbers and the archive carries the string. That 
 workaround, it is what the field is for.
 
 The repository's own version lives in `packaging/version.txt` (one line, currently `0.1.0`),
-and `export_presets.cfg` is committed stamped with it:
+and `export_presets.cfg` and `project.godot` are committed stamped with it:
 
 ```sh
-python3 tools/stamp_release_version.py --check   # the preset still says what the repo claims
+python3 tools/stamp_release_version.py --check   # the Windows preset and running game agree with the repo
 python3 tools/stamp_release_version.py           # stamp from packaging/version.txt
 python3 tools/stamp_release_version.py --version 0.1.0-rc.1   # what CI does for a tag
 ```

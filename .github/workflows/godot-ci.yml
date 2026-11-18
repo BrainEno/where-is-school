@@ -315,6 +315,8 @@ jobs:
             echo "IMPORT_AUDIT=success"
           fi
           run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
+          # Separate processes and an isolated XDG profile, through the actual settings UI.
+          bash tests/run_offline_diagnostics.sh || status=1
           # One camera, one field of view, and a faded wall that comes back. The fader
           # half of this is the regression for the occluder bug in #58.
           run_check camera_rig 240 godot --headless --path . --script res://tests/camera_rig_test.gd || status=1

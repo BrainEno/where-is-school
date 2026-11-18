@@ -22,6 +22,7 @@ func get_flag(flag: StringName, default_value: Variant = null) -> Variant:
 
 func set_flag(flag: StringName, value: Variant) -> void:
 	if String(flag).is_empty():
+		Diagnostics.record("state.flag_refused")
 		push_error("GameState.set_flag received an empty flag identifier.")
 		return
 

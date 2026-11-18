@@ -86,6 +86,7 @@ func play_track(path: String = TRACK_PATH) -> bool:
 		return false
 	var stream := load(path) as AudioStream
 	if stream == null:
+		Diagnostics.record("assets.load_failed", {"kind": "music"})
 		push_error("Music: '%s' could not be loaded; the background music is silent." % path)
 		return false
 	_player.stream = stream

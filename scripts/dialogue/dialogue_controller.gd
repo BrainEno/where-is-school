@@ -104,9 +104,12 @@ func _ready() -> void:
 	# nobody implemented.
 	_abilities = InnerAbilities.load_all()
 	if not _abilities.is_valid():
+		Diagnostics.record("assets.load_failed", {"kind": "abilities"})
 		push_error("DialogueController: %s" % _abilities.describe_errors())
 
 	_characters = CharacterDirectory.load_all(_abilities)
+	if not _characters.errors.is_empty():
+		Diagnostics.record("assets.load_failed", {"kind": "characters"})
 	for message in _characters.errors:
 		push_error("DialogueController: %s" % message)
 	# One resolver for the whole session. Its seed comes from the clock so two
@@ -116,10 +119,12 @@ func _ready() -> void:
 
 	_library = DialogueLibrary.load_all(_abilities)
 	if not _library.is_valid():
+		Diagnostics.record("assets.load_failed", {"kind": "dialogue"})
 		push_error("DialogueController: %s" % _library.describe_errors())
 
 	_inspections = InspectionLibrary.load_all()
 	if not _inspections.is_valid():
+		Diagnostics.record("assets.load_failed", {"kind": "inspections"})
 		push_error("DialogueController: %s" % _inspections.describe_errors())
 	_report_content_load()
 
@@ -177,6 +182,11 @@ func _report_content_load() -> void:
 	var inspection_report: Dictionary = _inspections.get_load_report()
 	var total := int(dialogue_report.get("total_usec", 0))
 	total += int(inspection_report.get("total_usec", 0))
+	Diagnostics.record("assets.text_load_timing", {
+		"elapsed_ms": int(total / 1000.0),
+		"dialogue_locales": dialogue_report.get("locales", {}).size(),
+		"inspection_locales": inspection_report.get("locales", {}).size(),
+	})
 	print(
 		(
 			"DialogueController: text corpus loaded in %.1f ms "
@@ -365,13 +375,16 @@ func _resolve_key(key: String, interactable: Interactable) -> String:
 ## presentation is already running.
 func play_conversation(conversation_id: StringName) -> bool:
 	if is_busy():
+		Diagnostics.record("dialogue.start_refused", {"reason": "busy"})
 		push_error("DialogueController: cannot start '%s' while busy." % conversation_id)
 		return false
 	if _library == null:
+		Diagnostics.record("dialogue.start_refused", {"reason": "no_graph"})
 		push_error("DialogueController: dialogue library failed to load.")
 		return false
 	var graph := _library.get_graph(conversation_id)
 	if graph == null:
+		Diagnostics.record("dialogue.start_refused", {"reason": "unknown_conversation"})
 		push_error("DialogueController: unknown conversation '%s'." % conversation_id)
 		return false
 

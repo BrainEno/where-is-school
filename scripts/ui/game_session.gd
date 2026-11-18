@@ -120,9 +120,7 @@ func inspect_save() -> Dictionary:
 func continue_game() -> Dictionary:
 	var tree := get_tree()
 	tree.paused = false
-	var error := tree.change_scene_to_file(MAIN_SCENE)
-	if error != OK:
-		push_error("Session: could not enter %s (error %d)." % [MAIN_SCENE, error])
+	var error := _go_to(MAIN_SCENE, MAIN_SCENE)
 	return {"ok": error == OK, "error": error, "scene": MAIN_SCENE}
 
 
@@ -479,6 +477,7 @@ func _conclude(report: Dictionary, steps: PackedStringArray) -> Dictionary:
 	if bool(report["ok"]):
 		new_game_started.emit(report.duplicate(true))
 	else:
+		Diagnostics.record("session.new_game_refused", {"reason": report["reason"]})
 		push_error("Session: the new game did not start: %s" % str(report))
 		new_game_failed.emit(report.duplicate(true))
 	return report
@@ -646,6 +645,8 @@ func _release_held_inputs() -> void:
 func _go_to(scene: String, what: String) -> int:
 	var error := get_tree().change_scene_to_file(scene)
 	if error != OK:
+		var scene_id := "world" if scene == MAIN_SCENE else ("title" if scene == TITLE_SCENE else "other")
+		Diagnostics.record("session.scene_refused", {"scene": scene_id, "error_code": error})
 		push_error("Session: could not enter %s (error %d)." % [what, error])
 	return error
 

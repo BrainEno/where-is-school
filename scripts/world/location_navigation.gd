@@ -157,6 +157,7 @@ func bake_region() -> bool:
 			"the region did not register with the navigation map (mesh has %d polygons)"
 			% _polygon_count
 		)
+		Diagnostics.record("world.navigation_failed")
 		push_error("LocationNavigation: %s" % _bake_error)
 	_bake_usec = Time.get_ticks_usec() - started
 	_report(String(root.name))
@@ -300,6 +301,7 @@ func _watch_synchronization() -> void:
 				worst[0] if not worst.is_empty() else -1.0, describe_sync(),
 			]
 		)
+		Diagnostics.record("world.navigation_unsynchronized")
 		push_warning("LocationNavigation: %s" % _sync_error)
 		return
 	_sync_checks_left -= 1

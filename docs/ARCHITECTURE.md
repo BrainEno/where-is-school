@@ -67,16 +67,20 @@ re-exports `Palette`, so the menus keep their existing names.
 
 ## 3. Autoload policy
 
-The project contains **five** autoloads, and this list is the only place that number is
-written down.
+The registration order is in [`project.godot`](../project.godot). The table describes
+what each process-wide service owns.
 
 | Autoload | Script | What it owns |
 |---|---|---|
+| `Diagnostics` | `scripts/autoload/diagnostics.gd` | bounded offline event history across scenes; player-initiated local export, never a gameplay state store (see §7c) |
 | `GameState` | `scripts/autoload/game_state.gd` | runtime story flags and snapshot/restore of those flags |
 | `NarrativeState` | `scripts/autoload/narrative_state.gd` | append-only narrative knowledge entries (observed / reported / recalled / imagined), de-duplicated by id, with snapshot/restore |
+| `Save` | `scripts/autoload/save_manager.gd` | versioned save payload and verified save/restore, see §7 |
 | `Loc` | `scripts/i18n/loc.gd` | the current locale, the locale tables, and the `locale_changed` signal (see §5b). Writes only `[display] locale` of `SettingsStore.PATH` |
 | `CueAudio` | `scripts/audio/cue_audio.gd` | the four synthesised interaction cues, built once at startup (see §5e) |
 | `Music` | `scripts/autoload/music_player.gd` | the one background-music player, on its own `Music` bus, for the whole session (see §5m) |
+| `Settings` | `scripts/autoload/settings_manager.gd` | preferences, bindings and active input device |
+| `Session` | `scripts/ui/game_session.gd` | title, new-game and save-and-quit transactions |
 
 - **GameState** is not a dumping ground for quests, dialogue UI, scene transitions,
   audio, inventory, settings, or save-file I/O.
@@ -93,11 +97,9 @@ written down.
   player inside a location restarts with the location, so every doorway would restart the
   take, and a player per room would overlap for a frame during a transition. It owns one
   `AudioStreamPlayer` and one stream, and it refuses to restart what is already playing.
-
-Earlier revisions of this section said "two autoloads" and did not mention `Loc` or
-`CueAudio`. That was wrong, not a plan: both had shipped in earlier rounds. `Music` is the
-first autoload added since, and this list moved with it in the same change rather than
-afterwards.
+- **Diagnostics** must see startup and normal teardown as well as scene changes. Its
+  recorder and single I/O worker do not own the game state, handle gameplay errors or
+  publish a general-purpose signal bus. Settings may explicitly request an export.
 
 Add another autoload only when:
 1. multiple independent scenes genuinely need the same service;
@@ -105,7 +107,7 @@ Add another autoload only when:
 3. the API is small and documented;
 4. tests can validate it independently.
 
-A future save manager should call explicit serializers and use a versioned save schema. It should not be merged into GameState.
+The save manager uses a versioned save schema and stays separate from GameState and Diagnostics.
 
 ## 4. Scene ownership
 
@@ -1162,6 +1164,18 @@ below are from that tool, and the per-category policy is written in
   content scripts), `art/` (the editable `.blend` sources), `addons/` (the narrative editor
   plugin) and `.github/`. The `.blend` files are additionally excluded from Godot's own
   resource filesystem by `art/props/.gdignore`.
+
+## 7c. Offline troubleshooting (implemented, #224)
+
+`Diagnostics.record(event, context)` appends only events defined in the
+[diagnostic schema](../scripts/diagnostics/event_schema.gd). World, save, dialogue,
+asset and state owners still make the decisions and retain their console errors and
+user-facing recovery flows. `Diagnostics` owns the process lifetime and bounded queue,
+while [`log_store.gd`](../scripts/diagnostics/log_store.gd) owns the rotating files.
+There is no interception of raw engine output, no network client and no copy of saved state.
+The title/pause `SettingsPanel` reuses that service for opening the local directory and
+explicitly exporting a JSON report. See the [developer contract and audit](OFFLINE_DIAGNOSTICS.md)
+for field rules, storage limits, failure handling and the restart check.
 
 ## 8. Testing boundaries
 
