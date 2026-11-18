@@ -271,11 +271,11 @@ func _check_parity() -> void:
 		if locale == reference:
 			continue
 		var table: Dictionary = _index.get(locale, {})
+		_problems.append_array(
+			LocaleParity.check_table_parity(reference, reference_table, locale, table)
+		)
 		for entry_id: Variant in reference_table.keys():
 			if not table.has(entry_id):
-				_problems.append(
-					"%s records '%s' but %s never does." % [reference, entry_id, locale]
-				)
 				continue
 			var a := int((reference_table[entry_id] as Dictionary)["source"])
 			var b := int((table[entry_id] as Dictionary)["source"])
@@ -285,9 +285,4 @@ func _check_parity() -> void:
 						entry_id, NarrativeEntry.source_to_id(a), reference,
 						NarrativeEntry.source_to_id(b), locale,
 					]
-				)
-		for entry_id: Variant in table.keys():
-			if not reference_table.has(entry_id):
-				_problems.append(
-					"%s records '%s' but %s never does." % [locale, entry_id, reference]
 				)

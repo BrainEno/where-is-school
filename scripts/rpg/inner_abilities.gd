@@ -221,9 +221,7 @@ func get_name_for_speaker(speaker_id: StringName) -> String:
 
 
 func describe_errors() -> String:
-	if errors.is_empty():
-		return "Inner abilities loaded without errors."
-	return "Inner abilities have %d error(s):\n%s" % [errors.size(), "\n".join(errors)]
+	return JsonTable.describe_errors("Inner abilities", errors, "have")
 
 
 # --- parsing ----------------------------------------------------------------
@@ -564,18 +562,9 @@ func _check_text_parity() -> void:
 				)
 		if locale == reference:
 			continue
-		for ability_id: Variant in reference_ids:
-			if not ids.has(ability_id):
-				errors.append(
-					"%s: ability '%s' has no text (present in %s)."
-					% [path, ability_id, reference]
-				)
-		for ability_id: Variant in ids:
-			if not reference_ids.has(ability_id):
-				errors.append(
-					"%s: ability '%s' does not exist in %s."
-					% [path, ability_id, reference]
-				)
+		errors.append_array(
+			LocaleParity.check_id_parity(reference, reference_ids, locale, ids, "ability", path)
+		)
 		for ability_id: Variant in ids:
 			if not reference_ids.has(ability_id):
 				continue
@@ -633,22 +622,10 @@ func _read_int(source: Dictionary, key: String, fallback: int, context: String) 
 
 
 func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		errors.append("File not found: %s" % path)
-		return {}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		errors.append("Could not open %s (error %d)." % [path, FileAccess.get_open_error()])
-		return {}
-	var text := file.get_as_text()
-	file.close()
-	var json := JSON.new()
-	if json.parse(text) != OK:
-		errors.append(
-			"%s: invalid JSON at line %d: %s" % [path, json.get_error_line(), json.get_error_message()]
-		)
-		return {}
-	if not (json.data is Dictionary):
-		errors.append("%s: root value must be an object." % path)
-		return {}
-	return json.data
+	return JsonTable.read_dict(
+		path,
+		errors,
+		"%s: root value must be an object.",
+		"File not found: %s",
+		"Could not open %s (error %d)."
+	)
