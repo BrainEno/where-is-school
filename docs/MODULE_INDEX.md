@@ -106,6 +106,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
+| `Locales` | [`scripts/i18n/locales.gd`](../scripts/i18n/locales.gd) | Supported locale profiles, aliases and reading speeds; add language metadata here. |
 | `L10n` | [`scripts/i18n/l10n.gd`](../scripts/i18n/l10n.gd) | Static interface-string lookup and locale tables; use Loc for persistent locale choice and change notifications. |
 
 ### Save encoding
@@ -113,7 +114,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `SaveCodec` | [`scripts/save/save_codec.gd`](../scripts/save/save_codec.gd) | Typed JSON envelope/value encoding and strict decoding; Save owns payload selection and file I/O. |
-| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The one place that names the preferences file (`user://settings.cfg`) shared by Settings and Loc; do not write the path again. |
+| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. |
 
 ### Interaction and world cues
 
@@ -163,7 +164,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `LocationHost` | [`scripts/world/location_host.gd`](../scripts/world/location_host.gd) | Load/swap location scenes transactionally: validate scene/id/spawn/placement before replacing the old room. |
 | `LocationNavigation` | [`scripts/world/location_navigation.gd`](../scripts/world/location_navigation.gd) | Bake/query a location's own static-collider mesh and expose synchronization; never borrow a neighboring map. |
 | `LocationRoot` | [`scripts/world/location_root.gd`](../scripts/world/location_root.gd) | Location-owned spawn, waypoint, actor and interactable lookup contract. |
-| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | Shared navigation-map questions (does a map hold geometry yet?) for the player, pointer and companion controllers; ask here instead of re-checking RIDs. |
+| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `NPresence` | [`scripts/world/n_presence.gd`](../scripts/world/n_presence.gd) | Restore substitute N at the room's authored lectern path endpoint from n_arrived. |
 | `OpeningSequence` | [`scripts/world/opening_sequence.gd`](../scripts/world/opening_sequence.gd) | Flag-gated prologue sequencing, shared beat/player locks and checkpoint/resume coordination; do not copy its lock state. |
 | `QPresence` | [`scripts/world/q_presence.gd`](../scripts/world/q_presence.gd) | Restore classroom Q and the talk anchor from story flags and room markers. |

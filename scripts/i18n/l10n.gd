@@ -12,8 +12,10 @@ extends RefCounted
 ## signal-backed part (persisting the choice and telling the UI to redraw) lives
 ## in scripts/i18n/loc.gd, which is the autoload `Loc`.
 
-const LOCALES: Array[String] = ["en", "zh-CN"]
-const DEFAULT_LOCALE := "en"
+static var LOCALES: Array[String]:
+	get:
+		return Locales.codes()
+const DEFAULT_LOCALE := Locales.DEFAULT_LOCALE
 const TABLE_DIR := "res://data/locale"
 const FORMAT_VERSION := 1
 
@@ -33,17 +35,7 @@ static func table_path(locale: String) -> String:
 
 ## Returns a supported locale code, or the default one for anything unknown.
 static func normalize(locale: String) -> String:
-	var code := locale.strip_edges()
-	for candidate in LOCALES:
-		if code == candidate:
-			return candidate
-	# "zh", "zh_CN", "zh-Hans" and "cn" all mean the same table for now.
-	var lowered := code.to_lower()
-	if lowered.begins_with("zh") or lowered == "cn":
-		return "zh-CN"
-	if lowered.begins_with("en"):
-		return "en"
-	return DEFAULT_LOCALE
+	return Locales.normalize(locale)
 
 
 static func is_supported(locale: String) -> bool:
