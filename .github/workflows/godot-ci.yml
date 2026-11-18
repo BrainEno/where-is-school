@@ -204,6 +204,19 @@ jobs:
           python3 tools/check_ui_palette.py
           python3 tests/ui_palette_test.py
 
+      - name: Check the interface has no new colour literals
+        shell: bash
+        run: |
+          # Issue #229 / F-022: `check_ui_palette.py` refuses the same RGB in two files, but a
+          # colour typed out once inside `scripts/ui/` had no gate at all - which is how the
+          # reading band and the notebook ended up with four source colours each. This check
+          # is the other half: no new literal in the interface, per line rather than per file,
+          # with an allowlist that records why each of the 20 remaining ones is local.
+          # Pure white and pure black are tween endpoints and are skipped, as they are in
+          # the palette check. Its test proves both directions on trees it writes.
+          python3 tools/check_ui_literals.py
+          python3 tests/ui_literals_test.py
+
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash
         run: |

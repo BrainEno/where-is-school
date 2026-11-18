@@ -251,6 +251,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
 | Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
+| Interface colour literals | [check_ui_literals.py](../tools/check_ui_literals.py) | The other half of the palette rule: no *new* `Color(<number>…)` inside `scripts/ui/`, per line rather than per file, with an allowlist that records why each remaining one is local. Pure white and pure black are tween endpoints and are skipped. |
 | Fixed-frame waits under a scaled clock | [check_flaky_waits.py](../tools/check_flaky_waits.py) | A ratchet on a structural fact, not a semantic verdict: no test whose `Engine.time_scale` exceeds 1.0 may add a fixed-frame wait, and a converted file must leave `BASELINE`. Waits for a condition use `TestHarness.wait_until`. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
