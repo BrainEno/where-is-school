@@ -37,10 +37,10 @@
 background_mode = 1
 background_color = Color(0.88, 0.84, 0.81, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.64, 0.6, 0.76, 1)
-ambient_light_energy = 1
+ambient_light_color = Color(0.6, 0.58, 0.72, 1)
+ambient_light_energy = 0.85
 tonemap_mode = 2
-tonemap_exposure = 0.8
+tonemap_exposure = 0.68
 fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.88, 0.84, 0.81, 1)
@@ -51,7 +51,7 @@ fog_depth_end = 38
 fog_height = -0.6
 fog_height_density = 0.32
 adjustment_enabled = true
-adjustment_saturation = 0.95
+adjustment_saturation = 0.92
 adjustment_contrast = 1.04
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
@@ -226,7 +226,7 @@ environment = SubResource("Environment_1")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-17, 16, 0)
 light_color = Color(1, 0.8, 0.62, 1)
-light_energy = 1.25
+light_energy = 0.55
 shadow_enabled = true
 directional_shadow_max_distance = 90.0
 

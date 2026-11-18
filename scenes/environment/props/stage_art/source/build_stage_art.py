@@ -290,12 +290,15 @@ HAZE = (0.88, 0.84, 0.81)
 CORRIDOR = {
     "scene": LOC / "corridor" / "corridor.tscn",
     "environment": environment(
-        HAZE, (0.64, 0.6, 0.76), 1.0, 0.8, 0.0, 0.95,
+        # Toon diffuse lights a lit face fully, whatever the angle, and the walkway's
+        # albedos are pale: the sun and the exposure stay low so plaster stays plaster
+        # rather than white, and the haze stays the brightest thing in the frame.
+        HAZE, (0.6, 0.58, 0.72), 0.85, 0.68, 0.0, 0.92,
         depth_fog={"density": 1.0, "curve": 1.2, "begin": 11.0, "end": 38.0, "height": -0.6, "height_density": 0.32},
     ),
     # A low afternoon sun from the stairs' end, almost along the walkway: every shadow,
     # the player's included, points down it towards the door and past it.
-    "sun": sun(-17, 16, 1.25, (1, 0.8, 0.62)),
+    "sun": sun(-17, 16, 0.55, (1, 0.8, 0.62)),
     "no_shadow": [],
     # The end wall's picture (the railing replaces it) and the far block that closed the
     # view across the yard: past the parapet there is the yard and then nothing.

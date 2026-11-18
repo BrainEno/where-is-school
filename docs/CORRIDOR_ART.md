@@ -16,7 +16,7 @@ Emptiness comes from taking away: the far block across the yard is gone, the cut
 
 | Part | Before (stage pass) | Now |
 |---|---|---|
-| Light | purple dusk clear colour (0.25, 0.29, 0.39), sun (−24°, 62°) × 0.6, no fog | haze clear colour (0.88, 0.84, 0.81); a low afternoon sun from the stairs' end (−17°, 16°) × 1.25, so every shadow points down the walkway towards the door; ambient (0.64, 0.60, 0.76) × 1.0 |
+| Light | purple dusk clear colour (0.25, 0.29, 0.39), sun (−24°, 62°) × 0.6, no fog | haze clear colour (0.88, 0.84, 0.81); a low afternoon sun from the stairs' end (−17°, 16°) × 0.55, so every shadow points down the walkway towards the door; ambient (0.60, 0.58, 0.72) × 0.85, exposure 0.68 (toon diffuse lights a lit face fully, and the albedos are pale: the first CI frames at sun × 1.25 blew the walkway out to white) |
 | Fog | none | **depth fog** (`fog_mode` 1), colour = clear colour, begins 11 m from the camera (the camera stands 8 m from the player, so the player is never fogged), full by 38 m, curve 1.2; **height fog** below y −0.6 (density 0.32) washes the yard out |
 | End wall | a 3.1 m wall with the yard door in it, its dado band | the wall's mesh hidden (`visible = false`); its collider is kept, full height. A railing — the parapet turned across the walkway — either side of the door; the door's frame, transom and closed leaf stand free |
 | Past the door | nothing (the wall) | `StageArt/Beyond`: 96 m more walkway — slab, ruled floor, wall with its painted rhythm, coping, the leaning upper storey with its windows, parapet and rail — all in phase with the walked 16 m |
