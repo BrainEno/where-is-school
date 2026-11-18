@@ -7,6 +7,6 @@ resource_name = "walk_dado"
 next_pass = ExtResource("1_ink")
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.204, 0.369, 0.314, 1)
+albedo_color = Color(0.235, 0.251, 0.408, 1)
 roughness = 1.0
 texture_filter = 3

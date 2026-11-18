@@ -32,6 +32,7 @@
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) 同步 |
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
+| [CORRIDOR_ART.md](CORRIDOR_ART.md) | 走廊“没有尽头的走廊”美术改造说明 | 现行 | 实现 PR 作者 | 2026-11-11 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |
 | [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) | 走廊模型落地实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行资产台账见 [MODEL_LIBRARY.md](MODEL_LIBRARY.md) |
 | [IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md](IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md) | 显示与输入提示适配实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 唯一无英文配对的实现笔记；现行边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
