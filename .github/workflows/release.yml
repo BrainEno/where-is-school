@@ -67,11 +67,10 @@ concurrency:
   group: release-build-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Bumped with `godot-ci.yml`, so the evidence runs and the release build are the same
-  # engine; a release built by a different engine than the tests ran on is not evidence of
-  # anything.
-  GODOT_VERSION: 4.7.2
+# The engine version is not written in this file, or in any other workflow: it is written
+# once in `.godot-version`, and `./.github/actions/setup-godot` is the only thing that reads
+# it. A release built by a different engine from the one the tests ran on is not evidence of
+# anything, and this version used to be a literal in fourteen workflows (issue #217).
 
 jobs:
   build:
@@ -82,19 +81,24 @@ jobs:
       version: ${{ steps.version.outputs.label }}
       prerelease: ${{ steps.version.outputs.prerelease }}
       resource_version: ${{ steps.version.outputs.resource }}
+      # The engine that built the artifacts, for the release notes. Read from
+      # `.godot-version` by the install step, so the notes cannot name another one.
+      godot_version: ${{ steps.godot.outputs.version }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      # `include-templates` is what makes an export possible at all: it downloads the
-      # 1.2 GB export template bundle, which carries the Windows *and* the Linux template.
-      # The action caches it, so only the first run on a runner generation pays for it.
+      # The same local action every other workflow installs the engine with, so this build
+      # cannot run on a different engine than the tests did. Its `step-id` publishes the
+      # version it read from `.godot-version`, which the release notes above name.
       - name: Install Godot and its export templates
-        uses: chickensoft-games/setup-godot@ac93246ea68518a384c1c280a496e5989341f2f6 # v2.4.3
+        id: godot
+        uses: ./.github/actions/setup-godot
         with:
-          version: ${{ env.GODOT_VERSION }}
-          use-dotnet: false
+          # `include-templates` is what makes an export possible at all: it downloads the
+          # 1.2 GB export template bundle, which carries the Windows *and* the Linux
+          # template. The action caches it, so only the first run on a runner generation
+          # pays for it.
           include-templates: true
-          cache: true
 
       # The version has three forms and this step is the only place that derives them:
       # - `label`     what the zip is called and what the release is called: `0.1.0`,
@@ -329,6 +333,7 @@ jobs:
           VERSION: ${{ needs.build.outputs.version }}
           RESOURCE_VERSION: ${{ needs.build.outputs.resource_version }}
           PRERELEASE: ${{ needs.build.outputs.prerelease }}
+          GODOT_VERSION: ${{ needs.build.outputs.godot_version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail

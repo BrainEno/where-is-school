@@ -24,7 +24,10 @@ extends SceneTree
 ##    `path_finished`, no budget handed back by the re-route itself, and a new request
 ##    gets its own re-route (#145);
 ## 10. a walk following a route that no longer fits the room (the map was re-baked under
-##    it) stalls, re-routes once from where the body stands, and arrives.
+##    it) stalls, re-routes once from where the body stands, and arrives;
+## 11. the "does this map hold geometry?" rule the player, the pointer and the companion
+##    all ask is one function (`NavMapUtil.has_geometry`, issue #212), and it answers the
+##    same way for an invalid map, an empty one, and a baked room.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -104,6 +107,7 @@ func _run() -> void:
 	Engine.time_scale = 4.0
 	await _frames(2)
 
+	await _check_shared_map_geometry_rule()
 	await _check_every_location_has_a_usable_mesh()
 	await _check_walk_arrives_and_stops()
 	await _check_off_mesh_is_refused()
@@ -122,6 +126,40 @@ func _run() -> void:
 
 
 # --- cases ------------------------------------------------------------------
+
+## Issue #212: three copies of one navigation question, now one function.
+func _check_shared_map_geometry_rule() -> void:
+	var empty := RID()
+	if NavMapUtil.has_geometry(empty):
+		_failures.append("#212: an invalid map RID was reported as holding geometry.")
+	# A valid map with nothing on it: the state every room is in before its bake lands.
+	var bare := NavigationServer3D.map_create()
+	NavigationServer3D.map_set_active(bare, true)
+	NavigationServer3D.map_force_update(bare)
+	if NavMapUtil.has_geometry(bare):
+		_failures.append("#212: a map with no regions was reported as holding geometry.")
+	# The real thing: a room, loaded for the question and left as the one in play, asked
+	# through the same call.
+	_location = await _enter(String(LOCATIONS[0]["scene"]), StringName(LOCATIONS[0]["spawn"]))
+	var nav := _nav_of(_location) if _location != null else null
+	if nav == null:
+		_failures.append("#212: no location to ask the shared rule about.")
+		NavigationServer3D.free_rid(bare)
+		return
+	NavigationServer3D.map_force_update(nav.get_navigation_map())
+	if not NavMapUtil.has_geometry(nav.get_navigation_map()):
+		_failures.append(
+			"#212: a baked room's map was reported as empty. %s" % _report(nav)
+		)
+	# And the three callers still answer through it: the controllers keep a private
+	# `_map_has_geometry`, and it must agree with the shared rule on both maps above.
+	for node: Node in [_player, _player.get_node_or_null("PointerNavigator")]:
+		if node == null or not node.has_method("_map_has_geometry"):
+			_failures.append("#212: %s no longer has _map_has_geometry." % str(node))
+			continue
+		if bool(node.call("_map_has_geometry", empty)) or bool(node.call("_map_has_geometry", bare)):
+			_failures.append("#212: %s disagrees with NavMapUtil on an empty map." % node.name)
+	NavigationServer3D.free_rid(bare)
 
 
 func _check_every_location_has_a_usable_mesh() -> void:

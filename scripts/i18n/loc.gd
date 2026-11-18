@@ -7,9 +7,12 @@ extends Node
 
 signal locale_changed(locale: String)
 
-const SETTINGS_PATH := "user://settings.cfg"
-const SETTINGS_SECTION := "display"
-const SETTINGS_KEY := "locale"
+## Where the preference is stored, and under which keys. The path and the key names live
+## in `SettingsStore`, which `Settings` also reads: one file, one place that names it
+## (issue #215). This node writes only `[display] locale`; every other key in the file
+## belongs to `Settings` and is carried through untouched.
+const SETTINGS_SECTION := SettingsStore.SECTION_DISPLAY
+const SETTINGS_KEY := SettingsStore.KEY_LOCALE
 
 var _last_error_count: int = 0
 
@@ -70,13 +73,16 @@ func load_errors() -> Array[String]:
 
 func _load_saved_locale() -> String:
 	var config := ConfigFile.new()
-	if config.load(SETTINGS_PATH) != OK:
+	if config.load(SettingsStore.PATH) != OK:
 		return ""
 	return String(config.get_value(SETTINGS_SECTION, SETTINGS_KEY, ""))
 
 
 func _save_locale(locale: String) -> void:
-	var config := ConfigFile.new()
-	config.load(SETTINGS_PATH)
+	# Load first, then set one key: this file is shared with `Settings`, and saving a
+	# fresh `ConfigFile` would drop everything it wrote.
+	var config := SettingsStore.open()
 	config.set_value(SETTINGS_SECTION, SETTINGS_KEY, locale)
-	config.save(SETTINGS_PATH)
+	var error := SettingsStore.write(config)
+	if error != OK:
+		push_error("Loc: could not write %s (error %d)." % [SettingsStore.PATH, error])

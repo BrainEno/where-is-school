@@ -32,41 +32,53 @@ log behind it and the names over the people in the room.
 There is a real build now, not only a project to open in the editor.
 
 **A build someone can run.** The release workflow (`.github/workflows/release.yml`)
-exports a single Windows executable and attaches it to the run — and to a GitHub release
-when a `v*` tag is pushed. Unzip it, double-click `where-is-school.exe`. It is unsigned, so
-Windows will warn about an unknown publisher; `packaging/HOW-TO-RUN.txt` ships in the zip
-and says so, along with the controls and the known cosmetic gaps.
+exports **two** archives from one tag and attaches both to the run — and to a GitHub
+release when a `v*` tag is pushed: a Windows executable and a Linux binary. Unzip, run
+`where-is-school.exe` on Windows or `./where-is-school` on Linux. Both are unsigned, so
+Windows will warn about an unknown publisher (Linux shows no warning but offers no
+signature either); `packaging/HOW-TO-RUN.txt` ships in both archives with the controls and
+the known cosmetic gaps, and `packaging/linux/README.txt` adds the Linux and Steam Deck
+notes. What a release contains, and what is checked before it is published, is
+[docs/RELEASE.md](docs/RELEASE.md) — that document is the single source of truth for the
+release process; this paragraph is a summary of it.
 
-**What is in it.** The executable embeds its pack, so there is nothing to keep beside it.
+**What is in it.** Each executable embeds its pack, so there is nothing to keep beside it.
 `tools/verify_build.py` reads that pack back and fails the build if the repository leaked
 into it: no `tests/`, no `docs/screenshots/`, no 10 MB source font — the shipped font is a
 376 KiB subset of the characters the game can actually draw (385,416 bytes), rebuilt by
-`tools/subset_font.py` whenever text changes. `docs/IMPLEMENTATION_NOTES_BUILD.md` records
-why each of those decisions was made and what the build still does not have (an icon, a
-signature, macOS and Linux).
+`tools/subset_font.py` whenever text changes. The Windows executable carries the project
+icon (`tools/build_app_icon.py`) and a version resource stamped from `packaging/version.txt`
+(`tools/stamp_release_version.py`); the Linux archive carries the desktop entry and the icon
+that entry names. What neither has is a signature, and there is no macOS build.
+`docs/IMPLEMENTATION_NOTES_BUILD.md` records why each of those decisions was made.
 
-**From the editor.** Install Godot 4.7.2 (standard, non-.NET), open `project.godot`, press
-F5. On a fresh clone let the import pass finish before playing: the tracked `.import`
-sidecars mean the engine resolves assets through `.godot/imported/`, which a
-just-interrupted import has not written yet. From a shell:
+**From the editor.** Install the engine version named in `.godot-version` (4.7.2, standard,
+non-.NET; that file is the only place the version is written, and CI installs the engine
+through `.github/actions/setup-godot`, which reads it), open `project.godot`, press F5. On a
+fresh clone let the import pass finish before playing: the tracked `.import` sidecars mean
+the engine resolves assets through `.godot/imported/`, which a just-interrupted import has
+not written yet. From a shell:
 
 ```sh
 godot --headless --path . --import          # blocking: waits for the queue to drain
 godot --path .                              # then play
 ```
 
-**Building it yourself** (needs the export templates for 4.7.2):
+**Building it yourself** (needs the export templates for the version in `.godot-version`):
 
 ```sh
 python3 tools/subset_font.py --check                                  # font is current
 godot --headless --path . --import
 godot --headless --path . --export-release "Windows Desktop" \
   build/windows/where-is-school.exe
+godot --headless --path . --export-release "Linux" \
+  build/linux/where-is-school.x86_64
 python3 tools/verify_build.py --exe build/windows/where-is-school.exe
 ```
 
-`export_presets.cfg` is committed and is the definition of the release build; it used to be
-gitignored, which is the reason no build could be reproduced from this repository.
+`export_presets.cfg` is committed and is the definition of both release builds (`Windows
+Desktop` and `Linux`); it used to be gitignored, which is the reason no build could be
+reproduced from this repository.
 
 **Playing it as a test.** `docs/PLAYTEST_CHECKLIST.md` is the ordered hands-on pass the
 build exists for: what to try in each room, what to write down, and the three questions the
@@ -102,6 +114,26 @@ classroom (stay, or leave) → walkway → schoolyard (end card at the far gap)
 The walkway is the short way in and the street is the long way round; both end in
 the same yard, and the end card sits at `pg_gap_in_fence` in the yard, not at an
 alley mouth.
+
+The names above are the ones a player meets. The location **ids** in
+`data/story/locations.json` — the strings a scene, a door and a save file use — are
+different for three of them, and a search for the wrong one finds nothing:
+
+| Player-facing name | Location id | Scene |
+| --- | --- | --- |
+| classroom | `classroom` | `scenes/locations/classroom/classroom.tscn` |
+| walkway | `corridor` | `scenes/locations/corridor/corridor.tscn` |
+| street | `street` | `scenes/locations/street/street.tscn` |
+| residential courtyard | `residential` | `scenes/locations/residential/residential.tscn` |
+| alley | `alley` | `scenes/locations/alley/alley.tscn` |
+| schoolyard | `playground` | `scenes/locations/playground/playground.tscn` |
+| — (not reachable yet) | `laboratory` | `scenes/locations/laboratory/laboratory.tscn` |
+
+`laboratory` is registered in the catalog and has its own scene, but no door in the
+slice leads to it; `docs/IMPLEMENTATION_NOTES_LABORATORY.md` says what it is for. It
+is not part of the six playable locations, and it has no `objective`, no arrival
+conversation and no arrival flag, so adding it to the route is a content decision, not
+a wiring one.
 
 See [docs/IMPLEMENTATION_NOTES_NAVIGATION.md](docs/IMPLEMENTATION_NOTES_NAVIGATION.md)
 for the mouse-navigation round (click-to-move, automatic interaction, evidence and
@@ -183,8 +215,9 @@ match a marker exactly — only an empty id means "this location's default". See
 
 ## Navigation
 
-Six locations are playable — the classroom, the walkway, the street, the residential
-courtyard, the alley and the schoolyard — and **each one owns its own navigation mesh**.
+Six locations are playable — the classroom, the walkway (`corridor` in the data), the
+street, the residential courtyard (`residential`), the alley and the schoolyard
+(`playground`) — and **each one owns its own navigation mesh**.
 Nothing is imported from a neighbouring room and nothing is hand-painted: every
 location scene has a `NavigationRegion3D` named `Navigation` that bakes itself from
 that scene's own static colliders when the location loads
@@ -211,7 +244,9 @@ missing.
 
 ## Repository map
 
-- AGENTS.md — authoritative coding-agent instructions.
+- [AGENTS.md](AGENTS.md) — authoritative coding-agent entry point; read before editing.
+- [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md) — mandatory collaboration, reporting and PR rules.
+- [docs/MODULE_INDEX.md](docs/MODULE_INDEX.md) — search here before implementing: every global GDScript type, shared UI helpers, test harness, autoloads and editor/tool boundaries.
 - project.godot, scenes/, scripts/ — Godot project and runtime.
 - data/ — dialogue, inspection text, interface strings and character presentation data (content, not code). Authors start at `data/dialogue_schema/README.md`.
 - docs/screenshots/ — frames captured from a real, running window by

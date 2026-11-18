@@ -14,7 +14,8 @@ extends SceneTree
 ##    scene change does not restart it either (that is why the player is an autoload);
 ## 5. the music sits on its own `Music` bus, so its dial moves the guitar and nothing else —
 ##    the interaction cues stay on `Master` at their own levels;
-## 6. the default level is a bed: at least 10 dB below the bus's own trim;
+## 6. the default is the shipped -6 dB dial: 6 dB louder than the first bed, with at
+##    least 10 dB of total attenuation left;
 ## 7. `stop()` stops and `play_track()` starts again, and seeking past the loop end wraps
 ##    instead of falling silent;
 ## 8. a music player that is freed - which is what quitting does to the autoload - hands
@@ -38,6 +39,13 @@ const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
 const TRACK_SIDECAR := "res://assets/audio/music/guitar_ambient_loop_01.wav.import"
 const BUS_NAME := &"Music"
 const SAMPLE_RATE := 48000
+## The shipped mix: -6 dB on the player plus the -6 dB Music bus trim. The upper
+## bound keeps the guitar a bed; the lower bound guards against a return to the
+## original quiet mix.
+const EXPECTED_DEFAULT_VOLUME_DB := -6.0
+const MIN_TOTAL_GAIN_DB := -12.0
+const MAX_TOTAL_GAIN_DB := -10.0
+const DB_TOLERANCE := 0.05
 
 ## 46.343 s: the take is 46.738 s, minus 0.59 s of dead air trimmed at the head.
 const LENGTH_TOLERANCE := 0.05
@@ -154,14 +162,29 @@ func _check_bus() -> void:
 		StringName(music.get_bus_name()) == BUS_NAME,
 		"the music plays on '%s', not its own bus" % String(music.get_bus_name())
 	)
+	var default_db := float(music.get_volume_db())
+	_expect(
+		is_equal_approx(default_db, EXPECTED_DEFAULT_VOLUME_DB),
+		"the music's shipped dial is %.1f dB, not the expected %.1f dB"
+		% [default_db, EXPECTED_DEFAULT_VOLUME_DB]
+	)
 	var bus_index := AudioServer.get_bus_index(BUS_NAME)
 	if bus_index != -1:
 		var bus_db := AudioServer.get_bus_volume_db(bus_index)
 		_expect(bus_db <= 0.0, "the '%s' bus is boosted to %.1f dB" % [String(BUS_NAME), bus_db])
-		var total := bus_db + float(music.get_volume_db())
+		var total := bus_db + default_db
 		_expect(
-			total <= -10.0,
+			total <= MAX_TOTAL_GAIN_DB + DB_TOLERANCE,
 			"the music plays at %.1f dB against full scale, which is not a bed" % total
+		)
+		_expect(
+			total >= MIN_TOTAL_GAIN_DB - DB_TOLERANCE,
+			"the music's total gain is %.1f dB, quieter than the expected %.1f dB"
+			% [total, MIN_TOTAL_GAIN_DB]
+		)
+		_notes.append(
+			"default mix: dial %.1f dB + bus %.1f dB = %.1f dB"
+			% [default_db, bus_db, total]
 		)
 
 
@@ -270,7 +293,7 @@ func _check_volume_is_independent() -> void:
 			voice.bus == &"Master",
 			"a cue is on '%s'; the music's bus cannot be theirs" % String(voice.bus)
 		)
-	music.set_volume_db(MusicScript.DEFAULT_VOLUME_DB)
+	music.set_volume_db(EXPECTED_DEFAULT_VOLUME_DB)
 	await process_frame
 	_checks += 1
 
@@ -459,5 +482,6 @@ func _report() -> void:
 		_failures,
 		"%d check(s): the recording imports as a loop, one player survives a scene change, "
 		% _checks
-		+ "the music dial moves nothing else, the loop wraps, and a freed player lets go of it."
+		+ "the default mix ships at -12 dB of total gain, the music dial moves "
+		+ "nothing else, the loop wraps, and a freed player lets go of it."
 	)

@@ -22,6 +22,15 @@ actions too):
 - one action repository, one pin: if two places use ``owner/repo`` with different SHAs or
   different version comments, that is drift and it fails.
 
+**And one engine version, written once (issue #217).** The project pins one Godot version in
+``.godot-version``, which ``./.github/actions/setup-godot`` reads. A workflow that installs
+the engine any other way - ``chickensoft-games/setup-godot`` directly, or a ``version:``
+input that is a literal instead of the composite action's output - has its own copy of that
+number, and an upgrade that misses it makes evidence from a different engine than the
+release. So a ``version:`` key inside a step that uses ``setup-godot`` must be absent or an
+expression (``${{ ... }}``); a literal fails, and so does a ``setup-godot`` step that is not
+the local action.
+
 Rejected references are classified so the message says what is wrong: a tag (``v4``,
 ``v2.4.3``), a short SHA (7-39 hex characters), a branch or other movable name (``main``,
 ``releases/v6``), an uppercase SHA, a missing ``@ref``, a missing or non-version comment.
@@ -71,6 +80,16 @@ USES_KEY = re.compile(r"""(?P<q>["']?)uses(?P=q)[ \t]*:(?=[ \t]|$)""")
 # Any mapping key, used to find the column a block scalar's content must exceed.
 ANY_KEY = re.compile(r"""(?:"[^"]*"|'[^']*'|[^\s#'"{\[][^:#]*?)[ \t]*:(?=[ \t]|$)""")
 BLOCK_INDICATOR = re.compile(r"[|>][0-9+\-]*")
+# The action whose `version:` input is the engine version.
+ENGINE_ACTION = "chickensoft-games/setup-godot"
+# The repository's own wrapper around it: the only acceptable caller.
+ENGINE_WRAPPER = "./.github/actions/setup-godot"
+# The wrapper's own definition, which is where the upstream action is called.
+WRAPPER_FILE = ".github/actions/setup-godot/action.yml"
+# `version:` as a mapping key, the way USES_KEY is written.
+VERSION_KEY = re.compile(r"""(?P<q>["']?)version(?P=q)[ \t]*:(?=[ \t]|$)""")
+# A value that is an expression, e.g. `${{ steps.version.outputs.version }}`.
+EXPRESSION = re.compile(r"^\$\{\{.*\}\}$")
 
 
 @dataclass
@@ -82,6 +101,9 @@ class Use:
     value: str
     comment: str
     problems: list[str] = field(default_factory=list)
+    # 1-based line of a `version:` input in this step's block, and its value, when the step
+    # is the engine install. Kept on the Use because the block is what the scanner reads.
+    version_lines: list[tuple[int, str]] = field(default_factory=list)
 
     @property
     def is_local(self) -> bool:
@@ -110,6 +132,11 @@ class Use:
     def version(self) -> str:
         match = VERSION.match(self.comment)
         return match.group(0) if match else ""
+
+    @property
+    def installs_engine(self) -> bool:
+        """True for the engine install: the local wrapper, or the upstream action itself."""
+        return self.value == ENGINE_WRAPPER or self.value.split("@", 1)[0] == ENGINE_ACTION
 
 
 # --- reading -------------------------------------------------------------------------
@@ -252,7 +279,40 @@ def scan_text(text: str, path: str) -> list[Use]:
                 use.problems.append("`uses:` continues on the next line; write it on one line")
         uses.append(use)
         i += 1
+    # A second pass over the same lines, because the `with:` inputs of a step are read
+    # after its `uses:` and belong to it by indentation. Only the engine install's
+    # `version:` is judged (see `judge_version`), and only what a step writes under its own
+    # `with:` counts, so an unrelated `version:` key elsewhere is not reported.
+    _collect_engine_versions(lines, uses)
     return uses
+
+
+def _collect_engine_versions(lines: list[str], uses: list[Use]) -> None:
+    """Attach each engine-install step's ``version:`` inputs to its ``Use``."""
+    for use in uses:
+        if not use.installs_engine:
+            continue
+        # The `uses:` line, then every following line deeper than it and before the next
+        # sequence item - the step's own block.
+        uses_indent = len(lines[use.line - 1]) - len(lines[use.line - 1].lstrip(" "))
+        step_indent = _content_start(lines[use.line - 1].replace("\t", "    "))
+        i = use.line
+        while i < len(lines):
+            raw = lines[i].replace("\t", "    ")
+            stripped = raw.strip()
+            indent = len(raw) - len(raw.lstrip(" "))
+            if stripped and indent <= uses_indent and stripped.startswith("- "):
+                break
+            if stripped and indent < step_indent:
+                break
+            if stripped and not stripped.startswith("#"):
+                value_part, _ = _strip_comment(stripped)
+                match = VERSION_KEY.match(value_part)
+                if match:
+                    # Quoted and unquoted are the same value to YAML, so they are the same
+                    # value here: `"${{ ... }}"` is an expression, `"4.7.2"` is a literal.
+                    use.version_lines.append((i + 1, _unquote(value_part[match.end():].strip())))
+            i += 1
 
 
 def workflow_files(root: Path) -> list[Path]:
@@ -286,8 +346,12 @@ def classify_ref(ref: str) -> str:
 def judge(use: Use) -> list[str]:
     """Problems with one ``uses:``; empty when it is acceptable."""
     problems = list(use.problems)
-    if problems or use.is_local:
-        return problems
+    if use.is_local:
+        # A local action needs no SHA, but the engine wrapper is the one local action with
+        # a rule about its inputs (`judge_version`), so it is judged either way.
+        return problems + judge_version(use)
+    if problems:
+        return problems + judge_version(use)
     if use.is_docker:
         if not DOCKER_DIGEST.fullmatch(use.ref):
             problems.append("docker image is not pinned by digest; use @sha256:<64 hex>")
@@ -300,6 +364,36 @@ def judge(use: Use) -> list[str]:
             problems.append("missing version comment; add e.g. `# v1.2.3` after the SHA")
         elif not use.version:
             problems.append(f"comment `# {use.comment}` does not start with a version")
+    problems += judge_version(use)
+    return problems
+
+
+def judge_version(use: Use) -> list[str]:
+    """Problems with how one engine-install step names the engine version (issue #217).
+
+    Two mistakes, both of which leave a copy of the version number in a workflow:
+
+    - installing ``chickensoft-games/setup-godot`` directly instead of the local wrapper,
+      which is what reads ``.godot-version``;
+    - passing ``version:`` a literal (``4.7.2``) rather than an expression. The wrapper
+      passes ``${{ steps.version.outputs.version }}``; anything that is not an expression
+      is a second copy of the number, and the copy is what goes stale.
+    """
+    if not use.installs_engine:
+        return []
+    problems: list[str] = []
+    # The wrapper is the one place allowed to call the upstream action: it is the thing
+    # that turns `.godot-version` into the input.
+    if use.value.split("@", 1)[0] == ENGINE_ACTION and use.path != WRAPPER_FILE:
+        problems.append(
+            f"installs the engine directly; use `{ENGINE_WRAPPER}`, which reads the one "
+            "version from `.godot-version` (issue #217)")
+    for line, value in use.version_lines:
+        if not EXPRESSION.match(value):
+            problems.append(
+                f"line {line}: engine `version: {value or '(empty)'}` is a literal; the "
+                f"version is written once in `.godot-version` and `{ENGINE_WRAPPER}` reads "
+                "it (issue #217)")
     return problems
 
 

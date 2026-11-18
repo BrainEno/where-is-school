@@ -1,6 +1,15 @@
 # Implementation Notes — Biology Class Prologue
 
-Scope: the second playable milestone. The player wakes at a desk in a biology
+> **Historical — superseded.** These notes describe the **second** milestone, which ended at
+> an end-of-slice card in the residential courtyard. The slice has since grown a free period,
+> a walkable schoolyard and an end card at the gap in the far fence, so the scope below and
+> the "build stops there" sentence are no longer true. README's "Project status" is the
+> current account; `docs/IMPLEMENTATION_NOTES_FREE_PERIOD.md` and
+> `docs/IMPLEMENTATION_NOTES_PLAYGROUND.md` cover what was added after this note. It is kept
+> because the architecture it describes (the beat director, the transition pre-flight, the
+> data-only dialogue) is still how the game is built.
+
+Scope (at the time): the second playable milestone. The player wakes at a desk in a biology
 classroom, Q talks to them unprompted, the schoolbag is missing its textbook, the
 room can be inspected, an anticipated confrontation is shown and explicitly
 framed as imagination, the second bell rings without B, substitute N takes the
