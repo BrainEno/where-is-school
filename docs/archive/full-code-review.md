@@ -1,5 +1,12 @@
 # Full code review and engineering audit — findings, decisions, and where they went
 
+> **状态：** 历史/归档
+> **最后核对：** 2026-11-17（仅归档标记、索引与相对链接）
+> **负责人：** 文档 Agent
+> **取代者：** [docs/README.md](../README.md) 是现行文档索引，[MODULE_INDEX.md](../MODULE_INDEX.md) 是公共类型索引，[ADR 0004](../adr/0004-art-direction.md) 已存在。
+>
+> 本页只保留 `f027f35` 基线时的评审记录，不代表当前 `main`。上表中 “Status today” 一列也写于当时，不能据此判断现在是否已修复；请回到 [docs/README.md](../README.md) 与 GitHub issue/PR 状态。
+
 This file is the repository-side index of the November 2026 audit of the project. The audit
 itself was delivered as a long report plus thirteen GitHub issues; this page keeps the part
 that has to survive in the repository: **what was measured, what was found, which decision
@@ -55,8 +62,10 @@ the art plan depends on them, and they are the owner's to make, not a developer'
 3. **Character shading.** Which look the two characters are supposed to have, which decides
    whether the meshes are re-UV'd and re-tangented at all.
 
-They belong in **ADR 0004**, which does not exist yet. Until it does, #54 (the
-"rendering pipeline is zero" finding) cannot be worked on responsibly.
+At the time of the audit they belonged in **ADR 0004**, which did not exist yet;
+[ADR 0004](../adr/0004-art-direction.md) now exists but still leaves camera and
+implementation details open. #54 (the "rendering pipeline is zero" finding) therefore
+remains an owner decision, not a claim this archived page can settle.
 
 ## Findings and where each one went
 

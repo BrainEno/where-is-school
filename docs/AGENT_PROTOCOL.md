@@ -112,3 +112,5 @@ The final handoff must link the PR and report its title, base/head SHA, changed-
 ## 8. Agent entry point
 
 `AGENTS.md` is the sole repository instruction entry point. Issue #221 removed the singular `AGENT.md` redirect with owner approval after searching tracked files (including `.github/`, `tools/` and tests) found no in-repository tool dependency on it. External agent/tool configurations cannot be verified from this checkout; point any such configuration at `AGENTS.md`, not at a copied rule set.
+
+Before treating a document under `docs/` as current, read [docs/README.md](README.md): it is the centralized status, ownership and archive index. [MODULE_INDEX.md](MODULE_INDEX.md) remains the public-type index. An implementation note, migration record or archived audit is historical evidence, not a current contract, unless the central index says otherwise.

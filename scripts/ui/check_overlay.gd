@@ -26,7 +26,7 @@ extends Control
 
 @export var success_color: Color = Color(0.62, 0.78, 0.56, 1.0)
 @export var failure_color: Color = Color(0.85, 0.5, 0.42, 1.0)
-@export var title_color: Color = Color(0.82, 0.553, 0.349, 1.0)
+@export var title_color: Color = Palette.WARN
 @export var detail_color: Color = Color(0.72, 0.66, 0.6, 1.0)
 
 ## Kept so the panel can redraw itself in the other language.

@@ -453,7 +453,7 @@ func _build_inspection_line(
 	inspection: InspectionLibrary.InspectionData, text: String
 ) -> Dictionary:
 	var speaker_name := "You"
-	var accent := Color(0.776, 0.733, 0.643, 1.0)
+	var accent := Palette.ACCENT
 	if _characters != null:
 		speaker_name = _characters.get_display_name(inspection.speaker_id)
 		accent = _characters.get_accent_color(inspection.speaker_id)

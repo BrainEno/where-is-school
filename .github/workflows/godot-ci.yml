@@ -192,6 +192,18 @@ jobs:
           python3 tools/check_ci_step_paths.py
           python3 tests/ci_step_paths_test.py
 
+      - name: Check the interface palette is written once
+        shell: bash
+        run: |
+          # Issue #210: the bone accent was typed out in eight files, and the reading band's
+          # "ember" had already drifted from the menus' by the time anyone looked. The check
+          # refuses the same RGB value in two files, ignores a colour reached through a name,
+          # and reports pairs between allowlisted writers without failing on them (the
+          # reading band left the allowlist when #231 merged). Its test proves both
+          # directions on trees it writes.
+          python3 tools/check_ui_palette.py
+          python3 tests/ui_palette_test.py
+
       - name: Check the committed screenshots are labelled
         shell: bash
         run: |

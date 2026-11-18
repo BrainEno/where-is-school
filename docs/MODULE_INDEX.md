@@ -59,7 +59,8 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `ImaginationOverlay` | [`scripts/ui/imagination_overlay.gd`](../scripts/ui/imagination_overlay.gd) | Mark subjective beats visibly as imagined, not observed world events. |
 | `InputHint` | [`scripts/ui/input_hint.gd`](../scripts/ui/input_hint.gd) | Localized action labels from the active device and live bindings; do not hard-code key names in another UI. |
 | `JournalPanel` | [`scripts/ui/journal_panel.gd`](../scripts/ui/journal_panel.gd) | Render the notebook from existing knowledge, routes and reading progress; do not create a second knowledge store. |
-| `MenuStyle` | [`scripts/ui/menu_style.gd`](../scripts/ui/menu_style.gd) | Shared menu palette, type, entry buttons, labels and page/form styling; reuse instead of copying colors or control factories. |
+| `Palette` | [`scripts/theme/palette.gd`](../scripts/theme/palette.gd) | The project's colours as names: ink, paper, bone, ember, sheet, and the four source colours. A leaf module (imports nothing) so the dialogue and actor layers can name a colour without importing the interface; `tools/check_ui_palette.py` fails one value written in two files, and fails this file if it ever loads anything. |
+| `MenuStyle` | [`scripts/ui/menu_style.gd`](../scripts/ui/menu_style.gd) | Menu type, entry buttons, labels, page/form styling and control factories; it re-exports `Palette`'s names, so `MenuStyle.INK` and `Palette.INK` are one value. Do not add a colour here - add it to `Palette`. |
 | `NewGameFailureText` | [`scripts/ui/new_game_failure_text.gd`](../scripts/ui/new_game_failure_text.gd) | Turn a Session failure report into localized player-facing text; keep technical details in the log. |
 | `NotebookPaper` | [`scripts/ui/notebook_paper.gd`](../scripts/ui/notebook_paper.gd) | Draw the dialogue band's torn notebook sheet, rules, red margin and set-square wedge; never takes input; DialoguePanel sizes it and aligns its rules. |
 | `PauseMenu` | [`scripts/ui/pause_menu.gd`](../scripts/ui/pause_menu.gd) | In-game pause, notebook, settings and save/quit UI; Session owns the transactions. |
@@ -106,6 +107,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
+| `Locales` | [`scripts/i18n/locales.gd`](../scripts/i18n/locales.gd) | Supported locale profiles, aliases and reading speeds; add language metadata here. |
 | `L10n` | [`scripts/i18n/l10n.gd`](../scripts/i18n/l10n.gd) | Static interface-string lookup and locale tables; use Loc for persistent locale choice and change notifications. |
 
 ### Save encoding
@@ -113,7 +115,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `SaveCodec` | [`scripts/save/save_codec.gd`](../scripts/save/save_codec.gd) | Typed JSON envelope/value encoding and strict decoding; Save owns payload selection and file I/O. |
-| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The one place that names the preferences file (`user://settings.cfg`) shared by Settings and Loc; do not write the path again. |
+| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. |
 
 ### Interaction and world cues
 
@@ -163,7 +165,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `LocationHost` | [`scripts/world/location_host.gd`](../scripts/world/location_host.gd) | Load/swap location scenes transactionally: validate scene/id/spawn/placement before replacing the old room. |
 | `LocationNavigation` | [`scripts/world/location_navigation.gd`](../scripts/world/location_navigation.gd) | Bake/query a location's own static-collider mesh and expose synchronization; never borrow a neighboring map. |
 | `LocationRoot` | [`scripts/world/location_root.gd`](../scripts/world/location_root.gd) | Location-owned spawn, waypoint, actor and interactable lookup contract. |
-| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | Shared navigation-map questions (does a map hold geometry yet?) for the player, pointer and companion controllers; ask here instead of re-checking RIDs. |
+| `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `NPresence` | [`scripts/world/n_presence.gd`](../scripts/world/n_presence.gd) | Restore substitute N at the room's authored lectern path endpoint from n_arrived. |
 | `OpeningSequence` | [`scripts/world/opening_sequence.gd`](../scripts/world/opening_sequence.gd) | Flag-gated prologue sequencing, shared beat/player locks and checkpoint/resume coordination; do not copy its lock state. |
 | `QPresence` | [`scripts/world/q_presence.gd`](../scripts/world/q_presence.gd) | Restore classroom Q and the talk anchor from story flags and room markers. |
@@ -248,6 +250,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Generated environments | [build_outdoor_locations.py](../tools/build_outdoor_locations.py), [build_laboratory.py](../tools/build_laboratory.py) | Regenerate scenes from their owner rather than editing generated locations. |
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
+| Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
 ## Keep this map current

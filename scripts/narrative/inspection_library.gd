@@ -6,9 +6,10 @@ extends RefCounted
 ## Descriptions stay short on purpose: a player should be able to read a desk
 ## without reading a paragraph.
 
-const CHAPTERS: Array[String] = [
-	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory",
-]
+## Compatibility view; the catalog is the only source of location IDs.
+static var CHAPTERS: Array[String]:
+	get:
+		return chapters()
 const INSPECTION_DIR := "res://data/inspections"
 
 
@@ -58,13 +59,25 @@ static func chapter_path(locale: String, chapter: String) -> String:
 	return "%s/%s/%s.json" % [INSPECTION_DIR, locale, chapter]
 
 
-static func load_all() -> InspectionLibrary:
+## An optional catalog lets authoring tools and tests inspect an alternate data set.
+static func chapters(catalog: LocationCatalog = null) -> Array[String]:
+	var source := catalog if catalog != null else LocationCatalog.load_all()
+	var ids: Array[String] = []
+	for id: StringName in source.get_ids_in_file_order():
+		ids.append(String(id))
+	return ids
+
+
+static func load_all(catalog_path: String = LocationCatalog.PATH, data_dir: String = INSPECTION_DIR) -> InspectionLibrary:
 	var library := InspectionLibrary.new()
+	var catalog := LocationCatalog.load_all(catalog_path)
+	library.errors.append_array(catalog.errors)
+	var chapter_ids := chapters(catalog)
 	var started := Time.get_ticks_usec()
 	for locale in L10n.LOCALES:
 		library._entries[locale] = {}
-		for chapter in CHAPTERS:
-			var path := chapter_path(locale, chapter)
+		for chapter in chapter_ids:
+			var path := "%s/%s/%s.json" % [data_dir, locale, chapter]
 			var before: int = (library._entries[locale] as Dictionary).size()
 			var chapter_started := Time.get_ticks_usec()
 			library._parse_file(path, locale)

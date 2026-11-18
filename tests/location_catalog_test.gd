@@ -21,7 +21,6 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const CATALOG_PATH := "res://data/story/locations.json"
 const LOCATION_DIR := "res://scenes/locations"
-const LOCALES := ["en", "zh-CN"]
 const LOCALE_DIR := "res://data/locale"
 
 var _failures: Array[String] = []
@@ -38,6 +37,7 @@ func _run() -> void:
 		Harness.finish(self, [catalog.describe_errors()], "")
 		return
 
+	_check_inspection_extension(catalog)
 	_check_every_scene_is_described(catalog)
 	_check_doors_point_at_described_rooms(catalog)
 	_check_objective_keys(catalog)
@@ -47,6 +47,57 @@ func _run() -> void:
 		self, _failures,
 		"every location is described, every door leads to a described room, and every key exists in both languages."
 	)
+
+
+## A location and its inspection files are enough: no GDScript chapter list is edited.
+func _check_inspection_extension(catalog: LocationCatalog) -> void:
+	var actual: Array[String] = []
+	for id: StringName in catalog.get_ids_in_file_order():
+		actual.append(String(id))
+	if InspectionLibrary.CHAPTERS != actual:
+		_failures.append("Inspection chapters do not match the location catalog.")
+	var root := "user://inspection_location_fixture"
+	var catalog_path := root + "/locations.json"
+	var source: Variant = JSON.parse_string(_file_text(CATALOG_PATH))
+	if not source is Dictionary:
+		_failures.append("Could not read the fixture's source catalog.")
+		return
+	var body: Dictionary = source["locations"]["classroom"].duplicate(true)
+	body["start"] = true
+	var fixture := {"format_version": 1, "locations": {"temporary_room": body}}
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(root))
+	var file := FileAccess.open(catalog_path, FileAccess.WRITE)
+	if file == null:
+		_failures.append("Could not create the fixture catalog.")
+		return
+	file.store_string(JSON.stringify(fixture))
+	file.close()
+	for locale: String in L10n.LOCALES:
+		var folder := root + "/" + locale
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+		var target := FileAccess.open(folder + "/temporary_room.json", FileAccess.WRITE)
+		if target == null:
+			_failures.append("Could not create inspection fixture for %s." % locale)
+			continue
+		target.store_string(_file_text(InspectionLibrary.chapter_path(locale, "classroom")))
+		target.close()
+	var added := LocationCatalog.load_all(catalog_path)
+	if not added.is_valid() or InspectionLibrary.chapters(added) != ["temporary_room"]:
+		_failures.append("A data-only location was not discovered: %s" % added.describe_errors())
+	var library := InspectionLibrary.load_all(catalog_path, root)
+	if not library.is_valid():
+		_failures.append("The data-only inspection did not load: %s" % library.describe_errors())
+	for locale: String in L10n.LOCALES:
+		var report: Dictionary = library.get_load_report().get("locales", {}).get(locale, {})
+		if not report.get("chapters", {}).has("temporary_room"):
+			_failures.append("The new location is missing from %s's inspection report." % locale)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(root + "/" + locale + "/temporary_room.json"))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(root + "/" + locale))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(catalog_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(root))
+	var missing := InspectionLibrary.load_all(catalog_path, root)
+	if missing.is_valid():
+		_failures.append("A missing location catalog must be reported, not silently ignored.")
 
 
 func _check_every_scene_is_described(catalog: LocationCatalog) -> void:
@@ -99,7 +150,7 @@ func _check_doors_point_at_described_rooms(catalog: LocationCatalog) -> void:
 
 
 func _check_objective_keys(catalog: LocationCatalog) -> void:
-	for locale in LOCALES:
+	for locale in L10n.LOCALES:
 		var strings := _strings(locale)
 		if strings.is_empty():
 			_failures.append("data/locale/%s.json could not be read." % locale)
@@ -121,7 +172,7 @@ func _check_arrival_conversations(catalog: LocationCatalog) -> void:
 	if not library.is_valid():
 		_failures.append(library.describe_errors())
 		return
-	for locale in LOCALES:
+	for locale in L10n.LOCALES:
 		library.set_locale(locale)
 		for location_id: StringName in catalog.get_ids():
 			var conversation := catalog.get_entry(location_id).arrival_conversation
