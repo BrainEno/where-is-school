@@ -763,8 +763,8 @@ func _hip_rise_weight(progress: float) -> float:
 ## Almost all of the travel happens in the first 60% of the stand, which is when a real body
 ## has left the chair and is still folded over its feet; the last 40% is the straightening,
 ## where the feet are planted and only the spine moves. A linear slide kept the knees in the
-## seat for the whole clip, which is the穿模 the eye picks first: the *shins* are what the
-## chair's front edge cuts through.
+## seat for the whole clip, and the shins are what the chair's front edge cuts through -
+## which is the clip the eye catches first, before it can name what is wrong.
 func _apply_get_up_travel(progress: float) -> void:
 	if not _get_up_travelling:
 		return
