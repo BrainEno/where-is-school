@@ -418,6 +418,10 @@ jobs:
           # The corridor's three library models (#90): wrapper, wall/parapet contact,
           # working face towards the walkway, anchors and routes with the colliders baked in.
           run_check corridor_props 300 godot --headless --path . --script res://tests/corridor_props_test.gd || status=1
+          # The walkway that does not end (docs/CORRIDOR_ART.md): depth fog the colour of the
+          # clear colour, the walkway carried on past the yard door north of every sight
+          # line, the end wall's picture gone but its collider kept, the door's opening clear.
+          run_check corridor_art 180 godot --headless --path . --script res://tests/corridor_art_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
           # has to point at a bone that exists on that rig, every clip has to actually move
           # the bone it is about, and the loop has to come back to where it started. The two

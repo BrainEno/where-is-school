@@ -40,99 +40,181 @@ RES_DIR = "res://scenes/environment/props/stage_art/textures"
 INK = (43, 38, 34)
 
 # --- the walkway (corridor) ---------------------------------------------------------------
-# A school walkway, not an office: chalky plaster over a deep green wainscot (the
-# classroom's horizon line, carried outside), a terrazzo floor with brass strips.
-PLASTER = (206, 198, 174)
-PLASTER_LIGHT = (218, 211, 188)
-PLASTER_DARK = (186, 176, 152)
-PILASTER = (156, 144, 120)
-DADO = (52, 94, 80)
-DADO_LIGHT = (62, 108, 92)
-DADO_DARK = (42, 80, 68)
-TERRAZZO = (92, 56, 48)
-TERRAZZO_LIGHT = (104, 64, 54)
-TERRAZZO_DARK = (80, 48, 42)
-BRASS = (150, 118, 70)
+# The walkway that does not end (docs/CORRIDOR_ART.md). An open gallery in the afternoon:
+# chalky lilac-white plaster over the classroom's deep wainscot (the same 1.05 m horizon
+# line, carried outside), a pale cast floor ruled like an answer sheet with a red margin by
+# the wall. Everything repeats at one even pace - a pilaster every 4 m, a classroom every
+# 8 m, a window every 2 m - because an even pace is what will not end; the stage pass before
+# this one squeezed the rhythm towards the yard door to fake a distance, and this one has a
+# real one. The same rhythm is painted twice: once for the 16 m the player walks, and once
+# as a tile for the walkway's continuation past the yard door, which the fog takes.
+PLASTER = (214, 210, 222)
+PLASTER_LIGHT = (226, 222, 232)
+PLASTER_DARK = (194, 190, 206)
+PILASTER = (184, 180, 200)
+DADO = (60, 64, 104)
+DADO_LIGHT = (72, 78, 120)
+DADO_DARK = (48, 52, 88)
+DOOR = (70, 88, 132)
+LIT_ROOM = (236, 204, 160)
+CONCRETE = (200, 192, 184)
+CONCRETE_LIGHT = (212, 205, 196)
+CONCRETE_DARK = (184, 176, 170)
+RULE = (128, 146, 196)
+MARGIN = (188, 74, 62)
+JOINT = (150, 142, 140)
 
 WALL_LEN = 16.0  # z from +7 (south, s = 0) to -9 (north, s = 16)
 WALL_H = 3.1
 FLOOR_W = 4.4
+DADO_H = 1.05  # the classroom's horizon line (art/classroom DADO_TOP), level all the way
+BAY = 4.0  # one pilaster every bay; a classroom every two
+PILASTER_W = 0.3
+# Pilasters of the walked wall at s = 4k - 0.2: clear of the glass (s 2.0-3.6), the door
+# (4.5-5.5), the extinguisher (6.7-7.1) and the noticeboard (8.1-9.9).
+PILASTER_PHASE = -0.2
+# The continuation starts behind the yard door, at z -9.2 (s = 16.2); its tile keeps the
+# same phase, so the rhythm runs straight on past the door.
+FAR_START_S = 16.2
+FAR_TILE = 8.0
+FLOOR_TILE = 4.0
+RULE_PITCH = 0.5
+MARGIN_S = 0.8  # 0.7 m out from the wall's face (x -2.1)
 
 
-def dado_top(s: float) -> float:
-    """The wainscot's top edge sinks along the walkway: 1.3 m at the stairs, 0.8 m at the
-    yard door. Against a level trim line that reads as distance that is not there."""
-    return 1.3 - 0.5 * (s / WALL_LEN)
+def _plaster(c: Canvas) -> None:
+    planes(c, PLASTER_LIGHT, PLASTER_DARK, int(6 * c.width_m), (1.0, 2.6), (0.25, 0.5), angle=math.pi / 2, opacity=0.4)
+    c.mottle(rgb(PLASTER_DARK), 2.5, 0.2)
 
 
-def pilaster_positions() -> list[tuple[float, float]]:
-    """Pilasters at a spacing that shrinks towards the far end (forced perspective).
-    Skips the stretches the door, the glass, the extinguisher and the noticeboard cover."""
-    covered = [(1.8, 3.8), (4.3, 5.7), (6.6, 7.3), (7.9, 10.1)]
-    out: list[tuple[float, float]] = []
-    s, gap, width = 0.6, 2.9, 0.34
-    while s < WALL_LEN - 0.3:
-        if not any(a - width < s < b + width for a, b in covered):
-            out.append((s, width))
-        s += gap
-        gap = max(1.0, gap * 0.8)
-        width = max(0.2, width * 0.9)
-    return out
+def _dado(c: Canvas, width: float) -> None:
+    rng = c.rng
+    pts = [(-0.1, 0.0)] + [(x, DADO_H + rng.normal(0, 0.006)) for x in np.linspace(-0.1, width + 0.1, 30)] + [(width + 0.1, 0.0)]
+    c.paint(DADO, c.polygon_mask(pts, rough=0.2, cell_m=0.04), 1.0)
+    strokes = []
+    for _ in range(int(5 * width)):
+        x = rng.uniform(0, width)
+        strokes.append(([(x, rng.uniform(0.05, 0.5)), (x + rng.uniform(-0.04, 0.04), DADO_H - 0.05)], rng.uniform(0.15, 0.4), {"bristles": 10, "dryness": 0.5, "wobble_m": 0.01}))
+    c.brush(rgb(DADO_LIGHT), strokes[0::2], opacity=0.3)
+    c.brush(rgb(DADO_DARK), strokes[1::2], opacity=0.3)
+    c.ink_line([(x, DADO_H) for x in np.linspace(0.0, width, max(4, int(width)))], width_m=0.03, wobble_m=0.006, opacity=0.85, taper=False)
+
+
+def _pilaster(c: Canvas, s: float) -> None:
+    w = PILASTER_W
+    c.paint(PILASTER, c.rect_mask(s, DADO_H, s + w, WALL_H + 0.1, rough=0.25, cell_m=0.05), 0.8)
+    c.ink_line([(s + w, DADO_H), (s + w, WALL_H)], width_m=0.025, wobble_m=0.006, opacity=0.6)
 
 
 def corridor_wall() -> Image.Image:
+    """The walked wall (16 x 3.1 m, seen from the walkway, s = 0 at the stairs)."""
     c = Canvas(WALL_LEN, WALL_H, 96.0, PLASTER, seed=3101)
-    rng = c.rng
-    planes(c, PLASTER_LIGHT, PLASTER_DARK, 90, (1.0, 2.6), (0.25, 0.5), angle=math.pi / 2, opacity=0.45)
-    c.mottle(rgb(PLASTER_DARK), 2.5, 0.25)
-    for s, w in pilaster_positions():
-        lean = rng.normal(0, 0.03)
-        c.paint(PILASTER, c.polygon_mask([(s, 0), (s + w, 0), (s + w + lean, WALL_H), (s + lean, WALL_H)], rough=0.3, cell_m=0.05), 0.85)
-        c.ink_line([(s + w, 0.0), (s + w + lean, WALL_H)], width_m=0.03, wobble_m=0.01, opacity=0.7)
-    # the wainscot, its top edge brushed rather than ruled
-    pts = [(-0.1, 0.0)] + [(x, dado_top(x) + rng.normal(0, 0.012)) for x in np.linspace(-0.1, WALL_LEN + 0.1, 40)] + [(WALL_LEN + 0.1, 0.0)]
-    c.paint(DADO, c.polygon_mask(pts, rough=0.25, cell_m=0.04), 1.0)
-    strokes = []
-    for _ in range(70):
-        x = rng.uniform(0, WALL_LEN)
-        top = dado_top(x) - 0.05
-        strokes.append(([(x, rng.uniform(0.05, top * 0.6)), (x + rng.uniform(-0.05, 0.05), top)], rng.uniform(0.15, 0.4), {"bristles": 10, "dryness": 0.5, "wobble_m": 0.01}))
-    c.brush(rgb(DADO_LIGHT), strokes[0::2], opacity=0.35)
-    c.brush(rgb(DADO_DARK), strokes[1::2], opacity=0.35)
-    c.ink_line([(x, dado_top(x)) for x in np.linspace(0.0, WALL_LEN, 12)], width_m=0.03, wobble_m=0.008, opacity=0.9, taper=False)
+    _plaster(c)
+    s = PILASTER_PHASE
+    while s < WALL_LEN:
+        _pilaster(c, s)
+        s += BAY
+    _dado(c, WALL_LEN)
     # a fresher rectangle where something used to hang, and a tally at hand height
     c.paint(PLASTER_LIGHT, c.rect_mask(12.4, 1.45, 13.3, 2.15, rough=0.3, cell_m=0.05), 0.7)
     for k in range(6):
         x = 14.1 + k * 0.05
-        c.chalk([(x, 1.42), (x + 0.01, 1.58)], 0.012, color=(232, 226, 210), opacity=0.7)
-    c.chalk([(14.08, 1.46), (14.38, 1.55)], 0.012, color=(232, 226, 210), opacity=0.7)
+        c.chalk([(x, 1.42), (x + 0.01, 1.58)], 0.012, color=(240, 236, 228), opacity=0.7)
+    c.chalk([(14.08, 1.46), (14.38, 1.55)], 0.012, color=(240, 236, 228), opacity=0.7)
     return c.image(12)
+
+
+def corridor_wall_far() -> Image.Image:
+    """The continuation's wall, one 8 m tile: two bays, one classroom - its door, its glass
+    lit by an afternoon that is the same in every room, its blank plate. Repeated without
+    a single difference; the fog decides where it stops."""
+    c = Canvas(FAR_TILE, WALL_H, 64.0, PLASTER, seed=3103)
+    _plaster(c)
+    phase = (PILASTER_PHASE - FAR_START_S) % BAY
+    s = phase
+    while s < FAR_TILE:
+        _pilaster(c, s)
+        s += BAY
+    _dado(c, FAR_TILE)
+    # the door: the classroom's own, 1.0 x 2.1 m, its frame inked
+    d0 = phase - BAY + 0.9  # the first bay of the tile runs from phase - 4 to phase
+    c.paint(DOOR, c.rect_mask(d0, 0.0, d0 + 1.0, 2.1, rough=0.15, cell_m=0.04), 1.0)
+    c.paint(LIT_ROOM, c.rect_mask(d0 + 0.3, 1.35, d0 + 0.7, 1.85, rough=0.1, cell_m=0.03), 0.9)
+    c.ink_line([(d0, 0.0), (d0, 2.1), (d0 + 1.0, 2.1), (d0 + 1.0, 0.0)], width_m=0.035, wobble_m=0.005, opacity=0.9, taper=False)
+    c.paint(PLASTER_LIGHT, c.rect_mask(d0 + 0.25, 2.3, d0 + 0.75, 2.5, rough=0.1, cell_m=0.03), 1.0)
+    c.ink_line([(d0 + 0.25, 2.3), (d0 + 0.75, 2.3), (d0 + 0.75, 2.5), (d0 + 0.25, 2.5), (d0 + 0.25, 2.3)], width_m=0.015, wobble_m=0.003, opacity=0.7, taper=False)
+    # the glass into the room, lit
+    g0 = phase + 0.7  # the second bay
+    c.paint(LIT_ROOM, c.rect_mask(g0, 1.12, g0 + 1.6, 2.32, rough=0.1, cell_m=0.03), 1.0)
+    c.paint((214, 172, 128), c.rect_mask(g0, 1.12, g0 + 1.6, 1.45, rough=0.2, cell_m=0.04), 0.6)
+    c.ink_line([(g0, 1.12), (g0, 2.32), (g0 + 1.6, 2.32), (g0 + 1.6, 1.12), (g0, 1.12)], width_m=0.04, wobble_m=0.005, opacity=0.9, taper=False)
+    c.ink_line([(g0 + 0.8, 1.12), (g0 + 0.8, 2.32)], width_m=0.025, wobble_m=0.004, opacity=0.8, taper=False)
+    return c.image(16)
+
+
+def _inked_image(c: Canvas, base: np.ndarray, base_colors: int, inks) -> Image.Image:
+    """Posterizes like Canvas.image, but onto the base's own palette plus the given inks,
+    so that thin ruled lines keep their colour instead of being averaged into the ground
+    by the median cut."""
+    ground = Image.fromarray((np.clip(base, 0, 1) * 255 + 0.5).astype(np.uint8))
+    ground = ground.quantize(colors=base_colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    colours = [tuple(ground.getpalette()[i * 3 : i * 3 + 3]) for i in range(base_colors)] + [tuple(k) for k in inks]
+    pal = Image.new("P", (1, 1))
+    pal.putpalette([v for col in colours for v in col] + [0, 0, 0] * (256 - len(colours)))
+    img = Image.fromarray((np.clip(c.rgb, 0, 1) * 255 + 0.5).astype(np.uint8))
+    return img.quantize(palette=pal, dither=Image.Dither.NONE).convert("RGB")
+
+
+def _ruled_floor(c: Canvas, joints: list[float]) -> np.ndarray:
+    """Cast floor ruled like an answer sheet: blue rules running the length of the walkway,
+    a red margin by the wall, saw cuts across at every pilaster."""
+    rng = c.rng
+    planes(c, CONCRETE_LIGHT, CONCRETE_DARK, int(4 * c.height_m), (0.8, 2.0), (0.2, 0.5), angle=None, opacity=0.4)
+    specks(c, rgb((226, 220, 212)), 0.03)
+    specks(c, rgb((150, 140, 136)), 0.025)
+    xs = np.linspace(0, FLOOR_W, c.w, dtype=np.float32)[None, :]
+    lane = smoothstep(1.3, 0.3, np.abs(xs - FLOOR_W / 2 - 0.2) + (value_noise(c.w, c.h, 10, rng, 2) - 0.5) * 0.6)
+    c.paint(CONCRETE_LIGHT, np.broadcast_to(lane, (c.h, c.w)), 0.35)
+    base = c.rgb.copy()
+    for y in joints:
+        c.ink_line([(0.0, y), (FLOOR_W, y + rng.normal(0, 0.01))], width_m=0.02, wobble_m=0.004, color=JOINT, opacity=0.7, taper=False)
+    x = MARGIN_S + RULE_PITCH
+    while x < FLOOR_W - 0.1:
+        c.ink_line([(x, -0.05), (x, c.height_m + 0.05)], width_m=0.026, wobble_m=0.003, color=RULE, opacity=0.8, taper=False, broken=0.15)
+        x += RULE_PITCH
+    for dx in (0.0, 0.05):
+        c.ink_line([(MARGIN_S + dx, -0.05), (MARGIN_S + dx, c.height_m + 0.05)], width_m=0.022, wobble_m=0.003, color=MARGIN, opacity=0.8, taper=False)
+    return base
+
+
+FLOOR_INKS = [JOINT, RULE, (150, 162, 200), (172, 176, 196), MARGIN, (194, 134, 120)]
 
 
 def corridor_floor() -> Image.Image:
-    c = Canvas(FLOOR_W, WALL_LEN, 64.0, TERRAZZO, seed=3102)
-    rng = c.rng
-    planes(c, TERRAZZO_LIGHT, TERRAZZO_DARK, 60, (0.8, 2.0), (0.2, 0.5), angle=None, opacity=0.45)
-    specks(c, rgb((150, 124, 104)), 0.03)
-    specks(c, rgb((64, 40, 36)), 0.02)
-    # A lane worn paler down the middle, where everyone walks.
-    xs = np.linspace(0, FLOOR_W, c.w, dtype=np.float32)[None, :]
-    lane = smoothstep(1.3, 0.3, np.abs(xs - FLOOR_W / 2) + (value_noise(c.w, c.h, 10, rng, 2) - 0.5) * 0.8)
-    c.paint(TERRAZZO_LIGHT, np.broadcast_to(lane, (c.h, c.w)), 0.35)
-    # Brass strips. The long ones converge towards the far end; the cross ones bunch up.
-    centre = FLOOR_W / 2
+    """The walked floor (4.4 x 16 m, plan, canvas top = north = the yard door)."""
+    c = Canvas(FLOOR_W, WALL_LEN, 64.0, CONCRETE, seed=3102)
+    # joints under the pilasters: s = 4k - 0.2 from the south end, y measured the same way
+    base = _ruled_floor(c, [y for y in np.arange(BAY + PILASTER_PHASE, WALL_LEN, BAY)])
+    return _inked_image(c, base, 7, FLOOR_INKS)
 
-    def x_at(f: float, y: float) -> float:
-        return centre + (f - 0.5) * FLOOR_W * (1.0 - 0.38 * y / WALL_LEN)
 
-    for f in (0.08, 0.5, 0.92):
-        c.ink_line([(x_at(f, y), y) for y in np.linspace(0, WALL_LEN, 10)], width_m=0.035, wobble_m=0.01, color=BRASS, opacity=0.8, taper=False)
-    y, gap = 0.4, 1.7
-    while y < WALL_LEN:
-        c.ink_line([(x_at(0.08, y), y), (x_at(0.92, y), y + rng.normal(0, 0.02))], width_m=0.03, wobble_m=0.01, color=BRASS, opacity=0.75, taper=False)
-        y += gap
-        gap = max(0.35, gap * 0.85)
-    return c.image(12)
+def corridor_floor_far() -> Image.Image:
+    """The continuation's floor, one 4.4 x 4 m tile of the same answer sheet."""
+    c = Canvas(FLOOR_W, FLOOR_TILE, 48.0, CONCRETE, seed=3104)
+    # the tile runs south (y = 0, z = -9.2 - 4k) to north; the pilasters stand at
+    # z = -12.8 - 4k, 3.6 m into each tile
+    base = _ruled_floor(c, [3.6])
+    return _inked_image(c, base, 7, FLOOR_INKS)
+
+
+def corridor_windows() -> Image.Image:
+    """The upper storey's windows (2 x 1.2 m tile, alpha): one window a tile, all alike."""
+    c = Canvas(2.0, 1.2, 64.0, (70, 72, 104), seed=3105, alpha=0.0)
+    c.paint_alpha((70, 72, 104), c.rect_mask(0.35, 0.1, 1.65, 1.1, rough=0.1, cell_m=0.03), 1.0)
+    c.paint_alpha((104, 104, 140), c.rect_mask(0.45, 0.65, 1.0, 1.0, rough=0.2, cell_m=0.03), 0.7)
+    c.ink_line([(0.35, 0.1), (0.35, 1.1), (1.65, 1.1), (1.65, 0.1), (0.35, 0.1)], width_m=0.04, wobble_m=0.004, alpha_canvas=True, taper=False)
+    c.ink_line([(1.0, 0.1), (1.0, 1.1)], width_m=0.03, wobble_m=0.004, alpha_canvas=True, taper=False)
+    return c.image(6, alpha="cut")
 
 
 # --- distance floors ----------------------------------------------------------------------
@@ -169,6 +251,27 @@ def distance_floor(size_m: float, centre: tuple[float, float], rect: tuple[float
     far = smoothstep(bands[1], bands[2], d)[..., None]
     c.rgb = before * (1.0 - far) + c.rgb * far
     return c.image(9)
+
+
+HAZE = (226, 214, 208)
+HAZE_WARM = (232, 210, 190)
+
+
+def haze_floor(size_m: float, centre: tuple[float, float], rect: tuple[float, float, float, float], seed: int, px: int = 256) -> Image.Image:
+    """The walkway's distance: not a sky but the haze the fog fades to, a breath warmer
+    near the building. Under the yard and the fog it is mostly never seen; it is there so
+    that a gap in the yard shows the same nothing as the far end."""
+    c = Canvas(size_m, size_m, px / size_m, HAZE, seed=seed)
+    half = size_m / 2
+    cx, cz = centre
+    xs = np.linspace(cx - half, cx + half, c.w, dtype=np.float32)[None, :]
+    zs = np.linspace(cz - half, cz + half, c.h, dtype=np.float32)[:, None]
+    x0, x1, z0, z1 = rect
+    dx = np.maximum(np.maximum(x0 - xs, xs - x1), 0.0)
+    dz = np.maximum(np.maximum(z0 - zs, zs - z1), 0.0)
+    d = np.sqrt(dx * dx + dz * dz) + (value_noise(c.w, c.h, 18.0, c.rng, 3) - 0.5) * 8.0
+    c.paint(HAZE_WARM, smoothstep(40.0, 6.0, d), 0.6)
+    return c.image(6)
 
 
 # --- the street ---------------------------------------------------------------------------
@@ -268,7 +371,7 @@ def save(img: Image.Image, name: str) -> None:
 # Distance floors: (plane size, plane centre x/z, playable rectangle x0, x1, z0, z1).
 # Kept in step with `build_stage_art.py`, which places the planes.
 DISTANCE = {
-    "corridor": (160.0, (20.0, -1.0), (-2.2, 2.2, -9.2, 7.6)),
+    "corridor": (320.0, (40.0, -60.0), (-2.2, 2.2, -9.2, 7.6)),
     "street": (200.0, (0.0, -10.0), (-21.0, 22.0, -42.0, 20.0)),
     "residential": (200.0, (0.0, -10.0), (-23.5, 21.0, -40.0, 18.0)),
     "alley": (160.0, (0.0, -4.0), (-8.7, 4.2, -23.0, 15.0)),
@@ -277,12 +380,15 @@ DISTANCE = {
 TEXTURES = {
     "corridor_wall.png": corridor_wall,
     "corridor_floor.png": corridor_floor,
+    "corridor_wall_far.png": corridor_wall_far,
+    "corridor_floor_far.png": corridor_floor_far,
+    "corridor_windows.png": corridor_windows,
     "dash_line.png": dash_line,
     "zebra.png": zebra,
     "window_tile.png": window_tile,
     "hopscotch.png": hopscotch,
     "streak_tile.png": streak_tile,
-    "distance_corridor.png": lambda: distance_floor(*DISTANCE["corridor"], seed=3141, bands=(6.0, 20.0, 44.0)),
+    "distance_corridor.png": lambda: haze_floor(*DISTANCE["corridor"], seed=3141),
     "distance_street.png": lambda: distance_floor(*DISTANCE["street"], seed=3142),
     "distance_residential.png": lambda: distance_floor(*DISTANCE["residential"], seed=3143, glow=(98, 88, 84), belt=(92, 84, 92)),
     "distance_alley.png": lambda: distance_floor(*DISTANCE["alley"], seed=3144, glow=(110, 86, 74), belt=(88, 76, 96), bands=(3.0, 10.0, 24.0)),
