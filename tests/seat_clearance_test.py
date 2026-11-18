@@ -84,6 +84,8 @@ size = Vector3(0.46, 0.34, 0.05)
 
 [node name="ClassroomDesk" type="Node3D"]
 
+size = Vector3(0.7118, 0.8826, 0.546)
+
 [node name="Chair" type="Node3D" parent="."]
 position = Vector3(0, 0, 0.58)
 
@@ -162,17 +164,18 @@ def run_main(argv: list[str]) -> tuple[int, str]:
 
 
 def walking_through_the_back_fails() -> None:
-    """Facing the chair's back steps *into* it, then out the far side into clear air.
+    """A stand-up that ends in clear air *through* the back's thickness is still a failure.
 
-    The endpoint is clear, so an endpoint-only check would pass. This is the regression the
-    per-part path rule exists for.
+    The direction is derived from the facing, so this is driven by giving the fixture a
+    stand-up too short to get out of the seat rather than by turning the body round: the
+    endpoint is what an endpoint-only check would look at, and the path is what went wrong.
     """
-    root = fixture(facing=(0.0, 0.0, 1.0))
+    root = fixture(clearance=0.30)
     found = problems(root)
-    check(bool(found), "stepping into the chair's back must be a failure")
+    check(bool(found), "a stand-up that ends inside the seat must be a failure")
     check(
-        any("Back" in entry and "deeper" in entry for entry in found),
-        f"the failure must name the back and say it is getting deeper, got {found}",
+        any("still intersects" in entry for entry in found),
+        f"the failure must report the end position, got {found}",
     )
 
 
@@ -186,14 +189,14 @@ def not_stepping_clear_at_all_fails() -> None:
     )
 
 
-def stopping_one_centimetre_short_fails() -> None:
-    """0.62 m leaves the capsule 1 cm inside the seat's front edge.
+def stopping_short_fails() -> None:
+    """0.50 m leaves the capsule 8 cm inside the seat it is stepping off.
 
-    That is the value an earlier, hand-derived constant used, and it is the reason the
-    check measures rather than trusts a comment.
+    A value close enough to look right in a comment and wrong in the room - which is why
+    the check measures the geometry instead of trusting the constant's documentation.
     """
-    root = fixture(clearance=0.62)
-    check(bool(problems(root)), "a stand-up that stops 1 cm short must be a failure")
+    root = fixture(clearance=0.50)
+    check(bool(problems(root)), "a stand-up that stops short must be a failure")
 
 
 def a_spawn_outside_the_chair_fails() -> None:
@@ -204,6 +207,38 @@ def a_spawn_outside_the_chair_fails() -> None:
     check(
         any("does not overlap" in entry for entry in found),
         f"the failure must say the spawn is not in the chair, got {found}",
+    )
+
+
+def the_desk_is_checked_and_not_only_the_chair() -> None:
+    """Only the desk has a collision shape; the chair has none at all.
+
+    That asymmetry is the reason a stand-up can clear the chair and still trap the body, so
+    the desk's box is measured separately and must be clear at the end of the step.
+    """
+    root = fixture()
+    box = seat.desk_collider(root)
+    check(box is not None, "the desk's collision box must be readable from props")
+    found = problems(root)
+    check(
+        not any("desk's collision box" in entry for entry in found),
+        f"the correct stand-up must not end inside the desk, got {found}",
+    )
+
+
+def ending_inside_the_desk_fails() -> None:
+    """A body turns before it stands, and one that ends up facing the desk steps into it.
+
+    The step is always perpendicular to the facing, so a body facing the wall (x) steps
+    along the desk's own axis - straight into the box. Nothing about the chair notices.
+    """
+    root = fixture(facing=(-1.0, 0.0, 0.0))
+    # Facing -x makes the body's right -z: the desk is 2.7 cm from the seated capsule.
+    found = problems(root)
+    check(bool(found), "a step that ends inside the desk must be a failure")
+    check(
+        any("desk" in entry for entry in found),
+        f"the failure must name the desk, got {found}",
     )
 
 
@@ -235,7 +270,7 @@ def a_passing_fixture_says_so() -> None:
 
 
 def a_failing_fixture_exits_one() -> None:
-    root = fixture(facing=(0.0, 0.0, 1.0))
+    root = fixture(clearance=0.50)
     code, output = run_main(["--root", str(root)])
     check(code == 1, "a failing fixture must exit 1")
     check("SEAT_CLEARANCE_FAILURE" in output, "the failure must be labelled")
@@ -287,8 +322,10 @@ def this_repository_really_is_seated() -> None:
 def main() -> int:
     walking_through_the_back_fails()
     not_stepping_clear_at_all_fails()
-    stopping_one_centimetre_short_fails()
+    stopping_short_fails()
     a_spawn_outside_the_chair_fails()
+    the_desk_is_checked_and_not_only_the_chair()
+    ending_inside_the_desk_fails()
     a_missing_clearance_constant_fails()
     a_passing_fixture_says_so()
     a_failing_fixture_exits_one()

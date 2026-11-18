@@ -110,16 +110,25 @@ const HIP_RISE_KEYS: Array[Vector2] = [
 	Vector2(1.0, 1.0),
 ]
 
-## The body starts this far *in front* of the chair's centre along the chair's own forward
-## axis, so standing up steps off the seat instead of through its back.
+## How far the body steps sideways to leave the seat.
 ##
-## `PlayerStart` sits at the chair's centre (z 1.95 against a chair at z 1.88), which put
-## the capsule axis 0.07 m from every part of the seat: the seat, both posts, the rail and
-## the back were all inside the capsule. Clearing the seat's front edge (z 1.67) needs
-## 0.63 m from that spawn for a 0.35 m capsule; 0.70 leaves 0.07 m of slack, because the
-## spawn is a marker an author can move and the stand-up should not end a centimetre inside
-## a chair it just left.
-const SEATED_CLEARANCE := 0.70
+## Sideways, not forward, and that is the whole of it. `PlayerStart` sits at the chair's
+## centre (z 1.95 against a chair at z 1.88), so the capsule axis is 0.07 m from every part
+## of the seat: the seat, both posts, the rail and the back are all inside it. Getting out
+## is a matter of which way is open, and neither way the body is facing is:
+##
+## - Forward (`-z`, the way the body looks) runs into the *desk*, whose collision box ends
+##   at z 1.573 against the capsule's rear face at z 1.600 - 2.7 cm of air, and the desk's
+##   front is 0.55 m of solid box further on. The chair has no collision at all; the desk
+##   does, so this is the direction that would actually trap the body.
+## - Backward (`+z`) is the chair's back, and a body that stands up backwards through its
+##   own backrest is the one thing the eye will not accept, whatever the numbers say.
+##
+## Sideways is what the room leaves: 0.58 m puts the capsule just clear of the seat, and
+## the desk's east edge needs 0.71 m, so 0.80 m clears both with 0.09 m of slack. A person
+## getting out of a classroom chair does the same thing - they swing out past the desk
+## rather than through it, because there is no room to stand up between the two.
+const SEATED_CLEARANCE := 0.80
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 ## In toggle mode, a jog that was switched on ends by itself after the player has stood
@@ -682,7 +691,7 @@ func _begin_get_up_from_seat() -> void:
 	# Remember where the body is, so the step clear of the seat is measured from it rather
 	# than assumed: a test that places the player elsewhere still gets a straight stand-up.
 	_get_up_origin = global_position
-	_get_up_forward = _seat_forward_direction()
+	_get_up_forward = _seat_exit_direction()
 	_get_up_travelling = true
 	_set_wake_seated(false, WAKE_GET_UP_SECONDS)
 	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
@@ -692,20 +701,23 @@ func is_getting_up() -> bool:
 	return _getting_up
 
 
-## Which way to step to leave the seat: the way the body is already looking.
+## Which way to step to leave the seat: sideways, to the body's own right.
 ##
-## A seated person faces away from the chair's back, and stands up by bringing their weight
-## over their feet - forward, in the direction they were looking. `PlayerStart` sits at the
-## classroom chair's centre with the back at `+z`, and the body faces `-z`, so forward is
-## `-z` and that is the direction with clear air in it. Stepping *against* the facing pushed
-## the body into the back, which is the one part of the chair at chest height.
-##
-## `_facing_direction` is seeded to `-z` and only changes once the body walks, so a body
-## that has never moved still has the take's own opening orientation.
-func _seat_forward_direction() -> Vector3:
-	if _facing_direction.length_squared() > 0.0001:
-		return _facing_direction.normalized()
-	return Vector3(0.0, 0.0, -1.0)
+## Not forward and not backward - see `SEATED_CLEARANCE` for why both of those are blocked.
+## The side is taken from the facing rather than from the chair, so the step stays on the
+## same side of the body however the room is laid out: with `facing` and `UP`, the cross
+## product is the body's right in Godot's right-handed axes (facing `-z` gives `+x`).
+## Either side clears this chair equally well - they are mirror images of the same geometry
+## - so the reason for this one is the room: `+x` is towards the aisle between the desk
+## columns, which is the direction a person actually steps out into.
+func _seat_exit_direction() -> Vector3:
+	var facing := _facing_direction
+	if facing.length_squared() < 0.0001:
+		facing = Vector3(0.0, 0.0, -1.0)
+	var sideways := facing.normalized().cross(Vector3.UP)
+	if sideways.length_squared() < 0.0001:
+		return Vector3(1.0, 0.0, 0.0)
+	return sideways.normalized()
 
 
 ## One clock, not a separate tween racing the profiled skeleton. Physics samples the
@@ -851,8 +863,12 @@ func face_toward(direction: Vector3, snap: bool = true) -> void:
 
 func teleport(target: Transform3D) -> void:
 	# A teleport means a location change: any walk being followed belongs to the old
-	# scene's navigation map.
+	# scene's navigation map - and so does any stand-up. The stand-up's travel is stored as
+	# an offset from where it began, so a body moved while one is still running would be
+	# dragged back towards the chair it was teleported away from, one frame later. Drop the
+	# travel instead of letting it interpolate from a place the body is no longer in.
 	cancel_path()
+	_get_up_travelling = false
 	global_position = target.origin
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):

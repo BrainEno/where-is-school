@@ -254,6 +254,58 @@ def horizontal_gap(
     return math.hypot(dx, dz) - radius
 
 
+## Where the seated body's torso begins: the hip height the controller holds at the seated
+## pose (`STANDING_HIP_HEIGHT - SEATED_HIP_DROP`). Parts that top out below it are below the
+## body's own lap, and the folded legs go over them.
+TORSO_FLOOR = 0.45
+
+
+def torso_reaches(
+    size: tuple[float, float, float],
+    centre: tuple[float, float, float],
+    capsule: tuple[float, float, float],
+) -> bool:
+    """Whether `size` rises into the part of the capsule that is torso, not legs."""
+    top = centre[1] + size[1] * 0.5
+    return top > TORSO_FLOOR
+
+
+def _body_right(facing: tuple[float, float, float]) -> tuple[float, float]:
+    """The body's right, on the ground plane: `facing x up`, normalised.
+
+    The same expression the controller uses, so a change to one is a change to the other.
+    """
+    fx, _fy, fz = facing
+    length = math.hypot(fx, fz)
+    if length < 1e-6:
+        return (1.0, 0.0)
+    fx, fz = fx / length, fz / length
+    # (fx, 0, fz) x (0, 1, 0) = (-fz, 0, fx)
+    return (-fz, fx)
+
+
+def desk_collider(
+    root: Path,
+) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
+    """The desk's collision box in world space, or None if the prop has none.
+
+    The chair is meshes only - there is no `CollisionShape3D` under it at all - so the desk
+    is the only thing in this corner of the room that can physically hold the body. That
+    asymmetry is worth stating in the check: a stand-up that clears the chair and walks
+    into the desk is still a body stuck in the furniture.
+    """
+    text = (root / DESK_SCENE).read_text(encoding="utf-8")
+    mesh = re.search(r"^size = Vector3\(([^)]*)\)", text, re.MULTILINE)
+    if not mesh:
+        return None
+    size = _vector("Vector3(" + mesh.group(1) + ")")
+    # The desk prop is instanced at the desk position; its box is authored at the prop's
+    # own origin, so the instance's position is the box's centre on the floor plane. The
+    # box's own centre is half its height up.
+    desk = desk_position(root)
+    return (desk[0], size[1] * 0.5, desk[2]), size
+
+
 def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
     """Contradictions, and the per-part gaps at the end of the stand-up."""
     spawn = spawn_position(root)
@@ -297,19 +349,15 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
             "at this desk - the clearance check has nothing to hold"
         )
 
-    # 3. Step the way the controller actually steps: along the body's facing.
+    # 3. Step the way the controller actually steps: sideways, to the body's own right.
     #
-    #    This used to try all four directions and keep the best, which hid the real bug -
-    #    the controller walked the body *backwards* into the chair's back, and the scoring
-    #    passed the check anyway because the opposite direction happened to be clear. The
-    #    direction is read from the controller's own default facing, so the two cannot
-    #    disagree about which way the stand-up goes.
+    #    The side is derived the same way the controller derives it, from the facing it
+    #    opens with, so the two cannot disagree. This replaced a version that tried all four
+    #    directions and kept the best result - which passed the backwards step, the one that
+    #    walks through the chair's back, because the opposite direction happened to be clear.
     facing = facing_default(root)
-    if abs(facing[2]) >= abs(facing[0]):
-        step = (0.0, math.copysign(clearance, facing[2] if facing[2] else 1.0))
-    else:
-        step = (math.copysign(clearance, facing[0]), 0.0)
-    stood = (spawn[0] + step[0], spawn[2] + step[1])
+    sideways = _body_right(facing)
+    stood = (spawn[0] + sideways[0] * clearance, spawn[2] + sideways[1] * clearance)
 
     best = [
         (name, horizontal_gap(stood, capsule, centre, size))
@@ -319,37 +367,58 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
     if worst <= 0.0:
         culprit = min(best, key=lambda pair: pair[1])[0]
         problems.append(
-            f"{CONTROLLER}: after the {clearance:.2f} m stand-up along the body's facing "
-            f"the capsule still intersects the chair's {culprit} by {-worst:.3f} m - the "
-            "body stands up inside the seat"
+            f"{CONTROLLER}: after the {clearance:.2f} m stand-up sideways the capsule "
+            f"still intersects the chair's {culprit} by {-worst:.3f} m"
         )
 
-    # 3b. The body *starts* inside the chair - that is what sitting is - so "never overlap"
-    #     is the wrong rule. The rule that works is per part: while the body rises, no part
-    #     of the chair may be entered *more deeply* than it already was.
+    # 3a. The desk is the half of this that traps the body, and it is easy to miss because
+    #     only *one* of the two props has a collision shape. The chair is decoration; the
+    #     desk is a static body with a box, and the seated capsule's rear face sits 2.7 cm
+    #     from it. Standing up forwards walks straight into that box, so it is checked here
+    #     rather than left to the chair's numbers to imply.
+    desk_box = desk_collider(root)
+    if desk_box is not None:
+        centre, size = desk_box
+        gap = horizontal_gap(stood, capsule, centre, size)
+        if gap <= 0.0:
+            problems.append(
+                f"{DESK_SCENE}: after the stand-up the capsule is {abs(gap):.3f} m inside "
+                "the desk's collision box - the body stands up into the desk it was sitting at"
+            )
+
+    # 3b. The *torso* must not be pushed through anything on its way out.
     #
-    #     This is what separates standing up from walking through the furniture. Going
-    #     forward (the way the body looks) every part's gap improves from the first sample:
-    #     the back starts 0.245 m inside and shrinks away. Going backwards, into the back,
-    #     the back's gap gets *worse* first - 0.245 m, then 0.350 m at its deepest - because
-    #     the body is climbing into the thickest part of it. A whole-body "worst gap"
-    #     reading misses that, because the seat is always the worst part and it improves
-    #     either way; the dip only shows per part.
+    #     The body starts inside the chair - that is what sitting is - so "never overlap" is
+    #     the wrong rule. But the standing capsule is a poor model of a seated body: it is
+    #     one 0.35 m column from the floor to the head, where a seated person's legs come
+    #     forward and up. Applying it to every part makes both sideways steps look like they
+    #     walk through a seat post, which is the capsule being wrong about a knee, not the
+    #     body being wrong about the chair.
+    #
+    #     So the parts are split by height. The seat and the back are at torso height and
+    #     the torso is what has to get past them; the posts and the rail are below the
+    #     thigh, which the clip has already folded up before the body slides out. Those are
+    #     checked for the end position only, above; here the torso is checked for the whole
+    #     path, per part, so that entering one more deeply than it started is the failure.
+    torso_parts = [(name, centre, size) for name, centre, size in placed if torso_reaches(size, centre, capsule)]
     samples = 24
     previous: dict[str, float] | None = None
     for step_index in range(samples + 1):
         fraction = step_index / samples
-        along = (spawn[0] + step[0] * fraction, spawn[2] + step[1] * fraction)
+        along = (
+            spawn[0] + sideways[0] * clearance * fraction,
+            spawn[2] + sideways[1] * clearance * fraction,
+        )
         current = {
             name: horizontal_gap(along, capsule, centre, size)
-            for name, centre, size in placed
+            for name, centre, size in torso_parts
         }
         if previous is not None:
             for name, gap in current.items():
                 if gap < previous[name] - 0.002:
                     problems.append(
                         f"{CONTROLLER}: at {fraction * 100:.0f}% through the stand-up the "
-                        f"capsule is {abs(gap):.3f} m inside the chair's {name} and getting "
+                        f"torso is {abs(gap):.3f} m inside the chair's {name} and getting "
                         "deeper - the body moves into the furniture before it leaves it"
                     )
                     break
