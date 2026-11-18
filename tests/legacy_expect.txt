@@ -1,0 +1,36 @@
+# Existing standalone _expect helpers at the #216 migration boundary.
+# Do not add entries: new tests use TestHarness.Checker; remove a row when migrated.
+tests/ability_validation_test.gd
+tests/b_reveal_timing_test.gd
+tests/biology_classroom_experiment_test.gd
+tests/camera_rig_test.gd
+tests/clock_reading_test.gd
+tests/content_load_report_test.gd
+tests/dialogue_playback_test.gd
+tests/dialogue_sync_finish_test.gd
+tests/display_mode_test.gd
+tests/display_resolution_test.gd
+tests/hud_layout_test.gd
+tests/input_device_test.gd
+tests/interaction_audio_test.gd
+tests/interaction_cue_test.gd
+tests/interaction_outline_occlusion_test.gd
+tests/journal_test.gd
+tests/location_pressure_test.gd
+tests/music_test.gd
+tests/n_presence_test.gd
+tests/narrative_editor_test.gd
+tests/new_game_failure_ui_test.gd
+tests/opening_line_evidence_test.gd
+tests/opening_resume_test.gd
+tests/painterly_rendering_test.gd
+tests/q_model_test.gd
+tests/q_presence_test.gd
+tests/reading_progress_test.gd
+tests/save_quit_test.gd
+tests/save_roundtrip_test.gd
+tests/save_validation_test.gd
+tests/settings_regression_test.gd
+tests/story_pause_timing_test.gd
+tests/title_menu_interaction_test.gd
+tests/visual_experiments_test.gd

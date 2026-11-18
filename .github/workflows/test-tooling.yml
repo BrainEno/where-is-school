@@ -1,0 +1,74 @@
+name: Test tooling
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tooling:
+    name: Test registration and Python tool reproducibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Create an isolated Python tooling environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Ubuntu 24.04 supplies CPython 3.12 and its matching development headers.
+          # meshoptimizer is a source build, not an undeclared preinstalled wheel.
+          python3 --version
+          command -v c++
+          python3 - <<'PY'
+          import sysconfig
+          from pathlib import Path
+          header = Path(sysconfig.get_path("include")) / "Python.h"
+          if not header.is_file():
+              raise SystemExit("Missing Python.h: install matching python3-dev headers")
+          PY
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r tools/requirements.txt
+          .venv/bin/python -m pip check
+
+      - name: Check standalone test registration and dependency contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          .venv/bin/python tools/check_test_registration.py --check
+          .venv/bin/python tests/test_registration_test.py
+          .venv/bin/python tests/tool_requirements_test.py
+
+      - name: Exercise the declared GDScript parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find scripts scenes tests addons -name '*.gd' | sort)
+          .venv/bin/gdparse "${files[@]}"
+
+      - name: Check Python tools and asset sources without rewriting them
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Every tools/*.py that exposes a standalone --check mode. Evidence readers
+          # and export verifiers need real capture/build inputs and are not fabricated here.
+          for tool in \
+            build_app_icon build_laboratory build_music_loop build_sample_models \
+            check_agent_docs check_test_registration godot_sidecars model_library \
+            prepare_portraits prepare_q prepare_teacher_n repo_size screenshot_evidence \
+            stamp_release_version subset_font
+          do
+            echo "=== tools/${tool}.py --check"
+            .venv/bin/python "tools/${tool}.py" --check
+          done
+          .venv/bin/python tools/check_workflow_action_pins.py
+          .venv/bin/python art/characters/build_character_looks.py --check
+          .venv/bin/python art/classroom/paint_classroom_textures.py --check
+          .venv/bin/python art/laboratory/paint_laboratory_textures.py --check
+          git diff --exit-code

@@ -30,7 +30,7 @@ extends SceneTree
 ##      at `atan2(facing)`, the model under it is never moved.
 
 const Harness = preload("res://tests/test_harness.gd")
-const GetUpChecks = preload("res://tests/player_get_up_test.gd")
+const GetUpChecks = preload("res://tests/player_get_up_support.gd")
 
 const TIME_SCALE := 2.0
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
@@ -118,7 +118,7 @@ func _run() -> void:
 	root.add_child(get_up)
 	await get_up.run(_player, _navigator, _main.get_node("DialogueController") as DialogueController,
 		_walkable_screen_point, _clear_movement_action)
-	_failures.append_array(get_up.failures)
+	_failures.append_array(get_up.checks.failures)
 	get_up.queue_free()
 
 	Harness.stage = "player idle"

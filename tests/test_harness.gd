@@ -16,6 +16,21 @@ const NARRATIVE_STATE_SCRIPT := "res://scripts/autoload/narrative_state.gd"
 const SAVE_SCRIPT := "res://scripts/autoload/save_manager.gd"
 
 
+## One collector per test (or subcase). Failed assertions are recorded in order;
+## only finish() logs the final verdict, so negative fixtures can inspect a local
+## Checker without producing engine errors. No static/shared failure state.
+class Checker extends RefCounted:
+	var failures: Array[String] = []
+
+	func expect(condition: bool, message: String) -> bool:
+		if not condition:
+			fail(message)
+		return condition
+
+	func fail(message: String) -> void:
+		failures.append(message)
+
+
 static func ensure_autoload(tree: SceneTree, node_name: String, script_path: String) -> Node:
 	if tree == null or tree.root == null:
 		push_error("TestHarness: scene tree is not available yet.")

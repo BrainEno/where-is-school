@@ -36,7 +36,7 @@ const TIME_SCALE := 4.0
 const AUTHORED_Q := Vector3(-3.3, 0.0, 3.1)
 const AUTHORED_TALK := Vector3(-3.3, 0.8, 3.1)
 ## The beat lands on the navigation map's closest point to the marker (within 0.15 m, as
-## `q_intro_lifecycle_test` holds it); a rebuilt room lands on the marker itself.
+## `q_intro_lifecycle_support` holds it); a rebuilt room lands on the marker itself.
 const BEAT_TOLERANCE_METRES := 0.15
 const AT_LANDING_METRES := 0.05
 const FACING_DOT := 0.98
