@@ -169,11 +169,17 @@ var _get_up_animated: bool = false
 var _get_up_elapsed: float = 0.0
 var _get_up_tilt: float = 0.0
 var _get_up_height: float = STANDING_HIP_HEIGHT
-## Where the body stood when the stand-up began, and which way it steps off the seat. The
-## flag is separate from the vectors on purpose: a player placed at the world origin is a
-## legitimate fixture, and a `== Vector3.ZERO` test would silently skip its stand-up.
+## Where the body stood when the stand-up began, which way it steps off the seat, and where
+## that step must end. The flags are separate from the vectors on purpose: a player at the
+## world origin is a legitimate fixture, and a `== Vector3.ZERO` test would silently skip its
+## stand-up. `_get_up_travelling` stays true until the step has actually been applied, and
+## `_get_up_landing_pending` records that the clip finished before the physics step could
+## move the body - both because the placement has to happen after `move_and_slide()`.
 var _get_up_origin: Vector3 = Vector3.ZERO
 var _get_up_forward: Vector3 = Vector3.ZERO
+var _get_up_progress: float = 0.0
+var _get_up_landing: Vector3 = Vector3.ZERO
+var _get_up_landing_pending: bool = false
 var _get_up_travelling: bool = false
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
@@ -267,6 +273,11 @@ func _physics_process(delta: float) -> void:
 			velocity.x = 0.0
 			velocity.z = 0.0
 			_apply_movement(Vector3.ZERO, delta)
+			# `move_and_slide()` has just recomputed the position from `velocity`, and it is
+			# zero here, so anything the pose step wrote before it is undone. The step off
+			# the seat therefore goes here, after the physics call, or the body stands up
+			# exactly where it woke - inside the chair.
+			_apply_get_up_travel(_get_up_progress)
 			return
 
 	var move_direction := Vector3.ZERO
@@ -693,6 +704,8 @@ func _begin_get_up_from_seat() -> void:
 	_get_up_origin = global_position
 	_get_up_forward = _seat_exit_direction()
 	_get_up_travelling = true
+	_get_up_progress = 0.0
+	_get_up_landing_pending = false
 	_set_wake_seated(false, WAKE_GET_UP_SECONDS)
 	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
 
@@ -724,21 +737,19 @@ func _seat_exit_direction() -> Vector3:
 ## action; its actual completion signal snaps the pivot's final pose before movement
 ## may resume. The timed fallback is only for rigless placement/preview fixtures.
 ##
-## The horizontal step is *not* eased with the sine curve: a body pushed out of a chair
-## eases as it leaves the seat and then travels at a steady rate, and a sine on both axes
-## made the first third of the stand look like a lean rather than a rise. The vertical
-## curve keeps the sine, because standing up does slow at the top.
+## This sets the *visual* pose only. The body's own travel is applied by the caller, after
+## `move_and_slide()`: this runs before it, and a position written here would be recomputed
+## away by the physics step every frame.
 func _update_get_up_pose(delta: float) -> void:
 	_get_up_elapsed += delta
 	var progress := clampf(_get_up_elapsed / WAKE_GET_UP_SECONDS, 0.0, 1.0)
 	if _get_up_animated:
 		progress = _character_animator.get_action_progress()
+	_get_up_progress = progress
 	if visual != null:
 		var weight := 0.5 - cos(PI * progress) * 0.5
 		visual.rotation.x = lerpf(_get_up_tilt, 0.0, weight)
 		visual.position.y = lerpf(_get_up_height, STANDING_HIP_HEIGHT, _hip_rise_weight(progress))
-	if _getting_up:
-		_apply_get_up_travel(progress)
 	if progress >= 1.0:
 		_finish_get_up()
 
@@ -780,11 +791,22 @@ func _hip_rise_weight(progress: float) -> float:
 func _apply_get_up_travel(progress: float) -> void:
 	if not _get_up_travelling:
 		return
+	if _get_up_landing_pending:
+		# The clip beat the frame clock to its last sample; the landing is already known.
+		global_position = _get_up_landing
+		_get_up_landing_pending = false
+		_get_up_travelling = false
+		return
 	var leave := clampf(progress / 0.6, 0.0, 1.0)
 	# Smoothstep, not the sine used for the height: this axis should be decisive early.
 	var eased := leave * leave * (3.0 - 2.0 * leave)
 	var target := _get_up_origin + _get_up_forward * SEATED_CLEARANCE
 	global_position = _get_up_origin.lerp(target, eased)
+	if progress >= 1.0:
+		# Land exactly, so a body that ends the frame on the threshold does not resume
+		# walking a centimetre inside the chair.
+		global_position = target
+		_get_up_travelling = false
 
 
 func _on_get_up_action_finished(clip_name: StringName) -> void:
@@ -796,12 +818,13 @@ func _finish_get_up() -> void:
 	if visual != null:
 		visual.rotation.x = 0.0
 		visual.position.y = STANDING_HIP_HEIGHT
-	# Land exactly on the target rather than wherever the last eased sample fell: the body
-	# resumes walking from here, and a stand-up that stopped a centimetre short would leave
-	# the capsule clipping the seat's front edge for the rest of the session.
-	if _get_up_travelling:
-		global_position = _get_up_origin + _get_up_forward * SEATED_CLEARANCE
-	_get_up_travelling = false
+	# Land on the target rather than wherever the last eased sample fell, but leave it owed
+	# to the physics step: the caller applies it after `move_and_slide()`, and a position
+	# written here would be recomputed away. `_get_up_travelling` stays set until that call
+	# has run, so the completion signal and the frame clock agree about whether the body has
+	# finished stepping.
+	_get_up_landing = _get_up_origin + _get_up_forward * SEATED_CLEARANCE
+	_get_up_landing_pending = true
 	_getting_up = false
 	_get_up_animated = false
 
@@ -869,6 +892,7 @@ func teleport(target: Transform3D) -> void:
 	# travel instead of letting it interpolate from a place the body is no longer in.
 	cancel_path()
 	_get_up_travelling = false
+	_get_up_landing_pending = false
 	global_position = target.origin
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):
