@@ -431,6 +431,13 @@ func _flat_distance(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
+## Waits for `condition` while sampling the closest approach of the pair.
+##
+## Deliberately not `Harness.wait_until`: this loop polls on **physics** frames, because
+## it samples positions the physics step moves and records the minimum distance reached.
+## Sampling on process frames would measure a stampede of duplicate positions between two
+## physics steps and could miss the closest one entirely. The sampling and the recording
+## are the reason this copy still exists; only the deadline shape is the same.
 func _wait_until(condition: Callable, limit_seconds: float) -> bool:
 	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
 	var sampled := 0

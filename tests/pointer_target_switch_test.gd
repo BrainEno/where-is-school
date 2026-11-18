@@ -579,12 +579,7 @@ func _on_approach_abandoned(interactable: Interactable) -> void:
 
 
 func _wait_until(condition: Callable, limit_seconds: float) -> bool:
-	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
-	while not condition.call():
-		await process_frame
-		if Time.get_ticks_msec() > deadline:
-			return false
-	return true
+	return await Harness.wait_until(condition, limit_seconds)
 
 
 func _settle_dialogue() -> void:

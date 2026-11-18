@@ -814,12 +814,7 @@ func _flat_distance(a: Vector3, b: Vector3) -> float:
 
 
 func _wait_until(condition: Callable, limit_seconds: float) -> bool:
-	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
-	while not condition.call():
-		await process_frame
-		if Time.get_ticks_msec() > deadline:
-			return false
-	return true
+	return await Harness.wait_until(condition, limit_seconds)
 
 
 ## Waits this many seconds of game time (the test runs at `Engine.time_scale` 4).
