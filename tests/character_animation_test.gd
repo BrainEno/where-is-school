@@ -62,9 +62,11 @@ const TRANSITIONS := ["get_up"]
 
 ## Degrees two keys of the same bone may differ by and still count as the same pose.
 const POSE_TOLERANCE_DEGREES := 0.5
-## The two characters' own ways of carrying the clips (docs/CHARACTER_ANIMATION.md).
+## The production motion resources (docs/CHARACTER_ANIMATION.md).
 const PROTAGONIST_MOTION := "res://assets/characters/protagonist/protagonist_motion.tres"
 const Q_MOTION := "res://assets/characters/q/q_motion.tres"
+const N_MOTION := "res://assets/characters/teacher_n/teacher_n_motion.tres"
+const STUDENT_MOTION := "res://assets/characters/classroom_student/student_motion.tres"
 
 var _failures: Array[String] = []
 var _notes: Array[String] = []
@@ -130,7 +132,8 @@ func _run() -> void:
 	await _check_runtime_wrapper("N", "res://scenes/environment/characters/teacher_n.tscn")
 	await _check_seated_student("res://scenes/environment/characters/classroom_student.tscn")
 
-	Harness.stage = "the two characters' motion profiles"
+	Harness.stage = "the four characters' motion profiles"
+	_check_authored_track_validation()
 	await _check_motion_profiles()
 
 	_report()
@@ -573,18 +576,20 @@ func _first_pose(
 ## - the two profiles are not one rhythm: idle, walk and talk differ in length between the
 ##   protagonist and Q, and the protagonist's idle is the slower one.
 func _check_motion_profiles() -> void:
-	var protagonist_profile := load(PROTAGONIST_MOTION) as CharacterMotionProfile
-	var q_profile := load(Q_MOTION) as CharacterMotionProfile
-	if protagonist_profile == null or q_profile == null:
-		_failures.append("the motion profiles %s and %s did not load." % [PROTAGONIST_MOTION, Q_MOTION])
-		return
 	var lengths := {}
+	var walk_arm := {}
 	for entry: Array in [
-		["protagonist", PRODUCTION_PROTAGONIST, protagonist_profile],
-		["Q", PRODUCTION_Q, q_profile],
+		["protagonist", PRODUCTION_PROTAGONIST, PROTAGONIST_MOTION, false],
+		["Q", PRODUCTION_Q, Q_MOTION, false],
+		["N", PRODUCTION_N, N_MOTION, true],
+		["student", FORMER_PROTAGONIST, STUDENT_MOTION, false],
 	]:
 		var label := "%s with its motion profile" % String(entry[0])
-		var profile: CharacterMotionProfile = entry[2]
+		var profile := load(String(entry[2])) as CharacterMotionProfile
+		if profile == null:
+			_failures.append("%s: could not load %s." % [label, entry[2]])
+			continue
+		var negative_z := bool(entry[3])
 		var packed := load(String(entry[1])) as PackedScene
 		var bare_model := packed.instantiate() as Node3D
 		var model := packed.instantiate() as Node3D
@@ -593,8 +598,8 @@ func _check_motion_profiles() -> void:
 		await process_frame
 		var bare_player := _player_for(bare_model)
 		var player := _player_for(model)
-		var bare := CharacterAnimation.bind(bare_model, bare_player)
-		var report := CharacterAnimation.bind(model, player, false, profile)
+		var bare := CharacterAnimation.bind(bare_model, bare_player, negative_z)
+		var report := CharacterAnimation.bind(model, player, negative_z, profile)
 		if not bool(report.get("ok", false)) or not bool(bare.get("ok", false)):
 			_failures.append("%s: bind failed: %s" % [label, String(report.get("reason", "?"))])
 			bare_model.queue_free()
@@ -639,10 +644,19 @@ func _check_motion_profiles() -> void:
 			var loops := not TRANSITIONS.has(clip_name)
 			if (animation.loop_mode == Animation.LOOP_LINEAR) != loops:
 				_failures.append("%s: '%s' changed its loop mode." % [label, clip_name])
+			if loops:
+				_check_bound_loop(label, clip_name, animation)
 		lengths[String(entry[0])] = clip_lengths
 		_check_transition_poses(label, player, skeleton, report.get("resolved", {}))
 		# The posture is in the standing pose: the chest (or spine) sits where the profile says.
 		var resolved: Dictionary = report.get("resolved", {})
+		if entry[0] != "student":
+			walk_arm[entry[0]] = _track_swing(player, model, skeleton, resolved, "walk", "upper_arm.L")
+		if entry[0] == "N":
+			var prompt := _track_swing(player, model, skeleton, resolved, "talk", "fore_arm.R")
+			_notes.append("N's lesson: prompt forearm swings %.1f°" % prompt)
+			if prompt < 25.0:
+				_failures.append("N's lectern prompt was not bound on its forearm.")
 		var standing := _first_pose(label, player, skeleton, resolved, "idle")
 		var bare_standing := _first_pose(label, bare_player, CharacterAnimation.skeletons_in(bare_model)[0], resolved, "idle")
 		var moved := 0
@@ -656,7 +670,7 @@ func _check_motion_profiles() -> void:
 			_notes.append(
 				"%s: idle starts with %s %.1f° from the bare clip (posture %.1f°)" % [label, canonical, difference, wanted]
 			)
-		if moved < 3:
+		if (entry[0] == "protagonist" or entry[0] == "Q") and moved < 3:
 			_failures.append("%s: only %d bones carry the profile's posture in the standing pose." % [label, moved])
 		bare_model.queue_free()
 		model.queue_free()
@@ -676,6 +690,54 @@ func _check_motion_profiles() -> void:
 				% [clip_name, float(protagonist_lengths.get(clip_name, 0.0)), float(q_lengths.get(clip_name, 0.0))]
 			)
 		_notes.append("clip lengths, protagonist / Q: %s" % ", ".join(parts))
+	if walk_arm.size() == 3:
+		var player_swing := float(walk_arm["protagonist"])
+		var q_swing := float(walk_arm["Q"])
+		var n_swing := float(walk_arm["N"])
+		_notes.append("bound walk arm excursion, protagonist / Q / N: %.1f° / %.1f° / %.1f°"
+			% [player_swing, q_swing, n_swing])
+		if q_swing < player_swing + 10.0 or player_swing < n_swing + 3.0 or n_swing < 8.0:
+			_failures.append("The walk curves lost Q's loose swing, the player's held elbows or N's small steps.")
+
+
+func _check_bound_loop(label: String, clip_name: String, animation: Animation) -> void:
+	for track in animation.get_track_count():
+		var first: Quaternion = animation.track_get_key_value(track, 0)
+		var last: Quaternion = animation.track_get_key_value(track, animation.track_get_key_count(track) - 1)
+		if rad_to_deg(first.angle_to(last)) > POSE_TOLERANCE_DEGREES:
+			_failures.append("%s/%s does not close on %s." % [label, clip_name, animation.track_get_path(track)])
+
+
+## Measure the bound quaternion range, independent of clip duration and the rig's rest twist.
+func _track_swing(
+	player: AnimationPlayer, model: Node3D, skeleton: Skeleton3D, resolved: Dictionary,
+	clip_name: String, canonical: String
+) -> float:
+	var animation := player.get_animation("char/" + clip_name)
+	var path := NodePath("%s:%s" % [model.get_path_to(skeleton), resolved.get(canonical, "?")])
+	var track := animation.find_track(path, Animation.TYPE_ROTATION_3D) if animation != null else -1
+	var widest := 0.0
+	if track >= 0:
+		var count := animation.track_get_key_count(track)
+		for index in count:
+			var a: Quaternion = animation.track_get_key_value(track, index)
+			for other in range(index + 1, count):
+				widest = maxf(widest, rad_to_deg(a.angle_to(animation.track_get_key_value(track, other))))
+	return widest
+
+
+func _check_authored_track_validation() -> void:
+	var profile := CharacterMotionProfile.new()
+	var zero := Vector3.ZERO
+	for entry: Array in [
+		["walke", [[0.0, zero], [1.0, zero]], "unknown clip"],
+		["walk", [[0.1, zero], [1.0, zero]], "endpoints"],
+		["walk", [[0.0, zero], [0.0, zero], [1.0, zero]], "ordered"],
+		["walk", [[0.0, zero], [1.0, Vector3.UP]], "close its loop"],
+	]:
+		profile.clip_tracks = {entry[0]: {"thigh.L": entry[1]}}
+		if not profile.track_error(CharacterAnimation.CLIPS).contains(String(entry[2])):
+			_failures.append("Invalid replacement track '%s' was not rejected (%s)." % [entry[0], entry[2]])
 
 
 ## The real wrapper scene must bind its own visual and switch clips, not just the
@@ -685,9 +747,9 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	if packed == null:
 		_failures.append("%s wrapper could not be loaded at %s." % [label, path])
 		return
-	var visual := packed.instantiate() as Node3D
+	var visual := packed.instantiate() as CharacterVisualAnimation
 	if visual == null:
-		_failures.append("%s wrapper is not a Node3D." % label)
+		_failures.append("%s wrapper is not a CharacterVisualAnimation." % label)
 		return
 	var body := CharacterBody3D.new()
 	root.add_child(body)
@@ -779,6 +841,8 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	if not is_equal_approx(player.speed_scale, 1.0) \
 			or not is_equal_approx(player.get_animation("char/get_up").length, action_length):
 		_failures.append("%s action changed a shared resource or leaked its playback speed." % label)
+	if not visual.dialogue_clip.is_empty():
+		_check_speech_precedence(label, visual)
 	_notes.append(
 		"%s runtime wrapper plays seven clips: locomotion by speed, seated, and a one-shot "
 		% label
@@ -786,6 +850,28 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	)
 	body.queue_free()
 	await process_frame
+
+
+## A speech request is a fallback for a stationary speaker, never an action lock.
+func _check_speech_precedence(label: String, visual: CharacterVisualAnimation) -> void:
+	visual.set_talking(true)
+	if visual.get_current_clip() != "talk":
+		_failures.append("%s did not start talking while still." % label)
+	visual.report_velocity(Vector3.RIGHT * 1.6)
+	if visual.get_current_clip() != "walk":
+		_failures.append("%s's talk interrupted locomotion." % label)
+	visual.set_seated(true)
+	if visual.get_current_clip() != "sit_idle":
+		_failures.append("%s's talk or locomotion interrupted the seat." % label)
+	visual.sample_action("get_up", 0.5)
+	if visual.get_current_clip() != "get_up":
+		_failures.append("%s's seat interrupted a staged one-shot." % label)
+	visual.clear_reported_velocity()
+	visual.set_seated(false)
+	visual.release_sampled_action()
+	if visual.get_current_clip() != "talk":
+		_failures.append("%s did not resume the current line after the action." % label)
+	visual.set_talking(false)
 
 
 ## The classroom student is scenery: no body above it, `start_seated` set, so it has to open

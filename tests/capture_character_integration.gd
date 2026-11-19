@@ -32,6 +32,7 @@ extends SceneTree
 ##   dialogue     talking to Q (the camera's focus, the dialogue panel up) and N's class
 ##                conversation, from the game's own camera
 ##   student      the seated classroom student: face, clothing, own chair and game camera
+##   motion       fixed game camera/crop across walk, lesson and A1 pose phases (`after`)
 ## `--frames=a,b` limits a group to some of its frame kinds. `--freeze-pose` holds the same
 ## idle/sit pose in each variant (not for motion/dialogue captures). For a new material
 ## change, `--variants=baseline,after --baseline-dir=<dir>` loads n.tres and student.tres
@@ -71,6 +72,7 @@ const GROUP_FRAMES := {
 	"n": ["body_sun", "body_shade", "face", "face_three_quarter", "hands", "cloth", "lectern", "walk"],
 	"student": ["face", "face_three_quarter", "hands", "cloth", "seated", "gameplay"],
 	"lineup": ["lineup_sun", "lineup_shade", "lineup_game"],
+	"motion": ["cast_stride", "lectern_motion", "seat_motion"],
 	"dialogue": ["dialogue_q", "dialogue_n"],
 }
 ## In front of the board, west aisle: the sun comes in low from the west windows (the
@@ -492,6 +494,96 @@ func _frame_dialogue_n(variant: String) -> Image:
 	await _quiet(30.0)
 	_set_ui(false)
 	return _fit(image, Rect2i(Vector2i.ZERO, image.get_size()), WIDE_PANEL)
+
+
+# --- motion evidence ----------------------------------------------------------
+
+
+## No alternate rig or clip: scrub the three real walk libraries in a staged lineup,
+## without advancing the actors through space. Runtime tests cover actual foot travel.
+func _frame_cast_stride(variant: String) -> Image:
+	_show_all()
+	var labels: Array[String] = ["protagonist", "q", "n"]
+	for index in labels.size():
+		_place(_cast[labels[index]]["animator"], LINEUP_SUN[index], -20.0)
+	await _player.camera_rig.frame_point(LINEUP_SUN[1], 0.0)
+	await _wait(0.4)
+	var sheet := await _motion_strip("stride_" + variant, labels, "walk", [0.0, 0.23, 0.48, 0.74], Vector2i(312, 268))
+	await _player.camera_rig.release_frame(0.0)
+	return sheet
+
+
+## Keep the real scene presentation on an N line before sampling the active clip.
+func _frame_lectern_motion(variant: String) -> Image:
+	_show_all()
+	await _stage_room()
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0.3, 0.0, -1.6)))
+	_player.face_toward(Vector3.FORWARD)
+	_set_ui(true)
+	if not _dialogue.play_conversation(&"n_class"):
+		_failures.append("The lesson motion fixture could not open n_class.")
+		return null
+	var n: CharacterVisualAnimation = _cast["n"]["animator"]
+	if not await Harness.wait_until(func() -> bool: return n.get_current_clip() == "talk", 5.0):
+		_failures.append("N did not enter talk from the lesson's first visible line.")
+		return null
+	await _wait(0.45)
+	var sheet := await _motion_strip("lesson_" + variant, ["n"], "talk", [0.0, 0.31, 0.51, 0.86], Vector2i(200, 214))
+	await _quiet(30.0)
+	_set_ui(false)
+	return sheet
+
+
+func _frame_seat_motion(variant: String) -> Image:
+	_show_all()
+	await _stage_room()
+	var student: CharacterVisualAnimation = _cast["student"]["animator"]
+	await _player.camera_rig.frame_point(student.global_position, 0.0)
+	await _wait(0.4)
+	var sheet := await _motion_strip("seat_" + variant, ["student"], "sit_idle", [0.0, 0.36, 0.55, 0.92], Vector2i(200, 214))
+	await _player.camera_rig.release_frame(0.0)
+	return sheet
+
+
+## Keep the production lens, angle and crop fixed within each strip. Original full
+## viewport frames go in the artifact too. Restore each animator's held state afterwards.
+func _motion_strip(
+	shot_name: String, labels: Array[String], clip: String, phases: Array[float], cell: Vector2i
+) -> Image:
+	var camera := _player.camera_rig.camera
+	camera.current = true
+	var box := Rect2i()
+	for label in labels:
+		var own := _screen_box(camera, _subtree_aabb(_cast[label]["animator"]))
+		if own.intersection(Rect2i(Vector2i.ZERO, root.size)).size.y < 10:
+			_failures.append("%s is out of the game camera in %s." % [label, shot_name])
+			return null
+		box = own if box.size == Vector2i.ZERO else box.merge(own)
+	box = box.grow(int(box.size.y * 0.15))
+	var rig := _player.camera_rig
+	rig.set_physics_process(false)
+	const GAP := 4
+	var width := (cell.x + GAP) * phases.size() - GAP
+	var strip := Image.create(width, cell.y, false, Image.FORMAT_RGB8)
+	strip.fill(BACKGROUND)
+	for index in phases.size():
+		for label in labels:
+			_pose(_cast[label]["animator"], clip, phases[index])
+		var frame_name := "motion_%s_%02d" % [shot_name, roundi(phases[index] * 100.0)]
+		var image := await _grab(frame_name)
+		if index == 0:
+			for label in labels:
+				var subject: CharacterVisualAnimation = _cast[label]["animator"]
+				await _measure_drawn(subject, camera, image, _screen_box(camera, _subtree_aabb(subject)), frame_name)
+		var panel := _fit(image, box, cell)
+		strip.blit_rect(panel, Rect2i(Vector2i.ZERO, cell), Vector2i(index * (cell.x + GAP), 0))
+	for label in labels:
+		var animator: CharacterVisualAnimation = _cast[label]["animator"]
+		CharacterAnimation.play(animator.get_animation_player(), animator.get_current_clip(), 0.0)
+		animator.set_process(true)
+	rig.set_physics_process(true)
+	_note("%s: char/%s at phases %s; game fov %.1f°, fixed crop %s" % [shot_name, clip, str(phases), camera.fov, str(box)])
+	return strip
 
 
 # --- staging ------------------------------------------------------------------

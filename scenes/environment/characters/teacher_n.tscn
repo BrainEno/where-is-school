@@ -1,13 +1,17 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://assets/models/teacher-n/teacher-n.glb" id="1_model"]
 [ext_resource type="Script" path="res://scripts/actors/character_visual_animation.gd" id="2_animation"]
 [ext_resource type="Script" path="res://scripts/actors/character_look_applier.gd" id="3_look_applier"]
 [ext_resource type="Resource" path="res://assets/characters/teacher_n/teacher_n_look.tres" id="4_look"]
+[ext_resource type="Resource" path="res://assets/characters/teacher_n/teacher_n_motion.tres" id="5_motion"]
 
 [node name="TeacherN" type="Node3D"]
 script = ExtResource("2_animation")
 faces_negative_z = true
+stride_speed = 1.4
+dialogue_clip = "talk"
+motion_profile = ExtResource("5_motion")
 authored_idle_layers = PackedStringArray("ST_Idle_Breathing", "ST_Nervous_Posture_Shift", "ST_Slight_Hand_Movement", "ST_Subtle_Head_Movement")
 
 [node name="Model" parent="." instance=ExtResource("1_model")]

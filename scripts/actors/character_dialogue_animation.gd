@@ -1,7 +1,7 @@
 class_name CharacterDialogueAnimation
 extends Node
 ## Presentation -> actor animation bridge. It owns no dialogue, routing or movement.
-## Only visuals with an explicit `dialogue_clip` opt in (currently Q). An invisible
+## Only visuals with an explicit `dialogue_clip` opt in (Q and N). An invisible
 ## classroom actor must never talk while its companion incarnation is on screen.
 
 @export var controller_path: NodePath = ^"../DialogueController"
