@@ -122,6 +122,130 @@
           ]
         }
       ]
+    },
+    "corridor_wait_shadow": {
+      "start": "cw2_1",
+      "nodes": [
+        {
+          "id": "cw2_1",
+          "speaker": "protagonist",
+          "text": "You stop at the railing again. The yard below, the two hoops, the shed - all where you left them.",
+          "source": "observed",
+          "next": "cw2_2"
+        },
+        {
+          "id": "cw2_2",
+          "speaker": "voice_orientation",
+          "text": "Don't look at the yard. Look at the piece of railing the wall is behind.",
+          "next": "cw2_check"
+        },
+        {
+          "id": "cw2_check",
+          "speaker": "voice_orientation",
+          "text": "The teaching block is what blocks the western light. At this hour the railing should lay seven or eight upright shadows across this wall, evenly spaced.",
+          "source": "observed",
+          "next": "cw2_ok"
+        },
+        {
+          "id": "cw2_ok",
+          "speaker": "protagonist",
+          "text": "There is nothing on the wall. A railing is a railing and a wall is a wall, and the thin black layer that should sit between them has been taken away.",
+          "source": "observed",
+          "next": "cw2_3"
+        },
+        {
+          "id": "cw2_3",
+          "speaker": "voice_orientation",
+          "text": "Outside it was a wall with no shadow. This is inside. Two places, two directions, two kinds of light. This is no longer a matter of how I see it.",
+          "next": "cw2_4"
+        },
+        {
+          "id": "cw2_4",
+          "speaker": "protagonist",
+          "text": "You put your hand between the railing and the wall. The wall takes no shadow of your hand either. The walkway is still bright. The dust is still dust.",
+          "source": "observed",
+          "next": "cw2_end"
+        },
+        {
+          "id": "cw2_end",
+          "speaker": "protagonist",
+          "text": "You draw your hand back and wipe it on your trousers.",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_shadow_seen",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "street_shadow_missing",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "shadow_thins",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "When something has a wall behind it, it casts nothing; it casts nothing, and it is still there."
+            }
+          ]
+        }
+      ]
+    },
+    "corridor_wait_after": {
+      "start": "cw3_1",
+      "nodes": [
+        {
+          "id": "cw3_1",
+          "speaker": "protagonist",
+          "text": "You come back to the railing. The yard below is the yard: two hoops, a shed.",
+          "source": "observed",
+          "next": "cw3_2"
+        },
+        {
+          "id": "cw3_2",
+          "speaker": "protagonist",
+          "text": "You do not turn around to look at the wall behind you.",
+          "source": "observed",
+          "next": "cw3_3"
+        },
+        {
+          "id": "cw3_3",
+          "speaker": "voice_orientation",
+          "text": "I could look for you.",
+          "next": "cw3_4"
+        },
+        {
+          "id": "cw3_4",
+          "speaker": "protagonist",
+          "text": "No.",
+          "source": "observed",
+          "next": "cw3_5"
+        },
+        {
+          "id": "cw3_5",
+          "speaker": "protagonist",
+          "text": "So you lean on the railing and watch the yard. You can work out where the light is and where the shadows should fall. You just don't.",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_waited",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "corridor_waited",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You stood at the walkway railing again during the free period and watched the yard."
+            }
+          ]
+        }
+      ]
     }
   }
 }

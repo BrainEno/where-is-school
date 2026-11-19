@@ -122,6 +122,9 @@ const NOTICED_N_SUBSTITUTE: StringName = &"noticed_n_substitute"
 const STREET_WALL_SEEN: StringName = &"street_wall_seen"
 ## bool: the player has looked at the school a second time and found its shadow missing.
 const STREET_SHADOW_MISSING: StringName = &"street_shadow_missing"
+## Set once the walkway railing shows the same absence indoors; afterwards the protagonist
+## stops checking, which is what the railing conversation becomes.
+const CORRIDOR_SHADOW_SEEN: StringName = &"corridor_shadow_seen"
 
 # --- Small runtime values used by presentation ------------------------------
 ## String: locale key of the single objective line the HUD shows, e.g.
@@ -135,6 +138,7 @@ const ALL_FLAGS: Array[StringName] = [
 	MET_Q,
 	STREET_WALL_SEEN,
 	STREET_SHADOW_MISSING,
+	CORRIDOR_SHADOW_SEEN,
 	Q_FIRST_TALK_DONE,
 	B_ON_STAGE,
 	TEXTBOOK_MISSING,

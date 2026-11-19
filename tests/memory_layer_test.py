@@ -423,6 +423,53 @@ def check_passive_openings() -> None:
                 f"check is '{roll.get('kind')}'.",
             )
 
+
+## Every route in ConversationRouter must name conversations that exist, and every route must
+## end with a fallback that always matches. A route whose rules all have requirements returns
+## nothing in the state they do not cover, and OpeningSequence only finds out at run time.
+##
+## The table uses two shapes - one rule on the line it opens (`&"x": [{...`), and one rule per
+## line under it - so the route is found by its line and its rules are the text up to the next
+## route line or the closing bracket. Matching brackets by hand would be a parser; this is a
+## test, and it anchors on the indentation the file actually uses.
+def check_routes_resolve() -> None:
+    source = (ROOT / "scripts" / "dialogue" / "conversation_router.gd").read_text(encoding="utf-8")
+    defined: set[str] = set()
+    for locale in LOCALES:
+        for path in (DIALOGUE / locale).glob("*.json"):
+            defined |= set(load(path).get("conversations", {}))
+    route_lines = [
+        (number, match.group(1), match.group(2))
+        for number, match in (
+            (i, re.match(r'\t&"([a-z_0-9]+)":\s*\[(.*)$', line))
+            for i, line in enumerate(source.split(chr(10)))
+        )
+        if match
+    ]
+    check(bool(route_lines), "no routes were found in conversation_router.gd; the pattern is stale.")
+    for index, (number, route_id, first_line) in enumerate(route_lines):
+        rows = source.split(chr(10))
+        # The body runs from this line to the line before the next route, then stops at the
+        # first `	],` that closes the dictionary entry.
+        stop = route_lines[index + 1][0] if index + 1 < len(route_lines) else len(rows)
+        body_lines = [first_line]
+        for line in rows[number + 1 : stop]:
+            if line.strip() == "]," or line.strip() == "],".rstrip():
+                break
+            body_lines.append(line)
+        body = chr(10).join(body_lines)
+        names = re.findall(r'"conversation":\s*&"([a-z_0-9]+)"', body)
+        check(bool(names), f"route '{route_id}' has no rules naming a conversation.")
+        for name in names:
+            check(
+                name in defined,
+                f"route '{route_id}' points at conversation '{name}', which no chapter defines.",
+            )
+        check(
+            re.search(r'"requires":\s*\{\s*\}', body) is not None,
+            f"route '{route_id}' has no catch-all rule, so an unmatched state resolves to nothing.",
+        )
+
 def main() -> int:
     check_recall_exists()
     check_recall_pairing()
@@ -432,6 +479,7 @@ def main() -> int:
         check_structure(locale)
     check_parity()
     check_passive_openings()
+    check_routes_resolve()
     if failures:
         for failure in failures:
             print(f"MEMORY_LAYER_FAILURE: {failure}")

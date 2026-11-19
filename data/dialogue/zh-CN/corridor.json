@@ -122,6 +122,130 @@
           ]
         }
       ]
+    },
+    "corridor_wait_shadow": {
+      "start": "cw2_1",
+      "nodes": [
+        {
+          "id": "cw2_1",
+          "speaker": "protagonist",
+          "text": "你又停在这道栏杆边。楼下的操场、两个篮筐、工具棚，都还在原来的位置上。",
+          "source": "observed",
+          "next": "cw2_2"
+        },
+        {
+          "id": "cw2_2",
+          "speaker": "voice_orientation",
+          "text": "先别看操场。看栏杆投在墙上的这一段。",
+          "next": "cw2_check"
+        },
+        {
+          "id": "cw2_check",
+          "speaker": "voice_orientation",
+          "text": "教学楼挡住的是西边的光。这个钟点，栏杆该在这面墙上排出七八道竖影，一道一道，间距一样。",
+          "source": "observed",
+          "next": "cw2_ok"
+        },
+        {
+          "id": "cw2_ok",
+          "speaker": "protagonist",
+          "text": "墙面上什么都没有。栏杆是栏杆，墙是墙，两者之间那层薄薄的黑，被人拿走了。",
+          "source": "observed",
+          "next": "cw2_3"
+        },
+        {
+          "id": "cw2_3",
+          "speaker": "voice_orientation",
+          "text": "外面那次，只有墙没有影子。这次是在楼里。两处，不同的方向，不同的光。这不是我怎么看的问题了。",
+          "next": "cw2_4"
+        },
+        {
+          "id": "cw2_4",
+          "speaker": "protagonist",
+          "text": "你伸手到栏杆和墙之间。手过去，墙上也没有手的影子。走廊还是亮的，灰还是灰的。",
+          "source": "observed",
+          "next": "cw2_end"
+        },
+        {
+          "id": "cw2_end",
+          "speaker": "protagonist",
+          "text": "你把手收回来，在裤子上擦了擦。",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_shadow_seen",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "street_shadow_missing",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "shadow_thins",
+              "source": "recalled",
+              "speaker": "protagonist",
+              "text": "墙上有东西投下来的时候，它就没有影子；它没有影子，却还在。"
+            }
+          ]
+        }
+      ]
+    },
+    "corridor_wait_after": {
+      "start": "cw3_1",
+      "nodes": [
+        {
+          "id": "cw3_1",
+          "speaker": "protagonist",
+          "text": "你又来到栏杆边。楼下还是那个操场，两个篮筐，一间工具棚。",
+          "source": "observed",
+          "next": "cw3_2"
+        },
+        {
+          "id": "cw3_2",
+          "speaker": "protagonist",
+          "text": "身后这面墙，你没有回头看。",
+          "source": "observed",
+          "next": "cw3_3"
+        },
+        {
+          "id": "cw3_3",
+          "speaker": "voice_orientation",
+          "text": "我可以替你看。",
+          "next": "cw3_4"
+        },
+        {
+          "id": "cw3_4",
+          "speaker": "protagonist",
+          "text": "不用。",
+          "source": "observed",
+          "next": "cw3_5"
+        },
+        {
+          "id": "cw3_5",
+          "speaker": "protagonist",
+          "text": "你就那样靠着栏杆，看楼下。阳光移到哪儿，影子该在哪儿，你算得出来。你只是不算。",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "corridor_waited",
+              "value": true
+            },
+            {
+              "type": "record",
+              "entry_id": "corridor_waited",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你又在自由活动时站到走廊栏杆边，看着楼下的操场。"
+            }
+          ]
+        }
+      ]
     }
   }
 }

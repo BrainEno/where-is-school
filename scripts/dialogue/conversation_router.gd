@@ -69,7 +69,23 @@ const ROUTES: Dictionary = {
 	# `conditions` on those lines are content, not a special case in code.
 	&"corridor_speaker": [{"conversation": &"corridor_speaker", "requires": {}}],
 	&"corridor_trolley": [{"conversation": &"corridor_trolley", "requires": {}}],
-	&"corridor_wait": [{"conversation": &"corridor_wait", "requires": {}}],
+	# The railing is the second sighting. Outside, a wall lost its shadow; here the same
+	# absence shows up indoors, against different light, in a different direction - which is
+	# what turns one odd moment into a pattern the protagonist cannot call a mistake.
+	&"corridor_wait": [
+		# Once the railing has shown it, the railing stops being somewhere to look, and
+		# becomes somewhere the protagonist declines to check. Without this rule the same
+		# scene would replay on every stop, which would make the absence a set piece.
+		{
+			"conversation": &"corridor_wait_after",
+			"requires": {StoryFlags.CORRIDOR_SHADOW_SEEN: true},
+		},
+		{
+			"conversation": &"corridor_wait_shadow",
+			"requires": {StoryFlags.STREET_SHADOW_MISSING: true},
+		},
+		{"conversation": &"corridor_wait", "requires": {}},
+	],
 	# The school does not move. Where the protagonist remembers it standing does, and the
 	# second look is the first chance to compare the two. The first visit only fixes the
 	# position; the visit after it is a different scene, not the same lines again.
