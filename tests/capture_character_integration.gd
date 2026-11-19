@@ -508,7 +508,7 @@ func _frame_cast_stride(variant: String) -> Image:
 		_place(_cast[labels[index]]["animator"], LINEUP_SUN[index], -20.0)
 	await _player.camera_rig.frame_point(LINEUP_SUN[1], 0.0)
 	await _wait(0.4)
-	var sheet := await _motion_strip("stride_" + variant, labels, "walk", [0.0, 0.23, 0.48, 0.74], Vector2i(364, 214))
+	var sheet := await _motion_strip("stride_" + variant, labels, "walk", [0.0, 0.23, 0.48, 0.74], Vector2i(312, 268))
 	await _player.camera_rig.release_frame(0.0)
 	return sheet
 
@@ -562,7 +562,10 @@ func _motion_strip(
 	box = box.grow(int(box.size.y * 0.15))
 	var rig := _player.camera_rig
 	rig.set_physics_process(false)
-	var strip := Image.create(cell.x * phases.size(), cell.y, false, Image.FORMAT_RGB8)
+	const GAP := 4
+	var width := (cell.x + GAP) * phases.size() - GAP
+	var strip := Image.create(width, cell.y, false, Image.FORMAT_RGB8)
+	strip.fill(BACKGROUND)
 	for index in phases.size():
 		for label in labels:
 			_pose(_cast[label]["animator"], clip, phases[index])
@@ -573,7 +576,7 @@ func _motion_strip(
 				var subject: CharacterVisualAnimation = _cast[label]["animator"]
 				await _measure_drawn(subject, camera, image, _screen_box(camera, _subtree_aabb(subject)), frame_name)
 		var panel := _fit(image, box, cell)
-		strip.blit_rect(panel, Rect2i(Vector2i.ZERO, cell), Vector2i(index * cell.x, 0))
+		strip.blit_rect(panel, Rect2i(Vector2i.ZERO, cell), Vector2i(index * (cell.x + GAP), 0))
 	for label in labels:
 		var animator: CharacterVisualAnimation = _cast[label]["animator"]
 		CharacterAnimation.play(animator.get_animation_player(), animator.get_current_clip(), 0.0)

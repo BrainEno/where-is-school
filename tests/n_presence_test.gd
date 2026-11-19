@@ -147,6 +147,7 @@ func _check_play_through() -> void:
 	)
 	if in_talk:
 		_expect_at_stand(n, "During her conversation")
+		_check_prompt_clearance(animator)
 
 	# 3. Read the actual lines the player sees; the presenter drives the clip, not this test.
 	var speakers := {}
@@ -309,6 +310,41 @@ func _check_arrived_not_dismissed() -> void:
 
 
 # --- Helpers ----------------------------------------------------------------
+
+
+## Scrub N's bound gesture on the real stand. The projected hand ends (16 cm beyond
+## each wrist) must stay on N's side of the lectern's near lip throughout the prompt.
+func _check_prompt_clearance(animator: CharacterVisualAnimation) -> void:
+	if animator.get_current_clip() != "talk":
+		return # The speaker handoff check reports a missing talk separately.
+	var lip := _host.get_current().get_node_or_null(^"Stage/Lectern/WorkSurface") as Marker3D
+	var skeleton := animator.get_skeleton()
+	var resolved: Dictionary = animator.get_bind_report().get("resolved", {})
+	if lip == null or skeleton == null:
+		_failures.append("The lectern lip or N's skeleton is missing in the lesson.")
+		return
+	var hands: Array[int] = []
+	for canonical: String in ["hand.L", "hand.R"]:
+		var bone := skeleton.find_bone(String(resolved.get(canonical, "")))
+		if bone < 0:
+			_failures.append("N's %s was not bound for the lectern check." % canonical)
+			return
+		hands.append(bone)
+	var player := animator.get_animation_player()
+	var playback_at := player.current_animation_position
+	player.stop(true)
+	CharacterAnimation.play(player, "talk", 0.0)
+	var closest := INF
+	for sample in 37:
+		player.seek(player.current_animation_length * float(sample) / 36.0, true)
+		for bone in hands:
+			var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(bone)
+			var tip := wrist.origin + 0.16 * wrist.basis.y.normalized()
+			closest = minf(closest, lip.to_local(wrist.origin).z * -1.0)
+			closest = minf(closest, lip.to_local(tip).z * -1.0)
+	player.seek(playback_at, true)
+	_expect(closest > 0.02, "N's speaking hand went into the lectern (%.3f m from the near lip)." % closest)
+	_notes.append("N lesson: projected hand clearance from near lip %.3f m" % closest)
 
 
 func _set_flags_before_substitute() -> void:

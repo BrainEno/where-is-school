@@ -201,8 +201,8 @@ replaced or scaled by its profile.
 |---|---|
 | `protagonist/protagonist_motion.tres` | Asymmetric, held-in walk with tighter arms, slower recovery and slight hunch; jog adds two forward pulses. Retains the slower breath/head drop and existing B2 seated posture and staged action keys. |
 | `q/q_motion.tres` | Looser shoulders and a delayed elbow over a quicker weight transfer, with the head counter-turning. Jog has a wider torso turn and its own elbow timing. Same resource in the classroom and on the follower. Keeps native breathing/lean, speech hand and finger motion and diagnostic actions. |
-| `teacher_n/teacher_n_motion.tres` | Close, measured steps with small arm travel. At the lectern, `n_class` lines for N drive a 3 s cycle with a nod, one low hand prompt, and a pause. An actual change of speaker/close blends back to the four embedded idle layers. |
-| `classroom_student/student_motion.tres` | A 7.2 s seated loop: a glance lifts toward the room, the head turns and the sleeve shifts slightly, then a rest. Hips, shins and boots remain planted at A1; no movement, gaze controller or interaction is added. |
+| `teacher_n/teacher_n_motion.tres` | Close, measured steps with small arm travel. At the lectern, `n_class` lines for N drive a 3 s cycle with a nod, one low hand prompt behind the lectern lip, and a pause. An actual change of speaker/close blends back to the four embedded idle layers. |
+| `classroom_student/student_motion.tres` | A 7.2 s seated loop: a glance lifts toward the aisle and the sleeve shifts slightly, then a rest. Hips, shins and boots remain planted at A1; no movement, gaze controller or interaction is added. |
 
 All four `sit_idle` first poses agree with their `get_up` first pose. Only the protagonist
 runs the B2 action/contact tracks; its seat pose, global posture data and staged actions
@@ -387,7 +387,8 @@ crop. The real routes and controller timing are asserted by the tests below.
   their starting contacts.
 - `tests/n_presence_test.gd` watches the actual entry play N's walk, then follows speakers
   in `n_class` and checks that N stops gesturing on other lines and when the panel closes;
-  the existing lectern, re-entry and save checks still apply.
+  it samples projected wrists/hand tips against the lip at the actual stand. The
+  existing lectern, re-entry and save checks still apply.
 
 - `tests/q_model_prepare_test.py` proves approved-source hash, reproducibility, all mesh,
   weight, bind and morph data, all non-rest action channels, five weighted fingers per
