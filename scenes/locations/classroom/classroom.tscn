@@ -1,4 +1,4 @@
-[gd_scene load_steps=116 format=3]
+[gd_scene load_steps=119 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -69,6 +69,10 @@ ambient_light_color = Color(0.44, 0.38, 0.52, 1)
 ambient_light_energy = 1.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wake_chair"]
+size = Vector3(0.46, 0.9, 0.42)
+
 size = Vector3(14.0, 0.2, 10.0)
 
 [sub_resource type="BoxMesh" id="BoxMesh_3"]
@@ -666,6 +670,14 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0.1, 0.8845, 0.1)
 mesh = SubResource("QuadMesh_desk_marks")
 material_override = ExtResource("c_desk_marks")
 cast_shadow = 0
+
+[node name="Solid" type="StaticBody3D" parent="Furniture/DeskB2/Chair" groups=["chair_solid"]]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Furniture/DeskB2/Chair/Solid"]
+position = Vector3(0, 0.45, 0.03)
+shape = SubResource("BoxShape3D_wake_chair")
 
 [node name="Schoolbag" parent="Furniture/DeskB2/Chair" instance=ExtResource("15_schoolbag")]
 position = Vector3(0, 0.5, 0.34)

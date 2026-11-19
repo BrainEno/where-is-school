@@ -531,10 +531,14 @@ func _expect_at(path: String, expected: Vector3) -> void:
 # --- 2. collision -------------------------------------------------------------------
 
 
-## True for the `Solid` body under a chair: the only decoration in this room allowed a
-## collision, on layer 3. See `pushable_chair.gd` for why that layer and not layer 1.
+## True for the `Solid` body under the one chair the protagonist wakes in - and only that one.
+##
+## Every desk in this room instances the same `classroom_desk.tscn`, so a collision authored in
+## that prop would be twelve chairs colliding, eleven of which nobody will ever sit in. The body
+## therefore lives in this scene, under `DeskB2/Chair`, on layer 3 (see `pushable_chair.gd` for
+## why layer 3 and not layer 1).
 func _is_chair_solid(path: String) -> bool:
-	return path.ends_with("/Chair/Solid")
+	return path == "Furniture/DeskB2/Chair/Solid"
 
 
 func _check_collision() -> void:

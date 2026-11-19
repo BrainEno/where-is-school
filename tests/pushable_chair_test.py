@@ -142,10 +142,27 @@ def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
     """
     chair = source()
     check("const SOLID_LAYER := 4" in chair, "the chair must collide on layer 3 (value 4)")
-    scene = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
+    # The body lives in the room, not in the shared prop: every desk instances
+    # `classroom_desk.tscn`, so a collision authored there is twelve colliding chairs, eleven
+    # of which nobody ever sits in.
+    prop = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
     check(
-        re.search(r'name="Solid".*?collision_layer = 4', scene, re.S) is not None,
-        "the chair's Solid body must be authored on layer 3",
+        "CollisionObject3D" not in prop and 'type="StaticBody3D"' not in prop,
+        "the shared desk prop must carry no collision: the room instances it twelve times",
+    )
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    check(
+        re.search(
+            r'name="Solid" type="StaticBody3D" parent="Furniture/DeskB2/Chair".*?collision_layer = 4',
+            room,
+            re.S,
+        )
+        is not None,
+        "the wake-up chair's Solid body must be authored in the room, on layer 3",
+    )
+    check(
+        room.count('parent="Furniture/DeskB2/Chair/Solid"') == 1,
+        "exactly one chair in the classroom may collide",
     )
     nav = (ROOT / "scripts/world/location_navigation.gd").read_text(encoding="utf-8")
     bake = int(re.search(r"geometry_collision_mask: int = (\d+)", nav).group(1))
