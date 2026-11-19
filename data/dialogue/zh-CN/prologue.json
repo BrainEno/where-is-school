@@ -1786,6 +1786,124 @@
           "next": null
         }
       ]
+    },
+    "student": {
+      "start": "st_1",
+      "nodes": [
+        {
+          "id": "st_1",
+          "speaker": "student",
+          "text": "你也坐这儿。",
+          "next": "st_2"
+        },
+        {
+          "id": "st_2",
+          "speaker": "protagonist",
+          "text": "他说话时不看你，看的是桌面。手一直放在桌沿上，像在按住什么东西，不让它动。",
+          "source": "observed",
+          "next": "st_3"
+        },
+        {
+          "id": "st_3",
+          "speaker": "student",
+          "text": "刚开学那两天，老师点名还得抬头找位置。现在不用了，一抬头就知道空着几张桌子。",
+          "next": "st_4"
+        },
+        {
+          "id": "st_4",
+          "speaker": "protagonist",
+          "text": "你顺着他的视线看过去。",
+          "source": "observed",
+          "next": "st_5"
+        },
+        {
+          "id": "st_5",
+          "speaker": "student",
+          "text": "别数。",
+          "next": "st_ask"
+        },
+        {
+          "id": "st_ask",
+          "speaker": "protagonist",
+          "text": "他这才看了你一眼。",
+          "source": "observed",
+          "choices": [
+            {
+              "id": "ask_moved",
+              "text": "桌子是不是被搬动过？",
+              "next": "st_moved"
+            },
+            {
+              "id": "ask_quiet",
+              "text": "你一直坐这儿？",
+              "next": "st_quiet"
+            },
+            {
+              "id": "ask_nothing",
+              "text": "（不说话，等他自己说）",
+              "next": "st_wait"
+            }
+          ]
+        },
+        {
+          "id": "st_moved",
+          "speaker": "student",
+          "text": "搬过。放假前有人进来重新排过一次。排完跟原来一模一样——连地上那圈印子都对得上。",
+          "next": "st_m2"
+        },
+        {
+          "id": "st_m2",
+          "speaker": "protagonist",
+          "text": "他说「一模一样」的时候，语气是平的，像在念一句背熟了的话。",
+          "source": "observed",
+          "next": "st_end"
+        },
+        {
+          "id": "st_quiet",
+          "speaker": "student",
+          "text": "我的位置没变过。",
+          "next": "st_q2"
+        },
+        {
+          "id": "st_q2",
+          "speaker": "protagonist",
+          "text": "停了一下，他又补了一句。",
+          "source": "observed",
+          "next": "st_q3"
+        },
+        {
+          "id": "st_q3",
+          "speaker": "student",
+          "text": "不过有时候我坐下，会觉得这张桌子比昨天矮一点点。抬一下头就又好了。",
+          "next": "st_end"
+        },
+        {
+          "id": "st_wait",
+          "speaker": "student",
+          "text": "……没什么。你会习惯的。",
+          "next": "st_w2"
+        },
+        {
+          "id": "st_w2",
+          "speaker": "protagonist",
+          "text": "他把手从桌沿上拿开。桌上什么都没有，连一层灰也没有——那张桌子干净得像刚刚擦过。",
+          "source": "observed",
+          "next": "st_end"
+        },
+        {
+          "id": "st_end",
+          "speaker": "student",
+          "text": "上课了。你回去坐着吧。",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "student_talked",
+              "value": true
+            }
+          ]
+        }
+      ]
     }
   }
 }

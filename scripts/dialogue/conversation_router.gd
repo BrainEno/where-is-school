@@ -72,6 +72,10 @@ const ROUTES: Dictionary = {
 	&"corridor_wait": [{"conversation": &"corridor_wait", "requires": {}}],
 	&"corridor_directory_tab": [{"conversation": &"corridor_directory_tab", "requires": {}}],
 	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
+	# The classmate at the last desk is a witness, not a quest giver: he is the one who
+	# stayed and has been counting the empty desks, and what he offers is a habit of not
+	# looking too closely. One conversation, no state of his own beyond having been asked.
+	&"student": [{"conversation": &"student", "requires": {}}],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],
 	# The yard's two attempts are conversations with a choice (and then a check), not
