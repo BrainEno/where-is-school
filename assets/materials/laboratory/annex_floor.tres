@@ -5,5 +5,5 @@ diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
 resource_name = "lab_annex_floor"
-albedo_color = Color(0.322, 0.353, 0.361, 1)
+albedo_color = Color(0.305, 0.283, 0.326, 1)
 texture_filter = 3

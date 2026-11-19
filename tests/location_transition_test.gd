@@ -633,19 +633,22 @@ func _offset_of(map: RID, point: Vector3) -> float:
 	return Vector2(closest.x - point.x, closest.z - point.z).length()
 
 
-## Coming back has to put the player by the door they came back through, not across the
-## room: the arrival marker and the exit back to the same place are compared where both
-## live, in the destination scene.
+## Arrive at a door leading back, not across the map. Where a location has more
+## than one exit to the same map, scene order doesn't determine which one we used.
 func _check_return_marker(
 	label: String, source_scene: String, location: LocationRoot, marker: Node3D
 ) -> void:
-	var back := _find_exit_to(location, source_scene)
-	if back == null:
-		return
-	var marker_point := location.global_transform.affine_inverse() * marker.global_position
-	var back_point := location.global_transform.affine_inverse() * back.global_position
-	var distance := Vector2(marker_point.x - back_point.x, marker_point.z - back_point.z).length()
-	_return_distances[label] = distance
+	var to_local := location.global_transform.affine_inverse()
+	var marker_point := to_local * marker.global_position
+	var nearest := INF
+	for interactable in location.get_interactables():
+		var exit := interactable as LocationExit
+		if exit == null or exit.destination_scene != source_scene:
+			continue
+		var back_point := to_local * exit.global_position
+		nearest = minf(nearest, Vector2(marker_point.x - back_point.x, marker_point.z - back_point.z).length())
+	if not is_inf(nearest):
+		_return_distances[label] = nearest
 
 
 ## The courtyard and the lane behind the flats, walked between each other (issue #33).
@@ -865,13 +868,6 @@ func _find_exit(location: LocationRoot, exit_id: StringName) -> LocationExit:
 			return exit
 	return null
 
-
-func _find_exit_to(location: LocationRoot, scene_path: String) -> LocationExit:
-	for interactable in location.get_interactables():
-		var exit := interactable as LocationExit
-		if exit != null and exit.destination_scene == scene_path:
-			return exit
-	return null
 
 
 ## Every LocationRoot currently in the tree under the main scene: a refused transition

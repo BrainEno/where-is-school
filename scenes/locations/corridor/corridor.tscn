@@ -246,6 +246,25 @@ destination_scene = "res://scenes/locations/street/street.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"street"
 
+[node name="EntranceToStreet" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(-17.65, -2.7, 17.75)
+interact_id = &"teaching_entrance_to_street"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/StreetPlate/Plate")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ApronRailSouth0")
+prompt_key = "prompt.back_to_street"
+radius = 1.35
+destination_scene = "res://scenes/locations/street/street.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"street"
+
+[node name="DirectoryInspect" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-17.645, -2.04, 11.01)
+interact_id = &"corridor_folded_directory"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/DirectoryWall/Index1/Backing", "../../TeachingBlock/GroundFloor/DirectoryWall/Index1/LabelRail")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/DirectoryWall")
+inspection_id = &"corridor_folded_directory"
+radius = 1.4
+
 [node name="SpeakerInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(1.9, 2.3, -3)
 interact_id = &"corridor_speaker"
@@ -306,6 +325,9 @@ rotation_degrees = Vector3(0, -90, 0)
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0, 0, 5.4)
+
+[node name="FromTeachingEntrance" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-17.65, -3.4, 16.38)
 
 [node name="FromSchoolyard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(15.6, -3.4, -19.48)

@@ -19,8 +19,8 @@ extends SceneTree
 ##    through the narrow door in the partition. Every run is at working height or on the
 ##    floor: none of them float.
 ## 4. **The unknown room is a room.** Behind the partition the soffit brings the ceiling
-##    down from 3.4 m to 2.6 m, the floor is a step down, there is one bulb, a shaft that climbs past the top of
-##    the building, a hatch where the bundle ends, and a corridor that runs on past the north
+##    down from 3.4 m to 2.6 m, a separate dark floor pour reaches the sill, there is one bulb and a
+##    shaft that climbs past the building, a hatch where the bundle ends, and a corridor past the north
 ##    wall into black. Nothing in the room explains any of it.
 ## 5. **You can walk all of it.** The bake reaches every interactable, the annex and the far
 ##    corridor from the entrance, and the annex back to the entrance - and it does not
@@ -52,22 +52,29 @@ const TEXTURE_WARN_BYTES := 512 * 1024
 const TEXTURE_MAX_SIDE := 2048
 const SCENE_WARN_BYTES := 192 * 1024
 
-const FLOOR_SIZE := Vector3(15.6, 0.2, 11.6)
+## Interior and north continuation, measured by section instead of accepting a
+## single slab beneath another slab at the same depth.
+const FLOOR_BOUNDS := {
+	"Floor": Rect2(-7.8, -5.8, 10.0, 11.6),
+	"FloorSouth": Rect2(2.2, -0.6, 5.6, 6.4),
+	"AnnexFloor": Rect2(2.2, -5.8, 5.6, 5.2),
+	"FarCorridorFloor": Rect2(3.4, -8.4, 1.8, 2.6),
+}
 const ENTRY := &"Entry"
 const ANNEX_SPAWN := &"FromAnnex"
 
 ## Walls, and the one opening each wall has to leave. Sizes are the visible box's own.
 const WALLS := {
 	"WallSouth": [Vector3(0.0, 1.7, 5.7), Vector3(15.6, 3.4, 0.2)],
-	"WallWest": [Vector3(-7.7, 1.7, 0.0), Vector3(0.2, 3.4, 11.6)],
-	"WallEast": [Vector3(7.7, 1.7, 0.0), Vector3(0.2, 3.4, 11.6)],
+	"WallWest": [Vector3(-7.7, 1.7, 0.0), Vector3(0.2, 3.4, 11.2)],
+	"WallEast": [Vector3(7.7, 1.7, 0.0), Vector3(0.2, 3.4, 11.2)],
 	"WallNorthLeft": [Vector3(-2.125, 1.7, -5.7), Vector3(11.35, 3.4, 0.2)],
 	"WallNorthRight": [Vector3(6.425, 1.7, -5.7), Vector3(2.75, 3.4, 0.2)],
 	"WallNorthLintel": [Vector3(4.3, 2.925, -5.7), Vector3(1.5, 0.95, 0.2)],
 	"PartitionWestA": [Vector3(2.2, 1.7, -4.6), Vector3(0.18, 3.4, 2.0)],
 	"PartitionWestB": [Vector3(2.2, 1.7, -1.35), Vector3(0.18, 3.4, 1.5)],
 	"PartitionLintel": [Vector3(2.2, 2.925, -2.85), Vector3(0.18, 0.95, 1.5)],
-	"PartitionSouth": [Vector3(4.9, 1.7, -0.6), Vector3(5.4, 3.4, 0.18)],
+	"PartitionSouth": [Vector3(4.943, 1.68, -0.6), Vector3(5.314, 3.36, 0.18)],
 }
 ## The five working zones, as floor rectangles (x0, z0, x1, z1) around their colliding body.
 ## They are the arrangement claim: the room is divided, and the divisions do not overlap.
@@ -90,20 +97,24 @@ const INTERACTABLES := {
 	"laboratory_cable_knot": Vector3(1.35, 0.55, 0.35),
 	"laboratory_annex_door": Vector3(1.95, 1.15, -2.85),
 }
-## The machines a cable is allowed to start from, with the cable it belongs to.
+## The physical gland or source mesh where each exposed lead should start.
 const CABLE_ORIGINS := {
-	"CableBank0": Vector3(6.95, 0.72, 1.02),
-	"CableBank1": Vector3(6.95, 0.66, 2.1),
-	"CableBank2": Vector3(6.95, 0.7, 3.2),
-	"CableBank3": Vector3(6.95, 0.76, 4.1),
-	"CableHood": Vector3(1.95, 1.02, -5.42),
-	"CableBoard": Vector3(1.4, 1.2, -5.4),
-	"CableCentrifuge": Vector3(-2.4, 0.95, -3.34),
-	"CableBenchLamp": Vector3(-7.05, 1.85, -1.9),
-	"CableBalance": Vector3(-6.6, 0.95, -3.9),
-	"CableMixer": Vector3(1.48, 1.5, 0.7),
-	"CableCeilingDrop": Vector3(-1.7, 2.98, 0.9),
+	"CableBank0": "BankOutlet0",
+	"CableBank1": "BankOutlet1",
+	"CableBank2": "BankOutlet2",
+	"CableBank3": "BankOutlet3",
+	"CableHood": "HoodConduitPort",
+	"CableBoard": "BoardGland",
+	"CableCentrifuge": "CentrifugeSocket",
+	"CableBenchLamp": "BenchLampShade",
+	"CableBalance": "BalanceSocket",
+	"CableMixer": "MixerControlBox",
+	"CableCeilingDrop": "CeilingTubeD",
 }
+const CABLE_CLEAR_OF := [
+	"WetBenchBody", "WetBenchTop", "InstrumentBenchBody", "InstrumentBenchTop",
+	"HoodServiceBase", "IslandBody", "IslandTop", "PartitionWestA", "PartitionWestB", "PartitionSouth",
+]
 ## The mixer drum, the room's one running machine, and the thing the bake must not cross.
 const MIXER_DRUM := Vector3(0.7, 1.62, 1.0)
 ## Floor points the bake has to reach, and where they are.
@@ -116,6 +127,7 @@ const REACHABLE := {
 ## floors that stand above the room floor, and the ramp over the one cable crossing.
 const REQUIRED_SOLIDS := [
 	"Floor",
+	"FloorSouth",
 	"WallNorthLeft",
 	"WallNorthRight",
 	"WallSouth",
@@ -128,6 +140,7 @@ const REQUIRED_SOLIDS := [
 	"IslandBody",
 	"InstrumentBenchBody",
 	"GlassCabinetBody",
+	"HoodServiceBase",
 	"MixerDrum",
 	"AnnexFloor",
 	"FarCorridorFloor",
@@ -188,6 +201,8 @@ func _run() -> void:
 
 	Harness.stage = "the room"
 	_check_room()
+	_check_floor_sections()
+	_check_equipment_contacts()
 	Harness.stage = "solids"
 	_check_solids()
 	Harness.stage = "cables"
@@ -230,15 +245,6 @@ func _check_room() -> void:
 	elif String(location.location_id) != "laboratory":
 		_failures.append("The laboratory declares location_id '%s'." % location.location_id)
 
-	var floor_shape := _room.get_node_or_null(^"Floor/CollisionShape3D") as CollisionShape3D
-	var floor_box: BoxShape3D = null
-	if floor_shape != null:
-		floor_box = floor_shape.shape as BoxShape3D
-	if floor_box == null or not floor_box.size.is_equal_approx(FLOOR_SIZE):
-		_failures.append("The laboratory floor is no longer the 15.2 x 11.2 m room.")
-	elif not (_room.get_node(^"Floor") as Node3D).position.is_equal_approx(Vector3(0.0, -0.1, 0.0)):
-		_failures.append("The floor moved; the walls are placed against its top face.")
-
 	for wall: String in WALLS:
 		var expected: Array = WALLS[wall]
 		var node := _room.get_node_or_null(NodePath(wall)) as Node3D
@@ -274,6 +280,63 @@ func _check_room() -> void:
 		if not home:
 			_failures.append("'%s' stands at %s, outside every working zone." % [id, str(anchor)])
 	_notes.append("zones %d, walls %d" % [ZONES.size(), WALLS.size()])
+
+
+func _check_floor_sections() -> void:
+	var spans: Array[Rect2] = []
+	for part: String in FLOOR_BOUNDS:
+		var aabb := _visible_bounds(part)
+		var footprint := Rect2(Vector2(aabb.position.x, aabb.position.z), Vector2(aabb.size.x, aabb.size.z))
+		var expected: Rect2 = FLOOR_BOUNDS[part]
+		if not footprint.is_equal_approx(expected) or not is_zero_approx(aabb.end.y):
+			_failures.append("%s: expected one visible level pour at %s, got %s." % [part, expected, aabb])
+		for span in spans:
+			# Tiny negative shrink avoids counting a shared edge as an overlapping surface.
+			if footprint.grow(-0.001).intersects(span.grow(-0.001)):
+				_failures.append("%s shares its top plane with another slab." % part)
+		spans.append(footprint)
+
+
+func _check_equipment_contacts() -> void:
+	# Each pair is a lower mesh and the mesh it is meant to carry. Test the actual
+	# rendered bounds, including cylinders, rather than assuming the origin is a foot.
+	var pairs := [
+		["WetBenchPlinth", "WetBenchBody"], ["WetBenchBody", "WetBenchTop"],
+		["WetBenchTop", "GlassFlask0"], ["WetBenchTop", "DryingRackTray"],
+		["DryingRackTray", "DryingFlask0"], ["HoodServiceBase", "HoodSideWest"],
+		["WetBenchTop", "BalanceBody"], ["BalanceBody", "BalancePlate"],
+		["GlassCabinetShelf0", "CabinetGlass0"], ["IslandTop", "MicroBase0"],
+		["IslandTop", "CentrifugeBody"], ["InstrumentBenchTop", "IncubatorBody"],
+		["WetBenchShelf", "BenchLampClamp"], ["BenchLampClamp", "BenchLampArm"], ["MixerTray", "MixerFoot0"],
+		["MixerFoot0", "MixerLeg0"], ["MixerCradle", "MixerDrum"],
+		["MixerDrum", "MixerLid"], ["MixerLid", "MixerMotorShoe"], ["MixerMotorShoe", "MixerMotor"],
+		["AnnexCordStem", "AnnexSoffitSpine"],
+	]
+	for tag in ["A", "B", "C", "D", "E"]:
+		var spine := "ServiceSpine" + ("West" if tag in ["A", "B"] else "East" if tag == "E" else "Mid")
+		pairs.append(["CeilingFixture" + tag, "FixtureHanger" + tag + "0"])
+		pairs.append(["FixtureHanger" + tag + "0", "FixtureYoke" + tag])
+		pairs.append(["FixtureYoke" + tag, spine])
+	for pair: Array in pairs:
+		var seat := _visible_bounds(pair[0])
+		var part := _visible_bounds(pair[1])
+		var gap := part.position.y - seat.end.y
+		var shared_xz := Rect2(seat.position.x, seat.position.z, seat.size.x, seat.size.z).intersects(
+			Rect2(part.position.x, part.position.z, part.size.x, part.size.z)
+		)
+		if not shared_xz or gap > 0.003 or gap < -0.075:
+			_failures.append("%s and %s are not seated on each other (gap %.3f m)." % [pair[0], pair[1], gap])
+	_notes.append("%d verified equipment contacts" % pairs.size())
+
+
+func _visible_bounds(part: String) -> AABB:
+	var node := _room.get_node_or_null(NodePath(part))
+	if node == null:
+		return AABB()
+	var mesh := node as MeshInstance3D
+	if mesh == null:
+		mesh = node.get_node_or_null(^"MeshInstance3D") as MeshInstance3D
+	return (mesh.global_transform * mesh.get_aabb()) if mesh != null else AABB()
 
 
 # --- 2. solids -------------------------------------------------------------------------
@@ -340,30 +403,36 @@ func _check_cables() -> void:
 		if piece.global_position.y > highest:
 			highest = piece.global_position.y
 			highest_point = piece.global_position
-		if piece.material_override == null:
+		if piece.get_active_material(0) == null:
 			_failures.append("'%s' has no cable material." % piece.name)
 	if cables.get_child_count() < 300:
 		_failures.append("Only %d cable segments; the room's cabling lost its weight." % cables.get_child_count())
 	if runs.size() < 20:
 		_failures.append("Only %d cable runs leave the machines." % runs.size())
 
-	# Every run that is supposed to come out of a machine starts there.
-	var anchored := 0
+	# The meshes share a unit cylinder; use its end, not the transform's centre,
+	# to verify contact. Also test the exposed routes, rather than just counting segments.
+	var obstacle_bounds := {}
+	for part: String in CABLE_CLEAR_OF:
+		obstacle_bounds[part] = _visible_bounds(part).grow(-0.003)
 	for run: String in CABLE_ORIGINS:
 		if not runs.has(run):
 			_failures.append("The cable from '%s' is missing." % run)
 			continue
-		var first: MeshInstance3D = (runs[run] as Array)[0]
-		var origin: Vector3 = CABLE_ORIGINS[run]
-		if first.global_position.distance_to(origin) > 0.45:
-			_failures.append(
-				"'%s' starts %.2f m from the machine it belongs to."
-				% [run, first.global_position.distance_to(origin)]
-			)
-		else:
-			anchored += 1
-	if anchored < CABLE_ORIGINS.size():
-		_failures.append("Only %d of %d machine cables start at their machine." % [anchored, CABLE_ORIGINS.size()])
+		var segments: Array = runs[run]
+		var first := segments[0] as MeshInstance3D
+		var source: String = CABLE_ORIGINS[run]
+		var bounds := _visible_bounds(source)
+		if not bounds.has_volume() or not bounds.grow(0.003).has_point(first.to_global(Vector3(0, -0.5, 0))):
+			_failures.append("'%s' no longer begins at %s." % [run, source])
+		for obstacle: String in obstacle_bounds:
+			var box: AABB = obstacle_bounds[obstacle]
+			for piece: MeshInstance3D in segments:
+				var start := piece.to_global(Vector3(0, -0.5, 0))
+				var finish := piece.to_global(Vector3(0, 0.5, 0))
+				if box.intersects_segment(start, finish) != null:
+					_failures.append("'%s' clips through %s." % [run, obstacle])
+					break
 
 	# The line the player can follow: one bundle leaves the working room through the door.
 	var through := false
@@ -396,11 +465,6 @@ func _check_annex() -> void:
 	# The low ceiling is carried by a perimeter soffit rather than by a lid over the room:
 	# every interior here is open above the working area so the follow camera can look in.
 	var ceiling := _box_bottom(_room.get_node_or_null(^"AnnexSoffitSpine") as Node3D)
-	var annex_floor := _room.get_node_or_null(^"AnnexFloor") as Node3D
-	if annex_floor == null:
-		_failures.append("The annex has lost its floor.")
-	elif not is_equal_approx(annex_floor.position.y, -0.06):
-		_failures.append("The annex floor is no longer the step down it was.")
 	if ceiling == null:
 		_failures.append("The annex has no soffit; the space no longer reads as a lower room.")
 	elif absf(ceiling - ANNEX_CEILING_HEIGHT) > 0.06:
@@ -447,7 +511,7 @@ func _check_colour() -> void:
 		var piece := node as MeshInstance3D
 		if piece == null or piece.mesh == null:
 			continue
-		var material := piece.material_override
+		var material := piece.get_active_material(0)
 		if material == null:
 			_failures.append("'%s' has no material; it would draw the engine default." % _relative(piece))
 			continue

@@ -25,6 +25,9 @@ BAKE_ONLY_LAYER = 1 << 4
 # masks. Thin landing-top colliders use it instead of making the tall visible plinths solid.
 PLAYER_ONLY_LAYER = 1 << 2
 
+# The stage pass paints the barred windows across this same front face.
+STREET_SCHOOL_Z = (-28.0, 12.7)
+
 MATS = {
     "asphalt": "res://assets/materials/outdoor_asphalt.tres",
     "concrete": "res://assets/materials/outdoor_concrete.tres",
@@ -283,16 +286,23 @@ def build_street():
     s.box("Road", (0, -0.1, -8), (22, 0.2, 56), "asphalt")
     s.box("PavementEast", (13, 0.075, -8), (8, 0.15, 56), "concrete")
     s.box("KerbEast", (8.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
-    s.box("PavementWest", (-13, 0.075, -8), (6, 0.15, 56), "concrete")
+    # Stop the vestibule pavement at the inside face of the return. Leaving a
+    # pavement hidden under the return lets the bake find false routes inside it.
+    street_end, split = 20.0, STREET_SCHOOL_Z[1]
+    s.box("PavementWest", (-13, 0.075, (-36 + split)/2), (6, 0.15, split+36), "concrete")
+    s.box("PavementSchoolEntry", (-11, 0.075, (split+street_end)/2), (2, 0.15, street_end-split), "concrete")
     s.box("KerbWest", (-9.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
-    # school building along the west side
-    s.box("SchoolBlock", (-16, 6.5, -6), (10, 13, 44), "wall", ["camera_occluder"])
-    s.box("SchoolPlinth", (-16, 0.6, -6), (10.2, 1.2, 44), "concrete")
-    s.box("SchoolExitRecess", (-10.4, 1.4, 16), (1.2, 2.8, 4), "concrete", None, False)
-    s.box("SchoolExitDark", (-10.9, 1.4, 16), (0.1, 2.6, 3.4), "metal", None, False)
-    # gate pillars
-    s.box("GatePillarSouth", (-10.2, 1.6, 18.4), (0.8, 3.2, 0.8), "concrete")
-    s.box("GatePillarNorth", (-10.2, 1.6, 13.6), (0.8, 3.2, 0.8), "concrete")
+    # Keep a shallow, walkable recess behind the shared glass entrance instead
+    # of putting a doorway over the side of the solid school block.
+    z_school = sum(STREET_SCHOOL_Z) / 2
+    length = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
+    s.box("SchoolBlock", (-16, 6.5, z_school), (10, 13, length), "wall", ["camera_occluder"])
+    s.box("SchoolPlinth", (-16, 0.6, z_school), (10.2, 1.2, length), "concrete")
+    s.box("SchoolEntryReturn", (-15.9, 5.4, 16.35), (7.8, 10.8, 7.3), "wall", ["camera_occluder"])
+    s.box("SchoolEntryEnd", (-11.45, 1.49, 19.22), (1.66, 2.68, 0.20), "wall", ["camera_occluder"])
+    s.box("SchoolEntryMat", (-10.79, 0.15, 15.8), (1.46, 0.025, 3.04), "metal", None, False)
+    s.props.append(("SchoolGlassEntrance", "res://scenes/environment/props/teaching_block_entrance.tscn",
+                    (-10.62, 0.15, 15.8), 90))
     # east side buildings
     s.box("FlatBlockA", (17, 5.5, 6), (10, 11, 16), "brick", ["camera_occluder"])
     s.box("FlatBlockB", (16, 7.0, -12), (8, 14, 14), "brick", ["camera_occluder"])
@@ -385,11 +395,13 @@ def build_street():
          "outline": ("LampPost", "LampHead", "LampGlow")},
     ]
     s.exits = [
-        {"name": "BackToSchool", "pos": (-9.6, 0.9, 16.0), "id": "street_back_to_school",
-         "prompt_key": "prompt.back_to_classroom", "radius": 1.1,
-         "support": ("../../GatePillarSouth", "../../GatePillarNorth"),
-         "outline": ("SchoolExitRecess", "SchoolExitDark", "GatePillarSouth", "GatePillarNorth"),
-         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromStreet",
+        {"name": "BackToSchool", "pos": (-9.6, 0.9, 15.8), "id": "street_back_to_school",
+         "prompt_key": "prompt.back_inside", "radius": 1.25,
+         "support": ("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right",
+                     "../../SchoolGlassEntrance/Header"),
+         "outline": ("SchoolGlassEntrance/Left/Stile", "SchoolGlassEntrance/Right/Stile",
+                     "SchoolGlassEntrance/Header/Shoe"),
+         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromTeachingEntrance",
          "id_dest": "corridor"},
         # The anchor stands in the doorway at the head of the stair, so a click on the stair
         # walks the player up it and through the door instead of stopping at the bottom.
