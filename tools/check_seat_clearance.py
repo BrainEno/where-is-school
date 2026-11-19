@@ -254,10 +254,13 @@ def horizontal_gap(
     return math.hypot(dx, dz) - radius
 
 
-## Where the seated body's torso begins: the hip height the controller holds at the seated
-## pose (`STANDING_HIP_HEIGHT - SEATED_HIP_DROP`). Parts that top out below it are below the
-## body's own lap, and the folded legs go over them.
-TORSO_FLOOR = 0.45
+## Where the seated body's torso begins, above the lap. Parts that top out below it are
+## below the body's own folded legs, which the clip lifts over them.
+##
+## Not the pelvis height: `%Visual` carries the whole body, so the seated pose is the standing
+## skeleton with the legs folded by the clip and only a slump on top. A floor set to where a
+## pelvis would be if it sat on the seat would be measuring a body the runtime never draws.
+TORSO_FLOOR = 0.50
 
 
 def torso_reaches(

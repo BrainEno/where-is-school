@@ -85,13 +85,18 @@ const WAKE_GET_UP_SECONDS := 0.75
 ## to, the hip has to travel the real distance between `sit_idle`'s thigh angle and the
 ## standing one, or the shins sweep through the seat while the pivot barely moves.
 const STANDING_HIP_HEIGHT := 0.9
-## How far the hip drops below `STANDING_HIP_HEIGHT` at the seated pose.
+## How far the body sinks below `STANDING_HIP_HEIGHT` in the seated pose.
 ##
-## The seat top is 0.45 m and the thigh is ~0.45 m long, so a body whose pelvis is at 0.9 m
-## with its thighs horizontal is sitting on air. 0.42 m puts the hip a hand's width above
-## the seat, which is where `sit_idle`'s thigh reads as a body on a chair rather than a body
-## hovering over one. The get-up raises the hip by this much as it straightens the legs.
-const SEATED_HIP_DROP := 0.42
+## This is a *slump*, not a descent to seat height, and the difference cost a working build
+## to learn: `%Visual` carries the whole body, with the model hung 0.9 m under it so its feet
+## sit at y = 0. Lowering the node is lowering the character into the floor. A drop sized to
+## the seat (0.42 m - what it takes to put a pelvis on a 0.45 m seat) drove the feet that far
+## under the ground and the model through it, while the pelvis was computed to be in exactly
+## the right place.
+##
+## The chair is met by the *clip*: `sit_idle` folds the legs and puts the body in the chair,
+## and the pivot only adds the slump on top of that. Six centimetres is that slump.
+const SEATED_HIP_DROP := 0.06
 ## The hip's rise across the stand-up, as (fraction of the clip, fraction of the total rise).
 ##
 ## A sine curve - the obvious choice, and the one this used - is wrong here because the hips
@@ -100,10 +105,10 @@ const SEATED_HIP_DROP := 0.42
 ## of the way, and its second half straightening the last few degrees and bringing the spine
 ## upright, which barely lifts it at all.
 ##
-## Sampling the clip's own thigh and shin keys gives the shape the skeleton expects: ~0.51 m
-## with the legs folded, ~0.79 m at the half-way key, 0.90 m standing. The sine sat 12 cm
-## below that through the middle, which is what made the feet sink and the knees drop: the
-## legs were being straightened while the body was drawn in a hole.
+## What matters here is the *shape*, not the metres: the rise is front-loaded, because the
+## knees unfold before the spine straightens. A sine puts its fastest rise in the middle
+## instead, which draws the body hanging in the air through the first third of the stand.
+## These keys put most of whatever rise there is in that first half, where the legs work.
 const HIP_RISE_KEYS: Array[Vector2] = [
 	Vector2(0.0, 0.0),
 	Vector2(0.467, 0.78),
