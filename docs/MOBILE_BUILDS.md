@@ -67,7 +67,10 @@ bash tools/macos/ios/debug.sh --device '<simulator-UDID>'  # 不再交互选机
 若缺 iOS 运行时，脚本用 `xcodebuild -downloadPlatform iOS` 安装，并在 Xcode 支持的机型里准备默认机型。
 它从官方 Godot 发布下载 `.godot-version` 对应的标准版编辑器和 iOS 模板，核对 SHA-256 后缓存；
 以后工程升级引擎时会取新的固定版本，不会自动升级到未指定版本。下载较大（模板约 1.2 GB）；可以用
-`--godot /path/to/Godot --no-download` 复用已安装的编辑器和模板。Python 不在 PATH 时设置 `WIS_PYTHON`。
+`--godot /path/to/Godot --no-download` 复用已安装的编辑器、模板和模拟器库。Python 不在 PATH 时设置 `WIS_PYTHON`。
+Godot 4.7.2 官方 iOS 模板缺少实际的 Apple Silicon Simulator 库。首次构建遇到缺失时，脚本用 Git 取同版本、
+与编辑器提交相符的官方源码，用独立环境中固定哈希的 SCons 4.10.1（MIT）编译 Debug 模拟器库。首次需要联网、
+额外时间和数 GB 临时空间；结果按 Godot、Xcode、SDK 和架构缓存，只补进本次导出工程，不改全局模板或真机库。
 CI 使用 `--non-interactive --no-open --shutdown`；本机默认保留模拟器和游戏。输出在
 `build/mobile/ios-simulator/run-*/`，含模拟器 `.app`、Xcode 工程、日志和截图。要打断点，打开该目录
 Xcode 工程，选择相同模拟器，选 **Debug** 后 Run 或附加进程。

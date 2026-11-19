@@ -318,6 +318,10 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         return project
     xcode = ("xcodebuild", "-project", project, "-scheme", APP)
     if simulator:
+        from macos.ios.simulator_template import ensure_simulator_slice
+
+        version_pin = (ROOT / ".godot-version").read_text().strip()
+        ensure_simulator_slice(out, APP, platform.machine(), version_pin, args.engine_version, no_download=args.no_download)
         app = build_simulator(xcode, out, flags)
         verify_ios_app(app, pack, args.build, version, simulator=True)
         return app
@@ -351,6 +355,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=ROOT / "build/mobile")
     parser.add_argument("--build", type=int, default=1, help="Monotonically increasing distribution build number")
     parser.add_argument("--team", default=os.environ.get("IOS_TEAM_ID"))
+    parser.add_argument("--no-download", action="store_true", help="do not fetch a missing iOS Simulator slice")
     parser.add_argument("--export-options", type=Path, help="Local Xcode export options for a signed IPA")
     args = parser.parse_args()
     try:
@@ -363,6 +368,7 @@ def main() -> int:
         actual = run(args.godot, "--version", capture=True).strip()
         require(actual.startswith(expected + ".stable.") and ".mono." not in actual,
                 f"Expected standard Godot {expected} stable; got {actual}")
+        args.engine_version = actual
         version = stamp_release_version.parse(stamp_release_version.read_version_file(ROOT / "packaging/version.txt"))["core"]
         out = args.output.resolve()
         require(not out.exists() or not any(out.iterdir()), "Build output directory must be empty")

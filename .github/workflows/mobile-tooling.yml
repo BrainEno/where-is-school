@@ -34,7 +34,7 @@ jobs:
   simulator:
     name: iOS Simulator Debug and unsigned device archive
     runs-on: macos-26
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -49,13 +49,18 @@ jobs:
           set -euo pipefail
           mkdir -p build/mobile/ios-logs
           xcodebuild -version
-          if ! bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --no-download --non-interactive --no-open --shutdown \
+          if ! bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --non-interactive --no-open --shutdown \
               --output build/mobile/ios-sim 2>&1 | tee build/mobile/ios-logs/simulator.log; then
             { grep -E '^iOS simulator failed:|^Mobile export failed:' build/mobile/ios-logs/simulator.log | tail -3 || true
               log=build/mobile/ios-sim/xcode-build.log
               if [[ -s "$log" ]]; then
                 grep -Ei '^xcodebuild: error:|(^|: )error:|eligible destinations|reason:|ld: |^  "_|\*\* BUILD FAILED' "$log" | head -12 || true
                 tail -5 "$log"
+              fi
+              compile=build/mobile/ios-sim/simulator-template.log
+              if [[ -s "$compile" ]]; then
+                grep -Ei 'error:|scons: \*\*\*' "$compile" | tail -5 || true
+                tail -4 "$compile"
               fi
               tail -3 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-850 |
             while IFS= read -r line; do [[ -z "$line" ]] || printf '::error title=iOS Simulator::%s\n' "$line"; done
@@ -83,6 +88,7 @@ jobs:
             build/mobile/ios-logs/
             build/mobile/ios-sim/BUILD.json
             build/mobile/ios-sim/xcode-build.log
+            build/mobile/ios-sim/simulator-template.log
             build/mobile/ios-sim/runtime.log
             build/mobile/ios-sim/launch.txt
             build/mobile/ios-sim/title.png

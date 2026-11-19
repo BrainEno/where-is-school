@@ -77,7 +77,9 @@ def build_and_launch(args: argparse.Namespace, godot: Path, row: dict) -> None:
     else:
         out = args.output.resolve()
     print(f"Simulator: {label(row)}\nBuild and logs: {out}", flush=True)
-    run(sys.executable, ROOT / "tools/export_mobile.py", "ios-simulator", "--godot", godot, "--output", out, timeout=900)
+    offline = ("--no-download",) if args.no_download else ()
+    run(sys.executable, ROOT / "tools/export_mobile.py", "ios-simulator", "--godot", godot, "--output", out,
+        *offline, timeout=3600)
     record = json.loads((out / "BUILD.json").read_text())
     app = out / record["artifact"]
     if record["target"] != "ios-simulator" or not app.is_dir():
