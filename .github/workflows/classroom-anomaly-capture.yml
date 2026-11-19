@@ -1,9 +1,7 @@
 name: Classroom anomaly capture
 
-# Photographs the biology-classroom anomalies (the curtained window, the void behind it,
-# the fall, the rear door and its staircase) from the game's own camera in a real window,
-# so the round can be judged on frames. `tests/capture_classroom_anomalies.gd` takes them.
-#
+# Photographs the two windows, the opened cut, both landings, the roof ladder and the
+# cabin in a real game window. `tests/capture_classroom_anomalies.gd` drives the beats.
 # Same publishing as `Location art capture`: the frames are an artifact, and each one is
 # also printed as a small JPEG, base64 split into numbered notice annotations (an
 # annotation holds about 4 KB; concatenate the parts of one file in order and decode).
@@ -16,8 +14,14 @@ on:
       - ".github/workflows/classroom-anomaly-capture.yml"
       - "scenes/locations/classroom/**"
       - "scenes/environment/props/classroom_art/**"
+      - "scenes/locations/playground/**"
+      - "scenes/environment/props/playground_art/**"
+      - "scripts/actors/**"
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
+      - "assets/camera/shots/container_*.tres"
+      - "assets/camera/shots/window.tres"
+      - "data/dialogue/*/prologue.json"
   workflow_dispatch:
 
 permissions:
@@ -39,16 +43,19 @@ jobs:
           # `--import` waits for the queue to drain; its exit code is not the verdict (the
           # project theme can load before its font is imported). The second pass is.
           godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
-          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
-          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1
+          if grep -E '^(SCRIPT ERROR:|ERROR:)|Parse Error' "${RUNNER_TEMP}/import-2.log"; then
+            exit 1
+          fi
 
       - name: Capture
         shell: bash
         run: |
           set +e -uo pipefail
           log="${RUNNER_TEMP}/capture.log"
+          # Xvfb has no sound device; exercise the real video renderer, not the runner's ALSA.
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_classroom_anomalies.gd > "${log}" 2>&1
           code=$?
           grep -E "SHOT|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${log}" | grep -v "^CROP" | head -n 60
@@ -64,8 +71,11 @@ jobs:
             done
           done
           echo "queued $(wc -l < "${queue}") annotation part(s); exit ${code}"
-          if [ "${code}" -ne 0 ]; then
-            echo "::error title=classroom anomaly capture::the capture exited ${code}"
+          if [ "${code}" -ne 0 ] || grep -qE '^(SCRIPT ERROR:|ERROR:)|Parse Error' "${log}"; then
+            grep -E '^(FAILURE:|SCRIPT ERROR:|ERROR:)|Parse Error' "${log}" | head -n 8 | while IFS= read -r line; do
+              echo "::error title=classroom anomaly capture::${line}"
+            done
+            echo "::error title=classroom anomaly capture::exit ${code} or engine diagnostics; see the artifact for the full log"
             exit 1
           fi
 

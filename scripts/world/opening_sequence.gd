@@ -27,6 +27,8 @@ extends Node
 ## run at once; anything the player triggers while a beat runs simply waits for the
 ## interaction to be re-enabled.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 @export var player_path: NodePath = ^"../Player"
 @export var interaction_path: NodePath = ^"../Player/InteractionController"
 @export var ui_path: NodePath = ^"../GameUI"
@@ -114,6 +116,7 @@ func _ready() -> void:
 	if not _catalog.is_valid():
 		# Not fatal: a room the catalog cannot describe still runs, it just announces
 		# nothing. The error is loud because it is always an authoring mistake.
+		OfflineDiagnostics.note("assets.load_failed", {"kind": "locations"})
 		push_error("OpeningSequence: %s" % _catalog.describe_errors())
 	_focus = CameraFocusDirector.new(_player.camera_rig)
 	_flow = LocationFlow.new(
@@ -811,6 +814,9 @@ func _run_staged(staged: StagedInteractable) -> void:
 		)
 		return
 	end_beat()
+	var checkpoint := String(request.get("checkpoint", ""))
+	if not checkpoint.is_empty():
+		autosave(checkpoint)
 	var inspection := StringName(String(request.get("inspection", "")))
 	if not String(inspection).is_empty():
 		_dialogue.present_inspection(inspection)

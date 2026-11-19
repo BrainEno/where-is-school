@@ -598,8 +598,21 @@ func _measure_drawn(subject: Node3D, camera: Camera3D, frame: Image, box: Rect2i
 	var share := float(changed) / float(maxi(total, 1))
 	var mean := lum_sum / float(maxi(changed, 1))
 	_note("%s: model draws %.0f%% of its box, mean luminance of its pixels %.2f" % [shot_name, share * 100.0, mean])
-	if share < 0.12:
-		_failures.append("%s draws only %.0f%% of its screen box in %s." % [subject.name, share * 100.0, shot_name])
+	# This catches a model that is *missing* - not bound, not visible, hidden behind the
+	# world - and the threshold has to be the one that answers that question. It was 0.12,
+	# which these frames straddle: seven clips measured 12% to 15%, and whether a clip
+	# passed depended on which side of 0.12 its last digit fell. Walk and talk failed while
+	# idle and get_up passed, with every one of them reporting "12%". A threshold that
+	# separates nothing is worse than none: it fails a capture for a rounding difference and
+	# teaches the reader to ignore the one message that means "the character is not there".
+	#
+	# A drawn body is a few percent of its own bounding box at *most* - the box is its
+	# silhouette rotated through every pose, and the model fills a fraction of that - so the
+	# floor belongs where an absent model actually sits: zero, plus room for a stray pixel of
+	# anti-aliasing. 0.02 is a body's worth of pixels and nowhere near a missing one.
+	const MIN_DRAWN_SHARE := 0.02
+	if share < MIN_DRAWN_SHARE:
+		_failures.append("%s draws only %.1f%% of its screen box in %s." % [subject.name, share * 100.0, shot_name])
 
 
 func _screen_box(camera: Camera3D, box: AABB) -> Rect2i:

@@ -32,8 +32,8 @@ const Harness = preload("res://tests/test_harness.gd")
 ## docs/CHARACTER_INTEGRATION.md), by asset name. N has a look and no motion profile: her
 ## wrapper plays the four loops her author made (`authored_idle_layers`), and the empty
 ## "motion" says the wrapper must not carry one. The classroom student has neither.
-## "two_sided" counts the surfaces painted with the two-sided shader: N's eyeballs (sclera,
-## iris and pupil, both eyes) face inward in teacher-n.glb and go blank one-sided.
+## "two_sided" counts the surfaces painted with the two-sided shader. Geometry revision 1
+## repairs N's six eye surfaces in the asset; no production character needs that workaround.
 const CHARACTER_LOOKS := {
 	"protagonist": {
 		"look": "res://assets/characters/protagonist/protagonist_look.tres",
@@ -46,7 +46,7 @@ const CHARACTER_LOOKS := {
 	"teacher n": {
 		"look": "res://assets/characters/teacher_n/teacher_n_look.tres",
 		"motion": "",
-		"two_sided": 6,
+		"two_sided": 0,
 	},
 	# The seated classroom student (the first protagonist model): painted like the others so
 	# it is not the one figure in the room still in its GLB's PBR colours. No motion profile;
@@ -59,6 +59,21 @@ const CHARACTER_LOOKS := {
 const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
 const PAINT_TWO_SIDED_SHADER_PATH := "res://assets/shaders/characters/character_paint_two_sided.gdshader"
 const PIGMENT_SHADER_PATH := "res://assets/shaders/painterly/character_pigment.gdshader"
+## Fine detail is deliberately restricted to cloth and hair on N/the seated student. The
+## shared shader must not silently restyle the protagonist/Q or put yarn on faces/eyes.
+const FINE_DETAIL_PARTS := {
+	"teacher n": {
+		"m_st_cardigan": 1, "m_st_blouse": 2, "m_st_trousers": 2,
+		"m_st_hair": 3, "m_st_hairlight": 3,
+	},
+	"former protagonist": {
+		"wis_protagonist_cardigan": 1, "wis_protagonist_cardigan_light": 1,
+		"wis_protagonist_cardigan_shadow": 1, "wis_protagonist_shirt": 2,
+		"wis_protagonist_shirt_shadow": 2, "wis_protagonist_trousers": 2,
+		"wis_protagonist_trousers_light": 2, "wis_protagonist_hair": 3,
+		"wis_protagonist_hair_warm": 3,
+	},
+}
 
 const PIPELINE_DOC := "res://docs/ASSET_PIPELINE.md"
 const PROVENANCE_DOC := "res://docs/ASSET_PROVENANCE.md"
@@ -134,9 +149,9 @@ const ASSETS: Array[Dictionary] = [
 		"name": "former protagonist",
 		"file": "res://assets/models/protagonist/protagonist.glb",
 		"wrapper": "res://scenes/environment/characters/classroom_student.tscn",
-		"size": Vector3(0.5559, 1.7269, 0.3370),
-		"meshes": 78,
-		"surfaces": 78,
+		"size": Vector3(0.5621, 1.7269, 0.3370),
+		"meshes": 64,
+		"surfaces": 64,
 		"model_base": 0.0170,
 		"scaled_nodes": {},
 		"kind": "seated_character",
@@ -144,7 +159,7 @@ const ASSETS: Array[Dictionary] = [
 		# The wrapper lowers the model so that, in `sit_idle`, the soles meet the floor the
 		# wrapper stands on: its origin is the floor under the seat, not the standing base.
 		"seated_drop": -0.347,
-		"note": "the first protagonist model, now a seated classroom student; rigid-weighted, "
+		"note": "the refined classroom student; 64 meshes, connected five-digit hands, rigid-weighted, "
 			+ "no embedded animation",
 	},
 	{
@@ -616,6 +631,7 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 	if applier.look == null or applier.look.resource_path != String(paths["look"]):
 		_failures.append("The Look applier for %s does not use %s." % [label, String(paths["look"])])
 		return
+	_check_fine_surface_work(label, applier.look)
 	var model := applier.get_model()
 	if model == null or model.scene_file_path != String(asset["file"]):
 		_failures.append("The Look applier for %s is not pointed at the GLB instance." % label)
@@ -647,7 +663,7 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 				outlined += 1
 	if two_sided != int(paths.get("two_sided", 0)):
 		_failures.append(
-			"%s has %d surfaces on the two-sided paint shader, expected %d (inward-facing eyeballs only)."
+			"%s has %d surfaces on two-sided paint, expected %d (geometry fixes must not need a culling workaround)."
 			% [label, two_sided, int(paths.get("two_sided", 0))]
 		)
 	if outlined == 0 or outlined == expected_surfaces:
@@ -711,6 +727,35 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 		var expression: Dictionary = painted.get("expression", {})
 		if expression.is_empty():
 			_failures.append("The protagonist's painted look set no resting expression on the head's blend shapes.")
+
+
+## Assert the generated resources opt in by material role, not just that the files exist.
+func _check_fine_surface_work(label: String, look: CharacterLook) -> void:
+	var expected: Dictionary = FINE_DETAIL_PARTS.get(label, {})
+	for part: String in expected:
+		if not look.materials.has(part):
+			_failures.append("%s is missing its fine-detail part %s." % [label, part])
+	for part: String in look.materials:
+		var material := look.materials[part] as ShaderMaterial
+		if material == null:
+			_failures.append("%s's %s is not a ShaderMaterial." % [label, part])
+			continue
+		var kind: Variant = material.get_shader_parameter("detail_kind")
+		var strength: Variant = material.get_shader_parameter("detail_strength")
+		var actual_kind := int(kind) if kind != null else 0
+		var actual_strength := float(strength) if strength != null else 0.0
+		if actual_kind != int(expected.get(part, 0)):
+			_failures.append("%s's %s has fine-detail kind %d, expected %d." % [label, part, actual_kind, int(expected.get(part, 0))])
+		if expected.has(part):
+			if actual_strength <= 0.0 or actual_strength > 0.5:
+				_failures.append("%s's %s has no restrained fine detail (strength %s)." % [label, part, actual_strength])
+		elif actual_strength != 0.0:
+			_failures.append("%s's %s unexpectedly enables fine detail." % [label, part])
+		if expected.is_empty():
+			for opt_in: String in ["pigment_blend", "patch_feather"]:
+				var value: Variant = material.get_shader_parameter(opt_in)
+				if value != null and float(value) != 0.0:
+					_failures.append("%s's existing %s unexpectedly enables %s." % [label, part, opt_in])
 
 
 ## A seated character is scenery that happens to be a person: the classroom student. It has

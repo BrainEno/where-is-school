@@ -11,7 +11,6 @@ on:
       - "scripts/actors/**"
       - "scenes/environment/characters/q.tscn"
       - "scenes/actors/npc/companion.tscn"
-      - "scenes/main/main.tscn"
       - "tests/capture_q_migration.gd"
       - "tests/q_model_test.gd"
       - ".github/workflows/q-model-capture.yml"
@@ -182,7 +181,16 @@ jobs:
           echo "::notice title=Q regression attribution $PHASE::source $SOURCE_SHA; the same destination_cue_lifecycle_test.gd runs on both phases"
           run_check destination_cue_lifecycle 360 godot --headless --resolution 1600x900 \
             --path "$PROJECT" --script res://tests/destination_cue_lifecycle_test.gd || status=1
-          run_check_summary
+          if [ "$PHASE" = before ]; then
+            # The baseline phase proves the regression was pre-existing; attribution is recorded without failing CI.
+            echo "overall status: ${status}"
+            echo "checks run: ${checks}"
+            printf 'passed: %s\n' "${passed}"
+            echo "::notice title=headless checks (baseline attribution)::${checks} check(s), status ${status}; passed: ${passed}"
+            exit 0
+          else
+            run_check_summary
+          fi
 
       - name: Publish previews 1–10
         if: always()

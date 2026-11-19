@@ -20,6 +20,8 @@ extends Control
 
 signal closed
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 const CAPTURE_SECONDS := 6.0
 ## How long the first press of "Forget what was read" waits for the second.
 const CLEAR_CONFIRM_SECONDS := 4.0
@@ -131,6 +133,7 @@ func is_open() -> bool:
 ## The focusable control of a row: `text_size`, `text_speed`, `auto_speed`, `skip_scope`,
 ## `clear_read_log`, `sprint_mode`, `volume_master`,
 ## `volume_music`, `volume_sfx`, `ui_scale`, `fullscreen`, `language`,
+## `open_logs`, `export_diagnostics`,
 ## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`.
 func get_row_control(id: StringName) -> Control:
 	if id == &"back":
@@ -209,6 +212,7 @@ func _rebuild() -> void:
 	_choice_row(&"ui_scale", "settings.ui_scale", _ui_scale_options(), _current(&"ui_scale"))
 	_choice_row(&"fullscreen", "settings.fullscreen", _on_off_options(), _current(&"fullscreen"))
 	_choice_row(&"language", "settings.language", _language_options(), _current(&"language"))
+	_diagnostics_rows()
 	_heading("settings.section.controls")
 	_choice_row(&"sprint_mode", "settings.sprint_mode", _sprint_mode_options(), _current(&"sprint_mode"))
 	_binding_header()
@@ -249,7 +253,7 @@ func _link_focus() -> void:
 	for id: StringName in [
 		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log",
 		&"volume_master", &"volume_music", &"volume_sfx", &"ui_scale", &"fullscreen", &"language",
-		&"sprint_mode",
+		&"open_logs", &"export_diagnostics", &"sprint_mode",
 	]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -711,6 +715,44 @@ func _disarm_clear_read_log() -> void:
 		return
 	_clear_armed_until_msec = 0
 	_refresh_clear_read_log()
+
+
+func _diagnostics_rows() -> void:
+	_heading("settings.section.diagnostics")
+	_rows.add_child(MenuStyle.paragraph(
+		L10n.t("settings.diagnostics_note"), MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
+	))
+	_rows.add_child(MenuStyle.paragraph(
+		L10n.t("settings.diagnostics_folder", {"path": ProjectSettings.globalize_path(OfflineDiagnostics.LOG_DIR)}),
+		MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
+	))
+	_diagnostics_button(&"open_logs", "settings.open_logs", _on_open_logs)
+	_diagnostics_button(&"export_diagnostics", "settings.export_diagnostics", _on_export_diagnostics)
+
+
+func _diagnostics_button(id: StringName, label: String, action: Callable) -> void:
+	var button := MenuStyle.entry_button(L10n.t(label), MenuStyle.BODY_SIZE, _factor)
+	button.name = String(id)
+	MenuStyle.style_form_entry(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(action)
+	_rows.add_child(button)
+	_controls[id] = button
+
+
+func _on_open_logs() -> void:
+	var log := OfflineDiagnostics.active()
+	var opened: bool = log != null and log.open_directory() == OK
+	_status.text = L10n.t("settings.logs_opened" if opened else "settings.logs_open_failed")
+
+
+func _on_export_diagnostics() -> void:
+	var log := OfflineDiagnostics.active()
+	var result: Dictionary = log.export_report() if log != null else {"ok": false}
+	var key := "settings.diagnostics_export_failed"
+	if result["ok"]:
+		key = "settings.diagnostics_export_partial" if result["partial"] else "settings.diagnostics_exported"
+	_status.text = L10n.t(key, {"file": OfflineDiagnostics.EXPORT_NAME})
 
 
 func _on_restore_pressed() -> void:

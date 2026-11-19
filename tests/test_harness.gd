@@ -67,6 +67,31 @@ static func ensure_state_autoloads(tree: SceneTree) -> Dictionary:
 	}
 
 
+## Waits for `condition` to become true, giving up after `limit_seconds` of real time.
+##
+## Six tests had grown their own copy of this loop, in two shapes that disagree at the
+## deadline. This takes the kinder of the two: the deadline is checked *before* the
+## condition, and the condition is asked once more after the loop, so a condition that
+## comes true on the last allowed frame is reported as success rather than as a timeout.
+## The other shape tested the condition first and re-polled only on the next pass, which
+## turns "it happened just in time" into a false failure. That false failure is the
+## failure mode behind issue #207: waiting a fixed number of frames for something the
+## engine advances on process frames, then asserting on it, is a race with the machine's
+## frame rate. `Engine.time_scale` makes the race wider, not narrower.
+##
+## `await` on a coroutine: call it as `await TestHarness.wait_until(func(): return x, 2.0)`.
+## The predicate runs on process frames, because every caller is waiting for presentation
+## state (a tween's opacity, a label's revealed text), not for a physics step. Callers
+## that need physics sampling do it in their own loop and document why.
+static func wait_until(condition: Callable, limit_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + int(limit_seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		if bool(condition.call()):
+			return true
+		await Engine.get_main_loop().process_frame
+	return bool(condition.call())
+
+
 ## Hard watchdog: a test that stalls must still terminate with a failure instead
 ## of eating the CI job's whole time budget. A Timer node is used (rather than a
 ## SceneTreeTimer) so the instance is owned by the tree and freed at exit.

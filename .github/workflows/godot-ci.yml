@@ -204,6 +204,46 @@ jobs:
           python3 tools/check_ui_palette.py
           python3 tests/ui_palette_test.py
 
+      - name: Check the interface has no new colour literals
+        shell: bash
+        run: |
+          # Issue #229 / F-022: `check_ui_palette.py` refuses the same RGB in two files, but a
+          # colour typed out once inside `scripts/ui/` had no gate at all - which is how the
+          # reading band and the notebook ended up with four source colours each. This check
+          # is the other half: no new literal in the interface, per line rather than per file,
+          # with an allowlist that records why each of the 20 remaining ones is local.
+          # Pure white and pure black are tween endpoints and are skipped, as they are in
+          # the palette check. Its test proves both directions on trees it writes.
+          python3 tools/check_ui_literals.py
+          python3 tests/ui_literals_test.py
+
+      - name: Check the protagonist's seat does not intersect its chair
+        shell: bash
+        run: |
+          # The protagonist wakes seated in a classroom chair. The spawn marker sat at the
+          # chair's centre, so the seat, both posts, the rail and the back were all inside
+          # the body's capsule, and the stand-up straightened the legs while the hip moved
+          # 3 cm. Nothing compared the spawn to the furniture, because they live in two
+          # different scenes - so the check does, and it follows the stand-up along its
+          # path rather than only looking at where it ends.
+          python3 tools/check_seat_clearance.py
+          python3 tests/seat_clearance_test.py
+          python3 tests/pushable_chair_test.py
+
+      - name: Check no test waits a fixed number of frames on a fast clock
+        shell: bash
+        run: |
+          # Issue #207: Engine.time_scale speeds the clock up, not the machine. A test that
+          # scales time and then waits a fixed frame count is racing the frame rate; it
+          # passes on a quiet runner and fails on a busy one, which is how
+          # destination_cue_lifecycle reported "a floor click drew no mark" for months while
+          # the mark was fine. The check cannot tell a racy wait from a safe one - it does
+          # not try - so it freezes the structural fact instead: the 16 files that hold such
+          # a wait today may not grow, and a converted one must leave the baseline. Waits are
+          # replaced by TestHarness.wait_until, which counts seconds and polls a condition.
+          python3 tools/check_flaky_waits.py
+          python3 tests/check_flaky_waits_test.py
+
       - name: Check the committed screenshots are labelled
         shell: bash
         run: |
@@ -288,6 +328,8 @@ jobs:
             echo "IMPORT_AUDIT=success"
           fi
           run_check smoke 180 godot --headless --path . --script res://tests/smoke_test.gd || status=1
+          # Separate processes and an isolated XDG profile, through the actual settings UI.
+          bash tests/run_offline_diagnostics.sh || status=1
           # One camera, one field of view, and a faded wall that comes back. The fader
           # half of this is the regression for the occluder bug in #58.
           run_check camera_rig 240 godot --headless --path . --script res://tests/camera_rig_test.gd || status=1
@@ -420,6 +462,10 @@ jobs:
           # The corridor's three library models (#90): wrapper, wall/parapet contact,
           # working face towards the walkway, anchors and routes with the colliders baked in.
           run_check corridor_props 300 godot --headless --path . --script res://tests/corridor_props_test.gd || status=1
+          # The walkway that does not end (docs/CORRIDOR_ART.md): depth fog the colour of the
+          # clear colour, the walkway carried on past the yard door north of every sight
+          # line, the end wall's picture gone but its collider kept, the door's opening clear.
+          run_check corridor_art 180 godot --headless --path . --script res://tests/corridor_art_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
           # has to point at a bone that exists on that rig, every clip has to actually move
           # the bone it is about, and the loop has to come back to where it started. The two
@@ -514,6 +560,10 @@ jobs:
           # The strict field types and the per-field translation exception in the inner
           # voice registry.
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
+          # Standardised JSON loading, formatting and locale parity.
+          run_check json_table 120 godot --headless --path . --script res://tests/json_table_test.gd || status=1
+          # Dialogue and inspection voice performance director.
+          run_check voice_director 120 godot --headless --path . --script res://tests/voice_director_test.gd || status=1
 
           run_check_summary
 

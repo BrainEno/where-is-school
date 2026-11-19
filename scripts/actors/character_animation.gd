@@ -363,7 +363,8 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 ## Null — every caller that leaves it out — writes the clips exactly as `CLIPS` has them.
 static func bind(
 		model_root: Node3D, player: AnimationPlayer, faces_negative_z: bool = false,
-		profile: CharacterMotionProfile = null
+		profile: CharacterMotionProfile = null,
+		extra_clips: Dictionary = {}
 ) -> Dictionary:
 	var skeletons := skeletons_in(model_root)
 	if skeletons.is_empty():
@@ -390,7 +391,8 @@ static func bind(
 	var resolved: Dictionary = rig["resolved"]
 	# Every canonical bone any clip animates, resolved on this rig: each clip writes all of
 	# them, so switching clips never leaves a bone where the previous clip put it.
-	var animated := _animated_bones(resolved)
+	var specs := CLIPS.merged(extra_clips)
+	var animated := _animated_bones(resolved, specs)
 	var posed := posed_limbs(skeleton, resolved)
 	# Each animated bone's semantic frame, as a turn about its own length (see
 	# `semantic_frame()`), and how far that turn is: the twist the rig's local axes carry.
@@ -411,8 +413,8 @@ static func bind(
 				ignored.append(canonical)
 	var library := AnimationLibrary.new()
 	var clip_report := {}
-	for clip_name in CLIPS:
-		var spec: Dictionary = CLIPS[clip_name]
+	for clip_name: String in specs:
+		var spec: Dictionary = specs[clip_name]
 		var animation := Animation.new()
 		var tempo := 1.0 if profile == null else profile.tempo_for(clip_name)
 		animation.length = float(spec["length"]) * tempo
@@ -568,10 +570,10 @@ static func posed_limbs(skeleton: Skeleton3D, resolved: Dictionary) -> Array[Str
 
 ## Canonical bones that at least one clip animates and that this rig resolves, in a stable
 ## order (the order of `BONE_ALIASES`).
-static func _animated_bones(resolved: Dictionary) -> Array[String]:
+static func _animated_bones(resolved: Dictionary, specs: Dictionary = CLIPS) -> Array[String]:
 	var wanted := {}
-	for clip_name in CLIPS:
-		var tracks: Dictionary = CLIPS[clip_name]["tracks"]
+	for clip_name in specs:
+		var tracks: Dictionary = specs[clip_name]["tracks"]
 		for canonical in tracks:
 			wanted[canonical] = true
 	var ordered: Array[String] = []

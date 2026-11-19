@@ -305,9 +305,9 @@ hidden. The companion record is
 | School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
 | Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
-| Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.556 × 1.727 × 0.337 | 12,388 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
+| Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.562 × 1.727 × 0.337 | 46,384 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
 | Q | `assets/models/q/new-Q.glb` (reproducible from `art/character_models/q/new-Q_source.glb` via `tools/prepare_q.py`) | `scenes/environment/characters/q.tscn` | 1.30945 × 1.78449 × 0.37586 (rest A-pose) | 17,918 | `Node3D` + `InteractionAnchor`; 60 joints, 30 weighted finger joints, six supplied actions |
-| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 57,460 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops; painted by a `Look` (`teacher_n_look.tres`, [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) |
+| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 56,950 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops; painted by a `Look` (`teacher_n_look.tres`, [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a
@@ -389,6 +389,37 @@ What this means for the contract:
 - **A re-export needs a check of the material names.** If a re-export renames a material,
   that surface falls back to its GLB material, and `imported_assets_test.gd` fails because
   a surface is no longer painted. A new material needs an entry in the script.
+
+### 10.2b Geometry revision 1: N and the seated classroom student
+
+The owner has now explicitly requested model edits, including hard corners and simplified
+hands. The earlier material-only/no-GLB scope is not a permanent prohibition. These two
+models are refined through their source-preparation owners, not at run time:
+
+- N: `tools/prepare_teacher_n.py`, unchanged pinned source under `art/character_models/teacher-n/`.
+- Student: `tools/prepare_classroom_student.py`, original 525,912-byte runtime preserved as
+  `art/character_models/classroom_student/student_source.glb` before editing; SHA-256 pinned.
+- Shared build-only loft/normal/connected-hand math: `tools/character_geometry.py`, existing
+  pinned NumPy, no new game dependency. Edit these sources, never only their exported GLBs.
+
+The student integrates fourteen obsolete component nodes into hands/face: **64**, not 78,
+meshes remain. Its width is now 0.562 m (6 mm wider), height/sole and seated wrapper drop
+remain. N retains 18 meshes / 28 surfaces and fixes its six inward eye surfaces in geometry;
+its production look is now one-sided. The historical woodcut experiment is not restyled.
+Both rigs keep the same sixteen joints, order, parents, rest transforms and inverse binds;
+N keeps every moving authored key. New topology has authored weights: rigid Hand on the
+student; hand/forearm blending over N's buried wrist. No independently animated fingers,
+new facial morphs, UVs, wrapper transforms, collision or dialogue portraits are introduced.
+
+Revision 2 keeps this structure but uses lighter hands, targeted eye/hair surfaces, N's
+shirt collar/welt/cuffs and the student's blended elbow overlap. The existing **1536 KiB**
+runtime hard cap is unchanged: student 1083.8 KiB / 46,384 triangles, N 1314.7 KiB / 56,950
+triangles (down from 1475.0 KiB / 64,604 and 1439.0 KiB / 62,340 in revision 1). These are
+asset measurements, not a target-GPU performance or artistic-quality claim.
+Regeneration/rig checks run in tooling CI; actual import/animation and visual acceptance
+remain separate. [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10 record the
+base/current geometry comparison; [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) records source
+hashes, modifications and the existing rights limits.
 
 ### 10.3 Textures are embedded, not extracted
 

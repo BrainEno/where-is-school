@@ -89,3 +89,13 @@ git add tests/<name>_test.gd tests/<name>_test.gd.uid
 
 [legacy_expect.txt](legacy_expect.txt) 只允许迁移边界已有的 `_expect` 定义。
 不要追加条目；按需迁移旧测试后删除对应行，检查会拒绝失效条目和新增的自定义断言器。
+
+## 加速时钟与固定帧等待（#207）
+
+`python3 tools/check_flaky_waits.py --list` 列出当前识别的位置。守卫按文件限制存量数量，
+不是整文件放行：只消除部分等待也要下调该文件的计数，全部消除则删除条目。
+测试仍应使用 `TestHarness.wait_until` 等待可观察的完成状态，而不是按机器能交付的帧数猜测。
+
+静态守卫只跟踪文本顺序中直接赋给 `Engine.time_scale` 的数字与约定的固定帧 `await`，
+包括多行参数和限定的帧信号；不会模拟调用顺序、计算常量或读懂断言。相同数量的替换、
+输入传播帧是否必要，仍需代码审查和运行时验证。不要把守卫通过当成没有不稳定测试。

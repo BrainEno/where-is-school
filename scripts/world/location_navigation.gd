@@ -23,6 +23,8 @@ extends NavigationRegion3D
 ## use layer 4 so Recast sees them and they still occlude sight; invisible thin treads use
 ## layer 5, which only the bake sees. The player rides one continuous ramp collider.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal navigation_baked(success: bool)
 
 ## Bake as soon as the location is in the tree. Turn off for a scene whose geometry is
@@ -157,6 +159,7 @@ func bake_region() -> bool:
 			"the region did not register with the navigation map (mesh has %d polygons)"
 			% _polygon_count
 		)
+		OfflineDiagnostics.note("world.navigation_failed")
 		push_error("LocationNavigation: %s" % _bake_error)
 	_bake_usec = Time.get_ticks_usec() - started
 	_report(String(root.name))
@@ -300,6 +303,7 @@ func _watch_synchronization() -> void:
 				worst[0] if not worst.is_empty() else -1.0, describe_sync(),
 			]
 		)
+		OfflineDiagnostics.note("world.navigation_unsynchronized")
 		push_warning("LocationNavigation: %s" % _sync_error)
 		return
 	_sync_checks_left -= 1

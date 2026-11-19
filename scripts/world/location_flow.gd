@@ -19,6 +19,8 @@ extends RefCounted
 ## itself is `SaveManager`'s business; this only says when the moment is right, by
 ## asking the host for a checkpoint (ADR 0005 §4).
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 ## The only exit whose prompt is rewritten by the story.
 const COMPLETION_DOOR_ID := &"classroom_door"
 const EXIT_GROUP := &"location_exit"
@@ -138,6 +140,8 @@ func _transition_to(exit: LocationExit) -> void:
 ##                                 player's body and roll the camera; both are put back
 ##                                 before the new room fades in.
 ##   "fade_out": float             seconds of fade to black after the departure (0.7).
+##   "arrival": Callable           optional presentation after placement and flag commit.
+##                                 Receives (player, fade) and owns fading from black.
 ##   "arrival_flags": Dictionary   flag -> value, written once the new room is loaded.
 ##   "arrival_conversation": StringName
 ##                                 plays instead of the room's own arrival line, whether
@@ -202,10 +206,16 @@ func transition_to(
 	if _hud != null:
 		_hud.clear_prompt()
 	update_exit_prompt()
-	# Story time, like every authored wait: a pause opened mid-transition holds this
-	# beat where it is (see `OpeningSequence.wait_seconds()`).
-	await _host.get_tree().create_timer(0.3, false).timeout
-	await _ui.fade.fade_from_black(0.9)
+
+	var arrival: Callable = options.get("arrival", Callable())
+	if arrival.is_valid():
+		await arrival.call(_player, _ui.fade)
+	else:
+		# Story time, like every authored wait: a pause opened mid-transition holds this
+		# beat where it is (see `OpeningSequence.wait_seconds()`).
+		await _host.get_tree().create_timer(0.3, false).timeout
+		await _ui.fade.fade_from_black(0.9)
+
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.
 	_host.end_beat()
@@ -229,6 +239,7 @@ func _recover_from_refusal(on_failure: Callable, label: String) -> void:
 	var limit := _host.get_tree().create_timer(FAILURE_RECOVERY_LIMIT, false)
 	while not bool(state["done"]):
 		if limit.time_left <= 0.0:
+			OfflineDiagnostics.note("world.recovery_timeout")
 			push_error(
 				(
 					"LocationFlow: the failure recovery for %s did not finish within %.1f s; "
@@ -265,7 +276,12 @@ func _stand_player_up() -> void:
 func _apply_arrival(location_id: StringName) -> void:
 	# Leaving the room is what starts the companion, not the dialogue choice: a player
 	# who stays at the desk and walks out ten minutes later gets the same Q.
-	if _companion != null and not _companion.is_joined():
+	# But if the arrival was from the curtain fall, Q was left behind in the classroom!
+	var fell_from_curtain := StoryFlags.has_curtain_landing(_game_state)
+	if fell_from_curtain:
+		if _companion != null:
+			_companion.leave()
+	elif _companion != null and not _companion.is_joined():
 		if location_id != &"classroom" and _has_flag(StoryFlags.CLASS_DISMISSED):
 			_companion.join()
 

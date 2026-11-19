@@ -40,12 +40,13 @@ const ROUTES: Dictionary = {
 			"requires": {},
 		},
 	],
-	# The biology classroom's back-window curtain. Before N lets the class go it is only
-	# looked at; afterwards it can be drawn aside (the conversation sets the provisional
-	# `curtain_fall_pending`, and the classroom stages the fall); once it hangs open, a
-	# visit is a look at what is still there. The room's StagedInteractable plays the
-	# conversation this route selects.
+	# Before dismissal it is only looked at. A steady first look leaves a new action
+	# available at the open edge; after a landing the ordinary interaction is a look.
 	&"classroom_curtain": [
+		{
+			"conversation": &"classroom_curtain_step",
+			"requires": {StoryFlags.CURTAIN_DRAWN: true, StoryFlags.CURTAIN_EDGE_HELD: true},
+		},
 		{
 			"conversation": &"classroom_curtain_drawn",
 			"requires": {StoryFlags.CURTAIN_DRAWN: true},

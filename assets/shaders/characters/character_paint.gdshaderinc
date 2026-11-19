@@ -35,6 +35,18 @@ uniform vec3 pigment_b : source_color = vec3(0.5);
 // How far the blocks pull the albedo towards pigment_a / pigment_b.
 uniform float pigment_mix : hint_range(0.0, 1.0) = 0.3;
 uniform float pigment_seed = 0.0;
+// Optional glazing between the stepped pigments. Zero preserves the existing charcoal
+// and oil looks; N and the seated student use it to avoid large, mask-like skin patches.
+uniform float pigment_blend : hint_range(0.0, 1.0) = 0.0;
+
+// Fine, matte surface work, in the same bind coordinates as the broad paint. This is
+// deliberately opt-in: 0 = none, 1 = knitted loops, 2 = woven twill, 3 = curved hair.
+// It adds no geometry, normals, specular or texture dependency to the untextured models.
+uniform int detail_kind : hint_range(0, 3) = 0;
+uniform float detail_strength : hint_range(0.0, 1.0) = 0.0;
+uniform float detail_scale : hint_range(10.0, 400.0) = 100.0;
+uniform vec3 detail_tint : source_color = vec3(0.5);
+uniform vec3 detail_origin = vec3(0.0, 1.6, 0.0);
 
 // Painted patches: an ellipsoid in rest/object space, optionally mirrored across x = 0.
 uniform vec3 patch_center = vec3(0.0);
@@ -48,6 +60,8 @@ uniform float patch2_strength : hint_range(0.0, 1.0) = 0.0;
 uniform bool patch_mirror_x = true;
 // The x the patches mirror across: the middle of the face (Q's sits 1.2 cm off x = 0).
 uniform float mirror_center_x = 0.0;
+// A glaze, not a hard cosmetic disc. Off for the previously authored paint patches.
+uniform float patch_feather : hint_range(0.0, 1.0) = 0.0;
 
 // Stroke marks (all off while `mark_strength` is 0).
 uniform float mark_strength : hint_range(0.0, 1.0) = 0.0;
@@ -103,8 +117,55 @@ float patch_mask(vec3 p, vec3 center, vec3 radius, float noise) {
 		q.x = mirror_center_x + abs(q.x - mirror_center_x);
 	}
 	float d = length((q - center) / radius);
-	// A hard-ish, uneven edge: a patch of paint, not an airbrushed blush.
-	return 1.0 - smoothstep(0.72, 0.9, d + (noise - 0.5) * 0.45);
+	// Keep the original broken edge at zero; feathering softens both its inner edge and
+	// noise, so the new small facial glazes do not turn into rings or bruises.
+	return 1.0 - smoothstep(mix(0.72, 0.22, patch_feather), 0.9,
+		d + (noise - 0.5) * mix(0.45, 0.12, patch_feather));
+}
+
+// A zero-mean thread. Fade to the underlying paint, not a screen-door/checker pattern,
+// before a cycle becomes sub-pixel. Derivatives are only used in fragment(), never light().
+float resolved_thread(float cycles) {
+	float visible = 1.0 - smoothstep(0.32, 0.9, fwidth(cycles));
+	return sin(cycles * 6.28318530718) * visible;
+}
+
+float cloth_threads(vec2 uv) {
+	vec2 q = uv * detail_scale;
+	if (detail_kind == 1) {
+		// V-shaped interlocking loops, rather than straight pinstripes on a cardigan.
+		float course = q.y * 0.72;
+		float loop = q.x + abs(fract(course) - 0.5) * 0.85;
+		return resolved_thread(loop) * 0.72 + resolved_thread(course) * 0.28;
+	}
+	// Restrained warp, weft and diagonal twill for the shirt and trousers.
+	return resolved_thread(q.x) * 0.4 + resolved_thread(q.y) * 0.25
+		+ resolved_thread(q.x * 0.5 + q.y * 0.5) * 0.35;
+}
+
+vec3 surface_detail(vec3 p, vec3 colour) {
+	float thread = 0.0;
+	if (detail_kind == 3) {
+		vec3 local = p - detail_origin;
+		float angle = atan(local.x, local.z + 0.00001);
+		// Integer turns meet at the back of the head; the strands curve around the bob
+		// instead of painting the same parallel hatch over its front and sides.
+		float turns = max(floor(detail_scale * 0.1 + 0.5), 1.0);
+		float flow = angle * turns / 6.28318530718
+			+ sin(local.y * 21.0 + angle * 2.0) * 0.12;
+		thread = resolved_thread(flow) * 0.75 + resolved_thread(flow * 3.0) * 0.25;
+	} else {
+		// Rest-space derivatives recover the unposed surface orientation. A posed/view
+		// normal would rotate the projection when an arm moves, making the cloth swim.
+		vec3 n = normalize(cross(dFdx(p), dFdy(p)) + vec3(0.0000000001));
+		vec3 weight = pow(abs(n), vec3(4.0));
+		weight /= max(weight.x + weight.y + weight.z, 0.0001);
+		thread = cloth_threads(p.zy) * weight.x + cloth_threads(p.xz) * weight.y
+			+ cloth_threads(p.xy) * weight.z;
+	}
+	// Diffuse-only highlights: no shiny skin, metal yarn or moving hair highlight.
+	colour *= 1.0 + thread * detail_strength * 0.25;
+	return mix(colour, detail_tint, max(thread, 0.0) * detail_strength * 0.55);
 }
 
 // 0..1: how much stroke covers this fragment (already faded with distance to the
@@ -135,6 +196,7 @@ void fragment() {
 	float steps = max(pigment_steps, 2.0);
 	float block = floor(n * steps) / (steps - 1.0);
 	block = clamp(block, 0.0, 1.0);
+	block = mix(block, smoothstep(0.18, 0.82, n), pigment_blend);
 	vec3 drift = mix(pigment_a, pigment_b, block);
 	vec3 colour = mix(albedo, drift, pigment_mix);
 	colour *= 1.0 + (block - 0.5) * 2.0 * pigment_value;
@@ -142,6 +204,9 @@ void fragment() {
 	colour = mix(colour, patch2_color, patch_mask(paint_position, patch2_center, patch2_radius, n) * patch2_strength);
 	if (mark_strength > 0.0) {
 		colour = mix(colour, mark_color, mark_mask(paint_position, abs(dot(NORMAL, VIEW))) * mark_strength);
+	}
+	if (detail_strength > 0.0 && detail_kind != 0) {
+		colour = surface_detail(paint_position, colour);
 	}
 	ALBEDO = clamp(colour, vec3(0.0), vec3(1.0));
 	ROUGHNESS = 1.0;

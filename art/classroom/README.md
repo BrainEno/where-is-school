@@ -100,8 +100,8 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Board wiped, then not quite; chalk tray with one broken stick and a clip | `Board/Face` texture, `ChalkBrokenEnd`, `Clip`, chalk dust on the tray |
 | Two panes, one cracked and taped; wet concrete, low wall, bins; late-afternoon light | `WindowGlass0` (crack + tape), `window_view.png` |
 | (curtain lines) The front window is ordinary, washing pegged out on a line; the back window has its curtain drawn | `window_view.png`, window 0's third only (s 3.0–4.5 m) carries the washing; `Anomalies/BackCurtain` (`WindowCurtain`, procedural, `curtain_blackout`) hangs from its track 0.18 m off the west wall, 3.3 m wide, from 3.14 m down to the floor, over the opening at z 0.95–3.45 |
-| (curtain lines) Behind the curtain: no glass, the wall's own thickness, then nothing | A real hole through `WallWest`, floor to wall top (y 0–3.2; the sill and header were removed in the art migration, so `paint_classroom_textures.py`'s `WEST_VOID_OPENING` only still gives its z range): the shell and paint stop at `MeshInstance3D` (north shell)/`SouthShell` and `Paint`/`PaintSouth`; there is no glass, frame, view or backdrop. Once the curtain is drawn, `Anomalies/VoidOpening/BlankSheet` fills the cut with the experiment's blank sheet (`void_sheet.tres`, unlit paper), and `Anomalies/PaperZone` (`scripts/environment/paper_zone.gd`, `paper_zone.tres`) turns the room within 2.6 m of the cut into a pencil drawing on an answer sheet, as an overlay that is removed again when the curtain is reset; the people (`Actors`) are never covered. The wall's collision stays whole |
-| The second door never opens, unless special means are used | `WallEast/RearDoor` (`classroom_door.tscn`, white leaf), a plain inspection (`classroom_rear_door`); nothing opens and no staircase is placed in this room |
+| (curtain lines) Behind the blue curtain: the room ends, without a view or a window | The west wall, trim and skirting stop at the cut (y 0–3.2, z 0.95–3.45), exposing the near-black world background; there is no backdrop mesh or paper effect. The two solid wall sections match the shells. A third shape, only for the closed curtain, unregisters when it opens. `VoidStep` is a non-solid trigger past the lip that uses the same staged fall as choosing to step out. The front glass has no cloth in front of it. |
+| The second door never opens, unless special means are used | `WallEast/RearDoor` (`classroom_rear_door.tscn`, white variant of `classroom_door.tscn`), a plain inspection (`classroom_rear_door`); nothing opens and no staircase is placed in this room |
 | Set square, forearm length, pale varnish, split corner taped with browned tape, taped corner faces the room | `set_square.tscn` lies flat (0.55 × 0.42 m; the prism's size axes were swapped), `TapeRepair` in browned tape, ink ticks. It lies on the lectern's sloped top (`Props/SetSquare`, tilted with the reading surface, resting on the register), since the low teacher's desk was taken out |
 | Own desk: scratched-out name, half-peeled sticker, groove along the front edge | `Furniture/DeskB2/DeskMarks` decal |
 | Lectern (the `classroom_teacher_desk` inspection): much taller than the desks, a register in plastic, lesson notes, the set square | `Stage/Lectern` with `Body/Register`, `Body/LessonPapers` and the set square on top. The low teacher's desk (`teacher_desk.tscn`) is no longer placed in the classroom; the wrapper stays in the project |
@@ -133,17 +133,18 @@ for owner art review or target-GPU acceptance.
 
 ## Geometry and gameplay contract
 
-The classroom shell is 14 × 10 m with a 3.2 m wall height. Every wall keeps one whole
-collision box; openings are cut only in what is drawn. The north/blackboard wall is one
-14 m wall. The east wall has two 1.2 × 2.2 m door openings centred at z −3.55 (front,
+The classroom shell is 14 × 10 m with a 3.2 m wall height. The north/blackboard wall is one
+14 m wall. The west wall's solid shapes and visual shell both stop at the cut; the east wall
+keeps its collision. The east wall has two 1.2 × 2.2 m door openings centred at z −3.55 (front,
 `WallEast/FrontDoor`, grey) and z +3.55 (rear, `WallEast/RearDoor`, white), both the
 owner's door model dressed in classroom materials, with plaster behind them; its shell and
 paint are cut into the long pier, two end piers and two lintels, each sampling its own
 slice of `wall_east.png`. `classroom_door` retains its original ID, blocked inspection and
-corridor destination, and now stands in front of the front door. The west wall is cut the
-same way round the back window's hole. Two marker nodes, `WindowCurtainMount0` and
-`WindowCurtainMount1`, mark the curtain attachment points (the second is the blackout
-curtain's track). The projection screen (`WallNorth/ProjectorScreen`) is rolled up when
+corridor destination, and stands at the front door. The corridor uses the same grey and
+white door variants at the matching thresholds. Only the front door changes location;
+the white rear door is inspection-only on both sides. The two original curtain mount points
+are kept as layout markers, but only `BackCurtain` is dressed. The projection screen
+(`WallNorth/ProjectorScreen`) is rolled up when
 the room loads; `Interactables/ProjectorScreenPull` rolls it down and up again, and
 nothing about it is saved. The schoolbag hangs on the back of the protagonist's chair
 (`Furniture/DeskB2/Chair/Schoolbag`); the player wakes in that chair (`PlayerStart`), and

@@ -51,13 +51,29 @@ re-export from Blender can go through the same pass:
    skin 0.8, eyes, lips and teeth 0.35) -- and the shoes from patent to leather: see
    `ROUGHNESS`. Metallic stays 0 everywhere and no base colour changes.
 
-Nothing is rotated, moved or scaled. The model faces -Z, which is what
+7. **Owner-authorised model refinement (geometry revision 1).** The immutable original
+   stays intact. `character_geometry.py` replaces the broken rod-like hands with tapered
+   palms and five unequal, relaxed digits, welded into a single closed surface per hand.
+   New wrist weights blend the hand with its existing forearm (the original hand weights
+   are NOT copied). It locally softens the supplied bob's corners and offsets its hem,
+   adds rolled cuffs, makes millimetric jaw/cheek asymmetry edits, and reverses the six
+   inward eye surfaces' winding and normals, removing production two-sided culling.
+   It does not add bones or claim articulated fingers. Joint names/rest transforms,
+   inverse binds, the other skin weights and the four authored loops are kept.
+   Steps 1-6 describe the original preparation, not an unchanged-geometry claim for this
+   new revision. The current regeneration and deformation checks are in the PR.
+8. **Geometry revision 2.** Selectively replace the floating fringe tufts and loose
+   neck rings, leaving the source bob shell, torso and limb weights. Sculpt eye/lip
+   planes together; build sewn collar leaves, a knit welt and open cuff rims. The
+   smaller welded hand mesh has a bevel, a knuckle arch and digit-specific relaxed curl.
+
+No node is rotated, moved or scaled. The model faces -Z, which is what
 `docs/ASSET_PIPELINE.md` section 1 asks a new export to do, and stands with its soles on the
 origin.
 
 Requires numpy and meshoptimizer 0.2.30a0 (which bundles meshoptimizer 0.22); both are
-build-time only, and neither the game nor CI needs them: CI checks the committed output
-(`tools/model_library.py --check`, the Godot import tests), not this script. The output is
+build-time only; the game does not need them. Tooling CI installs the pinned requirements
+and checks this script's deterministic output, alongside the model-library/import tests. The output is
 deterministic for that version -- two runs write the same bytes, which `--check` relies on.
 The Python package has no wheel and builds from source, so it needs the CPython headers
 (`Python.h`); where the interpreter ships without them, point `CFLAGS` and `CPPFLAGS` at a
@@ -77,6 +93,8 @@ import struct
 import sys
 
 import numpy as np
+
+import character_geometry as geometry
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = "art/character_models/teacher-n/teacher-n_source.glb"
@@ -306,6 +324,72 @@ def _moves(values: np.ndarray, rest: list[float], path: str) -> bool:
     return bool(np.any(np.abs(keys - reference) > CONSTANT_EPSILON))
 
 
+def _refine_surface(name: str, material: str, positions: np.ndarray, normals: np.ndarray,
+                    joints: np.ndarray, weights: np.ndarray, indices: np.ndarray,
+                    binds: np.ndarray) -> tuple:
+    """The owner-authorised geometry revision; source rig/actions remain immutable."""
+    shaped = None
+    if name == "ST_Hands":
+        parts, js, ws = [], [], []
+        for right, joint in [(False, 6), (True, 9)]:
+            part = geometry.hand_geometry(binds[joint], True, right)
+            j, w = geometry.skin_arrays(len(part.positions), joint)
+            # New topology needs new weights: blend the buried wrist into the existing
+            # forearm, reaching a rigid hand before the metacarpus. Not copied weights.
+            wrist_y = (np.c_[part.positions, np.ones(len(part.positions))] @ binds[joint].T)[:, 1]
+            amount = np.clip((wrist_y + .007) / .025, 0, 1)
+            j[:, 1], w[:, 0], w[:, 1] = (8 if right else 5), amount, 1 - amount
+            parts.append(part)
+            js.append(j)
+            ws.append(w)
+        shaped = geometry.join(*parts)
+        joints, weights = np.concatenate(js), np.concatenate(ws)
+    elif name == "ST_Hair":
+        shaped, kept = geometry.teacher_bob(positions, indices.reshape(-1, 3))
+        joints, weights = joints[kept], weights[kept]
+    elif name in ("ST_Eye_L", "ST_Eye_R"):
+        # The original three surfaces in each eye have inward winding/split normals.
+        p, n = geometry.deform(positions, -normals, geometry.teacher_face)
+        return p, n, joints, weights, indices.reshape(-1, 3)[:, [0, 2, 1]].ravel()
+    elif name == "ST_Head_Skin" or name.startswith("ST_Eyebrow_"):
+        p, n = geometry.deform(positions, normals, geometry.teacher_face)
+        return p, n, joints, weights, indices
+    elif name in ("ST_Blouse", "ST_Cardigan"):
+        # The two original collar rings never meet the body: replace just their
+        # triangles. Keep the torso/sleeve vertices' original (blended) skin weights.
+        rings = positions[:, 1] > 1.363
+        faces = indices.reshape(-1, 3)
+        if not rings.any() or np.any(rings[faces].any(1) != rings[faces].all(1)):
+            raise PrepareError(f"{name}: source neck ring no longer a separate component")
+        kept, remap = np.unique(faces[~rings[faces].all(1)], return_inverse=True)
+        knit = name == "ST_Cardigan"
+        body = geometry.Geometry(geometry.teacher_tailoring(positions[kept], knit), remap.reshape(-1, 3))
+        additions, js, ws = [], [], []
+        for right, wrist in [(False, 6), (True, 9)]:
+            detail = geometry.teacher_cuff(binds[wrist], right) if knit else geometry.teacher_collar(1 if right else -1)
+            j, w = geometry.skin_arrays(len(detail.positions), (8 if right else 5) if knit else 1)
+            if not knit:
+                join_neck = .56 * geometry.smoothstep(1.347, 1.374, detail.positions[:, 1])
+                j[:, 1], w[:, 0], w[:, 1] = 2, 1 - join_neck, join_neck
+            additions.append(detail)
+            js.append(j)
+            ws.append(w)
+        if knit:
+            welt = geometry.teacher_welt(body)
+            j, w = geometry.skin_arrays(len(welt.positions), 1)
+            additions.append(welt)
+            js.append(j)
+            ws.append(w)
+        shaped = geometry.join(body, *additions)
+        joints = np.r_[joints[kept], np.concatenate(js)]
+        weights = np.r_[weights[kept], np.concatenate(ws)]
+    elif name.startswith("ST_Blouse_Button_"):
+        shaped = geometry.Geometry(geometry.teacher_tailoring(positions, False), indices.reshape(-1, 3))
+    if shaped is not None:
+        return shaped.positions, geometry.normals(shaped), joints, weights, shaped.triangles.ravel()
+    return positions, normals, joints, weights, indices
+
+
 def prepare(source: bytes) -> tuple[bytes, dict]:
     if len(source) != SOURCE_BYTES or hashlib.sha256(source).hexdigest() != SOURCE_SHA256:
         raise PrepareError(
@@ -328,6 +412,8 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
 
     out = Builder()
     bone_count = len(document["skins"][0]["joints"])
+    binds = read_accessor(document, binary, document["skins"][0]["inverseBindMatrices"])
+    binds = binds.reshape(-1, 4, 4).transpose(0, 2, 1)
 
     # Meshes, in their original order, minus the floor.
     meshes = []
@@ -363,6 +449,8 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
                     "triangles": [before[1], len(indices) // 3],
                     "error_m": round(reached, 6),
                 }
+            positions, normals, joints, weights, indices = _refine_surface(
+                mesh["name"], material_name, positions, normals, joints, weights, indices, binds)
             index_type = 5123 if len(positions) < 65536 else 5125
             primitives.append({
                 "attributes": {
@@ -434,6 +522,8 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
         unknown = set(extensions) - set(UNSUPPORTED_MATERIAL_EXTENSIONS)
         if unknown:
             raise PrepareError("%s uses %s" % (material["name"], sorted(unknown)))
+        if material["name"] in ("M_ST_Sclera", "M_ST_Iris", "M_ST_Pupil"):
+            copy["doubleSided"] = False
         pbr = copy.setdefault("pbrMetallicRoughness", {})
         if material["name"] in ROUGHNESS:
             pbr["roughnessFactor"] = ROUGHNESS[material["name"]]
@@ -447,7 +537,7 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 2},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],

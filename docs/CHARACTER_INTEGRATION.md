@@ -15,9 +15,12 @@ records:
 It extends [CHARACTER_ART.md](CHARACTER_ART.md), whose option C palettes are now the *base*
 the shipped looks are built on. It does not replace it.
 
-**Status.** Proposal, not owner-approved. Nothing here changes a character's model, rig,
-animation, story role, dialogue or portrait. The owner decisions still open are listed at
-the end.
+**Status.** Implemented proposals, not owner visual approval. Sections 1–8 record earlier
+material-only work and its historical boundaries. The owner subsequently requested
+actual model refinement: §9 records the first geometry revision and the real GLB capture
+procedure; **§10 records the current N/seated student models**. Story, dialogue and
+independent 2D portraits are unchanged.
+Do not read a historical capture or a passing structural check as approval of the new art.
 
 Model identity: 平台未显示，无法核实.
 
@@ -225,4 +228,230 @@ hand-authored parameters, not generated assets, so `ASSET_PROVENANCE.md` needs n
    a helmet-like bob mesh. Its stripes are now hidden by one hair tone. A remodel, if
    wanted, is a separate task.
 5. **Hands.** Q's mitten-like hands and N's simplified hands are unchanged.
-6. The seated classroom student is still out of scope.
+6. The seated classroom student was out of scope in that integration. The later requested
+   surface refinement below includes it; its model and seated placement remain unchanged.
+
+## 8. N and the seated student's surface refinement (2026-11-18)
+
+**Scope/status.** Implemented material proposal against base `42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6`,
+not owner visual approval. This is not the retired issue #188 overlay experiment. The two
+production looks already use the painted pipeline. Their roughness is visual coarseness,
+not a request for lower PBR roughness or glossy skin: coarse pigment/contour, generic hair
+hatching and little separation between fabric types. N has no UVs; the student's main
+clothing surfaces also have none. Upscaling a bitmap cannot add detail to them.
+
+### Implementation and boundaries
+
+- The existing `character_paint.gdshaderinc` gains opt-in `pigment_blend` (continuous glaze
+  between pigment steps), `patch_feather`, and `detail_kind/strength/scale/tint/origin`.
+  Kind 1 is fine V-shaped knit, 2 is woven twill, 3 is curved angular hair flow. Detail
+  changes diffuse colour only: roughness stays 1, metallic/specular stay 0, with no extra
+  normal, texture sample, geometry, pass or material slot.
+- Clothing uses triplanar projections of the existing rest coordinates. Projection weights
+  come from rest-position derivatives, not a posed/view normal; moving a shoulder must not
+  rotate the weave on the garment. Thread contrast fades with `fwidth` before it becomes
+  sub-pixel. This is an anti-aliasing measure, not a measured FPS improvement.
+- `refined_teacher()` keeps N's sage cardigan, cream blouse and dark trousers: quieter
+  broad chalk, finer knit/twill, curved brown hair strands, lower-contrast facial pigment
+  and feathered glazes. `refined_student()` retains plum/cream/navy, quiets the harsh
+  light/shadow skin inserts and under-eyes, and assigns knit/twill/hair by material role.
+  Their outline is 5.5 mm with less wobble; fingers, facial inserts and small garment
+  pieces still have no individual hull.
+- Defaults are off. Only those two shipped looks opt in, before `room_keyed()`; protagonist,
+  Q and the retained woodcut/paper experiments are not restyled. Regenerate with
+  `python3 art/characters/build_character_looks.py`; `--check` detects drift. Do not edit
+  the generated `.tres` files by hand.
+- No GLB, normal, skin weight, skeleton, animation, blend shape, wrapper transform,
+  collision, interaction, dialogue or portrait changes. N's six inward-facing eye surfaces
+  still use the existing two-sided shader; this does not repair the source model or add
+  facial expressions. The student's modelled angular features remain model geometry.
+
+**Surface provenance.** The updated existing `.tres` resources are deterministic output
+of the in-repo Python palette table; the shader is first-party code authored with Arena
+coding assistance. No downloaded/traced/image-generated artwork or new runtime asset is
+added. The model rights remain exactly those in `ASSET_PROVENANCE.md`; these parameter
+changes do not establish rights in any other model or portrait. That shared ledger is
+left untouched to avoid overlap with the concurrent environment-art PR #245.
+
+### Reproducible comparison and regression coverage
+
+`capture_character_integration.gd` now includes the real `Actors/SeatedStudent` without
+standing it up: face/front-three-quarter, cloth, its own desk/chair, and gameplay-distance
+frames. N gains a cloth close-up. `baseline` is explicitly different from the historical
+`before`: it loads **n.tres and student.tres from this change's base** using
+`--baseline-dir`; omitting the directory or a resource fails rather than substituting an
+older/raw look. `--freeze-pose` fixes the bound idle/sit pose and blink for material A/Bs.
+Do not use it to claim motion validation.
+
+```sh
+baseline="$(mktemp -d)"
+base=42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+for group in n student; do
+  xvfb-run -a --server-args="-screen 0 1600x900x24" \
+    godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+    --script res://tests/capture_character_integration.gd -- \
+    --group="$group" --variants=baseline,after --baseline-dir="$baseline" --freeze-pose
+done
+```
+
+At the material-only revision, the capture workflow's `refinement-n` and
+`refinement-student` jobs extracted these looks from the **actual PR base SHA**, recording
+that SHA and publishing two-column sheets. The current geometry revision uses §9's two
+real engine sessions and swaps the actual GLBs as well; this old command alone does not. On manual dispatch, the baseline is the dispatched
+revision itself; it is not evidence of a historical improvement. All columns share scene,
+light, camera and pose; the base uses the current shader with its new options disabled.
+
+`tests/imported_assets_test.gd` additionally pins the fine-detail material roles and
+restrained strengths, keeps it off skin/eyes and all protagonist/Q parts, and checks their
+glaze options remain off. Its existing geometry/rest-coordinate, reversible-treatment,
+seated-wrapper and six two-sided-eye contracts remain in force. Exact run results and
+remaining environment warnings belong in the PR, not an assumed visual pass here.
+
+**Owner checklist:** compare face and hair in sun/shade; inspect both fabric close-ups;
+check N at the lectern and the student in the actual chair; move/zoom the gameplay camera
+for shimmer and silhouette readability; run the normal (unfrozen) idle, walk and sit paths
+for swimming detail. Forward+ on the target GPU and Windows performance still need target
+hardware verification; software/OpenGL captures are not that verification.
+
+## 9. Authored geometry refinement: N and the seated student (2026-11-18)
+
+**Brief/status.** The owner now explicitly permits model edits (corners and simplified
+hands) and asks for the selective detail and individuality of *Disco Elysium*'s people.
+That is a quality reference, not permission to copy its assets and not a claim of equivalent
+finished quality. Task base: `7379ff7239bee6254ab3242901be9705488e282d`. This pass focuses on
+the two previously refined NPCs. The player and Q were inspected, but their GLBs, portraits,
+looks and motion are unchanged; the player's unresolved source rights are not cleared here.
+
+### Geometry and identity
+
+- **Both hands:** four unequal long fingers and a thumb are modelled into one closed,
+  connected manifold per hand (not capped tubes stuck to a palm). Their relaxed curl,
+  tapered metacarpus, thumb web and different lengths survive a silhouette cut above the
+  knuckles. Existing Hand bones are used; this is not a finger-animation rig.
+- **N:** preserves her narrow face, supplied jaw-length bob, sage/cream/slate costume and
+  slightly uncertain bearing, not a new authoritative silhouette. The bob receives local
+  corner softening and a millimetric asymmetric hem, not a generic replacement helmet.
+  Cheek/jaw adjustments are millimetric, rolled cuffs cover the wrist transition. New
+  hand vertices have **new** hand/forearm weights over the buried wrist, not the original
+  hand weights. Six eye surfaces' winding/normals are repaired in the GLB; the production
+  `refined_teacher()` removes the two-sided workaround. The old experiment is retained.
+- **Student:** a broader jaw/cheek/temple and continuous nose distinguish it from N and
+  the tall, inward player's model. Smaller almond eye patches follow the actual socket,
+  rather than the old protruding globes/cheek pads. The short swept crop, shoulder/sleeve
+  lofts, solid curved collar/lapels/pocket and selective source-form rounding replace
+  blockout corners without changing its plum/cream/navy identity or making it a player clone.
+  The original rigid Hand binding remains. Fourteen obsolete mesh nodes are removed:
+  separate fingers/thumbs, cheek/under-eye pads and the two detached nose components.
+
+`prepare_teacher_n.py` remains N's owner. `prepare_classroom_student.py` is the missing
+student source -> runtime owner; the old 525,912-byte runtime is now its hash-pinned
+`art/character_models/classroom_student/student_source.glb`. Shared authored geometry is
+`tools/character_geometry.py`; NumPy and the existing teacher simplifier are build-only.
+No Blender generation source is invented for the old student. Provenance, original/current
+hashes and rights limits are in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md).
+
+Both sixteen-joint hierarchies, joint order, node rest transforms and inverse binds stay
+exact. N's four loops and every moving key remain exact; student still has no embedded
+animation. No wrapper offset/yaw, collision, classroom placement, runtime controller,
+material/rest-coordinate owner, story or portrait changes. The student is 6 mm wider but
+keeps its height/sole. Runtime source budgets stay **1536 KiB**, not relaxed: N 1439.0 KiB,
+student 1475.0 KiB. The student grows from 12,388 to 64,604 triangles; N 57,460 to 62,340.
+That cost is disclosed, not described as a performance win or proof of artistic quality.
+
+### Regenerate and check
+
+```sh
+python3 -m pip install -r tools/requirements.txt
+python3 tools/prepare_teacher_n.py --check
+python3 tools/prepare_classroom_student.py --check
+python3 tests/character_geometry_test.py
+python3 art/characters/build_character_looks.py --check
+python3 tools/model_library.py --check
+```
+
+The fifteen geometry tests verify deterministic bytes/source pins, a closed connected
+five-digit surface, valid normals/indices/weights, rig/rest/inverse-bind equality, retained
+moving N actions, local rather than wholesale N hair edits, eye relief/winding and the
+unchanged hard size/sole contracts. `imported_assets_test.gd` deliberately records 64
+student surfaces and **zero production two-sided eye surfaces**, without loosening its
+rest-coordinate/painted-skinning/seated-wrapper checks. This structural change is reviewed
+in the regenerated manifest; it does not excuse a deformation or visual regression.
+
+### Actual geometry comparison, not just a new look on the new mesh
+
+`--variants=baseline,after` alone still swaps **looks only**. The two workflow refinement
+jobs now use `tools/capture_character_geometry.sh`: exact PR head code/scenes/camera/shader
+in both legs, current GLBs/looks in one real Godot process, actual base GLBs/looks in the
+other. The base GLBs are re-imported between processes; current model bytes are restored
+on exit. A separate manifest records base/code-head SHA, model/look SHA-256, engine and
+backend. Only genuine rendered panels are joined into labelled base-left/head-right sheets;
+no offline renderer or 3D-derived portrait is used. Stills hold the same idle/sit phase;
+N's walk still does not establish moving-mesh quality.
+
+```sh
+baseline="$(mktemp -d)"
+base=7379ff7239bee6254ab3242901be9705488e282d
+git show "$base:assets/models/teacher-n/teacher-n.glb" > "$baseline/n.glb"
+git show "$base:assets/models/protagonist/protagonist.glb" > "$baseline/student.glb"
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+printf '%s\n' "$base" > "$baseline/base-sha.txt"
+# Run in a disposable evidence checkout with Godot on PATH and Xvfb available.
+bash tools/capture_character_geometry.sh n 'body_sun,face,face_three_quarter,hands,cloth,lectern,walk' "$baseline"
+bash tools/capture_character_geometry.sh student '' "$baseline"
+```
+
+The evidence workflow checks out the exact PR head before installing the repo-pinned
+Godot version. `workflow_dispatch` still defaults its base to the dispatched revision;
+identical base/head assets are not evidence of historical improvement. Full run results,
+failed attempts, diagnostic counts/leaks and final-head links belong in the PR, not a
+presumed pass here. Offline inspection images are explicitly not Godot evidence.
+
+**Acceptance still separate:** Agent static frame review; unfrozen idle/walk/turn/sit
+checks for wrist/shoulder seams, finger silhouette, collar/desk/chair penetration and
+swimming paint; owner art approval; Windows production Forward+ GPU quality/performance.
+OpenGL software capture and exact rig inputs do not satisfy those last two gates.
+
+## 10. Second geometry pass: a tailor's silhouette and a quieter seated face
+
+**Review base:** `350efd2a5594bc6bd37efbf237cd3f704cf82610` (#251, geometry revision 1).
+The first revision's real classroom captures still showed fine strips crossing N's
+forehead, a collar floating as a ring, both hands reading as similarly straight prongs,
+and very wide student eye whites. The student also blended into the classroom shade at
+normal camera distance. This is an authored mesh pass, not a filter on those captures.
+*Disco Elysium* is a reference for selective detail and distinguishable ordinary people;
+no model, texture, pose keys, or portrait is copied or traced from it.
+
+- **Substitute N:** the supplied jaw-length bob shell and rear locks remain. Remove the
+  isolated forehead tufts and tuck one temple; preserve the crown. Sculpt the narrow
+  cheek, bridge, eyelid and lip planes together, transforming the existing split normals
+  with the same deformation. Two turned blouse leaves replace the disconnected neck
+  rings. A fitted slanted knit welt, shaped torso and hollow turned cuffs give her sage
+  cardigan a readable cut over the cream shirt. Small, slender hand pads arc into a
+  shallow curl; the existing hand/forearm blend still holds the wrists in the sleeves.
+- **Seated student:** a sloped, close crop carries a distinct part, above a broader chin,
+  cheek shelf and smaller uneven apertures. Iris/pupil/glint follow the same clipped
+  lens as the sclera; the mouth, brows and ears no longer repeat round blockout forms.
+  The crooked plum knit lapels, angled pocket and diagonal lap fold are physical geometry.
+  Upper and lower sleeve ends share the same smoothly blended elbow weight field;
+  short pads curl further than N's using the existing rigid Hand bones.
+- **Classroom paint:** refine only the two production look resources through their
+  existing generator; quieter sclera/lip values, broad hair accents, and an easier-to-read
+  plum in shade. No global lighting, shader, character wrapper, dialogue or portrait edit.
+
+| Runtime export | Revision 1 triangles / KiB | Revision 2 triangles / KiB |
+| --- | ---: | ---: |
+| `teacher-n.glb` | 62,340 / 1439.0 | 56,950 / 1314.7 |
+| `protagonist.glb` (seated student) | 64,604 / 1475.0 | 46,384 / 1083.8 |
+
+Immutable source GLBs, mesh/surface/material keys, two 16-joint bind data sets, the
+seated drop, the player and Q, and N's four actions / eight moving channels stay unchanged.
+Each hand is still one closed five-digit surface; the new caps and bevels are baked into
+the asset, not applied at runtime. No finger articulation, new facial morphs or GPU
+performance claim. See the existing commands in §9 (use the §10 base for this comparison).
+The annotation previews now fit whole chunks so a dense set cannot silently drop its
+last seated panel. The artifact retains unscaled PNGs. Structural checks, fixed-phase
+OpenGL renders, continuous motion on the target hardware and owner art judgment are
+separate; the PR records which were actually run.

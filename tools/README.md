@@ -40,6 +40,34 @@ python3 -m venv .venv
 任意操作系统上的产物相同；下述实际字节检查才决定是否可以重建。下载依赖仅发生在
 开发/CI 安装阶段。`.venv/`、构建缓存和 Python 包不进 Git，`tools/*` 已被游戏导出预设排除。
 
+## GDScript 增量质量门禁（#229）
+
+```sh
+# 新文件先 git add；基线应为 PR 目标分支上要比较的提交。
+.venv/bin/python tools/check_gdscript_quality.py --base origin/main
+# 只盘点历史问题，不把存量问题当作本次 PR 的新回归。
+.venv/bin/python tools/check_gdscript_quality.py --inventory
+.venv/bin/python tests/gdscript_quality_test.py
+.venv/bin/python tests/gdscript_quality_ci_test.py
+```
+
+`gdlintrc` 复用已锁定的 gdtoolkit：默认命名约定、同文件的重复字面路径 `load/preload`、
+600 个物理行上限，不要求全库重排格式。检查 `scripts/`、`scenes/`、`addons/` 下受 Git
+跟踪的 `.gd`，不把长的测试夹具算入产品脚本预算。`gdparse` 仍独立解析测试和运行时脚本。
+
+- 用目标提交的同文件诊断作存量上限。移动行、减少相同问题不会失败，换一个不规范名字
+  或增加相同问题的次数会失败。Git 识别出的重命名继承存量，复制和从范围外移入则不继承。
+- 新脚本和原本未超限的脚本不得超过 600 行；已有超限文件增长时打印旧、新行数与告警，
+  不因存量阻断并行维护。拆到 600 行以内的文件，后续再跨过上限就会失败；不用维护一张
+  按文件名豁免的大表。代码内的 `gdlint` 忽略注释不影响这一比较；规则调整须显式评审。
+- Test tooling 在 PR 用目标提交，在 `main` push 用 push 前提交；浅克隆只取缺失基线。
+  基线缺失或无效是错误，不会用当前提交和自身比较。手动 dispatch 明确只输出盘点。
+  测试用本地浅克隆实际执行工作流步骤，分别证明新增违规失败、合法变更通过、缺基线拒绝。
+
+相邻守卫继续由 Godot CI 调用：`check_ui_literals.py` 按文件和完整 RGBA 约束每一次沿用的
+界面字面量；跨行构造、同一行的额外色值和改写旧色都会被识别。白/黑过渡端点与命名色不拦截，
+不更改任何现有画面；`check_ui_palette.py`、引擎版本与用例注册检查保持原职责。
+
 ## 无写入的工具检查
 
 以下循环包含 `tools/*.py` 中提供独立 `--check` 模式的脚本，不会重写生产资产：

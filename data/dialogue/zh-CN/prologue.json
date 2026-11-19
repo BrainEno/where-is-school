@@ -1488,7 +1488,7 @@
         {
           "id": "cc_2",
           "speaker": "protagonist",
-          "text": "布的边上一点光都没透进来。今天这么亮，本来应该透进来的。",
+          "text": "布边一点光都不透。另一扇窗已经让落日照成金色。",
           "choices": [
             {
               "id": "edges",
@@ -1527,14 +1527,14 @@
         {
           "id": "cc_edges_ok",
           "speaker": "voice_orientation",
-          "text": "它垂得笔直。后面的窗是开着的，窗框边上看得见缝，可布一动不动。开着的窗总会有风进来。现在什么也没进来。",
+          "text": "它垂得笔直。这一侧应该有风，可下摆一下也没动过。",
           "effects": [
             {
               "type": "record",
               "entry_id": "curtain_hangs_still",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "后窗开着，窗帘却一动不动地垂在前面。"
+              "text": "开口前的蓝窗帘一动不动。"
             }
           ],
           "next": "cc_decide"
@@ -1542,7 +1542,7 @@
         {
           "id": "cc_edges_bad",
           "speaker": "voice_orientation",
-          "text": "一副窗帘。一边赭黄，一边蓝，被太阳晒到的地方褪了色。",
+          "text": "只是很厚的蓝布。一道道折在一起。",
           "next": "cc_decide"
         },
         {
@@ -1565,7 +1565,7 @@
         {
           "id": "cc_draw",
           "speaker": "protagonist",
-          "text": "你抓住一把布，顺着窗帘杆往旁边拉。",
+          "text": "你伸手去拉那块布。",
           "effects": [
             {
               "type": "set_flag",
@@ -1598,26 +1598,33 @@
         {
           "id": "cv_1",
           "speaker": "protagonist",
-          "text": "窗帘后面没有空地，也没有玻璃。窗台只有墙那么厚，墙外面什么都没有：不是黑，也不是天。没有任何能被照亮的东西。",
+          "text": "墙不见了，地板到这里就断了。没有玻璃，也看不见外面。落日照不到这里。",
           "effects": [
             {
               "type": "record",
               "entry_id": "saw_void_window",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "生物教室后窗的窗帘后面，根本没有外面。"
+              "text": "蓝帘后面是断开的墙，再往外什么也看不见。"
             }
           ]
         },
         {
-          "id": "cv_2",
-          "speaker": "protagonist",
-          "text": "并不吓人。只是楼到这里就没有了。"
+          "id": "cv_balance_check",
+          "speaker": "voice_orientation",
+          "text": "脚尖下面就是尽头。你的重心在哪儿？",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "cv_hold",
+            "failure": null
+          }
         },
         {
-          "id": "cv_3",
-          "speaker": "protagonist",
-          "text": "你探出身去，想看看它往下有多深。",
+          "id": "cv_hold",
+          "speaker": "voice_orientation",
+          "text": "后脚。对，把重量放回后脚，退一步。",
           "next": null
         }
       ]
@@ -1630,12 +1637,55 @@
         {
           "id": "ccd_1",
           "speaker": "protagonist",
-          "text": "窗帘还收在一边，是你拉开的样子。窗台外面还是什么都没有。"
+          "text": "蓝帘还收在两边。墙到这里就断了，再往外什么也看不见。"
         },
         {
           "id": "ccd_2",
           "speaker": "protagonist",
-          "text": "这次你没有探出身去。",
+          "text": "这次你没有往前。",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_step": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cs_1",
+      "nodes": [
+        {
+          "id": "cs_1",
+          "speaker": "protagonist",
+          "text": "那里还是空的。你已经知道脚下的地板在哪里断开。",
+          "choices": [
+            {
+              "id": "step",
+              "text": "从开口下去。",
+              "next": "cs_step"
+            },
+            {
+              "id": "stay",
+              "text": "留在教室。",
+              "next": "cs_stay"
+            }
+          ]
+        },
+        {
+          "id": "cs_step",
+          "speaker": "protagonist",
+          "text": "你低下身子，向前走出最后一步。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "curtain_fall_pending",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "cs_stay",
+          "speaker": "protagonist",
+          "text": "你从边上退开。",
           "next": null
         }
       ]
@@ -1648,23 +1698,41 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "背后是平平的水泥地。上面是天。哪里都不疼。头顶上也没有一扇你可能掉下来的窗。"
+          "text": "蓝色铁皮在脚下响了一声。抬头只有天，刚才的开口不见了。"
         },
         {
-          "id": "cl_2",
-          "speaker": "q",
-          "source": "reported",
-          "text": "你在这儿啊。我还以为你会跟大家一样走楼梯下来。",
+          "id": "cl_safe",
+          "speaker": "protagonist",
+          "text": "两脚都站住了。你直起身，身上哪里也不疼。",
           "conditions": {
-            "all_flags": [
-              "q_companion"
+            "not_flags": [
+              "curtain_landing_injured"
             ]
           }
         },
         {
+          "id": "cl_hurt",
+          "speaker": "protagonist",
+          "text": "一只脚刚碰到铁皮就疼。你把手按在箱顶上，换另一只脚才站起来。",
+          "conditions": {
+            "all_flags": [
+              "curtain_landing_injured"
+            ]
+          },
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "hurt_ankle_at_container",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "你落在箱顶时伤了脚。"
+            }
+          ]
+        },
+        {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "你站起来。地上画着球场，一个攀爬架，一张长椅，旁边一间小屋。是操场。",
+          "text": "箱侧有一部铁梯。再往外是球场、攀爬架、长椅和工具棚。是操场。",
           "effects": [
             {
               "type": "set_flag",
@@ -1680,7 +1748,7 @@
               "entry_id": "fell_into_playground",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你从生物教室的后窗掉了下去，落在操场上，没有受伤。"
+              "text": "你从蓝帘后的开口落下，掉在操场的蓝色集装箱顶上。"
             }
           ],
           "next": null

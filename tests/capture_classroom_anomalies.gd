@@ -1,25 +1,19 @@
 extends SceneTree
-## Photographs the biology-classroom anomalies from the game's own camera, so the round
-## can be judged on frames: the two windows (one ordinary, one behind its blackout
-## curtain), the two doors on the east wall (the rear one never opens), the hole in the
-## wall once the curtain is drawn, and the body going over the sill (issue #159).
-##
-## `classroom_anomaly_test.gd` proves the behaviour headless; this script only takes the
-## pictures. It needs a display (Xvfb in CI):
-##
-##   xvfb-run -a --server-args="-screen 0 1600x900x24" \
-##     godot --path . --resolution 1600x900 --rendering-driver opengl3 \
-##     --script res://tests/capture_classroom_anomalies.gd
-##
-## Frames land in `docs/screenshots/classroom_anomalies/` as PNGs (the artifact) and are
-## printed as small JPEGs (`CROP: <file> <base64>`) for the workflow's annotations.
+## Captures the real staged curtain, drop, impact and ladder actions in a window, with
+## the HUD hidden for art review. The fixture places the player near each route's start;
+## the game drives character travel, body poses, lighting and camera. `classroom_anomaly_test`
+## separately exercises both routes with ground/roof movement input and checks state.
+## Run with Xvfb/OpenGL as in .github/workflows/classroom-anomaly-capture.yml.
 
 const Harness = preload("res://tests/test_harness.gd")
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const OUT_DIR := "res://docs/screenshots/classroom_anomalies"
 const LOG_PATH := "res://docs/screenshots/classroom_anomalies/CAPTURE.log"
 const INLINE_SIZE := Vector2i(480, 270)
-const EXPECTED_SHOTS := 5
+## Four 4000-character parts per frame, even with textured walls. The full PNG is
+## not affected. Ten frames then fit the workflow's 40 notice slots.
+const INLINE_BYTES := 12000
+const EXPECTED_SHOTS := 10
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -27,6 +21,10 @@ var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
 var _dialogue: DialogueController = null
+var _sequence: OpeningSequence = null
+var _interaction: InteractionController = null
+var _state: Node = null
+var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
@@ -36,98 +34,150 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var autoloads := Harness.ensure_state_autoloads(self)
-	var game_state: Node = autoloads["game_state"]
+	_state = autoloads["game_state"]
 	Harness.clear_session_state(self)
+	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
-	if packed == null:
-		_finish(["main.tscn could not be loaded."])
-		return
 	_main = packed.instantiate()
-	var sequence_node := _main.get_node_or_null("OpeningSequence")
-	if sequence_node != null:
-		sequence_node.set("autostart", false)
+	_sequence = _main.get_node(^"OpeningSequence") as OpeningSequence
+	_sequence.autostart = false
+	_sequence.autosave_enabled = false
 	root.add_child(_main)
-	await _frames(3)
-	_host = _main.get_node_or_null("LocationHost") as LocationHost
-	_player = _main.get_node_or_null("Player") as PlayerController
-	_dialogue = _main.get_node_or_null("DialogueController") as DialogueController
-	if _host == null or _player == null or _dialogue == null or game_state == null:
-		_finish(["Main did not expose the nodes this capture needs."])
-		return
-	# The HUD carries the boot fade (black until the opening sequence lifts it, and the
-	# sequence is not started here): hidden, as `capture_locations.gd` does.
-	var ui := _main.get_node_or_null("GameUI")
-	if ui is CanvasLayer:
-		(ui as CanvasLayer).visible = false
-	if _host.get_current_path() != CLASSROOM or _host.get_current() == null:
-		if not _host.load_location(CLASSROOM, &"PlayerStart", _player):
-			_finish(["The classroom could not be entered."])
-			return
-	game_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
-	await _quiet(20.0)
-	var room := _host.get_current()
-	var anomalies := room.get_node_or_null(^"Anomalies")
-	var rear_door := room.get_node_or_null(^"WallEast/RearDoor") as Node3D
-	if anomalies == null or rear_door == null:
-		_finish(["The classroom has no Anomalies or no rear door."])
+	_host = _main.get_node(^"LocationHost") as LocationHost
+	_player = _main.get_node(^"Player") as PlayerController
+	_dialogue = _main.get_node(^"DialogueController") as DialogueController
+	_voices = _main.get_node(^"InnerVoiceDirector") as InnerVoiceDirector
+	_interaction = _player.get_node(^"InteractionController") as InteractionController
+	(_main.get_node(^"GameUI") as CanvasLayer).hide()
+	_player.set_wake_pose(0.0)
+	_player.set_camera_roll(0.0)
+	_sequence.allow_player_control()
+	if _host.get_current() == null or _host.get_current().location_id != &"classroom" or not _seed_balance(true):
+		_finish(["Couldn't set up the safe classroom route."])
 		return
 
-	# 1. Both windows: the front one ordinary (the washing), the back one curtained.
-	await _stand(Vector3(-5.9, 0.0, -0.1), Vector3.LEFT)
+	await _stand(Vector3(-5.8, 0.0, -0.8), Vector3.LEFT)
 	await _shot("01-windows.png")
-
-	# 2. The white rear door, shut, from the game camera: the east wall fades round it.
-	await _stand(Vector3(5.7, 0.0, 3.55), Vector3.RIGHT)
-	await _shot("02-rear-door.png")
-
-	# 3. Both doors from inside the room, with a camera of its own: the game camera sits
-	# east of the player, so it only ever sees this wall faded.
-	var player_camera := root.get_camera_3d()
-	var camera := Camera3D.new()
-	camera.fov = 60.0
-	room.add_child(camera)
-	camera.global_position = Vector3(1.2, 1.7, 0.0)
-	camera.look_at(Vector3(6.9, 1.1, 0.0), Vector3.UP)
-	camera.current = true
-	await _frames(10)
-	await _shot("03-east-doors.png")
-	camera.current = false
-	camera.queue_free()
-	if player_camera != null:
-		player_camera.current = true
-
-	# 4. The back window once the curtain is drawn: a hole, no glass, no view.
-	await anomalies.call("draw_curtain", false)
-	await _stand(Vector3(-5.6, 0.0, 0.9), Vector3.LEFT)
-	await _shot("04-void.png")
-
-	# 5. Going over the sill (the beat's own departure, photographed part-way).
-	await _stand(Vector3(-5.9, 0.0, 2.2), Vector3.LEFT)
-	anomalies.call("_fall", _player)
-	await create_timer(1.1).timeout
-	await _shot("05-fall.png")
-
+	await _stand(Vector3(-5.95, 0.0, -2.35), Vector3.LEFT)
+	_activate(&"window")
+	await create_timer(1.05).timeout
+	await _shot("02-laundry.png")
+	await _settle()
+	await _stand(Vector3(-5.8, 0.0, 2.22), Vector3.LEFT)
+	_activate(&"curtain")
+	if not await _choose(&"draw"):
+		_finish(["Couldn't choose to draw the curtain."])
+		return
+	await _capture_pose("void_lean", 0.97, "03-void-lean.png")
+	await _settle()
+	if _host.get_current().location_id != &"classroom" or not _state.get_flag(StoryFlags.CURTAIN_EDGE_HELD, false):
+		_finish(["A passed check didn't keep the player upstairs."])
+		return
+	await _shot("04-edge-held.png")
+	_activate(&"curtain")
+	if not await _choose(&"step"):
+		_finish(["Couldn't choose to drop after a passed check."])
+		return
+	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png")
+	await _settle()
+	_state.clear()
+	_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
+	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	if not _seed_balance(false) or not _host.load_location(CLASSROOM, &"FromCorridor", _player):
+		_finish(["Couldn't load the classroom for the slip route."])
+		return
+	await _stand(Vector3(-5.83, 0.0, 2.16), Vector3.LEFT)
+	_activate(&"curtain")
+	if not await _choose(&"draw"):
+		_finish(["Couldn't choose to draw the curtain on the slip route."])
+		return
+	await _capture_pose("void_slip", 0.45, "06-slip.png")
+	await _capture_pose("roof_impact", 0.27, "07-roof-impact.png")
+	await _settle()
+	var container := _host.get_current().get_node_or_null(^"ContainerBody") as Node3D
+	if container == null or not _state.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, false):
+		_finish(["The failed check didn't produce an injured landing."])
+		return
+	var mark := container.get_node(^"Ladder/RoofMark") as Marker3D
+	await _stand(mark.global_position, Vector3.BACK)
+	_activate(&"pg_container_ladder")
+	await _capture_pose("ladder_left", 0.72, "08-ladder.png", 1.35, 1.88)
+	await _settle()
+	if _player.global_position.y > 0.10:
+		_finish(["The protagonist is still above the yard after using the ladder."])
+		return
+	await _stand(container.to_global(Vector3(4.15, 0.02, 0.20)), Vector3.LEFT)
+	await _shot("09-open-cabin.png")
+	_activate(&"pg_container_look")
+	await create_timer(1.15).timeout
+	await _shot("10-cabin-focus.png")
+	await _settle()
 	_finish(_failures)
+
+
+func _seed_balance(passed: bool) -> bool:
+	for seed_value in 100:
+		var resolver := CheckResolver.new(seed_value)
+		if (resolver.dice_total_for("classroom_curtain_void/cv_balance_check") + 3 >= 10) == passed:
+			_dialogue.set_check_resolver(resolver)
+			return true
+	return false
+
+
+func _activate(id: StringName) -> void:
+	var target := _host.get_current().find_interactable(id)
+	if target == null:
+		_failures.append("The capture couldn't find '%s'." % id)
+		return
+	_interaction.request_activation(target)
+
+
+func _choose(id: StringName) -> bool:
+	if not await Harness.wait_until(func() -> bool:
+		if _dialogue.has_pending_choices():
+			return true
+		if _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		return false
+	, 16.0):
+		return false
+	var index := _dialogue.get_runtime().get_available_choice_ids().find(id)
+	if index < 0:
+		return false
+	_dialogue.select_choice(index)
+	return true
+
+
+func _capture_pose(clip: String, progress: float, name: String, low: float = -INF, high: float = INF) -> void:
+	var animator := _player.get_character_animator()
+	if not await Harness.wait_until(func() -> bool:
+		if animator.get_current_clip() == clip and animator.get_action_progress() >= progress \
+			and _player.global_position.y >= low and _player.global_position.y <= high:
+			return true
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
+			_dialogue.advance_presentation()
+		return false
+	, 20.0):
+		_failures.append("The game did not reach '%s' for %s." % [clip, name])
+		return
+	await _shot(name)
 
 
 func _stand(where: Vector3, facing: Vector3) -> void:
 	_player.teleport(Transform3D(Basis(), where))
 	_player.face_toward(facing)
-	# Long enough for the occlusion fader and the projector's see-through to settle.
-	await _frames(45)
+	await create_timer(0.65).timeout # camera/occluder settling at normal story speed
 
 
-func _quiet(timeout_seconds: float) -> void:
-	var started := Time.get_ticks_msec()
-	while Time.get_ticks_msec() - started < int(timeout_seconds * 1000.0):
-		if not _dialogue.is_busy():
-			return
-		if _dialogue.has_pending_choices():
-			_dialogue.select_choice(0)
-		else:
+func _settle() -> void:
+	if not await Harness.wait_until(func() -> bool:
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
 			_dialogue.advance_presentation()
-		await _frames(1)
+		return not _dialogue.is_busy() and not _sequence.is_beat_active() \
+			and _voices.pending_count() == 0 and not _voices.is_firing()
+	, 20.0):
+		_failures.append("The capture waited on a busy stage.")
 
 
 func _shot(name: String) -> void:
@@ -156,14 +206,17 @@ func _shot(name: String) -> void:
 	var mean := total / maxf(1.0, float(samples))
 	if mean < 0.06:
 		_failures.append("The %s frame is black (mean luminance %.3f)." % [name, mean])
-	var encoded := Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.62))
+	var quality := 0.62
+	var jpeg := small.save_jpg_to_buffer(quality)
+	while jpeg.size() > INLINE_BYTES:
+		quality -= 0.08
+		if quality < 0.27:
+			small.resize(small.get_width() * 3 / 4, small.get_height() * 3 / 4, Image.INTERPOLATE_BILINEAR)
+			quality = 0.62
+		jpeg = small.save_jpg_to_buffer(quality)
+	var encoded := Marshalls.raw_to_base64(jpeg)
 	print("CROP: %s %s" % [name.get_basename() + ".jpg", encoded])
 	print("SHOT %s %dx%d" % [name, image.get_width(), image.get_height()])
-
-
-func _frames(count: int) -> void:
-	for index in count:
-		await process_frame
 
 
 func _finish(failures: Array) -> void:

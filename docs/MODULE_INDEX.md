@@ -90,6 +90,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `CharacterProfile` | [`scripts/narrative/character_profile.gd`](../scripts/narrative/character_profile.gd) | Speaker display/portrait resource; narrative text stays in content files. |
 | `InspectionLibrary` | [`scripts/narrative/inspection_library.gd`](../scripts/narrative/inspection_library.gd) | Load and validate localized inspectable-object content, records and first-read effects. |
+| `JsonTable` | [`scripts/narrative/json_table.gd`](../scripts/narrative/json_table.gd) | Standardised JSON file reading, syntax parsing, object validation and error reporting. |
 | `JournalCatalog` | [`scripts/narrative/journal_catalog.gd`](../scripts/narrative/journal_catalog.gd) | Resolve knowledge-entry identities back to content in the current locale. |
 | `JournalPage` | [`scripts/narrative/journal_page.gd`](../scripts/narrative/journal_page.gd) | Pure grouping/filtering of knowledge entries into notebook presentation dictionaries. |
 | `JournalRoute` | [`scripts/narrative/journal_route.gd`](../scripts/narrative/journal_route.gd) | Derive visited places from catalog arrival flags already stored by GameState. |
@@ -109,6 +110,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `Locales` | [`scripts/i18n/locales.gd`](../scripts/i18n/locales.gd) | Supported locale profiles, aliases and reading speeds; add language metadata here. |
 | `L10n` | [`scripts/i18n/l10n.gd`](../scripts/i18n/l10n.gd) | Static interface-string lookup and locale tables; use Loc for persistent locale choice and change notifications. |
+| `LocaleParity` | [`scripts/i18n/locale_parity.gd`](../scripts/i18n/locale_parity.gd) | Reusable key-set and entry parity comparison across languages. |
 
 ### Save encoding
 
@@ -187,6 +189,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `AudioRelease` | [`scripts/audio/audio_release.gd`](../scripts/audio/audio_release.gd) | Stop audio players and allow a bounded audio mix to release playback at shutdown; do not hide leak output. |
+| `VoiceDirector` | [`scripts/audio/voice_director.gd`](../scripts/audio/voice_director.gd) | Direct dialogue and inspection voiceover playback and character acoustic performance. |
 
 ### Scene-local globally named types
 
@@ -206,9 +209,10 @@ policy. See [ARCHITECTURE.md](ARCHITECTURE.md) for the dependency/lifecycle boun
 
 | Entry point | Source | Reuse boundary |
 |---|---|---|
-| `TestHarness` (local preload alias) | [tests/test_harness.gd](../tests/test_harness.gd) | Reuse `ensure_autoload`, `ensure_state_autoloads`, `clear_session_state`, `arm_watchdog`, `finish`; setup clears shared test saves. Test-only, never a runtime dependency. |
+| `TestHarness` (local preload alias) | [tests/test_harness.gd](../tests/test_harness.gd) | Reuse `ensure_autoload`, `ensure_state_autoloads`, `clear_session_state`, `arm_watchdog`, `wait_until`, `finish`; setup clears shared test saves. `wait_until(condition, limit_seconds)` is the one place a test waits for a condition: it polls on process frames and reports the last observed state at the deadline, so a time-sensitive assertion does not race the frame rate (issue #207). Test-only, never a runtime dependency. |
 | Capture evidence contract | [tests/evidence_contract.gd](../tests/evidence_contract.gd) | Shared authored-line/panel comparison and evidence fingerprints; capture/test-only, not fabricated images. |
 | Classroom wall contract | [tests/classroom_wall_contract.gd](../tests/classroom_wall_contract.gd) | Reuse measured wall/render assertions rather than maintaining another wall specification. |
+| `Diagnostics` | [scripts/autoload/diagnostics.gd](../scripts/autoload/diagnostics.gd) | Process-wide offline events, filters, bounded writes and player-initiated JSON export. The [event schema](../scripts/diagnostics/event_schema.gd) is the privacy allowlist; [the store](../scripts/diagnostics/log_store.gd) alone owns rotating files. See [offline diagnostics](OFFLINE_DIAGNOSTICS.md). |
 | `GameState` | [scripts/autoload/game_state.gd](../scripts/autoload/game_state.gd) | Named runtime flags and snapshots, not UI or file I/O. |
 | `NarrativeState` | [scripts/autoload/narrative_state.gd](../scripts/autoload/narrative_state.gd) | Validated, identity-based knowledge and snapshots. |
 | `Save` | [scripts/autoload/save_manager.gd](../scripts/autoload/save_manager.gd) | Versioned save payload, safe file writes, recovery and world binding. |
@@ -251,6 +255,10 @@ not the shipped `res://data/`. Headless assertions live in
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
 | Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
+| Pushable classroom chair | [pushable_chair.gd](../scripts/environment/pushable_chair.gd) | The chair the protagonist wakes in. Slides back 0.70 m when he stands up, stays there, and returns to the same place when he sits down again. |
+| Seat/chair clearance | [check_seat_clearance.py](../tools/check_seat_clearance.py) | Reads the spawn marker, the chair's meshes and the body's capsule from three scenes and checks the chair's own push gets every part clear of the body: per part, and along the slide, so the chair cannot travel *through* the body on its way out. |
+| Interface colour literals | [check_ui_literals.py](../tools/check_ui_literals.py) | The other half of the palette rule: no *new* `Color(<number>…)` inside `scripts/ui/`, per line rather than per file, with an allowlist that records why each remaining one is local. Pure white and pure black are tween endpoints and are skipped. |
+| Fixed-frame waits under a scaled clock | [check_flaky_waits.py](../tools/check_flaky_waits.py) | A ratchet on a structural fact, not a semantic verdict: no test whose `Engine.time_scale` exceeds 1.0 may add a fixed-frame wait, and a converted file must leave `BASELINE`. Waits for a condition use `TestHarness.wait_until`. |
 | Agent entry/index/template contracts | [check_agent_docs.py](../tools/check_agent_docs.py) | Check public type coverage and local discovery links without importing Godot or changing source files. |
 
 ## Keep this map current

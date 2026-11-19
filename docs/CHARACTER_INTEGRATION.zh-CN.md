@@ -9,7 +9,10 @@
 
 本文扩展 [CHARACTER_ART.md](CHARACTER_ART.md)，不取代它：其中的方案 C 配色现在是已发布外观的基础。
 
-**状态。** 提案，尚未经所有者批准。本文所述改动均不触及任何角色的模型、骨骼、动画、剧情定位、台词或肖像。尚待所有者决定的事项列在文末。
+**状态。** 已实现的提案，不是所有者视觉批准。第 1–8 节记录此前仅材质工作的历史边界。
+所有者随后已要求实际模型精修：第 9 节记录第一轮实际几何与同机位截取方式；
+**第 10 节记录当前 N 与坐椅学生的模型**。
+剧情、对白及独立 2D 肖像不变；历史截图或结构检查通过不能冒充新美术获批。
 
 模型身份：平台未显示，无法核实。
 
@@ -156,4 +159,182 @@ Q 的两套方案、N 的两套方案，区别在于媒介（颜料与版画、�
 3. **N 的开衫色相。** 保留鼠尾草绿系。木刻方案提示了更暗更强的服装；本任务没有采用，因为会使她显得威严。若她的角色之后要变得强硬，由你决定。
 4. **N 的模型**眼球朝内，已在外观中绕过；在源文件中翻转只需一行，可留到下次模型修订。模型仍是 16 关节骨骼，没有面部形变（不能眨眼、没有表情），波波头网格呈头盔状。条纹已由统一的发色掩盖。如需重建模型，另开任务。
 5. **手部。** Q 的手套状手和 N 的简化手部未改动。
-6. 坐着的同学仍不在本次范围内。
+6. 坐着的同学不在上述集成的原始范围内；下文后续要求的表面细化已将其纳入，模型与坐姿放置保持不变。
+
+## 8. N 与坐椅同学的表面细化（2026-11-18）
+
+**范围/状态。** 相对基线 `42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6` 已实现的材质提案，
+不等于所有者视觉批准。这不是已退役的 #188 叠层实验。两人的生产外观已经接入绘画管线，
+这里的“粗糙”是色块与描边过粗、头发通用排线、衣料种类缺乏区分，不是要求降低 PBR
+粗糙度或增加油亮皮肤。N 没有 UV，学生主要衣料表面也没有；放大一张位图不能为它们补上细节。
+
+### 实现与边界
+
+- 在现有 `character_paint.gdshaderinc` 内新增可选的 `pigment_blend`（色阶间连续罩染）、
+  `patch_feather` 与 `detail_kind/strength/scale/tint/origin`。类型 1 为细 V 形针织、
+  2 为经纬斜纹、3 为角向弯曲发束。仅改变漫反射颜色：粗糙度仍为 1，金属度/镜面仍为 0；
+  不新增法线、纹理采样、几何、绘制 pass 或材质槽。
+- 衣料复用现有静止坐标的三向投影，混合权重来自静止位置导数，而非姿态/视角法线，避免
+  肩膀运动时织纹在衣服上转动。用 `fwidth` 在纹理变成亚像素前淡出对比度；这是抗锯齿措施，
+  不是已经实测的 FPS 提升。
+- `refined_teacher()` 保留 N 的鼠尾草绿开衫、米色衬衣和深色裤子，收敛大块粉笔笔触，
+  加入细针织/斜纹及弯曲棕色发束，减弱面部色块对比并柔化罩染。
+  `refined_student()` 保留灰紫/米色/藏蓝，缓和皮肤明暗插片与眼下对比，按材质角色分配
+  针织、斜纹和发束。两人描边改为 5.5 mm，减少摇摆；手指、面部插片与细小衣片仍不单独套描边壳。
+- 新参数默认关闭；仅两个生产外观在 `room_keyed()` 前启用。主角、Q 和保留的木刻/纸感
+  实验不重新定风格。用 `python3 art/characters/build_character_looks.py` 重生成，
+  `--check` 检查漂移；不要手改生成的 `.tres`。
+- 不改 GLB、法线、权重、骨骼、动画、形变、包装场景变换、碰撞、交互、对白或肖像。
+  N 的六个内向眼面仍使用现有双面 shader；这不是修复源模型，也没有新增面部表情。
+  学生模型原有的棱角仍属于模型几何。
+
+**表面来源。** 修改的现有 `.tres` 资源由仓库内 Python 调色参数表确定性生成，shader 是
+在 Arena 编程辅助下编写的一方代码；不新增下载、描摹、图像生成作品或运行资源文件。
+模型权利仍以 `ASSET_PROVENANCE.md` 原有记录为准，材质参数变更不为其他模型/肖像确立
+权利。该共享台账保持原样，以免与并行环境美术 PR #245 交叉修改。
+
+### 可复现对照与回归覆盖
+
+`capture_character_integration.gd` 现在纳入真实的 `Actors/SeatedStudent`，不把它站起来：
+提供正面/四分之三脸部、衣料、原位桌椅和游戏距离画面，N 增加衣料近景。
+`baseline` 明确区别于历史 `before`：用 `--baseline-dir` 加载**本次变更基线**的
+n.tres 和 student.tres。缺目录/资源会失败，不会偷换成更老或 raw 外观。
+`--freeze-pose` 固定已绑定的 idle/sit 姿态和眨眼，供材质 A/B；不能据此声称验证了运动。
+
+```sh
+baseline="$(mktemp -d)"
+base=42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+for group in n student; do
+  xvfb-run -a --server-args="-screen 0 1600x900x24" \
+    godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+    --script res://tests/capture_character_integration.gd -- \
+    --group="$group" --variants=baseline,after --baseline-dir="$baseline" --freeze-pose
+done
+```
+
+在仅材质修订中，截图工作流的 `refinement-n`、`refinement-student` 作业从**实际 PR base SHA**
+提取外观，记录 SHA 并发布双列图。当前几何修订改用第 9 节的两次真实引擎运行，同时替换实际 GLB；
+仅上面的旧命令并不更换几何。手动 dispatch 时基线就是
+所 dispatch 的修订自身，不能作为历史改善证据。每列共享场景、灯光、镜头和姿态；基线使用
+当前 shader 但关闭新增选项。
+
+`tests/imported_assets_test.gd` 额外锁定细节材质角色与克制的强度，确认皮肤/眼睛及主角/Q
+所有材质不启用细节，主角/Q 也不启用新的罩染选项；现有几何/静止坐标、材质切换可逆性、
+坐椅包装场景、六个双面眼面的合同继续有效。实际执行结果与环境警告在 PR 中报告，
+不能在这里预先认定视觉验收通过。
+
+**所有者清单：** 对比日照/阴影下的脸和头发；检查两套衣料近景；查看讲台上的 N 与原位
+坐椅学生；移动/缩放游戏镜头观察闪烁和轮廓可读性；用未冻结的正常 idle、walk、sit 路径
+检查细节是否泳动。目标显卡 Forward+ 与 Windows 性能仍需目标硬件验证，软件/OpenGL 截图不等于该验证。
+
+## 9. N 与坐椅学生的实际几何精修（2026-11-18）
+
+**要求／状态。** 所有者本轮明确允许修改模型（棱角、简化手型），以《极乐迪斯科》人物的
+选择性精细度和区分性为质量参照。这不是复制其资产的许可，也不能宣称已达到同等商业成品质量。
+本轮基线 `7379ff7239bee6254ab3242901be9705488e282d`，先精修此前已处理外观的两个 NPC。
+已检查主角、Q，但不改变其 GLB、肖像、外观和动作；主角来源权利未因此获得澄清。
+
+### 几何与人物区分
+
+- **两人的手：** 四根长短不同的手指加拇指，每只手是一块闭合、连通的流形表面，不是把带盖
+  圆柱插进手掌。保留自然弯曲、渐细掌骨、虎口、不同指长；指根以上的轮廓切片仍分出四指。
+  仍用原 Hand 骨骼，并未增加可独立活动的手指骨骼。
+- **N：** 保留窄脸、原有及颌波波头、鼠尾草绿／奶油／深灰服装及略不确定的气质，不改成
+  权威式剪影。原头发仅局部柔化棱角、毫米级不对称发尾，不换成通用头盔；脸颊／下颌也是
+  毫米级调整。新增翻卷袖口遮接缝。新手部顶点在埋入袖口的腕部使用**新设**手／前臂过渡权重，
+  不能说保留了旧手权重。GLB 中修正六个眼面的绕序、法线；生产 `refined_teacher()` 移除双面
+  补丁，历史木刻实验保持不变。
+- **学生：** 更宽的下颌／颧骨／太阳穴和连续鼻部，与 N、瘦高内收的主角区分。较小杏仁形
+  眼面沿真实眼窝起伏，不再使用原先凸出的眼球／脸颊贴块。短斜梳发型、肩／袖放样、带厚度的
+  曲面领片／翻领／口袋、选定原形体的圆角修正替代灰盒棱角，同时保留梅灰／奶油／海军蓝身份，
+  不变成主角复制品。手仍刚性绑定原 Hand；删除 14 个过时网格节点：独立手指／拇指、脸颊／
+  眼下贴块及两个分离鼻部组件。
+
+N 仍由 `prepare_teacher_n.py` 唯一生成。学生新增此前缺失的源→运行文件 owner
+`prepare_classroom_student.py`；原 525,912 字节运行模型原样保存为哈希锁定的
+`art/character_models/classroom_student/student_source.glb`。共享建模代码是
+`tools/character_geometry.py`，NumPy 和 N 原有简化器均只用于构建；不虚构旧学生的 Blender
+生成源。来源、原／新哈希及权利边界见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)。
+
+两套 16 关节的层级、顺序、节点 rest 变换、逆绑定矩阵完全不变；N 四个循环及每个有效移动
+关键帧不变，学生仍没有内嵌动画。不改包装场景偏移／yaw、碰撞、教室位置、运行控制器、
+材质／静止坐标 owner、剧情或肖像。学生加宽约 6 mm，高度和脚底基准不变。**1536 KiB**
+运行文件硬上限不放宽：N 1439.0 KiB、学生 1475.0 KiB。学生三角面 12,388→64,604，
+N 57,460→62,340；明确披露这项成本，不把面数增长说成性能改善或美术质量证明。
+
+### 重建与检查
+
+```sh
+python3 -m pip install -r tools/requirements.txt
+python3 tools/prepare_teacher_n.py --check
+python3 tools/prepare_classroom_student.py --check
+python3 tests/character_geometry_test.py
+python3 art/characters/build_character_looks.py --check
+python3 tools/model_library.py --check
+```
+
+15 项几何测试检查确定性字节／源哈希、闭合连通五指表面、法线／索引／权重有效性、
+骨架／rest／逆绑定相同、N 移动动作完整保留、N 头发是局部改动而非替换、眼部浮雕／绕序、
+既有体积与脚底合同。`imported_assets_test.gd` 有意更新为学生 64 个材质面、生产外观
+**零个双面眼面**，不放宽其静止坐标／着色蒙皮／坐姿包装检查。结构变化由重建的清单审查，
+并不能豁免形变或视觉回归。
+
+### 真实几何对照，而非仅给新网格换旧材质
+
+单独 `--variants=baseline,after` 仍然**只换外观**。工作流两个精修作业现用
+`tools/capture_character_geometry.sh`：两段均为精确 PR head 的代码／场景／镜头／shader，
+一次 Godot 真运行用当前 GLB／外观，另一次用实际基线 GLB／外观；两次进程间重新导入基线
+GLB，退出时恢复当前模型字节。独立 manifest 记录 base／代码 head SHA、模型／外观 SHA-256、
+引擎与后端。仅把真实渲染面板拼成带标签的“左基线／右 head”对照，不用离线渲染或模型截图
+冒充肖像。静帧固定相同 idle／sit 相位；N 的 walk 静帧仍不证明动态网格质量。
+
+```sh
+baseline="$(mktemp -d)"
+base=7379ff7239bee6254ab3242901be9705488e282d
+git show "$base:assets/models/teacher-n/teacher-n.glb" > "$baseline/n.glb"
+git show "$base:assets/models/protagonist/protagonist.glb" > "$baseline/student.glb"
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+printf '%s\n' "$base" > "$baseline/base-sha.txt"
+# 在可丢弃的证据 checkout 中运行；PATH 上需有 Godot，且安装 Xvfb。
+bash tools/capture_character_geometry.sh n 'body_sun,face,face_three_quarter,hands,cloth,lectern,walk' "$baseline"
+bash tools/capture_character_geometry.sh student '' "$baseline"
+```
+
+证据工作流先检出精确 PR head，再安装仓库锁定版本的 Godot。`workflow_dispatch` 默认基线
+仍为派发修订自身；模型 base/head 相同不是历史改善证据。实际结果、失败尝试、诊断／泄漏
+数量和最终 head 链接在 PR 记录，不在本文假定通过。离线排查图明确不属于 Godot 证据。
+
+**仍须分开验收：** Agent 静态画面复查；不冻结的 idle／walk／转身／sit 中腕／肩接缝、
+手指剪影、衣领／桌／椅穿插与颜料泳动；所有者美术批准；Windows 生产 Forward+ 目标 GPU
+质量／性能。软件 OpenGL 截图和相同骨架输入都不能替代最后两项。
+
+## 10. 第二轮实际几何：合身的开衫与安静的坐姿面孔
+
+**评审基线：** `350efd2a5594bc6bd37efbf237cd3f704cf82610`（#251，几何修订 1）。
+上一轮的真实教室截图仍可看见 N 额头上互相穿插的细碎发片、悬空的圈形领口；两人的手型
+都偏直，学生眼白偏大，常规镜头下又容易融进阴影。本轮修改实体网格，不是给截图加滤镜。
+《极乐迪斯科》只作为选择性细节和普通人物区分性的参考，未复制或描摹其模型、纹理、关键帧或肖像。
+
+- **代课教师 N：** 保留原齐下颌短发的主壳与后发束；去浮起的额前细束，收起一侧鬓角，不动头顶。
+  脸颊、鼻梁、眼睑与嘴唇按同一变形收敛，已有分裂法线同步变换。两片翻领替代悬空圆领；斜嵌袋口、
+  有收省的衣身和中空翻袖口，让鼠尾草色开衫与米色衬衣有清楚层次。窄手掌有掌骨体积和浅弯五指，
+  沿用腕部的手／前臂权重过渡。
+- **坐椅学生：** 倾斜短发轮廓下是更宽的下颌、颧骨平面与更小且不完全对称的眼裂。虹膜、瞳孔与
+  高光贴同一裁切眼面，唇线、眉弓和耳外缘不再是重复的圆形块。梅灰针织的歪翻边、斜袋口和腿上折痕
+  是实体几何。上下袖在肘重叠段共享同一平滑权重场；指节更短、更蜷，仍绑原本的 Hand 骨。
+- **教室里的着色：** 使用原生成器，只改两套正式外观。收住眼白与唇色，扩大成组的发束色面，
+  让阴影里的梅灰衣服读得出来。没有修改全局灯光、shader、角色包装、对话或肖像。
+
+| 运行文件 | 修订 1 三角面 / KiB | 修订 2 三角面 / KiB |
+| --- | ---: | ---: |
+| `teacher-n.glb` | 62,340 / 1439.0 | 56,950 / 1314.7 |
+| `protagonist.glb`（坐椅学生） | 64,604 / 1475.0 | 46,384 / 1083.8 |
+
+原始 GLB、网格／材质面／材质键、两套 16 关节绑定数据、坐姿偏移、主角和 Q，以及 N 的四段动作／
+八条有效运动通道不变。每只手仍是闭合连通的五指，翻边与圆角直接写进资产；不新增独立指骨或面部
+blend shape，也不由面数宣称实际性能。用第 9 节的命令重建与截取，当前对照换用本节基线。注解预览按
+完整分片限额，避免密集画面集丢掉最后的坐姿图；artifact 仍保留原尺寸 PNG。结构测试、固定相位 OpenGL
+画面、目标机器上的连续动作和所有者美术判断是不同的证据，实跑状态见本轮 PR。

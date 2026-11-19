@@ -42,6 +42,12 @@ notes. What a release contains, and what is checked before it is published, is
 [docs/RELEASE.md](docs/RELEASE.md) — that document is the single source of truth for the
 release process; this paragraph is a summary of it.
 
+**Support level.** Windows PC is the first target. Linux x86_64 is **experimental**:
+CI builds and inspects the archive, but Linux desktop/Steam Deck graphics, audio,
+controller behavior and suspend/resume playtesting remain **unverified**. The Linux
+run notes include the launch command, per-user save paths and driver troubleshooting;
+a successful export is not a hardware compatibility or playability claim.
+
 **What is in it.** Each executable embeds its pack, so there is nothing to keep beside it.
 `tools/verify_build.py` reads that pack back and fails the build if the repository leaked
 into it: no `tests/`, no `docs/screenshots/`, no 10 MB source font — the shipped font is a

@@ -49,6 +49,7 @@ func _run() -> void:
 	_check_visible_and_hidden()
 	_check_no_reroll()
 	_check_failure_branch_is_not_a_wall()
+	_check_terminal_branch()
 	_check_conditions_with_dictionary_flags()
 	Harness.finish(self, _failures, "checks parse strictly and resolve through one shared core.")
 
@@ -224,6 +225,10 @@ func _check_rejections() -> void:
 		"a modifier without a flag", _content({"modifiers": [{"value": 1}]}), "flag"
 	)
 
+	var missing := _content()
+	missing["conversations"]["trial"]["nodes"][0]["check"].erase("failure")
+	_expect_rejected("omitted failure branch", missing, "failure")
+
 	var conflict := _content()
 	var nodes: Array = conflict["conversations"]["trial"]["nodes"]
 	(nodes[0] as Dictionary)["choices"] = [{"id": "a", "text": "A.", "next": "good"}]
@@ -350,3 +355,23 @@ func _check_failure_branch_is_not_a_wall() -> void:
 	)
 	if not (recorded is Dictionary) or (recorded as Dictionary).is_empty():
 		_failures.append("A failed check was not recorded, so it could be re-rolled later.")
+
+
+## A staged reaction can carry the failure itself; no extra line has to be advanced.
+func _check_terminal_branch() -> void:
+	Harness.clear_session_state(self)
+	var content := _content({"difficulty": 30, "failure": null})
+	(content["conversations"]["trial"]["nodes"] as Array).pop_back() # no longer a target
+	var graph := _load("terminal_failure", content)
+	if graph == null:
+		return
+	if not graph.is_valid():
+		_failures.append("An explicit null check branch was rejected: %s" % graph.describe_errors())
+		return
+	var runtime := _new_runtime(graph, 3)
+	if runtime.get_last_check().get("success", true) != false:
+		_failures.append("The deterministic terminal check didn't fail.")
+		return
+	runtime.advance()
+	if runtime.is_active():
+		_failures.append("The explicit null branch did not finish immediately.")

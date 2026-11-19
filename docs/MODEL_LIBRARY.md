@@ -254,15 +254,15 @@ Measured from the committed `.glb` files, not from the Blender sources and not f
 
 | | `Protagonist_Character.glb` | `protagonist.glb` | `new-Q.glb` | `teacher-n.glb` |
 |---|---|---|---|---|
-| nodes | 70 | 96 | 70 | 35 |
+| nodes | 70 | 82 | 70 | 35 |
 | scene root → armature | `Protagonist_Armature` (the root) | `CHR_Protagonist_Root` → `RIG_Protagonist_Blockout` | `Q_Armature` (the root) | `CHR_Substitute_Teacher_Root` → its armature |
 | skin joints (bones) | 60 | 16 | 60 | 16 |
-| mesh nodes, all bound to skin 0 | 9 | 78 | 9 | 18 |
-| meshes / primitives | 9 / 15 | 78 / 78 | 9 / 16 | 18 / 28 |
+| mesh nodes, all bound to skin 0 | 9 | 64 | 9 | 18 |
+| meshes / primitives | 9 / 15 | 64 / 64 | 9 / 16 | 18 / 28 |
 | materials | 12 | 22 | 12 | 17 |
 | embedded animations | 5 (721 channels; not played by the game) | 0 | 6 (70 channels; native idle/talk and named actions) | 4 (8 channels; played together as N's idle) |
-| triangles | 15,782 | 12,388 | 17,918 | 57,460 |
-| file | 851.9 KiB | 513.6 KiB | 980.7 KiB | 1334.7 KiB |
+| triangles | 15,782 | 46,384 | 17,918 | 56,950 |
+| file | 852.3 KiB | 1083.8 KiB | 980.7 KiB | 1314.7 KiB |
 
 The former protagonist and N retain the 16-joint naming convention. Q no longer
 shares that hierarchy: its approved replacement has `Root → Pelvis → Spine → Spine_01
@@ -274,8 +274,17 @@ its native breathing/lean and hand gesture are used by the production idle/talk,
 named rotation previews remain available, and the facial diagnostic remains in the source
 player. N's four loops remain its idle, unchanged. The manifest locks each action's name,
 channel count and target paths; adding/removing a channel is a reviewed structural change.
-Q and N are reproducibly prepared from immutable `.gdignore`d sources under
-`art/character_models/`; their respective preparation tools have `--check` modes.
+Q, N and the seated student are reproducibly prepared from immutable `.gdignore`d sources
+under `art/character_models/`; their respective preparation tools have `--check` modes.
+Geometry revision 2 (`prepare_teacher_n.py`, `prepare_classroom_student.py`, shared
+`character_geometry.py`) refines N/student silhouettes, eyes and garment seams and uses
+fewer triangles than the first refinement without changing the registered structure.
+`tests/character_geometry_test.py` verifies connected closed five-digit hands, normal/skin
+validity, exact source/output, joint/rest/inverse-bind preservation, and N's live actions.
+The N wrist and student elbow weights are authored, not represented as original weights.
+Structural checks and smaller files do not establish visual quality; source rights and engine/owner
+acceptance remain in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) and
+[CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10.
 
 The manifest verifies that every primitive remains skinned, not that skin deformation is
 artistically accepted. For Q, `tests/q_model_prepare_test.py` additionally compares all
@@ -308,10 +317,12 @@ Three stages of the same characters exist in this repository and they do not agr
 why the manifest was built from the `.glb` files rather than from the audits:
 
 - **`protagonist_rig_audit.json`** describes a Blender import of the *same path*: 1 armature,
-  16 bones, **79 mesh objects**, 12,468 polygons, 0 actions. The runtime `.glb` holds **78
-  mesh nodes** and 12,388 triangles. The audit counts objects in the Blender scene; one of
-  them does not reach the export, and a polygon count is not a triangle count. The manifest
-  records the exported file, so its number is 78.
+  16 bones, **79 mesh objects**, 12,468 polygons, 0 actions. The original runtime export had
+  **78 mesh nodes**, 12,388 triangles (one Blender object did not reach the export; polygons
+  are not triangles). That exact export is now `student_source.glb`. Geometry revision 1
+  replaces fourteen obsolete hand/face components with integrated surfaces, so the current
+  runtime manifest correctly records **64 meshes**. The second pass has 46,384 triangles.
+  The old rig audit is historical source evidence, not the current geometry contract.
 - **Former Q records** described an unrigged input and a separate 16-joint derivative,
   not today's approved replacement. Those Q-only sources, workfiles, audit reports and
   development duplicate have been removed with the retired production model. They can be

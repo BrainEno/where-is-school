@@ -4,10 +4,9 @@ extends Interactable
 ##
 ## Most interactables declare an inspection, a conversation route or an exit, and the
 ## sequence director routes the activation to one of them. Some objects change the room
-## they stand in: the biology classroom's rear door opens and a staircase is suddenly in
-## the room; its back-window curtain is drawn aside and there is nothing behind it. What
-## happens there is choreography that only that room knows, so the room's script sets
-## `stage_handler`, and the director (`OpeningSequence`) calls it through `perform()`
+## they stand in: the biology classroom's back curtain opens onto a cut, and the yard's
+## ladder carries the player off a roof. What happens there is choreography that only
+## that scene knows, so its script sets `stage_handler`, and the director (`OpeningSequence`) calls it through `perform()`
 ## *inside a beat*: the player is locked, nothing else can start, and the handler can play
 ## conversations and animate its own nodes.
 ##
@@ -16,6 +15,7 @@ extends Interactable
 ## halfway through a transition, and a coroutine resumed on a freed node is an engine error
 ## - it *returns a request* and the director carries it out:
 ##
+##   {"checkpoint": "…"}                autosave after the beat releases.
 ##   {}                                    nothing more; the beat ends.
 ##   {"inspection": &"some_inspection"}    show this text once the beat has ended.
 ##   {"transition": {"scene": "res://...", "spawn": &"Marker", "id": &"location_id",
@@ -38,7 +38,8 @@ func is_staged() -> bool:
 
 
 ## Runs the room's handler and returns its request (see the class notes). The director
-## calls this inside a beat; anything else should call `activate()`.
+## calls this inside a beat. Outside the director, use InteractionController to route
+## the activation so its activation_requested signal still reaches the director.
 func perform(director: Node) -> Dictionary:
 	if not stage_handler.is_valid():
 		push_error("StagedInteractable '%s' has no stage handler." % interact_id)

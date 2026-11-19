@@ -10,6 +10,8 @@ extends Node3D
 ## standing in the room they were already in, with the story flag that describes that
 ## room still correct, and the call still returns false.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal location_entered(location: LocationRoot, spawn_id: StringName)
 
 ## Kept for error messages and for tests that assert the old scene survived.
@@ -69,31 +71,37 @@ func load_location(
 ) -> bool:
 	# The wrapper exists so the timing covers every exit of the transaction, including the
 	# failures, without a single `return` inside the transaction having to know about it.
+	var from_id := _current.location_id if _current != null else &""
 	var started := Time.get_ticks_usec()
 	_marks = {}
-	var ok := _swap(scene_path, spawn_id, player, expected_location_id, started)
+	var reason := _swap(scene_path, spawn_id, player, expected_location_id, started)
+	var ok := reason == &"entered"
 	_record(scene_path, spawn_id, ok, started)
+	if not ok:
+		OfflineDiagnostics.note("world.transition_refused", {
+			"from_location": from_id, "to_location": expected_location_id, "reason": reason,
+		})
 	return ok
 
 
-## The transaction itself. Unchanged in what it does; it only marks the stages on the way.
+## The transaction itself. Returns a diagnostic code; the public method still returns bool.
 func _swap(
 	scene_path: String,
 	spawn_id: StringName,
 	player: Node3D,
 	expected_location_id: StringName,
 	started: int
-) -> bool:
+) -> StringName:
 	# --- Stage 1: pre-flight. Nothing outside this function may change. ---------
 	if scene_path.is_empty():
 		push_error("LocationHost: empty scene path; keeping %s." % _describe_current())
-		return false
+		return &"no_scene"
 	if not ResourceLoader.exists(scene_path):
 		push_error(
 			"LocationHost: location scene not found: %s; keeping %s."
 			% [scene_path, _describe_current()]
 		)
-		return false
+		return &"scene_missing"
 	var packed := load(scene_path) as PackedScene
 	_mark("loaded", started)
 	if packed == null:
@@ -101,7 +109,7 @@ func _swap(
 			"LocationHost: '%s' is not a PackedScene; keeping %s."
 			% [scene_path, _describe_current()]
 		)
-		return false
+		return &"not_packed_scene"
 	var instance := packed.instantiate()
 	_mark("instantiated", started)
 	if instance == null:
@@ -109,7 +117,7 @@ func _swap(
 			"LocationHost: '%s' could not be instantiated; keeping %s."
 			% [scene_path, _describe_current()]
 		)
-		return false
+		return &"instantiation_failed"
 	var location := instance as LocationRoot
 	if location == null:
 		push_error(
@@ -117,14 +125,14 @@ func _swap(
 			% [scene_path, instance.get_class(), _describe_current()]
 		)
 		_discard(instance)
-		return false
+		return &"invalid_root"
 	if String(location.location_id).is_empty():
 		push_error(
 			"LocationHost: '%s' declares no location_id; keeping %s."
 			% [scene_path, _describe_current()]
 		)
 		_discard(location)
-		return false
+		return &"no_location_id"
 	if (
 		not String(expected_location_id).is_empty()
 		and location.location_id != expected_location_id
@@ -134,7 +142,7 @@ func _swap(
 			% [expected_location_id, scene_path, location.location_id, _describe_current()]
 		)
 		_discard(location)
-		return false
+		return &"mismatched_location"
 	# The player has to be placeable *before* anything moves: there is no second player
 	# and no fallback placement, because a swap into a scene the body cannot stand in is
 	# not a transition.
@@ -144,14 +152,14 @@ func _swap(
 			% [scene_path, _describe_current()]
 		)
 		_discard(location)
-		return false
+		return &"no_player"
 	if not player.has_method("teleport"):
 		push_error(
 			"LocationHost: the player node has no teleport(); refusing to enter '%s' and keeping %s."
 			% [scene_path, _describe_current()]
 		)
 		_discard(location)
-		return false
+		return &"no_teleport"
 	var spawn := location.get_spawn(spawn_id)
 	if spawn == null:
 		# get_spawn() already named the location, the id and the markers it does have.
@@ -160,7 +168,7 @@ func _swap(
 			% [scene_path, _describe_spawn(spawn_id), _describe_current()]
 		)
 		_discard(location)
-		return false
+		return &"no_spawn"
 	# --- Stage 2: commit. From here on the new scene is in the tree. -----------
 	var previous := _current
 	var previous_path := _current_path
@@ -182,7 +190,7 @@ func _swap(
 			"LocationHost: '%s' was not entered (spawn '%s'); keeping %s."
 			% [scene_path, _describe_spawn(spawn_id), _describe_current()]
 		)
-		return false
+		return &"placement_failed"
 	_mark("placed", started)
 	_current = location
 	_current_path = scene_path
@@ -191,8 +199,12 @@ func _swap(
 		remove_child(previous)
 		previous.queue_free()
 	_mark("committed", started)
+	OfflineDiagnostics.note("world.entered", {
+		"from_location": previous.location_id if previous != null else &"",
+		"to_location": location.location_id,
+	})
 	location_entered.emit(location, spawn_id)
-	return true
+	return &"entered"
 
 
 ## Places `player` at `target` and reports whether the body actually took it.

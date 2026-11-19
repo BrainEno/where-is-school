@@ -24,7 +24,7 @@ comes from the manuscript.
 | Location id | Scene | What it is now | Status |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | Open walkway on the building's side: wall and classroom door on the west, parapet over the yard on the east, gate stairs south, yard door north. Stage pass: green wainscot that sinks towards the yard door, converging terrazzo strips, a leaning upper storey whose windows shrink, a tall yard door with a lit transom, the yard far below with a court fragment and a too-small hoop, the sky laid flat under it all. | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | Two walkable storeys with turning galleries, a straight stair and an offset stair forming a loop, five paired-door classrooms per storey and real court geometry through the glass. The fire stair descends to `playground`; the old gate still goes to `street`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The road runs off its north end into the laid-flat sky; a blank sign stands out there. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
@@ -68,8 +68,8 @@ is the same yard behind the corridor.
 
 | Landmark | Where | Use | Status |
 |---|---|---|---|
-| Yard door with a lit transom | corridor, north end | Pulls the eye down the walkway; the "other side" of the corridor | 已实现 |
-| Court fragment and small hoop below the parapet | corridor, east | Shows the yard before it is reachable | 已实现 |
+| Red fire door and fire stair | corridor, lower east wing | Yard entry and return landing | 已实现 |
+| Painted court, hoops and shed through the glass | corridor, courtside galleries | Shows the same yard before it is reached | 已实现 |
 | Blank sign standing in the sky | street, past the road's north end | Marks the end of the walkable town without a wall | 已实现 |
 | School wall with barred windows | street, west | Keeps the school present while outside it | 已实现 |
 | Long lit window off the grid | courtyard, north block | The one wrong thing in an ordinary block | 已实现 |
@@ -115,9 +115,9 @@ flowchart TB
 
 | Space | Narrative function | Exploration purpose | Scene or zone | Status |
 |---|---|---|---|---|
-| Stairwell | The vertical joint of the school; the first place where floors could disagree | Choice of up/down; landmarks on landings | Separate scene (`stairwell`), entered from the corridor's south end or a new door | 建议新增 |
-| Upper-floor corridor | Repetition of the walkway with one change | Compare against memory of the first corridor | Separate scene, built from the corridor's stage kit | 建议新增 |
-| Other classrooms | Rooms that look like the first one and are not | Short visits, one object each | Zones inside the upper corridor scene (door + shallow room), not full scenes | 建议新增 |
+| Stairwell | The vertical joint of the school; the first place where floors could disagree | Choice of up/down; an offset half landing | Two continuous connections inside `corridor` | 已实现 |
+| Upper-floor corridor | Repetition of the walkway with one change | Five bays, a turn and repeated room plates | Connected inside `corridor`; no location load | 已实现 |
+| Other classrooms | Rooms that look like the first one and are not | Jump to observe the interiors; opening further doors is a separate feature | Shallow furnished interiors behind high glass | 部分实现 |
 | Staff office | Authority without people; papers | One inspectable desk, the rota's origin | Separate small scene | 建议新增 |
 | Laboratory, toilets, gym | Named in the narrative bible as candidate spaces; order not fixed | Each a single-room scene | Separate scenes | 已确定但未实现 (as candidates); order 尚待作者决定 |
 | Unfinished stairwell | Named as a candidate space | A flight that stops; a view out | Zone of the stairwell scene | 已确定但未实现 (candidate) |
@@ -131,7 +131,7 @@ exploration, not implemented content; this plan places them only as far as the b
 
 | Study | Map consequence | Scene or zone | Status |
 |---|---|---|---|
-| Biology classroom: the curtained window opens onto absence; the protagonist falls and arrives in the schoolyard | A one-way link from an upper classroom to `playground` (needs its own spawn in the yard, e.g. the unused `FromSchool` or a new one) | Separate scene (`biology_classroom`); the fall is an exit, inside the transition transaction | **Implemented in the existing `classroom` scene** (Agent 03), not a separate `biology_classroom`: the back window is a hole through the west wall behind a floor-to-ceiling blackout curtain (issue #159), the fall is a staged transition (`LocationFlow.transition_to`) into `playground` `FromSchool`. Floor and trigger timing are provisional (`curtain_fall_pending`, handed to Agent 04) |
+| Biology classroom: a blue curtain conceals a cut through the west wall | A one-way route from an upper classroom to `playground`, separate from the normal corridor/yard entrances | Existing `classroom` and `playground` scenes | **Implemented:** failed Orientation check slips and injures a foot on `FromSchool`; success stays upstairs until a voluntary drop. Both land on the container roof and use its ladder to reach the yard. |
 | Biology classroom: the rear door opens onto a staircase suspended in the room | A vertical link that does not fit the building | Zone of the biology classroom | **Withdrawn from `classroom` in issue #159**: the rear door (`WallEast/RearDoor`, white, in the east wall behind the front door) never opens, "unless special means are used", and no staircase is placed. What those means are, and where the staircase goes: 尚待作者决定 |
 | Mirror-lined crawlspace or pipe | A narrow connector between two places | Short separate scene | 已确定但未实现; what it connects: 尚待作者决定 |
 | The schoolyard's impossible animals (a crocodile or a lion, as examples) | Occupants of the yard, calm, not combat | Inside `playground` (the yard's middle is reserved for events) | 已确定但未实现; relation to the green animal: 尚待作者决定 |
@@ -156,7 +156,7 @@ These are proposals for *how* links could misbehave, not decisions that they do.
 | The yard door leads to a yard that is not the same yard | Exit with a flag-conditioned `destination_scene` | 建议新增 |
 | The stairwell has one floor more going down than going up | Two stairwell scenes whose exits point at each other asymmetrically | 建议新增 |
 | Returning to the corridor from the street after a flag shows a changed walkway | Scene variant or state-driven visibility in the corridor | 建议新增 |
-| The biology classroom's curtain: a fall from an upper floor that lands in the yard | Exit from the classroom scene to `playground`, its own spawn, a fall beat in the transition | 已确定但未实现 (art-bible study) |
+| The biology classroom's curtain: a fall from an upper floor that lands in the yard | One-way staged route through the cut to the container roof (`FromSchool`), then down the ladder | 已实现 (see Location studies above) |
 | The elliptical building as the place where versions of the school meet | — | 已确定但未实现 as a later structure; placement, entry and rules 尚待作者决定 |
 
 All of these must stay inside the existing scene-transition transaction and keep one
@@ -187,7 +187,7 @@ and exits whose prompts name where they lead.
 flowchart LR
   p0["Phase 0 (this PR): stage pass on 4 locations + yard distance; tests; this plan"] --> p1
   p1["Phase 1: fix prompts and spawns (§4); register tests/location_art_test.gd in CI"] --> p2
-  p2["Phase 2: stairwell + upper corridor (kit from the corridor pass)"] --> p3
+  p2["Phase 2: connected stairs and upper gallery"] --> p3
   p3["Phase 3: one candidate room (lab, toilets or gym; author picks)"] --> p4
   p4["Phase 4: one periphery space (container yard or port; author picks)"] --> p5
   p5["Phase 5: first unstable link (§7), then the elliptical building when the author places it"]
@@ -197,21 +197,20 @@ flowchart LR
 |---|---|---|
 | 0 | Stage pass on corridor, street, courtyard, alley; yard distance additions; `tests/location_art_test.gd`; this plan | 已实现 (this pull request) |
 | 1 | Prompt keys, unused spawns, CI registration of the new test | 建议新增 |
-| 2 | Stairwell and upper corridor | 建议新增 |
+| 2 | Stairwell and upper corridor | 已实现：两层、两条楼梯，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | First candidate room | 已确定但未实现 (candidates); choice 尚待作者决定 |
 | 4 | First periphery space | 已确定但未实现 (candidates); choice 尚待作者决定 |
 | 5 | Unstable links; elliptical building | 建议新增 / 尚待作者决定 |
 
 ## Tests
 
-`tests/location_art_test.gd` checks the stage pass: no collider in its nodes, the same
-collider count per location, every spawn, interactable count and exit (destination and
-spawn) as on main at `6cdf037`, outline paths, routes from every spawn to every exit,
-materials and texture sizes, the distance staying under the floors and out of the light,
-no piece on a sight line of the follow camera, and lighting that is not murk. It is **not
-yet registered in `.github/workflows/godot-ci.yml`**, because another open pull request is
-changing that file; until then `.github/workflows/location-art-capture.yml` runs it (job
-`location art test`). Registering it is phase 1.
+`tests/location_art_test.gd` checks the visual-only stage dressing: no new colliders in
+its nodes, unchanged graybox collider counts, original spawn and exit IDs, original
+interactables, valid outline paths, reachable exits, small textures and no opaque prop
+crossing the follow camera. The structurally expanded teaching block is checked by
+`tests/corridor_art_test.gd`, registered as `corridor_art` in the main Godot checks.
+The stage test still runs in Location art capture; its main-workflow registration is
+separate from the teaching block.
 
 Rebuild order for the dressed scenes:
 
@@ -222,4 +221,4 @@ python3 scenes/environment/props/playground_art/source/build_playground_art.py
 python3 scenes/environment/props/stage_art/source/build_stage_art.py
 ```
 
-The stage builder is idempotent, so the hand-authored corridor can be re-dressed in place.
+The stage builder is idempotent for street, residential and alley. Run `python3 tools/build_teaching_block.py` for the corridor instead.

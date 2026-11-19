@@ -119,12 +119,7 @@ func _note_chapter(
 
 
 static func _file_bytes(path: String) -> int:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return 0
-	var length := file.get_length()
-	file.close()
-	return length
+	return JsonTable.file_bytes(path)
 
 
 ## The report as text: the same numbers the console gets, for a test or a document.
@@ -304,6 +299,4 @@ func _check_objective_effect(effect: Dictionary, label: String, locale: String) 
 
 
 func describe_errors() -> String:
-	if errors.is_empty():
-		return "Dialogue content loaded without errors."
-	return "Dialogue content has %d error(s):\n%s" % [errors.size(), "\n".join(errors)]
+	return JsonTable.describe_errors("Dialogue content", errors)

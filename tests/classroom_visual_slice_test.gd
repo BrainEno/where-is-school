@@ -135,10 +135,9 @@ const WALL_PAINT_SEGMENTS := {
 	"WallEast/PaintLintelBack": "wall_east_lintel_back.tres",
 	"WallWest/PaintSouth": "wall_west_south.tres",
 }
-## Each wall's one collision box: the openings are visual only.
+## North and east retain their full collision boxes; the west cut is checked below.
 const WALL_COLLISION := {
 	"WallNorth": Vector3(14.0, 3.2, 0.2),
-	"WallWest": Vector3(0.2, 3.2, 10.0),
 	"WallEast": Vector3(0.2, 3.2, 10.0),
 }
 
@@ -297,6 +296,20 @@ func _check_layout() -> void:
 		var box := (shapes[0] as CollisionShape3D).shape as BoxShape3D if shapes.size() == 1 else null
 		if box == null or not box.size.is_equal_approx(WALL_COLLISION[wall_name]):
 			_failures.append("'%s' is no longer one whole collision box." % wall_name)
+	var west_specs := {
+		"CollisionShape3D": [Vector3(0, 0, -2.025), Vector3(0.2, 3.2, 5.95)],
+		"SouthCollision": [Vector3(0, 0, 4.225), Vector3(0.2, 3.2, 1.55)],
+		"ClosedCurtainStop": [Vector3(0, 0, 2.2), Vector3(0.2, 3.2, 2.5)],
+	}
+	var west_shapes := _room.get_node(^"WallWest").find_children("*", "CollisionShape3D", false, false)
+	if west_shapes.size() != west_specs.size():
+		_failures.append("The west wall must have its two sections and one removable stop.")
+	for path: String in west_specs:
+		var shape := _room.get_node_or_null(NodePath("WallWest/" + path)) as CollisionShape3D
+		var size := shape.shape as BoxShape3D if shape != null else null
+		if size == null or not size.size.is_equal_approx(west_specs[path][1]) \
+			or not shape.position.is_equal_approx(west_specs[path][0]):
+			_failures.append("The west wall's '%s' no longer fits the opening." % path)
 	for removed: String in [
 		"DoorLintel", "AnomalyDoorLintel", "DoorFrameHead", "AnomalyDoorFrameHead", "Threshold",
 		"WallNorth/RearDoorAnomalyMount", "WallNorth/PaintCenter", "WallNorth/PaintRight",
@@ -320,6 +333,9 @@ func _check_layout() -> void:
 		_failures.append("The east wall lost one of its two dressed doors.")
 	elif front_door.global_position.z >= rear_door.global_position.z:
 		_failures.append("The grey door is not the front (blackboard-end) door.")
+	else:
+		_check_door_fit(front_door, "door_gray.tres")
+		_check_door_fit(rear_door, "door_white.tres")
 	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Chair/Schoolbag") as Node3D
 	if bag != null:
 		var bag_box := _subtree_aabb(bag)
@@ -370,6 +386,24 @@ func _check_layout() -> void:
 ## rest (just under the elbow, about 0.55-0.62 of their height - CSULB's and MSU's 36-42 in
 ## lecterns for an adult of 1.75 m, scaled to N's 1.65 m), N's stand is the lectern's own
 ## marker, and N there stands clear of it with the upper body above the top.
+func _check_door_fit(door: ClassroomDoorDressing, leaf_name: String) -> void:
+	var bounds := _subtree_aabb(door)
+	var delta_z := absf(bounds.get_center().z - door.global_position.z)
+	if bounds.position.x < 6.65 or bounds.end.x > 7.0 or bounds.position.y < -0.01 \
+		or bounds.end.y > 2.25 or bounds.size.z > 1.25 or delta_z > 0.10:
+		_failures.append("%s's frame or hardware escapes its east-wall opening: %s." % [door.name, bounds])
+	var paint := door.get_leaf_meshes()
+	if paint.is_empty():
+		_failures.append("%s has no painted leaf." % door.name)
+	for part in paint:
+		if part.material_override == null or part.material_override.resource_path.get_file() != leaf_name:
+			_failures.append("%s's leaf is not %s: %s." % [door.name, leaf_name, part.name])
+	var reverse := door.get_node_or_null(^"Reverse") as Node3D
+	if reverse == null or reverse.get_node_or_null(^"Door_vision_glass") == null \
+		or reverse.find_children("Door_handle*", "MeshInstance3D", false, false).is_empty():
+		_failures.append("%s lost its reverse-face glass or handle." % door.name)
+
+
 func _check_lectern() -> void:
 	var lectern := _room.get_node_or_null(^"Stage/Lectern") as Node3D
 	if lectern == null or lectern.scene_file_path != LECTERN_SCENE:
@@ -504,6 +538,12 @@ func _check_collision() -> void:
 			continue
 		var path := _relative(node)
 		if path.begins_with("Interactables/") or path.begins_with("Actors/"):
+			continue
+		if path == "VoidStep" and node is Area3D:
+			var trigger := node as Area3D
+			if trigger.collision_layer != 0 or trigger.collision_mask != 1 \
+				or trigger.monitorable or trigger.monitoring:
+				_failures.append("VoidStep must start inert and sense the player only, never block a ray or body.")
 			continue
 		if not SOLIDS.has(path):
 			_failures.append(

@@ -1,18 +1,20 @@
 extends SceneTree
 ## The stage pass over the walkway, street, courtyard and alley (and the yard's additions)
-## is visual-only, and stays out of the player's way.
+## is visual-only, and stays out of the player's way. The teaching block's new floors
+## are structural, checked separately by corridor_art_test.gd; only the exterior court
+## in StageArt is part of this pass.
 ##
 ##   godot --headless --path . --script res://tests/location_art_test.gd
 ##
 ## `scenes/environment/props/stage_art/source/build_stage_art.py` repoints materials,
-## retunes the light and adds mesh-only nodes to four scenes; the yard's builder adds a
+## retunes the light and adds mesh-only nodes to three scenes; the yard's builder adds a
 ## few more pieces to its painted distance. This test loads the real scenes and checks
 ## what a player would notice if the pass had got it wrong:
 ##
 ## 1. **Nothing to walk into.** No node of the pass (`StageArt/**`, `Stage*`) is or
-##    holds a collider; each scene keeps exactly the colliders it had before the pass.
-## 2. **The map is unchanged.** Every location keeps its spawn markers, its number of
-##    interactables, and its exits with the same destination and spawn; every outline
+##    holds a collider; the graybox exteriors keep exactly the colliders they had before the pass.
+## 2. **The route contract is explicit.** Every location keeps its spawn markers, its
+##    original interactables, and its exits with the same destination and spawn; every outline
 ##    path of every interactable still resolves.
 ## 3. **Still walkable.** The navigation bakes, and every spawn reaches every exit.
 ## 4. **Own materials, small textures.** Every mesh of the pass draws with a material
@@ -40,6 +42,7 @@ const TEXTURE_ROOTS: Array[String] = [
 	"res://scenes/environment/props/stage_art/textures/",
 	"res://scenes/environment/props/playground_art/textures/",
 ]
+const YARD_MATERIALS := "res://scenes/environment/props/playground_art/materials/"
 const MAX_TEXTURE_BYTES := 512 * 1024
 const MAX_TEXTURE_PX := 2048
 ## The follow camera (`scripts/world/camera_rig.gd`): the rig sits on the player.
@@ -58,13 +61,14 @@ const LOCATIONS := {
 	"corridor": {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
-		"shapes": 87,
-		"interactables": 9,
-		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard"],
+		# The teaching block is not the old graybox; corridor_art tests its solids and route.
+		"interactables": 11, # The rear classroom door is still an inspection, not an exit.
+		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard", "FromLaboratory"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"school_gate": "street/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
+			"to_laboratory": "laboratory/FromCorridor",
 		},
 	},
 	"street": {
@@ -103,18 +107,25 @@ const LOCATIONS := {
 	"playground": {
 		"scene": "res://scenes/locations/playground/playground.tscn",
 		"stage": false,
-		"shapes": 79,
-		"interactables": 12,
+		"shapes": 91, # Eight shell plates instead of one, two extra door pick meshes and the ladder.
+		"interactables": 13,
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
 		},
 	},
+	"laboratory": {
+		"scene": "res://scenes/locations/laboratory/laboratory.tscn",
+		"stage": false,
+		"interactables": 10, # Nine inspections and the shared entrance door.
+		"spawns": ["Entry", "FromAnnex", "FromCorridor"],
+		"exits": {"laboratory_to_corridor": "corridor/FromLaboratory"},
+	},
 }
 
 ## Spawns that are not meant to reach every exit (see docs/MAP_PLAN.md: FromStair stands
-## on a look-only landing, FromSchool is not used by any exit).
+## on a look-only landing; FromSchool uses a staged ladder instead of a navmesh slope).
 const ROUTE_EXEMPT: Array[String] = ["residential/FromStair", "playground/FromSchool"]
 
 var _failures: Array[String] = []
@@ -184,7 +195,7 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		if node is CollisionShape3D:
 			shapes += 1
 	_checks += 1
-	if shapes != int(spec["shapes"]):
+	if spec.has("shapes") and shapes != int(spec["shapes"]):
 		_failures.append("%s has %d collision shapes; it had %d." % [id, shapes, int(spec["shapes"])])
 
 	var spawns: Array[String] = []
@@ -197,18 +208,25 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		if not spawns.has(wanted):
 			_failures.append("%s lost its spawn marker %s." % [id, wanted])
 
-	var interactables := location.get_node_or_null(^"Interactables")
-	if interactables == null:
+	var anchors := location.get_node_or_null(^"Interactables")
+	if anchors == null:
 		_failures.append("%s has no Interactables." % id)
 		return
+	var interactables := anchors.get_children()
+	# Keep the stage-pass contract on its own anchor list (e.g. the teaching wing's
+	# nine recessed windows have their own test). The yard's fitted ladder is nested.
+	if id == "playground":
+		var ladder := (location as LocationRoot).find_interactable(&"pg_container_ladder")
+		if ladder != null:
+			interactables.append(ladder)
 	_checks += 1
-	if interactables.get_child_count() != int(spec["interactables"]):
+	if interactables.size() != int(spec["interactables"]):
 		_failures.append(
-			"%s has %d interactables; it had %d." % [id, interactables.get_child_count(), int(spec["interactables"])]
+			"%s has %d interactables; expected %d." % [id, interactables.size(), int(spec["interactables"])]
 		)
 	var exits: Dictionary = spec["exits"]
 	var seen := {}
-	for child in interactables.get_children():
+	for child: Node in interactables:
 		_check_outlines(id, child)
 		var exit := child as LocationExit
 		if exit == null or exit.destination_id == &"":
@@ -268,7 +286,11 @@ func _check_pieces(id: String, pieces: Array[MeshInstance3D]) -> void:
 	for mesh in pieces:
 		_checks += 1
 		var material := mesh.material_override as BaseMaterial3D
-		if material == null or not material.resource_path.begins_with(STAGE_MATERIALS):
+		var valid := material != null and material.resource_path.begins_with(STAGE_MATERIALS)
+		if id == "corridor" and material != null:
+			# The court the hall overlooks uses the playable yard's own paint and scale.
+			valid = valid or material.resource_path.begins_with(YARD_MATERIALS)
+		if not valid:
 			_failures.append("%s: '%s' does not draw with a stage material." % [id, mesh.name])
 			continue
 		if material.albedo_texture != null:

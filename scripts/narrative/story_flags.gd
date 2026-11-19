@@ -68,15 +68,15 @@ const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
 const Q_COMPANION: StringName = &"q_companion"
 ## bool: the player used the walkway railing to let part of the period pass.
 const CORRIDOR_WAITED: StringName = &"corridor_waited"
-## bool: the curtain conversation ended with the protagonist drawing the back-window
-## curtain aside; the classroom's fall is owed. Set by dialogue (`classroom_curtain`),
-## cleared by the fall itself once the player has landed in the yard.
-## PROVISIONAL: a placeholder until the curtain scene's narrative owner (Agent 04) takes
-## the dialogue over; the id is what the classroom code listens for, so keep it or
-## migrate both together.
+## bool: the opening has been requested by dialogue. Kept across a refused forced fall.
 const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
 ## bool: the back-window curtain hangs open on the void; the classroom loads that way.
 const CURTAIN_DRAWN: StringName = &"curtain_drawn"
+## bool: the curtain is open but the protagonist caught their balance and stayed in class.
+## Absent in earlier saves, where the only way to leave the curtain open was to fall.
+const CURTAIN_EDGE_HELD: StringName = &"curtain_edge_held"
+## bool: the player hurt their ankle on their last landing. Written only on arrival.
+const CURTAIN_LANDING_INJURED: StringName = &"curtain_landing_injured"
 ## bool: the rear door has been opened and the staircase hangs in the classroom.
 const REAR_DOOR_OPENED: StringName = &"rear_door_opened"
 
@@ -164,11 +164,20 @@ const ALL_FLAGS: Array[StringName] = [
 	# The biology classroom's two anomalies.
 	CURTAIN_FALL_PENDING,
 	CURTAIN_DRAWN,
+	CURTAIN_EDGE_HELD,
+	CURTAIN_LANDING_INJURED,
 	REAR_DOOR_OPENED,
 	# Outdoor beats.
 	ALLEY_ARRIVED,
 	PLAYGROUND_ARRIVED,
 ]
+
+
+## The opened curtain alone no longer means Q was left behind. Preserve that reading
+## for saves from before the protagonist could catch their balance and stay upstairs.
+static func has_curtain_landing(state: Node) -> bool:
+	return state != null and state.get_flag(CURTAIN_DRAWN, false) == true \
+		and state.get_flag(CURTAIN_EDGE_HELD, false) != true
 
 
 ## Flag that records a single dialogue choice was taken. Dialogue content marks
