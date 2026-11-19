@@ -1,9 +1,7 @@
 name: Classroom anomaly capture
 
-# Photographs the biology-classroom anomalies (the curtained window, the void behind it,
-# the fall, the rear door and its staircase) from the game's own camera in a real window,
-# so the round can be judged on frames. `tests/capture_classroom_anomalies.gd` takes them.
-#
+# Photographs the two windows, the opened cut, both landings, the roof ladder and the
+# cabin in a real game window. `tests/capture_classroom_anomalies.gd` drives the beats.
 # Same publishing as `Location art capture`: the frames are an artifact, and each one is
 # also printed as a small JPEG, base64 split into numbered notice annotations (an
 # annotation holds about 4 KB; concatenate the parts of one file in order and decode).
@@ -16,8 +14,13 @@ on:
       - ".github/workflows/classroom-anomaly-capture.yml"
       - "scenes/locations/classroom/**"
       - "scenes/environment/props/classroom_art/**"
+      - "scenes/locations/playground/**"
+      - "scenes/environment/props/playground_art/**"
+      - "scripts/actors/**"
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
+      - "assets/camera/shots/container_cabin.tres"
+      - "data/dialogue/*/prologue.json"
   workflow_dispatch:
 
 permissions:
@@ -40,7 +43,9 @@ jobs:
           # project theme can load before its font is imported). The second pass is.
           godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
-          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log"; then
+            exit 1
+          fi
 
       - name: Capture
         shell: bash

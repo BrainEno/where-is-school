@@ -135,10 +135,9 @@ const WALL_PAINT_SEGMENTS := {
 	"WallEast/PaintLintelBack": "wall_east_lintel_back.tres",
 	"WallWest/PaintSouth": "wall_west_south.tres",
 }
-## Each wall's one collision box: the openings are visual only.
+## North and east retain their full collision boxes; the west cut is checked below.
 const WALL_COLLISION := {
 	"WallNorth": Vector3(14.0, 3.2, 0.2),
-	"WallWest": Vector3(0.2, 3.2, 10.0),
 	"WallEast": Vector3(0.2, 3.2, 10.0),
 }
 
@@ -297,6 +296,20 @@ func _check_layout() -> void:
 		var box := (shapes[0] as CollisionShape3D).shape as BoxShape3D if shapes.size() == 1 else null
 		if box == null or not box.size.is_equal_approx(WALL_COLLISION[wall_name]):
 			_failures.append("'%s' is no longer one whole collision box." % wall_name)
+	var west_specs := {
+		"CollisionShape3D": [Vector3(0, 0, -2.025), Vector3(0.2, 3.2, 5.95)],
+		"SouthCollision": [Vector3(0, 0, 4.225), Vector3(0.2, 3.2, 1.55)],
+		"ClosedCurtainStop": [Vector3(0, 0, 2.2), Vector3(0.2, 3.2, 2.5)],
+	}
+	var west_shapes := _room.get_node(^"WallWest").find_children("*", "CollisionShape3D", false, false)
+	if west_shapes.size() != west_specs.size():
+		_failures.append("The west wall must have its two sections and one removable stop.")
+	for path: String in west_specs:
+		var shape := _room.get_node_or_null(NodePath("WallWest/" + path)) as CollisionShape3D
+		var size := shape.shape as BoxShape3D if shape != null else null
+		if size == null or not size.size.is_equal_approx(west_specs[path][1]) \
+			or not shape.position.is_equal_approx(west_specs[path][0]):
+			_failures.append("The west wall's '%s' no longer fits the opening." % path)
 	for removed: String in [
 		"DoorLintel", "AnomalyDoorLintel", "DoorFrameHead", "AnomalyDoorFrameHead", "Threshold",
 		"WallNorth/RearDoorAnomalyMount", "WallNorth/PaintCenter", "WallNorth/PaintRight",

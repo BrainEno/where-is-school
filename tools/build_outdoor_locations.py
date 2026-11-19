@@ -101,6 +101,13 @@ class Scene:
                 prop_ids[item[1]] = f'{base + 6 + len(prop_ids)}_prop'
                 ext.append(('PackedScene', item[1], prop_ids[item[1]]))
 
+        shot_ids = {}
+        for item in self.interactables:
+            shot = item.get("shot")
+            if shot and shot not in shot_ids:
+                shot_ids[shot] = f"shot_{len(shot_ids)}"
+                ext.append(('Resource', shot, shot_ids[shot]))
+
         mat_res = {mat: f'{i + 2}_{mat}' for i, mat in enumerate(used)}
 
         # sub resources: one shape + one mesh per box
@@ -215,6 +222,8 @@ class Scene:
             if item.get('route'):
                 lines.append(f'conversation_route = &"{item["route"]}"')
             lines.append(f'radius = {item.get("radius", 1.1)}')
+            if item.get('shot'):
+                lines.append(f'camera_shot = ExtResource("{shot_ids[item["shot"]]}")')
             _support_lines(lines, item)
             _outline_lines(lines, item)
             lines.append('')
@@ -782,10 +791,9 @@ def build_playground():
         s.box(f"TyreStack_{i}", (-15.2, y, 2.6), (1.0, 0.22, 0.42), "metal", None, False)
     s.box("TyreLoose", (-14.1, 0.12, 3.5), (0.92, 0.22, 0.4), "metal", None, False)
 
-    # the equipment container along the back: metal, no windows, a padlock bar
-    s.box("ContainerBody", (12.0, 1.3, -15.5), (6.0, 2.6, 2.4), "metal", ["camera_occluder"])
-    s.box("ContainerDoorLine", (12.0, 1.3, -14.28), (5.0, 2.2, 0.06), "shutter", None, False)
-    s.box("ContainerBar", (9.4, 1.3, -14.24), (0.1, 2.2, 0.08), "metal", None, False)
+    # Hollow ISO-style container, deck and ladder are one fitted prefab. The slab
+    # keeps FromSchool's roof 2.6 m above the yard, so older checkpoints still fit.
+    s.props.append(("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0))
     s.box("ContainerFootingA", (9.4, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
     s.box("ContainerFootingB", (14.6, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
 
@@ -841,8 +849,10 @@ def build_playground():
         {"name": "BoardLook", "pos": (13.2, 1.7, 3.2), "id": "pg_board_look",
          "inspection": "pg_court", "radius": 1.2,
          "outline": ("BoardSheet", "BoardBacking", "BoardPostA", "BoardPostB")},
-        {"name": "ContainerLook", "pos": (12.0, 1.4, -13.9), "id": "pg_container_look",
-         "inspection": "pg_container", "radius": 1.8, "outline": ("ContainerDoorLine",)},
+        {"name": "ContainerLook", "pos": (15.25, 1.05, -15.5), "id": "pg_container_look",
+         "inspection": "pg_container", "radius": 1.4,
+         "shot": "res://assets/camera/shots/container_cabin.tres",
+         "outline": ("ContainerBody/EndHeader", "ContainerBody/DoorNorth/Panel", "ContainerBody/DoorSouth/Panel")},
         {"name": "TyreLook", "pos": (-14.6, 0.7, 2.9), "id": "pg_tyre_look",
          "inspection": "pg_tyres", "radius": 1.4,
          # The ring tyres the art pass adds; the graybox stack they replace is hidden, and

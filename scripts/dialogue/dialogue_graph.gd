@@ -342,7 +342,7 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 	return choice
 
 
-## A check node rolls once and continues to one of two nodes:
+## A check node rolls once and follows one of two branches (explicit null ends it):
 ##
 ##   "check": {"ability": "orientation", "difficulty": 9, "kind": "visible",
 ##             "success": "looked_closely", "failure": "looked_badly",
@@ -378,12 +378,14 @@ func _parse_check(raw: Variant, context: String, targets: Array[StringName]) -> 
 	if not ["visible", "hidden"].has(kind):
 		errors.append("%s: check kind '%s' must be 'visible' or 'hidden'." % [context, kind])
 	check["kind"] = kind
-	check["success"] = StringName(String(data.get("success", "")))
-	check["failure"] = StringName(String(data.get("failure", "")))
 	for branch: String in ["success", "failure"]:
-		var target: StringName = check[branch]
-		if String(target).is_empty():
-			errors.append("%s: check needs a '%s' node." % [context, branch])
+		if data.has(branch) and data[branch] == null:
+			check[branch] = &""
+			continue
+		var target := StringName(String(data.get(branch, "")))
+		check[branch] = target
+		if target == &"":
+			errors.append("%s: check needs a '%s' node or explicit null." % [context, branch])
 		else:
 			targets.append(target)
 	check["repeatable"] = data.get("repeatable", false) == true

@@ -107,8 +107,8 @@ const LOCATIONS := {
 	"playground": {
 		"scene": "res://scenes/locations/playground/playground.tscn",
 		"stage": false,
-		"shapes": 79,
-		"interactables": 12,
+		"shapes": 91, # Eight shell plates instead of one, two extra door pick meshes and the ladder.
+		"interactables": 13,
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
@@ -125,7 +125,7 @@ const LOCATIONS := {
 }
 
 ## Spawns that are not meant to reach every exit (see docs/MAP_PLAN.md: FromStair stands
-## on a look-only landing, FromSchool is not used by any exit).
+## on a look-only landing; FromSchool uses a staged ladder instead of a navmesh slope).
 const ROUTE_EXEMPT: Array[String] = ["residential/FromStair", "playground/FromSchool"]
 
 var _failures: Array[String] = []
@@ -208,18 +208,15 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		if not spawns.has(wanted):
 			_failures.append("%s lost its spawn marker %s." % [id, wanted])
 
-	var interactables := location.get_node_or_null(^"Interactables")
-	if interactables == null:
-		_failures.append("%s has no Interactables." % id)
-		return
+	var interactables := (location as LocationRoot).get_interactables()
 	_checks += 1
-	if interactables.get_child_count() != int(spec["interactables"]):
+	if interactables.size() != int(spec["interactables"]):
 		_failures.append(
-			"%s has %d interactables; it had %d." % [id, interactables.get_child_count(), int(spec["interactables"])]
+			"%s has %d interactables; expected %d." % [id, interactables.size(), int(spec["interactables"])]
 		)
 	var exits: Dictionary = spec["exits"]
 	var seen := {}
-	for child in interactables.get_children():
+	for child: Interactable in interactables:
 		_check_outlines(id, child)
 		var exit := child as LocationExit
 		if exit == null or exit.destination_id == &"":

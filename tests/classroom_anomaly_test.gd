@@ -4,7 +4,7 @@ extends SceneTree
 ##
 ## Claims under test:
 ##
-## 1. **Placed, and decoration only.** The back window is a real hole through the west wall
+## 1. **Two different openings.** The back window is a real hole through the west wall
 ##    - no glass, no view, no frame, no backdrop - with a floor-to-ceiling blackout curtain
 ##    drawn over it; the front window (Window0) stays ordinary and shows the washing. Both
 ##    doors are on the east wall: the grey front door and the white rear door, one model in
@@ -17,11 +17,13 @@ extends SceneTree
 ## 3b. **The projection screen is furniture.** It is rolled up when the room loads; its
 ##    pull rolls it all the way down over the board and, used again, back up, with the
 ##    prompt following. No conversation, no inspection, no story flag, nothing saved.
-## 4. **The curtain.** Leaving it drawn changes nothing. Drawing it aside (after an
-##    orientation check that is visible and recorded) uncovers the void, and the
-##    protagonist falls: the next room is the yard, at `FromSchool`, with the landing line
-##    instead of the yard's ordinary arrival; the provisional `curtain_fall_pending` flag is
-##    spent; the body is upright and the view level.
+## 4. **Two outcomes.** Leaving it drawn changes nothing. At the uncovered cut, the
+##    visible balance check decides whether the player catches their weight or slips.
+##    Success allows walking away and later crossing the lip for a braced landing. On a miss
+##    the player crosses the open lip without a second choice and injures a foot on the roof.
+##    Both routes use FromSchool, the right landing line and a level camera on recovery.
+## 4b. **A route down.** Walk to the ladder, press interact and ride the actual rungs
+##    on both branches. On the ground, walk to the open end and see the cot through it.
 ## 5. **The room remembers.** Walking back into the classroom finds the curtain open on the
 ##    void and the rear door still shut, and the curtain does not throw the player out a
 ##    second time.
@@ -63,7 +65,9 @@ const REMOVED_WINDOW_PARTS: Array[String] = [
 	"WindowFrameLeft1", "WindowFrameRight1", "WindowMullion1",
 	"WallWest/CurtainRod1", "WallWest/CurtainPanel1L", "WallWest/CurtainPanel1R",
 ]
-const CHECK_KEY := "classroom_curtain/cc_edges_check"
+const HEM_CHECK := "classroom_curtain/cc_edges_check"
+const BALANCE_KEY := "classroom_curtain_void/cv_balance_check"
+const BALANCE_RECORD := &"check:classroom_curtain_void:cv_balance_check"
 const SESSION_SCRIPT := "res://scripts/ui/game_session.gd"
 ## A scene nobody ships, for the refused-fall fixture (never written anywhere).
 const MISSING_SCENE := "user://classroom_anomaly_fixtures/no_such_yard.tscn"
@@ -93,6 +97,8 @@ var _inspections: Array[StringName] = []
 ## `location_entered` emissions of the current world's host.
 var _entered := 0
 var _lap_started := 0
+## The authored route can also be played with -- --real-time to inspect at ordinary speed.
+var _story_speed := TIME_SCALE
 
 
 func _initialize() -> void:
@@ -102,6 +108,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_started = Time.get_ticks_msec()
+	if "--real-time" in OS.get_cmdline_user_args():
+		_story_speed = 1.0
 	var autoloads := Harness.ensure_state_autoloads(self)
 	_game_state = autoloads["game_state"]
 	_narrative = autoloads["narrative_state"]
@@ -143,7 +151,7 @@ func _run() -> void:
 	# the way the game does when it ends; without this every beat would end with control
 	# still withheld and "control is back" could not be checked.
 	_sequence.allow_player_control()
-	Engine.time_scale = TIME_SCALE
+	Engine.time_scale = _story_speed
 
 	if _host.get_current_path() != CLASSROOM or _host.get_current() == null:
 		if not _host.load_location(CLASSROOM, &"PlayerStart", _player):
@@ -180,6 +188,9 @@ func _run() -> void:
 	Harness.stage = "the room remembers"
 	await _check_return()
 	_lap("fall and return")
+	Harness.stage = "successful hold, later safe drop and ladder"
+	await _check_safe_drop()
+	_lap("safe drop and ladder")
 
 	var save := root.get_node_or_null(^"Save")
 	if save != null and save.has_method("forget_all"):
@@ -191,8 +202,8 @@ func _run() -> void:
 		self,
 		_failures,
 		(
-			"the curtained window opens on nothing and drops the player into the yard and is "
-			+ "remembered; the rear door on the east wall never opens; nothing collides."
+			"the empty cut holds or drops the player, both landings and the ladder work and are "
+			+ "remembered; the rear door on the east wall never opens."
 		)
 	)
 
@@ -277,8 +288,10 @@ func _check_placement() -> void:
 	):
 		_failures.append("The ordinary window does not show the washing on the line.")
 
-	# The back window is a hole: nothing of Window1 is left, and nothing drawn under the
-	# west wall reaches into the opening. The wall's collision stays whole.
+	for path: String in ["WallWest/CurtainRod0", "WallWest/CurtainPanel0L", "WallWest/CurtainPanel0R"]:
+		if _room().has_node(NodePath(path)):
+			_failures.append("The ordinary window still carries '%s'." % path)
+	# The hole is free of glass, frame, curtain panels from the first window and backdrop.
 	for removed: String in REMOVED_WINDOW_PARTS:
 		if _room().get_node_or_null(NodePath(removed)) != null:
 			_failures.append("Window1's '%s' is still in the room." % removed)
@@ -293,13 +306,10 @@ func _check_placement() -> void:
 			_failures.append(
 				"'%s' %s covers the hole in the west wall." % [mesh.name, str(box)]
 			)
-	var west_shapes := west.find_children("*", "CollisionShape3D", true, false)
-	if west_shapes.size() != 1:
-		_failures.append("The west wall has %d collision shapes, not one." % west_shapes.size())
-	else:
-		var west_box := (west_shapes[0] as CollisionShape3D).shape as BoxShape3D
-		if west_box == null or not west_box.size.is_equal_approx(Vector3(0.2, 3.2, 10.0)):
-			_failures.append("The west wall's collision is no longer the whole wall.")
+	if _ray(Vector3(-6.3, 1.35, 2.2), Vector3(-7.5, 1.35, 2.2)).get("collider") != west:
+		_failures.append("A closed curtain did not stop the player at the wall.")
+	if _ray(Vector3(-6.3, 1.35, -2.4), Vector3(-7.5, 1.35, -2.4)).get("collider") != west:
+		_failures.append("The normal glass window lost the wall behind it.")
 	if void_marker.visible:
 		_failures.append("The void is uncovered before the curtain was touched.")
 	if absf(void_marker.global_position.z - 2.2) > 0.05:
@@ -555,12 +565,14 @@ func _check_refused_fall(label: String, tamper: Dictionary) -> void:
 	var entered_before := _entered
 	var location_before := String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, ""))
 	_conversations.clear()
+	_seed_balance(false)
 	Engine.time_scale = FAILURE_TIME_SCALE
 	await _activate(&"curtain")
 	var chose := await _choose(&"draw", "%s: drawing the curtain" % label)
 	var releases := 0
 	var was_held := true
-	var max_pitch := 0.0
+	var saw_lean := false
+	var crossed := false
 	var saw_void := false
 	var started := Time.get_ticks_msec()
 	while chose and Time.get_ticks_msec() - started < 40000 and not _over_budget():
@@ -572,8 +584,8 @@ func _check_refused_fall(label: String, tamper: Dictionary) -> void:
 				was_held = false
 				break
 		was_held = held
-		if _player.visual != null:
-			max_pitch = maxf(max_pitch, _player.visual.rotation_degrees.x)
+		saw_lean = saw_lean or _clip() == "void_lean"
+		crossed = crossed or (_player.global_position.x < -7.2 and _player.global_position.y < -0.25)
 		if _void() != null and _void().visible:
 			saw_void = true
 		if _dialogue.is_busy():
@@ -582,7 +594,7 @@ func _check_refused_fall(label: String, tamper: Dictionary) -> void:
 	if was_held:
 		_failures.append("%s: the staged moment's beat was never released." % label)
 	await _settle(20.0, "%s: the refused fall" % label)
-	Engine.time_scale = TIME_SCALE
+	Engine.time_scale = _story_speed
 	staged.stage_handler = original
 	if not chose:
 		return
@@ -593,8 +605,8 @@ func _check_refused_fall(label: String, tamper: Dictionary) -> void:
 		_failures.append("%s: the curtain handler did not stage a fall (%s)." % [label, str(requests)])
 	if not saw_void:
 		_failures.append("%s: the void never showed before the refused fall." % label)
-	if max_pitch < 20.0:
-		_failures.append("%s: the body never leaned out (pitch %.1f)." % [label, max_pitch])
+	if not saw_lean or not crossed:
+		_failures.append("%s: the real body never leaned and crossed the cut." % label)
 	if recoveries.size() != 1:
 		_failures.append("%s: on_failure ran %d time(s), not once." % [label, recoveries.size()])
 	else:
@@ -626,7 +638,7 @@ func _check_refused_fall(label: String, tamper: Dictionary) -> void:
 	).length()
 	if moved > 0.1:
 		_failures.append("%s: the player was moved %.2f m by a refused fall." % [label, moved])
-	_notes.append("%s: recovered once, beat released %d, lean %.0f deg" % [label, releases, max_pitch])
+	_notes.append("%s: body crossed cut, recovered once, beat released %d" % [label, releases])
 
 
 ## What a refused fall leaves behind, wherever it is checked from: the flags, the room and
@@ -691,7 +703,7 @@ func _check_retry_left_drawn() -> void:
 	await _activate(&"curtain")
 	var chose := await _choose(&"leave", "the retried curtain")
 	await _settle(30.0, "leaving the retried curtain")
-	Engine.time_scale = TIME_SCALE
+	Engine.time_scale = _story_speed
 	if not chose:
 		return
 	if not _conversations.has(&"classroom_curtain"):
@@ -782,13 +794,7 @@ func _adopt_current_world() -> bool:
 
 
 func _check_fall() -> void:
-	var seed_value := -1
-	for candidate in 4000:
-		if CheckResolver.new(candidate).dice_total_for(CHECK_KEY) >= 12:
-			seed_value = candidate
-			break
-	if seed_value >= 0:
-		_dialogue.set_check_resolver(CheckResolver.new(seed_value))
+	_seed_balance(false, true)
 	_conversations.clear()
 	var entered_before := _entered
 	await _activate(&"curtain")
@@ -805,8 +811,10 @@ func _check_fall() -> void:
 		_failures.append("A passed check at the curtain recorded nothing.")
 	# The fall: the void is shown, the room goes, the yard comes.
 	var saw_void := false
+	var observed_clips := {}
 	var started := Time.get_ticks_msec()
 	while Time.get_ticks_msec() - started < 60000:
+		observed_clips[_clip()] = true
 		var room := _room()
 		if (
 			room != null
@@ -882,6 +890,14 @@ func _check_fall() -> void:
 	if companion != null and companion.visible:
 		_failures.append("The companion followed the protagonist downstairs after the curtain fall.")
 
+	var balance: Variant = _game_state.get_flag(BALANCE_RECORD, null)
+	if not (balance is Dictionary) or balance.get("success", true) or not observed_clips.has("void_slip"):
+		_failures.append("Failed balance didn't play the uncontrolled slip.")
+	if not observed_clips.has("roof_impact") or not _flag(StoryFlags.CURTAIN_LANDING_INJURED) \
+		or not _narrative.has_entry(&"hurt_ankle_at_container"):
+		_failures.append("The hard landing did not produce an impact, an injury and a record.")
+	await _check_ladder(true)
+
 
 # --- 5. the room remembers ----------------------------------------------------------
 
@@ -911,6 +927,220 @@ func _check_return() -> void:
 		_failures.append("The drawn curtain played %s." % str(_conversations))
 	if String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) != "classroom":
 		_failures.append("The drawn curtain threw the player out a second time.")
+
+
+func _check_safe_drop() -> void:
+	_game_state.clear()
+	_narrative.clear()
+	_game_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
+	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	if not _host.load_location(CLASSROOM, &"FromCorridor", _player):
+		_failures.append("Couldn't reset the classroom for a passed check.")
+		return
+	_seed_balance(true)
+	_player.teleport(Transform3D(Basis.IDENTITY, CURTAIN_SPOT + Vector3(0.17, 0, -0.36)))
+	_player.face_toward(Vector3.LEFT)
+	await _activate(&"curtain")
+	if not await _choose(&"draw", "drawing the curtain with a passed check"):
+		return
+	await _settle(30.0, "the edge held after the check")
+	var record: Variant = _game_state.get_flag(BALANCE_RECORD, null)
+	if not (record is Dictionary) or record.get("success", false) != true:
+		_failures.append("No passed balance check was recorded at the edge.")
+	if not _flag(StoryFlags.CURTAIN_EDGE_HELD) or not _flag(StoryFlags.CURTAIN_DRAWN) \
+		or _room().location_id != &"classroom" or not _player.is_control_enabled():
+		_failures.append("Success didn't leave the curtain open and give the player control upstairs.")
+		return
+	if _flag(StoryFlags.CURTAIN_FALL_PENDING) or _flag(StoryFlags.CURTAIN_LANDING_INJURED):
+		_failures.append("Merely looking into the void queued a fall or an injury.")
+	if not _ray(Vector3(-6.55, 1.35, 2.53), Vector3(-7.6, 1.35, 2.53)).is_empty():
+		_failures.append("Something solid still blocks the open cut.")
+	var entered_before := _entered
+	await _activate(&"curtain")
+	if not await _choose(&"stay", "choosing to stay upstairs"):
+		return
+	await _settle(30.0, "staying upstairs")
+	if _entered != entered_before or not _flag(StoryFlags.CURTAIN_EDGE_HELD):
+		_failures.append("Choosing to stay still left the classroom.")
+		return
+	var held_at := _player.global_position
+	_check_checkpoint(&"classroom", held_at)
+	var retreat := Vector3(-5.38, 0.0, held_at.z)
+	if not await _walk_to(retreat, 0.15) or _entered != entered_before \
+		or not _player.is_control_enabled() or _player.global_position.x <= held_at.x + 0.47:
+		_failures.append("The player couldn't physically retreat from the open cut after passing.")
+		return
+	# Cross the geometry on foot; do not choose the menu option or call the trigger.
+	if not await _walk_to(Vector3(-7.72, 0.0, 2.2), 0.12, true):
+		_failures.append("Walking off the open lip didn't begin the deliberate drop.")
+		return
+	var observed := {}
+	if not await Harness.wait_until(func() -> bool:
+		if _clip() == "roof_brace":
+			observed["brace"] = true
+		if _clip() == "void_step":
+			observed["step"] = true
+		if _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		return _room().location_id == &"playground" and _flag(StoryFlags.PLAYGROUND_ARRIVED) \
+			and not _sequence.is_beat_active() and not _dialogue.is_busy()
+	, 45.0):
+		_failures.append("The later optional drop did not land.")
+		return
+	var braced := observed.has("brace")
+	var stepped := observed.has("step")
+	if not stepped or not braced or _flag(StoryFlags.CURTAIN_LANDING_INJURED) \
+		or _narrative.has_entry(&"hurt_ankle_at_container") or _flag(StoryFlags.CURTAIN_EDGE_HELD):
+		_failures.append("The optional drop reused the slip/hard impact, hurt the player or kept the edge held.")
+	await _check_ladder(false)
+
+
+func _check_ladder(hurt: bool) -> void:
+	if _room().location_id != &"playground":
+		_failures.append("Ladder check did not start in the yard.")
+		return
+	var ladder := _room().find_interactable(&"pg_container_ladder") as StagedInteractable
+	var container := _room().get_node_or_null(^"ContainerBody") as Node3D
+	if container == null:
+		_failures.append("The playable yard has no container shell.")
+		return
+	var roof := container.get_node(^"Ladder/RoofMark") as Marker3D
+	var ground := container.get_node(^"Ladder/GroundMark") as Marker3D
+	if ladder == null or not ladder.is_staged():
+		_failures.append("No staged ladder on the roof.")
+		return
+	if absf(_player.global_position.y - roof.global_position.y) > 0.12:
+		_failures.append("The drop did not end on the solid roof.")
+		return
+	if not await _walk_to(roof.global_position, 0.24):
+		_failures.append("The player could not walk across the roof to the ladder.")
+		return
+	_player.face_toward(Vector3.BACK)
+	if not await Harness.wait_until(func() -> bool:
+		return _interaction.get_current_target() == ladder and _player.is_on_floor()
+	, 4.0):
+		_failures.append("The ladder was not targeted while the player stood on the roof.")
+		return
+	var started := Time.get_ticks_msec()
+	await _interact_key()
+	var clips := {}
+	var levels := {}
+	var drop := 0.0
+	var previous := _player.global_position.y
+	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 15000:
+		var clip := _clip()
+		var pos := _player.global_position
+		clips[clip] = true
+		if clip in ["ladder_right", "ladder_left"]:
+			levels[int(pos.y / 0.28)] = true
+			if absf(pos.x - roof.global_position.x) > 0.05 or absf(pos.z - roof.global_position.z - 0.94) > 0.07:
+				_failures.append("The player slid away from the rungs mid-descent.")
+		drop = maxf(drop, previous - pos.y)
+		previous = pos.y
+		await process_frame
+	if not await Harness.wait_until(func() -> bool: return _player.is_control_enabled() and _player.is_on_floor(), 5.0):
+		_failures.append("The ladder didn't return grounded control.")
+	if levels.size() < 6 or drop > 0.32 or not clips.has("ladder_mount") \
+		or not clips.has("ladder_dismount") or not clips.has("ladder_left") or not clips.has("ladder_right"):
+		_failures.append("The ladder did not move rung by rung (%s, max drop %.2f m)." % [str(clips), drop])
+	if _player.global_position.distance_to(ground.global_position) > 0.08 \
+		or _host.get_current_spawn() != &"FromSchool" or not _flag(StoryFlags.CURTAIN_DRAWN):
+		_failures.append("The descent did not end below the same container.")
+	if _flag(StoryFlags.CURTAIN_LANDING_INJURED) != hurt:
+		_failures.append("The ladder changed the landing outcome.")
+	_check_checkpoint(&"playground", _player.global_position)
+	# Walk around the folded-back door leaf rather than setting a ground transform.
+	if not await _walk_to(container.to_global(Vector3(4.0, 0.0, 1.95)), 0.24) \
+		or not await _walk_to(container.to_global(Vector3(4.0, 0.0, 0.12)), 0.22):
+		_failures.append("Couldn't turn the corner from the ladder to the open end.")
+		return
+	var look := _room().find_interactable(&"pg_container_look")
+	_player.face_toward(Vector3.LEFT)
+	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == look, 3.0):
+		_failures.append("The open door doesn't offer its inspection.")
+		return
+	var bed := container.get_node(^"Cabin/Mattress") as MeshInstance3D
+	var eye := _player.global_position + Vector3.UP * 1.4
+	var mattress_top := bed.global_position + Vector3.UP * 0.073
+	var ray := _ray(eye, mattress_top)
+	if not ray.is_empty():
+		_failures.append("A solid blocks the cot from the real doorway (%s)." % ray.get("collider"))
+	var rig := _player.camera_rig
+	rig.snap()
+	var camera := rig.camera
+	if not camera.is_position_in_frustum(mattress_top) \
+		or not _ray(camera.global_position, mattress_top).is_empty():
+		_failures.append("The cot is blocked or off-screen from the default doorway camera.")
+	await _interact_key()
+	await _settle(20.0, "seeing the cot")
+	if not _narrative.has_entry(&"saw_pg_container"):
+		_failures.append("Inspecting the open end did not record the cabin.")
+	_notes.append("%s ladder: %d heights; stayed in yard; cot from open door" % ["injured" if hurt else "braced", levels.size()])
+
+
+## Check what Continue would read, not just the in-memory flag or an autosave signal.
+func _check_checkpoint(location: StringName, at: Vector3) -> void:
+	var save := root.get_node_or_null(^"Save")
+	var result: Dictionary = save.read_save()
+	var world: Dictionary = (result.get("payload", {}) as Dictionary).get("world", {})
+	var saved: Array = world.get("position", [])
+	if not bool(result.get("ok", false)) or StringName(world.get("location_id", "")) != location \
+		or saved.size() != 3 or Vector3(saved[0], saved[1], saved[2]).distance_to(at) > 0.12:
+		_failures.append("The %s checkpoint saved a different room or a mid-beat position." % location)
+
+
+func _walk_to(goal: Vector3, radius: float, begins_beat: bool = false) -> bool:
+	var deadline := Time.get_ticks_msec() + 4500
+	var actions: Array[StringName] = [&"move_left", &"move_right", &"move_forward", &"move_back"]
+	var arrived := false
+	while Time.get_ticks_msec() < deadline:
+		if begins_beat and _sequence.is_beat_active():
+			arrived = true
+			break
+		var offset := goal - _player.global_position
+		offset.y = 0
+		if not begins_beat and offset.length() < radius:
+			arrived = true
+			break
+		var dir := offset.normalized()
+		var x := dir.dot(_player.camera_rig.planar_right())
+		var z := dir.dot(_player.camera_rig.planar_forward())
+		var inputs := [maxf(0, -x), maxf(0, x), maxf(0, z), maxf(0, -z)]
+		for i in actions.size():
+			Input.action_press(actions[i], inputs[i])
+		await physics_frame
+	for action: StringName in actions:
+		Input.action_release(action)
+	return arrived
+
+
+func _interact_key() -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventKey.new()
+		event.physical_keycode = KEY_E
+		event.keycode = KEY_E
+		event.pressed = pressed
+		root.push_input(event)
+		await process_frame
+
+
+func _ray(a: Vector3, b: Vector3) -> Dictionary:
+	var query := PhysicsRayQueryParameters3D.create(a, b, 1, [_player.get_rid()])
+	return _player.get_world_3d().direct_space_state.intersect_ray(query)
+
+
+func _clip() -> String:
+	return _player.get_character_animator().get_current_clip()
+
+
+func _seed_balance(passed: bool, hem_passed: bool = false) -> void:
+	for seed_value in 4000:
+		var resolver := CheckResolver.new(seed_value)
+		if (resolver.dice_total_for(BALANCE_KEY) + 3 >= 10) == passed \
+			and (not hem_passed or resolver.dice_total_for(HEM_CHECK) + 3 >= 9):
+			_dialogue.set_check_resolver(resolver)
+			return
+	_failures.append("No seed for the required balance outcome.")
 
 
 # --- helpers ------------------------------------------------------------------------

@@ -156,8 +156,8 @@ shows the line, and then continues to one of two branches. A check node never ha
 | `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. Shipping today: `orientation`. Its value is added to the die. |
 | `difficulty` | yes | 1..30. The total needed. Typical values are 8-12. |
 | `kind` | yes | `visible` = the player sees the voice, the die, the difficulty and the outcome. `hidden` = only the resulting line is shown. Use `visible` when the player chose the attempt, `hidden` when a voice speaks up on its own. |
-| `success` | yes | Node id to continue to on success. |
-| `failure` | yes | Node id to continue to on failure. Must exist and must carry real content: a failed check can never be the only way past a required beat. |
+| `success` | yes | Node id to continue to on success, or explicit `null` to end the conversation. |
+| `failure` | yes | Node id to continue to on failure, or explicit `null` to end the conversation (for example, before an immediate staged fall). Both outcomes must let the player continue. |
 | `modifiers` | no | `[{"flag": "saw_set_square", "value": 1}]`. Each set flag adds its value; unset flags add nothing. |
 | `repeatable` | no | Default `false`. When false the resolved result is recorded under `check:<conversation>:<node>` and replayed on a later visit, so the attempt cannot be re-rolled. Leave it false. |
 

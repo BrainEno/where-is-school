@@ -9,6 +9,7 @@
 [node name="Protagonist" type="Node3D"]
 script = ExtResource("2_animation")
 motion_profile = ExtResource("3_motion")
+prologue_actions = true
 
 [node name="Model" parent="." instance=ExtResource("1_model")]
 

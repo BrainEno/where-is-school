@@ -20,17 +20,19 @@ What it does to the scene, and nothing else:
   court and the ring tyres replace (mesh-only nodes - no collider is touched);
 * lifts `CourtFarHalf` 4 mm so it is no longer buried under `CourtSurface`;
 * replaces the Environment resource and retunes `Sun`;
-* adds one `PlaygroundArt` subtree of mesh-only nodes (no bodies, no shapes), plus two
-  flat decals parented under the occluder bodies they are painted on, so the camera's
+* adds one `PlaygroundArt` subtree of mesh-only nodes (no bodies, no shapes), plus one
+  flat decal parented under the occluder bodies they are painted on, so the camera's
   occluder fader fades them together with their wall.
 
-It never adds a CollisionObject3D, never moves a body, a shape, an interactable, an exit
-or a spawn - `tests/playground_art_slice_test.gd` checks exactly that.
+The dressing pass never adds a CollisionObject3D, moves a body, shape, interactable,
+exit or spawn. The separate container prefab owns its own shell and ladder.
 """
 
 from __future__ import annotations
 
 import argparse
+import math
+from functools import lru_cache
 import re
 import sys
 from pathlib import Path
@@ -76,8 +78,6 @@ SCHOOL_EXIT_MATERIALS = {
     "exit_steel": {"color": (150, 158, 151)},
 }
 BRASS = (190, 150, 62)
-CONTAINER = (66, 86, 120)
-SHUTTER = (52, 68, 96)
 ESTATE = (128, 104, 116)
 DISTANT = (44, 40, 58)
 PALE = (226, 216, 190)
@@ -129,9 +129,16 @@ MATERIALS: dict[str, dict] = {
     "frame_yellow": {"color": YELLOW, "outline": True},
     "tyre": {"texture": tex("tyre"), "outline": True},
     "notice": {"texture": tex("notice_sheet"), "triplanar": "local", "scale": (1.0, 1 / 1.1, -1 / 1.8), "offset": (0.0, 0.5, 0.5)},
-    "container": {"color": CONTAINER, "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
-    "shutter": {"color": SHUTTER, "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5)},
-    "container_gesture": {"texture": tex("container_gesture"), "cut": 0.5},
+    "container": {"color": (48, 92, 146), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.58, 0.58, 0.58)},
+    "container_rib": {"color": (60, 111, 164), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.72, 0.72, 0.72)},
+    "container_frame": {"color": (51, 71, 97), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.73, 0.73, 0.73), "outline": True},
+    "container_lining": {"color": (136, 145, 143), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.56, 0.56, 0.56)},
+    "container_steel": {"color": (139, 161, 169), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.9, 0.9, 0.9)},
+    "container_deck": {"color": (117, 83, 63), "texture": tex("metal_tile"), "triplanar": "local", "scale": (1.6, 0.8, 0.8)},
+    "container_canvas": {"color": (162, 170, 147)},
+    "container_bedding": {"color": (228, 212, 176)},
+    "container_blanket": {"color": (150, 105, 70)},
+    "container_oxide": {"color": (118, 75, 58)},
     # the shed corner
     "shed_wall": {"color": SHED_IVORY, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "shed_roof": {"color": ROOF_PLUM, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
@@ -239,12 +246,10 @@ REPOINT: list[tuple[str, str]] = [
     (r"BoardSheet", "notice"),
     (r"FramePost_\d/MeshInstance3D|FrameRung_\d|FrameTopBar", "frame_yellow"),
     (r"TyreStack_\d|TyreLoose", "tyre"),
-    (r"ContainerBody/MeshInstance3D", "container"),
-    (r"ContainerDoorLine", "shutter"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
     (
-        r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking|ContainerBar"
+        r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
         r"|Bird_\d|BirdWire|TapPost/MeshInstance3D|TapSpout|TapDrain"
         r"|SouthGatePost(West|East)|SouthGateLintel",
@@ -455,7 +460,6 @@ def build_nodes() -> Builder:
 
     # Decals on the occluder bodies: children of the body, so they fade with it.
     b.flat("WallPatches", "SchoolBackWall", quad(b, 6.0, 2.4), "wall_patches", (4.0, -3.0, 1.006))
-    b.flat("Gesture", "ContainerBody", quad(b, 5.0, 2.0), "container_gesture", (0.0, 0.0, 1.27))
 
     # The plinth returns into the jambs instead of passing through the bottom half
     # of the door. Only the mesh is replaced; the plinth keeps its full-width collider.
@@ -467,6 +471,152 @@ def build_nodes() -> Builder:
 
 
 # --- scene surgery ----------------------------------------------------------------------------
+
+
+def build_container() -> tuple[str, set[str]]:
+    """Hollow 6 × 2.4 m shipping container. Everything is authored in prop space:
+    five structural plates, opening hardware, fitted cot, and a climbable steel ladder.
+    Only the shell, open leaves and entry plate are solid. The corrugation, grips and
+    furniture detailing don't add little obstacles to the schoolyard bake.
+    """
+    b = Builder()
+    used = set()
+
+    @lru_cache(maxsize=None)
+    def box_mesh(size):
+        return b.mesh("BoxMesh", size=vec3(size))
+
+    def box(name, size, where, mat, parent=".", rot=None, shadow=True):
+        used.add(mat)
+        b.flat(name, parent, box_mesh(size), mat, where, rot, shadow=shadow)
+
+    def shape(name, size, where, rot=None):
+        props = {"position": vec3(where), "shape": f'SubResource("{b.mesh("BoxShape3D", size=vec3(size))}")'}
+        if rot is not None:
+            props["rotation_degrees"] = vec3(rot)
+        b.node(name, ".", "CollisionShape3D", **props)
+
+    def plate(name, size, where, mat, rot=None):
+        box(name, size, where, mat, rot=rot)
+        shape(name + "Collision", size, where, rot)
+
+    plate("Roof", (6.0, 0.10, 2.40), (0, 2.55, 0), "container")
+    plate("Deck", (6.0, 0.22, 2.40), (0, 0.11, 0), "container_deck")
+    plate("Rear", (0.12, 2.32, 2.40), (-2.94, 1.34, 0), "container")
+    for name, side in (("South", 1), ("North", -1)):
+        plate("Side" + name, (5.76, 2.32, 0.08), (0, 1.34, side * 1.13), "container")
+        box("Lining" + name, (5.68, 2.26, 0.018), (0, 1.37, side * 1.076), "container_lining")
+        for n in range(19):
+            # Raised folded web and its narrow crown; dark channels are the real panel.
+            x = -2.57 + 0.285 * n
+            box(f"Web{name}{n:02}", (0.154, 2.06, 0.042), (x, 1.34, side * 1.177), "container", shadow=False)
+            box(f"Crown{name}{n:02}", (0.113, 2.06, 0.032), (x, 1.34, side * 1.199), "container_rib", shadow=False)
+        for end, x in (("Rear", -2.89), ("End", 2.89)):
+            box(f"{end}Post{name}", (0.21, 2.31, 0.15), (x, 1.34, side * 1.125), "container_frame")
+            for y, key in ((0.11, "Foot"), (2.49, "Cap")):
+                box(f"{end}{key}{name}", (0.22, 0.18, 0.19), (x, y, side * 1.126), "container_frame")
+                box(f"{end}{key}{name}Socket", (0.108, 0.070, 0.010), (x, y, side * 1.228), "metal_ink")
+        for y, key in ((0.23, "Sill"), (2.45, "TopRail")):
+            box(key + name, (5.65, 0.134, 0.130), (0, y, side * 1.147), "container_frame")
+    for n in range(18):
+        box(f"RoofFold{n:02}", (0.128, 0.023, 2.21), (-2.50 + n * 0.294, 2.600, 0),
+            "container_rib", shadow=False)
+    box("EndHeader", (0.17, 0.165, 2.16), (2.91, 2.432, 0), "container_frame")
+    box("EndSill", (0.18, 0.097, 2.16), (2.91, 0.165, 0), "container_frame")
+    # A scuffed steel threshold plate slopes from the deck to the yard. No hidden
+    # face blocking the door; the real player can walk to the cot.
+    plate("Threshold", (0.669, 0.043, 1.74), (3.268, 0.098, 0), "container_steel", (0, 0, -18))
+    for z in (-0.79, -0.49, -0.19, 0.11, 0.41, 0.71):
+        box(f"DeckSeam{round((z + 0.79) * 100):03}", (5.72, 0.003, 0.009), (0.01, 0.221, z), "container_oxide", shadow=False)
+
+    for side, z, angle in (("South", 1.16, -171), ("North", -1.16, 58)):
+        parent = "Door" + side
+        b.node(parent, ".", position=vec3((2.96, 0, z)), rotation_degrees=vec3((0, angle, 0)))
+        # The near leaf is latched back, the far leaf stays part open. The dark gasket,
+        # hinges, keeper shoes, lock rods and two levers are on the leaves, not decals.
+        box("Panel", (1.08, 2.13, 0.065), (0.55, 1.32, 0), "container", parent)
+        theta = math.radians(angle)
+        shape(parent + "Collision", (1.08, 2.13, 0.067),
+              (2.96 + 0.55 * math.cos(theta), 1.32, z - 0.55 * math.sin(theta)), (0, angle, 0))
+        for j in range(4):
+            box(f"Pressing{j}", (0.14, 1.90, 0.028), (0.185 + 0.238 * j, 1.32, 0.035),
+                "container_rib", parent, shadow=False)
+        for x, name in ((0.057, "HingeRail"), (1.078, "LockEdge")):
+            box(name, (0.043, 2.19, 0.085), (x, 1.32, 0.001), "container_frame", parent)
+        for k, y in enumerate((0.33, 1.01, 1.64, 2.25)):
+            box(f"Hinge{k}", (0.136, 0.080, 0.105), (0.038, y, 0.025), "container_steel", parent)
+        for idx, x in enumerate((0.29, 0.83)):
+            box(f"LockRod{idx}", (0.033, 2.08, 0.042), (x, 1.32, 0.067), "container_steel", parent)
+            for key, y in (("Lower", 0.54), ("Upper", 2.10)):
+                box(f"Keeper{idx}{key}", (0.112, 0.047, 0.049), (x, y, 0.073), "metal_ink", parent)
+            box(f"Lever{idx}", (0.26, 0.038, 0.041), (x + 0.12, 0.99, 0.103),
+                "container_steel", parent, (0, 0, 8))
+    # Faded inspection plate and lower oxidation, concentrated at hardware/edges.
+    box("DataPlate", (0.48, 0.29, 0.019), (-1.84, 1.88, 1.225), "container_frame")
+    b.node("Stencil", ".", "Label3D", position=vec3((-1.84, 1.89, 1.239)),
+           text='"SU  214\n22G1"'.replace('\n', '\\n'), font_size=28, outline_size=0,
+           pixel_size=0.0034, modulate="Color(0.89, 0.83, 0.68, 1)")
+    for n, (x, w) in enumerate(((-2.74, 0.29), (-1.63, 0.17), (0.47, 0.12), (2.75, 0.23))):
+        box(f"WornSill{n}", (w, 0.035, 0.010), (x, 0.254, 1.215), "container_oxide", shadow=False)
+
+    b.node("Cabin", ".")
+    for name, size, where, mat in (
+        ("CotRails", (1.98, 0.065, 0.79), (1.29, 0.48, -0.54), "metal_ink"),
+        ("Mattress", (1.91, 0.124, 0.75), (1.29, 0.562, -0.54), "container_canvas"),
+        ("Pillow", (0.42, 0.093, 0.63), (2.00, 0.647, -0.54), "container_bedding"),
+        ("Sheet", (1.35, 0.021, 0.75), (1.00, 0.632, -0.54), "container_bedding"),
+        ("Blanket", (0.63, 0.043, 0.77), (0.67, 0.662, -0.54), "container_blanket"),
+        ("BlanketHem", (0.055, 0.011, 0.77), (0.92, 0.685, -0.54), "container_oxide"),
+        ("TableTop", (0.83, 0.061, 0.55), (-0.94, 0.88, 0.51), "container_deck"),
+    ):
+        box(name, size, where, mat, "Cabin")
+    for label, x, z, y in (("Cot", 1.29, -0.54, 0.33), ("Table", -0.94, 0.51, 0.52)):
+        for i, dx in enumerate((-1, 1)):
+            for j, dz in enumerate((-1, 1)):
+                w, d = (0.87, 0.35) if label == "Cot" else (0.34, 0.21)
+                box(f"{label}Leg{i}{j}", (0.05, 2 * (y - 0.22), 0.05),
+                    (x + w * dx, y, z + d * dz), "metal_ink", "Cabin")
+    cup = b.mesh("CylinderMesh", top_radius=0.052, bottom_radius=0.044, height=0.09, radial_segments=12)
+    b.flat("EnamelCup", "Cabin", cup, "container_bedding", (-0.82, 0.955, 0.44))
+    b.node("DoorLight", "Cabin", "OmniLight3D", position=vec3((1.98, 1.65, 0.10)),
+           light_color="Color(1, 0.77, 0.56, 1)", light_energy=0.78, omni_range=2.24, omni_attenuation=1.15)
+
+    ladder_x, rung_z, trace_z = 1.39, 1.48, 1.76
+    b.node("Ladder", ".")
+    for key, side in (("Left", -1), ("Right", 1)):
+        rail = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=3.24, radial_segments=10)
+        x = ladder_x + side * 0.38
+        b.flat("SteelRail" + key, "Ladder", rail, "container_steel", (x, 1.66, rung_z), shadow=True)
+        for j, y in enumerate((0.24, 1.26, 2.39)):
+            box(f"Stay{key}{j}", (0.082, 0.063, 0.32), (x, y, 1.328), "container_frame", "Ladder")
+        grip = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=0.30, radial_segments=10)
+        b.flat("Grab" + key, "Ladder", grip, "container_steel", (x, 3.20, 1.355), (-90, 0, 0), shadow=True)
+    tf = b.mesh("CylinderMesh", top_radius=0.021, bottom_radius=0.021, height=0.76, radial_segments=10)
+    b.node("Steps", "Ladder")
+    b.node("RoofMark", "Ladder", "Marker3D", position=vec3((ladder_x, 2.60, 0.82)))
+    b.node("GroundMark", "Ladder", "Marker3D", position=vec3((ladder_x + 0.14, 0.014, 2.02)))
+    for rung in range(8):
+        y = round(2.35 - rung * 0.30, 2)
+        b.flat(f"Rung{rung}", "Ladder", tf, "container_steel", (ladder_x, y, rung_z), (0, 0, 90), shadow=True)
+        b.node(f"Step{rung}", "Ladder/Steps", "Marker3D", position=vec3((ladder_x, y + 0.022, trace_z)))
+    ext = [
+        '[ext_resource type="Script" path="res://scenes/locations/playground/container_ladder.gd" id="ladder"]',
+        '[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]',
+        '[ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]',
+    ] + [f'[ext_resource type="Material" path="{RES}/materials/{mat}.tres" id="art_{mat}"]' for mat in sorted(used)]
+    root = '[node name="ContainerBody" type="StaticBody3D" groups=["camera_occluder"]]\nscript = ExtResource("ladder")'
+    use = f'''[node name="LadderUse" parent="." instance=ExtResource("interactable")]
+script = ExtResource("staged")
+position = {vec3((ladder_x, 3.35, 1.30))}
+interact_id = &"pg_container_ladder"
+prompt_text = "Climb down the steel ladder"
+prompt_key = "prompt.container_ladder_down"
+radius = 0.45
+outline_paths = PackedStringArray("../Ladder/GrabLeft", "../Ladder/GrabRight")
+support_paths = PackedStringArray("..")
+'''
+    scene = [f'[gd_scene load_steps={len(ext) + len(b.subs) + 1} format=3]\n', '\n'.join(ext) + '\n']
+    return '\n'.join(scene + b.subs + [root + '\n'] + b.nodes + [use]), used
 
 
 def node_path(head: str) -> str:
@@ -552,12 +702,15 @@ def main() -> None:
     for name, spec in MATERIALS.items():
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
     print(f"wrote {len(MATERIALS) + 1} materials to {MAT_DIR.relative_to(ROOT)}")
+    container, container_materials = build_container()
+    (ART / "container.tscn").write_text(container)
     if args.materials_only:
         return
 
     text, used = apply(args.scene.read_text())
     b = build_nodes()
     text = finish(text, used, b)
+    used.update(container_materials)
     unknown = sorted(m for m in used if m not in MATERIALS)
     if unknown:
         sys.exit("unknown materials: " + ", ".join(unknown))

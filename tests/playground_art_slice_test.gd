@@ -5,14 +5,14 @@ extends SceneTree
 ## a local colour system, a flat painted distance, ring tyres, hoop rings, the far net). None
 ## of it may cost the yard anything a player relies on. The claims under test:
 ##
-## 1. **Same yard.** Every collision body, interactable, exit and spawn keeps its place, shape,
-##    id and destination from the base commit; Sun, WorldEnvironment and Navigation exist.
+## 1. **Same yard outside the container.** Existing bodies, interactables, exits and spawns keep
+##    their geometry, ids and destinations. The container has its own precise shell contract.
 ## 2. **No new solids.** Only the graybox's 33 bodies collide outside Interactables/:
 ##    colliding decoration would carve the navigation mesh and block interaction rays.
 ## 3. **Its own colour system.** Every drawn surface (the imported bench and bag aside) uses a
 ##    material from `playground_art/`; nothing reaches into `assets/materials/` or the Shader
 ##    Agent's painterly folders.
-## 4. **Dressing fades with its wall.** Decals on the school wall and the container are
+## 4. **Dressing fades with its wall.** The school wall decal and the container fittings are
 ##    children of those occluders, so the camera fades them together.
 ## 5. **Textures within budget**, all from the slice's own texture folder.
 ## 6. **Hierarchy.** Broad planes stay quiet; what the player looks for stands out.
@@ -67,7 +67,6 @@ const SOLIDS := {
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_1": [Vector3(18.0, 1.4, 9.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_2": [Vector3(18.0, 1.4, 11.0), Vector3(0.14, 2.8, 0.14)],
-	"ContainerBody": [Vector3(12.0, 1.3, -15.5), Vector3(6.0, 2.6, 2.4)],
 	"ContainerFootingA": [Vector3(9.4, 0.1, -15.5), Vector3(0.8, 0.2, 2.6)],
 	"ContainerFootingB": [Vector3(14.6, 0.1, -15.5), Vector3(0.8, 0.2, 2.6)],
 	"FitnessPost_0": [Vector3(-20.6, 1.0, 4.8), Vector3(0.14, 2.0, 0.14)],
@@ -87,7 +86,7 @@ const INTERACTABLES := {
 	"pg_hoop_near": Vector3(-8.0, 1.4, 8.8), "pg_court_middle": Vector3(0.0, 0.9, 2.0),
 	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
 	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
-	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(12.0, 1.4, -13.9),
+	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
 }
 ## [position, destination scene, destination spawn, milestone end].
@@ -296,7 +295,10 @@ func _check_collision() -> void:
 		if not node is CollisionObject3D:
 			continue
 		var path := _relative(node)
-		if path.begins_with("Interactables/"):
+		if path.begins_with("Interactables/") or path == "ContainerBody/LadderUse":
+			continue
+		if path == "ContainerBody":
+			_check_container_shell(node as StaticBody3D)
 			continue
 		if not SOLIDS.has(path):
 			_failures.append(
@@ -333,6 +335,31 @@ func _check_collision() -> void:
 			if node is CollisionObject3D or node is CollisionShape3D:
 				_failures.append("The art node '%s' brings collision." % _relative(node))
 	_notes.append("solids %d" % found.size())
+
+
+func _check_container_shell(body: StaticBody3D) -> void:
+	_expect_position("shipping container", body, Vector3(12.0, 0.0, -15.5))
+	var shell := {
+		"RoofCollision": [Vector3(0, 2.55, 0), Vector3(6, 0.1, 2.4)],
+		"DeckCollision": [Vector3(0, 0.11, 0), Vector3(6, 0.22, 2.4)],
+		"RearCollision": [Vector3(-2.94, 1.34, 0), Vector3(0.12, 2.32, 2.4)],
+		"SideSouthCollision": [Vector3(0, 1.34, 1.13), Vector3(5.76, 2.32, 0.08)],
+		"SideNorthCollision": [Vector3(0, 1.34, -1.13), Vector3(5.76, 2.32, 0.08)],
+	}
+	if body.find_children("*", "CollisionShape3D", false, false).size() != 8:
+		_failures.append("The hollow shell must have its five plates, threshold and two leaves.")
+	for key: String in shell:
+		var shape := body.get_node_or_null(NodePath(key)) as CollisionShape3D
+		var box := shape.shape as BoxShape3D if shape != null else null
+		if box == null or not box.size.is_equal_approx(shell[key][1]) or not shape.position.is_equal_approx(shell[key][0]):
+			_failures.append("The shell plate '%s' no longer fits." % key)
+	for path: String in ["DoorNorth/LockRod0", "DoorSouth/LockRod0", "CrownSouth09", "RoofFold09",
+		"Cabin/Mattress", "Cabin/Pillow", "Cabin/Blanket", "Cabin/TableTop", "Ladder/SteelRailLeft", "Ladder/Rung7"]:
+		if not body.get_node_or_null(NodePath(path)) is MeshInstance3D:
+			_failures.append("The shipping container lost visible geometry '%s'." % path)
+	var ladder := body.get_node_or_null(^"LadderUse") as StagedInteractable
+	if ladder == null or not ladder.is_staged():
+		_failures.append("The visible steel ladder isn't an interaction.")
 
 
 ## The two imported props carry their shape half their height up; the graybox boxes are
@@ -396,7 +423,7 @@ func _has_own_materials(path: String) -> bool:
 
 
 func _check_dressing() -> void:
-	for pair: Array in [["SchoolBackWall", "WallPatches"], ["ContainerBody", "Gesture"]]:
+	for pair: Array in [["SchoolBackWall", "WallPatches"]]:
 		var decal := _yard.get_node_or_null(NodePath("%s/%s" % [pair[0], pair[1]])) as MeshInstance3D
 		if decal == null:
 			_failures.append("'%s' is not hung on '%s', so it would not fade with it." % [pair[1], pair[0]])
