@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5pxlq0knnp6s"
-path="res://.godot/imported/canvas_mustard.png-ebf4b516be4ffdc7b8e02473f8841966.ctex"
+uid="uid://ipdygm7oftkg"
+path="res://.godot/imported/canvas_indigo.png-74b6e33ef97ec4fc7a64a39cede45ea4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/materials/classroom/textures/canvas_mustard.png"
-dest_files=["res://.godot/imported/canvas_mustard.png-ebf4b516be4ffdc7b8e02473f8841966.ctex"]
+source_file="res://assets/materials/classroom/textures/canvas_indigo.png"
+dest_files=["res://.godot/imported/canvas_indigo.png-74b6e33ef97ec4fc7a64a39cede45ea4.ctex"]
 
 [params]
 

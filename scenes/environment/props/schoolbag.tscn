@@ -1,50 +1,111 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=18 format=3]
 
-[ext_resource type="Material" path="res://assets/materials/classroom/canvas_mustard.tres" id="1_canvas"]
-[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="2_metal"]
-[ext_resource type="Material" path="res://assets/materials/classroom/strap_mustard.tres" id="3_strap"]
+[ext_resource type="Script" path="res://scenes/environment/props/schoolbag.gd" id="1_bag"]
+[ext_resource type="Material" path="res://assets/materials/classroom/canvas_indigo.tres" id="2_canvas"]
+[ext_resource type="Material" path="res://assets/materials/classroom/webbing_indigo.tres" id="3_webbing"]
+[ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="4_metal"]
+[ext_resource type="Material" path="res://assets/materials/classroom/register_cover.tres" id="5_book"]
+[ext_resource type="Material" path="res://assets/materials/classroom/paper_ivory.tres" id="6_paper"]
+[ext_resource type="Material" path="res://assets/materials/classroom/varnish_pale.tres" id="7_pull"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/shell.obj" id="8_shell"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/pocket.obj" id="9_pocket"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/flap.obj" id="10_flap"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/strap.obj" id="11_strap"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/handle.obj" id="12_handle"]
+[ext_resource type="ArrayMesh" path="res://assets/models/classroom/schoolbag/hook.obj" id="13_hook"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_1"]
-size = Vector3(0.42, 0.3, 0.22)
+[sub_resource type="BoxMesh" id="BoxMesh_book"]
+size = Vector3(0.229, 0.025, 0.116)
 
-[sub_resource type="BoxMesh" id="BoxMesh_2"]
-size = Vector3(0.44, 0.16, 0.24)
+[sub_resource type="BoxMesh" id="BoxMesh_paper"]
+size = Vector3(0.121, 0.009, 0.081)
 
-[sub_resource type="BoxMesh" id="BoxMesh_3"]
-size = Vector3(0.05, 0.02, 0.3)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_pull"]
+radius = 0.007
+height = 0.027
+radial_segments = 8
+rings = 3
 
-[sub_resource type="BoxMesh" id="BoxMesh_4"]
-size = Vector3(0.05, 0.04, 0.02)
-
-[sub_resource type="BoxMesh" id="BoxMesh_pocket"]
-size = Vector3(0.03, 0.16, 0.16)
+[sub_resource type="BoxMesh" id="BoxMesh_patch"]
+size = Vector3(0.048, 0.029, 0.003)
 
 [node name="Schoolbag" type="Node3D"]
-rotation_degrees = Vector3(0, 0, 0)
+script = ExtResource("1_bag")
 
-[node name="Body" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.16, 0)
-mesh = SubResource("BoxMesh_1")
-material_override = ExtResource("1_canvas")
+[node name="Shell" type="MeshInstance3D" parent="."]
+mesh = ExtResource("8_shell")
+material_override = ExtResource("2_canvas")
 
-[node name="Flap" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.3, 0.02)
-rotation_degrees = Vector3(-6, 0, 0)
-mesh = SubResource("BoxMesh_2")
-material_override = ExtResource("1_canvas")
+[node name="Pocket" type="MeshInstance3D" parent="."]
+mesh = ExtResource("9_pocket")
+material_override = ExtResource("3_webbing")
 
-[node name="Strap" type="MeshInstance3D" parent="."]
-position = Vector3(0.12, 0.34, -0.02)
-rotation_degrees = Vector3(0, 0, -12)
-mesh = SubResource("BoxMesh_3")
-material_override = ExtResource("3_strap")
+[node name="WovenPatch" type="MeshInstance3D" parent="Pocket"]
+position = Vector3(-0.050, 0.154, 0.146)
+rotation_degrees = Vector3(1, -2, -5)
+mesh = SubResource("BoxMesh_patch")
+material_override = ExtResource("2_canvas")
 
-[node name="Buckle" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.23, 0.13)
-mesh = SubResource("BoxMesh_4")
-material_override = ExtResource("2_metal")
+[node name="PocketPull" type="MeshInstance3D" parent="Pocket"]
+position = Vector3(-0.089, 0.220, 0.134)
+rotation_degrees = Vector3(8, 0, -19)
+mesh = SubResource("CapsuleMesh_pull")
+material_override = ExtResource("7_pull")
 
-[node name="SidePocket" type="MeshInstance3D" parent="."]
-position = Vector3(0.225, 0.12, 0)
-mesh = SubResource("BoxMesh_pocket")
-material_override = ExtResource("3_strap")
+[node name="Harness" type="Node3D" parent="."]
+
+[node name="StrapLeft" type="MeshInstance3D" parent="Harness"]
+position = Vector3(0.091, 0, 0)
+mesh = ExtResource("11_strap")
+material_override = ExtResource("3_webbing")
+
+[node name="StrapRight" type="MeshInstance3D" parent="Harness"]
+position = Vector3(-0.105, 0, 0.004)
+rotation_degrees = Vector3(0, -8, -4)
+mesh = ExtResource("11_strap")
+material_override = ExtResource("3_webbing")
+
+[node name="CarryLoop" type="MeshInstance3D" parent="Harness"]
+mesh = ExtResource("12_handle")
+material_override = ExtResource("3_webbing")
+
+[node name="DeskHook" type="MeshInstance3D" parent="."]
+mesh = ExtResource("13_hook")
+material_override = ExtResource("4_metal")
+
+[node name="ExerciseBooks" type="MeshInstance3D" parent="."]
+position = Vector3(0.007, 0.286, -0.018)
+rotation_degrees = Vector3(-8, 7, -4)
+mesh = SubResource("BoxMesh_book")
+material_override = ExtResource("5_book")
+
+[node name="FoldedTimetable" type="MeshInstance3D" parent="."]
+position = Vector3(0.029, 0.305, 0.021)
+rotation_degrees = Vector3(-11, -12, 5)
+mesh = SubResource("BoxMesh_paper")
+material_override = ExtResource("6_paper")
+
+[node name="Lid" type="Node3D" parent="."]
+position = Vector3(0, 0.365, -0.093)
+
+[node name="Flap" type="MeshInstance3D" parent="Lid"]
+mesh = ExtResource("10_flap")
+material_override = ExtResource("2_canvas")
+
+[node name="FlapPull" type="MeshInstance3D" parent="Lid"]
+position = Vector3(0.058, -0.093, 0.226)
+rotation_degrees = Vector3(-12, 0, -15)
+mesh = SubResource("CapsuleMesh_pull")
+material_override = ExtResource("7_pull")
+
+[node name="LidGrip" type="Marker3D" parent="Lid"]
+position = Vector3(0.065, -0.087, 0.258)
+
+[node name="MouthBrace" type="Marker3D" parent="."]
+position = Vector3(-0.135, 0.367, 0.068)
+
+[node name="PocketGrip" type="Marker3D" parent="."]
+position = Vector3(0.169, 0.250, 0.046)
+
+[node name="SearchPosition" type="Marker3D" parent="."]
+position = Vector3(0, -0.415, 0.53)

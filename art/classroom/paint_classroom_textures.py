@@ -66,8 +66,6 @@ PLUM = (92, 59, 79)
 PLUM_DARK = (64, 43, 58)
 HONEY = (169, 132, 88)
 HONEY_PALE = (200, 175, 129)
-MUSTARD = (190, 150, 62)
-MUSTARD_DARK = (148, 110, 42)
 COBALT = (64, 86, 140)
 
 
@@ -1039,7 +1037,6 @@ def main() -> None:
     save(glass(False, 1414), "glass_clean.png")
     save(tile_noise_texture(HONEY, HONEY_PALE, (110, 114, 95), 1515, (256, 128), "h", 20), "wood_honey.png")
     save(tile_noise_texture(OXBLOOD, (138, 79, 68), (76, 48, 59), 1616, (256, 256), "h", 16), "lacquer_oxblood.png")
-    save(tile_noise_texture(MUSTARD, (210, 172, 86), MUSTARD_DARK, 1717, (256, 256), "x", 16), "canvas_mustard.png")
     save(desk_marks(), "desk_marks.png")
     save(timetable(), "timetable.png")
     save(clock_face(), "clock_face.png")

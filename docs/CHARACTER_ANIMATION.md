@@ -283,12 +283,29 @@ Accessors for tests and debugging: `get_character_animator()` on `PlayerControll
 
 ## The wake beat: sitting, then getting up
 
-The take opens asleep over a desk, so the prologue's slump is not only the pivot tilt: while
-black is still coming up the model holds `sit_idle`, and the settle that straightens the
-pivot is also `get_up`. `PlayerController.set_wake_pose()` above `SEATED_WAKE_POSE` (0.5)
-seats the model, and coming back to 0 plays the transition, so the two halves of "waking up"
-happen together. A resume from a save calls `set_wake_pose(0.0)` from an already-upright
-state, which is why no get-up plays there.
+The take opens asleep over the desk. `set_wake_pose(1.0)` starts the slump;
+`settle_wake_seated_pose()` straightens it on the same seat while Q talks. In the
+real classroom, `DeskB2/Chair/SeatMark` is the floor mark for the capsule, and the
+seat mesh's top sets the visual hip height. The actor driver does not lower the
+physics body. Boot contacts keep the soles level while the character breathes.
+
+The protagonist's `classroom_rise` and `classroom_sit` are sampled on the same
+clock as the chair slide, visual hip motion and two-bone contacts. The rise
+loads the feet before lifting, then hands off to the already requested movement.
+For a return, the room finds a capsule-clear path to the mark, faces the desk,
+and draws the chair under the hips before the final settle. A fixture seated
+away from that mark still uses the shared `get_up`; `set_wake_pose(0.0)` on a resume
+resets directly to standing without replaying a transition.
+
+`schoolbag_search` uses the same contacts on the feet and wrists while one hand
+steadies the opening and the other lifts the flap, checks the lining and pocket,
+and closes it. The room runs the beat through `StagedInteractable`; the original
+`classroom_schoolbag` inspection (including its effects and record) is displayed
+only after this pose is released. If the search mark is obstructed, the original
+inspection stays available without a walk through scenery.
+
+[The live-window capture](../tests/capture_classroom_motion.gd) verifies seat
+contact and the two approach sides and exercises the real pointer and inspection.
 
 ## Sprinting
 
@@ -328,8 +345,8 @@ run's *teacher N crop* annotations (base64, in numbered parts).
 - `tests/runtime_character_animation_test.gd` runs against `main.tscn`: the real player,
   the real classroom, the real companion. It measures the skeletons rather than trusting a
   state name:
-  - the new game boots seated (the hip folded), and `set_wake_pose(0.0)` plays `get_up` once
-    and stands the protagonist in idle;
+  - the new game boots seated, and movement plays `classroom_rise` before walking;
+    the fixture without furniture checks that `get_up` still shares its clock with the pivot;
   - idle limbs are within 20° of rest, hands are below the shoulders (against each rig's own
     modelled arm), and feet are below the hips;
   - holding a movement key plays walk. The thigh swings, the foot travels forward and back
@@ -385,16 +402,11 @@ every build.
 
 ## Remaining limitations
 
-- The clips are procedural prototypes, not captured or hand-animated motion, and there is
-  no foot planting: at the playback ceilings the feet still slide. They need an eye in the
-  editor and a pass once proportions settle.
-- **The seated pose folds the legs; it does not lower the body.** No clip translates the
-  hips, because clip-driven translation is root motion and the controllers are the only thing
-  that moves a body. What lowers the protagonist at the desk is the pivot's 6 cm sink, so
-  `sit_idle` on its own sits in the air at standing height. A real seated animation needs an
-  authored hip offset (and a decision about who owns it) or a seat marker. The classroom
-  student, which never stands, gets its height from its wrapper instead (`Model` at
-  y = −0.347).
+- The shared locomotion loops are procedural, with no foot planting: at the playback
+  ceilings the feet still slide. The classroom contacts apply only to its staged beats.
+- **The shared seated clip does not lower the body.** At the desk the real chair owns the
+  marker and the protagonist owns visual height; the other seated student, which never
+  stands, gets its height from its wrapper (`Model` at y = −0.347).
 - The new protagonist's fingers, eyes, toes, clavicles and two of its four spine bones never
   move, and its five embedded clips and 9 blend shapes are unused (see above).
 - N walks with the procedural walk (its file has none) and its idle is the owner's; the two

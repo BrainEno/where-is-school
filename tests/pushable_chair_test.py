@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Boundary tests for the chair the protagonist stands up out of.
 
-``tools/check_seat_clearance.py`` proves the *geometry* works: 0.70 m of travel puts every
+``tools/check_seat_clearance.py`` proves the *geometry* works: 0.65 m of travel puts every
 part of the chair outside the body's capsule. This file proves the *chair itself* behaves,
 by reading the script's contract and the scene that instances it - the two things that can
 go wrong without the geometry notice.
@@ -9,7 +9,7 @@ go wrong without the geometry notice.
 The behaviour that matters and is easy to lose:
 
 - the push is idempotent, because the position after the stand-up is a fact about the room
-  rather than a frame of an animation, and something re-triggering it must not walk the
+  rather than a sum of per-frame offsets, and something re-triggering it must not walk the
   chair across the floor;
 - it always comes back to the same place, so re-sitting lands the chair where it started;
 - it is reachable from the room by the node group the controller searches for, since the
@@ -27,7 +27,8 @@ from pathlib import Path
 ## The scripts this change added or rewrote, relative to the repository root.
 SCRIPTS = (
     "scripts/environment/pushable_chair.gd",
-    "scripts/actors/character_arm_reach.gd",
+    "scripts/actors/character_limb_contact.gd",
+    "scripts/actors/player/classroom_seat_motion.gd",
     "scripts/interaction/seated_chair_interactable.gd",
     "scenes/locations/classroom/classroom_chair_control.gd",
 )
@@ -52,40 +53,20 @@ def source() -> str:
     return CHAIR_SCRIPT.read_text(encoding="utf-8")
 
 
-def test_the_push_is_idempotent() -> None:
-    """Push twice, and the chair must not travel twice as far."""
+def test_the_slide_has_one_absolute_clock() -> None:
+    """Samples may repeat and seek. Neither stop can accumulate frame-to-frame drift."""
     text = source()
-    body = text[text.index("func push_back(") : text.index("func pull_home(")]
-    check("if _pushed:" in body, "push_back must refuse to push an already-pushed chair")
-    check(
-        "return null" in body,
-        "push_back must say it did nothing rather than starting a second slide",
-    )
-
-
-def test_the_chair_comes_home() -> None:
-    """Re-sitting has to put the chair back under the body it came out from."""
-    text = source()
-    check("func pull_home(" in text, "the chair must be able to come back")
-    body = text[text.index("func pull_home(") :]
-    check("_home_position" in body, "pull_home must target the position the room gave the chair")
-
-
-def test_both_ends_are_remembered_not_derived() -> None:
-    """The two stops are recorded, so a moved or re-run slide cannot drift the chair."""
-    text = source()
-    check("_home_position = position" in text, "the chair must record where the room put it")
-    check(
-        "_pushed_position = position + Vector3(0.0, 0.0, PUSH_BACK_DISTANCE)" in text,
-        "the pushed position must be the home position plus the push distance, along one axis",
-    )
-
-
-def test_slides_do_not_stack() -> None:
-    """A second slide has to kill the first, or the two fight over the position."""
-    text = source()
-    body = text[text.index("func _slide_to(") :]
-    check("_kill_slide()" in body, "starting a slide must stop the one already running")
+    sample = text[text.index("func sample_slide(") : text.index("func snap_back(")]
+    check("position = _home_position.lerp(_pushed_position," in sample,
+          "a repeated sample must calculate the same position from the two stops")
+    check("clampf(fraction, 0.0, 1.0)" in sample, "samples must stay between the stops")
+    check("_home_position = position" in text, "retain the room's home placement")
+    check("_pushed_position = position + basis.z * PUSH_BACK_DISTANCE" in text,
+          "push the authored distance along the chair's back axis")
+    check("Tween" not in text, "the prop must not start a second clock beside the body")
+    home = text[text.index("func snap_home(") : text.index("func _set_solid(")]
+    check("sample_slide(0.0)" in home and "_pushed = false" in home,
+          "return to the exact home position and remember it")
 
 
 def test_it_is_snappable() -> None:
@@ -127,18 +108,13 @@ def test_the_chair_is_solid_only_when_it_is_empty() -> None:
         "_set_solid(false)" in text[text.index("func _ready()") : text.index("func is_pushed_back")],
         "the chair must start open - the opening has the protagonist asleep in it",
     )
-    push = text[text.index("func push_back(") : text.index("func pull_home(")]
-    check("_set_solid(true)" in push, "pushing the chair back must make it solid")
-    check(
-        push.index("_slide_to(") < push.index("_set_solid(true)"),
-        "the collision must come on when the chair *arrives*: turning it on while the body is "
-        "still folded over the seat puts a solid box inside the protagonist",
-    )
-    pull = text[text.index("func pull_home(") :]
-    check(
-        pull.index("_set_solid(false)") < pull.index("_slide_to("),
-        "pulling the chair home must open it *before* it moves, not after",
-    )
+    begin = text[text.index("func start_slide(") : text.index("func sample_slide(")]
+    check("_set_solid(false)" in begin, "unblock the capsule before either slide starts")
+    end = text[text.index("func snap_back(") : text.index("func snap_home(")]
+    check("sample_slide(1.0)" in end and "_set_solid(true)" in end,
+          "only the pushed stop re-enables collision")
+    check(end.index("sample_slide(1.0)") < end.index("_set_solid(true)"),
+          "finish the slide before enabling collision")
 
 
 def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
@@ -252,20 +228,16 @@ def test_the_room_has_a_sit_interaction() -> None:
     )
 
 
-def test_the_hand_does_the_pushing() -> None:
-    """The arm reaches the chair before it moves, and lets go after.
-
-    A chair that slides with no hand on it is the thing this was built to avoid looking like.
-    """
-    controller = (ROOT / "scripts/actors/player/player_controller.gd").read_text(encoding="utf-8")
-    push = controller[controller.index("func _push_seat_back(") :]
-    push = push[: push.index("func _pull_seat_home(")]
-    check("_reach_for_chair()" in push, "the stand-up must reach for the chair")
-    check("_release_chair" in push, "and let go of it once it stops")
-    check(
-        push.index("_reach_for_chair()") < push.index("push_back"),
-        "the hand has to be on the chair *before* it starts moving",
-    )
+def test_the_hand_shares_the_motion_clock() -> None:
+    """The two transfers share one sampler with their hand and foot constraints."""
+    path = ROOT / "scripts/actors/player/classroom_seat_motion.gd"
+    text = path.read_text(encoding="utf-8")
+    for action in ("stand", "sit"):
+        start = text.index(f"func sample_{action}(")
+        body = text[start : text.index("\nfunc ", start + 1)]
+        for operation in ("sample_action(", "sample_slide(", "_hold_chair(", "_plant("):
+            check(operation in body, f"{action}: {operation} must be sampled on the transfer clock")
+    check("hand.hold_at(chair.grip_point()" in text, "wrist follows the moving chair")
 
 
 def test_the_distance_is_the_one_that_was_measured() -> None:
@@ -287,10 +259,7 @@ def test_the_distance_is_the_one_that_was_measured() -> None:
 
 
 def main() -> int:
-    test_the_push_is_idempotent()
-    test_the_chair_comes_home()
-    test_both_ends_are_remembered_not_derived()
-    test_slides_do_not_stack()
+    test_the_slide_has_one_absolute_clock()
     test_it_is_snappable()
     test_the_room_can_find_it()
     test_the_chair_is_solid_only_when_it_is_empty()
@@ -298,7 +267,7 @@ def main() -> int:
     test_the_new_scripts_do_not_shadow_built_in_properties()
     test_no_sub_resource_lost_its_properties()
     test_the_room_has_a_sit_interaction()
-    test_the_hand_does_the_pushing()
+    test_the_hand_shares_the_motion_clock()
     test_the_distance_is_the_one_that_was_measured()
 
     if FAILURES:

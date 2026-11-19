@@ -138,8 +138,9 @@ func _run() -> void:
 
 		# --- and interaction still works after switching -----------------
 		_interaction.request_activation(bag)
-		await process_frame
-		if not _dialogue.is_busy():
+		if not await Harness.wait_until(func() -> bool:
+			return _dialogue.get_mode() == DialogueController.Mode.INSPECTION, 10.0
+		):
 			_failures.append("Interaction stopped working after a language switch.")
 		else:
 			var inspection_text := String(_dialogue.get_current_line().get("text", ""))
