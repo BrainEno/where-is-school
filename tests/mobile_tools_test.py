@@ -6,7 +6,9 @@ from pathlib import Path
 import plistlib
 import struct
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile
 
 import yaml
@@ -15,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "tools"), str(ROOT / "tools/macos/ios")]
 from export_mobile import BuildError, PACKAGE, ios_signing_flags, verify_android_assets
 from godot_pck import PackError, read_pack
+from macos.ios import simulator_template
 from release_pack_fixtures import fields, pack_files
 from sign_ipa import export_options, profile_details
 from simulator import available_runtimes, choose, devices
@@ -119,6 +122,36 @@ class SimulatorSelectionTest(unittest.TestCase):
         self.assertEqual(choose(rows, "OLD", False)["udid"], "old")
         with self.assertRaises(ValueError):
             choose(rows, "iPhone Test", False)
+
+
+class SimulatorTemplateTest(unittest.TestCase):
+    def test_exact_official_editor_version_for_source_fallback(self):
+        self.assertEqual(simulator_template.release_ref("4.7.2", "4.7.2.stable.official.ed1daf0bf"),
+                         ("refs/tags/4.7.2-stable", "ed1daf0bf"))
+        for engine in ("4.7.1.stable.official.ed1daf0bf", "4.7.2.stable.custom_build.ed1daf0bf",
+                       "4.7.2.stable.mono.official.ed1daf0bf", "4.7.2.beta.official.ed1daf0bf"):
+            with self.subTest(engine=engine), self.assertRaisesRegex(ValueError, "official"):
+                simulator_template.release_ref("4.7.2", engine)
+
+    def test_missing_slice_offline_fails_without_mutating_the_device_library(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out = Path(temp)
+            framework = out / "test.xcframework"
+            simulator = framework / "ios-arm64_x86_64-simulator/libgodot.a"
+            device = framework / "ios-arm64/libgodot.a"
+            for archive in (simulator, device):
+                archive.parent.mkdir(parents=True)
+                archive.write_bytes(b"fixture")
+            with (patch.object(Path, "home", return_value=out),
+                  patch.object(simulator_template, "capture", return_value="Test SDK"),
+                  patch.object(simulator_template, "has_arch", return_value=False),
+                  patch.object(simulator_template, "compile_slice") as compile_slice):
+                with self.assertRaisesRegex(ValueError, "no matching cached Simulator build"):
+                    simulator_template.ensure_simulator_slice(out, "test", "arm64", "4.7.2",
+                                                               "4.7.2.stable.official.ed1daf0bf", no_download=True)
+                compile_slice.assert_not_called()
+            self.assertEqual(device.read_bytes(), b"fixture")
+            self.assertEqual(simulator.read_bytes(), b"fixture")
 
 
 class WorkflowTest(unittest.TestCase):
