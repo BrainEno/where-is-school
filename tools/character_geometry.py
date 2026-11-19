@@ -58,7 +58,12 @@ def normals(geometry: Geometry) -> np.ndarray:
     lengths = np.linalg.norm(result, axis=1, keepdims=True)
     if np.any(lengths < 1e-12):
         raise ValueError("a refined vertex has no non-degenerate incident face")
-    return (result / lengths)[weld].astype(np.float32)
+    unit = result / lengths
+    # Symmetry axes have exact zero normals in that component. SIMD summation can
+    # leave platform-dependent sub-picounit remainders on an otherwise zero axis
+    # (e.g. the student's centreline). Canonicalize them before serializing glTF.
+    unit[np.abs(unit) < 1e-12] = 0.0
+    return unit[weld].astype(np.float32)
 
 
 def deform(points: np.ndarray, normal: np.ndarray, warp: Callable[[np.ndarray], np.ndarray]

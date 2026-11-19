@@ -122,6 +122,13 @@ class RefinedCharacterTests(unittest.TestCase):
                     area = np.linalg.norm(np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]), axis=1)
                     self.assertTrue((area > 1e-17).all(), "zero-area geometry is not refinement")
 
+    def test_student_face_normals_have_canonical_axis_zeros(self) -> None:
+        normals = self.outputs[0][2]["Head_Main_Mesh_Mesh", "WIS_Protagonist_Skin"]["NORMAL"]
+        zero = normals == 0
+        self.assertTrue(zero.any(), "there are symmetric vertices on the head centreline")
+        self.assertFalse(np.signbit(normals[zero]).any(), "normalize signed zeros before writing")
+        self.assertFalse((np.abs(normals[~zero]) < 1e-12).any(), "no CPU-dependent cancellation residue")
+
     def test_five_digits_are_one_closed_connected_surface(self) -> None:
         for teacher_hand in [True, False]:
             hand = geometry.canonical_hand(teacher_hand)
