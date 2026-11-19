@@ -70,9 +70,13 @@ PORTRAITS = (
     ),
     Portrait(
         "q",
-        "q.webp",
-        (25, 20, 1085, 1254),
-        "993a6055dfa537ef790e8034823bf2dff77e4fdc428f1098b4444caca165d386",
+        "q.png",
+        # The redrawn Q is 896x1200 and framed for the panel's face crop: the head and
+        # the pointing hand fill the upper two thirds, with the burnt-orange wash around
+        # them. The crop keeps the whole head, both shoulders and the hand, and gives up
+        # the empty paper above it and the cropped torso below.
+        (90, 48, 806, 816),
+        "3d73b25001d4540802dacc052f0d561b57caeb86668b271b78faef7e5520ca60",
     ),
     Portrait(
         "n",

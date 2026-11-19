@@ -759,6 +759,16 @@ visual_yaw_degrees = 0.0
 [node name="SeatedStudent" parent="Actors" instance=ExtResource("23_classroom_student")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -4.8, 0, -0.22)
 
+[node name="StudentTalk" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(-4.8, 0.85, 0.95)
+interact_id = &"student_talk"
+outline_paths = PackedStringArray("../../Actors/SeatedStudent")
+prompt_text = "Talk to the classmate"
+prompt_key = "prompt.talk"
+speaker_id = &"student"
+conversation_route = &"student"
+radius = 1.0
+
 [node name="NEntryPath" type="Node3D" parent="."]
 
 [node name="InDoorway" type="Marker3D" parent="NEntryPath"]

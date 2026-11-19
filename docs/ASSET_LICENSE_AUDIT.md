@@ -46,7 +46,7 @@ DialogueController、ReadLog 或其他 Agent 的美术实验。
 |---|---|---|---|---|---|
 | `assets/models/protagonist/Protagonist_Character.glb`，当前玩家 | Owner 提供，**不等于原创**；PR #118 明确保留作者待答；E2/E3 | **UNKNOWN**。header 只自报 glTF Blender exporter；不能反推完整制作工具、作者或 AI/第三方输入 | **UNKNOWN** | **UNKNOWN**；包括自带 mesh、骨架、9 个头部 blend shape、5 个嵌入动画 | **UNKNOWN / NOT CLEARED** |
 | `art/portraits/protagonist.png` → `assets/ui/portraits/protagonist.webp` | Owner 供图，记录称新生成；`GENERATED / AI_DETAILS_UNKNOWN`；E4/E5 | 生成工具/服务/模型 **UNKNOWN**；转换为 Pillow 裁切、Lanczos 缩放、WebP 编码 | **UNKNOWN** | **UNKNOWN** | 原图与裁切版均 **UNKNOWN / NOT CLEARED** |
-| `art/portraits/q.webp` → `assets/ui/portraits/q.webp` | 原供图名 `q-picture.webp`；与 Q 的 3D 模型是不同作品；E4/E5 | 生成工具/服务/模型 **UNKNOWN**；转换同上 | **UNKNOWN** | **UNKNOWN** | **UNKNOWN / NOT CLEARED**，不能引用 Q 模型确认代替 |
+| `art/portraits/q.png` → `assets/ui/portraits/q.webp` | 2026-11 重绘，由本项目工作会话中的图像生成模型产出，Owner 审核后替换旧图；与 Q 的 3D 模型是不同作品；E4/E5 | 生成工具/服务/模型 **UNKNOWN**；转换同上 | **UNKNOWN** | **UNKNOWN** | **UNKNOWN / NOT CLEARED**；旧的 `q-picture.webp` 已不在库中 |
 | `art/portraits/n.webp` → `assets/ui/portraits/n.webp` | 原供图名 `teacher-n.webp`；与 N 的 3D 模型是不同作品；E4/E5 | 生成工具/服务/模型 **UNKNOWN**；转换同上 | **UNKNOWN** | **UNKNOWN** | **UNKNOWN / NOT CLEARED** |
 | `scenes/dev/animation_retarget_test/UAL1_Standard.glb` | 第三方 Quaternius；记录为 Standard/free；E7/P1–P4 | 文件自报 exporter `Khronos glTF Blender I/O v4.5.48`；取得版本/日期 **UNKNOWN** | 当前公开页面均允许一定范围商用，但**此副本适用授权仍未定**；项目不放行生产使用 | **项目禁止**，不能因 QAL 允许完成品而擅自改变决定 | 资产本身再分发有冲突；**RESTRICTED / DEV_ONLY** |
 | 同目录 `protagonist_ual.res`，开发预览加载 | UAL 动作经 `tools/bake_animation_retarget.gd` 在目标骨架上重采样；E7/E8 | Godot / `AnimationRetarget.bake()`；脚本采样 30 fps。未在本轮重新 bake | 不因 retarget 获得新的独立许可 | **项目禁止**，包括转换格式或复制目录后 | 与上游相连；**RESTRICTED / DEV_ONLY** |
@@ -91,10 +91,10 @@ PR #125 的供图记录使用 2026-11-12；这是**供图记录日期，不是�
 |---|---|
 | `assets/models/protagonist/Protagonist_Character.glb` | `80239a44cbbfdd6eebf560750a904a124e1d0db8f2e503db67150dc1ea60c09d` |
 | `art/portraits/protagonist.png` | `2b8494996f8569977a94b4a79e34aa866ae98f933d1b563bfc2aed5aad9c7b2b` |
-| `art/portraits/q.webp` | `993a6055dfa537ef790e8034823bf2dff77e4fdc428f1098b4444caca165d386` |
+| `art/portraits/q.png` | `3d73b25001d4540802dacc052f0d561b57caeb86668b271b78faef7e5520ca60` |
 | `art/portraits/n.webp` | `2417a5b79db609d754ad2bc78705bf0fad495af7f4fa7ab82f65612679feae3d` |
 | `assets/ui/portraits/protagonist.webp` | `622a85104c2140f60e11db21594e81ba8db1b34f91e1d3333d1880d604ab703b` |
-| `assets/ui/portraits/q.webp` | `8990e78b0fbf01340f5357e8687852e83202209c85da334465dbeacdacad6876` |
+| `assets/ui/portraits/q.webp` | `68c8001a33e604c619710573fbd253eefffde2d3fa233a93a996463df0b4d42c` |
 | `assets/ui/portraits/n.webp` | `cd6039a337c7be6a8243406b7caa20fbe8f4b65f3ae1f903649231aa479e4552` |
 | `scenes/dev/animation_retarget_test/UAL1_Standard.glb` | `69591853d817488edaa8fd9bf8fc1d821eaeaf789f8627b3cd23b41c4ed67997` |
 | `scenes/dev/animation_retarget_test/protagonist_ual.res` | `3aa7bd48fb77061c76f4f443538d8999e89eb57ab29ca6bd6a19b6f3f1226835` |
