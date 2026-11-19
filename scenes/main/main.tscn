@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/interaction/outline_overlay.gd" id="13_outline"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="14_pause_menu"]
 [ext_resource type="Script" path="res://scripts/actors/character_dialogue_animation.gd" id="15_dialogue_animation"]
+[ext_resource type="Script" path="res://scripts/audio/voice_director.gd" id="16_voice_director"]
 
 [node name="Main" type="Node3D"]
 
@@ -57,6 +58,9 @@ script = ExtResource("4_dialogue_controller")
 
 [node name="CharacterDialogueAnimation" type="Node" parent="."]
 script = ExtResource("15_dialogue_animation")
+
+[node name="VoiceDirector" type="Node" parent="."]
+script = ExtResource("16_voice_director")
 
 [node name="OpeningSequence" type="Node" parent="."]
 script = ExtResource("5_opening_sequence")
