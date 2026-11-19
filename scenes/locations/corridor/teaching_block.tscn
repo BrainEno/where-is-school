@@ -1,4 +1,4 @@
-[gd_scene load_steps=427 format=3]
+[gd_scene load_steps=430 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -207,17 +207,17 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.596, 0.545, 0.573, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_fern_blue"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.337, 0.502, 0.549, 1)
-
 [sub_resource type="StandardMaterial3D" id="Mat_chalk_rose"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.773, 0.671, 0.659, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_fern_blue"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.337, 0.502, 0.549, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
 size = Vector3(4.4, 0.1, 36.95)
@@ -1146,229 +1146,238 @@ size = Vector3(0.16, 1, 5.85)
 [sub_resource type="BoxMesh" id="BoxMesh_art309"]
 size = Vector3(0.16, 0.08, 5.85)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art310"]
-size = Vector3(2.6, 0.1, 4.3744)
+[sub_resource type="BoxMesh" id="BoxMesh_art310"]
+size = Vector3(0.76, 4.96, 0.76)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art311"]
+size = Vector3(0.65, 6.76, 0.65)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art312"]
+size = Vector3(2.6, 0.1, 4.3744)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art313"]
 size = Vector3(2.55, 0.26, 0.394)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art312"]
+[sub_resource type="BoxMesh" id="BoxMesh_art314"]
 size = Vector3(2.55, 0.043, 0.04)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art313"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art315"]
 size = Vector3(0.14, 1.13, 4.2544)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art314"]
+[sub_resource type="BoxMesh" id="BoxMesh_art316"]
 size = Vector3(0.14, 1, 4.2544)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art315"]
+[sub_resource type="BoxMesh" id="BoxMesh_art317"]
 size = Vector3(0.16, 0.08, 4.2544)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art316"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art318"]
 size = Vector3(2.85, 0.1, 3.55)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art317"]
+[sub_resource type="BoxMesh" id="BoxMesh_art319"]
 size = Vector3(2.85, 0.27, 3.55)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_art318"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_art320"]
 size = Vector2(2.85, 3.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art319"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art321"]
 size = Vector3(0.2, 1.1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art320"]
+[sub_resource type="BoxMesh" id="BoxMesh_art322"]
 size = Vector3(0.2, 1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art321"]
+[sub_resource type="BoxMesh" id="BoxMesh_art323"]
 size = Vector3(0.2, 0.08, 0.16)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art322"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art324"]
 size = Vector3(2.85, 1.1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art323"]
+[sub_resource type="BoxMesh" id="BoxMesh_art325"]
 size = Vector3(2.85, 1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art324"]
+[sub_resource type="BoxMesh" id="BoxMesh_art326"]
 size = Vector3(2.85, 0.08, 0.16)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art325"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art327"]
 size = Vector3(0.16, 1.1, 0.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art326"]
+[sub_resource type="BoxMesh" id="BoxMesh_art328"]
 size = Vector3(0.16, 1, 0.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art327"]
+[sub_resource type="BoxMesh" id="BoxMesh_art329"]
 size = Vector3(0.16, 0.08, 0.3)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art328"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art330"]
 size = Vector3(0.16, 1.1, 0.35)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art329"]
+[sub_resource type="BoxMesh" id="BoxMesh_art331"]
 size = Vector3(0.16, 1, 0.35)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art330"]
+[sub_resource type="BoxMesh" id="BoxMesh_art332"]
 size = Vector3(0.16, 0.08, 0.35)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art331"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art333"]
 size = Vector3(0.16, 1.1, 3.55)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art332"]
+[sub_resource type="BoxMesh" id="BoxMesh_art334"]
 size = Vector3(0.16, 1, 3.55)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art333"]
+[sub_resource type="BoxMesh" id="BoxMesh_art335"]
 size = Vector3(0.16, 0.08, 3.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art334"]
+[sub_resource type="BoxMesh" id="BoxMesh_art336"]
+size = Vector3(0.92, 1.46, 0.92)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art337"]
 size = Vector3(2.95, 0.1, 4.5123)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art335"]
+[sub_resource type="BoxMesh" id="BoxMesh_art338"]
 size = Vector3(2.9, 0.26, 0.409)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art336"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art339"]
 size = Vector3(0.14, 1.13, 4.3923)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art337"]
+[sub_resource type="BoxMesh" id="BoxMesh_art340"]
 size = Vector3(0.14, 1, 4.3923)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art338"]
+[sub_resource type="BoxMesh" id="BoxMesh_art341"]
 size = Vector3(0.16, 0.08, 4.3923)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art339"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art342"]
 size = Vector3(17.7, 0.1, 4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art340"]
+[sub_resource type="BoxMesh" id="BoxMesh_art343"]
 size = Vector3(17.7, 0.27, 4)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_art341"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_art344"]
 size = Vector2(4, 17.7)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art342"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art345"]
 size = Vector3(3.6, 0.1, 4.9)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art343"]
+[sub_resource type="BoxMesh" id="BoxMesh_art346"]
 size = Vector3(3.6, 0.27, 4.9)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_art344"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_art347"]
 size = Vector2(3.6, 4.9)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art345"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art348"]
 size = Vector3(17.7, 1.1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art346"]
+[sub_resource type="BoxMesh" id="BoxMesh_art349"]
 size = Vector3(17.7, 1, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art347"]
+[sub_resource type="BoxMesh" id="BoxMesh_art350"]
 size = Vector3(17.7, 0.08, 0.16)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art348"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art351"]
 size = Vector3(0.16, 1.1, 0.6)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art349"]
+[sub_resource type="BoxMesh" id="BoxMesh_art352"]
 size = Vector3(0.16, 1, 0.6)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art350"]
+[sub_resource type="BoxMesh" id="BoxMesh_art353"]
 size = Vector3(0.16, 0.08, 0.6)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art351"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art354"]
 size = Vector3(0.16, 1.1, 0.5)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art352"]
+[sub_resource type="BoxMesh" id="BoxMesh_art355"]
 size = Vector3(0.16, 1, 0.5)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art353"]
+[sub_resource type="BoxMesh" id="BoxMesh_art356"]
 size = Vector3(0.16, 0.08, 0.5)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art354"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art357"]
 size = Vector3(3.525, 3.05, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art355"]
+[sub_resource type="BoxMesh" id="BoxMesh_art358"]
 size = Vector3(3.525, 0.94, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art356"]
+[sub_resource type="BoxMesh" id="BoxMesh_art359"]
 size = Vector3(3.525, 2.11, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art357"]
+[sub_resource type="BoxMesh" id="BoxMesh_art360"]
 size = Vector3(3.525, 0.32, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art358"]
+[sub_resource type="BoxMesh" id="BoxMesh_art361"]
 size = Vector3(1.5136, 1.84, 0.045)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art359"]
+[sub_resource type="BoxMesh" id="BoxMesh_art362"]
 size = Vector3(0.19, 1.47, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art360"]
+[sub_resource type="BoxMesh" id="BoxMesh_art363"]
 size = Vector3(0.2484, 0.19, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art361"]
+[sub_resource type="BoxMesh" id="BoxMesh_art364"]
 size = Vector3(3.285, 0.2, 0.75)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art362"]
+[sub_resource type="BoxMesh" id="BoxMesh_art365"]
 size = Vector3(1.848, 1.84, 0.045)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art363"]
+[sub_resource type="BoxMesh" id="BoxMesh_art366"]
 size = Vector3(0.19, 1.29, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art364"]
+[sub_resource type="BoxMesh" id="BoxMesh_art367"]
 size = Vector3(0.2985, 0.19, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art365"]
+[sub_resource type="BoxMesh" id="BoxMesh_art368"]
 size = Vector3(1.2672, 1.84, 0.045)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art366"]
+[sub_resource type="BoxMesh" id="BoxMesh_art369"]
 size = Vector3(0.19, 1.55, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art367"]
+[sub_resource type="BoxMesh" id="BoxMesh_art370"]
 size = Vector3(0.2116, 0.19, 0.2)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art368"]
+[sub_resource type="BoxMesh" id="BoxMesh_art371"]
 size = Vector3(17, 0.01, 0.1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art369"]
+[sub_resource type="BoxMesh" id="BoxMesh_art372"]
 size = Vector3(0.052, 0.008, 3.8)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art370"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art373"]
 size = Vector3(8.9, 3.05, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art371"]
+[sub_resource type="BoxMesh" id="BoxMesh_art374"]
 size = Vector3(8.9, 0.94, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art372"]
+[sub_resource type="BoxMesh" id="BoxMesh_art375"]
 size = Vector3(8.9, 2.11, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art373"]
+[sub_resource type="BoxMesh" id="BoxMesh_art376"]
 size = Vector3(8.9, 0.32, 0.16)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art374"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art377"]
 size = Vector3(4.9, 3.05, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art375"]
+[sub_resource type="BoxMesh" id="BoxMesh_art378"]
 size = Vector3(4.9, 0.94, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art376"]
+[sub_resource type="BoxMesh" id="BoxMesh_art379"]
 size = Vector3(4.9, 2.11, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art377"]
+[sub_resource type="BoxMesh" id="BoxMesh_art380"]
 size = Vector3(4.9, 0.32, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art378"]
+[sub_resource type="BoxMesh" id="BoxMesh_art381"]
 size = Vector3(3.35, 0.07, 0.05)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art379"]
+[sub_resource type="BoxMesh" id="BoxMesh_art382"]
 size = Vector3(0.1, 0.013, 7.63)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art380"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art383"]
 size = Vector3(3.6, 3.05, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art381"]
+[sub_resource type="BoxMesh" id="BoxMesh_art384"]
 size = Vector3(3.6, 0.94, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art382"]
+[sub_resource type="BoxMesh" id="BoxMesh_art385"]
 size = Vector3(3.6, 2.11, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art383"]
+[sub_resource type="BoxMesh" id="BoxMesh_art386"]
 size = Vector3(3.6, 0.32, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art384"]
+[sub_resource type="BoxMesh" id="BoxMesh_art387"]
 size = Vector3(2.42, 0.21, 0.48)
 
 [node name="TeachingBlock" type="Node3D"]
@@ -10638,6 +10647,26 @@ mesh = SubResource("BoxMesh_art309")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
+[node name="UpLandingPier0" type="MeshInstance3D" parent="RearStair"]
+position = Vector3(-13.76, -0.92, 6.53)
+mesh = SubResource("BoxMesh_art310")
+material_override = SubResource("Mat_chalk_rose")
+
+[node name="UpLandingPier1" type="MeshInstance3D" parent="RearStair"]
+position = Vector3(-9.58, -0.92, 6.53)
+mesh = SubResource("BoxMesh_art310")
+material_override = SubResource("Mat_chalk_rose")
+
+[node name="UpperLinkPier0" type="MeshInstance3D" parent="RearStair"]
+position = Vector3(-13.82, -0.02, -1.17)
+mesh = SubResource("BoxMesh_art311")
+material_override = SubResource("Mat_chalk_rose")
+
+[node name="UpperLinkPier1" type="MeshInstance3D" parent="RearStair"]
+position = Vector3(-10.2, -0.02, -1.17)
+mesh = SubResource("BoxMesh_art311")
+material_override = SubResource("Mat_chalk_rose")
+
 [node name="DownUpperFlight" type="Node3D" parent="RearStair"]
 position = Vector3(-3.575, -1.7, 10.85)
 rotation_degrees = Vector3(0, 0, 0)
@@ -10650,126 +10679,126 @@ collision_mask = 0
 
 [node name="Slope" type="CollisionShape3D" parent="RearStair/DownUpperFlight/Ramp"]
 position = Vector3(0, 0.8042, -1.97)
-shape = SubResource("BoxShape3D_art310")
+shape = SubResource("BoxShape3D_art312")
 rotation_degrees = Vector3(23.5523, 0, 0)
 
 [node name="Tread1" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, -0.045, -0.195)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
 [node name="Nosing1" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.063, 0)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread2" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.125, -0.585)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing2" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.233, -0.39)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread3" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.295, -0.975)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing3" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.403, -0.78)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread4" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.465, -1.365)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing4" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.573, -1.17)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread5" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.635, -1.755)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
 [node name="Nosing5" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.743, -1.56)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread6" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.805, -2.145)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing6" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.913, -1.95)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread7" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 0.975, -2.535)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing7" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.083, -2.34)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread8" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.145, -2.925)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing8" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.253, -2.73)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread9" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.315, -3.315)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
 [node name="Nosing9" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.423, -3.12)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="Tread10" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.485, -3.705)
-mesh = SubResource("BoxMesh_art311")
+mesh = SubResource("BoxMesh_art313")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
 [node name="Nosing10" type="MeshInstance3D" parent="RearStair/DownUpperFlight"]
 position = Vector3(0, 1.593, -3.51)
-mesh = SubResource("BoxMesh_art312")
+mesh = SubResource("BoxMesh_art314")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10781,17 +10810,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownUpperFlight/WestGuard"]
 position = Vector3(0, 0.54, 0)
-shape = SubResource("BoxShape3D_art313")
+shape = SubResource("BoxShape3D_art315")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownUpperFlight/WestGuard"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art314")
+mesh = SubResource("BoxMesh_art316")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownUpperFlight/WestGuard"]
 position = Vector3(0, 1.02, 0)
-mesh = SubResource("BoxMesh_art315")
+mesh = SubResource("BoxMesh_art317")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10803,17 +10832,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownUpperFlight/EastGuard"]
 position = Vector3(0, 0.54, 0)
-shape = SubResource("BoxShape3D_art313")
+shape = SubResource("BoxShape3D_art315")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownUpperFlight/EastGuard"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art314")
+mesh = SubResource("BoxMesh_art316")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownUpperFlight/EastGuard"]
 position = Vector3(0, 1.02, 0)
-mesh = SubResource("BoxMesh_art315")
+mesh = SubResource("BoxMesh_art317")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10825,17 +10854,17 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="RearStair/DownLanding"]
 position = Vector3(0, -0.05, 0)
-shape = SubResource("BoxShape3D_art316")
+shape = SubResource("BoxShape3D_art318")
 
 [node name="Slab" type="MeshInstance3D" parent="RearStair/DownLanding"]
 position = Vector3(0, -0.14, 0)
-mesh = SubResource("BoxMesh_art317")
+mesh = SubResource("BoxMesh_art319")
 material_override = SubResource("Mat_upper_concrete")
 cast_shadow = 0
 
 [node name="RuledPour" type="MeshInstance3D" parent="RearStair/DownLanding"]
 position = Vector3(0, 0.003, 0)
-mesh = SubResource("PlaneMesh_art318")
+mesh = SubResource("PlaneMesh_art320")
 material_override = SubResource("Mat_folded_tile")
 cast_shadow = 0
 
@@ -10847,17 +10876,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLandingRailNorth0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art319")
+shape = SubResource("BoxShape3D_art321")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLandingRailNorth0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art320")
+mesh = SubResource("BoxMesh_art322")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLandingRailNorth0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art321")
+mesh = SubResource("BoxMesh_art323")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10891,17 +10920,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLandingRailSouth0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art322")
+shape = SubResource("BoxShape3D_art324")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLandingRailSouth0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art323")
+mesh = SubResource("BoxMesh_art325")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLandingRailSouth0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art324")
+mesh = SubResource("BoxMesh_art326")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10913,17 +10942,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLandingRailWest0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art325")
+shape = SubResource("BoxShape3D_art327")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLandingRailWest0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art326")
+mesh = SubResource("BoxMesh_art328")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLandingRailWest0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art327")
+mesh = SubResource("BoxMesh_art329")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10935,17 +10964,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLandingRailWest1"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art328")
+shape = SubResource("BoxShape3D_art330")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLandingRailWest1"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art329")
+mesh = SubResource("BoxMesh_art331")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLandingRailWest1"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art330")
+mesh = SubResource("BoxMesh_art332")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -10957,19 +10986,24 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLandingRailEast0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art331")
+shape = SubResource("BoxShape3D_art333")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLandingRailEast0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art332")
+mesh = SubResource("BoxMesh_art334")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLandingRailEast0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art333")
+mesh = SubResource("BoxMesh_art335")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
+
+[node name="DownLandingPier" type="MeshInstance3D" parent="RearStair"]
+position = Vector3(-3.625, -2.67, 13.75)
+mesh = SubResource("BoxMesh_art336")
+material_override = SubResource("Mat_chalk_rose")
 
 [node name="DownLowerFlight" type="Node3D" parent="RearStair"]
 position = Vector3(-9.1, -3.4, 12.6)
@@ -10983,12 +11017,12 @@ collision_mask = 0
 
 [node name="Slope" type="CollisionShape3D" parent="RearStair/DownLowerFlight/Ramp"]
 position = Vector3(0, 0.8039, -2.0444)
-shape = SubResource("BoxShape3D_art334")
+shape = SubResource("BoxShape3D_art337")
 rotation_degrees = Vector3(22.7704, 0, 0)
 
 [node name="Tread1" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, -0.045, -0.2025)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
@@ -11000,7 +11034,7 @@ cast_shadow = 0
 
 [node name="Tread2" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.125, -0.6075)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11012,7 +11046,7 @@ cast_shadow = 0
 
 [node name="Tread3" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.295, -1.0125)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11024,7 +11058,7 @@ cast_shadow = 0
 
 [node name="Tread4" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.465, -1.4175)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11036,7 +11070,7 @@ cast_shadow = 0
 
 [node name="Tread5" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.635, -1.8225)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
@@ -11048,7 +11082,7 @@ cast_shadow = 0
 
 [node name="Tread6" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.805, -2.2275)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11060,7 +11094,7 @@ cast_shadow = 0
 
 [node name="Tread7" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 0.975, -2.6325)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11072,7 +11106,7 @@ cast_shadow = 0
 
 [node name="Tread8" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 1.145, -3.0375)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11084,7 +11118,7 @@ cast_shadow = 0
 
 [node name="Tread9" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 1.315, -3.4425)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
@@ -11096,7 +11130,7 @@ cast_shadow = 0
 
 [node name="Tread10" type="MeshInstance3D" parent="RearStair/DownLowerFlight"]
 position = Vector3(0, 1.485, -3.8475)
-mesh = SubResource("BoxMesh_art335")
+mesh = SubResource("BoxMesh_art338")
 material_override = SubResource("Mat_landing_stone")
 cast_shadow = 0
 
@@ -11114,17 +11148,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLowerFlight/WestGuard"]
 position = Vector3(0, 0.54, 0)
-shape = SubResource("BoxShape3D_art336")
+shape = SubResource("BoxShape3D_art339")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLowerFlight/WestGuard"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art337")
+mesh = SubResource("BoxMesh_art340")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLowerFlight/WestGuard"]
 position = Vector3(0, 1.02, 0)
-mesh = SubResource("BoxMesh_art338")
+mesh = SubResource("BoxMesh_art341")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -11136,17 +11170,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="RearStair/DownLowerFlight/EastGuard"]
 position = Vector3(0, 0.54, 0)
-shape = SubResource("BoxShape3D_art336")
+shape = SubResource("BoxShape3D_art339")
 
 [node name="Panel" type="MeshInstance3D" parent="RearStair/DownLowerFlight/EastGuard"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art337")
+mesh = SubResource("BoxMesh_art340")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="RearStair/DownLowerFlight/EastGuard"]
 position = Vector3(0, 1.02, 0)
-mesh = SubResource("BoxMesh_art338")
+mesh = SubResource("BoxMesh_art341")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -11158,17 +11192,17 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/Arcade"]
 position = Vector3(0, -0.05, 0)
-shape = SubResource("BoxShape3D_art339")
+shape = SubResource("BoxShape3D_art342")
 
 [node name="Slab" type="MeshInstance3D" parent="GroundFloor/Arcade"]
 position = Vector3(0, -0.14, 0)
-mesh = SubResource("BoxMesh_art340")
+mesh = SubResource("BoxMesh_art343")
 material_override = SubResource("Mat_upper_concrete")
 cast_shadow = 0
 
 [node name="RuledPour" type="MeshInstance3D" parent="GroundFloor/Arcade"]
 position = Vector3(0, 0.003, 0)
-mesh = SubResource("PlaneMesh_art341")
+mesh = SubResource("PlaneMesh_art344")
 material_override = SubResource("Mat_arcade_tile")
 rotation_degrees = Vector3(0, -90, 0)
 cast_shadow = 0
@@ -11181,17 +11215,17 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/Recess"]
 position = Vector3(0, -0.05, 0)
-shape = SubResource("BoxShape3D_art342")
+shape = SubResource("BoxShape3D_art345")
 
 [node name="Slab" type="MeshInstance3D" parent="GroundFloor/Recess"]
 position = Vector3(0, -0.14, 0)
-mesh = SubResource("BoxMesh_art343")
+mesh = SubResource("BoxMesh_art346")
 material_override = SubResource("Mat_upper_concrete")
 cast_shadow = 0
 
 [node name="RuledPour" type="MeshInstance3D" parent="GroundFloor/Recess"]
 position = Vector3(0, 0.003, 0)
-mesh = SubResource("PlaneMesh_art344")
+mesh = SubResource("PlaneMesh_art347")
 material_override = SubResource("Mat_recess_tile")
 cast_shadow = 0
 
@@ -11203,17 +11237,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="GroundFloor/ArcadeRailSouth0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art345")
+shape = SubResource("BoxShape3D_art348")
 
 [node name="Panel" type="MeshInstance3D" parent="GroundFloor/ArcadeRailSouth0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art346")
+mesh = SubResource("BoxMesh_art349")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="GroundFloor/ArcadeRailSouth0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art347")
+mesh = SubResource("BoxMesh_art350")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
@@ -11225,17 +11259,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="GroundFloor/ArcadeRailEast0"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art348")
+shape = SubResource("BoxShape3D_art351")
 
 [node name="Panel" type="MeshInstance3D" parent="GroundFloor/ArcadeRailEast0"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art349")
+mesh = SubResource("BoxMesh_art352")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="GroundFloor/ArcadeRailEast0"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art350")
+mesh = SubResource("BoxMesh_art353")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
@@ -11247,17 +11281,17 @@ collision_mask = 0
 
 [node name="Guard" type="CollisionShape3D" parent="GroundFloor/ArcadeRailEast1"]
 position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art351")
+shape = SubResource("BoxShape3D_art354")
 
 [node name="Panel" type="MeshInstance3D" parent="GroundFloor/ArcadeRailEast1"]
 position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art352")
+mesh = SubResource("BoxMesh_art355")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Cap" type="MeshInstance3D" parent="GroundFloor/ArcadeRailEast1"]
 position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art353")
+mesh = SubResource("BoxMesh_art356")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
@@ -11269,131 +11303,131 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art354")
+shape = SubResource("BoxShape3D_art357")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art355")
+mesh = SubResource("BoxMesh_art358")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art356")
+mesh = SubResource("BoxMesh_art359")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art357")
+mesh = SubResource("BoxMesh_art360")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Recess" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0, 0.94, 0.126)
-mesh = SubResource("BoxMesh_art358")
+mesh = SubResource("BoxMesh_art361")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Jamb0" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.86, 0.735, 0.165)
-mesh = SubResource("BoxMesh_art359")
+mesh = SubResource("BoxMesh_art362")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Jamb1" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.86, 0.735, 0.165)
-mesh = SubResource("BoxMesh_art359")
+mesh = SubResource("BoxMesh_art362")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Arch0" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.8526, 1.5823, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 97.5)
 cast_shadow = 0
 
 [node name="Arch1" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.7945, 1.7991, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 112.5)
 cast_shadow = 0
 
 [node name="Arch2" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.6823, 1.9935, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 127.5)
 cast_shadow = 0
 
 [node name="Arch3" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.5235, 2.1523, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 142.5)
 cast_shadow = 0
 
 [node name="Arch4" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.3291, 2.2645, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 157.5)
 cast_shadow = 0
 
 [node name="Arch5" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(0.1123, 2.3226, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 172.5)
 cast_shadow = 0
 
 [node name="Arch6" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.1123, 2.3226, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 187.5)
 cast_shadow = 0
 
 [node name="Arch7" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.3291, 2.2645, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 202.5)
 cast_shadow = 0
 
 [node name="Arch8" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.5235, 2.1523, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 217.5)
 cast_shadow = 0
 
 [node name="Arch9" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.6823, 1.9935, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 232.5)
 cast_shadow = 0
 
 [node name="Arch10" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.7945, 1.7991, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 247.5)
 cast_shadow = 0
 
 [node name="Arch11" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.8526, 1.5823, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 262.5)
 cast_shadow = 0
 
 [node name="OffsetCornice" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
 position = Vector3(-0.22, 2.99, 0.37)
-mesh = SubResource("BoxMesh_art361")
+mesh = SubResource("BoxMesh_art364")
 material_override = SubResource("Mat_arch_chalk")
 
 [node name="GalleryLightTray" type="MeshInstance3D" parent="GroundFloor/BlindBay1"]
@@ -11422,131 +11456,131 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art354")
+shape = SubResource("BoxShape3D_art357")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art355")
+mesh = SubResource("BoxMesh_art358")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art356")
+mesh = SubResource("BoxMesh_art359")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art357")
+mesh = SubResource("BoxMesh_art360")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Recess" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0, 0.94, 0.126)
-mesh = SubResource("BoxMesh_art362")
+mesh = SubResource("BoxMesh_art365")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Jamb0" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-1.05, 0.645, 0.165)
-mesh = SubResource("BoxMesh_art363")
+mesh = SubResource("BoxMesh_art366")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
 [node name="Jamb1" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(1.05, 0.645, 0.165)
-mesh = SubResource("BoxMesh_art363")
+mesh = SubResource("BoxMesh_art366")
 material_override = SubResource("Mat_fern_blue")
 cast_shadow = 0
 
 [node name="Arch0" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(1.041, 1.4271, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 97.5)
 cast_shadow = 0
 
 [node name="Arch1" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.9701, 1.6918, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 112.5)
 cast_shadow = 0
 
 [node name="Arch2" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.833, 1.9292, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 127.5)
 cast_shadow = 0
 
 [node name="Arch3" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.6392, 2.123, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 142.5)
 cast_shadow = 0
 
 [node name="Arch4" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.4018, 2.2601, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 157.5)
 cast_shadow = 0
 
 [node name="Arch5" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.1371, 2.331, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 172.5)
 cast_shadow = 0
 
 [node name="Arch6" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-0.1371, 2.331, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 187.5)
 cast_shadow = 0
 
 [node name="Arch7" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-0.4018, 2.2601, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 202.5)
 cast_shadow = 0
 
 [node name="Arch8" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-0.6392, 2.123, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 217.5)
 cast_shadow = 0
 
 [node name="Arch9" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-0.833, 1.9292, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 232.5)
 cast_shadow = 0
 
 [node name="Arch10" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-0.9701, 1.6918, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 247.5)
 cast_shadow = 0
 
 [node name="Arch11" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(-1.041, 1.4271, 0.165)
-mesh = SubResource("BoxMesh_art364")
+mesh = SubResource("BoxMesh_art367")
 material_override = SubResource("Mat_fern_blue")
 rotation_degrees = Vector3(0, 0, 262.5)
 cast_shadow = 0
 
 [node name="OffsetCornice" type="MeshInstance3D" parent="GroundFloor/BlindBay2"]
 position = Vector3(0.22, 2.99, 0.37)
-mesh = SubResource("BoxMesh_art361")
+mesh = SubResource("BoxMesh_art364")
 material_override = SubResource("Mat_fern_blue")
 
 [node name="BlindBay3" type="StaticBody3D" parent="GroundFloor" groups=["camera_occluder"]]
@@ -11557,131 +11591,131 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art354")
+shape = SubResource("BoxShape3D_art357")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art355")
+mesh = SubResource("BoxMesh_art358")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art356")
+mesh = SubResource("BoxMesh_art359")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art357")
+mesh = SubResource("BoxMesh_art360")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Recess" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0, 0.94, 0.126)
-mesh = SubResource("BoxMesh_art358")
+mesh = SubResource("BoxMesh_art361")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Jamb0" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.86, 0.735, 0.165)
-mesh = SubResource("BoxMesh_art359")
+mesh = SubResource("BoxMesh_art362")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Jamb1" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.86, 0.735, 0.165)
-mesh = SubResource("BoxMesh_art359")
+mesh = SubResource("BoxMesh_art362")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Arch0" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.8526, 1.5823, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 97.5)
 cast_shadow = 0
 
 [node name="Arch1" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.7945, 1.7991, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 112.5)
 cast_shadow = 0
 
 [node name="Arch2" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.6823, 1.9935, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 127.5)
 cast_shadow = 0
 
 [node name="Arch3" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.5235, 2.1523, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 142.5)
 cast_shadow = 0
 
 [node name="Arch4" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.3291, 2.2645, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 157.5)
 cast_shadow = 0
 
 [node name="Arch5" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(0.1123, 2.3226, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 172.5)
 cast_shadow = 0
 
 [node name="Arch6" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.1123, 2.3226, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 187.5)
 cast_shadow = 0
 
 [node name="Arch7" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.3291, 2.2645, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 202.5)
 cast_shadow = 0
 
 [node name="Arch8" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.5235, 2.1523, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 217.5)
 cast_shadow = 0
 
 [node name="Arch9" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.6823, 1.9935, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 232.5)
 cast_shadow = 0
 
 [node name="Arch10" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.7945, 1.7991, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 247.5)
 cast_shadow = 0
 
 [node name="Arch11" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.8526, 1.5823, 0.165)
-mesh = SubResource("BoxMesh_art360")
+mesh = SubResource("BoxMesh_art363")
 material_override = SubResource("Mat_arch_chalk")
 rotation_degrees = Vector3(0, 0, 262.5)
 cast_shadow = 0
 
 [node name="OffsetCornice" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
 position = Vector3(-0.22, 2.99, 0.37)
-mesh = SubResource("BoxMesh_art361")
+mesh = SubResource("BoxMesh_art364")
 material_override = SubResource("Mat_arch_chalk")
 
 [node name="GalleryLightTray" type="MeshInstance3D" parent="GroundFloor/BlindBay3"]
@@ -11710,110 +11744,110 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art354")
+shape = SubResource("BoxShape3D_art357")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art355")
+mesh = SubResource("BoxMesh_art358")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art356")
+mesh = SubResource("BoxMesh_art359")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art357")
+mesh = SubResource("BoxMesh_art360")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="Recess" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0, 0.94, 0.126)
-mesh = SubResource("BoxMesh_art365")
+mesh = SubResource("BoxMesh_art368")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="Jamb0" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.72, 0.775, 0.165)
-mesh = SubResource("BoxMesh_art366")
+mesh = SubResource("BoxMesh_art369")
 material_override = SubResource("Mat_iron_red")
 cast_shadow = 0
 
 [node name="Jamb1" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0.72, 0.775, 0.165)
-mesh = SubResource("BoxMesh_art366")
+mesh = SubResource("BoxMesh_art369")
 material_override = SubResource("Mat_iron_red")
 cast_shadow = 0
 
 [node name="Arch3" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0.4383, 2.1212, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 142.5)
 cast_shadow = 0
 
 [node name="Arch4" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0.2755, 2.2152, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 157.5)
 cast_shadow = 0
 
 [node name="Arch5" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0.094, 2.2638, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 172.5)
 cast_shadow = 0
 
 [node name="Arch6" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.094, 2.2638, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 187.5)
 cast_shadow = 0
 
 [node name="Arch7" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.2755, 2.2152, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 202.5)
 cast_shadow = 0
 
 [node name="Arch8" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.4383, 2.1212, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 217.5)
 cast_shadow = 0
 
 [node name="Arch9" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.5712, 1.9883, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 232.5)
 cast_shadow = 0
 
 [node name="Arch10" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.6652, 1.8255, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 247.5)
 cast_shadow = 0
 
 [node name="Arch11" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(-0.7138, 1.644, 0.165)
-mesh = SubResource("BoxMesh_art367")
+mesh = SubResource("BoxMesh_art370")
 material_override = SubResource("Mat_iron_red")
 rotation_degrees = Vector3(0, 0, 262.5)
 cast_shadow = 0
 
 [node name="OffsetCornice" type="MeshInstance3D" parent="GroundFloor/BlindBay4"]
 position = Vector3(0.22, 2.99, 0.37)
-mesh = SubResource("BoxMesh_art361")
+mesh = SubResource("BoxMesh_art364")
 material_override = SubResource("Mat_iron_red")
 
 [node name="FirstFloorPlate" type="Node3D" parent="GroundFloor"]
@@ -11836,43 +11870,43 @@ modulate = Color(0.93, 0.86, 0.73, 1)
 
 [node name="HallInlay" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-17.95, -3.391, 13.28)
-mesh = SubResource("BoxMesh_art368")
+mesh = SubResource("BoxMesh_art371")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="CrossRule0" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-9.6, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="CrossRule1" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-13.1, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="CrossRule2" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-16.6, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="CrossRule3" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-20.1, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="CrossRule4" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-23.6, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
 [node name="CrossRule5" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-26.1, -3.393, 12.55)
-mesh = SubResource("BoxMesh_art369")
+mesh = SubResource("BoxMesh_art372")
 material_override = SubResource("Mat_deep_plum")
 cast_shadow = 0
 
@@ -11884,23 +11918,23 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/EndWall"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art370")
+shape = SubResource("BoxShape3D_art373")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/EndWall"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art371")
+mesh = SubResource("BoxMesh_art374")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/EndWall"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art372")
+mesh = SubResource("BoxMesh_art375")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/EndWall"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art373")
+mesh = SubResource("BoxMesh_art376")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
@@ -11912,35 +11946,35 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/RecessScreen"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art374")
+shape = SubResource("BoxShape3D_art377")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/RecessScreen"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art375")
+mesh = SubResource("BoxMesh_art378")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/RecessScreen"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art376")
+mesh = SubResource("BoxMesh_art379")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/RecessScreen"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art377")
+mesh = SubResource("BoxMesh_art380")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
 [node name="AmberRule" type="MeshInstance3D" parent="GroundFloor/RecessScreen"]
 position = Vector3(0.25, 0.96, 0.123)
-mesh = SubResource("BoxMesh_art378")
+mesh = SubResource("BoxMesh_art381")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
 [node name="ReturnInlay" type="MeshInstance3D" parent="GroundFloor"]
 position = Vector3(-25.25, -3.391, 9.465)
-mesh = SubResource("BoxMesh_art379")
+mesh = SubResource("BoxMesh_art382")
 material_override = SubResource("Mat_apricot")
 cast_shadow = 0
 
@@ -11952,23 +11986,23 @@ collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/LaboratoryPortal"]
 position = Vector3(0, 1.525, 0)
-shape = SubResource("BoxShape3D_art380")
+shape = SubResource("BoxShape3D_art383")
 
 [node name="Dado" type="MeshInstance3D" parent="GroundFloor/LaboratoryPortal"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art381")
+mesh = SubResource("BoxMesh_art384")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
 [node name="RosePlaster" type="MeshInstance3D" parent="GroundFloor/LaboratoryPortal"]
 position = Vector3(0, 1.995, 0)
-mesh = SubResource("BoxMesh_art382")
+mesh = SubResource("BoxMesh_art385")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/LaboratoryPortal"]
 position = Vector3(0, 2.89, 0.045)
-mesh = SubResource("BoxMesh_art383")
+mesh = SubResource("BoxMesh_art386")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
@@ -11977,7 +12011,7 @@ position = Vector3(0, 0, 0)
 
 [node name="EnamelLintel" type="MeshInstance3D" parent="GroundFloor/LaboratoryPortal"]
 position = Vector3(0, 2.36, 0.23)
-mesh = SubResource("BoxMesh_art384")
+mesh = SubResource("BoxMesh_art387")
 material_override = SubResource("Mat_fern_blue")
 
 [node name="BorrowedLightTray" type="MeshInstance3D" parent="GroundFloor/LaboratoryPortal"]

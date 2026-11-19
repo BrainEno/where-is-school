@@ -126,6 +126,8 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 	if not _host.load_location(scene_path, &"", _player, StringName(location_id)):
 		_failures.append("%s did not load" % location_id)
 		return
+	if _teaching_wing:
+		_player.set_wake_pose(0.0) # These shots are after class, not in the wake pose.
 	await _wait(1.2)
 	var current := _host.get_current()
 	var spots := _teaching_spots(current) if _teaching_wing else _spots(current)
@@ -227,7 +229,8 @@ func _wide(current: LocationRoot, location_id: String, out_dir: String) -> void:
 	if _rig.get("offset") is Vector3:
 		bearing = (_rig.get("offset") as Vector3).normalized()
 	var radius := Vector2(bounds.size.x, bounds.size.z).length() * 0.5
-	var distance := radius / tan(deg_to_rad(WIDE_FOV * 0.5)) * 0.95
+	var clearance := 1.12 if _teaching_wing else 0.95
+	var distance := radius / tan(deg_to_rad(WIDE_FOV * 0.5)) * clearance
 	var camera := Camera3D.new()
 	camera.name = "LocationCaptureCamera"
 	camera.fov = WIDE_FOV

@@ -4403,7 +4403,7 @@ position = Vector3(1.35, 0.55, 0.35)
 interact_id = &"laboratory_cable_knot"
 inspection_id = &"laboratory_cable_knot"
 radius = 1.4
-outline_paths = PackedStringArray("../../CableCoil0_000", "../../CableCoil1_000", "../../CableCoil2_000", "../../CableBundle0_004")
+outline_paths = PackedStringArray("../../Cables/CableCoil0_000", "../../Cables/CableCoil1_000", "../../Cables/CableCoil2_000", "../../Cables/CableBundle0_004")
 
 [node name="AnnexDoorLook" parent="Interactables" instance=ExtResource("3_interactable")]
 position = Vector3(1.95, 1.15, -2.85)
@@ -4418,7 +4418,7 @@ position = Vector3(-4.4, 0.67, 5.06)
 interact_id = &"laboratory_to_corridor"
 outline_paths = PackedStringArray("../../WallSouth/EntranceFrame/LeafLeft", "../../WallSouth/EntranceFrame/LeafRight", "../../WallSouth/EntranceFrame/Head")
 support_paths = PackedStringArray("../../WallSouth")
-prompt_key = "prompt.back_to_corridor"
+prompt_key = "prompt.door_try"
 radius = 1.35
 destination_scene = "res://scenes/locations/corridor/corridor.tscn"
 destination_spawn = &"FromLaboratory"

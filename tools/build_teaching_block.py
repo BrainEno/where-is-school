@@ -428,6 +428,12 @@ def blind_arch(b, parent, radius, head, material, open_quarter=False):
               (0, 0, math.degrees(a)+90))
 
 
+def landing_support(b, parent, name, x, z, landing_y, width):
+    # A solid-looking pier below the section, outside any walkable volume.
+    top = landing_y-0.24
+    b.box(name, parent, (x, (GROUND_Y+top)/2, z), (width, top-GROUND_Y, width), "chalk_rose", shadow=True)
+
+
 def rear_stair_and_ground_wing(b):
     # The hub attaches to the corridor slab after the white rear door. Splay up
     # toward the old 03 return and down toward the south apron. Neither branch
@@ -467,6 +473,10 @@ def rear_stair_and_ground_wing(b):
     slab(b, s, "UpperLink", UPPER_X, upper_link, RISE, "folded_tile")
     guard_edges(b, s, "UpperLinkRail", UPPER_X, upper_link, RISE,
                 {"North": [UPPER_X], "South": [high_track]}, "iron_red", "deep_plum")
+    for i, x in enumerate((up_x[0]+0.49, up_x[1]-0.53)):
+        landing_support(b, s, f"UpLandingPier{i}", x, junction_z[1]-0.42, up_y, 0.76)
+    for i, x in enumerate((UPPER_X[0]+0.43, UPPER_X[1]-0.45)):
+        landing_support(b, s, f"UpperLinkPier{i}", x, UPPER_JOIN_Z-0.52, RISE, 0.65)
 
     down_half_y = GROUND_Y/2
     down_half_x, down_half_z = (-5.05, junction_x[1]), (10.85, 14.4)
@@ -478,6 +488,7 @@ def rear_stair_and_ground_wing(b):
     slab(b, s, "DownLanding", down_half_x, down_half_z, down_half_y, "folded_tile")
     guard_edges(b, s, "DownLandingRail", down_half_x, down_half_z, down_half_y,
                 {"North": [down_entry], "West": [low_track]}, "night_blue", "apricot")
+    landing_support(b, s, "DownLandingPier", sum(down_half_x)/2, down_half_z[1]-0.65, down_half_y, 0.92)
     flight(b, s, "DownLowerFlight", (ground_x[1], GROUND_Y, sum(low_track)/2), -90,
            down_half_x[0]-ground_x[1], down_half_y-GROUND_Y,
            low_track[1]-low_track[0], 10, "fern_blue",
@@ -637,6 +648,7 @@ def foundations(b):
     ground = material_for("YardGround/MeshInstance3D")
     b.box("NorthApron", p, (8, YARD_Y-0.12, -37.9), (70, 0.20, 39.8), f"yard/{ground}")
     b.box("WestApron", p, (-15.7, YARD_Y-0.12, -3.1), (22.6, 0.20, 30), f"yard/{ground}")
+    b.box("GroundWingApron", p, (-16.0, GROUND_Y-0.22, 12.30), (28.3, 0.18, 13.0), f"yard/{ground}")
     for name, x, z, w, d, top in (
         ("LowerWest", -5.35, -11.55, 6.2, 36.5, -0.34),
         ("LowerNorth", 13.4, -33.0, 30.6, 6.0, -0.34),

@@ -67,9 +67,9 @@ build rather than a file nobody can rebuild.
   read-only from `scenes/environment/props/playground_art/materials/ink_outline.tres`, and
   the room's one chromatic events reserved for the lamps, the two running lights and the
   annex.
-- `scenes/locations/laboratory/laboratory.tscn` — the scene: 167 collision boxes (each one
-  the size of its own visible box mesh, and nothing else collides), 89 cylinders, 401 cable
-  segments and nine inspections. There is now also an exit in the south wall.
+- `scenes/locations/laboratory/laboratory.tscn` — the scene: a shell and benches with
+  matching collision boxes, 89 cylinders, 401 cable segments and nine inspections. There
+  is now also an exit in the south wall.
 
 The [folded teaching wing](../teaching_block/README.md) connects the room to the optional
 01 recess through two matching sides of `laboratory_entry_door.tscn`. The separate `Entry`

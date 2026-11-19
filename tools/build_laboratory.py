@@ -846,7 +846,9 @@ def build_interactables(lab: Lab) -> None:
             "id": "laboratory_cable_knot",
             "inspection": "laboratory_cable_knot",
             "radius": 1.4,
-            "outline": ["../../CableCoil0_000", "../../CableCoil1_000", "../../CableCoil2_000", "../../CableBundle0_004"],
+            "outline": [f"../../Cables/{part}" for part in (
+                "CableCoil0_000", "CableCoil1_000", "CableCoil2_000", "CableBundle0_004",
+            )],
             "support": [],
         },
         {
@@ -1099,7 +1101,7 @@ def build_scene(lab: Lab) -> str:
         'outline_paths = PackedStringArray("../../WallSouth/EntranceFrame/LeafLeft", '
         '"../../WallSouth/EntranceFrame/LeafRight", "../../WallSouth/EntranceFrame/Head")',
         'support_paths = PackedStringArray("../../WallSouth")',
-        'prompt_key = "prompt.back_to_corridor"',
+        'prompt_key = "prompt.door_try"',
         'radius = 1.35',
         'destination_scene = "res://scenes/locations/corridor/corridor.tscn"',
         'destination_spawn = &"FromLaboratory"',

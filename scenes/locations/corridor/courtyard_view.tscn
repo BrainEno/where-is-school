@@ -1,4 +1,4 @@
-[gd_scene load_steps=75 format=3]
+[gd_scene load_steps=76 format=3]
 
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_haze_floor.tres" id="art_school_haze_floor"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ground.tres" id="yard_ground"]
@@ -161,21 +161,24 @@ size = Vector3(70, 0.2, 39.8)
 size = Vector3(22.6, 0.2, 30)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art42"]
-size = Vector3(6.2, 3.06, 36.5)
+size = Vector3(28.3, 0.18, 13)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art43"]
-size = Vector3(30.6, 3.06, 6)
+size = Vector3(6.2, 3.06, 36.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art44"]
-size = Vector3(5.9, 6.4, 38.5)
+size = Vector3(30.6, 3.06, 6)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art45"]
-size = Vector3(31.8, 6.35, 6.4)
+size = Vector3(5.9, 6.4, 38.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art46"]
-size = Vector3(0.47, 3.16, 0.47)
+size = Vector3(31.8, 6.35, 6.4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art47"]
+size = Vector3(0.47, 3.16, 0.47)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art48"]
 size = Vector3(0.47, 6.76, 0.47)
 
 [node name="CourtyardView" type="Node3D"]
@@ -560,110 +563,116 @@ mesh = SubResource("BoxMesh_art41")
 material_override = ExtResource("yard_ground")
 cast_shadow = 0
 
+[node name="GroundWingApron" type="MeshInstance3D" parent="Foundations"]
+position = Vector3(-16, -3.62, 12.3)
+mesh = SubResource("BoxMesh_art42")
+material_override = ExtResource("yard_ground")
+cast_shadow = 0
+
 [node name="LowerWest" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-5.35, -1.87, -11.55)
-mesh = SubResource("BoxMesh_art42")
+mesh = SubResource("BoxMesh_art43")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerNorth" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(13.4, -1.87, -33)
-mesh = SubResource("BoxMesh_art43")
+mesh = SubResource("BoxMesh_art44")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperWest" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-17.2, -0.2, -25.7)
-mesh = SubResource("BoxMesh_art44")
+mesh = SubResource("BoxMesh_art45")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperNorth" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(2.05, -0.225, -48.2)
-mesh = SubResource("BoxMesh_art45")
+mesh = SubResource("BoxMesh_art46")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn0" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(2, -1.82, -22)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn1" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(2, -1.82, -13)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn2" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(2, -1.82, -4)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn3" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(2, -1.82, 5)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn4" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(5, -1.82, -25.75)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn5" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(11, -1.82, -25.75)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn6" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(21, -1.82, -25.75)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="LowerColumn7" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(28.2, -1.82, -25.75)
-mesh = SubResource("BoxMesh_art46")
+mesh = SubResource("BoxMesh_art47")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn0" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-9.96, -0.02, -37.4)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn1" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-9.96, -0.02, -28)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn2" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-9.96, -0.02, -16)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn3" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(-7.4, -0.02, -40.66)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn4" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(9.6, -0.02, -40.66)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperColumn5" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(17.6, -0.02, -40.66)
-mesh = SubResource("BoxMesh_art47")
+mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
