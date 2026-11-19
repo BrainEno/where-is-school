@@ -28,6 +28,7 @@ var _interaction: InteractionController
 var _pointer: PointerNavigator
 var _dialogue: DialogueController
 var _last_inspection: StringName = &""
+var _directory_checkpoints: Dictionary = {}
 
 
 func _initialize() -> void:
@@ -38,7 +39,8 @@ func _initialize() -> void:
 func _run() -> void:
 	Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
-	var main := (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
+	var main_scene := load("res://scenes/main/main.tscn") as PackedScene
+	var main := main_scene.instantiate()
 	var director := main.get_node(^"OpeningSequence") as OpeningSequence
 	director.autostart = false
 	root.add_child(main)
@@ -144,6 +146,11 @@ func _run() -> void:
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
+	if _check.expect(not _directory_checkpoints.is_empty(), "The directory never reached its save cases."):
+		main.queue_free()
+		if _check.expect(await Harness.wait_until(func() -> bool: return not is_instance_valid(main), 5.0),
+			"Could not close the walking test's world before resuming."):
+			await DirectoryCase.check_resume(self, main_scene, _directory_checkpoints, _check)
 	_finish()
 
 
@@ -151,7 +158,8 @@ func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
-		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work.")
+		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work; "
+		+ "marked and unmarked directory poses survive resuming a checkpoint.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -445,7 +453,7 @@ func _check_directory(corridor: LocationRoot) -> void:
 	if not _check.expect(opened, "The directory did not open through the normal inspection channel."):
 		return
 	await _dismiss_inspection()
-	await DirectoryCase.use_tab(corridor, directory, _dialogue, _check, _press_interact)
+	_directory_checkpoints = await DirectoryCase.use_tab(corridor, directory, _dialogue, _check, _press_interact)
 
 
 ## Take the new branches from the same landing without placing or reloading the player.
