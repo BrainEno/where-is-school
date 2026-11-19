@@ -44,11 +44,12 @@ func _run() -> void:
 	await _world_taps()
 	await _pause_navigation()
 	await _reading()
+	await _large_reading()
 	_main.queue_free()
 	await process_frame
 	Harness.finish(self, _check.failures,
-		"mobile safe controls at three aspect ratios, single-finger world taps, "
-		+ "settings scroll, modal back/resume, dialogue reveal and choice paging")
+		"mobile safe controls at three aspect ratios, single-finger path and get-up, "
+		+ "settings scroll, modal back/resume, dialogue reveal, choice paging and large bilingual layouts")
 
 
 func _set_screen(metrics: Array) -> void:
@@ -116,14 +117,26 @@ func _load_world() -> void:
 func _world_taps() -> void:
 	Harness.stage = "world tap, swipe, second finger and cancel"
 	var safe := MobileLayout.safe_rect(_ui.hud)
-	var point := safe.get_center()
+	# Use real floor, not the center pixel: an authored hotspot there can begin an
+	# inspection and replace the independent long-line fixture later in this test.
+	var candidates: Array[Vector2] = [Vector2.INF]
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		candidates[0] = _route_screen_point(safe)
+		return candidates[0] != Vector2.INF, 4.0), "No visible, reachable, unoccupied floor for the touch path"):
+		return
+	var point := candidates[0]
+	_player.set_wake_pose(1.0)
 	var before := _nav.get_world_click_event_count()
 	_touch(point, true)
 	_check.expect(_nav.get_world_click_event_count() == before, "Touch-down walked the player")
 	_touch(point, false)
 	_check.expect(_nav.get_world_click_event_count() == before + 1, "A single tap did not pick exactly once")
 	_check.expect(_settings.call("get_input_device") == &"touch", "Mouse emulation displaced touch prompts")
+	_check.expect(_player.is_path_active(), "The accepted tap did not start a real navigation path")
+	_check.expect(await Harness.wait_until(_player.is_getting_up, 3.0), "The first deliberate touch move did not start getting up")
 	_player.cancel_path()
+	_check.expect(await Harness.wait_until(func() -> bool: return not _player.is_getting_up(), 3.0),
+		"Get-up did not finish after the touch move")
 	before = _nav.get_world_click_event_count()
 	await _swipe(point, point + Vector2(100, 0))
 	_touch(point, true)
@@ -138,6 +151,25 @@ func _world_taps() -> void:
 	_touch(safe.position - Vector2(10, -80), true)
 	_touch(safe.position - Vector2(10, -80), false)
 	_check.expect(_nav.get_world_click_event_count() == before, "Drag, second finger, cancel or unsafe tap picked the world")
+
+
+func _route_screen_point(safe: Rect2) -> Vector2:
+	var map := _player.navigation_agent.get_navigation_map()
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return Vector2.INF
+	var interaction := _player.get_node(^"InteractionController") as InteractionController
+	for y in range(14):
+		for x in range(18):
+			var screen := safe.position + safe.size * Vector2(0.13 + 0.74 * float(x) / 17.0,
+				0.25 + 0.63 * float(y) / 13.0)
+			var ground: Variant = _nav.get_ground_point_at(screen)
+			if ground == null or _player.global_position.distance_to(ground) < 1.1:
+				continue
+			if interaction.get_target_at_screen_position(screen, false) != null:
+				continue
+			if NavigationServer3D.map_get_path(map, _player.global_position, ground, true).size() >= 2:
+				return screen
+	return Vector2.INF
 
 
 func _pause_navigation() -> void:
@@ -160,9 +192,13 @@ func _pause_navigation() -> void:
 
 func _reading() -> void:
 	Harness.stage = "dialogue scrolling, continue, log and choices"
+	var controller := _main.get_node(^"DialogueController") as DialogueController
+	if not _check.expect(not controller.is_busy(), "A real presentation got into the dialogue layout fixture"):
+		return
 	var panel := _ui.dialogue_panel
 	panel.set_reveal_speed(0.1)
-	panel.show_line({"speaker_name": "Test", "text": "A readable line for checking touch. ".repeat(90)})
+	var line := "A readable line for checking touch. ".repeat(90)
+	panel.show_line({"speaker_name": "Test", "text": line})
 	_check.expect(await Harness.wait_until(func() -> bool: return not bool(panel.get("_layout_dirty")), 3.0),
 		"Reading band did not settle")
 	var continued := [0]
@@ -173,8 +209,7 @@ func _reading() -> void:
 	var before := _nav.get_world_click_event_count()
 	await _tap_control(next_line)
 	_check.expect(not panel.is_revealing() and continued[0] == 0, "First Continue did not only finish the reveal")
-	await _tap_control(next_line)
-	_check.expect(continued[0] == 1, "One tap did not continue exactly once")
+	_check.expect(panel.get_body_text() == line, "Continue replaced the fixture before it could be scrolled")
 	var body := panel.get_body_label()
 	var content_height := body.get_content_height()
 	_check.expect(body.scroll_active and float(content_height) > body.size.y,
@@ -189,9 +224,11 @@ func _reading() -> void:
 	var changed := bar.value
 	_touch(start - Vector2(0, 64), false)
 	await process_frame
-	_check.expect(bar.value > origin and continued[0] == 1,
+	_check.expect(bar.value > origin and continued[0] == 0,
 		"Dragging long dialogue did not just scroll: active=%s finger=%s position=%s->%s->%s range=%s advance=%s" % [
 			body.scroll_active, capture, origin, changed, bar.value, bar.max_value - bar.page, continued[0]])
+	await _tap_control(next_line)
+	_check.expect(continued[0] == 1, "One tap did not continue exactly once")
 	await _tap_control(footer.get_node(^"Log") as Button)
 	_check.expect(_ui.backlog.is_open(), "Reading tray did not open Log")
 	await _tap_control(_ui.backlog.find_child("TouchClose", true, false) as Button)
@@ -222,6 +259,25 @@ func _option_page(panel: DialoguePanel, footer: Node) -> void:
 	_check_target(choice, "Paged choice")
 	await _tap_control(choice)
 	_check.expect(selected == [expected], "Choice was missed or selected more than once: %s" % [selected])
+
+
+func _large_reading() -> void:
+	Harness.stage = "largest text on compact phone and tablet"
+	_settings.call("set_text_size", &"largest")
+	var loc := root.get_node(^"Loc")
+	var panel := _ui.dialogue_panel
+	for sample: Array in [[SCREENS[0], "en", "A short layout sample."], [SCREENS[2], "zh-CN", "这段文字用于检查横屏阅读。"]]:
+		await _set_screen(sample[0])
+		loc.call("set_locale", sample[1])
+		panel.show_line({"speaker_name": "Test", "text": sample[2]})
+		_check.expect(await Harness.wait_until(func() -> bool: return not bool(panel.get("_layout_dirty")), 3.0),
+			"Large reading layout did not settle")
+		var button := panel.find_child("TouchReading", true, false).get_node(^"Continue") as Button
+		_check_target(button, "Largest %s Continue" % sample[1])
+		var body := panel.get_body_label()
+		_check.expect(body.get_content_height() <= body.size.y + 1.0 or body.scroll_active,
+			"Large %s reading body clipped without scroll" % sample[1])
+		panel.close()
 
 
 func _check_target(control: Control, label: String) -> void:
