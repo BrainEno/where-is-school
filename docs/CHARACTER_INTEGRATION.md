@@ -225,4 +225,88 @@ hand-authored parameters, not generated assets, so `ASSET_PROVENANCE.md` needs n
    a helmet-like bob mesh. Its stripes are now hidden by one hair tone. A remodel, if
    wanted, is a separate task.
 5. **Hands.** Q's mitten-like hands and N's simplified hands are unchanged.
-6. The seated classroom student is still out of scope.
+6. The seated classroom student was out of scope in that integration. The later requested
+   surface refinement below includes it; its model and seated placement remain unchanged.
+
+## 8. N and the seated student's surface refinement (2026-11-18)
+
+**Scope/status.** Implemented material proposal against base `42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6`,
+not owner visual approval. This is not the retired issue #188 overlay experiment. The two
+production looks already use the painted pipeline. Their roughness is visual coarseness,
+not a request for lower PBR roughness or glossy skin: coarse pigment/contour, generic hair
+hatching and little separation between fabric types. N has no UVs; the student's main
+clothing surfaces also have none. Upscaling a bitmap cannot add detail to them.
+
+### Implementation and boundaries
+
+- The existing `character_paint.gdshaderinc` gains opt-in `pigment_blend` (continuous glaze
+  between pigment steps), `patch_feather`, and `detail_kind/strength/scale/tint/origin`.
+  Kind 1 is fine V-shaped knit, 2 is woven twill, 3 is curved angular hair flow. Detail
+  changes diffuse colour only: roughness stays 1, metallic/specular stay 0, with no extra
+  normal, texture sample, geometry, pass or material slot.
+- Clothing uses triplanar projections of the existing rest coordinates. Projection weights
+  come from rest-position derivatives, not a posed/view normal; moving a shoulder must not
+  rotate the weave on the garment. Thread contrast fades with `fwidth` before it becomes
+  sub-pixel. This is an anti-aliasing measure, not a measured FPS improvement.
+- `refined_teacher()` keeps N's sage cardigan, cream blouse and dark trousers: quieter
+  broad chalk, finer knit/twill, curved brown hair strands, lower-contrast facial pigment
+  and feathered glazes. `refined_student()` retains plum/cream/navy, quiets the harsh
+  light/shadow skin inserts and under-eyes, and assigns knit/twill/hair by material role.
+  Their outline is 5.5 mm with less wobble; fingers, facial inserts and small garment
+  pieces still have no individual hull.
+- Defaults are off. Only those two shipped looks opt in, before `room_keyed()`; protagonist,
+  Q and the retained woodcut/paper experiments are not restyled. Regenerate with
+  `python3 art/characters/build_character_looks.py`; `--check` detects drift. Do not edit
+  the generated `.tres` files by hand.
+- No GLB, normal, skin weight, skeleton, animation, blend shape, wrapper transform,
+  collision, interaction, dialogue or portrait changes. N's six inward-facing eye surfaces
+  still use the existing two-sided shader; this does not repair the source model or add
+  facial expressions. The student's modelled angular features remain model geometry.
+
+**Surface provenance.** The updated existing `.tres` resources are deterministic output
+of the in-repo Python palette table; the shader is first-party code authored with Arena
+coding assistance. No downloaded/traced/image-generated artwork or new runtime asset is
+added. The model rights remain exactly those in `ASSET_PROVENANCE.md`; these parameter
+changes do not establish rights in any other model or portrait. That shared ledger is
+left untouched to avoid overlap with the concurrent environment-art PR #245.
+
+### Reproducible comparison and regression coverage
+
+`capture_character_integration.gd` now includes the real `Actors/SeatedStudent` without
+standing it up: face/front-three-quarter, cloth, its own desk/chair, and gameplay-distance
+frames. N gains a cloth close-up. `baseline` is explicitly different from the historical
+`before`: it loads **n.tres and student.tres from this change's base** using
+`--baseline-dir`; omitting the directory or a resource fails rather than substituting an
+older/raw look. `--freeze-pose` fixes the bound idle/sit pose and blink for material A/Bs.
+Do not use it to claim motion validation.
+
+```sh
+baseline="$(mktemp -d)"
+base=42b25b29adc53bfb36d2c6f5be7fcf4ee948b6b6
+git show "$base:assets/characters/teacher_n/teacher_n_look.tres" > "$baseline/n.tres"
+git show "$base:assets/characters/classroom_student/student_look.tres" > "$baseline/student.tres"
+for group in n student; do
+  xvfb-run -a --server-args="-screen 0 1600x900x24" \
+    godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+    --script res://tests/capture_character_integration.gd -- \
+    --group="$group" --variants=baseline,after --baseline-dir="$baseline" --freeze-pose
+done
+```
+
+The capture workflow's `refinement-n` and `refinement-student` jobs extract these looks
+from the **actual PR base SHA**, record that SHA, and publish two-column sheets (left base,
+right current) plus full-size artifacts. On manual dispatch, the baseline is the dispatched
+revision itself; it is not evidence of a historical improvement. All columns share scene,
+light, camera and pose; the base uses the current shader with its new options disabled.
+
+`tests/imported_assets_test.gd` additionally pins the fine-detail material roles and
+restrained strengths, keeps it off skin/eyes and all protagonist/Q parts, and checks their
+glaze options remain off. Its existing geometry/rest-coordinate, reversible-treatment,
+seated-wrapper and six two-sided-eye contracts remain in force. Exact run results and
+remaining environment warnings belong in the PR, not an assumed visual pass here.
+
+**Owner checklist:** compare face and hair in sun/shade; inspect both fabric close-ups;
+check N at the lectern and the student in the actual chair; move/zoom the gameplay camera
+for shimmer and silhouette readability; run the normal (unfrozen) idle, walk and sit paths
+for swimming detail. Forward+ on the target GPU and Windows performance still need target
+hardware verification; software/OpenGL captures are not that verification.
