@@ -58,12 +58,12 @@
     "prompt": "Look at the container",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A metal container set on two concrete pads, no windows, one door with a bar across it and no padlock on the bar. The paint is a school colour and the container is older than the yard.",
-    "repeat_text": "The container, the bar, the missing padlock.",
+    "text": "A blue container, its door ajar, resting between the school back wall and the yard.",
+    "repeat_text": "The blue container, where you landed.",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "The equipment container's door bar has no padlock on it."
+      "text": "A blue container rests at the edge of the schoolyard."
     }
   },
   "pg_tyres": {

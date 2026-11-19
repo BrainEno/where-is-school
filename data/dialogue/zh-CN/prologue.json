@@ -1069,23 +1069,13 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "背后是平平的水泥地。上面是天。哪里都不疼。头顶上也没有一扇你可能掉下来的窗。"
-        },
-        {
-          "id": "cl_2",
-          "speaker": "q",
-          "source": "reported",
-          "text": "你在这儿啊。我还以为你会跟大家一样走楼梯下来。",
-          "conditions": {
-            "all_flags": [
-              "q_companion"
-            ]
-          }
+          "text": "铁皮发出一声大响。你落在蓝色的集装箱顶上。哪里都不疼。上面是天，头顶没有窗。",
+          "next": "cl_3"
         },
         {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "你站起来。地上画着球场，一个攀爬架，一张长椅，旁边一间小屋。是操场。",
+          "text": "你站起身来。从集装箱上看下去，地上画着球场、攀爬架、长椅和小屋。是操场。",
           "effects": [
             {
               "type": "set_flag",
@@ -1101,7 +1091,7 @@
               "entry_id": "fell_into_playground",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你从生物教室的后窗掉了下去，落在操场上，没有受伤。"
+              "text": "你从二楼生物教室的后窗掉了下去，落在操场蓝色的集装箱上，没有受伤。"
             }
           ],
           "next": null

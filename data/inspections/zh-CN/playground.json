@@ -58,12 +58,12 @@
     "prompt": "看看那个集装箱",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "一只红色的集装箱，门半开着，箱子里面放着两张床铺，但是没有看到任何人。",
-    "repeat_text": "集装箱开着，里面有床铺。",
+    "text": "一只蓝色的集装箱，门半开着，横在学校后墙和操场之间。里面放着简易床铺，但没有人。",
+    "repeat_text": "蓝色的集装箱，顶上还留着你落下的地方。",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "集装箱开着，里面有简易的床铺，但没有人。"
+      "text": "操场边横放着一只蓝色的集装箱，里面有简易床铺，但没有人。"
     }
   },
   "pg_tyres": {

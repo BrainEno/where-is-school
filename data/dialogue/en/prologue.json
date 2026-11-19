@@ -1069,23 +1069,13 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "Concrete, flat under your back. Sky. Nothing hurts. There is no window above you to have fallen from."
-        },
-        {
-          "id": "cl_2",
-          "speaker": "q",
-          "source": "reported",
-          "text": "There you are. I thought you'd come down the stairs like everybody else.",
-          "conditions": {
-            "all_flags": [
-              "q_companion"
-            ]
-          }
+          "text": "A loud metallic clang sounds beneath you. You land on the blue container. Above is sky, with no window above.",
+          "next": "cl_3"
         },
         {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "You get up. A court painted on the ground, a climbing frame, a bench, a shed at the side. The yard.",
+          "text": "You stand up. Looking down from the container, you see the court, a climbing frame, a bench, and a shed. The yard.",
           "effects": [
             {
               "type": "set_flag",
@@ -1101,7 +1091,7 @@
               "entry_id": "fell_into_playground",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You fell from the back window of the biology classroom and landed in the yard, unhurt."
+              "text": "You fell from the second-floor biology classroom window onto the blue container in the yard, unharmed."
             }
           ],
           "next": null

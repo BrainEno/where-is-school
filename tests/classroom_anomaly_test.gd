@@ -878,6 +878,9 @@ func _check_fall() -> void:
 		_failures.append(
 			"The view is still rolled %.1f degrees in the yard." % _player.camera_rig.get_roll()
 		)
+	var companion := _main.find_child("Companion", true, false) as Node3D
+	if companion != null and companion.visible:
+		_failures.append("The companion followed the protagonist downstairs after the curtain fall.")
 
 
 # --- 5. the room remembers ----------------------------------------------------------
