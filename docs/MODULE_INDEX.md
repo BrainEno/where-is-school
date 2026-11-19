@@ -197,6 +197,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `ClassroomAnomalies` | [`scenes/locations/classroom/classroom_anomalies.gd`](../scenes/locations/classroom/classroom_anomalies.gd) | Classroom-specific curtain/void/paper staging and restoration; use its authored props and story flags. |
 | `ClassroomScreenControl` | [`scenes/locations/classroom/classroom_screen_control.gd`](../scenes/locations/classroom/classroom_screen_control.gd) | Classroom-specific staged projection-screen toggle; leaves story/save state unchanged. |
+| `ClassroomChairControl` | [`scenes/locations/classroom/classroom_chair_control.gd`](../scenes/locations/classroom/classroom_chair_control.gd) | Classroom-specific staged sit/stand on the chair the protagonist wakes in; keeps the prompt in step with the body and leaves story/save state unchanged. |
 
 <!-- class-name-index:end -->
 
