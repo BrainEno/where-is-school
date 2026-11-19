@@ -147,7 +147,9 @@ func _restore() -> void:
 
 
 func _bone_named(resolved: Dictionary, canonical: String, fallback: String) -> int:
-	var name := String(resolved.get(canonical, ""))
-	if name.is_empty():
-		name = fallback
-	return _skeleton.find_bone(name)
+	# Not `name`: that is `Node.name`, and a local of that name is a parse error rather than a
+	# shadow, which is a thing `gdparse` accepts and the engine does not.
+	var bone_name := String(resolved.get(canonical, ""))
+	if bone_name.is_empty():
+		bone_name = fallback
+	return _skeleton.find_bone(bone_name)
