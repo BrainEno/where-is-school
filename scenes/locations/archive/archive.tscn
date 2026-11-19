@@ -592,7 +592,7 @@ omni_range = 4.2
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(2.86, 0, 2.18)
-rotation_degrees = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 12, 0)
 
 [node name="Interactables" type="Node3D" parent="."]
 

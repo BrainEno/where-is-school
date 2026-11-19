@@ -329,7 +329,7 @@ def room(r):
     b.box("SwitchPlate", ".", (door_x-1.14,1.15,dims[1]/2-.129),(.12,.22,.02), "trim")
     b.node("WorkLamp", ".", "OmniLight3D", position=vec3((-2.83,2.55,-1.92)),
            light_color=srgb((255,229,179)), light_energy=.46, omni_range=4.2)
-    add_route(b,r.id,(door_x,0,dims[1]/2-1.27),(door_x,.84,dims[1]/2-.40),0)
+    add_route(b,r.id,(door_x,0,dims[1]/2-1.27),(door_x,.84,dims[1]/2-.40),12)
     ROOM_CONTENT[r.id](b)
     return b.emit()
 
@@ -339,13 +339,18 @@ def corridor_exits():
         support = f"../../TeachingBlock/{r.parent}/{r.name}Portal/Door/Panel"
         mark = f"../../TeachingBlock/{r.parent}/{r.name}Portal"
         extra = f'required_flag = &"annex.{r.id}.aligned"\nblocked_inspection_id = &"{r.id}_threshold"\n' if r.gated else ""
+        # Adjacent controls need separate pick zones. A full-leaf pick box or
+        # broad anchor sphere would catch a mouse click aimed at the slide.
+        door_point = r.point(.53, 1.10, .45) if r.gated else r.point(0, .83, .51)
+        door_shape = ("HallLever", "HallSign") if r.gated else ("Leaf", "HallLever", "HallSign")
+        outline = ", ".join(f'"{support}/{part}"' for part in door_shape)
         yield f'''[node name="{r.name}Door" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = {vec3(r.point(0, .83, .51))}
+position = {vec3(door_point)}
 interact_id = &"to_{r.id}"
-outline_paths = PackedStringArray("{support}/Leaf", "{support}/HallLever", "{support}/HallSign")
+outline_paths = PackedStringArray({outline})
 support_paths = PackedStringArray("{support}")
 prompt_key = "prompt.{f'enter_{r.id}' if r.gated else 'enter_restroom'}"
-radius = 1.38
+radius = {.36 if r.gated else 1.38}
 {extra}destination_scene = "res://scenes/locations/{r.id}/{r.id}.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"{r.id}"
@@ -359,7 +364,7 @@ prompt_key = "prompt.annex_align"
 outline_paths = PackedStringArray("{mark}/RegistrationSlide", "{mark}/SlideGrip")
 support_paths = PackedStringArray("{support}")
 camera_shot = ExtResource("29_annex_shot")
-radius = 1.17
+radius = 0.34
 '''
 
 

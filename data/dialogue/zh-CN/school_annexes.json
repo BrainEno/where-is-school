@@ -1,6 +1,7 @@
 {
   "format_version": 1,
   "locale": "zh-CN",
+  "chapter": "school_annexes",
   "conversations": {
     "align_archive": {
       "default_source": "observed",

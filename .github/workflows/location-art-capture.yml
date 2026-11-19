@@ -182,6 +182,9 @@ jobs:
               grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             tail -n 40 "${RUNNER_TEMP}/capture.log"
+            grep -E '^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)' "${RUNNER_TEMP}/capture.log" | head -n 4 | while read -r issue; do
+              echo "::error title=location capture diagnostic::$issue"
+            done
             echo "::error title=location capture::$LOCATION/$SIDE wrote ${#frames[@]} frames, ${#views[@]}/$expect detail frames, exit $code"
             exit 1
           fi

@@ -345,7 +345,12 @@ def glass_run(b, parent, name, west, axis, y, low, high, gap=()):
         for j in range(count):
             centre = start + (j + .5) * width
             pos = (axis, y, centre) if west else (centre, y, axis)
-            w = b.shell(f"Bay{i}_{j}", p, pos, (0, -90 if west else 180, 0), ("camera_occluder",))
+            yaw = -90 if west else 180
+            # A short return next to a stair is a pier, not a token slit window.
+            if width < 3.16:
+                solid_wall(b, p, f"Bay{i}_{j}", pos, width, yaw, WALL_HEIGHT, base, field)
+                continue
+            w = b.shell(f"Bay{i}_{j}", p, pos, (0, yaw, 0), ("camera_occluder",))
             glass_width = min(1.82, width*.49)
             window_y = (sill+lintel)/2
             h = lintel-sill

@@ -148,9 +148,10 @@ func _study(id: StringName, marker: StringName, success: bool, observation_stanc
 	var slide := hall.find_interactable(route)
 	if not _check.expect(door != null and slide != null and not door.is_open(), "Fresh %s was open or incomplete." % id):
 		return false
-	var slide_stance := feet + (slide.global_position - door.global_position) * Vector3(1, 0, 1)
+	var toward_hall := (feet - door.global_position) * Vector3(1, 0, 1)
+	var slide_stance := Vector3(slide.global_position.x, feet.y, slide.global_position.z) + toward_hall.normalized() * 1.05
 	var record_key := StoryFlags.check_record_flag(route, &"bearing")
-	if not await _show_choices(slide, slide_stance, route):
+	if not await _show_choices(slide, slide_stance, route, id == &"archive"):
 		return false
 	_check.expect(_choices() == [&"leave"], "%s can roll without a clue: %s." % [id, _choices()])
 	if not _choose(&"leave") or not await _close():
@@ -316,8 +317,8 @@ func _choose(id: StringName) -> bool:
 	return true
 
 
-func _show_choices(slide: Interactable, feet: Vector3, route: StringName) -> bool:
-	return await _use(slide, feet, false) and await _wait_choices(route)
+func _show_choices(slide: Interactable, feet: Vector3, route: StringName, via_mouse: bool = false) -> bool:
+	return await _use(slide, feet, via_mouse) and await _wait_choices(route)
 
 
 func _wait_choices(route: StringName) -> bool:
