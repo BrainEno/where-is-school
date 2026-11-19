@@ -11,32 +11,33 @@
         {
           "id": "cs_1",
           "speaker": "protagonist",
-          "text": "There is a box speaker above the fire door. It used to carry the school bell. It is still switched on.",
+          "text": "The speaker is on. Up close, that isn’t just a hum.",
           "source": "observed",
           "next": "cs_2"
         },
         {
           "id": "cs_2",
           "speaker": "protagonist",
-          "text": "A whole class is talking on the other side of the wall. The voices run together, then stop all at once, as if someone has just come in.",
+          "text": "Someone starts to say something. A few more voices come in over the top.",
           "source": "observed",
           "next": "cs_q_q"
         },
         {
           "id": "cs_q_q",
           "speaker": "q",
-          "text": "That is C's lot. They do that.",
+          "text": "You can hear it here too? I used to learn my vocab under it. Kept thinking it was my turn to read.",
           "next": "cs_3",
           "conditions": {
             "all_flags": [
               "q_companion"
             ]
-          }
+          },
+          "source": "reported"
         },
         {
           "id": "cs_3",
           "speaker": "protagonist",
-          "text": "The speaker clicks twice and goes quiet.",
+          "text": "It cuts out. You’d been waiting for a surname.",
           "source": "observed",
           "next": null
         }
@@ -50,32 +51,33 @@
         {
           "id": "ct_1",
           "speaker": "protagonist",
-          "text": "A cleaning trolley is parked across the cupboard, wheels turned in.",
+          "text": "The trolley’s parked square. One caster’s still turned out.",
           "source": "observed",
           "next": "ct_2"
         },
         {
           "id": "ct_2",
           "speaker": "protagonist",
-          "text": "A mop, half a bucket of water, and a bottle of yellow cleaning fluid. The cupboard behind them seems to be full of exercise books; you can make out the spines.",
+          "text": "There’s barely room to open the cupboard even without the trolley. This is where it gets parked.",
           "source": "observed",
           "next": "ct_q_q"
         },
         {
           "id": "ct_q_q",
           "speaker": "q",
-          "text": "Leave the bucket. It has been there since Monday.",
+          "text": "Don’t put it away for them. I did it once and they said it was my job from then on.",
           "next": "ct_3",
           "conditions": {
             "all_flags": [
               "q_companion"
             ]
-          }
+          },
+          "source": "reported"
         },
         {
           "id": "ct_3",
           "speaker": "protagonist",
-          "text": "You leave the trolley alone. It blocks the cupboard, but there is room to get past it.",
+          "text": "A row of white exercise-book edges in the cupboard. You’d have to pull one out to find a name.",
           "source": "observed",
           "next": null
         }
@@ -89,23 +91,26 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "You stop by the railing. The yard looks different from up here than it did through the classroom window. Even the colours seem to have changed.",
+          "text": "There’s a join in the rail. One side sits a little higher under your palm.",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "Two hoops, a shed, a stretch of concrete. You watch for a while. Nothing much happens.",
+          "text": "Both rims are visible from here. The near one covers part of a painted line. The far one covers nothing.",
           "source": "observed",
           "next": "cw_3"
         },
         {
           "id": "cw_3",
           "speaker": "protagonist",
-          "text": "The lesson carries on without you. You don't mind as much as you thought you might.",
+          "text": "Nobody comes to fetch the ball. You look at the edge of the court again. There wasn’t a ball.",
           "source": "observed",
           "next": null,
+          "conditions": {
+            "not_flags": ["corridor_waited"]
+          },
           "effects": [
             {
               "type": "set_flag",
@@ -117,9 +122,88 @@
               "entry_id": "corridor_waited",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You stood at the walkway railing during the free period and watched the yard."
+              "text": "Stood at the rail during the break. Both rims are visible from there."
             }
           ]
+        }
+      ]
+    },
+    "corridor_directory_tab": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cd_choose",
+      "nodes": [
+        {
+          "id": "cd_choose",
+          "speaker": "protagonist",
+          "text": "The tab catches at either end. What would you look for on the way back?",
+          "choices": [
+            {
+              "id": "glass",
+              "text": "Slide it towards the glass doors.",
+              "next": "cd_glass",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "corridor_directory_tab",
+                  "value": "glass"
+                }
+              ]
+            },
+            {
+              "id": "stair",
+              "text": "Slide it towards the stairs.",
+              "next": "cd_stair",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "corridor_directory_tab",
+                  "value": "stair"
+                }
+              ]
+            },
+            {
+              "id": "leave",
+              "text": "Take your hand away.",
+              "next": "cd_leave"
+            }
+          ]
+        },
+        {
+          "id": "cd_glass",
+          "speaker": "protagonist",
+          "text": "The glass doors, then. You can see those from the street. Count the floors once you’re inside.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "directory_mark_glass",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "Under the two 01s, I moved the tab towards the glass doors."
+            }
+          ]
+        },
+        {
+          "id": "cd_stair",
+          "speaker": "protagonist",
+          "text": "Anyone can find the doors. For the room you just left, it’s that first flight up you need to find.",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "directory_mark_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "Under the two 01s, I moved the tab towards the stairs."
+            }
+          ]
+        },
+        {
+          "id": "cd_leave",
+          "speaker": "protagonist",
+          "text": "A little warmth from your finger on the tab. Leave it there.",
+          "next": null
         }
       ]
     }

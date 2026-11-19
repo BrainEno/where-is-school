@@ -50,6 +50,9 @@ const LEFT_CLASSROOM: StringName = &"left_classroom"
 const LEFT_SCHOOL: StringName = &"left_school"
 ## bool: the first street conversation has played.
 const STREET_ARRIVED: StringName = &"street_arrived"
+## bool: the camera has been noted during a first wall look. Later looks skip
+## that observation but keep the opening and route-tab response. Absent in old saves.
+const STREET_WALL_SEEN: StringName = &"street_wall_seen"
 ## bool: the first residential-area conversation has played.
 const RESIDENTIAL_ARRIVED: StringName = &"residential_arrived"
 ## bool: the green animal has been seen at least once.
@@ -68,6 +71,9 @@ const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
 const Q_COMPANION: StringName = &"q_companion"
 ## bool: the player used the walkway railing to let part of the period pass.
 const CORRIDOR_WAITED: StringName = &"corridor_waited"
+## String: the directory tab points to the glass doors (glass) or the stairs (stair).
+## Missing in old saves and before marking: the tab is centered.
+const CORRIDOR_DIRECTORY_TAB: StringName = &"corridor_directory_tab"
 ## bool: the opening has been requested by dialogue. Kept across a refused forced fall.
 const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
 ## bool: the back-window curtain hangs open on the void; the classroom loads that way.
@@ -161,6 +167,7 @@ const ALL_FLAGS: Array[StringName] = [
 	FREE_PERIOD_LEAVING,
 	Q_COMPANION,
 	CORRIDOR_WAITED,
+	CORRIDOR_DIRECTORY_TAB,
 	# The biology classroom's two anomalies.
 	CURTAIN_FALL_PENDING,
 	CURTAIN_DRAWN,
@@ -168,6 +175,7 @@ const ALL_FLAGS: Array[StringName] = [
 	CURTAIN_LANDING_INJURED,
 	REAR_DOOR_OPENED,
 	# Outdoor beats.
+	STREET_WALL_SEEN,
 	ALLEY_ARRIVED,
 	PLAYGROUND_ARRIVED,
 ]

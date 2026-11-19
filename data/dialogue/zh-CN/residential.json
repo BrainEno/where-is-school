@@ -11,12 +11,12 @@
         {
           "id": "ra_1",
           "speaker": "protagonist",
-          "text": "三栋楼围着一个院子。有人把衣服晾在楼间，风没怎么动，衣服也没动。"
+          "text": "街上的房子还在背后。再往里一点，听见自己走路，听不见街了。"
         },
         {
           "id": "ra_2",
           "speaker": "protagonist",
-          "text": "院子里有个滑梯、一张长椅，旁边还有一小块草地。草没长出来，倒是水泥地占了大半。",
+          "text": "滑梯下面空着，滑道的出口倒正对着长椅。等孩子下来的人坐那里不用转头。",
           "effects": [
             {
               "type": "set_flag",
@@ -32,14 +32,14 @@
               "entry_id": "residential_arrived",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你走到了学校后面的居民楼：三栋楼围着一个院子。"
+              "text": "顺街到了居民院。滑梯朝着一张空长椅，楼间有条窄路。"
             }
           ]
         },
         {
           "id": "ra_3",
           "speaker": "protagonist",
-          "text": "楼和楼之间有条路。你没走过那条路，但它像是从一道缝里接过来的。",
+          "text": "长椅上没人。楼跟楼之间还留了条窄路，从这边能看见尽头的亮处。",
           "next": null
         }
       ]
@@ -52,16 +52,16 @@
         {
           "id": "rs_1",
           "speaker": "protagonist",
-          "text": "两栋楼之间有一段楼梯。数了数，十一级台阶，一个平台，上面还有一段。",
+          "text": "扶手拐了个弯。站在这儿，能看到的就到平台。",
           "choices": [
             {
               "id": "up",
-              "text": "往上走。",
+              "text": "从这里数到平台。",
               "next": "rs_up_1"
             },
             {
               "id": "down",
-              "text": "留在原地。",
+              "text": "先走平路。",
               "next": "rs_down_1"
             }
           ]
@@ -69,27 +69,27 @@
         {
           "id": "rs_up_1",
           "speaker": "protagonist",
-          "text": "你往上走。到了平台，回头看，下面那段楼梯像是刚才走过的那一段。",
+          "text": "数到上头才发觉，刚才把平台也算成一级了。",
           "effects": [
             {
               "type": "record",
               "entry_id": "residential_loop_stair",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你爬上楼与楼之间那段楼梯，又回到了原地。"
+              "text": "院里的楼梯从下方只能数到第一处平台。没有上去。"
             }
           ]
         },
         {
           "id": "rs_up_2",
           "speaker": "protagonist",
-          "text": "你又往下走。台阶数没变。",
+          "text": "再数也只能到那儿。要知道上面有什么，得真的走上去。",
           "next": null
         },
         {
           "id": "rs_down_1",
           "speaker": "protagonist",
-          "text": "你没往上走。楼梯还在那儿，一直通向上面。",
+          "text": "不数了。两栋楼中间，平着也有路。",
           "next": null
         }
       ]
@@ -102,7 +102,7 @@
         {
           "id": "a_1",
           "speaker": "protagonist",
-          "text": "花坛边上有个绿色的东西。不是绿篱的颜色。",
+          "text": "花坛的阴面有块绿。一抬起来，才看见跟下面的影子不是一回事。",
           "effects": [
             {
               "type": "set_flag",
@@ -125,16 +125,16 @@
         {
           "id": "a_2",
           "speaker": "protagonist",
-          "text": "它是湿的，动得很慢，像在数什么。",
+          "text": "它不远。只要不盯着它看，几乎可以当成花坛掉下来的一块。",
           "choices": [
             {
               "id": "closer",
-              "text": "走近两步。",
+              "text": "仔细看它的头。",
               "next": "a_c_1"
             },
             {
               "id": "stay",
-              "text": "站着不动。",
+              "text": "先别惊动它。",
               "next": "a_s_1"
             }
           ]
@@ -142,12 +142,12 @@
         {
           "id": "a_c_1",
           "speaker": "protagonist",
-          "text": "它没跑，只是转了转头，眼睛一直跟着你。"
+          "text": "看过去，先对上的是眼睛。它把头转过来了，身子没动。"
         },
         {
           "id": "a_c_2",
           "speaker": "protagonist",
-          "text": "凑近了才看清：扁嘴，湿漉漉的毛，尾巴像一把桨，悬在地面上。",
+          "text": "嘴是扁的，尾巴也是。看不清尾巴在地上，还是离地一点。",
           "next": "a_recall",
           "effects": [
             {
@@ -162,18 +162,18 @@
         {
           "id": "a_s_1",
           "speaker": "protagonist",
-          "text": "你站着没动。它也没理你，继续忙自己的。"
+          "text": "先认地上那道缝。它还没越过去。"
         },
         {
           "id": "a_s_2",
           "speaker": "protagonist",
-          "text": "它一直看着你，没躲，也没别的动作。",
+          "text": "等了一会儿，影子倒比刚才清楚。它把头抬得更高了。",
           "next": "a_recall"
         },
         {
           "id": "a_recall",
           "speaker": "protagonist",
-          "text": "你在生物课本里见过类似的图。想翻到那一页，却想不起页码。",
+          "text": "课本里那张图倒想起来了。图底下一行小字，只记得它排得很短。",
           "source": "recalled",
           "effects": [
             {
@@ -181,14 +181,14 @@
               "entry_id": "animal_recall",
               "source": "recalled",
               "speaker": "protagonist",
-              "text": "这只动物让你想起生物课本里的一张图。你翻不到那一页。"
+              "text": "想起课本里一幅图和它下面很短的图注。记不清写的是什么。"
             }
           ]
         },
         {
           "id": "a_end",
           "speaker": "protagonist",
-          "text": "你还是认不出它。也不知道它为什么会在这儿。",
+          "text": "算了，先别给它填那个名字。",
           "next": null
         }
       ]
@@ -201,12 +201,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "它还在那儿。已经沿着花坛挪出去一米左右，正朝着巷子那边。"
+          "text": "又看到那一点绿。这次先看见的是影子。"
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "你还是没认出它是什么。",
+          "text": "还说不上是哪一种。",
           "next": null
         }
       ]

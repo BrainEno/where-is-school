@@ -11,7 +11,7 @@
         {
           "id": "s_1",
           "speaker": "protagonist",
-          "text": "外面比走廊里亮，也没有更暖。",
+          "text": "一到街上，就想起书还没拿。又一想，没找到的东西也不能算忘拿。",
           "effects": [
             {
               "type": "set_flag",
@@ -27,19 +27,19 @@
               "entry_id": "street_outside",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你从学校里走出来，站在傍晚的光里的一条街上。"
+              "text": "出了校门。回头看，单凭窗子认不出刚才那间教室。"
             }
           ]
         },
         {
           "id": "s_2",
           "speaker": "protagonist",
-          "text": "校门在你身后。没人拦你，也没人送你出来。"
+          "text": "你转头认了一下墙。从这一面，教室的窗和别的窗没两样。"
         },
         {
           "id": "s_3",
           "speaker": "protagonist",
-          "text": "路往前走，拐一下，就不再是你认识的那条路。",
+          "text": "路对面还有一排楼。沿人行道走，看看哪儿能过去。",
           "next": null
         }
       ]
@@ -52,27 +52,59 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "从外面看学校：瓷砖贴到窗台，再往上是素水泥。"
+          "text": "瓷砖铺到窗底，齐齐地断了。再往上数，才是你坐着听课的高度。"
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
-          "text": "支架上有个摄像头，对着那块没人站的草地。",
+          "text": "摄像头不对着门，偏偏对着墙根那撮草。守在那儿的人大概连下课也看不出来。",
+          "conditions": {
+            "not_flags": ["street_wall_seen"]
+          },
           "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_wall_seen",
+              "value": true
+            },
             {
               "type": "record",
               "entry_id": "street_camera",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "学校外面有个摄像头，画面里是一小片空草地。"
+              "text": "校墙上的摄像头对着草地，不对着门。"
             }
           ]
         },
         {
           "id": "w_3",
           "speaker": "protagonist",
-          "text": "二楼有一扇窗开着。窗子后面的屋子是黑的。",
-          "next": null
+          "text": "真要回来，窗户是一扇也指望不上的。",
+          "next": "w_tab_glass"
+        },
+        {
+          "id": "w_tab_glass",
+          "speaker": "protagonist",
+          "text": "你把签留给了玻璃门。沿墙走到玻璃那儿就行；到门跟前，再看里面是哪一层。",
+          "next": "w_tab_stair",
+          "source": "recalled",
+          "conditions": {
+            "requires": {
+              "corridor_directory_tab": "glass"
+            }
+          }
+        },
+        {
+          "id": "w_tab_stair",
+          "speaker": "protagonist",
+          "text": "你把签留给了楼梯。街上的台阶不是那一截。得先进门，才用得上那个记号。",
+          "next": null,
+          "source": "recalled",
+          "conditions": {
+            "requires": {
+              "corridor_directory_tab": "stair"
+            }
+          }
         }
       ]
     },
@@ -84,26 +116,26 @@
         {
           "id": "n_1",
           "speaker": "protagonist",
-          "text": "杆子上贴着一张通知，字已经复印得发虚。"
+          "text": "纸下面还有一张。最上面这张翘起一角，露出半截旧照片。"
         },
         {
           "id": "n_2",
           "speaker": "protagonist",
-          "text": "是找猫的。照片上的猫和文字里写的那只不是同一只。",
+          "text": "找猫。上面那只蹲着，底下只露出一截尾巴。你试着把两张当成同一只看，接不上。",
           "effects": [
             {
               "type": "record",
               "entry_id": "street_lost_cat",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "杆子上那张找猫的通知，照片和文字说的不是同一只猫。"
+              "text": "电线杆上叠贴了两张找猫的纸，露出的照片对不上。"
             }
           ]
         },
         {
           "id": "n_3",
           "speaker": "protagonist",
-          "text": "最下面的日期是四年前的。胶带是新的。",
+          "text": "最清楚的倒是底下那张的日期。四年前。外面这圈胶还黏手。",
           "next": null
         }
       ]

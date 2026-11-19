@@ -27,6 +27,7 @@ const BROKEN_PATH := "user://save.broken.json"
 const CLASSROOM_SCENE := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR_SCENE := "res://scenes/locations/corridor/corridor.tscn"
 const PLAYGROUND_SCENE := "res://scenes/locations/playground/playground.tscn"
+const SET_SQUARE := &"classroom_set_square"
 ## Where the yard save stands the player: on the court, three metres in from the school
 ## door, so that walking back towards the door is open ground the yard's own spawn uses.
 const YARD_STANDING := Vector3(-3.0, 0.0, -12.0)
@@ -91,7 +92,7 @@ func _check_round_trip() -> void:
 	var sequence := main.get_node_or_null("OpeningSequence")
 	var host := main.get_node_or_null("LocationHost") as LocationHost
 	var player := main.get_node_or_null("Player") as PlayerController
-	var dialogue := main.get_node_or_null("DialogueController")
+	var dialogue := main.get_node_or_null("DialogueController") as DialogueController
 	if sequence == null or host == null or player == null or dialogue == null:
 		_failures.append("main.tscn is missing a node the save system needs.")
 		main.free()
@@ -118,6 +119,8 @@ func _check_round_trip() -> void:
 	_narrative.record(
 		&"claim_b_strict", NarrativeEntry.Source.REPORTED, &"q", "Q says B is strict."
 	)
+	_inspect_set_square(dialogue, [&"first", &"recall"])
+	var saved_knowledge: Dictionary = _narrative.to_snapshot()
 	dialogue.set_session_seed(31337)
 	var standing := Transform3D(Basis.IDENTITY, Vector3(1.4, 0.6, -2.2))
 	player.teleport(standing)
@@ -153,7 +156,7 @@ func _check_round_trip() -> void:
 	var sequence_again := again.get_node_or_null("OpeningSequence")
 	var host_again := again.get_node_or_null("LocationHost") as LocationHost
 	var player_again := again.get_node_or_null("Player") as PlayerController
-	var dialogue_again := again.get_node_or_null("DialogueController")
+	var dialogue_again := again.get_node_or_null("DialogueController") as DialogueController
 
 	_expect(
 		_game_state.get_flag(StoryFlags.MET_Q, false) == true,
@@ -172,11 +175,16 @@ func _check_round_trip() -> void:
 		"The director wants to replay '%s' after a finished prologue."
 		% String(sequence_again.next_step())
 	)
-	_expect(
-		_narrative.get_entries().size() == 2,
-		"Expected 2 knowledge entries after the restore, found %d."
-		% _narrative.get_entries().size()
-	)
+	_expect(_narrative.get_entries().size() == 4 and _narrative.to_snapshot() == saved_knowledge,
+		"The four knowledge entries did not round-trip in order with their sources intact.")
+	var observation: NarrativeEntry = _narrative.get_entry(&"saw_set_square")
+	var recollection: NarrativeEntry = _narrative.get_entry(&"recall_set_square_placed")
+	_expect(observation != null and observation.source == NarrativeEntry.Source.OBSERVED
+		and recollection != null and recollection.source == NarrativeEntry.Source.RECALLED,
+		"The inspection's observation and recollection were not restored as separate entries.")
+	if dialogue_again != null:
+		_inspect_set_square(dialogue_again, [&"repeat"])
+		_expect(_narrative.to_snapshot() == saved_knowledge, "A repeat read after loading rewrote the notes.")
 	_expect(
 		_narrative.get_entry(&"claim_b_strict") != null
 		and _narrative.get_entry(&"claim_b_strict").source == NarrativeEntry.Source.REPORTED,
@@ -218,6 +226,24 @@ func _check_round_trip() -> void:
 
 	again.queue_free()
 	await _frames(3)
+
+
+func _inspect_set_square(dialogue: DialogueController, expected: Array[StringName]) -> void:
+	if not dialogue.present_inspection(SET_SQUARE):
+		_failures.append("The set square inspection could not start.")
+		return
+	var variants: Array[StringName] = []
+	for step in range(3):
+		if not dialogue.is_busy():
+			break
+		var line := dialogue.get_current_line()
+		var variant := StringName(line.get("variant", &""))
+		variants.append(variant)
+		var source := NarrativeEntry.Source.RECALLED if variant == &"recall" else NarrativeEntry.Source.OBSERVED
+		_expect(int(line.get("source", -1)) == source, "The set square's '%s' line showed the wrong source." % variant)
+		dialogue.advance_presentation()
+	_expect(variants == expected and not dialogue.is_busy(),
+		"The set square showed %s; expected %s." % [variants, expected])
 
 
 # --- A write that cannot land (#122) -------------------------------------------

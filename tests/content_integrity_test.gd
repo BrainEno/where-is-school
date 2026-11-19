@@ -8,7 +8,8 @@ extends SceneTree
 ## `tools/build_outdoor_locations.py`, so their shape is stable) and asserts:
 ##
 ## - every `inspection_id` in a scene exists in every language;
-## - every `conversation_route` in a scene matches a routing rule;
+## - every `conversation_route` in a scene matches a routing rule, and every rule's
+##   target exists in both languages, with a fallback that cannot hide later rules;
 ## - every prompt key in a scene exists in the locale tables;
 ## - every exit leads to a scene that exists, at a spawn point that exists;
 ## - every exit that ends the slice carries a title and a body;
@@ -51,11 +52,30 @@ func _run() -> void:
 		_inspections.set_locale(locale)
 		_library.set_locale(locale)
 		L10n.current = locale
+		_check_route_targets(locale)
 		for location in LOCATIONS:
 			_check_location(location, locale)
 
 	_check_chain()
 	Harness.finish(self, _failures, "every scene reference resolves in every language.")
+
+
+func _check_route_targets(locale: String) -> void:
+	# Read the table the runtime uses, rather than matching a particular layout
+	# of its GDScript source or checking the union of both languages' ids.
+	for route: StringName in ConversationRouter.ROUTES:
+		var rules: Array = ConversationRouter.ROUTES[route]
+		var fallback := false
+		for rule: Dictionary in rules:
+			var target := StringName(rule["conversation"])
+			if not _library.has_conversation(target):
+				_failures.append("%s: route '%s' points at missing conversation '%s'." % [locale, route, target])
+			if fallback:
+				_failures.append("%s: route '%s' hides '%s' behind a fallback." % [locale, route, target])
+			var requires: Dictionary = rule["requires"]
+			fallback = fallback or requires.is_empty()
+		if not fallback:
+			_failures.append("%s: route '%s' has no fallback." % [locale, route])
 
 
 # --- per location -----------------------------------------------------------

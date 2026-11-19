@@ -193,13 +193,30 @@ func _check_corridor_activities() -> void:
 	if _check_count != before:
 		_failures.append("An ordinary corridor prop rolled dice.")
 
-	# Waiting at the railing: nothing is gained, and that is the point.
+	await _check_railing_revisit()
+
+
+func _check_railing_revisit() -> void:
+	# The first stop plays the complete waiting beat. Later stops are still a
+	# look at the rail and court, not a replay of the one-time waiting observation.
+	_seen_nodes.clear()
 	await _activate(&"corridor_wait", "the railing")
 	await _settle(30.0, "the railing conversation")
+	if _seen_nodes != [&"cw_1", &"cw_2", &"cw_3"]:
+		_failures.append("The first stop at the railing showed %s." % str(_seen_nodes))
 	if not _flag(StoryFlags.CORRIDOR_WAITED):
 		_failures.append("Waiting at the railing was not recorded.")
 	if not _narrative.has_entry(&"corridor_waited"):
 		_failures.append("Waiting at the railing left no record at all.")
+	var flags: Dictionary = _game_state.get_snapshot()
+	var knowledge: Dictionary = _narrative.to_snapshot()
+	_seen_nodes.clear()
+	await _activate(&"corridor_wait", "the railing again")
+	await _settle(30.0, "the railing revisit")
+	if _seen_nodes != [&"cw_1", &"cw_2"]:
+		_failures.append("The railing revisit showed %s instead of the two observations." % str(_seen_nodes))
+	if _game_state.get_snapshot() != flags or _narrative.to_snapshot() != knowledge:
+		_failures.append("The railing revisit changed the objective, flags or notes.")
 
 
 func _check_following() -> void:

@@ -4,6 +4,7 @@ extends SceneTree
 ## CI entry: corridor_art. The separate location_art suite checks the exterior art.
 
 const Harness = preload("res://tests/test_harness.gd")
+const DirectoryCase = preload("res://tests/corridor_directory_support.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const SCHOOL := ^"TeachingBlock"
 const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
@@ -27,6 +28,7 @@ var _interaction: InteractionController
 var _pointer: PointerNavigator
 var _dialogue: DialogueController
 var _last_inspection: StringName = &""
+var _directory_checkpoints: Dictionary = {}
 
 
 func _initialize() -> void:
@@ -37,7 +39,8 @@ func _initialize() -> void:
 func _run() -> void:
 	Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
-	var main := (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
+	var main_scene := load("res://scenes/main/main.tscn") as PackedScene
+	var main := main_scene.instantiate()
 	var director := main.get_node(^"OpeningSequence") as OpeningSequence
 	director.autostart = false
 	root.add_child(main)
@@ -143,6 +146,9 @@ func _run() -> void:
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
+	if _check.expect(not _directory_checkpoints.is_empty(), "The directory never reached its save cases."):
+		if _check.expect(await DirectoryCase.close_world(main), "Could not close the walking world's scene."):
+			await DirectoryCase.check_resume(self, main_scene, _directory_checkpoints, _check)
 	_finish()
 
 
@@ -150,7 +156,8 @@ func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
-		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work.")
+		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work; "
+		+ "directory poses and the wall's shortened revisit survive resuming a checkpoint.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -398,8 +405,10 @@ func _check_glass_entrance() -> void:
 			"The click accepted the hall side instead of crossing to the apron."):
 			return
 		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
+			_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
 			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
-				await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance")
+				if await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
+					DirectoryCase.check_return(_host.get_current(), _check)
 
 
 ## A long click from outside should turn through the opening, not across a sill.
@@ -439,8 +448,10 @@ func _check_directory(corridor: LocationRoot) -> void:
 	_last_inspection = &""
 	_press_interact()
 	var opened := await Harness.wait_until(func() -> bool: return _last_inspection == DIRECTORY, 5.0)
-	_check.expect(opened, "The directory did not open through the normal inspection channel.")
+	if not _check.expect(opened, "The directory did not open through the normal inspection channel."):
+		return
 	await _dismiss_inspection()
+	_directory_checkpoints = await DirectoryCase.use_tab(corridor, directory, _dialogue, _check, _press_interact)
 
 
 ## Take the new branches from the same landing without placing or reloading the player.
