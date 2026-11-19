@@ -333,7 +333,8 @@ Q = {
 # (not the protagonist's slate, Q's moss or N's sage, and off the classroom's teal trim), a
 # cream shirt, navy-charcoal trousers, a warm ordinary skin with lilac shade.
 #
-# Its 78 meshes are small rigid pieces (each finger, each lock of hair, each lapel quad), so
+# Its source was 78 rigid pieces; geometry revision 1 integrates the hands and face.
+# The remaining small parts (locks, panels, creases) still need selective outlines, so
 # the ink line goes only on the closed outer forms: cardigan body and sleeves, trousers,
 # shoes, the hair cap and back, and the head, ears and neck (named per mesh; the skin
 # material is also every finger, and a hull per finger would weld them into a mitten). The
@@ -532,12 +533,16 @@ def refined_teacher(look: dict) -> dict:
 
     These are only the shipped look's overrides. The retired woodcut experiment and
     the protagonist/Q are deliberately not restyled. Coordinates are measured on N's
-    immutable -Z-facing GLB, in the same bind space as the existing painted patches.
+    -Z-facing source, in the same bind space as the refined model's painted patches.
     """
     result = copy.deepcopy(look)
     result["outline_width"] = 0.0055
     result["outline"].update(wobble=0.18)
     parts = result["parts"]
+    # Geometry revision 1 repairs the eyes' winding/normals in prepare_teacher_n.py.
+    # Keep the historical experiment unchanged; the production look is one-sided.
+    for name in ("m_st_sclera", "m_st_iris", "m_st_pupil"):
+        parts[name].pop("two_sided", None)
     parts["m_st_skin"].update(
         pigment_blend=0.82, pigment_scale=28.0, pigment_mix=0.28, pigment_value=0.055,
         edge_break=0.10, edge_softness=0.14, patch_feather=0.9,
@@ -583,8 +588,8 @@ def refined_student(look: dict) -> dict:
     parts["wis_protagonist_skin_shadow"]["albedo"] = "#947568"
     parts["wis_protagonist_undereye"]["albedo"] = "#AB8E82"
     parts["head_main_mesh/wis_protagonist_skin"].update(
-        patch_center=(0.045, 1.546, 0.132), patch_radius=(0.026, 0.012, 0.025),
-        patch_color="#8F7984", patch_strength=0.20,
+        patch_center=(0.043, 1.564, 0.109), patch_radius=(0.027, 0.008, 0.023),
+        patch_color="#8F7984", patch_strength=0.16,
         patch2_center=(0.058, 1.521, 0.105), patch2_radius=(0.033, 0.025, 0.045),
         patch2_color="#C68C78", patch2_strength=0.15, patch_feather=0.85,
     )

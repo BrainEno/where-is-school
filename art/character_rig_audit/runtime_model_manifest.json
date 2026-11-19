@@ -8,11 +8,11 @@
     {
       "path": "assets/models/protagonist/protagonist.glb",
       "wrapper": "scenes/environment/characters/classroom_student.tscn",
-      "note": "The first protagonist model; since PR #118 a seated classroom student (scenes/locations/classroom/classroom.tscn, Actors/SeatedStudent) with no controller or interaction. One armature (RIG_Protagonist_Blockout) whose 16 deform bones are the skin's joints, 78 mesh nodes all bound to that skin, 22 materials, and no embedded animation: the seven clips in scripts/actors/character_animation.gd are composed onto this rig's rest pose at run time.",
+      "note": "The first protagonist model; since PR #118 a seated classroom student (scenes/locations/classroom/classroom.tscn, Actors/SeatedStudent) with no controller or interaction. Geometry revision 1 is reproducible via tools/prepare_classroom_student.py from the immutable original under art/character_models/classroom_student/. One armature (RIG_Protagonist_Blockout) whose 16 deform bones are the skin's joints, 64 mesh nodes all bound to that skin, 22 materials, and no embedded animation: the seven clips in scripts/actors/character_animation.gd are composed onto this rig's rest pose at run time.",
       "counts": {
-        "nodes": 96,
-        "meshes": 78,
-        "primitives": 78,
+        "nodes": 82,
+        "meshes": 64,
+        "primitives": 64,
         "materials": 22,
         "skins": 1,
         "joints": 16,
@@ -93,18 +93,6 @@
           "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Cardigan_UpperSleeve_R",
           "name": "Cardigan_UpperSleeve_R",
           "mesh": "Cardigan_UpperSleeve_R_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Cheek_Plane_L",
-          "name": "Cheek_Plane_L",
-          "mesh": "Sphere.006",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Cheek_Plane_R",
-          "name": "Cheek_Plane_R",
-          "mesh": "Sphere.008",
           "skin": 0
         },
         {
@@ -246,42 +234,6 @@
           "skin": 0
         },
         {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_L_1",
-          "name": "Hand_Finger_L_1",
-          "mesh": "Hand_Finger_L_1_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_L_2",
-          "name": "Hand_Finger_L_2",
-          "mesh": "Hand_Finger_L_2_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_L_3",
-          "name": "Hand_Finger_L_3",
-          "mesh": "Hand_Finger_L_3_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_R_1",
-          "name": "Hand_Finger_R_1",
-          "mesh": "Hand_Finger_R_1_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_R_2",
-          "name": "Hand_Finger_R_2",
-          "mesh": "Hand_Finger_R_2_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Finger_R_3",
-          "name": "Hand_Finger_R_3",
-          "mesh": "Hand_Finger_R_3_Mesh",
-          "skin": 0
-        },
-        {
           "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Palm_L",
           "name": "Hand_Palm_L",
           "mesh": "Sphere.027",
@@ -291,18 +243,6 @@
           "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Palm_R",
           "name": "Hand_Palm_R",
           "mesh": "Sphere.028",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Thumb_L",
-          "name": "Hand_Thumb_L",
-          "mesh": "Hand_Thumb_L_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Hand_Thumb_R",
-          "name": "Hand_Thumb_R",
-          "mesh": "Hand_Thumb_R_Mesh",
           "skin": 0
         },
         {
@@ -327,18 +267,6 @@
           "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Neck",
           "name": "Neck",
           "mesh": "Neck_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Nose_Bridge",
-          "name": "Nose_Bridge",
-          "mesh": "Nose_Bridge_Mesh",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Nose_Tip",
-          "name": "Nose_Tip",
-          "mesh": "Sphere.018",
           "skin": 0
         },
         {
@@ -576,18 +504,6 @@
           "skin": 0
         },
         {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/UnderEye_Shadow_L",
-          "name": "UnderEye_Shadow_L",
-          "mesh": "Sphere.007",
-          "skin": 0
-        },
-        {
-          "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/UnderEye_Shadow_R",
-          "name": "UnderEye_Shadow_R",
-          "mesh": "Sphere.009",
-          "skin": 0
-        },
-        {
           "path": "CHR_Protagonist_Root/RIG_Protagonist_Blockout/Upper_Eyelid_L",
           "name": "Upper_Eyelid_L",
           "mesh": "Upper_Eyelid_L_Curve",
@@ -755,78 +671,6 @@
           ]
         },
         {
-          "name": "Hand_Finger_L_1_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Finger_L_2_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Finger_L_3_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Finger_R_1_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Finger_R_2_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Finger_R_3_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Thumb_L_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Hand_Thumb_R_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
           "name": "Head_Main_Mesh_Mesh",
           "primitives": [
             {
@@ -858,15 +702,6 @@
           "primitives": [
             {
               "material": "WIS_Protagonist_Skin",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Nose_Bridge_Mesh",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin_Light",
               "skinned": true
             }
           ]
@@ -1016,42 +851,6 @@
           ]
         },
         {
-          "name": "Sphere.006",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin_Light",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Sphere.007",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_UnderEye",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Sphere.008",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin_Light",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Sphere.009",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_UnderEye",
-              "skinned": true
-            }
-          ]
-        },
-        {
           "name": "Sphere.010",
           "primitives": [
             {
@@ -1119,15 +918,6 @@
           "primitives": [
             {
               "material": "WIS_Protagonist_Eye_Glint",
-              "skinned": true
-            }
-          ]
-        },
-        {
-          "name": "Sphere.018",
-          "primitives": [
-            {
-              "material": "WIS_Protagonist_Skin",
               "skinned": true
             }
           ]
@@ -5853,7 +5643,7 @@
     {
       "path": "assets/models/teacher-n/teacher-n.glb",
       "wrapper": "scenes/environment/characters/teacher_n.tscn",
-      "note": "Substitute teacher N, built by tools/prepare_teacher_n.py from the owner's export (art/character_models/teacher-n/teacher-n_source.glb). One 16-joint skin with the same joint names and parentage as Q (Root, Spine, Neck, Head, UpperArm/LowerArm/Hand and Thigh/Shin/Foot on each side), 18 mesh nodes all bound to it, 17 materials, no blend shapes (the source's 15 facial blend shapes are not shipped). Four embedded animations authored by the owner; only the channels that move are kept (8 rotation channels). All four are played together as N's idle (CharacterAnimation.adopt_authored_layers(), named in teacher_n.tscn); walking and the other states use the procedural clips in scripts/actors/character_animation.gd. Unlike the other three characters this model faces -Z (docs/ASSET_PIPELINE.md section 1), so its wrapper sets faces_negative_z and its NpcActor visual_yaw_degrees 0.",
+      "note": "Substitute teacher N, built by tools/prepare_teacher_n.py from the owner's export (art/character_models/teacher-n/teacher-n_source.glb). One 16-joint skin with the same joint names and parentage as the retired 16-joint Q (Root, Spine, Neck, Head, UpperArm/LowerArm/Hand and Thigh/Shin/Foot on each side), 18 mesh nodes all bound to it, 17 materials, no blend shapes (the source's 15 facial blend shapes are not shipped). Four embedded animations authored by the owner; only the channels that move are kept (8 rotation channels). All four are played together as N's idle (CharacterAnimation.adopt_authored_layers(), named in teacher_n.tscn); walking and the other states use the procedural clips in scripts/actors/character_animation.gd. Unlike the other three characters this model faces -Z (docs/ASSET_PIPELINE.md section 1), so its wrapper sets faces_negative_z and its NpcActor visual_yaw_degrees 0.",
       "counts": {
         "nodes": 35,
         "meshes": 18,
