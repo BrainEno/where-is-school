@@ -21,6 +21,7 @@ on:
     paths:
       - "tests/capture_locations.gd"
       - "tests/location_art_test.gd"
+      - "tests/playground_art_slice_test.gd"
       - "tests/return_route_test.gd"
       - "assets/camera/shots/return_board.tres"
       - "data/inspections/*/street.json"
@@ -249,6 +250,14 @@ jobs:
               | while IFS= read -r line; do echo "::warning title=location art tail::${line}"; done
           fi
           exit "${status}"
+
+      - name: Playground collision and follow-camera regression
+        shell: bash
+        if: always()
+        run: |
+          source tools/ci_run_check.sh
+          run_check playground_art_slice 300 godot --headless --path . --script res://tests/playground_art_slice_test.gd || status=1
+          run_check_summary
 
       - name: Return route interaction and branching
         shell: bash

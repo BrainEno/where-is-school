@@ -428,15 +428,19 @@ def route_arrow(b: Builder, parent: str, name: str, center, mat: str, *, directi
 
 
 def _return_board(b: Builder, parent: str) -> None:
-    # Faces on both sides of the old board. Preserve the post spacing and the approach
-    # from the bench. Arrows aim at the real gates in world space on either face.
-    rail = b.mesh("BoxMesh", size=vec3((0.095, 0.077, 2.46)))
-    for i, y in enumerate((1.50, 2.27)):
+    # A low, pitched reading surface: the two faces stay below the player's waist,
+    # so neither hides the capsule in the follow camera. Keep the old post spacing,
+    # solids and approach from the bench. Both faces point at the real gates.
+    post = b.mesh("BoxMesh", size=vec3((0.12, 0.86, 0.12)))
+    for name in ("BoardPostA", "BoardPostB"):
+        b.flat("ReturnBoardSupport", name, post, "metal_ink", (0, -0.87, 0), shadow=True)
+    for i, (width, y) in enumerate(((0.56, 0.32), (0.14, 0.80))):
+        rail = b.mesh("BoxMesh", size=vec3((width, 0.064, 2.46)))
         b.flat(f"ReturnBoardRail{i}", parent, rail, "exit_frame", (14, y, 3.2))
     for side, sign in (("East", 1), ("West", -1)):
         name = "ReturnBoard" + side
-        b.node(name, parent, position=vec3((14.0 + sign * 0.09, 1.9, 3.2)),
-               rotation_degrees=vec3((0, sign * 90, 0)))
+        b.node(name, parent, position=vec3((14.0 + sign * 0.15, 0.56, 3.2)),
+               rotation_degrees=vec3((-33, sign * 90, 0)), scale=vec3((1.0, 0.42, 1.0)))
         p = f"{parent}/{name}"
 
         def box(part, pos, size, mat, rot=None):
@@ -777,7 +781,9 @@ def apply(text: str) -> tuple[str, set[str]]:
                 block = re.sub(r'material_override = ExtResource\("[^"]+"\)', f'material_override = ExtResource("art_{mat}")', block)
                 used.add(mat)
                 repointed.add(path)
-            if HIDE.fullmatch(path) or path in ("BoardSheet", "BoardBacking"):
+            if HIDE.fullmatch(path) or path in (
+                "BoardSheet", "BoardBacking", "BoardPostA/MeshInstance3D", "BoardPostB/MeshInstance3D",
+            ):
                 block = block.replace(head, head + "\nvisible = false", 1)
             if path == "CourtFarHalf":
                 block = block.replace("position = Vector3(0, 0.008, -9.5)", "position = Vector3(0, 0.012, -9.5)")

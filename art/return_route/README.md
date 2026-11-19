@@ -15,7 +15,7 @@ The board replaces the inspection that reused the court-floor description. First
 
 ## Source and regeneration
 
-Authored in the two existing Python art passes. The mark and arrows are shared mesh geometry, not a texture or font. No downloaded or generated image, model or sound was imported. Materials come from each scene's existing local palette; decorative meshes are non-solid. Wall plates are children of their occluder owners so they do not hang in front of faded walls. The two yard board faces fit the original posts; spawns, exits and physical collision are unchanged.
+Authored in the two existing Python art passes. The mark and arrows are shared mesh geometry, not a texture or font. No downloaded or generated image, model or sound was imported. Materials come from each scene's existing local palette; decorative meshes are non-solid. Wall plates are children of their occluder owners so they do not hang in front of faded walls. The yard board fits two sloping faces below waist height on the original post footprint, to keep the player visible in the follow camera. Spawns, exits and physical collision are unchanged.
 
 ```sh
 python3 tools/build_outdoor_locations.py street residential alley playground
