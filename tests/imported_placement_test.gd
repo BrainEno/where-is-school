@@ -320,8 +320,11 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		var holder := node as CollisionObject3D
 		if holder == null:
 			holder = node.get_parent() as CollisionObject3D
+		# Its layer reads 0, not 3: the chair opens its collision in `_ready` because the
+		# opening has the protagonist asleep inside it. The authored layer is checked in
+		# `pushable_chair_test.py`, which reads the scene file rather than a built tree.
 		var is_wake_chair := desk_name == "DeskB2" and String(node.name) == "Solid"
-		if is_wake_chair and holder != null and holder.collision_layer == 4:
+		if is_wake_chair and holder != null and holder.collision_layer == 0:
 			continue
 		_failures.append(
 			"'%s/Chair/%s' collides; the chairs have never collided and the walk routes "

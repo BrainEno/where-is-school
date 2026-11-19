@@ -562,8 +562,13 @@ func _check_collision() -> void:
 			# Layer 3, not layer 1: see `pushable_chair.gd`. The bake's mask is 25 and the
 			# interaction rays' is 9, and neither includes it, so the two reasons this rule
 			# exists - carving the navmesh, blocking rays - do not apply to this body.
+			# The layer is 0 here, not 3: the chair opens its own collision in `_ready` (the
+			# opening has the protagonist asleep inside it), so by the time this room is built
+			# the body is genuinely not colliding. What `_is_chair_solid` pins is the *authored*
+			# path; `pushable_chair_test.py` pins the authored layer in the scene file, because
+			# a body whose layer the script resets cannot be judged by its runtime value.
 			var body := node as CollisionObject3D
-			if body != null and body.collision_layer == 4 and _is_chair_solid(path):
+			if body != null and body.collision_layer == 0 and _is_chair_solid(path):
 				found[path] = true
 				continue
 			_failures.append(
