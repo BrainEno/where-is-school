@@ -10,6 +10,30 @@ permissions:
   contents: read
 
 jobs:
+  commit-messages:
+    # Issue #222: docs/AGENT_PROTOCOL.md §3 asks for English conventional commit subjects,
+    # and nothing checked it, so it was quietly broken. This checks the commits a pull
+    # request adds (merge commits exempt; see the tool). Only on pull requests: `main`'s
+    # history is what it is.
+    name: Commit subjects follow the protocol
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Check the pull request's commit subjects
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          python3 tools/check_commit_messages.py --range "${BASE_SHA}..${HEAD_SHA}"
+
   tooling:
     name: Test registration and Python tool reproducibility
     runs-on: ubuntu-24.04
@@ -91,7 +115,7 @@ jobs:
           # and export verifiers need real capture/build inputs and are not fabricated here.
           for tool in \
             build_app_icon build_laboratory build_music_loop build_sample_models \
-            build_teaching_block check_agent_docs check_test_registration godot_sidecars \
+            build_teaching_block check_agent_docs check_scene_order check_story_flags check_test_registration godot_sidecars \
             model_library prepare_classroom_student prepare_portraits prepare_q prepare_teacher_n repo_size \
             screenshot_evidence stamp_release_version subset_font
           do
@@ -99,6 +123,14 @@ jobs:
             .venv/bin/python "tools/${tool}.py" --check
           done
           .venv/bin/python tools/check_workflow_action_pins.py
+          # Issue #292: the story-flag registry against the content; #291: no .tscn node
+          # declared before its parent. Both directions, on trees the tests write.
+          .venv/bin/python tests/story_flags_test.py
+          .venv/bin/python tests/scene_order_test.py
+          # Issue #286: no hand-kept font subset size in the live docs.
+          .venv/bin/python tests/font_size_prose_test.py
+          # Issue #222: the commit-subject rule itself (the PR's own commits: job below).
+          .venv/bin/python tests/commit_messages_test.py
           .venv/bin/python art/characters/build_character_looks.py --check
           .venv/bin/python art/classroom/paint_classroom_textures.py --check
           .venv/bin/python art/laboratory/paint_laboratory_textures.py --check

@@ -13,7 +13,11 @@ extends SceneTree
 ## - every prompt key in a scene exists in the locale tables;
 ## - every exit leads to a scene that exists, at a spawn point that exists;
 ## - every exit that ends the slice carries a title and a body;
-## - the yard really is the last space, and the alley is not a dead end.
+## - the yard really is the last space, and the alley is not a dead end;
+## - the classmate in the classroom can be talked to (issue #291): the instantiated scene
+##   still has `Interactables/StudentTalk` - a node written before its parent is dropped
+##   at instantiation, which is how PR #272 briefly lost it - and it routes to the
+##   `student` conversation in both languages, its outline pointing at the seated student.
 ##
 ## It is a static check on purpose: it needs no rendering, so it can run on every
 ## pull request without adding a playtest to CI.
@@ -57,6 +61,7 @@ func _run() -> void:
 			_check_location(location, locale)
 
 	_check_chain()
+	_check_student_talk()
 	Harness.finish(self, _failures, "every scene reference resolves in every language.")
 
 
@@ -185,6 +190,30 @@ func _check_chain() -> void:
 		_failures.append("The yard has almost nothing to inspect.")
 	if _matches(playground, "conversation_route = &\"([^\"]+)\"").size() < 2:
 		_failures.append("The yard offers no conversations of its own.")
+
+
+func _check_student_talk() -> void:
+	var packed := load("res://scenes/locations/classroom/classroom.tscn") as PackedScene
+	if packed == null:
+		_failures.append("classroom.tscn could not be loaded.")
+		return
+	var room := packed.instantiate()
+	var talk := room.get_node_or_null("Interactables/StudentTalk") as Interactable
+	if talk == null:
+		_failures.append("classroom: Interactables/StudentTalk is missing from the instantiated scene (dropped, or not an Interactable).")
+	else:
+		if talk.interact_id != &"student_talk" or talk.speaker_id != &"student":
+			_failures.append("classroom: StudentTalk is '%s' spoken by '%s', not 'student_talk' by 'student'." % [talk.interact_id, talk.speaker_id])
+		var target := ConversationRouter.select(talk.conversation_route, {})
+		if target != &"student":
+			_failures.append("classroom: StudentTalk's route '%s' selects '%s', not the 'student' conversation." % [talk.conversation_route, target])
+		for locale in L10n.LOCALES:
+			_library.set_locale(locale)
+			if not _library.has_conversation(&"student"):
+				_failures.append("%s: the 'student' conversation is missing." % locale)
+		if talk.outline_paths.is_empty() or talk.get_node_or_null(NodePath(talk.outline_paths[0])) == null:
+			_failures.append("classroom: StudentTalk's outline does not reach the seated student (%s)." % [talk.outline_paths])
+	room.free()
 
 
 # --- helpers ----------------------------------------------------------------

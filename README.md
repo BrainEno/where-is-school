@@ -55,8 +55,8 @@ a successful export is not a hardware compatibility or playability claim.
 **What is in it.** Each executable embeds its pack, so there is nothing to keep beside it.
 `tools/verify_build.py` reads that pack back and fails the build if the repository leaked
 into it: no `tests/`, no `docs/screenshots/`, no 10 MB source font — the shipped font is a
-376 KiB subset of the characters the game can actually draw (385,416 bytes), rebuilt by
-`tools/subset_font.py` whenever text changes. The Windows executable carries the project
+subset of the characters the game can actually draw, rebuilt by `tools/subset_font.py`
+whenever text changes (its `--check` prints the current size; the prose does not keep one). The Windows executable carries the project
 icon (`tools/build_app_icon.py`) and a version resource stamped from `packaging/version.txt`
 (`tools/stamp_release_version.py`); the Linux archive carries the desktop entry and the icon
 that entry names. What neither has is a signature, and there is no macOS build.
