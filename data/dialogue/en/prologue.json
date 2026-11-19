@@ -1069,13 +1069,13 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "A heavy, reverberating boom of sheet metal shudders beneath you. You land hard on top of a giant blue shipping container, the corrugated roof dipping under the impact, your palms pressed against rough paint and dried rain marks. Above is the pale sky. Overhead, there is no window you could have fallen from.",
+          "text": "A hollow boom shudders beneath you. You land on a giant blue container. Above is sky, with no window you could have fallen from.",
           "next": "cl_3"
         },
         {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "You push yourself up from the warm metal. Looking down from atop the container, you see the court, a climbing frame, a bench, and the equipment shed. The schoolyard.",
+          "text": "You push yourself up from the metal. From atop the container you see the court, a climbing frame, a bench, and a shed. The yard.",
           "effects": [
             {
               "type": "set_flag",

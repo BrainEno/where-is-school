@@ -205,10 +205,10 @@ func transition_to(
 		_hud.clear_prompt()
 	update_exit_prompt()
 
-	var is_curtain_fall := (
+	var is_curtain_fall: bool = (
 		label == "the back-window curtain"
 		or _has_flag(StoryFlags.CURTAIN_DRAWN)
-		or (options.get("arrival_conversation", &"") == &"classroom_fall_landing")
+		or (String(options.get("arrival_conversation", "")) == "classroom_fall_landing")
 	)
 	if is_curtain_fall:
 		await _present_container_landing(_player, _ui.fade)
