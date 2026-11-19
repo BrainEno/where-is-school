@@ -24,6 +24,14 @@ import re
 import sys
 from pathlib import Path
 
+## The scripts this change added or rewrote, relative to the repository root.
+SCRIPTS = (
+    "scripts/environment/pushable_chair.gd",
+    "scripts/actors/character_arm_reach.gd",
+    "scripts/interaction/seated_chair_interactable.gd",
+    "scenes/locations/classroom/classroom_chair_control.gd",
+)
+
 ROOT = Path(__file__).resolve().parent.parent
 CHAIR_SCRIPT = ROOT / "scripts/environment/pushable_chair.gd"
 DESK_SCENE = ROOT / "scenes/environment/props/classroom_desk.tscn"
@@ -106,6 +114,160 @@ def test_the_room_can_find_it() -> None:
     )
 
 
+def test_the_chair_is_solid_only_when_it_is_empty() -> None:
+    """A solid chair the protagonist is sitting *in* would trap him.
+
+    The body overlaps the seat for the whole of the opening, so the collision has to be off
+    while it is being sat in and on once it is out of the way. Getting this backwards is not a
+    cosmetic bug: it is a player who cannot move, or one who is shoved out of the room.
+    """
+    text = source()
+    check("func _set_solid(" in text, "the chair must be able to turn its collision on and off")
+    check(
+        "_set_solid(false)" in text[text.index("func _ready()") : text.index("func is_pushed_back")],
+        "the chair must start open - the opening has the protagonist asleep in it",
+    )
+    push = text[text.index("func push_back(") : text.index("func pull_home(")]
+    check("_set_solid(true)" in push, "pushing the chair back must make it solid")
+    check(
+        push.index("_slide_to(") < push.index("_set_solid(true)"),
+        "the collision must come on when the chair *arrives*: turning it on while the body is "
+        "still folded over the seat puts a solid box inside the protagonist",
+    )
+    pull = text[text.index("func pull_home(") :]
+    check(
+        pull.index("_set_solid(false)") < pull.index("_slide_to("),
+        "pulling the chair home must open it *before* it moves, not after",
+    )
+
+
+def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
+    """Layer 1 is the navmesh bake and the interaction rays; the chair needs neither.
+
+    The numbers are read from the scripts rather than repeated, because this only works while
+    all three agree: the bake must not see the layer, the body must, and the interaction rays
+    must not.
+    """
+    chair = source()
+    check("const SOLID_LAYER := 4" in chair, "the chair must collide on layer 3 (value 4)")
+    # The body lives in the room, not in the shared prop: every desk instances
+    # `classroom_desk.tscn`, so a collision authored there is twelve colliding chairs, eleven
+    # of which nobody ever sits in.
+    prop = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
+    check(
+        "CollisionObject3D" not in prop and 'type="StaticBody3D"' not in prop,
+        "the shared desk prop must carry no collision: the room instances it twelve times",
+    )
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    check(
+        re.search(
+            r'name="Solid" type="StaticBody3D" parent="Furniture/DeskB2/Chair".*?collision_layer = 4',
+            room,
+            re.S,
+        )
+        is not None,
+        "the wake-up chair's Solid body must be authored in the room, on layer 3",
+    )
+    check(
+        room.count('parent="Furniture/DeskB2/Chair/Solid"') == 1,
+        "exactly one chair in the classroom may collide",
+    )
+    nav = (ROOT / "scripts/world/location_navigation.gd").read_text(encoding="utf-8")
+    bake = int(re.search(r"geometry_collision_mask: int = (\d+)", nav).group(1))
+    check(bake & 4 == 0, f"the navigation bake's mask ({bake}) must not include layer 3")
+    player = (ROOT / "scenes/actors/player/player.tscn").read_text(encoding="utf-8")
+    body_mask = int(re.search(r"^collision_mask = (\d+)", player, re.M).group(1))
+    check(body_mask & 4 != 0, f"the player's mask ({body_mask}) must include layer 3")
+    controller = (ROOT / "scripts/interaction/interaction_controller.gd").read_text(encoding="utf-8")
+    occluder = int(re.search(r"occluder_mask: int = (\d+)", controller).group(1))
+    check(occluder & 4 == 0, f"the interaction rays ({occluder}) must not include layer 3")
+
+
+def test_the_new_scripts_do_not_shadow_built_in_properties() -> None:
+    """`var name := ...` is a parse error, and no static gate in this repository says so.
+
+    `gdparse` checks grammar, not the class hierarchy, so a local called `name` parses fine
+    and then the engine refuses to load the script - which is exactly the shape of failure
+    that made the capture jobs go red while every Python gate stayed green. `name` is the one
+    built-in this codebase has actually tripped on; the check is scoped to it on purpose
+    rather than to a guessed list of reserved words.
+    """
+    for relative in SCRIPTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for number, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if re.match(r"(var|const)\s+name\s*[:=]", stripped):
+                raise AssertionError(
+                    f"{relative}:{number}: a local called `name` is `Node.name` and will not "
+                    f"parse in the engine: {stripped}"
+                )
+
+
+def test_no_sub_resource_lost_its_properties() -> None:
+    """Every `[sub_resource]` header must be followed by attributes, not another header.
+
+    Inserting the chair's box into the classroom scene once put a new header between an
+    existing shape and its `size`, which silently emptied the *floor* collider: the room stopped
+    being 14 x 10 m and every walk route in it collapsed. The scene still loaded, so nothing
+    but a check like this one says anything.
+    """
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    lines = room.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith("[sub_resource") or line.endswith("]"):
+            continue
+        # A header line ends in `]`; anything else means the parser is mid-declaration.
+        raise AssertionError(f"unterminated sub_resource header at line {index + 1}: {line}")
+    for index, line in enumerate(lines):
+        if not line.startswith("[sub_resource"):
+            continue
+        following = lines[index + 1] if index + 1 < len(lines) else ""
+        if following.startswith("[") or following == "":
+            raise AssertionError(
+                f"sub_resource at line {index + 1} has no attributes before the next header"
+            )
+
+
+def test_the_room_has_a_sit_interaction() -> None:
+    """The chair offers sitting, and it reaches into the room without a hard player path."""
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    control = (ROOT / "scenes/locations/classroom/classroom_chair_control.gd").read_text(
+        encoding="utf-8"
+    )
+    check('interact_id = &"chair_sit"' in room, "the classroom needs a chair_sit interactable")
+    check("seated_chair_interactable.gd" in room, "it must use the offer-aware interactable")
+    check(
+        "ChairControl" in room,
+        "the room needs a controller to wire the interactable to the protagonist",
+    )
+    check(
+        "player_group" in control and "player_path" not in control,
+        "the controller must find the body by group; the host, not the room, places the player",
+    )
+    check(
+        "stage_handler" in control,
+        "sitting has to run inside the director's beat, like every other staged moment",
+    )
+
+
+def test_the_hand_does_the_pushing() -> None:
+    """The arm reaches the chair before it moves, and lets go after.
+
+    A chair that slides with no hand on it is the thing this was built to avoid looking like.
+    """
+    controller = (ROOT / "scripts/actors/player/player_controller.gd").read_text(encoding="utf-8")
+    push = controller[controller.index("func _push_seat_back(") :]
+    push = push[: push.index("func _pull_seat_home(")]
+    check("_reach_for_chair()" in push, "the stand-up must reach for the chair")
+    check("_release_chair" in push, "and let go of it once it stops")
+    check(
+        push.index("_reach_for_chair()") < push.index("push_back"),
+        "the hand has to be on the chair *before* it starts moving",
+    )
+
+
 def test_the_distance_is_the_one_that_was_measured() -> None:
     """0.62 m is the geometric minimum; the constant has to keep its slack."""
     text = source()
@@ -115,8 +277,12 @@ def test_the_distance_is_the_one_that_was_measured() -> None:
         return
     distance = float(m.group(1))
     check(
-        distance >= 0.65,
-        f"a {distance:g} m push is at or below the 0.63 m minimum, leaving no slack",
+        distance >= 0.63,
+        f"a {distance:g} m push does not clear the seat, which needs 0.63 m",
+    )
+    check(
+        distance <= 0.80,
+        f"a {distance:g} m push moves the chair further than the room is worth watching",
     )
 
 
@@ -127,6 +293,12 @@ def main() -> int:
     test_slides_do_not_stack()
     test_it_is_snappable()
     test_the_room_can_find_it()
+    test_the_chair_is_solid_only_when_it_is_empty()
+    test_the_collision_is_on_a_layer_that_does_not_carve_the_room()
+    test_the_new_scripts_do_not_shadow_built_in_properties()
+    test_no_sub_resource_lost_its_properties()
+    test_the_room_has_a_sit_interaction()
+    test_the_hand_does_the_pushing()
     test_the_distance_is_the_one_that_was_measured()
 
     if FAILURES:

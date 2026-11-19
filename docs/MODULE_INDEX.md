@@ -197,6 +197,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 |---|---|---|
 | `ClassroomAnomalies` | [`scenes/locations/classroom/classroom_anomalies.gd`](../scenes/locations/classroom/classroom_anomalies.gd) | Classroom-specific curtain/void/paper staging and restoration; use its authored props and story flags. |
 | `ClassroomScreenControl` | [`scenes/locations/classroom/classroom_screen_control.gd`](../scenes/locations/classroom/classroom_screen_control.gd) | Classroom-specific staged projection-screen toggle; leaves story/save state unchanged. |
+| `ClassroomChairControl` | [`scenes/locations/classroom/classroom_chair_control.gd`](../scenes/locations/classroom/classroom_chair_control.gd) | Classroom-specific staged sit/stand on the chair the protagonist wakes in; keeps the prompt in step with the body and leaves story/save state unchanged. |
 
 <!-- class-name-index:end -->
 
@@ -255,7 +256,10 @@ not the shipped `res://data/`. Headless assertions live in
 | Font coverage | [subset_font.py](../tools/subset_font.py) | Rebuild/check subsets when game-visible text changes; keep source fonts out of exports. |
 | External Action pins | [check_workflow_action_pins.py](../tools/check_workflow_action_pins.py) | Full commit pins with consistent version comments. |
 | Interface palette duplication | [check_ui_palette.py](../tools/check_ui_palette.py) | Refuse one RGB literal in two files; the palette must stay a leaf; report pairs between allowlisted writers. |
-| Pushable classroom chair | [pushable_chair.gd](../scripts/environment/pushable_chair.gd) | The chair the protagonist wakes in. Slides back 0.70 m when he stands up, stays there, and returns to the same place when he sits down again. |
+| Pushable classroom chair | [pushable_chair.gd](../scripts/environment/pushable_chair.gd) | The chair the protagonist wakes in. Slides back 0.65 m when he stands up, stays there, and is drawn home when he sits down again. Solid only while it is empty: a collision a seated body overlaps would trap him. Collides on layer 3, which the navigation bake and the interaction rays do not read. |
+| Seated chair interactable | [seated_chair_interactable.gd](../scripts/interaction/seated_chair_interactable.gd) | One chair, one offer: "Sit down" on his feet, "Stand up" when seated, nothing mid-transition so the pointer falls through to the schoolbag on the chair's back. |
+| Arched arm reach | [character_arm_reach.gd](../scripts/actors/character_arm_reach.gd) | Procedural one-arm reach to a world target, written after the animation mixer, so a hand can hold the chair it is pushing or drawing. |
+| Classroom chair control | [classroom_chair_control.gd](../scenes/locations/classroom/classroom_chair_control.gd) | Wires the chair's interactable to the protagonist's sit/stand inside a director's beat, and keeps the prompt in step with the body. |
 | Seat/chair clearance | [check_seat_clearance.py](../tools/check_seat_clearance.py) | Reads the spawn marker, the chair's meshes and the body's capsule from three scenes and checks the chair's own push gets every part clear of the body: per part, and along the slide, so the chair cannot travel *through* the body on its way out. |
 | Interface colour literals | [check_ui_literals.py](../tools/check_ui_literals.py) | The other half of the palette rule: no *new* `Color(<number>…)` inside `scripts/ui/`, per line rather than per file, with an allowlist that records why each remaining one is local. Pure white and pure black are tween endpoints and are skipped. |
 | Fixed-frame waits under a scaled clock | [check_flaky_waits.py](../tools/check_flaky_waits.py) | A ratchet on a structural fact, not a semantic verdict: no test whose `Engine.time_scale` exceeds 1.0 may add a fixed-frame wait, and a converted file must leave `BASELINE`. Waits for a condition use `TestHarness.wait_until`. |
