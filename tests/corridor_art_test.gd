@@ -28,7 +28,7 @@ var _last_inspection: StringName = &""
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 120.0, "corridor_art_test.gd")
+	Harness.arm_watchdog(self, 170.0, "corridor_art_test.gd")
 	call_deferred("_run")
 
 
@@ -112,14 +112,14 @@ func _run() -> void:
 		if _check.expect(hit is Vector3 and (hit as Vector3).distance_to(nav_point) < 0.12,
 			"A floor click on 02 was lost behind glazing (hit %s, wanted %s)." % [hit, nav_point]):
 			_pointer.click_at_screen_position(screen)
-			await _arrive(next, "02 clicked floor")
+			await _arrive(next, "03 clicked floor")
 		var upper_peek := corridor.find_interactable(&"high_window_upperwest1")
-		if await _walk(Vector3(-13.25, 3.6, -12.2), "02 high window"):
+		if await _walk(Vector3(-13.25, 3.6, -12.2), "03 high window"):
 			await _check_peek(upper_peek, true)
 		await _walk(SECOND_BEND, "upper bend")
 		await _walk(UPPER_EAST, "upper east wing")
 		await _walk(LANDING, "dogleg half landing")
-		await _walk(FIRST_BEND, "ground floor via far stair")
+		await _walk(FIRST_BEND, "02 via far stair")
 
 	Harness.stage = "yard fire stair and two-way exit"
 	var approach := corridor.get_spawn(&"FromSchoolyard")
@@ -141,13 +141,16 @@ func _run() -> void:
 				# The street spawn is across the pavement, not in reach of the gate.
 				if await _walk(Vector3(-8.15, 0, 15.2), "street side of the gate"):
 					await _use_exit(&"street_back_to_school", &"corridor", &"FromStreet")
+	if _host.get_current().location_id == &"corridor":
+		await _check_rear_stair_and_laboratory(_host.get_current())
 	_finish()
 
 
 func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
-		+ "the ten bays, glazed galleries, stairs, two-way exits and both peek inputs still work.")
+		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
+		+ "the rear stair connects all three floors and the laboratory returns to its hidden threshold.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -173,12 +176,17 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 	var start := corridor.get_spawn(&"FromStreet").global_position
 	var end := corridor.get_spawn(&"FromSchoolyard").global_position
 	var path := NavigationServer3D.map_get_path(map, start, end, true)
-	var length := 0.0
-	for i in range(1, path.size()):
-		length += path[i-1].distance_to(path[i])
+	var length := _route_length(path)
 	print("corridor art: gate to fire door %.1f m on the baked map" % length)
 	_check.expect(not path.is_empty() and path[-1].distance_to(end) < 0.5 and length > 42.0,
 		"The gate to fire door no longer follows a long connected route (%.1f m)." % length)
+
+
+func _route_length(path: PackedVector3Array) -> float:
+	var length := 0.0
+	for i in range(1, path.size()):
+		length += path[i-1].distance_to(path[i])
+	return length
 
 
 func _check_bay(bay: StaticBody3D, map: RID) -> void:
@@ -301,6 +309,97 @@ func _check_rear_door(corridor: LocationRoot, bay: StaticBody3D) -> void:
 	await _dismiss_inspection()
 
 
+## Take the new branches from the same landing without placing or reloading the player.
+## The half landings put a real turn between each pair of flights, not another exit.
+func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
+	Harness.stage = "02 rear hub to 03 and back"
+	var hub := corridor.get_node_or_null(^"TeachingBlock/RearStair/Junction") as Node3D
+	var up := corridor.get_node_or_null(^"TeachingBlock/RearStair/UpLanding") as Node3D
+	var down := corridor.get_node_or_null(^"TeachingBlock/RearStair/DownLanding") as Node3D
+	var lab := corridor.get_node_or_null(^"TeachingBlock/GroundFloor/LaboratoryPortal/Door") as Node3D
+	var screen_wall := corridor.get_node_or_null(^"TeachingBlock/GroundFloor/RecessScreen") as StaticBody3D
+	var hall_spawn := corridor.get_spawn(&"FromLaboratory")
+	if not _check.expect(hub != null and up != null and down != null and lab != null
+		and screen_wall != null and hall_spawn != null, "The teaching block lost its new walk or threshold."):
+		return
+	var rear := corridor.find_interactable(&"corridor_rear_door")
+	var rear_dz := hub.global_position.z - rear.global_position.z
+	_check.expect(rear_dz > 1.0 and rear_dz < 4.5 and is_zero_approx(hub.global_position.y),
+		"The new stair is not just beyond the biology rear door on 02.")
+	var junction := hub.global_position
+	var lower_landing := down.global_position
+	if not await _walk(junction, "rear-door junction") or not await _walk(up.global_position, "03 half landing"):
+		return
+	var top := Vector3(-12, 3.6, -7.8)
+	var school_nav := corridor.get_node(^"Navigation") as LocationNavigation
+	var up_path := NavigationServer3D.map_get_path(school_nav.get_navigation_map(), _player.global_position, top, true)
+	_check.expect(not up_path.is_empty() and up_path[-1].distance_to(top) < 0.5 and _route_length(up_path) < 18.0,
+		"The upper flight detours through the old stair instead of meeting 03.")
+	if not await _walk(top, "03 from the new stair"):
+		return
+	if not await _walk(up.global_position, "03 turn on the way back") or not await _walk(junction, "02 from 03"):
+		return
+
+	Harness.stage = "02 down to 01 and the hidden recess"
+	if not await _walk(lower_landing, "01 half landing"):
+		return
+	var near_end := Vector3(-11.4, -3.4, 12.6)
+	if not await _walk(near_end, "01 arcade from 02"):
+		return
+	_check.expect(_host.get_current() == corridor, "Walking between floors loaded a different location.")
+	var leaf := lab.get_node(^"LeafLeft") as MeshInstance3D
+	var sight := PhysicsRayQueryParameters3D.create(near_end + Vector3.UP * 1.43, leaf.global_position, 1)
+	var blocked := _player.get_world_3d().direct_space_state.intersect_ray(sight)
+	var blocker := blocked.get("collider") as StaticBody3D
+	_check.expect(blocker != null and blocker != lab.get_parent() and screen_wall.get_parent().is_ancestor_of(blocker),
+		"The laboratory door is in the direct sight line down 01, not behind the return.")
+	var hall_step := hall_spawn.global_position
+	var door_scene := lab.scene_file_path
+	var door_basis := lab.global_basis
+	if not await _walk(Vector3(-25, -3.4, 12.6), "end of the 01 arcade") or not await _walk(hall_step, "laboratory recess"):
+		return
+
+	Harness.stage = "laboratory mouse entry and return"
+	_player.camera_rig.snap()
+	var door_click := _camera.unproject_position(leaf.to_global(Vector3(0, 0, 0.145)))
+	var enter := corridor.find_interactable(&"to_laboratory") as LocationExit
+	if not _check.expect(enter != null and enter.destination_spawn == &"FromCorridor"
+		and _interaction.get_target_at_screen_position(door_click) == enter,
+		"The hidden door cannot be clicked from its own landing."):
+		return
+	_pointer.click_at_screen_position(door_click)
+	var entered := await Harness.wait_until(func() -> bool:
+		return (_host.get_current().location_id == &"laboratory" and _player.is_control_enabled()
+			and _player.is_on_floor()), 10.0)
+	if not _check.expect(entered and _host.get_current_spawn() == &"FromCorridor",
+		"Clicking the hidden door did not enter the laboratory at its door."):
+		return
+	var room := _host.get_current()
+	var inside := room.get_node_or_null(^"WallSouth/EntranceFrame") as Node3D
+	var inside_step := room.get_spawn(&"FromCorridor").global_position
+	_check.expect(inside != null and inside.scene_file_path == door_scene and inside.global_basis.is_equal_approx(door_basis)
+		and absf(inside_step.x - inside.global_position.x) < 0.02 and inside_step.z < inside.global_position.z
+		and _player.global_position.distance_to(inside_step) < 0.15,
+		"The laboratory does not show the reverse of the same doorway at the arrival.")
+	var nav := room.get_node(^"Navigation") as LocationNavigation
+	if not await Harness.wait_until(nav.is_routable, 5.0):
+		_check.fail("The laboratory entrance never became routable.")
+		return
+	if not await _walk(room.get_spawn(&"Entry").global_position, "into the working laboratory"):
+		return
+	if not await _walk(inside_step, "laboratory south door"):
+		return
+	if await _use_exit(&"laboratory_to_corridor", &"corridor", &"FromLaboratory"):
+		_check.expect(_player.global_position.distance_to(hall_step) < 0.15,
+			"The laboratory return did not land outside the same door on 01.")
+		var returned_nav := _host.get_current().get_node(^"Navigation") as LocationNavigation
+		if await Harness.wait_until(returned_nav.is_routable, 5.0):
+			await _walk(lower_landing, "back up the lower flight after returning")
+			await _walk(junction, "02 after visiting the laboratory")
+		else:
+			_check.fail("The returned 01 floor never became routable.")
+
+
 func _check_yard_view(corridor: LocationRoot) -> void:
 	var bay := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
 	var pane := bay.get_node(^"ClearGlass") as MeshInstance3D
@@ -361,7 +460,7 @@ func _climb_with_keys() -> bool:
 	Input.action_release(&"move_forward")
 	Input.action_release(&"move_left")
 	return _check.expect(reached and absf(_player.global_position.y - 3.6) < 0.15,
-		"W+A did not take the player onto 02: %s" % _player.global_position)
+		"W+A did not take the player onto 03: %s" % _player.global_position)
 
 
 func _check_peek(peek: Interactable, by_mouse: bool) -> void:

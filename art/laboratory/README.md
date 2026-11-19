@@ -69,7 +69,10 @@ build rather than a file nobody can rebuild.
   annex.
 - `scenes/locations/laboratory/laboratory.tscn` — the scene: 167 collision boxes (each one
   the size of its own visible box mesh, and nothing else collides), 89 cylinders, 401 cable
-  segments and 9 interaction anchors.
+  segments and nine inspections. There is now also an exit in the south wall.
 
-The layout, the numbers behind it and the decisions taken along the way are written up in
-`docs/IMPLEMENTATION_NOTES_LABORATORY.md`.
+The [folded teaching wing](../teaching_block/README.md) connects the room to the optional
+01 recess through two matching sides of `laboratory_entry_door.tscn`. The separate `Entry`
+marker remains for the room's own captures; play arrives at `FromCorridor` beside the door.
+The cold palette, working equipment and annex are unchanged. The original standalone build
+and its layout decisions are recorded in `docs/IMPLEMENTATION_NOTES_LABORATORY.md`.

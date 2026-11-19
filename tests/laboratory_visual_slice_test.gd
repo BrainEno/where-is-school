@@ -205,8 +205,8 @@ func _run() -> void:
 	var navigation := await _check_navigation()
 	Harness.stage = "the game camera"
 	await _check_camera()
-	Harness.stage = "standalone"
-	_check_standalone()
+	Harness.stage = "optional entrance"
+	_check_optional_link()
 
 	print("::notice title=laboratory visual slice::%s" % " | ".join(_notes))
 	Harness.finish(
@@ -737,17 +737,16 @@ func _yaw_towards(from: Vector3, target: Vector3) -> float:
 	return atan2(-direction.x, -direction.z)
 
 
-# --- 10. standalone --------------------------------------------------------------------------
+# --- 10. optional entrance --------------------------------------------------------------------------
 
 
-func _check_standalone() -> void:
+func _check_optional_link() -> void:
 	var catalog := LocationCatalog.load_all()
 	if not catalog.is_valid():
 		_failures.append("locations: " + catalog.describe_errors())
 		return
-	# It is described, because `location_catalog_test` fails on any scene folder the catalog
-	# does not know. Described is not the same as wired in: nothing points here, the entry
-	# claims no objective and no arrival line, and it is not the start location.
+	# The building can lead here without turning the room into a chapter milestone.
+	# Keep the existing catalogue and its empty story fields.
 	if not catalog.has(&"laboratory"):
 		_failures.append("The laboratory is not described in data/story/locations.json.")
 		return
@@ -755,19 +754,22 @@ func _check_standalone() -> void:
 	if described.scene != "res://scenes/locations/laboratory/laboratory.tscn":
 		_failures.append("data/story/locations.json points 'laboratory' at '%s'." % described.scene)
 	if not String(described.objective).is_empty():
-		_failures.append("The laboratory claims objective '%s'; it is not in the story yet." % described.objective)
+		_failures.append("The laboratory claims objective '%s'; it should remain an optional visit." % described.objective)
 	if not String(described.arrival_conversation).is_empty():
-		_failures.append("The laboratory claims an arrival conversation; it is not in the story yet.")
+		_failures.append("The laboratory claims an arrival conversation; it should remain an optional visit.")
 	if described.is_start:
 		_failures.append("The laboratory is marked as the location the game opens in.")
 	if not _has_spawn(described.spawn):
 		_failures.append("The catalog spawn '%s' is not a marker in this room." % described.spawn)
-	# No exit: the entrance is a door, and the room declares no destination.
+	var exits: Array[LocationExit] = []
 	for node in _descendants(_room):
 		if node is LocationExit:
-			_failures.append("The laboratory declares an exit ('%s')." % _relative(node))
-	if _room.get_node_or_null(^"EntranceFrame") == null:
-		_failures.append("The entrance door frame is missing.")
+			exits.append(node as LocationExit)
+	if (exits.size() != 1 or exits[0].interact_id != &"laboratory_to_corridor"
+			or exits[0].destination_id != &"corridor" or exits[0].destination_spawn != &"FromLaboratory"):
+		_failures.append("The laboratory must only exit back to its 01 door.")
+	if not _has_spawn(&"FromCorridor") or _room.get_node_or_null(^"WallSouth/EntranceFrame") == null:
+		_failures.append("The matching laboratory doorway and arrival are missing.")
 
 
 # --- helpers ------------------------------------------------------------------------------------

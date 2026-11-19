@@ -24,10 +24,9 @@ and a shaft that climbs higher than the building. The player can walk the whole 
 main aisle from the entrance door to that narrow door is kept clear, and the single cable
 run that crosses it is covered by a walkable steel ramp.
 
-Boundaries this file respects: no classroom file, no story entry, no catalogue entry. The
-laboratory is a standalone location scene that `LocationHost.load_location()` can enter and
-`tests/laboratory_visual_slice_test.gd` can check; how the chapter uses it is the owner's
-decision, so nothing here registers it in `data/story/locations.json`.
+The room is an optional visit from the teaching block's 01 corridor. The south-wall door
+shares a PackedScene with its hall face. The only exit goes back to that threshold; the
+existing catalogue entry still declares no arrival scene, objective or story flag.
 """
 
 from __future__ import annotations
@@ -325,13 +324,6 @@ def build_room(lab: Lab) -> None:
     ):
         prop(lab, name, pos, size, "metal_frame")
 
-    # The entrance: a sealed double door on the south wall. The scene is a room, not a
-    # corridor, and no exit is authored here on purpose (see the module docstring).
-    prop(lab, "EntranceFrame", (-4.4, 1.05, 5.54), (1.9, 2.1, 0.08), "metal_frame")
-    prop(lab, "EntranceLeafLeft", (-5.05, 1.02, 5.5), (0.86, 2.0, 0.06), "casework_pale")
-    prop(lab, "EntranceLeafRight", (-3.75, 1.02, 5.5), (0.86, 2.0, 0.06), "casework_pale")
-    prop(lab, "EntrancePushBar", (-4.4, 1.0, 5.45), (1.4, 0.06, 0.05), "metal_pale")
-    prop(lab, "EntranceKickPlate", (-4.4, 0.24, 5.45), (1.7, 0.18, 0.05), "metal_frame")
 
 
 def build_wet_bench(lab: Lab) -> None:
@@ -869,6 +861,7 @@ def build_interactables(lab: Lab) -> None:
     ]
     lab.spawns = [
         {"name": "Entry", "pos": (-2.4, 0.0, 2.8)},
+        {"name": "FromCorridor", "pos": (-4.4, 0.0, 4.42)},
         {"name": "FromAnnex", "pos": (3.4, 0.0, -2.85)},
     ]
 
@@ -884,6 +877,8 @@ def build_scene(lab: Lab) -> str:
     ext.append(("AudioStream", "res://assets/audio/laboratory_hum.wav", "5_ambience"))
     ext.append(("Script", "res://scripts/world/ambience_player.gd", "6_ambience_player"))
     ext.append(("Material", "res://assets/materials/glass_pane.tres", "7_glass"))
+    ext.append(("PackedScene", "res://scenes/interaction/location_exit.tscn", "8_exit"))
+    ext.append(("PackedScene", "res://scenes/environment/props/laboratory_entry_door.tscn", "9_entry_door"))
     mat_ids = {}
     for index, name in enumerate(MATERIAL_ORDER):
         rid = "m%02d_%s" % (index, name)
@@ -1057,6 +1052,14 @@ def build_scene(lab: Lab) -> str:
         lines.append('material_override = ExtResource("%s")' % material_id(row["mat"]))
         lines.append("")
 
+    # Both scene coordinates use +Z for the corridor side. Parenting to the wall
+    # lets the existing wall fader clear the doorway with the south facade.
+    lines.extend([
+        '[node name="EntranceFrame" parent="WallSouth" instance=ExtResource("9_entry_door")]',
+        'position = Vector3(-4.4, -1.7, 0)',
+        '',
+    ])
+
     # Cables: each segment is the shared unit cylinder with radius and length in its basis.
     lines.append('[node name="Cables" type="Node3D" parent="."]')
     lines.append("")
@@ -1089,6 +1092,20 @@ def build_scene(lab: Lab) -> str:
             lines.append("outline_paths = PackedStringArray(%s)" % ", ".join('"%s"' % p for p in item["outline"]))
         lines.append("")
 
+    lines.extend([
+        '[node name="BackToCorridor" parent="Interactables" instance=ExtResource("8_exit")]',
+        'position = Vector3(-4.4, 0.67, 5.06)',
+        'interact_id = &"laboratory_to_corridor"',
+        'outline_paths = PackedStringArray("../../WallSouth/EntranceFrame/LeafLeft", '
+        '"../../WallSouth/EntranceFrame/LeafRight", "../../WallSouth/EntranceFrame/Head")',
+        'support_paths = PackedStringArray("../../WallSouth")',
+        'prompt_key = "prompt.back_to_corridor"',
+        'radius = 1.35',
+        'destination_scene = "res://scenes/locations/corridor/corridor.tscn"',
+        'destination_spawn = &"FromLaboratory"',
+        'destination_id = &"corridor"',
+        '',
+    ])
     lines.append('[node name="SpawnPoints" type="Node3D" parent="."]')
     lines.append("")
     for spawn in lab.spawns:

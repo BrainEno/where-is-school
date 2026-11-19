@@ -13,7 +13,7 @@ extends SceneTree
 ##
 ## 1. **Nothing to walk into.** No node of the pass (`StageArt/**`, `Stage*`) is or
 ##    holds a collider; the graybox exteriors keep exactly the colliders they had before the pass.
-## 2. **The route contract is unchanged.** Every location keeps its spawn markers, its
+## 2. **The route contract is explicit.** Every location keeps its spawn markers, its
 ##    original interactables, and its exits with the same destination and spawn; every outline
 ##    path of every interactable still resolves.
 ## 3. **Still walkable.** The navigation bakes, and every spawn reaches every exit.
@@ -62,12 +62,13 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 10, # The rear classroom door is an inspection, not an exit.
-		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard"],
+		"interactables": 11, # The rear classroom door is still an inspection, not an exit.
+		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard", "FromLaboratory"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"school_gate": "street/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
+			"to_laboratory": "laboratory/FromCorridor",
 		},
 	},
 	"street": {
@@ -113,6 +114,13 @@ const LOCATIONS := {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
 		},
+	},
+	"laboratory": {
+		"scene": "res://scenes/locations/laboratory/laboratory.tscn",
+		"stage": false,
+		"interactables": 10, # Nine inspections and the shared entrance door.
+		"spawns": ["Entry", "FromAnnex", "FromCorridor"],
+		"exits": {"laboratory_to_corridor": "corridor/FromLaboratory"},
 	},
 }
 

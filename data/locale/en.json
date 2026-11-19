@@ -64,6 +64,7 @@
     "objective.stay_classroom": "You've decided to stay in the classroom.",
     "prompt.ask_along": "Ask Q to come along",
     "prompt.yard_door": "Go out into the yard",
+    "prompt.back_to_corridor": "Return to the corridor",
     "prompt.corridor_speaker": "Listen to the speaker",
     "prompt.corridor_trolley": "Look at the cleaning trolley",
     "prompt.corridor_wait": "Stop at the railing",

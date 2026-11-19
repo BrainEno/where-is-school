@@ -64,6 +64,7 @@
     "objective.stay_classroom": "你决定留在教室里。",
     "prompt.ask_along": "叫上 Q 一起走",
     "prompt.yard_door": "走到操场去",
+    "prompt.back_to_corridor": "回到走廊",
     "prompt.corridor_speaker": "听走廊里的喇叭",
     "prompt.corridor_trolley": "看看清洁车",
     "prompt.corridor_wait": "在栏杆边停一会儿",
