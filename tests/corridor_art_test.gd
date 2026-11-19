@@ -337,6 +337,20 @@ func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
 		"The upper flight detours through the old stair instead of meeting 03.")
 	if not await _walk(top, "03 from the new stair"):
 		return
+	# Q has a solid capsule and stops behind us. On a reversal, use the side of
+	# the 4.5 m gallery to pass, rather than clicking straight through another actor.
+	var companion := _host.get_parent().get_node_or_null(^"Companion") as CompanionController
+	if not _check.expect(companion != null and companion.is_with_player()
+		and (companion.collision_layer & _player.collision_mask) != 0,
+		"The new route must still work with the solid companion following the player."):
+		return
+	var passing_lane_x := -13.2
+	if not await _walk(Vector3(passing_lane_x, top.y, top.z), "03 into the passing lane"):
+		return
+	if not await _click_floor(Vector3(passing_lane_x, top.y, -3.15), "03 floor click past Q"):
+		return
+	_check.expect(_player.global_position.z > companion.global_position.z and companion.is_with_player(),
+		"The player and Q did not pass one another on the 03 gallery.")
 	if not await _walk(up.global_position, "03 turn on the way back") or not await _walk(junction, "02 from 03"):
 		return
 
@@ -387,6 +401,9 @@ func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
 		return
 	if not await _walk(room.get_spawn(&"Entry").global_position, "into the working laboratory"):
 		return
+	# Return along the open south aisle, rather than retracing the approach through Q.
+	if not await _walk(inside_step + Vector3.RIGHT * 2.25, "laboratory return aisle"):
+		return
 	if not await _walk(inside_step, "laboratory south door"):
 		return
 	if await _use_exit(&"laboratory_to_corridor", &"corridor", &"FromLaboratory"):
@@ -435,6 +452,14 @@ func _check_glass_collision(corridor: LocationRoot) -> void:
 	var blocked := _player.test_move(from, -glass.global_basis.z * 2.0, hit)
 	_check.expect(blocked and hit.get_collider() == glass,
 		"The player capsule can pass through a glazed bay above the rail.")
+
+
+func _click_floor(destination: Vector3, label: String) -> bool:
+	_player.camera_rig.snap()
+	_pointer.click_at_screen_position(_camera.unproject_position(destination))
+	if not _check.expect(_pointer.was_last_click_accepted(), "%s: %s" % [label, _pointer.get_last_rejection()]):
+		return false
+	return await _arrive(destination, label)
 
 
 func _walk(destination: Vector3, label: String) -> bool:
