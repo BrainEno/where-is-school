@@ -235,13 +235,6 @@
               "type": "set_flag",
               "flag": "corridor_waited",
               "value": true
-            },
-            {
-              "type": "record",
-              "entry_id": "corridor_waited",
-              "source": "observed",
-              "speaker": "protagonist",
-              "text": "你又在自由活动时站到走廊栏杆边，看着楼下的操场。"
             }
           ]
         }

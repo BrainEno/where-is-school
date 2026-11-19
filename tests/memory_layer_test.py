@@ -470,6 +470,39 @@ def check_routes_resolve() -> None:
             f"route '{route_id}' has no catch-all rule, so an unmatched state resolves to nothing.",
         )
 
+
+## A narrative entry is a single fact the protagonist learns once. Recording the same entry
+## id from two nodes means the recollection list says the same thing twice, and a save that
+## read one of them cannot tell which. The engine test refuses it; this catches it in seconds.
+def check_entries_recorded_once() -> None:
+    for locale in LOCALES:
+        seen: dict[str, str] = {}
+        for path in sorted((DIALOGUE / locale).glob("*.json")):
+            document = load(path)
+            for conversation_id, graph in document.get("conversations", {}).items():
+                for node in graph.get("nodes", []):
+                    places = [(node.get("effects") or [], f"{conversation_id}/{node.get('id')}")]
+                    for choice in node.get("choices") or []:
+                        places.append(
+                            (choice.get("effects") or [], f"{conversation_id}/{node.get('id')}/choice")
+                        )
+                    for effects, context in places:
+                        for effect in effects:
+                            if str(effect.get("type", "")) != "record":
+                                continue
+                            entry_id = str(effect.get("entry_id", ""))
+                            if not entry_id:
+                                failures.append(f"{context} has a record effect with no entry id.")
+                                continue
+                            if entry_id in seen:
+                                failures.append(
+                                    f"narrative entry '{entry_id}' is recorded twice "
+                                    f"({seen[entry_id]} and {context}), so the same fact "
+                                    "reaches the recollection list along two paths."
+                                )
+                                continue
+                            seen[entry_id] = context
+
 def main() -> int:
     check_recall_exists()
     check_recall_pairing()
@@ -480,6 +513,7 @@ def main() -> int:
     check_parity()
     check_passive_openings()
     check_routes_resolve()
+    check_entries_recorded_once()
     if failures:
         for failure in failures:
             print(f"MEMORY_LAYER_FAILURE: {failure}")

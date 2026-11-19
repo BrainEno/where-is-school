@@ -235,13 +235,6 @@
               "type": "set_flag",
               "flag": "corridor_waited",
               "value": true
-            },
-            {
-              "type": "record",
-              "entry_id": "corridor_waited",
-              "source": "observed",
-              "speaker": "protagonist",
-              "text": "You stood at the walkway railing again during the free period and watched the yard."
             }
           ]
         }
