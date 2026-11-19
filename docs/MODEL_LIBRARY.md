@@ -261,8 +261,8 @@ Measured from the committed `.glb` files, not from the Blender sources and not f
 | meshes / primitives | 9 / 15 | 64 / 64 | 9 / 16 | 18 / 28 |
 | materials | 12 | 22 | 12 | 17 |
 | embedded animations | 5 (721 channels; not played by the game) | 0 | 6 (70 channels; native idle/talk and named actions) | 4 (8 channels; played together as N's idle) |
-| triangles | 15,782 | 64,604 | 17,918 | 62,340 |
-| file | 852.3 KiB | 1475.0 KiB | 980.7 KiB | 1439.0 KiB |
+| triangles | 15,782 | 46,384 | 17,918 | 56,950 |
+| file | 852.3 KiB | 1083.8 KiB | 980.7 KiB | 1314.7 KiB |
 
 The former protagonist and N retain the 16-joint naming convention. Q no longer
 shares that hierarchy: its approved replacement has `Root → Pelvis → Spine → Spine_01
@@ -276,14 +276,15 @@ player. N's four loops remain its idle, unchanged. The manifest locks each actio
 channel count and target paths; adding/removing a channel is a reviewed structural change.
 Q, N and the seated student are reproducibly prepared from immutable `.gdignore`d sources
 under `art/character_models/`; their respective preparation tools have `--check` modes.
-Geometry revision 1 (`prepare_teacher_n.py`, `prepare_classroom_student.py`, shared
-`character_geometry.py`) refines N/student hands, face/hair and selected garment forms.
+Geometry revision 2 (`prepare_teacher_n.py`, `prepare_classroom_student.py`, shared
+`character_geometry.py`) refines N/student silhouettes, eyes and garment seams and uses
+fewer triangles than the first refinement without changing the registered structure.
 `tests/character_geometry_test.py` verifies connected closed five-digit hands, normal/skin
 validity, exact source/output, joint/rest/inverse-bind preservation, and N's live actions.
-New hand weights are authored, not represented as original weights. These checks and
-higher triangle counts do not establish visual quality; source rights and engine/owner
+The N wrist and student elbow weights are authored, not represented as original weights.
+Structural checks and smaller files do not establish visual quality; source rights and engine/owner
 acceptance remain in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) and
-[CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §9.
+[CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10.
 
 The manifest verifies that every primitive remains skinned, not that skin deformation is
 artistically accepted. For Q, `tests/q_model_prepare_test.py` additionally compares all
@@ -320,8 +321,8 @@ why the manifest was built from the `.glb` files rather than from the audits:
   **78 mesh nodes**, 12,388 triangles (one Blender object did not reach the export; polygons
   are not triangles). That exact export is now `student_source.glb`. Geometry revision 1
   replaces fourteen obsolete hand/face components with integrated surfaces, so the current
-  runtime manifest correctly records **64 meshes** and 64,604 triangles. The old rig audit
-  is historical source evidence, not the current geometry contract.
+  runtime manifest correctly records **64 meshes**. The second pass has 46,384 triangles.
+  The old rig audit is historical source evidence, not the current geometry contract.
 - **Former Q records** described an unrigged input and a separate 16-joint derivative,
   not today's approved replacement. Those Q-only sources, workfiles, audit reports and
   development duplicate have been removed with the retired production model. They can be

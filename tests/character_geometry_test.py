@@ -122,6 +122,13 @@ class RefinedCharacterTests(unittest.TestCase):
                     area = np.linalg.norm(np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]), axis=1)
                     self.assertTrue((area > 1e-17).all(), "zero-area geometry is not refinement")
 
+    def test_student_face_normals_have_canonical_axis_zeros(self) -> None:
+        normals = self.outputs[0][2]["Head_Main_Mesh_Mesh", "WIS_Protagonist_Skin"]["NORMAL"]
+        zero = normals == 0
+        self.assertTrue(zero.any(), "there are symmetric vertices on the head centreline")
+        self.assertFalse(np.signbit(normals[zero]).any(), "normalize signed zeros before writing")
+        self.assertFalse((np.abs(normals[~zero]) < 1e-12).any(), "no CPU-dependent cancellation residue")
+
     def test_five_digits_are_one_closed_connected_surface(self) -> None:
         for teacher_hand in [True, False]:
             hand = geometry.canonical_hand(teacher_hand)
@@ -144,14 +151,31 @@ class RefinedCharacterTests(unittest.TestCase):
                         pending.extend(adjacent.pop(index, set()))
                 return result
             self.assertEqual(components(np.ones(len(p), bool)), 1, "digits are still disconnected capped rods")
-            size = 1 if teacher_hand else .91
-            self.assertEqual(components(p[:, 1] > .100 * size), 4, "four long fingers must separate above the webs")
-            self.assertGreater(p[:, 0].max(), .059 * size, "thumb silhouette is missing")
-            tips = [p[np.abs(p[:, 0] / size - x) < .004, 1].max()
-                    for x, _length, _width in geometry.HAND_DIGITS]
+            # Thumb opposes the palm lower than the four unequal finger tips. Check
+            # its reach relative to the narrower metacarpus, not a world-space width.
+            cut = geometry.TEACHER_HAND if teacher_hand else geometry.STUDENT_HAND
+            size = cut.scale
+            self.assertEqual(components(p[:, 1] > .100 * size), 4, "four distinct fingers above the webs")
+            x = p[:, 0] / (size * cut.width)
+            thumb = x > .043
+            self.assertEqual(components(thumb), 1, "thumb silhouette is missing or disconnected")
+            self.assertGreater(x[thumb].max(), .057)
+            self.assertLess(p[thumb, 1].max(), .090 * size)
+            tips = [p[np.abs(x - (x0 + (.0015 if teacher_hand else .0032) * (1.5 - i))) < .004, 1].max()
+                    for i, (x0, _length, _width) in enumerate(cut.digits)]
             self.assertEqual(len(set(np.round(tips, 4))), 4)
             self.assertGreater(tips[2], tips[3])
             self.assertLess(tips[0], tips[1])
+            self.assertLess(len(t), 2400, "the shallow pads do not need revision 1's 4600 triangles")
+
+    def test_student_relaxes_its_fingers_more_than_the_teacher(self) -> None:
+        adult, student_hand = (geometry.canonical_hand(flag).positions for flag in [True, False])
+        # Compare actual 3-D finger pads in the same canonical coordinate system.
+        def tip_advance(p):
+            return p[p[:, 1] > .112, 2].max() - np.median(p[p[:, 1] < .025, 2])
+        self.assertGreater(tip_advance(student_hand), tip_advance(adult) + .008)
+        self.assertLess(student_hand[:, 1].max(), adult[:, 1].max() - .014)
+
 
     def test_exported_hands_really_contain_the_new_digits(self) -> None:
         for teacher_hand, (document, binary, surfaces) in zip([False, True], self.outputs):
@@ -212,20 +236,81 @@ class RefinedCharacterTests(unittest.TestCase):
             if m["name"] in ("M_ST_Sclera", "M_ST_Iris", "M_ST_Pupil"):
                 self.assertFalse(m.get("doubleSided", False))
 
-    def test_teacher_bob_is_locally_refined_not_replaced_by_a_generic_cap(self) -> None:
+    def test_teacher_bob_keeps_shell_back_locks_and_exact_crown(self) -> None:
         _document, _binary, original = parts(self.teacher_source)
         _document, _binary, refined = self.outputs[1]
         for material in ("M_ST_Hair", "M_ST_HairLight"):
             old = original["ST_Hair", material]
             new = refined["ST_Hair", material]
-            np.testing.assert_array_equal(old["triangles"], new["triangles"])
-            self.assertGreater(np.linalg.norm(old["POSITION"] - new["POSITION"], axis=1).max(), .001)
-            self.assertLess(np.linalg.norm(old["POSITION"] - new["POSITION"], axis=1).max(), .0041)
-            np.testing.assert_array_equal(old["JOINTS_0"], new["JOINTS_0"])
+            _geometry, kept = geometry.teacher_bob(old["POSITION"], old["triangles"])
+            # Only disconnected forehead tufts may leave the source bob. Every other
+            # original face stays, in order, even after compacting unused indices.
+            remapped = kept[new["triangles"]]
+            before = {tuple(triangle) for triangle in old["triangles"]}
+            retained = {tuple(triangle) for triangle in remapped}
+            self.assertTrue(retained < before)
+            discarded = old["POSITION"][np.asarray(sorted(before - retained))]
+            self.assertGreater(discarded[:, :, 1].min(), 1.53)
+            self.assertLess(discarded[:, :, 2].max(), -.046)
+            self.assertEqual(len(before - retained), 520 if material == "M_ST_Hair" else 208)
+            displacement = np.linalg.norm(old["POSITION"][kept] - new["POSITION"], axis=1)
+            self.assertGreater(displacement.max(), .001)
+            self.assertLess(displacement.max(), .013)
+            np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
+            top = old["POSITION"][kept, 1] > 1.632
+            np.testing.assert_array_equal(old["POSITION"][kept[top]], new["POSITION"][top])
+
+    def test_iris_pupil_and_glint_lie_on_the_cut_sclera(self) -> None:
+        doc, _binary, surfaces = self.outputs[0]
+        names = {n["name"]: doc["meshes"][n["mesh"]]["name"] for n in doc["nodes"] if "mesh" in n}
+        for side, suffix in [(-1, "L"), (1, "R")]:
+            cut = geometry.student_eye(side)
+            for role, offset in [("Iris", .00026), ("Pupil", .00052), ("Glint", .00078)]:
+                material = "Eye_Glint" if role == "Glint" else role
+                p = surfaces[names[f"Eye_{role}_{suffix}"], f"WIS_Protagonist_{material}"]
+                x, y, z = p["POSITION"].T.astype(np.float64)
+                self.assertTrue(np.all(cut.level(x, y) < .977))
+                np.testing.assert_allclose(z - cut.surface(x, y), offset, atol=2e-7)
+                self.assertTrue((p["NORMAL"][:, 2] > 0).all())
+
+    def test_student_uses_one_elbow_field_across_each_overlap(self) -> None:
+        d, binary, surfaces = self.outputs[0]
+        binds = teacher.read_accessor(d, binary, d["skins"][0]["inverseBindMatrices"])
+        binds = binds.reshape(-1, 4, 4).transpose(0, 2, 1)
+        for suffix, upper, lower in [("L", 4, 5), ("R", 7, 8)]:
+            for band in ("Upper", "Lower"):
+                q = surfaces[f"Cardigan_{band}Sleeve_{suffix}_Mesh", "WIS_Protagonist_Cardigan"]
+                local = np.c_[q["POSITION"], np.ones(len(q["POSITION"]))] @ binds[lower].T
+                d_to_elbow = local[:, 1]
+                np.testing.assert_array_equal(q["JOINTS_0"][:, :2], [[upper, lower]] * len(local))
+                s = np.clip((d_to_elbow + .031) / .073, 0, 1)
+                np.testing.assert_allclose(q["WEIGHTS_0"][:, 1], s * s * (3 - 2 * s), atol=1 / 255)
+                shared = q["WEIGHTS_0"][:, 1]
+                self.assertGreater(np.count_nonzero((shared > 0) & (shared < 1)), 50)
+
+    def test_tailoring_replaces_rings_with_attached_layers(self) -> None:
+        _doc, _binary, surfaces = self.outputs[1]
+        knit = surfaces["ST_Cardigan", "M_ST_Cardigan"]
+        blouse = surfaces["ST_Blouse", "M_ST_Blouse"]
+        self.assertLess(float(knit["POSITION"][:, 1].max()), 1.362)
+        for side in [-1, 1]:
+            part = geometry.teacher_collar(side)
+            y = part.positions[:, 1]
+            self.assertLess(y.min(), 1.328)
+            self.assertGreater(y.max(), 1.371)
+            self.assertTrue(np.all(side * part.positions[:, 0] > 0), "collar leaves must not meet across the neck")
+        leaves = geometry.join(geometry.teacher_collar(-1), geometry.teacher_collar(1))
+        np.testing.assert_allclose(blouse["POSITION"][-len(leaves.positions):], leaves.positions, atol=8e-8)
+        joint = blouse["JOINTS_0"][-len(leaves.positions):]
+        self.assertTrue(np.all(joint[:, 0] == 1) and np.all(joint[:, 1] == 2))
+        self.assertTrue(np.any(blouse["WEIGHTS_0"][-len(leaves.positions):, 1] > .5))
 
     def test_runtime_models_stay_within_the_existing_hard_budget(self) -> None:
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
+        for (doc, _binary, surfaces), limit in zip(self.outputs, [64604, 62340]):
+            self.assertEqual(doc["asset"]["extras"]["geometry_revision"], 2)
+            self.assertLess(sum(len(part["triangles"]) for part in surfaces.values()), limit)
 
     def test_existing_scale_and_sole_contracts_are_preserved(self) -> None:
         for source, (_document, _binary, surfaces) in zip(

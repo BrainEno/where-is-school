@@ -156,7 +156,12 @@ record['capture_diagnostics'] = {
     } for variant, text in logs.items()
 }
 record['rendered_sheets'] = {}
-share = 184000 // len(frames)
+# GitHub counts each 4000-character chunk separately. Rounding only the aggregate
+# byte total down loses the last (often seated) panel. Keep the full PNG in the
+# artifact; cap each annotation preview by a whole number of chunks instead.
+share = (46 // len(frames)) * 4000
+if not share:
+    raise SystemExit('too many geometry panels for the comparison preview budget')
 for frame in sorted(frames):
     left = folder / (frame + '__baseline.png')
     right = left.with_name(left.name.replace('__baseline.png', '__after.png'))
@@ -174,11 +179,17 @@ for frame in sorted(frames):
     output = folder / (name + '.png')
     sheet.save(output)
     record['rendered_sheets'][output.name] = hashlib.sha256(output.read_bytes()).hexdigest()
-    for quality in (80, 72, 64, 56, 48, 40):
-        buffer = io.BytesIO(); sheet.save(buffer, 'JPEG', quality=quality)
-        encoded = base64.b64encode(buffer.getvalue()).decode('ascii')
+    preview = sheet
+    while True:
+        for quality in (80, 72, 64, 56, 48, 40):
+            buffer = io.BytesIO()
+            preview.save(buffer, 'JPEG', quality=quality, optimize=True)
+            encoded = base64.b64encode(buffer.getvalue()).decode('ascii')
+            if len(encoded) <= share:
+                break
         if len(encoded) <= share:
             break
+        preview = preview.resize(tuple(max(1, int(v * .86)) for v in preview.size), Image.Resampling.LANCZOS)
     print(f'ARTSHEET: {name}.jpg {encoded}')
 record['status'] = 'complete; static rendered comparisons, not motion or owner signoff'
 manifest_path.write_text(json.dumps(record, indent=2) + '\n')

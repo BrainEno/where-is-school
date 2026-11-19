@@ -544,25 +544,33 @@ def refined_teacher(look: dict) -> dict:
     for name in ("m_st_sclera", "m_st_iris", "m_st_pupil"):
         parts[name].pop("two_sided", None)
     parts["m_st_skin"].update(
-        pigment_blend=0.82, pigment_scale=28.0, pigment_mix=0.28, pigment_value=0.055,
-        edge_break=0.10, edge_softness=0.14, patch_feather=0.9,
-        patch_strength=0.24, patch2_strength=0.18,
+        pigment_blend=0.82, pigment_scale=23.0, pigment_mix=0.29, pigment_value=0.061,
+        edge_break=0.095, edge_softness=0.15, patch_feather=0.92,
+        patch_strength=0.24, patch2_strength=0.23,
     )
+    # Value steps on the compressed eyelid and lip are deliberately closer to skin.
+    parts["m_st_sclera"].update(albedo="#C7B9A8", shadow_fill=0.56)
+    parts["m_st_iris"].update(albedo="#543F31")
+    parts["m_st_brow"].update(albedo="#4A3A37")
+    parts["m_st_lash"].update(albedo="#3E3032")
+    parts["m_st_lip"].update(albedo="#AB7F75", shadow_fill=0.54)
     for name in ("m_st_hair", "m_st_hairlight"):
         part = parts[name]
         part.update(
-            pigment_blend=0.65, pigment_value=0.16, pigment_scale=20.0,
-            mark_strength=0.12, mark_coverage=0.08, mark_contour=0.1,
-            detail_origin=(0.0, 1.60, 0.01),
+            pigment_blend=0.69, pigment_value=0.15, pigment_scale=14.0,
+            mark_strength=0.16, mark_coverage=0.08, mark_contour=0.085,
+            detail_origin=(-0.019, 1.61, 0.008),
         )
-        surface_work(part, 3, 160.0, "#665249", 0.42)
+        surface_work(part, 3, 128.0, "#685449", 0.31)
+    parts["m_st_hairlight"].update(albedo="#322720", outline=False)
     cardigan = parts["m_st_cardigan"]
     cardigan.update(
-        pigment_blend=0.6, pigment_value=0.10, pigment_mix=0.34, pigment_scale=10.0,
-        mark_strength=0.16, mark_coverage=0.12, mark_contour=0.12,
+        albedo="#838E78", pigment_a="#819276", pigment_b="#777B78", shadow_fill=0.44,
+        pigment_blend=0.64, pigment_value=0.11, pigment_mix=0.39, pigment_scale=8.0,
+        mark_strength=0.17, mark_coverage=0.12, mark_contour=0.12,
     )
-    surface_work(cardigan, 1, 160.0, "#A7AD94", 0.24)
-    parts["m_st_blouse"].update(pigment_blend=0.7, pigment_value=0.04)
+    surface_work(cardigan, 1, 151.0, "#A8AC8F", 0.24)
+    parts["m_st_blouse"].update(albedo="#DAD0B7", pigment_blend=0.7, pigment_value=0.04, outline=False)
     surface_work(parts["m_st_blouse"], 2, 180.0, "#F4E7D1", 0.16)
     trousers = parts["m_st_trousers"]
     trousers.update(pigment_blend=0.5, pigment_value=0.10, mark_strength=0.10)
@@ -584,9 +592,13 @@ def refined_student(look: dict) -> dict:
                 pigment_blend=0.8, pigment_value=0.06, pigment_scale=24.0,
                 edge_break=0.10, edge_softness=0.08, half_tone=0.6,
             )
-    parts["wis_protagonist_skin_light"]["albedo"] = "#CFAA8E"
-    parts["wis_protagonist_skin_shadow"]["albedo"] = "#947568"
+    parts["wis_protagonist_skin_light"]["albedo"] = "#C69C83"
+    parts["wis_protagonist_skin_shadow"]["albedo"] = "#987367"
     parts["wis_protagonist_undereye"]["albedo"] = "#AB8E82"
+    parts["wis_protagonist_eye_offwhite"].update(albedo="#BFB29D", shadow_fill=0.52, half_tone=0.62)
+    parts["wis_protagonist_iris"].update(albedo="#574233", shadow_fill=0.51)
+    parts["wis_protagonist_pupil"].update(albedo="#1D171B")
+    parts["wis_protagonist_eye_glint"].update(albedo="#D7C9AF", shadow_fill=0.66)
     parts["head_main_mesh/wis_protagonist_skin"].update(
         patch_center=(0.043, 1.564, 0.109), patch_radius=(0.027, 0.008, 0.023),
         patch_color="#8F7984", patch_strength=0.16,
@@ -596,18 +608,21 @@ def refined_student(look: dict) -> dict:
     for name in ("wis_protagonist_hair", "wis_protagonist_hair_warm"):
         part = parts[name]
         part.update(
-            pigment_blend=0.6, pigment_value=0.16, mark_strength=0.12,
-            detail_origin=(0.0, 1.64, 0.04),
+            pigment_blend=0.66, pigment_value=0.14, mark_strength=0.14,
+            detail_origin=(-0.012, 1.646, 0.044),
         )
-        surface_work(part, 3, 145.0, "#5C4E50", 0.36)
+        surface_work(part, 3, 120.0, "#554854", 0.29)
+    parts["wis_protagonist_hair_warm"]["albedo"] = "#392A2D"
     for name in ("wis_protagonist_cardigan", "wis_protagonist_cardigan_light", "wis_protagonist_cardigan_shadow"):
         part = parts[name]
         part.update(pigment_blend=0.6, pigment_value=0.11, pigment_scale=10.0)
         surface_work(part, 1, 150.0, "#A79A98", 0.22)
     parts["wis_protagonist_cardigan"].update(
-        pigment_mix=0.35, mark_strength=0.18, mark_contour=0.45, mark_coverage=0.025,
+        albedo="#705565", pigment_a="#60506A", pigment_b="#7B5A58", shadow_fill=0.49,
+        pigment_mix=0.38, mark_strength=0.18, mark_contour=0.41, mark_coverage=0.033,
     )
-    parts["wis_protagonist_cardigan_shadow"]["albedo"] = "#4C3D50"
+    parts["wis_protagonist_cardigan_light"].update(albedo="#806775", shadow_fill=0.47)
+    parts["wis_protagonist_cardigan_shadow"]["albedo"] = "#584251"
     for name in ("wis_protagonist_shirt", "wis_protagonist_shirt_shadow"):
         parts[name].update(pigment_blend=0.7, pigment_value=0.04)
         surface_work(parts[name], 2, 190.0, "#ECE0CC", 0.18)
