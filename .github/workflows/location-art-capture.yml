@@ -79,6 +79,7 @@ jobs:
           - {location: plan_room, side: after}
           - {location: projection_room, side: after}
           - {location: computer_room, side: after}
+          - {location: computer_room, side: forward-plus}
           - {location: vacant_office, side: after}
           - {location: principal_office, side: after}
           - {location: restroom_02, side: after}
@@ -118,7 +119,7 @@ jobs:
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
           grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
 
-      - name: Install software Vulkan for the two Forward+ room checks
+      - name: Install software Vulkan for the Forward+ room checks
         if: matrix.side == 'forward-plus'
         run: |
           sudo apt-get update -qq
@@ -182,7 +183,8 @@ jobs:
               grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             tail -n 40 "${RUNNER_TEMP}/capture.log"
-            grep -E '^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)' "${RUNNER_TEMP}/capture.log" | head -n 4 | while read -r issue; do
+            awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:|res:\/\/data\/)/ {print; if (++count == 6) exit}' \
+              "${RUNNER_TEMP}/capture.log" | while read -r issue; do
               echo "::error title=location capture diagnostic::$issue"
             done
             echo "::error title=location capture::$LOCATION/$SIDE wrote ${#frames[@]} frames, ${#views[@]}/$expect detail frames, exit $code"
