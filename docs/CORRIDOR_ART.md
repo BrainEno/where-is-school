@@ -27,8 +27,9 @@ The two openings in bay 101 are the outside of `classroom/WallEast`, not a mirro
 The grey front door near the blackboard is at classroom-local z −3.55 / hall z −5.10;
 the white rear door is at classroom-local z +3.55 / hall z +2.00. Both use the same
 respective packed door variant across the wall, including the setback, teal frame,
-painted vision light and steel hardware. The corridor shows the hinge side; both handles
-stay on the same latch edge. The full wall still separates the loaded scenes.
+painted vision light and steel hardware. The hinges are on the classroom side (an
+inward swing); the corridor shows the reverse fittings on the same latch edge. The
+full wall still separates the loaded scenes, and the transition does not animate the leaf.
 
 `FromClassroom` and `back_to_classroom` are at the front threshold; `FromCorridor` in the
 classroom lands at the reverse face of that same door. Arrivals face into the walkable

@@ -210,7 +210,8 @@ func _measure_biology_doors(location: LocationRoot, wall: Node3D, inside: bool) 
 	var foot := wall.global_position
 	foot.y = location.global_position.y
 	var to_wall := Transform3D(location.global_basis, foot).affine_inverse()
-	var face := "Reverse" if inside else "Model"
+	var face := "Model" if inside else "Reverse"
+	var walk_side := Vector3.LEFT if inside else Vector3.RIGHT
 	var measured := {}
 	for door_name in ["FrontDoor", "RearDoor"]:
 		var door := wall.get_node_or_null(NodePath(door_name)) as ClassroomDoorDressing
@@ -228,7 +229,7 @@ func _measure_biology_doors(location: LocationRoot, wall: Node3D, inside: bool) 
 			parts[mesh.name] = mesh.material_override
 			if mesh.name == &"Door_handle_rosette":
 				var latch := door.to_local(mesh.global_position)
-				_check.expect(latch.x > 0.3 and (latch.z > 0.0) == inside,
+				_check.expect(latch.x > 0.3 and (mesh.global_position - door.global_position).dot(walk_side) > 0.03,
 					"%s/%s has the handle on the wrong edge or face." % [location.name, door_name])
 		measured[door_name] = {"pose": to_wall * door.global_transform,
 			"prefab": door.scene_file_path, "parts": parts}

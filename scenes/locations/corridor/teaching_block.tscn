@@ -1168,8 +1168,6 @@ cast_shadow = 0
 
 [node name="FrontDoor" parent="LowerFloor/LowerWest1" instance=ExtResource("bio_door")]
 position = Vector3(3.55, 0, -0.04)
-dress_reverse = false
-rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FrontDoorTransom" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.55, 2.57, 0.104)
@@ -1203,8 +1201,6 @@ cast_shadow = 0
 
 [node name="RearDoor" parent="LowerFloor/LowerWest1" instance=ExtResource("bio_rear_door")]
 position = Vector3(-3.55, 0, -0.04)
-dress_reverse = false
-rotation_degrees = Vector3(0, 180, 0)
 
 [node name="RearDoorTransom" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(-3.55, 2.57, 0.104)

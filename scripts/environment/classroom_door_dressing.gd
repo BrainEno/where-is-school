@@ -3,7 +3,7 @@ extends Node3D
 ## Both sides of the biology classroom's two doors use the owner's
 ## `classroom_door_assembly.glb` and the same classroom materials.
 ##
-## The corridor shows the imported -Z face with its hinge barrels. The classroom
+## The classroom shows the imported -Z face with its hinge barrels. The corridor
 ## shows the +Z face with matching fittings on the same latch edge. The painted
 ## glass is opaque; the wall and interactables own collision and passage.
 

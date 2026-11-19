@@ -225,9 +225,10 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     facade_sections(b, p, width, openings)
     for i, (which, x) in enumerate(zip(("FrontDoor", "RearDoor"), door_x)):
         if biology:
-            # Same setback, handedness and packed variant as the indoor door.
+            # Bay-local +Z is toward the hall, as is the fitted door's +Z in
+            # the classroom. Do not turn the assembly around to face the camera.
             scene = "bio_rear_door" if i else "bio_door"
-            b.instance(which, p, scene, (x, 0, -0.04), (0, 180, 0), dress_reverse="false")
+            b.instance(which, p, scene, (x, 0, -0.04))
         else:
             plain_door(b, p, which, x, "room_blue" if not i else "room_pale")
         glazing(b, p, which + "Transom", x, 2.57, 0.82, 0.32, "transom")
