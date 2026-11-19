@@ -152,6 +152,12 @@ for the free-period milestone's decisions, and
 [docs/IMPLEMENTATION_NOTES_OPENING.md](docs/IMPLEMENTATION_NOTES_OPENING.md) for
 controls, architecture, and the older known limitations.
 
+Names in this repository do not always match: the walkway is `corridor`, the schoolyard is
+`playground`, and the `Save` autoload's script is `save_manager.gd`.
+[docs/GLOSSARY.md](docs/GLOSSARY.md) maps every player-facing name to the id or file the
+code uses, and defines the words the content files are written in (`beat`, `Source`,
+`flag`, `entry_id`, `route`, `passive`).
+
 ## Technical baseline
 
 - **Engine:** Godot 4.7.2 Stable (standard build).
