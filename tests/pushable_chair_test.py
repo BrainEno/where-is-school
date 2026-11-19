@@ -24,6 +24,14 @@ import re
 import sys
 from pathlib import Path
 
+## The scripts this change added or rewrote, relative to the repository root.
+SCRIPTS = (
+    "scripts/environment/pushable_chair.gd",
+    "scripts/actors/character_arm_reach.gd",
+    "scripts/interaction/seated_chair_interactable.gd",
+    "scenes/locations/classroom/classroom_chair_control.gd",
+)
+
 ROOT = Path(__file__).resolve().parent.parent
 CHAIR_SCRIPT = ROOT / "scripts/environment/pushable_chair.gd"
 DESK_SCENE = ROOT / "scenes/environment/props/classroom_desk.tscn"
@@ -175,6 +183,28 @@ def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
     check(occluder & 4 == 0, f"the interaction rays ({occluder}) must not include layer 3")
 
 
+def test_the_new_scripts_do_not_shadow_built_in_properties() -> None:
+    """`var name := ...` is a parse error, and no static gate in this repository says so.
+
+    `gdparse` checks grammar, not the class hierarchy, so a local called `name` parses fine
+    and then the engine refuses to load the script - which is exactly the shape of failure
+    that made the capture jobs go red while every Python gate stayed green. `name` is the one
+    built-in this codebase has actually tripped on; the check is scoped to it on purpose
+    rather than to a guessed list of reserved words.
+    """
+    for relative in SCRIPTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for number, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if re.match(r"(var|const)\s+name\s*[:=]", stripped):
+                raise AssertionError(
+                    f"{relative}:{number}: a local called `name` is `Node.name` and will not "
+                    f"parse in the engine: {stripped}"
+                )
+
+
 def test_no_sub_resource_lost_its_properties() -> None:
     """Every `[sub_resource]` header must be followed by attributes, not another header.
 
@@ -265,6 +295,7 @@ def main() -> int:
     test_the_room_can_find_it()
     test_the_chair_is_solid_only_when_it_is_empty()
     test_the_collision_is_on_a_layer_that_does_not_carve_the_room()
+    test_the_new_scripts_do_not_shadow_built_in_properties()
     test_no_sub_resource_lost_its_properties()
     test_the_room_has_a_sit_interaction()
     test_the_hand_does_the_pushing()
