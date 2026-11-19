@@ -58,12 +58,12 @@
     "prompt": "Look at the container",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A giant blue metal container set on two concrete pads, no windows, one door with a bar across it. The paint is a weathered blue, older than the yard. On the corrugated roof, a faint depression marks where you landed.",
-    "repeat_text": "The giant blue container, the locked bar, and the mark of your fall on the roof.",
+    "text": "A blue container, its door ajar, resting between the school back wall and the yard.",
+    "repeat_text": "The blue container, where you landed.",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "A giant blue equipment container sits at the yard's edge, its roof dented where you landed."
+      "text": "A blue container rests at the edge of the schoolyard."
     }
   },
   "pg_tyres": {

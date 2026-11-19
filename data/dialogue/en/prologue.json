@@ -1069,13 +1069,13 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "A hollow boom shudders beneath you. You land on a giant blue container. Above is sky, with no window you could have fallen from.",
+          "text": "A loud metallic clang sounds beneath you. You land on the blue container. Above is sky, with no window above.",
           "next": "cl_3"
         },
         {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "You push yourself up from the metal. From atop the container you see the court, a climbing frame, a bench, and a shed. The yard.",
+          "text": "You stand up. Looking down from the container, you see the court, a climbing frame, a bench, and a shed. The yard.",
           "effects": [
             {
               "type": "set_flag",
@@ -1091,7 +1091,7 @@
               "entry_id": "fell_into_playground",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You fell from the second-floor biology classroom window onto the roof of a giant blue container in the schoolyard, unharmed."
+              "text": "You fell from the second-floor biology classroom window onto the blue container in the yard, unharmed."
             }
           ],
           "next": null
