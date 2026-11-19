@@ -444,12 +444,13 @@ func _walk(destination: Vector3, label: String) -> bool:
 
 
 func _arrive(destination: Vector3, label: String) -> bool:
+	var route := _player.get_path_legs()
 	var arrived := await Harness.wait_until(func() -> bool:
 		return not _player.is_path_active() and _player.is_on_floor(), 28.0)
 	_player.cancel_path()
 	print("corridor art: %s -> %s" % [label, _player.global_position])
 	return _check.expect(arrived and _player.global_position.distance_to(destination) < 0.8,
-		"%s: stayed at %s instead of walking to %s." % [label, _player.global_position, destination])
+		"%s: stopped at %s instead of walking to %s via %s." % [label, _player.global_position, destination, str(route)])
 
 
 func _climb_with_keys() -> bool:

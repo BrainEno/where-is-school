@@ -326,12 +326,19 @@ def glass_run(b, parent, name, west, axis, y, low, high, gap=()):
                 b.box("EndPost", w, (width/2-0.02, 1.95, 0), (0.045, 1.94, 0.16), "gallery_frame")
 
 
-def slab(b, parent, name, x_span, z_span, y, surface_mat=None, rotate=False):
+def slab(b, parent, name, x_span, z_span, y, surface_mat=None, rotate=False, *, through_z=None):
     x0, x1 = x_span
     z0, z1 = z_span
     w, d = x1-x0, z1-z0
     p = b.shell(name, parent, ((x0+x1)/2, y, (z0+z1)/2))
-    b.shape("Solid", p, (0, -WALK_SURFACE/2, 0), (w, WALK_SURFACE, d))
+    # A continuous floor can carry more than one paint/mesh section without a
+    # physics seam between them. Extend only its collider, not this section's tile.
+    solid_end = z1 if through_z is None else through_z
+    b.shape("Solid", p, (0, -WALK_SURFACE/2, (solid_end-z1)/2), (w, WALK_SURFACE, solid_end-z0))
+    slab_dressing(b, p, w, d, surface_mat, rotate)
+
+
+def slab_dressing(b, p, w, d, surface_mat, rotate=False):
     b.box("Slab", p, (0, -0.140, 0), (w, 0.27, d), "upper_concrete")
     if surface_mat:
         # Use #243's small ruled tile; its physical four-metre repeat follows the turn.
@@ -470,7 +477,8 @@ def rear_stair_and_ground_wing(b):
            junction_z[0]-UPPER_JOIN_Z, up_y, high_track[1]-high_track[0], 10, "arch_chalk",
            panel="iron_red", cap="deep_plum", tread="landing_stone")
     upper_link = (UPPER_Z[1], UPPER_JOIN_Z)
-    slab(b, s, "UpperLink", UPPER_X, upper_link, RISE, "folded_tile")
+    b.node("UpperLink", s, position=vec3((sum(UPPER_X)/2, RISE, sum(upper_link)/2)))
+    slab_dressing(b, child_path(s, "UpperLink"), UPPER_X[1]-UPPER_X[0], upper_link[1]-upper_link[0], "folded_tile")
     guard_edges(b, s, "UpperLinkRail", UPPER_X, upper_link, RISE,
                 {"North": [UPPER_X], "South": [high_track]}, "iron_red", "deep_plum")
     for i, x in enumerate((up_x[0]+0.49, up_x[1]-0.53)):
@@ -560,7 +568,7 @@ def teaching_block():
     slab(b, l, "Main", MAIN_X, MAIN_Z, 0, "lower")
     yard_gap = (YARD_X-YARD_WIDTH/2, YARD_X+YARD_WIDTH/2)
     slab(b, l, "Turn", (MAIN_X[1], EAST_END), TURN_Z, 0, "lower_turn", rotate=True)
-    slab(b, u, "Main", UPPER_X, UPPER_Z, RISE, "upper")
+    slab(b, u, "Main", UPPER_X, UPPER_Z, RISE, "upper", through_z=UPPER_JOIN_Z)
     slab(b, u, "Turn", (-9.75, 18.25), UPPER_TURN, RISE, "upper_turn", rotate=True)
     classroom_run(b, l, True, -2.2, 0, MAIN_Z, LOWER_WEST, (west_gap, REAR_JUNCTION_Z), biology=True)
     classroom_run(b, l, False, -30, 0, (-2.2, EAST_END), LOWER_NORTH, (north_gap,))

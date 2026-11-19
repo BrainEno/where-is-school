@@ -31,9 +31,8 @@ extends SceneTree
 ##    referenced read-only.
 ## 7. **The texts are true.** All nine inspection ids exist in both languages, and each of
 ##    them names something that is in the scene.
-## 8. **Still standalone.** The entrance is a door, not an exit: the scene declares one
-##    location and no destination, and it is deliberately absent from the story catalogue,
-##    so nothing in the current slice can wander into it.
+## 8. **An optional room.** Its only exit returns to 01, and the location catalogue
+##    still assigns it no arrival conversation, objective or role as the start location.
 ##
 ## It needs no main-menu state and no playtest, so it runs in CI next to the classroom slice.
 
@@ -536,10 +535,19 @@ func _check_texts() -> void:
 		var interactable := child as Interactable
 		if interactable == null:
 			continue
+		if interactable is LocationExit:
+			# The threshold has its own contract in _check_optional_link, not an inspection.
+			if interactable.inspection_id != &"":
+				_failures.append("Exit '%s' doubles as an inspection." % interactable.interact_id)
+			continue
 		anchors += 1
-		if not INTERACTABLES.has(String(interactable.interact_id)):
-			_failures.append("Unexpected interactable '%s'." % interactable.interact_id)
-		if not interactable.global_position.is_equal_approx(INTERACTABLES[String(interactable.interact_id)]):
+		var id := String(interactable.interact_id)
+		if not INTERACTABLES.has(id):
+			_failures.append("Unexpected interactable '%s'." % id)
+			continue
+		if interactable.inspection_id != interactable.interact_id:
+			_failures.append("'%s' does not read its own inspection." % id)
+		if not interactable.global_position.is_equal_approx(INTERACTABLES[id]):
 			_failures.append(
 				"'%s' stands at %s, not %s."
 				% [
