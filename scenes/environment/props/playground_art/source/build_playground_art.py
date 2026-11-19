@@ -246,6 +246,10 @@ REPOINT: list[tuple[str, str]] = [
     (r"BoardSheet", "notice"),
     (r"FramePost_\d/MeshInstance3D|FrameRung_\d|FrameTopBar", "frame_yellow"),
     (r"TyreStack_\d|TyreLoose", "tyre"),
+    # Low-detail version emitted only for build_teaching_block's distant view.
+    (r"ContainerBody/MeshInstance3D", "container"),
+    (r"ContainerDoorLine", "shutter"),
+    (r"ContainerBar", "metal_ink"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
     (
@@ -584,13 +588,13 @@ def build_container() -> tuple[str, set[str]]:
     ladder_x, rung_z, trace_z = 1.39, 1.48, 1.76
     b.node("Ladder", ".")
     for key, side in (("Left", -1), ("Right", 1)):
-        rail = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=3.24, radial_segments=10)
+        rail = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=3.52, radial_segments=10)
         x = ladder_x + side * 0.38
-        b.flat("SteelRail" + key, "Ladder", rail, "container_steel", (x, 1.66, rung_z), shadow=True)
+        b.flat("SteelRail" + key, "Ladder", rail, "container_steel", (x, 1.80, rung_z), shadow=True)
         for j, y in enumerate((0.24, 1.26, 2.39)):
             box(f"Stay{key}{j}", (0.082, 0.063, 0.32), (x, y, 1.328), "container_frame", "Ladder")
         grip = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=0.30, radial_segments=10)
-        b.flat("Grab" + key, "Ladder", grip, "container_steel", (x, 3.20, 1.355), (-90, 0, 0), shadow=True)
+        b.flat("Grab" + key, "Ladder", grip, "container_steel", (x, 3.48, 1.355), (-90, 0, 0), shadow=True)
     tf = b.mesh("CylinderMesh", top_radius=0.021, bottom_radius=0.021, height=0.76, radial_segments=10)
     b.node("Steps", "Ladder")
     b.node("RoofMark", "Ladder", "Marker3D", position=vec3((ladder_x, 2.60, 0.82)))

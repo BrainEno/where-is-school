@@ -20,6 +20,7 @@ on:
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
       - "assets/camera/shots/container_cabin.tres"
+      - "assets/camera/shots/window.tres"
       - "data/dialogue/*/prologue.json"
   workflow_dispatch:
 
@@ -42,8 +43,8 @@ jobs:
           # `--import` waits for the queue to drain; its exit code is not the verdict (the
           # project theme can load before its font is imported). The second pass is.
           godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
-          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
-          if grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log"; then
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1
+          if grep -E '^(SCRIPT ERROR:|ERROR:)|Parse Error' "${RUNNER_TEMP}/import-2.log"; then
             exit 1
           fi
 
@@ -69,8 +70,11 @@ jobs:
             done
           done
           echo "queued $(wc -l < "${queue}") annotation part(s); exit ${code}"
-          if [ "${code}" -ne 0 ]; then
-            echo "::error title=classroom anomaly capture::the capture exited ${code}"
+          if [ "${code}" -ne 0 ] || grep -qE '^(SCRIPT ERROR:|ERROR:)|Parse Error' "${log}"; then
+            grep -E '^(FAILURE:|SCRIPT ERROR:|ERROR:)|Parse Error' "${log}" | head -n 8 | while IFS= read -r line; do
+              echo "::error title=classroom anomaly capture::${line}"
+            done
+            echo "::error title=classroom anomaly capture::the capture exited ${code}; see the artifact for the full log"
             exit 1
           fi
 

@@ -152,9 +152,10 @@ geometry. Roof corrugation remains decorative above the continuous landing surfa
 
 The prologue has two ways onto the same roof (braced or injured). The **roof-side** ladder
 prompt turns the character to the rails and stages eight levels, from the top rung down to
-the yard. It is not a ground-to-roof navigation link. The scene's local rung marks and pose
-track share the same beat clock; the save point records the player's ground transform after
-the beat, not a mid-ladder pose. From the base, walk around the right-hand end to see the
+the yard. It is not a ground-to-roof navigation link. The rung marks and the pose track
+share the same beat clock; two-joint corrections keep the boots on alternating treads and
+the wrists at the rails during support. The save point records the player's ground
+transform after the beat, not a mid-ladder pose. From the base, walk around the right-hand end to see the
 interior; activating the inspection also lowers the camera to look through the doorway.
 
 Regenerate just this yard with:

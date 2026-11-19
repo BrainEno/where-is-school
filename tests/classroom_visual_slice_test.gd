@@ -539,6 +539,12 @@ func _check_collision() -> void:
 		var path := _relative(node)
 		if path.begins_with("Interactables/") or path.begins_with("Actors/"):
 			continue
+		if path == "VoidStep" and node is Area3D:
+			var trigger := node as Area3D
+			if trigger.collision_layer != 0 or trigger.collision_mask != 1 \
+				or trigger.monitorable or trigger.monitoring:
+				_failures.append("VoidStep must start inert and sense the player only, never block a ray or body.")
+			continue
 		if not SOLIDS.has(path):
 			_failures.append(
 				"'%s' collides. Classroom decoration carries no collision: it would carve the "

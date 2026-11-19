@@ -992,7 +992,8 @@ func _check_safe_drop() -> void:
 	if not stepped or not braced or _flag(StoryFlags.CURTAIN_LANDING_INJURED) \
 		or _narrative.has_entry(&"hurt_ankle_at_container") or _flag(StoryFlags.CURTAIN_EDGE_HELD):
 		_failures.append("The optional drop reused the slip/hard impact, hurt the player or kept the edge held.")
-	await _check_ladder(false)
+	if await _settle(20.0, "the optional landing and yard arrival voice"):
+		await _check_ladder(false)
 
 
 func _check_ladder(hurt: bool) -> void:
@@ -1013,7 +1014,8 @@ func _check_ladder(hurt: bool) -> void:
 		_failures.append("The drop did not end on the solid roof.")
 		return
 	if not await _walk_to(roof.global_position, 0.24):
-		_failures.append("The player could not walk across the roof to the ladder.")
+		_failures.append("The player could not walk across the roof to the ladder (%s → %s, control %s)."
+			% [_player.global_position, roof.global_position, _player.is_control_enabled()])
 		return
 	_player.face_toward(Vector3.BACK)
 	if not await Harness.wait_until(func() -> bool:
@@ -1025,6 +1027,9 @@ func _check_ladder(hurt: bool) -> void:
 	await _interact_key()
 	var clips := {}
 	var levels := {}
+	var planted := {}
+	var skeletons := CharacterAnimation.skeletons_in(_player.get_character_animator())
+	var ladder_rig: Skeleton3D = skeletons[0] if not skeletons.is_empty() else null
 	var drop := 0.0
 	var previous := _player.global_position.y
 	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 15000:
@@ -1033,6 +1038,8 @@ func _check_ladder(hurt: bool) -> void:
 		clips[clip] = true
 		if clip in ["ladder_right", "ladder_left"]:
 			levels[int(pos.y / 0.28)] = true
+			if ladder_rig != null and not planted.has(clip) and _has_ladder_support(container, ladder_rig):
+				planted[clip] = true
 			if absf(pos.x - roof.global_position.x) > 0.05 or absf(pos.z - roof.global_position.z - 0.94) > 0.07:
 				_failures.append("The player slid away from the rungs mid-descent.")
 		drop = maxf(drop, previous - pos.y)
@@ -1043,6 +1050,8 @@ func _check_ladder(hurt: bool) -> void:
 	if levels.size() < 6 or drop > 0.32 or not clips.has("ladder_mount") \
 		or not clips.has("ladder_dismount") or not clips.has("ladder_left") or not clips.has("ladder_right"):
 		_failures.append("The ladder did not move rung by rung (%s, max drop %.2f m)." % [str(clips), drop])
+	if not planted.has("ladder_left") or not planted.has("ladder_right"):
+		_failures.append("Both lowering phases must show planted boots on different rungs and both wrists by the rails.")
 	if _player.global_position.distance_to(ground.global_position) > 0.08 \
 		or _host.get_current_spawn() != &"FromSchool" or not _flag(StoryFlags.CURTAIN_DRAWN):
 		_failures.append("The descent did not end below the same container.")
@@ -1075,7 +1084,38 @@ func _check_ladder(hurt: bool) -> void:
 	await _settle(20.0, "seeing the cot")
 	if not _narrative.has_entry(&"saw_pg_container"):
 		_failures.append("Inspecting the open end did not record the cabin.")
-	_notes.append("%s ladder: %d heights; stayed in yard; cot from open door" % ["injured" if hurt else "braced", levels.size()])
+	_notes.append("%s ladder: %d heights, %d supported phases; cot from open door"
+		% ["injured" if hurt else "braced", levels.size(), planted.size()])
+
+
+func _has_ladder_support(container: Node3D, skeleton: Skeleton3D) -> bool:
+	var rungs: Array[MeshInstance3D] = []
+	for child: Node in container.get_node(^"Ladder").get_children():
+		if child.name.begins_with("Rung") and child is MeshInstance3D:
+			rungs.append(child as MeshInstance3D)
+	var levels := []
+	# The actual shoe joints (not the player origin or the ladder's route markers).
+	for side: String in ["L", "R"]:
+		var toe := skeleton.find_bone("Toe_" + side)
+		var wrist := skeleton.find_bone("Hand_" + side)
+		if mini(toe, wrist) < 0:
+			return false
+		var foot := container.to_local(skeleton.to_global(skeleton.get_bone_global_pose(toe).origin))
+		var hand := container.to_local(skeleton.to_global(skeleton.get_bone_global_pose(wrist).origin))
+		var rail := container.get_node(NodePath("Ladder/SteelRail" + ("Left" if side == "L" else "Right"))) as Node3D
+		if absf(hand.x - rail.position.x) > 0.085 or absf(hand.z - rail.position.z) > 0.135:
+			return false
+		var level := -1
+		for i in rungs.size():
+			var center := rungs[i].position
+			if absf(foot.x - center.x) < 0.34 and absf(foot.z - center.z) < 0.085 \
+				and absf(foot.y - center.y - 0.042) < 0.062:
+				level = i
+				break
+		if level < 0:
+			return false
+		levels.append(level)
+	return absi(levels[0] - levels[1]) == 1
 
 
 ## Check what Continue would read, not just the in-memory flag or an autosave signal.

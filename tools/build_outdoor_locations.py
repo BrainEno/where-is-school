@@ -686,7 +686,7 @@ def build_alley():
     return s
 
 
-def build_playground():
+def build_playground(for_courtyard_view: bool = False):
     """The open yard.
 
     Deliberately not a corridor and not a circuit: it is a rectangle you can walk
@@ -791,9 +791,12 @@ def build_playground():
         s.box(f"TyreStack_{i}", (-15.2, y, 2.6), (1.0, 0.22, 0.42), "metal", None, False)
     s.box("TyreLoose", (-14.1, 0.12, 3.5), (0.92, 0.22, 0.4), "metal", None, False)
 
-    # Hollow ISO-style container, deck and ladder are one fitted prefab. The slab
-    # keeps FromSchool's roof 2.6 m above the yard, so older checkpoints still fit.
-    s.props.append(("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0))
+    # In the distant teaching-wing view keep the same cheap three-mesh silhouette.
+    # The playable yard instances the full shell at the same footprint and roof height.
+    if for_courtyard_view:
+        s.box("ContainerBody", (12.0, 1.3, -15.5), (6.0, 2.6, 2.4), "metal", ["camera_occluder"])
+        s.box("ContainerDoorLine", (12.0, 1.3, -14.28), (5.0, 2.2, 0.06), "shutter", None, False)
+        s.box("ContainerBar", (9.4, 1.3, -14.24), (0.1, 2.2, 0.08), "metal", None, False)
     s.box("ContainerFootingA", (9.4, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
     s.box("ContainerFootingB", (14.6, 0.1, -15.5), (0.8, 0.2, 2.6), "concrete")
 
@@ -825,6 +828,9 @@ def build_playground():
         ("YardBench", "res://scenes/environment/props/playground_bench.tscn", (11.0, 0.0, 3.2), -90.0),
         ("YardBag", "res://scenes/environment/props/student_backpack.tscn", (11.03, 0.52, 3.75), -90.0),
     ]
+
+    if not for_courtyard_view:
+        s.props.append(("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0))
 
     s.interactables = [
         {"name": "HoopLook", "pos": (-8.0, 1.4, 8.8), "id": "pg_hoop_near",

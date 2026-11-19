@@ -208,7 +208,17 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		if not spawns.has(wanted):
 			_failures.append("%s lost its spawn marker %s." % [id, wanted])
 
-	var interactables := (location as LocationRoot).get_interactables()
+	var anchors := location.get_node_or_null(^"Interactables")
+	if anchors == null:
+		_failures.append("%s has no Interactables." % id)
+		return
+	var interactables := anchors.get_children()
+	# Keep the stage-pass contract on its own anchor list (e.g. the teaching wing's
+	# nine recessed windows have their own test). The yard's fitted ladder is nested.
+	if id == "playground":
+		var ladder := (location as LocationRoot).find_interactable(&"pg_container_ladder")
+		if ladder != null:
+			interactables.append(ladder)
 	_checks += 1
 	if interactables.size() != int(spec["interactables"]):
 		_failures.append(
@@ -216,7 +226,7 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		)
 	var exits: Dictionary = spec["exits"]
 	var seen := {}
-	for child: Interactable in interactables:
+	for child: Node in interactables:
 		_check_outlines(id, child)
 		var exit := child as LocationExit
 		if exit == null or exit.destination_id == &"":

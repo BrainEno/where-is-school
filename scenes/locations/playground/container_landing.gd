@@ -11,6 +11,14 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 	var physics := player.is_physics_processing()
 	player.set_physics_process(false)
 	player.face_toward(Vector3(0.55, 0.0, 1.0))
+	var forward := player.get_facing_direction()
+	var right := Vector3.UP.cross(forward)
+	var contacts := Motion.contacts(player)
+	var left_boot: Motion.Limb = contacts.get("foot.L")
+	var right_boot: Motion.Limb = contacts.get("foot.R")
+	var palm: Motion.Limb = contacts.get("hand.R")
+	var left_sole := roof - right * 0.11
+	var right_sole := roof + right * 0.14 + forward * (0.19 if hurt else 0.06)
 	var rig := player.camera_rig
 	if rig != null:
 		rig.frame_point(roof + Vector3(0.7, 0.24, 0.4), 0.0)
@@ -34,8 +42,18 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 		var rise := clampf((t - touch - (0.24 if hurt else 0.18)) / (0.62 if hurt else 0.36), 0.0, 1.0)
 		var weight := smoothstep(0.0, 1.0, hit) * (1.0 - smoothstep(0.0, 1.0, rise))
 		if player.visual != null:
-			player.visual.position = Vector3(0.06 if hurt else 0.0, -0.33 if hurt else -0.12, 0.10) \
+			player.visual.position = Vector3(-0.07 if hurt else 0.0, -0.48 if hurt else -0.13, 0.04) \
 				* weight + Vector3.UP * PlayerController.STANDING_HIP_HEIGHT
+		# Both outcomes make contact. In the hard impact the front ankle rolls;
+		# the rear sole and the nearer palm then take the weight through the pause.
+		var planted := smoothstep(touch, touch + 0.07, t) * (1.0 - smoothstep(0.83, 1.0, t))
+		if left_boot != null:
+			left_boot.plant(left_sole, forward, planted)
+		if right_boot != null:
+			right_boot.plant(right_sole, forward, planted * (0.91 if hurt else 1.0))
+		if hurt and palm != null:
+			var support := roof + right * 0.27 + forward * 0.30 + Vector3.UP * 0.08
+			palm.hold_at(support, right + Vector3.BACK * 0.28, weight)
 	)
 	Motion.reset_pose(player)
 	player.set_physics_process(physics)

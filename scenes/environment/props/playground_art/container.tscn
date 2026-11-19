@@ -159,7 +159,7 @@ radial_segments = 12
 [sub_resource type="CylinderMesh" id="CylinderMesh_art47"]
 top_radius = 0.033
 bottom_radius = 0.033
-height = 3.24
+height = 3.52
 radial_segments = 10
 
 [sub_resource type="BoxMesh" id="BoxMesh_art48"]
@@ -174,7 +174,7 @@ radial_segments = 10
 [sub_resource type="CylinderMesh" id="CylinderMesh_art50"]
 top_radius = 0.033
 bottom_radius = 0.033
-height = 3.24
+height = 3.52
 radial_segments = 10
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_art51"]
@@ -1338,7 +1338,7 @@ omni_attenuation = 1.15
 [node name="Ladder" type="Node3D" parent="."]
 
 [node name="SteelRailLeft" type="MeshInstance3D" parent="Ladder"]
-position = Vector3(1.01, 1.66, 1.48)
+position = Vector3(1.01, 1.8, 1.48)
 mesh = SubResource("CylinderMesh_art47")
 material_override = ExtResource("art_container_steel")
 
@@ -1358,13 +1358,13 @@ mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("art_container_frame")
 
 [node name="GrabLeft" type="MeshInstance3D" parent="Ladder"]
-position = Vector3(1.01, 3.2, 1.355)
+position = Vector3(1.01, 3.48, 1.355)
 rotation_degrees = Vector3(-90, 0, 0)
 mesh = SubResource("CylinderMesh_art49")
 material_override = ExtResource("art_container_steel")
 
 [node name="SteelRailRight" type="MeshInstance3D" parent="Ladder"]
-position = Vector3(1.77, 1.66, 1.48)
+position = Vector3(1.77, 1.8, 1.48)
 mesh = SubResource("CylinderMesh_art50")
 material_override = ExtResource("art_container_steel")
 
@@ -1384,7 +1384,7 @@ mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("art_container_frame")
 
 [node name="GrabRight" type="MeshInstance3D" parent="Ladder"]
-position = Vector3(1.77, 3.2, 1.355)
+position = Vector3(1.77, 3.48, 1.355)
 rotation_degrees = Vector3(-90, 0, 0)
 mesh = SubResource("CylinderMesh_art51")
 material_override = ExtResource("art_container_steel")

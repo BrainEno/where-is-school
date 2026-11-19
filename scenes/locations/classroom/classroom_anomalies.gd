@@ -26,7 +26,7 @@ const CURTAIN_STEP_PROMPT := "prompt.curtain_step"
 @onready var _approach: Marker3D = $VoidApproach
 @onready var _curtain_interactable := get_node(curtain_interactable_path) as StagedInteractable
 @onready var _closed_stop: CollisionShape3D = $"../WallWest/ClosedCurtainStop"
-@onready var _step_trigger: Area3D = $"../Interactables/VoidStep"
+@onready var _step_trigger: Area3D = $"../VoidStep"
 
 
 func _ready() -> void:
@@ -118,9 +118,13 @@ func _stage_curtain(director: Node) -> Dictionary:
 	draw_curtain()
 	await Motion.act(player, "curtain_draw", _curtain.open_seconds, Callable())
 	Motion.reset_pose(player)
+	var rear_boot: Motion.Limb = Motion.contacts(player).get("foot.R")
+	var rear_sole := mark + Vector3(0.18, 0.0, 0.12)
 	await Motion.act(player, "void_lean", 0.84, func(t: float) -> void:
 		player.global_position = reach.lerp(mark, smoothstep(0.05, 0.72, t))
 		_set_hip(player, -0.064 * sin(t * PI / 2.0), 0.13 * t)
+		if rear_boot != null:
+			rear_boot.plant(rear_sole, Vector3.LEFT, smoothstep(0.0, 0.48, t))
 	)
 	await director.play_conversation(VOID_CONVERSATION)
 	var check: Variant = state.get_flag(StoryFlags.check_record_flag(VOID_CONVERSATION, BALANCE_CHECK), null)
@@ -129,6 +133,8 @@ func _stage_curtain(director: Node) -> Dictionary:
 		await Motion.act(player, "void_recover", 0.70, func(t: float) -> void:
 			player.global_position = mark + Vector3.RIGHT * 0.36 * smoothstep(0.16, 0.9, t)
 			_set_hip(player, -0.064 * (1.0 - t), 0.13 * (1.0 - smoothstep(0.0, 0.54, t)))
+			if rear_boot != null:
+				rear_boot.plant(rear_sole, Vector3.LEFT, 1.0 - smoothstep(0.2, 0.74, t))
 		)
 		Motion.reset_pose(player)
 		if rig != null:

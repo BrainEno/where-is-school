@@ -24,6 +24,7 @@ var _dialogue: DialogueController = null
 var _sequence: OpeningSequence = null
 var _interaction: InteractionController = null
 var _state: Node = null
+var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
@@ -35,6 +36,7 @@ func _run() -> void:
 	var autoloads := Harness.ensure_state_autoloads(self)
 	_state = autoloads["game_state"]
 	Harness.clear_session_state(self)
+	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	_main = packed.instantiate()
@@ -45,13 +47,14 @@ func _run() -> void:
 	_host = _main.get_node(^"LocationHost") as LocationHost
 	_player = _main.get_node(^"Player") as PlayerController
 	_dialogue = _main.get_node(^"DialogueController") as DialogueController
+	_voices = _main.get_node(^"InnerVoiceDirector") as InnerVoiceDirector
 	_interaction = _player.get_node(^"InteractionController") as InteractionController
 	(_main.get_node(^"GameUI") as CanvasLayer).hide()
 	_player.set_wake_pose(0.0)
 	_player.set_camera_roll(0.0)
 	_sequence.allow_player_control()
-	if not _reset_classroom(true):
-		_finish(["Couldn't load the classroom for the safe route."])
+	if _host.get_current() == null or _host.get_current().location_id != &"classroom" or not _seed_balance(true):
+		_finish(["Couldn't set up the safe classroom route."])
 		return
 
 	await _stand(Vector3(-5.8, 0.0, -0.8), Vector3.LEFT)
@@ -78,7 +81,10 @@ func _run() -> void:
 		return
 	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png")
 	await _settle()
-	if not _reset_classroom(false):
+	_state.clear()
+	_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
+	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	if not _seed_balance(false) or not _host.load_location(CLASSROOM, &"FromCorridor", _player):
 		_finish(["Couldn't load the classroom for the slip route."])
 		return
 	await _stand(Vector3(-5.83, 0.0, 2.16), Vector3.LEFT)
@@ -96,7 +102,7 @@ func _run() -> void:
 	var mark := container.get_node(^"Ladder/RoofMark") as Marker3D
 	await _stand(mark.global_position, Vector3.BACK)
 	_activate(&"pg_container_ladder")
-	await _capture_pose("ladder_left", 0.5, "08-ladder.png", 1.35, 1.88)
+	await _capture_pose("ladder_left", 0.72, "08-ladder.png", 1.35, 1.88)
 	await _settle()
 	if _player.global_position.y > 0.10:
 		_finish(["The protagonist is still above the yard after using the ladder."])
@@ -110,15 +116,12 @@ func _run() -> void:
 	_finish(_failures)
 
 
-func _reset_classroom(passed: bool) -> bool:
-	_state.clear()
-	_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
-	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+func _seed_balance(passed: bool) -> bool:
 	for seed_value in 100:
 		var resolver := CheckResolver.new(seed_value)
 		if (resolver.dice_total_for("classroom_curtain_void/cv_balance_check") + 3 >= 10) == passed:
 			_dialogue.set_check_resolver(resolver)
-			return _host.load_location(CLASSROOM, &"FromCorridor", _player)
+			return true
 	return false
 
 
@@ -171,7 +174,8 @@ func _settle() -> void:
 	if not await Harness.wait_until(func() -> bool:
 		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
 			_dialogue.advance_presentation()
-		return not _dialogue.is_busy() and not _sequence.is_beat_active()
+		return not _dialogue.is_busy() and not _sequence.is_beat_active() \
+			and _voices.pending_count() == 0 and not _voices.is_firing()
 	, 20.0):
 		_failures.append("The capture waited on a busy stage.")
 

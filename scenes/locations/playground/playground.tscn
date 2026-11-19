@@ -1,4 +1,4 @@
-[gd_scene load_steps=222 format=3]
+[gd_scene load_steps=223 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="17_navigation"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_bench.tscn" id="18_prop"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/student_backpack.tscn" id="19_prop"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/container.tscn" id="20_prop"]
 [ext_resource type="Resource" path="res://assets/camera/shots/container_cabin.tres" id="shot_0"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/backboard.tres" id="art_backboard"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ball.tres" id="art_ball"]
@@ -1225,6 +1226,9 @@ rotation = Vector3(0, -1.570796, 0)
 [node name="YardBag" parent="." instance=ExtResource("19_prop")]
 position = Vector3(11.03, 0.52, 3.75)
 rotation = Vector3(0, -1.570796, 0)
+
+[node name="ContainerBody" parent="." instance=ExtResource("20_prop")]
+position = Vector3(12, 0, -15.5)
 
 [node name="PlaygroundArt" type="Node3D" parent="."]
 

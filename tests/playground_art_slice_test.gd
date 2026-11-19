@@ -105,7 +105,9 @@ const SPAWNS := {
 	"FromSchool": Vector3(12.0, 2.6, -15.5),
 }
 ## The baked navigation at base commit 359ed4a (Godot CI run 43014461771).
-const NAV_POLYGONS := 143
+## 143 with the old solid block. The shell's doorway and threshold make the cabin
+## walkable, adding nine polygons; the roof must still be isolated from the ground.
+const NAV_POLYGONS := 152
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [
@@ -655,12 +657,25 @@ func _check_navigation() -> LocationNavigation:
 	var polygons := navigation.get_polygon_count()
 	if polygons != NAV_POLYGONS:
 		_failures.append(
-			"The baked navigation has %d polygons; it had %d at the base commit, " % [polygons, NAV_POLYGONS]
-			+ "so the walkable shape changed."
+			"The yard and open cabin bake %d polygons; expected %d." % [polygons, NAV_POLYGONS]
 		)
 	var map := navigation.get_navigation_map()
 	var gate := _yard.get_node_or_null(^"SpawnPoints/FromAlley") as Node3D
 	var start := NavigationServer3D.map_get_closest_point(map, gate.global_position)
+	var container := _yard.get_node_or_null(^"ContainerBody") as Node3D
+	if container != null:
+		var roof := container.to_global(Vector3(0, 2.6, 0))
+		var roof_nav := NavigationServer3D.map_get_closest_point(map, roof)
+		# Recast's surface is quantized above the collision top. A query to a
+		# disconnected island can return a partial path ending back on the ground.
+		var to_roof := NavigationServer3D.map_get_path(map, start, roof_nav, true)
+		if roof_nav.distance_to(roof) > 0.55 \
+			or (not to_roof.is_empty() and to_roof[-1].distance_to(roof_nav) < 0.6):
+			_failures.append("The container roof must have its own walkable surface and no route from ground level.")
+		var cabin := container.to_global(Vector3(1.2, 0.22, 0.5))
+		var cabin_nav := NavigationServer3D.map_get_closest_point(map, cabin)
+		if cabin_nav.distance_to(cabin) > 0.50 or _route_gap(map, start, cabin) > 0.20:
+			_failures.append("The yard navigation cannot cross the threshold to reach the open cabin.")
 	var worst := 0.0
 	var interactables := _yard.get_node_or_null(^"Interactables")
 	for child in interactables.get_children():
@@ -681,7 +696,7 @@ func _check_navigation() -> LocationNavigation:
 		if marker != null and _route_gap(map, start, marker.global_position) > 0.5:
 			_failures.append("Spawn '%s' is cut off from the gate." % spawn_name)
 	_notes.append(
-		"nav polygons %d (base %d), worst reach margin %.2f m" % [polygons, NAV_POLYGONS, worst]
+		"nav polygons %d (expected %d), worst reach margin %.2f m" % [polygons, NAV_POLYGONS, worst]
 	)
 	return navigation
 
