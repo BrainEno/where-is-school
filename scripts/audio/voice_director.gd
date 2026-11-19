@@ -12,6 +12,12 @@ extends Node
 const BASE_VOICE_DIR := "res://assets/audio/voice"
 const FADE_OUT_SECONDS := 0.2
 
+## Where clips are looked for. Shipped dialogue has no audio at all (see
+## `docs/ASSET_PROVENANCE.md`), so this is `BASE_VOICE_DIR` in the game and a temporary
+## fixture directory in `tests/voice_director_test.gd` - the playback path stays testable
+## even though the repository ships no clips to test it with.
+@export var voice_dir: String = BASE_VOICE_DIR
+
 ## Default bus for dialogue voices: sends to Master or SFX.
 const DEFAULT_BUS := &"SFX"
 
@@ -96,24 +102,30 @@ static func resolve_clip_path(
 	locale: String,
 	conversation_id: StringName,
 	node_id: StringName,
-	inspection_id: StringName
+	inspection_id: StringName,
+	base_dir: String = BASE_VOICE_DIR
 ) -> String:
+	var root := base_dir if not base_dir.is_empty() else BASE_VOICE_DIR
 	var loc := locale if not locale.is_empty() else "zh-CN"
 	var candidates: Array[String] = []
 
 	if not inspection_id.is_empty():
 		var insp_name := String(inspection_id)
-		candidates.append("%s/%s/inspection_%s" % [BASE_VOICE_DIR, loc, insp_name])
+		candidates.append("%s/%s/inspection_%s" % [root, loc, insp_name])
 		if insp_name.begins_with("classroom_"):
 			candidates.append(
-				"%s/%s/inspection_%s" % [BASE_VOICE_DIR, loc, insp_name.trim_prefix("classroom_")]
+				"%s/%s/inspection_%s" % [root, loc, insp_name.trim_prefix("classroom_")]
 			)
 
 	if not conversation_id.is_empty() and not node_id.is_empty():
-		candidates.append("%s/%s/%s_%s" % [BASE_VOICE_DIR, loc, conversation_id, node_id])
+		candidates.append("%s/%s/%s_%s" % [root, loc, conversation_id, node_id])
 
+	# `.res` is last and is not decoration: it is how a clip that is not a source file - a
+	# synthesised or converted one - can still be a clip. `tests/voice_director_test.gd` uses
+	# it to exercise the playback path against a resource it writes itself, since the
+	# project ships no dialogue audio by design.
 	for base: String in candidates:
-		for ext: String in [".mp3", ".ogg", ".wav"]:
+		for ext: String in [".mp3", ".ogg", ".wav", ".res"]:
 			var full_path := base + ext
 			if ResourceLoader.exists(full_path):
 				return full_path
@@ -139,10 +151,10 @@ func play_line_voice(line: Dictionary) -> bool:
 	if locale.is_empty():
 		locale = L10n.current if not L10n.current.is_empty() else "zh-CN"
 
-	var clip_path := resolve_clip_path(locale, conv_id, node_id, insp_id)
+	var clip_path := resolve_clip_path(locale, conv_id, node_id, insp_id, voice_dir)
 	if clip_path.is_empty() and locale != "zh-CN":
 		# Fall back to primary zh-CN performance if line has no localized dub
-		clip_path = resolve_clip_path("zh-CN", conv_id, node_id, insp_id)
+		clip_path = resolve_clip_path("zh-CN", conv_id, node_id, insp_id, voice_dir)
 
 	if clip_path.is_empty():
 		_active_clip_path = ""

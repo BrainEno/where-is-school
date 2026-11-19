@@ -20,52 +20,31 @@ func _run() -> void:
 
 
 func _test_clip_path_resolution() -> void:
-	# 1. Inspection voice clip resolution (schoolbag)
-	var bag_clip := VoiceDirector.resolve_clip_path(
-		"zh-CN", &"", &"", &"classroom_schoolbag"
-	)
-	checks.expect(
-		not bag_clip.is_empty(),
-		"VoiceDirector resolves inspection voice clip for classroom_schoolbag."
-	)
-	checks.expect(
-		ResourceLoader.exists(bag_clip),
-		"Resolved inspection clip exists on disk: %s" % bag_clip
-	)
-
-	# 2. Q conversation node resolution (q_wake / q_1)
-	var q_clip := VoiceDirector.resolve_clip_path(
-		"zh-CN", &"q_wake", &"q_1", &""
-	)
-	checks.expect(
-		not q_clip.is_empty(),
-		"VoiceDirector resolves Q conversation voice clip for q_wake/q_1."
-	)
-	checks.expect(
-		ResourceLoader.exists(q_clip),
-		"Resolved Q conversation clip exists on disk: %s" % q_clip
-	)
-
-	# 3. N conversation node resolution (n_class / n_1)
-	var n_clip := VoiceDirector.resolve_clip_path(
-		"zh-CN", &"n_class", &"n_1", &""
-	)
-	checks.expect(
-		not n_clip.is_empty(),
-		"VoiceDirector resolves N conversation voice clip for n_class/n_1."
-	)
-	checks.expect(
-		ResourceLoader.exists(n_clip),
-		"Resolved N conversation clip exists on disk: %s" % n_clip
-	)
-
-	# 4. Unvoiced line resolution
+	# The naming rule, not the shipped files: an unvoiced line must resolve to nothing, and a
+	# line with no clip must not invent one. What used to be asserted here - that four specific
+	# files resolve - pinned the project to clips that said nothing (0.05 to 0.28 seconds
+	# against two-second lines). Those are gone, and `voice_coverage_test.py` is what keeps a
+	# clip honest now: it measures every shipped clip against the line it plays for.
 	var missing_clip := VoiceDirector.resolve_clip_path(
 		"zh-CN", &"unknown_conv", &"unknown_node", &""
 	)
 	checks.expect(
 		missing_clip.is_empty(),
 		"Unvoiced conversation returns empty clip path."
+	)
+	checks.expect(
+		VoiceDirector.resolve_clip_path("zh-CN", &"", &"", &"").is_empty(),
+		"A line with no conversation and no inspection resolves to nothing."
+	)
+	# A clip that is named for a conversation node is looked for at
+	# `<conversation_id>_<node_id>`, so a name that only *looks* like one must not match.
+	checks.expect(
+		VoiceDirector.resolve_clip_path("zh-CN", &"q_wake", &"q_1", &"")
+		== ""
+		or ResourceLoader.exists(
+			VoiceDirector.resolve_clip_path("zh-CN", &"q_wake", &"q_1", &"")
+		),
+		"Whatever a node resolves to, it exists on disk."
 	)
 
 
@@ -98,7 +77,19 @@ func _test_speaker_acoustic_profiles() -> void:
 
 
 func _test_playback_lifecycle() -> void:
+	# The playback path is exercised against a clip this test writes itself, in a directory it
+	# owns. Nothing is asserted about shipped audio: the project ships none, by decision, and a
+	# test that needed one to exist would be a test that argues with the decision.
+	var scratch := "user://voice_director_test_clips"
+	# Start from nothing: a `.res` left behind by an earlier run would let the assertions pass
+	# against a file this run never wrote, which is the one way a fixture test lies.
+	_remove_fixture(scratch)
+	_write_fixture_clip(scratch + "/zh-CN/q_wake_q_1.res")
+
 	var director := VoiceDirector.new()
+	# Set before it enters the tree, so the player and the fixture directory are both in place
+	# by the time `_ready()` runs.
+	director.voice_dir = scratch
 	root.add_child(director)
 
 	var voiced_line: Dictionary = {
@@ -111,13 +102,18 @@ func _test_playback_lifecycle() -> void:
 	}
 
 	var started := director.play_line_voice(voiced_line)
-	checks.expect(started, "play_line_voice returns true for existing clip.")
+	checks.expect(started, "play_line_voice returns true for a clip that exists.")
 	checks.expect(
 		not director.get_active_clip_path().is_empty(),
-		"director tracks active clip path."
+		"director tracks the active clip path."
+	)
+	checks.expect(
+		director.get_active_clip_path().ends_with("q_wake_q_1.res"),
+		"The resolved clip is not the one written for this line (%s)."
+		% director.get_active_clip_path()
 	)
 
-	# Verify locale fallback when locale is en but dubbing exists in zh-CN
+	# An English line with no dub of its own falls back to the primary performance.
 	var fallback_line: Dictionary = {
 		"locale": "en",
 		"speaker_id": &"q",
@@ -129,13 +125,13 @@ func _test_playback_lifecycle() -> void:
 	var fallback_started := director.play_line_voice(fallback_line)
 	checks.expect(
 		fallback_started,
-		"play_line_voice falls back to zh-CN clip when current locale is unvoiced."
+		"play_line_voice falls back to the zh-CN clip when the locale is unvoiced."
 	)
 
 	director.stop_voice(false)
 	checks.expect(
 		director.get_active_clip_path().is_empty(),
-		"stop_voice clears active clip path."
+		"stop_voice clears the active clip path."
 	)
 
 	var unvoiced_line: Dictionary = {
@@ -146,10 +142,45 @@ func _test_playback_lifecycle() -> void:
 		"inspection_id": &"",
 		"text": "无音频测试行",
 	}
-	var unvoiced_started := director.play_line_voice(unvoiced_line)
 	checks.expect(
-		not unvoiced_started,
+		not director.play_line_voice(unvoiced_line),
 		"play_line_voice returns false when no clip exists."
 	)
 
 	director.queue_free()
+	_remove_fixture(scratch)
+
+
+## A quarter second of a quiet tone, saved as a resource the loader will accept.
+##
+## A raw `.wav` written into `user://` is not enough: `resolve_clip_path()` asks
+## `ResourceLoader.exists()`, and an un-imported file does not exist as far as that is
+## concerned. Saving an `AudioStreamWAV` with `ResourceSaver` produces a real resource at a
+## `.res` path, which is what the resolution rule is actually looking for. The format is a
+## detail of the fixture; the rule under test is the naming.
+func _write_fixture_clip(path: String) -> void:
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var frames := PackedByteArray()
+	var count := 22050 / 4
+	frames.resize(count * 2)
+	for index in count:
+		frames.encode_s16(index * 2, int(sin(TAU * 440.0 * float(index) / 22050.0) * 8000.0))
+	wav.data = frames
+	var saved := ResourceSaver.save(wav, path)
+	if saved != OK:
+		checks.fail("the fixture clip could not be saved to %s (error %d)." % [path, saved])
+
+
+func _remove_fixture(path: String) -> void:
+	var directory := DirAccess.open(path)
+	if directory == null:
+		return
+	for child in directory.get_directories():
+		_remove_fixture(path + "/" + child)
+	for file in directory.get_files():
+		directory.remove(file)
+	DirAccess.remove_absolute(path)

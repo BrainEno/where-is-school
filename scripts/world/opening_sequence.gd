@@ -46,6 +46,13 @@ const WAKE_SETTLE_SECONDS := 2.0
 const EXPECTATION_LEAD_IN := 0.8
 const EXPECTATION_DISCLAIMER_SECONDS := 2.8
 const BELL_LEAD_IN := 6.0
+## How much of the bell the player hears alone before Q says anything about it.
+##
+## `assets/audio/bell_second.wav` is 7.4 s: the four-note phrase, then the corridor's quieter
+## answer. Speaking at 1.0 s cut the phrase in half and made the bell read as an alert sound;
+## this lands on the second phrase, which is when someone in the room would talk over it.
+## `tests/bell_sound_test.py` pins the buffer length this assumes.
+const BELL_SPEAK_AFTER_SECONDS := 4.6
 const BAG_REMINDER_SECONDS := 40.0
 ## Hard fallback so a player who never opens the bag still reaches the lesson.
 const BAG_WAIT_LIMIT := 95.0
@@ -668,7 +675,11 @@ func _beat_bell() -> void:
 	_game_state().set_flag(StoryFlags.BELL_RUNG, true)
 	_bell_audio.play()
 	_hud.set_objective("objective.bell")
-	await wait_seconds(1.0)
+	# Q speaks into the bell's tail rather than over its head. The phrase is 7.4 s long -
+	# four struck bars, then the corridor answering - so the wait is most of it: long enough
+	# that the player hears a bell and not an alarm, short enough that nobody is left standing
+	# in a silent room wondering whether the beat stalled.
+	await wait_seconds(BELL_SPEAK_AFTER_SECONDS)
 	await play_conversation(&"bell_moment")
 	end_beat()
 

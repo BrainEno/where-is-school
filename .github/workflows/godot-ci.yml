@@ -229,6 +229,15 @@ jobs:
           python3 tools/check_seat_clearance.py
           python3 tests/seat_clearance_test.py
           python3 tests/pushable_chair_test.py
+          # The school bell is a struck metal bar, not a sine with a tremolo: measured by
+          # length, envelope and the inharmonic partials that make the timbre.
+          python3 tests/bell_sound_test.py
+          # Every dialogue line and inspection against the clips that claim to speak them.
+          # The repository ships no dialogue audio, so today this proves the absence and
+          # fails the moment a fragment is added back.
+          python3 tests/voice_coverage_test.py
+          # The world's own sounds, read from the script that synthesises them.
+          python3 tests/world_audio_test.py
 
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash
@@ -564,6 +573,10 @@ jobs:
           run_check json_table 120 godot --headless --path . --script res://tests/json_table_test.gd || status=1
           # Dialogue and inspection voice performance director.
           run_check voice_director 120 godot --headless --path . --script res://tests/voice_director_test.gd || status=1
+          # The sounds the world makes when it is touched - footsteps, chairs, paper, pickups,
+          # doors - as distinct from the pointer's feedback above: five buffers, their levels,
+          # their own rate limits, the SFX bus they must own, and that something asks for each.
+          run_check world_audio 180 godot --headless --path . --script res://tests/world_audio_test.gd || status=1
 
           run_check_summary
 

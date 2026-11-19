@@ -26,7 +26,7 @@ the repository. Material not imported is listed separately at the end.
 | `assets/materials/*.tres` | Placeholder StandardMaterial3D colours | Authored for this repository; colours follow docs/ART_BIBLE.md palette anchors | — | Project-owned placeholder | No | — | n/a | Pending owner art review |
 | `assets/audio/room_tone_classroom.wav` | Ambient room tone (6 s, mono 22.05 kHz) | Synthesised by `tools/generate_placeholder_audio.py` (sine hum + white noise, in-repo algorithm) | — | Project-owned placeholder | No | — | n/a (no external samples) | Pending owner audio review |
 | `assets/audio/room_tone_walkway.wav` | Ambient walkway tone (6 s) | Same script, different level/air parameters | — | Project-owned placeholder | No | — | n/a | Pending owner audio review |
-| `assets/audio/bell_second.wav` | School bell one-shot (2 s) | Same script, additive sine bell with tremolo envelope | — | Project-owned placeholder | No | — | n/a | Pending owner audio review |
+| `assets/audio/bell_second.wav` | School bell phrase (7.4 s): four struck metal bars through a corridor speaker, repeated once | Synthesised by `tools/generate_placeholder_audio.py` (`bell()`): inharmonic bar partials at 1x / 2.756x / 5.404x / 8.933x / 13.35x with a 6 ms strike transient, early reflections, then a two-pole speaker band-limit and a 260 Hz high-pass | — | Project-owned placeholder | No | — | n/a (no external samples) | Pending owner audio review |
 | `assets/audio/wake_thud.wav` | Low thud and breath for the wake beat (1.6 s) | Same script | — | Project-owned placeholder | No | — | n/a | Pending owner audio review |
 | `assets/audio/laboratory_hum.wav` | The laboratory's room bed (6 s loop, mono 22.05 kHz, 248 KiB): two low partials beating a little over once a second, two partials above them, and a filtered noise floor | Synthesised by `tools/generate_placeholder_audio.py` (`laboratory_hum()`), the same in-repo additive script as the school's tones | — | Project-owned placeholder | No | — | n/a (no external samples) | Pending owner audio review |
 | `art/fonts/NotoSansSC-Regular.ttf` (source) and `assets/fonts/NotoSansSC-Regular.ttf` (shipped subset) | Simplified-Chinese + Latin text font (variable-free static Regular). `art/` holds the untouched upstream file; the file under `assets/` is a glyph subset of it, produced by `tools/subset_font.py` | Google / Adobe, Noto Sans SC, obtained from the public google/fonts repository | https://github.com/google/fonts/tree/main/ofl/notosanssc | SIL Open Font License 1.1 (full text committed as `assets/fonts/OFL.txt`) | No (OFL allows bundling without attribution in-game; the license file ships with the font, and is copied into the release zip's `licences/`) | Modified: the shipped file is a subset, and OFL §5 permits modification. This copy declares no Reserved Font Name (the copyright line is `Google Inc.` alone), so the original name is kept, which also keeps the theme's path, the import sidecar and the licence aligned. The licence text travels with both copies. The whole family was not added, only Regular | Yes (OFL 1.1 permits commercial use and embedding) | Owner should confirm before a store build |
@@ -71,6 +71,15 @@ the repository. Material not imported is listed separately at the end.
   field is, why it tiles and why it is quiet.
 - The audio files are regenerated deterministically by
   `python3 tools/generate_placeholder_audio.py`; the script is the provenance.
+  `WIS_AUDIO_OUT` redirects the write, which is how `tests/bell_sound_test.py` proves the
+  shipped bell is byte-identical to what the script produces today.
+- **There is no dialogue audio.** The repository once carried nine clips under
+  `assets/audio/voice/`, total length 1.8 s, against 228 spoken lines, and every one of them
+  was between 0.05 s and 0.28 s - a fragment, not a line. A tenth clip covered an inspection
+  whose `text` and `repeat_text` differ in length by a factor of three, so no single recording
+  could fit both. They have been removed rather than left as decoys that make the voice system
+  look wired when it is not. Dialogue is text, paced by the player; `tests/voice_coverage_test.py`
+  fails if a clip is ever added that does not match the line it claims to speak.
 - The four interaction cue sounds are not files at all: `scripts/audio/cue_audio.gd`
   synthesises them at startup, in the same additive style, from constants in that script. The
   script is therefore the whole provenance, and there is nothing to import, license or lose.

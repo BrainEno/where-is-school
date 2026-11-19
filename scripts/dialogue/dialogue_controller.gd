@@ -441,6 +441,19 @@ func present_inspection(inspection_id: StringName) -> bool:
 			}
 			_queue.append(recall)
 	observation["variant"] = "repeat" if already_seen else "first"
+	# Looking at something for the first time is reading it, and a screen of text appearing
+	# out of nowhere is the one seam a player notices most. The sound is only on the first
+	# read - re-reading a bag is not another page turning, and a sound on every click would
+	# turn examination into a metronome. `WorldAudio` is optional: a headless run without
+	# autoloads stays silent.
+	if not already_seen:
+		# A first look that changes state is a hand doing something to the object - the bag
+		# is lifted, a square is set - and that is a different sound from a page opening.
+		# Both are first-read only: a repeat visit is neither another page nor another lift.
+		if _first_read_changes_state(inspection):
+			_play_world_sound(&"play_pickup")
+		else:
+			_play_world_sound(&"play_paper")
 	_queue.push_front(observation)
 
 	_mode = Mode.INSPECTION
@@ -453,6 +466,23 @@ func present_inspection(inspection_id: StringName) -> bool:
 
 
 # --- Internals --------------------------------------------------------------
+
+
+## Whether the first read of this inspection sets anything: the ones that do are the ones
+## where the player moves something rather than only reading it.
+static func _first_read_changes_state(inspection: InspectionLibrary.InspectionData) -> bool:
+	for entry: Variant in inspection.effects:
+		var effect := entry as Dictionary
+		if effect != null and String(effect.get("type", "")) == "set_flag":
+			return true
+	return false
+
+
+## World-audio autoload, looked up by path so a run without autoloads gets silence.
+func _play_world_sound(method: StringName) -> void:
+	var audio: Node = get_node_or_null(^"/root/WorldAudio")
+	if audio != null and audio.has_method(method):
+		audio.call(method)
 
 
 func _observation_text(inspection: InspectionLibrary.InspectionData, already_seen: bool) -> String:

@@ -108,7 +108,21 @@ func handle_exit(exit: LocationExit) -> void:
 	if exit.is_milestone_end:
 		await _finish_slice(exit)
 		return
+	# The door is only heard when it actually opens: the two returns above are the door
+	# staying shut, and a swing sound on a refusal would say the opposite of the text.
+	_play_world_sound(&"play_door")
 	await _transition_to(exit)
+
+
+## World-audio autoload, reached through the host node: this class is a `RefCounted`, not a
+## `Node`, so it has no tree of its own and `get_node_or_null()` is not available on it.
+## `_host` is the scene node that owns this flow. Silent when there is no host or no autoload.
+func _play_world_sound(method: StringName) -> void:
+	if _host == null or not _host.is_inside_tree():
+		return
+	var audio := _host.get_node_or_null(^"/root/WorldAudio")
+	if audio != null and audio.has_method(method):
+		audio.call(method)
 
 
 func _transition_to(exit: LocationExit) -> void:
