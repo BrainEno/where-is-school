@@ -586,6 +586,10 @@ def build_container() -> tuple[str, set[str]]:
            light_color="Color(1, 0.77, 0.56, 1)", light_energy=0.78, omni_range=2.24, omni_attenuation=1.15)
 
     ladder_x, rung_z, trace_z = 1.39, 1.48, 1.76
+    # A small patch of warm, reflected yard light picks out the near rails and the
+    # actor on the blue roof without changing the lighting of the surrounding routes.
+    b.node("LandingFill", ".", "OmniLight3D", position=vec3((1.10, 4.40, 2.55)),
+           light_color="Color(1, 0.86, 0.72, 1)", light_energy=0.95, omni_range=5.2, omni_attenuation=1.2)
     b.node("Ladder", ".")
     for key, side in (("Left", -1), ("Right", 1)):
         rail = b.mesh("CylinderMesh", top_radius=0.033, bottom_radius=0.033, height=3.52, radial_segments=10)
@@ -607,6 +611,7 @@ def build_container() -> tuple[str, set[str]]:
         '[ext_resource type="Script" path="res://scenes/locations/playground/container_ladder.gd" id="ladder"]',
         '[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]',
         '[ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]',
+        '[ext_resource type="Resource" path="res://assets/camera/shots/container_ladder.tres" id="shot"]',
     ] + [f'[ext_resource type="Material" path="{RES}/materials/{mat}.tres" id="art_{mat}"]' for mat in sorted(used)]
     root = '[node name="ContainerBody" type="StaticBody3D" groups=["camera_occluder"]]\nscript = ExtResource("ladder")'
     use = f'''[node name="LadderUse" parent="." instance=ExtResource("interactable")]
@@ -616,6 +621,7 @@ interact_id = &"pg_container_ladder"
 prompt_text = "Climb down the steel ladder"
 prompt_key = "prompt.container_ladder_down"
 radius = 0.45
+camera_shot = ExtResource("shot")
 outline_paths = PackedStringArray("../Ladder/GrabLeft", "../Ladder/GrabRight")
 support_paths = PackedStringArray("..")
 '''

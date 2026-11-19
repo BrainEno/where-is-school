@@ -19,7 +19,7 @@ on:
       - "scripts/actors/**"
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
-      - "assets/camera/shots/container_cabin.tres"
+      - "assets/camera/shots/container_*.tres"
       - "assets/camera/shots/window.tres"
       - "data/dialogue/*/prologue.json"
   workflow_dispatch:
@@ -53,8 +53,9 @@ jobs:
         run: |
           set +e -uo pipefail
           log="${RUNNER_TEMP}/capture.log"
+          # Xvfb has no sound device; exercise the real video renderer, not the runner's ALSA.
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_classroom_anomalies.gd > "${log}" 2>&1
           code=$?
           grep -E "SHOT|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${log}" | grep -v "^CROP" | head -n 60
@@ -74,7 +75,7 @@ jobs:
             grep -E '^(FAILURE:|SCRIPT ERROR:|ERROR:)|Parse Error' "${log}" | head -n 8 | while IFS= read -r line; do
               echo "::error title=classroom anomaly capture::${line}"
             done
-            echo "::error title=classroom anomaly capture::the capture exited ${code}; see the artifact for the full log"
+            echo "::error title=classroom anomaly capture::exit ${code} or engine diagnostics; see the artifact for the full log"
             exit 1
           fi
 

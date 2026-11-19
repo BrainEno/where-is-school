@@ -1,8 +1,9 @@
-[gd_scene load_steps=67 format=3]
+[gd_scene load_steps=68 format=3]
 
 [ext_resource type="Script" path="res://scenes/locations/playground/container_ladder.gd" id="ladder"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]
 [ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]
+[ext_resource type="Resource" path="res://assets/camera/shots/container_ladder.tres" id="shot"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container.tres" id="art_container"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_bedding.tres" id="art_container_bedding"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_blanket.tres" id="art_container_blanket"]
@@ -1335,6 +1336,13 @@ light_energy = 0.78
 omni_range = 2.24
 omni_attenuation = 1.15
 
+[node name="LandingFill" type="OmniLight3D" parent="."]
+position = Vector3(1.1, 4.4, 2.55)
+light_color = Color(1, 0.86, 0.72, 1)
+light_energy = 0.95
+omni_range = 5.2
+omni_attenuation = 1.2
+
 [node name="Ladder" type="Node3D" parent="."]
 
 [node name="SteelRailLeft" type="MeshInstance3D" parent="Ladder"]
@@ -1476,5 +1484,6 @@ interact_id = &"pg_container_ladder"
 prompt_text = "Climb down the steel ladder"
 prompt_key = "prompt.container_ladder_down"
 radius = 0.45
+camera_shot = ExtResource("shot")
 outline_paths = PackedStringArray("../Ladder/GrabLeft", "../Ladder/GrabRight")
 support_paths = PackedStringArray("..")

@@ -4,13 +4,14 @@ extends RefCounted
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
 const METAL_IMPACT := preload("res://assets/audio/wake_thud.wav")
+const ROOF_SHOT := preload("res://assets/camera/shots/container_roof.tres")
 
 
 static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 	var roof := player.global_position
 	var physics := player.is_physics_processing()
 	player.set_physics_process(false)
-	player.face_toward(Vector3(0.55, 0.0, 1.0))
+	player.face_toward(Vector3(-0.26, 0.0, 1.0))
 	var forward := player.get_facing_direction()
 	var right := Vector3.UP.cross(forward)
 	var contacts := Motion.contacts(player)
@@ -21,7 +22,8 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 	var right_sole := roof + right * 0.14 + forward * (0.19 if hurt else 0.06)
 	var rig := player.camera_rig
 	if rig != null:
-		rig.frame_point(roof + Vector3(0.7, 0.24, 0.4), 0.0)
+		rig.frame_point(roof + Vector3(0.28, 0.13, 0.34), 0.0)
+		rig.focus_on(player, ROOF_SHOT)
 	var clip := "roof_impact" if hurt else "roof_brace"
 	var duration := 1.55 if hurt else 0.84
 	var touch := (0.22 if hurt else 0.16) / duration
@@ -58,6 +60,7 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 	Motion.reset_pose(player)
 	player.set_physics_process(physics)
 	if rig != null:
+		rig.release_focus()
 		rig.release_frame(0.4)
 
 

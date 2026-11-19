@@ -1030,6 +1030,9 @@ func _check_ladder(hurt: bool) -> void:
 	var planted := {}
 	var skeletons := CharacterAnimation.skeletons_in(_player.get_character_animator())
 	var ladder_rig: Skeleton3D = skeletons[0] if not skeletons.is_empty() else null
+	var roof_mesh := container.get_node(^"Roof") as MeshInstance3D
+	var ladder_camera := _player.camera_rig.camera
+	var clear_view := false
 	var drop := 0.0
 	var previous := _player.global_position.y
 	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 15000:
@@ -1038,6 +1041,9 @@ func _check_ladder(hurt: bool) -> void:
 		clips[clip] = true
 		if clip in ["ladder_right", "ladder_left"]:
 			levels[int(pos.y / 0.28)] = true
+			clear_view = clear_view or (roof_mesh.transparency < 0.08 \
+				and ladder_camera.is_position_in_frustum(pos + Vector3.UP * 1.4) \
+				and ladder_camera.is_position_in_frustum(ground.global_position))
 			if ladder_rig != null and not planted.has(clip) and _has_ladder_support(container, ladder_rig):
 				planted[clip] = true
 			if absf(pos.x - roof.global_position.x) > 0.05 or absf(pos.z - roof.global_position.z - 0.94) > 0.07:
@@ -1050,6 +1056,8 @@ func _check_ladder(hurt: bool) -> void:
 	if levels.size() < 6 or drop > 0.32 or not clips.has("ladder_mount") \
 		or not clips.has("ladder_dismount") or not clips.has("ladder_left") or not clips.has("ladder_right"):
 		_failures.append("The ladder did not move rung by rung (%s, max drop %.2f m)." % [str(clips), drop])
+	if not clear_view:
+		_failures.append("The ladder shot obscures the actor or ground, or fades out the steel shell.")
 	if not planted.has("ladder_left") or not planted.has("ladder_right"):
 		_failures.append("Both lowering phases must show planted boots on different rungs and both wrists by the rails.")
 	if _player.global_position.distance_to(ground.global_position) > 0.08 \
@@ -1093,7 +1101,7 @@ func _has_ladder_support(container: Node3D, skeleton: Skeleton3D) -> bool:
 	for child: Node in container.get_node(^"Ladder").get_children():
 		if child.name.begins_with("Rung") and child is MeshInstance3D:
 			rungs.append(child as MeshInstance3D)
-	var levels := []
+	var levels: Array[int] = []
 	# The actual shoe joints (not the player origin or the ladder's route markers).
 	for side: String in ["L", "R"]:
 		var toe := skeleton.find_bone("Toe_" + side)

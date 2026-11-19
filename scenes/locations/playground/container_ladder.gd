@@ -32,8 +32,10 @@ func _descend(director: Node) -> Dictionary:
 	await Motion.turn_to(player, -global_basis.z)
 	var rig := player.camera_rig
 	if rig != null:
-		# Hold a wide enough view to show both the roof departure and the ground below.
-		rig.frame_point(to_global(Vector3(1.79, 1.23, 1.04)), 0.5)
+		# Keep the whole descent in frame while looking at the outer face of the rails.
+		# The fader also checks ahead of this point; aim clear of the shell so it
+		# remains opaque even while the protagonist faces it during the climb.
+		rig.frame_point(to_global(Vector3(1.66, 1.18, 2.38)), 0.45)
 	var roof := _roof.global_position
 	var steps := _rungs.get_children()
 	var contacts := Motion.contacts(player)
