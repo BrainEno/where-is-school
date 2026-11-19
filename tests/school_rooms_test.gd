@@ -11,7 +11,8 @@ const ROTA := &"staff_office_rota"
 const BASINS := &"restroom_basins"
 const OBJECTIVE := "objective.schoolyard"
 const ROTA_STANCE := Vector3(-2.19, 0, -0.14)
-const BASINS_STANCE := Vector3(-2.12, 0, -0.98)
+const BASINS_STANCE := Vector3(-2.15, 0, -.28)
+const DRAIN_STANCE := Vector3(-1.45, 0, 1.45)
 
 var _check := Harness.Checker.new()
 var _state: Node
@@ -36,6 +37,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	# The CLI resolution does not set the headless viewport (64x64 default).
+	# Keep the same framing and 12 px inset as the rendered acceptance plates.
+	root.size = Vector2i(1600, 900)
 	var autoloads := Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
 	_state = autoloads["game_state"]
@@ -143,14 +147,14 @@ func _visit_restroom() -> void:
 		return
 	if not await _inspect(&"restroom_latch", Vector3(2.18,0,.47), false, "first", "red"):
 		return
-	if not await _inspect(&"restroom_drain", Vector3(-.88,0,1.70), true, "first", "tile"):
+	if not await _inspect(&"restroom_drain", DRAIN_STANCE, true, "first", "tile"):
 		return
 	_check_note(&"saw_restroom_drain", "place.restroom")
 	if not await _continue_inside(RESTROOM):
 		return
 	_loc.set_locale("zh-CN")
 	var room := _host.get_current()
-	if not await _inspect(&"restroom_drain", Vector3(-.88, 0, 1.70), false, "repeat", "地漏边上"):
+	if not await _inspect(&"restroom_drain", DRAIN_STANCE, false, "repeat", "地漏边上"):
 		return
 	if await _visit(&"restroom_to_corridor", room.get_spawn(&"FromCorridor").global_position, &"corridor", &"FromRestroom", true):
 		_check.expect(_player.global_position.distance_to(hall_stance) < .14, "The restroom returns to the wrong landing.")
@@ -162,13 +166,22 @@ func _check_threshold(path: String, basis: Basis) -> void:
 	var door := current.get_node(^"Door") as Node3D
 	_check.expect(door.scene_file_path == path and door.global_basis.is_equal_approx(basis),
 		"%s does not share the hall face of its own door." % current.location_id)
+	var exit := current.find_interactable(StringName("%s_to_corridor" % current.location_id)) as LocationExit
+	_check.expect(exit != null and exit.can_interact(), "Reading anything must not be required to leave %s." % current.location_id)
 	var spawn := current.get_spawn(&"FromCorridor")
-	_check.expect(door.to_local(spawn.global_position).z < -1.0
-		and _player.get_facing_direction().dot(-door.global_basis.z) > .96,
-		"%s does not arrive on the room face, facing inward." % current.location_id)
+	var local_feet := door.to_local(_player.global_position)
+	var heading := _player.get_facing_direction().dot(-door.global_basis.z)
+	_check.expect(_player.global_position.distance_to(spawn.global_position) < .14
+		and local_feet.z < -1.0 and heading > .96,
+		"%s arrives at %s in door coordinates, inward dot %.3f." % [current.location_id, local_feet, heading])
+	# Lift just clear of floor recovery so the horizontal sweep identifies the leaf,
+	# not the depenetration hit at the first millimetre of the motion.
+	var from := _player.global_transform
+	from.origin.y += .06
 	var hit := KinematicCollision3D.new()
-	_check.expect(_player.test_move(_player.global_transform, door.global_basis.z * 2.4, hit)
-		and hit.get_collider() == door.get_node(^"Panel"), "The closed leaf did not stop the capsule.")
+	var blocked := _player.test_move(from, door.global_basis.z * 2.4, hit)
+	_check.expect(blocked and hit.get_collider() == door.get_node(^"Panel"),
+		"%s leaf sweep: blocked=%s collider=%s." % [current.location_id, blocked, hit.get_collider()])
 
 
 func _continue_inside(id: StringName) -> bool:

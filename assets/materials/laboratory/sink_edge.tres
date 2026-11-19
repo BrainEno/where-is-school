@@ -1,9 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=1 format=3]
 
 [resource]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
+roughness = 0.48
+metallic = 0.22
 resource_name = "lab_sink_edge"
-albedo_color = Color(0.6196, 0.7176, 0.7137, 1)
+albedo_color = Color(0.36, 0.47, 0.49, 1)
 texture_filter = 3

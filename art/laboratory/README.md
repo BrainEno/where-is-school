@@ -67,7 +67,8 @@ for the measured fittings:
   (`diffuse_mode = 3`, `specular_mode = 2`, `roughness = 1.0`), a 6 mm ink contour borrowed
   read-only from `scenes/environment/props/playground_art/materials/ink_outline.tres`, and
   colours reserved for the sage enamel under the cold fixtures, the running lights and
-  the darker amethyst-gray annex.
+  the darker amethyst-gray annex. The round fittings have a satin finish so that the
+  cold lights do not wipe out the glass mouth, rolled lip or inside wall.
 - `scenes/locations/laboratory/laboratory.tscn` — the scene: a shell and benches with
   matching collision boxes, 421 cable sections sharing three material-bearing meshes, and
   nine inspections. The only exit is in the south wall.
@@ -103,4 +104,5 @@ strainer seat. Collars sit on the back rails and the spouts turn over the bowls.
 actual basin triangles and keeps the earlier cable, route, camera and text checks. The new
 wet-bench CameraShot shows the first bowl and adjacent glass at an angle, in addition to
 the default follow view. The matched `laboratory` legs in Location art capture compare
-those default stances; the Laboratory capture workflow still covers the rest of the room.
+those default stances and a separately labelled low plate of the bench end (same camera
+on both revisions). The Laboratory capture workflow still covers the rest of the room.

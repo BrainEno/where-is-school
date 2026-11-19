@@ -19,7 +19,7 @@ extends SceneTree
 ## alley and yard. The coordinates are valid on both sides of the art change.
 ## `return-board-focus` adds the board's authored focus on the current scene.
 ## `school-details` selects matched hall and lab stances or the two new rooms. Pass
-## `school-focus` as well to record a detail with the game rig's authored CameraShot.
+## `school-focus` as well to record details with the game rig's authored CameraShots.
 ## `school-details` uses matched corridor and lab stances; on the new interiors it
 ## records both the normal rig and the authored detail shot. `school-focus` also
 ## captures the finished wet-bench shot (only the updated laboratory has it).
@@ -62,9 +62,17 @@ const SCHOOL_STILLS := {
 	],
 }
 const SCHOOL_SHOTS := {
-	"laboratory": [&"laboratory_wet_bench", Vector3(-5.94, 0, -3.35)],
-	"staff_office": [&"staff_office_rota", Vector3(-2.19, 0, -.14)],
-	"restroom": [&"restroom_basins", Vector3(-2.12, 0, -.98)],
+	"laboratory": [["wet_bench", &"laboratory_wet_bench", Vector3(-5.94, 0, -3.35)]],
+	"staff_office": [
+		["rota", &"staff_office_rota", Vector3(-2.19, 0, -.14)],
+		["dispatch", &"staff_office_trays", Vector3(2.08, 0, -1.35)],
+		["keys", &"staff_office_keys", Vector3(-3.04, 0, -.25)],
+	],
+	"restroom": [
+		["basins", &"restroom_basins", Vector3(-2.15, 0, -.28)],
+		["latch", &"restroom_latch", Vector3(2.18, 0, .47)],
+		["grate", &"restroom_drain", Vector3(-1.45, 0, 1.45)],
+	],
 }
 const TEACHING_SPOTS := {
 	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
@@ -254,11 +262,29 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		index += 1
 	if _return_board_focus and location_id == "playground":
 		await _capture_board_focus(current, out_dir)
-	if _school_focus and SCHOOL_SHOTS.has(location_id):
-		var shot: Array = SCHOOL_SHOTS[location_id]
-		await _capture_focus(current, out_dir, shot[0], shot[1], location_id + "_shot_detail_focus")
+	if _school_details and location_id == "laboratory":
+		await _lab_end_plate(out_dir)
+	if _school_focus:
+		for shot: Array in SCHOOL_SHOTS.get(location_id, []):
+			await _capture_focus(current, out_dir, shot[1], shot[2], "%s_shot_detail_%s" % [location_id, shot[0]])
 	await _wide(current, subject, out_dir)
 	_lines.append("")
+
+
+## This is not a gameplay shot: the low matched plate makes the old unsupported
+## feet and the new bearing surfaces easy to compare at the same perspective.
+func _lab_end_plate(out_dir: String) -> void:
+	var camera := Camera3D.new()
+	camera.fov = 44.0
+	_main.add_child(camera)
+	camera.global_position = Vector3(-4.93, 1.91, 2.86)
+	camera.look_at(Vector3(-7.00, .89, 1.08), Vector3.UP)
+	camera.make_current()
+	await _wait(0.45)
+	_save(out_dir, "laboratory_plate_detail_bench_end")
+	_lines.append("- `laboratory_plate_detail_bench_end.jpg` (matched low camera, not gameplay).")
+	(_rig as CameraRig).camera.make_current()
+	camera.queue_free()
 
 
 func _capture_board_focus(current: LocationRoot, out_dir: String) -> void:

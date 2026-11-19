@@ -25,10 +25,10 @@ shader_parameter/style_level = 2
 
 [sub_resource type="ShaderMaterial" id="Mat_floor"]
 shader = ExtResource("paint")
-shader_parameter/base_color = Color(0.576, 0.639, 0.608, 1)
-shader_parameter/shadow_pigment = Color(0.42, 0.498, 0.525, 1)
-shader_parameter/highlight_pigment = Color(0.675, 0.69, 0.604, 1)
-shader_parameter/brush_pigment = Color(0.42, 0.498, 0.525, 1)
+shader_parameter/base_color = Color(0.49, 0.573, 0.545, 1)
+shader_parameter/shadow_pigment = Color(0.369, 0.467, 0.486, 1)
+shader_parameter/highlight_pigment = Color(0.576, 0.62, 0.549, 1)
+shader_parameter/brush_pigment = Color(0.369, 0.467, 0.486, 1)
 shader_parameter/patch_scale = 0.83
 shader_parameter/patch_strength = 0.31
 shader_parameter/brush_scale = 5.4
@@ -611,12 +611,12 @@ size = Vector3(0.972, 0.033, 0.13)
 
 [sub_resource type="Resource" id="Shot_BasinsLook"]
 script = ExtResource("camera_shot")
-look_offset = Vector3(-0.28, 0, 0.02)
+look_offset = Vector3(-0.3, 0, 0.02)
 subject_mix = 0.72
-distance_scale = 0.71
-height_scale = 0.87
-yaw_degrees = 21
-fov = 50
+distance_scale = 0.66
+height_scale = 0.91
+yaw_degrees = 16
+fov = 49
 glide_seconds = 0.68
 
 [sub_resource type="Resource" id="Shot_LatchLook"]
@@ -649,7 +649,7 @@ environment = SubResource("RoomEnvironment")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-53, -37, 0)
 light_color = Color(0.941, 0.902, 0.812, 1)
-light_energy = 0.77
+light_energy = 0.63
 shadow_enabled = true
 directional_shadow_max_distance = 22
 
@@ -2597,8 +2597,8 @@ position = Vector3(-2.97, 1.02, -0.98)
 interact_id = &"restroom_basins"
 inspection_id = &"restroom_basins"
 radius = 1.5
-outline_paths = PackedStringArray("../../Basins/Bowl0", "../../Basins/Bowl1", "../../Basins/Tap0Spout", "../../Basins/Tap1Spout")
-support_paths = PackedStringArray("../../Basins/Apron")
+outline_paths = PackedStringArray("../../Basins/Bowl0", "../../Basins/Bowl1", "../../Basins/Tap0Spout", "../../Basins/Tap1Spout", "../../WallWest0/Mirror/MirrorClip1")
+support_paths = PackedStringArray("../../Basins/Apron", "../../WallWest0")
 camera_shot = SubResource("Shot_BasinsLook")
 
 [node name="LatchLook" parent="Interactables" instance=ExtResource("tap_target")]
@@ -2611,10 +2611,10 @@ support_paths = PackedStringArray("../../Cubicles/Closed")
 camera_shot = SubResource("Shot_LatchLook")
 
 [node name="DrainLook" parent="Interactables" instance=ExtResource("tap_target")]
-position = Vector3(-0.89, 0.36, 0.84)
+position = Vector3(-0.89, 0.15, 0.84)
 interact_id = &"restroom_drain"
 inspection_id = &"restroom_drain"
-radius = 0.98
-outline_paths = PackedStringArray("../../FloorDrain/GrateRing", "../../FloorDrain/FrameX0", "../../FloorDrain/Patch")
-support_paths = PackedStringArray()
+radius = 1.12
+outline_paths = PackedStringArray("../../FloorDrain/GrateBridge1", "../../FloorDrain/GrateRing", "../../FloorDrain/FrameX0", "../../FloorDrain/Patch")
+support_paths = PackedStringArray("../../Slab")
 camera_shot = SubResource("Shot_DrainLook")

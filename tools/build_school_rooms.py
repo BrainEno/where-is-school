@@ -91,7 +91,7 @@ shader_parameter/style_level = 2
     b.local_mats[name] = b.subs.pop()
 
 
-def start_room(role, pigments, ambient, backdrop, light):
+def start_room(role, pigments, ambient, backdrop, light, *, sun=0.77):
     b = FixtureBuild(ROLES[role][0], pigments)
     script = b.bind("location", "res://scripts/world/location_root.gd", "Script")
     b.nodes[0] += f'script = {script}\nlocation_id = &"{role}"\n'
@@ -106,7 +106,7 @@ tonemap_exposure = 0.76
 ''')
     b.node("WorldEnvironment", ".", "WorldEnvironment", environment='SubResource("RoomEnvironment")')
     b.node("Sun", ".", "DirectionalLight3D", rotation_degrees=vec3((-53, -37, 0)),
-           light_color=srgb(light), light_energy=0.77, shadow_enabled="true", directional_shadow_max_distance=22)
+           light_color=srgb(light), light_energy=sun, shadow_enabled="true", directional_shadow_max_distance=22)
     nav = b.bind("navigation", "res://scripts/world/location_navigation.gd", "Script")
     b.node("Navigation", ".", "NavigationRegion3D", script=nav)
     tone = b.bind("room_tone", "res://assets/audio/room_tone_walkway.wav", "AudioStream")
@@ -311,7 +311,24 @@ def office():
             b.box(f"Key{i}", key, (x,-.087,.111), (.032,.117,.019), "steel")
         label(b, f"Slot{i}", key, (x,.213,.044), str(i+1), .00112, ink=(63,58,61))
 
-    add_route(b, "staff_office", (OFFICE_DOOR_X,0,1.67), (OFFICE_DOOR_X,.81,2.61), 0)
+    # A lockable file pedestal marks the quiet side of the room, outside the
+    # routes between the cabinet, reading position and the threshold.
+    files = solid(b, "FilePedestal", ".", (3.76,.393,.28), (.55,.786,1.28), "enamel")
+    b.box("Cap", files, (0,.412,0), (.58,.05,1.32), "maple")
+    for i, z in enumerate((-.31,.31)):
+        b.box(f"Door{i}", files, (-.28,-.028,z), (.038,.634,.572), "lower")
+        b.box(f"Tag{i}", files, (-.303,.131,z), (.018,.065,.193), "steel")
+        b.box(f"Pull{i}", files, (-.322,.031,z), (.048,.035,.128), "edge")
+    for i, y in enumerate((.440,.454,.472)):
+        b.box(f"Folder{i}", files, (-.045,y,.30-.018*i), (.32,.018,.42), "paper" if i == 1 else "ledger",
+              rot=(0,(i-1)*6,0))
+    b.box("DoorMat", ".", (OFFICE_DOOR_X,.003,2.37), (1.51,.006,.61), "enamel")
+    for i in range(5):
+        b.box(f"MatRule{i}", ".", (OFFICE_DOOR_X,.007,2.15+i*.107), (1.41,.002,.013), "edge")
+
+    # A slight turn toward the working area also makes this an explicit facing
+    # basis (the player preserves the old yaw on identity teleports).
+    add_route(b, "staff_office", (OFFICE_DOOR_X,0,1.67), (OFFICE_DOOR_X,.81,2.61), -12)
     look(b, "RotaLook", "staff_office_rota", (-2.18,.95,-1.04), ("Rota/Leaf0","Rota/Leaf1","Rota/Binder"),
          ("Desk",), 1.31, (.61,.86,8,45,(0,0,-.15)))
     look(b, "TrayLook", "staff_office_trays", (2.03,1.07,-2.355), ("Tray0/Base","Tray1/Base","Tray0/Ticket","Tray1/Ticket"),
@@ -411,9 +428,9 @@ def restroom():
               "soap": (176, 127, 87), "valve": (145, 87, 65), "stall": (82, 119, 132),
               "paper": (231, 223, 192), "sky": (177, 198, 195), "sky_low": (149, 168, 185),
               "mirror": (89, 119, 139), "mirror_light": (118, 153, 175), "repair": (167, 140, 101)}
-    b = start_room("restroom", colors, (169,195,206), (63,79,98), (240,230,207))
+    b = start_room("restroom", colors, (169,195,206), (63,79,98), (240,230,207), sun=.63)
     painted_field(b, "plaster", ((191,200,191), (164,178,183), (222,214,186)), 1.05, .21)
-    painted_field(b, "floor", ((147,163,155), (107,127,134), (172,176,154)), .83, .31)
+    painted_field(b, "floor", ((125,146,139), (94,119,124), (147,158,140)), .83, .31)
     walls(b, (WASH_WIDTH,WASH_DEPTH), "restroom", WASH_DOOR_Z, door_on_east=True)
     for name, w in (("WallNorth0", WASH_WIDTH), ("WallWest0", WASH_DEPTH)):
         for i in range(1, 6):
@@ -456,12 +473,13 @@ def restroom():
            light_color=srgb((222,239,253)), light_energy=.52, omni_range=3.7)
 
     add_route(b, "restroom", (2.73,0,WASH_DOOR_Z), (3.64,.80,WASH_DOOR_Z), 90)
-    look(b, "BasinsLook", "restroom_basins", (-2.97,1.02,-.98), ("Basins/Bowl0","Basins/Bowl1","Basins/Tap0Spout","Basins/Tap1Spout"),
-         ("Basins/Apron",), 1.50, (.71,.87,21,50,(-.28,0,.02)))
+    look(b, "BasinsLook", "restroom_basins", (-2.97,1.02,-.98), ("Basins/Bowl0","Basins/Bowl1","Basins/Tap0Spout","Basins/Tap1Spout",
+         "WallWest0/Mirror/MirrorClip1"),
+         ("Basins/Apron", "WallWest0"), 1.50, (.66,.91,16,49,(-.30,0,.02)))
     look(b, "LatchLook", "restroom_latch", (2.18,1.09,-.68), ("Cubicles/Closed/LatchPlate","Cubicles/Closed/Latch","Cubicles/Closed/Witness","Cubicles/Closed/Bolt"),
          ("Cubicles/Closed",), 1.23, (.61,.76,-15,45,(0,0,-.05)))
-    look(b, "DrainLook", "restroom_drain", (-.89,.36,.84), ("FloorDrain/GrateRing","FloorDrain/FrameX0","FloorDrain/Patch"),
-         (), .98, (.54,.87,4,44,(0,0,-.06)))
+    look(b, "DrainLook", "restroom_drain", (-.89,.15,.84), ("FloorDrain/GrateBridge1","FloorDrain/GrateRing","FloorDrain/FrameX0","FloorDrain/Patch"),
+         ("Slab",), 1.12, (.54,.87,4,44,(0,0,-.06)))
     return b.emit()
 
 

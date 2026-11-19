@@ -73,7 +73,8 @@ to the street. Returning from the street should put you outside the door, not on
 The school-detail legs of Location art capture save matched corridor and laboratory views
 on both revisions and current interior views for `staff_office` and `restroom` (which have
 no baseline interior). Their Compatibility and Forward+ frames use the gameplay camera;
-`wide` is marked separately. To reproduce the two office standing views and its ledger shot:
+`wide` is marked separately. To reproduce the two office standing views and all three
+inspection shots:
 
 ```sh
 xvfb-run -a --server-args='-screen 0 1600x900x24' godot --path . --resolution 1600x900 \

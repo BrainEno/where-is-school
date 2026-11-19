@@ -55,7 +55,7 @@ def build(top, hood_deck, shelf_tops):
         b.detail("Bowl", p, (0, 0, 0), basin(0.598, 0.734, BASIN_DROP, 0.102), "sink_edge", shadow=True)
         b.drain("Strainer", p, (0, -BASIN_DROP-0.006, 0), 0.037,
                 "metal_frame" if i == 0 else "metal_pale", "drain_ink")
-        b.tap("Tap", p, (-0.374, 0, 0), "metal_pale", "metal_dark", rise=0.375, reach=0.38)
+        b.tap("Tap", p, (-0.374, 0, 0), "sink_edge", "metal_frame", rise=0.375, reach=0.38)
         # An inset kick panel and recessed pull below each bowl, not a blank worktop block.
         b.box("AccessPanel", p, (0.408, -0.36, 0), (0.031, 0.56, 0.695), "accent_oxide")
         b.box("PanelGrip", p, (0.433, -0.149, 0), (0.025, 0.032, 0.182), "metal_dark")

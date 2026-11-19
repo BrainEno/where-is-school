@@ -12,6 +12,7 @@ What it writes:
 
     assets/materials/laboratory/*.tres                       the room's own material presets
     scenes/locations/laboratory/laboratory.tscn              the location scene
+    scenes/locations/laboratory/laboratory_fittings.tscn     its fitted meshes
 
 The room in one paragraph. A fifteen by eleven metre laboratory: a wet bench and tile along
 the west wall, a fume hood and a glassware cabinet on the north wall, an analysis island
@@ -60,7 +61,7 @@ SHARED_MATERIALS = {
 MATERIALS = {
     # name: (albedo, texture, outline, unshaded, emission, uv_scale)
     "wall_plaster": ((0.72, 0.735, 0.755), "wall_plaster", True, False, None, 0.36),
-    "wall_tile": ((1.0, 1.0, 1.0), "tile_glaze", True, False, None, 1.0),
+    "wall_tile": ((0.78, 0.82, 0.83), "tile_glaze", True, False, None, 1.0),
     "floor_concrete": ((0.57, 0.66, 0.64), "floor_concrete", False, False, None, 0.46),
     "bench_resin": ((0.92, 0.93, 0.93), "bench_top", False, False, None, 1.4),
     "bench_steel": ((0.54, 0.65, 0.63), None, True, False, None, 0.0),
@@ -70,7 +71,7 @@ MATERIALS = {
     "metal_frame": ((0.353, 0.384, 0.400), None, False, False, None, 0.0),
     "instrument_cream": ((0.792, 0.776, 0.706), None, True, False, None, 0.0),
     "instrument_grey": ((0.620, 0.647, 0.639), None, False, False, None, 0.0),
-    "glassware": ((0.839, 0.886, 0.878), None, False, False, None, 0.0),
+    "glassware": ((0.37, 0.55, 0.53), None, False, False, None, 0.0),
     "ceramic_white": ((0.882, 0.890, 0.871), None, False, False, None, 0.0),
     "accent_oxide": ((0.365, 0.478, 0.443), None, True, False, None, 0.0),
     "paper_pale": ((0.859, 0.851, 0.804), None, False, False, None, 0.0),
@@ -85,7 +86,7 @@ MATERIALS = {
     "led_dial": ((1.0, 0.741, 0.365), None, False, True, (1.0, 0.741, 0.365, 1.0), 0.0),
     "void_black": ((0.024, 0.027, 0.031), None, False, True, None, 0.0),
     "gauge_face": ((0.886, 0.902, 0.886), None, False, False, None, 0.0),
-    "sink_edge": ((0.6196, 0.7176, 0.7137), None, False, False, None, 0.0),
+    "sink_edge": ((0.36, 0.47, 0.49), None, False, False, None, 0.0),
     "bottle_umber": ((0.4078, 0.3176, 0.1961), None, False, False, None, 0.0),
     "bottle_smoke": ((0.3529, 0.5176, 0.4941), None, False, False, None, 0.0),
     "cap_olive": ((0.2392, 0.2824, 0.2353), None, False, False, None, 0.0),
@@ -126,8 +127,14 @@ def material_tres(name: str) -> str:
         lines.append('next_pass = ExtResource("2_ink")')
     if unshaded:
         lines.append("shading_mode = 0")
+    elif name in ("glassware", "sink_edge"):
+        # Round fitted parts need a controlled satin lobe: under the wet-station
+        # lights the matte whites flattened the lip, inside wall and glass mouth.
+        lines.append("roughness = 0.48" if name == "sink_edge" else "roughness = 0.57")
+        if name == "sink_edge":
+            lines.append("metallic = 0.22")
     else:
-        # The project's surface language: toon diffuse, no specular lobe, roughness 1.
+        # The project's large planar surfaces are still matte and toon-lit.
         lines.append("diffuse_mode = 3")
         lines.append("specular_mode = 2")
         lines.append("roughness = 1.0")
@@ -364,22 +371,30 @@ def build_room(lab: Lab) -> None:
 def build_wet_bench(lab: Lab) -> None:
     """West wall: the wet bench. Two sinks, a rack of drying glass, and the day's washing up."""
     top_y = BENCH_TOP
-    # Five bands with the original casework footprint. Only the two bays under the
-    # sinks are low (the sump must not be drawn inside a solid steel body).
+    # Five deck bands with the original footprint. Only the two bays under the
+    # sinks are low (the sumps must not be drawn inside solid steel bodies).
     x0, x1 = fittings.WET_COUNTER_X
     north, south = fittings.WET_SPAN
     cuts = [(z-fittings.CUT_DEPTH/2, z+fittings.CUT_DEPTH/2) for z in fittings.SINK_CENTRES]
-    for suffix, (lo, hi) in zip(("North", "", "South"), ((north, cuts[0][0]),
-                                                               (cuts[0][1], cuts[1][0]), (cuts[1][1], south))):
+    for suffix, (lo, hi) in (("North", (north, cuts[0][0])), ("", (cuts[0][1], cuts[1][0]))):
         bench(lab, "WetBench"+suffix, (x0+x1)/2, (lo+hi)/2, x1-x0, hi-lo, -7.06, 0.82)
+    # At the wall end there is only a 40 mm counter strip. An over-the-sump
+    # end riser sits on the last service box; it is not a full, sliver-thin cabinet.
+    end_z = (cuts[-1][1]+south)/2
+    end_depth = south-cuts[-1][1]
+    prop(lab, "WetBenchSouthTop", ((x0+x1)/2, top_y-0.03, end_z), (x1-x0, 0.06, end_depth), "bench_resin")
+    slab(lab, "WetBenchSouthBody", (-7.06, 0.7965, end_z), (0.82, 0.187, end_depth), "bench_steel")
     for i, (lo, hi) in enumerate(cuts):
         z = (lo+hi)/2
-        slab(lab, f"WetBenchBasinBase{i}", (-7.06, 0.4, z), (0.82, 0.606, hi-lo+0.03), "bench_steel")
+        base_end = hi if i == 0 else south
+        slab(lab, f"WetBenchBasinBase{i}", (-7.06, 0.4, (lo+base_end)/2),
+             (0.82, 0.606, base_end-lo), "bench_steel")
         for side, a, b in (("Back", x0, fittings.SINK_X-fittings.CUT_WIDTH/2),
                            ("Front", fittings.SINK_X+fittings.CUT_WIDTH/2, x1)):
             prop(lab, f"WetBenchRail{side}{i}", ((a+b)/2, top_y-0.03, z), (b-a, 0.06, hi-lo), "bench_resin")
             prop(lab, f"WetBenchRiser{side}{i}", ((a+b)/2, 0.795, z), (b-a-0.02, 0.19, hi-lo), "bench_steel")
-        prop(lab, f"WetBenchBasinKick{i}", (-7.06, 0.051, z), (0.71, 0.104, hi-lo), "metal_frame")
+        prop(lab, f"WetBenchBasinKick{i}", (-7.06, 0.051, (lo+base_end)/2),
+             (0.71, 0.104, base_end-lo), "metal_frame")
     # The tiled splashback: the one place in the room that says "washable" at a glance.
     prop(lab, "WetBenchTile", (-7.55, 1.42, -1.4), (0.05, 1.0, 5.6), "wall_tile")
     prop(lab, "WetBenchShelf", (-7.35, 1.98, -1.4), (0.34, 0.04, 3.4), "bench_steel")

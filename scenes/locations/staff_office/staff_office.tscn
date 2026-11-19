@@ -1,4 +1,4 @@
-[gd_scene load_steps=119 format=3]
+[gd_scene load_steps=128 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -469,6 +469,33 @@ size = Vector3(0.086, 0.132, 0.024)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art82"]
 size = Vector3(0.032, 0.117, 0.019)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art83"]
+size = Vector3(0.55, 0.786, 1.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art84"]
+size = Vector3(0.55, 0.786, 1.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art85"]
+size = Vector3(0.58, 0.05, 1.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art86"]
+size = Vector3(0.038, 0.634, 0.572)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art87"]
+size = Vector3(0.018, 0.065, 0.193)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art88"]
+size = Vector3(0.048, 0.035, 0.128)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art89"]
+size = Vector3(0.32, 0.018, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art90"]
+size = Vector3(1.51, 0.006, 0.61)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art91"]
+size = Vector3(1.41, 0.002, 0.013)
 
 [sub_resource type="Resource" id="Shot_RotaLook"]
 script = ExtResource("camera_shot")
@@ -1752,11 +1779,125 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
+[node name="FilePedestal" type="StaticBody3D" parent="."]
+position = Vector3(3.76, 0.393, 0.28)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="FilePedestal"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art83")
+
+[node name="Surface" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art84")
+material_override = SubResource("Mat_enamel")
+
+[node name="Cap" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(0, 0.412, 0)
+mesh = SubResource("BoxMesh_art85")
+material_override = SubResource("Mat_maple")
+cast_shadow = 0
+
+[node name="Door0" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.28, -0.028, -0.31)
+mesh = SubResource("BoxMesh_art86")
+material_override = SubResource("Mat_lower")
+cast_shadow = 0
+
+[node name="Tag0" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.303, 0.131, -0.31)
+mesh = SubResource("BoxMesh_art87")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Pull0" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.322, 0.031, -0.31)
+mesh = SubResource("BoxMesh_art88")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Door1" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.28, -0.028, 0.31)
+mesh = SubResource("BoxMesh_art86")
+material_override = SubResource("Mat_lower")
+cast_shadow = 0
+
+[node name="Tag1" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.303, 0.131, 0.31)
+mesh = SubResource("BoxMesh_art87")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Pull1" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.322, 0.031, 0.31)
+mesh = SubResource("BoxMesh_art88")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Folder0" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.045, 0.44, 0.3)
+mesh = SubResource("BoxMesh_art89")
+material_override = SubResource("Mat_ledger")
+rotation_degrees = Vector3(0, -6, 0)
+cast_shadow = 0
+
+[node name="Folder1" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.045, 0.454, 0.282)
+mesh = SubResource("BoxMesh_art89")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, 0, 0)
+cast_shadow = 0
+
+[node name="Folder2" type="MeshInstance3D" parent="FilePedestal"]
+position = Vector3(-0.045, 0.472, 0.264)
+mesh = SubResource("BoxMesh_art89")
+material_override = SubResource("Mat_ledger")
+rotation_degrees = Vector3(0, 6, 0)
+cast_shadow = 0
+
+[node name="DoorMat" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.003, 2.37)
+mesh = SubResource("BoxMesh_art90")
+material_override = SubResource("Mat_enamel")
+cast_shadow = 0
+
+[node name="MatRule0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.007, 2.15)
+mesh = SubResource("BoxMesh_art91")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="MatRule1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.007, 2.257)
+mesh = SubResource("BoxMesh_art91")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="MatRule2" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.007, 2.364)
+mesh = SubResource("BoxMesh_art91")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="MatRule3" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.007, 2.471)
+mesh = SubResource("BoxMesh_art91")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="MatRule4" type="MeshInstance3D" parent="."]
+position = Vector3(-2.28, 0.007, 2.578)
+mesh = SubResource("BoxMesh_art91")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-2.28, 0, 1.67)
-rotation_degrees = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, -12, 0)
 
 [node name="Interactables" type="Node3D" parent="."]
 

@@ -306,7 +306,8 @@ func _check_equipment_contacts() -> void:
 	# rendered bounds, including cylinders, rather than assuming the origin is a foot.
 	var pairs := [
 		["WetBenchPlinth", "WetBenchBody"], ["WetBenchBody", "WetBenchTop"],
-		["WetBenchNorthBody", "WetBenchNorthTop"], ["WetBenchSouthBody", "WetBenchSouthTop"],
+		["WetBenchNorthBody", "WetBenchNorthTop"], ["WetBenchBasinBase1", "WetBenchSouthBody"],
+		["WetBenchSouthBody", "WetBenchSouthTop"],
 		["HoodServiceBase", "HoodSideWest"],
 		["WetBenchNorthTop", "BalanceBody"], ["BalanceBody", "BalancePlate"],
 		["IslandTop", "MicroBase0"],
@@ -377,9 +378,15 @@ func _check_sink(index: int) -> void:
 	if bowl == null or not bowl.mesh is ArrayMesh:
 		_failures.append("Sink %d is not a fitted basin." % index)
 		return
+	if bowl.mesh.get_surface_count() != 1:
+		_failures.append("Sink %d has no single fitted surface." % index)
+		return
 	var arrays := bowl.mesh.surface_get_arrays(0)
 	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	if verts.is_empty() or indices.is_empty() or indices.size() % 3 != 0:
+		_failures.append("Sink %d has no indexed basin triangles." % index)
+		return
 	# Vertical samples through the rendered triangles: the middle is an aperture,
 	# the sump is well below the flange, and the flange actually covers its four cuts.
 	var hole := _surface_y(verts, indices, Vector2.ZERO)
@@ -387,6 +394,9 @@ func _check_sink(index: int) -> void:
 	var lip := _surface_y(verts, indices, Vector2(0.281, 0.013))
 	if hole != -INF or sump > -0.12 or sump < -0.184 or lip < 0.0:
 		_failures.append("Sink %d: aperture %f, sump %f, lip %f." % [index, hole, sump, lip])
+	for corner: Vector2 in [Vector2(.27,.33), Vector2(-.27,.33), Vector2(.27,-.33), Vector2(-.27,-.33)]:
+		if _surface_y(verts, indices, corner) < 0.0:
+			_failures.append("Sink %d leaves a gap at its rectangular cut corner %s." % [index, corner])
 	var centre := bowl.global_position
 	var drain := _visible_bounds(prefix + "StrainerRing")
 	if drain.end.y > centre.y - 0.14 or drain.end.y < centre.y - 0.192:

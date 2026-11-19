@@ -3,9 +3,9 @@
 [ext_resource type="Material" path="res://assets/materials/laboratory/sink_edge.tres" id="mat_sink_edge"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/drain_ink.tres" id="mat_drain_ink"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/metal_frame.tres" id="mat_metal_frame"]
-[ext_resource type="Material" path="res://assets/materials/laboratory/metal_pale.tres" id="mat_metal_pale"]
-[ext_resource type="Material" path="res://assets/materials/laboratory/metal_dark.tres" id="mat_metal_dark"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/accent_oxide.tres" id="mat_accent_oxide"]
+[ext_resource type="Material" path="res://assets/materials/laboratory/metal_dark.tres" id="mat_metal_dark"]
+[ext_resource type="Material" path="res://assets/materials/laboratory/metal_pale.tres" id="mat_metal_pale"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/ceramic_white.tres" id="mat_ceramic_white"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/glassware.tres" id="mat_glassware"]
 [ext_resource type="Material" path="res://assets/materials/laboratory/bottle_smoke.tres" id="mat_bottle_smoke"]
@@ -391,37 +391,37 @@ cast_shadow = 0
 [node name="TapCollar" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(-0.374, 0.014, 0)
 mesh = SubResource("CylinderMesh_art6")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 cast_shadow = 0
 
 [node name="TapSpout" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(-0.374, 0, 0)
 mesh = SubResource("ArrayMesh_art7")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 
 [node name="TapAerator" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(0.006, 0.279, 0)
 mesh = SubResource("CylinderMesh_art8")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 cast_shadow = 0
 
 [node name="TapOutlet" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(0.006, 0.268, 0)
 mesh = SubResource("CylinderMesh_art9")
-material_override = ExtResource("mat_metal_dark")
+material_override = ExtResource("mat_metal_frame")
 cast_shadow = 0
 
 [node name="TapValve" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(-0.374, 0.109, 0)
 mesh = SubResource("CylinderMesh_art10")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 rotation_degrees = Vector3(90, 0, 0)
 cast_shadow = 0
 
 [node name="TapLever" type="MeshInstance3D" parent="WashStation/Sink0"]
 position = Vector3(-0.331, 0.109, 0.025)
 mesh = SubResource("BoxMesh_art11")
-material_override = ExtResource("mat_metal_dark")
+material_override = ExtResource("mat_metal_frame")
 cast_shadow = 0
 
 [node name="AccessPanel" type="MeshInstance3D" parent="WashStation/Sink0"]
@@ -491,37 +491,37 @@ cast_shadow = 0
 [node name="TapCollar" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(-0.374, 0.014, 0)
 mesh = SubResource("CylinderMesh_art6")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 cast_shadow = 0
 
 [node name="TapSpout" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(-0.374, 0, 0)
 mesh = SubResource("ArrayMesh_art7")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 
 [node name="TapAerator" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(0.006, 0.279, 0)
 mesh = SubResource("CylinderMesh_art8")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 cast_shadow = 0
 
 [node name="TapOutlet" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(0.006, 0.268, 0)
 mesh = SubResource("CylinderMesh_art9")
-material_override = ExtResource("mat_metal_dark")
+material_override = ExtResource("mat_metal_frame")
 cast_shadow = 0
 
 [node name="TapValve" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(-0.374, 0.109, 0)
 mesh = SubResource("CylinderMesh_art10")
-material_override = ExtResource("mat_metal_pale")
+material_override = ExtResource("mat_sink_edge")
 rotation_degrees = Vector3(90, 0, 0)
 cast_shadow = 0
 
 [node name="TapLever" type="MeshInstance3D" parent="WashStation/Sink1"]
 position = Vector3(-0.331, 0.109, 0.025)
 mesh = SubResource("BoxMesh_art11")
-material_override = ExtResource("mat_metal_dark")
+material_override = ExtResource("mat_metal_frame")
 cast_shadow = 0
 
 [node name="AccessPanel" type="MeshInstance3D" parent="WashStation/Sink1"]
