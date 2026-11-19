@@ -153,3 +153,34 @@ func _bone_named(resolved: Dictionary, canonical: String, fallback: String) -> i
 	if bone_name.is_empty():
 		bone_name = fallback
 	return _skeleton.find_bone(bone_name)
+
+
+# --- holding a chair ---------------------------------------------------------------
+#
+# The two things a body does to a chair are take hold of it and let go, and both of them are
+# the same performance in both directions: the hand arrives, the chair moves, the hand leaves.
+# Keeping the choreography here rather than in the controller is what stops the controller
+# growing another fifty lines for each prop that has a hand on it.
+
+
+## Takes hold of `target` and returns the tween that lasts the reach. The caller waits on it
+## before moving whatever the hand is on.
+func take_hold(target: Vector3, seconds: float) -> Tween:
+	reach_to(target)
+	var tween := create_tween()
+	tween.tween_method(_set_weight_from_tween, 0.0, 1.0, seconds)
+	return tween
+
+
+## Lets go over `seconds`, then hands the arm back to the clip.
+func let_go(seconds: float) -> Tween:
+	var tween := create_tween()
+	tween.tween_method(_set_weight_from_tween, get_weight(), 0.0, seconds)
+	tween.tween_callback(release)
+	return tween
+
+
+## `Tween.tween_method` needs a `Callable` with a concrete float parameter; `set_weight` is the
+## one thing that changes, so the adapter is one line instead of a lambda at every call site.
+func _set_weight_from_tween(value: float) -> void:
+	set_weight(value)

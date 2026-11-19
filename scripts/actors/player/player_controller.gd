@@ -887,19 +887,16 @@ func _reach_for_chair() -> void:
 	var at := _seated_chair.global_position
 	if _seated_chair.has_method("get_back_point"):
 		at = _seated_chair.call("get_back_point")
-	reach.call("reach_to", at)
-	var tween := create_tween()
-	tween.tween_method(func(value: float) -> void: reach.call("set_weight", value), 0.0, 1.0, CHAIR_REACH_SECONDS)
+	# The choreography of a hand on a prop lives in the reach itself; this only says which
+	# point of which chair.
+	reach.call("take_hold", at, CHAIR_REACH_SECONDS)
 
 
 ## Lets go: the arm eases back under the clip's control.
 func _release_chair() -> void:
-	if _arm_reach == null:
+	if _arm_reach == null or not is_instance_valid(_arm_reach):
 		return
-	var reach := _arm_reach
-	var tween := create_tween()
-	tween.tween_method(func(value: float) -> void: reach.call("set_weight", value), reach.call("get_weight"), 0.0, CHAIR_REACH_SECONDS)
-	tween.tween_callback(func() -> void: reach.call("release"))
+	_arm_reach.call("let_go", CHAIR_REACH_SECONDS)
 
 
 ## The reach, built on first use against this body's model.
