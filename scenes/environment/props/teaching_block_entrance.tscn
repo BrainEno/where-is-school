@@ -84,7 +84,7 @@ size = Vector3(0.052, 0.31, 0.066)
 size = Vector3(0.061, 0.058, 0.152)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art15"]
-size = Vector3(0.061, 0.058, 0.173)
+size = Vector3(0.056, 0.058, 0.173)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art16"]
 size = Vector3(6.72, 1.58, 0.72)
@@ -164,7 +164,7 @@ cast_shadow = 0
 [node name="GlassSafety" type="StaticBody3D" parent="Left"]
 position = Vector3(0, 0, 0)
 rotation_degrees = Vector3(0, 0, 0)
-collision_layer = 4
+collision_layer = 20
 collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="Left/GlassSafety"]
@@ -274,7 +274,7 @@ cast_shadow = 0
 [node name="GlassSafety" type="StaticBody3D" parent="Right"]
 position = Vector3(0, 0, 0)
 rotation_degrees = Vector3(0, 0, 0)
-collision_layer = 4
+collision_layer = 20
 collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="Right/GlassSafety"]

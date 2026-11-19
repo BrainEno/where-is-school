@@ -367,6 +367,9 @@ func _check_glass_entrance() -> void:
 	pose.origin = doorway.to_global(Vector3(0, 0.045, 1.35))
 	_check.expect(not _player.test_move(pose, Vector3.FORWARD * 2.7),
 		"An invisible barrier crosses the centre of the glass entrance.")
+	var nav := inside.get_node(^"Navigation") as LocationNavigation
+	if _check.expect(await Harness.wait_until(nav.is_synchronized, 5.0), "01 never finished its navigation bake."):
+		_check_entrance_route(nav.get_navigation_map(), doorway, arrival.global_position)
 
 	# In the default camera basis W+D steps north. This crosses the portal with
 	# actual continuous movement: no reload, no activation and no teleport.
@@ -397,6 +400,24 @@ func _check_glass_entrance() -> void:
 		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
 			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
 				await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance")
+
+
+## A long click from outside should turn through the opening, not across a sill.
+func _check_entrance_route(map: RID, doorway: Node3D, from: Vector3) -> void:
+	var hall := doorway.to_global(Vector3(6.3, 0, -2.0))
+	var route := NavigationServer3D.map_get_path(map, from, hall, true)
+	if not _check.expect(not route.is_empty() and route[-1].distance_to(hall) < 0.6,
+		"The apron route to the hall is partial: %s." % str(route)):
+		return
+	for i in range(1, route.size()):
+		var a := doorway.to_local(route[i - 1])
+		var b := doorway.to_local(route[i])
+		if a.z > 0.0 and b.z <= 0.0:
+			var threshold := a.lerp(b, a.z / (a.z - b.z))
+			_check.expect(absf(threshold.x) < 1.14,
+				"The baked route sent the player through a side pane: %s." % threshold)
+			return
+	_check.fail("The baked route never crossed the 01 threshold.")
 
 
 func _check_directory(corridor: LocationRoot) -> void:

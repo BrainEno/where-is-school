@@ -22,7 +22,7 @@ from build_playground_art import (  # noqa: E402
     Builder, HIDE, court_landmarks, material_for, plane, quad, school_exit_fittings,
     school_plinth_returns, srgb, vec3,
 )
-from build_outdoor_locations import build_playground  # noqa: E402
+from build_outdoor_locations import BAKE_ONLY_LAYER, PLAYER_ONLY_LAYER, build_playground  # noqa: E402
 
 # Geometry in metres. +Z is the local face of each facade. Upper wings are set back
 # west and north of the lower walk (no upper slab between the fixed camera and player).
@@ -469,13 +469,14 @@ def teaching_entrance():
             b.shape(part+"Body", edge, (direction*x, 1.32, 0), (width, 2.64, 0.35))
             b.box(part, edge, (direction*x, 1.32, 0), (width, 2.64, 0.35), "entry_glaze", shadow=True)
         b.box("Mullion", edge, (direction*2.14, 1.28, 0), (0.061, 2.54, 0.17), "entry_glaze")
-        # The plinth keeps the bake from offering paths through the panes.
-        # Like the galleries' knee walls it still sits below the visible glass.
+        # The sill sits under the pane, not across the clear opening.
         kick_pos, kick_size = (direction*2.18, 0.185, 0), (1.55, 0.38, 0.14)
         b.shape("KickBody", edge, kick_pos, kick_size)
         b.box("Kick", edge, kick_pos, kick_size, "entry_glaze")
         b.flat("Pane", edge, quad(b, 1.57, 2.26), "entry_pane", (direction*2.18, 1.44, 0.018))
-        safety = b.shell("GlassSafety", edge, layer=4)
+        # An apron-to-stair route otherwise treats the low kick as a voxel step.
+        # Let the full pane take part in the bake without adding it to pick rays.
+        safety = b.shell("GlassSafety", edge, layer=PLAYER_ONLY_LAYER | BAKE_ONLY_LAYER)
         b.shape("Pane", safety, (direction*2.18, 1.32, 0.018), (1.58, 2.64, 0.10))
         # Short opaque silk-screen bands give the pane a readable silhouette
         # from either side without a second transparency layer to depth-sort.
@@ -487,7 +488,7 @@ def teaching_entrance():
             for i, y in enumerate((0.91, 1.15)):
                 y += 0.011 if face == "Inside" else 0
                 b.box(f"{face}Mount{i}", edge, (direction*1.65, y, (z+0.018)*0.5),
-                      (0.061, 0.058, abs(z-0.018)+0.015), "brass_rule")
+                      (0.056 if face == "Inside" else 0.061, 0.058, abs(z-0.018)+0.015), "brass_rule")
     top = b.shell("Header", ".", groups=("camera_occluder",))
     # Match the projecting cap's silhouette: the old slim lintel volume missed
     # the camera ray while the cap itself still covered the player inside 01.
