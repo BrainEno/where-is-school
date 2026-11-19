@@ -52,6 +52,34 @@ jobs:
           mapfile -t files < <(find scripts scenes tests addons -name '*.gd' | sort)
           .venv/bin/gdparse "${files[@]}"
 
+      - name: Gate new GDScript quality debt
+        shell: bash
+        env:
+          QUALITY_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            .venv/bin/python tools/check_gdscript_quality.py --inventory
+            exit 0
+          fi
+          if [[ ! "$QUALITY_BASE" =~ ^[0-9a-f]{40}$ || "$QUALITY_BASE" =~ ^0+$ ]]; then
+            echo 'A PR or push must supply an actual GDScript quality comparison base.' >&2
+            exit 2
+          fi
+          # The checkout is shallow. Fetch at most the missing base commit, not the
+          # full history with earlier versions of the models and screenshots.
+          if ! git cat-file -e "${QUALITY_BASE}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --no-recurse-submodules --depth=1 origin "$QUALITY_BASE"
+          fi
+          .venv/bin/python tools/check_gdscript_quality.py --base "$QUALITY_BASE"
+
+      - name: Exercise the GDScript quality gate and its CI wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          .venv/bin/python tests/gdscript_quality_test.py
+          .venv/bin/python tests/gdscript_quality_ci_test.py
+
       - name: Check Python tools and asset sources without rewriting them
         shell: bash
         run: |

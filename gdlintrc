@@ -1,0 +1,18 @@
+# Curated, incremental policy for production GDScript. Keep gdtoolkit's default
+# naming patterns and duplicate-load detection; do not require mass reformatting.
+# tools/check_gdscript_quality.py compares the results against an explicit Git base.
+max-file-lines: 600
+disable:
+  - class-definitions-order
+  - comparison-with-itself
+  - expression-not-assigned
+  - function-arguments-number
+  - max-line-length
+  - max-public-methods
+  - max-returns
+  - mixed-tabs-and-spaces
+  - no-elif-return
+  - no-else-return
+  - trailing-whitespace
+  - unnecessary-pass
+  - unused-argument
