@@ -1,0 +1,109 @@
+name: Teacher B asset review
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/teacher-b-review.yml'
+      - '.godot-version'
+      - 'art/character_models/teacher_b/**'
+      - 'scenes/dev/teacher_b/**'
+      - 'tests/teacher_b_review_test.gd*'
+      - 'assets/shaders/characters/character_paint.gdshaderinc'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-godot
+      - name: Measure staged GLB with the model-library reader
+        shell: bash
+        run: |
+          PYTHONPATH=tools python3 - <<'PY'
+          from pathlib import Path
+          from model_library import audit, report, ROOT
+          path = Path(ROOT, "scenes/dev/teacher_b/teacher_b.glb")
+          problems, notes, measured = audit([str(path)])
+          print(report(measured))
+          for line in notes:
+              print("::warning title=Teacher B model budget::" + line)
+          for line in problems:
+              print("::error title=Teacher B GLB contract::" + line)
+          if problems:
+              raise SystemExit(1)
+          PY
+      - name: Import and audit the review asset
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p ci-logs
+          code=0
+          godot --headless --path . --import > ci-logs/b_import.log 2>&1 || code=$?
+          echo "Cold import exit=${code}"
+          # Like the main import job, keep the first pass and check its actual product.
+          scene=$(grep -o 'res://\.godot/imported/[^" ]*\.scn' scenes/dev/teacher_b/teacher_b.glb.import | head -1)
+          if [ "$code" -ge 128 ] || [ -z "$scene" ] || [ ! -s "${scene#res://}" ]; then
+            tail -40 ci-logs/b_import.log
+            echo '::error title=Teacher B import::The committed sidecar did not produce the skinned scene.'
+            exit 1
+          fi
+          source tools/ci_run_check.sh
+          run_check capture_script 120 godot --headless --path . --check-only --script res://tests/teacher_b_review_test.gd
+      - name: Check imported skin and replay gating
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          run_check teacher_b 100 godot --headless --path . --script res://tests/teacher_b_review_test.gd || status=1
+          run_check b_reveal_timing 300 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || status=1
+          exit "$status"
+      - name: Photograph B and the lead on the same classroom mark
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          export LIBGL_ALWAYS_SOFTWARE=1
+          run_check teacher_b_capture 150 xvfb-run -a --server-args="-screen 0 1280x800x24" \
+            godot --path . --resolution 1120x720 --rendering-method gl_compatibility \
+            --script res://tests/teacher_b_review_test.gd -- --capture || status=1
+          if grep -q 'SHADER ERROR' ci-logs/teacher_b_capture.log; then
+            grep -m1 -A4 'SHADER ERROR' ci-logs/teacher_b_capture.log
+            echo '::error title=Teacher B painterly look::Shader compile error; see capture log.'
+            status=1
+          fi
+          exit "$status"
+      - name: Prepare compact comparison crops
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/b-image"
+          "$RUNNER_TEMP/b-image/bin/pip" -q install Pillow==11.3.0
+          "$RUNNER_TEMP/b-image/bin/python" art/character_models/teacher_b/compose_review.py --classroom-only
+      # The artifact holds lossless originals. Small crops in check annotations are also
+      # readable in environments that can reach api.github.com but not artifact storage.
+      - name: Publish comparison (1-10)
+        run: sed -n '1,10p' builds/teacher-b-review/crop-parts.txt
+      - name: Publish comparison (11-20)
+        run: sed -n '11,20p' builds/teacher-b-review/crop-parts.txt
+      - name: Publish comparison (21-30)
+        run: sed -n '21,30p' builds/teacher-b-review/crop-parts.txt
+      - name: Publish comparison (31-40)
+        run: sed -n '31,40p' builds/teacher-b-review/crop-parts.txt
+      - name: Upload exact-head frames and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: teacher-b-review-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            builds/teacher-b-review/classroom/*.png
+            builds/teacher-b-review/classroom-comparison.jpg
+            ci-logs/*.log
+          if-no-files-found: error
+          retention-days: 30
