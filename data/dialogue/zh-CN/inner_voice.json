@@ -115,85 +115,142 @@
       ]
     },
     "echo_stain": {
-      "default_source": "recalled",
-      "subjective": false,
       "start": "es_1",
       "nodes": [
         {
           "id": "es_1",
           "speaker": "voice_echo",
-          "text": "这块水印我以前见过。不在这个花坛，在另一面墙上，高度也高一些。"
+          "text": "这块水印我以前见过。不在这个花坛，在另一面墙上，高度也高一些。",
+          "check": {
+            "ability": "echo",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "es_ok",
+            "failure": "es_bad"
+          }
         },
         {
-          "id": "es_2",
+          "id": "es_ok",
           "speaker": "voice_echo",
-          "text": "那时候有人每天往同一处泼水。说是驱虫。谁说的我记不住了。"
+          "text": "那时候有人每天往同一处泼水。说是驱虫。谁说的我记不住了。",
+          "next": "es_ok2"
         },
         {
-          "id": "es_3",
+          "id": "es_ok2",
           "speaker": "protagonist",
-          "text": "你蹲下去比对影子。水印的下沿比墙根的苔更旧，边缘却更干净——像是最近才被谁描过一遍。"
+          "text": "你蹲下去比对影子。水印的下沿比墙根的苔更旧，边缘却更干净——像是最近才被谁描过一遍。",
+          "next": "es_ok3"
         },
         {
-          "id": "es_4",
+          "id": "es_ok3",
           "speaker": "voice_echo",
           "text": "也可能是我把两件事缝在一起了。这种事我常干。你信一半就行。",
+          "next": null
+        },
+        {
+          "id": "es_bad",
+          "speaker": "voice_echo",
+          "text": "……我刚才说到哪儿了。这块水印，我看它就像看一块脏。",
+          "next": "es_bad2"
+        },
+        {
+          "id": "es_bad2",
+          "speaker": "protagonist",
+          "text": "你蹲下去比对影子。水印的下沿比墙根的苔更旧，边缘却更干净——像是最近才被谁描过一遍。这一点你自己看得出来，不用谁提醒。",
           "next": null
         }
       ]
     },
     "echo_desk": {
-      "default_source": "recalled",
-      "subjective": false,
       "start": "ed_1",
       "nodes": [
         {
           "id": "ed_1",
           "speaker": "voice_echo",
-          "text": "最靠边那个名字，你写过。"
+          "text": "最靠边那个名字，你写过。",
+          "check": {
+            "ability": "echo",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "ed_ok",
+            "failure": "ed_bad"
+          }
         },
         {
-          "id": "ed_2",
-          "speaker": "protagonist",
-          "text": "刻痕比你的字浅，笔画的方向也不像右手写的。"
-        },
-        {
-          "id": "ed_3",
+          "id": "ed_ok",
           "speaker": "voice_echo",
-          "text": "你写过它，但没刻过它。你把它写在别的东西上，写过很多遍，写到那个名字自己没了意思。"
+          "text": "你写过它，但没刻过它。你把它写在别的东西上，写过很多遍，写到那个名字自己没了意思。",
+          "next": "ed_ok2"
         },
         {
-          "id": "ed_4",
+          "id": "ed_ok2",
+          "speaker": "protagonist",
+          "text": "刻痕比你的字浅，笔画的方向也不像右手写的。",
+          "next": "ed_ok3"
+        },
+        {
+          "id": "ed_ok3",
           "speaker": "voice_echo",
           "text": "写在什么上面？问得好。我只记得手腕的角度——写字的时候，桌子比这张矮一截。",
+          "next": null
+        },
+        {
+          "id": "ed_bad",
+          "speaker": "voice_echo",
+          "text": "这个名字……你的手在这张桌子上动过。动过多少次，我说不出来。",
+          "next": "ed_bad2"
+        },
+        {
+          "id": "ed_bad2",
+          "speaker": "protagonist",
+          "text": "刻痕比你的字浅，笔画的方向也不像右手写的。你没刻过它，但你还是认得出它像谁的字。",
           "next": null
         }
       ]
     },
     "echo_directory": {
-      "default_source": "recalled",
-      "subjective": false,
       "start": "ec_1",
       "nodes": [
         {
           "id": "ec_1",
           "speaker": "voice_echo",
-          "text": "这块牌子以前只有一排。"
+          "text": "这块牌子以前只有一排。",
+          "check": {
+            "ability": "echo",
+            "difficulty": 8,
+            "kind": "hidden",
+            "success": "ec_ok",
+            "failure": "ec_bad"
+          }
         },
         {
-          "id": "ec_2",
-          "speaker": "protagonist",
-          "text": "第二排的螺丝孔没有锈，孔沿的漆还很锐。它是最近才被加上去的。"
-        },
-        {
-          "id": "ec_3",
+          "id": "ec_ok",
           "speaker": "voice_echo",
-          "text": "我说的「以前」不是去年。我不给年份。"
+          "text": "我说的「以前」不是去年。我不给年份。",
+          "next": "ec_ok2"
         },
         {
-          "id": "ec_4",
+          "id": "ec_ok2",
+          "speaker": "protagonist",
+          "text": "第二排的螺丝孔没有锈，孔沿的漆还很锐。它是最近才被加上去的。",
+          "next": "ec_ok3"
+        },
+        {
+          "id": "ec_ok3",
           "speaker": "voice_echo",
           "text": "而且我可能只记得它在别处的那一块。这一栋楼有没有过「以前」，我拿不准。",
+          "next": null
+        },
+        {
+          "id": "ec_bad",
+          "speaker": "voice_echo",
+          "text": "两排？一排？我没法给你数。看牌子这种事，我一直不牢靠。",
+          "next": "ec_bad2"
+        },
+        {
+          "id": "ec_bad2",
+          "speaker": "protagonist",
+          "text": "第二排的螺丝孔没有锈，孔沿的漆还很锐。它是最近才被加上去的——这句不用谁来告诉你。",
           "next": null
         }
       ]

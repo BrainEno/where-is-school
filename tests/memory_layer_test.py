@@ -376,6 +376,53 @@ def check_parity() -> None:
                     f"{path.name}/{conversation_id}/{first['id']}: choice count differs.",
                 )
 
+
+## A passive rule fires without the player choosing to look, so the roll behind it is hidden and
+## it must be the first thing in its conversation: the voice speaks before the player can act.
+## The engine test states this too; restating it here means an edit that breaks it fails in
+## seconds rather than after a fourteen-minute engine run.
+def check_passive_openings() -> None:
+    registry = load(ROOT / "data" / "abilities" / "abilities.json")
+    # `abilities` is a table keyed by voice and `passives` is a flat list beside it.
+    for rule in registry.get("passives", []):
+        conversation_id = str(rule.get("conversation", ""))
+        if not conversation_id:
+            continue
+        found = None
+        for locale in LOCALES:
+            for path in (DIALOGUE / locale).glob("*.json"):
+                document = load(path)
+                graph = document.get("conversations", {}).get(conversation_id)
+                if graph:
+                    found = (locale, path.name, graph)
+                    break
+            if found:
+                break
+        if not found:
+            failures.append(
+                f"passive '{rule.get('id')}' names conversation '{conversation_id}', which "
+                "no chapter defines."
+            )
+            continue
+        locale, name, graph = found
+        start = graph.get("start")
+        first = next((n for n in graph.get("nodes", []) if n.get("id") == start), None)
+        check(first is not None, f"{name}/{conversation_id}: start node '{start}' is missing.")
+        if first is None:
+            continue
+        roll = first.get("check") or {}
+        check(
+            bool(roll),
+            f"{name}/{conversation_id}: a passive conversation must open with a hidden "
+            "check, and the first node has none.",
+        )
+        if roll:
+            check(
+                str(roll.get("kind", "")) == "hidden",
+                f"{name}/{conversation_id}: a passive roll is hidden, but the opening "
+                f"check is '{roll.get('kind')}'.",
+            )
+
 def main() -> int:
     check_recall_exists()
     check_recall_pairing()
@@ -384,6 +431,7 @@ def main() -> int:
     for locale in LOCALES:
         check_structure(locale)
     check_parity()
+    check_passive_openings()
     if failures:
         for failure in failures:
             print(f"MEMORY_LAYER_FAILURE: {failure}")
