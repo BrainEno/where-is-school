@@ -190,7 +190,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends xvfb xauth libgl1-mesa-dri
       - uses: ./.github/actions/setup-godot
-      - name: Import and render the live classroom
+      - name: Import the project and check the bag source
         shell: bash
         run: |
           set -euo pipefail
@@ -198,36 +198,52 @@ jobs:
           printf 'head=%s\nengine=%s\n' "$HEAD_SHA" "$(godot --version)" > "$CI_LOG_DIR/BUILD.txt"
           godot --headless --path . --import > "$CI_LOG_DIR/IMPORT.log" 2>&1
           python3 art/classroom/build_schoolbag.py --check
+      - name: Exercise mouse and touch in the live classroom
+        shell: bash
+        run: |
+          set -uo pipefail
           source tools/ci_run_check.sh
-          run_check classroom_motion 140 xvfb-run -a --server-args='-screen 0 1280x720x24' \
-            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
-            --resolution 1120x630 --rendering-method gl_compatibility --rendering-driver opengl3 \
-            --script res://tests/capture_classroom_motion.gd -- "--output=$CI_LOG_DIR"
-      - name: Report the measured poses
+          for mode in mouse touch; do
+            args=("--output=$CI_LOG_DIR/$mode")
+            if [ "$mode" = touch ]; then args+=(--mobile-preview); fi
+            run_check "classroom_motion_$mode" 140 xvfb-run -a --server-args='-screen 0 1280x720x24' \
+              env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
+              --resolution 1120x630 --rendering-method gl_compatibility --rendering-driver opengl3 \
+              --script res://tests/capture_classroom_motion.gd -- "${args[@]}" || true
+          done
+          run_check_summary
+      - name: Report first-import diagnostics
         if: always()
         shell: bash
         run: |
-          set -euo pipefail
           grep -m 6 -Ee "SCRIPT ERROR|ERROR: " "$CI_LOG_DIR/IMPORT.log" | while IFS= read -r line; do
             echo "::notice title=classroom motion import::$line"
           done || true
-          log="$CI_LOG_DIR/classroom_motion.log"
-          if test -f "$log"; then
-            grep -m 8 -E '^MOTION_|SCRIPT ERROR|TEST FAILURE|ERROR:|^PASS:' "$log" | while IFS= read -r line; do
-              echo "::notice title=classroom motion measurement::$line"
+      - name: Report motion measurements and runtime diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for log in "$CI_LOG_DIR"/classroom_motion_*.log; do
+            test -f "$log" || continue
+            grep -m 4 -E 'TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|ERROR:|WARNING:' "$log" | while IFS= read -r line; do
+              echo "::notice title=classroom motion diagnostic::$line"
             done
-          fi
+            echo "::notice title=$(basename "$log") measurements::$(grep '^MOTION_' "$log" | paste -sd'|' -)"
+          done
       - name: Preview the returned pose
         if: always()
         env:
           FRAME: 03_returned_from_aisle
         run: &motion_preview |
           set -euo pipefail
-          file="$CI_LOG_DIR/$FRAME.jpg"
+          file="$CI_LOG_DIR/${MODE:-mouse}/$FRAME.jpg"
           test -f "$file" || exit 0
           sha=$(sha256sum "$file" | cut -d' ' -f1)
           mapfile -t parts < <(base64 -w 4000 "$file")
-          test "${#parts[@]}" -le 10 # GitHub's limit is per step
+          if [ "${#parts[@]}" -gt 10 ]; then # GitHub's limit is per step
+            echo "::notice::Preview does not fit; download the full frame in the artifact."
+            exit 0
+          fi
           for i in "${!parts[@]}"; do
             echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
           done
@@ -245,6 +261,17 @@ jobs:
         if: always()
         env:
           FRAME: 05_rummaging
+        run: *motion_preview
+      - name: Preview the original inspection
+        if: always()
+        env:
+          FRAME: 06_inspection
+        run: *motion_preview
+      - name: Preview the touch return
+        if: always()
+        env:
+          MODE: touch
+          FRAME: 07_touch_returned
         run: *motion_preview
       - name: Publish viewport frames and motion log
         if: always()

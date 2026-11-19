@@ -27,7 +27,12 @@ func _ready() -> void:
 
 
 func _bind_player() -> void:
-	_seat.player = get_tree().get_first_node_in_group(player_group) as PlayerController
+	var player := get_tree().get_first_node_in_group(player_group) as PlayerController
+	_seat.player = player
+	# Continue restores a position, not an in-progress pose. At the wake mark,
+	# a standing player needs the chair at the clear stop, even on an older save.
+	if player != null and not player.is_seated() and player.global_position.distance_to(_chair.home_mark()) < 0.025:
+		_chair.snap_back()
 	_update_offer()
 
 

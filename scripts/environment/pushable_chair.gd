@@ -10,6 +10,7 @@ const SOLID_LAYER := 4
 var _home_position: Vector3
 var _pushed_position: Vector3
 var _pushed := false
+var _cue_pending := false
 
 @onready var _body: StaticBody3D = get_node_or_null(^"Solid")
 @onready var seat_mark: Marker3D = get_node_or_null(^"SeatMark")
@@ -42,20 +43,31 @@ func grip_point() -> Vector3:
 
 
 func start_slide() -> void:
+	_cue_pending = true
 	_set_solid(false)
 
 
 func sample_slide(fraction: float) -> void:
+	var previous := position
 	position = _home_position.lerp(_pushed_position, clampf(fraction, 0.0, 1.0))
+	# One cue when the chair actually starts moving; snaps and repeated samples
+	# (including resuming a paused beat) never trigger a new scrape.
+	if _cue_pending and not previous.is_equal_approx(position):
+		_cue_pending = false
+		var audio := get_node_or_null(^"/root/WorldAudio")
+		if audio != null:
+			audio.call(&"play_chair")
 
 
 func snap_back() -> void:
+	_cue_pending = false
 	_pushed = true
 	sample_slide(1.0)
 	_set_solid(true)
 
 
 func snap_home() -> void:
+	_cue_pending = false
 	_pushed = false
 	sample_slide(0.0)
 	_set_solid(false)

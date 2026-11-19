@@ -3,6 +3,7 @@ extends SceneTree
 ## with the baseline and use the real gameplay camera for pointer/inspection checks.
 
 const Harness = preload("res://tests/test_harness.gd")
+const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const APPROACH := Vector3(-0.75, 0, 2.15)
 const OTHER_AISLE := Vector3(-2.43, 0, 2.83)
 const CAMERA_AT := Vector3(0.65, 1.46, 2.48)
@@ -15,6 +16,10 @@ var _player: PlayerController
 var _sequence: OpeningSequence
 var _interaction: InteractionController
 var _dialogue: DialogueController
+var _pointer: PointerNavigator
+var _ui: GameUI
+var _lid: Node3D
+var _brace: Marker3D
 var _room: LocationRoot
 var _chair: PushableChair
 var _seat: Interactable
@@ -49,6 +54,9 @@ func _run() -> void:
 		Engine.get_version_info().string, DisplayServer.get_name(),
 		RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name(),
 	])
+	if MobileLayout.enabled:
+		Input.emulate_mouse_from_touch = true
+		Input.emulate_touch_from_mouse = true
 	Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
 	var loc := root.get_node_or_null("Loc")
@@ -64,6 +72,7 @@ func _run() -> void:
 	_bones = _animator.get_bind_report()["resolved"]
 	_room = (_main.get_node(^"LocationHost") as LocationHost).get_current()
 	_interaction = _player.get_node(^"InteractionController") as InteractionController
+	_pointer = _player.get_node(^"PointerNavigator") as PointerNavigator
 	_dialogue = _main.get_node(^"DialogueController") as DialogueController
 	_chair = _room.get_node(^"Furniture/DeskB2/Chair") as PushableChair
 	_seat = _room.find_interactable(&"chair_sit")
@@ -73,7 +82,10 @@ func _run() -> void:
 		_finish()
 		return
 	_main.get_node(^"InnerVoiceDirector").set_process(false)
-	(_main.get_node(^"GameUI") as GameUI).fade.set_clear()
+	_ui = _main.get_node(^"GameUI") as GameUI
+	_lid = _room.get_node(^"Furniture/DeskB2/Schoolbag/Lid") as Node3D
+	_brace = _room.get_node(^"Furniture/DeskB2/Schoolbag/MouthBrace") as Marker3D
+	_ui.fade.set_clear()
 	_player.settle_wake_seated_pose(0.0)
 	_player.set_camera_roll(0.0)
 	_sequence.allow_player_control()
@@ -81,6 +93,14 @@ func _run() -> void:
 		_finish()
 		return
 
+	if MobileLayout.enabled:
+		await _run_touch()
+	else:
+		await _run_desktop()
+	_finish()
+
+
+func _run_desktop() -> void:
 	_review = Camera3D.new()
 	_main.add_child(_review)
 	_review.position = CAMERA_AT
@@ -98,7 +118,7 @@ func _run() -> void:
 		var offset := _chair.to_local(_player.global_position)
 		_check.expect(offset.z < -0.05 and offset.z > -0.58, "Chair and lift did not overlap in time.")
 		_check.expect(not _seat.can_interact(), "A moving chair still offered a second activation.")
-		_check.expect(_foot_on_floor("foot.L"), "The near foot lost floor contact on the lift.")
+		_check_floor_and_grip("rise")
 		await _shot("02_rising")
 	await _wait(func() -> bool: return not _player.is_getting_up(), "stand-up to finish")
 	await _wait(func() -> bool: return _chair_solid().collision_layer == PushableChair.SOLID_LAYER, "solid pushed stop")
@@ -111,7 +131,9 @@ func _run() -> void:
 	if await _phase("classroom_sit", 0.52):
 		_check.expect(not _player.is_seated(), "Sit-idle took over before the chair was home.")
 		_check.expect(_chair_solid().collision_layer == 0, "Chair stayed solid during the pull.")
+		_check_floor_and_grip("pull")
 		await _shot("02b_lowering")
+		await _pause_during_sit()
 	await _wait(func() -> bool: return not _sequence.is_beat_active(), "sit request to finish")
 	_check_seated("returned from right aisle")
 	await _shot("03_returned_from_aisle")
@@ -122,49 +144,166 @@ func _run() -> void:
 	await _wait(func() -> bool: return _chair.is_pushed_back() and not _sequence.is_beat_active(), "repeat stand")
 	_game_camera.current = true
 	await _place(OTHER_AISLE, Vector3.RIGHT)
-	var back := _chair.get_node(^"Back") as Node3D
-	var seat_pixel := _game_camera.unproject_position(back.global_position)
+	var seat_pixel := _seat_pixel()
 	_check.expect(_interaction.get_target_at_screen_position(seat_pixel, false) == _seat,
 		"The backrest pixel selected something other than the pushed chair.")
-	var pointer := _player.get_node(^"PointerNavigator") as PointerNavigator
-	pointer.click_at_screen_position(seat_pixel)
-	await _wait(func() -> bool: return _player.is_seated() and not _sequence.is_beat_active(), "left-aisle click to sit")
-	_check_seated("returned from left aisle")
+	_mouse_click(seat_pixel)
+	_check.expect(not _player.is_seated(), "The click immediately posed the actor at the aisle.")
+	await _wait(_settled_at_seat, "left-aisle mouse click to sit")
+	_check_seated("mouse from left aisle")
 
-	# From the seat a real pointer click can start the search; it includes a stand.
-	# Capture the two separate live prompts, then the wrist/lid and original text.
-	var shell := _room.get_node(^"Furniture/DeskB2/Schoolbag/Shell") as MeshInstance3D
-	var bag_pixel := _game_camera.unproject_position(shell.to_global(shell.get_aabb().get_center()))
-	seat_pixel = _game_camera.unproject_position(back.global_position)
-	_check.expect(_interaction.get_target_at_screen_position(seat_pixel) == _seat, "Seated chair pixel hit the bag.")
+	# From the seat a real click starts the search, including a stand. Both shapes
+	# must pick their own object. The hover override only stabilizes the screenshot.
+	var bag_pixel := _bag_pixel()
+	_check.expect(_interaction.get_target_at_screen_position(_seat_pixel()) == _seat, "Seated chair pixel hit the bag or desk.")
 	_check.expect(_interaction.get_target_at_screen_position(bag_pixel) == _bag, "Bag pixel hit another prop.")
 	_interaction.set_mouse_override(bag_pixel)
 	if await _wait(func() -> bool: return _interaction.get_current_target() == _bag, "bag hover"):
 		await _shot("04_bag_target")
-	pointer.click_at_screen_position(bag_pixel)
+	_mouse_click(bag_pixel)
 	_interaction.clear_mouse_override()
 	if await _phase("schoolbag_search", 0.46):
-		var lid := _room.get_node(^"Furniture/DeskB2/Schoolbag/Lid") as Node3D
-		_check.expect(lid.rotation_degrees.x < -70.0, "The rummage clip did not actually open the bag.")
-		_check.expect(not _dialogue.is_busy() and not _player.is_control_enabled(),
-			"The hands did not own the beat until the inspection.")
+		_check_search()
+		await _shot("05a_search_game_camera")
 		_review.position = Vector3(-0.60, 1.72, 2.55)
 		_review.look_at(Vector3(-0.85, 0.85, 1.40))
 		_review.fov = 53.0
 		_review.current = true
 		await _shot("05_rummaging")
 	_game_camera.current = true
-	if await _wait(func() -> bool:
-		return _dialogue.get_mode() == DialogueController.Mode.INSPECTION,
-		"original inspection to follow the rummage"
-	):
-		_check.expect(StringName(_dialogue.get_current_line().get("inspection_id", "")) == &"classroom_schoolbag",
-			"The stage opened a different inspection.")
-		var lid := _room.get_node(^"Furniture/DeskB2/Schoolbag/Lid") as Node3D
-		_check.expect(absf(lid.rotation.x) < 0.001, "The bag was left open after searching it.")
-		_dialogue.advance_presentation() # reveal the current line without waiting for the typewriter
-		await _shot("06_inspection")
-	_finish()
+	await _finish_search()
+
+
+func _run_touch() -> void:
+	# Native touch path with mobile layout, in the X11 preview of the game.
+	var seat_pixel := _seat_pixel()
+	_check.expect(_interaction.get_target_at_screen_position(seat_pixel) == _seat, "Touch could not target the occupied chair.")
+	_tap(seat_pixel)
+	if not await _wait(func() -> bool: return _chair.is_pushed_back() and not _sequence.is_beat_active(), "stand on tap"):
+		return
+	await _place(APPROACH, Vector3.LEFT)
+	seat_pixel = _seat_pixel()
+	_check.expect(_interaction.get_target_at_screen_position(seat_pixel) == _seat, "Touch could not target the empty chair.")
+	var events := _pointer.get_world_click_event_count()
+	_touch(seat_pixel, true)
+	_touch(seat_pixel, false, true)
+	_check.expect(_pointer.get_world_click_event_count() == events and not _sequence.is_beat_active(),
+		"A canceled chair tap started to walk or sit.")
+	_tap(seat_pixel)
+	_check.expect(not _player.is_seated(), "The tap posed the actor before walking to the seat.")
+	if not await _wait(_settled_at_seat, "right-aisle touch to sit"):
+		return
+	_check_seated("touch from right aisle")
+	await _shot("07_touch_returned")
+	var bag_pixel := _bag_pixel()
+	_check.expect(_interaction.get_target_at_screen_position(bag_pixel) == _bag, "Bag touch ray found the chair or desk instead.")
+	_tap(bag_pixel)
+	if await _phase("schoolbag_search", 0.46):
+		_check_search()
+		await _shot("08_touch_search")
+	await _finish_search()
+
+
+func _settled_at_seat() -> bool:
+	return _player.is_seated() and not _sequence.is_beat_active()
+
+
+func _seat_pixel() -> Vector2:
+	var back := _chair.get_node(^"Back") as Node3D
+	return _game_camera.unproject_position(back.global_position)
+
+
+func _bag_pixel() -> Vector2:
+	var shell := _room.get_node(^"Furniture/DeskB2/Schoolbag/Shell") as MeshInstance3D
+	return _game_camera.unproject_position(shell.to_global(shell.get_aabb().get_center()))
+
+
+func _mouse_click(pixel: Vector2) -> void:
+	var before := _pointer.get_world_click_event_count()
+	for down: bool in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.position = root.get_final_transform() * pixel
+		click.global_position = click.position
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = down
+		_send(click)
+	_check.expect(_pointer.get_world_click_event_count() == before + 1, "Mouse press did not reach world input exactly once.")
+
+
+func _tap(pixel: Vector2) -> void:
+	var before := _pointer.get_world_click_event_count()
+	_check.expect(MobileLayout.safe_rect(_ui.hud).has_point(pixel), "The target pixel is outside the touch safe area.")
+	_touch(pixel, true)
+	_check.expect(_pointer.get_world_click_event_count() == before, "Touch-down activated the prop.")
+	_touch(pixel, false)
+	_check.expect(_pointer.get_world_click_event_count() == before + 1, "A tap did not reach world input exactly once.")
+
+
+func _touch(pixel: Vector2, down: bool, canceled: bool = false) -> void:
+	var touch := InputEventScreenTouch.new()
+	touch.position = root.get_final_transform() * pixel
+	touch.index = 0
+	touch.pressed = down
+	touch.canceled = canceled
+	_send(touch)
+
+
+func _send(event: InputEvent) -> void:
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
+func _pause_during_sit() -> void:
+	var menu := _main.get_node(^"PauseMenu") as PauseMenu
+	var chair_at := _chair.global_position
+	var phase := _animator.get_action_progress()
+	menu.open()
+	await create_timer(0.20, true, false, true).timeout
+	_check.expect(paused and _sequence.is_beat_active() and _player.is_seat_transition_active()
+		and _chair.global_position.is_equal_approx(chair_at) and is_equal_approx(phase, _animator.get_action_progress()),
+		"Opening the real pause menu advanced part of the seat transfer.")
+	menu.close()
+
+
+func _check_floor_and_grip(label: String) -> void:
+	var wrist := _joint("hand.L").distance_to(_chair.grip_point())
+	_check.expect(wrist < 0.12, "%s: chair wrist missed its support by %.3f m." % [label, wrist])
+	_check.expect(_foot_on_floor("foot.L") and _foot_on_floor("foot.R"), "%s: feet lost the floor during load bearing." % label)
+	_check.expect(not _player.test_move(_player.global_transform.translated(Vector3.UP * 0.035),
+		Vector3.ZERO, null, 0.001, true), "%s: the capsule intersects the desk during transfer." % label)
+	print("MOTION_CONTACT %s wrist_gap=%.3f ankle_y=%.3f/%.3f" % [label, wrist, _joint("foot.L").y, _joint("foot.R").y])
+
+
+func _check_search() -> void:
+	var wrist := _joint("hand.R").distance_to(_brace.global_position)
+	_check.expect(_lid.rotation_degrees.x < -70.0, "The rummage clip did not actually open the bag.")
+	_check.expect(wrist < 0.12, "The bracing wrist missed the bag mouth by %.3f m." % wrist)
+	_check.expect(_foot_on_floor("foot.L") and _foot_on_floor("foot.R"), "Searching the bag lost the floor.")
+	_check.expect(not _dialogue.is_busy() and not _player.is_control_enabled() and not _has_missing_book(),
+		"The original inspection or its effect started while the bag was still open.")
+	print("MOTION_CONTACT bag wrist_gap=%.3f lid_deg=%.1f ankle_y=%.3f/%.3f" % [
+		wrist, _lid.rotation_degrees.x, _joint("foot.L").y, _joint("foot.R").y,
+	])
+
+
+func _has_missing_book() -> bool:
+	return bool(root.get_node(^"GameState").call("get_flag", StoryFlags.TEXTBOOK_MISSING, false))
+
+
+func _finish_search() -> void:
+	if not await _wait(func() -> bool: return _dialogue.get_mode() == DialogueController.Mode.INSPECTION,
+		"original inspection to follow the rummage"):
+		return
+	_check.expect(StringName(_dialogue.get_current_line().get("inspection_id", "")) == &"classroom_schoolbag",
+		"The stage opened a different inspection.")
+	_check.expect(absf(_lid.rotation.x) < 0.001, "The bag was left open after searching it.")
+	var entry := root.get_node(^"NarrativeState").call("get_entry", &"bag_missing_textbook") as NarrativeEntry
+	_check.expect(_has_missing_book() and entry != null and entry.source == NarrativeEntry.Source.OBSERVED,
+		"The inspection lost the missing-textbook flag or the journal observation.")
+	_ui.dialogue_panel.complete_reveal()
+	await _shot("06_inspection")
+	_dialogue.advance_presentation()
+	await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(), "control after reading")
 
 
 func _place(at: Vector3, toward: Vector3) -> void:
@@ -233,4 +372,4 @@ func _finish() -> void:
 	if is_instance_valid(_main):
 		_main.queue_free()
 		await process_frame
-	Harness.finish(self, _check.failures, "live seat contacts, two approaches, pointer separation and the staged bag inspection.")
+	Harness.finish(self, _check.failures, "live seat contacts, approach, separate world input and the staged bag inspection (touch=%s)." % MobileLayout.enabled)
