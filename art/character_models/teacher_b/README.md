@@ -17,12 +17,16 @@ extend beyond the reference and are provisional.
   selected armature. The timeline marks **1** (bind), **24** (elbow and fingers)
   and **48** (stride). These are static deformation checkpoints, not performance
   clips. Lens, rims, temples, hinges, hair and earrings are distinct geometry.
-- In Godot, open `scenes/dev/teacher_b/teacher_b_review.tscn` and run the current
-  scene (F6). **1–6** choose full, face, back, elbow/hand, stride and the game
-  camera. **Left/Right** turn the figure. **Tab** switches between B and the
-  current `Protagonist_Character` wrapper in shots 1, 2 and 6; **M** compares B's
-  matte painted finish to the original GLB. Same mark, room lighting and camera
-  scale; the close-up is only re-centered vertically to account for height.
+- Open [`teacher_b_review.tscn`](../../../scenes/dev/teacher_b/teacher_b_review.tscn)
+  in Godot and press **F6**. B starts in her own idle. Click the bottom buttons
+  or press **7** (Idle), **8** (Short walk), **9** (Explain). **Space** pauses or
+  resumes; **R** starts the selected clip again. Press **6**, then **7–9**, to
+  see a clip at gameplay distance.
+- **1–6** select still views of the body, face, back, elbow/hand, stride and the
+  game camera. **Left/Right** turn the figure. **Tab** switches between B and the
+  current `Protagonist_Character` wrapper in views 1, 2 and 6; **M** compares B's
+  matte painted finish to the GLB originals. The comparison uses the same mark,
+  light and camera scale; the face view is only re-centered vertically.
 - `scenes/dev/teacher_b/teacher_b.glb` is the meter-scale **+Y / −Z** export.
   Crown at **1.640 m**, soles at **0**, origin on the centered ankle line. It
   carries one 57-joint armature, normalized four-influence weights, inverse binds,
@@ -41,6 +45,30 @@ The triangle count is descriptive, not a finish criterion: review the head,
 clothing joins, gesture and readability against the **current** protagonist, not
 the retired `protagonist.glb` now used by the seated student.
 
+## B-only motion
+
+[`teacher_b_motion.tres`](../../../scenes/dev/teacher_b/teacher_b_motion.tres)
+is a Godot `AnimationLibrary`, not a retarget of the lead's walk. The dev
+`AnimationPlayer` resolves the imported Skeleton3D and points native tracks
+straight to its joints. No script drives this library in the story. The GLB
+and Blender inspection checkpoints are unchanged.
+
+| Clip | Performance | Playback |
+|---|---|---|
+| `idle` | Uneven standing weight, small breath and glance | 3.8 s loop |
+| `walk` | Measured arm swing and four short steps, both shoes settle | 2.9 s, 0.90 m travel along −Z, one shot |
+| `explain` | Left elbow and wrist lift, independent knuckles and two small beats, then hands down | 3.2 s, one shot |
+
+The walk is an authored **start, walk, stop** for review, not an in-place
+locomotion cycle and not coupled to pathfinding. Root travel and rotations are
+baked at 30 Hz before key reduction; planted ankles are solved against the
+measured leg lengths and sole mesh offline. Every clip writes the same track
+set so switching actions does not retain displaced roots or curled fingers.
+The source is [`build_teacher_b_motion.py`](build_teacher_b_motion.py). With
+NumPy 2.2.6, run `python3 art/character_models/teacher_b/build_teacher_b_motion.py`
+to rebuild or add `--check` to verify the committed library. No donor download
+or Blender install is required for motion-only changes.
+
 ## Source and rights
 
 The geometry recipe is first-party. The face and hand topology, morph offsets,
@@ -51,8 +79,8 @@ Inputs are `makehuman/data/3dobjs/base.obj` (only the `body` shell), relevant
 `targets/` deltas (see the recipe), `rigs/default.mhskel` and
 `rigs/default_weights.mhw`. No MakeHuman executable code, UI, ready-made dressed
 character, hair/clothing, skin texture, eyes or animation is redistributed.
-Glasses, hair, garment surfaces, their skinning and paint, and the review poses
-were made here. Donor CC0 does **not** establish the rights to the owner's
+Glasses, hair, garment surfaces, their skinning and paint, the review poses
+and all three development clips were made here. Donor CC0 does **not** establish the rights to the owner's
 reference or its public reuse. The attachment and the donor archive stay out of
 Git; release use still needs owner approval.
 
@@ -89,6 +117,8 @@ godot --path . --resolution 1120x720 --rendering-method gl_compatibility \
 ```
 
 The last command needs a window. CI uses the project-pinned standard Godot and
-software OpenGL and preserves the original frames and logs in the
-`Teacher B asset review` artifact. Captures are an isolated comparison, not an
-endorsement of a final look, navigation, foot sliding or an in-story entrance.
+software OpenGL. The `Teacher B asset review` artifact has the original frames,
+still comparisons, `teacher-b-motion.webp` and logs. The test samples actual
+skinned sole vertices between animation keys in the staged walk; that check
+is not validation of navigation, slopes, locomotion blending, or a story
+entrance. Visual acceptance and runtime blink/lip sync are separate.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scenes/dev/teacher_b/teacher_b_review.gd" id="1_review"]
 [ext_resource type="PackedScene" path="res://scenes/dev/teacher_b/teacher_b.glb" id="2_teacher"]
@@ -6,6 +6,19 @@
 [ext_resource type="Resource" path="res://scenes/dev/teacher_b/teacher_b_look.tres" id="4_look"]
 [ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="5_lead"]
 [ext_resource type="Script" path="res://scripts/world/camera_rig.gd" id="6_rig"]
+
+[ext_resource type="AnimationLibrary" path="res://scenes/dev/teacher_b/teacher_b_motion.tres" id="7_motion"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_actions"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.07, 0.09, 0.1, 0.86)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
 
 [node name="TeacherBReview" type="Node3D"]
 script = ExtResource("1_review")
@@ -18,6 +31,11 @@ script = ExtResource("1_review")
 script = ExtResource("3_paint")
 look = ExtResource("4_look")
 blinking = false
+
+[node name="Motion" type="AnimationPlayer" parent="TeacherB"]
+libraries = {
+&"teacher_b": ExtResource("7_motion")
+}
 
 [node name="Protagonist" parent="." instance=ExtResource("5_lead")]
 visible = false
@@ -45,3 +63,44 @@ mouse_filter = 2
 position = Vector2(24, 16)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 18
+
+[node name="Actions" type="PanelContainer" parent="Help"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -68.0
+offset_bottom = -18.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_actions")
+
+[node name="Buttons" type="HBoxContainer" parent="Help/Actions"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Idle" type="Button" parent="Help/Actions/Buttons"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+text = "7 待机"
+
+[node name="Walk" type="Button" parent="Help/Actions/Buttons"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+text = "8 短步"
+
+[node name="Explain" type="Button" parent="Help/Actions/Buttons"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+text = "9 抬手讲解"
+
+[node name="Pause" type="Button" parent="Help/Actions/Buttons"]
+layout_mode = 2
+focus_mode = 0
+text = "空格 暂停"
+
+[node name="Restart" type="Button" parent="Help/Actions/Buttons"]
+layout_mode = 2
+focus_mode = 0
+text = "R 从头"
