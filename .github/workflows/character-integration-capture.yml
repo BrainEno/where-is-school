@@ -17,6 +17,7 @@ on:
   pull_request:
     paths:
       - "tests/capture_character_integration.gd"
+      - "tools/capture_character_geometry.sh"
       - ".github/workflows/character-integration-capture.yml"
       - "assets/characters/**"
       - "assets/shaders/characters/**"
@@ -72,21 +73,24 @@ jobs:
             group: dialogue
             variants: "before,after"
             frames: ""
-          # Unlike historical `before`, these compare with the PR's actual base looks.
+          # Two real engine sessions: actual PR base GLBs/looks vs this exact head.
+          # The same head scene/camera/shader/pose code is used for both legs.
           - name: refinement-n
             group: n
             variants: "baseline,after"
-            frames: "body_sun,body_shade,face,cloth,lectern"
+            frames: "body_sun,face,face_three_quarter,hands,cloth,lectern,walk"
           - name: refinement-student
             group: student
             variants: "baseline,after"
             frames: ""
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/setup-godot
 
-      - name: Prepare material-refinement baseline
+      - name: Prepare geometry and material baseline
         if: startsWith(matrix.name, 'refinement-')
         shell: bash
         env:
@@ -99,13 +103,44 @@ jobs:
             > "${RUNNER_TEMP}/character-look-baseline/n.tres"
           git show "${BASE_SHA}:assets/characters/classroom_student/student_look.tres" \
             > "${RUNNER_TEMP}/character-look-baseline/student.tres"
-          echo "Material baseline: ${BASE_SHA}; columns baseline,after; fixed idle/sit pose"
+          git show "${BASE_SHA}:assets/models/teacher-n/teacher-n.glb" \
+            > "${RUNNER_TEMP}/character-look-baseline/n.glb"
+          git show "${BASE_SHA}:assets/models/protagonist/protagonist.glb" \
+            > "${RUNNER_TEMP}/character-look-baseline/student.glb"
+          printf '%s\n' "${BASE_SHA}" > "${RUNNER_TEMP}/character-look-baseline/base-sha.txt"
+          python3 -m venv "${RUNNER_TEMP}/character-evidence-python"
+          "${RUNNER_TEMP}/character-evidence-python/bin/pip" install Pillow==11.3.0
+          echo "Geometry/material baseline: ${BASE_SHA}; left base GLB/look, right head; fixed pose"
 
       - name: Import project
         shell: bash
         run: |
           set -uo pipefail
-          godot --headless --path . --import > import-1.log 2>&1 || true
+          # As in Godot CI, first import may report the theme/font bootstrap error.
+          # It is not a clean-runtime verdict: keep its status/diagnostics, audit every
+          # import destination, then compile the now-imported editor once. Never hide a
+          # crash/timeout or use a second import attempt to replace the original log.
+          import_code=0
+          godot --headless --path . --import > import-1.log 2>&1 || import_code=$?
+          echo "Initial import exit=${import_code}"
+          grep -E "ERROR:|WARNING:|SCRIPT ERROR" import-1.log | head -n 20 || true
+          if [ "${import_code}" -ge 128 ]; then
+            echo "::error title=initial import crashed::exit ${import_code}; inspect import-1.log"
+            exit 1
+          fi
+          missing=0
+          while IFS= read -r sidecar; do
+            while IFS= read -r dest; do
+              if [ -n "${dest}" ] && [ ! -f "${dest#res://}" ]; then
+                echo "MISSING ${dest} (declared by ${sidecar})"
+                missing=1
+              fi
+            done < <(grep -o 'res://\.godot/imported/[^"]*' "${sidecar}" | sort -u)
+          done < <(find . -name '*.import' -not -path './.godot/*' | sort)
+          if [ "${missing}" -ne 0 ]; then
+            echo "::error title=import audit failed::a committed import destination is missing"
+            exit 1
+          fi
           godot --headless --editor --path . --quit > import-2.log 2>&1
           code=$?
           if [ "${code}" -ne 0 ] || grep -qE "SCRIPT ERROR|Parse Error" import-2.log; then
@@ -122,12 +157,16 @@ jobs:
           args="--group=${{ matrix.group }} --variants=${{ matrix.variants }}"
           if [ -n "${{ matrix.frames }}" ]; then args="${args} --frames=${{ matrix.frames }}"; fi
           if [[ "${{ matrix.name }}" == refinement-* ]]; then
-            args="${args} --freeze-pose --baseline-dir=${RUNNER_TEMP}/character-look-baseline"
+            EVIDENCE_PYTHON="${RUNNER_TEMP}/character-evidence-python/bin/python" \
+              bash tools/capture_character_geometry.sh "${{ matrix.group }}" \
+              "${{ matrix.frames }}" "${RUNNER_TEMP}/character-look-baseline"
+            code=$?
+          else
+            xvfb-run -a --server-args="-screen 0 1600x900x24" \
+              godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+              --script res://tests/capture_character_integration.gd -- ${args} > capture.log 2>&1
+            code=$?
           fi
-          xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
-            --script res://tests/capture_character_integration.gd -- ${args} > capture.log 2>&1
-          code=$?
           grep -E "^ARTNOTE: |^CHARACTER_INTEGRATION|SCRIPT ERROR|ERROR:|SHADER ERROR" capture.log | cut -c1-400 | tail -n 150 || true
           grep -E "^ARTSHEET: " capture.log > sheets.txt || true
           : > parts.txt
@@ -152,6 +191,10 @@ jobs:
             failures=$(grep -E "FAILURE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' | tr '\n' '|' | cut -c1-1500)
             echo "::error title=character integration ${{ matrix.name }} failed (exit ${code})::${failures}"
             exit 1
+          fi
+          if [ "${code}" -ne 0 ]; then
+            echo "::error title=character integration ${{ matrix.name }} process failed::exit ${code}; inspect the full artifact logs"
+            exit "${code}"
           fi
           if ! grep -qE "RESULT: SUCCESS" capture.log; then
             tail_lines=$(grep -E "SCRIPT ERROR|ERROR:" capture.log | head -n 8 | tr '\n' '|' | cut -c1-1200)
@@ -216,4 +259,6 @@ jobs:
           path: |
             docs/screenshots/character_integration/
             capture.log
+            geometry-*.log
+            import-*.log
           if-no-files-found: warn

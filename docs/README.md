@@ -23,13 +23,13 @@
 | [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
 | [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 是证据台账而非许可证明；见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
-| [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 导入 3D 模型与字体等资产的合同 | 现行 | 工程 Agent | 2026-11-17 | 来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
-| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-17 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
+| [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 导入 3D 模型与字体等资产的合同 | 现行 | 工程 Agent | 2026-11-18 | 来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；§10.2b 同步 N／学生几何修订合同 |
+| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；本轮补 N／学生派生来源与修改，不等于美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-17 | 集成现状见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
-| [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-17 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) |
-| [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) 同步 |
+| [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§9 为 N／学生几何修订与真实 GLB 对照流程，待所有者验收 |
+| [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §9 几何修订同步，不独立声称获批 |
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 走廊“没有尽头的走廊”美术改造说明 | 现行 | 实现 PR 作者 | 2026-11-11 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
@@ -45,7 +45,7 @@
 | [IMPLEMENTATION_NOTES_PROPS.md](IMPLEMENTATION_NOTES_PROPS.md) | 长椅与书包道具实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
 | [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) | 地图规划中文阅读副本 | 阅读副本 | 内容 Agent | 2026-11-17 | 与 [MAP_PLAN.md](MAP_PLAN.md) 同步 |
-| [MODEL_LIBRARY.md](MODEL_LIBRARY.md) | 可复用模型库与放置状态台账 | 现行 | 工程 Agent | 2026-11-17 | 导入合同见 [ASSET_PIPELINE.md](ASSET_PIPELINE.md) |
+| [MODEL_LIBRARY.md](MODEL_LIBRARY.md) | 可复用模型库与放置状态台账 | 现行 | 工程 Agent | 2026-11-18 | 导入合同见 [ASSET_PIPELINE.md](ASSET_PIPELINE.md)；同步 N／学生当前几何计数，旧审计仍为历史记录 |
 | [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-18 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
 | [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
 | [OFFLINE_DIAGNOSTICS.md](OFFLINE_DIAGNOSTICS.md) | 离线事件审计、导出隐私及开发验证 | 现行 | 工程 Agent | 2026-11-18 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) §7c |

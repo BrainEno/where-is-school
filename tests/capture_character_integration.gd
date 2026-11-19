@@ -36,6 +36,9 @@ extends SceneTree
 ## idle/sit pose in each variant (not for motion/dialogue captures). For a new material
 ## change, `--variants=baseline,after --baseline-dir=<dir>` loads n.tres and student.tres
 ## saved from that change's base; the historical `before` is NOT a current-look baseline.
+## That switch alone DOES NOT replace geometry. tools/capture_character_geometry.sh runs
+## two separate engine sessions with the base/current GLBs and looks and joins only their
+## genuine panels. It records their hashes, code head and base SHA in the artifact.
 ##
 ## Every frame kind becomes one sheet, one column per variant, printed as
 ## `ARTSHEET: <name>.jpg <base64>` for the workflow to publish as annotations; full-size
@@ -65,8 +68,8 @@ const VARIANTS := {
 const GROUP_FRAMES := {
 	"protagonist": ["body_sun", "body_shade", "face", "gameplay"],
 	"q": ["body_sun", "body_backlit", "face", "face_three_quarter", "talk", "walk"],
-	"n": ["body_sun", "body_shade", "face", "cloth", "lectern"],
-	"student": ["face", "face_three_quarter", "cloth", "seated", "gameplay"],
+	"n": ["body_sun", "body_shade", "face", "face_three_quarter", "hands", "cloth", "lectern", "walk"],
+	"student": ["face", "face_three_quarter", "hands", "cloth", "seated", "gameplay"],
 	"lineup": ["lineup_sun", "lineup_shade", "lineup_game"],
 	"dialogue": ["dialogue_q", "dialogue_n"],
 }
@@ -383,6 +386,31 @@ func _frame_seated(variant: String) -> Image:
 	_drop_camera()
 	image.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
 	return _fit(image, box.grow(int(box.size.y * 0.25)), WIDE_PANEL)
+
+
+## A hand in the wrapper's actual held idle/seated pose. Look along its palm plane,
+## choosing the outward side so the body cannot cover it. The camera is identical for
+## the two geometry legs because it is derived only from the unchanged Hand rest/pose.
+func _frame_hands(variant: String) -> Image:
+	var subject := _subject_for_group()
+	await _solo(subject, SUN_SPOT, 15.0)
+	var skeleton := subject.get_skeleton()
+	var resolved: Dictionary = subject.get_bind_report().get("resolved", {})
+	if skeleton == null or not resolved.has("hand.R"):
+		_failures.append("Hand close-up: the wrapper did not resolve hand.R.")
+		return null
+	var bone := skeleton.find_bone(String(resolved["hand.R"]))
+	var hand := skeleton.global_transform * skeleton.get_bone_global_pose(bone)
+	var centre := hand.origin + hand.basis.y.normalized() * 0.065
+	var normal := (-hand.basis.x if _group == "n" else hand.basis.z).normalized()
+	if normal.dot(centre - subject.global_position) < 0.0:
+		normal = -normal
+	var frame := await _frame_from(centre + normal * 0.45 + Vector3.UP * 0.04, centre, 38.0)
+	var image: Image = frame["image"]
+	_drop_camera()
+	image.save_png("%s/%s_hands_%s.png" % [SHOT_DIR, _group, variant])
+	var size := int(image.get_height() * 0.82)
+	return _fit(image, Rect2i(image.get_size() / 2 - Vector2i(size, size) / 2, Vector2i(size, size)), FACE_PANEL)
 
 
 ## A closer look at the upper clothing under the same real classroom light.

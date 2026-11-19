@@ -1,9 +1,8 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_outline"]
-[ext_resource type="Shader" path="res://assets/shaders/characters/character_paint_two_sided.gdshader" id="4_paint_two_sided"]
 
 [sub_resource type="ShaderMaterial" id="outline"]
 resource_name = "character_ink_outline"
@@ -273,7 +272,7 @@ shader_parameter/shadow_fill = 0.3
 
 [sub_resource type="ShaderMaterial" id="m_m_st_sclera"]
 resource_name = "m_st_sclera (painted)"
-shader = ExtResource("4_paint_two_sided")
+shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.8471, 0.8157, 0.7529, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
@@ -292,7 +291,7 @@ shader_parameter/shadow_fill = 0.6
 
 [sub_resource type="ShaderMaterial" id="m_m_st_iris"]
 resource_name = "m_st_iris (painted)"
-shader = ExtResource("4_paint_two_sided")
+shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.2275, 0.1647, 0.1176, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
@@ -311,7 +310,7 @@ shader_parameter/shadow_fill = 0.6
 
 [sub_resource type="ShaderMaterial" id="m_m_st_pupil"]
 resource_name = "m_st_pupil (painted)"
-shader = ExtResource("4_paint_two_sided")
+shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.0549, 0.0431, 0.0392, 1)
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03

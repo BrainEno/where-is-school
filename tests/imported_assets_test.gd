@@ -32,8 +32,8 @@ const Harness = preload("res://tests/test_harness.gd")
 ## docs/CHARACTER_INTEGRATION.md), by asset name. N has a look and no motion profile: her
 ## wrapper plays the four loops her author made (`authored_idle_layers`), and the empty
 ## "motion" says the wrapper must not carry one. The classroom student has neither.
-## "two_sided" counts the surfaces painted with the two-sided shader: N's eyeballs (sclera,
-## iris and pupil, both eyes) face inward in teacher-n.glb and go blank one-sided.
+## "two_sided" counts the surfaces painted with the two-sided shader. Geometry revision 1
+## repairs N's six eye surfaces in the asset; no production character needs that workaround.
 const CHARACTER_LOOKS := {
 	"protagonist": {
 		"look": "res://assets/characters/protagonist/protagonist_look.tres",
@@ -46,7 +46,7 @@ const CHARACTER_LOOKS := {
 	"teacher n": {
 		"look": "res://assets/characters/teacher_n/teacher_n_look.tres",
 		"motion": "",
-		"two_sided": 6,
+		"two_sided": 0,
 	},
 	# The seated classroom student (the first protagonist model): painted like the others so
 	# it is not the one figure in the room still in its GLB's PBR colours. No motion profile;
@@ -149,9 +149,9 @@ const ASSETS: Array[Dictionary] = [
 		"name": "former protagonist",
 		"file": "res://assets/models/protagonist/protagonist.glb",
 		"wrapper": "res://scenes/environment/characters/classroom_student.tscn",
-		"size": Vector3(0.5559, 1.7269, 0.3370),
-		"meshes": 78,
-		"surfaces": 78,
+		"size": Vector3(0.5621, 1.7269, 0.3370),
+		"meshes": 64,
+		"surfaces": 64,
 		"model_base": 0.0170,
 		"scaled_nodes": {},
 		"kind": "seated_character",
@@ -159,7 +159,7 @@ const ASSETS: Array[Dictionary] = [
 		# The wrapper lowers the model so that, in `sit_idle`, the soles meet the floor the
 		# wrapper stands on: its origin is the floor under the seat, not the standing base.
 		"seated_drop": -0.347,
-		"note": "the first protagonist model, now a seated classroom student; rigid-weighted, "
+		"note": "the refined classroom student; 64 meshes, connected five-digit hands, rigid-weighted, "
 			+ "no embedded animation",
 	},
 	{
@@ -663,7 +663,7 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 				outlined += 1
 	if two_sided != int(paths.get("two_sided", 0)):
 		_failures.append(
-			"%s has %d surfaces on the two-sided paint shader, expected %d (inward-facing eyeballs only)."
+			"%s has %d surfaces on two-sided paint, expected %d (geometry fixes must not need a culling workaround)."
 			% [label, two_sided, int(paths.get("two_sided", 0))]
 		)
 	if outlined == 0 or outlined == expected_surfaces:
