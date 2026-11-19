@@ -143,7 +143,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `CharacterLimbContact` | [`scripts/actors/character_limb_contact.gd`](../scripts/actors/character_limb_contact.gd) | Resolve and solve two-joint wrist/boot contacts on a sampled pose, with no stretch or capsule movement. |
 | `CharacterLook` | [`scripts/actors/character_look.gd`](../scripts/actors/character_look.gd) | Material-name and resting-expression resource; source model geometry stays independent. |
 | `CharacterLookApplier` | [`scripts/actors/character_look_applier.gd`](../scripts/actors/character_look_applier.gd) | Apply look treatments, stable paint coordinates and blink without changing the wrapper/rig contract. |
-| `CharacterMotionProfile` | [`scripts/actors/character_motion_profile.gd`](../scripts/actors/character_motion_profile.gd) | Per-character tempo, posture and layer parameters for the shared animation API. |
+| `CharacterMotionProfile` | [`scripts/actors/character_motion_profile.gd`](../scripts/actors/character_motion_profile.gd) | Per-character semantic key tracks, tempo, posture and layers for the shared animation API. |
 | `CharacterNameplate` | [`scripts/actors/character_nameplate.gd`](../scripts/actors/character_nameplate.gd) | Localized development-only name labels; not collision or click targets. |
 | `CharacterVisualAnimation` | [`scripts/actors/character_visual_animation.gd`](../scripts/actors/character_visual_animation.gd) | One wrapper-level animation state machine for actions, seating, dialogue and locomotion. |
 | `NpcActor` | [`scripts/actors/npc/npc_actor.gd`](../scripts/actors/npc/npc_actor.gd) | Location actor visibility, facing, marker-path motion and model attachment; not the companion collision body. |

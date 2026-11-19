@@ -2,22 +2,20 @@
 
 The protagonist (`Protagonist_Character.glb` since PR #118), the former protagonist (now a
 seated classroom student), Q and substitute teacher N keep the same seven semantic states.
-Shared motion is built in `scripts/actors/character_animation.gd`; N's idle and new Q's
-idle/talk instead use layers supplied by their own models (see below). Q also exposes four
-native rotation actions without replacing locomotion. The shared clips are built in
-`scripts/actors/character_animation.gd` and resolved against each rig's own bone names at
-bind time. Their production wrapper scenes bind them when instantiated. In the game, every
-authored character goes through one state machine, `CharacterVisualAnimation`, fed by the
-velocity its own controller already produces.
+Each ships its own `CharacterMotionProfile`; N's idle and Q's idle/talk still use layers
+supplied by their models. Q also exposes four native rotation actions without replacing
+locomotion. `scripts/actors/character_animation.gd` resolves the clips against each rig's
+own bone names. Their production wrappers use one driver, `CharacterVisualAnimation`,
+with the velocity their existing controllers already produce (none for the seated student).
 
-| Clip | Length | Loops | What holds it |
+| Clip | Base length before profile | Loops | What holds it |
 |---|---|---|---|
 | `idle` | 2.0 s | yes | standing still: breathing, a little sway |
 | `walk` | 1.0 s | yes | the body moving: enters above 0.2 m/s, leaves below 0.08 m/s |
 | `jog` | 0.72 s | yes | the body moving faster than 4.4 m/s (leaves below 4.0): the player's sprint input |
-| `sit_idle` | 2.4 s | yes | `set_seated(true)`: the protagonist at the desk during the wake beat |
+| `sit_idle` | 2.4 s | yes | `set_seated(true)`: the protagonist at B2 during the wake beat; also the student at A1 |
 | `wave` | 1.6 s | yes | a beat for an interaction, played by hand for now |
-| `talk` | 1.2 s shared; Q 3.2 s native | yes | Q: the visible speaker in real dialogue, only while standing still; other characters: explicit preview/action |
+| `talk` | 1.2 s shared | yes | Q or N as the visible speaker in real dialogue, only while standing still |
 | `get_up` | 1.5 s | **no** | a transition: `play_action("get_up")` stands the body up from `sit_idle` |
 
 ## How a clip becomes a pose
@@ -140,11 +138,12 @@ leaving stale rotations behind. No `AnimationTree`, root motion or new controlle
 
 `CharacterDialogueAnimation` listens to the existing presentation signals and matches
 `line.speaker_id` to the **visible** `NpcActor.npc_id`, including the companion. Subjective
-voices do not animate an onstage Q. `dialogue_clip = "talk"` opts Q in; the protagonist and
-other characters remain unchanged. Precedence is action → seated → moving walk/jog →
-standing speech → idle. Closing/changing a dialogue line clears speech; stopping during
-Q's line resumes talk. `NpcGaze` remains a post-animation skeletal modifier on the measured
-Spine/Neck/Head chain (the chest follows the spine); existing doorway-watch tests continue to cover it.
+voices do not animate an onstage character. `dialogue_clip = "talk"` opts Q and N in;
+the protagonist and A1 student keep the animation they already hold during dialogue.
+Precedence is action → seated → moving walk/jog → standing speech → idle. Clearing or
+changing the speaker clears speech; stopping during their line resumes talk. `NpcGaze` remains
+a post-animation skeletal modifier on the measured Spine/Neck/Head chain (the chest follows
+the spine); existing doorway-watch tests continue to cover it.
 
 ### The protagonist's rig
 
@@ -180,50 +179,37 @@ Every clip keys every bone that any clip animates. Bones a clip does not author 
 rest, so a cross-fade always has a full pose to fade to and no bone is left where the
 previous clip put it.
 
-### Each character's own way of carrying the clips
+### Per-character motion resources
 
-The seven clips are one body rhythm. Played as written, the protagonist and Q breathed,
-walked and talked with the same timing and the same swing, and stood equally straight. A
-`CharacterMotionProfile` (`scripts/actors/character_motion_profile.gd`) gives a character its
-own version of that rhythm without changing the system. The wrapper root carries it
-(`CharacterVisualAnimation.motion_profile`), and `bind()` applies it as the keys are written:
+`CharacterMotionProfile` is plain data in `assets/characters/`. Writers can replace individual
+semantic curves with `clip_tracks`, or keep the shared keys and layer on top. Unlisted tracks
+fall back to the shared clip; empty/null profiles are the identity.
 
 ```
-offset(t) = amplitude × clip key(t) + layer(t) + posture × posture_weight(clip, t)
+offset(t) = amplitude × (authored or fallback key)(t) + layer(t) + posture × posture_weight(clip, t)
 ```
 
-The offset is in the same semantic degrees as `CLIPS` and is keyed at `t × tempo`. The
-clips, their names, the bones they key, the state machine, the hysteresis and the playback
-rates are all unchanged. N, the classroom student and every test that binds a bare GLB pass
-no profile, which is the identity. The rules a profile keeps:
+Use the base clip's seconds in `clip_tracks`: the binder writes keys at `t × tempo`. Include
+both endpoints, in increasing order, with equal first/last offsets for a loop. The binder
+checks that before creating animations. The named bones must be in the shared animated set
+and pass the same posed-limb guards, otherwise they appear in `profile_ignored`. A profile
+can move a bone held at rest in that particular clip, but cannot add tracks for new joints.
+Native Q actions still use the source bones and full-pose resets. N's native idle is not
+replaced or scaled by its profile.
 
-- **No invented profile joints.** A shared clip only keys the bones it authors; unknown
-  profile names are reported as `profile_ignored`. Native Q layers may animate additional
-  real source bones, which are included in the reset union.
-- **Posed-limb guards remain per rig.** New Q has no held limbs; this is checked, not assumed.
-- **Loops still close.** A layer's last key repeats its first.
-- **`get_up` still starts on the `sit_idle` pose and ends standing.** Its posture weight runs
-  from the seated weight to the standing one.
-- **Idle still plays at ×1.** A slower idle is a longer clip, not a lower `speed_scale`.
-- **The existing limits hold with the profiles applied.** These are idle limbs within 20° of
-  rest, legs within 8° after a walk, hands below the shoulders, a thigh swing of at least 12°,
-  foot travel of at least 0.12 m, and `get_up` under 4 s.
+| Wrapper profile | Personality as seen in motion |
+|---|---|
+| `protagonist/protagonist_motion.tres` | Asymmetric, held-in walk with tighter arms, slower recovery and slight hunch; jog adds two forward pulses. Retains the slower breath/head drop and existing B2 seated posture and staged action keys. |
+| `q/q_motion.tres` | Looser shoulders and a delayed elbow over a quicker weight transfer, with the head counter-turning. Jog has a wider torso turn and its own elbow timing. Same resource in the classroom and on the follower. Keeps native breathing/lean, speech hand and finger motion and diagnostic actions. |
+| `teacher_n/teacher_n_motion.tres` | Close, measured steps with small arm travel. At the lectern, `n_class` lines for N drive a 3 s cycle with a nod, one low hand prompt, and a pause. An actual change of speaker/close blends back to the four embedded idle layers. |
+| `classroom_student/student_motion.tres` | A 7.2 s seated loop: a glance lifts toward the room, the head turns and the sleeve shifts slightly, then a rest. Hips, shins and boots remain planted at A1; no movement, gaze controller or interaction is added. |
 
-| | Protagonist (`assets/characters/protagonist/protagonist_motion.tres`) | Q (`assets/characters/q/q_motion.tres`) |
-|---|---|---|
-| Idea | tired, slumped, held in | loose, leaning back, weight on the heels |
-| Posture | spine +4°, chest +5°, neck +6° (forward); head −3° with a 1.5° tilt; upper arms drawn 14° in and 4° back; elbows 6° bent | spine −4.5° (back); neck +3°; head +1° and cocked 4°; thighs 2.5° apart (wide stance); upper arms drawn 14° inward from the A-pose, left elbow 6° bent |
-| Tempo (× clip length) | idle 2.0 (4 s), get_up 1.35 (2.0 s), talk 1.4, wave 1.3, sit_idle 1.6, jog 1.05, walk 1.0 | idle 0.85 (native 3.4 s), walk 0.92, jog 0.95, talk 0.8, wave 0.85, get_up 0.9 |
-| Amplitude | idle ×1.3 (a deeper, slower breath); walk arms ×0.45, forearms ×0.6, head ×0.6, thighs ×0.9, shins ×0.85, feet ×0.75; jog arms ×0.6; talk ×0.5; wave ×0.6–0.75 | walk spine ×2, head ×1.4, arms ×1.2; jog spine ×1.6, arms ×1.1; talk ×1.5 |
-| Layers | idle: a sigh in the chest, a head that drops and recovers | idle: a sway of the spine and head, the free arm drifting; talk: the spine rocking side to side |
-
-Worst idle bone with the protagonist's profile: the forearm at about 16° from rest, inside the
-20° limit. The walk keeps 19.8° of thigh swing. `tests/character_animation_test.gd` checks the
-profiles against the bare bind (same tracks on the same bones, lengths equal to `CLIPS` × tempo,
-the `get_up` / `sit_idle` agreement, the posture present in the standing pose, the two
-characters' idle, walk and talk lengths different). `tests/runtime_character_animation_test.gd`
-checks the same characters in the running game. How the characters look is in
-[CHARACTER_ART.md](CHARACTER_ART.md).
+All four `sit_idle` first poses agree with their `get_up` first pose. Only the protagonist
+runs the B2 action/contact tracks; its seat pose, global posture data and staged actions
+are unchanged. Idle and speech still play at ×1; tempo changes the bound resource duration,
+not the controller speed. The production tests measure full loop closure, differences in
+arm travel independent of clip length, knee/elbow directions and ground-relative seat
+contacts. See [CHARACTER_ART.md](CHARACTER_ART.md) for the visual direction.
 
 ## Runtime wiring
 
@@ -236,11 +222,10 @@ checks the same characters in the running game. How the characters look is in
   lowered 0.347 m so the seated soles are on the floor.
 - `assets/models/teacher-n/teacher-n.glb` (substitute teacher N) has the same 16 joint
   names, faces −Z and carries four authored loops (above). Its wrapper has a `Look` applier
-  like the other two, and still no motion profile ([CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)).
-- `scenes/environment/characters/protagonist.tscn`, `q.tscn` and `teacher_n.tscn` attach
+  as described in [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md).
+- `scenes/environment/characters/{protagonist,q,teacher_n,classroom_student}.tscn` attach
   `scripts/actors/character_visual_animation.gd` to their wrapper roots. The driver builds an
-  `AnimationPlayer`, binds the clips (with the wrapper's `motion_profile`, set on the
-  protagonist and Q) and logs the bind report.
+  `AnimationPlayer`, binds the clips with the wrapper's `motion_profile` and logs the bind report.
 - Three things can hold a clip, in this order: a **one-shot action** (nothing else takes over
   until it reports `animation_finished`), then **seated** (`sit_idle`, which outranks the
   body's velocity), then **locomotion**. Only an idle opted-in character can show standing
@@ -260,8 +245,10 @@ checks the same characters in the running game. How the characters look is in
     gap it would flicker between walk and jog. Locomotion changes cross-fade over 0.18 s;
     actions and the seated pose cut, because `get_up` starts on exactly the pose `sit_idle`
     holds.
-  - **Stride.** Walk plays at `speed / 1.6`, clamped to 0.7–1.9×; jog at `speed / 5.0`,
-    clamped to 0.8–1.4×. Actions, idle and sitting play at 1×.
+  - **Stride.** Walk plays at `speed / stride_speed`, clamped to 0.7–1.9×. N uses
+    `stride_speed = 1.4` rather than 1.6 m/s to fit her shorter steps; her route speed is
+    unchanged. Jog uses `speed / jog_stride_speed` (5.0 m/s by default), clamped to
+    0.8–1.4×. Idle, sitting and speech play at 1×.
   - **Bodies.** `PlayerController` and `CompanionController` hand themselves to their
     model's animator with `bind_body()` in `_ready()`; a wrapper with no call falls back to
     its nearest `CharacterBody3D` ancestor. A body reads its velocity after
@@ -336,6 +323,21 @@ run's *teacher N crop* annotations (base64, in numbered parts).
 
 ## Check it
 
+For fixed-camera phase strips and the original viewport PNGs, use the `cast-motion` job in
+[Character integration capture](../.github/workflows/character-integration-capture.yml), or run:
+
+```bash
+xvfb-run -a --server-args="-screen 0 1600x900x24" godot --path . --resolution 1600x900 \
+  --rendering-driver opengl3 --script res://tests/capture_character_integration.gd -- \
+  --group=motion --variants=after
+```
+
+These are staged samples, not live locomotion or a geometry/paint comparison. The stride
+strip samples actual bound walk poses at matching normalized phases in the real classroom;
+N samples the `talk` entered on a visible `n_class` line at the lectern, and the student
+samples `sit_idle` at the placed A1 desk. Each strip keeps the game camera angle, lens and
+crop. The real routes and controller timing are asserted by the tests below.
+
 - `tests/character_animation_test.gd` binds the clips to the development rigs, the
   production GLBs and the wrapper scenes. It checks that every track names a real bone, that
   each clip moves its bone and closes its loop, and that `get_up` is `LOOP_NONE`, ends on the
@@ -380,7 +382,12 @@ run's *teacher N crop* annotations (base64, in numbered parts).
   feet travelling along the facing, knees never backwards, elbows never backwards, hands
   below the shoulders and on their own side, no twist about a hand's or foot's length); the
   player scene showing the new model in idle; and the classroom student seated on its chair
-  with no controller, collision or interaction.
+  with no controller, collision or interaction. It samples the A1 student's full loop:
+  the head has an excursion of at least 12°, with both hips and ankles within 2 mm of
+  their starting contacts.
+- `tests/n_presence_test.gd` watches the actual entry play N's walk, then follows speakers
+  in `n_class` and checks that N stops gesturing on other lines and when the panel closes;
+  the existing lectern, re-entry and save checks still apply.
 
 - `tests/q_model_prepare_test.py` proves approved-source hash, reproducibility, all mesh,
   weight, bind and morph data, all non-rest action channels, five weighted fingers per
