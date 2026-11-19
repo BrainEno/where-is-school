@@ -42,5 +42,26 @@
     "source": "observed",
     "text": "The lamp is already on, though the sky is still bright enough to read by. A moth is working at it the way moths do.",
     "repeat_text": "Lamp on, sky bright, moth still at it."
+  },
+  "street_return_plate": {
+    "title": "Equipment return plate",
+    "prompt": "Read the return plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "An arrow points along the street towards the flats stair. Above it, two short strokes hang from the right end of a long one.",
+    "repeat_text": "Arrow towards the flats stair; both short strokes at the right.",
+    "record": {
+      "entry_id": "saw_street_return_plate",
+      "source": "observed",
+      "text": "The street return plate points towards the flats stair. Its two short strokes hang from the right end."
+    }
+  },
+  "street_receipt_slot": {
+    "title": "Receipt slot",
+    "prompt": "Examine the receipt slot",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The slot is just wide enough for a folded slip. Below it is a wooden stop, polished where a thumb would rest.",
+    "repeat_text": "The slit is dark; the wood beneath it has been rubbed smooth."
   }
 }

@@ -80,11 +80,74 @@
               }
             },
             {
+              "id": "compare_return",
+              "text": "拿归还板上的印记和窗里的纸条对照。",
+              "next": "ps_return_check",
+              "conditions": {
+                "all_flags": [
+                  "seen:street_return_plate",
+                  "seen:alley_return_plate",
+                  "seen:pg_return_board"
+                ],
+                "not_flags": [
+                  "check:pg_shed:ps_return_check"
+                ]
+              }
+            },
+            {
               "id": "leave",
               "text": "就让它锁着。",
               "next": "ps_leave"
             }
           ]
+        },
+        {
+          "id": "ps_return_check",
+          "speaker": "voice_orientation",
+          "text": "先对圆孔。先别跟着箭头走。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "ps_return_match",
+            "failure": "ps_return_unclear",
+            "modifiers": [
+              {
+                "flag": "seen:pg_chalk_guide",
+                "value": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "ps_return_match",
+          "speaker": "protagonist",
+          "text": "隔着纸从背面看，长孔才对得上。这样读，印记就和街边那块一样了。操场的铁栅门还在原处。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "pg_return_match",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "从背面看器材棚窗里的纸条，归还印记就和街边路牌上的一样。"
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_return_unclear",
+          "speaker": "protagonist",
+          "text": "圆孔对上了，另一道可能是长孔，也可能只是折痕。操场那块板还能用：走防火门回教学楼，走铁栅门回后巷。",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "pg_return_unclear",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "器材棚纸条的圆孔能对上，另一道记号挨着折痕，分不清。"
+            }
+          ],
+          "next": null
         },
         {
           "id": "ps_boundary_check",

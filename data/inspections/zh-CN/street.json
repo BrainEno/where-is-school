@@ -42,5 +42,26 @@
     "source": "observed",
     "text": "路灯已经亮了，可天还亮得能看书。一只飞蛾绕着它转，跟飞蛾一贯的做法一样。",
     "repeat_text": "灯亮着，天亮着，飞蛾还在转。"
+  },
+  "street_return_plate": {
+    "title": "器材归还路牌",
+    "prompt": "读归还路牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "箭头沿街指向住宅区楼梯那头。上面有一长横，两道短竖都挂在横线右边。",
+    "repeat_text": "箭头朝住宅区楼梯，两道短竖都在右边。",
+    "record": {
+      "entry_id": "saw_street_return_plate",
+      "source": "observed",
+      "text": "街边的归还路牌指向住宅区楼梯，标记的两道短竖都在右边。"
+    }
+  },
+  "street_receipt_slot": {
+    "title": "回执投口",
+    "prompt": "看看回执投口",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "窄缝刚好塞得下一张叠过的回执。下面有块木挡片，搁拇指的地方已经被磨亮了。",
+    "repeat_text": "缝里黑着，下面那片木头倒是很光滑。"
   }
 }

@@ -80,11 +80,74 @@
               }
             },
             {
+              "id": "compare_return",
+              "text": "Match the return marks to the strip in the window.",
+              "next": "ps_return_check",
+              "conditions": {
+                "all_flags": [
+                  "seen:street_return_plate",
+                  "seen:alley_return_plate",
+                  "seen:pg_return_board"
+                ],
+                "not_flags": [
+                  "check:pg_shed:ps_return_check"
+                ]
+              }
+            },
+            {
               "id": "leave",
               "text": "Leave it shut.",
               "next": "ps_leave"
             }
           ]
+        },
+        {
+          "id": "ps_return_check",
+          "speaker": "voice_orientation",
+          "text": "Round to round. Try that before you follow the arrows.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "ps_return_match",
+            "failure": "ps_return_unclear",
+            "modifiers": [
+              {
+                "flag": "seen:pg_chalk_guide",
+                "value": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "ps_return_match",
+          "speaker": "protagonist",
+          "text": "The long hole only lines up if you look through the strip from the back. Read that way, the stamp matches the street plate. The gate on the yard board does not move.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "pg_return_match",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "At the shed window the return stamp matches the street plate when read through the back of the strip."
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "ps_return_unclear",
+          "speaker": "protagonist",
+          "text": "The round hole matches; the other mark could be a slot or just the fold. The board still gives two ways: the fire door back into school, or the estate gate towards the alley.",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "pg_return_unclear",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The round hole in the shed copy lines up, but the fold makes the other mark too hard to distinguish."
+            }
+          ],
+          "next": null
         },
         {
           "id": "ps_boundary_check",

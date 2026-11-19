@@ -15,6 +15,8 @@ extends SceneTree
 ##
 ## Pass `teaching-wing` to frame the new hub, gallery and hidden door instead, from
 ## the same camera and live scene. The close overview uses only those wings' bounds.
+## Pass `return-route` for matched gameplay-camera details of the street, courtyard,
+## alley and yard. The coordinates are valid on both sides of the art change.
 ## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
@@ -39,6 +41,25 @@ const TEACHING_SPOTS := {
 	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
 	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],
 }
+const RETURN_SPOTS := {
+	"street": [
+		["detail_return_plate", Vector3(-9.15, 0, -10.8)],
+		["detail_receipt_slot", Vector3(-9.18, 0, -24.7)],
+	],
+	"residential": [
+		["detail_alley_guide", Vector3(3.23, 0, -15.76)],
+		["detail_bench", Vector3(-2.72, 0, 6.95)],
+	],
+	"alley": [
+		["detail_reversed_plate", Vector3(-2.10, 0, -18.55)],
+		["detail_trolley_guide", Vector3(-2.10, 0, 5.6)],
+	],
+	"playground": [
+		["detail_return_board", Vector3(12.45, 0, 3.2)],
+		["detail_line_kit", Vector3(-11.48, 0, -9.6)],
+		["detail_yard_tap", Vector3(-4.67, 0, 14.42)],
+	],
+}
 const MIN_SPACING := 4.5
 ## The wide view looks along the game camera's own bearing, from further away.
 const WIDE_FOV := 46.0
@@ -51,6 +72,7 @@ var _review_width := 0
 var _quality := 0.9
 var _only := ""
 var _teaching_wing := false
+var _return_route := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -78,6 +100,8 @@ func _initialize() -> void:
 			_only = arg.substr(5).strip_edges()
 		elif arg == "teaching-wing":
 			_teaching_wing = true
+		elif arg == "return-route":
+			_return_route = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -129,6 +153,11 @@ func _run() -> void:
 	if file != null:
 		file.store_string("\n".join(_lines) + "\n")
 		file.close()
+	# The new art jobs assert a clean exit, including the autoload's ambient music.
+	AudioRelease.stop_all(root.find_children("*", "AudioStreamPlayer", true, false))
+	AudioRelease.stop_all(root.find_children("*", "AudioStreamPlayer3D", true, false))
+	AudioRelease.wait_for_mix()
+	await process_frame
 	_finish(_failures)
 
 
@@ -141,6 +170,10 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 	await _wait(1.2)
 	var current := _host.get_current()
 	var spots := _teaching_spots(current) if _teaching_wing else _spots(current)
+	if _return_route:
+		_player.set_wake_pose(0.0)
+		for spot: Array in RETURN_SPOTS.get(location_id, []):
+			spots.append([spot[0], (spot[1] as Vector3) + Vector3.UP * 0.05])
 	var subject := "teaching_wing" if _teaching_wing else location_id
 	_lines.append("## %s" % subject)
 	_lines.append("")

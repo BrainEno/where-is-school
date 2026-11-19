@@ -1,4 +1,4 @@
-[gd_scene load_steps=82 format=3]
+[gd_scene load_steps=104 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="6_paper"]
@@ -18,9 +18,12 @@
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/alley_wall_high.tres" id="art_alley_wall_high"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/light_beyond.tres" id="art_light_beyond"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/metal_ink.tres" id="art_metal_ink"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/pale.tres" id="art_pale"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/row_chimney.tres" id="art_row_chimney"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/row_flats.tres" id="art_row_flats"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/row_tower.tres" id="art_row_tower"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_teal.tres" id="art_school_teal"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/shop_ochre.tres" id="art_shop_ochre"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/shutter_blue.tres" id="art_shutter_blue"]
 
 [sub_resource type="Environment" id="Environment_1"]
@@ -211,6 +214,66 @@ size = Vector3(0.5, 4, 6.6)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art7"]
 size = Vector2(3, 3.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+size = Vector3(1.3, 0.72, 0.094)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art9"]
+size = Vector3(1.15, 0.6, 0.018)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(1.38, 0.058, 0.15)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art11"]
+size = Vector3(0.89, 0.023, 0.009)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art12"]
+size = Vector3(0.4232, 0.0506, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art13"]
+size = Vector3(0.0414, 0.138, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art14"]
+size = Vector3(0.0478, 0.1012, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art15"]
+size = Vector3(0.41, 0.038, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art16"]
+size = Vector3(0.15, 0.035, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art17"]
+size = Vector3(0.15, 0.035, 0.006)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art18"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.016
+radial_segments = 10
+
+[sub_resource type="BoxMesh" id="BoxMesh_art19"]
+size = Vector3(1.48, 0.27, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art20"]
+size = Vector3(1.34, 0.124, 0.016)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art21"]
+size = Vector3(0.071, 0.25, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art22"]
+size = Vector3(0.071, 0.25, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art23"]
+size = Vector3(0.071, 0.25, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art24"]
+size = Vector3(0.071, 0.25, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art25"]
+size = Vector3(0.109, 0.086, 0.166)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art26"]
+size = Vector3(0.041, 0.041, 0.014)
 
 [node name="Alley" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -512,6 +575,20 @@ inspection_id = &"alley_door"
 radius = 1.4
 outline_paths = PackedStringArray("../../ServiceDoor", "../../ServicePlaque")
 
+[node name="ReturnPlateLook" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-3.12, 1.43, -18.55)
+interact_id = &"alley_return_plate"
+inspection_id = &"alley_return_plate"
+radius = 1.4
+outline_paths = PackedStringArray("../../WallWest/StageReturnPlate/Case")
+
+[node name="TrolleyGuideLook" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-3.12, 0.76, 5.6)
+interact_id = &"alley_trolley_guide"
+inspection_id = &"alley_trolley_guide"
+radius = 1.25
+outline_paths = PackedStringArray("../../WallWest/StageTrolleyGuide/Rail")
+
 [node name="BackToCourtyard" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = Vector3(0.0, 0.9, 12.5)
 interact_id = &"alley_back_to_courtyard"
@@ -595,4 +672,137 @@ material_override = ExtResource("art_alley_wall_high")
 position = Vector3(0, 1.8, -25)
 mesh = SubResource("QuadMesh_art7")
 material_override = ExtResource("art_light_beyond")
+cast_shadow = 0
+
+[node name="StageReturnPlate" type="Node3D" parent="WallWest"]
+position = Vector3(0.257, -0.49, -14.55)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1, 1, 1)
+
+[node name="Case" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0, 0, 0.051)
+mesh = SubResource("BoxMesh_art8")
+material_override = ExtResource("art_shutter_blue")
+
+[node name="Face" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0, 0.008, 0.102)
+mesh = SubResource("BoxMesh_art9")
+material_override = ExtResource("art_pale")
+cast_shadow = 0
+
+[node name="Brow" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0, 0.354, 0.074)
+mesh = SubResource("BoxMesh_art10")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="Rule" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0.025, -0.004, 0.116)
+mesh = SubResource("BoxMesh_art11")
+material_override = ExtResource("art_school_teal")
+cast_shadow = 0
+
+[node name="StampStroke0" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0, 0.212, 0.119)
+mesh = SubResource("BoxMesh_art12")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="StampStroke1" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(-0.069, 0.1228, 0.121)
+mesh = SubResource("BoxMesh_art13")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="StampStroke2" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(-0.1665, 0.1421, 0.121)
+mesh = SubResource("BoxMesh_art14")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="DirectionShaft" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0, -0.145, 0.119)
+mesh = SubResource("BoxMesh_art15")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="DirectionHead0" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(-0.173, -0.189, 0.123)
+rotation_degrees = Vector3(0, 0, -40)
+mesh = SubResource("BoxMesh_art16")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="DirectionHead1" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(-0.173, -0.101, 0.124)
+rotation_degrees = Vector3(0, 0, 40)
+mesh = SubResource("BoxMesh_art17")
+material_override = ExtResource("art_shutter_blue")
+cast_shadow = 0
+
+[node name="CornerPin0" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(-0.512, 0.234, 0.113)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("CylinderMesh_art18")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="CornerPin1" type="MeshInstance3D" parent="WallWest/StageReturnPlate"]
+position = Vector3(0.506, 0.234, 0.113)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("CylinderMesh_art18")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="StageTrolleyGuide" type="Node3D" parent="WallWest"]
+position = Vector3(0.257, -1.26, 9.6)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Rail" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0, 0, 0.061)
+mesh = SubResource("BoxMesh_art19")
+material_override = ExtResource("art_shutter_blue")
+
+[node name="WearFace" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0, -0.011, 0.126)
+mesh = SubResource("BoxMesh_art20")
+material_override = ExtResource("art_school_teal")
+cast_shadow = 0
+
+[node name="Stop0_0" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(-0.525, 0.019, 0.16)
+mesh = SubResource("BoxMesh_art21")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="Stop0_2" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(-0.335, 0.019, 0.16)
+mesh = SubResource("BoxMesh_art22")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="Stop1_0" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0.335, 0.019, 0.16)
+mesh = SubResource("BoxMesh_art23")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="Stop1_2" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0.525, 0.019, 0.16)
+mesh = SubResource("BoxMesh_art24")
+material_override = ExtResource("art_metal_ink")
+cast_shadow = 0
+
+[node name="WoodShim" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0.412, -0.041, 0.153)
+rotation_degrees = Vector3(0, 0, -11)
+mesh = SubResource("BoxMesh_art25")
+material_override = ExtResource("art_shop_ochre")
+cast_shadow = 0
+
+[node name="OldScrew" type="MeshInstance3D" parent="WallWest/StageTrolleyGuide"]
+position = Vector3(0.572, 0.062, 0.129)
+rotation_degrees = Vector3(0, 0, 14)
+mesh = SubResource("BoxMesh_art26")
+material_override = ExtResource("art_metal_ink")
 cast_shadow = 0

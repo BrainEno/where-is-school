@@ -78,5 +78,39 @@
       "source": "observed",
       "text": "The tyres against the shed were painted the same green as the shed door."
     }
+  },
+  "pg_return_board": {
+    "title": "Equipment return board",
+    "prompt": "Read the return board",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The red steps lead to the fire door in the school wall. For the alley, use the estate gate opposite. A strip under the main sheet has the same stamp printed backwards.",
+    "repeat_text": "Fire door for the school, estate gate for the alley. The lower stamp is still backwards.",
+    "record": {
+      "entry_id": "saw_pg_return_board",
+      "source": "observed",
+      "text": "The yard board marks the fire door back into school and the gate towards the alley. The lower strip shows the return stamp in reverse."
+    }
+  },
+  "pg_chalk_guide": {
+    "title": "Court marking guide",
+    "prompt": "Inspect the chalk-line kit",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Red cord and a strip used to mark the court. One peg hole is round, the other is a slot. There is enough chalk on the offcut to see what prints through each one.",
+    "repeat_text": "A round hole and a slot. The chalk gives both away.",
+    "record": {
+      "entry_id": "saw_pg_chalk_guide",
+      "source": "observed",
+      "text": "The court marking guide has one round hole and one slotted hole; both leave distinct chalk marks."
+    }
+  },
+  "pg_tap": {
+    "title": "Tethered drain cap",
+    "prompt": "Look at the yard tap",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The brass cap has been hooked up onto the tap post. The chain holds it clear of the drain. There is a little patch of pale concrete under the spout.",
+    "repeat_text": "The cap is still hanging where it cannot stop the drain."
   }
 }

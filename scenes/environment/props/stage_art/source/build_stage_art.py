@@ -198,6 +198,21 @@ def box(b: Builder, size) -> str:
     return b.mesh("BoxMesh", size=vec3(size))
 
 
+def return_plate(b: Builder, parent: str, name: str, pos, *, yaw=90, reverse=False, scale=1.0) -> None:
+    """Enamel on a deep mount, with an asymmetric stamp readable without text."""
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)), scale=vec3((scale,) * 3))
+    p = f"{parent}/{name}"
+    b.flat("Case", p, box(b, (1.30, 0.72, 0.094)), "shutter_blue", (0, 0, 0.051), shadow=True)
+    b.flat("Face", p, box(b, (1.15, 0.60, 0.018)), "pale", (0, 0.008, 0.102))
+    b.flat("Brow", p, box(b, (1.38, 0.058, 0.15)), "metal_ink", (0, 0.354, 0.074))
+    b.flat("Rule", p, box(b, (0.89, 0.023, 0.009)), "school_teal", (0.025, -0.004, 0.116))
+    yard.route_mark(b, p, "Stamp", (0, 0.143, 0.119), "shutter_blue", mirrored=reverse, scale=0.92)
+    yard.route_arrow(b, p, "Direction", (0, -0.145, 0.119), "shutter_blue", direction=-1 if reverse else 1)
+    pin = b.mesh("CylinderMesh", top_radius="0.025", bottom_radius="0.025", height="0.016", radial_segments="10")
+    for index, x in enumerate((-0.512, 0.506)):
+        b.flat(f"CornerPin{index}", p, pin, "metal_ink", (x, 0.234, 0.113), (90, 0, 0))
+
+
 # --- the street ---------------------------------------------------------------------------------
 
 
@@ -224,6 +239,19 @@ def street_nodes() -> Builder:
     # The school's barred windows, painted on its long wall (a child of the occluder).
     width = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
     b.flat("StageWindows", "SchoolBlock", yard.quad(b, width, 11.4), "school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
+    mid = sum(STREET_SCHOOL_Z) / 2.0
+    return_plate(b, "SchoolBlock", "StageReturnPlate", (5.004, -4.92, -10.8 - mid))
+    # A receipt hatch farther down the plinth. The lip, not the school wall, is pickable.
+    name = "StageReceiptSlot"
+    b.node(name, "SchoolPlinth", position=vec3((5.104, 0.34, -24.7 - mid)), rotation_degrees=vec3((0, 90, 0)))
+    p = "SchoolPlinth/" + name
+    b.flat("Housing", p, box(b, (0.92, 0.48, 0.104)), "shutter_blue", (0, 0, 0.053), shadow=True)
+    b.flat("Slot", p, box(b, (0.68, 0.052, 0.024)), "metal_ink", (-0.022, 0.082, 0.109))
+    b.flat("DripEdge", p, box(b, (0.85, 0.048, 0.154)), "school_teal", (0, 0.193, 0.082))
+    b.flat("WoodStop", p, box(b, (0.70, 0.07, 0.112)), "shop_ochre", (-0.02, -0.126, 0.143))
+    b.flat("Polish", p, box(b, (0.41, 0.009, 0.049)), "pale", (-0.082, -0.087, 0.171))
+    for i, x in enumerate((-0.382, 0.389)):
+        b.flat(f"Bolt{i}", p, box(b, (0.038, 0.036, 0.017)), "pale", (x, -0.089, 0.109), (0, 0, 10 + i * 16))
     return b
 
 
@@ -271,6 +299,18 @@ def residential_nodes() -> Builder:
     b.flat("AerialBar", f"{A}/Roofs", box(b, (1.8, 0.05, 0.05)), "metal_ink", (-3.3, 20.8, -21.0), (0, 0, 8), shadow=True)
     # One window that is not on the grid: long, low, lit, between the floors.
     b.flat("StageLongWindow", "BlockNorthWest", yard.quad(b, 3.0, 1.6), "light_beyond", (-0.4, -0.5, 5.006))
+    # A visual stepping stone only: the courtyard passage is still the same passage.
+    return_plate(b, "BlockNorthWest", "StageAlleyGuide", (8.66, -6.96, 5.006), yaw=0, scale=0.82)
+    # The existing bench has a dark replacement slat. One small sweep pile below
+    # it makes the other half of the inspection true without dressing the courtyard centre.
+    p = f"{A}/BenchSweepings"
+    b.node("BenchSweepings", A, position=vec3((-3.27, 0, 6.08)))
+    scraps = ((-0.20, 0.008, 0.036, 0.095, -24), (-0.091, -0.025, 0.109, 0.063, 35),
+              (0.037, 0.016, 0.146, 0.036, -16), (0.173, -0.061, 0.074, 0.026, 22),
+              (-0.008, 0.087, 0.054, 0.022, -33), (0.086, -0.032, 0.037, 0.078, 14))
+    for i, (x, z, w, d, yaw) in enumerate(scraps):
+        b.flat(f"Scrap{i}", p, box(b, (w, 0.012, d)), "shop_ochre" if i % 3 else "pale",
+               (x, 0.007 + i * 0.001, z), (0, yaw, 0))
     return b
 
 
@@ -318,6 +358,20 @@ def alley_nodes() -> Builder:
         b.flat(name, "WallWest", box(b, (0.5, 4.0, length)), "alley_wall_high", (0.35, 3.9, mid + 4.0), (0, 0, -8), shadow=True)
     # Past the gate, where the yard is: light, not a view.
     b.flat("GateLight", A, yard.quad(b, 3.0, 3.6), "light_beyond", (0.0, 1.8, -25.0))
+    return_plate(b, "WallWest", "StageReturnPlate", (0.257, -0.49, -14.55), reverse=True)
+    # A cart guide at the quiet end of the lane. The notch is padded with a shim
+    # rather than redrilled. It is part of the wall dressing, not a hidden collision.
+    name = "StageTrolleyGuide"
+    b.node(name, "WallWest", position=vec3((0.257, -1.26, 9.6)), rotation_degrees=vec3((0, 90, 0)))
+    p = "WallWest/" + name
+    b.flat("Rail", p, box(b, (1.48, 0.27, 0.12)), "shutter_blue", (0, 0, 0.061), shadow=True)
+    b.flat("WearFace", p, box(b, (1.34, 0.124, 0.016)), "school_teal", (0, -0.011, 0.126))
+    for i, x in enumerate((-0.43, 0.43)):
+        for side in (-1, 1):
+            b.flat(f"Stop{i}_{side + 1}", p, box(b, (0.071, 0.25, 0.12)), "metal_ink",
+                   (x + side * 0.095, 0.019, 0.16))
+    b.flat("WoodShim", p, box(b, (0.109, 0.086, 0.166)), "shop_ochre", (0.412, -0.041, 0.153), (0, 0, -11))
+    b.flat("OldScrew", p, box(b, (0.041, 0.041, 0.014)), "metal_ink", (0.572, 0.062, 0.129), (0, 0, 14))
     return b
 
 

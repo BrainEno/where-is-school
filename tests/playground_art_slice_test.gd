@@ -5,8 +5,9 @@ extends SceneTree
 ## a local colour system, a flat painted distance, ring tyres, hoop rings, the far net). None
 ## of it may cost the yard anything a player relies on. The claims under test:
 ##
-## 1. **Same yard outside the container.** Existing bodies, interactables, exits and spawns keep
-##    their geometry, ids and destinations. The container has its own precise shell contract.
+## 1. **Same yard outside the container.** Existing bodies, anchors, exits and spawns keep
+##    their geometry, ids and destinations. The new return-route actions add only areas.
+##    The container has its own precise shell contract.
 ## 2. **No new solids.** Only the graybox's 33 bodies collide outside Interactables/:
 ##    colliding decoration would carve the navigation mesh and block interaction rays.
 ## 3. **Its own colour system.** Every drawn surface (the imported bench and bag aside) uses a
@@ -88,6 +89,7 @@ const INTERACTABLES := {
 	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
 	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
+	"pg_chalk_guide": Vector3(-12.4, 0.53, -9.6), "pg_tap": Vector3(-5.58, 1.08, 14.0),
 }
 ## [position, destination scene, destination spawn, milestone end].
 const EXITS := {
@@ -261,7 +263,7 @@ func _check_layout() -> void:
 			if exit.is_milestone_end != spec[3]:
 				_failures.append("Exit '%s' changed its milestone-end flag." % id)
 		else:
-			_failures.append("'%s' is an interactable the graybox did not have." % id)
+			_failures.append("'%s' is not an authored schoolyard interactable." % id)
 	for id: String in INTERACTABLES:
 		if not found.has(id):
 			_failures.append("The schoolyard lost the '%s' interactable." % id)

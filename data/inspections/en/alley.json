@@ -39,5 +39,26 @@
       "source": "observed",
       "text": "The service door in the alley has a handle and no lock."
     }
+  },
+  "alley_return_plate": {
+    "title": "Reversed return plate",
+    "prompt": "Read the plate by the gate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The arrow points back towards the courtyard instead of through the lit gate. There is one long stroke above it, with two short strokes at the left end.",
+    "repeat_text": "Back towards the courtyard; the two short strokes on the left.",
+    "record": {
+      "entry_id": "saw_alley_return_plate",
+      "source": "observed",
+      "text": "The alley return plate points back towards the courtyard. Its two short strokes hang from the left end."
+    }
+  },
+  "alley_trolley_guide": {
+    "title": "Trolley guide",
+    "prompt": "Inspect the trolley guide",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two stops hold a trolley against the wall. Someone put a wedge of wood in one stop instead of moving it. The old screw is still in place.",
+    "repeat_text": "Two stops and one wedge. The screw has not moved."
   }
 }
