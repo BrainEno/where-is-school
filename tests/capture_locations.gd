@@ -207,12 +207,25 @@ func _capture_board_focus(current: LocationRoot, out_dir: String) -> void:
 		return
 	_player.teleport(Transform3D(Basis.IDENTITY, BOARD_STANCE + Vector3.UP * 0.05))
 	rig.focus_on(board, board.camera_shot)
-	if await Harness.wait_until(func() -> bool: return rig.get_focus_weight() > 0.97, 5.0):
+	if not await Harness.wait_until(func() -> bool: return rig.get_focus_weight() > 0.97, 5.0):
+		_failures.append("The return board's gameplay shot never settled.")
+	elif not _board_fits(board, rig.camera):
+		_failures.append("The return board's gameplay shot cuts off part of the board.")
+	else:
 		_save(out_dir, "playground_shot_detail_board_focus")
 		_lines.append("- `playground_shot_detail_board_focus.jpg` uses the board's CameraShot.")
-	else:
-		_failures.append("The return board's gameplay shot never settled.")
 	rig.clear_focus()
+
+
+func _board_fits(board: Interactable, camera: Camera3D) -> bool:
+	var view := camera.get_viewport().get_visible_rect().grow(-12.0)
+	for mesh: GeometryInstance3D in board.get_outline_meshes():
+		var bounds := mesh.get_aabb()
+		for corner in 8:
+			var point := mesh.global_transform * bounds.get_endpoint(corner)
+			if camera.is_position_behind(point) or not view.has_point(camera.unproject_position(point)):
+				return false
+	return true
 
 
 func _teaching_spots(current: LocationRoot) -> Array:

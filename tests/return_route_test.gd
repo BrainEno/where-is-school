@@ -40,6 +40,7 @@ func _run() -> void:
 	var main := (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
 	var sequence := main.get_node(^"OpeningSequence") as OpeningSequence
 	sequence.autostart = false
+	sequence.autosave_enabled = false
 	root.add_child(main)
 	main.get_node(^"InnerVoiceDirector").set_process(false)
 	_host = main.get_node(^"LocationHost") as LocationHost
@@ -54,8 +55,7 @@ func _run() -> void:
 	for flag in [StoryFlags.STREET_ARRIVED, StoryFlags.RESIDENTIAL_ARRIVED,
 			StoryFlags.ALLEY_ARRIVED, StoryFlags.PLAYGROUND_ARRIVED]:
 		_state.set_flag(flag, true)
-	if _check.expect(_host.load_location(STREET, &"FromCorridor", _player, &"street"), "Street did not load."):
-		sequence.allow_player_control()
+	if await _start_in_street(sequence):
 		await _walk_return_route()
 		if _host.get_current().location_id == &"playground":
 			await _check_choices_and_notes()
@@ -65,6 +65,23 @@ func _run() -> void:
 	await process_frame # Release stopped playbacks on the main thread before exit.
 	Harness.finish(self, _check.failures,
 		"four locations walked, seven props read, two locales, both seeded comparisons, and exits on either result.")
+
+
+func _start_in_street(sequence: OpeningSequence) -> bool:
+	Harness.stage = "wait for the startup location to finish loading"
+	var classroom := _host.get_current()
+	if not _check.expect(classroom != null, "The startup location did not load."):
+		return false
+	var nav := classroom.get_node_or_null(^"Navigation") as LocationNavigation
+	# Even with autostart disabled, the classroom entered the tree and queued a bake.
+	# Let that bake finish before swapping the room; it needs the bodies in the tree.
+	if not _check.expect(nav != null and await Harness.wait_until(nav.is_routable, 7.0),
+		"The startup location did not finish preparing navigation."):
+		return false
+	if not _check.expect(_host.load_location(STREET, &"FromCorridor", _player, &"street"), "Street did not load."):
+		return false
+	sequence.allow_player_control()
+	return true
 
 
 func _walk_return_route() -> void:
@@ -139,11 +156,17 @@ func _check_choices_and_notes() -> void:
 	if not _check.expect(seed_found, "No deterministic marginal dice fixture."):
 		return
 	_dialogue.set_check_resolver(resolver)
+	var key := StoryFlags.check_record_flag(SHED, ROLL_NODE)
+
+	Harness.stage = "declining the available comparison never rolls it"
+	if not await _open_shed(true) or not await _select_and_close(&"leave"):
+		return
+	_check.expect(_rolls.is_empty() and _state.get_flag(key, null) == null,
+		"Leaving the shed rolled or recorded the unchosen comparison.")
 
 	Harness.stage = "failed comparison does not lock the estate gate"
 	if not await _compare(false, 0, &"pg_return_unclear"):
 		return
-	var key := StoryFlags.check_record_flag(SHED, ROLL_NODE)
 	var failure_record: Dictionary = _state.get_flag(key, {}).duplicate(true)
 	if not await _exit(&"pg_back_to_alley", Vector3(0.12, 0, 17.12), &"alley", &"FromPlayground"):
 		return

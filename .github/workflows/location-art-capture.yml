@@ -22,6 +22,7 @@ on:
       - "tests/capture_locations.gd"
       - "tests/location_art_test.gd"
       - "tests/return_route_test.gd"
+      - "assets/camera/shots/return_board.tres"
       - "data/inspections/*/street.json"
       - "data/inspections/*/alley.json"
       - "data/inspections/*/playground.json"
@@ -258,8 +259,11 @@ jobs:
           run_check return_route 300 godot --headless --path . --script res://tests/return_route_test.gd || status=$?
           awk '/return route:|^PASS:|^FAIL:|TEST FAILURE|SCRIPT ERROR/ && n++ < 8 {print}' ci-logs/return_route.log \
             | while IFS= read -r line; do echo "::notice title=return route::${line}"; done
-          awk '/^ERROR: / && !at {at=NR} at && NR < at+8 {print}' ci-logs/return_route.log \
-            | while IFS= read -r line; do echo "::notice title=return route first engine error::${line}"; done
+          if grep -Eq '^ERROR:|^WARNING: ObjectDB instances leaked' ci-logs/return_route.log; then
+            awk '/^ERROR:|^WARNING: ObjectDB instances leaked/ {if (!at) at=NR} at && NR < at+8 {print}' ci-logs/return_route.log \
+              | while IFS= read -r line; do echo "::error title=return route engine error::${line}"; done
+            status=1
+          fi
           exit "$status"
 
       - name: Upload art regression logs
