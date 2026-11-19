@@ -296,6 +296,7 @@ jobs:
             tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
             exit 1
           fi
+          echo "::notice title=laboratory walkthrough::recorded ${frames} frames at 24 fps (exit ${code})"
           # What the frames actually are, as an annotation: if the sequence is not what the
           # encoder expects, the notice says so without needing the artifact.
           first=$(find build/walkthrough -name '*.png' | sort | sed -n '1p')

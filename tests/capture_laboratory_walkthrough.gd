@@ -105,10 +105,11 @@ func _run() -> void:
 		await _frames(1)
 		recorded += 1
 	# Movie Maker mixes on rendered frames, not on the audio thread. Stop the
-	# loop and give the mix and audio update a final frame each before teardown.
+	# room and autoload players (including Music), then let the mix and audio
+	# update run before tearing down the tree.
 	var players: Array[Node] = []
 	for type: String in ["AudioStreamPlayer", "AudioStreamPlayer2D", "AudioStreamPlayer3D"]:
-		players.append_array(_main.find_children("*", type, true, false))
+		players.append_array(root.find_children("*", type, true, false))
 	if AudioRelease.stop_all(players) > 0:
 		await _frames(2)
 		recorded += 2
