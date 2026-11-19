@@ -149,6 +149,36 @@ def read_code(root: Path) -> list[tuple[str, str]]:
     return out
 
 
+MEMBER = re.compile(r"\bStoryFlags\.([A-Z][A-Z0-9_]*)\b")
+
+
+def dangling_members(root: Path, consts: dict[str, str]) -> list[str]:
+    """`StoryFlags.NAME` in any script, scene or test that names no constant.
+
+    Godot reports these as a Parse Error, but only when the script runs; deleting a flag
+    should fail here, before CI starts an engine. Tests count: a test that still names a
+    deleted flag would stop compiling.
+    """
+    known = set(consts) | {"ALL_FLAGS"}
+    found = []
+    for folder in CODE_DIRS + ("tests",):
+        base = root / folder
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if path.suffix not in CODE_SUFFIXES:
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for match in MEMBER.finditer(text):
+                if match.group(1) not in known:
+                    line = text.count("\n", 0, match.start()) + 1
+                    found.append(
+                        f"{path.relative_to(root).as_posix()}:{line}: StoryFlags.{match.group(1)} "
+                        f"is not declared in {REGISTRY}"
+                    )
+    return found
+
+
 def code_names(code: list[tuple[str, str]], const: str | None, value: str) -> list[str]:
     by_value = re.compile(r"[\"']" + re.escape(value) + r"[\"']")
     by_name = re.compile(r"\bStoryFlags\." + const + r"\b") if const else None
@@ -184,6 +214,8 @@ def audit(root: Path, write_only: dict[str, str] | None = None) -> list[str]:
             problems.append(f"WRITE_ONLY: \"{flag}\" has no reason")
         if flag not in writes:
             problems.append(f"WRITE_ONLY: \"{flag}\" is no longer written by content - remove it from the list")
+
+    problems += dangling_members(root, consts)
 
     if listed is None:
         problems.append(f"{REGISTRY}: no ALL_FLAGS array")

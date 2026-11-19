@@ -43,6 +43,9 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
+## The rear door never opens, so the registry no longer declares a flag for it (#292). The
+## old name is kept here so the test still proves nothing records the door as opened.
+const REAR_DOOR_OPENED := &"rear_door_opened"
 const TIME_SCALE := 4.0
 ## Real seconds for the whole file; godot-ci.yml gives it 300 and the watchdog 290.
 const BUDGET_SECONDS := 270.0
@@ -387,7 +390,7 @@ func _check_lesson() -> void:
 	if _curtain().is_open() or not _no_staircase():
 		_failures.append("Something moved during the lesson.")
 	for flag: StringName in [
-		StoryFlags.CURTAIN_FALL_PENDING, StoryFlags.CURTAIN_DRAWN, StoryFlags.REAR_DOOR_OPENED
+		StoryFlags.CURTAIN_FALL_PENDING, StoryFlags.CURTAIN_DRAWN, REAR_DOOR_OPENED
 	]:
 		if _flag(flag):
 			_failures.append("'%s' was set during the lesson." % flag)
@@ -424,7 +427,7 @@ func _check_rear_door() -> void:
 		)
 	if not _conversations.is_empty():
 		_failures.append("The rear door started a conversation: %s." % str(_conversations))
-	if _flag(StoryFlags.REAR_DOOR_OPENED):
+	if _flag(REAR_DOOR_OPENED):
 		_failures.append("The rear door recorded itself as opened.")
 	if framed:
 		_failures.append("The camera went somewhere when the rear door was tried.")
@@ -753,7 +756,7 @@ func _check_refused_state_on_disk() -> void:
 		_failures.append("%s: what the player saw before the refusal was not restored." % label)
 	if ConversationRouter.select(&"classroom_curtain", _game_state.get_snapshot()) != &"classroom_curtain":
 		_failures.append("%s: the curtain routes to another conversation." % label)
-	if not _flag(StoryFlags.CLASS_DISMISSED) or _flag(StoryFlags.REAR_DOOR_OPENED):
+	if not _flag(StoryFlags.CLASS_DISMISSED) or _flag(REAR_DOOR_OPENED):
 		_failures.append("%s: the rest of the story did not come back." % label)
 	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), CURTAIN_SPOT))
 	await _frames(4)
@@ -910,7 +913,7 @@ func _check_return() -> void:
 	await _settle(30.0, "the classroom again")
 	if not _curtain().is_open() or not _void().visible:
 		_failures.append("Back in the classroom the curtain is closed over the void again.")
-	if not _no_staircase() or _flag(StoryFlags.REAR_DOOR_OPENED):
+	if not _no_staircase() or _flag(REAR_DOOR_OPENED):
 		_failures.append("Back in the classroom the rear door opened or a staircase appeared.")
 	var curtain: Interactable = _room().find_interactable(&"curtain")
 	if curtain != null and curtain.get_prompt_override() != "prompt.curtain_drawn":

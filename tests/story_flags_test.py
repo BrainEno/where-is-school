@@ -13,6 +13,7 @@ check cannot rot with the repository's own flags:
 - a test naming a flag is not a reader; game code naming it (by constant or by string) is;
 - a location's `arrival_flags` is both written and read (the notebook's route);
 - generated flags (`check:...`) are out of scope;
+- `StoryFlags.NAME` naming no constant, in game code or in a test, is refused;
 - the command returns 0 on this repository.
 
 Run with `python3 tests/story_flags_test.py`; no engine and no network.
@@ -144,6 +145,15 @@ class StoryFlagsTest(unittest.TestCase):
     def test_generated_flags_are_out_of_scope(self) -> None:
         self.tree.nodes.append({"id": "e", "effects": [{"type": "set_flag", "flag": "seen:door", "value": True}]})
         self.assertEqual(self.tree.audit(), [])
+
+    def test_dangling_member_fails_in_code_and_tests(self) -> None:
+        self.tree.test_script = "func t() -> void:\n\tassert(not GameState.has_flag(StoryFlags.REAR_DOOR_OPENED))\n"
+        self.assertFinding(self.tree.audit(), "tests/door_test.gd:2: StoryFlags.REAR_DOOR_OPENED is not declared")
+        self.tree.test_script = ""
+        self.tree.script += "func _y() -> void:\n\tprint(StoryFlags.GONE, StoryFlags.ALL_FLAGS)\n"
+        problems = self.tree.audit()
+        self.assertFinding(problems, "StoryFlags.GONE is not declared")
+        self.assertFalse(any("ALL_FLAGS is not declared" in p for p in problems), problems)
 
     def test_command_passes_on_this_repository(self) -> None:
         out = io.StringIO()
