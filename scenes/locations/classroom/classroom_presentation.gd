@@ -1,7 +1,8 @@
 extends Node3D
-## Classroom-only presentation. The shared imported desk and wrapper stay untouched.
+## Classroom-only presentation: desk finish and the imagined teacher's wall mark.
 ## Replace (do not cover) the photographic PBR surface: an alpha wash leaves its
-## normal/ORM maps and specular response underneath. No geometry or physics is edited.
+## normal/ORM maps and specular response underneath. The shared desk and wrapper
+## stay untouched. No geometry or physics is edited.
 
 const DESK_SURFACE: Material = preload("res://assets/materials/classroom/student_wood.tres")
 const DESKS: Array[NodePath] = [
@@ -19,8 +20,12 @@ const DESKS: Array[NodePath] = [
 	^"../Furniture/DeskC4/Desk",
 ]
 
+@onready var _b_impression := get_node_or_null(^"../WallNorth/InkShadowFigure") as MeshInstance3D
+
 
 func _ready() -> void:
+	# The room is drawn before anyone has imagined the teacher, even on a revisit.
+	set_b_impression_visible(false)
 	for path in DESKS:
 		var desk := get_node_or_null(path)
 		if desk == null:
@@ -35,3 +40,9 @@ func _ready() -> void:
 			# Remove the wash, not just its opacity. The imported hard-normal mesh
 			# cannot grow a clean inverted hull; leave its silhouette to geometry.
 			mesh.material_overlay = null
+
+
+## Only this painted figure changes. The floor's set-square mark remains scenery.
+func set_b_impression_visible(show_impression: bool) -> void:
+	if _b_impression != null:
+		_b_impression.visible = show_impression

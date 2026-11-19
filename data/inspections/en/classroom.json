@@ -30,16 +30,16 @@
     "prompt": "Look at the set square",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A set square the length of your forearm, laid across the top of the lectern. The varnish is pale where a hand would hold it. One corner has split, and someone has taped it with tape that has since gone brown.",
-    "repeat_text": "The set square, still on the lectern. The taped corner faces the room.",
+    "text": "A wooden set square the length of your forearm lies on the teacher’s desk. The varnish is pale where a hand would hold it. The split along one side of the right angle is wrapped in yellowed tape.",
+    "repeat_text": "The taped set square is still there, its sharp point facing the room.",
     "recall": {
       "entry_id": "recall_set_square_placed",
-      "text": "You remember this being put down on a desk. Twice, to be heard. You cannot say whether you were in the room when it happened."
+      "text": "You remember it usually tucked on the shelf below the teacher’s desk."
     },
     "record": {
       "entry_id": "saw_set_square",
       "source": "observed",
-      "text": "A damaged wooden set square lies on the lectern before the biology lesson."
+      "text": "There’s a wooden set square on the teacher’s desk in the biology room, with tape wrapped around the split."
     },
     "effects": [
       {

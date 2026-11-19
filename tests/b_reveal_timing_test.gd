@@ -21,6 +21,8 @@ extends SceneTree
 ##    keeps it hidden and not processing on entry, after Q's talk too, until the explicit
 ##    trigger (`present_b()`), which is refused before the talk. After it she is shown; a
 ##    re-entered room shows the one B again, and a snapshot without her entrance hides her.
+## 5. **The wall mark is an impression, not an actor.** Only the live `expected_b`
+##    lines show it. It is gone at the end, also when skipped, and never saved.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
@@ -61,6 +63,7 @@ func _run() -> void:
 	await _check_gate_snapshots()
 	await _check_player_started_talk()
 	await _check_actor_schedule()
+	await _check_impression_skip_and_resume()
 	Engine.time_scale = 1.0
 	await _release()
 	Harness.clear_session_state(self)
@@ -69,8 +72,8 @@ func _run() -> void:
 		self, _failures,
 		"B is presented only after Q's first conversation has ended: the real opening plays "
 		+ "q_wake before any line of B's, a missing or unfinished Q talk skips the imagined "
-		+ "scene, older saves keep it, and a room's B stays hidden until her explicit entrance, "
-		+ "across repeat talks, reloads and re-entering the room."
+		+ "scene, and a room's B stays hidden until her explicit entrance. The wall impression "
+		+ "is visible only during the live imagined dialogue, not on re-entry or after loading."
 	)
 
 
@@ -115,6 +118,7 @@ func _check_real_opening_order() -> void:
 		"expected_b started before q_wake: %s." % str(_started))
 	_expect(_flag(StoryFlags.Q_FIRST_TALK_DONE), "Q's finished conversation was not recorded.")
 	_expect(not _flag(StoryFlags.B_ON_STAGE), "Something put B on stage during the opening.")
+	_expect_impression(false, "after the expectation beat")
 	await _release()
 
 
@@ -132,6 +136,7 @@ func _check_gate_snapshots() -> void:
 			"expected_b played although Q's first conversation never happened.")
 		_expect(_flag(StoryFlags.EXPECTATION_SKIPPED),
 			"The ungated expectation step was not closed as skipped.")
+		_expect_impression(false, "when the expectation is skipped without a Q talk")
 		await _release()
 
 	Harness.stage = "the expectation gate: a resumed, unfinished Q talk"
@@ -149,6 +154,7 @@ func _check_gate_snapshots() -> void:
 		_expect(not _started.has(&"expected_b"), "expected_b played after an unfinished Q talk.")
 		_expect(_flag(StoryFlags.EXPECTATION_SKIPPED),
 			"The expectation step stayed open after an unfinished Q talk.")
+		_expect_impression(false, "when the expectation is skipped after an unfinished Q talk")
 		await _release()
 
 	Harness.stage = "the expectation gate: an older save"
@@ -236,6 +242,7 @@ func _check_actor_schedule() -> void:
 			"present_b() did not place B where it was asked.")
 	_expect(_sequence.present_b(Vector3(1.6, 0.0, -3.0)), "A second present_b() was refused.")
 	_expect(_count_b_actors() == 1, "A second entrance made %d B actors." % _count_b_actors())
+	_expect_impression(false, "after a real B's explicit entrance")
 
 	# Reload-shaped changes: re-entering keeps her; a snapshot without her entrance does not.
 	_expect(_enter_room_with_b(spawn), "Re-entering the room after B's entrance failed.")
@@ -309,11 +316,65 @@ func _expect_hidden(actor: NpcActor, when: String) -> void:
 # --- Plumbing ---------------------------------------------------------------
 
 
+# --- 5. The impression ends even if the player skips the text ----------------
+
+
+func _check_impression_skip_and_resume() -> void:
+	Harness.stage = "skipping the imagined dialogue"
+	await _boot(false, {
+		StoryFlags.MET_Q: true, StoryFlags.Q_FIRST_TALK_DONE: true,
+		StoryFlags.TEXTBOOK_MISSING: true,
+	})
+	if _world == null:
+		return
+	Engine.time_scale = TIME_SCALE
+	_sequence._beat_expectation()
+	var until := Time.get_ticks_msec() + 20000
+	while not _started.has(&"expected_b") and Time.get_ticks_msec() < until:
+		await process_frame
+	var reached := _dialogue.is_presenting_subjective()
+	_expect(reached, "The skip case did not reach the first imagined line.")
+	if reached:
+		_dialogue.get_playback().set_skip_scope(&"all")
+		_dialogue.request_skip()
+		while not _flag(StoryFlags.EXPECTATION_PLAYED) and Time.get_ticks_msec() < until:
+			await process_frame
+	Engine.time_scale = 1.0
+	var completed := _finished.has(&"expected_b") and _flag(StoryFlags.EXPECTATION_PLAYED)
+	_expect(completed, "Skip did not finish the imagined dialogue and expectation beat.")
+	_expect_impression(false, "after skipping the imagined dialogue")
+	if not completed:
+		await _release()
+		return
+
+	Harness.stage = "re-entering and continuing after the expectation"
+	var spawn := _host.get_current_spawn()
+	_expect(_host.load_location(CLASSROOM, spawn, _player, &"classroom"),
+		"The classroom could not be re-entered after the expectation.")
+	_expect_impression(false, "on re-entry after the expectation")
+	var save := root.get_node(^"Save")
+	var result: Dictionary = save.save_game()
+	_expect(bool(result.get("ok", false)), "Could not save after the expectation: %s" % str(result))
+	await _release()
+	_state.clear()
+	_narrative.clear()
+	await _open_world(false)
+	if _world != null:
+		_expect(_flag(StoryFlags.EXPECTATION_PLAYED) and _sequence.next_step() == &"bell",
+			"Continue did not restore the completed expectation from disk.")
+		_expect_impression(false, "after continuing from disk")
+	await _release()
+
+
 func _boot(autostart: bool, flags: Dictionary) -> void:
 	await _release()
 	Harness.clear_session_state(self)
 	for flag: StringName in flags:
 		_state.set_flag(flag, flags[flag])
+	await _open_world(autostart)
+
+
+func _open_world(autostart: bool) -> void:
 	_started.clear()
 	_finished.clear()
 	_talk_done_at_first_line = null
@@ -330,11 +391,12 @@ func _boot(autostart: bool, flags: Dictionary) -> void:
 	if voices != null:
 		voices.set_process(false)
 	_dialogue.conversation_started.connect(_on_started)
-	_dialogue.conversation_finished.connect(func(id: StringName) -> void: _finished.append(id))
+	_dialogue.conversation_finished.connect(_on_finished)
 	_dialogue.line_presented.connect(_on_line)
 	_state.story_flag_changed.connect(_on_flag)
 	if not autostart:
 		(_world.get_node(^"GameUI") as GameUI).fade.set_clear()
+	_expect_impression(false, "on entering the classroom")
 	await _frames(3)
 	if _host.get_current() == null:
 		_expect(false, "%s: main did not enter the classroom." % Harness.stage)
@@ -353,16 +415,38 @@ func _release() -> void:
 
 func _on_started(conversation_id: StringName) -> void:
 	_started.append(conversation_id)
+	_expect_impression(false, "before the first line of %s" % conversation_id)
 	if conversation_id == &"expected_b" and not _finished.has(&"q_wake") \
 			and not _flag(StoryFlags.Q_FIRST_TALK_DONE):
 		_expect(false, "%s: expected_b started before Q's first conversation ended."
 			% Harness.stage)
 
 
+func _on_finished(conversation_id: StringName) -> void:
+	_finished.append(conversation_id)
+	_expect_impression(false, "as %s closes" % conversation_id)
+
+
 func _on_line(line: Dictionary) -> void:
+	var imagined_b := StringName(line.get("conversation_id", &"")) == &"expected_b"
+	_expect_impression(imagined_b, "during %s" % String(line.get("node_id", "")))
+	if imagined_b:
+		_expect(not _flag(StoryFlags.B_ON_STAGE) and _b_actor() == null,
+			"The imagined exchange put a real B on stage.")
 	if StringName(line.get("speaker_id", &"")) == &"b" and not _flag(StoryFlags.Q_FIRST_TALK_DONE):
 		_expect(false, "%s: B spoke ('%s') before Q's first conversation ended."
 			% [Harness.stage, String(line.get("node_id", ""))])
+
+
+func _expect_impression(shown: bool, when: String) -> void:
+	var room := _host.get_current()
+	if room == null:
+		return
+	var figure := room.get_node_or_null(^"WallNorth/InkShadowFigure") as MeshInstance3D
+	var square := room.get_node_or_null(^"Props/InkShadowSquare") as MeshInstance3D
+	_expect(figure != null and figure.is_visible_in_tree() == shown,
+		"B's wall impression is not %s %s." % ["visible" if shown else "hidden", when])
+	_expect(square != null and square.is_visible_in_tree(), "The floor mark is missing %s." % when)
 
 
 func _on_flag(flag: StringName, _previous: Variant, value: Variant) -> void:
