@@ -260,8 +260,10 @@ func _activate(id: StringName) -> void:
 
 func _inspect(id: StringName) -> void:
 	_activate(id)
-	if not _checks.expect(_dialogue.get_mode() == DialogueController.Mode.INSPECTION,
-		"No inspection started for %s." % id):
+	var presented := await Harness.wait_until(func() -> bool:
+		return _dialogue.get_mode() == DialogueController.Mode.INSPECTION, 10.0
+	)
+	if not _checks.expect(presented, "No inspection started for %s." % id):
 		return
 	while _dialogue.get_mode() == DialogueController.Mode.INSPECTION:
 		_dialogue.advance_presentation()

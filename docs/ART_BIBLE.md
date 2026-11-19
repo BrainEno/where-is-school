@@ -106,7 +106,7 @@ entry are removed. Do not replace it with another slogan, glyph strip or decorat
 | Teacher's floor / lacquer | `#785148`, `#6E3C36` | Muted rose/umber, not a saturated red stripe |
 | Board | `#243D3F`, shadow `#212A3A`, chalk `#D6DCCE` | Cool pigment underneath the existing erased heading, diagram and date ghosts |
 | Wood | `#A98458`, light `#C8AF81`, cool `#6E725F` | Matte ochre against cool floor; chairs quieter than the bag |
-| Window light / schoolbag | `#E0A569`–`#EFCD97`; bag `#BE963E` | Concentrate warm chroma here, not on every surface |
+| Window light / schoolbag | `#E0A569`–`#EFCD97`; bag `#274774` | Keep window light warm; the indigo canvas is a separate local accent against the warm desk |
 | Contour | near `#2E2933` | Warm-violet dark, never a pure-black cage |
 
 **Material tiers.**

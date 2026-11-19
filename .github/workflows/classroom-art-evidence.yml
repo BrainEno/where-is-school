@@ -41,6 +41,17 @@ on:
       - 'scenes/locations/classroom/**'
       - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
+      - 'tests/capture_classroom_motion.gd'
+      - 'scenes/environment/props/schoolbag.*'
+      - 'scenes/environment/props/classroom_desk.tscn'
+      - 'assets/models/classroom/schoolbag/**'
+      - 'scripts/actors/player/**'
+      - 'scripts/actors/prologue_action_poses.gd'
+      - 'scripts/actors/character_limb_contact.gd'
+      - 'scripts/environment/pushable_chair.gd'
+      - 'scripts/interaction/interactable.gd'
+      - 'scripts/interaction/interaction_controller.gd'
+      - 'scripts/interaction/seated_chair_interactable.gd'
       - 'tests/capture_classroom_clock.gd'
       - 'tests/clock_reading.gd'
       - 'tests/clock_reading_test.gd'
@@ -49,6 +60,9 @@ on:
       - 'tests/classroom_wall_contract.gd'
       - 'tests/classroom_render_evidence_test.py'
       - 'tests/opening_flow_test.gd'
+      - 'tests/imported_placement_test.gd'
+      - 'tests/runtime_character_animation_test.gd'
+      - 'tests/b_reveal_timing_test.gd'
       - 'tests/run_check_test.sh'
       - 'tests/run_classroom_checks.sh'
       - 'tests/run_classroom_checks_test.sh'
@@ -164,6 +178,124 @@ jobs:
         with:
           name: classroom-render-${{ matrix.method }}-${{ env.HEAD_SHA }}
           path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  motion:
+    name: Capture classroom interaction motion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CI_LOG_DIR: build/classroom-motion
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - name: Install Xvfb and Mesa
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends xvfb xauth libgl1-mesa-dri
+      - uses: ./.github/actions/setup-godot
+      - name: Import the project and check the bag source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$CI_LOG_DIR"
+          printf 'head=%s\nengine=%s\n' "$HEAD_SHA" "$(godot --version)" > "$CI_LOG_DIR/BUILD.txt"
+          godot --headless --path . --import > "$CI_LOG_DIR/IMPORT.log" 2>&1
+          python3 art/classroom/build_schoolbag.py --check
+      - name: Exercise mouse and touch in the live classroom
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          for mode in mouse touch; do
+            args=("--output=$CI_LOG_DIR/$mode")
+            if [ "$mode" = touch ]; then args+=(--mobile-preview); fi
+            run_check "classroom_motion_$mode" 140 xvfb-run -a --server-args='-screen 0 1280x720x24' \
+              env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
+              --resolution 1120x630 --rendering-method gl_compatibility --rendering-driver opengl3 \
+              --script res://tests/capture_classroom_motion.gd -- "${args[@]}" || true
+          done
+          run_check_summary
+      - name: Check the seat, imported furniture and resaved classroom
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          run_check classroom_visual_slice 180 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || true
+          run_check imported_placement 180 godot --headless --path . --script res://tests/imported_placement_test.gd || true
+          run_check runtime_character_animation 300 godot --headless --path . --script res://tests/runtime_character_animation_test.gd || true
+          run_check b_reveal_timing 360 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || true
+          run_check_summary
+      - name: Report first-import diagnostics
+        if: always()
+        shell: bash
+        run: |
+          grep -m 6 -Ee "SCRIPT ERROR|ERROR: " "$CI_LOG_DIR/IMPORT.log" | while IFS= read -r line; do
+            echo "::notice title=classroom motion import::$line"
+          done || true
+      - name: Report motion measurements and runtime diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for log in "$CI_LOG_DIR"/classroom_motion_*.log; do
+            test -f "$log" || continue
+            grep -m 4 -E 'TEST FAILURE|TEST WATCHDOG|SCRIPT ERROR|ERROR:|WARNING:' "$log" | while IFS= read -r line; do
+              echo "::notice title=classroom motion diagnostic::$line"
+            done
+            echo "::notice title=$(basename "$log") measurements::$(grep '^MOTION_' "$log" | paste -sd'|' -)"
+          done
+      - name: Preview the returned pose
+        if: always()
+        env:
+          FRAME: 03_returned_from_aisle
+        run: &motion_preview |
+          set -euo pipefail
+          file="$CI_LOG_DIR/${MODE:-mouse}/$FRAME.jpg"
+          test -f "$file" || exit 0
+          sha=$(sha256sum "$file" | cut -d' ' -f1)
+          mapfile -t parts < <(base64 -w 4000 "$file")
+          if [ "${#parts[@]}" -gt 10 ]; then # GitHub's limit is per step
+            echo "::notice::Preview does not fit; download the full frame in the artifact."
+            exit 0
+          fi
+          for i in "${!parts[@]}"; do
+            echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
+          done
+      - name: Preview the lift
+        if: always()
+        env:
+          FRAME: 02_rising
+        run: *motion_preview
+      - name: Preview the bag target
+        if: always()
+        env:
+          FRAME: 04_bag_target
+        run: *motion_preview
+      - name: Preview the bag being searched
+        if: always()
+        env:
+          FRAME: 05_rummaging
+        run: *motion_preview
+      - name: Preview the original inspection
+        if: always()
+        env:
+          FRAME: 06_inspection
+        run: *motion_preview
+      - name: Preview the touch return
+        if: always()
+        env:
+          MODE: touch
+          FRAME: 07_touch_returned
+        run: *motion_preview
+      - name: Publish viewport frames and motion log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classroom-motion-${{ env.HEAD_SHA }}
+          path: ${{ env.CI_LOG_DIR }}/
           if-no-files-found: error
           retention-days: 30
 

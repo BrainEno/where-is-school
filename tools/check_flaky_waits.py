@@ -50,7 +50,7 @@ BASELINE: dict[str, int] = {
     "tests/interaction_hover_test.gd": 18,
     "tests/interaction_occlusion_test.gd": 47,
     "tests/interaction_visibility_sweep_test.gd": 4,
-    "tests/language_switch_test.gd": 15,
+    "tests/language_switch_test.gd": 14,
     "tests/location_transition_test.gd": 17,
     "tests/navigation_sync_stress_test.gd": 5,
     "tests/navigation_test.gd": 22,

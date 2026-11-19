@@ -95,8 +95,15 @@ func _run() -> void:
 	Engine.time_scale = TIME_SCALE
 
 	Harness.stage = "classroom"
-	if not await _enter(CLASSROOM, &"PlayerStart"):
-		Harness.finish(self, _failures, "")
+	# Main already placed the new game on B2. Re-loading the room here would
+	# deliberately discard that seated pose (a room transition), not test the wake.
+	var room := _host.get_current()
+	if room == null or room.location_id != &"classroom":
+		Harness.finish(self, ["The new game did not open in its classroom."], "")
+		return
+	var navigation := room.get_node_or_null(^"Navigation") as LocationNavigation
+	if navigation == null or not await navigation.wait_until_synchronized():
+		Harness.finish(self, ["The boot classroom navigation never synchronized."], "")
 		return
 	var player_animator := _player.get_character_animator()
 	if player_animator == null or not player_animator.is_bound():
@@ -187,8 +194,8 @@ func _check_wake(sequence: OpeningSequence, animator: CharacterVisualAnimation) 
 	Input.action_press(&"move_right")
 	await _physics_frames(2)
 	Input.action_release(&"move_right")
-	if not animator.is_playing_action() or animator.get_current_clip() != "get_up":
-		_failures.append("The first deliberate movement did not start the get-up (clip '%s')." % animator.get_current_clip())
+	if not animator.is_playing_action() or animator.get_current_clip() != "classroom_rise":
+		_failures.append("The first deliberate movement did not start the classroom rise (clip '%s')." % animator.get_current_clip())
 	var waited := 0.0
 	while animator.is_playing_action() and waited < 4.0:
 		await _seconds(0.1)

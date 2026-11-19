@@ -20,13 +20,13 @@
 | [AGENT_EVALUATION.md](AGENT_EVALUATION.md) | 编码 Agent 的公平比较与选型协议 | 现行 | 仓库所有者 | 2026-11-17 | 与 [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) 配套使用 |
 | [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) | 强制协作、证据与合并边界规则 | 现行 | 仓库所有者 | 2026-11-17 | 唯一入口是 [AGENTS.md](../AGENTS.md)；文档状态入口是本页 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 运行时模块边界与交互规则 | 现行 | 工程 Agent | 2026-11-18 | 全局类型见 [MODULE_INDEX.md](MODULE_INDEX.md)，离线诊断见 §7c |
-| [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
-| [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
+| [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
+| [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 是证据台账而非许可证明；见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 导入 3D 模型与字体等资产的合同 | 现行 | 工程 Agent | 2026-11-18 | 来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；§10.2b 同步 N／学生几何修订合同 |
-| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；本轮补 N／学生派生来源与修改，不等于美术批准 |
+| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含教室靛蓝帆布书包的第一方派生来源；记录不等于美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
-| [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-17 | 集成现状见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
+| [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐和翻包；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–10 为 N／学生两轮几何修订与真实 GLB 对照流程，待所有者验收 |
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10 几何修订同步，不独立声称获批 |

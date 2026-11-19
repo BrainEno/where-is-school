@@ -192,6 +192,9 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 ##   Per pixel, so a partly covered object is pointable exactly on its uncovered part.
 ## * Off the object, on its anchor sphere: it counts while any part of it is in view - a ray
 ##   to the centre or a corner of one of its boxes reaches the box first.
+## * For an occupied chair, the sitter's full-height movement capsule would hide its
+##   visible backrest. Count the sitter as part of that support only; the highlight
+##   still depth-tests against the actual character mesh.
 ## * Nothing to draw (no outline meshes): there is no outline to disagree with; true.
 ##
 ## What a body may be looked through is the same ray as `_probe_is_clear`, with two
@@ -213,7 +216,7 @@ func is_drawn_at_screen_ray(from: Vector3, direction: Vector3, candidate: Intera
 		return true
 	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
 	var cull_mask := camera.cull_mask if camera != null else 0xFFFFF
-	var own := _bodies_owning(meshes)
+	var own := _screen_pick_bodies(candidate, meshes)
 	var none: Array[RID] = []
 	var see_through := func(body: CollisionObject3D) -> bool:
 		return not _draws_opaque(body, cull_mask)
@@ -246,7 +249,15 @@ func is_seen_by_camera(candidate: Interactable) -> bool:
 	var cull_mask := camera.cull_mask
 	var see_through := func(body: CollisionObject3D) -> bool:
 		return not _draws_opaque(body, cull_mask)
-	return _any_box_in_view(space, camera.global_position, meshes, _bodies_owning(meshes), see_through)
+	return _any_box_in_view(space, camera.global_position, meshes, _screen_pick_bodies(candidate, meshes), see_through)
+
+
+func _screen_pick_bodies(candidate: Interactable, meshes: Array[GeometryInstance3D]) -> Array[RID]:
+	var own := _bodies_owning(meshes)
+	var sitter := _player as CollisionObject3D
+	if sitter != null and candidate.is_occupied_by(sitter):
+		own.append(sitter.get_rid())
+	return own
 
 
 ## The anchor-sphere half of `is_drawn_at_screen_ray`: true while a ray from the camera to

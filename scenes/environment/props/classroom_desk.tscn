@@ -27,6 +27,9 @@ script = ExtResource("4_ink")
 position = Vector3(0, 0, 0.58)
 script = ExtResource("5_chair")
 
+[node name="SeatMark" type="Marker3D" parent="Chair"]
+position = Vector3(0, 0, 0.07)
+
 [node name="Seat" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.45, 0)
 mesh = SubResource("BoxMesh_seat")

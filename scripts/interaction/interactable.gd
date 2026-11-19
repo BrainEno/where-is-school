@@ -237,6 +237,12 @@ func can_interact() -> bool:
 	return interaction_enabled
 
 
+## An occupied support can count its sitter as part of itself for camera picking.
+## Other targets must still respect depth occlusion from unrelated bodies.
+func is_occupied_by(_body: Node3D) -> bool:
+	return false
+
+
 ## The controller marks exactly one interactable as highlighted: the one E would use
 ## right now, and the one a click would walk to.
 ##
