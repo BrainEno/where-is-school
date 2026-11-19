@@ -81,7 +81,10 @@ func _test_playback_lifecycle() -> void:
 	# owns. Nothing is asserted about shipped audio: the project ships none, by decision, and a
 	# test that needed one to exist would be a test that argues with the decision.
 	var scratch := "user://voice_director_test_clips"
-	_write_fixture_clip(scratch + "/zh-CN/q_wake_q_1.wav")
+	# Start from nothing: a `.res` left behind by an earlier run would let the assertions pass
+	# against a file this run never wrote, which is the one way a fixture test lies.
+	_remove_fixture(scratch)
+	_write_fixture_clip(scratch + "/zh-CN/q_wake_q_1.res")
 
 	var director := VoiceDirector.new()
 	# Set before it enters the tree, so the player and the fixture directory are both in place
@@ -105,7 +108,7 @@ func _test_playback_lifecycle() -> void:
 		"director tracks the active clip path."
 	)
 	checks.expect(
-		director.get_active_clip_path().ends_with("q_wake_q_1.wav"),
+		director.get_active_clip_path().ends_with("q_wake_q_1.res"),
 		"The resolved clip is not the one written for this line (%s)."
 		% director.get_active_clip_path()
 	)
@@ -148,7 +151,13 @@ func _test_playback_lifecycle() -> void:
 	_remove_fixture(scratch)
 
 
-## A quarter second of a quiet tone: enough for the loader, short enough to be free.
+## A quarter second of a quiet tone, saved as a resource the loader will accept.
+##
+## A raw `.wav` written into `user://` is not enough: `resolve_clip_path()` asks
+## `ResourceLoader.exists()`, and an un-imported file does not exist as far as that is
+## concerned. Saving an `AudioStreamWAV` with `ResourceSaver` produces a real resource at a
+## `.res` path, which is what the resolution rule is actually looking for. The format is a
+## detail of the fixture; the rule under test is the naming.
 func _write_fixture_clip(path: String) -> void:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var wav := AudioStreamWAV.new()
@@ -161,7 +170,9 @@ func _write_fixture_clip(path: String) -> void:
 	for index in count:
 		frames.encode_s16(index * 2, int(sin(TAU * 440.0 * float(index) / 22050.0) * 8000.0))
 	wav.data = frames
-	wav.save_to_wav(path)
+	var saved := ResourceSaver.save(wav, path)
+	if saved != OK:
+		checks.fail("the fixture clip could not be saved to %s (error %d)." % [path, saved])
 
 
 func _remove_fixture(path: String) -> void:

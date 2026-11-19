@@ -120,8 +120,12 @@ static func resolve_clip_path(
 	if not conversation_id.is_empty() and not node_id.is_empty():
 		candidates.append("%s/%s/%s_%s" % [root, loc, conversation_id, node_id])
 
+	# `.res` is last and is not decoration: it is how a clip that is not a source file - a
+	# synthesised or converted one - can still be a clip. `tests/voice_director_test.gd` uses
+	# it to exercise the playback path against a resource it writes itself, since the
+	# project ships no dialogue audio by design.
 	for base: String in candidates:
-		for ext: String in [".mp3", ".ogg", ".wav"]:
+		for ext: String in [".mp3", ".ogg", ".wav", ".res"]:
 			var full_path := base + ext
 			if ResourceLoader.exists(full_path):
 				return full_path

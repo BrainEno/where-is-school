@@ -187,18 +187,22 @@ func _check_rate_limits() -> void:
 			"The refused '%s' play was counted: the count is supposed to mean 'heard'."
 			% String(kind)
 		)
-	# Measured, not assumed: the wait has to actually outlast the longest interval, and a
-	# "wait" that returned early would test the refusal rather than its expiry.
+	# Measured, not assumed, and polled rather than timed: `create_timer()` runs on the
+	# scaled clock and a single sleep that lands a few milliseconds short turns this into a
+	# test of the refusal instead of its expiry. The loop asks the clock until the interval
+	# has genuinely passed, so there is nothing to be short of.
 	var longest := 0.0
 	for kind: StringName in _audio.KINDS:
 		longest = maxf(longest, float(WorldAudioScript.MIN_INTERVAL_SECONDS[kind]))
+	var window := int(longest * 1000.0) + 120
 	var before := Time.get_ticks_msec()
-	await create_timer(longest + 0.15).timeout
+	while Time.get_ticks_msec() - before < window:
+		await process_frame
 	var waited := Time.get_ticks_msec() - before
 	checks.expect(
-		waited >= int(longest * 1000.0),
-		"The wait lasted only %d ms, under the %d ms longest interval."
-		% [waited, int(longest * 1000.0)]
+		waited >= window,
+		"The wait lasted only %d ms, under the %d ms the longest interval needs."
+		% [waited, window]
 	)
 	_audio.reset_counts()
 	checks.expect(
