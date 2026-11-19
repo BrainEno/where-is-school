@@ -21,7 +21,7 @@ What it does to the scene, and nothing else:
 * lifts `CourtFarHalf` 4 mm so it is no longer buried under `CourtSurface`;
 * replaces the Environment resource and retunes `Sun`;
 * adds one `PlaygroundArt` subtree of mesh-only nodes (no bodies, no shapes), plus one
-  flat decal parented under the occluder bodies they are painted on, so the camera's
+  set of wall fittings and decals under the bodies they belong to, so the camera's
   occluder fader fades them together with their wall.
 
 The dressing pass never adds a CollisionObject3D, moves a body, shape, interactable,
@@ -36,6 +36,8 @@ from functools import lru_cache
 import re
 import sys
 from pathlib import Path
+
+import yard_details
 
 HERE = Path(__file__).resolve().parent
 ART = HERE.parent
@@ -135,15 +137,20 @@ MATERIALS: dict[str, dict] = {
     "container_lining": {"color": (136, 145, 143), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.56, 0.56, 0.56)},
     "container_steel": {"color": (139, 161, 169), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.9, 0.9, 0.9)},
     "container_deck": {"color": (117, 83, 63), "texture": tex("metal_tile"), "triplanar": "local", "scale": (1.6, 0.8, 0.8)},
-    "container_canvas": {"color": (162, 170, 147)},
-    "container_bedding": {"color": (228, 212, 176)},
-    "container_blanket": {"color": (150, 105, 70)},
+    "container_bedding": {"color": (228, 218, 192), "cull_off": True},
+    "container_blanket": {"texture": tex("blanket_weave"), "cull_off": True},
+    "old_newsprint": {"texture": tex("old_newsprint"), "cull_off": True},
+    "noodle_film": {"texture": tex("noodle_film"), "roughness": 0.58, "specular": 0},
     "container_oxide": {"color": (118, 75, 58)},
     # the shed corner
     "shed_wall": {"color": SHED_IVORY, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "shed_roof": {"color": ROOF_PLUM, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "door_green": {"color": DOOR_GREEN, "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
     "brass": {"color": BRASS, "outline": True},
+    "shed_clean_paint": {"color": (114, 137, 82)},
+    "shed_sign": {"texture": tex("shed_sign")},
+    "tap_steel": {"color": (159, 173, 161)},
+    "tap_runoff": {"texture": tex("tap_runoff"), "cut": 0.42},
     # Sheet box 0.9 x 0.5 m facing +x.
     "rota": {"texture": tex("rota_sheet"), "triplanar": "local", "scale": (1.0, 2.0, 1 / 0.9), "offset": (0.0, 0.5, 0.5)},
     "hedge": {"color": HEDGE, "texture": tex("foliage_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
@@ -182,12 +189,12 @@ def material_tres(name: str, spec: dict) -> str:
     if spec.get("unshaded"):
         lines += ["shading_mode = 0", "disable_receive_shadows = true"]
     else:
-        lines += ["diffuse_mode = 3", "specular_mode = 2"]
+        lines += ["diffuse_mode = 3", f"specular_mode = {spec.get('specular', 2)}"]
     lines.append(f"albedo_color = {srgb(spec.get('color', (255, 255, 255)))}")
     if "texture" in spec:
         lines.append('albedo_texture = ExtResource("2_tex")')
     if not spec.get("unshaded"):
-        lines.append("roughness = 1.0")
+        lines.append(f"roughness = {spec.get('roughness', 1.0)}")
     if "scale" in spec:
         lines.append(f"uv1_scale = {vec3(spec['scale'])}")
     if "offset" in spec:
@@ -253,11 +260,11 @@ REPOINT: list[tuple[str, str]] = [
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
     # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
-    (r"TapPost/MeshInstance3D|TapSpout", "exit_steel"),
+    (r"TapPost/MeshInstance3D", "exit_steel"),
     (
         r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
-        r"|Bird_\d|BirdWire|TapDrain"
+        r"|Bird_\d|BirdWire"
         r"|SouthGatePost(West|East)|SouthGateLintel",
         "metal_ink",
     ),
@@ -266,7 +273,7 @@ REPOINT: list[tuple[str, str]] = [
 # Ruled graybox boxes the painted planes / ring tyres below replace.
 HIDE = re.compile(
     r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
-    r"|SchoolPlinth/MeshInstance3D"
+    r"|SchoolPlinth/MeshInstance3D|TapPost/MeshInstance3D"
 )
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
@@ -301,6 +308,7 @@ class Builder:
     def __init__(self) -> None:
         self.subs: list[str] = []
         self.nodes: list[str] = []
+        self.imported_meshes: set[str] = set()
         self.n = 0
 
     def mesh(self, kind: str, **props) -> str:
@@ -318,16 +326,33 @@ class Builder:
             body.append(f"{k} = {v}")
         self.nodes.append("\n".join(body) + "\n")
 
-    def flat(self, name: str, parent: str, mesh_id: str, mat: str, pos, rot=None, shadow: bool = False) -> None:
+    def flat(self, name: str, parent: str, mesh_id: str, mat: str, pos, rot=None,
+             shadow: bool = False, *, imported: bool = False) -> None:
         props = {"position": vec3(pos)}
         if rot is not None:
             props["rotation_degrees"] = vec3(rot)
-        props["mesh"] = f'SubResource("{mesh_id}")'
+        if imported:
+            self.imported_meshes.add(mesh_id)
+            props["mesh"] = f'ExtResource("mesh_{mesh_id}")'
+        else:
+            props["mesh"] = f'SubResource("{mesh_id}")'
         props["material_override"] = f'ExtResource("art_{mat}")'
         if not shadow:
             props["cast_shadow"] = "0"
         self.node(name, parent, "MeshInstance3D", **props)
 
+    def mesh_resources(self) -> list[str]:
+        return [f'[ext_resource type="Mesh" path="{RES}/meshes/{name}.obj" id="mesh_{name}"]'
+                for name in sorted(self.imported_meshes)]
+
+
+def dressed_materials(b: Builder) -> set[str]:
+    return {name for block in b.nodes for name in re.findall(r'ExtResource\("art_([a-z_]+)"\)', block)}
+
+
+def material_resources(used: set[str]) -> list[str]:
+    return [f'[ext_resource type="Material" path="{RES}/materials/{name}.tres" id="art_{name}"]'
+            for name in sorted(used)]
 
 def plane(b: Builder, w: float, d: float) -> str:
     return b.mesh("PlaneMesh", size=f"Vector2({w:g}, {d:g})")
@@ -500,21 +525,6 @@ def _yard_return_details(b: Builder, parent: str) -> None:
     b.flat("RoundRubbing", p, rub, "concrete_patch", (0.147, 0.249, 0.173))
     b.flat("SlotRubbing", p, b.mesh("BoxMesh", size=vec3((0.086, 0.004, 0.038))), "concrete_patch", (0.264, 0.249, 0.181))
 
-    # Cast fitting, handle and brass drain cap: the chain hangs on the post, not in the drain.
-    b.node("TapDetail", parent, position=vec3((-6, 0, 14)))
-    p = f"{parent}/TapDetail"
-    ring = b.mesh("TorusMesh", inner_radius="0.044", outer_radius="0.069", rings="14", ring_segments="8")
-    b.flat("Handle", p, ring, "fire_door", (0.11, 1.66, 0.006))
-    b.flat("Cap", p, b.mesh("CylinderMesh", top_radius="0.094", bottom_radius="0.094", height="0.039",
-                            radial_segments="14"), "brass", (0.112, 1.053, 0.037), (12, 0, -82))
-    link = b.mesh("TorusMesh", inner_radius="0.017", outer_radius="0.028", rings="10", ring_segments="6")
-    for i in range(12):
-        angle = (i - 11) * 0.35
-        b.flat(f"Link{i}", p, link, "exit_steel",
-               (0.111 * math.cos(angle), 1.47 - 0.037 * i, 0.111 * math.sin(angle)), (72, 28 * i, 0))
-    b.flat("Drip", p, b.mesh("CylinderMesh", top_radius="0.11", bottom_radius="0.14", height="0.004",
-                             radial_segments="10"), "concrete_patch", (0.33, 0.010, 0))
-
 
 def build_nodes() -> Builder:
     b = Builder()
@@ -570,9 +580,8 @@ def build_nodes() -> Builder:
     for i, y in enumerate((0.12, 0.36, 0.6)):
         b.flat(f"Tyre_{i}", f"{A}/Equipment", tyre, "tyre", (-15.2 + (0.05 if i == 1 else 0.0), y, 2.6 - (0.04 if i == 2 else 0.0)), (0, 20 * i, 0), shadow=True)
     b.flat("TyreLoose", f"{A}/Equipment", tyre, "tyre", (-14.1, 0.14, 3.5), (6, 0, 0), shadow=True)
-    # The shed door's hasp and padlock (the inspection text describes both).
-    b.flat("ShedHasp", f"{A}/Equipment", b.mesh("BoxMesh", size=vec3((0.03, 0.06, 0.2))), "metal_ink", (-13.875, 1.12, -3.62))
-    b.flat("ShedPadlock", f"{A}/Equipment", b.mesh("BoxMesh", size=vec3((0.05, 0.09, 0.07))), "brass", (-13.85, 1.04, -3.56))
+    yard_details.shed(b)
+    yard_details.tap(b, A)
 
     # Decals on the occluder bodies: children of the body, so they fade with it.
     b.flat("WallPatches", "SchoolBackWall", quad(b, 6.0, 2.4), "wall_patches", (4.0, -3.0, 1.006))
@@ -592,19 +601,17 @@ def build_nodes() -> Builder:
 
 def build_container() -> tuple[str, set[str]]:
     """Hollow 6 × 2.4 m shipping container. Everything is authored in prop space:
-    five structural plates, opening hardware, fitted cot, and a climbable steel ladder.
+    five structural plates, opening hardware, improvised bedding, and a climbable steel ladder.
     Only the shell, open leaves and entry plate are solid. The corrugation, grips and
-    furniture detailing don't add little obstacles to the schoolyard bake.
+    bedding don't add little obstacles to the schoolyard bake.
     """
     b = Builder()
-    used = set()
 
     @lru_cache(maxsize=None)
     def box_mesh(size):
         return b.mesh("BoxMesh", size=vec3(size))
 
     def box(name, size, where, mat, parent=".", rot=None, shadow=True):
-        used.add(mat)
         b.flat(name, parent, box_mesh(size), mat, where, rot, shadow=shadow)
 
     def shape(name, size, where, rot=None):
@@ -676,27 +683,9 @@ def build_container() -> tuple[str, set[str]]:
     for n, (x, w) in enumerate(((-2.74, 0.29), (-1.63, 0.17), (0.47, 0.12), (2.75, 0.23))):
         box(f"WornSill{n}", (w, 0.035, 0.010), (x, 0.254, 1.215), "container_oxide", shadow=False)
 
-    b.node("Cabin", ".")
-    for name, size, where, mat in (
-        ("CotRails", (1.98, 0.065, 0.79), (1.29, 0.48, -0.54), "metal_ink"),
-        ("Mattress", (1.91, 0.124, 0.75), (1.29, 0.562, -0.54), "container_canvas"),
-        ("Pillow", (0.42, 0.093, 0.63), (2.00, 0.647, -0.54), "container_bedding"),
-        ("Sheet", (1.35, 0.021, 0.75), (1.00, 0.632, -0.54), "container_bedding"),
-        ("Blanket", (0.63, 0.043, 0.77), (0.67, 0.662, -0.54), "container_blanket"),
-        ("BlanketHem", (0.055, 0.011, 0.77), (0.92, 0.685, -0.54), "container_oxide"),
-        ("TableTop", (0.83, 0.061, 0.55), (-0.94, 0.88, 0.51), "container_deck"),
-    ):
-        box(name, size, where, mat, "Cabin")
-    for label, x, z, y in (("Cot", 1.29, -0.54, 0.33), ("Table", -0.94, 0.51, 0.52)):
-        for i, dx in enumerate((-1, 1)):
-            for j, dz in enumerate((-1, 1)):
-                w, d = (0.87, 0.35) if label == "Cot" else (0.34, 0.21)
-                box(f"{label}Leg{i}{j}", (0.05, 2 * (y - 0.22), 0.05),
-                    (x + w * dx, y, z + d * dz), "metal_ink", "Cabin")
-    cup = b.mesh("CylinderMesh", top_radius=0.052, bottom_radius=0.044, height=0.09, radial_segments=12)
-    b.flat("EnamelCup", "Cabin", cup, "container_bedding", (-0.82, 0.955, 0.44))
+    yard_details.cabin(b)
     b.node("DoorLight", "Cabin", "OmniLight3D", position=vec3((1.98, 1.65, 0.10)),
-           light_color="Color(1, 0.77, 0.56, 1)", light_energy=0.78, omni_range=2.24, omni_attenuation=1.15)
+           light_color="Color(1, 0.84, 0.68, 1)", light_energy=0.92, omni_range=2.64, omni_attenuation=1.12)
 
     ladder_x, rung_z, trace_z = 1.39, 1.48, 1.76
     # A small patch of warm, reflected yard light picks out the near rails and the
@@ -725,7 +714,9 @@ def build_container() -> tuple[str, set[str]]:
         '[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]',
         '[ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]',
         '[ext_resource type="Resource" path="res://assets/camera/shots/container_ladder.tres" id="shot"]',
-    ] + [f'[ext_resource type="Material" path="{RES}/materials/{mat}.tres" id="art_{mat}"]' for mat in sorted(used)]
+    ]
+    used = dressed_materials(b)
+    ext += material_resources(used) + b.mesh_resources()
     root = '[node name="ContainerBody" type="StaticBody3D" groups=["camera_occluder"]]\nscript = ExtResource("ladder")'
     use = f'''[node name="LadderUse" parent="." instance=ExtResource("interactable")]
 script = ExtResource("staged")
@@ -740,6 +731,14 @@ support_paths = PackedStringArray("..")
 '''
     scene = [f'[gd_scene load_steps={len(ext) + len(b.subs) + 1} format=3]\n', '\n'.join(ext) + '\n']
     return '\n'.join(scene + b.subs + [root + '\n'] + b.nodes + [use]), used
+
+
+def build_noodle_wrapper() -> str:
+    b = Builder()
+    b.flat("Film", ".", "noodle_wrapper", "noodle_film", (0, 0, 0), imported=True)
+    ext = material_resources(dressed_materials(b)) + b.mesh_resources()
+    return "\n".join([f"[gd_scene load_steps={len(ext) + 1} format=3]\n", *ext, "",
+                      '[node name="NoodleWrapper" type="Node3D"]\n', *b.nodes])
 
 
 def node_path(head: str) -> str:
@@ -795,16 +794,14 @@ def apply(text: str) -> tuple[str, set[str]]:
 
 
 def finish(text: str, used: set[str], b: Builder) -> str:
-    for block in b.nodes:
-        for m in re.findall(r'ExtResource\("art_([a-z_]+)"\)', block):
-            used.add(m)
+    used.update(dressed_materials(b))
     # Drop the graybox's shared-material ext_resources nothing refers to any more.
     def keep(match: re.Match) -> str:
         rid = match.group(1)
         return match.group(0) if f'ExtResource("{rid}")' in text else ""
 
     text = re.sub(r'\[ext_resource type="StandardMaterial3D" path="res://assets/materials/[^"]+" id="([^"]+)"\]\n', keep, text)
-    new_ext = "".join(f'[ext_resource type="Material" path="{RES}/materials/{m}.tres" id="art_{m}"]\n' for m in sorted(used))
+    new_ext = "\n".join(material_resources(used) + b.mesh_resources()) + "\n"
     first_sub = text.index("\n\n[sub_resource")
     text = text[: first_sub + 1] + new_ext + text[first_sub + 1 :]
     first_node = text.index('\n[node name="Playground"')
@@ -827,6 +824,8 @@ def main() -> None:
     for name, spec in MATERIALS.items():
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
     print(f"wrote {len(MATERIALS) + 1} materials to {MAT_DIR.relative_to(ROOT)}")
+    yard_details.write_detail_meshes(ART, RES)
+    (ART / "noodle_wrapper.tscn").write_text(build_noodle_wrapper())
     container, container_materials = build_container()
     (ART / "container.tscn").write_text(container)
     if args.materials_only:
@@ -835,7 +834,8 @@ def main() -> None:
     text, used = apply(args.scene.read_text())
     b = build_nodes()
     text = finish(text, used, b)
-    used.update(container_materials)
+    # Include the materials of the two separate prop scenes.
+    used.update(container_materials | {"noodle_film"})
     unknown = sorted(m for m in used if m not in MATERIALS)
     if unknown:
         sys.exit("unknown materials: " + ", ".join(unknown))

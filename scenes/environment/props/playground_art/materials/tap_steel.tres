@@ -1,9 +1,9 @@
 [gd_resource type="StandardMaterial3D" load_steps=1 format=3]
 
 [resource]
-resource_name = "container_canvas"
+resource_name = "tap_steel"
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.635, 0.667, 0.576, 1)
+albedo_color = Color(0.624, 0.678, 0.631, 1)
 roughness = 1.0
 texture_filter = 3

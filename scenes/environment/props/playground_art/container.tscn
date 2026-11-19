@@ -1,4 +1,4 @@
-[gd_scene load_steps=68 format=3]
+[gd_scene load_steps=62 format=3]
 
 [ext_resource type="Script" path="res://scenes/locations/playground/container_ladder.gd" id="ladder"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]
@@ -7,7 +7,6 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container.tres" id="art_container"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_bedding.tres" id="art_container_bedding"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_blanket.tres" id="art_container_blanket"]
-[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_canvas.tres" id="art_container_canvas"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_deck.tres" id="art_container_deck"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_frame.tres" id="art_container_frame"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_lining.tres" id="art_container_lining"]
@@ -15,6 +14,11 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_rib.tres" id="art_container_rib"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_steel.tres" id="art_container_steel"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/metal_ink.tres" id="art_metal_ink"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/old_newsprint.tres" id="art_old_newsprint"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_blanket.obj" id="mesh_cabin_blanket"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_sheet.obj" id="mesh_cabin_sheet"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint.obj" id="mesh_newsprint"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint_clipped.obj" id="mesh_newsprint_clipped"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_art1"]
 size = Vector3(6, 0.1, 2.4)
@@ -124,67 +128,34 @@ size = Vector3(0.12, 0.035, 0.01)
 [sub_resource type="BoxMesh" id="BoxMesh_art36"]
 size = Vector3(0.23, 0.035, 0.01)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art37"]
-size = Vector3(1.98, 0.065, 0.79)
+[sub_resource type="CylinderMesh" id="CylinderMesh_art37"]
+top_radius = 0.033
+bottom_radius = 0.033
+height = 3.52
+radial_segments = 10
 
 [sub_resource type="BoxMesh" id="BoxMesh_art38"]
-size = Vector3(1.91, 0.124, 0.75)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art39"]
-size = Vector3(0.42, 0.093, 0.63)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art40"]
-size = Vector3(1.35, 0.021, 0.75)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art41"]
-size = Vector3(0.63, 0.043, 0.77)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art42"]
-size = Vector3(0.055, 0.011, 0.77)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art43"]
-size = Vector3(0.83, 0.061, 0.55)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art44"]
-size = Vector3(0.05, 0.22, 0.05)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art45"]
-size = Vector3(0.05, 0.6, 0.05)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_art46"]
-top_radius = 0.052
-bottom_radius = 0.044
-height = 0.09
-radial_segments = 12
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_art47"]
-top_radius = 0.033
-bottom_radius = 0.033
-height = 3.52
-radial_segments = 10
-
-[sub_resource type="BoxMesh" id="BoxMesh_art48"]
 size = Vector3(0.082, 0.063, 0.32)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_art49"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_art39"]
 top_radius = 0.033
 bottom_radius = 0.033
 height = 0.3
 radial_segments = 10
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_art50"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_art40"]
 top_radius = 0.033
 bottom_radius = 0.033
 height = 3.52
 radial_segments = 10
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_art51"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_art41"]
 top_radius = 0.033
 bottom_radius = 0.033
 height = 0.3
 radial_segments = 10
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_art52"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_art42"]
 top_radius = 0.021
 bottom_radius = 0.021
 height = 0.76
@@ -1248,93 +1219,63 @@ cast_shadow = 0
 
 [node name="Cabin" type="Node3D" parent="."]
 
-[node name="CotRails" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(1.29, 0.48, -0.54)
-mesh = SubResource("BoxMesh_art37")
-material_override = ExtResource("art_metal_ink")
+[node name="Bedding" type="Node3D" parent="Cabin"]
 
-[node name="Mattress" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(1.29, 0.562, -0.54)
-mesh = SubResource("BoxMesh_art38")
-material_override = ExtResource("art_container_canvas")
-
-[node name="Pillow" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(2, 0.647, -0.54)
-mesh = SubResource("BoxMesh_art39")
+[node name="Sheet" type="MeshInstance3D" parent="Cabin/Bedding"]
+position = Vector3(1.3, 0.222, -0.559)
+rotation_degrees = Vector3(0, 1.8, 0)
+mesh = ExtResource("mesh_cabin_sheet")
 material_override = ExtResource("art_container_bedding")
+cast_shadow = 0
 
-[node name="Sheet" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(1, 0.632, -0.54)
-mesh = SubResource("BoxMesh_art40")
-material_override = ExtResource("art_container_bedding")
-
-[node name="Blanket" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(0.67, 0.662, -0.54)
-mesh = SubResource("BoxMesh_art41")
+[node name="Blanket" type="MeshInstance3D" parent="Cabin/Bedding"]
+position = Vector3(0.98, 0.223, -0.603)
+rotation_degrees = Vector3(0, -10.5, 0)
+mesh = ExtResource("mesh_cabin_blanket")
 material_override = ExtResource("art_container_blanket")
+cast_shadow = 0
 
-[node name="BlanketHem" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(0.92, 0.685, -0.54)
-mesh = SubResource("BoxMesh_art42")
-material_override = ExtResource("art_container_oxide")
+[node name="Papers" type="Node3D" parent="Cabin"]
 
-[node name="TableTop" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-0.94, 0.88, 0.51)
-mesh = SubResource("BoxMesh_art43")
-material_override = ExtResource("art_container_deck")
+[node name="DiscardedPage" type="Node3D" parent="Cabin/Papers"]
+position = Vector3(0.83, 0.223, 0.12)
+rotation_degrees = Vector3(0, 37, 0)
+scale = Vector3(1, 1, 1)
 
-[node name="CotLeg00" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(0.42, 0.33, -0.89)
-mesh = SubResource("BoxMesh_art44")
-material_override = ExtResource("art_metal_ink")
+[node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/DiscardedPage"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_newsprint")
+material_override = ExtResource("art_old_newsprint")
+cast_shadow = 0
 
-[node name="CotLeg01" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(0.42, 0.33, -0.19)
-mesh = SubResource("BoxMesh_art44")
-material_override = ExtResource("art_metal_ink")
+[node name="FoldedPage" type="Node3D" parent="Cabin/Papers"]
+position = Vector3(2.13, 0.223, 0.2)
+rotation_degrees = Vector3(0, 15, 0)
+scale = Vector3(0.89, 0.6, 0.58)
 
-[node name="CotLeg10" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(2.16, 0.33, -0.89)
-mesh = SubResource("BoxMesh_art44")
-material_override = ExtResource("art_metal_ink")
+[node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/FoldedPage"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_newsprint")
+material_override = ExtResource("art_old_newsprint")
+cast_shadow = 0
 
-[node name="CotLeg11" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(2.16, 0.33, -0.19)
-mesh = SubResource("BoxMesh_art44")
-material_override = ExtResource("art_metal_ink")
+[node name="ClippedPage" type="Node3D" parent="Cabin/Papers"]
+position = Vector3(1.96, 0.226, 0.25)
+rotation_degrees = Vector3(0, -19, 0)
+scale = Vector3(1, 1, 1)
 
-[node name="TableLeg00" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-1.28, 0.52, 0.3)
-mesh = SubResource("BoxMesh_art45")
-material_override = ExtResource("art_metal_ink")
-
-[node name="TableLeg01" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-1.28, 0.52, 0.72)
-mesh = SubResource("BoxMesh_art45")
-material_override = ExtResource("art_metal_ink")
-
-[node name="TableLeg10" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-0.6, 0.52, 0.3)
-mesh = SubResource("BoxMesh_art45")
-material_override = ExtResource("art_metal_ink")
-
-[node name="TableLeg11" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-0.6, 0.52, 0.72)
-mesh = SubResource("BoxMesh_art45")
-material_override = ExtResource("art_metal_ink")
-
-[node name="EnamelCup" type="MeshInstance3D" parent="Cabin"]
-position = Vector3(-0.82, 0.955, 0.44)
-mesh = SubResource("CylinderMesh_art46")
-material_override = ExtResource("art_container_bedding")
+[node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/ClippedPage"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_newsprint_clipped")
+material_override = ExtResource("art_old_newsprint")
 cast_shadow = 0
 
 [node name="DoorLight" type="OmniLight3D" parent="Cabin"]
 position = Vector3(1.98, 1.65, 0.1)
-light_color = Color(1, 0.77, 0.56, 1)
-light_energy = 0.78
-omni_range = 2.24
-omni_attenuation = 1.15
+light_color = Color(1, 0.84, 0.68, 1)
+light_energy = 0.92
+omni_range = 2.64
+omni_attenuation = 1.12
 
 [node name="LandingFill" type="OmniLight3D" parent="."]
 position = Vector3(1.1, 4.4, 2.55)
@@ -1347,54 +1288,54 @@ omni_attenuation = 1.2
 
 [node name="SteelRailLeft" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.01, 1.8, 1.48)
-mesh = SubResource("CylinderMesh_art47")
+mesh = SubResource("CylinderMesh_art37")
 material_override = ExtResource("art_container_steel")
 
 [node name="StayLeft0" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.01, 0.24, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="StayLeft1" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.01, 1.26, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="StayLeft2" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.01, 2.39, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="GrabLeft" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.01, 3.48, 1.355)
 rotation_degrees = Vector3(-90, 0, 0)
-mesh = SubResource("CylinderMesh_art49")
+mesh = SubResource("CylinderMesh_art39")
 material_override = ExtResource("art_container_steel")
 
 [node name="SteelRailRight" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.77, 1.8, 1.48)
-mesh = SubResource("CylinderMesh_art50")
+mesh = SubResource("CylinderMesh_art40")
 material_override = ExtResource("art_container_steel")
 
 [node name="StayRight0" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.77, 0.24, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="StayRight1" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.77, 1.26, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="StayRight2" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.77, 2.39, 1.328)
-mesh = SubResource("BoxMesh_art48")
+mesh = SubResource("BoxMesh_art38")
 material_override = ExtResource("art_container_frame")
 
 [node name="GrabRight" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.77, 3.48, 1.355)
 rotation_degrees = Vector3(-90, 0, 0)
-mesh = SubResource("CylinderMesh_art51")
+mesh = SubResource("CylinderMesh_art41")
 material_override = ExtResource("art_container_steel")
 
 [node name="Steps" type="Node3D" parent="Ladder"]
@@ -1408,7 +1349,7 @@ position = Vector3(1.53, 0.014, 2.02)
 [node name="Rung0" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 2.35, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step0" type="Marker3D" parent="Ladder/Steps"]
@@ -1417,7 +1358,7 @@ position = Vector3(1.39, 2.372, 1.76)
 [node name="Rung1" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 2.05, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step1" type="Marker3D" parent="Ladder/Steps"]
@@ -1426,7 +1367,7 @@ position = Vector3(1.39, 2.072, 1.76)
 [node name="Rung2" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 1.75, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step2" type="Marker3D" parent="Ladder/Steps"]
@@ -1435,7 +1376,7 @@ position = Vector3(1.39, 1.772, 1.76)
 [node name="Rung3" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 1.45, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step3" type="Marker3D" parent="Ladder/Steps"]
@@ -1444,7 +1385,7 @@ position = Vector3(1.39, 1.472, 1.76)
 [node name="Rung4" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 1.15, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step4" type="Marker3D" parent="Ladder/Steps"]
@@ -1453,7 +1394,7 @@ position = Vector3(1.39, 1.172, 1.76)
 [node name="Rung5" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 0.85, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step5" type="Marker3D" parent="Ladder/Steps"]
@@ -1462,7 +1403,7 @@ position = Vector3(1.39, 0.872, 1.76)
 [node name="Rung6" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 0.55, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step6" type="Marker3D" parent="Ladder/Steps"]
@@ -1471,7 +1412,7 @@ position = Vector3(1.39, 0.572, 1.76)
 [node name="Rung7" type="MeshInstance3D" parent="Ladder"]
 position = Vector3(1.39, 0.25, 1.48)
 rotation_degrees = Vector3(0, 0, 90)
-mesh = SubResource("CylinderMesh_art52")
+mesh = SubResource("CylinderMesh_art42")
 material_override = ExtResource("art_container_steel")
 
 [node name="Step7" type="Marker3D" parent="Ladder/Steps"]

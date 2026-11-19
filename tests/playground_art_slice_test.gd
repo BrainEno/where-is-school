@@ -39,11 +39,12 @@ const FOREIGN_PREFIXES: Array[String] = [
 	"res://assets/materials/", "res://assets/shaders/", "res://scenes/dev/painterly_lab/",
 ]
 ## Imported models keep their own materials; the art pass frames them from the ground.
-const OWN_MATERIAL_PREFIXES: Array[String] = ["YardBench/", "YardBag/"]
+const OWN_MATERIAL_PREFIXES: Array[String] = ["YardBench/"]
 const TEXTURE_WARN_BYTES := 512 * 1024
 const TEXTURE_MAX_SIDE := 2048
 
-## Every collision body at base commit 359ed4a: [position, collision box size].
+## The graybox solids, minus the old backpack wholly contained in YardBench:
+## [position, collision box size].
 const SOLIDS := {
 	"YardGround": [Vector3(0, -0.1, 0), Vector3(46, 0.2, 40)],
 	"SchoolBackWall": [Vector3(0, 6.0, -21), Vector3(46, 12, 2.0)],
@@ -76,7 +77,6 @@ const SOLIDS := {
 	"TapPost": [Vector3(-6.0, 0.9, 14.0), Vector3(0.16, 1.8, 0.16)],
 	"TreeTrunk": [Vector3(20.0, 2.0, 15.0), Vector3(0.5, 4.0, 0.5)],
 	"YardBench": [Vector3(11.0, 0.0, 3.2), Vector3(2.043, 1.04, 0.527)],
-	"YardBag": [Vector3(11.03, 0.52, 3.75), Vector3(0.528, 0.498, 0.386)],
 }
 ## The bodies the camera fades; the slice must leave their group membership alone.
 const OCCLUDERS: Array[String] = [
@@ -88,6 +88,7 @@ const INTERACTABLES := {
 	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
 	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
 	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(15.25, 1.05, -15.5),
+	"pg_cabin_papers_look": Vector3(13.96, 0.32, -15.25),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
 	"pg_chalk_guide": Vector3(-12.4, 0.53, -9.6), "pg_tap": Vector3(-5.58, 1.08, 14.0),
 }
@@ -206,6 +207,7 @@ func _run() -> void:
 	_check_hierarchy()
 	Harness.stage = "story agreement"
 	_check_story_agreement()
+	_check_temporary_bedding()
 	Harness.stage = "navigation"
 	var navigation := await _check_navigation()
 	Harness.stage = "game camera"
@@ -358,7 +360,8 @@ func _check_container_shell(body: StaticBody3D) -> void:
 		if box == null or not box.size.is_equal_approx(shell[key][1]) or not shape.position.is_equal_approx(shell[key][0]):
 			_failures.append("The shell plate '%s' no longer fits." % key)
 	for path: String in ["DoorNorth/LockRod0", "DoorSouth/LockRod0", "CrownSouth09", "RoofFold09",
-		"Cabin/Mattress", "Cabin/Pillow", "Cabin/Blanket", "Cabin/TableTop", "Ladder/SteelRailLeft", "Ladder/Rung7"]:
+		"Cabin/Bedding/Sheet", "Cabin/Bedding/Blanket", "Cabin/Papers/ClippedPage/Paper",
+		"Ladder/SteelRailLeft", "Ladder/Rung7"]:
 		if not body.get_node_or_null(NodePath(path)) is MeshInstance3D:
 			_failures.append("The shipping container lost visible geometry '%s'." % path)
 	var ladder := body.get_node_or_null(^"LadderUse") as StagedInteractable
@@ -366,13 +369,10 @@ func _check_container_shell(body: StaticBody3D) -> void:
 		_failures.append("The visible steel ladder isn't an interaction.")
 
 
-## The two imported props carry their shape half their height up; the graybox boxes are
-## centred on their body.
+## The imported bench carries its shape half its height up; graybox boxes are centred.
 func _shape_origin(path: String) -> Vector3:
 	if path == "YardBench":
 		return Vector3(0.0, 0.52, 0.0)
-	if path == "YardBag":
-		return Vector3(0.0, 0.249, 0.0)
 	return Vector3.ZERO
 
 
@@ -439,6 +439,7 @@ func _check_dressing() -> void:
 	for path: String in [
 		"CourtLineSouth", "CourtLineNorth", "CourtLineWest", "CourtLineEast", "CourtCentre",
 		"KeyNear", "KeyFar", "TyreStack_0", "TyreStack_1", "TyreStack_2", "TyreLoose",
+		"TapPost/MeshInstance3D",
 	]:
 		var node := _yard.get_node_or_null(NodePath(path)) as Node3D
 		if node == null:
@@ -581,22 +582,30 @@ func _hue_distance(a: Color, b: Color) -> float:
 
 func _check_story_agreement() -> void:
 	var expectations := {
-		"PlaygroundArt/Equipment/ShedHasp": "the hasp on the shed door",
-		"PlaygroundArt/Equipment/ShedPadlock": "the padlock on the shed door",
+		"ShedBody/Facade/Hasp": "the hasp on the shed door",
+		"ShedBody/Facade/Padlock": "the padlock on the shed door",
+		"ShedBody/Facade/DoorLightGap": "the slit under the door",
+		"ShedBody/Facade/OldPaintPatch": "the clean paint under the hasp",
+		"PlaygroundArt/TapDetail/Wheel/Rim": "the red wheel on the tap",
+		"PlaygroundArt/TapDetail/Cap": "the cap hanging from the pipe",
+		"PlaygroundArt/TapDetail/Drain/Bar4": "the open grate under the tap",
+		"YardNoodleWrapper/Film": "the printed noodle packet on the bench",
 		"PlaygroundArt/Equipment/HoopFarNet": "the net on the far hoop",
 		"PlaygroundArt/Ground/HoopNearPatch": "the newer concrete the near hoop stands in",
 		"PlaygroundArt/Ground/Seam": "the seam running past the middle of the yard",
 		"PlaygroundArt/Ground/PourB": "the second pour of concrete",
 		"PaleUnderHedge": "the pale strip under the hedge",
-		"ShedSheet": "the duty sheet in the shed window",
+		"ShedBody/Facade/DutySheet": "the duty sheet in the shed window",
+		"ShedBody/ShedReturnCopy/Strip": "the clipped copy of the return mark",
 		"PingPongBall": "the ball under the shed footing",
 	}
 	for path: String in expectations:
 		var node := _yard.get_node_or_null(NodePath(path)) as Node3D
 		if node == null or not node.is_visible_in_tree():
 			_failures.append("The text describes %s, and '%s' is not drawn." % [expectations[path], path])
-	_expect_material("ShedDoor", "door_green.tres", "the shed door is green")
-	_expect_material("ShedSheet", "rota.tres", "the duty sheet is drawn as a sheet")
+	_expect_material("ShedBody/Facade/Door", "door_green.tres", "the shed door is green")
+	_expect_material("ShedBody/Facade/DutySheet", "rota.tres", "the duty sheet is drawn as a sheet")
+	_expect_material("YardNoodleWrapper/Film", "noodle_film.tres", "the opened plastic packet has printed film")
 	_expect_material(
 		"HoopNearFooting/MeshInstance3D", "concrete_patch.tres", "the near hoop stands in newer concrete"
 	)
@@ -633,6 +642,31 @@ func _check_story_agreement() -> void:
 		var size := (ground.shape as BoxShape3D).size
 		if size.z < size.x * 0.8:
 			_failures.append("The yard reads wider than long.")
+
+
+func _check_temporary_bedding() -> void:
+	var cabin := _yard.get_node_or_null(^"ContainerBody/Cabin") as Node3D
+	if cabin == null:
+		_failures.append("The shell lost its cabin dressing.")
+		return
+	for retired: String in ["Mattress", "CotRails", "Pillow", "TableTop", "EnamelCup"]:
+		if cabin.find_child(retired, true, false) != null:
+			_failures.append("The cabin still draws the old room furnishing '%s'." % retired)
+	var items := ["Bedding/Sheet", "Bedding/Blanket", "Papers/ClippedPage/Paper",
+		"Papers/FoldedPage/Paper", "Papers/DiscardedPage/Paper"]
+	for path: String in items:
+		var item := cabin.get_node_or_null(NodePath(path)) as MeshInstance3D
+		if item == null or not item.mesh is ArrayMesh or not item.is_visible_in_tree():
+			_failures.append("Cabin dressing '%s' must be a visible shaped mesh, not a box." % path)
+			continue
+		var bounds := item.global_transform * item.get_aabb()
+		if bounds.position.y < 0.218 or bounds.position.y > 0.274 or bounds.end.y > 0.42:
+			_failures.append("Cabin dressing '%s' is off the 0.22 m deck: %s." % [path, bounds])
+	var location := _yard as LocationRoot
+	var papers := location.find_interactable(&"pg_cabin_papers_look")
+	var clip := cabin.get_node_or_null(^"Papers/ClippedPage/Paper")
+	if papers == null or papers.camera_shot == null or papers.get_outline_meshes() != [clip]:
+		_failures.append("The optional paper read must trace and frame the cut page only.")
 
 
 func _expect_material(path: String, file_name: String, why: String) -> void:

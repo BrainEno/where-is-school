@@ -24,7 +24,7 @@
 | [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 是证据台账而非许可证明；见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 导入 3D 模型与字体等资产的合同 | 现行 | 工程 Agent | 2026-11-18 | 来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；§10.2b 同步 N／学生几何修订合同 |
-| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含教室靛蓝帆布书包的第一方派生来源；记录不等于美术批准 |
+| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含教室帆布书包、操场集装箱铺盖与球场道具的第一方来源；记录不等于美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐和翻包；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |

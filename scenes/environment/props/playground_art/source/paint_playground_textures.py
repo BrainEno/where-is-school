@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[4]
@@ -577,6 +577,109 @@ def ground_row(kind: str, seed: int) -> Image.Image:
     return c.image(2, alpha="cut")
 
 
+def _type(size: int) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(str(ROOT / "art/fonts/NotoSansSC-Regular.ttf"), size)
+
+
+def noodle_film() -> Image.Image:
+    """Fictional red-and-cream packet. Wide thermoseals, a bowl logo and broken foil sheen."""
+    im = Image.new("RGB", (384, 256), (166, 62, 36))
+    d = ImageDraw.Draw(im)
+    pale, red, ink = (246, 220, 154), (119, 42, 29), (80, 47, 39)
+    d.polygon([(0, 37), (384, 37), (384, 94), (228, 221), (0, 215)], fill=(207, 78, 35))
+    d.polygon([(0, 33), (242, 28), (130, 227), (0, 228)], fill=pale)
+    d.polygon([(227, 27), (254, 27), (147, 225), (123, 225)], fill=(214, 142, 62))
+    d.text((21, 50), "泡面", font=_type(65), fill=red, stroke_width=1)
+    d.text((24, 141), "NOODLES", font=_type(29), fill=ink, stroke_width=1)
+    d.rectangle((25, 185, 96, 208), fill=red)
+    d.text((32, 183), "汤面", font=_type(15), fill=pale)
+    # The broad bowl reads even after letters have become too small to read.
+    d.ellipse((191, 88, 359, 194), fill=(131, 49, 30))
+    d.pieslice((190, 79, 355, 190), 0, 180, fill=(253, 228, 173))
+    d.ellipse((190, 73, 355, 132), fill=(250, 231, 183), outline=ink, width=3)
+    d.ellipse((205, 82, 342, 122), fill=(157, 72, 36))
+    for j in range(4):
+        d.arc((214 + j * 9, 84 + j * 3, 323 + j * 4, 116 + j * 2), 6, 336, fill=(247, 184, 82), width=4)
+    d.ellipse((229, 96, 242, 104), fill=(85, 104, 59))
+    d.ellipse((285, 108, 298, 116), fill=(85, 104, 59))
+    d.line([(300, 78), (351, 51), (370, 37)], fill=ink, width=7, joint="curve")
+    d.line([(309, 83), (358, 62), (376, 46)], fill=ink, width=5, joint="curve")
+    d.arc((210, 144, 333, 182), 13, 167, fill=(191, 99, 63), width=5)
+    for top in (0, 226):
+        d.rectangle((0, top, 384, top + 30), fill=red)
+        d.line((0, top + 26, 384, top + 26), fill=(226, 143, 79), width=3)
+        for x in range(2, 384, 11):
+            d.line((x, top + 4, x - 2, top + 21), fill=(196, 106, 65), width=2)
+    # Exposed lining just inside the torn end, and separate, not all-over glare.
+    d.polygon([(0, 247), (80, 242), (173, 252), (274, 245), (383, 250), (383, 256), (0, 256)],
+              fill=(212, 215, 208))
+    d.polygon([(6, 41), (104, 35), (82, 45), (19, 49)], fill=(255, 239, 200))
+    d.polygon([(147, 185), (202, 178), (184, 187), (160, 192)], fill=(245, 177, 104))
+    d.polygon([(317, 204), (380, 146), (381, 158), (340, 199)], fill=(240, 153, 98))
+    return im
+
+
+def old_newsprint() -> Image.Image:
+    """An invented local paper, not adapted from a real masthead or source text."""
+    c = Canvas(1.25, 1.0, 256.0, (212, 196, 160), seed=2126)
+    planes(c, (230, 215, 180), (173, 150, 118), 32, (0.15, 0.77), (0.06, 0.17),
+           angle=0.2, opacity=0.48, bristles=10)
+    im = c.image(18).convert("RGB")
+    d = ImageDraw.Draw(im)
+    ink = (94, 78, 60)
+    d.text((13, 6), "早报", font=_type(46), fill=ink)
+    # The clipped mesh removes the right-hand part of the dateline.
+    d.text((207, 32), "十二月四日", font=_type(21), fill=ink)
+    d.line((13, 72, 304, 72), fill=ink, width=3)
+    d.text((13, 75), "街口修路", font=_type(24), fill=ink)
+    d.rectangle((13, 117, 148, 178), fill=(144, 135, 112))
+    d.polygon([(13, 165), (48, 143), (83, 157), (97, 128), (148, 160), (148, 178), (13, 178)],
+              fill=(110, 108, 90))
+    rng = np.random.default_rng(2127)
+    for x0, top, width in ((13, 190, 136), (166, 105, 140)):
+        for y in range(top, 241, 8):
+            end = int(rng.integers(width - 30, width))
+            for x in range(x0, x0 + end, 20):
+                d.line((x, y, min(x + int(rng.integers(12, 19)), x0 + end), y), fill=(128, 110, 87), width=2)
+    return im
+
+
+def blanket_weave() -> Image.Image:
+    c = Canvas(1.29, 0.713, 224.0, (146, 96, 72), seed=2128)
+    planes(c, (163, 113, 84), (116, 76, 67), 28, (0.26, 0.6), (0.07, 0.15),
+           angle=0, opacity=0.6, bristles=12)
+    im = c.image(14).convert("RGB")
+    d = ImageDraw.Draw(im)
+    for y, width, color in ((4, 6, (107, 75, 64)), (15, 4, (185, 139, 99)),
+                            (im.height - 13, 4, (185, 139, 99)), (im.height - 4, 6, (107, 75, 64))):
+        d.line((0, y, im.width, y), fill=color, width=width)
+    return im
+
+
+def shed_sign() -> Image.Image:
+    im = Image.new("RGB", (336, 80), (201, 190, 143))
+    d = ImageDraw.Draw(im)
+    ink = (60, 78, 66)
+    d.rectangle((5, 5, 331, 75), outline=ink, width=3)
+    d.text((64, 6), "器材室", font=_type(48), fill=ink)
+    d.line((231, 21, 231, 58), fill=ink, width=2)
+    d.text((248, 21), "02", font=_type(26), fill=ink)
+    for x in (19, 313):
+        d.ellipse((x - 3, 36, x + 3, 42), fill=ink)
+    return im
+
+
+def tap_runoff() -> Image.Image:
+    c = Canvas(1.64, 1.22, 160.0, (85, 89, 81), seed=2129, alpha=0.0)
+    damp = [(0.21, 0.86), (0.41, 1.00), (0.71, 0.87), (1.12, 0.77), (1.47, 0.68),
+            (1.52, 0.40), (1.40, 0.20), (1.07, 0.21), (0.83, 0.43), (0.51, 0.52)]
+    c.paint_alpha((83, 88, 82), c.polygon_mask(damp, rough=0.43, cell_m=0.046, blur_m=0.013), 1.0)
+    # Chalky mineral bloom only under the faucet's lip.
+    c.ink_line([(0.59, 0.82), (0.74, 0.89), (0.89, 0.84), (0.93, 0.74), (0.84, 0.68)],
+               width_m=0.054, wobble_m=0.018, color=(161, 156, 132), broken=0.24, alpha_canvas=True)
+    return c.image(12, alpha="cut")
+
+
 # --- output --------------------------------------------------------------------------------
 
 
@@ -595,6 +698,11 @@ TEXTURES = {
     "seam.png": seam,
     "hoop_patch.png": hoop_patch,
     "bench_patch.png": bench_patch,
+    "noodle_film.png": noodle_film,
+    "old_newsprint.png": old_newsprint,
+    "blanket_weave.png": blanket_weave,
+    "shed_sign.png": shed_sign,
+    "tap_runoff.png": tap_runoff,
     "hoop_net.png": hoop_net,
     "court_tile.png": court_tile,
     "court_line.png": court_line,

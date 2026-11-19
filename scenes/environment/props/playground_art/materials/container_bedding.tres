@@ -2,8 +2,9 @@
 
 [resource]
 resource_name = "container_bedding"
+cull_mode = 2
 diffuse_mode = 3
 specular_mode = 2
-albedo_color = Color(0.894, 0.831, 0.69, 1)
+albedo_color = Color(0.894, 0.855, 0.753, 1)
 roughness = 1.0
 texture_filter = 3
