@@ -1786,6 +1786,124 @@
           "next": null
         }
       ]
+    },
+    "student": {
+      "start": "st_1",
+      "nodes": [
+        {
+          "id": "st_1",
+          "speaker": "student",
+          "text": "You sit here too.",
+          "next": "st_2"
+        },
+        {
+          "id": "st_2",
+          "speaker": "protagonist",
+          "text": "He does not look at you while he says it. He looks at the desk. Both hands stay on the edge of it, as if holding something down.",
+          "source": "observed",
+          "next": "st_3"
+        },
+        {
+          "id": "st_3",
+          "speaker": "student",
+          "text": "The first couple of days the teacher had to look up to find everyone. Now she doesn't. She knows which desks are empty before she gets to them.",
+          "next": "st_4"
+        },
+        {
+          "id": "st_4",
+          "speaker": "protagonist",
+          "text": "You follow where he is looking.",
+          "source": "observed",
+          "next": "st_5"
+        },
+        {
+          "id": "st_5",
+          "speaker": "student",
+          "text": "Don't count them.",
+          "next": "st_ask"
+        },
+        {
+          "id": "st_ask",
+          "speaker": "protagonist",
+          "text": "Only then does he glance at you.",
+          "source": "observed",
+          "choices": [
+            {
+              "id": "ask_moved",
+              "text": "Have the desks been moved?",
+              "next": "st_moved"
+            },
+            {
+              "id": "ask_quiet",
+              "text": "Have you always sat here?",
+              "next": "st_quiet"
+            },
+            {
+              "id": "ask_nothing",
+              "text": "(Say nothing. Let him get there.)",
+              "next": "st_wait"
+            }
+          ]
+        },
+        {
+          "id": "st_moved",
+          "speaker": "student",
+          "text": "Moved. Someone came in and re-laid them over the holiday. Finished, and it came out exactly the same - down to the marks on the floor.",
+          "next": "st_m2"
+        },
+        {
+          "id": "st_m2",
+          "speaker": "protagonist",
+          "text": "He says exactly the same in a flat voice, like a line he has said often enough to stop hearing.",
+          "source": "observed",
+          "next": "st_end"
+        },
+        {
+          "id": "st_quiet",
+          "speaker": "student",
+          "text": "My seat hasn't changed.",
+          "next": "st_q2"
+        },
+        {
+          "id": "st_q2",
+          "speaker": "protagonist",
+          "text": "He stops, then adds one more thing.",
+          "source": "observed",
+          "next": "st_q3"
+        },
+        {
+          "id": "st_q3",
+          "speaker": "student",
+          "text": "Though sometimes when I sit down, the desk feels a little lower than it was yesterday. I look up, and it's fine again.",
+          "next": "st_end"
+        },
+        {
+          "id": "st_wait",
+          "speaker": "student",
+          "text": "...Nothing. You get used to it.",
+          "next": "st_w2"
+        },
+        {
+          "id": "st_w2",
+          "speaker": "protagonist",
+          "text": "He takes his hands off the edge of the desk. There is nothing on it, not even a film of dust - the surface is as clean as if it had just been wiped.",
+          "source": "observed",
+          "next": "st_end"
+        },
+        {
+          "id": "st_end",
+          "speaker": "student",
+          "text": "Class is starting. You should go back to your seat.",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "student_talked",
+              "value": true
+            }
+          ]
+        }
+      ]
     }
   }
 }
