@@ -6,6 +6,8 @@ extends Control
 ## director owns; every string it shows is resolved through L10n at draw time so
 ## a language switch only has to ask for a redraw.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 @onready var _objective_label: Label = $ObjectiveLabel
 @onready var _prompt_label: Label = $PromptLabel
 @onready var _language_label: Label = $LanguageLabel
@@ -48,6 +50,9 @@ func _ready() -> void:
 	_prompt_label.text = ""
 	_prompt_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	_build_noted_label()
+	if MobileLayout.enabled:
+		MobileLayout.watch(self, _fit_mobile)
+		_fit_mobile()
 	refresh_language_text()
 	var loc := _loc()
 	if loc != null:
@@ -80,7 +85,7 @@ func _on_input_changed(_device: StringName) -> void:
 	refresh_language_text()
 	_refresh_noted_text()
 	if _prompt_label.visible and not _prompt_action.is_empty():
-		_prompt_label.text = "[%s] %s" % [_interact_key_label(), _prompt_action]
+		_prompt_label.text = _format_prompt(_prompt_action)
 
 
 func _loc() -> Node:
@@ -123,7 +128,7 @@ func set_prompt_text(action: String) -> void:
 		clear_prompt()
 		return
 	_prompt_action = action
-	var text := "[%s] %s" % [_interact_key_label(), action]
+	var text := _format_prompt(action)
 	if _prompt_label.visible and _prompt_label.text == text:
 		return
 	_prompt_label.text = text
@@ -176,17 +181,32 @@ func refresh_language_text() -> void:
 			"key": MenuStyle.key(self, &"toggle_language"),
 		}
 	)
-	_language_label.visible = not _dialogue_open
+	_language_label.visible = not _dialogue_open and not MobileLayout.enabled
 
 
 ## Called by the UI root when the dialogue panel opens or closes.
 func set_dialogue_open(open: bool) -> void:
 	_dialogue_open = open
 	if _language_label != null:
-		_language_label.visible = not open
+		_language_label.visible = not open and not MobileLayout.enabled
 
 
 ## Shared device-aware presentation; no scene-local device branching or binding lookup.
+func _format_prompt(action: String) -> String:
+	if InputHint.device(self) == InputHint.DEVICE_TOUCH:
+		return action
+	return "[%s] %s" % [_interact_key_label(), action]
+
+
+func _fit_mobile() -> void:
+	MobileLayout.inset(self)
+	_objective_label.anchor_right = 1.0
+	_objective_label.offset_left = MobileLayout.EDGE
+	_objective_label.offset_top = 22.0
+	_objective_label.offset_right = -244.0
+	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
 func _interact_key_label() -> String:
 	return InputHint.action_key(self, &"interact")
 

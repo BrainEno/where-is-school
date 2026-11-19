@@ -72,6 +72,8 @@ extends Control
 ## the player took in an earlier run (`chosen_before` on the choice) is set in a faded red
 ## ink, lit like any other under the pointer.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal advance_requested
 signal choice_selected(index: int)
 signal backlog_requested
@@ -230,6 +232,9 @@ var _playback_mode: int = 0
 var _playback_notice := ""
 var _playback_notice_until_msec := 0
 var _mode_bar: DialogueModeBar = null
+var _touch_footer: HBoxContainer
+var _touch_buttons: Dictionary[StringName, Button] = {}
+var _body_touch := -1
 
 
 func _ready() -> void:
@@ -243,12 +248,14 @@ func _ready() -> void:
 	_apply_type()
 	_connect_settings()
 	refresh_static_text()
-	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
-		get_viewport().size_changed.connect(_on_viewport_resized)
+	MobileLayout.watch(self, _on_viewport_resized)
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
 	_make_band_clickable()
 	_build_mode_bar()
+	if MobileLayout.enabled:
+		_build_touch_footer()
+		set_text_scale(UiTextScale.current(self))
 	_warm_portrait_resources()
 	_queue_fit()
 
@@ -340,6 +347,8 @@ func set_text_scale(factor: float) -> void:
 		if is_instance_valid(button):
 			button.add_theme_font_size_override("font_size", choice_size)
 			button.custom_minimum_size = Vector2(0.0, _choice_min_height())
+	for button: Button in _touch_buttons.values():
+		button.add_theme_font_size_override(&"font_size", UiTextScale.scaled(22, _text_scale))
 	_queue_fit()
 
 
@@ -391,7 +400,7 @@ func _on_setting_changed(key: StringName) -> void:
 	if settings == null:
 		return
 	if key == &"all" or key == &"text_size":
-		set_text_scale(float(settings.call("text_scale")))
+		set_text_scale(UiTextScale.current(self))
 	if key == &"all" or key == &"text_speed":
 		set_reveal_speed(float(settings.call("reveal_characters_per_second")))
 
@@ -403,6 +412,8 @@ func _on_input_device_changed(_device: StringName) -> void:
 
 
 func _choice_min_height() -> float:
+	if MobileLayout.enabled:
+		return maxf(32.0 * _text_scale, MobileLayout.hit_size(self))
 	return roundf(32.0 * maxf(_text_scale, 1.0))
 
 
@@ -463,7 +474,6 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 		_revealing = _body_label.text.length() > 0
 
 	refresh_static_text()
-	_hint_label.show()
 	_update_hint_visibility()
 	_queue_fit()
 
@@ -481,6 +491,7 @@ func set_choices(choices: Array) -> void:
 	_choices_container.hide()
 	_choice_rule.visible = false
 	if choices.is_empty():
+		_refresh_touch_footer()
 		_queue_fit()
 		return
 
@@ -521,6 +532,7 @@ func set_choices(choices: Array) -> void:
 
 func close() -> void:
 	hide()
+	_body_touch = -1
 	_line = {}
 	_revealing = false
 	set_choices([])
@@ -705,6 +717,9 @@ func _process(delta: float) -> void:
 ## what arrives here is a click on the reading surface: it continues the line, finishes
 ## one that is still typing, or does nothing while a choice is open.
 func _gui_input(event: InputEvent) -> void:
+	if MobileLayout.enabled and _touch_reading(event):
+		accept_event()
+		return
 	var mouse := event as InputEventMouseButton
 	if mouse != null and mouse.pressed and _choice_window_count > 0 and (
 		mouse.button_index == MOUSE_BUTTON_WHEEL_UP or mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN
@@ -726,8 +741,33 @@ func _gui_input(event: InputEvent) -> void:
 	_request_advance()
 
 
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_PAUSED]:
+		_body_touch = -1
+
+
+func _touch_reading(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed and _body_touch < 0 and _body_label.scroll_active \
+				and _body_label.get_global_rect().has_point((get_global_transform() * touch.position)):
+			_body_touch = touch.index
+		elif not touch.pressed and touch.index == _body_touch:
+			_body_touch = -1
+		return true
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if drag.index == _body_touch:
+			_body_label.get_v_scroll_bar().value -= drag.relative.y
+		return true
+	return MobileLayout.is_emulated_mouse(event)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
+		return
+	if MobileLayout.enabled and (MobileLayout.is_emulated_mouse(event) or event is InputEventScreenTouch):
+		get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("backlog"):
@@ -796,6 +836,8 @@ func _is_pressed(event: InputEvent, actions: Array) -> bool:
 ## One definition of "continue": finish the line if it is still typing, otherwise ask
 ## for the next one. The click and the key both go through it so they cannot drift.
 func _request_advance() -> void:
+	if has_choices():
+		return
 	if _revealing:
 		complete_reveal()
 		return
@@ -807,6 +849,11 @@ func _on_choice_button_pressed(index: int) -> void:
 
 
 func _on_viewport_resized() -> void:
+	if _touch_footer != null:
+		for button: Button in _choice_buttons:
+			button.custom_minimum_size.y = _choice_min_height()
+		for button: Button in _touch_buttons.values():
+			MobileLayout.enlarge(button)
 	_queue_fit()
 
 
@@ -861,6 +908,7 @@ func _build_mode_bar() -> void:
 
 
 func _refresh_mode_bar() -> void:
+	_refresh_touch_footer()
 	if _mode_bar == null:
 		return
 	if _on_mouse():
@@ -879,6 +927,9 @@ func _refresh_mode_bar() -> void:
 func _fit_mode_bar() -> void:
 	if _mode_bar == null or _hint_label == null:
 		return
+	if _touch_footer != null:
+		_mode_bar.hide()
+		return
 	var font := _hint_label.get_theme_font(&"font")
 	var font_size := _hint_label.get_theme_font_size(&"font_size")
 	_mode_bar.set_type(font, font_size)
@@ -890,6 +941,69 @@ func _fit_mode_bar() -> void:
 	_mode_bar.fit_into(_hint_label.size, text_width)
 
 
+# --- Touch reading tray ------------------------------------------------------
+
+
+func _build_touch_footer() -> void:
+	_touch_footer = HBoxContainer.new()
+	_touch_footer.name = "TouchReading"
+	_touch_footer.add_theme_constant_override(&"separation", 10)
+	_hint_label.get_parent().add_child(_touch_footer)
+	_touch_button(&"auto", func() -> void: auto_toggle_requested.emit())
+	_touch_button(&"skip", func() -> void: skip_requested.emit())
+	_touch_button(&"log", func() -> void: backlog_requested.emit())
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_touch_footer.add_child(gap)
+	_touch_button(&"previous", func() -> void: reveal_choice(_choice_window_start - 1))
+	_touch_button(&"next", func() -> void: reveal_choice(_choice_window_start + _choice_window_count))
+	_touch_button(&"continue", _request_advance)
+	_hint_label.hide()
+	_refresh_touch_footer()
+
+
+func _touch_button(id: StringName, action: Callable) -> void:
+	var button := Button.new()
+	button.name = String(id).capitalize()
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_override(&"font", _dialogue_font())
+	button.add_theme_font_size_override(&"font_size", 28)
+	button.add_theme_color_override(&"font_color", Palette.RED_INK)
+	button.add_theme_color_override(&"font_pressed_color", Palette.RED_INK_LIT)
+	button.add_theme_stylebox_override(&"normal", _style_normal)
+	button.add_theme_stylebox_override(&"hover", _style_hover)
+	button.add_theme_stylebox_override(&"pressed", _style_pressed)
+	button.add_theme_stylebox_override(&"disabled", _style_normal)
+	button.pressed.connect(action)
+	_touch_footer.add_child(button)
+	_touch_buttons[id] = button
+	MobileLayout.enlarge(button)
+
+
+func _refresh_touch_footer() -> void:
+	if _touch_footer == null:
+		return
+	_touch_buttons[&"auto"].text = L10n.t("ui.dialogue_mode_auto")
+	_touch_buttons[&"skip"].text = L10n.t("ui.dialogue_mode_skip")
+	_touch_buttons[&"log"].text = L10n.t("settings.action.backlog")
+	_touch_buttons[&"continue"].text = L10n.t("menu.continue")
+	_touch_buttons[&"continue"].visible = not has_choices()
+	_touch_buttons[&"auto"].add_theme_color_override(
+		&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.AUTO else Palette.RED_INK
+	)
+	_touch_buttons[&"skip"].add_theme_color_override(
+		&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.SKIP else Palette.RED_INK
+	)
+	_touch_buttons[&"previous"].text = "‹"
+	_touch_buttons[&"next"].text = "›"
+	_touch_buttons[&"previous"].visible = has_choices()
+	_touch_buttons[&"next"].visible = has_choices()
+	_touch_buttons[&"previous"].disabled = _choice_window_start <= 0 or _choice_window_count == 0
+	_touch_buttons[&"next"].disabled = _choice_window_count == 0 \
+		or _choice_window_start + _choice_window_count >= _choice_buttons.size()
+
+
 # --- Layout -----------------------------------------------------------------
 
 
@@ -897,7 +1011,13 @@ func _settle_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		return
-	var left := minf(viewport_size.x * side_margin_ratio, side_margin_max)
+	var safe := MobileLayout.safe_rect(self)
+	var margin := minf(safe.size.x * side_margin_ratio, side_margin_max)
+	var foot := bottom_margin
+	if _touch_footer != null:
+		margin = MobileLayout.EDGE
+		foot = viewport_size.y - safe.end.y + MobileLayout.EDGE
+	var left := safe.position.x + margin
 	# Larger type gets a wider, taller band (within the contract), so a paragraph that fits
 	# at the standard size still fits instead of scrolling. At the standard size both
 	# ratios are exactly the authored ones.
@@ -910,9 +1030,12 @@ func _settle_layout() -> void:
 			max_height_ratio,
 			minf(max_height_ratio * (1.0 + (grow - 1.0) * 0.5), LARGE_TEXT_MAX_HEIGHT_RATIO)
 		)
-	var width := clampf(viewport_size.x * width_ratio, band_min_width, band_max_width * grow)
-	width = minf(width, viewport_size.x - left * 2.0)
-	var max_height := viewport_size.y * height_ratio
+	var width := clampf(safe.size.x * width_ratio, band_min_width, band_max_width * grow)
+	width = minf(width, safe.size.x - margin * 2.0)
+	var max_height := safe.size.y * height_ratio
+	if _touch_footer != null:
+		width = safe.size.x - margin * 2.0
+		max_height = safe.size.y * 0.79
 	# The portrait lives in the name row, so the band is where it is without one.
 	var portrait_plan := _plan_portrait(width)
 
@@ -923,8 +1046,8 @@ func _settle_layout() -> void:
 		var retained_height := minf(size.y, max_height)
 		offset_left = left
 		offset_right = left + width
-		offset_bottom = -bottom_margin
-		offset_top = -bottom_margin - retained_height
+		offset_bottom = -foot
+		offset_top = -foot - retained_height
 		_body_label.fit_content = true
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
@@ -941,7 +1064,7 @@ func _settle_layout() -> void:
 	var needed: float = _frame.get_combined_minimum_size().y
 	var scrolling := needed > max_height + 0.5
 	var height := max_height if scrolling else clampf(needed, min_height, max_height)
-	offset_top = -bottom_margin - height
+	offset_top = -foot - height
 	if scrolling:
 		# The body keeps the room that is left and scrolls; nothing is cut off and no
 		# type size is reduced to force the paragraph in.
@@ -959,6 +1082,7 @@ func _settle_layout() -> void:
 	_layout_stage = 0
 	_layout_dirty = false
 	_fit_mode_bar()
+	_refresh_touch_footer()
 	_rule_paper()
 
 
@@ -1384,6 +1508,9 @@ func _digit_from_event(event: InputEvent) -> int:
 
 
 func _update_hint_visibility() -> void:
+	if _touch_footer != null:
+		_hint_label.hide()
+		return
 	_hint_label.visible = visible
 
 

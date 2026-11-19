@@ -20,6 +20,8 @@ extends Node
 ## `_set_current`, the same highlight, and the same E/`request_activation` call,
 ## so what the cue shows is what the key uses.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal target_changed(interactable: Interactable)
 signal activation_requested(interactable: Interactable)
 
@@ -406,6 +408,8 @@ func _find_mouse_target() -> Interactable:
 		return null
 	if _has_mouse_override:
 		return get_target_at_screen_position(_mouse_override)
+	if MobileLayout.enabled and InputHint.device(self) == InputHint.DEVICE_TOUCH:
+		return null
 	if DisplayServer.get_name() == "headless":
 		# There is no cursor and no window; the pointer path stays dormant instead
 		# of returning a meaningless (0, 0) hit.

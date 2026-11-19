@@ -22,6 +22,8 @@ extends Node
 ## Input arrives through `_unhandled_input`, so a click that a `Control` consumed
 ## (a dialogue choice, an overlay) never reaches the world.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 ## Emitted when a ground destination was accepted.
 signal destination_accepted(point: Vector3)
 ## Emitted when a click landed somewhere the character cannot walk.
@@ -79,9 +81,15 @@ var _last_ground_hint: Vector3 = Vector3.ZERO
 ## Why the last click did nothing, in words. A refused click is quiet on screen; this is
 ## the sentence a log or a test can print instead.
 var _last_rejection: String = ""
+## Native touch only: one finger may begin a tap; a drag or second finger cancels it.
+var _fingers := {}
+var _tap_index := -1
+var _tap_start := Vector2.ZERO
+var _tap_deadzone := 16.0
 
 
 func _ready() -> void:
+	set_process_input(MobileLayout.enabled)
 	_player = get_node_or_null(player_path) as PlayerController
 	if _player == null:
 		push_error("PointerNavigator: player_path '%s' did not resolve." % player_path)
@@ -134,6 +142,7 @@ func is_approaching() -> bool:
 
 ## Forgets the current walk and target. Safe to call at any time.
 func cancel() -> void:
+	_tap_index = -1
 	var abandoned := _pending
 	var had_pending := _has_pending
 	_pending = null
@@ -201,9 +210,38 @@ func _physics_process(_delta: float) -> void:
 		_player.cancel_path()
 
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_fingers[touch.index] = true
+			if _fingers.size() != 1:
+				_tap_index = -1
+		else:
+			_fingers.erase(touch.index)
+			if touch.canceled:
+				_tap_index = -1
+	elif event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if drag.index == _tap_index and drag.position.distance_to(_tap_start) > _tap_deadzone:
+			_tap_index = -1
+
+
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_PAUSED]:
+		_tap_index = -1
+		_fingers.clear()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not _enabled:
 		return
+	if MobileLayout.enabled:
+		if event is InputEventScreenTouch:
+			_world_tap(event as InputEventScreenTouch)
+			return
+		if MobileLayout.is_emulated_mouse(event):
+			return
 	if not (event is InputEventMouseButton):
 		return
 	var mouse := event as InputEventMouseButton
@@ -212,6 +250,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 	_world_click_events += 1
 	click_at_screen_position(mouse.position)
+
+
+func _world_tap(touch: InputEventScreenTouch) -> void:
+	get_viewport().set_input_as_handled()
+	if touch.pressed:
+		_tap_index = -1
+		if _fingers.size() == 1 and _player != null and _player.is_control_enabled() \
+				and MobileLayout.safe_rect(self).has_point(touch.position):
+			_tap_index = touch.index
+			_tap_start = touch.position
+			_tap_deadzone = MobileLayout.hit_size(self) / 5.0
+		return
+	if touch.index != _tap_index:
+		return
+	_tap_index = -1
+	if touch.position.distance_to(_tap_start) <= _tap_deadzone \
+			and MobileLayout.safe_rect(self).has_point(touch.position):
+		_world_click_events += 1
+		click_at_screen_position(touch.position)
 
 
 # --- Ground picking ---------------------------------------------------------

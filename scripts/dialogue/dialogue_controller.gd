@@ -82,6 +82,7 @@ var _reading_progress: ReadingProgress = null
 var _current_choices: Array = []
 ## False while the window has lost focus: nothing is passed while nobody is looking.
 var _window_focused := true
+var _app_suspended := false
 
 
 func _ready() -> void:
@@ -807,7 +808,7 @@ func _process(delta: float) -> void:
 		"presenting": _mode != Mode.NONE and _panel.visible,
 		"revealing": _panel.is_revealing(),
 		"choices": _panel.has_choices(),
-		"blocked": not _window_focused or (_backlog != null and _backlog.is_open()),
+		"blocked": _app_suspended or not _window_focused or (_backlog != null and _backlog.is_open()),
 		"check": _overlay != null and _overlay.visible,
 	}
 	match _playback.tick(delta, view):
@@ -823,6 +824,13 @@ func _notification(what: int) -> void:
 			_window_focused = false
 		NOTIFICATION_APPLICATION_FOCUS_IN:
 			_window_focused = true
+		NOTIFICATION_APPLICATION_RESUMED:
+			_app_suspended = false
+		NOTIFICATION_APPLICATION_PAUSED:
+			_app_suspended = true
+			_commit_read_if_shown()
+			if _read_log != null:
+				_read_log.flush()
 		NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_EXIT_TREE:
 			_commit_read_if_shown()
 			if _read_log != null:

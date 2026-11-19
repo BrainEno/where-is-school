@@ -13,6 +13,8 @@ extends Control
 ## compared by text, so two different events that happen to say the same words stay
 ## two rows, and a first read, a repeat read and a recollection stay three.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 @onready var _list: VBoxContainer = %BacklogList
 @onready var _scroll: ScrollContainer = %BacklogScroll
 @onready var _empty_label: Label = %BacklogEmpty
@@ -25,6 +27,7 @@ var _rendered: Array[Dictionary] = []
 ## locale. Without it the panel can only re-localise the labels it owns.
 var _resolver: Callable = Callable()
 var _text_scale: float = 1.0
+var _close_touch: Button
 
 
 func _ready() -> void:
@@ -39,6 +42,17 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
 		loc.connect("locale_changed", _on_locale_changed)
+	if MobileLayout.enabled:
+		var footer := $Margin/Layout/Footer as Label
+		footer.hide()
+		_close_touch = MenuStyle.entry_button(L10n.t("menu.back"), MenuStyle.ENTRY_SIZE, 1.0)
+		_close_touch.name = "TouchClose"
+		_close_touch.size_flags_horizontal = Control.SIZE_SHRINK_END
+		_close_touch.pressed.connect(close)
+		footer.get_parent().add_child(_close_touch)
+		MobileLayout.setup_scroll(_scroll)
+		MobileLayout.watch(self, _fit_mobile)
+		_fit_mobile()
 	_refresh_footer()
 	set_text_scale(UiTextScale.current(self))
 
@@ -66,6 +80,8 @@ func _on_locale_changed(_locale: String) -> void:
 ## The title and footer come from the locale tables (they were fixed English in the
 ## scene); the footer names the key or button that closes the log on the device in use.
 func _refresh_footer() -> void:
+	if _close_touch != null:
+		_close_touch.text = L10n.t("menu.back")
 	var title := get_node_or_null(^"Margin/Layout/Title") as Label
 	if title != null:
 		title.text = L10n.t("ui.log_title")
@@ -179,12 +195,17 @@ func is_open() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or (MobileLayout.enabled and MobileLayout.is_emulated_mouse(event)):
 		return
 	if event.is_action_pressed("backlog") or event.is_action_pressed("dialogue_advance") \
 			or event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
 		close()
+
+
+func _fit_mobile() -> void:
+	MobileLayout.inset($Margin)
+	MobileLayout.enlarge(_close_touch)
 
 
 func _display(entry: Dictionary) -> Dictionary:
