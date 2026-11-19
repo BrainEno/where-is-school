@@ -9,6 +9,8 @@ extends Control
 ## asks first and then runs `Session.start_new_game()`, and **Title**. The card that
 ## reports an unreadable save uses the same surface and shows neither.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal restart_confirmed
 
 const SAVE_NOTICE_TITLE_KEY := "save.error.title"
@@ -31,6 +33,9 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hide()
 	_build_actions()
+	if MobileLayout.enabled:
+		MobileLayout.watch(self, _fit_mobile)
+		_fit_mobile()
 	var settings := get_node_or_null(^"/root/Settings")
 	if settings != null:
 		settings.connect("setting_changed", _on_setting_changed)
@@ -38,6 +43,16 @@ func _ready() -> void:
 	if loc != null:
 		loc.connect("locale_changed", _on_locale_changed)
 	UiTextScale.apply(self, UiTextScale.current(self))
+
+
+func _fit_mobile() -> void:
+	var safe := MobileLayout.safe_rect(self).grow(-MobileLayout.EDGE)
+	var column := $Layout as VBoxContainer
+	var width := minf(840.0, safe.size.x)
+	column.size.x = width
+	column.position = Vector2(safe.get_center().x - width * 0.5, safe.get_center().y - column.size.y * 0.5)
+	MobileLayout.enlarge(_restart)
+	MobileLayout.enlarge(_title_button)
 
 
 func _build_actions() -> void:
@@ -198,6 +213,8 @@ func present(title: String, body: String, hint: String = "") -> void:
 	_show_failure({})
 	_refresh_action_text()
 	show()
+	if MobileLayout.enabled:
+		_fit_mobile()
 	move_to_front()
 	if actions:
 		_focus_restart.call_deferred()

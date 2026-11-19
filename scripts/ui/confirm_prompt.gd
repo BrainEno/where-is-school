@@ -15,6 +15,8 @@ extends Control
 ## a row that does not stretch it it was laid out narrower than one character, which is
 ## how the first version of this card showed two empty answers.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal confirmed
 signal cancelled
 
@@ -57,6 +59,7 @@ var _confirm: Button = null
 var _cancel: Button = null
 var _panel: PanelContainer = null
 var _card: Card = null
+var _center: CenterContainer = null
 
 
 func _init() -> void:
@@ -78,6 +81,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	_center = center
 	_panel = PanelContainer.new()
 	_panel.name = "Panel"
 	_panel.add_theme_stylebox_override(&"panel", MenuStyle.prompt_content_style())
@@ -113,7 +117,7 @@ func _ready() -> void:
 	# never to whatever menu is behind the question.
 	_trap_focus(_cancel, _confirm)
 	_trap_focus(_confirm, _cancel)
-	get_viewport().size_changed.connect(_fit)
+	MobileLayout.watch(self, _fit)
 
 
 func _answer_button(id: String) -> Button:
@@ -180,12 +184,20 @@ func set_text_scale(factor: float) -> void:
 func _fit() -> void:
 	if _message == null:
 		return
-	var view := get_viewport_rect().size
+	var view := MobileLayout.safe_rect(self).size
+	if MobileLayout.enabled:
+		MobileLayout.inset(_center, MobileLayout.EDGE)
+		MobileLayout.enlarge(_cancel)
+		MobileLayout.enlarge(_confirm)
 	# A readable measure, never wider than the screen allows.
 	var width := minf(view.x - 120.0, 600.0 * maxf(_factor, 1.0))
 	_message.custom_minimum_size = Vector2(maxf(width - 92.0, 200.0), 0.0)
 	if _card != null:
 		_card.queue_redraw()
+
+
+func cancel() -> void:
+	_answer(false)
 
 
 func _answer(yes: bool) -> void:

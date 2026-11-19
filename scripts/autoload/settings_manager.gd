@@ -26,9 +26,12 @@ extends Node
 ## startup, before anything is applied, so "restore defaults" can never drift from the
 ## project file.
 
+
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 signal setting_changed(key: StringName)
 signal bindings_changed
 signal input_device_changed(device: StringName)
+signal mobile_area_changed
 
 ## The file, and the one place its path is written. `SettingsStore` is shared with `Loc`,
 ## which owns `[display] locale`: two owners, one file, one path (issue #215). The constant
@@ -78,6 +81,7 @@ const UI_MINIMUM_LOGICAL := Vector2(1280.0, 720.0)
 
 const DEVICE_KEYBOARD := &"keyboard"
 const DEVICE_MOUSE := &"mouse"
+const DEVICE_TOUCH := &"touch"
 const DEVICE_GAMEPAD := &"gamepad"
 
 ## Everything the settings screen lets the player rebind, in the order it lists them.
@@ -124,6 +128,10 @@ var _load_problems: Array[String] = []
 var _device: StringName = DEVICE_KEYBOARD
 var _applying_scale := false
 var _applied_ui_scale := 1.0
+var _mobile_area := Rect2()
+var _mobile_window := Vector2i.ZERO
+var _mobile_density := 0.0
+var _metrics_elapsed := 1.0
 
 
 func _ready() -> void:
@@ -134,6 +142,11 @@ func _ready() -> void:
 	_capture_bus_trim()
 	_capture_default_bindings()
 	_ensure_ui_navigation()
+	if MobileLayout.enabled:
+		_device = DEVICE_TOUCH
+	# Safe insets can change on a 180-degree turn or when system bars reappear,
+	# without a resize event. Only the mobile path polls, and only four times a second.
+	set_process(MobileLayout.enabled)
 	load_settings()
 	get_tree().node_added.connect(_on_node_added)
 	var root := get_tree().root
@@ -366,6 +379,13 @@ func _apply_ui_scale() -> void:
 	if root == null:
 		return
 	_applying_scale = true
+	if MobileLayout.enabled:
+		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+		root.content_scale_size = MobileLayout.DESIGN_SIZE
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		_applied_ui_scale = root.get_final_transform().get_scale().y
+		_applying_scale = false
+		return
 	var window_size := Vector2(root.size)
 	var factor := effective_ui_scale(window_size, _ui_scale)
 	if is_equal_approx(factor, 1.0):
@@ -383,6 +403,21 @@ func _apply_ui_scale() -> void:
 	_applying_scale = false
 
 
+func _process(delta: float) -> void:
+	_metrics_elapsed += delta
+	if _metrics_elapsed < 0.25:
+		return
+	_metrics_elapsed = 0.0
+	var window := get_tree().root
+	var safe := MobileLayout.safe_pixels(window)
+	var dpi := MobileLayout.density(window)
+	if safe != _mobile_area or window.size != _mobile_window or dpi != _mobile_density:
+		_mobile_area = safe
+		_mobile_window = window.size
+		_mobile_density = dpi
+		mobile_area_changed.emit()
+
+
 # --- Input ---------------------------------------------------------------------
 
 
@@ -398,8 +433,12 @@ func is_using_gamepad() -> bool:
 ## so pointer users see click affordances; axis noise below the gameplay deadzone is ignored.
 ## This only changes presentation state: it never replays or synthesizes an action.
 func _input(event: InputEvent) -> void:
+	if MobileLayout.is_emulated_mouse(event):
+		return
 	var device := _device
-	if event is InputEventJoypadButton and (event as InputEventJoypadButton).pressed:
+	if MobileLayout.enabled and event is InputEventScreenTouch and event.is_pressed():
+		device = DEVICE_TOUCH
+	elif event is InputEventJoypadButton and (event as InputEventJoypadButton).pressed:
 		device = DEVICE_GAMEPAD
 	elif event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > 0.5:
 		device = DEVICE_GAMEPAD
@@ -416,11 +455,11 @@ func _input(event: InputEvent) -> void:
 ## the always-available keyboard; connecting a pad alone does not steal the active hand.
 func _on_joy_connection_changed(_device_id: int, connected: bool) -> void:
 	if not connected and _device == DEVICE_GAMEPAD:
-		_set_detected_device(DEVICE_KEYBOARD)
+		_set_detected_device(DEVICE_TOUCH if MobileLayout.enabled else DEVICE_KEYBOARD)
 
 
 func _set_detected_device(device: StringName) -> void:
-	if device != DEVICE_KEYBOARD and device != DEVICE_MOUSE and device != DEVICE_GAMEPAD:
+	if device not in [DEVICE_KEYBOARD, DEVICE_MOUSE, DEVICE_GAMEPAD, DEVICE_TOUCH]:
 		return
 	if device == _device:
 		return

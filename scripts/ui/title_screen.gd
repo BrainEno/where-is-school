@@ -18,12 +18,15 @@ extends Control
 ## to the right, one distant building cut out of two colour fields on a bare horizon - a
 ## spare stage (ART_BIBLE, "Outdoor spaces") drawn in `_draw()`, not an illustration.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal entry_activated(id: StringName)
 
 var _factor := 1.0
 var _save_state: StringName = &"none"
 var _save_report: Dictionary = {}
 var _column: VBoxContainer = null
+var _touch_scroll: ScrollContainer
 var _entries_box: VBoxContainer = null
 var _title: Label = null
 ## The line under Continue: where the save stands and when it was written.
@@ -48,7 +51,9 @@ func _ready() -> void:
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 10)
-	add_child(_column)
+	_touch_scroll = MobileLayout.add_menu_column(self, _column)
+	if _touch_scroll != null:
+		_touch_scroll.get_v_scroll_bar().value_changed.connect(queue_redraw.unbind(1))
 	_title = MenuStyle.serif_label(
 		_display_name(), MenuStyle.DISPLAY_SIZE, _factor, MenuStyle.PAPER, 0.7, 4
 	)
@@ -85,7 +90,9 @@ func _ready() -> void:
 		settings.connect("setting_changed", _on_setting_changed)
 		settings.connect("input_device_changed", _on_device_changed)
 		settings.connect("bindings_changed", _refresh_hint)
-	get_viewport().size_changed.connect(_refit)
+	MobileLayout.watch(self, _refit)
+	if MobileLayout.enabled:
+		get_window().go_back_requested.connect(_on_mobile_back)
 
 	refresh_save_state()
 	_show_unshown_failure()
@@ -183,7 +190,8 @@ func _build_entries() -> void:
 		ids.append(&"continue")
 	ids.append(&"new_game")
 	ids.append(&"settings")
-	ids.append(&"quit")
+	if not MobileLayout.enabled:
+		ids.append(&"quit")
 	for id: StringName in ids:
 		var entry := MenuStyle.page_entry(_entry_text(id), MenuStyle.ENTRY_SIZE, _factor)
 		entry.name = String(id)
@@ -249,6 +257,7 @@ func _refresh_texts() -> void:
 func _refresh_hint() -> void:
 	if _hint == null:
 		return
+	_hint.visible = not MobileLayout.enabled or MenuStyle.using_gamepad(self)
 	var keys := {
 		"language": MenuStyle.key(self, &"toggle_language"),
 		"confirm": MenuStyle.key(self, &"ui_accept"),
@@ -436,15 +445,21 @@ func _draw_margin() -> void:
 	title_box.position -= origin
 	var entries_box := _entries_box.get_global_rect()
 	entries_box.position -= origin
-	var x := _column.position.x - 16.0
+	var x := title_box.position.x - 16.0
+	var start_y := title_box.position.y + 6.0
+	var end_y := entries_box.end.y - 4.0
+	if _touch_scroll != null:
+		start_y = maxf(start_y, _touch_scroll.position.y)
+		end_y = minf(end_y, _touch_scroll.get_rect().end.y)
 	draw_line(
-		Vector2(x, title_box.position.y + 6.0), Vector2(x, entries_box.end.y - 4.0),
+		Vector2(x, start_y), Vector2(x, end_y),
 		Color(MenuStyle.EMBER, 0.85), 2.0
 	)
 	var under := title_box.end.y + 12.0
-	MenuStyle.draw_rough_slab(
-		self, Rect2(_column.position.x + 4.0, under, 72.0, 4.0), MenuStyle.EMBER, 5, 2.0
-	)
+	if _touch_scroll == null or _touch_scroll.get_rect().has_point(Vector2(title_box.position.x + 4.0, under)):
+		MenuStyle.draw_rough_slab(
+			self, Rect2(title_box.position.x + 4.0, under, 72.0, 4.0), MenuStyle.EMBER, 5, 2.0
+		)
 
 
 func _on_settings_closed() -> void:
@@ -471,7 +486,8 @@ func _on_device_changed(_device: StringName) -> void:
 func _fit() -> void:
 	if _column == null:
 		return
-	var view := get_viewport_rect().size
+	var safe := MobileLayout.safe_rect(self)
+	var view := safe.size
 	var factor := maxf(_factor, 1.0)
 	# The reading band's left margin; the column a little above the middle, lifted when a
 	# notice and the largest text size need the room, never into the hint line.
@@ -479,11 +495,17 @@ func _fit() -> void:
 	var width := minf(view.x - left * 2.0, 720.0 * factor)
 	_column.custom_minimum_size = Vector2(width, 0.0)
 	_column.size = Vector2(width, 0.0)
+	if MobileLayout.enabled:
+		for entry: Button in _entries.values():
+			MobileLayout.enlarge(entry)
 	var needed := _column.get_combined_minimum_size().y
-	var hint_room := 64.0 * factor
+	var hint_room := 64.0 * factor if _hint.visible else MobileLayout.EDGE
 	var top := minf(view.y * 0.28, view.y - hint_room - needed - 12.0)
-	_column.position = Vector2(left, maxf(top, 24.0))
-	_hint.position = Vector2(left + 12.0, view.y - 48.0 * factor)
+	top = maxf(top, 24.0)
+	MobileLayout.place_menu_column(_column, _touch_scroll, Rect2(
+		safe.position + Vector2(left, top), Vector2(width, minf(needed + 2.0, view.y - top - hint_room))
+	))
+	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * factor)
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
 	queue_redraw()
 
@@ -496,6 +518,15 @@ func _refit() -> void:
 	await get_tree().process_frame
 	if is_inside_tree():
 		_fit()
+
+
+func _on_mobile_back() -> void:
+	if _confirm.visible:
+		_confirm.cancel()
+	elif _settings_panel.is_open():
+		_settings_panel.close()
+	elif OS.has_feature("android") and not _starting:
+		get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
