@@ -6,6 +6,8 @@ extends Node
 ## `replace_snapshot()`; the encoding that keeps an `int` an `int` lives in
 ## `SaveCodec` (ADR 0005).
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal story_flag_changed(flag: StringName, previous_value: Variant, new_value: Variant)
 signal story_state_replaced
 
@@ -22,6 +24,7 @@ func get_flag(flag: StringName, default_value: Variant = null) -> Variant:
 
 func set_flag(flag: StringName, value: Variant) -> void:
 	if String(flag).is_empty():
+		OfflineDiagnostics.note("state.flag_refused")
 		push_error("GameState.set_flag received an empty flag identifier.")
 		return
 

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Write the release version into the Windows export preset, and check that it is there.
+"""Stamp the version in the Windows preset and in the running game on both platforms.
 
 Windows shows a program's version in Explorer, in Task Manager and in the file's properties
 dialog, and it reads it out of the executable's version resource — not out of the zip's
 name. Godot fills that resource in from four preset fields (`application/file_version`,
 `application/product_version`, and the product strings next to them), and a preset cannot
 be overridden from the command line. So the version to build is written into
-`export_presets.cfg` before the export:
+`export_presets.cfg` before the export. The full version is also written to
+`application/config/version` in `project.godot`, so a diagnostic report identifies the
+same build as the package, including its prerelease or development suffix:
 
     python3 tools/stamp_release_version.py                    # from packaging/version.txt
     python3 tools/stamp_release_version.py --version 0.1.0-rc.1
@@ -38,6 +40,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PRESETS = ROOT / "export_presets.cfg"
 VERSION_FILE = ROOT / "packaging" / "version.txt"
+PROJECT = ROOT / "project.godot"
+_PROJECT_VERSION = re.compile(r'^config/version="[^"\r\n]*"$', re.MULTILINE)
 
 # The preset this tool stamps. Written out rather than "the first preset", because a
 # repository with two presets and one of them Windows is exactly the situation this exists
@@ -48,7 +52,7 @@ WINDOWS_PRESET = "Windows Desktop"
 # set in the preset itself and only checked here, since they do not change per build.
 STAMPED = ("application/file_version", "application/product_version")
 
-_VERSION = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-(?P<tail>[0-9A-Za-z][0-9A-Za-z.-]*))?$")
+_VERSION = re.compile(r"^(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(?:-(?P<tail>[0-9A-Za-z][0-9A-Za-z.-]*))?$")
 
 
 class VersionError(Exception):
@@ -63,6 +67,8 @@ def parse(version: str) -> dict[str, str]:
             f"{version!r} is not MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-prerelease, "
             "which is the only shape a tag and a Windows version resource share"
         )
+    if len(version.strip()) > 64:
+        raise VersionError("the full version cannot exceed 64 characters")
     parts = [match.group("major"), match.group("minor"), match.group("patch")]
     for part in parts:
         if int(part) > 65535:
@@ -123,6 +129,7 @@ def main(argv: list[str]) -> int:
         help="report whether the committed preset still carries the version it claims",
     )
     parser.add_argument("--presets", type=Path, default=PRESETS, help=argparse.SUPPRESS)
+    parser.add_argument("--project", type=Path, default=PROJECT, help=argparse.SUPPRESS)
     arguments = parser.parse_args(argv)
 
     try:
@@ -133,13 +140,21 @@ def main(argv: list[str]) -> int:
 
     try:
         text = arguments.presets.read_text(encoding="utf-8")
-    except OSError as error:
-        print(f"FAIL: cannot read {arguments.presets}: {error}", file=sys.stderr)
+        project = arguments.project.read_text(encoding="utf-8")
+        stamped_project, replacements = _PROJECT_VERSION.subn(
+            f'config/version="{version["full"]}"', project
+        )
+        if replacements != 1:
+            raise VersionError("project.godot must declare one config/version")
+    except (OSError, VersionError) as error:
+        print(f"FAIL: {error}", file=sys.stderr)
         return 1
 
     if arguments.check:
         try:
             problems = check(text, version)
+            if project != stamped_project:
+                problems.append(f"project.godot must carry {version['full']}: run tools/stamp_release_version.py")
         except VersionError as error:
             print(f"FAIL: {error}", file=sys.stderr)
             return 1
@@ -148,8 +163,8 @@ def main(argv: list[str]) -> int:
         if problems:
             return 1
         print(
-            f"RELEASE_VERSION_OK: the {WINDOWS_PRESET} preset carries {version['full']} "
-            f"(file and product version {version['resource']})."
+            f"RELEASE_VERSION_OK: project.godot carries {version['full']}; {WINDOWS_PRESET} "
+            f"carries file and product version {version['resource']}."
         )
         return 0
 
@@ -163,6 +178,9 @@ def main(argv: list[str]) -> int:
         print(f"stamped {arguments.presets.name}: file and product version {version['resource']}")
     else:
         print(f"{arguments.presets.name} already carried {version['resource']}")
+    if stamped_project != project:
+        arguments.project.write_text(stamped_project, encoding="utf-8")
+        print(f"stamped {arguments.project.name}: runtime version {version['full']}")
     print(
         f"RELEASE_VERSION_STAMPED: {version['full']} -> {version['resource']} in the "
         f"{WINDOWS_PRESET} preset; the package will be named {version['full']}."

@@ -5,10 +5,12 @@ config_version=5
 [application]
 
 config/name="where-is-school"
+config/version="0.1.0"
 run/main_scene="res://scenes/ui/title_screen.tscn"
 
 [autoload]
 
+Diagnostics="*res://scripts/autoload/diagnostics.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 NarrativeState="*res://scripts/autoload/narrative_state.gd"
 Save="*res://scripts/autoload/save_manager.gd"
@@ -27,6 +29,12 @@ Session="*res://scripts/ui/game_session.gd"
 # Master plus one `Music` bus, so the music has its own dial (see docs/ARCHITECTURE.md
 # §5m). Named explicitly rather than left to the engine default so the file is visible.
 buses/default_bus_layout="res://default_bus_layout.tres"
+
+[debug]
+
+; Keep raw engine output on the console, not in player diagnostic files.
+file_logging/enable_file_logging=false
+file_logging/enable_file_logging.pc=false
 
 [display]
 

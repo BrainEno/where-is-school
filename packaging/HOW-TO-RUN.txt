@@ -12,6 +12,7 @@ inside its own folder, %APPDATA%\Godot\app_userdata\where-is-school:
   save.json          your progress (Godot calls this user://save.json)
   save.broken.json   a copy of a save the game could not read, kept for you
   settings.cfg       language, text size and speed, volumes, interface scale, controls
+  logs/              recent local technical events (not the dialogue backlog)
 
 Title screen
 ------------
@@ -86,6 +87,23 @@ to change. COPYRIGHT.md is the notice to read before reusing anything else.
 
 Reporting something
 -------------------
+Go to Settings -> Troubleshooting from the title screen or while paused. Choose
+"Export diagnostics (replace last export)", then "Open log folder" to find
+`diagnostics-latest.json`. The folder path is also shown in Settings. Exporting
+works offline and sends nothing. Open the file in a text editor and share only
+that file, manually, if you choose. Do not share your save or the whole folder.
+
+The report includes the game and Godot versions, OS family, current scene/room,
+a few progression and dialogue-status fields, and up to 160 recent technical
+records. It does not include dialogue/choices, saves, usernames, personal paths,
+or raw Godot output. Logs rotate and retain a limited history across restarts;
+a crash, power loss or forced exit can lose events that had not yet been written.
+Older `godot*.log` files are not part of the report and are not sanitized by it.
+
+中文：标题或暂停菜单 → 设置 → 故障诊断。点击「导出诊断（替换上次导出）」后，
+「打开日志目录」找到 diagnostics-latest.json。包内包含版本、地点、少量状态与近期事件，
+不含存档、台词、用户名、个人路径或引擎原文。请先检查，只手动分享该文件；游戏不会发送。
+
 If you are the owner: docs/PLAYTEST_CHECKLIST.md in the repository is the list this build
 is meant to be played against, with what to write down. If something breaks, the useful
 details are where you were (room), what you did, and what you expected — the game has no

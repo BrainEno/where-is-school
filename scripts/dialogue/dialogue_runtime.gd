@@ -11,6 +11,8 @@ extends RefCounted
 ## observed or reported knowledge. An imagined confrontation therefore cannot
 ## become part of the world state by accident.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 signal line_changed(line: Dictionary)
 signal choices_changed(choices: Array)
 signal conversation_started(conversation_id: StringName)
@@ -124,16 +126,20 @@ func get_current_node_id() -> StringName:
 
 func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	if _active:
+		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "busy"})
 		push_error("DialogueRuntime.start: a conversation is already running.")
 		return false
 	if graph == null:
+		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "no_graph"})
 		push_error("DialogueRuntime.start: no dialogue graph supplied.")
 		return false
 	var conversation := graph.get_conversation(conversation_id)
 	if conversation == null:
+		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "unknown_conversation"})
 		push_error("DialogueRuntime.start: unknown conversation '%s'." % conversation_id)
 		return false
 	if _game_state == null or _narrative_state == null:
+		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "no_state"})
 		push_error("DialogueRuntime.start: GameState/NarrativeState autoloads are unavailable.")
 		return false
 
@@ -142,6 +148,7 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	_active = true
 	_steps = 0
 	_lines_presented = 0
+	OfflineDiagnostics.note("dialogue.started")
 	conversation_started.emit(conversation_id)
 	_enter_node(conversation.start_id)
 	if not _active and _lines_presented == 0:
@@ -151,6 +158,7 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 		# end has to check `is_active()`/`is_busy()` after this returns. Say so
 		# here, where the cause is still visible, instead of leaving the caller to
 		# hang with no explanation.
+		OfflineDiagnostics.note("dialogue.no_line")
 		push_warning(
 			("DialogueRuntime: conversation '%s' started and finished without showing "
 			+ "a line; its first node was skipped or missing. Callers must check that "
@@ -177,6 +185,7 @@ func choose(choice_index: int) -> bool:
 		return false
 	var available := _available_choices(_node)
 	if choice_index < 0 or choice_index >= available.size():
+		OfflineDiagnostics.note("dialogue.progress_failed", {"reason": "choice_out_of_range"})
 		push_error(
 			"DialogueRuntime.choose: choice index %d is out of range for node '%s'."
 			% [choice_index, _node.node_id]
@@ -226,6 +235,7 @@ func _enter_node(node_id: StringName) -> void:
 	while true:
 		_steps += 1
 		if _steps > MAX_STEPS_PER_CONVERSATION:
+			OfflineDiagnostics.note("dialogue.progress_failed", {"reason": "step_limit"})
 			push_error(
 				"DialogueRuntime: conversation '%s' exceeded %d steps, stopping. Check for a loop."
 				% [_conversation.conversation_id, MAX_STEPS_PER_CONVERSATION]
@@ -234,6 +244,7 @@ func _enter_node(node_id: StringName) -> void:
 			return
 		node = _conversation.nodes.get(node_id, null)
 		if node == null:
+			OfflineDiagnostics.note("dialogue.progress_failed", {"reason": "missing_node"})
 			push_error(
 				"DialogueRuntime: conversation '%s' has no node '%s'."
 				% [_conversation.conversation_id, node_id]
@@ -397,6 +408,7 @@ func rebind_graph(new_graph: DialogueGraph) -> bool:
 		return false
 	var conversation := new_graph.get_conversation(_conversation.conversation_id)
 	if conversation == null:
+		OfflineDiagnostics.note("dialogue.progress_failed", {"reason": "locale_rebind"})
 		push_error(
 			"DialogueRuntime.rebind_graph: '%s' is missing from %s."
 			% [_conversation.conversation_id, new_graph.source_path]
@@ -409,6 +421,7 @@ func rebind_graph(new_graph: DialogueGraph) -> bool:
 		return true
 	var node: DialogueGraph.DialogueNode = conversation.nodes.get(current_id, null)
 	if node == null:
+		OfflineDiagnostics.note("dialogue.progress_failed", {"reason": "locale_rebind"})
 		push_error(
 			"DialogueRuntime.rebind_graph: node '%s' is missing from %s."
 			% [current_id, new_graph.source_path]
@@ -544,6 +557,7 @@ func _record_narrative(effect: Dictionary) -> void:
 
 
 func _reject(reason: String) -> void:
+	OfflineDiagnostics.note("dialogue.effect_refused")
 	push_warning("DialogueRuntime: %s" % reason)
 	effect_rejected.emit(reason)
 
@@ -556,6 +570,7 @@ func _finish() -> void:
 	_pending_branch = &""
 	_conversation = null
 	_graph = null
+	OfflineDiagnostics.note("dialogue.ended")
 	conversation_finished.emit(finished_id)
 
 

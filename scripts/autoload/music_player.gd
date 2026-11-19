@@ -33,6 +33,8 @@ extends Node
 ## `project.godot` are gone already, and this one mix lets go of whatever they stopped too.
 ## `CueAudio`, freed after this, waits for its own voices.
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 ## The one track. A `res://` path, so no machine's absolute path can leak into a build.
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
 
@@ -86,6 +88,7 @@ func play_track(path: String = TRACK_PATH) -> bool:
 		return false
 	var stream := load(path) as AudioStream
 	if stream == null:
+		OfflineDiagnostics.note("assets.load_failed", {"kind": "music"})
 		push_error("Music: '%s' could not be loaded; the background music is silent." % path)
 		return false
 	_player.stream = stream

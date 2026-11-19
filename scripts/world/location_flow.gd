@@ -19,6 +19,8 @@ extends RefCounted
 ## itself is `SaveManager`'s business; this only says when the moment is right, by
 ## asking the host for a checkpoint (ADR 0005 §4).
 
+const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+
 ## The only exit whose prompt is rewritten by the story.
 const COMPLETION_DOOR_ID := &"classroom_door"
 const EXIT_GROUP := &"location_exit"
@@ -229,6 +231,7 @@ func _recover_from_refusal(on_failure: Callable, label: String) -> void:
 	var limit := _host.get_tree().create_timer(FAILURE_RECOVERY_LIMIT, false)
 	while not bool(state["done"]):
 		if limit.time_left <= 0.0:
+			OfflineDiagnostics.note("world.recovery_timeout")
 			push_error(
 				(
 					"LocationFlow: the failure recovery for %s did not finish within %.1f s; "
