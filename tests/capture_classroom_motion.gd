@@ -29,6 +29,7 @@ var _review: Camera3D
 var _animator: CharacterVisualAnimation
 var _rig: Skeleton3D
 var _bones: Dictionary
+var _clicked: Interactable
 
 
 func _initialize() -> void:
@@ -73,6 +74,7 @@ func _run() -> void:
 	_room = (_main.get_node(^"LocationHost") as LocationHost).get_current()
 	_interaction = _player.get_node(^"InteractionController") as InteractionController
 	_pointer = _player.get_node(^"PointerNavigator") as PointerNavigator
+	_pointer.approach_activated.connect(func(target: Interactable) -> void: _clicked = target)
 	_dialogue = _main.get_node(^"DialogueController") as DialogueController
 	_chair = _room.get_node(^"Furniture/DeskB2/Chair") as PushableChair
 	_seat = _room.find_interactable(&"chair_sit")
@@ -147,7 +149,7 @@ func _run_desktop() -> void:
 	var seat_pixel := _seat_pixel()
 	_check.expect(_interaction.get_target_at_screen_position(seat_pixel, false) == _seat,
 		"The backrest pixel selected something other than the pushed chair.")
-	_mouse_click(seat_pixel)
+	_mouse_click(seat_pixel, _seat)
 	_check.expect(not _player.is_seated(), "The click immediately posed the actor at the aisle.")
 	await _wait(_settled_at_seat, "left-aisle mouse click to sit")
 	_check_seated("mouse from left aisle")
@@ -160,7 +162,7 @@ func _run_desktop() -> void:
 	_interaction.set_mouse_override(bag_pixel)
 	if await _wait(func() -> bool: return _interaction.get_current_target() == _bag, "bag hover"):
 		await _shot("04_bag_target")
-	_mouse_click(bag_pixel)
+	_mouse_click(bag_pixel, _bag)
 	_interaction.clear_mouse_override()
 	if await _phase("schoolbag_search", 0.46):
 		_check_search()
@@ -178,7 +180,7 @@ func _run_touch() -> void:
 	# Native touch path with mobile layout, in the X11 preview of the game.
 	var seat_pixel := _seat_pixel()
 	_check.expect(_interaction.get_target_at_screen_position(seat_pixel) == _seat, "Touch could not target the occupied chair.")
-	_tap(seat_pixel)
+	_tap(seat_pixel, _seat)
 	if not await _wait(func() -> bool: return _chair.is_pushed_back() and not _sequence.is_beat_active(), "stand on tap"):
 		return
 	await _place(APPROACH, Vector3.LEFT)
@@ -189,7 +191,7 @@ func _run_touch() -> void:
 	_touch(seat_pixel, false, true)
 	_check.expect(_pointer.get_world_click_event_count() == events and not _sequence.is_beat_active(),
 		"A canceled chair tap started to walk or sit.")
-	_tap(seat_pixel)
+	_tap(seat_pixel, _seat)
 	_check.expect(not _player.is_seated(), "The tap posed the actor before walking to the seat.")
 	if not await _wait(_settled_at_seat, "right-aisle touch to sit"):
 		return
@@ -197,7 +199,7 @@ func _run_touch() -> void:
 	await _shot("07_touch_returned")
 	var bag_pixel := _bag_pixel()
 	_check.expect(_interaction.get_target_at_screen_position(bag_pixel) == _bag, "Bag touch ray found the chair or desk instead.")
-	_tap(bag_pixel)
+	_tap(bag_pixel, _bag)
 	if await _phase("schoolbag_search", 0.46):
 		_check_search()
 		await _shot("08_touch_search")
@@ -218,7 +220,8 @@ func _bag_pixel() -> Vector2:
 	return _game_camera.unproject_position(shell.to_global(shell.get_aabb().get_center()))
 
 
-func _mouse_click(pixel: Vector2) -> void:
+func _mouse_click(pixel: Vector2, target: Interactable) -> void:
+	_clicked = null
 	var before := _pointer.get_world_click_event_count()
 	for down: bool in [true, false]:
 		var click := InputEventMouseButton.new()
@@ -228,15 +231,18 @@ func _mouse_click(pixel: Vector2) -> void:
 		click.pressed = down
 		_send(click)
 	_check.expect(_pointer.get_world_click_event_count() == before + 1, "Mouse press did not reach world input exactly once.")
+	_check.expect(_clicked == target, "Mouse did not activate %s from its own visible pixel." % target.interact_id)
 
 
-func _tap(pixel: Vector2) -> void:
+func _tap(pixel: Vector2, target: Interactable) -> void:
+	_clicked = null
 	var before := _pointer.get_world_click_event_count()
 	_check.expect(MobileLayout.safe_rect(_ui.hud).has_point(pixel), "The target pixel is outside the touch safe area.")
 	_touch(pixel, true)
 	_check.expect(_pointer.get_world_click_event_count() == before, "Touch-down activated the prop.")
 	_touch(pixel, false)
 	_check.expect(_pointer.get_world_click_event_count() == before + 1, "A tap did not reach world input exactly once.")
+	_check.expect(_clicked == target, "Touch did not activate %s from its own visible pixel." % target.interact_id)
 
 
 func _touch(pixel: Vector2, down: bool, canceled: bool = false) -> void:
@@ -364,8 +370,8 @@ func _shot(file_name: String) -> void:
 	_check.expect(image.save_png(_out.path_join(file_name + ".png")) == OK, "Could not save %s." % file_name)
 	# The original full-size frames are the evidence; small previews are relayed
 	# for review when the artifact CDN isn't available to the coding sandbox.
-	image.resize(520, 293, Image.INTERPOLATE_LANCZOS)
-	_check.expect(image.save_jpg(_out.path_join(file_name + ".jpg"), 0.62) == OK, "Could not save %s preview." % file_name)
+	image.resize(480, 270, Image.INTERPOLATE_LANCZOS)
+	_check.expect(image.save_jpg(_out.path_join(file_name + ".jpg"), 0.46) == OK, "Could not save %s preview." % file_name)
 
 
 func _finish() -> void:

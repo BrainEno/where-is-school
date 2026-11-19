@@ -37,9 +37,10 @@ func seat_surface_height() -> float:
 	return (_seat.global_transform * _seat.get_aabb()).end.y
 
 
-## Near side of the seat's front edge: reachable even with the chair pushed out.
+## Wrist above the near corner of the seat, rather than on the wood where the
+## hand itself goes. The moving mesh owns the point at every phase of the slide.
 func grip_point() -> Vector3:
-	return _seat.to_global(Vector3(0.218, 0.047, -0.17))
+	return _seat.to_global(Vector3(0.218, 0.073, -0.197))
 
 
 func start_slide() -> void:

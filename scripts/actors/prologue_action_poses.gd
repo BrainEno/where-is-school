@@ -28,9 +28,9 @@ static func clips() -> Dictionary:
 	return {
 		"classroom_rise": _clip([
 			[0.0] + SEAT,
-			[0.17, Vector3(16, -5, -4), Vector3(-80, 82, -4), Vector3(-79, 81, -3),
+			[0.17, Vector3(16, 7, -4), Vector3(-80, 82, -4), Vector3(-79, 81, -3),
 				Vector3(1, 14, -24), Vector3(-32, 10, -62)],
-			[0.38, Vector3(29, -6, -9), Vector3(-54, 61, -4), Vector3(-53, 56, -4),
+			[0.38, Vector3(29, 12, -9), Vector3(-54, 61, -4), Vector3(-53, 56, -4),
 				Vector3(10, 15, -27), Vector3(-30, 9, -50)],
 			[0.68, Vector3(14, 3, -4), Vector3(-28, 38, -4), Vector3(-28, 33, -3),
 				Vector3(9, 12, -15), Vector3(-14, 8, -24)],
@@ -42,9 +42,9 @@ static func clips() -> Dictionary:
 			[0.0, Z, Z, Z, Z, Z],
 			[0.18, Vector3(10, -4, 12), Vector3(-24, 42, 0), Vector3(-12, 27, 0),
 				Vector3(12, 16, -11), Vector3(-13, 10, -26)],
-			[0.41, Vector3(5, -13, 13), Vector3(-57, 68, 0), Vector3(-55, 67, 0),
+			[0.41, Vector3(10, 13, 13), Vector3(-57, 68, 0), Vector3(-55, 67, 0),
 				Vector3(18, 24, -23), Vector3(-30, 12, -46)],
-			[0.69, Vector3(18, -6, 5), Vector3(-72, 80, -4), Vector3(-68, 80, -4),
+			[0.69, Vector3(18, 7, 5), Vector3(-72, 80, -4), Vector3(-68, 80, -4),
 				Vector3(-2, 15, -28), Vector3(-32, 12, -46)],
 			[1.0] + SEAT,
 		]),

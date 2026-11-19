@@ -15,3 +15,9 @@ func current_offer() -> Offer:
 
 func can_interact() -> bool:
 	return interaction_enabled and current_offer() != Offer.NONE
+
+
+func is_occupied_by(body: Node3D) -> bool:
+	var chair := get_parent() as PushableChair
+	return chair != null and is_instance_valid(player) and body == player and player.is_seated() \
+		and player.global_position.distance_to(chair.home_mark()) < 0.12
