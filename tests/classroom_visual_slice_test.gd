@@ -559,6 +559,9 @@ func _check_collision() -> void:
 			# The one exception, and it is narrow: the chair the protagonist wakes in carries
 			# a body on layer 3, which is solid to the body but enters neither the navigation
 			# bake nor the interaction rays. Anything on layer 1 is still the old failure.
+			# Layer 3, not layer 1: see `pushable_chair.gd`. The bake's mask is 25 and the
+			# interaction rays' is 9, and neither includes it, so the two reasons this rule
+			# exists - carving the navmesh, blocking rays - do not apply to this body.
 			var body := node as CollisionObject3D
 			if body != null and body.collision_layer == 4 and _is_chair_solid(path):
 				found[path] = true

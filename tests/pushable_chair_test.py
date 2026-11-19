@@ -175,6 +175,31 @@ def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
     check(occluder & 4 == 0, f"the interaction rays ({occluder}) must not include layer 3")
 
 
+def test_no_sub_resource_lost_its_properties() -> None:
+    """Every `[sub_resource]` header must be followed by attributes, not another header.
+
+    Inserting the chair's box into the classroom scene once put a new header between an
+    existing shape and its `size`, which silently emptied the *floor* collider: the room stopped
+    being 14 x 10 m and every walk route in it collapsed. The scene still loaded, so nothing
+    but a check like this one says anything.
+    """
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    lines = room.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith("[sub_resource") or line.endswith("]"):
+            continue
+        # A header line ends in `]`; anything else means the parser is mid-declaration.
+        raise AssertionError(f"unterminated sub_resource header at line {index + 1}: {line}")
+    for index, line in enumerate(lines):
+        if not line.startswith("[sub_resource"):
+            continue
+        following = lines[index + 1] if index + 1 < len(lines) else ""
+        if following.startswith("[") or following == "":
+            raise AssertionError(
+                f"sub_resource at line {index + 1} has no attributes before the next header"
+            )
+
+
 def test_the_room_has_a_sit_interaction() -> None:
     """The chair offers sitting, and it reaches into the room without a hard player path."""
     room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
@@ -240,6 +265,7 @@ def main() -> int:
     test_the_room_can_find_it()
     test_the_chair_is_solid_only_when_it_is_empty()
     test_the_collision_is_on_a_layer_that_does_not_carve_the_room()
+    test_no_sub_resource_lost_its_properties()
     test_the_room_has_a_sit_interaction()
     test_the_hand_does_the_pushing()
     test_the_distance_is_the_one_that_was_measured()
