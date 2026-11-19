@@ -131,14 +131,19 @@ func play_line_voice(line: Dictionary) -> bool:
 	var node_id := StringName(String(line.get("node_id", "")))
 	var insp_id := StringName(String(line.get("inspection_id", "")))
 
-	var locale := ""
-	var loc_node := get_node_or_null(^"/root/Loc")
-	if loc_node != null and loc_node.has_method("get_locale"):
-		locale = String(loc_node.call("get_locale"))
+	var locale := String(line.get("locale", ""))
 	if locale.is_empty():
-		locale = L10n.LOCALES[0] if not L10n.LOCALES.is_empty() else "zh-CN"
+		var loc_node := get_node_or_null(^"/root/Loc")
+		if loc_node != null and loc_node.has_method("get_locale"):
+			locale = String(loc_node.call("get_locale"))
+	if locale.is_empty():
+		locale = L10n.current if not L10n.current.is_empty() else "zh-CN"
 
 	var clip_path := resolve_clip_path(locale, conv_id, node_id, insp_id)
+	if clip_path.is_empty() and locale != "zh-CN":
+		# Fall back to primary zh-CN performance if line has no localized dub
+		clip_path = resolve_clip_path("zh-CN", conv_id, node_id, insp_id)
+
 	if clip_path.is_empty():
 		_active_clip_path = ""
 		return false

@@ -102,6 +102,7 @@ func _test_playback_lifecycle() -> void:
 	root.add_child(director)
 
 	var voiced_line: Dictionary = {
+		"locale": "zh-CN",
 		"speaker_id": &"q",
 		"conversation_id": &"q_wake",
 		"node_id": &"q_1",
@@ -116,6 +117,21 @@ func _test_playback_lifecycle() -> void:
 		"director tracks active clip path."
 	)
 
+	# Verify locale fallback when locale is en but dubbing exists in zh-CN
+	var fallback_line: Dictionary = {
+		"locale": "en",
+		"speaker_id": &"q",
+		"conversation_id": &"q_wake",
+		"node_id": &"q_1",
+		"inspection_id": &"",
+		"text": "Enjoy your nap, did you?",
+	}
+	var fallback_started := director.play_line_voice(fallback_line)
+	checks.expect(
+		fallback_started,
+		"play_line_voice falls back to zh-CN clip when current locale is unvoiced."
+	)
+
 	director.stop_voice(false)
 	checks.expect(
 		director.get_active_clip_path().is_empty(),
@@ -123,6 +139,7 @@ func _test_playback_lifecycle() -> void:
 	)
 
 	var unvoiced_line: Dictionary = {
+		"locale": "zh-CN",
 		"speaker_id": &"q",
 		"conversation_id": &"non_existent",
 		"node_id": &"none",
