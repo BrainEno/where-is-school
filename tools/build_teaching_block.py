@@ -683,7 +683,7 @@ def courtyard_view():
     b.node("Yard", ".", position=vec3(YARD_OFFSET))
     prefixes = ("Hoop", "Shed", "Container", "Frame", "FencePostGap", "Bird", "Tree", "SouthGate")
     named = {"YardGround", "CourtSurface", "CourtFarHalf", "SouthFenceWest", "SouthFenceEast"}
-    for name, pos, size, _, _, body, _ in build_playground().boxes:
+    for name, pos, size, _, _, body, _ in build_playground(for_courtyard_view=True).boxes:
         if not (name in named or name.startswith(prefixes)) or HIDE.fullmatch(name):
             continue
         # The full-height estate blocks and the yard back wall are absent from this

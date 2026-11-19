@@ -3,11 +3,28 @@ where-is-school — the vertical slice
 
 Run it
 ------
-Double-click where-is-school.exe.
+Windows x86_64: unzip the whole archive, then double-click where-is-school.exe.
+The build is unsigned, so Windows SmartScreen may show "Windows protected your PC".
+Only for a build you trust, choose "More info" -> "Run anyway".
 
-The build is unsigned, so Windows SmartScreen will show "Windows protected your PC" the
-first time. Choose "More info" -> "Run anyway". Nothing is installed. The game writes only
-inside its own folder, %APPDATA%\Godot\app_userdata\where-is-school:
+Linux x86_64: unzip the whole archive, open a terminal in that folder, then run:
+
+    ./where-is-school
+
+If extraction lost the executable bit, first run `chmod +x ./where-is-school`.
+Linux support is experimental: desktop graphics/audio/controller playtesting and
+Steam Deck playtesting are unverified. A passing CI export is not a hardware test.
+README.txt in the Linux archive has driver troubleshooting and launcher limitations.
+Do not run the game as root or with sudo. The Linux build is also unsigned.
+
+Nothing is installed. The unpacked game folder and the writable user-data folder
+are different places. Godot stores progress and preferences per user:
+
+  Windows: %APPDATA%\Godot\app_userdata\where-is-school\
+  Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/godot/app_userdata/where-is-school/
+           (XDG_DATA_HOME overrides the usual ~/.local/share location when set)
+
+The user-data folder contains:
 
   save.json          your progress (Godot calls this user://save.json)
   save.broken.json   a copy of a save the game could not read, kept for you
@@ -68,9 +85,10 @@ The end of a milestone, not the end of the story: the slice stops at a gap in th
 fence with an end card. The card offers "Start again" (asks first, then begins a new game)
 and "Title screen".
 
-Known cosmetic gaps (not bugs to report):
-  - grey boxes stand in for people, and some furniture is still a box
-  - the executable carries the default engine icon
+Presentation is still in development and has not passed final owner visual acceptance.
+The Windows executable has the project icon; the running window may still show the
+engine's default icon. Report missing assets or unreadable controls, not just that the
+presentation is unfinished.
 
 Licences
 --------

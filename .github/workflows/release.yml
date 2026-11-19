@@ -53,10 +53,14 @@ on:
       - "packaging/**"
       - "tools/subset_font.py"
       - "tools/verify_build.py"
+      - "tools/godot_pck.py"
+      - "tools/release_archive.py"
       - "tools/export_presets.py"
       - "tools/stamp_release_version.py"
       - "tools/build_app_icon.py"
       - "tests/verify_build_test.py"
+      - "tests/release_pack_fixtures.py"
+      - "tests/release_integrity_test.py"
       - ".github/workflows/release.yml"
   workflow_dispatch:
 

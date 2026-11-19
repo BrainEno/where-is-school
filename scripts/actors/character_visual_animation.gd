@@ -93,6 +93,11 @@ const SEATED_CLIP := "sit_idle"
 ## same bones, same state machine either way.
 @export var motion_profile: CharacterMotionProfile = null
 
+## Only the protagonist binds the prologue's staged, manually timed actions.
+@export var prologue_actions: bool = false
+
+const ProloguePoses = preload("res://scripts/actors/prologue_action_poses.gd")
+
 var _player: AnimationPlayer
 var _bound := false
 var _bind_report: Dictionary = {}
@@ -105,6 +110,7 @@ var _reporting := false
 var _seated := false
 var _talking := false
 var _action := ""
+var _sampling_action := false
 var _state: StringName = STATE_IDLE
 var _current_clip := ""
 var _planar_speed := 0.0
@@ -117,7 +123,10 @@ func _ready() -> void:
 	add_child(_player)
 	_player.root_node = _player.get_path_to(self)
 
-	_bind_report = CharacterAnimation.bind(self, _player, faces_negative_z, motion_profile)
+	_bind_report = CharacterAnimation.bind(
+		self, _player, faces_negative_z, motion_profile,
+		ProloguePoses.clips() if prologue_actions else {}
+	)
 	_bound = bool(_bind_report.get("ok", false))
 	if not _bound:
 		push_error(
@@ -273,6 +282,25 @@ func play_action(clip_name: String, duration: float = 0.0) -> bool:
 	# Install the first pose now, before a controller reads its progress in physics.
 	_player.advance(0.0)
 	return true
+
+
+## A staged beat owns both the body's travel and the limb pose. Scrub them on one
+## clock, including still frames held while the player reads or makes a choice.
+func sample_action(clip_name: String, progress: float) -> void:
+	if not _sampling_action or _action != clip_name:
+		if not play_action(clip_name):
+			return
+		_sampling_action = true
+		_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	_player.seek(clampf(progress, 0.0, 1.0) * _player.current_animation_length, true, true)
+
+
+func release_sampled_action() -> void:
+	if not _sampling_action:
+		return
+	_sampling_action = false
+	_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
+	_on_animation_finished(StringName("%s/%s" % [CharacterAnimation.LIBRARY_NAME, _action]))
 
 
 func is_playing_action() -> bool:

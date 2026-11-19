@@ -8,8 +8,8 @@ extends SceneTree
 ##    the game - shader includes too, which the experiment's own isolation scan does not
 ##    read - names the experiment's folder.
 ## 2. **The cut and the blank sheet.** The west wall is open from floor to wall top, the
-##    blank sheet fills the cut and is hidden with the void until the curtain is drawn.
-## 3. **The paper anomaly is local.** Drawing it covers the floor and the curtain at the
+##    emptied cut reveals nothing, no mesh, glass, wall or paper.
+## 3. **The reusable paper experiment is local.** A fixture covers the floor and the curtain at the
 ##    cut and nothing past its radius (the east wall, the front of the room); no person is
 ##    ever covered; an overlay the room authored is kept (copied, paper appended), and
 ##    giving the paper back restores every overlay exactly. Animated, it spreads.
@@ -40,7 +40,6 @@ const ISOLATION_ROOTS: Array[String] = [
 const ISOLATION_EXTENSIONS: Array[String] = [
 	"gd", "tscn", "tres", "json", "cfg", "gdshader", "gdshaderinc",
 ]
-const VOID_SHEET := "res://assets/materials/classroom/void_sheet.tres"
 ## The cut through the west wall: z 0.95..3.45, floor to wall top.
 const CUT := AABB(Vector3(-7.0, 0.0, 0.95), Vector3(0.2, 3.2, 2.5))
 ## Interactables that frame their moment, and the shot each carries.
@@ -116,10 +115,15 @@ func _run() -> void:
 
 	Harness.stage = "the cut"
 	_check_cut()
-	Harness.stage = "paper zone"
+	Harness.stage = "paper zone (isolated fixture)"
+	var zone := PaperZone.new()
+	zone.name = "PaperZone"
+	zone.position = Vector3(-6.9, 0, 2.2)
+	_room().get_node(^"Anomalies").add_child(zone)
 	await _check_paper_zone()
-	Harness.stage = "paper follows the curtain"
-	await _check_paper_follows_curtain()
+	zone.free()
+	Harness.stage = "uncover the empty cut"
+	await _check_void_reveal()
 	Harness.stage = "camera rig focus"
 	await _check_rig_focus()
 	Harness.stage = "camera focus in the game"
@@ -135,8 +139,8 @@ func _run() -> void:
 		self,
 		_failures,
 		(
-			"the classroom draws the experiment's concrete and paper, the cut is open floor to "
-			+ "wall top with the blank sheet in it, the paper stays local and comes off again, and "
+			"the classroom keeps its concrete, the cut is empty floor to "
+			+ "wall top, the optional paper fixture stays local and comes off again, and "
 			+ "the camera focuses on Q's conversation and gives the framing back."
 		)
 	)
@@ -208,22 +212,12 @@ func _check_cut() -> void:
 			continue
 		if (mesh.global_transform * mesh.get_aabb()).intersects(CUT.grow(-0.02)):
 			_failures.append("'%s' closes part of the cut." % mesh.name)
-	var sheet := room.get_node_or_null(^"Anomalies/VoidOpening/BlankSheet") as MeshInstance3D
-	if sheet == null:
-		_failures.append("The cut has no blank sheet in it.")
-		return
-	var material := sheet.material_override as ShaderMaterial
-	if material == null or material.resource_path != VOID_SHEET or not bool(material.get_shader_parameter("blank_sheet")):
-		_failures.append("The blank sheet does not draw %s as a blank sheet." % VOID_SHEET)
-	var box := sheet.global_transform * sheet.get_aabb()
-	if (
-		box.position.z > CUT.position.z + 0.05 or box.end.z < CUT.end.z - 0.05
-		or box.position.y > 0.05 or box.end.y < 3.15
-		or box.get_center().x < CUT.position.x or box.get_center().x > CUT.end.x
-	):
-		_failures.append("The blank sheet %s does not fill the cut %s." % [str(box), str(CUT)])
-	if sheet.is_visible_in_tree():
-		_failures.append("The blank sheet shows before the curtain is drawn.")
+	var opening := room.get_node_or_null(^"Anomalies/VoidOpening") as Node3D
+	if opening == null or opening.visible or opening.get_child_count() != 0:
+		_failures.append("The opening must start covered and contain no view or sheet.")
+	var sky: Environment = room.get_node(^"WorldEnvironment").environment
+	if maxf(sky.background_color.r, maxf(sky.background_color.g, sky.background_color.b)) > 0.04:
+		_failures.append("The classroom background is not near-black.")
 
 
 # --- 3. the paper zone ----------------------------------------------------------------
@@ -306,27 +300,26 @@ func _check_paper_zone() -> void:
 			break
 
 
-## The curtain's own state change drives the paper (the story, not a test hook).
-func _check_paper_follows_curtain() -> void:
-	var anomalies := _room().get_node_or_null(^"Anomalies") as ClassroomAnomalies
-	var zone := _zone()
-	if anomalies == null or zone == null:
-		_failures.append("The classroom's anomalies or paper zone are missing.")
-		return
-	if anomalies.get_paper_zone() != zone:
-		_failures.append("The anomalies do not know their paper zone.")
+## The reveal keeps the room's real materials and unregisters the temporary stop.
+func _check_void_reveal() -> void:
+	var anomalies := _room().get_node(^"Anomalies") as ClassroomAnomalies
+	var stop := _room().get_node(^"WallWest/ClosedCurtainStop") as CollisionShape3D
+	var before := {}
+	for mesh: MeshInstance3D in _room_meshes():
+		before[mesh] = mesh.material_overlay
 	await anomalies.draw_curtain(false)
-	var sheet := _room().get_node_or_null(^"Anomalies/VoidOpening/BlankSheet") as MeshInstance3D
-	if not zone.is_drawn() or zone.get_covered_meshes().is_empty():
-		_failures.append("Drawing the curtain did not put the room round the cut on paper.")
-	if sheet != null and not sheet.is_visible_in_tree():
-		_failures.append("Drawing the curtain did not show the blank sheet in the cut.")
-	# The refused fall's reset is the one way the story puts the curtain back.
+	if not await Harness.wait_until(func() -> bool: return stop.disabled, 2.0):
+		_failures.append("Opening the curtain left a solid wall in the cut.")
+	if not anomalies.is_void_open():
+		_failures.append("The empty cut isn't uncovered.")
+	for mesh: MeshInstance3D in before:
+		if mesh.material_overlay != before[mesh]:
+			_failures.append("Opening the cut still changes '%s' to paper." % mesh.name)
 	anomalies.reset_curtain_after_failed_transition()
-	if zone.is_drawn() or not zone.get_covered_meshes().is_empty():
-		_failures.append("Closing the curtain left the paper on.")
-	if sheet != null and sheet.is_visible_in_tree():
-		_failures.append("Closing the curtain left the blank sheet showing.")
+	if not await Harness.wait_until(func() -> bool: return not stop.disabled, 2.0):
+		_failures.append("A closed curtain lets the player fall before class is dismissed.")
+	if anomalies.is_void_open():
+		_failures.append("Closing the curtain left the cut exposed.")
 
 
 # --- 4. camera focus ------------------------------------------------------------------

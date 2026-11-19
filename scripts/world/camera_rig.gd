@@ -261,7 +261,7 @@ func get_focus_weight() -> float:
 ## The subject the view is gliding to or holding (null while none, or while releasing).
 func get_focus_subject() -> Node3D:
 	for layer: Dictionary in _focus_layers:
-		if float(layer["target"]) > 0.0 and is_instance_valid(layer["subject"]):
+		if float(layer["target"]) > 0.0 and _has_live_subject(layer):
 			return layer["subject"] as Node3D
 	return null
 
@@ -277,8 +277,8 @@ func _step_focus(delta: float) -> void:
 	var kept: Array[Dictionary] = []
 	for layer: Dictionary in _focus_layers:
 		var shot := layer["shot"] as CameraShot
-		if not is_instance_valid(layer["subject"]):
-			# A freed subject (the room went away under a shot) fades from its last point.
+		if not _has_live_subject(layer):
+			# A detached or freed subject fades from the last point in its old room.
 			layer["target"] = 0.0
 		var target := float(layer["target"])
 		var seconds := shot.glide_seconds if target > 0.0 else shot.release_seconds
@@ -311,11 +311,15 @@ static func _smooth_damp(current: float, target: float, velocity: float, seconds
 	return Vector2(clampf(value, 0.0, 1.0), next_velocity)
 
 
+func _has_live_subject(layer: Dictionary) -> bool:
+	return is_instance_valid(layer["subject"]) and layer["subject"].is_inside_tree()
+
+
 ## Where a layer looks, on the target's floor: the subject's position plus the shot's
-## offset (remembered, so a freed subject leaves the view where it was).
+## offset (remembered so a detached subject leaves the view where it was).
 func _focus_point(layer: Dictionary, base_anchor: Vector3) -> Vector3:
 	var shot := layer["shot"] as CameraShot
-	if is_instance_valid(layer["subject"]):
+	if _has_live_subject(layer):
 		var subject := layer["subject"] as Node3D
 		layer["point"] = subject.global_position + shot.look_offset
 	var point: Vector3 = layer["point"]

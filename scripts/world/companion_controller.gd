@@ -238,7 +238,7 @@ func _story_says_joined() -> bool:
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state == null:
 		return false
-	if bool(game_state.get_flag(StoryFlags.CURTAIN_DRAWN, false)):
+	if StoryFlags.has_curtain_landing(game_state):
 		return false
 	var value: Variant = game_state.get_flag(joined_flag, false)
 	return value is bool and value
@@ -800,7 +800,7 @@ func _settle_after_transition() -> void:
 ## already has its own authored Q.
 func _refresh_visibility(location: LocationRoot) -> void:
 	var game_state := get_node_or_null(^"/root/GameState")
-	var fell_from_curtain := game_state != null and bool(game_state.get_flag(StoryFlags.CURTAIN_DRAWN, false))
+	var fell_from_curtain := StoryFlags.has_curtain_landing(game_state)
 	var authored := location.find_actor(npc_id) if location != null else null
 	var should_show := _joined and not fell_from_curtain and authored == null
 	visible = should_show

@@ -804,6 +804,9 @@ func _run_staged(staged: StagedInteractable) -> void:
 		)
 		return
 	end_beat()
+	var checkpoint := String(request.get("checkpoint", ""))
+	if not checkpoint.is_empty():
+		autosave(checkpoint)
 	var inspection := StringName(String(request.get("inspection", "")))
 	if not String(inspection).is_empty():
 		_dialogue.present_inspection(inspection)

@@ -26,6 +26,7 @@ Run it with ``python3 tests/verify_build_test.py`` (CI does). It needs no engine
 from __future__ import annotations
 
 import struct
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -34,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import export_presets  # noqa: E402  (the path has to be set up first)
 import verify_build as vb  # noqa: E402
+from release_pack_fixtures import embed, pack_files  # noqa: E402
 
 FAILURES: list[str] = []
 CHECKS: int = 0
@@ -54,36 +56,9 @@ def expect_problem(problems: list[str], needle: str, message: str) -> None:
 
 
 def make_pack(entries: list[tuple[str, int]], version: int = 4) -> bytes:
-    """A pack with a valid header and directory, in the layout the reader reads.
-
-    The data section is omitted: the reader only reads the directory, and a test that had to
-    write 16 MiB of padding to check a size limit would be a slow test that checks the same
-    thing.
-    """
-    directory = struct.pack("<I", len(entries))
-    for name, size in entries:
-        raw = name.encode("utf-8")
-        padded = raw + b"\x00" * ((-len(raw)) % 4)
-        directory += struct.pack("<I", len(padded)) + padded
-        directory += struct.pack("<QQ", 0, size)
-        directory += b"\x00" * 16  # md5
-        directory += struct.pack("<I", 0)  # flags
-    if version >= 3:
-        header_length = 40
-        header = (
-            b"GDPC"
-            + struct.pack("<IIIII", version, 4, 7, 2, 0)
-            + struct.pack("<Q", 0)
-            + struct.pack("<Q", header_length)
-        )
-    else:
-        header = (
-            b"GDPC"
-            + struct.pack("<IIIII", 2, 4, 7, 2, 0)
-            + struct.pack("<Q", 0)
-            + b"\x00" * 64
-        )
-    return header + directory
+    """A complete synthetic pack, including actual file data and its MD5s."""
+    return pack_files([(name, bytes([index % 251 + 1]) * size)
+                       for index, (name, size) in enumerate(entries)], version)
 
 
 # --- cases ------------------------------------------------------------------
@@ -275,7 +250,10 @@ def test_pack_parser_rejects_garbage() -> None:
 def test_embedded_pack_with_decoy() -> None:
     # The exported executable ends with bytes that spell GDPC, and the first version of the
     # reader took the last one and reported a truncated header. The decoy here is that case.
-    blob = b"\x7fELF" + b"x" * 64 + make_pack([("project.binary", 42)]) + b"GDPC" + b"\x00" * 12
+    # Keep the decoy inside the pack boundary and use the real uint64(size),
+    # GDPC footer. The old fixture omitted that locator and all actual payloads.
+    pack = make_pack([("project.binary", 42)]) + b"GDPC" + bytes(12)
+    blob = embed(pack, b"\x7fELF" + b"x" * 64)
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / "game.exe"
         path.write_bytes(blob)
@@ -504,6 +482,8 @@ PNG_256 = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack("
 
 
 NOTES = b"""where-is-school
+
+Linux: ./where-is-school (experimental; desktop/Steam Deck playtesting unverified).
 
 Licences
 --------
@@ -900,8 +880,13 @@ def main() -> int:
         f"PASS: {CHECKS} check(s): the build check's categories, limits, pack reader, "
         "executable metadata, package layout and preset pre-flight."
     )
-    print(f"::notice title=build check tests::{CHECKS} boundary check(s) passed")
-    return 0
+    print(f"::notice title=build check tests::{CHECKS} boundary check(s) passed", flush=True)
+    # The existing CI entry point must execute the new negative cases too, rather
+    # than leaving an unregistered test next to a green legacy suite.
+    return subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("release_integrity_test.py"))],
+        check=False,
+    ).returncode
 
 
 if __name__ == "__main__":
