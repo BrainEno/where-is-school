@@ -42,7 +42,12 @@ on:
       - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
       - 'tests/capture_classroom_motion.gd'
-      - 'scenes/environment/props/schoolbag.tscn'
+      - 'scenes/environment/props/schoolbag.*'
+      - 'assets/models/classroom/schoolbag/**'
+      - 'scripts/actors/player/**'
+      - 'scripts/actors/prologue_action_poses.gd'
+      - 'scripts/actors/character_limb_contact.gd'
+      - 'scripts/environment/pushable_chair.gd'
       - 'tests/capture_classroom_clock.gd'
       - 'tests/clock_reading.gd'
       - 'tests/clock_reading_test.gd'
@@ -192,6 +197,7 @@ jobs:
           mkdir -p "$CI_LOG_DIR"
           printf 'head=%s\nengine=%s\n' "$HEAD_SHA" "$(godot --version)" > "$CI_LOG_DIR/BUILD.txt"
           godot --headless --path . --import > "$CI_LOG_DIR/IMPORT.log" 2>&1
+          python3 art/classroom/build_schoolbag.py --check
           source tools/ci_run_check.sh
           run_check classroom_motion 140 xvfb-run -a --server-args='-screen 0 1280x720x24' \
             env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
@@ -202,9 +208,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          grep -m 6 -Ee "SCRIPT ERROR|ERROR: " "$CI_LOG_DIR/IMPORT.log" | while IFS= read -r line; do
+            echo "::notice title=classroom motion import::$line"
+          done || true
           log="$CI_LOG_DIR/classroom_motion.log"
           if test -f "$log"; then
-            grep -E '^MOTION_(POSE|DISPLAY)' "$log" | while IFS= read -r line; do
+            grep -m 8 -E '^MOTION_|SCRIPT ERROR|TEST FAILURE|ERROR:|^PASS:' "$log" | while IFS= read -r line; do
               echo "::notice title=classroom motion measurement::$line"
             done
           fi

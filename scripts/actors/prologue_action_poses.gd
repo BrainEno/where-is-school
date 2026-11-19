@@ -1,10 +1,12 @@
 extends RefCounted
-## Limb keys for the protagonist's curtain and ladder beats. These are semantic offsets
+## Limb keys for the protagonist's classroom, curtain and ladder beats. These are semantic offsets
 ## consumed by CharacterAnimation, not rotations of the model as a whole. Each row is
 ## [time, torso (lean, bank, nod), left leg, right leg, left arm, right arm]. Legs are
 ## (hip, knee, toe); arms are (shoulder, outward reach, elbow). Angles are in degrees.
 
 const Z := Vector3.ZERO
+const SEAT := [Vector3(10, 0, 8), Vector3(-82, 84, -6), Vector3(-82, 84, -6),
+	Vector3(-26, 8, -48), Vector3(-26, 8, -48)]
 const LEAN := [Vector3(29, -7, 19), Vector3(-29, 30, 1), Vector3(14, 11, 10),
 	Vector3(-41, 27, -25), Vector3(-12, 41, -23)]
 const GRIP := [Vector3(10, 0, -7), Vector3(-34, 49, -5), Vector3(-10, 28, -4),
@@ -24,6 +26,42 @@ static func clips() -> Dictionary:
 	for row: Array in down:
 		other.append([row[0]] + _mirror(row.slice(1)))
 	return {
+		"classroom_rise": _clip([
+			[0.0] + SEAT,
+			[0.17, Vector3(16, -5, -4), Vector3(-80, 82, -4), Vector3(-79, 81, -3),
+				Vector3(1, 14, -24), Vector3(-32, 10, -62)],
+			[0.38, Vector3(29, -6, -9), Vector3(-54, 61, -4), Vector3(-53, 56, -4),
+				Vector3(10, 15, -27), Vector3(-30, 9, -50)],
+			[0.68, Vector3(14, 3, -4), Vector3(-28, 38, -4), Vector3(-28, 33, -3),
+				Vector3(9, 12, -15), Vector3(-14, 8, -24)],
+			[0.88, Vector3(3, 1, -2), Vector3(-4, 8, 0), Vector3(-4, 7, 0),
+				Vector3(-4, 4, -5), Vector3(-3, 3, -7)],
+			[1.0, Z, Z, Z, Z, Z],
+		]),
+		"classroom_sit": _clip([
+			[0.0, Z, Z, Z, Z, Z],
+			[0.18, Vector3(10, -4, 12), Vector3(-24, 42, 0), Vector3(-12, 27, 0),
+				Vector3(12, 16, -11), Vector3(-13, 10, -26)],
+			[0.41, Vector3(5, -13, 13), Vector3(-57, 68, 0), Vector3(-55, 67, 0),
+				Vector3(18, 24, -23), Vector3(-30, 12, -46)],
+			[0.69, Vector3(18, -6, 5), Vector3(-72, 80, -4), Vector3(-68, 80, -4),
+				Vector3(-2, 15, -28), Vector3(-32, 12, -46)],
+			[1.0] + SEAT,
+		]),
+		"schoolbag_search": _clip([
+			[0.0, Z, Z, Z, Z, Z],
+			[0.19, Vector3(21, -5, 19), Vector3(-16, 31, -3), Vector3(-18, 32, -4),
+				Vector3(-40, 9, -30), Vector3(-43, 13, -28)],
+			[0.36, Vector3(36, 6, 25), Vector3(-25, 44, -3), Vector3(-28, 45, -5),
+				Vector3(-41, 18, -49), Vector3(-42, 15, -36)],
+			[0.52, Vector3(40, -5, 20), Vector3(-29, 49, -3), Vector3(-25, 44, -3),
+				Vector3(-47, 18, -46), Vector3(-47, 12, -36)],
+			[0.70, Vector3(37, 4, 27), Vector3(-25, 45, -3), Vector3(-28, 40, -3),
+				Vector3(-40, 19, -37), Vector3(-41, 15, -40)],
+			[0.86, Vector3(23, -3, 18), Vector3(-15, 28, -3), Vector3(-18, 30, -4),
+				Vector3(-40, 12, -27), Vector3(-39, 11, -28)],
+			[1.0, Z, Z, Z, Z, Z],
+		]),
 		"curtain_reach": _clip([
 			[0.0, Z, Z, Z, Z, Z],
 			[0.38, Vector3(14, 2, 4), Z, Z, Vector3(-18, 12, -34), Vector3(-76, 6, -26)],
