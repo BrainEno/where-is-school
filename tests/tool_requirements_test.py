@@ -81,16 +81,23 @@ class ToolRequirementsTest(unittest.TestCase):
         files = [relative for relative in self.inventory if relative.endswith(".py")
                  and relative.startswith(("tools/", "art/", "scenes/"))]
         local_modules = {Path(relative).stem for relative in files}
+        # Platform tools also reuse first-party modules via qualified paths under
+        # tools/. Match the whole path against tracked files, not a namespace prefix.
+        qualified_tools = {relative.removeprefix("tools/").removesuffix(".py").replace("/", ".")
+                           for relative in files if relative.startswith("tools/")}
         for relative in sorted(files):
             tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"))
             imports = set()
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
-                    imports.update(alias.name.split(".", 1)[0] for alias in node.names)
+                    imports.update(alias.name for alias in node.names)
                 elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
-                    imports.add(node.module.split(".", 1)[0])
-            for module in sorted(imports - sys.stdlib_module_names - local_modules):
-                with self.subTest(path=relative, module=module):
+                    imports.add(node.module)
+            for qualified in sorted(imports - qualified_tools):
+                module = qualified.split(".", 1)[0]
+                if module in sys.stdlib_module_names or module in local_modules:
+                    continue
+                with self.subTest(path=relative, module=qualified):
                     distribution = normalized(IMPORT_DISTRIBUTIONS.get(module, module))
                     self.assertIn(distribution, self.pins,
                                   "Declare new third-party imports and map nonmatching distribution names")

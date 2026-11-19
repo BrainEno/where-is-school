@@ -22,7 +22,7 @@ to ignore. So it is tested both ways, with workflow files this test writes:
 - composite actions under ``.github/actions/`` are scanned too, and ``.yaml`` is read like
   ``.yml``;
 - the command returns 1 on any finding, 1 when there is nothing to scan, and 0 on the
-  repository's own workflows, which also have to agree with ``release.yml``'s pins;
+  repository's own workflows, which also have to agree with the release and debug-only pins;
 - the engine version is written once (issue #217): ``./.github/actions/setup-godot`` passes
   no ``version:`` at all, an expression passes, and a literal, a quoted literal, a value on
   the next line, or a step that installs ``chickensoft-games/setup-godot`` directly each
@@ -439,7 +439,7 @@ def repository_engine_version() -> None:
 
 
 def this_repository() -> None:
-    """The real workflows pass, and every external action agrees with release.yml's pin."""
+    """The real workflows pass and use only the release pins or an explicit scoped pin."""
     code, out = run_main([])
     check(code == 0, f"the repository's own workflows must pass:\n{out}")
     uses, _ = pins.audit(pins.ROOT)
@@ -457,6 +457,13 @@ def this_repository() -> None:
             # The wrapper is where the upstream engine action is named; release.yml does not
             # name it any more (it goes through the wrapper like everything else), so this
             # pin is checked by `repository_engine_version` and by `audit` itself.
+            continue
+        if use.repository == "actions/cache":
+            # The native Simulator Debug slice is slow to compile. No release workflow
+            # may read this cache or replace any of the official device libraries.
+            check(use.path == ".github/workflows/mobile-tooling.yml" and
+                  (use.ref, use.version) == ("cdf6c1fa76f9f475f3d7449005a359c84ca0f306", "v5.0.3"),
+                  f"{use.path}:{use.line} uses an unapproved Simulator cache pin or path")
             continue
         check(release.get(use.repository) == (use.ref, use.version),
               f"{use.path}:{use.line} pins {use.repository} differently from release.yml")

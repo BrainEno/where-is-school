@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import struct
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass
 
 MAGIC = b"GDPC"
@@ -143,12 +144,15 @@ def _check_payloads(
 
 def read_pack(
     blob: bytes, base: int, *, end: int | None = None,
+    verify_external: Callable[[str, int, bytes], None] | None = None,
 ) -> tuple[list[tuple[str, int]], dict]:
     """Read one v2/v3/v4 pack, bounded to [base, end), with verified contents.
 
     v2's file base is absolute unless PACK_REL_FILEBASE is set; v3/v4's is
     always relative to the magic, even when that flag is absent. The directory
     offset in v3/v4 is relative too. Embedded callers exclude the footer from end.
+    Only Android's ZIP-backed reader supplies verify_external, which must verify
+    the actual external member's path, length and digest for every entry.
     """
     limit = len(blob) if end is None else end
     cursor = _Cursor(blob, base, limit)
@@ -160,11 +164,14 @@ def read_pack(
     major, minor, patch = cursor.u32(), cursor.u32(), cursor.u32()
     flags = cursor.u32()
     unknown = flags & ~(PACK_DIR_ENCRYPTED | PACK_REL_FILEBASE | PACK_SPARSE_BUNDLE)
-    if unknown or flags & (PACK_DIR_ENCRYPTED | PACK_SPARSE_BUNDLE):
+    sparse = bool(flags & PACK_SPARSE_BUNDLE)
+    if unknown or flags & PACK_DIR_ENCRYPTED or sparse != (verify_external is not None):
         raise PackError(
-            f"unsupported pack flags 0x{flags:x}; encrypted or sparse bundles "
-            "are not complete, inspectable release packs"
+            f"unsupported pack flags 0x{flags:x}; encrypted bundles are not inspectable, "
+            "and sparse bundles require a verified external payload for every entry"
         )
+    if sparse and (base != 0 or version < 3):
+        raise PackError("expected a standalone v3/v4 sparse index")
     stored_base = cursor.u64()
     relative = version >= 3 or bool(flags & PACK_REL_FILEBASE)
     file_base = stored_base + (base if relative else 0)
@@ -180,7 +187,13 @@ def read_pack(
     if directory_start < header_end or directory_start > limit - 4:
         raise PackError(f"directory offset 0x{directory_start:x} is outside the pack directory boundary")
     entries, directory_end = _directory(blob, directory_start, limit)
-    _check_payloads(blob, entries, file_base, header_end, directory_start, directory_end, limit)
+    if verify_external is not None:
+        if file_base or directory_end != limit or any(entry.offset for entry in entries):
+            raise PackError("invalid sparse index offsets or trailing payload")
+        for entry in entries:
+            verify_external(entry.path, entry.size, entry.digest)
+    else:
+        _check_payloads(blob, entries, file_base, header_end, directory_start, directory_end, limit)
     return [("res://" + entry.path, entry.size) for entry in entries], {
         "version": version,
         "engine": f"{major}.{minor}.{patch}",

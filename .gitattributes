@@ -26,6 +26,7 @@
 *.py text eol=lf
 *.gitignore text eol=lf
 *.gitattributes text eol=lf
+tools/windows/**/*.cmd text eol=crlf
 
 # --- Binary assets: never touched, never diffed as text -------------------
 # `-text` disables any line-ending translation. Without it Git can rewrite

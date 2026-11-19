@@ -1,0 +1,137 @@
+name: Mobile build tooling validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/build-android.yml'
+      - '.github/workflows/build-ios.yml'
+      - '.github/workflows/mobile-tooling.yml'
+      - '.github/actions/setup-godot/**'
+      - '.godot-version'
+      - 'export_presets.cfg'
+      - 'packaging/version.txt'
+      - 'tools/export_mobile.py'
+      - 'tools/export_presets.py'
+      - 'tools/stamp_release_version.py'
+      - 'tools/verify_build.py'
+      - 'tools/godot_pck.py'
+      - 'tools/release_archive.py'
+      - 'tools/android/**'
+      - 'tools/macos/ios/**'
+      - 'tools/windows/android/**'
+      - 'tests/mobile_*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-tooling-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    uses: ./.github/workflows/build-android.yml
+  simulator:
+    name: iOS Simulator Debug and unsigned device archive
+    runs-on: macos-26
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Record the Simulator toolchain for cache isolation
+        id: simulator-sdk
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(xcodebuild -version)"
+          sdk="$(xcrun --sdk iphonesimulator --show-sdk-build-version)"
+          printf '::notice title=iOS Simulator toolchain::%s; SDK build %s; %s\n' "$(tr '\n' ' ' <<< "$version")" "$sdk" "$(uname -m)"
+          printf 'key=%s\n' "$(printf '%s\n' "$version" "$sdk" | shasum -a 256 | cut -c1-24)" >> "$GITHUB_OUTPUT"
+      - name: Restore the matching Debug-only Simulator library
+        id: simulator-cache
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/Library/Caches/where-is-school/godot/simulator/*/*.a
+          key: wis-ios-sim-${{ runner.os }}-${{ runner.arch }}-${{ steps.simulator-sdk.outputs.key }}-${{ hashFiles('.godot-version', 'tools/macos/ios/simulator_template.py') }}
+      - name: Select a simulator and install and launch the verified Debug app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/mobile/ios-logs
+          xcodebuild -version
+          if ! bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --non-interactive --no-open --shutdown \
+              --output build/mobile/ios-sim 2>&1 | tee build/mobile/ios-logs/simulator.log; then
+            { grep -E '^iOS simulator failed:|^Mobile export failed:' build/mobile/ios-logs/simulator.log | tail -3 || true
+              log=build/mobile/ios-sim/xcode-build.log
+              if [[ -s "$log" ]]; then
+                grep -Ei '^xcodebuild: error:|(^|: )error:|eligible destinations|reason:|ld: |^  "_|\*\* BUILD FAILED' "$log" | head -12 || true
+                tail -5 "$log"
+              fi
+              compile=build/mobile/ios-sim/simulator-template.log
+              if [[ -s "$compile" ]]; then
+                grep -Ei 'error:|scons: \*\*\*' "$compile" | tail -5 || true
+                tail -4 "$compile"
+              fi
+              tail -3 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-850 |
+            while IFS= read -r line; do [[ -z "$line" ]] || printf '::error title=iOS Simulator::%s\n' "$line"; done
+            exit 1
+          fi
+          printf '::notice title=iOS Simulator::%s\n' "$(tr -d '\n' < build/mobile/ios-sim/BUILD.json)"
+      - name: Cache a compiled Simulator slice for this PR
+        if: ${{ !cancelled() && steps.simulator-cache.outputs.cache-hit != 'true' && steps.simulator-cache.outputs.cache-primary-key != '' }}
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/Library/Caches/where-is-school/godot/simulator/*/*.a
+          key: ${{ steps.simulator-cache.outputs.cache-primary-key }}
+      - name: Verify the iPhone/iPad archive path without signing secrets
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 tools/export_mobile.py ios-unsigned --output build/mobile/ios-device \
+              2>&1 | tee build/mobile/ios-logs/archive.log; then
+            grep -Ei 'error:|failed' build/mobile/ios-logs/archive.log | tail -12 | cut -c1-500 |
+              while IFS= read -r line; do printf '::error title=iOS device archive::%s\n' "$line"; done
+            exit 1
+          fi
+          cp build/mobile/ios-device/BUILD.json build/mobile/ios-logs/device-build.json
+      - name: Publish unsigned test evidence (not an IPA)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-tooling-evidence-${{ github.run_attempt }}
+          path: |
+            build/mobile/ios-logs/
+            build/mobile/ios-sim/BUILD.json
+            build/mobile/ios-sim/xcode-build.log
+            build/mobile/ios-sim/simulator-template.log
+            build/mobile/ios-sim/runtime.log
+            build/mobile/ios-sim/launch.txt
+            build/mobile/ios-sim/title.png
+          retention-days: 14
+  windows:
+    name: Windows ADB setup and debug entry points
+    runs-on: windows-2025
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Bootstrap a clean SDK with the batch wrapper
+        shell: powershell
+        run: |
+          $sdk = Join-Path $env:RUNNER_TEMP 'Where Is School Android'
+          & .\tools\windows\android\Setup.cmd -SdkRoot $sdk
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\tools\windows\android\Setup.cmd -SdkRoot $sdk
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & (Join-Path $sdk 'platform-tools\adb.exe') version
+          exit $LASTEXITCODE
+      - name: Test launcher verdicts and Windows argument handling without a USB device
+        shell: powershell
+        run: ./tests/mobile_android_smoke_test.ps1

@@ -248,6 +248,7 @@ not the shipped `res://data/`. Headless assertions live in
 | Tracked-file inventory and UID auditing | [godot_sidecars.py](../tools/godot_sidecars.py), including `tracked_files(root)` | Shared inventory already handles shallow checkouts and plain fixture trees; the documentation check reuses it. |
 | CI pass/fail verdict | [ci_run_check.sh](../tools/ci_run_check.sh) | Preserve nonzero exits, script/parse errors and missing verdict failures. |
 | Model inventory/import contract | [model_library.py](../tools/model_library.py) | Uses the existing pack verifier budgets; do not copy the limits. |
+| Native mobile export and device smoke tests | [export_mobile.py](../tools/export_mobile.py), [iOS debug entry point](../tools/macos/ios/debug.sh), [ADB smoke](../tools/android/smoke.ps1) | One tracked-source pack/export path; device IPA, Simulator Debug app and unsigned archive are different artifacts. Shared ADB test checks the Android app without wiping logs or saves. |
 | Pack contents and size | [verify_build.py](../tools/verify_build.py), [repo_size.py](../tools/repo_size.py) | Export and tracked-source limits are different contracts; no size exceptions. |
 | Screenshot validity | [screenshot_evidence.py](../tools/screenshot_evidence.py), [classroom_render_evidence.py](../tools/classroom_render_evidence.py) | Authored-line/manifest evidence and render provenance, not a general Markdown/type index. |
 | Engine noise attribution | [engine_noise_report.py](../tools/engine_noise_report.py) | Classify actual logs; do not filter them to invent a pass. |

@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 from pathlib import Path
 import plistlib
 import re
@@ -18,10 +19,12 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
-from zipfile import ZipFile
+from zipfile import BadZipFile, ZipFile
 
 import export_presets
 import stamp_release_version
+import verify_build
+from godot_pck import PackError, read_pack
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = "where-is-school"
@@ -164,17 +167,40 @@ def verify_apk(apk: Path, sdk_tools: Path, package: str, build: int, version: st
     require(bool(analyzers), "Install Android SDK Command-line Tools (apkanalyzer)")
     check_manifest(run(analyzers[0], "manifest", "print", apk, capture=True), package, build, version)
     with ZipFile(apk) as archive:
-        paths = set(archive.namelist())
-        expected = {"arm64-v8a", "x86_64"} if preview else {"arm64-v8a"}
-        abis = {path.split("/")[1] for path in paths if path.endswith("/libgodot_android.so")}
-        require(abis == expected, f"Unexpected APK ABIs: {sorted(abis)}")
-        required = {"assets/project.binary", "assets/assets.sparsepck", "assets/data/locale/en.json",
-                    "assets/data/locale/zh-CN.json", "assets/data/story/locations.json"}
-        require(required <= paths, f"APK is missing runtime content: {sorted(required - paths)}")
-        require(not any(path.startswith(f"assets/{p}/") for p in EXCLUDED for path in paths),
-                "APK contains editor/developer files")
-        require(archive.testzip() is None, "APK contains a corrupt member")
-    print(f"VERIFIED APK {package} {version} ({build}); ABI {', '.join(sorted(abis))}")
+        verify_android_assets(archive, preview)
+    print(f"VERIFIED APK {package} {version} ({build}); complete indexed game and signed native libraries")
+
+
+def verify_android_assets(archive: ZipFile, preview: bool) -> None:
+    names = archive.namelist()
+    paths = set(names)
+    require(len(paths) == len(names), "APK contains duplicate ZIP members")
+    expected = {"arm64-v8a", "x86_64"} if preview else {"arm64-v8a"}
+    abis = {path.split("/")[1] for path in paths if re.fullmatch(r"lib/[^/]+/libgodot_android.so", path)}
+    require(abis == expected, f"Unexpected APK ABIs: {sorted(abis)}")
+    index_name = "assets/assets.sparsepck"
+    require(index_name in paths and archive.getinfo(index_name).file_size <= 8 * verify_build.MiB,
+            "APK has no bounded Godot sparse index")
+
+    def verify_member(path: str, size: int, digest: bytes) -> None:
+        name = "assets/" + path
+        require(name in paths and archive.getinfo(name).file_size == size <= verify_build.HARD_CEILING,
+                f"APK resource missing, oversized or truncated: {path}")
+        with archive.open(name) as stream:
+            actual = hashlib.file_digest(stream, lambda: hashlib.md5(usedforsecurity=False)).digest()
+        require(actual == digest, f"APK resource does not match its Godot index: {path}")
+
+    entries, header = read_pack(archive.read(index_name), 0, verify_external=verify_member)
+    required = {"res://project.binary", "res://data/locale/en.json", "res://data/locale/zh-CN.json",
+                "res://data/story/locations.json"}
+    require(required <= dict(entries).keys(), "APK index is missing the project, locale or location data")
+    require(not any(path.startswith(f"assets/{folder}/") for path in paths for folder in EXCLUDED),
+            "APK contains editor/developer files")
+    problems, warnings = verify_build.verify(entries, header)
+    for warning in warnings:
+        verify_build.annotate("warning", "Android build budget", warning)
+    require(not problems, "; ".join(problems))
+    require(archive.testzip() is None, "APK contains a corrupt member")
 
 
 def android(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path) -> Path:
@@ -208,43 +234,102 @@ def check_app(info: dict, build: int, version: str) -> None:
         require(set(info.get(key, ())) == ORIENTATIONS, f"Expected sensor landscape in {key}")
 
 
+def verify_ios_app(app: Path, pack: Path, build: int, version: str, *, simulator: bool) -> None:
+    info = plistlib.loads((app / "Info.plist").read_bytes())
+    check_app(info, build, version)
+    sdk = "iphonesimulator" if simulator else "iphoneos"
+    require(info.get("DTPlatformName") == sdk, f"Expected an {sdk} application")
+    executable = app / info["CFBundleExecutable"]
+    arch = platform.machine() if simulator else "arm64"
+    require(run("lipo", "-archs", executable, capture=True).strip() == arch,
+            f"{sdk} executable must be {arch}")
+    installed_pack = app / pack.name
+    require(installed_pack.is_file() and file_sha256(installed_pack) == file_sha256(pack),
+            "The built application does not contain the verified Godot pack")
+
+
+def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str]) -> Path:
+    products = out / "simulator"
+    cmd = (*xcode, "-configuration", "Debug", "-sdk", "iphonesimulator", "-destination",
+           "generic/platform=iOS Simulator", "-derivedDataPath", out / "DerivedData",
+           f"CONFIGURATION_BUILD_DIR={products}", f"ARCHS={platform.machine()}", "build", *flags)
+    log = out / "xcode-build.log"
+    # Keep Xcode's output separate from import and simctl noise; on failure the
+    # exact compiler/linker/target error should survive the CI log's summary.
+    with log.open("w", encoding="utf-8") as stream:
+        built = subprocess.run(cmd, stdout=stream, stderr=subprocess.STDOUT, check=False)
+    if built.returncode:
+        print(log.read_text(encoding="utf-8", errors="replace"), file=sys.stderr, end="")
+        raise BuildError(f"Simulator xcodebuild exited {built.returncode}; see xcode-build.log")
+    app, = products.glob("*.app")
+    return app
+
+
+def file_sha256(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def ios_signing_flags(team: str, options: dict) -> list[str]:
+    if options.get("signingStyle") != "manual":
+        return [f"DEVELOPMENT_TEAM={team}", "CODE_SIGN_STYLE=Automatic"]
+    profile = options.get("provisioningProfiles", {}).get(PACKAGE)
+    certificate = options.get("signingCertificate")
+    require(isinstance(profile, str) and bool(profile.strip()), "Manual signing needs the game's profile")
+    require(isinstance(certificate, str) and bool(certificate.strip()), "Manual signing needs a certificate")
+    return [f"DEVELOPMENT_TEAM={team}", "CODE_SIGN_STYLE=Manual", f"CODE_SIGN_IDENTITY={certificate}",
+            f"PROVISIONING_PROFILE_SPECIFIER={profile}"]
+
+
 def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path) -> Path:
     signed = args.target == "ios-ipa"
+    simulator = args.target == "ios-simulator"
+    flags = ["DEVELOPMENT_TEAM=", "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
+    require(args.target == "ios-project" or sys.platform == "darwin", "This iOS build needs macOS and full Xcode")
     if signed:
-        require(sys.platform == "darwin", "A signed IPA requires macOS and Xcode")
         require(bool(re.fullmatch(r"[A-Z0-9]{10}", args.team or "")) and args.team != UNSIGNED_TEAM,
                 "A real Apple Team ID is required for IPA export")
         require(args.export_options is not None, "Supply a local Xcode ExportOptions.plist")
         options = plistlib.loads(args.export_options.read_bytes())
         require(options.get("destination", "export") == "export", "This command exports locally, never uploads")
         require(options.get("teamID", args.team) == args.team, "Export options select a different Apple team")
-    else:
-        require(args.target == "ios-project" or sys.platform == "darwin", "The device archive requires macOS and Xcode")
+        flags = ios_signing_flags(args.team, options)
+    if simulator:
+        # Godot's official simulator slices omit both Metal and Vulkan. Do not
+        # change the device preset or the source tree to get a simulator build.
+        settings = tree / "project.godot"
+        source, count = re.subn(r'^renderer/rendering_method\.ios="mobile"$',
+                                'renderer/rendering_method.ios="gl_compatibility"',
+                                settings.read_text(encoding="utf-8"), flags=re.M)
+        require(count == 1, "Cannot select the Compatibility renderer for the simulator")
+        settings.write_text(source, encoding="utf-8")
     project = out / f"{APP}.xcodeproj"
-    require(not project.exists(), "Choose an empty output directory; refusing to reuse an old Xcode project")
     (tree / "export_presets.cfg").write_text(configure(text, "iOS", {
         "application/app_store_team_id": args.team if signed else UNSIGNED_TEAM,
         "application/short_version": version, "application/version": str(args.build),
     }), encoding="utf-8")
     import_project(args.godot, tree)
-    run(args.godot, "--headless", "--path", tree, "--export-release", "iOS", project)
+    run(args.godot, "--headless", "--path", tree, "--export-debug" if simulator else "--export-release", "iOS", project)
     pack = out / f"{APP}.pck"
     require((project / "project.pbxproj").is_file() and pack.is_file(),
             "Godot did not produce the Xcode project and game pack")
     run(sys.executable, ROOT / "tools/verify_build.py", "--pck", pack)
     if args.target == "ios-project":
         return project
+    xcode = ("xcodebuild", "-project", project, "-scheme", APP)
+    if simulator:
+        from macos.ios.simulator_template import ensure_simulator_slice
+
+        version_pin = (ROOT / ".godot-version").read_text().strip()
+        ensure_simulator_slice(out, APP, platform.machine(), version_pin, args.engine_version, no_download=args.no_download)
+        app = build_simulator(xcode, out, flags)
+        verify_ios_app(app, pack, args.build, version, simulator=True)
+        return app
     archive = out / f"{APP}.xcarchive"
-    flags = [f"DEVELOPMENT_TEAM={args.team}", "CODE_SIGN_STYLE=Automatic"] if signed else [
-        "DEVELOPMENT_TEAM=", "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
-    run("xcodebuild", "-project", project, "-scheme", APP, "-configuration", "Release", "-sdk", "iphoneos",
-        "-destination", "generic/platform=iOS", "-archivePath", archive, "archive", *flags)
+    run(*xcode, "-configuration", "Release", "-sdk", "iphoneos", "-destination", "generic/platform=iOS",
+        "-archivePath", archive, "archive", *flags)
     app, = archive.glob("Products/Applications/*.app")
-    info = plistlib.loads((app / "Info.plist").read_bytes())
-    check_app(info, args.build, version)
-    require(run("lipo", "-archs", app / info["CFBundleExecutable"], capture=True).strip() == "arm64",
-            "Archive must contain a device ARM64 executable, not a simulator build")
-    require(any(app.rglob("*.pck")), "iOS app is missing its Godot pack")
+    verify_ios_app(app, pack, args.build, version, simulator=False)
     if not signed:
         print("VERIFIED unsigned iOS device archive; NOT an installable IPA")
         return archive
@@ -252,22 +337,25 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
     run("xcodebuild", "-exportArchive", "-archivePath", archive, "-exportOptionsPlist", args.export_options,
         "-exportPath", out / "ipa")
     ipa, = (out / "ipa").glob("*.ipa")
+    # Verify the *exported* app, not just the archive that Xcode can re-sign.
     with ZipFile(ipa) as export:
-        plist, = [name for name in export.namelist() if re.fullmatch(r"Payload/[^/]+\.app/Info\.plist", name)]
-        check_app(plistlib.loads(export.read(plist)), args.build, version)
-        require(plist.removesuffix("Info.plist") + "_CodeSignature/CodeResources" in export.namelist(),
-                "The exported IPA has no code-signature resources")
         require(export.testzip() is None, "IPA contains a corrupt member")
+    with tempfile.TemporaryDirectory(prefix="wis-verify-ipa-") as unpacked:
+        run("ditto", "-x", "-k", ipa, unpacked)
+        exported, = (Path(unpacked) / "Payload").glob("*.app")
+        verify_ios_app(exported, pack, args.build, version, simulator=False)
+        run("codesign", "--verify", "--deep", "--strict", exported)
     return ipa
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", choices=("check", "android-preview", "android-release", "ios-project", "ios-unsigned", "ios-ipa"))
+    parser.add_argument("target", choices=("check", "android-preview", "android-release", "ios-project", "ios-unsigned", "ios-simulator", "ios-ipa"))
     parser.add_argument("--godot", default="godot")
     parser.add_argument("--output", type=Path, default=ROOT / "build/mobile")
     parser.add_argument("--build", type=int, default=1, help="Monotonically increasing distribution build number")
     parser.add_argument("--team", default=os.environ.get("IOS_TEAM_ID"))
+    parser.add_argument("--no-download", action="store_true", help="do not fetch a missing iOS Simulator slice")
     parser.add_argument("--export-options", type=Path, help="Local Xcode export options for a signed IPA")
     args = parser.parse_args()
     try:
@@ -280,6 +368,7 @@ def main() -> int:
         actual = run(args.godot, "--version", capture=True).strip()
         require(actual.startswith(expected + ".stable.") and ".mono." not in actual,
                 f"Expected standard Godot {expected} stable; got {actual}")
+        args.engine_version = actual
         version = stamp_release_version.parse(stamp_release_version.read_version_file(ROOT / "packaging/version.txt"))["core"]
         out = args.output.resolve()
         require(not out.exists() or not any(out.iterdir()), "Build output directory must be empty")
@@ -295,12 +384,12 @@ def main() -> int:
                                                cwd=ROOT, capture=True)),
                   "godot": actual, "version": version, "build": args.build, "artifact": str(artifact.relative_to(out))}
         if artifact.is_file():
-            with artifact.open("rb") as stream:
-                report["sha256"] = hashlib.file_digest(stream, "sha256").hexdigest()
+            report["sha256"] = file_sha256(artifact)
         (out / "BUILD.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report))
         return 0
-    except (BuildError, OSError, ValueError, ET.ParseError, plistlib.InvalidFileException, subprocess.CalledProcessError,
+    except (BuildError, PackError, BadZipFile, OSError, ValueError, ET.ParseError, plistlib.InvalidFileException,
+            subprocess.CalledProcessError,
             stamp_release_version.VersionError, export_presets.PresetError) as error:
         print(f"Mobile export failed: {error}", file=sys.stderr)
         return 1
