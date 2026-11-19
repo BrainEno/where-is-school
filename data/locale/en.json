@@ -42,7 +42,7 @@
     "overlay.deny_title": "THAT HAS NOT HAPPENED",
     "overlay.deny_body": "The bell has not rung. Nobody has come in.",
     "objective.bell": "Second bell. The lesson is starting.",
-    "objective.no_textbook": "No textbook. Look around before the second bell. You can glance at the corridor if you like.",
+    "objective.no_textbook": "The biology textbook isn't in your bag.",
     "end.slice.title": "End of this build",
     "end.slice.body": "You are past the school, through the flats, and out in the open yard behind them: a court, a shed, a climbing frame, a bench. The gap in the fence at the far end is the next thing to build.",
     "prompt.back_inside": "Go back inside",

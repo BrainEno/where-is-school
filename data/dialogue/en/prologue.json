@@ -24,7 +24,7 @@
         {
           "id": "p_who",
           "speaker": "protagonist",
-          "text": "…Sorry, who are you?",
+          "text": "…Who are you?",
           "source": "observed",
           "next": "q_3",
           "effects": [
@@ -60,13 +60,13 @@
         {
           "id": "q_who_1",
           "speaker": "q",
-          "text": "Right. You've only just woken up.",
+          "text": "Usually if I’m in your way you just say, “Move.” Now I get an apology and everything.",
           "next": "q_who_2"
         },
         {
           "id": "q_who_2",
           "speaker": "q",
-          "text": "Biology's next. It'll start in a minute.",
+          "text": "It’s B you’re worried about, right? She’s got to wait for the bell like the rest of us.",
           "next": "p_biology"
         },
         {
@@ -86,13 +86,13 @@
         {
           "id": "q_day_1",
           "speaker": "q",
-          "text": "Nearly nine. Second bell's due any minute.",
+          "text": "Nearly nine. Second bell hasn’t gone yet.",
           "next": "q_day_2"
         },
         {
           "id": "q_day_2",
           "speaker": "q",
-          "text": "Biology first.",
+          "text": "We’ve got biology with B. Still time to get your book open.",
           "next": "p_biology"
         },
         {
@@ -112,13 +112,13 @@
         {
           "id": "q_silent_1",
           "speaker": "q",
-          "text": "All right. Still waking up, then.",
+          "text": "…All right. I’m not taking attendance.",
           "next": "q_silent_2"
         },
         {
           "id": "q_silent_2",
           "speaker": "q",
-          "text": "Biology's next, by the way.",
+          "text": "We’ve got biology. You can wait till B calls on you to say something.",
           "next": "p_biology"
         },
         {
@@ -131,7 +131,7 @@
         {
           "id": "q_exam_1",
           "speaker": "q",
-          "text": "Yeah. You hate biology, don't you? Last term's exam—did you miss it altogether, or hand in a blank paper? I can't remember which.",
+          "text": "I waited outside after the biology exam last term. You still had my eraser. Then someone said you hadn’t come. Someone else said all you wrote was your name.",
           "next": "q_exam_2",
           "effects": [
             {
@@ -139,14 +139,14 @@
               "entry_id": "q_claims_blank_exam",
               "source": "reported",
               "speaker": "q",
-              "text": "Q remembers something went wrong at last term's biology exam, but cannot say whether you missed the room or handed in a blank paper."
+              "text": "Q says he waited outside after last term’s biology exam. He isn’t sure whether you missed it or handed in a blank paper."
             }
           ]
         },
         {
           "id": "q_exam_2",
           "speaker": "q",
-          "text": "Do you remember?",
+          "text": "It got passed around. I can’t remember who said what first. Do you?",
           "choices": [
             {
               "id": "blank",
@@ -175,7 +175,7 @@
         {
           "id": "q_blank_1",
           "speaker": "q",
-          "text": "I think that's what you told me. Or I might be mixing the two up.",
+          "text": "There was a blank paper. The kid behind me said it was yours. I couldn’t read the name from where I was.",
           "next": "q_exam_end"
         },
         {
@@ -188,7 +188,7 @@
         {
           "id": "q_absent_1",
           "speaker": "q",
-          "text": "I think you never made it into the exam room. I don't know what happened after that. You never mentioned it again.",
+          "text": "I didn’t see you come out. Everyone handed in at once. I wasn’t checking faces.",
           "next": "q_exam_end"
         },
         {
@@ -208,23 +208,23 @@
         {
           "id": "q_none_1",
           "speaker": "q",
-          "text": "Right. You barely opened the textbook around then, either.",
+          "text": "Leave it for now. I didn’t put a word down for the last two questions. You wouldn’t know it, the way I talk.",
           "next": "q_exam_end"
         },
         {
           "id": "q_exam_end",
           "speaker": "q",
-          "text": "Anyway. Biology again today.",
+          "text": "Let’s get through today first.",
           "next": "q_topic_ask"
         },
         {
           "id": "q_topic_ask",
           "speaker": "q",
-          "text": "She might ask questions today. Have you memorised the key points?",
+          "text": "If she asks about ecosystems, don’t look to me. I lose the second half as soon as I look up.",
           "choices": [
             {
               "id": "ask",
-              "text": "Questions? About what?",
+              "text": "Ecosystems?",
               "next": "p_topic"
             },
             {
@@ -242,40 +242,40 @@
         {
           "id": "p_topic",
           "speaker": "protagonist",
-          "text": "Questions? About what?",
+          "text": "Ecosystems?",
           "source": "observed",
           "next": "q_topic_answer"
         },
         {
           "id": "q_topic_answer",
           "speaker": "q",
-          "text": "Ecosystems.",
+          "text": "That’s the one. What eats what, and the place they do it in.",
           "next": "p_ecosystem_question"
         },
         {
           "id": "p_ecosystem_question",
           "speaker": "protagonist",
-          "text": "What's an ecosystem?",
+          "text": "It’s not enough to say what eats what?",
           "source": "observed",
           "next": "q_ecosystem"
         },
         {
           "id": "q_ecosystem",
           "speaker": "q",
-          "text": "It's everything living in one place, plus the place itself. What eats what, what grows where, where the water goes. That sort of thing.",
+          "text": "I don’t think so. They don’t live inside the arrows. There’s water and light and all that. I always leave that part out.",
           "next": "p_ecosystem_reply"
         },
         {
           "id": "p_ecosystem_reply",
           "speaker": "protagonist",
-          "text": "Sounds like they've shoved a lot of things under one label.",
+          "text": "Then don’t look up yet.",
           "source": "observed",
           "next": "q_ecosystem_end"
         },
         {
           "id": "q_ecosystem_end",
           "speaker": "q",
-          "text": "More or less. That should be enough to get you through a question.",
+          "text": "Fine. Don’t laugh if I get it wrong.",
           "next": "q_end_1"
         },
         {
@@ -288,7 +288,7 @@
         {
           "id": "q_topic_silent",
           "speaker": "q",
-          "text": "All right. Maybe she won't ask today. She hasn't even come in yet.",
+          "text": "Fine. I’ll try the second half again. You don’t have to listen.",
           "next": "q_end_1"
         },
         {
@@ -301,7 +301,7 @@
         {
           "id": "q_topic_book",
           "speaker": "q",
-          "text": "Looking for your book? I thought you always had it with you.",
+          "text": "Oh, you’re looking for your book. I didn’t mean you had to do it right now.",
           "next": "q_end_1"
         },
         {
@@ -332,7 +332,7 @@
         {
           "id": "q_studying_1",
           "speaker": "q",
-          "text": "Not now. I’m trying to get these biology points into my head.",
+          "text": "Primary consumers… Give me till the end of this sentence, will you?",
           "next": null
         }
       ]
@@ -345,7 +345,7 @@
         {
           "id": "q_ab_1",
           "speaker": "q",
-          "text": "Find it?",
+          "text": "No biology book? Don’t you usually keep it in front of your workbooks?",
           "choices": [
             {
               "id": "told",
@@ -354,13 +354,24 @@
             },
             {
               "id": "accused",
-              "text": "Have you seen it?",
+              "text": "Did you take my book?",
               "next": "p_accused"
             },
             {
               "id": "never",
-              "text": "(Never mind.)",
+              "text": "(Don’t tell him about the book.)",
               "next": "p_never"
+            },
+            {
+              "id": "square",
+              "text": "Isn’t that set square for maths?",
+              "next": "p_square",
+              "conditions": {
+                "all_flags": [
+                  "saw_set_square"
+                ]
+              },
+              "once": true
             }
           ]
         },
@@ -381,19 +392,41 @@
         {
           "id": "q_told_1",
           "speaker": "q",
-          "text": "How? I saw you put your bag here this morning.",
+          "text": "I saw you put your bag down this morning. Didn’t see you take a book out.",
           "next": "q_told_2"
         },
         {
           "id": "q_told_2",
           "speaker": "q",
-          "text": "Look again. It might be under the exercise books.",
-          "next": "q_ab_end"
+          "text": "Use mine, then. Just don’t skip ahead. I’ve still got my finger on this page.",
+          "choices": [
+            {
+              "id": "share",
+              "text": "Let’s share yours if we need it.",
+              "next": "p_q_share",
+              "conditions": {
+                "not_flags": [
+                  "q_book_pact"
+                ]
+              }
+            },
+            {
+              "id": "witness",
+              "text": "Did you actually see me put it there?",
+              "next": "p_q_witness",
+              "once": true
+            },
+            {
+              "id": "drop",
+              "text": "(Leave it for now.)",
+              "next": "q_ab_end"
+            }
+          ]
         },
         {
           "id": "p_accused",
           "speaker": "protagonist",
-          "text": "Did you take it?",
+          "text": "Did you take my book?",
           "source": "observed",
           "next": "q_accused_1",
           "effects": [
@@ -407,45 +440,210 @@
         {
           "id": "q_accused_1",
           "speaker": "q",
-          "text": "Me? I can barely keep track of my own things.",
+          "text": "I didn’t. You’d recognize your own pen cap if I borrowed it. Where would I hide a whole book?",
           "next": "q_accused_2"
         },
         {
           "id": "q_accused_2",
           "speaker": "q",
-          "text": "What would I want with your biology book? So I can study?",
+          "text": "If you want to borrow it, just ask. Don’t make me prove this one’s mine first.",
           "next": "q_ab_end"
         },
         {
           "id": "p_never",
           "speaker": "protagonist",
-          "text": "(Never mind.)",
+          "text": "(Don’t tell him about the book.)",
           "source": "observed",
           "next": "q_never_1"
         },
         {
           "id": "q_never_1",
           "speaker": "q",
-          "text": "All right. I won't ask.",
-          "next": "q_ab_end"
+          "text": "All right. I’ll get back to my book, then.",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "q_book_talk_done",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "p_q_share",
+          "speaker": "protagonist",
+          "text": "All right. If we need a book, I’ll share yours.",
+          "source": "observed",
+          "next": "q_share"
+        },
+        {
+          "id": "q_share",
+          "speaker": "q",
+          "text": "Just pull your chair over. You can read with me, but if she calls your name, you answer.",
+          "next": "q_ab_end",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "q_book_pact",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "p_q_witness",
+          "speaker": "protagonist",
+          "text": "Not the book. Did you see it was me?",
+          "source": "observed",
+          "next": "q_witness"
+        },
+        {
+          "id": "q_witness",
+          "speaker": "q",
+          "text": "I saw a hand put it down by your seat. I recognized the bag. …You mean did I see a face? No.",
+          "next": "q_ab_end",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_bag_witness_limits",
+              "source": "reported",
+              "speaker": "q",
+              "text": "Q first said he saw you put down the bag. When asked, he said he saw a hand put it by your seat, but not a face."
+            }
+          ]
+        },
+        {
+          "id": "p_square",
+          "speaker": "protagonist",
+          "text": "Wait. Isn’t that set square for maths?",
+          "source": "observed",
+          "next": "q_sq_1"
+        },
+        {
+          "id": "q_sq_1",
+          "speaker": "q",
+          "text": "I heard the maths teacher next door threw it down and snapped it. The caretaker taped it up. See all that yellow tape?",
+          "next": "q_sq_2"
+        },
+        {
+          "id": "q_sq_2",
+          "speaker": "q",
+          "text": "B uses it to point at the food web. She hit the board once and two bits of chalk fell out of the tray. I thought she’d make me pick them up.",
+          "next": "q_sq_3",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_set_square_use",
+              "source": "reported",
+              "speaker": "q",
+              "text": "Q heard that the set square broke in the classroom next door and was repaired. He says he saw B strike the board with it."
+            }
+          ]
+        },
+        {
+          "id": "q_sq_3",
+          "speaker": "q",
+          "text": "I haven’t seen her do anything else with it. …Where were we?",
+          "next": "q_ab_1"
         },
         {
           "id": "q_ab_end",
           "speaker": "q",
-          "text": "If she asks, deal with it then. No need to confess to anything yet.",
-          "next": null
+          "text": "Right. Let me get through one more line. Just one.",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "q_book_talk_done",
+              "value": true
+            }
+          ]
         }
       ]
     },
     "q_after_dismissal": {
       "default_source": "reported",
       "subjective": false,
-      "start": "q_ad_1",
+      "start": "q_ad_bell",
       "nodes": [
+        {
+          "id": "q_ad_bell",
+          "speaker": "q",
+          "text": "Let me turn down this corner. …There.",
+          "next": "q_ad_present"
+        },
+        {
+          "id": "q_ad_present",
+          "speaker": "q",
+          "text": "I heard you say “here.” Last exam I waited at the door, didn’t see you, and went back and said you hadn’t come. If you hear that again, it might’ve started with me.",
+          "conditions": {
+            "requires": {
+              "n_roll_response": "answered_self"
+            },
+            "not_flags": [
+              "q_roll_debriefed"
+            ]
+          },
+          "next": "q_ad_pressed",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_repeated_absence_rumor",
+              "speaker": "q",
+              "source": "reported",
+              "text": "After you answered your own name, Q admitted that he’d told people you missed last term’s exam because he didn’t see you at the door."
+            }
+          ]
+        },
+        {
+          "id": "q_ad_pressed",
+          "speaker": "q",
+          "text": "Ask me first next time, not in front of the class. When she looked down, I thought she was going to put my name on there too.",
+          "conditions": {
+            "requires": {
+              "n_roll_response": "asked_q"
+            },
+            "not_flags": [
+              "q_roll_debriefed"
+            ]
+          },
+          "next": "q_ad_quiet"
+        },
+        {
+          "id": "q_ad_quiet",
+          "speaker": "q",
+          "text": "I nearly said “here” for you. Last time I did that, you said, “I’m not deaf.” So this time I didn’t.",
+          "next": "q_ad_lead",
+          "conditions": {
+            "requires": {
+              "n_roll_response": "silent"
+            },
+            "not_flags": [
+              "q_roll_debriefed"
+            ]
+          }
+        },
+        {
+          "id": "q_ad_lead",
+          "speaker": "q",
+          "text": "I said they’d all gone out. I only saw the two from the front row head for the stairs. I didn’t follow them down.",
+          "next": "q_ad_1",
+          "conditions": {
+            "not_flags": [
+              "q_roll_debriefed"
+            ]
+          },
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "q_roll_debriefed",
+              "value": true
+            }
+          ]
+        },
         {
           "id": "q_ad_1",
           "speaker": "q",
-          "text": "You heard her. That's practically a free period. Want to get some air? The yard?",
+          "text": "Want to look in the yard? I’d like to see if those two are actually there.",
           "choices": [
             {
               "id": "yes",
@@ -466,6 +664,32 @@
               "id": "silent",
               "text": "(You say nothing and keep packing.)",
               "next": "p_silent"
+            },
+            {
+              "id": "look_back_at_square",
+              "text": "Did you see N touch the set square?",
+              "next": "p_ad_square",
+              "conditions": {
+                "all_flags": [
+                  "saw_set_square"
+                ]
+              },
+              "once": true
+            },
+            {
+              "id": "place_sound",
+              "text": "Try to place the sound in this room.",
+              "next": "ad_square_check",
+              "conditions": {
+                "all_flags": [
+                  "saw_set_square",
+                  "expectation_played",
+                  "choice:q_after_dismissal:look_back_at_square"
+                ],
+                "not_flags": [
+                  "check:q_after_dismissal:ad_square_check"
+                ]
+              }
             }
           ]
         },
@@ -480,6 +704,11 @@
               "type": "set_flag",
               "flag": "free_period_leaving",
               "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "free_period_stayed",
+              "value": false
             },
             {
               "type": "set_objective",
@@ -513,6 +742,11 @@
               "value": true
             },
             {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": false
+            },
+            {
               "type": "set_objective",
               "key": "objective.stay_classroom"
             }
@@ -521,7 +755,7 @@
         {
           "id": "q_later",
           "speaker": "q",
-          "text": "All right. I won't rush you. Come out if you feel like it.",
+          "text": "All right. I haven’t decided which way I’m going yet. Give me a shout if you want to go.",
           "next": null
         },
         {
@@ -535,6 +769,11 @@
               "type": "set_flag",
               "flag": "free_period_stayed",
               "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": false
             },
             {
               "type": "set_objective",
@@ -552,7 +791,7 @@
         {
           "id": "q_no",
           "speaker": "q",
-          "text": "All right. I won't rush you.",
+          "text": "All right. You don’t have to go. Give me a shout if you need me.",
           "next": null
         },
         {
@@ -568,15 +807,143 @@
               "value": true
             },
             {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": false
+            },
+            {
               "type": "set_objective",
               "key": "objective.stay_classroom"
             }
           ]
         },
         {
+          "id": "p_ad_square",
+          "speaker": "protagonist",
+          "text": "Did you see N touch the set square when she called the names?",
+          "source": "observed",
+          "next": "q_ad_square_seen"
+        },
+        {
+          "id": "q_ad_square_seen",
+          "speaker": "q",
+          "text": "Didn’t see her touch it. She pointed with the pen cap. If no one answered, she’d still wait a bit.",
+          "next": "q_ad_square_origin",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_n_left_square_alone",
+              "speaker": "q",
+              "source": "reported",
+              "text": "Q didn’t see N touch the set square. He says she pointed at the register with her pen cap."
+            }
+          ]
+        },
+        {
+          "id": "q_ad_square_origin",
+          "speaker": "q",
+          "text": "I heard it broke next door and the caretaker taped it up. B hit the board with it once and knocked the chalk out of the tray.",
+          "conditions": {
+            "not_flags": [
+              "choice:q_after_bag:square"
+            ]
+          },
+          "next": "p_ad_square_memory",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_set_square_after_roll",
+              "speaker": "q",
+              "source": "reported",
+              "text": "Q says he saw B strike the board with the set square. How it broke is hearsay."
+            }
+          ]
+        },
+        {
+          "id": "p_ad_square_memory",
+          "speaker": "protagonist",
+          "text": "I remember a knock too. I think it was the teacher’s desk, not the board.",
+          "source": "recalled",
+          "conditions": {
+            "all_flags": [
+              "expectation_played"
+            ]
+          },
+          "next": "q_ad_square_compare"
+        },
+        {
+          "id": "q_ad_square_compare",
+          "speaker": "q",
+          "text": "I’m talking about the time I saw it. The knock you remember might not be the same one.",
+          "conditions": {
+            "all_flags": [
+              "expectation_played"
+            ]
+          },
+          "next": "q_ad_1"
+        },
+        {
+          "id": "ad_square_check",
+          "speaker": "voice_orientation",
+          "source": "recalled",
+          "text": "Put two things in place first. Desk in front, board behind. Where does the sound go?",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 9,
+            "kind": "visible",
+            "success": "ad_square_close",
+            "failure": "ad_square_unplaced"
+          }
+        },
+        {
+          "id": "ad_square_close",
+          "speaker": "voice_orientation",
+          "text": "The knock was close to your left hand. In this room, your hand would be on the edge of the teacher’s desk. What happened to the steps in between?",
+          "source": "recalled",
+          "next": "q_ad_1",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "recall_square_sound_close",
+              "speaker": "protagonist",
+              "source": "recalled",
+              "text": "Trying to place the sound in the room, you remember it close to your left hand. You can’t tell whether you were standing by the teacher’s desk."
+            }
+          ]
+        },
+        {
+          "id": "ad_square_unplaced",
+          "speaker": "voice_orientation",
+          "text": "The desk is in the right place. So is the board. Move them where you like; the sound still won’t fit.",
+          "source": "recalled",
+          "next": "p_ad_square_unplaced"
+        },
+        {
+          "id": "p_ad_square_unplaced",
+          "speaker": "protagonist",
+          "text": "Never mind. Just the sound. What else do you remember?",
+          "next": "q_ad_square_pause",
+          "source": "observed"
+        },
+        {
+          "id": "q_ad_square_pause",
+          "speaker": "q",
+          "text": "After she hit it, she didn’t call on anyone. Just waited. Someone tapped a pen cap on a desk and the whole class turned to look.",
+          "next": "q_ad_1",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_set_square_pause",
+              "speaker": "q",
+              "source": "reported",
+              "text": "Q says B didn’t call on anyone after hitting the board. The room was quiet enough that a tap of a pen cap made everyone turn."
+            }
+          ]
+        },
+        {
           "id": "q_silent",
           "speaker": "q",
-          "text": "Fine. I'll take that as a no.",
+          "text": "All right. Take your time. I won’t rush you.",
           "next": null
         }
       ]
@@ -711,7 +1078,7 @@
         {
           "id": "p_attendance",
           "speaker": "protagonist",
-          "text": "She read out a few names. Nobody answered. N checked the list, then looked up at the empty desks.",
+          "text": "She reads a few names. Two voices answer. She calls the next name and waits until the room has gone quiet before looking up.",
           "source": "observed",
           "next": "n_6"
         },
@@ -724,7 +1091,7 @@
         {
           "id": "q_students",
           "speaker": "q",
-          "text": "They've all gone out to play.",
+          "text": "Probably all out playing.",
           "next": "student_students"
         },
         {
@@ -736,13 +1103,13 @@
         {
           "id": "n_react",
           "speaker": "n",
-          "text": "…Right.",
+          "text": "There’s no box for “out playing.” If I put a dash, they’ll still ask what it means when I hand this back.",
           "next": "n_8"
         },
         {
           "id": "n_8",
           "speaker": "n",
-          "text": "Well. A couple of things, then.",
+          "text": "I’ll leave it for now. Did anyone have a question?",
           "choices": [
             {
               "id": "where_b",
@@ -758,6 +1125,17 @@
               "id": "wait",
               "text": "(Wait.)",
               "next": "p_wait"
+            },
+            {
+              "id": "share_with_q",
+              "text": "Can Q and I share?",
+              "next": "p_n_share",
+              "conditions": {
+                "all_flags": [
+                  "q_book_pact",
+                  "textbook_missing"
+                ]
+              }
             }
           ]
         },
@@ -778,8 +1156,17 @@
         {
           "id": "n_where_1",
           "speaker": "n",
-          "text": "Her name's crossed off the register. I don't know what happened, either.",
-          "next": "n_turn"
+          "text": "Her name was crossed out when I got this sheet. If you’re asking why, I’d like to know too.",
+          "next": "n_roll_1",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "n_b_name_crossed_out",
+              "speaker": "n",
+              "source": "reported",
+              "text": "N says B’s name was already crossed out when she got the register. She doesn’t know who did it."
+            }
+          ]
         },
         {
           "id": "p_textbook",
@@ -798,14 +1185,25 @@
         {
           "id": "n_textbook_1",
           "speaker": "n",
-          "text": "I suppose so. I don't know where the spare copies are kept, though.",
-          "next": "n_textbook_2"
+          "text": "I thought so. Haven’t you got it, or are you asking what happens if you haven’t?",
+          "next": "q_n_guarded"
+        },
+        {
+          "id": "q_n_guarded",
+          "speaker": "q",
+          "text": "He just asked if I took his. Miss, this one’s mine.",
+          "next": "n_textbook_2",
+          "conditions": {
+            "all_flags": [
+              "accused_q"
+            ]
+          }
         },
         {
           "id": "n_textbook_2",
           "speaker": "n",
-          "text": "If someone knows, you can go and get one. I won't make a whole thing of it today.",
-          "next": "n_turn"
+          "text": "I’m only marking who’s here. Leave your books on the desks for now.",
+          "next": "n_roll_1"
         },
         {
           "id": "p_wait",
@@ -817,13 +1215,194 @@
         {
           "id": "n_wait_1",
           "speaker": "n",
-          "text": "Nobody says anything. N looks down at the register, turns it over, then turns it back.",
-          "next": "n_turn"
+          "text": "Right. Let’s finish this sheet, then.",
+          "next": "n_roll_1"
+        },
+        {
+          "id": "p_n_share",
+          "speaker": "protagonist",
+          "text": "Miss, can I share Q’s book?",
+          "source": "observed",
+          "next": "q_n_share",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "asked_n_about_textbook",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "q_n_share",
+          "speaker": "q",
+          "text": "I said you could borrow it, not… Yes, Miss. I’ve got the book right here.",
+          "next": "n_share_ok"
+        },
+        {
+          "id": "n_share_ok",
+          "speaker": "n",
+          "text": "Go ahead and share. For now I just need to know who’s in the room.",
+          "next": "n_roll_1",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "n_allows_book_sharing",
+              "source": "reported",
+              "speaker": "n",
+              "text": "You asked to share Q’s book, and N agreed."
+            }
+          ]
+        },
+        {
+          "id": "n_roll_1",
+          "speaker": "n",
+          "text": "Wait. Why is there a tick by your name? I haven’t called it yet.",
+          "next": "p_roll_mark",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "n_found_roll_mark",
+              "speaker": "n",
+              "source": "reported",
+              "text": "N says she hadn’t called your name yet, but there was already a tick beside it. She didn’t claim to have made it."
+            }
+          ]
+        },
+        {
+          "id": "p_roll_mark",
+          "speaker": "protagonist",
+          "text": "She turns the pen around and holds the cap against the row.",
+          "next": "n_roll_2",
+          "source": "observed"
+        },
+        {
+          "id": "n_roll_2",
+          "speaker": "n",
+          "text": "That’s not my tick. Did you answer earlier?",
+          "choices": [
+            {
+              "id": "answer_self",
+              "text": "Call it now. I’ll answer for myself.",
+              "next": "p_roll_present"
+            },
+            {
+              "id": "ask_q",
+              "text": "Q, did someone call my name earlier?",
+              "next": "p_roll_q"
+            },
+            {
+              "id": "leave_to_n",
+              "text": "(See what she writes.)",
+              "next": "n_roll_silence"
+            }
+          ]
+        },
+        {
+          "id": "p_roll_present",
+          "speaker": "protagonist",
+          "text": "Call it now. I’ll answer for myself.",
+          "source": "observed",
+          "next": "n_roll_calls"
+        },
+        {
+          "id": "n_roll_calls",
+          "speaker": "n",
+          "text": "All right. Starting with you.",
+          "next": "p_roll_answer"
+        },
+        {
+          "id": "p_roll_answer",
+          "speaker": "protagonist",
+          "text": "(She reads the name on that row.) …Here.",
+          "next": "n_roll_present",
+          "source": "observed"
+        },
+        {
+          "id": "n_roll_present",
+          "speaker": "n",
+          "text": "Right. I’ll put “answered now” beside it. I’ll leave the old tick. I don’t know who made it.",
+          "next": "n_turn",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "n_roll_response",
+              "value": "answered_self"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_roll_answered_self",
+              "speaker": "n",
+              "source": "reported",
+              "text": "You asked N to call your name and answered in person. She said she’d note “answered now” and leave the original tick."
+            }
+          ]
+        },
+        {
+          "id": "p_roll_q",
+          "speaker": "protagonist",
+          "text": "Q, did you hear someone call my name earlier?",
+          "source": "observed",
+          "next": "q_roll_limits"
+        },
+        {
+          "id": "q_roll_limits",
+          "speaker": "q",
+          "text": "Before the first bell, someone at the door asked if you were here. I saw your bag and said yes. …I didn’t see who was asking.",
+          "next": "n_roll_inquire",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "q_answered_at_door",
+              "speaker": "q",
+              "source": "reported",
+              "text": "Q says someone at the door asked if you had arrived before the first bell. He saw your bag and said yes, but didn’t see who asked."
+            }
+          ]
+        },
+        {
+          "id": "n_roll_inquire",
+          "speaker": "n",
+          "text": "Whoever asked may not have made the mark. I’ll put a question mark by it. You’re here now. I can see that.",
+          "next": "n_turn",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "n_roll_response",
+              "value": "asked_q"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_roll_mark_unconfirmed",
+              "speaker": "n",
+              "source": "reported",
+              "text": "Q couldn’t say who asked after you. N said she would put a question mark by the tick rather than take his account as its explanation."
+            }
+          ]
+        },
+        {
+          "id": "n_roll_silence",
+          "speaker": "n",
+          "text": "…“Present, no answer.” I’ll leave the tick. If they ask, I’ll show them the sheet.",
+          "next": "n_turn",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "n_roll_response",
+              "value": "silent"
+            },
+            {
+              "type": "record",
+              "entry_id": "n_roll_no_answer",
+              "speaker": "n",
+              "source": "reported",
+              "text": "You didn’t answer. N said she’d note “present, no answer” and keep the earlier tick."
+            }
+          ]
         },
         {
           "id": "n_turn",
           "speaker": "n",
-          "text": "All right. Let's not pretend we're going to have a proper lesson today.",
+          "text": "I’ll leave those other rows empty. The lesson plan… Never mind. No lesson today.",
           "next": "n_turn_2"
         },
         {

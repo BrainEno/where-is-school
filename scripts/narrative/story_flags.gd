@@ -101,6 +101,14 @@ const NOTED_B_LATE: StringName = &"noted_b_late"
 const TOLD_Q_ABOUT_TEXTBOOK: StringName = &"told_q_about_textbook"
 ## bool: the protagonist accused Q of taking the textbook.
 const ACCUSED_Q: StringName = &"accused_q"
+## bool: Q already asked what the protagonist found in the bag.
+const Q_BOOK_TALK_DONE: StringName = &"q_book_talk_done"
+## bool: Q agreed to share his biology book if the lesson uses it.
+const Q_BOOK_PACT: StringName = &"q_book_pact"
+## String: how the protagonist handled N's roll (answered_self, asked_q, silent).
+const N_ROLL_RESPONSE: StringName = &"n_roll_response"
+## bool: Q has given his first reply to the roll call and suggested where to look.
+const Q_ROLL_DEBRIEFED: StringName = &"q_roll_debriefed"
 ## bool: the player asked the substitute about B.
 const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
 ## bool: the player asked the substitute about spare textbooks.
@@ -139,6 +147,10 @@ const ALL_FLAGS: Array[StringName] = [
 	NOTED_B_LATE,
 	TOLD_Q_ABOUT_TEXTBOOK,
 	ACCUSED_Q,
+	Q_BOOK_TALK_DONE,
+	Q_BOOK_PACT,
+	N_ROLL_RESPONSE,
+	Q_ROLL_DEBRIEFED,
 	ASKED_N_ABOUT_B,
 	ASKED_N_ABOUT_TEXTBOOK,
 	NOTICED_N_SUBSTITUTE,

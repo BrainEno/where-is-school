@@ -14,6 +14,10 @@ const ROUTES: Dictionary = {
 			"requires": {StoryFlags.CLASS_DISMISSED: true},
 		},
 		{
+			"conversation": &"q_studying",
+			"requires": {StoryFlags.TEXTBOOK_MISSING: true, StoryFlags.Q_BOOK_TALK_DONE: true},
+		},
+		{
 			"conversation": &"q_after_bag",
 			"requires": {StoryFlags.TEXTBOOK_MISSING: true},
 		},

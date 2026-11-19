@@ -614,15 +614,23 @@ func _approach_q_for_intro() -> bool:
 
 
 ## Beats C/D: the bag reminder runs in the background while the player looks around.
-## The step ends when the bag has been searched - or when the fallback limit runs
-## out, because a player who never opens the bag still has to reach the lesson.
-## The fallback is recorded as what it is (`bag_wait_expired`), not as a search: the
-## textbook is not known to be missing, and no observation is written.
+## If they check the bag, Q is just beside the desk. Let him ask before the imagined
+## lesson starts, rather than making the player catch him in its short lead-in.
+## If they never check, the fallback claims neither a search nor a conversation.
 func _beat_bag() -> void:
 	_start_bag_reminder()
 	await _wait_for_flag(StoryFlags.TEXTBOOK_MISSING, BAG_WAIT_LIMIT)
 	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
 		_game_state().set_flag(StoryFlags.BAG_WAIT_EXPIRED, true)
+		return
+	if not is_b_introduced() or _has_flag(StoryFlags.Q_BOOK_TALK_DONE):
+		return
+	# Wait for the bag text to close. If the player managed to ask Q in the
+	# meantime, the shared reply has already played and should not start again.
+	await begin_beat()
+	if not _has_flag(StoryFlags.Q_BOOK_TALK_DONE):
+		await play_conversation(&"q_after_bag")
+	end_beat()
 
 
 ## Beat E: expectation, clearly framed as imagination. Skipped when the bag was
@@ -721,7 +729,9 @@ func _start_bag_reminder() -> void:
 	if _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.BELL_RUNG) or is_slice_finished():
 		return
 	await begin_beat()
-	await play_conversation(&"q_bag_reminder")
+	# An inspection can finish while the reminder is waiting for the dialogue lock.
+	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) and not _has_flag(StoryFlags.BELL_RUNG):
+		await play_conversation(&"q_bag_reminder")
 	end_beat()
 
 
