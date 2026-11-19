@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/classroom_door.tscn" id="bio_door"]
-[ext_resource type="Material" path="res://assets/materials/classroom/door_white.tres" id="bio_white"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/classroom_rear_door.tscn" id="bio_rear_door"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_dado.tres" id="art_walk_dado"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_frame.tres" id="art_exit_frame"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_steel.tres" id="art_exit_steel"]
@@ -1167,72 +1167,71 @@ material_override = ExtResource("art_walk_plaster")
 cast_shadow = 0
 
 [node name="FrontDoor" parent="LowerFloor/LowerWest1" instance=ExtResource("bio_door")]
-position = Vector3(-3.55, 0, 0.048)
+position = Vector3(3.55, 0, -0.04)
 dress_reverse = false
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FrontDoorTransom" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-3.55, 2.57, 0.104)
-mesh = SubResource("QuadMesh_art27")
-material_override = SubResource("Mat_transom")
-cast_shadow = 0
-
-[node name="FrontDoorTransomSill" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-3.55, 2.41, 0.095)
-mesh = SubResource("BoxMesh_art28")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="FrontDoorTransomHead" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-3.55, 2.73, 0.08)
-mesh = SubResource("BoxMesh_art29")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="FrontDoorTransomLeft" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-3.96, 2.57, 0.081)
-mesh = SubResource("BoxMesh_art30")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="FrontDoorTransomRight" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-3.14, 2.57, 0.081)
-mesh = SubResource("BoxMesh_art30")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="RearDoor" parent="LowerFloor/LowerWest1" instance=ExtResource("bio_door")]
-position = Vector3(3.55, 0, 0.048)
-dress_reverse = false
-leaf_material = ExtResource("bio_white")
-rotation_degrees = Vector3(0, 180, 0)
-
-[node name="RearDoorTransom" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.55, 2.57, 0.104)
 mesh = SubResource("QuadMesh_art27")
 material_override = SubResource("Mat_transom")
 cast_shadow = 0
 
-[node name="RearDoorTransomSill" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+[node name="FrontDoorTransomSill" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.55, 2.41, 0.095)
 mesh = SubResource("BoxMesh_art28")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
-[node name="RearDoorTransomHead" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+[node name="FrontDoorTransomHead" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.55, 2.73, 0.08)
 mesh = SubResource("BoxMesh_art29")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
-[node name="RearDoorTransomLeft" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+[node name="FrontDoorTransomLeft" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.14, 2.57, 0.081)
 mesh = SubResource("BoxMesh_art30")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
-[node name="RearDoorTransomRight" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+[node name="FrontDoorTransomRight" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
 position = Vector3(3.96, 2.57, 0.081)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="RearDoor" parent="LowerFloor/LowerWest1" instance=ExtResource("bio_rear_door")]
+position = Vector3(-3.55, 0, -0.04)
+dress_reverse = false
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="RearDoorTransom" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+position = Vector3(-3.55, 2.57, 0.104)
+mesh = SubResource("QuadMesh_art27")
+material_override = SubResource("Mat_transom")
+cast_shadow = 0
+
+[node name="RearDoorTransomSill" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+position = Vector3(-3.55, 2.41, 0.095)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="RearDoorTransomHead" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+position = Vector3(-3.55, 2.73, 0.08)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="RearDoorTransomLeft" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+position = Vector3(-3.96, 2.57, 0.081)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="RearDoorTransomRight" type="MeshInstance3D" parent="LowerFloor/LowerWest1"]
+position = Vector3(-3.14, 2.57, 0.081)
 mesh = SubResource("BoxMesh_art30")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
@@ -1268,7 +1267,7 @@ material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="Number" type="Node3D" parent="LowerFloor/LowerWest1"]
-position = Vector3(-2.65, 1.89, 0.112)
+position = Vector3(2.65, 1.83, 0.112)
 rotation_degrees = Vector3(0, 0, 0)
 
 [node name="Plate" type="MeshInstance3D" parent="LowerFloor/LowerWest1/Number"]

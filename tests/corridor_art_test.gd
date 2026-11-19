@@ -6,6 +6,7 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const SCHOOL := ^"TeachingBlock"
+const BIOLOGY_BAY := ^"TeachingBlock/LowerFloor/LowerWest1"
 const UPPER := ^"TeachingBlock/UpperFloor"
 const LANDING := Vector3(2.2, 1.8, -35.75)
 const FIRST_BEND := Vector3(0, 0, -27.75)
@@ -51,7 +52,11 @@ func _run() -> void:
 	for flag in [StoryFlags.PLAYGROUND_ARRIVED, StoryFlags.STREET_ARRIVED]:
 		flags.set_flag(flag, true) # Arrival dialogue and Q are covered by companion_route.
 
-	var initial_nav := _host.get_current().get_node(^"Navigation") as LocationNavigation
+	var classroom := _host.get_current()
+	var inner_wall := classroom.get_node(^"WallEast") as Node3D
+	var classroom_doors := _measure_biology_doors(classroom, inner_wall, true)
+	_check_biology_thresholds(classroom, inner_wall, true)
+	var initial_nav := classroom.get_node(^"Navigation") as LocationNavigation
 	if not await Harness.wait_until(initial_nav.is_routable, 5.0):
 		_check.fail("Initial classroom did not finish entering the navigation map.")
 		_finish()
@@ -62,6 +67,9 @@ func _run() -> void:
 		return
 	director.allow_player_control()
 	var corridor := _host.get_current()
+	var outer_wall := corridor.get_node(BIOLOGY_BAY) as StaticBody3D
+	_check_door_alignment(classroom_doors, _measure_biology_doors(corridor, outer_wall, false))
+	_check_biology_thresholds(corridor, outer_wall, false)
 	var nav := corridor.get_node(^"Navigation") as LocationNavigation
 	if not await Harness.wait_until(func() -> bool: return nav.is_routable() and _player.is_on_floor(), 5.0):
 		_check.fail("The new building never became routable: %s" % nav.get_bake_error())
@@ -73,6 +81,15 @@ func _run() -> void:
 	_check_yard_view(corridor)
 	await physics_frame
 	_check_glass_collision(corridor)
+
+	Harness.stage = "rear door on the corridor side"
+	flags.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	await _check_rear_door(corridor, outer_wall)
+	# Leave the rest of the structural walk solo until the real classroom exit joins Q.
+	flags.set_flag(StoryFlags.CLASS_DISMISSED, false)
+	if _host.get_current().location_id != &"corridor":
+		_finish()
+		return
 
 	Harness.stage = "front-room jump with the existing interact input"
 	var peek := corridor.find_interactable(&"classroom_glass")
@@ -111,12 +128,14 @@ func _run() -> void:
 			await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
 	if _host.get_current().location_id == &"corridor":
 		await _walk(FIRST_BEND, "climb back from the yard")
-		# Both lower spawns are still on the original coordinate system for old saves.
-		await _walk(Vector3(-1.1, 0, 2), "return to biology door")
 		Harness.stage = "classroom and street returns"
-		if await _use_exit(&"back_to_classroom", &"classroom", &"FromCorridor"):
-			flags.set_flag(StoryFlags.CLASS_DISMISSED, true)
-			await _use_exit(&"classroom_door", &"corridor", &"FromClassroom")
+		var front_step := _host.get_current().get_spawn(&"FromClassroom").global_position
+		if await _walk(front_step, "return to biology front door"):
+			if await _use_exit(&"back_to_classroom", &"classroom", &"FromCorridor"):
+				flags.set_flag(StoryFlags.CLASS_DISMISSED, true)
+				if await _use_exit(&"classroom_door", &"corridor", &"FromClassroom"):
+					_check.expect(_player.global_position.distance_to(front_step) < 0.12,
+						"Leaving the classroom did not land on the hall side of the front door.")
 		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "school gate"):
 			if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
 				# The street spawn is across the pavement, not in reach of the gate.
@@ -126,7 +145,9 @@ func _run() -> void:
 
 
 func _finish() -> void:
-	Harness.finish(self, _check.failures, "the teaching block has ten bays, glazed courtside galleries, walkable stairs and two-way exits; both input paths hop to see through the high glass.")
+	Harness.finish(self, _check.failures,
+		"the biology doors match on both sides and only the front door routes; "
+		+ "the ten bays, glazed galleries, stairs, two-way exits and both peek inputs still work.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -147,15 +168,17 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 			count += 1
 			_check_bay(bay as StaticBody3D, map)
 		_check.expect(count >= 5, "%s has only %d classroom bays." % [floor.name, count])
-	var start := corridor.get_spawn(&"FromClassroom").global_position
+	# Measure the long route from the fixed street-side entrance. The biology arrival
+	# moved one door-spacing north; it is not the datum for the length of this gallery.
+	var start := corridor.get_spawn(&"FromStreet").global_position
 	var end := corridor.get_spawn(&"FromSchoolyard").global_position
 	var path := NavigationServer3D.map_get_path(map, start, end, true)
 	var length := 0.0
 	for i in range(1, path.size()):
 		length += path[i-1].distance_to(path[i])
-	print("corridor art: biology to fire door %.1f m on the baked map" % length)
+	print("corridor art: gate to fire door %.1f m on the baked map" % length)
 	_check.expect(not path.is_empty() and path[-1].distance_to(end) < 0.5 and length > 42.0,
-		"The original room to fire door no longer follows a long connected route (%.1f m)." % length)
+		"The gate to fire door no longer follows a long connected route (%.1f m)." % length)
 
 
 func _check_bay(bay: StaticBody3D, map: RID) -> void:
@@ -171,13 +194,110 @@ func _check_bay(bay: StaticBody3D, map: RID) -> void:
 	var quad := slit.mesh as QuadMesh
 	_check.expect(quad != null and quad.size.x > quad.size.y * 5.0 and is_equal_approx(slit.position.y, ROOM_WINDOW_Y),
 		"%s's high window is not a narrow slit above standing eye height." % bay.name)
-	_check.expect(front.position.x < slit.position.x and slit.position.x < rear.position.x,
+	_check.expect(minf(front.position.x, rear.position.x) < slit.position.x
+		and slit.position.x < maxf(front.position.x, rear.position.x),
 		"%s's high window is not between the two doors." % bay.name)
 	var spot := bay.to_global(Vector3(slit.position.x, 0, 1.18))
 	var closest := NavigationServer3D.map_get_closest_point(map, spot)
 	var path := NavigationServer3D.map_get_path(map, _player.global_position, spot, true)
 	_check.expect(closest.distance_to(spot) < 0.55 and not path.is_empty() and path[-1].distance_to(spot) < 0.55,
 		"%s has no connected floor in front of its window." % bay.name)
+
+
+## Snapshot the materials before the camera's wall fade can replace them with alpha copies.
+## Use the wall's foot as the origin but the location's axes (the bay has its own yaw).
+func _measure_biology_doors(location: LocationRoot, wall: Node3D, inside: bool) -> Dictionary:
+	var foot := wall.global_position
+	foot.y = location.global_position.y
+	var to_wall := Transform3D(location.global_basis, foot).affine_inverse()
+	var face := "Reverse" if inside else "Model"
+	var measured := {}
+	for door_name in ["FrontDoor", "RearDoor"]:
+		var door := wall.get_node_or_null(NodePath(door_name)) as ClassroomDoorDressing
+		if not _check.expect(door != null, "%s is missing %s." % [location.name, door_name]):
+			continue
+		var parts := {}
+		var paths := ["Model/Door_leaf", "Model/Door_frame_head"]
+		for part in ["Door_panel_inset", "Door_vision_glass", "Door_handle_rosette", "Door_kick_plate"]:
+			paths.append("%s/%s" % [face, part])
+		for path in paths:
+			var mesh := door.get_node_or_null(NodePath(path)) as MeshInstance3D
+			if not _check.expect(mesh != null and mesh.material_override != null,
+				"%s/%s is missing its dressed %s." % [location.name, door_name, path]):
+				continue
+			parts[mesh.name] = mesh.material_override
+			if mesh.name == &"Door_handle_rosette":
+				var latch := door.to_local(mesh.global_position)
+				_check.expect(latch.x > 0.3 and (latch.z > 0.0) == inside,
+					"%s/%s has the handle on the wrong edge or face." % [location.name, door_name])
+		measured[door_name] = {"pose": to_wall * door.global_transform,
+			"prefab": door.scene_file_path, "parts": parts}
+	return measured
+
+
+func _check_door_alignment(inside: Dictionary, outside: Dictionary) -> void:
+	for door_name in ["FrontDoor", "RearDoor"]:
+		if not inside.has(door_name) or not outside.has(door_name):
+			continue # Reported by the measurement above.
+		var room_pose: Transform3D = inside[door_name]["pose"]
+		var hall_pose: Transform3D = outside[door_name]["pose"]
+		_check.expect(room_pose.is_equal_approx(hall_pose),
+			"%s does not line up across the wall: inside %s, outside %s." % [door_name, room_pose, hall_pose])
+		_check.expect(inside[door_name]["prefab"] == outside[door_name]["prefab"]
+			and inside[door_name]["parts"] == outside[door_name]["parts"],
+			"%s does not use the same prefab and painted fittings on both sides." % door_name)
+
+
+func _check_biology_thresholds(location: LocationRoot, wall: Node3D, inside: bool) -> void:
+	var through := location.find_interactable(&"classroom_door" if inside else &"back_to_classroom") as LocationExit
+	var locked := location.find_interactable(&"rear_door" if inside else &"corridor_rear_door")
+	var front := wall.get_node_or_null(^"FrontDoor") as Node3D
+	var rear := wall.get_node_or_null(^"RearDoor") as Node3D
+	var spawn := location.get_spawn(&"FromCorridor" if inside else &"FromClassroom")
+	if not _check.expect(through != null and locked != null and front != null and rear != null and spawn != null,
+		"%s has no matching front threshold and rear-door inspection." % location.name):
+		return
+	_check.expect(not (locked is LocationExit or locked is StagedInteractable) and locked.inspection_id == &"classroom_rear_door",
+		"The rear door is not an inspection-only target in %s." % location.name)
+	if inside:
+		var exits := location.get_interactables().filter(func(target: Interactable) -> bool: return target is LocationExit)
+		_check.expect(exits.size() == 1 and exits[0] == through
+			and through.required_flag == StoryFlags.CLASS_DISMISSED and not through.is_open(),
+			"Only the front door may lead out, and only after the lesson.")
+	var walk_side := Vector3.LEFT if inside else Vector3.RIGHT
+	for pair in [[through, front], [locked, rear]]:
+		var target := pair[0] as Interactable
+		var door := pair[1] as Node3D
+		var offset := target.global_position - door.global_position
+		var outline := target.get_outline_meshes()
+		_check.expect(absf(offset.z) < 0.02 and offset.dot(walk_side) > 0.0
+			and not outline.is_empty() and outline.all(func(mesh: GeometryInstance3D) -> bool: return door.is_ancestor_of(mesh)),
+			"%s points at the wrong door in %s." % [target.interact_id, location.name])
+	var arrival := spawn.global_position - front.global_position
+	_check.expect(absf(arrival.z) < 0.02 and absf(arrival.y) < 0.02 and arrival.dot(walk_side) > 0.0
+		and (-spawn.global_basis.z).dot(walk_side) > 0.99,
+		"%s does not land at the front door facing away from it." % spawn.name)
+
+
+func _check_rear_door(corridor: LocationRoot, bay: StaticBody3D) -> void:
+	var leaf := bay.get_node_or_null(^"RearDoor/Model/Door_leaf") as MeshInstance3D
+	var locked := corridor.find_interactable(&"corridor_rear_door")
+	if leaf == null or locked == null:
+		return # The doorway contract already reports this.
+	var centre := leaf.to_global(leaf.get_aabb().get_center())
+	if not await _walk(Vector3(-1.2, 0, centre.z), "white rear door"):
+		return
+	_player.camera_rig.snap()
+	var screen := _camera.unproject_position(centre)
+	if not _check.expect(_interaction.get_target_at_screen_position(screen) == locked,
+		"The white door does not point to its locked inspection from the corridor."):
+		return
+	_last_inspection = &""
+	_pointer.click_at_screen_position(screen)
+	var inspected := await Harness.wait_until(func() -> bool: return _last_inspection != &"", 3.0)
+	_check.expect(inspected and _last_inspection == &"classroom_rear_door" and _host.get_current() == corridor,
+		"Clicking the white rear door should inspect it and never change location.")
+	await _dismiss_inspection()
 
 
 func _check_yard_view(corridor: LocationRoot) -> void:
@@ -272,10 +392,15 @@ func _check_peek(peek: Interactable, by_mouse: bool) -> void:
 	_check.expect(apex > feet.y + 0.40 and eyes_at_slit and _player.is_on_floor()
 		and _last_inspection == peek.inspection_id, "%s did not hop and present the inspection on landing (rise %.2f, inspection %s)." %
 		[peek.interact_id, apex - feet.y, _last_inspection])
-	var end := Time.get_ticks_msec() + 3000
-	while _dialogue.is_busy() and Time.get_ticks_msec() < end:
-		_dialogue.advance_presentation()
-		await process_frame
+	await _dismiss_inspection()
+
+
+func _dismiss_inspection() -> void:
+	var dismissed := await Harness.wait_until(func() -> bool:
+		if _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		return not _dialogue.is_busy(), 3.0)
+	_check.expect(dismissed, "The inspection held the player after dismissal.")
 
 
 func _use_exit(id: StringName, destination: StringName, spawn: StringName) -> bool:

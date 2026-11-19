@@ -81,9 +81,9 @@ SOLIDS = {
 }
 SCENES = {
     "bio_door": f"{PROPS}/classroom_art/classroom_door.tscn",
+    "bio_rear_door": f"{PROPS}/classroom_art/classroom_rear_door.tscn",
     "interactable": "res://scenes/interaction/interactable.tscn",
 }
-DOOR_WHITE = "res://assets/materials/classroom/door_white.tres"
 
 
 def complement(low, high, holes):
@@ -214,7 +214,10 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     _, width, plate, depth, bias = spec
     p = b.shell(name, parent, pos, (0, yaw, 0), ("camera_occluder", "teaching_bay"))
     b.shape("WallCollision", p, (0, WALL_HEIGHT / 2, 0), (width, WALL_HEIGHT, 0.20))
-    door_x = (-DOOR_SPACING / 2, DOOR_SPACING / 2)
+    # Match WallEast in classroom.tscn: the blackboard-end door is at -Z. The
+    # west bay turns its local +X toward -Z, so its front door uses positive X.
+    half_spacing = DOOR_SPACING / 2
+    door_x = (half_spacing, -half_spacing) if biology else (-half_spacing, half_spacing)
     slit_x = 1.8 if biology else 0.0
     openings = [(x - DOOR_WIDTH / 2, x + DOOR_WIDTH / 2, 0, DOOR_HEIGHT) for x in door_x]
     openings += [(x - 0.41, x + 0.41, 2.41, 2.73) for x in door_x]
@@ -222,16 +225,16 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     facade_sections(b, p, width, openings)
     for i, (which, x) in enumerate(zip(("FrontDoor", "RearDoor"), door_x)):
         if biology:
-            props = {"dress_reverse": "false"}
-            if i == 1:
-                props["leaf_material"] = b.bind("bio_white", DOOR_WHITE, "Material")
-            b.instance(which, p, "bio_door", (x, 0, 0.048), (0, 180, 0), **props)
+            # Same setback, handedness and packed variant as the indoor door.
+            scene = "bio_rear_door" if i else "bio_door"
+            b.instance(which, p, scene, (x, 0, -0.04), (0, 180, 0), dress_reverse="false")
         else:
             plain_door(b, p, which, x, "room_blue" if not i else "room_pale")
         glazing(b, p, which + "Transom", x, 2.57, 0.82, 0.32, "transom")
     glazing(b, p, "HighGlass", slit_x, SILL + SLIT_HEIGHT / 2, SLIT_WIDTH, SLIT_HEIGHT, "peek_glass")
-    plate_x = door_x[0] + 0.9
-    sign(b, p, "Number", (plate_x, 1.89, 0.112), plate, 0.33)
+    plate_x = door_x[0] - 0.9 if biology else door_x[0] + 0.9
+    plate_y = 1.83 if biology else 1.89  # Below the biology high window sill.
+    sign(b, p, "Number", (plate_x, plate_y, 0.112), plate, 0.33)
     for side, x in enumerate((-width/2+0.09, width/2-0.09)):
         b.box(f"Pier{side}", p, (x, 1.56, 0.06), (0.18, 3.12, 0.29), "gallery_base")
     # Cutaway ceiling: the return/beam and its shadow remain, not a roof across the

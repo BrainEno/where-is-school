@@ -62,7 +62,7 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 9,
+		"interactables": 10, # The rear classroom door is an inspection, not an exit.
 		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",

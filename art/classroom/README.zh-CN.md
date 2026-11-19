@@ -79,7 +79,7 @@
 | 两块玻璃，一块裂了、用胶带补过；窗外是湿水泥地、矮墙、一排垃圾桶；傍晚的光 | `WindowGlass0`（裂纹 + 胶带）、`window_view.png` |
 | （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain`（程序生成的 `WindowCurtain`，`curtain_blackout`）挂在离西墙 0.18 m 的轨道上，宽 3.3 m，从 3.14 m 垂到地面，遮住 z 0.95–3.45 的墙洞 |
 | （窗帘对白）窗帘后面没有玻璃，只有墙的厚度，然后什么都没有 | `WallWest` 上真实的洞，从地面一直到墙顶（y 0–3.2；美术迁移时去掉了窗台和过梁，`paint_classroom_textures.py` 的 `WEST_VOID_OPENING` 只剩 z 范围仍有效）：墙壳和墙面只剩 `MeshInstance3D`（北段墙壳）/`SouthShell` 与 `Paint`/`PaintSouth`，洞后没有玻璃、窗框、窗景或背景板。窗帘拉开后，`Anomalies/VoidOpening/BlankSheet` 用实验里的空白纸（`void_sheet.tres`，不受光的纸面）填满墙洞，`Anomalies/PaperZone`（`scripts/environment/paper_zone.gd`、`paper_zone.tres`）把墙洞 2.6 m 以内的教室变成答题纸上的铅笔画——以覆盖层实现，窗帘复位时会撤掉；人物（`Actors`）永远不会被覆盖。墙的碰撞体保持完整 |
-| 另一扇门从来不会打开，除非使用特殊的手段 | `WallEast/RearDoor`（`classroom_door.tscn`，白色门板），只是普通检视（`classroom_rear_door`）；不会打开，本教室不放置楼梯 |
+| 另一扇门从来不会打开，除非使用特殊的手段 | `WallEast/RearDoor`（`classroom_rear_door.tscn`，`classroom_door.tscn` 的白色变体），只是普通检视（`classroom_rear_door`）；不会打开，本教室不放置楼梯 |
 | 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度。低矮教师桌移除后，它放在讲桌倾斜的桌面上（`Props/SetSquare`，随桌面倾斜，压在点名册上） |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |
 | 讲台（`classroom_teacher_desk` 检视）：比课桌高很多，上面有塑料封皮的点名册、教案和三角尺 | `Stage/Lectern` 的 `Body/Register`、`Body/LessonPapers` 和放在上面的三角尺。低矮教师桌（`teacher_desk.tscn`）不再放进教室，包装场景仍保留在项目中 |
@@ -103,7 +103,8 @@
 教室外壳为 14 × 10 米，墙高 3.2 米。每面墙都保留一整块碰撞体，洞口只切在可见部分上。北侧黑板墙是一整面 14 米的墙。
 东墙有两个 1.2 × 2.2 米门洞，中心分别在 z −3.55（前门 `WallEast/FrontDoor`，灰色）和 z +3.55（后门 `WallEast/RearDoor`，白色），
 都是所有者的门模型换上教室材质，门后有墙面；墙壳和墙面被切成长墙段、两端墙段和两块门楣，各自采样 `wall_east.png` 中对应的一段。
-`classroom_door` 保留原 ID、受阻检视文本和走廊转场，现在位于前门前方。西墙以同样方式围绕后窗墙洞切分。
+`classroom_door` 保留原 ID、受阻检视文本和走廊转场，位于前门前方。走廊在对应门位复用同一套灰色前门和白色后门变体。
+只有前门触发转场，白色后门从两侧都只能检视。西墙以同样方式围绕后窗墙洞切分。
 `WindowCurtainMount0` 与 `WindowCurtainMount1` 标记窗帘挂点（后者即遮光窗帘轨道）。投影幕（`WallNorth/ProjectorScreen`）在进入教室时是卷起的；
 `Interactables/ProjectorScreenPull` 可以把它拉下、再卷上去，其状态不会存档。
 书包挂在主角椅背上（`Furniture/DeskB2/Chair/Schoolbag`）；玩家在这把椅子上醒来（`PlayerStart`），Q 从过道稍远处出发，在第一句台词前走到玩家左手边的 `QOpeningTalk`（开场 Q 段落，#160）。讲台和台阶都有真实碰撞体：
