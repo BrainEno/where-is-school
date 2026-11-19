@@ -41,6 +41,8 @@ on:
       - 'scenes/locations/classroom/**'
       - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
+      - 'tests/capture_classroom_motion.gd'
+      - 'scenes/environment/props/schoolbag.tscn'
       - 'tests/capture_classroom_clock.gd'
       - 'tests/clock_reading.gd'
       - 'tests/clock_reading_test.gd'
@@ -164,6 +166,67 @@ jobs:
         with:
           name: classroom-render-${{ matrix.method }}-${{ env.HEAD_SHA }}
           path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  motion:
+    name: Capture classroom interaction motion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CI_LOG_DIR: build/classroom-motion
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - name: Install Xvfb and Mesa
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends xvfb xauth libgl1-mesa-dri
+      - uses: ./.github/actions/setup-godot
+      - name: Import and render the live classroom
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$CI_LOG_DIR"
+          printf 'head=%s\nengine=%s\n' "$HEAD_SHA" "$(godot --version)" > "$CI_LOG_DIR/BUILD.txt"
+          godot --headless --path . --import > "$CI_LOG_DIR/IMPORT.log" 2>&1
+          source tools/ci_run_check.sh
+          run_check classroom_motion 140 xvfb-run -a --server-args='-screen 0 1280x720x24' \
+            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --audio-driver Dummy \
+            --resolution 1120x630 --rendering-method gl_compatibility --rendering-driver opengl3 \
+            --script res://tests/capture_classroom_motion.gd -- "--output=$CI_LOG_DIR"
+      - name: Report the measured poses
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$CI_LOG_DIR/classroom_motion.log"
+          if test -f "$log"; then
+            grep -E '^MOTION_(POSE|DISPLAY)' "$log" | while IFS= read -r line; do
+              echo "::notice title=classroom motion measurement::$line"
+            done
+          fi
+      - name: Preview the returned pose at the submitted SHA
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in "$CI_LOG_DIR"/03_returned_from_aisle.jpg; do
+            test -f "$file" || continue
+            sha=$(sha256sum "$file" | cut -d' ' -f1)
+            mapfile -t parts < <(base64 -w 4000 "$file")
+            for i in "${!parts[@]}"; do
+              echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
+            done
+          done
+      - name: Publish viewport frames and motion log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classroom-motion-${{ env.HEAD_SHA }}
+          path: ${{ env.CI_LOG_DIR }}/
           if-no-files-found: error
           retention-days: 30
 
