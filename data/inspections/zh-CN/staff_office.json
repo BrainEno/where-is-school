@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "staff_office_rota": {
+    "title": "值日表底稿",
+    "prompt": "读桌上的值日表",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "活页夹摊在一张没填完的值日表上。左边扣着两个圈，旁边的复写纸也是同样的格子。有几个格子盖了章，一个名字也没填。",
+    "repeat_text": "章已经盖了，名字还空着。",
+    "record": {
+      "entry_id": "saw_staff_office_rota",
+      "source": "observed",
+      "text": "办公室的活页夹里有一张没有姓名的值日表底稿，以及格子一样的复写纸。"
+    }
+  },
+  "staff_office_trays": {
+    "title": "收发格",
+    "prompt": "看看收发格",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "标着“出”的那格有三张复写单。“入”那格只有自己的红签。那只托盘偏了一点，两张签的边没对齐。",
+    "repeat_text": "“出”有三张单，另一格是空的。"
+  },
+  "staff_office_keys": {
+    "title": "钥匙板",
+    "prompt": "看看钥匙板",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "六只编号的挂钩。四号没有钥匙，也没有牌。钩子底下和四周是同一个木色，看不出原先挂过什么。",
+    "repeat_text": "四号钩空着。",
+    "record": {
+      "entry_id": "saw_staff_office_keys",
+      "source": "observed",
+      "text": "办公室钥匙板的四号钩空着，上面没有房间名。"
+    }
+  }
+}

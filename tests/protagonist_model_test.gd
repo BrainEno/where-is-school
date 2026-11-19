@@ -20,9 +20,9 @@ extends SceneTree
 ##      and shins down; walking and jogging feet travel along the facing, knees fold forward
 ##      and never back, elbows never bend backwards, hands stay below the shoulders and on
 ##      their own side of the body, and hands and feet do not twist about their own length;
-##   6. the player scene shows the new model, the classroom seats the former protagonist as a
-##      plain student (no controller, no input, no collision, no interaction), the old asset
-##      and its sidecar are still there, and Q binds its current rig without losing a limb.
+##   6. the player scene shows the new model, the former protagonist stays seated without a
+##      controller, input or collision, and only his authored dialogue can outline him. The
+##      old asset and its sidecar remain, and Q binds its current rig without losing a limb.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -777,10 +777,20 @@ func _check_classroom_student() -> void:
 			_failures.append("The classroom contains a player controller ('%s')." % node.name)
 	if student.is_in_group("player"):
 		_failures.append("The classroom student is in the 'player' group.")
+	# The seated rig stays visual-only; #272 adds one separate classroom dialogue anchor.
+	var talk := classroom.get_node_or_null(^"Interactables/StudentTalk") as Interactable
+	if (talk == null or not talk.can_interact() or talk.interact_id != &"student_talk"
+		or talk.speaker_id != &"student" or talk.conversation_route != &"student"
+		or not talk.inspection_id.is_empty() or ConversationRouter.select(talk.conversation_route, {}) != &"student"
+		or talk.outline_paths.size() != 1 or model == null
+		or talk.get_node_or_null(NodePath(talk.outline_paths[0])) != model):
+		_failures.append("StudentTalk must route to the student dialogue and outline only the seated model.")
 	for node in everything:
-		if not node is Interactable:
+		if not node is Interactable or node == talk:
 			continue
 		var interactable := node as Interactable
+		if interactable.interact_id == &"student_talk" or interactable.conversation_route == &"student":
+			_failures.append("'%s' duplicates the classroom student's dialogue anchor." % interactable.name)
 		for outline: String in interactable.outline_paths:
 			var target := interactable.get_node_or_null(NodePath(outline))
 			if target != null and (target == student or student.is_ancestor_of(target)):

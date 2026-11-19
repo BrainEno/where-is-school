@@ -24,13 +24,16 @@ comes from the manuscript.
 | Location id | Scene | What it is now | Status |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys; glass street entrance and optional laboratory on 01, biology and the old street exit on 02, a loop to the upper gallery on 03. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: glass street entrance and directory on 01, biology and the old street exit on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The road runs off its north end into the laid-flat sky; a blank sign stands out there. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | The yard (key location): red court, school back wall, shed, container, tree, fence with a gap, estate. This round adds a fence run that carries on past the open west edge and sinks into the sky, a 20 m floodlight mast standing in the sky, and one chair out there facing the yard. | 已实现 |
+| `laboratory` | `scenes/locations/laboratory/laboratory.tscn` | Behind the 01 return wall. Cold working room with two inset bowls, supported glassware and a running mixer. Nine inspections; return to the recess. | 已实现 |
+| `restroom` | `scenes/locations/restroom/restroom.tscn` | West end of 01. Twin basins, an open cubicle beside a closed one, and a repaired tile at the drain. Three optional observations; return to the same landing. | 已实现 |
+| `staff_office` | `scenes/locations/staff_office/staff_office.tscn` | East end of 03. An unstaffed desk, dispatch trays and a key rail. Three optional observations; return to the same landing. | 已实现 |
 
-Screenshots of every change: `docs/screenshots/map_art/before/` and `after/` (CI frames
+Screenshots of the exterior pass: `docs/screenshots/map_art/before/` and `after/` (CI frames
 from `.github/workflows/location-art-capture.yml`).
 
 ## 2. Connections (current)
@@ -43,6 +46,9 @@ flowchart LR
   residential["residential courtyard"]
   alley["alley"]
   playground["playground / yard"]
+  laboratory["laboratory / 01 recess"]
+  restroom["restroom / 01 west"]
+  staff_office["staff office / 03 east"]
   endcard(["end of this build"])
 
   classroom -- "classroom_door → FromClassroom" --> corridor
@@ -58,6 +64,12 @@ flowchart LR
   alley -- "alley_back_to_courtyard → FromAlley" --> residential
   alley -- "alley_to_playground → FromAlley" --> playground
   playground -- "pg_back_to_alley → FromPlayground" --> alley
+  corridor -- "to_laboratory → FromCorridor" --> laboratory
+  laboratory -- "laboratory_to_corridor → FromLaboratory" --> corridor
+  corridor -- "to_restroom → FromCorridor" --> restroom
+  restroom -- "restroom_to_corridor → FromRestroom" --> corridor
+  corridor -- "to_staff_office → FromCorridor" --> staff_office
+  staff_office -- "staff_office_to_corridor → FromStaffOffice" --> corridor
   playground -- "pg_gap_in_fence (milestone end.slice)" --> endcard
 ```
 
@@ -119,8 +131,10 @@ flowchart TB
 | Stairwell | The vertical joint of the school; the first place where floors could disagree | Choice of up/down; an offset half landing | Two continuous connections inside `corridor` | 已实现 |
 | Upper-floor corridor | Repetition of the walkway with one change | Five bays, a turn and repeated room plates | Connected inside `corridor`; no location load | 已实现 |
 | Other classrooms | Rooms that look like the first one and are not | Jump to observe the interiors; opening further doors is a separate feature | Shallow furnished interiors behind high glass | 部分实现 |
-| Staff office | Authority without people; papers | One inspectable desk, the rota's origin | Separate small scene | 建议新增 |
-| Laboratory, toilets, gym | Named in the narrative bible as candidate spaces; order not fixed | Each a single-room scene | Separate scenes | 已确定但未实现 (as candidates); order 尚待作者决定 |
+| Staff office | Authority without people; unfinished clerical work | Duty-sheet master, trays and empty hook; no inference about the courtyard rota | 03 east end, `staff_office` | 已实现 |
+| Laboratory | A working room with a palette of its own | Nine optional observations, no new objective | 01 recess, `laboratory` | 已实现 |
+| Restroom | Ordinary maintenance without an explanation | Washbasins, latch and floor grate | 01 west end, `restroom` | 已实现 |
+| Gym | Candidate in the narrative bible | Not ordered on the route | Separate scene if chosen | 已确定但未实现 (candidate) |
 | Unfinished stairwell | Named as a candidate space | A flight that stops; a view out | Zone of the stairwell scene | 已确定但未实现 (candidate) |
 | Ground-floor connector | Joins stairs, rooms and the yard's `FromSchool` spawn | Gives `FromSchool` a use | Separate scene or zone of the stairwell | 建议新增 |
 
@@ -136,7 +150,7 @@ exploration, not implemented content; this plan places them only as far as the b
 | Biology classroom: the rear door opens onto a staircase suspended in the room | A vertical link that does not fit the building | Zone of the biology classroom | **Withdrawn from `classroom` in issue #159**: the rear door (`WallEast/RearDoor`, white, in the east wall behind the front door) never opens, "unless special means are used", and no staircase is placed. What those means are, and where the staircase goes: 尚待作者决定 |
 | Mirror-lined crawlspace or pipe | A narrow connector between two places | Short separate scene | 已确定但未实现; what it connects: 尚待作者决定 |
 | The schoolyard's impossible animals (a crocodile or a lion, as examples) | Occupants of the yard, calm, not combat | Inside `playground` (the yard's middle is reserved for events) | 已确定但未实现; relation to the green animal: 尚待作者决定 |
-| A laboratory with its own medium | One of the candidate rooms of the table above | Separate scene | 已确定但未实现 |
+| A laboratory with its own medium | Optional detour off 01, with a cold studio palette and instrumentation | `laboratory` | 已实现 |
 
 ## 6. Expansions around the campus
 
@@ -199,7 +213,7 @@ flowchart LR
 | 0 | Stage pass on corridor, street, courtyard, alley; yard distance additions; `tests/location_art_test.gd`; this plan | 已实现 (this pull request) |
 | 1 | Prompt keys, unused spawns, CI registration of the new test | 建议新增 |
 | 2 | Stairwell and upper corridor | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
-| 3 | First candidate room | 已确定但未实现 (candidates); choice 尚待作者决定 |
+| 3 | First candidate rooms | 已实现: laboratory and restroom; the staff office is another optional visit. The gym and later room order remain undecided. |
 | 4 | First periphery space | 已确定但未实现 (candidates); choice 尚待作者决定 |
 | 5 | Unstable links; elliptical building | 建议新增 / 尚待作者决定 |
 

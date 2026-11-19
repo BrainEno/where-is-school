@@ -97,16 +97,15 @@ jobs:
           # so replacing the source without re-deriving it fails here.
           python3 tools/build_music_loop.py --check
 
-      - name: Check the laboratory is reproducible
+      - name: Check the school interiors are reproducible
         shell: bash
         run: |
-          # The laboratory (#163) is generated twice over: its four painted texture fields
-          # come from `art/laboratory/paint_laboratory_textures.py` and its 26 materials and
-          # 188 KiB scene from `tools/build_laboratory.py`. Both are deterministic, so a
-          # committed file that no longer matches its generator is a file nobody can
-          # rebuild, and that is exactly what `--check` refuses.
+          # Geometry and independent local palettes live in the builders. No manual
+          # edits to the generated scenes, fitted meshes, lab materials or textures.
           python3 art/laboratory/paint_laboratory_textures.py --check
           python3 tools/build_laboratory.py --check
+          python3 tools/build_school_rooms.py --check
+          python3 tools/build_teaching_block.py --check
 
       - name: Check the CI verdict itself
         shell: bash
@@ -475,6 +474,7 @@ jobs:
           # clear colour, the walkway carried on past the yard door north of every sight
           # line, the end wall's picture gone but its collider kept, the door's opening clear.
           run_check corridor_art 180 godot --headless --path . --script res://tests/corridor_art_test.gd || status=1
+          run_check school_rooms 240 godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
           # has to point at a bone that exists on that rig, every clip has to actually move
           # the bone it is about, and the loop has to come back to where it started. The two

@@ -32,7 +32,7 @@
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10 几何修订同步，不独立声称获批 |
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
-| [CORRIDOR_ART.md](CORRIDOR_ART.md) | 走廊“没有尽头的走廊”美术改造说明 | 现行 | 实现 PR 作者 | 2026-11-11 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
+| [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-18 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |
 | [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) | 走廊模型落地实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行资产台账见 [MODEL_LIBRARY.md](MODEL_LIBRARY.md) |
 | [IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md](IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md) | 显示与输入提示适配实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 唯一无英文配对的实现笔记；现行边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
@@ -43,7 +43,7 @@
 | [IMPLEMENTATION_NOTES_OPENING.md](IMPLEMENTATION_NOTES_OPENING.md) | 生物课序章实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行验收见 [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) |
 | [IMPLEMENTATION_NOTES_PLAYGROUND.md](IMPLEMENTATION_NOTES_PLAYGROUND.md) | 操场与内心声音实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |
 | [IMPLEMENTATION_NOTES_PROPS.md](IMPLEMENTATION_NOTES_PROPS.md) | 长椅与书包道具实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
-| [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
+| [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
 | [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) | 地图规划中文阅读副本 | 阅读副本 | 内容 Agent | 2026-11-17 | 与 [MAP_PLAN.md](MAP_PLAN.md) 同步 |
 | [MODEL_LIBRARY.md](MODEL_LIBRARY.md) | 可复用模型库与放置状态台账 | 现行 | 工程 Agent | 2026-11-18 | 导入合同见 [ASSET_PIPELINE.md](ASSET_PIPELINE.md)；同步 N／学生当前几何计数，旧审计仍为历史记录 |
 | [MOBILE_BUILDS.md](MOBILE_BUILDS.md) | 原生移动构建、签名与设备验收 | 现行 | 工程 Agent | 2026-11-18 | 独立按需 APK/IPA 工作流、Mac 模拟器与 Windows ADB 调试；桌面发布见 [RELEASE.md](RELEASE.md) |

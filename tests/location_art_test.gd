@@ -62,14 +62,17 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 13, # Includes the new threshold exit and the directory, not fake doors.
-		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory"],
+		"interactables": 15, # Same 13, plus the two corridor-end doors.
+		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
+			"FromStaffOffice", "FromRestroom"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"school_gate": "street/FromCorridor",
 			"teaching_entrance_to_street": "street/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
 			"to_laboratory": "laboratory/FromCorridor",
+			"to_staff_office": "staff_office/FromCorridor",
+			"to_restroom": "restroom/FromCorridor",
 		},
 	},
 	"street": {
@@ -122,6 +125,20 @@ const LOCATIONS := {
 		"interactables": 10, # Nine inspections and the shared entrance door.
 		"spawns": ["Entry", "FromAnnex", "FromCorridor"],
 		"exits": {"laboratory_to_corridor": "corridor/FromLaboratory"},
+	},
+	"staff_office": {
+		"scene": "res://scenes/locations/staff_office/staff_office.tscn",
+		"stage": false,
+		"interactables": 4,
+		"spawns": ["FromCorridor"],
+		"exits": {"staff_office_to_corridor": "corridor/FromStaffOffice"},
+	},
+	"restroom": {
+		"scene": "res://scenes/locations/restroom/restroom.tscn",
+		"stage": false,
+		"interactables": 4,
+		"spawns": ["FromCorridor"],
+		"exits": {"restroom_to_corridor": "corridor/FromRestroom"},
 	},
 }
 

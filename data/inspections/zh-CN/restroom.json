@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "restroom_basins": {
+    "title": "两个洗手池",
+    "prompt": "看看洗手池",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两根拨杆都关了。一块滤网发暗，另一块颜色和龙头一样。镜子下沿，两片镜面接合的地方多了一个新卡扣。",
+    "repeat_text": "两个关着的龙头，两块颜色不同的滤网，还有一个新卡扣。"
+  },
+  "restroom_latch": {
+    "title": "第二格隔间",
+    "prompt": "看看插销",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "指示片露出窄窄一条红色。从面板的缝里看得见插销末端。从这边看不出是什么抵住了它。",
+    "repeat_text": "一线红色，和露出来的插销。"
+  },
+  "restroom_drain": {
+    "title": "地漏",
+    "prompt": "看看地漏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一条砖缝到了地漏就断了。地漏边上补过一小块颜色偏暖的砖。格栅里的缝是通的。",
+    "repeat_text": "地漏边上有一小块偏暖的砖。",
+    "record": {
+      "entry_id": "saw_restroom_drain",
+      "source": "observed",
+      "text": "厕所的地漏旁边补了一小块颜色不同的砖。"
+    }
+  }
+}

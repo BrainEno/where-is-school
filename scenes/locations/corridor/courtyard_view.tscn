@@ -173,7 +173,7 @@ size = Vector3(30.6, 3.06, 6)
 size = Vector3(5.9, 6.4, 38.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art46"]
-size = Vector3(31.8, 6.35, 6.4)
+size = Vector3(34.9, 6.35, 6.4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art47"]
 size = Vector3(0.47, 3.16, 0.47)
@@ -588,7 +588,7 @@ material_override = ExtResource("yard_plinth")
 cast_shadow = 0
 
 [node name="UpperNorth" type="MeshInstance3D" parent="Foundations"]
-position = Vector3(2.05, -0.225, -48.2)
+position = Vector3(3.2, -0.225, -48.2)
 mesh = SubResource("BoxMesh_art46")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
@@ -673,6 +673,12 @@ cast_shadow = 0
 
 [node name="UpperColumn5" type="MeshInstance3D" parent="Foundations"]
 position = Vector3(17.6, -0.02, -40.66)
+mesh = SubResource("BoxMesh_art48")
+material_override = ExtResource("yard_plinth")
+cast_shadow = 0
+
+[node name="UpperColumn6" type="MeshInstance3D" parent="Foundations"]
+position = Vector3(20.1, -0.02, -40.66)
 mesh = SubResource("BoxMesh_art48")
 material_override = ExtResource("yard_plinth")
 cast_shadow = 0
