@@ -313,6 +313,11 @@ func _check_game_integration() -> void:
 	var companion_q := companion.get_character_animator()
 	_expect(companion_q != null and (companion_q.get_node("Model") as Node3D).scene_file_path == MODEL,
 		"The companion does not use the same new Q wrapper.")
+	if companion_q == null:
+		main.queue_free()
+		return
+	_expect(companion_q.motion_profile != null and companion_q.motion_profile == q.motion_profile,
+		"Classroom and companion Q do not share the same authored motion resource.")
 	_expect(not companion_q.is_talking(), "The hidden companion animated during classroom dialogue.")
 	var player := main.get_node("Player") as PlayerController
 	_expect(host.load_location("res://scenes/locations/corridor/corridor.tscn", &"FromClassroom", player),

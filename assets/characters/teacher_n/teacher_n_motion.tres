@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="CharacterMotionProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+label = "N: measured steps and contained hand prompt"
+tempo = {
+"walk": 1.04,
+"talk": 2.5
+}
+clip_tracks = {
+"walk": {
+"thigh.L": [[0.0, Vector3(19, 0, 0)], [0.15, Vector3(9, 0, 0)], [0.3, Vector3(-10, 0, 0)], [0.44, Vector3(-20, 0, 0)], [0.49, Vector3(-20, 0, 0)], [0.74, Vector3(-1, 0, 0)], [1.0, Vector3(19, 0, 0)]],
+"thigh.R": [[0.0, Vector3(-20, 0, 0)], [0.25, Vector3(-1, 0, 0)], [0.49, Vector3(19, 0, 0)], [0.64, Vector3(9, 0, 0)], [0.79, Vector3(-10, 0, 0)], [0.93, Vector3(-20, 0, 0)], [1.0, Vector3(-20, 0, 0)]],
+"shin.L": [[0.0, Vector3(11, 0, 0)], [0.13, Vector3(28, 0, 0)], [0.26, Vector3(33, 0, 0)], [0.43, Vector3(7, 0, 0)], [0.53, Vector3(4, 0, 0)], [0.7, Vector3(8, 0, 0)], [0.9, Vector3(5, 0, 0)], [1.0, Vector3(11, 0, 0)]],
+"shin.R": [[0.0, Vector3(4, 0, 0)], [0.21, Vector3(8, 0, 0)], [0.42, Vector3(5, 0, 0)], [0.49, Vector3(11, 0, 0)], [0.62, Vector3(28, 0, 0)], [0.75, Vector3(33, 0, 0)], [0.92, Vector3(7, 0, 0)], [1.0, Vector3(4, 0, 0)]],
+"foot.L": [[0.0, Vector3(14, 0, 0)], [0.18, Vector3(6, 0, 0)], [0.32, Vector3(0, 0, 0)], [0.49, Vector3(-9, 0, 0)], [0.61, Vector3(-2, 0, 0)], [0.84, Vector3(3, 0, 0)], [1.0, Vector3(14, 0, 0)]],
+"foot.R": [[0.0, Vector3(-9, 0, 0)], [0.12, Vector3(-2, 0, 0)], [0.35, Vector3(3, 0, 0)], [0.49, Vector3(14, 0, 0)], [0.67, Vector3(6, 0, 0)], [0.81, Vector3(0, 0, 0)], [1.0, Vector3(-9, 0, 0)]],
+"upper_arm.L": [[0.0, Vector3(-8, 0, 5)], [0.14, Vector3(-10, 0, 5)], [0.48, Vector3(6, 0, 4)], [0.71, Vector3(1, 0, 4)], [1.0, Vector3(-8, 0, 5)]],
+"upper_arm.R": [[0.0, Vector3(5, 0, -4)], [0.22, Vector3(1, 0, -4)], [0.55, Vector3(-9, 0, -5)], [0.75, Vector3(-4, 0, -3)], [1.0, Vector3(5, 0, -4)]],
+"fore_arm.L": [[0.0, Vector3(-12, 0, 0)], [0.2, Vector3(-13, 0, 0)], [0.51, Vector3(-7, 0, 0)], [0.76, Vector3(-8, 0, 0)], [1.0, Vector3(-12, 0, 0)]],
+"fore_arm.R": [[0.0, Vector3(-8, 0, 0)], [0.26, Vector3(-10, 0, 0)], [0.55, Vector3(-15, 0, 0)], [0.73, Vector3(-13, 0, 0)], [1.0, Vector3(-8, 0, 0)]],
+"spine": [[0.0, Vector3(1.2, -1.4, 0.8)], [0.24, Vector3(2, 0, 0)], [0.49, Vector3(1.2, 1.4, -0.8)], [0.73, Vector3(2, 0, 0)], [1.0, Vector3(1.2, -1.4, 0.8)]],
+"head": [[0.0, Vector3(-1, 0.6, -0.5)], [0.24, Vector3(-2, 0, 0)], [0.49, Vector3(-1, -0.6, 0.5)], [0.73, Vector3(-2, 0, 0)], [1.0, Vector3(-1, 0.6, -0.5)]]
+},
+"talk": {
+"spine": [[0.0, Vector3(0, 0, 0)], [0.14, Vector3(1, 0, 0)], [0.36, Vector3(2, 4, 0.5)], [0.48, Vector3(1.5, 3, 1)], [0.76, Vector3(1, 0, 0)], [1.2, Vector3(0, 0, 0)]],
+"neck": [[0.0, Vector3(0, 0, 0)], [0.19, Vector3(-1, 0, 0)], [0.39, Vector3(2, 0, 0)], [0.53, Vector3(1, 0, 0)], [0.74, Vector3(0, 0, 0)], [1.2, Vector3(0, 0, 0)]],
+"head": [[0.0, Vector3(0, 0, 0)], [0.12, Vector3(-2, 0, 0)], [0.27, Vector3(6, 0, -1)], [0.42, Vector3(2, 2, -1)], [0.54, Vector3(5, 0, 0)], [0.71, Vector3(-1, 0, 0)], [0.86, Vector3(0, 0, 0)], [1.2, Vector3(0, 0, 0)]],
+"upper_arm.L": [[0.0, Vector3(0, 0, 3)], [0.38, Vector3(1, 0, 4)], [0.63, Vector3(0, 0, 3)], [1.2, Vector3(0, 0, 3)]],
+"upper_arm.R": [[0.0, Vector3(-3, 0, -3)], [0.15, Vector3(8, 0, -13)], [0.31, Vector3(14, 0, -23)], [0.49, Vector3(12, 0, -20)], [0.64, Vector3(7, 0, -12)], [0.81, Vector3(-3, 0, -3)], [1.2, Vector3(-3, 0, -3)]],
+"fore_arm.L": [[0.0, Vector3(-7, 0, 0)], [0.4, Vector3(-11, 0, 0)], [0.75, Vector3(-7, 0, 0)], [1.2, Vector3(-7, 0, 0)]],
+"fore_arm.R": [[0.0, Vector3(-9, 0, 0)], [0.15, Vector3(-14, 0, 0)], [0.37, Vector3(-59, 0, -3)], [0.50, Vector3(-51, 0, -2)], [0.70, Vector3(-17, 0, 0)], [0.89, Vector3(-9, 0, 0)], [1.2, Vector3(-9, 0, 0)]]
+}
+}

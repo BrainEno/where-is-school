@@ -376,6 +376,7 @@ func _check_classroom_n() -> void:
 	_check_tracks_are_bones_only("classroom N", animator)
 	_notes.append("N bind: %s" % CharacterAnimation.describe(report))
 	_check_walking_limbs_free("N", animator)
+	_check_in_game_look("N", animator)
 	if not animator.faces_negative_z or String(report.get("faces", "")) != "-Z":
 		_failures.append("N's model faces −Z, but its clips were bound for %s." % report.get("faces", "?"))
 	if not (report.get("mirrored", []) as Array).is_empty():

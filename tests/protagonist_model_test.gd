@@ -832,6 +832,39 @@ func _check_student_on_seat(student: CharacterVisualAnimation) -> void:
 	var seat := SEAT_DESK + Vector3(0.0, 0.0, 0.65)
 	if Vector2(hip.x - seat.x, hip.z - seat.z).length() > 0.15:
 		_failures.append("The student's hips are at %s, not on desk A1's chair (%s)." % [hip, seat])
+	_check_student_glance(student, skeleton, resolved)
+
+
+## Sample the full bound loop on the A1 instance. Both feet and hips keep the exact seat
+## contacts while the head moves, including between the authored keys.
+func _check_student_glance(student: CharacterVisualAnimation, skeleton: Skeleton3D, resolved: Dictionary) -> void:
+	var player := student.get_animation_player()
+	if player.current_animation != "char/sit_idle":
+		return
+	var head := skeleton.find_bone(String(resolved.get("head", "")))
+	if head < 0:
+		_failures.append("The A1 student's head cannot be animated.")
+		return
+	var anchors := {}
+	player.seek(0.0, true)
+	for canonical: String in ["thigh.L", "thigh.R", "foot.L", "foot.R"]:
+		var bone := String(resolved.get(canonical, ""))
+		if bone.is_empty():
+			_failures.append("The A1 student's %s contact cannot be measured." % canonical)
+			return
+		anchors[bone] = skeleton.global_transform * _joint(skeleton, bone, false)
+	var start := skeleton.get_bone_pose_rotation(head)
+	var excursion := 0.0
+	var drift := 0.0
+	for index in range(1, 25):
+		player.seek(player.current_animation_length * float(index) / 24.0, true)
+		excursion = maxf(excursion, rad_to_deg(start.angle_to(skeleton.get_bone_pose_rotation(head))))
+		for bone: String in anchors:
+			var at := skeleton.global_transform * _joint(skeleton, bone, false)
+			drift = maxf(drift, at.distance_to(anchors[bone]))
+	_notes.append("A1 seat: head turn %.1f°, maximum hip/ankle drift %.4f m" % [excursion, drift])
+	if excursion < 12.0 or drift > 0.002:
+		_failures.append("The A1 student must glance up without shifting the hips or boots.")
 
 
 func _check_assets_kept() -> void:

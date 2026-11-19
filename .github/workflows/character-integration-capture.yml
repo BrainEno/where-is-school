@@ -73,6 +73,10 @@ jobs:
             group: dialogue
             variants: "before,after"
             frames: ""
+          - name: cast-motion
+            group: motion
+            variants: "after"
+            frames: ""
           # Two real engine sessions: actual PR base GLBs/looks vs this exact head.
           # The same head scene/camera/shader/pose code is used for both legs.
           - name: refinement-n
