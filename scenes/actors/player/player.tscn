@@ -13,7 +13,7 @@ height = 1.8
 [sub_resource type="SphereShape3D" id="SphereShape3D_sensor"]
 radius = 2.2
 
-[node name="Player" type="CharacterBody3D"]
+[node name="Player" type="CharacterBody3D" groups=["protagonist"]]
 collision_mask = 5
 script = ExtResource("1_controller")
 

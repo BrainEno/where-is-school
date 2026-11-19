@@ -7,18 +7,21 @@ extends RefCounted
 ## back and forth never compounds rounding. Containers grow around the larger type; no
 ## layout here shrinks text to make it fit.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 const BASE_META := &"ui_base_font_size"
 
 
 ## The multiplier in effect: the `Settings` autoload's, or 1 when there is none (a test
 ## that never registers it).
 static func current(node: Node) -> float:
+	var base := MobileLayout.TEXT_MULTIPLIER if MobileLayout.enabled else 1.0
 	if node == null or not node.is_inside_tree():
-		return 1.0
+		return base
 	var settings := node.get_node_or_null(^"/root/Settings")
 	if settings == null or not settings.has_method("text_scale"):
-		return 1.0
-	return float(settings.call("text_scale"))
+		return base
+	return base * float(settings.call("text_scale"))
 
 
 static func scaled(size: int, factor: float) -> int:

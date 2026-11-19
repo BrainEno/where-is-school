@@ -1,0 +1,184 @@
+name: Native mobile
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - '.github/workflows/mobile-ci.yml'
+      - '.github/actions/setup-godot/**'
+      - '.godot-version'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'packaging/version.txt'
+      - 'default_bus_layout.tres'
+      - 'scripts/**'
+      - 'scenes/**'
+      - 'assets/**'
+      - 'data/**'
+      - 'tests/mobile*'
+      - 'tests/test_harness.gd'
+      - 'tools/export_mobile.py'
+      - 'tools/smoke_android.sh'
+      - 'tools/export_presets.py'
+      - 'tools/stamp_release_version.py'
+      - 'tools/verify_build.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-mobile-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  controls:
+    name: Touch input and safe-area regression (desktop engine)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - name: Validate mobile export contracts
+        run: |
+          python3 tools/export_mobile.py check
+          python3 tests/mobile_export_test.py
+      - name: Import the game and test phone and tablet geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/mobile-controls
+          export XDG_DATA_HOME="$RUNNER_TEMP/mobile-test-user-data"
+          godot --version
+          godot --headless --path . --import > build/mobile-controls/import.log 2>&1
+          status=0
+          godot --headless --path . --script res://tests/mobile_controls_test.gd -- --mobile-preview 2>&1 | tee build/mobile-controls/controls.log || status=1
+          # The fresh import can try the project theme before importing its font. The
+          # runtime must be clean of parse errors; do not waive any test failure.
+          if grep -E 'SCRIPT ERROR|Parse Error' build/mobile-controls/controls.log; then status=1; fi
+          if (( status != 0 )); then
+            grep -E 'SCRIPT ERROR|Parse Error|FAIL|watchdog' build/mobile-controls/controls.log | head -20 > "$RUNNER_TEMP/mobile-failures" || true
+            while IFS= read -r line; do printf '::error title=Mobile controls::%s\n' "$line"; done < "$RUNNER_TEMP/mobile-failures"
+          fi
+          exit "$status"
+      - name: Upload input and layout results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mobile-controls-${{ github.run_number }}
+          path: build/mobile-controls/
+          retention-days: 14
+
+  android:
+    name: Android preview APK and API 36 emulator launch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Select preinstalled JDK and install Android SDK tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f | sort -V | tail -1)"
+          test -x "$sdkmanager"
+          printf 'Using %s\n' "$sdkmanager"
+          "$JAVA_HOME/bin/java" -version
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" --version
+          printf 'JAVA_HOME=%s\nANDROID_SDKMANAGER=%s\n' "$JAVA_HOME" "$sdkmanager" >> "$GITHUB_ENV"
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.1.0'
+      - name: Export and validate an installable debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 tools/export_mobile.py android-preview --build "$GITHUB_RUN_NUMBER" --output build/android-preview 2>&1 | tee "$RUNNER_TEMP/android-export.log"; then
+            {
+              grep -A7 'Cannot export project with preset' "$RUNNER_TEMP/android-export.log" || true
+              grep -Ei 'error:|failed|exception' "$RUNNER_TEMP/android-export.log" | tail -10 || true
+            } | cut -c1-500 | while IFS= read -r line; do printf '::error title=Android export::%s\n' "$line"; done
+            exit 1
+          fi
+          printf '::notice title=Android preview APK::%s\n' "$(tr -d '\n' < build/android-preview/BUILD.json)"
+      # Upload before starting the emulator: the verified APK is useful even if the
+      # hosted emulator is unavailable. The emulator step must still pass the job.
+      - name: Upload test APK (debug certificate; not for distribution)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-preview-apk-${{ github.run_number }}
+          path: build/android-preview/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Install and launch the APK with the actual Android runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/android-smoke
+          if ! bash tools/smoke_android.sh build/android-preview/where-is-school-preview.apk --boot 2>&1 | tee build/android-smoke/smoke.log; then
+            for log in smoke emulator launch godot android-runtime; do
+              file="build/android-smoke/$log.log"
+              [[ "$log" != launch ]] || file=build/android-smoke/launch.txt
+              if [[ -f "$file" ]]; then
+                tail -4 "$file" | cut -c1-400 | while IFS= read -r line; do printf '::error title=Android %s::%s\n' "$log" "$line"; done
+              fi
+            done
+            exit 1
+          fi
+      - name: Upload Android launch evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-emulator-${{ github.run_number }}
+          path: build/android-smoke/
+          retention-days: 14
+
+  ios:
+    name: iOS device archive (unsigned, not an IPA)
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Export and archive for iPhone and iPad without a certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          if ! python3 tools/export_mobile.py ios-unsigned --build "$GITHUB_RUN_NUMBER" --output build/ios-unsigned 2>&1 | tee "$RUNNER_TEMP/ios-export.log"; then
+            {
+              grep -A7 'Cannot export project with preset' "$RUNNER_TEMP/ios-export.log" || true
+              grep -Ei 'error:|failed|exception' "$RUNNER_TEMP/ios-export.log" | tail -10 || true
+            } | cut -c1-500 | while IFS= read -r line; do printf '::error title=iOS export::%s\n' "$line"; done
+            exit 1
+          fi
+          printf '::notice title=iOS device archive unsigned::%s\n' "$(tr -d '\n' < build/ios-unsigned/BUILD.json)"
+          # Keep the archive and the Xcode project separate and preserve Apple bundle
+          # metadata. Neither zip is installable; a signed export needs the owner.
+          ditto -c -k --keepParent build/ios-unsigned/where-is-school.xcarchive build/ios-unsigned-device.zip
+          rm -rf build/ios-unsigned/where-is-school.xcarchive
+          ditto -c -k --keepParent build/ios-unsigned build/ios-xcode-project.zip
+      - name: Upload unsigned archive and Xcode project
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-unsigned-not-installable-${{ github.run_number }}
+          path: |
+            build/ios-unsigned-device.zip
+            build/ios-xcode-project.zip
+            build/ios-unsigned/BUILD.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

@@ -131,7 +131,7 @@ def tree(files: dict[str, str]) -> Path:
 
 
 def fixture(
-    clearance: float = 0.70,
+    clearance: float = 0.65,
     spawn_z: float = SPAWN_Z,
 ) -> Path:
     return tree(

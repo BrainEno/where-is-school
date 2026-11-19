@@ -23,6 +23,8 @@ extends Node
 ## test) the state machine still runs, so the logic that could lose the window is testable
 ## without a display.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 ## The smallest window the layout is verified at (tests/ui_resolution_test.gd runs here).
 const MIN_WINDOW_SIZE := Vector2i(1280, 720)
 ## The design size, and the size the window opens at when the screen can hold it.
@@ -47,6 +49,9 @@ func _ready() -> void:
 	# must not be reset when one happens, so this node lives in main.tscn and never reloads.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group(&"display_mode")
+	if MobileLayout.enabled:
+		set_process_unhandled_input(false)
+		return
 	_open_at_the_design_size()
 
 
@@ -81,6 +86,8 @@ func get_windowed_rect() -> Rect2i:
 ## Switches between fullscreen and windowed, remembers where the window was, and puts it
 ## back. Safe to call when the display is headless, and safe to call twice.
 func toggle_fullscreen() -> bool:
+	if MobileLayout.enabled:
+		return false
 	var now := Time.get_ticks_msec()
 	if now - _last_toggle_msec < TOGGLE_GUARD_MSEC:
 		return false

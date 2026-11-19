@@ -18,6 +18,8 @@ extends Control
 ## small size for the column heads and the hint line - and the ember of the title and pause
 ## menus for section heads, focus and the volume dials.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal closed
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
@@ -30,6 +32,7 @@ const OUTER_MARGIN := 40.0
 
 var _factor := 1.0
 var _panel: PanelContainer = null
+var _outer: MarginContainer
 var _scroll: ScrollContainer = null
 var _rows: VBoxContainer = null
 var _status: Label = null
@@ -63,6 +66,7 @@ func _ready() -> void:
 	for side: String in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, int(OUTER_MARGIN))
 	add_child(margin)
+	_outer = margin
 	var center := CenterContainer.new()
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(center)
@@ -106,7 +110,7 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
 		loc.connect("locale_changed", _on_locale_changed)
-	get_viewport().size_changed.connect(_fit)
+	MobileLayout.watch(self, _fit)
 	_rebuild()
 
 
@@ -191,6 +195,7 @@ func _rebuild() -> void:
 	var focused := _focused_id()
 	if String(_focus_after_rebuild).is_empty():
 		_focus_after_rebuild = focused
+	var scroll_y := _scroll.scroll_vertical
 	_factor = UiTextScale.current(self)
 	for child in _rows.get_children():
 		_rows.remove_child(child)
@@ -209,8 +214,9 @@ func _rebuild() -> void:
 	for key: StringName in [&"master", &"music", &"sfx"]:
 		_volume_row(key)
 	_heading("settings.section.display")
-	_choice_row(&"ui_scale", "settings.ui_scale", _ui_scale_options(), _current(&"ui_scale"))
-	_choice_row(&"fullscreen", "settings.fullscreen", _on_off_options(), _current(&"fullscreen"))
+	if not MobileLayout.enabled:
+		_choice_row(&"ui_scale", "settings.ui_scale", _ui_scale_options(), _current(&"ui_scale"))
+		_choice_row(&"fullscreen", "settings.fullscreen", _on_off_options(), _current(&"fullscreen"))
 	_choice_row(&"language", "settings.language", _language_options(), _current(&"language"))
 	_diagnostics_rows()
 	_heading("settings.section.controls")
@@ -233,9 +239,13 @@ func _rebuild() -> void:
 	_controls[&"restore_bindings"] = restore
 
 	UiTextScale.apply(self, _factor)
+	if MobileLayout.enabled:
+		MobileLayout.setup_scroll(_scroll)
 	_link_focus()
 	_refresh_status_hint()
 	_fit()
+	if MobileLayout.enabled:
+		_scroll.set_deferred(&"scroll_vertical", scroll_y)
 	if visible and not String(_focus_after_rebuild).is_empty():
 		var target := _focus_after_rebuild
 		call_deferred("focus_row", target)
@@ -726,7 +736,8 @@ func _diagnostics_rows() -> void:
 		L10n.t("settings.diagnostics_folder", {"path": ProjectSettings.globalize_path(OfflineDiagnostics.LOG_DIR)}),
 		MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
 	))
-	_diagnostics_button(&"open_logs", "settings.open_logs", _on_open_logs)
+	if not MobileLayout.enabled:
+		_diagnostics_button(&"open_logs", "settings.open_logs", _on_open_logs)
 	_diagnostics_button(&"export_diagnostics", "settings.export_diagnostics", _on_export_diagnostics)
 
 
@@ -793,7 +804,8 @@ func _refresh_status_hint() -> void:
 		"confirm": MenuStyle.key(self, &"ui_accept"),
 		"cancel": MenuStyle.key(self, &"ui_cancel"),
 	}
-	_status.text = L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard", keys)
+	_status.text = "" if MobileLayout.enabled and InputHint.device(self) == InputHint.DEVICE_TOUCH else \
+		L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard", keys)
 
 
 # --- Capturing a new binding -----------------------------------------------------
@@ -910,7 +922,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func _fit() -> void:
 	if _panel == null or _scroll == null:
 		return
-	var view := get_viewport_rect().size
+	var view := MobileLayout.safe_rect(self).size
+	if MobileLayout.enabled:
+		MobileLayout.inset(_outer)
+		MobileLayout.enlarge(_back)
+		for control: Control in _controls.values():
+			MobileLayout.enlarge(control)
 	var width := minf(view.x - OUTER_MARGIN * 2.0, PANEL_MAX_WIDTH * maxf(_factor, 1.0))
 	var height := view.y - OUTER_MARGIN * 2.0
 	_panel.custom_minimum_size = Vector2(maxf(width, 320.0), maxf(height, 240.0))

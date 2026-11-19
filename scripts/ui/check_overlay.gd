@@ -19,6 +19,8 @@ extends Control
 ## so a check that is on screen when the player presses L keeps its numbers and
 ## changes its words.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 @onready var _panel: PanelContainer = %Panel
 @onready var _title: Label = %Title
 @onready var _detail: Label = %Detail
@@ -45,6 +47,14 @@ func _ready() -> void:
 	if settings != null:
 		settings.connect("setting_changed", _on_setting_changed)
 	set_text_scale(UiTextScale.current(self))
+	if MobileLayout.enabled:
+		MobileLayout.watch(self, _fit_mobile)
+		_fit_mobile()
+
+
+func _fit_mobile() -> void:
+	MobileLayout.inset(self)
+	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
 ## The player's text size. The panel is a container, so it grows around larger type.

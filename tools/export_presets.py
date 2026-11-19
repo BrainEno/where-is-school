@@ -23,6 +23,7 @@ Nothing here writes a file, so a caller can decide whether a change is worth kee
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import json
 from pathlib import Path
 
 
@@ -131,7 +132,7 @@ def section_of(text: str, name: str) -> tuple[int, int, bool]:
     raise PresetError(f"preset {name!r} has no [{wanted}] section")
 
 
-def set_option(text: str, name: str, key: str, value: str) -> str:
+def set_option(text: str, name: str, key: str, value: str | int | bool) -> str:
     """Set one option of one preset, leaving every other byte of the file alone.
 
     Rewriting the whole file from a parse would reformat it, and a reformat is a diff nobody
@@ -140,7 +141,9 @@ def set_option(text: str, name: str, key: str, value: str) -> str:
     start, end, _ = section_of(text, name)
     lines = text.splitlines()
     block = lines[start:end]
-    replacement = f'{key}="{value}"'
+    # Godot ConfigFile scalars share JSON's string, integer and boolean notation.
+    # Quote text once; writing `"true"` makes a boolean option a string.
+    replacement = f'{key}={json.dumps(value, ensure_ascii=False)}'
     for position, line in enumerate(block):
         if line.partition("=")[0].strip() == key:
             block[position] = replacement

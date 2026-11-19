@@ -132,6 +132,15 @@ const CHAIR_PUSH_SECONDS := 0.35
 ## Longer, and it runs *after* the body has mostly lowered: a chair is pulled in behind you,
 ## not slid under you while you are still in the air.
 const CHAIR_PULL_SECONDS := 0.45
+## How long the hand takes to get to the chair before it starts moving, and to leave it after.
+##
+## The hand arrives first and leaves last: a chair that moves with no hand on it is a chair
+## being pushed by the air. Short, because a person does not reach slowly for a chair they are
+## already touching - the reach is the *look* of taking hold, not a journey.
+const CHAIR_REACH_SECONDS := 0.18
+## A beat after the chair arrives before the sit is considered over, so a caller does not get
+## control back on the same frame the chair stops.
+const CHAIR_PULL_SETTLE_SECONDS := 0.08
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 ## In toggle mode, a jog that was switched on ends by itself after the player has stood
@@ -178,6 +187,8 @@ var _get_up_progress: float = 0.0
 ## The chair this body wakes up in, if the room has one to push. Resolved on the way up, not
 ## in `_ready()`: the player exists before the location is loaded under it.
 var _seated_chair: Node3D = null
+## The arm that pushes and draws the chair. Built lazily, and only if the rig has arms.
+var _arm_reach: Node = null
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -717,43 +728,75 @@ func is_getting_up() -> bool:
 	return _getting_up
 
 
+## Whether the body is sitting in a chair right now, i.e. the state the stand-up leaves.
+func is_seated() -> bool:
+	return _wake_seated
+
+
 ## Sits the protagonist back down in the chair it got up from, if that chair is still there.
 ##
-## The mirror of the stand-up, and deliberately built from the same two pieces in reverse: the
-## clip runs backwards from the last key of `get_up` to its first, and the chair is pulled in
-## *behind* the body once it has mostly lowered (`CHAIR_PULL_SECONDS` starts with the clip).
-## Returns the clip tween (or null when the model cannot animate), so a caller can keep
-## control locked until the body is seated.
+## Three things move together, because they are one movement:
 ##
-## Refused while already seated or still standing up: two transitions running at once is how
-## a body ends up halfway into a chair.
+## - the body lowers and folds onto `sit_idle` (the clip holds the folded pose; the tween adds
+##   the slump on top of it, so the last frame of the transition is the first frame of the loop);
+## - the hand goes back to the chair's back and *draws it in*, then lets go;
+## - the chair arrives under the body as the body arrives in it.
+##
+## Returns a tween that is done when the body is seated and the chair is home, so the room can
+## hold its beat until then rather than handing control back in the middle of a sit.
+##
+## Refused while already seated or still standing up: two transitions running at once is how a
+## body ends up halfway into a chair.
 func sit_down(duration: float = WAKE_GET_UP_SECONDS) -> Tween:
 	if _wake_seated or _getting_up or visual == null:
 		return null
-	# The clip first: `set_seated(true)` holds `sit_idle`, which is the folded pose the body
-	# ends in. The tween below carries the slump down onto it, so the last frame of the
-	# transition and the first frame of the loop are the same pose.
+	_seated_chair = _find_seated_chair()
 	_set_wake_seated(true)
-	_seat_sit_down_chair_in(CHAIR_PULL_SECONDS)
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tween.tween_property(visual, "rotation_degrees:x", wake_tilt_degrees * SEATED_WAKE_POSE, duration)
-	tween.tween_property(visual, "position:y", STANDING_HIP_HEIGHT - SEATED_HIP_DROP, duration)
-	return tween
+	var chair_tween := _sit_chair_under_body(duration)
+	var body_tween := create_tween()
+	body_tween.set_parallel(true)
+	body_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	body_tween.tween_property(visual, "rotation_degrees:x", wake_tilt_degrees * SEATED_WAKE_POSE, duration)
+	body_tween.tween_property(visual, "position:y", STANDING_HIP_HEIGHT - SEATED_HIP_DROP, duration)
+	# The whole sit is over when the *chair* is home: the body reaches the seat first, and
+	# letting go of the chair is the last thing that happens.
+	var total := create_tween()
+	total.tween_interval(duration)
+	if chair_tween != null:
+		total.chain().tween_interval(CHAIR_PULL_SETTLE_SECONDS)
+	return total
 
 
-## Brings the chair back under the body, starting so that it arrives with the body.
+## Stands the protagonist up out of the chair it is sitting in, for a body that got there by
+## sitting rather than by waking up. The mirror of `sit_down`, and refused in the same states.
+func stand_up() -> void:
+	if not _wake_seated or _getting_up:
+		return
+	_begin_get_up_from_seat()
+
+
+## The chair half of a sit-down: hand back to the chair, draw it in under the body, let go.
 ##
-## The chair's travel and the body's descent are the same beat seen twice, so the chair is
-## given the body's own duration minus its own slide time rather than a fixed delay: change
-## one and the other still lands together.
-func _seat_sit_down_chair_in(sit_duration: float) -> void:
-	var delay := maxf(sit_duration - CHAIR_PULL_SECONDS, 0.0)
+## The hand reaches *first* - it has to already be holding the chair when the chair starts
+## moving, or the body is being pushed by a chair nobody is touching.
+func _sit_chair_under_body(duration: float) -> Tween:
+	if _seated_chair == null:
+		return null
+	_reach_for_chair()
+	# The order is the whole of the performance: take hold, let the body get most of the way
+	# down, *then* draw the chair in behind it. Drawing first would slide the chair out from
+	# under a body still in the air; drawing late would leave the body landing on nothing.
+	var reach_seconds := minf(CHAIR_REACH_SECONDS, duration * 0.25)
+	var settle_seconds := maxf(duration * SEATED_WAKE_POSE - CHAIR_REACH_SECONDS, 0.0)
+	var pull_seconds := minf(CHAIR_PULL_SECONDS, maxf(duration - reach_seconds - settle_seconds, 0.05))
 	var tween := create_tween()
-	if delay > 0.0:
-		tween.tween_interval(delay)
+	tween.tween_interval(reach_seconds)
+	tween.tween_interval(settle_seconds)
 	tween.tween_callback(_pull_seat_home)
+	# The hand stays on the chair for as long as the chair is travelling.
+	tween.tween_interval(pull_seconds)
+	tween.tween_callback(_release_chair)
+	return tween
 
 
 ## One clock, not a separate tween racing the profiled skeleton. Physics samples the
@@ -813,8 +856,14 @@ func _push_seat_back() -> void:
 	_seated_chair = _find_seated_chair()
 	if _seated_chair == null:
 		return
+	# The hand is on the chair before it moves, and stays on it until it stops: the push is
+	# what the arm is *doing*, not something that happens to the chair nearby.
+	_reach_for_chair()
 	if _seated_chair.has_method("push_back"):
 		_seated_chair.call("push_back", CHAIR_PUSH_SECONDS)
+	var tween := create_tween()
+	tween.tween_interval(CHAIR_PUSH_SECONDS + CHAIR_REACH_SECONDS * 0.5)
+	tween.tween_callback(_release_chair)
 
 
 ## Pulls that same chair back under the body, for a sit-down.
@@ -825,6 +874,47 @@ func _pull_seat_home() -> void:
 		return
 	if _seated_chair.has_method("pull_home"):
 		_seated_chair.call("pull_home", CHAIR_PULL_SECONDS)
+
+
+## Puts a hand on the chair's back and keeps it there while the chair moves.
+##
+## The target is the chair's own back, read from the chair rather than assumed: the reach has
+## to end where the chair is, or the body is holding the air beside it.
+func _reach_for_chair() -> void:
+	var reach := _ensure_arm_reach()
+	if reach == null or _seated_chair == null:
+		return
+	var at := _seated_chair.global_position
+	if _seated_chair.has_method("get_back_point"):
+		at = _seated_chair.call("get_back_point")
+	# The choreography of a hand on a prop lives in the reach itself; this only says which
+	# point of which chair.
+	reach.call("take_hold", at, CHAIR_REACH_SECONDS)
+
+
+## Lets go: the arm eases back under the clip's control.
+func _release_chair() -> void:
+	if _arm_reach == null or not is_instance_valid(_arm_reach):
+		return
+	_arm_reach.call("let_go", CHAIR_REACH_SECONDS)
+
+
+## The reach, built on first use against this body's model.
+func _ensure_arm_reach() -> Node:
+	if _arm_reach != null and is_instance_valid(_arm_reach):
+		return _arm_reach
+	if _character_animator == null:
+		return null
+	var reach := preload("res://scripts/actors/character_arm_reach.gd").new()
+	reach.name = "ArmReach"
+	# A child of the controller, not of the model: the model may be replaced by a look
+	# treatment, and the reach has to survive that.
+	add_child(reach)
+	if not bool(reach.call("bind", _character_animator)):
+		reach.queue_free()
+		return null
+	_arm_reach = reach
+	return _arm_reach
 
 
 ## The chair nearest this body, found by group so no scene path is hard-coded.
