@@ -147,9 +147,7 @@ func _run() -> void:
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
 	if _check.expect(not _directory_checkpoints.is_empty(), "The directory never reached its save cases."):
-		main.queue_free()
-		if _check.expect(await Harness.wait_until(func() -> bool: return not is_instance_valid(main), 5.0),
-			"Could not close the walking test's world before resuming."):
+		if _check.expect(await DirectoryCase.close_world(main), "Could not close the walking world's scene."):
 			await DirectoryCase.check_resume(self, main_scene, _directory_checkpoints, _check)
 	_finish()
 

@@ -131,11 +131,16 @@ static func check_resume(
 		director.autostart = false
 		tree.root.add_child(main)
 		_check_resumed_tab(main, marked, check)
-		main.queue_free()
-		if not check.expect(await Harness.wait_until(func() -> bool: return not is_instance_valid(main), 5.0),
-			"Could not close the resumed world."):
+		if not check.expect(await close_world(main), "Could not close the resumed %s world." % key):
 			return
 	Harness.clear_session_state(tree)
+
+
+static func close_world(main: Node) -> bool:
+	# The wait must not capture the Node whose destruction it is waiting for.
+	var reference: WeakRef = weakref(main)
+	main.queue_free()
+	return await Harness.wait_until(func() -> bool: return reference.get_ref() == null, 5.0)
 
 
 static func _check_resumed_tab(main: Node, marked: bool, check: Harness.Checker) -> void:
