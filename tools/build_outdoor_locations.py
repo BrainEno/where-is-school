@@ -286,7 +286,11 @@ def build_street():
     s.box("Road", (0, -0.1, -8), (22, 0.2, 56), "asphalt")
     s.box("PavementEast", (13, 0.075, -8), (8, 0.15, 56), "concrete")
     s.box("KerbEast", (8.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
-    s.box("PavementWest", (-13, 0.075, -8), (6, 0.15, 56), "concrete")
+    # Stop the vestibule pavement at the inside face of the return. Leaving a
+    # pavement hidden under the return lets the bake find false routes inside it.
+    street_end, split = 20.0, STREET_SCHOOL_Z[1]
+    s.box("PavementWest", (-13, 0.075, (-36 + split)/2), (6, 0.15, split+36), "concrete")
+    s.box("PavementSchoolEntry", (-11, 0.075, (split+street_end)/2), (2, 0.15, street_end-split), "concrete")
     s.box("KerbWest", (-9.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
     # Keep a shallow, walkable recess behind the shared glass entrance instead
     # of putting a doorway over the side of the solid school block.

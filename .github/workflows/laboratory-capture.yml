@@ -277,7 +277,7 @@ jobs:
           mkdir -p build/walkthrough
           ffmpeg -version | head -n 1
           xvfb-run -a --server-args="-screen 0 960x540x24" \
-            godot --path . --resolution 960x540 --rendering-driver opengl3 --audio-driver Dummy \
+            godot --verbose --path . --resolution 960x540 --rendering-driver opengl3 --audio-driver Dummy \
             --write-movie build/walkthrough/frame.png --fixed-fps 24 \
             --script res://tests/capture_laboratory_walkthrough.gd \
             > "${RUNNER_TEMP}/record.log" 2>&1
@@ -289,7 +289,7 @@ jobs:
               grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/record.log" || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/record.log"; then
             echo "::error title=laboratory walkthrough::${frames} frames were written (exit ${code})"
-            grep -E 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:|^PASS:|LABORATORY_WALKTHROUGH' \
+            grep -E 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:|^PASS:|^Resource still in use:|LABORATORY_WALKTHROUGH' \
               "${RUNNER_TEMP}/record.log" | cut -c1-400 | sort -u | head -n 12 | while IFS= read -r msg; do
                 printf '::notice title=laboratory walkthrough log::%s\n' "$msg"
               done

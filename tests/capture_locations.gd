@@ -33,7 +33,8 @@ const TEACHING_SPOTS := {
 	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
 	"directory_01": [^"TeachingBlock/GroundFloor/Gallery", Vector3(-1.24, 0, -0.30)],
 	"waiting_register_02": [^"TeachingBlock/LowerFloor/WaitingRegister", Vector3(2.38, 0, 0.75)],
-	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-3.35, 0, 0.42)],
+	# Keep the follow camera on the hall side, so it sees the ruled face of the end panel.
+	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-4.90, 0, 0.42)],
 	"rear_junction": [^"TeachingBlock/RearStair/Junction", Vector3.ZERO],
 	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
 	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],

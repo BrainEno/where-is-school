@@ -75,7 +75,7 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 88, # Nine on the glass assembly; the school frontage uses one fewer body.
+		"shapes": 89, # The glass assembly and the separately bounded vestibule pavement.
 		"interactables": 8,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
