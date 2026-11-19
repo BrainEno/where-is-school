@@ -70,7 +70,16 @@ const ROUTES: Dictionary = {
 	&"corridor_speaker": [{"conversation": &"corridor_speaker", "requires": {}}],
 	&"corridor_trolley": [{"conversation": &"corridor_trolley", "requires": {}}],
 	&"corridor_wait": [{"conversation": &"corridor_wait", "requires": {}}],
-	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
+	# The school does not move. Where the protagonist remembers it standing does, and the
+	# second look is the first chance to compare the two. The first visit only fixes the
+	# position; the visit after it is a different scene, not the same lines again.
+	&"street_wall": [
+		{
+			"conversation": &"street_wall_again",
+			"requires": {StoryFlags.STREET_WALL_SEEN: true},
+		},
+		{"conversation": &"street_wall", "requires": {}},
+	],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],
 	# The yard's two attempts are conversations with a choice (and then a check), not

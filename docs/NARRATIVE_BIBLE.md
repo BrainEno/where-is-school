@@ -91,11 +91,22 @@ The six core voices are:
 - **推演 (Inference):** logical analysis, deduction and causal reasoning.
 - **共鸣 (Resonance):** emotional attunement, empathy and interpersonal signals.
 
-This is a narrative design decision, not an implementation claim. **Only one
-provisional voice is currently implemented**: Orientation (路感), in
-`data/abilities/`. The ability registry, character profiles, dialogue runtime,
-dice core and passive director support multiple voices, but the other five are not
-yet shipped as content.
+This is a narrative design decision, not an implementation claim. **Two
+provisional voices are currently implemented**: Orientation (路感) and Echo (回声,
+memory and association), both in `data/abilities/`. The remaining four are not yet
+shipped as content.
+
+Echo exists because the premise needs it and the content did not have it. The game
+separates four kinds of knowledge - observed, reported, recalled, imagined - and
+showed a badge for each, but only two of the 40 inspectable objects carried a
+`recall` line, so the recollection layer was a decoration rather than a mechanic.
+Echo is the voice that speaks from it: past tense, frequently wrong, and unable to
+tell an event from something repeated until it may as well have happened. It is
+registered with three passive rules and six recollections in
+`data/inspections/`. `tests/memory_layer_test.py` holds both halves of the rule:
+every recollection must be paired across languages and must say something the
+observation it follows did not, and every voice must admit doubt somewhere in its
+repertoire - a voice that is never wrong is a hint system wearing a personality.
 
 Voices volunteer automatically when relevant scene details, events or interactions
 activate them. They are not primarily a player-operated skill menu. The player's

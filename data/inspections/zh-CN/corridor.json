@@ -53,6 +53,10 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "一块旧牌上列着三排房间，前两排都标着 01。一排从玻璃门开始，另一排在玻璃门前停下。两排之间，有人用笔在螺丝外面画了个小方框。",
-    "repeat_text": "小方框里没有房间号。"
+    "repeat_text": "小方框里没有房间号。",
+    "recall": {
+      "entry_id": "recall_directory_one_row",
+      "text": "你上一次看这块牌子，它只有一排房间。你记得那时螺丝孔是锈的——现在这些不锈。你没法确定「上一次」是哪一年。"
+    }
   }
 }

@@ -5,6 +5,10 @@
     "orientation": {
       "name": "Orientation",
       "description": "A sense of where things are in relation to each other: heights, seams, what lines up and what does not. It is confident about shapes and has nothing to say about people. One voice, still provisional."
+    },
+    "echo": {
+      "name": "Echo",
+      "description": "What was here before, arriving without being called: a smell, a hand on a rail, a room in another year. It speaks in the past tense and it is often wrong. It does not distinguish between what happened and what was told so many times that it may as well have happened. When it is sure, be careful."
     }
   }
 }

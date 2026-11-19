@@ -46,6 +46,10 @@
       "entry_id": "saw_res_stain",
       "source": "observed",
       "text": "你先后来过同一面墙，看见同一块污渍，却说不清自己当时在墙的哪一边。"
+    },
+    "recall": {
+      "entry_id": "recall_stain_other_wall",
+      "text": "这块水印你见过。你觉得它更高一些，在另一面墙上，而且那时候有人在旁边站着。你翻不回来那个人的样子。"
     }
   }
 }

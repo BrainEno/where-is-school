@@ -238,6 +238,9 @@ jobs:
           python3 tests/voice_coverage_test.py
           # The world's own sounds, read from the script that synthesises them.
           python3 tests/world_audio_test.py
+          # The four kinds of knowledge the game separates. Three were covered; the
+          # recollection layer had 2 entries against 40 objects until this test existed.
+          python3 tests/memory_layer_test.py
 
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash

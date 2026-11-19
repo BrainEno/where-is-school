@@ -6,6 +6,11 @@
       "value": 3,
       "speaker": "voice_orientation",
       "max_passive": 2
+    },
+    "echo": {
+      "value": 4,
+      "speaker": "voice_echo",
+      "max_passive": 2
     }
   },
   "passives": [
@@ -37,6 +42,36 @@
         "id": "playground"
       },
       "conversation": "voice_arrival",
+      "once": true
+    },
+    {
+      "id": "residential_stain_echo",
+      "ability": "echo",
+      "trigger": {
+        "kind": "inspection",
+        "id": "res_stain"
+      },
+      "conversation": "echo_stain",
+      "once": true
+    },
+    {
+      "id": "classroom_desk_echo",
+      "ability": "echo",
+      "trigger": {
+        "kind": "inspection",
+        "id": "classroom_own_desk"
+      },
+      "conversation": "echo_desk",
+      "once": true
+    },
+    {
+      "id": "corridor_directory_echo",
+      "ability": "echo",
+      "trigger": {
+        "kind": "inspection",
+        "id": "corridor_folded_directory"
+      },
+      "conversation": "echo_directory",
       "once": true
     }
   ]

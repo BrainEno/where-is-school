@@ -23,7 +23,7 @@
         {
           "id": "vn_ok",
           "speaker": "voice_orientation",
-          "text": "The notices are pinned at the same height except one. That one sits higher, and the tape behind it is clean where the old tape was. Someone moved it up to be read.",
+          "text": "The notices are pinned at the same height except one, which sits higher. The tape behind it is still clean. Someone moved it up to be read - who, and why, is more than I can tell from this.",
           "next": null
         },
         {
@@ -60,7 +60,7 @@
         {
           "id": "va_ok",
           "speaker": "voice_orientation",
-          "text": "There is a seam down the middle of the concrete, where two pours meet. It runs all the way across. The main gate, though, is at the short end.",
+          "text": "There is a seam down the middle of the concrete, where two pours meet, running the length of it. But the gate is on the short side. What is wrong I cannot name. I can only say the shape and the way in do not agree.",
           "next": null
         },
         {
@@ -97,7 +97,7 @@
         {
           "id": "vh_ok",
           "speaker": "voice_orientation",
-          "text": "The concrete around the pole is newer than the rest of the yard. There are old bolt holes in the wall too, filled in and painted over. The hoop must have stood somewhere else.",
+          "text": "The concrete around the pole is newer than the rest of the yard, and there are old bolt holes in the wall, filled and painted over. The hoop was somewhere else before - or only the pole was replaced. I cannot tell which.",
           "next": null
         },
         {
@@ -110,6 +110,90 @@
           "id": "vh_bad_2",
           "speaker": "protagonist",
           "text": "You couldn't say how high a hoop is meant to be. But the concrete around the base is a different colour, and the net looks newer than the rim.",
+          "next": null
+        }
+      ]
+    },
+    "echo_stain": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "es_1",
+      "nodes": [
+        {
+          "id": "es_1",
+          "speaker": "voice_echo",
+          "text": "I have seen this water stain before. Not on this planter - on another wall, higher up."
+        },
+        {
+          "id": "es_2",
+          "speaker": "voice_echo",
+          "text": "Someone poured water at the same spot every day then. Said it kept the insects off. I cannot remember who."
+        },
+        {
+          "id": "es_3",
+          "speaker": "protagonist",
+          "text": "You crouch and compare it against its shadow. The bottom edge is older than the moss at the wall's foot. The edge itself is cleaner - as if someone traced it recently."
+        },
+        {
+          "id": "es_4",
+          "speaker": "voice_echo",
+          "text": "Or I have sewn two things together. I do that. Believe half of it.",
+          "next": null
+        }
+      ]
+    },
+    "echo_desk": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "ed_1",
+      "nodes": [
+        {
+          "id": "ed_1",
+          "speaker": "voice_echo",
+          "text": "The name at the edge of the desk. You have written it."
+        },
+        {
+          "id": "ed_2",
+          "speaker": "protagonist",
+          "text": "The cut is shallower than your hand and the strokes run the wrong way for a right hand."
+        },
+        {
+          "id": "ed_3",
+          "speaker": "voice_echo",
+          "text": "Written it, not carved it. You wrote it on something else, many times, until the name stopped meaning anything to you."
+        },
+        {
+          "id": "ed_4",
+          "speaker": "voice_echo",
+          "text": "On what? Fair question. I only remember the angle of the wrist. The desk was lower than this one.",
+          "next": null
+        }
+      ]
+    },
+    "echo_directory": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "ec_1",
+      "nodes": [
+        {
+          "id": "ec_1",
+          "speaker": "voice_echo",
+          "text": "This board had one row before."
+        },
+        {
+          "id": "ec_2",
+          "speaker": "protagonist",
+          "text": "The screw holes on the second row have no rust and the paint at their rim is still sharp. It was added recently."
+        },
+        {
+          "id": "ec_3",
+          "speaker": "voice_echo",
+          "text": "When I say before, I do not mean last year. I do not give years."
+        },
+        {
+          "id": "ec_4",
+          "speaker": "voice_echo",
+          "text": "And I may be remembering the one in the other building. Whether this one ever had a before, I cannot say.",
           "next": null
         }
       ]

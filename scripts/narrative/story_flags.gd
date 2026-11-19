@@ -115,6 +115,13 @@ const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
 const ASKED_N_ABOUT_TEXTBOOK: StringName = &"asked_n_about_textbook"
 ## bool: the player noticed that N is a substitute.
 const NOTICED_N_SUBSTITUTE: StringName = &"noticed_n_substitute"
+## bool: the player has already stood in the street and looked at the school from outside.
+## The school does not move; what moves is where the protagonist remembers it standing, and
+## the second look is the first time the two can be compared. Set at the end of the first
+## look, so the first pass records the position and the second can find it wrong.
+const STREET_WALL_SEEN: StringName = &"street_wall_seen"
+## bool: the player has looked at the school a second time and found its shadow missing.
+const STREET_SHADOW_MISSING: StringName = &"street_shadow_missing"
 
 # --- Small runtime values used by presentation ------------------------------
 ## String: locale key of the single objective line the HUD shows, e.g.
@@ -126,6 +133,8 @@ const CURRENT_LOCATION: StringName = &"current_location"
 
 const ALL_FLAGS: Array[StringName] = [
 	MET_Q,
+	STREET_WALL_SEEN,
+	STREET_SHADOW_MISSING,
 	Q_FIRST_TALK_DONE,
 	B_ON_STAGE,
 	TEXTBOOK_MISSING,

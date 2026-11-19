@@ -23,7 +23,7 @@
         {
           "id": "vn_ok",
           "speaker": "voice_orientation",
-          "text": "告示都钉在同一高度，只有一张例外。那张更高，背后胶带的印子还是干净的。有人把它挪高了，好让人读到。",
+          "text": "告示都钉在同一高度，只有一张更高。那张背后的胶带印子还是干净的。有人把它挪高了，好让人读到——至于是谁、为什么，我只看得出这么多。",
           "next": null
         },
         {
@@ -60,7 +60,7 @@
         {
           "id": "va_ok",
           "speaker": "voice_orientation",
-          "text": "水泥地中间有一道接缝，像是分两次浇的。接缝一直通到另一头。可大门偏偏开在短边上。",
+          "text": "水泥地中间有一道接缝，像是分两次浇的，一直通到另一头。可大门开在短边上。这不对劲的地方我说不清，只能说这里的样子和它开门的方向对不上。",
           "next": null
         },
         {
@@ -97,7 +97,7 @@
         {
           "id": "vh_ok",
           "speaker": "voice_orientation",
-          "text": "杆子周围的水泥比操场其他地方新。墙上还有几个旧螺栓孔，填过，又刷了一遍漆。篮架以前应该在别处。",
+          "text": "杆子周围的水泥比操场其他地方新。墙上还有几个旧螺栓孔，填过，又刷了一遍漆。篮架以前应该在别处——也可能只是这根杆子换过。我分不出来。",
           "next": null
         },
         {
@@ -110,6 +110,90 @@
           "id": "vh_bad_2",
           "speaker": "protagonist",
           "text": "你也说不准正常的篮筐该有多高。只是底座那块水泥颜色不一样，篮网看着也比篮圈新。",
+          "next": null
+        }
+      ]
+    },
+    "echo_stain": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "es_1",
+      "nodes": [
+        {
+          "id": "es_1",
+          "speaker": "voice_echo",
+          "text": "这块水印我以前见过。不在这个花坛，在另一面墙上，高度也高一些。"
+        },
+        {
+          "id": "es_2",
+          "speaker": "voice_echo",
+          "text": "那时候有人每天往同一处泼水。说是驱虫。谁说的我记不住了。"
+        },
+        {
+          "id": "es_3",
+          "speaker": "protagonist",
+          "text": "你蹲下去比对影子。水印的下沿比墙根的苔更旧，边缘却更干净——像是最近才被谁描过一遍。"
+        },
+        {
+          "id": "es_4",
+          "speaker": "voice_echo",
+          "text": "也可能是我把两件事缝在一起了。这种事我常干。你信一半就行。",
+          "next": null
+        }
+      ]
+    },
+    "echo_desk": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "ed_1",
+      "nodes": [
+        {
+          "id": "ed_1",
+          "speaker": "voice_echo",
+          "text": "最靠边那个名字，你写过。"
+        },
+        {
+          "id": "ed_2",
+          "speaker": "protagonist",
+          "text": "刻痕比你的字浅，笔画的方向也不像右手写的。"
+        },
+        {
+          "id": "ed_3",
+          "speaker": "voice_echo",
+          "text": "你写过它，但没刻过它。你把它写在别的东西上，写过很多遍，写到那个名字自己没了意思。"
+        },
+        {
+          "id": "ed_4",
+          "speaker": "voice_echo",
+          "text": "写在什么上面？问得好。我只记得手腕的角度——写字的时候，桌子比这张矮一截。",
+          "next": null
+        }
+      ]
+    },
+    "echo_directory": {
+      "default_source": "recalled",
+      "subjective": false,
+      "start": "ec_1",
+      "nodes": [
+        {
+          "id": "ec_1",
+          "speaker": "voice_echo",
+          "text": "这块牌子以前只有一排。"
+        },
+        {
+          "id": "ec_2",
+          "speaker": "protagonist",
+          "text": "第二排的螺丝孔没有锈，孔沿的漆还很锐。它是最近才被加上去的。"
+        },
+        {
+          "id": "ec_3",
+          "speaker": "voice_echo",
+          "text": "我说的「以前」不是去年。我不给年份。"
+        },
+        {
+          "id": "ec_4",
+          "speaker": "voice_echo",
+          "text": "而且我可能只记得它在别处的那一块。这一栋楼有没有过「以前」，我拿不准。",
           "next": null
         }
       ]

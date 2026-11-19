@@ -53,6 +53,10 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "An enamel directory with three room lists. The first two say 01. One list starts at the glass doors; the other ends there. In the gap between them, someone has drawn a tiny square around a screw.",
-    "repeat_text": "The little square has no room number."
+    "repeat_text": "The little square has no room number.",
+    "recall": {
+      "entry_id": "recall_directory_one_row",
+      "text": "The last time you looked at this board it had one row of rooms. You remember the screw holes being rusted. These are not. You cannot place what year the last time was."
+    }
   }
 }

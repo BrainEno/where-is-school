@@ -60,6 +60,10 @@
       "entry_id": "saw_blackboard_revision",
       "source": "observed",
       "text": "黑板擦过，但没擦干净。隐约能看见复习、重点知识，还有一些数学公式之类的内容。粉笔槽里有很多截断粉笔，还有用了很多年的黑板擦。"
+    },
+    "recall": {
+      "entry_id": "recall_blackboard_list",
+      "text": "「复习」两个字底下，你隐约记得还有一行小字，写着考试的时间。你凑近去看，粉笔灰底下的确像是有过一行，但已经擦得只剩一种均匀的灰。"
     }
   },
   "classroom_window": {
@@ -73,6 +77,10 @@
       "entry_id": "saw_window_light",
       "source": "observed",
       "text": "教室窗外的光看着像傍晚，可现在应该是早上，因为生物课一般在早上。"
+    },
+    "recall": {
+      "entry_id": "recall_window_light",
+      "text": "你记得这扇窗。你记得它外面应该是另一栋楼，砖是红的。现在外面只有水泥地，一直到很远的墙根。你不确定自己记的是不是这一扇。"
     }
   },
   "classroom_own_desk": {

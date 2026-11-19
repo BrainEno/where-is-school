@@ -52,26 +52,43 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "从外面看学校：瓷砖贴到窗台，再往上是素水泥。"
+          "text": "从外面看学校：瓷砖贴到窗台，再往上是素水泥。二楼有一扇窗开着，窗子后面的屋子是黑的。"
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
-          "text": "支架上有个摄像头，对着那块没人站的草地。",
+          "text": "支架上有个摄像头，对着那块没人站的草地。它转得很慢，像是在数草。",
           "effects": [
             {
               "type": "record",
               "entry_id": "street_camera",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "学校外面有个摄像头，画面里是一小片空草地。"
+              "text": "学校外面有个摄像头，对着草地慢慢转。"
             }
           ]
         },
         {
-          "id": "w_3",
+          "id": "w_pos",
           "speaker": "protagonist",
-          "text": "二楼有一扇窗开着。窗子后面的屋子是黑的。",
+          "text": "你把位置记下来：学校在这条路的这一侧，斜对面是三栋楼。墙根有一排没种东西的方砖。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_wall_seen",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.street_position"
+            }
+          ],
+          "next": "w_end"
+        },
+        {
+          "id": "w_end",
+          "speaker": "protagonist",
+          "text": "你转身走开。",
           "next": null
         }
       ]
@@ -104,6 +121,55 @@
           "id": "n_3",
           "speaker": "protagonist",
           "text": "最下面的日期是四年前的。胶带是新的。",
+          "next": null
+        }
+      ]
+    },
+    "street_wall_again": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "g_1",
+      "nodes": [
+        {
+          "id": "g_1",
+          "speaker": "protagonist",
+          "text": "你又绕回这面墙。瓷砖、素水泥、二楼那扇开着的窗，都和刚才一样。"
+        },
+        {
+          "id": "g_check",
+          "speaker": "voice_orientation",
+          "text": "等一下。先别看墙，看墙投在路面上的那一片。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 8,
+            "kind": "visible",
+            "success": "g_ok",
+            "failure": "g_bad"
+          }
+        },
+        {
+          "id": "g_ok",
+          "speaker": "voice_orientation",
+          "text": "这条路东西向，墙在路南。早上墙的影子应该压到路中间。现在一片影子都没有，可墙还在。是影子不见了，不是墙。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_shadow_missing",
+              "value": true
+            }
+          ],
+          "next": "g_end"
+        },
+        {
+          "id": "g_bad",
+          "speaker": "voice_orientation",
+          "text": "……说不上来。这段路和刚才那段，宽度不一样。可能是我记错了。",
+          "next": "g_end"
+        },
+        {
+          "id": "g_end",
+          "speaker": "protagonist",
+          "text": "你退后几步再抬头。学校还在原地，一块砖都没少。只是它在你记忆里的位置，比现在更靠左一些。",
           "next": null
         }
       ]

@@ -245,6 +245,7 @@
     "journal.read_progress": "已读文字：{percent}%（{read} / {total}）",
     "journal.read_areas": "尚未读完的区域：{areas}",
     "journal.read_area_left": "{place}：还有 {count} 句",
-    "journal.read_areas_more": "另有 {count} 处"
+    "journal.read_areas_more": "另有 {count} 处",
+    "objective.street_position": "学校就在这一侧。你已经把位置记住了。"
   }
 }

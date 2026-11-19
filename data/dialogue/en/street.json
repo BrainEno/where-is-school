@@ -52,26 +52,43 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "The school from the outside: tile up to the window sills, plain concrete above them."
+          "text": "The school from outside: tile up to the sill, bare concrete above. One window on the second floor is open. The room behind it is dark."
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
-          "text": "A camera on a bracket, pointing at the strip of grass nobody stands on.",
+          "text": "There is a camera on a bracket, pointed at a strip of empty grass. It turns slowly, as if counting the grass.",
           "effects": [
             {
               "type": "record",
               "entry_id": "street_camera",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "A camera outside the school points at an empty strip of grass."
+              "text": "Outside the school there is a camera turning slowly over the grass."
             }
           ]
         },
         {
-          "id": "w_3",
+          "id": "w_pos",
           "speaker": "protagonist",
-          "text": "One window on the second floor is open. The room behind it is dark.",
+          "text": "You fix the position: the school on this side of the road, the three blocks across from it. A row of empty brick squares along the foot of the wall.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_wall_seen",
+              "value": true
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.street_position"
+            }
+          ],
+          "next": "w_end"
+        },
+        {
+          "id": "w_end",
+          "speaker": "protagonist",
+          "text": "You turn and walk on.",
           "next": null
         }
       ]
@@ -104,6 +121,55 @@
           "id": "n_3",
           "speaker": "protagonist",
           "text": "The date at the bottom is four years old. The tape is new.",
+          "next": null
+        }
+      ]
+    },
+    "street_wall_again": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "g_1",
+      "nodes": [
+        {
+          "id": "g_1",
+          "speaker": "protagonist",
+          "text": "You come round to the wall again. Tile, bare concrete, the open window on the second floor - all of it as it was."
+        },
+        {
+          "id": "g_check",
+          "speaker": "voice_orientation",
+          "text": "Wait. Not the wall - the patch of road the wall should be throwing its shadow across.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 8,
+            "kind": "visible",
+            "success": "g_ok",
+            "failure": "g_bad"
+          }
+        },
+        {
+          "id": "g_ok",
+          "speaker": "voice_orientation",
+          "text": "This road runs east to west and the wall is on the south side. In the morning its shadow should reach the middle of the road. There is no shadow at all, and the wall is still there. It is the shadow that is gone, not the wall.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_shadow_missing",
+              "value": true
+            }
+          ],
+          "next": "g_end"
+        },
+        {
+          "id": "g_bad",
+          "speaker": "voice_orientation",
+          "text": "...I cannot say. This stretch of road is not the same width as the last one. I may be remembering it wrong.",
+          "next": "g_end"
+        },
+        {
+          "id": "g_end",
+          "speaker": "protagonist",
+          "text": "You step back and look up again. The school is where it was, not one brick short. Only, in your memory it stood further left than this.",
           "next": null
         }
       ]

@@ -46,6 +46,10 @@
       "entry_id": "saw_res_stain",
       "source": "observed",
       "text": "You passed the same stain on the same wall twice, and you cannot say which side of the wall you were on."
+    },
+    "recall": {
+      "entry_id": "recall_stain_other_wall",
+      "text": "You have seen this water stain. You think it was higher, on another wall, and that someone was standing beside it. You cannot get that person's face back."
     }
   }
 }

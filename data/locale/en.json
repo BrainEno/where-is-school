@@ -245,6 +245,7 @@
     "journal.read_progress": "Text read: {percent}% ({read} / {total})",
     "journal.read_areas": "Not yet read through: {areas}",
     "journal.read_area_left": "{place}: {count} still unread",
-    "journal.read_areas_more": "{count} more"
+    "journal.read_areas_more": "{count} more",
+    "objective.street_position": "The school is on this side. You have the position fixed now."
   }
 }

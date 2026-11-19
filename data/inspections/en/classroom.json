@@ -60,6 +60,10 @@
       "entry_id": "saw_blackboard_revision",
       "source": "observed",
       "text": "The blackboard still carries last term's revision heading and a three-week-old date."
+    },
+    "recall": {
+      "entry_id": "recall_blackboard_list",
+      "text": "Under the word revision you half-remember another line, smaller, giving the date of an exam. You lean in. The chalk dust does look as though a line lay there once, worn to an even grey."
     }
   },
   "classroom_window": {
@@ -73,6 +77,10 @@
       "entry_id": "saw_window_light",
       "source": "observed",
       "text": "The light outside the classroom window looks like late afternoon even though it is early morning."
+    },
+    "recall": {
+      "entry_id": "recall_window_light",
+      "text": "You remember this window. You remember another building outside it, in red brick. Now there is only concrete, running out to a wall a long way off. You are not sure you are remembering this one."
     }
   },
   "classroom_own_desk": {
