@@ -5,6 +5,14 @@
 仓库根目录是下列命令的工作目录。GDScript 测试入口和公共断言见
 [tests/README.md](../tests/README.md)。
 
+## 移动构建与调试
+
+移动脚本不需要本页的资产工具依赖。[移动构建、安装与验收](../docs/MOBILE_BUILDS.md)
+说明何时点击 Actions 构建、如何配置签名，以及从 **Mac** 的
+[`macos/ios/Debug.command`](macos/ios/Debug.command) 或 **Windows** 的
+[`windows/android/Setup.cmd`](windows/android/Setup.cmd) / [`Test.cmd`](windows/android/Test.cmd)
+开始调试。共用打包工具仍是 [`export_mobile.py`](export_mobile.py)。
+
 ## 从干净环境安装
 
 参考环境为 Linux、CPython 3.11 / 3.12。不要依赖系统恰好已经安装 NumPy/Pillow，

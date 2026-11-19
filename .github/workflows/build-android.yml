@@ -1,0 +1,81 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Android versionCode (0 uses the run number)'
+        type: number
+        default: 0
+  # Only mobile tooling PRs call this; normal gameplay CI does not build an APK.
+  workflow_call:
+    inputs:
+      build_number:
+        type: number
+        default: 0
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: Export a complete APK and launch it on Android API 36
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Prepare JDK and Android SDK
+        run: bash tools/android/install-build-tools.sh
+      - name: Export APK and verify the signed package and every indexed resource
+        shell: bash
+        env:
+          REQUESTED_BUILD: ${{ inputs.build_number }}
+        run: |
+          set -euo pipefail
+          build="${REQUESTED_BUILD:-0}"
+          if [[ "$build" == 0 ]]; then build="$GITHUB_RUN_NUMBER"; fi
+          mkdir -p build/mobile/android-logs
+          if ! python3 tools/export_mobile.py android-preview --build "$build" --output build/mobile/android \
+            2>&1 | tee build/mobile/android-logs/export.log; then
+            { grep -A7 'Cannot export project with preset' build/mobile/android-logs/export.log || true
+              tail -10 build/mobile/android-logs/export.log; } | cut -c1-500 |
+            while IFS= read -r line; do printf '::error title=Android export::%s\n' "$line"; done
+            exit 1
+          fi
+          printf '::notice title=Android APK::%s\n' "$(tr -d '\n' < build/mobile/android/BUILD.json)"
+      - name: Install and launch the same APK on the emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          logs=build/mobile/android-logs
+          if ! bash tools/android/smoke-ci.sh build/mobile/android/where-is-school-preview.apk "$logs" 2>&1 | tee "$logs/smoke.log"; then
+            for file in "$logs"/{smoke,emulator,runtime}.log "$logs/launch.txt"; do
+              if [[ -f "$file" ]]; then
+                tail -8 "$file" | cut -c1-500 | while IFS= read -r line; do
+                  printf '::error title=Android launch::%s\n' "$line"
+                done
+              fi
+            done
+            exit 1
+          fi
+      - name: Publish playable Android preview APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-preview-apk-${{ github.run_number }}-${{ github.run_attempt }}
+          path: build/mobile/android/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Publish Android build and launch evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-build-logs-${{ github.run_attempt }}
+          path: build/mobile/android-logs/
+          retention-days: 14

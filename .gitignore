@@ -148,3 +148,10 @@ __pycache__/
 #
 # Committed evidence (see section 3):
 #   docs/screenshots/PLAYTHROUGH.log, docs/screenshots/UI_CAPTURE.log
+
+# Local mobile signing inputs never belong in source control.
+*.p12
+*.mobileprovision
+*.provisionprofile
+*.jks
+*.keystore

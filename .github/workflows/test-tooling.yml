@@ -46,6 +46,7 @@ jobs:
           .venv/bin/python tests/tool_requirements_test.py
           .venv/bin/python tests/character_geometry_test.py
           .venv/bin/python tests/character_geometry_capture_test.py
+          .venv/bin/python tests/mobile_tools_test.py
 
       - name: Exercise the declared GDScript parser
         shell: bash

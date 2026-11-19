@@ -42,6 +42,10 @@ notes. What a release contains, and what is checked before it is published, is
 [docs/RELEASE.md](docs/RELEASE.md) — that document is the single source of truth for the
 release process; this paragraph is a summary of it.
 
+**Native mobile builds.** Android APK and signed iOS IPA have independent, on-demand
+Actions workflows. See [mobile builds and debugging](docs/MOBILE_BUILDS.md) for the signing
+prerequisites, the Mac iOS Simulator entry point, and the Windows ADB setup and test scripts.
+
 **Support level.** Windows PC is the first target. Linux x86_64 is **experimental**:
 CI builds and inspects the archive, but Linux desktop/Steam Deck graphics, audio,
 controller behavior and suspend/resume playtesting remain **unverified**. The Linux

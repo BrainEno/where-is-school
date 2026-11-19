@@ -10,7 +10,102 @@
 - 手机基准画布按实际窗口展开；触摸控件目标为至少 48 个逻辑点（Android dp / iOS pt）。设置中的文字大小仍可调整，不显示桌面的窗口/全屏选项；键鼠和手柄仍走原有输入绑定。
 - Android 以 GLES 3 Compatibility 渲染覆盖较旧设备，iOS 使用 Mobile/Metal。移动版限制 60 FPS 上限，并独立降低 3D 渲染比例，避免降低 2D 文字分辨率。这不是帧率保证；场景的雾、阴影、材质与性能须在目标 GPU 上复核。
 
-## 一次配置，重复构建
+## 在 GitHub Actions 点击构建
+
+两个工作流**相互独立**，可以同时触发。没有跨平台 `needs`、共享排队组或发布上传步骤。
+
+| Actions 工作流 | 怎么用 | 成功产物 |
+| --- | --- | --- |
+| [Build Android APK](../.github/workflows/build-android.yml) | **Run workflow** → 选分支 → **Run workflow**；不需要签名配置 | 解压 `android-preview-apk-*` 得到 `where-is-school-preview.apk` 和 `BUILD.json`。同一个 APK 已通过 API 36 模拟器安装和启动测试。 |
+| [Build iOS IPA](../.github/workflows/build-ios.yml) | 配置一次 `ios-signing`（见下文）；**Run workflow** → 选 `main` → 选与 profile 一致的 `development` 或 `ad-hoc` | 解压 `ios-signed-ipa-*`，在 `ipa/` 取签名 `.ipa`。只能装到描述文件里的 iPhone/iPad，不会上传 TestFlight。 |
+
+`build_number=0` 使用各工作流自己的运行号。装过更高构建号时请显式填写更大的号码。
+工件保留 14 天；`BUILD.json` 记录源码 SHA、引擎版本、版本号和文件 SHA-256。
+Android 出包先检查签名和 Godot 稀疏索引中**每项**资源的路径、大小和哈希，再用真实 APK 检查
+渲染和前台。iOS 打包后重新校验 IPA 内应用的签名、设备架构和游戏包。两边都不会用未验证工件替代成品。
+
+日常改动不自动打两套包。`Mobile input regression` 在相关改动上验证触控和安全区；只有
+修改移动打包/工具链时，`Mobile build tooling validation` 才额外执行 Android 构建、Mac
+模拟器及无签名归档、Windows ADB 脚本检查；该 PR 工作流不接触任何签名密钥。
+
+### 首次配置签名 IPA（仓库所有者）
+
+1. 在 Apple Developer 注册显式 App ID `io.github.braineno.whereisschool`，把要安装的设备加入
+   对应的 **Development** 或 **Ad Hoc** profile。准备同一 Team 和 profile 授权的 Apple Development
+   或 Apple Distribution 证书（带私钥、导出为密码保护的 `.p12`），以及未过期的 `.mobileprovision`。
+2. 在 GitHub **Settings → Environments** 建立 `ios-signing`，把部署分支限制为 `main`，有条件时启用
+   必须审阅。仅在这个环境设置以下 **Environment secrets**，不要放在仓库级 secrets，也不要发到聊天或 PR：
+
+   | Secret | 内容 |
+   | --- | --- |
+   | `IOS_SIGNING_P12_BASE64` | `.p12` 的 Base64 |
+   | `IOS_SIGNING_P12_PASSWORD` | `.p12` 的导出密码 |
+   | `IOS_PROVISIONING_PROFILE_BASE64` | `.mobileprovision` 的 Base64 |
+
+   可在自己的 Mac 用 `base64 -i /path/to/file | pbcopy` 编码并直接贴进对应 secret。团队 ID 从
+   profile 读取并核对。每次变更证书/profile 后同步更新 secrets；签名作业只用临时钥匙串，退出时清理，
+   不上传归档、证书、描述文件原件或钥匙串。
+3. 运行 **Build iOS IPA**，必要时审批环境作业。缺少配置/签名失败时工作流标红，不生成“无签名 IPA”。
+   解压下载，解锁授权 iPhone/iPad，用 Xcode 的 **Devices and Simulators** 或 Apple Configurator
+   安装；Development 方式可能需要启用设备的开发者模式。App Store Connect / TestFlight 是另一个分发流程。
+
+## 本地调试：Mac → iOS 模拟器
+
+先安装完整 Xcode 和 Python 3.11+，打开 Xcode 完成首次许可与组件安装。在 Xcode **Settings → Locations**
+选择完整 Xcode（或为本终端设置 `DEVELOPER_DIR`）。不需要 Apple 证书，也不会改变全机 Xcode 选择。
+
+双击 [`tools/macos/ios/Debug.command`](../tools/macos/ios/Debug.command)，或从仓库根目录执行：
+
+```bash
+bash tools/macos/ios/debug.sh                             # 准备、选模拟器、编译、安装、启动
+bash tools/macos/ios/debug.sh --setup-only                 # 只准备依赖
+bash tools/macos/ios/debug.sh --setup-only --update-runtime # 让 Xcode 更新 iOS 运行时
+bash tools/macos/ios/debug.sh --list                       # 获取可用机型/UDID
+bash tools/macos/ios/debug.sh --device '<simulator-UDID>'  # 不再交互选机
+```
+
+若缺 iOS 运行时，脚本用 `xcodebuild -downloadPlatform iOS` 安装，并在 Xcode 支持的机型里准备默认机型。
+它从官方 Godot 发布下载 `.godot-version` 对应的标准版编辑器和 iOS 模板，核对 SHA-256 后缓存；
+以后工程升级引擎时会取新的固定版本，不会自动升级到未指定版本。下载较大（模板约 1.2 GB）；可以用
+`--godot /path/to/Godot --no-download` 复用已安装的编辑器和模板。Python 不在 PATH 时设置 `WIS_PYTHON`。
+CI 使用 `--non-interactive --no-open --shutdown`；本机默认保留模拟器和游戏。输出在
+`build/mobile/ios-simulator/run-*/`，含模拟器 `.app`、Xcode 工程、日志和截图。要打断点，打开该目录
+Xcode 工程，选择相同模拟器，选 **Debug** 后 Run 或附加进程。
+
+**这是 Simulator Debug，不是 IPA。** Godot 的模拟器库没有 Metal/Vulkan；只在临时导出副本改用
+Compatibility，设备 IPA 保持 Mobile/Metal。模拟器的画质或性能不能当真机结果。保留上一次输出或
+显式使用空 `--output`，不会沿用旧 `.app`。
+
+## 本地调试：Windows → Android USB 或模拟器
+
+1. 双击 [`tools/windows/android/Setup.cmd`](../tools/windows/android/Setup.cmd)。默认在
+   `%LOCALAPPDATA%\WhereIsSchool\Android\Sdk` 安装 Google Platform-Tools（ADB），无需管理员、
+   Python 或 Android Studio；不改全机 PATH。`Setup.cmd -Update` 可更新，需先结束自己正在使用的 ADB 会话。
+2. 下载并**解压** Actions 的 `android-preview-apk-*`。在手机上启用 USB 调试、接线并授权；需要时安装厂商
+   USB 驱动。也可以先启动已配置的 Android Studio 模拟器。在 **PowerShell** 中：
+
+   ```powershell
+   .\tools\windows\android\Test.cmd -Apk "C:\Downloads\Android Build\where-is-school-preview.apk"
+   # 有多个设备可用时交互选择，或按 adb devices -l 指定：
+   .\tools\windows\android\Test.cmd -Apk "C:\Downloads\where-is-school-preview.apk" -Serial '<serial>'
+   ```
+
+   也可将 `.apk` 拖到 `Test.cmd` 上，或双击后输入路径（`build/mobile/` 下只有一个匹配 APK 时自动使用）。
+   `Test.ps1` 在 ADB 缺失时会运行安装；如果相邻有 `BUILD.json`，会先核对 APK 哈希。脚本用 `adb install -r`，
+   不卸载、不清空存档或设备日志；采集被测进程日志、前台状态和截图到 `build/mobile/android-debug/`，
+   游戏留在设备上便于操作。`-NonInteractive` 拒绝不唯一的设备或包。
+3. 要由脚本准备和启动专用 Android 模拟器，在 x64 Windows 启用 BIOS 虚拟化和 Windows Hypervisor Platform，
+   安装 JDK 17。脚本不修改管理员设置，首次执行请确认 Android SDK 许可证：
+
+   ```powershell
+   .\tools\windows\android\Setup.cmd -Emulator -JavaHome "C:\Path To\jdk-17"
+   .\tools\windows\android\Test.cmd -Emulator -Apk "C:\Downloads\where-is-school-preview.apk"
+   ```
+
+   使用自己的 SDK 根目录可传 `-SdkRoot`，配置和启动必须用同一路径。无 hypervisor 时请用 USB 真机。
+   本地保留日志，不会把 USB 设备序列号、截图或存档上传到 Actions。
+
+## 开发者直接导出（可选）
 
 从包含移动支持的 **干净 Git checkout** 构建。使用 `.godot-version` 对应的 **标准版** Godot 和同版本官方导出模板。准备 Python 3.11+ 和 Git；下列命令在项目根目录执行，`godot` 应在 `PATH`，否则传 `--godot /path/to/godot`。构建脚本在临时目录使用 Git 跟踪的游戏文件，不修改项目预设或当前游戏的 `user://`。每个输出位置须为空，防止把上次的包误当本次产物。`BUILD.json` 记录源码提交、工作区是否改动、Godot 版本、版本号和单个包的 SHA-256。
 
@@ -46,9 +141,9 @@
 
   得到的 `.ipa` 在 `ipa/` 子目录下。能否在某一台手机上安装由分发方式与 profile 决定：Development / Ad Hoc 要授权对应设备；App Store Connect / TestFlight 的包需走对应分发渠道，不是把文件发给任意 iPhone 就能安装。不要把证书、私钥、设备清单或 provisioning profile 发到 PR。首发前确认 Apple 当期 SDK/隐私清单/商店审核要求。
 
-## 每次改动与设备验收
+## 真机验收
 
-`Native mobile` 工作流对影响游戏和构建的 PR 运行（也可手动运行）。它用官方桌面引擎注入触摸回归，用真实 APK 跑 Android 模拟器启动，用 Xcode 构建设备归档。Actions 测试产物有保留期限，不是正式发行版。无签名验证不需要 Apple 账号，不接触发布密钥。正式发布用本地签名入口；不要把发布凭据交给来自 PR 的工作流。
+模拟器启动和桌面逻辑测试不代表完整手机通关或真机性能。测试 APK 不是正式发行版；如调试证书和已装包不一致，Android 会拒绝升级，不要在有存档时为绕过错误随意卸载。
 
 | 代表尺寸（横屏） | 验收重点 |
 | --- | --- |
