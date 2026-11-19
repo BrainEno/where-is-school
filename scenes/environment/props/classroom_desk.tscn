@@ -50,8 +50,8 @@ position = Vector3(0.2, 0.22, 0)
 mesh = SubResource("BoxMesh_post")
 material_override = ExtResource("3_metal")
 
-[node name="Solid" type="StaticBody3D" parent="Chair"]
-collision_layer = 1
+[node name="Solid" type="StaticBody3D" parent="Chair" groups=["chair_solid"]]
+collision_layer = 4
 collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Chair/Solid"]

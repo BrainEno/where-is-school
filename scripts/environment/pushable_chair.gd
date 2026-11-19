@@ -21,6 +21,21 @@ extends Node3D
 ## room. So the collision only turns on when the chair is pushed back and nobody is in it:
 ## the state where a chair is something you walk around rather than something you sit in.
 ##
+## ## Which physics layer the collision lives on, and why it is not layer 1
+##
+## The classroom's furniture is on layer 1, and layer 1 is what the navigation bake and the
+## interaction rays both read. A chair on layer 1 would carve a hole in the navmesh wherever it
+## stood and block the ray to the schoolbag hanging on its own back.
+##
+## Layer 3 ("solid to the body, invisible to picking") is the layer the corridor's glazing
+## panels already use for exactly this: `tools/build_teaching_block.py` puts `GlassSafety`
+## there so that the player and the camera's occluder rays meet the glass while ground-picking
+## and depth-test rays see through it. The numbers line up without anything new:
+## `LocationNavigation.geometry_collision_mask` is 25 (layers 1, 3, 5) - 3 not among them; the
+## player's `collision_mask` is 5 (layers 1, 3) - 3 among them; the interaction controller's
+## `occluder_mask` is 9 (layers 1, 4) - 3 not among them. So a chair here stops the body and
+## nothing else, which is the whole of what the collision was for.
+
 ## The interaction area is not this node's: it lives with the room's other interactables
 ## (`Interactables/ChairSit`), on its own collision layer so the player body never notices it.
 ## Because it is anchored in the room rather than under the chair, whatever owns it has to call
@@ -35,6 +50,9 @@ extends Node3D
 ## is a thing in a room, and watching it retreat across the floor was the wrong picture.
 ## `tools/check_seat_clearance.py` measures it rather than trusting this comment.
 const PUSH_BACK_DISTANCE := 0.65
+
+## The physics layer the chair collides on. See the note on the class.
+const SOLID_LAYER := 4  # layer 3
 
 ## Where the chair slides to, in its parent's space.
 var _pushed_position := Vector3.ZERO
@@ -98,10 +116,19 @@ func push_back(duration: float) -> Tween:
 	if _pushed:
 		return null
 	_pushed = true
-	# The body being out of it and it becoming solid are the same moment: a chair that turns
-	# solid while the protagonist is still in the seat is a chair that traps him.
-	_set_solid(true)
-	return _slide_to(_pushed_position, duration)
+	# Solid only once it has *arrived*, not when it starts moving.
+	#
+	# The call arrives while the protagonist is still folded over the seat, because that is
+	# the moment a person pushes the chair. Turning the collision on there would put a solid
+	# box inside the body and let the physics solver decide which of them moves - which is how
+	# he ends up shoved into the desk. By the time the slide is over the seat has left and the
+	# body has risen, so the box can be turned on without anything overlapping it.
+	var slide := _slide_to(_pushed_position, duration)
+	if slide == null:
+		_set_solid(true)
+		return null
+	slide.finished.connect(_set_solid.bind(true), CONNECT_ONE_SHOT)
+	return slide
 
 
 ## Slides the chair back to where the room put it, for a body about to sit down again.
@@ -146,7 +173,9 @@ func _set_solid(solid: bool) -> void:
 		var collider := shape as CollisionShape3D
 		if collider != null:
 			collider.set_deferred("disabled", not solid)
-	_body.set_deferred("collision_layer", 1 if solid else 0)
+	# See the note on the class: layer 3 is solid to the body, invisible to the navmesh bake
+	# and to the interaction rays.
+	_body.set_deferred("collision_layer", SOLID_LAYER if solid else 0)
 
 
 func _slide_to(target: Vector3, duration: float) -> Tween:

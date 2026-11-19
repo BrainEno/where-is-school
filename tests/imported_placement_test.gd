@@ -215,9 +215,13 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			% [desk_name, str(model.scale)]
 		)
 
+	# The desk is its wrapper; the chair standing at it is not part of the desk, and the
+	# wake-up chair may carry a layer-3 `Solid` of its own (see `_check_chair`).
 	var bodies: Array[Node] = []
 	var shapes: Array[Node] = []
 	for node in _descendants(desk):
+		if _is_chair_subtree(node):
+			continue
 		if node is CollisionObject3D:
 			bodies.append(node)
 		if node is CollisionShape3D:
@@ -282,18 +286,41 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		)
 
 
-## The chair is still the blockout, still without collision, and still at a desk.
+## True for anything under a desk's `Chair` child: counted by `_check_chair`, not by the
+## desk's own one-box rule.
+func _is_chair_subtree(node: Node) -> bool:
+	var walk: Node = node
+	while walk != null:
+		if String(walk.name) == "Chair":
+			return true
+		walk = walk.get_parent()
+	return false
+
+
+## The chair is still the blockout and still at a desk; it may only collide on layer 3.
 func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 	var chair := desk.get_node_or_null(^"Chair") as Node3D
 	if chair == null:
 		_failures.append("'%s' lost its Chair subtree." % desk_name)
 		return
+	# A chair may collide, but only on layer 3 and only through the `Solid` body the wake-up
+	# chair carries: layer 3 is solid to the body without entering the navigation bake or the
+	# interaction rays (see `pushable_chair.gd`). Layer 1 here would carve the walk routes out
+	# from under the room.
 	for node in _descendants(chair):
-		if node is CollisionObject3D or node is CollisionShape3D:
+		if not (node is CollisionObject3D or node is CollisionShape3D):
+			continue
+		var body := node as CollisionObject3D
+		if body == null:
+			body = node.get_parent() as CollisionObject3D
+		var off_layer := body == null or body.collision_layer != 4
+		var named := String(node.name) == "Solid" or (body != null and String(body.name) == "Solid")
+		if off_layer or not named:
 			_failures.append(
-				"'%s/Chair/%s' collides; the chairs have never collided and the walk routes "
+				"'%s/Chair/%s' collides outside the one exception; a chair's only collision is "
 				% [desk_name, node.name]
-				+ "are laid out on that."
+				+ "the wake-up chair's `Solid` body on layer 3, and layer 1 would carve the "
+				+ "walk routes out of the navigation mesh."
 			)
 			break
 	var seat := chair.get_node_or_null(^"Seat") as MeshInstance3D

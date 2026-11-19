@@ -121,11 +121,41 @@ def test_the_chair_is_solid_only_when_it_is_empty() -> None:
     )
     push = text[text.index("func push_back(") : text.index("func pull_home(")]
     check("_set_solid(true)" in push, "pushing the chair back must make it solid")
+    check(
+        push.index("_slide_to(") < push.index("_set_solid(true)"),
+        "the collision must come on when the chair *arrives*: turning it on while the body is "
+        "still folded over the seat puts a solid box inside the protagonist",
+    )
     pull = text[text.index("func pull_home(") :]
     check(
         pull.index("_set_solid(false)") < pull.index("_slide_to("),
         "pulling the chair home must open it *before* it moves, not after",
     )
+
+
+def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
+    """Layer 1 is the navmesh bake and the interaction rays; the chair needs neither.
+
+    The numbers are read from the scripts rather than repeated, because this only works while
+    all three agree: the bake must not see the layer, the body must, and the interaction rays
+    must not.
+    """
+    chair = source()
+    check("const SOLID_LAYER := 4" in chair, "the chair must collide on layer 3 (value 4)")
+    scene = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
+    check(
+        re.search(r'name="Solid".*?collision_layer = 4', scene, re.S) is not None,
+        "the chair's Solid body must be authored on layer 3",
+    )
+    nav = (ROOT / "scripts/world/location_navigation.gd").read_text(encoding="utf-8")
+    bake = int(re.search(r"geometry_collision_mask: int = (\d+)", nav).group(1))
+    check(bake & 4 == 0, f"the navigation bake's mask ({bake}) must not include layer 3")
+    player = (ROOT / "scenes/actors/player/player.tscn").read_text(encoding="utf-8")
+    body_mask = int(re.search(r"^collision_mask = (\d+)", player, re.M).group(1))
+    check(body_mask & 4 != 0, f"the player's mask ({body_mask}) must include layer 3")
+    controller = (ROOT / "scripts/interaction/interaction_controller.gd").read_text(encoding="utf-8")
+    occluder = int(re.search(r"occluder_mask: int = (\d+)", controller).group(1))
+    check(occluder & 4 == 0, f"the interaction rays ({occluder}) must not include layer 3")
 
 
 def test_the_room_has_a_sit_interaction() -> None:
@@ -192,6 +222,7 @@ def main() -> int:
     test_it_is_snappable()
     test_the_room_can_find_it()
     test_the_chair_is_solid_only_when_it_is_empty()
+    test_the_collision_is_on_a_layer_that_does_not_carve_the_room()
     test_the_room_has_a_sit_interaction()
     test_the_hand_does_the_pushing()
     test_the_distance_is_the_one_that_was_measured()

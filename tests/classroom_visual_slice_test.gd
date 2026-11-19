@@ -531,6 +531,12 @@ func _expect_at(path: String, expected: Vector3) -> void:
 # --- 2. collision -------------------------------------------------------------------
 
 
+## True for the `Solid` body under a chair: the only decoration in this room allowed a
+## collision, on layer 3. See `pushable_chair.gd` for why that layer and not layer 1.
+func _is_chair_solid(path: String) -> bool:
+	return path.ends_with("/Chair/Solid")
+
+
 func _check_collision() -> void:
 	var found := {}
 	for node in _descendants(_room):
@@ -546,10 +552,18 @@ func _check_collision() -> void:
 				_failures.append("VoidStep must start inert and sense the player only, never block a ray or body.")
 			continue
 		if not SOLIDS.has(path):
+			# The one exception, and it is narrow: the chair the protagonist wakes in carries
+			# a body on layer 3, which is solid to the body but enters neither the navigation
+			# bake nor the interaction rays. Anything on layer 1 is still the old failure.
+			var body := node as CollisionObject3D
+			if body != null and body.collision_layer == 4 and _is_chair_solid(path):
+				found[path] = true
+				continue
 			_failures.append(
 				"'%s' collides. Classroom decoration carries no collision: it would carve the "
 				% path
-				+ "navigation mesh and block interaction rays."
+				+ "navigation mesh and block interaction rays. (Layer-3 collisions are the one "
+				+ "exception, and only on the wake-up chair's `Solid` body.)"
 			)
 			continue
 		found[path] = true
