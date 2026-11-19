@@ -212,7 +212,14 @@ void fragment() {
 		colour = surface_detail(paint_position, colour);
 	}
 	if (use_vertex_paint) {
-		colour *= COLOR.rgb;
+		// glTF stores COLOR_0 in linear RGB. Compatibility shades in sRGB;
+		// Forward+ and Mobile keep the linear pigment, without double decoding.
+		vec3 baked = clamp(COLOR.rgb, vec3(0.0), vec3(1.0));
+		if (OUTPUT_IS_SRGB) {
+			baked = mix(vec3(1.055) * pow(baked, vec3(1.0 / 2.4)) - vec3(0.055),
+				baked * 12.92, lessThanEqual(baked, vec3(0.0031308)));
+		}
+		colour *= baked;
 	}
 	ALBEDO = clamp(colour, vec3(0.0), vec3(1.0));
 	ROUGHNESS = 1.0;

@@ -66,7 +66,10 @@ func _surfaces(teacher: Node3D, skeleton: Skeleton3D) -> Array[Dictionary]:
 			var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
 			if not _check.expect(not points.is_empty() and weights.size() == 4 * points.size() and indices.size() == weights.size() and colors.size() == points.size(), "%s retains positions, four weights and vertex paint" % part.name):
 				continue
-			var material := part.mesh.surface_get_material(surface).resource_name
+			var original := part.mesh.surface_get_material(surface) as BaseMaterial3D
+			if not _check.expect(original != null and original.vertex_color_use_as_albedo, "%s retains vertex paint in the imported material" % part.name):
+				continue
+			var material := original.resource_name
 			result.append({"points": points, "weights": weights, "indices": indices,
 				"joints": joints, "inverse": inverse_binds, "material": material})
 			var invalid := 0
@@ -126,7 +129,7 @@ func _check_skin(parts: Array[Dictionary], stage: Stage) -> void:
 	var toe := skeleton.get_bone_global_rest(skeleton.find_bone("Toes_L")).origin
 	var ankle := skeleton.get_bone_global_rest(skeleton.find_bone("Foot_L")).origin
 	_check.expect(eye.z < head.z - .040 and toe.z < ankle.z - .09 and absf(ankle.z) < .001, "eyes/toes confirm -Z and the foot axis is centered")
-	_check.expect(stage.look.get_report()["replaced"] == 6, "six painted surfaces use the opt-in finish; lenses and rims remain separate")
+	_check.expect(stage.look.get_report()["replaced"] == 12, "opaque pieces keep their vertex paint; the transparent lenses stay separate")
 	var changes := {}
 	var glasses_error := 0.0
 	var head_index := skeleton.find_bone("Head")

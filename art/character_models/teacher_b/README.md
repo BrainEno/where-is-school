@@ -30,6 +30,8 @@ extend beyond the reference and are provisional.
   13 skinned surfaces and 12 materials. The two transparent lenses are batched
   separately from the frames. No camera, light, texture, collider or action is
   stored in the GLB. Face shapes and the jaw are not a dialogue performance rig.
+  The Godot import sidecar enables linear glTF vertex colors on the original
+  materials; the review finish keeps those colors when it replaces materials.
 
 No production room, `BPresence`, dialogue, impression, `q_wake` or `b_on_stage`
 behavior changes. The review stages the actual classroom's backdrop and lights
@@ -67,6 +69,9 @@ OPENBLAS_NUM_THREADS=1 python3 "$SRC/build_teacher_b.py" --makehuman-data "$DONO
 OPENBLAS_NUM_THREADS=1 python3 "$SRC/build_teacher_b.py" --makehuman-data "$DONOR" --split-parts --output "$PARTS"
 blender --background --python-exit-code 1 --python "$SRC/make_blender_source.py" -- --parts "$PARTS"
 ```
+
+The Blender driver uses the `bpy` and `mathutils` APIs of the Blender 4.5 host,
+not the project's Python tooling venv.
 
 The Python recipe authors the batched review GLB; the `.blend` is the editable
 companion to that export. If making direct Blender edits, start at frame 1, omit

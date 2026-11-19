@@ -21,6 +21,10 @@ from godot_sidecars import tracked_files
 
 PIN = re.compile(r"([A-Za-z_0-9.-]+)(?:\[[A-Za-z_0-9,.-]+\])?==([A-Za-z_0-9.+-]+)")
 IMPORT_DISTRIBUTIONS = {"PIL": "Pillow", "fontTools": "fonttools", "yaml": "PyYAML"}
+# Blender supplies these two APIs in its embedded interpreter, not in the tools
+# venv. Only the explicitly Blender-invoked source driver may use them.
+BLENDER_DRIVERS = {"art/character_models/teacher_b/make_blender_source.py"}
+BLENDER_MODULES = {"bpy", "mathutils"}
 
 
 def normalized(name: str) -> str:
@@ -96,6 +100,8 @@ class ToolRequirementsTest(unittest.TestCase):
             for qualified in sorted(imports - qualified_tools):
                 module = qualified.split(".", 1)[0]
                 if module in sys.stdlib_module_names or module in local_modules:
+                    continue
+                if relative in BLENDER_DRIVERS and qualified in BLENDER_MODULES:
                     continue
                 with self.subTest(path=relative, module=qualified):
                     distribution = normalized(IMPORT_DISTRIBUTIONS.get(module, module))

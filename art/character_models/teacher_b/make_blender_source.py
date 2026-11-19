@@ -191,6 +191,8 @@ def render_review(scene, out, samples):
 
 
 def main():
+    if bpy.app.version[:2] != (4, 5):
+        raise RuntimeError('Run the source driver in the Blender 4.5 LTS Python host')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--parts', required=True, type=Path)
     parser.add_argument('--output', type=Path, default=Path(__file__).with_name('teacher_b.blend'))
