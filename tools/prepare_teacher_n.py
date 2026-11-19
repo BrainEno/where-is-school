@@ -62,6 +62,10 @@ re-export from Blender can go through the same pass:
    inverse binds, the other skin weights and the four authored loops are kept.
    Steps 1-6 describe the original preparation, not an unchanged-geometry claim for this
    new revision. The current regeneration and deformation checks are in the PR.
+8. **Geometry revision 2.** Selectively replace the floating fringe tufts and loose
+   neck rings, leaving the source bob shell, torso and limb weights. Sculpt eye/lip
+   planes together; build sewn collar leaves, a knit welt and open cuff rims. The
+   smaller welded hand mesh has a bevel, a knuckle arch and digit-specific relaxed curl.
 
 No node is rotated, moved or scaled. The model faces -Z, which is what
 `docs/ASSET_PIPELINE.md` section 1 asks a new export to do, and stands with its soles on the
@@ -341,30 +345,46 @@ def _refine_surface(name: str, material: str, positions: np.ndarray, normals: np
         shaped = geometry.join(*parts)
         joints, weights = np.concatenate(js), np.concatenate(ws)
     elif name == "ST_Hair":
-        shaped = geometry.teacher_hair(positions, indices.reshape(-1, 3))
-    elif name == "ST_Head_Skin" and material == "M_ST_Skin":
-        shaped = geometry.Geometry(geometry.teacher_face(positions), indices.reshape(-1, 3))
+        shaped, kept = geometry.teacher_bob(positions, indices.reshape(-1, 3))
+        joints, weights = joints[kept], weights[kept]
     elif name in ("ST_Eye_L", "ST_Eye_R"):
-        # All six source eye surfaces are inside out. Fix the asset, not global culling.
-        return positions, -normals, joints, weights, indices.reshape(-1, 3)[:, [0, 2, 1]].ravel()
-    elif name == "ST_Cardigan":
+        # The original three surfaces in each eye have inward winding/split normals.
+        p, n = geometry.deform(positions, -normals, geometry.teacher_face)
+        return p, n, joints, weights, indices.reshape(-1, 3)[:, [0, 2, 1]].ravel()
+    elif name == "ST_Head_Skin" or name.startswith("ST_Eyebrow_"):
+        p, n = geometry.deform(positions, normals, geometry.teacher_face)
+        return p, n, joints, weights, indices
+    elif name in ("ST_Blouse", "ST_Cardigan"):
+        # The two original collar rings never meet the body: replace just their
+        # triangles. Keep the torso/sleeve vertices' original (blended) skin weights.
+        rings = positions[:, 1] > 1.363
+        faces = indices.reshape(-1, 3)
+        if not rings.any() or np.any(rings[faces].any(1) != rings[faces].all(1)):
+            raise PrepareError(f"{name}: source neck ring no longer a separate component")
+        kept, remap = np.unique(faces[~rings[faces].all(1)], return_inverse=True)
+        knit = name == "ST_Cardigan"
+        body = geometry.Geometry(geometry.teacher_tailoring(positions[kept], knit), remap.reshape(-1, 3))
         additions, js, ws = [], [], []
-        for right, joint in [(False, 6), (True, 9)]:
-            theta = np.arange(32) * 2 * np.pi / 32
-            rings = np.array([np.c_[np.cos(theta) * (.027 + width),
-                                   np.full(len(theta), distance),
-                                   np.sin(theta) * (.031 + width)]
-                              for distance, width in [(-.032, 0), (-.028, .0015),
-                                                       (-.017, .0015), (-.014, 0)]])
-            cuff = geometry.grid_surface(rings).transformed(np.linalg.inv(binds[joint]))
-            j, w = geometry.skin_arrays(len(cuff.positions), 8 if right else 5)
-            additions.append(cuff)
+        for right, wrist in [(False, 6), (True, 9)]:
+            detail = geometry.teacher_cuff(binds[wrist], right) if knit else geometry.teacher_collar(1 if right else -1)
+            j, w = geometry.skin_arrays(len(detail.positions), (8 if right else 5) if knit else 1)
+            if not knit:
+                join_neck = .56 * geometry.smoothstep(1.347, 1.374, detail.positions[:, 1])
+                j[:, 1], w[:, 0], w[:, 1] = 2, 1 - join_neck, join_neck
+            additions.append(detail)
             js.append(j)
             ws.append(w)
-        new = geometry.join(*additions)
-        return (np.r_[positions, new.positions], np.r_[normals, geometry.normals(new)],
-                np.r_[joints, np.concatenate(js)], np.r_[weights, np.concatenate(ws)],
-                np.r_[indices, new.triangles.ravel() + len(positions)])
+        if knit:
+            welt = geometry.teacher_welt(body)
+            j, w = geometry.skin_arrays(len(welt.positions), 1)
+            additions.append(welt)
+            js.append(j)
+            ws.append(w)
+        shaped = geometry.join(body, *additions)
+        joints = np.r_[joints[kept], np.concatenate(js)]
+        weights = np.r_[weights[kept], np.concatenate(ws)]
+    elif name.startswith("ST_Blouse_Button_"):
+        shaped = geometry.Geometry(geometry.teacher_tailoring(positions, False), indices.reshape(-1, 3))
     if shaped is not None:
         return shaped.positions, geometry.normals(shaped), joints, weights, shaped.triangles.ravel()
     return positions, normals, joints, weights, indices
@@ -517,7 +537,7 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 1},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 2},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],

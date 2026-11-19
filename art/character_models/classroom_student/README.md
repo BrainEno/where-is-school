@@ -27,7 +27,10 @@ low-relief eyes, a swept crop, shoulder/sleeve lofts and curved solid garment pa
 selectively rounds the remaining low-sided source forms. Fourteen obsolete mesh nodes
 are removed, not hidden: six separate long fingers, two thumbs, two cheek pads, two
 under-eye pads and two detached nose parts. Existing names/material keys are retained
-where the corresponding piece remains. The source is never overwritten.
+where the corresponding piece remains. Revision 2 further sculpts the sloped crop,
+shared sclera/iris surface, folded lap, and shorter, more curled fingers; both sides of
+each sleeve overlap share the same blended upper-arm/forearm weight field. The source
+is never overwritten.
 
 The sixteen joint names/order, parentage, rest transforms, inverse binds, standing height,
 sole datum and unanimated-source contract are unchanged. The runtime still lives at the
@@ -40,4 +43,4 @@ No commercial reference-game mesh, portrait, texture or animation was downloaded
 or sampled. This revision is a reviewable refinement, not a claim of commercial-reference
 quality. Source rights do not clear other characters/portraits, and owner visual approval,
 Windows Forward+ deformation and performance review remain separate requirements.
-See `docs/CHARACTER_INTEGRATION.md` §9 for genuine base/current capture instructions.
+See `docs/CHARACTER_INTEGRATION.md` §§9–10 for genuine base/current capture instructions.

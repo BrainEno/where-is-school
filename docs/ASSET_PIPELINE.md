@@ -305,9 +305,9 @@ hidden. The companion record is
 | School desk | `assets/models/school_desk/school_desk.glb` | `scenes/environment/props/school_desk.tscn` | 0.712 × 0.883 × 0.546 | 4,162 | `StaticBody3D`, layer 1, one box |
 | Stationery supplies | `assets/models/stationery_supplies/stationery_supplies.glb` | `scenes/environment/props/stationery_supplies.tscn` | 0.302 × 0.164 × 0.084 | 4,412 | `Node3D`, no collision |
 | Protagonist | `assets/models/protagonist/Protagonist_Character.glb` | `scenes/environment/characters/protagonist.tscn` | 1.046 × 1.767 × 0.324 | 15,782 | `Node3D` + `InteractionAnchor`; 60-joint rig, A-pose (PR #118) |
-| Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.562 × 1.727 × 0.337 | 64,604 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
+| Former protagonist (classroom student) | `assets/models/protagonist/protagonist.glb` | `scenes/environment/characters/classroom_student.tscn` | 0.562 × 1.727 × 0.337 | 46,384 | `Node3D`, `start_seated`, model at y = −0.347; no anchor, no collision |
 | Q | `assets/models/q/new-Q.glb` (reproducible from `art/character_models/q/new-Q_source.glb` via `tools/prepare_q.py`) | `scenes/environment/characters/q.tscn` | 1.30945 × 1.78449 × 0.37586 (rest A-pose) | 17,918 | `Node3D` + `InteractionAnchor`; 60 joints, 30 weighted finger joints, six supplied actions |
-| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 62,340 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops; painted by a `Look` (`teacher_n_look.tres`, [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) |
+| Substitute teacher N | `assets/models/teacher-n/teacher-n.glb` (built by `tools/prepare_teacher_n.py` from `art/character_models/teacher-n/teacher-n_source.glb`) | `scenes/environment/characters/teacher_n.tscn` | 0.624 × 1.654 × 0.326 | 56,950 | `Node3D` + `InteractionAnchor`; 16-bone rig, faces −Z, idle from its own four loops; painted by a `Look` (`teacher_n_look.tres`, [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md)) |
 
 A prop wrapper is the §2 wrapper: `StaticBody3D` on layer 1, exactly one box collider
 sized to the visual bounds, the model as the `Model` child. A character wrapper is a
@@ -411,13 +411,15 @@ N keeps every moving authored key. New topology has authored weights: rigid Hand
 student; hand/forearm blending over N's buried wrist. No independently animated fingers,
 new facial morphs, UVs, wrapper transforms, collision or dialogue portraits are introduced.
 
-The existing **1536 KiB** runtime hard cap is unchanged: student 1475.0 KiB, N 1439.0 KiB.
-Triangle counts grow (student 12,388 -> 64,604, N 57,460 -> 62,340); this is not evidence of
-visual quality or a measured performance improvement. Target-GPU performance still needs
-review. Regeneration/rig checks run in tooling CI; actual import/animation and visual
-acceptance remain separate. [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §9 records
-the actual base/current geometry comparison, and [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)
-records source hashes, modifications and the existing rights limits.
+Revision 2 keeps this structure but uses lighter hands, targeted eye/hair surfaces, N's
+shirt collar/welt/cuffs and the student's blended elbow overlap. The existing **1536 KiB**
+runtime hard cap is unchanged: student 1083.8 KiB / 46,384 triangles, N 1314.7 KiB / 56,950
+triangles (down from 1475.0 KiB / 64,604 and 1439.0 KiB / 62,340 in revision 1). These are
+asset measurements, not a target-GPU performance or artistic-quality claim.
+Regeneration/rig checks run in tooling CI; actual import/animation and visual acceptance
+remain separate. [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–10 record the
+base/current geometry comparison; [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) records source
+hashes, modifications and the existing rights limits.
 
 ### 10.3 Textures are embedded, not extracted
 

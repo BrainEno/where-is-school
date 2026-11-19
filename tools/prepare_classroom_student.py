@@ -5,10 +5,10 @@
     python3 tools/prepare_classroom_student.py --check
 
 The supplied blockout is preserved byte-for-byte under art/character_models/ (excluded
-from imports/exports). This deterministic geometry revision replaces four-digit mitten
-parts, globe-like eyes and the featureless facial sphere; solidifies garment panels and
-rounds selected low-sided forms. It is NOT a replacement player, an animation controller,
-a new bone hierarchy or a claim of equivalence to a commercial game's finished artwork.
+from imports/exports). The deterministic revision cuts smaller anatomical eyes and a
+swept crop, bends the welded hands and tailors the knit around a seated silhouette. It is
+not a replacement player, an animation controller, a new bone hierarchy or a claim of
+equivalence to a commercial game's finished artwork.
 Build tools only: the existing pinned numpy and GLB reader/writer from prepare_teacher_n.
 """
 from __future__ import annotations
@@ -46,6 +46,25 @@ def _skin_nearest(points: np.ndarray, source: np.ndarray, joints: np.ndarray,
     return joints[nearest], weights[nearest]
 
 
+def _elbow_skin(points: np.ndarray, binds: np.ndarray, right: bool) -> tuple[np.ndarray, np.ndarray]:
+    """Both sides of the sleeve overlap use the same forearm-local weight field."""
+    arm, elbow = (7, 8) if right else (4, 5)
+    distance = points @ binds[elbow, 1, :3] + binds[elbow, 1, 3]
+    flex = geometry.smoothstep(-.031, .042, distance)
+    joints, weights = geometry.skin_arrays(len(points), arm)
+    joints[:, 1], weights[:, 0], weights[:, 1] = elbow, 1 - flex, flex
+    return joints, weights
+
+
+def _resting_lips(lower: bool) -> geometry.Geometry:
+    x = np.linspace(-.021, .023, 13) * (.79 if lower else 1)
+    t = x / .023
+    y = 1.490 - .0018 * t - .0021 * t ** 2 - (.0038 if lower else 0)
+    z = geometry.student_front(x, y) + (.00085 if lower else .00068)
+    r = .00035 + (.00125 if lower else .00077) * (1 - np.abs(t))
+    return geometry.tube(np.c_[x, y, z].tolist(), r.tolist(), 9, .70)
+
+
 def _surface(name: str, points: np.ndarray, indices: np.ndarray,
              binds: np.ndarray) -> geometry.Geometry | None:
     if name == "Head_Main_Mesh":
@@ -63,49 +82,42 @@ def _surface(name: str, points: np.ndarray, indices: np.ndarray,
     if name.startswith("Eyebrow_"):
         return geometry.brow(-1 if name.endswith("L") else 1)
     if name.startswith("Nostril_Shadow_"):
-        x = -.008 if name.endswith("L") else .007
-        z = float(geometry.student_front(np.asarray(x), np.asarray(1.540))) + .0006
-        return geometry.ellipsoid([x, 1.540, z], [.0026, .0013, .0006], 20, 8)
-    if name == "Mouth_Line":
-        return geometry.tube([[-.026, 1.492, .111], [-.014, 1.490, .116],
-                              [0, 1.4895, .118], [.014, 1.490, .116], [.026, 1.491, .111]],
-                             [.0008, .0014, .0015, .0012, .0007], 10, .64)
-    if name == "Lower_Lip_Plane":
-        return geometry.tube([[-.019, 1.486, .112], [-.010, 1.484, .117],
-                              [0, 1.483, .119], [.010, 1.484, .117], [.018, 1.486, .112]],
-                             [.0008, .0018, .0021, .0018, .0008], 12, .7)
+        x = -.0105 if name.endswith("L") else .0085
+        y = 1.5396 if x < 0 else 1.5413
+        z = float(geometry.student_front(x, y)) + .0001
+        return geometry.ellipsoid([x, y, z], [.00235, .00092, .0005], 16, 7)
+    if name in ("Mouth_Line", "Lower_Lip_Plane"):
+        return _resting_lips(name.startswith("Lower"))
     if name == "Hair_Cap":
         return geometry.student_hair_cap()
     if name.startswith("Hair_Fringe_Lock_"):
-        index = int(name.rsplit("_", 1)[1]) - 1
-        x = -.057 + index * .027
-        path = [[x + .015, 1.716 - index * .001], [x + .010, 1.690 - index * .002],
-                [x - .004, 1.662 - index * .003], [x - .015, 1.631 + index * .002]]
-        return geometry.tube([[xx, yy, geometry.student_hair_front(xx, yy)] for xx, yy in path],
-                             [.010, .013, .010, .0025], 12, .24)
+        return geometry.student_fringe(int(name.rsplit("_", 1)[1]) - 1)
     if name.startswith("Hair_Side_Lock_"):
         side = -1 if name.endswith("L") else 1
-        return geometry.tube([[side * .084, 1.650, .035], [side * .087, 1.621, .045],
-                              [side * .086, 1.598, .048], [side * .080, 1.578, .043]],
-                             [.009, .011, .008, .0025], 12, .6)
+        tip = 1.591 if side < 0 else 1.581
+        return geometry.tube([[side * .084, 1.645, .034], [side * .088, 1.618, .048],
+                              [side * .085, tip + .011, .051], [side * .080, tip, .048]],
+                             [.007, .008, .006, .0025], 10, .56)
     if name.startswith("Cardigan_UpperSleeve_"):
-        return geometry.student_sleeve(points, binds[4 if name.endswith("L") else 7], True)
+        return geometry.student_sleeve(points, binds[4 if name.endswith("L") else 7], True, name.endswith("R"))
     if name.startswith("Cardigan_LowerSleeve_"):
-        return geometry.student_sleeve(points, binds[5 if name.endswith("L") else 8], False)
+        return geometry.student_sleeve(points, binds[5 if name.endswith("L") else 8], False, name.endswith("R"))
     if name.startswith(("Cardigan_Lapel_", "Shirt_Collar_")) or name in ("Shirt_Front_Panel", "Cardigan_Pocket"):
         side = -1 if name.endswith("Left") else 1
         if name.startswith("Cardigan_Lapel_"):
-            xy = [[side * .111, 1.360], [side * .027, 1.354],
-                  [side * .024, 1.181], [side * .074, 1.248]]
+            # One side lies flatter, the other rocks away from the shoulder seam.
+            xy = [[side * .104, 1.352], [side * .031, 1.355],
+                  [side * .022, 1.180], [side * .074, 1.258 + .015 * side]]
         elif name.startswith("Shirt_Collar_"):
-            xy = [[side * .048, 1.394], [side * .006, 1.378],
-                  [side * .025, 1.337], [side * .064, 1.371]]
+            xy = [[side * .049, 1.393], [side * .006, 1.378],
+                  [side * .030, 1.335 + .006 * side], [side * .069, 1.357 + .004 * side]]
         elif name == "Shirt_Front_Panel":
-            xy = [[-.032, 1.365], [.032, 1.365], [.029, 1.086], [-.032, 1.086]]
+            xy = [[-.031, 1.367], [.032, 1.366], [.023, 1.073], [-.027, 1.073]]
         else:
-            xy = [[-.121, 1.151], [-.073, 1.151], [-.074, 1.090], [-.117, 1.091]]
+            xy = [[-.130, 1.153], [-.065, 1.147], [-.070, 1.083], [-.118, 1.088]]
         xy = np.asarray(xy)
-        return geometry.garment_panel(xy, .006 if "Collar" in name else .004)
+        relief = .008 if "Collar" in name else .0055 if "Lapel" in name else .0038
+        return geometry.garment_panel(xy, relief)
     if name.startswith("Cardigan_Button_") or name == "Paint_Mark_Lower_Cardigan":
         shaped = points.copy()
         y, x = points[:, 1].mean(), points[:, 0].mean()
@@ -114,7 +126,10 @@ def _surface(name: str, points: np.ndarray, indices: np.ndarray,
     if name in ("Ear_L", "Ear_R", "Ear_Inner_L", "Ear_Inner_R"):
         p = points.copy()
         c = (p.min(0) + p.max(0)) / 2
-        p = c + (p - c) * [1.0, .87, .90]
+        p = c + (p - c) * [1.0, .83, .88]
+        # Taper the lobule and tip the helix back rather than presenting a round disk.
+        p[:, 0] = np.sign(c[0]) * (np.abs(p[:, 0]) - .004)
+        p[:, 2] -= (p[:, 1] - c[1]) * .31 + (.003 if "Inner" in name else 0)
         return geometry.rounded_source(p, indices.reshape(-1, 3), 1)
     if name == "Neck":
         p = points.copy()
@@ -161,6 +176,8 @@ def prepare(data: bytes) -> bytes:
             if shaped is not None:
                 if name.startswith("Hand_Palm_"):
                     j, w = geometry.skin_arrays(len(shaped.positions), 9 if name.endswith("R") else 6)
+                elif name.startswith(("Cardigan_UpperSleeve_", "Cardigan_LowerSleeve_")):
+                    j, w = _elbow_skin(shaped.positions, frames, name.endswith("R"))
                 else:
                     j, w = _skin_nearest(shaped.positions, p, j, w)
                 p, n, t = shaped.positions, geometry.normals(shaped), shaped.triangles.ravel()
@@ -193,7 +210,7 @@ def prepare(data: bytes) -> bytes:
         scene["nodes"] = [node_map[n] for n in scene["nodes"] if n in node_map]
     result = {"asset": {"version": "2.0", "generator": "where-is-school prepare_classroom_student.py",
                         "extras": {"source": str(SOURCE.relative_to(ROOT)),
-                                   "source_sha256": SOURCE_SHA256, "geometry_revision": 1}},
+                                   "source_sha256": SOURCE_SHA256, "geometry_revision": 2}},
               "scene": document.get("scene", 0), "scenes": scenes, "nodes": kept_nodes,
               "meshes": meshes, "materials": document["materials"], "skins": [skin],
               "accessors": builder.accessors, "bufferViews": builder.views,

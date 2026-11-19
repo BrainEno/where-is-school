@@ -6,7 +6,10 @@ rendering remains the separate Xvfb workflow on its exact code head.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
+import io
+import math
 import json
 import os
 from pathlib import Path
@@ -30,7 +33,7 @@ def write(path: Path, text: str, executable: bool = False) -> None:
 
 
 class GeometryCaptureOrchestrationTest(unittest.TestCase):
-    def fixture(self, folder: Path, fail: str = "") -> subprocess.CompletedProcess:
+    def fixture(self, folder: Path, fail: str = "", dense: bool = False) -> subprocess.CompletedProcess:
         baseline = folder / "baseline"
         shots = folder / "docs/screenshots/character_integration"
         shots.mkdir(parents=True, exist_ok=True)
@@ -75,9 +78,14 @@ if variant == 'baseline' and os.environ.get('FIXTURE_FAIL') == 'baseline-capture
     raise SystemExit(7)
 folder = Path('docs/screenshots/character_integration')
 folder.mkdir(parents=True, exist_ok=True)
-for kind in ['face', 'hands']:
-    # Large flat colours make pixel order testable; these are not character screenshots.
-    image = Image.new('RGB', (40, 40), '#336699' if base else '#bb7733')
+dense = bool(os.environ.get('FIXTURE_DENSE'))
+kinds = ['face', 'hands', 'seated', 'cloth', 'profile', 'walk', 'lectern'] if dense else ['face', 'hands']
+for kind in kinds:
+    # Explicit high-entropy synthetic panels exercise annotation rounding and resizing.
+    if dense:
+        image = Image.effect_noise((520, 380), 95).convert('RGB')
+    else:
+        image = Image.new('RGB', (40, 40), '#336699' if base else '#bb7733')
     image.save(folder / f'{group}_{kind}__{variant}.png')
     print(f'ARTSHEET: {group}_{kind}__{variant}.jpg synthetic-fixture-not-evidence')
 (folder / f'CHARACTER_INTEGRATION_{group}.log').write_text('synthetic fixture only\n')
@@ -85,7 +93,7 @@ print('ARTNOTE: RESULT: SUCCESS')
 ''', True)
         env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ["PATH"],
                    GODOT_BIN=str(tools / "fixture-engine"), EVIDENCE_PYTHON=sys.executable,
-                   FIXTURE_FAIL=fail)
+                   FIXTURE_FAIL=fail, FIXTURE_DENSE="1" if dense else "")
         return subprocess.run(["bash", str(ROOT / "tools/capture_character_geometry.sh"),
                                "n", "face,hands", str(baseline)], cwd=folder, env=env,
                               text=True, capture_output=True, timeout=30)
@@ -118,6 +126,29 @@ print('ARTNOTE: RESULT: SUCCESS')
                 self.assertEqual(image.getpixel((64, 40)), (0xbb, 0x77, 0x33))
             log = (folder / "capture.log").read_text()
             self.assertEqual(log.count("ARTSHEET: "), 2)
+
+    def test_every_preview_fits_the_published_chunk_budget(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            result = self.fixture(folder, dense=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assert_restored(folder)
+            log = (folder / "capture.log").read_text()
+            chunks = 0
+            published = []
+            for line in log.splitlines():
+                if not line.startswith("ARTSHEET: "):
+                    continue
+                _, name, text = line.split()
+                published.append(name)
+                chunks += math.ceil(len(text) / 4000)
+                with Image.open(io.BytesIO(base64.b64decode(text, validate=True))) as preview:
+                    self.assertGreater(preview.width, 300)
+            self.assertEqual(len(published), 7)
+            self.assertIn("n_seated__geometry_base_after.jpg", published)
+            self.assertLessEqual(chunks, 46)
+            with Image.open(folder / "docs/screenshots/character_integration/n_seated__geometry_base_after.png") as png:
+                self.assertEqual(png.size, (1044, 400), "never shrink the artifact's original panel")
 
     def test_failed_baseline_import_does_not_report_a_comparison_or_leave_old_meshes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

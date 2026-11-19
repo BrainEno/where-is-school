@@ -16,9 +16,10 @@ It extends [CHARACTER_ART.md](CHARACTER_ART.md), whose option C palettes are now
 the shipped looks are built on. It does not replace it.
 
 **Status.** Implemented proposals, not owner visual approval. Sections 1–8 record earlier
-material-only work and its historical boundaries. The owner has subsequently requested
-actual model refinement: **§9 supersedes those no-GLB / six-two-sided-eye statements for
-N and the seated student only**. Story, dialogue and independent 2D portraits are unchanged.
+material-only work and its historical boundaries. The owner subsequently requested
+actual model refinement: §9 records the first geometry revision and the real GLB capture
+procedure; **§10 records the current N/seated student models**. Story, dialogue and
+independent 2D portraits are unchanged.
 Do not read a historical capture or a passing structural check as approval of the new art.
 
 Model identity: 平台未显示，无法核实.
@@ -412,3 +413,45 @@ presumed pass here. Offline inspection images are explicitly not Godot evidence.
 checks for wrist/shoulder seams, finger silhouette, collar/desk/chair penetration and
 swimming paint; owner art approval; Windows production Forward+ GPU quality/performance.
 OpenGL software capture and exact rig inputs do not satisfy those last two gates.
+
+## 10. Second geometry pass: a tailor's silhouette and a quieter seated face
+
+**Review base:** `350efd2a5594bc6bd37efbf237cd3f704cf82610` (#251, geometry revision 1).
+The first revision's real classroom captures still showed fine strips crossing N's
+forehead, a collar floating as a ring, both hands reading as similarly straight prongs,
+and very wide student eye whites. The student also blended into the classroom shade at
+normal camera distance. This is an authored mesh pass, not a filter on those captures.
+*Disco Elysium* is a reference for selective detail and distinguishable ordinary people;
+no model, texture, pose keys, or portrait is copied or traced from it.
+
+- **Substitute N:** the supplied jaw-length bob shell and rear locks remain. Remove the
+  isolated forehead tufts and tuck one temple; preserve the crown. Sculpt the narrow
+  cheek, bridge, eyelid and lip planes together, transforming the existing split normals
+  with the same deformation. Two turned blouse leaves replace the disconnected neck
+  rings. A fitted slanted knit welt, shaped torso and hollow turned cuffs give her sage
+  cardigan a readable cut over the cream shirt. Small, slender hand pads arc into a
+  shallow curl; the existing hand/forearm blend still holds the wrists in the sleeves.
+- **Seated student:** a sloped, close crop carries a distinct part, above a broader chin,
+  cheek shelf and smaller uneven apertures. Iris/pupil/glint follow the same clipped
+  lens as the sclera; the mouth, brows and ears no longer repeat round blockout forms.
+  The crooked plum knit lapels, angled pocket and diagonal lap fold are physical geometry.
+  Upper and lower sleeve ends share the same smoothly blended elbow weight field;
+  short pads curl further than N's using the existing rigid Hand bones.
+- **Classroom paint:** refine only the two production look resources through their
+  existing generator; quieter sclera/lip values, broad hair accents, and an easier-to-read
+  plum in shade. No global lighting, shader, character wrapper, dialogue or portrait edit.
+
+| Runtime export | Revision 1 triangles / KiB | Revision 2 triangles / KiB |
+| --- | ---: | ---: |
+| `teacher-n.glb` | 62,340 / 1439.0 | 56,950 / 1314.7 |
+| `protagonist.glb` (seated student) | 64,604 / 1475.0 | 46,384 / 1083.8 |
+
+Immutable source GLBs, mesh/surface/material keys, two 16-joint bind data sets, the
+seated drop, the player and Q, and N's four actions / eight moving channels stay unchanged.
+Each hand is still one closed five-digit surface; the new caps and bevels are baked into
+the asset, not applied at runtime. No finger articulation, new facial morphs or GPU
+performance claim. See the existing commands in §9 (use the §10 base for this comparison).
+The annotation previews now fit whole chunks so a dense set cannot silently drop its
+last seated panel. The artifact retains unscaled PNGs. Structural checks, fixed-phase
+OpenGL renders, continuous motion on the target hardware and owner art judgment are
+separate; the PR records which were actually run.

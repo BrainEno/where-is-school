@@ -4,14 +4,25 @@ Build-time only: numpy is already pinned by tools/requirements.txt. These are ac
 bind-space vertices, not a runtime smoothing modifier or a shader displacement. This
 module owns the shared loft/normal math; prepare_teacher_n.py and
 prepare_classroom_student.py remain the owners of their immutable sources and exports.
-No skeleton, inverse bind or animation data is edited here.
+The figures are sewn and sculpted in their original bind frames; no skeleton, inverse
+bind or animation data is edited here.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 
 import numpy as np
+
+
+def smoothstep(low: float, high: float, value: np.ndarray) -> np.ndarray:
+    t = np.clip((value - low) / (high - low), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def bell(value: np.ndarray, center: float, width: float) -> np.ndarray:
+    return np.exp(-((value - center) / width) ** 2)
 
 
 @dataclass
@@ -48,6 +59,16 @@ def normals(geometry: Geometry) -> np.ndarray:
     if np.any(lengths < 1e-12):
         raise ValueError("a refined vertex has no non-degenerate incident face")
     return (result / lengths)[weld].astype(np.float32)
+
+
+def deform(points: np.ndarray, normal: np.ndarray, warp: Callable[[np.ndarray], np.ndarray]
+           ) -> tuple[np.ndarray, np.ndarray]:
+    """Inverse-transpose local Jacobian; keep source split normals on thin surfaces."""
+    p = points.astype(np.float64)
+    step = np.eye(3) * 1e-5
+    jacobian = np.stack([(warp(p + d) - warp(p - d)) / 2e-5 for d in step], axis=2)
+    n = np.linalg.solve(jacobian.transpose(0, 2, 1), normal[:, :, None])[:, :, 0]
+    return warp(p), n / np.linalg.norm(n, axis=1, keepdims=True)
 
 
 def grid_surface(points: np.ndarray, cap: bool = True) -> Geometry:
@@ -171,35 +192,51 @@ def _improve_triangles(p: np.ndarray, t: np.ndarray) -> np.ndarray:
     return t
 
 
-# Canonical x, fingertip distance beyond the metacarpus, half width; pinky -> index.
-HAND_DIGITS = ((-.024, .052, .0063), (-.0085, .069, .0074),
-               (.0085, .074, .0075), (.0245, .064, .0073))
+@dataclass(frozen=True)
+class HandCut:
+    # Pinky to index: centre across the knuckles, reach beyond the palm, half-width.
+    digits: tuple[tuple[float, float, float], ...]
+    web: float
+    width: float
+    scale: float
+    flex: tuple[float, ...]
+
+
+# N's slender, nearly extended hand and the student's shorter converging fingers.
+# The silhouette, metacarpal arch and unequal curls are modelled, not inked on.
+TEACHER_HAND = HandCut(((-.024, .049, .0060), (-.0085, .066, .0067),
+                       (.008, .073, .0071), (.0245, .063, .0070)),
+                      .081, .90, 1, (.025, .021, .016, .012))
+STUDENT_HAND = HandCut(((-.024, .046, .0068), (-.0085, .063, .0075),
+                       (.0085, .069, .0076), (.025, .060, .0073)),
+                      .086, .99, .91, (.043, .037, .029, .024))
 
 
 @lru_cache(maxsize=2)
 def canonical_hand(teacher: bool) -> Geometry:
-    """One closed connected hand, not intersecting capped finger cylinders.
+    """One closed five-digit hand with longer webs and differently curled digits.
 
-    A five-digit contour is triangulated with constrained edge flips and conforming
-    bisection; dorsal/palmar depth is a rounded distance field over that contour. Both
-    sides share their border indices. This gives real thumb webs and welded knuckles
-    without a new CSG/meshing dependency or a hidden topology repair in Blender.
-    x crosses the palm; y runs wrist -> fingertips; z is thickness and relaxed curl.
+    Fewer triangles are spent across each broad pad; the contour, bevel and fused
+    thumb web still carry the shape. x crosses the palm, y runs from the wrist and
+    z carries knuckle and palm thickness rather than making the hand a flat cutout.
     """
-    outline = [[-.016, -.007], [-.023, .014], [-.030, .040], [-.031, .067]]
-    for x, length, radius in HAND_DIGITS:
+    cut = TEACHER_HAND if teacher else STUDENT_HAND
+    outline = [[-.017, -.010], [-.020, .012], [-.026, .043], [-.031, .065]]
+    for index, (x, length, radius) in enumerate(cut.digits):
         top = .073 + length
-        for fraction in (0, .35, .65, .88):
-            outline.append([x - radius * (1 - .18 * fraction),
-                            .078 + (top - .006 - .078) * fraction])
-        for angle in np.linspace(np.pi, 0, 9):
-            outline.append([x + radius * .82 * np.cos(angle), top - .006 + .006 * np.sin(angle)])
-        for fraction in (.88, .65, .35, 0):
-            outline.append([x + radius * (1 - .18 * fraction),
-                            .078 + (top - .006 - .078) * fraction])
-    outline += [[.035, .067], [.037, .062], [.041, .071], [.042, .082], [.044, .089],
-                [.048, .092], [.052, .091], [.055, .087], [.058, .079], [.060, .066],
-                [.058, .054], [.052, .040], [.040, .027], [.024, .014], [.016, -.007]]
+        inset = (.0032 if not teacher else .0015) * (1.5 - index)
+        for fraction in (0, .32, .68, .88):
+            outline.append([x + inset * fraction - radius * (1 - .27 * fraction),
+                            cut.web + (top - .006 - cut.web) * fraction])
+        for angle in np.linspace(np.pi, 0, 7):
+            outline.append([x + inset + radius * .72 * np.cos(angle),
+                            top - .006 + .006 * np.sin(angle)])
+        for fraction in (.88, .68, .32, 0):
+            outline.append([x + inset * fraction + radius * (1 - .27 * fraction),
+                            cut.web + (top - .006 - cut.web) * fraction])
+    outline += [[.035, .072], [.036, .066], [.040, .069], [.043, .079], [.046, .086],
+                [.051, .088], [.056, .084], [.059, .074], [.060, .065],
+                [.058, .054], [.052, .040], [.040, .027], [.024, .014], [.017, -.010]]
     contour = np.asarray(outline, np.float64)
     points = contour[::-1].copy()  # CCW front surface
     triangles = _triangulate(points)
@@ -208,7 +245,8 @@ def canonical_hand(teacher: bool) -> Geometry:
         triangles = _improve_triangles(points, triangles)
         edges = sorted({tuple(sorted((int(a), int(b)))) for face in triangles
                         for a, b in zip(face, np.roll(face, -1))
-                        if np.linalg.norm(points[a] - points[b]) > .0052})
+                        if np.linalg.norm(points[a] - points[b]) >
+                        (.0059 if (points[a, 1] + points[b, 1]) * .5 > .071 else .0092)})
         if not edges:
             break
         mid = {edge: len(points) + index for index, edge in enumerate(edges)}
@@ -248,18 +286,40 @@ def canonical_hand(teacher: bool) -> Geometry:
     fraction = np.clip((delta * edge).sum(2) / (edge * edge).sum(1), 0, 1)
     distance = np.sqrt(((delta - fraction[:, :, None] * edge) ** 2).sum(2).min(1))
     x, y = points.T
-    radius = .0075 + .0055 * (1 - np.clip((y - .065) / .015, 0, 1))
+    fingers = smoothstep(.068, .097, y)
+    pinch = smoothstep(.026, .054, x)
+    radius = (.0138 if teacher else .016) - .0066 * fingers - .0037 * pinch
+    # The dorsal plane crosses an oblique row of knuckles; each pad bends by a
+    # different amount, and the opposed thumb is not coplanar with the palm.
     d = np.minimum(distance, radius)
     depth = np.sqrt(np.maximum(2 * radius * d - d ** 2, 0))
-    center = .002 + (.010 if teacher else .022) * np.clip((y - .074) / .074, 0, 1) ** 1.6
-    depth += .0005 * np.exp(-((y - .090) / .008) ** 2) * (d / radius)
-    front = np.c_[points, center + depth]
+    knuckles = bell(y, .081 + .08 * x, .012) * bell(x, -.003, .031)
+    depth += .0026 * knuckles * np.clip(distance / .004, 0, 1)
+    tip = np.interp(x, [d[0] for d in cut.digits], [.073 + d[1] for d in cut.digits])
+    curl = np.clip((y - .067) / (tip - .067), 0, 1)
+    flex = np.interp(x, [d[0] for d in cut.digits], cut.flex)
+    center = .001 + .10 * x * smoothstep(.010, .060, y) + flex * curl ** 1.65
+    center += .009 * pinch * bell(y, .069, .024)
+    # Flexion takes reach out of the rest silhouette, not just moving the tips in z.
+    points = np.c_[x * cut.width, y - .22 * flex * curl ** 2]
+    front = np.c_[points, center + depth * (.83 + .17 * fingers)]
     inside = np.array([i for i in range(len(points)) if i not in boundary])
     remap = np.arange(len(points))
     remap[inside] = len(points) + np.arange(len(inside))
     positions = np.r_[front, np.c_[points[inside], (center - depth)[inside]]]
     faces = np.r_[triangles, remap[triangles[:, [0, 2, 1]]]]
-    return Geometry(positions * (1 if teacher else .91), faces)
+    # Small depth-only relaxation inside the bevel, not across the shared silhouette.
+    # This removes triangulation ripples without rounding the wrist seat or the tips.
+    edges = np.unique(np.vstack((faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]],
+                                 faces[:, [1, 0]], faces[:, [2, 1]], faces[:, [0, 2]])), axis=0)
+    degree = np.bincount(edges[:, 0], minlength=len(positions))
+    interior = np.r_[inside, remap[inside]]
+    interior = interior[positions[interior, 1] > .023]
+    for _ in range(2):
+        total = np.bincount(edges[:, 0], weights=positions[edges[:, 1], 2], minlength=len(positions))
+        positions[interior, 2] = (.78 * positions[interior, 2] + .22 * total[interior] / degree[interior])
+    return Geometry(positions * cut.scale, faces)
+
 
 
 def hand_matrix(inverse_bind: np.ndarray, teacher: bool, right: bool) -> np.ndarray:
@@ -287,134 +347,293 @@ def skin_arrays(count: int, joint: int) -> tuple[np.ndarray, np.ndarray]:
     return j, w
 
 
-def student_hair_cap() -> Geometry:
-    """A short, high, swept crop, different from N's supplied jaw-length bob."""
-    columns, rows = 80, 24
-    theta = np.arange(columns) * 2 * np.pi / columns
+def _student_hair_section(theta: np.ndarray, t: float) -> np.ndarray:
+    """A swept crop with a sloped crown and a single off-centre break in the fringe."""
     front = (1 + np.cos(theta)) / 2
-    center_y, half_height = 1.640, .1039
-    bottom = 1.541 + .103 * front ** 1.4 + .006 * np.sin(theta + .4) * front
-    points = []
-    end_phi = np.arccos(np.clip((bottom - center_y) / half_height, -.99, .99))
-    for t in np.linspace(.012, 1, rows):
-        phi = t * end_phi
-        y = center_y + half_height * np.cos(phi)
-        radial = np.sin(phi) ** .86
-        flow = theta + .18 * (1 - t) + .045 * np.sin(theta * 2)
-        relief = .0018 * np.sin(flow * 8) * np.sin(phi) ** 2
-        x = (.097 * radial + relief) * np.sin(theta) - .001 * radial * front
-        z = -.002 + (.116 * radial + relief) * np.cos(theta)
-        points.append(np.c_[x, y, z])
-    return grid_surface(np.array(points))
+    height, crown = 1.641, .10291
+    notch = .014 * bell(theta, .42, .19) + .014 * bell(theta, 2 * np.pi + .42, .19)
+    bottom = 1.531 + .103 * front ** 1.65 + front ** 3 * .022 * np.sin(theta - .36) + notch
+    phi = t * np.arccos(np.clip((bottom - height) / crown, -.99, .99))
+    rad = np.sin(phi) ** .85
+    flow = theta - .54 * (1 - t) + .15 * np.sin(theta)
+    relief = (.0031 * np.cos(flow * 4) + .0013 * np.sin(flow * 7)) * rad ** 2
+    x = (.096 * rad + relief) * np.sin(theta) - .010 * (1 - t) ** 1.2
+    z = -.003 + (.116 * rad + relief) * np.cos(theta)
+    return np.stack([x, height + crown * np.cos(phi), z], axis=-1)
 
 
-def student_hair_front(x: float, y: float) -> float:
-    radial = max(1 - ((y - 1.640) / .1039) ** 2, .008) ** (.86 / 2)
-    z = .116 * radial * np.sqrt(max(1 - (x / (.097 * radial)) ** 2, .025))
-    return -.002 + z + .0015
+def student_hair_cap() -> Geometry:
+    theta = np.arange(72) * 2 * np.pi / 72
+    return grid_surface(np.array([_student_hair_section(theta, t)
+                                  for t in np.linspace(.011, 1, 23)]))
 
 
-def teacher_hair(points: np.ndarray, triangles: np.ndarray) -> Geometry:
-    """Locally soften N's supplied bob and offset its hem, retaining its own silhouette."""
-    p, weld = np.unique(np.round(points, 7), axis=0, return_inverse=True)
-    adjacent = [set() for _ in p]
-    for a, b, c in weld[triangles]:
-        adjacent[a].update((b, c))
-        adjacent[b].update((a, c))
-        adjacent[c].update((a, b))
-    shift = np.array([p[list(neighbors)].mean(0) - v if neighbors else v * 0
-                      for v, neighbors in zip(p, adjacent)]) * .4
-    shift *= np.minimum(1, .0015 / np.maximum(np.linalg.norm(shift, axis=1, keepdims=True), 1e-12))
-    p += shift
-    p[:, 1] += .0025 * np.tanh(p[:, 0] / .035) * np.exp(-((p[:, 1] - 1.466) / .025) ** 2)
-    return Geometry(p[weld], triangles)
+def student_fringe(index: int) -> Geometry:
+    """Shallow cap-following clumps; their tips end above the cap's actual edge."""
+    t = np.linspace(.23, .86 + .013 * index, 8)
+    theta = -.84 + .34 * index + .60 * (t - .5)
+    p = np.array([_student_hair_section(angle, row) for angle, row in zip(theta, t)])
+    p[:, 2] -= .0011
+    r = .0016 + .009 * np.sin(np.linspace(0, np.pi, len(t))) ** 1.25
+    return tube(p.tolist(), r.tolist(), 10, .34)
+
+
+def _components(positions: np.ndarray, faces: np.ndarray) -> list[np.ndarray]:
+    """Face groups across coincident export seams, not across nearby locks."""
+    unique, weld = np.unique(np.round(positions, 6), axis=0, return_inverse=True)
+    parent = np.arange(len(unique))
+
+    def root(vertex):
+        while parent[vertex] != vertex:
+            parent[vertex] = parent[parent[vertex]]
+            vertex = parent[vertex]
+        return vertex
+
+    for a, b, c in weld[faces]:
+        parent[root(b)] = root(a)
+        parent[root(c)] = root(a)
+    labels = np.array([root(x) for x in weld[faces[:, 0]]])
+    return [np.flatnonzero(labels == i) for i in np.unique(labels)]
+
+
+def teacher_bob(points: np.ndarray, triangles: np.ndarray) -> tuple[Geometry, np.ndarray]:
+    """Keep the supplied bob shell/back locks; remove only floating front thread tufts.
+
+    The original shell already has a swept fringe. Its tucked left temple and broad
+    middle plane should carry the part, not parallel strips crossing the forehead.
+    Shape the shell and accent surfaces with the same field at every shared seam.
+    """
+    keep = np.ones(len(triangles), bool)
+    for group in _components(points, triangles):
+        lock = points[triangles[group]]
+        if lock[:, :, 1].min() > 1.53 and lock[:, :, 2].max() < -.046:
+            keep[group] = False
+    p = points.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    margin = 1 - smoothstep(1.575, 1.627, y)
+    front = smoothstep(.032, .084, -z)
+    tuck = bell(x, .071, .028) * bell(z, -.032, .051)
+    p[:, 1] += margin * (.012 * tuck - .005 * bell(x, -.067, .032) * front)
+    sweep = bell(x + .5 * (y - 1.583), -.035, .035) * bell(y, 1.588, .033)
+    p[:, 2] -= .0045 * sweep * front * margin
+    # The tucked temple is round, not a flat mask extending past the ear.
+    p[:, 0] -= .004 * tuck * margin
+    f = triangles[keep]
+    seen, inverse = np.unique(f, return_inverse=True)
+    return Geometry(p[seen], inverse.reshape(-1, 3)), seen
 
 
 def teacher_face(points: np.ndarray) -> np.ndarray:
-    p = points.copy().astype(np.float64)
+    """One deformation for face, eyes and lip attachments so nothing drifts apart."""
+    p = points.astype(np.float64).copy()
     x, y, z = p.T.copy()
-    frontal = np.clip((-z - .025) / .06, 0, 1)
-    lower = np.exp(-((y - 1.438) / .032) ** 2)
-    # Retain N's long, fine face, not the student's broader jaw. Deliberate millimetric
-    # asymmetry keeps a human plane change without random vertex noise.
-    p[:, 0] *= 1 - .045 * lower
-    p[:, 0] += -.0012 * np.exp(-(x / .021) ** 2 - ((y - 1.50) / .045) ** 2) * frontal
-    p[:, 2] -= .0018 * np.exp(-((x + .045) / .025) ** 2 - ((y - 1.49) / .028) ** 2) * frontal
+    frontal = smoothstep(.024, .071, -z)
+    jaw = bell(y, 1.438, .033)
+    eye = np.where(x < 0, 1.532, 1.5296)
+    orbit = bell(np.abs(x), .032, .026) * bell(y, eye, .021)
+    mouth = bell(x, 0, .031) * bell(y, 1.451, .019)
+    p[:, 0] *= 1 - .061 * jaw
+    p[:, 0] -= .0016 * bell(x, 0, .023) * bell(y, 1.505, .039) * frontal
+    p[:, 1] += frontal * (-.40 * (y - eye) * orbit - .33 * (y - 1.451) * mouth
+                           + .0025 * np.tanh(x / .020) * mouth)
+    cheek = .0035 * bell(x, -.041, .027) * bell(y, 1.500, .019)
+    cheek += .0020 * bell(x, .044, .024) * bell(y, 1.497, .018)
+    bridge = .0035 * bell(x, -.0015, .011) * bell(y, 1.505, .025)
+    p[:, 2] -= frontal * (cheek + bridge - .0012 * mouth)
     return p
 
 
+def teacher_tailoring(points: np.ndarray, knit: bool) -> np.ndarray:
+    """Shape the cut in the actual garment; preserve the source skin weights."""
+    p = points.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    torso = 1 - smoothstep(.136, .174, np.abs(x))
+    front = smoothstep(.034, .094, -z) * torso
+    # A broad belly fold makes the placket stand clear of the underlying trousers.
+    overlap = .014 * bell(y, .949, .075) + .006 * bell(y, 1.030, .095)
+    p[:, 2] -= overlap * front
+    if not knit:
+        # A tucked shirt continues underneath the trouser waist instead of leaving an
+        # irregular gap where both source surfaces met at y~.93.
+        p[:, 1] -= .014 * bell(y, .921, .033) * torso * front
+    if knit:
+        p[:, 0] *= 1 - .052 * bell(y, 1.054, .171) * torso
+        # Pressed vertical facing and fabric gathered diagonally into each hip.
+        lapel = bell(np.abs(x), .073 - .037 * (y - 1.1), .017) * bell(y, 1.202, .147)
+        crease = y - .987 + .25 * x
+        lower_fold = .0047 * bell(crease, 0, .017) - .0032 * bell(crease, .034, .012)
+        p[:, 2] -= front * (.0065 * lapel + lower_fold)
+        p[:, 1] += .005 * np.tanh(x / .068) * bell(y, .855, .067) * torso
+        # Heavy sleeve creases have one main ridge, not noise across the cloth.
+        sleeve = smoothstep(.189, .245, np.abs(x))
+        elbow = y - (1.054 + .12 * z) + .011 * np.sign(x)
+        p[:, 2] += smoothstep(.009, .048, np.abs(z)) * np.sign(z) * sleeve * (
+            .004 * bell(elbow, 0, .024) - .0025 * bell(elbow, .032, .019))
+    return p
+
+
+def teacher_collar(side: int) -> Geometry:
+    """Two turned blouse leaves replace the disconnected neck rings.
+
+    Columns are y, inner/outer x, inner/outer z on the pinned -Z blouse. The
+    fold begins by the neck and is sewn into the shirt front, not the cardigan.
+    """
+    levels = np.array([
+        [1.373, .028, .043, -.047, -.038],
+        [1.367, .018, .055, -.068, -.051],
+        [1.355, .008, .064, -.084, -.073],
+        [1.343, .016, .066, -.094, -.084],
+        [1.333, .027, .058, -.100, -.091],
+        [1.325, .039, .045, -.101, -.098],
+    ])
+    u = np.linspace(0, 1, 9)
+    rows = []
+    for y in np.linspace(levels[0, 0], levels[-1, 0], 14):
+        x0, x1, z0, z1 = [np.interp(y, levels[::-1, 0], col[::-1]) for col in levels[:, 1:].T]
+        x = side * (x0 + (x1 - x0) * u)
+        z = z0 + (z1 - z0) * u - .0038 * np.sin(np.pi * u) * bell(y, 1.348, .017)
+        vy = y + side * .0027 * u * bell(y, 1.336, .022)
+        rows.append(np.c_[x, vy, z])
+    return panel_volume(np.asarray(rows), -.008)
+
+
+def teacher_welt(body: Geometry) -> Geometry:
+    """A slanted knit welt fitted to the deformed -Z chest, not a decal or cube."""
+    v, u = np.mgrid[0:1:8j, 0:1:13j]
+    x = -.134 + .055 * u + .005 * v
+    y = 1.082 + .014 * v + .014 * u
+    facets = body.positions[body.triangles]
+    a, b, c = facets[:, 0], facets[:, 1] - facets[:, 0], facets[:, 2] - facets[:, 0]
+    area = b[:, 0] * c[:, 1] - b[:, 1] * c[:, 0]
+    valid = np.abs(area) > 1e-11
+    a, b, c, area = a[valid], b[valid], c[valid], area[valid]
+    query = np.stack((x, y), axis=2)[:, :, None, :] - a[:, :2]
+    beta = (query[..., 0] * c[:, 1] - query[..., 1] * c[:, 0]) / area
+    gamma = (b[:, 0] * query[..., 1] - b[:, 1] * query[..., 0]) / area
+    is_inside = (beta >= 0) & (gamma >= 0) & (beta + gamma <= 1)
+    depth = np.min(np.where(is_inside, a[:, 2] + beta * b[:, 2] + gamma * c[:, 2], np.inf), axis=2)
+    if not np.all(depth < -.028):
+        raise ValueError("teacher's welt must remain over the front of the cardigan")
+    # The corners sink into the knit; the middle rolls out over the opening.
+    lift = -.001 - .003 * np.sin(u * np.pi) ** .65 * np.sin(v * np.pi) ** .55
+    return panel_volume(np.stack((x, y, depth + lift), axis=2), -.005)
+
+
+def teacher_cuff(inverse_bind: np.ndarray, right: bool) -> Geometry:
+    """A closed, rounded rim, open around the skin rather than capped with a disk."""
+    theta = np.arange(28) * 2 * np.pi / 28
+    # x/y/z here are in the wrist joint's coordinates. The last row is welded to
+    # the first by wrapping triangle indices; the opening straddles the buried wrist.
+    profile = [(-.038, .028, .032), (-.028, .030, .034), (-.014, .028, .031),
+               (-.007, .025, .029), (-.006, .021, .025), (-.012, .020, .024),
+               (-.032, .022, .027), (-.038, .025, .029)]
+    rings = [np.c_[a * np.cos(theta), y + (.0018 if right else -.0018) * np.sin(theta),
+                   b * np.sin(theta)] for y, a, b in profile]
+    g = grid_surface(np.array(rings + [rings[0]]), cap=False)
+    g.triangles[g.triangles >= len(theta) * len(profile)] -= len(theta) * len(profile)
+    g.positions = g.positions[:-len(theta)]
+    # First and last rings now share the same vertices; orient the toroidal section.
+    tri = g.positions[g.triangles]
+    if np.einsum("ij,ij->i", tri[:, 0], np.cross(tri[:, 1], tri[:, 2])).sum() < 0:
+        g.triangles = g.triangles[:, [0, 2, 1]]
+    return g.transformed(np.linalg.inv(inverse_bind))
+
+
 STUDENT_HEAD_LEVELS = np.array([
-    [1.4275, .020, .033, .036], [1.438, .040, .028, .058],
-    [1.454, .057, .024, .073], [1.477, .071, .020, .083],
-    [1.505, .082, .014, .094], [1.535, .091, .009, .103],
+    [1.4275, .019, .027, .037], [1.438, .038, .025, .058],
+    [1.454, .057, .019, .076], [1.477, .073, .016, .086],
+    [1.505, .084, .012, .093], [1.535, .091, .008, .104],
     [1.560, .091, .004, .108], [1.584, .086, .001, .111],
-    [1.611, .084, -.002, .112], [1.640, .086, -.003, .110],
-    [1.670, .077, -.004, .100], [1.692, .056, -.008, .078],
+    [1.611, .084, -.002, .111], [1.640, .086, -.003, .109],
+    [1.670, .077, -.004, .099], [1.692, .056, -.008, .078],
     [1.706, .006, -.010, .012],
 ])
 
 
+def _student_head_section(y: np.ndarray) -> list[np.ndarray]:
+    return [np.interp(y, STUDENT_HEAD_LEVELS[:, 0], axis)
+            for axis in STUDENT_HEAD_LEVELS[:, 1:].T]
+
+
 def student_front(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """The authored front skin surface; eye rims, nose and features share this datum."""
-    rx, cz, rz = [np.interp(y, STUDENT_HEAD_LEVELS[:, 0], STUDENT_HEAD_LEVELS[:, k])
-                  for k in (1, 2, 3)]
+    """Plane-broken face datum; lid, lip, brow and iris geometry sit on this surface."""
+    rx, cz, rz = _student_head_section(y)
     c = np.sqrt(np.maximum(1 - (x / rx) ** 2, 0))
-    def g(cx: float, cy: float, sx: float, sy: float) -> np.ndarray:
-        return np.exp(-((x - cx) / sx) ** 2 - ((y - cy) / sy) ** 2)
-    planes = (-.008 * (g(-.043, 1.583, .025, .019) + g(.043, 1.581, .025, .019))
-              + .007 * (g(-.043, 1.606, .030, .010) + g(.043, 1.604, .030, .010))
-              + .007 * g(-.063, 1.543, .025, .019) + .005 * g(.061, 1.540, .025, .019)
-              - .004 * (g(-.061, 1.505, .022, .024) + g(.061, 1.505, .022, .024))
-              + .006 * g(0, 1.487, .030, .016) + .006 * g(0, 1.452, .031, .014)
-              + .014 * g(-.0008, 1.577, .011, .039)
-              + .021 * g(-.0008, 1.546, .014, .012)
-              + .008 * (g(-.013, 1.540, .006, .008) + g(.012, 1.540, .006, .008)))
-    return cz + rz * c ** .56 + np.clip(c * 2, 0, 1) * planes
+
+    def plane(cx, cy, sx, sy):
+        return bell(x, cx, sx) * bell(y, cy, sy)
+
+    # Broader cheek shelves and chin than N. Keep the nose and upper lip separate in
+    # section, with asymmetric cheeks and a small break under the resting lower lip.
+    planes = (-.010 * (plane(-.044, 1.582, .024, .017) + plane(.044, 1.580, .024, .016))
+              + .006 * (plane(-.042, 1.604, .026, .013) + plane(.044, 1.601, .026, .012))
+              + .008 * plane(-.063, 1.548, .024, .013) + .0062 * plane(.062, 1.545, .024, .013)
+              - .004 * (plane(-.066, 1.510, .021, .022) + plane(.066, 1.506, .022, .024))
+              + .005 * plane(0, 1.494, .025, .014) - .0035 * plane(0, 1.472, .023, .007)
+              + .007 * plane(0, 1.452, .032, .014) + .017 * plane(-.0018, 1.575, .010, .035)
+              + .022 * plane(-.0024, 1.547, .013, .014)
+              + .006 * (plane(-.014, 1.542, .006, .010) + plane(.011, 1.542, .006, .010)))
+    return cz + rz * c ** .58 + smoothstep(0, .52, c) * planes
 
 
 def student_face() -> Geometry:
-    # More samples at the bridge/eye socket, not global subdivision of every rigid part.
-    y = np.linspace(STUDENT_HEAD_LEVELS[0, 0], STUDENT_HEAD_LEVELS[-1, 0], 64)
-    theta = np.arange(128) * 2 * np.pi / 128
+    # More rings in the expressive lower/front face and fewer across the cranium.
+    y = np.unique(np.r_[np.linspace(1.4275, 1.625, 42), np.linspace(1.625, 1.706, 12)])
+    theta = np.arange(88) * 2 * np.pi / 88
     points = []
     for height in y:
-        rx, cz, rz = [np.interp(height, STUDENT_HEAD_LEVELS[:, 0], STUDENT_HEAD_LEVELS[:, k])
-                      for k in (1, 2, 3)]
+        rx, cz, rz = _student_head_section(height)
         x = rx * np.sin(theta)
         c = np.cos(theta)
         z = np.where(c >= 0, student_front(x, height), cz + rz * c)
-        x += -.0015 * np.exp(-((height - 1.49) / .06) ** 2) * np.clip(c * 2, 0, 1)
         points.append(np.c_[x, np.full(len(theta), height), z])
     return grid_surface(np.array(points))
 
 
-def student_torso() -> Geometry:
-    levels = np.array([[.860, .150, .102], [.890, .154, .112], [1.01, .155, .120],
-                       [1.15, .159, .124], [1.27, .168, .119], [1.34, .171, .100],
-                       [1.375, .144, .078], [1.395, .083, .055], [1.405, .055, .043]])
-    theta = np.arange(64) * 2 * np.pi / 64
-    rows = []
-    for y in np.linspace(.860, 1.405, 38):
-        rx = np.interp(y, levels[:, 0], levels[:, 1])
-        rz = np.interp(y, levels[:, 0], levels[:, 2])
-        relief = .0025 * np.sin(theta * 5 + (y - .9) * 7) * np.exp(-((y - 1.02) / .17) ** 2)
-        cz = .014 + .024 * np.clip((y - 1.34) / .065, 0, 1)
-        rows.append(np.c_[(rx + relief) * np.sin(theta),
-                          np.full(len(theta), y), cz + (rz + relief) * np.cos(theta)])
-    return grid_surface(np.array(rows))
+STUDENT_KNIT_LEVELS = np.array([
+    [.860, .150, .104], [.884, .153, .110], [.930, .151, .119], [1.010, .153, .126],
+    [1.15, .158, .123], [1.27, .167, .116], [1.34, .171, .098],
+    [1.375, .140, .077], [1.395, .081, .055], [1.405, .055, .043],
+])
+
+
+def _knit_section(y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    rx, rz = (np.interp(y, STUDENT_KNIT_LEVELS[:, 0], a) for a in STUDENT_KNIT_LEVELS[:, 1:].T)
+    return rx, rz, .014 + .024 * np.clip((y - 1.34) / .065, 0, 1)
+
+
+def _knit_folds(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    # Diagonal compression around the lap, broader folds at the side seams. Use
+    # the same surface for collars, pocket and buttons so they never float.
+    hip = smoothstep(.86, .885, y) * (1 - smoothstep(.96, 1.09, y))
+    crease = y - .978 + .27 * x
+    drape = .0052 * bell(crease, 0, .023) - .0034 * bell(crease, .032, .019)
+    tuck = -.0053 * bell(x, .092, .031) * bell(y, 1.180, .091)
+    return hip * drape + tuck
 
 
 def student_garment_front(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    rx = np.interp(y, [.86, 1.15, 1.27, 1.34, 1.375, 1.395, 1.405],
-                   [.15, .159, .168, .171, .144, .083, .055])
-    rz = np.interp(y, [.86, 1.01, 1.15, 1.27, 1.34, 1.375, 1.395, 1.405],
-                   [.102, .120, .124, .119, .100, .078, .055, .043])
-    return .014 + .024 * np.clip((y - 1.34) / .065, 0, 1) + rz * np.sqrt(np.maximum(1 - (x / rx) ** 2, .01))
+    rx, rz, cz = _knit_section(y)
+    c = np.sqrt(np.maximum(1 - (x / rx) ** 2, 0))
+    return cz + rz * c + _knit_folds(x, y) * smoothstep(0, .65, c)
+
+
+def student_torso() -> Geometry:
+    theta = np.arange(52) * 2 * np.pi / 52
+    heights = np.unique(np.r_[STUDENT_KNIT_LEVELS[:, 0], np.linspace(.87, 1.404, 29)])
+    rows = []
+    for y in heights:
+        rx, rz, cz = _knit_section(y)
+        x = rx * np.sin(theta)
+        c = np.cos(theta)
+        z = np.where(c >= 0, student_garment_front(x, y), cz + rz * c)
+        rows.append(np.c_[x, np.full(len(theta), y), z])
+    return grid_surface(np.array(rows))
 
 
 def garment_panel(outline: np.ndarray, relief: float = .004) -> Geometry:
     """A closed curved quad, sampled against the torso rather than cutting through it."""
-    rows, columns = 14, 8
+    rows, columns = 11, 7
     points = []
     for v in np.linspace(0, 1, rows):
         for u in np.linspace(0, 1, columns):
@@ -423,8 +642,14 @@ def garment_panel(outline: np.ndarray, relief: float = .004) -> Geometry:
             z = float(student_garment_front(xy[0], xy[1])) + relief
             z += .0015 * np.sin(np.pi * u) * np.sin(np.pi * v)
             points.append([*xy, z])
-    front = np.asarray(points)
-    back = front - [0, 0, .003]
+    return panel_volume(np.asarray(points).reshape(rows, columns, 3), relief + .002)
+
+
+def panel_volume(grid: np.ndarray, thickness: float) -> Geometry:
+    """Sew a curved open grid to its backing with consistent winding (+/-Z)."""
+    rows, columns, _ = grid.shape
+    front = grid.reshape(-1, 3)
+    back = front - [0, 0, thickness]
     faces = []
     for row in range(rows - 1):
         for col in range(columns - 1):
@@ -433,7 +658,7 @@ def garment_panel(outline: np.ndarray, relief: float = .004) -> Geometry:
             faces.extend(((a, b, c), (b, d, c)))
     faces = np.asarray(faces, np.int64)
     if np.cross(front[faces[0, 1]] - front[faces[0, 0]],
-                front[faces[0, 2]] - front[faces[0, 0]])[2] < 0:
+                front[faces[0, 2]] - front[faces[0, 0]])[2] * thickness < 0:
         faces = faces[:, [0, 2, 1]]
     count = len(front)
     edges: dict[tuple, list] = {}
@@ -448,7 +673,7 @@ def garment_panel(outline: np.ndarray, relief: float = .004) -> Geometry:
     return Geometry(np.r_[front, back], np.r_[faces, faces[:, [0, 2, 1]] + count, sides])
 
 
-def student_sleeve(points: np.ndarray, inverse_bind: np.ndarray, upper: bool) -> Geometry:
+def student_sleeve(points: np.ndarray, inverse_bind: np.ndarray, upper: bool, right: bool) -> Geometry:
     """A rolled deltoid and elbow/cuff overlap, in the original bone's bind frame."""
     local = (np.c_[points, np.ones(len(points))] @ inverse_bind.T)[:, :3]
     low, high = local.min(0), local.max(0)
@@ -456,64 +681,99 @@ def student_sleeve(points: np.ndarray, inverse_bind: np.ndarray, upper: bool) ->
     levels = ([[-.015, .15], [.00, .57], [.07, .88], [.20, 1], [.48, .94], [.80, .82], [1.02, .77]]
               if upper else [[-.02, .90], [.08, 1], [.35, .93], [.66, .79], [.90, .65], [1.02, .63]])
     levels = np.array(levels)
-    theta = np.arange(32) * 2 * np.pi / 32
+    theta = np.arange(28) * 2 * np.pi / 28
     rows = []
-    for t in np.linspace(levels[0, 0], levels[-1, 0], 22):
+    for t in np.unique(np.round(np.r_[levels[:, 0], np.linspace(.04, .99, 16)], 8)):
         radius = np.interp(t, levels[:, 0], levels[:, 1])
-        fold = .0014 * np.sin(theta * 3 + t * 8) * np.exp(-((t - .84) / .17) ** 2)
+        # The elbow bends into one broad crease, not alternating bumps or an entire
+        # straight polygon tube. The differently angled left fold is intentional.
+        axis = theta + (.38 if right else -.53)
+        fold = .0032 * np.cos(axis) * bell(t - .08 * np.sin(axis), .78 if upper else .24, .12)
+        fold -= .0027 * np.cos(axis + .52) * bell(t, .91 if upper else .38, .11)
         x = center[0] + ((high[0] - low[0]) * .5 * radius + fold) * np.cos(theta)
         z = center[2] + ((high[2] - low[2]) * .5 * radius + fold) * np.sin(theta)
         rows.append(np.c_[x, np.full(len(theta), low[1] + (high[1] - low[1]) * t), z])
     return grid_surface(np.array(rows)).transformed(np.linalg.inv(inverse_bind))
 
 
+@dataclass(frozen=True)
+class EyeCut:
+    x: float
+    y: float
+    width: float
+    upper: float
+    lower: float
+    tilt: float
+
+    def level(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        dy = y - self.y - (x - self.x) * self.tilt
+        return ((x - self.x) / self.width) ** 2 + (dy / np.where(dy >= 0, self.upper, self.lower)) ** 2
+
+    def surface(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return student_front(x, y) + .00052 + .0044 * np.maximum(1 - self.level(x, y), 0)
+
+
+def student_eye(side: int) -> EyeCut:
+    return (EyeCut(-.043, 1.581, .0197, .0068, .0061, -.078) if side < 0 else
+            EyeCut(.0445, 1.5798, .0192, .0060, .0064, .065))
+
+
+def _lens_patch(x: np.ndarray, y: np.ndarray, radius: np.ndarray,
+                depth: Callable, rings: int = 6) -> Geometry:
+    """A front-facing radial patch with one centre, no floating shell or pole hole."""
+    px = np.linspace(0, 1, rings + 1)[1:, None] * radius * x
+    py = np.linspace(0, 1, rings + 1)[1:, None] * radius * y
+    xx, yy, zz = depth(px, py)
+    patch = grid_surface(np.stack([xx, yy, zz], axis=2), cap=False)
+    count = len(x)
+    center = len(patch.positions)
+    t = np.c_[np.full(count, center), np.arange(count), np.roll(np.arange(count), -1)]
+    return Geometry(np.r_[patch.positions, np.asarray(depth(0, 0))[None, :]],
+                    np.r_[patch.triangles[:, [0, 2, 1]], t])
+
+
 def eye_patch(side: int, role: str) -> Geometry:
-    cx, cy = side * .043, 1.581 - (0.0015 if side > 0 else 0)
+    eye = student_eye(side)
+    sides = 40 if role == "sclera" else 24
+    theta = np.arange(sides) * 2 * np.pi / sides
+    u, v = np.cos(theta), np.sin(theta)
     if role == "sclera":
-        # Low-relief almond patch, rather than a complete protruding cartoon eyeball.
-        rows, columns = 10, 48
-        theta = np.arange(columns) * 2 * np.pi / columns
-        rings = []
-        for radius in np.linspace(.035, 1, rows):
-            x = .025 * np.cos(theta) * radius
-            yy = .012 * np.sin(theta) * (.74 + .26 * np.abs(np.sin(theta))) * radius
-            yy += side * x * .055
-            z = student_front(cx + x, cy + yy) + .0004 + .010 * np.sqrt(1 - radius ** 2)
-            rings.append(np.c_[cx + x, cy + yy, z])
-        g = grid_surface(np.array(rings), cap=False)
-        # Its rings run outwards, rather than axially along a tube.
-        g.triangles = g.triangles[:, [0, 2, 1]]
-        return g
-    specs = {"iris": (.0065, .0072, .0009, .0104),
-             "pupil": (.0028, .0036, .0005, .0112),
-             "glint": (.0008, .0010, .0003, .0117)}
-    rx, ry, rz, relief = specs[role]
-    z = student_front(np.asarray(cx), np.asarray(cy)) + relief
-    offset = [-.0025, .0027] if role == "glint" else [0, 0]
-    return ellipsoid([cx + offset[0], cy + offset[1], z], [rx, ry, rz], 28, 12)
+        x = eye.width * u
+        y = np.where(v >= 0, eye.upper, eye.lower) * v + x * eye.tilt
+        return _lens_patch(x, y, np.ones(len(x)),
+                           lambda x, y: (x + eye.x, y + eye.y, eye.surface(x + eye.x, y + eye.y)))
+    rx, ry, inset, ox, oy = {"iris": (.0073, .0078, .00026, -.0026, .0008),
+                             "pupil": (.0031, .0038, .00052, -.0026, .0008),
+                             "glint": (.00068, .00088, .00078, -.0047, .0027)}[role]
+    x, y = rx * u, ry * v
+    # Where an iris meets a lid it terminates at the lens rim. Projection and tint do
+    # not hide geometry sticking through the skin in a three-quarter view.
+    low, high = np.zeros(len(x)), np.ones(len(x))
+    for _ in range(12):
+        mid = (low + high) * .5
+        inside = eye.level(eye.x + ox + mid * x, eye.y + oy + mid * y) <= .975
+        low, high = np.where(inside, mid, low), np.where(inside, high, mid)
+    return _lens_patch(x, y, low, lambda a, b: (a + eye.x + ox, b + eye.y + oy,
+                        eye.surface(a + eye.x + ox, b + eye.y + oy) + inset), rings=4)
 
 
-def eyelid(side: int, lower: bool = False) -> Geometry:
-    cx, cy = side * .043, 1.581 - (0.0015 if side > 0 else 0)
-    theta = np.linspace(np.pi, 0, 18)
-    x = .0255 * np.cos(theta)
-    yy = .012 * np.sin(theta) * (.74 + .26 * np.abs(np.sin(theta)))
-    if lower:
-        yy *= -.91
-    y = cy + yy + side * x * .055
-    z = student_front(cx + x, y) + .0008 + .0018 * np.sin(theta)
-    radius = .0010 + (.0012 if lower else .0018) * np.sin(theta)
-    return tube(np.c_[cx + x, y, z].tolist(), radius.tolist(), 8, .8)
+def eyelid(side: int) -> Geometry:
+    eye = student_eye(side)
+    theta = np.linspace(np.pi, 0, 21)
+    x = eye.x + eye.width * np.cos(theta)
+    y = eye.y + eye.upper * np.sin(theta) + (x - eye.x) * eye.tilt
+    z = eye.surface(x, y) + .00005
+    radius = .00065 + .0015 * np.sin(theta) ** .65
+    return tube(np.c_[x, y, z].tolist(), radius.tolist(), 9, .76)
 
 
 def brow(side: int) -> Geometry:
-    x = np.linspace(.016, .074, 14)
-    y = 1.607 + .004 * np.sin(np.linspace(0, np.pi, len(x))) - .006 * (x / .074) ** 2
-    if side > 0:
-        y -= .0018
-    z = .113 - .010 * (x / .074) ** 2
-    radius = .0008 + .0022 * np.sin(np.linspace(.2, np.pi - .1, len(x)))
-    return tube(np.c_[x * side, y, z].tolist(), radius.tolist(), 8, .50)
+    x = np.linspace(.017, .068, 17) * side
+    t = np.linspace(0, 1, len(x))
+    y = 1.5998 + .0049 * np.sin(t * np.pi * 1.07) - .0038 * t ** 2
+    y -= .0018 if side > 0 else 0
+    r = .00055 + .00155 * np.sin(np.pi * t ** .8)
+    return tube(np.c_[x, y, student_front(x, y) + .00045].tolist(), r.tolist(), 9, .67)
 
 
 def rounded_source(points: np.ndarray, triangles: np.ndarray, subdivisions: int = 1) -> Geometry:
