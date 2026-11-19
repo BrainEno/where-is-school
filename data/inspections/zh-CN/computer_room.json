@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "computer_room_detail": {
+    "title": "错行的显像管",
+    "prompt": "检视错行的显像管",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "机壳比键盘还深。玻璃上的方框断成几行，墙上的放大版本却晚了一行才起笔。",
+    "repeat_text": "机壳比键盘还深。玻璃上的方框断成几行，墙上的放大版本却晚了一行才起笔。",
+    "record": {
+      "entry_id": "saw_computer_room_register",
+      "source": "observed",
+      "text": "机壳比键盘还深。玻璃上的方框断成几行，墙上的放大版本却晚了一行才起笔。"
+    }
+  }
+}

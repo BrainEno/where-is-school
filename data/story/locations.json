@@ -10,12 +10,16 @@
     "corridor": {
       "scene": "res://scenes/locations/corridor/corridor.tscn",
       "objective": "objective.schoolyard",
-      "arrival_flags": ["left_classroom"]
+      "arrival_flags": [
+        "left_classroom"
+      ]
     },
     "street": {
       "scene": "res://scenes/locations/street/street.tscn",
       "objective": "objective.outside",
-      "arrival_flags": ["left_school"],
+      "arrival_flags": [
+        "left_school"
+      ],
       "arrival_conversation": "street_arrival",
       "arrival_flag": "street_arrived"
     },
@@ -47,6 +51,38 @@
     },
     "restroom": {
       "scene": "res://scenes/locations/restroom/restroom.tscn",
+      "spawn": "FromCorridor"
+    },
+    "archive": {
+      "scene": "res://scenes/locations/archive/archive.tscn",
+      "spawn": "FromCorridor"
+    },
+    "plan_room": {
+      "scene": "res://scenes/locations/plan_room/plan_room.tscn",
+      "spawn": "FromCorridor"
+    },
+    "projection_room": {
+      "scene": "res://scenes/locations/projection_room/projection_room.tscn",
+      "spawn": "FromCorridor"
+    },
+    "computer_room": {
+      "scene": "res://scenes/locations/computer_room/computer_room.tscn",
+      "spawn": "FromCorridor"
+    },
+    "vacant_office": {
+      "scene": "res://scenes/locations/vacant_office/vacant_office.tscn",
+      "spawn": "FromCorridor"
+    },
+    "principal_office": {
+      "scene": "res://scenes/locations/principal_office/principal_office.tscn",
+      "spawn": "FromCorridor"
+    },
+    "restroom_02": {
+      "scene": "res://scenes/locations/restroom_02/restroom_02.tscn",
+      "spawn": "FromCorridor"
+    },
+    "restroom_03": {
+      "scene": "res://scenes/locations/restroom_03/restroom_03.tscn",
       "spawn": "FromCorridor"
     }
   }

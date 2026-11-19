@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "archive_detail": {
+    "title": "Offset index",
+    "prompt": "Look at offset index",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The top copy is one column wider than the carbon underneath. The pinholes still meet. The oversize squares on the wall have the same two offsets.",
+    "repeat_text": "The top copy is one column wider than the carbon underneath. The pinholes still meet. The oversize squares on the wall have the same two offsets.",
+    "record": {
+      "entry_id": "saw_archive_register",
+      "source": "observed",
+      "text": "The top copy is one column wider than the carbon underneath. The pinholes still meet. The oversize squares on the wall have the same two offsets."
+    }
+  }
+}

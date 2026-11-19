@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "plan_room_detail": {
+    "title": "Tracing table",
+    "prompt": "Look at tracing table",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The same landing occupies two places on the sheets. One drawing carries the short elbow; the shiny parallel rule ends on neither floor line.",
+    "repeat_text": "The same landing occupies two places on the sheets. One drawing carries the short elbow; the shiny parallel rule ends on neither floor line.",
+    "record": {
+      "entry_id": "saw_plan_room_register",
+      "source": "observed",
+      "text": "The same landing occupies two places on the sheets. One drawing carries the short elbow; the shiny parallel rule ends on neither floor line."
+    }
+  }
+}

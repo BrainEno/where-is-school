@@ -1,0 +1,2080 @@
+[gd_scene load_steps=112 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="room_tone"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="Shader" path="res://assets/shaders/school/restroom_wear.gdshader" id="wear"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_02_door.tscn" id="door"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_fittings.tscn" id="wash_fittings"]
+[ext_resource type="Shader" path="res://assets/shaders/school/restroom_flies.gdshader" id="flies"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="tap_target"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
+
+[sub_resource type="ShaderMaterial" id="Mat_floor"]
+shader = ExtResource("wear")
+shader_parameter/base_ink = Color(0.522, 0.486, 0.365, 1)
+shader_parameter/damp_ink = Color(0.29, 0.294, 0.208, 1)
+shader_parameter/rust_ink = Color(0.439, 0.31, 0.196, 1)
+shader_parameter/field = 0
+shader_parameter/phase = 1.0
+
+[sub_resource type="ShaderMaterial" id="Mat_plaster"]
+shader = ExtResource("wear")
+shader_parameter/base_ink = Color(0.718, 0.663, 0.49, 1)
+shader_parameter/damp_ink = Color(0.341, 0.373, 0.259, 1)
+shader_parameter/rust_ink = Color(0.451, 0.31, 0.176, 1)
+shader_parameter/field = 1
+shader_parameter/phase = 1.0
+
+[sub_resource type="ShaderMaterial" id="Mat_lower"]
+shader = ExtResource("wear")
+shader_parameter/base_ink = Color(0.58, 0.6, 0.471, 1)
+shader_parameter/damp_ink = Color(0.29, 0.345, 0.263, 1)
+shader_parameter/rust_ink = Color(0.443, 0.286, 0.18, 1)
+shader_parameter/field = 1
+shader_parameter/phase = 1.0
+
+[sub_resource type="ShaderMaterial" id="Mat_ceramic"]
+shader = ExtResource("wear")
+shader_parameter/base_ink = Color(0.886, 0.847, 0.624, 1)
+shader_parameter/damp_ink = Color(0.4, 0.416, 0.235, 1)
+shader_parameter/rust_ink = Color(0.537, 0.365, 0.212, 1)
+shader_parameter/field = 2
+shader_parameter/phase = 1.0
+
+[sub_resource type="ShaderMaterial" id="Mat_wet"]
+shader = ExtResource("wear")
+shader_parameter/base_ink = Color(0.588, 0.616, 0.424, 1)
+shader_parameter/damp_ink = Color(0.243, 0.282, 0.212, 1)
+shader_parameter/rust_ink = Color(0.325, 0.306, 0.208, 1)
+shader_parameter/field = 3
+shader_parameter/phase = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_trim"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.329, 0.357, 0.275, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_skirt"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.267, 0.322, 0.357, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_tile_gap"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.435, 0.459, 0.349, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_sky"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.694, 0.776, 0.765, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_sky_low"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.584, 0.659, 0.725, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor_grid"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.373, 0.392, 0.302, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_repair"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.596, 0.416, 0.259, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_edge"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.196, 0.263, 0.263, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_mirror"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.349, 0.467, 0.545, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_mirror_light"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.463, 0.6, 0.686, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_steel"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.58, 0.643, 0.62, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_water_edge"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.318, 0.349, 0.231, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_peel"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.808, 0.714, 0.518, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_old_rust"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.412, 0.282, 0.165, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_discard"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.604, 0.541, 0.412, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_paper"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.784, 0.698, 0.502, 1)
+
+[sub_resource type="ShaderMaterial" id="Mat_flies"]
+shader = ExtResource("flies")
+
+[sub_resource type="StandardMaterial3D" id="Mat_valve"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.569, 0.341, 0.255, 1)
+
+[sub_resource type="Environment" id="RoomEnvironment"]
+background_mode = 1
+background_color = Color(0.271, 0.247, 0.204, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.69, 0.659, 0.553, 1)
+ambient_light_energy = 0.73
+tonemap_mode = 2
+tonemap_exposure = 0.76
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
+size = Vector3(8.46, 0.16, 6.54)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art2"]
+size = Vector3(8.46, 0.16, 6.54)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art3"]
+size = Vector3(8.24, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art4"]
+size = Vector3(8.24, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+size = Vector3(8.24, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+size = Vector3(8.24, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
+size = Vector3(8.24, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+size = Vector3(8.24, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art9"]
+size = Vector3(6.32, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(6.32, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art11"]
+size = Vector3(6.32, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art12"]
+size = Vector3(6.32, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art13"]
+size = Vector3(6.32, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art14"]
+size = Vector3(6.32, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art15"]
+size = Vector3(8.24, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art16"]
+size = Vector3(8.24, 0.818, 0.19)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art17"]
+size = Vector3(3.75, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art18"]
+size = Vector3(3.75, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art19"]
+size = Vector3(3.75, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art20"]
+size = Vector3(3.75, 0.118, 0.038)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art21"]
+size = Vector3(0.73, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art22"]
+size = Vector3(0.73, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art23"]
+size = Vector3(0.73, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art24"]
+size = Vector3(0.73, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art25"]
+size = Vector3(8.214, 0.009, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art26"]
+size = Vector3(0.009, 0.2, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art27"]
+size = Vector3(6.294, 0.009, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art28"]
+size = Vector3(2.74, 0.65, 0.114)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art29"]
+size = Vector3(0.8367, 0.51, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art30"]
+size = Vector3(0.8367, 0.1785, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art31"]
+size = Vector3(2.83, 0.075, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art32"]
+size = Vector3(2.08, 0.53, 0.114)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art33"]
+size = Vector3(0.6167, 0.39, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art34"]
+size = Vector3(0.6167, 0.1365, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art35"]
+size = Vector3(2.17, 0.075, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art36"]
+size = Vector3(8.05, 0.003, 0.015)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art37"]
+size = Vector3(0.015, 0.003, 6.13)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art38"]
+size = Vector3(0.11, 0.006, 6.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art39"]
+size = Vector3(0.045, 0.006, 6.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art40"]
+size = Vector3(3.16, 0.81, 0.066)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art41"]
+size = Vector3(3.06, 0.722, 0.021)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art42"]
+size = Vector3(0.77, 0.49, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art43"]
+size = Vector3(0.23, 0.49, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art44"]
+size = Vector3(1.05, 0.49, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art45"]
+size = Vector3(3.06, 0.14, 0.005)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art46"]
+size = Vector3(0.019, 0.722, 0.019)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art47"]
+size = Vector3(0.039, 0.053, 0.035)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art48"]
+_surfaces = [{
+"aabb": AABB(-3.1452469, 0.0070000, -3.1008392, 7.1195293, 0.0010000, 5.9088369),
+"format": 34359742471,
+"index_count": 270,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AkACRAJIAkwCUAJUAlgCXAJgAmQCaAJsAnACdAJ4AnwCgAKEAogCjAKQApQCmAKcAqACpAKoAqwCsAK0ArgCvALAAsQCyALMAtAC1ALYAtwC4ALkAugC7ALwAvQC+AL8AwADBAMIAwwDEAMUAxgDHAMgAyQDKAMsAzADNAM4AzwDQANEA0gDTANQA1QDWANcA2ADZANoA2wDcAN0A3gDfAOAA4QDiAOMA5ADlAOYA5wDoAOkA6gDrAOwA7QDuAO8A8ADxAPIA8wD0APUA9gD3APgA+QD6APsA/AD9AP4A/wAAAQEBAgEDAQQBBQEGAQcBCAEJAQoBCwEMAQ0B"),
+"primitive": 3,
+"vertex_count": 270,
+"vertex_data": PackedByteArray("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MzNjQG8SAzzNzAxACJ9vQG8SAzwuqDBA37JmQG8SAzzQ3i1AMzNjQG8SAzzNzAxA37JmQG8SAzzQ3i1AURVfQG8SAzw8tjNAMzNjQG8SAzzNzAxAURVfQG8SAzw8tjNAan5aQG8SAzy/7iVAMzNjQG8SAzzNzAxAan5aQG8SAzy/7iVA9G9RQG8SAzwfpCVAMzNjQG8SAzzNzAxA9G9RQG8SAzwfpCVA+z5KQG8SAzwB8BtAMzNjQG8SAzzNzAxA+z5KQG8SAzwB8BtA3T1NQG8SAzzNzAxAMzNjQG8SAzzNzAxA3T1NQG8SAzzNzAxAbRhLQG8SAzwCW/w/MzNjQG8SAzzNzAxAbRhLQG8SAzwCW/w/231PQG8SAzzGeeI/MzNjQG8SAzzNzAxA231PQG8SAzzGeeI/XRBaQG8SAzxU2uQ/MzNjQG8SAzzNzAxAXRBaQG8SAzxU2uQ/xyRfQG8SAzwD68w/MzNjQG8SAzzNzAxAxyRfQG8SAzwD68w/YrBnQG8SAzwlvcQ/MzNjQG8SAzzNzAxAYrBnQG8SAzwlvcQ/O25sQG8SAzyhTuQ/MzNjQG8SAzzNzAxAO25sQG8SAzyhTuQ/b452QG8SAzzQdeM/MzNjQG8SAzzNzAxAb452QG8SAzzQdeM/dZh0QG8SAzxhPwJAMzNjQG8SAzzNzAxAdZh0QG8SAzxhPwJApVp+QG8SAzzNzAxA/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art49"]
+_surfaces = [{
+"aabb": AABB(-3.1175348, 0.0100000, -2.8514634, 6.9565432, 0.0000000, 5.5772254),
+"format": 34359742471,
+"index_count": 216,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AkACRAJIAkwCUAJUAlgCXAJgAmQCaAJsAnACdAJ4AnwCgAKEAogCjAKQApQCmAKcAqACpAKoAqwCsAK0ArgCvALAAsQCyALMAtAC1ALYAtwC4ALkAugC7ALwAvQC+AL8AwADBAMIAwwDEAMUAxgDHAMgAyQDKAMsAzADNAM4AzwDQANEA0gDTANQA1QDWANcA"),
+"primitive": 3,
+"vertex_count": 216,
+"vertex_data": PackedByteArray("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exTuvwrXIzxI4RrAMiDovwrXIzwAOjHAj//VvwrXIzyUezbAexTuvwrXIzxI4RrAj//VvwrXIzyUezbAf1rOvwrXIzxPfyzAexTuvwrXIzxI4RrAf1rOvwrXIzxPfyzAky/DvwrXIzwsNiXAexTuvwrXIzxI4RrAky/DvwrXIzwsNiXAsWnQvwrXIzxI4RrAMzNjQArXIzzXoxBAtbFvQArXIzzXoxBAULJ1QArXIzyodRtAMzNjQArXIzzXoxBAULJ1QArXIzyodRtARjVtQArXIzzvIh5AMzNjQArXIzzXoxBARjVtQArXIzzvIh5AMr9rQArXIzx2bihAMzNjQArXIzzXoxBAMr9rQArXIzx2bihAcHhmQArXIzzici5AMzNjQArXIzzXoxBAcHhmQArXIzzici5AfXZgQArXIzyBlilAMzNjQArXIzzXoxBAfXZgQArXIzyBlilAYSdZQArXIzzlmixAMzNjQArXIzzXoxBAYSdZQArXIzzlmixAB95UQArXIzzq9yNAMzNjQArXIzzXoxBAB95UQArXIzzq9yNAqmhUQArXIzzIShlAMzNjQArXIzzXoxBAqmhUQArXIzzIShlAJQ1TQArXIzzXoxBAMzNjQArXIzzXoxBAJQ1TQArXIzzXoxBAxItUQArXIzxuEQhAMzNjQArXIzzXoxBAxItUQArXIzxuEQhAJndVQArXIzyEPPw/MzNjQArXIzzXoxBAJndVQArXIzyEPPw/NrZaQArXIzz+BfI/MzNjQArXIzzXoxBANrZaQArXIzz+BfI/CghgQArXIzzphOc/MzNjQArXIzzXoxBACghgQArXIzzphOc/imllQArXIzzX8/g/MzNjQArXIzzXoxBAimllQArXIzzX8/g/KGBqQArXIzzGVPk/MzNjQArXIzzXoxBAKGBqQArXIzzGVPk/xXJxQArXIzzN2fo/MzNjQArXIzzXoxBAxXJxQArXIzzN2fo/AlZ0QArXIzzEnQZAMzNjQArXIzzXoxBAAlZ0QArXIzzEnQZAtbFvQArXIzzXoxBA/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art50"]
+_surfaces = [{
+"aabb": AABB(-3.0325271, 1.1488433, 0.0990000, 6.1301418, 1.1334690, 0.0000000),
+"format": 34359742471,
+"index_count": 216,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AkACRAJIAkwCUAJUAlgCXAJgAmQCaAJsAnACdAJ4AnwCgAKEAogCjAKQApQCmAKcAqACpAKoAqwCsAK0ArgCvALAAsQCyALMAtAC1ALYAtwC4ALkAugC7ALwAvQC+AL8AwADBAMIAwwDEAMUAxgDHAMgAyQDKAMsAzADNAM4AzwDQANEA0gDTANQA1QDWANcA"),
+"primitive": 3,
+"vertex_count": 216,
+"vertex_data": PackedByteArray("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AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art51"]
+_surfaces = [{
+"aabb": AABB(-2.8553778, 0.0501394, 0.1030000, 3.3690859, 1.2565724, 0.0030000),
+"format": 34359742471,
+"index_count": 162,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AkACRAJIAkwCUAJUAlgCXAJgAmQCaAJsAnACdAJ4AnwCgAKEA"),
+"primitive": 3,
+"vertex_count": 162,
+"vertex_data": PackedByteArray("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H4XrPs3MDD+q8dI9Nrf3Pr862j6q8dI9XwLxPts0vD6q8dI9H4XrPs3MDD+q8dI97nP/Pk5s5z6q8dI9Nrf3Pr862j6q8dI9H4XrPs3MDD+q8dI9ov0AP3qJAD+q8dI97nP/Pk5s5z6q8dI9H4XrPs3MDD+q8dI9X4IDP83MDD+q8dI9ov0AP3qJAD+q8dI9/3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art52"]
+size = Vector3(0.13, 0.008, 0.145)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art53"]
+size = Vector3(0.078, 0.009, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art54"]
+size = Vector3(0.22, 0.008, 0.145)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art55"]
+_surfaces = [{
+"aabb": AABB(-0.0330000, 0.0000000, -0.0300000, 0.0660000, 0.0160000, 0.0660000),
+"format": 34359742471,
+"index_count": 15,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABwAIAAkACgALAAwA"),
+"primitive": 3,
+"vertex_count": 13,
+"vertex_data": PackedByteArray("AAAAAKabRDuPwvW8QmDlu6abxDtCYOU7AAAAAKabRDt/arw8QmDlO6abxDtCYOU7AAAAAAAAAAAxCKy8vHQTvAAAAABYOTQ8vHQTPAAAAABYOTQ8bxKDu0Jg5TsK16O7AisHvW8SgzwK16M8vHSTvArXozu8dBM9bxKDO0Jg5TsK16O7vHSTPArXozu8dBM9AisHPW8SgzwK16M8mVlmJv////+ZWWYm/////5lZZib/////mVlmJv//////fwAAAAD/v/9/AAAAAP+//38AAAAA/795SjEl//937HlKMSX//3fseUoxJf//d+yFtTElDqf/v4W1MSUOp/+/hbUxJQ6n/78=")
+}]
+
+[sub_resource type="MultiMesh" id="MultiMesh_art56"]
+transform_format = 1
+instance_count = 22
+mesh = SubResource("ArrayMesh_art55")
+custom_aabb = AABB(-1, -.82, -1, 2, 1.64, 2)
+buffer = PackedFloat32Array(1.1250, 0.0000, 0.0000, -0.2901, 0.0000, 1.1250, 0.0000, 0.3078, 0.0000, 0.0000, 1.1250, 0.0310, 1.0680, 0.0000, 0.0000, 0.1171, 0.0000, 1.0680, 0.0000, 0.2217, 0.0000, 0.0000, 1.0680, 0.1070, 0.9941, 0.0000, 0.0000, 0.1419, 0.0000, 0.9941, 0.0000, -0.4131, 0.0000, 0.0000, 0.9941, -0.2378, 0.9861, 0.0000, 0.0000, -0.1715, 0.0000, 0.9861, 0.0000, -0.2926, 0.0000, 0.0000, 0.9861, -0.3382, 0.8188, 0.0000, 0.0000, -0.0848, 0.0000, 0.8188, 0.0000, -0.3259, 0.0000, 0.0000, 0.8188, -0.6206, 0.8150, 0.0000, 0.0000, -0.0050, 0.0000, 0.8150, 0.0000, -0.1270, 0.0000, 0.0000, 0.8150, 0.0086, 1.2396, 0.0000, 0.0000, -0.5061, 0.0000, 1.2396, 0.0000, 0.1927, 0.0000, 0.0000, 1.2396, 0.5598, 0.7234, 0.0000, 0.0000, 0.0854, 0.0000, 0.7234, 0.0000, -0.4306, 0.0000, 0.0000, 0.7234, 0.4295, 0.7307, 0.0000, 0.0000, -0.1242, 0.0000, 0.7307, 0.0000, -0.2514, 0.0000, 0.0000, 0.7307, 0.5425, 0.7560, 0.0000, 0.0000, 0.0205, 0.0000, 0.7560, 0.0000, -0.4404, 0.0000, 0.0000, 0.7560, 0.3801, 0.7230, 0.0000, 0.0000, 0.2910, 0.0000, 0.7230, 0.0000, 0.0154, 0.0000, 0.0000, 0.7230, -0.3488, 0.7691, 0.0000, 0.0000, 0.2229, 0.0000, 0.7691, 0.0000, -0.4175, 0.0000, 0.0000, 0.7691, -0.2112, 0.9540, 0.0000, 0.0000, -0.4679, 0.0000, 0.9540, 0.0000, 0.1824, 0.0000, 0.0000, 0.9540, 0.3621, 0.9779, 0.0000, 0.0000, -0.4498, 0.0000, 0.9779, 0.0000, 0.4182, 0.0000, 0.0000, 0.9779, -0.3316, 0.9514, 0.0000, 0.0000, -0.1670, 0.0000, 0.9514, 0.0000, 0.4487, 0.0000, 0.0000, 0.9514, -0.1703, 0.9604, 0.0000, 0.0000, -0.1431, 0.0000, 0.9604, 0.0000, 0.4314, 0.0000, 0.0000, 0.9604, 0.5586, 0.9738, 0.0000, 0.0000, 0.4044, 0.0000, 0.9738, 0.0000, 0.1944, 0.0000, 0.0000, 0.9738, 0.4336, 0.8872, 0.0000, 0.0000, 0.3806, 0.0000, 0.8872, 0.0000, 0.1797, 0.0000, 0.0000, 0.8872, 0.0683, 0.7355, 0.0000, 0.0000, 0.2839, 0.0000, 0.7355, 0.0000, 0.0355, 0.0000, 0.0000, 0.7355, -0.3914, 1.1048, 0.0000, 0.0000, 0.0588, 0.0000, 1.1048, 0.0000, 0.2754, 0.0000, 0.0000, 1.1048, 0.6296, 1.1471, 0.0000, 0.0000, -0.3915, 0.0000, 1.1471, 0.0000, 0.0529, 0.0000, 0.0000, 1.1471, 0.1218, 1.1300, 0.0000, 0.0000, 0.1640, 0.0000, 1.1300, 0.0000, -0.0061, 0.0000, 0.0000, 1.1300, -0.3930)
+
+[sub_resource type="MultiMesh" id="MultiMesh_art57"]
+transform_format = 1
+instance_count = 22
+mesh = SubResource("ArrayMesh_art55")
+custom_aabb = AABB(-1, -.82, -1, 2, 1.64, 2)
+buffer = PackedFloat32Array(0.7050, 0.0000, 0.0000, -0.0215, 0.0000, 0.7050, 0.0000, -0.4141, 0.0000, 0.0000, 0.7050, -0.1995, 0.7593, 0.0000, 0.0000, 0.0077, 0.0000, 0.7593, 0.0000, 0.4234, 0.0000, 0.0000, 0.7593, -0.1609, 0.7021, 0.0000, 0.0000, -0.2778, 0.0000, 0.7021, 0.0000, 0.3971, 0.0000, 0.0000, 0.7021, -0.2324, 0.8488, 0.0000, 0.0000, -0.5451, 0.0000, 0.8488, 0.0000, 0.0086, 0.0000, 0.0000, 0.8488, -0.2945, 0.9657, 0.0000, 0.0000, 0.4125, 0.0000, 0.9657, 0.0000, 0.0651, 0.0000, 0.0000, 0.9657, -0.0008, 0.7826, 0.0000, 0.0000, -0.3697, 0.0000, 0.7826, 0.0000, -0.2173, 0.0000, 0.0000, 0.7826, -0.3082, 1.0325, 0.0000, 0.0000, 0.4975, 0.0000, 1.0325, 0.0000, 0.0210, 0.0000, 0.0000, 1.0325, -0.1125, 0.9255, 0.0000, 0.0000, -0.3430, 0.0000, 0.9255, 0.0000, 0.3448, 0.0000, 0.0000, 0.9255, 0.2781, 0.8396, 0.0000, 0.0000, -0.1777, 0.0000, 0.8396, 0.0000, 0.1887, 0.0000, 0.0000, 0.8396, -0.0474, 1.1275, 0.0000, 0.0000, 0.1186, 0.0000, 1.1275, 0.0000, 0.4376, 0.0000, 0.0000, 1.1275, 0.0649, 0.7367, 0.0000, 0.0000, 0.0716, 0.0000, 0.7367, 0.0000, 0.3761, 0.0000, 0.0000, 0.7367, -0.2913, 1.0474, 0.0000, 0.0000, -0.5073, 0.0000, 1.0474, 0.0000, 0.0661, 0.0000, 0.0000, 1.0474, 0.1205, 1.1828, 0.0000, 0.0000, 0.5770, 0.0000, 1.1828, 0.0000, 0.1525, 0.0000, 0.0000, 1.1828, -0.0027, 1.1638, 0.0000, 0.0000, -0.5222, 0.0000, 1.1638, 0.0000, -0.1320, 0.0000, 0.0000, 1.1638, -0.0889, 0.7010, 0.0000, 0.0000, -0.5066, 0.0000, 0.7010, 0.0000, -0.2753, 0.0000, 0.0000, 0.7010, 0.3399, 0.7583, 0.0000, 0.0000, 0.5363, 0.0000, 0.7583, 0.0000, 0.1815, 0.0000, 0.0000, 0.7583, -0.2696, 1.0514, 0.0000, 0.0000, 0.1931, 0.0000, 1.0514, 0.0000, -0.1441, 0.0000, 0.0000, 1.0514, -0.0188, 0.9269, 0.0000, 0.0000, 0.3254, 0.0000, 0.9269, 0.0000, -0.4133, 0.0000, 0.0000, 0.9269, 0.2221, 1.2049, 0.0000, 0.0000, 0.4306, 0.0000, 1.2049, 0.0000, 0.0545, 0.0000, 0.0000, 1.2049, 0.2048, 0.9320, 0.0000, 0.0000, -0.3537, 0.0000, 0.9320, 0.0000, 0.3869, 0.0000, 0.0000, 0.9320, -0.1184, 0.8759, 0.0000, 0.0000, 0.2159, 0.0000, 0.8759, 0.0000, -0.2695, 0.0000, 0.0000, 0.8759, -0.1715, 0.7077, 0.0000, 0.0000, 0.4749, 0.0000, 0.7077, 0.0000, 0.1944, 0.0000, 0.0000, 0.7077, 0.0193)
+
+[sub_resource type="MultiMesh" id="MultiMesh_art58"]
+transform_format = 1
+instance_count = 18
+mesh = SubResource("ArrayMesh_art55")
+custom_aabb = AABB(-1, -.82, -1, 2, 1.64, 2)
+buffer = PackedFloat32Array(0.7466, 0.0000, 0.0000, 0.1576, 0.0000, 0.7466, 0.0000, -0.1401, 0.0000, 0.0000, 0.7466, 0.1523, 1.0547, 0.0000, 0.0000, -0.3210, 0.0000, 1.0547, 0.0000, 0.3636, 0.0000, 0.0000, 1.0547, 0.3899, 0.7439, 0.0000, 0.0000, 0.3996, 0.0000, 0.7439, 0.0000, -0.0629, 0.0000, 0.0000, 0.7439, -0.2636, 1.0618, 0.0000, 0.0000, 0.6081, 0.0000, 1.0618, 0.0000, -0.3494, 0.0000, 0.0000, 1.0618, -0.2673, 0.7553, 0.0000, 0.0000, -0.0024, 0.0000, 0.7553, 0.0000, 0.3091, 0.0000, 0.0000, 0.7553, -0.1732, 0.8436, 0.0000, 0.0000, -0.0408, 0.0000, 0.8436, 0.0000, -0.1716, 0.0000, 0.0000, 0.8436, 0.3503, 1.0311, 0.0000, 0.0000, 0.4039, 0.0000, 1.0311, 0.0000, 0.2324, 0.0000, 0.0000, 1.0311, 0.1752, 1.0290, 0.0000, 0.0000, -0.5736, 0.0000, 1.0290, 0.0000, -0.2618, 0.0000, 0.0000, 1.0290, 0.1086, 0.8923, 0.0000, 0.0000, 0.0877, 0.0000, 0.8923, 0.0000, -0.1290, 0.0000, 0.0000, 0.8923, -0.1146, 0.8447, 0.0000, 0.0000, 0.0167, 0.0000, 0.8447, 0.0000, -0.2444, 0.0000, 0.0000, 0.8447, -0.3677, 1.0522, 0.0000, 0.0000, -0.0476, 0.0000, 1.0522, 0.0000, 0.1325, 0.0000, 0.0000, 1.0522, -0.3437, 1.0025, 0.0000, 0.0000, -0.2727, 0.0000, 1.0025, 0.0000, 0.2127, 0.0000, 0.0000, 1.0025, -0.2612, 1.0750, 0.0000, 0.0000, -0.3420, 0.0000, 1.0750, 0.0000, 0.1656, 0.0000, 0.0000, 1.0750, -0.0804, 0.8988, 0.0000, 0.0000, -0.5298, 0.0000, 0.8988, 0.0000, -0.2096, 0.0000, 0.0000, 0.8988, 0.2118, 0.7964, 0.0000, 0.0000, -0.0688, 0.0000, 0.7964, 0.0000, -0.1843, 0.0000, 0.0000, 0.7964, 0.2630, 1.0913, 0.0000, 0.0000, -0.3656, 0.0000, 1.0913, 0.0000, -0.2742, 0.0000, 0.0000, 1.0913, 0.1495, 1.0179, 0.0000, 0.0000, -0.4038, 0.0000, 1.0179, 0.0000, 0.1369, 0.0000, 0.0000, 1.0179, -0.4944, 1.1368, 0.0000, 0.0000, -0.0860, 0.0000, 1.1368, 0.0000, 0.0133, 0.0000, 0.0000, 1.1368, 0.1068)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art59"]
+size = Vector3(0.038, 0.008, 0.29)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art60"]
+size = Vector3(0.236, 0.008, 0.028)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art61"]
+top_radius = 0.117
+bottom_radius = 0.117
+height = 0.014
+radial_segments = 16
+rings = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art62"]
+_surfaces = [{
+"aabb": AABB(-0.1170000, -0.0080000, -0.1170000, 0.2340000, 0.0080000, 0.2340000),
+"format": 34359742471,
+"index_count": 288,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcAOAA5ADoAOAA6ADsAPAA9AD4APAA+AD8AQABBAEIAQABCAEMARABFAEYARABGAEcASABJAEoASABKAEsATABNAE4ATABOAE8AUABRAFIAUABSAFMAVABVAFYAVABWAFcAWABZAFoAWABaAFsAXABdAF4AXABeAF8AYABhAGIAYABiAGMAZABlAGYAZABmAGcAaABpAGoAaABqAGsAbABtAG4AbABuAG8AcABxAHIAcAByAHMAdAB1AHYAdAB2AHcAeAB5AHoAeAB6AHsAfAB9AH4AfAB+AH8AgACBAIIAgACCAIMAhACFAIYAhACGAIcAiACJAIoAiACKAIsAjACNAI4AjACOAI8AkACRAJIAkACSAJMAlACVAJYAlACWAJcAmACZAJoAmACaAJsAnACdAJ4AnACeAJ8AoAChAKIAoACiAKMApAClAKYApACmAKcAqACpAKoAqACqAKsArACtAK4ArACuAK8AsACxALIAsACyALMAtAC1ALYAtAC2ALcAuAC5ALoAuAC6ALsAvAC9AL4AvAC+AL8A"),
+"primitive": 3,
+"vertex_count": 192,
+"vertex_data": PackedByteArray("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wur/v///wurC6v+////C6sLq/7///7rMusz/v///usy6zP+///+6zLrM/7///7rMusz/v///RLNEs/+///9Es0Sz/7///0SzRLP/v///RLNEs/+///87lTuV/7///zuVO5X/v///O5U7lf+///87lTuV/7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////vwAAO5X//2D1AAA7lf//YPUAADuV//9g9QAAO5X//2D1AABEs///XOYAAESz//9c5gAARLP//1zmAABEs///XOYAALrM//+h2QAAusz//6HZAAC6zP//odkAALrM//+h2QAAwur//53KAADC6v//ncoAAMLq//+dygAAwur//53K///C6sLq/7///8Lqwur/v///wurC6v+////C6sLq/7///7rMusz/v///usy6zP+///+6zLrM/7///7rMusz/v///RLNEs/+///9Es0Sz/7///0SzRLP/v///RLNEs/+///87lTuV/7///zuVO5X/v///O5U7lf+///87lTuV/7/C6v9/w2r/v8Lq/3/Dav+/wur/f8Nq/7/C6v9/w2r/v7rM/3+6TP+/usz/f7pM/7+6zP9/ukz/v7rM/3+6TP+/RLP/f0Qz/79Es/9/RDP/v0Sz/39EM/+/RLP/f0Qz/787lf9/PBX/vzuV/388Ff+/O5X/fzwV/787lf9/PBX/v8Nq/38AAJ3Kw2r/fwAAncrDav9/AACdysNq/38AAJ3Kukz/fwAAodm6TP9/AACh2bpM/38AAKHZukz/fwAAodlEM/9/AABc5kQz/38AAFzmRDP/fwAAXOZEM/9/AABc5jwV/38AAGD1PBX/fwAAYPU8Ff9/AABg9TwV/38AAGD1")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art63"]
+size = Vector3(0.0222, 0.007, 0.158)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art64"]
+size = Vector3(0.0222, 0.007, 0.1966)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art65"]
+size = Vector3(0.073, 0.008, 0.083)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art66"]
+top_radius = 0.044
+bottom_radius = 0.044
+height = 2.34
+radial_segments = 12
+rings = 0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art67"]
+top_radius = 0.056
+bottom_radius = 0.056
+height = 0.077
+radial_segments = 12
+rings = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_art68"]
+size = Vector3(0.154, 0.076, 0.079)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art69"]
+size = Vector3(0.553, 0.171, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art70"]
+size = Vector3(0.38, 0.31, 0.035)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art71"]
+top_radius = 0.015
+bottom_radius = 0.015
+height = 0.014
+radial_segments = 16
+rings = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_art72"]
+size = Vector3(1.1, 0.077, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art73"]
+size = Vector3(0.972, 0.033, 0.13)
+
+[sub_resource type="Resource" id="Shot_BasinsLook"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(-0.3, 0, 0.02)
+subject_mix = 0.72
+distance_scale = 0.66
+height_scale = 0.91
+yaw_degrees = 16
+fov = 49
+glide_seconds = 0.68
+
+[sub_resource type="Resource" id="Shot_LatchLook"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(0, 0, -0.05)
+subject_mix = 0.72
+distance_scale = 0.61
+height_scale = 0.76
+yaw_degrees = -15
+fov = 45
+glide_seconds = 0.68
+
+[sub_resource type="Resource" id="Shot_DrainLook"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(0, 0, -0.06)
+subject_mix = 0.72
+distance_scale = 0.54
+height_scale = 0.87
+yaw_degrees = 4
+fov = 44
+glide_seconds = 0.68
+
+[node name="Restroom02" type="Node3D"]
+script = ExtResource("location")
+location_id = &"restroom_02"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("RoomEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-53, -4, 0)
+light_color = Color(0.992, 0.882, 0.631, 1)
+light_energy = 0.69
+shadow_enabled = true
+directional_shadow_max_distance = 22
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("room_tone")
+script = ExtResource("ambience")
+volume_db = -26
+target_db = -29
+
+[node name="Slab" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.08, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art1")
+
+[node name="Surface" type="MeshInstance3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art2")
+material_override = SubResource("Mat_floor")
+
+[node name="WallNorth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, -3.16)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallNorth0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art3")
+
+[node name="Lower" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art4")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art7")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art8")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallWest0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-4.12, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallWest0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art9")
+
+[node name="Lower" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art13")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallSouth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, 3.16)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallSouth0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art15")
+
+[node name="Lower" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallEast0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.12, 0, -1.285)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallEast0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art17")
+
+[node name="Lower" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art19")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art20")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallEast1" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.12, 0, 2.795)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallEast1"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art21")
+
+[node name="Lower" type="MeshInstance3D" parent="WallEast1"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art22")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallEast1"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art23")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallEast1"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art24")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Door" parent="." instance=ExtResource("door")]
+position = Vector3(4.12, 0, 1.51)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="BedJoint1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.2, 0.097)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.4, 0.097)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.6, 0.097)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.8, 0.097)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 1, 0.097)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.856, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.196, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.536, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.876, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.216, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.556, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.104, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.764, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.424, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.084, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.744, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.404, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.691, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.031, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.371, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.711, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.051, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.391, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.269, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.929, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.589, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.249, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.909, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.569, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.856, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.196, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.536, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.876, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.216, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.556, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.104, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.764, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.424, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.084, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.744, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.404, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.691, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.031, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.371, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.711, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.051, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.391, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.269, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.929, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.589, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.249, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.909, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.569, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.856, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.196, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.536, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.876, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.216, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.556, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.104, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.764, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.424, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.084, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.744, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.404, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.691, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-3.031, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.371, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_3" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.711, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_4" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.051, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_5" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.391, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_6" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.269, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_7" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0.929, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_8" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.589, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_9" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.249, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_10" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.909, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_11" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(3.569, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.2, 0.097)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.4, 0.097)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.6, 0.097)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.8, 0.097)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="BedJoint5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 1, 0.097)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.896, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.236, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.576, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.916, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.256, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.404, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.064, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.724, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint0_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.384, 0.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.731, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.071, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.411, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.751, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.091, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.569, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.229, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.889, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint1_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.549, 0.3, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.896, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.236, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.576, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.916, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.256, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.404, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.064, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.724, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint2_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.384, 0.5, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.731, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.071, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.411, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.751, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.091, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.569, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.229, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.889, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint3_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.549, 0.7, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.896, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.236, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.576, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.916, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.256, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.404, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.064, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.724, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint4_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.384, 0.9, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.731, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.071, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.411, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_3" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.751, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_4" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-0.091, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_5" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0.569, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_6" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.229, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_7" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(1.889, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="HeadJoint5_8" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(2.549, 1.1, 0.097)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_tile_gap")
+cast_shadow = 0
+
+[node name="ClerestoryFrame" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.6, 2.24, 0.101)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_skirt")
+
+[node name="ClerestoryPane0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.4667, 2.24, 0.163)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="ClerestoryHorizon0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-2.4667, 2.087, 0.171)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="ClerestoryPane1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.6, 2.24, 0.163)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="ClerestoryHorizon1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.6, 2.087, 0.171)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="ClerestoryPane2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.7333, 2.24, 0.163)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="ClerestoryHorizon2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-0.7333, 2.087, 0.171)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="ClerestorySill" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.6, 1.912, 0.181)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_trim")
+
+[node name="HighPaneFrame" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.11, 2.32, 0.101)
+mesh = SubResource("BoxMesh_art32")
+material_override = SubResource("Mat_skirt")
+
+[node name="HighPanePane0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.4633, 2.32, 0.163)
+mesh = SubResource("BoxMesh_art33")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="HighPaneHorizon0" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(1.4633, 2.203, 0.171)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="HighPanePane1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.11, 2.32, 0.163)
+mesh = SubResource("BoxMesh_art33")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="HighPaneHorizon1" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.11, 2.203, 0.171)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="HighPanePane2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.7567, 2.32, 0.163)
+mesh = SubResource("BoxMesh_art33")
+material_override = SubResource("Mat_sky")
+cast_shadow = 0
+
+[node name="HighPaneHorizon2" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.7567, 2.203, 0.171)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="HighPaneSill" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(2.11, 2.052, 0.181)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_trim")
+
+[node name="TileRow0" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, -2.49)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow1" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, -1.66)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow2" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, -0.83)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow3" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, 0)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow4" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, 0.83)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow5" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, 1.66)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileRow6" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.002, 2.49)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn0" type="MeshInstance3D" parent="."]
+position = Vector3(-3.35, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn1" type="MeshInstance3D" parent="."]
+position = Vector3(-2.51, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn2" type="MeshInstance3D" parent="."]
+position = Vector3(-1.67, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn3" type="MeshInstance3D" parent="."]
+position = Vector3(-0.83, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn4" type="MeshInstance3D" parent="."]
+position = Vector3(0.01, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn5" type="MeshInstance3D" parent="."]
+position = Vector3(0.85, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn6" type="MeshInstance3D" parent="."]
+position = Vector3(1.69, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn7" type="MeshInstance3D" parent="."]
+position = Vector3(2.53, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="TileColumn8" type="MeshInstance3D" parent="."]
+position = Vector3(3.37, 0.002, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_floor_grid")
+cast_shadow = 0
+
+[node name="StripWest" type="MeshInstance3D" parent="."]
+position = Vector3(-2.72, 0.005, 0)
+mesh = SubResource("BoxMesh_art38")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="StripInner" type="MeshInstance3D" parent="."]
+position = Vector3(-2.54, 0.005, 0)
+mesh = SubResource("BoxMesh_art39")
+material_override = SubResource("Mat_repair")
+cast_shadow = 0
+
+[node name="Mirror" type="Node3D" parent="WallWest0"]
+position = Vector3(0.81, 1.66, 0.12)
+
+[node name="Frame" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art40")
+material_override = SubResource("Mat_edge")
+
+[node name="Silver" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0, 0, 0.037)
+mesh = SubResource("BoxMesh_art41")
+material_override = SubResource("Mat_mirror")
+cast_shadow = 0
+
+[node name="Light0" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(-1.01, -0.048, 0.05)
+mesh = SubResource("BoxMesh_art42")
+material_override = SubResource("Mat_mirror_light")
+cast_shadow = 0
+
+[node name="Light1" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(-0.14, -0.048, 0.05)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="Light2" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0.88, -0.048, 0.05)
+mesh = SubResource("BoxMesh_art44")
+material_override = SubResource("Mat_mirror_light")
+cast_shadow = 0
+
+[node name="Frost" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0, 0.289, 0.05)
+mesh = SubResource("BoxMesh_art45")
+material_override = SubResource("Mat_sky_low")
+cast_shadow = 0
+
+[node name="Join" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0.127, 0, 0.054)
+mesh = SubResource("BoxMesh_art46")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="MirrorClip0" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(-1.52, -0.32, 0.064)
+mesh = SubResource("BoxMesh_art47")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="MirrorClip1" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(0.127, -0.32, 0.064)
+mesh = SubResource("BoxMesh_art47")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="MirrorClip2" type="MeshInstance3D" parent="WallWest0/Mirror"]
+position = Vector3(1.52, -0.32, 0.064)
+mesh = SubResource("BoxMesh_art47")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Fittings" parent="." instance=ExtResource("wash_fittings")]
+
+[node name="DampEdges" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = SubResource("ArrayMesh_art48")
+material_override = SubResource("Mat_water_edge")
+cast_shadow = 0
+
+[node name="PooledWater" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = SubResource("ArrayMesh_art49")
+material_override = SubResource("Mat_wet")
+cast_shadow = 0
+
+[node name="PeelingPlaster" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("ArrayMesh_art50")
+material_override = SubResource("Mat_peel")
+cast_shadow = 0
+
+[node name="RustUnderPipes" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("ArrayMesh_art51")
+material_override = SubResource("Mat_old_rust")
+cast_shadow = 0
+
+[node name="Discard0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.14, 0.013, -2.28)
+mesh = SubResource("BoxMesh_art52")
+material_override = SubResource("Mat_discard")
+rotation_degrees = Vector3(0, -9, 0)
+cast_shadow = 0
+
+[node name="Fold0" type="MeshInstance3D" parent="."]
+position = Vector3(-2.093, 0.018, -2.263)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, -18, 6)
+cast_shadow = 0
+
+[node name="Discard1" type="MeshInstance3D" parent="."]
+position = Vector3(-0.97, 0.013, -2.68)
+mesh = SubResource("BoxMesh_art54")
+material_override = SubResource("Mat_discard")
+rotation_degrees = Vector3(0, 32, 0)
+cast_shadow = 0
+
+[node name="Fold1" type="MeshInstance3D" parent="."]
+position = Vector3(-0.923, 0.018, -2.663)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, 23, 6)
+cast_shadow = 0
+
+[node name="Discard2" type="MeshInstance3D" parent="."]
+position = Vector3(1.16, 0.013, -0.31)
+mesh = SubResource("BoxMesh_art52")
+material_override = SubResource("Mat_discard")
+rotation_degrees = Vector3(0, 47, 0)
+cast_shadow = 0
+
+[node name="Fold2" type="MeshInstance3D" parent="."]
+position = Vector3(1.207, 0.018, -0.293)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, 38, 6)
+cast_shadow = 0
+
+[node name="Discard3" type="MeshInstance3D" parent="."]
+position = Vector3(2.74, 0.013, 2.81)
+mesh = SubResource("BoxMesh_art54")
+material_override = SubResource("Mat_discard")
+rotation_degrees = Vector3(0, -5, 0)
+cast_shadow = 0
+
+[node name="Fold3" type="MeshInstance3D" parent="."]
+position = Vector3(2.787, 0.018, 2.827)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, -14, 6)
+cast_shadow = 0
+
+[node name="Discard4" type="MeshInstance3D" parent="."]
+position = Vector3(3.56, 0.013, 1.88)
+mesh = SubResource("BoxMesh_art52")
+material_override = SubResource("Mat_discard")
+rotation_degrees = Vector3(0, 25, 0)
+cast_shadow = 0
+
+[node name="Fold4" type="MeshInstance3D" parent="."]
+position = Vector3(3.607, 0.018, 1.897)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(0, 16, 6)
+cast_shadow = 0
+
+[node name="FlyClouds" type="Node3D" parent="."]
+
+[node name="Cloud0" type="MultiMeshInstance3D" parent="FlyClouds"]
+position = Vector3(-2.74, 1.24, -1.73)
+multimesh = SubResource("MultiMesh_art56")
+material_override = SubResource("Mat_flies")
+cast_shadow = 0
+
+[node name="Cloud1" type="MultiMeshInstance3D" parent="FlyClouds"]
+position = Vector3(-1.7, 0.96, -2.49)
+multimesh = SubResource("MultiMesh_art57")
+material_override = SubResource("Mat_flies")
+cast_shadow = 0
+
+[node name="Cloud2" type="MultiMeshInstance3D" parent="FlyClouds"]
+position = Vector3(0.18, 0.69, -0.94)
+multimesh = SubResource("MultiMesh_art58")
+material_override = SubResource("Mat_flies")
+cast_shadow = 0
+
+[node name="FloorDrain" type="Node3D" parent="."]
+position = Vector3(-0.89, 0.004, 0.84)
+
+[node name="FrameX0" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(-0.137, 0.004, 0)
+mesh = SubResource("BoxMesh_art59")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="FrameZ0" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0, 0.004, -0.131)
+mesh = SubResource("BoxMesh_art60")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="FrameX1" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0.137, 0.004, 0)
+mesh = SubResource("BoxMesh_art59")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="FrameZ1" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0, 0.004, 0.131)
+mesh = SubResource("BoxMesh_art60")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="GrateCup" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0, 0.005, 0)
+mesh = SubResource("CylinderMesh_art61")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="GrateRing" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0, 0.015, 0)
+mesh = SubResource("ArrayMesh_art62")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="GrateBridge0" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(-0.055, 0.013, 0)
+mesh = SubResource("BoxMesh_art63")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="GrateBridge1" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0, 0.013, 0)
+mesh = SubResource("BoxMesh_art64")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="GrateBridge2" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(0.055, 0.013, 0)
+mesh = SubResource("BoxMesh_art63")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Patch" type="MeshInstance3D" parent="FloorDrain"]
+position = Vector3(-0.196, 0.0036, 0.168)
+mesh = SubResource("BoxMesh_art65")
+material_override = SubResource("Mat_repair")
+cast_shadow = 0
+
+[node name="ServicePipe" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 1.17, 0.203)
+mesh = SubResource("CylinderMesh_art66")
+material_override = SubResource("Mat_valve")
+
+[node name="Sleeve0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 0.22, 0.203)
+mesh = SubResource("CylinderMesh_art67")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Saddle0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 0.22, 0.137)
+mesh = SubResource("BoxMesh_art68")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Sleeve1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 0.94, 0.203)
+mesh = SubResource("CylinderMesh_art67")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Saddle1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 0.94, 0.137)
+mesh = SubResource("BoxMesh_art68")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Sleeve2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 1.87, 0.203)
+mesh = SubResource("CylinderMesh_art67")
+material_override = SubResource("Mat_steel")
+cast_shadow = 0
+
+[node name="Saddle2" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.65, 1.87, 0.137)
+mesh = SubResource("BoxMesh_art68")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="ReplacedTile" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.19, 0.706, 0.101)
+mesh = SubResource("BoxMesh_art69")
+material_override = SubResource("Mat_repair")
+cast_shadow = 0
+
+[node name="AccessCover" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.11, 1.385, 0.102)
+mesh = SubResource("BoxMesh_art70")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Fastener0" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-2.24, 1.483, 0.125)
+mesh = SubResource("CylinderMesh_art71")
+material_override = SubResource("Mat_steel")
+rotation_degrees = Vector3(90, 0, 0)
+cast_shadow = 0
+
+[node name="Fastener1" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(-1.98, 1.483, 0.125)
+mesh = SubResource("CylinderMesh_art71")
+material_override = SubResource("Mat_steel")
+rotation_degrees = Vector3(90, 0, 0)
+cast_shadow = 0
+
+[node name="LightTray" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.54, 2.575, 0.392)
+mesh = SubResource("BoxMesh_art72")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="WashTube" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(-1.54, 2.527, 0.392)
+mesh = SubResource("BoxMesh_art73")
+material_override = SubResource("Mat_ceramic")
+cast_shadow = 0
+
+[node name="WashLight" type="OmniLight3D" parent="."]
+position = Vector3(-3.27, 2.58, -1.89)
+light_color = Color(0.929, 0.941, 0.733, 1)
+light_energy = 0.52
+omni_range = 3.7
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(2.73, 0, 1.51)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToCorridor" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(3.64, 0.8, 1.51)
+interact_id = &"restroom_02_to_corridor"
+prompt_text = "Return to the corridor"
+prompt_key = "prompt.return_to_corridor"
+outline_paths = PackedStringArray("../../Door/Panel/Leaf", "../../Door/Panel/RoomLever")
+support_paths = PackedStringArray("../../Door/Panel")
+radius = 1.42
+destination_scene = "res://scenes/locations/corridor/corridor.tscn"
+destination_spawn = &"FromRestroom02"
+destination_id = &"corridor"
+
+[node name="BasinsLook" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(-2.97, 1.02, -0.98)
+interact_id = &"restroom_02_basins"
+inspection_id = &"restroom_02_basins"
+radius = 1.5
+outline_paths = PackedStringArray("../../Fittings/Basins/Bowl0", "../../Fittings/Basins/Bowl1", "../../Fittings/Basins/Tap0Spout", "../../Fittings/Basins/Tap1Spout", "../../WallWest0/Mirror/MirrorClip1")
+support_paths = PackedStringArray("../../Fittings/Basins/Apron", "../../WallWest0")
+camera_shot = SubResource("Shot_BasinsLook")
+
+[node name="LatchLook" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(2.18, 1.09, -0.68)
+interact_id = &"restroom_02_latch"
+inspection_id = &"restroom_02_latch"
+radius = 1.23
+outline_paths = PackedStringArray("../../Fittings/Cubicles/Closed/LatchPlate", "../../Fittings/Cubicles/Closed/Latch", "../../Fittings/Cubicles/Closed/Witness", "../../Fittings/Cubicles/Closed/Bolt")
+support_paths = PackedStringArray("../../Fittings/Cubicles/Closed")
+camera_shot = SubResource("Shot_LatchLook")
+
+[node name="DrainLook" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(-0.89, 0.15, 0.84)
+interact_id = &"restroom_02_drain"
+inspection_id = &"restroom_02_drain"
+radius = 1.12
+outline_paths = PackedStringArray("../../FloorDrain/GrateBridge1", "../../FloorDrain/GrateRing", "../../FloorDrain/FrameX0", "../../FloorDrain/Patch")
+support_paths = PackedStringArray("../../Slab")
+camera_shot = SubResource("Shot_DrainLook")

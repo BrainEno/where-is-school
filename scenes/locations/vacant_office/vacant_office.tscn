@@ -1,0 +1,924 @@
+[gd_scene load_steps=83 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="room_tone"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="Shader" path="res://assets/shaders/school/registration_paper.gdshader" id="paper_shader"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/vacant_office_door.tscn" id="door"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="font"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="tap_target"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
+
+[sub_resource type="ShaderMaterial" id="Mat_plaster"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.773, 0.741, 0.647, 1)
+shader_parameter/ink = Color(0.435, 0.424, 0.388, 1)
+shader_parameter/press = 3
+
+[sub_resource type="ShaderMaterial" id="Mat_floor"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.757, 0.722, 0.62, 1)
+shader_parameter/ink = Color(0.435, 0.424, 0.388, 1)
+shader_parameter/press = 3
+
+[sub_resource type="ShaderMaterial" id="Mat_ledger"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.878, 0.8, 0.631, 1)
+shader_parameter/ink = Color(0.439, 0.306, 0.278, 1)
+shader_parameter/press = 1
+
+[sub_resource type="ShaderMaterial" id="Mat_ruled"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.914, 0.867, 0.749, 1)
+shader_parameter/ink = Color(0.404, 0.494, 0.49, 1)
+shader_parameter/press = 1
+
+[sub_resource type="ShaderMaterial" id="Mat_cyanotype"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.263, 0.443, 0.537, 1)
+shader_parameter/ink = Color(0.659, 0.816, 0.8, 1)
+shader_parameter/press = 2
+
+[sub_resource type="ShaderMaterial" id="Mat_hatching"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.824, 0.792, 0.722, 1)
+shader_parameter/ink = Color(0.239, 0.231, 0.271, 1)
+shader_parameter/press = 3
+
+[sub_resource type="StandardMaterial3D" id="Mat_lower"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.435, 0.424, 0.388, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_trim"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.235, 0.243, 0.263, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_skirt"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.267, 0.235, 0.259, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood_light"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.686, 0.502, 0.329, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_red"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.706, 0.255, 0.204, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_navy"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.196, 0.239, 0.408, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_edge"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.169, 0.176, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_putty"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.655, 0.604, 0.463, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_paper"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.933, 0.863, 0.678, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_rules"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.549, 0.337, 0.282, 1)
+
+[sub_resource type="Environment" id="RoomEnvironment"]
+background_mode = 1
+background_color = Color(0.298, 0.275, 0.333, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.784, 0.737, 0.741, 1)
+ambient_light_energy = 0.73
+tonemap_mode = 2
+tonemap_exposure = 0.76
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
+size = Vector3(9.02, 0.16, 7.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art2"]
+size = Vector3(9.02, 0.16, 7.12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art3"]
+size = Vector3(8.8, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art4"]
+size = Vector3(8.8, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+size = Vector3(8.8, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+size = Vector3(8.8, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
+size = Vector3(8.8, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+size = Vector3(8.8, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art9"]
+size = Vector3(6.9, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(6.9, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art11"]
+size = Vector3(6.9, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art12"]
+size = Vector3(6.9, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art13"]
+size = Vector3(6.9, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art14"]
+size = Vector3(6.9, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art15"]
+size = Vector3(6.34, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art16"]
+size = Vector3(6.34, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art17"]
+size = Vector3(6.34, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art18"]
+size = Vector3(6.34, 0.118, 0.038)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art19"]
+size = Vector3(0.62, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art20"]
+size = Vector3(0.62, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art21"]
+size = Vector3(0.62, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art22"]
+size = Vector3(0.62, 0.118, 0.038)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art23"]
+size = Vector3(6.9, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art24"]
+size = Vector3(6.9, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art25"]
+size = Vector3(0.12, 0.22, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art26"]
+size = Vector3(2.47, 0.076, 1.15)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art27"]
+size = Vector3(2.35, 0.135, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art28"]
+size = Vector3(2.47, 0.79, 1.15)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art29"]
+size = Vector3(0.062, 0.72, 0.062)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art30"]
+size = Vector3(1.12, 0.046, 0.68)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art31"]
+_surfaces = [{
+"aabb": AABB(-0.4990674, 0.0000000, -0.3463279, 0.9922097, 0.0000000, 0.6928627),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAAwoX/vgAAAABR7Fa+qaCYvgAAAAACBoC+AAAAAAAAAAAAAAAAqaCYvgAAAAACBoC+bTnSvQAAAAAddoa+AAAAAAAAAAAAAAAAbTnSvQAAAAAddoa+6z+OPQAAAAC3hZ2+AAAAAAAAAAAAAAAA6z+OPQAAAAC3hZ2+pTCNPgAAAADfo56+AAAAAAAAAAAAAAAApTCNPgAAAADfo56+w3/XPgAAAADlUbG+AAAAAAAAAAAAAAAAw3/XPgAAAADlUbG+J338PgAAAAAALnA+AAAAAAAAAAAAAAAAJ338PgAAAAAALnA+Gg/JvgAAAAACbbE+AAAAAAAAAAAAAAAAGg/JvgAAAAACbbE+woX/vgAAAABR7Fa+/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art32"]
+size = Vector3(0.621, 0.024, 0.067)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art33"]
+size = Vector3(0.47, 0.72, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art34"]
+size = Vector3(0.449, 0.073, 0.455)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art35"]
+size = Vector3(0.442, 0.227, 0.071)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art36"]
+size = Vector3(0.04, 0.421, 0.044)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art37"]
+size = Vector3(0.04, 0.797, 0.044)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art38"]
+size = Vector3(1.24, 1.12, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art39"]
+size = Vector3(1.24, 1.12, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art40"]
+size = Vector3(1.164, 0.291, 0.033)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art41"]
+size = Vector3(0.162, 0.031, 0.041)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art42"]
+size = Vector3(0.16, 0.087, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art43"]
+size = Vector3(0.099, 0.014, 0.009)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art44"]
+_surfaces = [{
+"aabb": AABB(-1.0072013, -0.8296838, -0.0157817, 2.0043651, 1.6618751, 0.0936301),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9TkUcvx4/JL9nsxG8+euAv/5eDr+X1T08AAAAAAAAAADsUTg9yAVkvmiyKL/5bp89TkUcvx4/JL9nsxG8AAAAAAAAAADsUTg9m03uPREyQr9q+Cg9yAVkvmiyKL/5bp89AAAAAAAAAADsUTg918MGPyvZP7/gYA49m03uPREyQr9q+Cg9AAAAAAAAAADsUTg93vtPPyhmVL/i6FC518MGPyvZP7/gYA49AAAAAAAAAADsUTg9IEZ/P9TuHT+gSIG83vtPPyhmVL/i6FC5AAAAAAAAAADsUTg9op9Bv30KVT9x+x+8IEZ/P9TuHT+gSIG8AAAAAAAAAADsUTg9+euAv/5eDr+X1T08op9Bv30KVT9x+x+8IIOTc3cD/78gg5NzdwP/vyCDk3N3A/+/L2vJiwAAdcsva8mLAAB1yy9ryYsAAHXLs4xigdcM/7+zjGKB1wz/v7OMYoHXDP+//oGufwAC/7/+ga5/AAL/v/6Brn8AAv+/QI9MiXMQ/79Aj0yJcxD/v0CPTIlzEP+/GYdjgCAH/78Zh2OAIAf/vxmHY4AgB/+/hIEaiaMB/7+EgRqJowH/v4SBGomjAf+/dnrWggAA1MJ2etaCAADUwnZ61oIAANTC")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art45"]
+_surfaces = [{
+"aabb": AABB(-1.5593424, -0.9174342, -0.0190899, 3.1788208, 1.8943523, 0.1027611),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9N+Fbv/jcar8Qtj49iJjHvx7aZ79sYpy8AAAAAAAAAADsUTg9trlFvuZRWb+yP4w7N+Fbv/jcar8Qtj49AAAAAAAAAADsUTg9ZG7TPiohZL/TW6s9trlFvuZRWb+yP4w7AAAAAAAAAADsUTg9+/yNP2cKSb+vT888ZG7TPiohZL/TW6s9AAAAAAAAAADsUTg9EkvPP3v/UL8uGW89+/yNP2cKSb+vT888AAAAAAAAAADsUTg9WTTDP00Xej/nvJE9EkvPP3v/UL8uGW89AAAAAAAAAADsUTg9ZSXDv4MXVT8Cpo49WTTDP00Xej/nvJE9AAAAAAAAAADsUTg9iJjHvx7aZ79sYpy8ZSXDv4MXVT8Cpo49/nWMiQAAZsX+dYyJAABmxf51jIkAAGbF6IfIeGEI/7/oh8h4YQj/v+iHyHhhCP+/R3EBfgAAeMdHcQF+AAB4x0dxAX4AAHjHCIiOiJwI/78IiI6InAj/vwiIjoicCP+/QXhjcgAAVMRBeGNyAABUxEF4Y3IAAFTEeH4FfwAAxMB4fgV/AADEwHh+BX8AAMTAGoCBfBsA/78agIF8GwD/vxqAgXwbAP+/mn7feQAAusCaft95AAC6wJp+33kAALrA")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art46"]
+_surfaces = [{
+"aabb": AABB(-1.4313747, -0.8768964, -0.0220340, 2.8449409, 1.7508480, 0.0994164),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg97OpZv1JKD7+fgLS8STe3v28F4b6nfqA7AAAAAAAAAADsUTg9N12TvjQQHb8itFo97OpZv1JKD7+fgLS8AAAAAAAAAADsUTg9bFhWPsbrPb/wrP27N12TvjQQHb8itFo9AAAAAAAAAADsUTg9sr5NPwaxRb+wep49bFhWPsbrPb/wrP27AAAAAAAAAADsUTg9S4ecP0l8YL97n5A9sr5NPwaxRb+wep49AAAAAAAAAADsUTg9ve+0P6l+/z7/QZ+7S4ecP0l8YL97n5A9AAAAAAAAAADsUTg9PSGSv0q7Xz81Ki88ve+0P6l+/z7/QZ+7AAAAAAAAAADsUTg9STe3v28F4b6nfqA7PSGSv0q7Xz81Ki88z4EKcBEC/7/PgQpwEQL/v8+BCnARAv+/d3LOhwAANMd3cs6HAAA0x3dyzocAADTHiIyje/oM/7+IjKN7+gz/v4iMo3v6DP+/43CGdAAAS8jjcIZ0AABLyONwhnQAAEvIH4QaiXEE/78fhBqJcQT/vx+EGolxBP+/AIJJhhsC/78AgkmGGwL/vwCCSYYbAv+/v4H2htkB/7+/gfaG2QH/v7+B9obZAf+/cnw7gAAAxsFyfDuAAADGwXJ8O4AAAMbB")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art47"]
+_surfaces = [{
+"aabb": AABB(-0.8175826, -0.4878509, -0.0118170, 1.6219149, 0.9786800, 0.1046539),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9HrXxvghx0b4Vm288GE1Rv1XVu75qwx89AAAAAAAAAADsUTg9S98OvsjM0b5BIb49HrXxvghx0b4Vm288AAAAAAAAAADsUTg9n4ghPkKc7L6VAok8S98OvsjM0b5BIb49AAAAAAAAAADsUTg9IOABP+xW5L5AnEG8n4ghPkKc7L6VAok8AAAAAAAAAADsUTg9LgBCP5jH+b6FiL08IOABP+xW5L5AnEG8AAAAAAAAAADsUTg9uehNP+TIzj54vxG8LgBCP5jH+b6FiL08AAAAAAAAAADsUTg9isg1v/RN+z7eiZw8uehNP+TIzj54vxG8AAAAAAAAAADsUTg9GE1Rv1XVu75qwx89isg1v/RN+z7eiZw8y4VTcYsG/7/LhVNxiwb/v8uFU3GLBv+/AWuVkQAAKswBa5WRAAAqzAFrlZEAACrM6ZnEgn0a/7/pmcSCfRr/v+mZxIJ9Gv+/iYk8fNMJ/7+JiTx80wn/v4mJPHzTCf+/nm/bYgAAmsqeb9tiAACayp5v22IAAJrK8IXugyAG/7/whe6DIAb/v/CF7oMgBv+/tIL+ie8C/7+0gv6J7wL/v7SC/onvAv+/sX0hgwAALcGxfSGDAAAtwbF9IYMAAC3B")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art48"]
+_surfaces = [{
+"aabb": AABB(-0.7208442, -0.6808228, -0.0193443, 1.4825070, 1.4118973, 0.0931816),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9YYOlvherLL/BipA8T94hv2dKLr9RyCi8AAAAAAAAAADsUTg9qmQMvdOGHL8k+XY9YYOlvherLL/BipA8AAAAAAAAAADsUTg966lwPi7+IL+uwJY9qmQMvdOGHL8k+XY9AAAAAAAAAADsUTg9PgQJP2jbCb/ad56866lwPi7+IL+uwJY9AAAAAAAAAADsUTg9VvxCP6PMDL9xC/c8PgQJP2jbCb/ad568AAAAAAAAAADsUTg9nekcP7QnOz8x8IC8VvxCP6PMDL9xC/c8AAAAAAAAAADsUTg9Pok4v3Y9ED8KOJc9nekcP7QnOz8x8IC8AAAAAAAAAADsUTg9T94hv2dKLr9RyCi8Pok4v3Y9ED8KOJc9Z3VTgAAATsVndVOAAABOxWd1U4AAAE7FUG+ggwAAlchQb6CDAACVyFBvoIMAAJXIU3pLgwAA6MJTekuDAADowlN6S4MAAOjCIZgkjeUa/78hmCSN5Rr/vyGYJI3lGv+/92x4YwAAPsz3bHhjAAA+zPdseGMAAD7MzoXghAkG/7/OheCECQb/v86F4IQJBv+/a4eAg6EH/79rh4CDoQf/v2uHgIOhB/+/Y37idwAA28BjfuJ3AADbwGN+4ncAANvA")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art49"]
+_surfaces = [{
+"aabb": AABB(-1.0050697, 0.0000000, -1.1416245, 2.0382339, 0.0000000, 2.3480878),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAAfQ4KvgAAAADAIJK/f9cNPgAAAABFWoW/AAAAAAAAAAAAAAAAf9cNPgAAAABFWoW/4TS3PgAAAAC/SF6/AAAAAAAAAAAAAAAA4TS3PgAAAAC/SF6/e1EcPwAAAACPRVC/AAAAAAAAAAAAAAAAe1EcPwAAAACPRVC/O5dSPwAAAACNMBm/AAAAAAAAAAAAAAAAO5dSPwAAAACNMBm/uT6EPwAAAAAORAy/AAAAAAAAAAAAAAAAuT6EPwAAAAAORAy/OB+vPQAAAABkbZo/AAAAAAAAAAAAAAAAOB+vPQAAAABkbZo/IKaAvwAAAABeKxQ/AAAAAAAAAAAAAAAAIKaAvwAAAABeKxQ/fQ4KvgAAAADAIJK//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art50"]
+_surfaces = [{
+"aabb": AABB(-0.8761661, 0.0000000, -1.0949246, 1.7858012, 0.0000000, 2.2629060),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAAR0qzvgAAAAB9Joy/hKWAvQAAAAAfSYa/AAAAAAAAAAAAAAAAhKWAvQAAAAAfSYa/mwY+PgAAAADNrWu/AAAAAAAAAAAAAAAAmwY+PgAAAADNrWu/jWnjPgAAAACpRWq/AAAAAAAAAAAAAAAAjWnjPgAAAACpRWq/230xPwAAAADIjj6/AAAAAAAAAAAAAAAA230xPwAAAADIjj6/2t1oPwAAAADkJzy/AAAAAAAAAAAAAAAA2t1oPwAAAADkJzy/MdegPgAAAABqgJU/AAAAAAAAAAAAAAAAMdegPgAAAABqgJU/a0xgvwAAAAC3ikI/AAAAAAAAAAAAAAAAa0xgvwAAAAC3ikI/R0qzvgAAAAB9Joy//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art51"]
+_surfaces = [{
+"aabb": AABB(-0.7150671, 0.0000000, -1.0178457, 1.4677482, 0.0000000, 2.1044269),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAAYHsNvwAAAADZBYG/9w+GvgAAAADESIK/AAAAAAAAAAAAAAAA9w+GvgAAAADESIK/3fzUOwAAAADaaXC/AAAAAAAAAAAAAAAA3fzUOwAAAADaaXC/59SFPgAAAAD+qXu/AAAAAAAAAAAAAAAA59SFPgAAAAD+qXu/2N4JPwAAAAB17Fy/AAAAAAAAAAAAAAAA2N4JPwAAAAB17Fy/tq9APwAAAADFIWW/AAAAAAAAAAAAAAAAtq9APwAAAADFIWW/yf4HPwAAAAAYFYs/AAAAAAAAAAAAAAAAyf4HPwAAAAAYFYs/ow43vwAAAAAIxGk/AAAAAAAAAAAAAAAAow43vwAAAAAIxGk/YHsNvwAAAADZBYG//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art52"]
+_surfaces = [{
+"aabb": AABB(-0.7348436, 0.0000000, -1.0222204, 1.4636443, 0.0000000, 2.0550320),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAAtR48vwAAAAADT2K/cQnnvgAAAACv/XK/AAAAAAAAAAAAAAAAcQnnvgAAAACv/XK/afUwvgAAAABcUGy/AAAAAAAAAAAAAAAAafUwvgAAAABcUGy/RFWNPQAAAAB654G/AAAAAAAAAAAAAAAARFWNPQAAAAB654G/y126PgAAAADtK3O/AAAAAAAAAAAAAAAAy126PgAAAADtK3O//WwRPwAAAAAe2IK/AAAAAAAAAAAAAAAA/WwRPwAAAAAe2IK/r5I6PwAAAADhGnc/AAAAAAAAAAAAAAAAr5I6PwAAAADhGnc/3BYHvwAAAAAsM4Q/AAAAAAAAAAAAAAAA3BYHvwAAAAAsM4Q/tR48vwAAAAADT2K//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art53"]
+size = Vector3(0.038, 1.08, 0.018)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art54"]
+size = Vector3(2.24, 0.039, 0.018)
+
+[sub_resource type="Resource" id="Shot_Observe"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(0, 0, 0)
+subject_mix = 0.72
+distance_scale = 0.58
+height_scale = 0.91
+yaw_degrees = 13
+fov = 47
+glide_seconds = 0.68
+
+[node name="VacantOffice" type="Node3D"]
+script = ExtResource("location")
+location_id = &"vacant_office"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("RoomEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-53, -40, 0)
+light_color = Color(1, 0.863, 0.663, 1)
+light_energy = 0.84
+shadow_enabled = true
+directional_shadow_max_distance = 22
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("room_tone")
+script = ExtResource("ambience")
+volume_db = -26
+target_db = -29
+
+[node name="Slab" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.08, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art1")
+
+[node name="Surface" type="MeshInstance3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art2")
+material_override = SubResource("Mat_floor")
+
+[node name="WallNorth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, -3.45)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallNorth0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art3")
+
+[node name="Lower" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art4")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art7")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art8")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallWest0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-4.4, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallWest0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art9")
+
+[node name="Lower" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art13")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallSouth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-1.23, 0, 3.45)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallSouth0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art15")
+
+[node name="Lower" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art17")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallSouth1" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.09, 0, 3.45)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallSouth1"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art19")
+
+[node name="Lower" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art20")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art21")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art22")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallEast0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.4, 0, 0)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallEast0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art23")
+
+[node name="Lower" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art24")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Door" parent="." instance=ExtResource("door")]
+position = Vector3(2.86, 0, 3.45)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="PaperAssembly" type="Node3D" parent="."]
+
+[node name="FloorComposition" type="Node3D" parent="."]
+
+[node name="RoomSign" type="Label3D" parent="WallNorth0"]
+position = Vector3(1.408, 2.662, 0.134)
+rotation_degrees = Vector3(0, 0, 0)
+text = "STAFF WORKROOM"
+font = ExtResource("font")
+font_size = 54
+pixel_size = 0.00237
+outline_size = 0
+modulate = Color(0.91, 0.843, 0.675, 1)
+
+[node name="SwitchPlate" type="MeshInstance3D" parent="."]
+position = Vector3(1.72, 1.15, 3.321)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WorkLamp" type="OmniLight3D" parent="."]
+position = Vector3(-2.83, 2.55, -1.92)
+light_color = Color(1, 0.898, 0.702, 1)
+light_energy = 0.46
+omni_range = 4.2
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(2.86, 0, 2.18)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToCorridor" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(2.86, 0.84, 3.05)
+interact_id = &"vacant_office_to_corridor"
+prompt_text = "Return to the corridor"
+prompt_key = "prompt.return_to_corridor"
+outline_paths = PackedStringArray("../../Door/Panel/Leaf", "../../Door/Panel/RoomLever")
+support_paths = PackedStringArray("../../Door/Panel")
+radius = 1.42
+destination_scene = "res://scenes/locations/corridor/corridor.tscn"
+destination_spawn = &"FromVacantOffice"
+destination_id = &"corridor"
+
+[node name="EmptyDesk" type="StaticBody3D" parent="."]
+position = Vector3(0.89, 0, -1.71)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Top" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(0, 0.752, 0)
+mesh = SubResource("BoxMesh_art26")
+material_override = SubResource("Mat_wood_light")
+
+[node name="Apron" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(0, 0.656, -0.391)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Body" type="CollisionShape3D" parent="EmptyDesk"]
+position = Vector3(0, 0.395, 0)
+shape = SubResource("BoxShape3D_art28")
+
+[node name="Foot0" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(-1.125, 0.36, -0.48)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot1" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(-1.125, 0.36, 0.48)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot2" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(1.125, 0.36, -0.48)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot3" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(1.125, 0.36, 0.48)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_trim")
+
+[node name="Blotter" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(0.19, 0.814, 0.02)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_hatching")
+
+[node name="Carbon" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(0.1, 0.846, 0.056)
+mesh = SubResource("ArrayMesh_art31")
+material_override = SubResource("Mat_ruled")
+cast_shadow = 0
+
+[node name="Ruler" type="MeshInstance3D" parent="EmptyDesk"]
+position = Vector3(0.42, 0.856, 0.225)
+mesh = SubResource("BoxMesh_art32")
+material_override = SubResource("Mat_red")
+rotation_degrees = Vector3(0, 17, 0)
+cast_shadow = 0
+
+[node name="VacantChair" type="StaticBody3D" parent="."]
+position = Vector3(0.48, 0, -2.87)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="SeatStop" type="CollisionShape3D" parent="VacantChair"]
+position = Vector3(0, 0.37, 0)
+shape = SubResource("BoxShape3D_art33")
+
+[node name="Seat" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(0, 0.431, 0)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_navy")
+
+[node name="Back" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(0, 0.763, -0.21)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_navy")
+rotation_degrees = Vector3(-7, 0, 0)
+
+[node name="Stile0" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(-0.179, 0.2105, 0.162)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile1" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(0.179, 0.2105, 0.162)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile2" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(-0.18, 0.3985, -0.197)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile3" type="MeshInstance3D" parent="VacantChair"]
+position = Vector3(0.18, 0.3985, -0.197)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_edge")
+
+[node name="VisitorSeat" type="StaticBody3D" parent="."]
+position = Vector3(-2.31, 0, -1.21)
+rotation_degrees = Vector3(0, 28, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="SeatStop" type="CollisionShape3D" parent="VisitorSeat"]
+position = Vector3(0, 0.37, 0)
+shape = SubResource("BoxShape3D_art33")
+
+[node name="Seat" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(0, 0.431, 0)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_putty")
+
+[node name="Back" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(0, 0.763, -0.21)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_putty")
+rotation_degrees = Vector3(-7, 0, 0)
+
+[node name="Stile0" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(-0.179, 0.2105, 0.162)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile1" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(0.179, 0.2105, 0.162)
+mesh = SubResource("BoxMesh_art36")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile2" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(-0.18, 0.3985, -0.197)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_edge")
+
+[node name="Stile3" type="MeshInstance3D" parent="VisitorSeat"]
+position = Vector3(0.18, 0.3985, -0.197)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_edge")
+
+[node name="EmptyPigeonhole" type="StaticBody3D" parent="."]
+position = Vector3(-3.2, 0.56, -2.96)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="EmptyPigeonhole"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art38")
+
+[node name="Surface" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art39")
+material_override = SubResource("Mat_trim")
+
+[node name="Front0" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, -0.31, 0.294)
+mesh = SubResource("BoxMesh_art40")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull0" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, -0.329, 0.322)
+mesh = SubResource("BoxMesh_art41")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card0" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3224, -0.276, 0.316)
+mesh = SubResource("BoxMesh_art42")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule0" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3348, -0.297, 0.323)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front1" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, 0.01, 0.294)
+mesh = SubResource("BoxMesh_art40")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull1" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, -0.009, 0.322)
+mesh = SubResource("BoxMesh_art41")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card1" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3224, 0.044, 0.316)
+mesh = SubResource("BoxMesh_art42")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule1" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3348, 0.023, 0.323)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front2" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, 0.33, 0.294)
+mesh = SubResource("BoxMesh_art40")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull2" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(0, 0.311, 0.322)
+mesh = SubResource("BoxMesh_art41")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card2" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3224, 0.364, 0.316)
+mesh = SubResource("BoxMesh_art42")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule2" type="MeshInstance3D" parent="EmptyPigeonhole"]
+position = Vector3(-0.3348, 0.343, 0.323)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="CarbonPull0" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(-2.85, 1.81, -3.336)
+mesh = SubResource("ArrayMesh_art44")
+material_override = SubResource("Mat_hatching")
+
+[node name="CarbonPull1" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(-1.09, 1.49, -3.315)
+mesh = SubResource("ArrayMesh_art45")
+material_override = SubResource("Mat_paper")
+
+[node name="CarbonPull2" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(0.35, 1.65, -3.294)
+mesh = SubResource("ArrayMesh_art46")
+material_override = SubResource("Mat_hatching")
+
+[node name="CarbonPull3" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(1.59, 2.124, -3.273)
+mesh = SubResource("ArrayMesh_art47")
+material_override = SubResource("Mat_ruled")
+
+[node name="CarbonPull4" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(3.21, 1.56, -3.252)
+mesh = SubResource("ArrayMesh_art48")
+material_override = SubResource("Mat_hatching")
+
+[node name="FloorPull0" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-2.32, 0.016, 0.169)
+mesh = SubResource("ArrayMesh_art49")
+material_override = SubResource("Mat_hatching")
+cast_shadow = 0
+
+[node name="FloorPull1" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-1.36, 0.017, -0.051)
+mesh = SubResource("ArrayMesh_art50")
+material_override = SubResource("Mat_hatching")
+cast_shadow = 0
+
+[node name="FloorPull2" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-0.4, 0.018, -0.271)
+mesh = SubResource("ArrayMesh_art51")
+material_override = SubResource("Mat_hatching")
+cast_shadow = 0
+
+[node name="FloorPull3" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(0.56, 0.019, -0.491)
+mesh = SubResource("ArrayMesh_art52")
+material_override = SubResource("Mat_hatching")
+cast_shadow = 0
+
+[node name="MissingCorner0" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(0.27, 1.76, -3.093)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_red")
+cast_shadow = 0
+
+[node name="MissingCorner1" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(2.51, 1.76, -3.093)
+mesh = SubResource("BoxMesh_art53")
+material_override = SubResource("Mat_red")
+cast_shadow = 0
+
+[node name="MissingCorner2" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(1.39, 1.22, -3.093)
+mesh = SubResource("BoxMesh_art54")
+material_override = SubResource("Mat_red")
+cast_shadow = 0
+
+[node name="MissingCorner3" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(1.39, 2.3, -3.093)
+mesh = SubResource("BoxMesh_art54")
+material_override = SubResource("Mat_red")
+cast_shadow = 0
+
+[node name="Observe" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(1.04, 0.816, -1.34)
+interact_id = &"vacant_office_detail"
+inspection_id = &"vacant_office_detail"
+radius = 1.34
+outline_paths = PackedStringArray("../../EmptyDesk/Blotter", "../../EmptyDesk/Ruler")
+support_paths = PackedStringArray("../../EmptyDesk")
+camera_shot = SubResource("Shot_Observe")

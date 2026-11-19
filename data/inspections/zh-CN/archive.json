@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "archive_detail": {
+    "title": "错栏的索引簿",
+    "prompt": "检视错栏的索引簿",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "上联比下面的复写件多出一栏，两个针孔却能重合。墙上那些放大的色块，也错开了同样的距离。",
+    "repeat_text": "上联比下面的复写件多出一栏，两个针孔却能重合。墙上那些放大的色块，也错开了同样的距离。",
+    "record": {
+      "entry_id": "saw_archive_register",
+      "source": "observed",
+      "text": "上联比下面的复写件多出一栏，两个针孔却能重合。墙上那些放大的色块，也错开了同样的距离。"
+    }
+  }
+}

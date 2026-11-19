@@ -31,6 +31,8 @@ const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const LOCATIONS: Array[String] = [
 	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory",
 	"staff_office", "restroom",
+	"archive", "plan_room", "projection_room", "computer_room", "vacant_office", "principal_office",
+	"restroom_02", "restroom_03",
 ]
 const FIXTURE_DIR := "user://location_fixtures"
 

@@ -251,6 +251,21 @@
     "journal.read_progress": "已读文字：{percent}%（{read} / {total}）",
     "journal.read_areas": "尚未读完的区域：{areas}",
     "journal.read_area_left": "{place}：还有 {count} 句",
-    "journal.read_areas_more": "另有 {count} 处"
+    "journal.read_areas_more": "另有 {count} 处",
+    "prompt.annex_align": "拨动校准片",
+    "prompt.enter_archive": "试试档案室的门",
+    "prompt.enter_plan_room": "试试图纸室的门",
+    "prompt.enter_projection_room": "试试投影准备室的门",
+    "prompt.enter_computer_room": "试试计算机教室的门",
+    "prompt.enter_vacant_office": "试试空办公室的门",
+    "prompt.enter_principal_office": "试试校长室的门",
+    "place.archive": "档案室",
+    "place.plan_room": "图纸室",
+    "place.projection_room": "投影准备室",
+    "place.computer_room": "计算机教室",
+    "place.vacant_office": "空办公室",
+    "place.principal_office": "校长室",
+    "place.restroom_02": "厕所（二楼）",
+    "place.restroom_03": "厕所（三楼）"
   }
 }

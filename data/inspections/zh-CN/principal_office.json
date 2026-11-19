@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "principal_office_detail": {
+    "title": "桌子与中轴",
+    "prompt": "检视桌子与中轴",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "几把椅子都望向桌角，不是桌子的正中。那片黄先碰到桌侧，暗色十字也没有指向真正的光。",
+    "repeat_text": "几把椅子都望向桌角，不是桌子的正中。那片黄先碰到桌侧，暗色十字也没有指向真正的光。",
+    "record": {
+      "entry_id": "saw_principal_office_register",
+      "source": "observed",
+      "text": "几把椅子都望向桌角，不是桌子的正中。那片黄先碰到桌侧，暗色十字也没有指向真正的光。"
+    }
+  }
+}

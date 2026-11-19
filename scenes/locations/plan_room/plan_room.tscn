@@ -1,0 +1,1086 @@
+[gd_scene load_steps=82 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="room_tone"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="Shader" path="res://assets/shaders/school/registration_paper.gdshader" id="paper_shader"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/plan_room_door.tscn" id="door"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="font"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="tap_target"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
+
+[sub_resource type="ShaderMaterial" id="Mat_plaster"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.529, 0.604, 0.608, 1)
+shader_parameter/ink = Color(0.212, 0.318, 0.357, 1)
+shader_parameter/press = 0
+
+[sub_resource type="ShaderMaterial" id="Mat_floor"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.227, 0.404, 0.478, 1)
+shader_parameter/ink = Color(0.212, 0.318, 0.357, 1)
+shader_parameter/press = 2
+
+[sub_resource type="ShaderMaterial" id="Mat_ledger"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.878, 0.8, 0.631, 1)
+shader_parameter/ink = Color(0.439, 0.306, 0.278, 1)
+shader_parameter/press = 1
+
+[sub_resource type="ShaderMaterial" id="Mat_ruled"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.914, 0.867, 0.749, 1)
+shader_parameter/ink = Color(0.404, 0.494, 0.49, 1)
+shader_parameter/press = 1
+
+[sub_resource type="ShaderMaterial" id="Mat_cyanotype"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.263, 0.443, 0.537, 1)
+shader_parameter/ink = Color(0.659, 0.816, 0.8, 1)
+shader_parameter/press = 2
+
+[sub_resource type="ShaderMaterial" id="Mat_hatching"]
+shader = ExtResource("paper_shader")
+shader_parameter/stock = Color(0.824, 0.792, 0.722, 1)
+shader_parameter/ink = Color(0.239, 0.231, 0.271, 1)
+shader_parameter/press = 3
+
+[sub_resource type="StandardMaterial3D" id="Mat_lower"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.212, 0.318, 0.357, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_trim"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.235, 0.243, 0.263, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_skirt"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.267, 0.235, 0.259, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_navy"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.196, 0.239, 0.408, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood_light"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.686, 0.502, 0.329, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_edge"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.169, 0.176, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_paper"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.933, 0.863, 0.678, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_rules"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.549, 0.337, 0.282, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_white"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.914, 0.882, 0.753, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ochre"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.875, 0.639, 0.263, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ink"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.157, 0.192, 0.259, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_brass"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.796, 0.655, 0.38, 1)
+
+[sub_resource type="Environment" id="RoomEnvironment"]
+background_mode = 1
+background_color = Color(0.188, 0.259, 0.325, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.784, 0.737, 0.741, 1)
+ambient_light_energy = 0.73
+tonemap_mode = 2
+tonemap_exposure = 0.76
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
+size = Vector3(9.02, 0.16, 7.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art2"]
+size = Vector3(9.02, 0.16, 7.12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art3"]
+size = Vector3(8.8, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art4"]
+size = Vector3(8.8, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+size = Vector3(8.8, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+size = Vector3(8.8, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
+size = Vector3(8.8, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+size = Vector3(8.8, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art9"]
+size = Vector3(6.9, 2.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(6.9, 1.2, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art11"]
+size = Vector3(6.9, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art12"]
+size = Vector3(6.9, 0.118, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art13"]
+size = Vector3(6.9, 1.62, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art14"]
+size = Vector3(6.9, 0.062, 0.043)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art15"]
+size = Vector3(6.34, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art16"]
+size = Vector3(6.34, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art17"]
+size = Vector3(6.34, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art18"]
+size = Vector3(6.34, 0.118, 0.038)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art19"]
+size = Vector3(0.62, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art20"]
+size = Vector3(0.62, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art21"]
+size = Vector3(0.62, 0.06, 0.216)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art22"]
+size = Vector3(0.62, 0.118, 0.038)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art23"]
+size = Vector3(6.9, 0.88, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art24"]
+size = Vector3(6.9, 0.818, 0.19)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art25"]
+size = Vector3(0.12, 0.22, 0.02)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art26"]
+size = Vector3(0.81, 1.13, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art27"]
+size = Vector3(0.81, 1.13, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art28"]
+size = Vector3(0.734, 0.2135, 0.033)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art29"]
+size = Vector3(0.162, 0.031, 0.041)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art30"]
+size = Vector3(0.16, 0.087, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art31"]
+size = Vector3(0.099, 0.014, 0.009)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_art32"]
+top_radius = 0.077
+bottom_radius = 0.077
+height = 0.64
+radial_segments = 10
+rings = 0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art33"]
+size = Vector3(0.81, 1.4, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art34"]
+size = Vector3(0.81, 1.4, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art35"]
+size = Vector3(0.734, 0.281, 0.033)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art36"]
+size = Vector3(0.81, 1.67, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art37"]
+size = Vector3(0.81, 1.67, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art38"]
+size = Vector3(0.734, 0.3485, 0.033)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art39"]
+_surfaces = [{
+"aabb": AABB(-2.0410719, -1.0023972, -0.0125764, 4.2065966, 2.0708675, 0.0800071),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9lGOMv2XsdL+Xukc9+kwBwI1OgL+WmEM9AAAAAAAAAADsUTg9BkljvkQWVr9bDU68lGOMv2XsdL+Xukc9AAAAAAAAAADsUTg9UA4UPwbnU79nxXo9BkljvkQWVr9bDU68AAAAAAAAAADsUTg9q/i+P/YzK79q0EI9UA4UPwbnU79nxXo9AAAAAAAAAADsUTg99ZcKQGZCKL8B32Q9q/i+P/YzK79q0EI9AAAAAAAAAADsUTg9BXf8P6LDiD8cGYo99ZcKQGZCKL8B32Q9AAAAAAAAAADsUTg97KACwNoxLj99xZA7BXf8P6LDiD8cGYo9AAAAAAAAAADsUTg9+kwBwI1OgL+WmEM97KACwNoxLj99xZA703+ygAAAFcDTf7KAAAAVwNN/soAAABXAAokYdsQJ/78CiRh2xAn/vwKJGHbECf+/qXX8egAAYMWpdfx6AABgxal1/HoAAGDFRIFNg00B/79EgU2DTQH/v0SBTYNNAf+/hH4sfQAAwMCEfix9AADAwIR+LH0AAMDAE38MfwAAdsATfwx/AAB2wBN/DH8AAHbA7H01gQAAC8HsfTWBAAALwex9NYEAAAvBmX4ogwAAt8CZfiiDAAC3wJl+KIMAALfA")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art40"]
+_surfaces = [{
+"aabb": AABB(-1.6365760, -0.7449336, -0.0112488, 3.2479832, 1.4842987, 0.0873599),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9EoJzvwQ80r6tlxU9U3vRv96Klb4e4Js9AAAAAAAAAADsUTg9mJmUvs6T877fTDi8EoJzvwQ80r6tlxU9AAAAAAAAAADsUTg93hGZPqTwGL/ebJg9mJmUvs6T877fTDi8AAAAAAAAAADsUTg9pol+P/4oJb+2Kci63hGZPqTwGL/ebJg9AAAAAAAAAADsUTg9ptO+P/izPr/AISM9pol+P/4oJb+2Kci6AAAAAAAAAADsUTg9l0LOP1karj5vG2I9ptO+P/izPr/AISM9AAAAAAAAAADsUTg9W6yyvwhHPT/QSyg9l0LOP1karj5vG2I9AAAAAAAAAADsUTg9U3vRv96Klb4e4Js9W6yyvwhHPT/QSyg9ToS2c8QE/79OhLZzxAT/v06EtnPEBP+/C4bNb+wG/78Lhs1v7Ab/vwuGzW/sBv+/mG8lfQAAYsiYbyV9AABiyJhvJX0AAGLIMIw/i14N/78wjD+LXg3/vzCMP4teDf+/VnMKZgAA78dWcwpmAADvx1ZzCmYAAO/HkX9DfgAAN8CRf0N+AAA3wJF/Q34AADfAUn9kfwAAVsBSf2R/AABWwFJ/ZH8AAFbAp4HFg7QB/7+ngcWDtAH/v6eBxYO0Af+/")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art41"]
+_surfaces = [{
+"aabb": AABB(-1.5088179, -0.8759573, -0.0186047, 2.9917513, 1.7589027, 0.1060498),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9LFldv3HqRL9dO/a78iDBvy3DM7/7aJi8AAAAAAAAAADsUTg9bdF7vgqUQr8Mbds8LFldv3HqRL9dO/a7AAAAAAAAAADsUTg9NiWePmbqWL+qG6w8bdF7vgqUQr8Mbds8AAAAAAAAAADsUTg9aW11PwV8Tr9lgls9NiWePmbqWL+qG6w8AAAAAAAAAADsUTg9yYq2P70+YL9jFrM9aW11PwV8Tr9lgls9AAAAAAAAAADsUTg9wtC9P6QhRT9fl9a6yYq2P70+YL9jFrM9AAAAAAAAAADsUTg9rjCrv7UIYj8sGDs9wtC9P6QhRT9fl9a6AAAAAAAAAADsUTg98iDBvy3DM7/7aJi8rjCrv7UIYj8sGDs9YX28egAAXMFhfbx6AABcwWF9vHoAAFzBUnlEfwAAWsNSeUR/AABaw1J5RH8AAFrDyIDFfM0A/7/IgMV8zQD/v8iAxXzNAP+/dXqpegAA4sJ1eql6AADiwnV6qXoAAOLCpXYKdgAAEcWldgp2AAARxaV2CnYAABHFaYCIhm8A/79pgIiGbwD/v2mAiIZvAP+/LoI2gz0C/78ugjaDPQL/vy6CNoM9Av+/C31uewAAh8ELfW57AACHwQt9bnsAAIfB")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art42"]
+_surfaces = [{
+"aabb": AABB(-0.7847703, -0.4958320, -0.0232999, 1.5600275, 0.9902962, 0.1154386),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAADsUTg9q4rvviFEpb5t58Q8teZIv79Fg77hlHs9AAAAAAAAAADsUTg9oKkjvprgs74zs7w9q4rvviFEpb5t58Q8AAAAAAAAAADsUTg9FavkPUBo2L7GjjU9oKkjvprgs74zs7w9AAAAAAAAAADsUTg9u5ffPs4a4L7HuKA9FavkPUBo2L7GjjU9AAAAAAAAAADsUTg9t2YqP7Dd/b73npe6u5ffPs4a4L7HuKA9AAAAAAAAAADsUTg9QXdGP9KhlD5v3768t2YqP7Dd/b73npe6AAAAAAAAAADsUTg9vwYfv2sq/T5PXJQ9QXdGP9KhlD5v3768AAAAAAAAAADsUTg9teZIv79Fg77hlHs9vwYfv2sq/T5PXJQ9H4igbXwJ/78fiKBtfAn/vx+IoG18Cf+/BW45lAAArMoFbjmUAACsygVuOZQAAKzKiJP+hFQU/7+Ik/6EVBT/v4iT/oRUFP+/AXSmfAAAJ8YBdKZ8AAAnxgF0pnwAACfGk55CozMq/7+TnkKjMyr/v5OeQqMzKv+/iInzga4J/7+IifOBrgn/v4iJ84GuCf+/hohRhNMI/7+GiFGE0wj/v4aIUYTTCP+/YIN4fXID/79gg3h9cgP/v2CDeH1yA/+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art43"]
+size = Vector3(0.053, 0.015, 5.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art44"]
+size = Vector3(2.13, 0.016, 0.059)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art45"]
+size = Vector3(2.66, 0.076, 1.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art46"]
+size = Vector3(2.54, 0.135, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art47"]
+size = Vector3(2.66, 0.88, 1.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art48"]
+size = Vector3(0.062, 0.81, 0.062)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art49"]
+size = Vector3(2.38, 0.043, 1.03)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art50"]
+_surfaces = [{
+"aabb": AABB(-0.7545155, 0.0000000, -0.4587994, 1.5531498, 0.0000000, 0.9456015),
+"format": 34359742471,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAAAAAAAAAAAAALqwyvwAAAADD5+q+uNS7vgAAAADG8Nq+AAAAAAAAAAAAAAAAuNS7vgAAAADG8Nq+7UZjvQAAAAAztrq+AAAAAAAAAAAAAAAA7UZjvQAAAAAztrq+6eVtPgAAAAA+wbO+AAAAAAAAAAAAAAAA6eVtPgAAAAA+wbO+u3gOPwAAAABQvoq+AAAAAAAAAAAAAAAAu3gOPwAAAABQvoq+THNMPwAAAACL7oO+AAAAAAAAAAAAAAAATHNMPwAAAACL7oO+8sItPwAAAAAfPvk+AAAAAAAAAAAAAAAA8sItPwAAAAAfPvk+7idBvwAAAABo24k+AAAAAAAAAAAAAAAA7idBvwAAAABo24k+LqwyvwAAAADD5+q+/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_art51"]
+size = Vector3(1.73, 0.026, 0.111)
+
+[sub_resource type="Resource" id="Shot_Observe"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(0, 0, -0.04)
+subject_mix = 0.72
+distance_scale = 0.62
+height_scale = 1.01
+yaw_degrees = 5
+fov = 51
+glide_seconds = 0.68
+
+[node name="PlanRoom" type="Node3D"]
+script = ExtResource("location")
+location_id = &"plan_room"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("RoomEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-53, -40, 0)
+light_color = Color(1, 0.863, 0.663, 1)
+light_energy = 0.84
+shadow_enabled = true
+directional_shadow_max_distance = 22
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("room_tone")
+script = ExtResource("ambience")
+volume_db = -26
+target_db = -29
+
+[node name="Slab" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.08, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art1")
+
+[node name="Surface" type="MeshInstance3D" parent="Slab"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art2")
+material_override = SubResource("Mat_floor")
+
+[node name="WallNorth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, -3.45)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallNorth0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art3")
+
+[node name="Lower" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art4")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art7")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallNorth0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art8")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallWest0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-4.4, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallWest0"]
+position = Vector3(0, 1.44, 0)
+shape = SubResource("BoxShape3D_art9")
+
+[node name="Lower" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 1.23, 0)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Plaster" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.07, 0)
+mesh = SubResource("BoxMesh_art13")
+material_override = SubResource("Mat_plaster")
+
+[node name="Rail" type="MeshInstance3D" parent="WallWest0"]
+position = Vector3(0, 2.803, 0.106)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WallSouth0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-1.23, 0, 3.45)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallSouth0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art15")
+
+[node name="Lower" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art17")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallSouth0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallSouth1" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.09, 0, 3.45)
+rotation_degrees = Vector3(0, 180, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallSouth1"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art19")
+
+[node name="Lower" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art20")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art21")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallSouth1"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art22")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="WallEast0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(4.4, 0, 0)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="WallEast0"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art23")
+
+[node name="Lower" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.409, 0)
+mesh = SubResource("BoxMesh_art24")
+material_override = SubResource("Mat_lower")
+
+[node name="Trim" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.848, 0)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Base" type="MeshInstance3D" parent="WallEast0"]
+position = Vector3(0, 0.059, 0.107)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_skirt")
+cast_shadow = 0
+
+[node name="Door" parent="." instance=ExtResource("door")]
+position = Vector3(2.86, 0, 3.45)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="PaperAssembly" type="Node3D" parent="."]
+
+[node name="FloorComposition" type="Node3D" parent="."]
+
+[node name="RoomSign" type="Label3D" parent="WallNorth0"]
+position = Vector3(1.408, 2.662, 0.134)
+rotation_degrees = Vector3(0, 0, 0)
+text = "PLAN ROOM"
+font = ExtResource("font")
+font_size = 54
+pixel_size = 0.00237
+outline_size = 0
+modulate = Color(0.91, 0.843, 0.675, 1)
+
+[node name="SwitchPlate" type="MeshInstance3D" parent="."]
+position = Vector3(1.72, 1.15, 3.321)
+mesh = SubResource("BoxMesh_art25")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="WorkLamp" type="OmniLight3D" parent="."]
+position = Vector3(-2.83, 2.55, -1.92)
+light_color = Color(1, 0.898, 0.702, 1)
+light_energy = 0.46
+omni_range = 4.2
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(2.86, 0, 2.18)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToCorridor" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(2.86, 0.84, 3.05)
+interact_id = &"plan_room_to_corridor"
+prompt_text = "Return to the corridor"
+prompt_key = "prompt.return_to_corridor"
+outline_paths = PackedStringArray("../../Door/Panel/Leaf", "../../Door/Panel/RoomLever")
+support_paths = PackedStringArray("../../Door/Panel")
+radius = 1.42
+destination_scene = "res://scenes/locations/corridor/corridor.tscn"
+destination_spawn = &"FromPlanRoom"
+destination_id = &"corridor"
+
+[node name="PlanFile0" type="StaticBody3D" parent="."]
+position = Vector3(-3.82, 0.565, -1.2)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="PlanFile0"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art26")
+
+[node name="Surface" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art27")
+material_override = SubResource("Mat_navy")
+
+[node name="Front0" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, -0.3538, 0.294)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull0" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, -0.3728, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card0" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2106, -0.3197, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule0" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2187, -0.3407, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front1" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, -0.1113, 0.294)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull1" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, -0.1303, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card1" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2106, -0.0773, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule1" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2187, -0.0983, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front2" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, 0.1312, 0.294)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull2" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, 0.1122, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card2" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2106, 0.1652, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule2" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2187, 0.1442, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front3" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, 0.3737, 0.294)
+mesh = SubResource("BoxMesh_art28")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull3" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0, 0.3547, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card3" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2106, 0.4077, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule3" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.2187, 0.3867, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Roll0" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(-0.13, 0.64, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="Roll1" type="MeshInstance3D" parent="PlanFile0"]
+position = Vector3(0.1, 0.64, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="PlanFile1" type="StaticBody3D" parent="."]
+position = Vector3(-3.54, 0.7, -2.82)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="PlanFile1"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art33")
+
+[node name="Surface" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art34")
+material_override = SubResource("Mat_navy")
+
+[node name="Front0" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, -0.455, 0.294)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull0" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, -0.474, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card0" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2106, -0.421, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule0" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2187, -0.442, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front1" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, -0.145, 0.294)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull1" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, -0.164, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card1" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2106, -0.111, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule1" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2187, -0.132, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front2" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, 0.165, 0.294)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull2" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, 0.146, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card2" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2106, 0.199, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule2" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2187, 0.178, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front3" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, 0.475, 0.294)
+mesh = SubResource("BoxMesh_art35")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull3" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0, 0.456, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card3" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2106, 0.509, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule3" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.2187, 0.488, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Roll0" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(-0.13, 0.76, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="Roll1" type="MeshInstance3D" parent="PlanFile1"]
+position = Vector3(0.1, 0.76, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="PlanFile2" type="StaticBody3D" parent="."]
+position = Vector3(3.68, 0.835, -2.71)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="PlanFile2"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art36")
+
+[node name="Surface" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("BoxMesh_art37")
+material_override = SubResource("Mat_navy")
+
+[node name="Front0" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, -0.5563, 0.294)
+mesh = SubResource("BoxMesh_art38")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull0" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, -0.5753, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card0" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2106, -0.5222, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule0" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2187, -0.5433, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front1" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, -0.1787, 0.294)
+mesh = SubResource("BoxMesh_art38")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull1" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, -0.1977, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card1" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2106, -0.1447, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule1" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2187, -0.1657, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front2" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, 0.1987, 0.294)
+mesh = SubResource("BoxMesh_art38")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull2" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, 0.1797, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card2" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2106, 0.2327, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule2" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2187, 0.2117, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Front3" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, 0.5763, 0.294)
+mesh = SubResource("BoxMesh_art38")
+material_override = SubResource("Mat_wood_light")
+cast_shadow = 0
+
+[node name="Pull3" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0, 0.5573, 0.322)
+mesh = SubResource("BoxMesh_art29")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="Card3" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2106, 0.6103, 0.316)
+mesh = SubResource("BoxMesh_art30")
+material_override = SubResource("Mat_paper")
+cast_shadow = 0
+
+[node name="Rule3" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.2187, 0.5893, 0.323)
+mesh = SubResource("BoxMesh_art31")
+material_override = SubResource("Mat_rules")
+cast_shadow = 0
+
+[node name="Roll0" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(-0.13, 0.88, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="Roll1" type="MeshInstance3D" parent="PlanFile2"]
+position = Vector3(0.1, 0.88, 0.08)
+mesh = SubResource("CylinderMesh_art32")
+material_override = SubResource("Mat_paper")
+rotation_degrees = Vector3(81, 13, -8)
+cast_shadow = 0
+
+[node name="PlanSection0" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(-1.04, 1.56, -3.31)
+mesh = SubResource("ArrayMesh_art39")
+material_override = SubResource("Mat_cyanotype")
+
+[node name="PlanSection1" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(0.31, 1.66, -3.289)
+mesh = SubResource("ArrayMesh_art40")
+material_override = SubResource("Mat_paper")
+
+[node name="PlanSection2" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(2.35, 2, -3.268)
+mesh = SubResource("ArrayMesh_art41")
+material_override = SubResource("Mat_cyanotype")
+
+[node name="PlanSection3" type="MeshInstance3D" parent="PaperAssembly"]
+position = Vector3(1.91, 1.88, -3.247)
+mesh = SubResource("ArrayMesh_art42")
+material_override = SubResource("Mat_ruled")
+
+[node name="SurveyLong0" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-1.65, 0.01, -0.48)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_white")
+rotation_degrees = Vector3(0, -11, 0)
+cast_shadow = 0
+
+[node name="SurveyReturn0" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-0.69, 0.014, 1.89)
+mesh = SubResource("BoxMesh_art44")
+material_override = SubResource("Mat_ochre")
+rotation_degrees = Vector3(0, 6, 0)
+cast_shadow = 0
+
+[node name="SurveyLong1" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-0.03, 0.01, -0.71)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_white")
+rotation_degrees = Vector3(0, -16, 0)
+cast_shadow = 0
+
+[node name="SurveyReturn1" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(-0.2, 0.014, 1.439)
+mesh = SubResource("BoxMesh_art44")
+material_override = SubResource("Mat_ochre")
+rotation_degrees = Vector3(0, 11, 0)
+cast_shadow = 0
+
+[node name="SurveyLong2" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(1.59, 0.01, -0.94)
+mesh = SubResource("BoxMesh_art43")
+material_override = SubResource("Mat_white")
+rotation_degrees = Vector3(0, -21, 0)
+cast_shadow = 0
+
+[node name="SurveyReturn2" type="MeshInstance3D" parent="FloorComposition"]
+position = Vector3(0.29, 0.014, 0.988)
+mesh = SubResource("BoxMesh_art44")
+material_override = SubResource("Mat_ochre")
+rotation_degrees = Vector3(0, 16, 0)
+cast_shadow = 0
+
+[node name="TracingTable" type="StaticBody3D" parent="."]
+position = Vector3(0.3, 0, -1.49)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Top" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(0, 0.842, 0)
+mesh = SubResource("BoxMesh_art45")
+material_override = SubResource("Mat_ink")
+
+[node name="Apron" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(0, 0.746, -0.4522)
+mesh = SubResource("BoxMesh_art46")
+material_override = SubResource("Mat_trim")
+cast_shadow = 0
+
+[node name="Body" type="CollisionShape3D" parent="TracingTable"]
+position = Vector3(0, 0.44, 0)
+shape = SubResource("BoxShape3D_art47")
+
+[node name="Foot0" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(-1.22, 0.405, -0.57)
+mesh = SubResource("BoxMesh_art48")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot1" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(-1.22, 0.405, 0.57)
+mesh = SubResource("BoxMesh_art48")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot2" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(1.22, 0.405, -0.57)
+mesh = SubResource("BoxMesh_art48")
+material_override = SubResource("Mat_trim")
+
+[node name="Foot3" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(1.22, 0.405, 0.57)
+mesh = SubResource("BoxMesh_art48")
+material_override = SubResource("Mat_trim")
+
+[node name="Layout" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(0.05, 0.902, 0.033)
+mesh = SubResource("BoxMesh_art49")
+material_override = SubResource("Mat_cyanotype")
+
+[node name="TracingOverlay" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(0.32, 0.932, 0.048)
+mesh = SubResource("ArrayMesh_art50")
+material_override = SubResource("Mat_ruled")
+cast_shadow = 0
+
+[node name="ParallelRule" type="MeshInstance3D" parent="TracingTable"]
+position = Vector3(0.11, 0.959, 0.262)
+mesh = SubResource("BoxMesh_art51")
+material_override = SubResource("Mat_brass")
+rotation_degrees = Vector3(0, -8, 0)
+cast_shadow = 0
+
+[node name="Observe" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(0.42, 0.89, -0.89)
+interact_id = &"plan_room_detail"
+inspection_id = &"plan_room_detail"
+radius = 1.34
+outline_paths = PackedStringArray("../../TracingTable/Layout", "../../TracingTable/ParallelRule")
+support_paths = PackedStringArray("../../TracingTable")
+camera_shot = SubResource("Shot_Observe")

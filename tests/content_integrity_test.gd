@@ -22,6 +22,8 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const LOCATIONS: Array[String] = [
 	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory", "staff_office", "restroom",
+	"archive", "plan_room", "projection_room", "computer_room", "vacant_office", "principal_office",
+	"restroom_02", "restroom_03",
 ]
 const END_CARD_KEY := "end.slice"
 
@@ -220,6 +222,9 @@ func _matches(text: String, pattern: String) -> Array[String]:
 ## Splits the scene into its exit nodes and keeps the properties each one sets.
 func _exit_blocks(text: String) -> Array[Dictionary]:
 	var blocks: Array[Dictionary] = []
+	# Read the path, not a naming convention for ExtResource ids. The shared
+	# interior generator uses a short id for the same exit prefab.
+	var exit_ids := _matches(text, 'path="res://scenes/interaction/location_exit\\.tscn" id="([^"]+)"')
 	var current: Dictionary = {}
 	for raw_line in text.split("\n"):
 		var line := String(raw_line).strip_edges()
@@ -227,9 +232,10 @@ func _exit_blocks(text: String) -> Array[Dictionary]:
 			if not current.is_empty():
 				blocks.append(current)
 			current = {}
-			# Exit nodes instance the exit scene by generated id ("13_location_exit").
-			if "location_exit" in line:
-				current = {"end_card_key": ""}
+			for id: String in exit_ids:
+				if 'instance=ExtResource("%s")' % id in line:
+					current = {"end_card_key": ""}
+					break
 			continue
 		if current.is_empty():
 			continue

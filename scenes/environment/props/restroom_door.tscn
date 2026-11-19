@@ -6,13 +6,13 @@
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.325, 0.506, 0.576, 1)
+albedo_color = Color(0.412, 0.459, 0.384, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_door_frame"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.176, 0.282, 0.337, 1)
+albedo_color = Color(0.176, 0.239, 0.243, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_tread"]
 diffuse_mode = 3

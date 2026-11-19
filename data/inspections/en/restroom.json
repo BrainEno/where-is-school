@@ -6,8 +6,8 @@
     "prompt": "Look at the washbasins",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "Both levers are shut. One strainer is dull and the other is the colour of the taps. Along the bottom of the mirror, a new clip sits where the two panes meet.",
-    "repeat_text": "Two shut taps, two different strainers, one new clip."
+    "text": "Both levers are shut. Scale rings the strainers; one bright clip bridges the mirror seam. Brown streaks hang below the pipe over the urinals.",
+    "repeat_text": "Shut taps, scaled strainers, and one bright clip."
   },
   "restroom_latch": {
     "title": "Second cubicle",
@@ -22,7 +22,7 @@
     "prompt": "Look at the floor grate",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "The grate interrupts one of the ruled lines in the floor. A small piece of warmer tile sits by its edge. The slots are clear.",
+    "text": "A tile line ends at the grate. Flies circle a little standing water, next to a warmer piece of replacement tile. The slots are still clear.",
     "repeat_text": "A little warmer tile at the edge of the grate.",
     "record": {
       "entry_id": "saw_restroom_drain",
