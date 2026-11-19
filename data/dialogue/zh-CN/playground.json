@@ -81,7 +81,7 @@
             },
             {
               "id": "compare_return",
-              "text": "拿归还板上的印记和窗里的纸条对照。",
+              "text": "拿交还板上的印记和窗里的纸条对照。",
               "next": "ps_return_check",
               "conditions": {
                 "all_flags": [
@@ -129,7 +129,7 @@
               "entry_id": "pg_return_match",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "从背面看器材棚窗里的纸条，归还印记就和街边路牌上的一样。"
+              "text": "从背面看器材棚窗里的纸条，交还印记就和街边路牌上的一样。"
             }
           ],
           "next": null
@@ -137,14 +137,14 @@
         {
           "id": "ps_return_unclear",
           "speaker": "protagonist",
-          "text": "圆孔对上了，另一道可能是长孔，也可能只是折痕。操场那块板还能用：走防火门回教学楼，走铁栅门回后巷。",
+          "text": "圆孔对上了，另一道可能是长孔，也可能只是纸上的折线。操场那块板还能用：走防火门回教学楼，走铁栅门回后巷。",
           "effects": [
             {
               "type": "record",
               "entry_id": "pg_return_unclear",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "器材棚纸条的圆孔能对上，另一道记号挨着折痕，分不清。"
+              "text": "器材棚纸条的圆孔能对上，另一道记号靠着折角，分不清。"
             }
           ],
           "next": null

@@ -99,6 +99,9 @@ jobs:
           if [ "$LOCATION" != corridor ]; then
             detail=(return-route review_width=460)
           fi
+          if [ "$LOCATION/$SIDE" = playground/after ]; then
+            detail+=(return-board-focus)
+          fi
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_locations.gd -- \
@@ -124,6 +127,7 @@ jobs:
             views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
             expect=2
             if [ "$LOCATION" = playground ]; then expect=3; fi
+            if [ "$LOCATION/$SIDE" = playground/after ]; then expect=4; fi
             if [ "$code" -ne 0 ] || [ "${#views[@]}" -ne "$expect" ] || \
                 grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
                 ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
@@ -133,7 +137,7 @@ jobs:
             fi
             cp "${views[@]}" "$inline/"
             cp "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
-            echo "::notice title=return route capture::${#views[@]} matched detail views"
+            echo "::notice title=return route capture::${#views[@]} detail views of the return route"
           fi
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
@@ -252,8 +256,10 @@ jobs:
           source tools/ci_run_check.sh
           status=0
           run_check return_route 300 godot --headless --path . --script res://tests/return_route_test.gd || status=$?
-          grep -E 'return route:|^PASS:|^FAIL:|TEST FAILURE|SCRIPT ERROR|^ERROR:' ci-logs/return_route.log | head -n 8 \
+          awk '/return route:|^PASS:|^FAIL:|TEST FAILURE|SCRIPT ERROR/ && n++ < 8 {print}' ci-logs/return_route.log \
             | while IFS= read -r line; do echo "::notice title=return route::${line}"; done
+          awk '/^ERROR: / && !at {at=NR} at && NR < at+8 {print}' ci-logs/return_route.log \
+            | while IFS= read -r line; do echo "::notice title=return route first engine error::${line}"; done
           exit "$status"
 
       - name: Upload art regression logs

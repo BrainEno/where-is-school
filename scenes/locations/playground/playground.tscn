@@ -1447,12 +1447,12 @@ shape = SubResource("BoxShape3D_88")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="TapPost"]
 mesh = SubResource("BoxMesh_88")
-material_override = ExtResource("art_metal_ink")
+material_override = ExtResource("art_exit_steel")
 
 [node name="TapSpout" type="MeshInstance3D" parent="."]
 position = Vector3(-5.8, 1.6, 14.0)
 mesh = SubResource("BoxMesh_89")
-material_override = ExtResource("art_metal_ink")
+material_override = ExtResource("art_exit_steel")
 
 [node name="TapDrain" type="MeshInstance3D" parent="."]
 position = Vector3(-5.4, 0.02, 14.3)

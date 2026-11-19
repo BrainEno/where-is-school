@@ -74,6 +74,10 @@ func _walk_return_route() -> void:
 		await _dismiss()
 	if await _inspect(&"street_receipt_slot", &"street_receipt_slot", Vector3(-9.22, 0, -24.7)):
 		await _dismiss()
+	# Cross the road to the foot of the stairs before climbing, rather than
+	# asking the capsule to mount the side of the existing ramp diagonally.
+	if not await _walk(Vector3(10.5, 0.15, -29.8)):
+		return
 	if not await _exit(&"street_to_residential", Vector3(10.49, 1.6, -35.7), &"residential", &"FromStreet"):
 		return
 
@@ -110,13 +114,15 @@ func _check_choices_and_notes() -> void:
 	await _dismiss()
 	var note_count: int = _notes.get_entries().size()
 	_loc.set_locale("zh-CN")
-	_check.expect(_dialogue.get_interact_prompt(board) == "读操场归还板", "The board's Chinese prompt was lost.")
+	_check.expect(_dialogue.get_interact_prompt(board) == "读操场交还板", "The board's Chinese prompt was lost.")
 	if not await _inspect(&"pg_board_look", &"pg_return_board", BOARD_STANCE):
 		return
 	_check.expect(_last_line.get("variant") == "repeat" and String(_last_line.get("text", "")).contains("防火门"),
 		"The second read did not show the Chinese repeat line.")
 	_check.expect(_notes.get_entries().size() == note_count, "A repeat read duplicated the board's note.")
 	await _dismiss()
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return _player.camera_rig.get_focus_weight() < 0.01, 4.0), "The return-board shot held the camera after dismissal.")
 	_loc.set_locale("en")
 
 	var before_flags: Dictionary = _state.get_snapshot()

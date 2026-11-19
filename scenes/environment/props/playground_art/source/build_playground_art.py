@@ -252,10 +252,12 @@ REPOINT: list[tuple[str, str]] = [
     (r"ContainerBar", "metal_ink"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
+    # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
+    (r"TapPost/MeshInstance3D|TapSpout", "exit_steel"),
     (
         r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
-        r"|Bird_\d|BirdWire|TapPost/MeshInstance3D|TapSpout|TapDrain"
+        r"|Bird_\d|BirdWire|TapDrain"
         r"|SouthGatePost(West|East)|SouthGateLintel",
         "metal_ink",
     ),
