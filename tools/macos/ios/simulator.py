@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from zipfile import BadZipFile
 
 from bootstrap import ROOT, prepare_godot, xcode_check
@@ -90,19 +91,24 @@ def build_and_launch(args: argparse.Namespace, godot: Path, row: dict) -> None:
             started = True
         run(*SIMCTL, "bootstatus", udid, "-b", timeout=420)
         run(*SIMCTL, "install", udid, app)
-        result = run(*SIMCTL, "launch", "--terminate-running-process", udid, BUNDLE, capture=True)
+        container = Path(run(*SIMCTL, "get_app_container", udid, BUNDLE, "data", capture=True).strip())
+        if not container.is_absolute() or not container.is_dir():
+            raise ValueError("Could not locate the Simulator app's data container.")
+        # Unified log INFO isn't guaranteed to persist on every runtime. A unique
+        # explicit log file in this Simulator's sandbox has no stale launch lines.
+        app_log = container / "Library/Caches" / f"wis-{uuid.uuid4().hex}.log"
+        app_log.parent.mkdir(parents=True, exist_ok=True)
+        result = run(*SIMCTL, "launch", "--terminate-running-process", udid, BUNDLE, "--log-file", app_log, capture=True)
         (out / "launch.txt").write_text(result, encoding="utf-8")
         match = re.search(rf"^{re.escape(BUNDLE)}: (\d+)$", result, flags=re.M)
         if not match:
             raise ValueError("simctl did not return the game's process ID; see launch.txt.")
         pid = int(match[1])
-        predicate = f'processIdentifier == {pid} AND subsystem == "{BUNDLE}"'
         deadline = time.monotonic() + 60
         while True:
-            os.kill(pid, 0)  # Simulator processes run on the host under the current user.
-            logs = run(*SIMCTL, "spawn", udid, "log", "show", "--last", "2m", "--style", "compact", "--info",
-                       "--predicate", predicate, capture=True, timeout=20)
+            logs = app_log.read_text(encoding="utf-8", errors="replace") if app_log.exists() else ""
             (out / "runtime.log").write_text(logs, encoding="utf-8")
+            os.kill(pid, 0)  # Simulator processes run on the host under the current user.
             if re.search(r"SCRIPT ERROR|Parse Error|Failed to load script", logs, re.I):
                 raise ValueError("Godot runtime errors; see runtime.log.")
             if re.search(r"OpenGL (API|ES)|Compatibility.*Renderer", logs, re.I):

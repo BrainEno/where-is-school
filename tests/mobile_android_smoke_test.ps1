@@ -38,7 +38,7 @@ switch ($args[2]) {
     }
     'logcat' {
         if ($args -contains '-c' -or $args -notcontains '--pid=234') { throw 'ADB logs must be scoped, never cleared' }
-        'OpenGL API OpenGL ES — Compatibility'
+        'OpenGL API OpenGL ES - Compatibility'
         if ($env:WIS_SMOKE_FIXTURE -eq 'crash') { 'FATAL EXCEPTION' }
     }
     'pull' {
@@ -65,11 +65,23 @@ exit 0
     # Exercise the native .cmd wrapper's non-zero exit and quoted paths on Windows.
     if ($env:OS -eq 'Windows_NT') {
         $test = Join-Path $root 'tools/windows/android/Test.cmd'
-        & $test -Apk (Join-Path $temp 'missing file.apk') -NonInteractive
-        if ($LASTEXITCODE -eq 0) { throw 'Batch debug wrapper did not propagate failure.' }
+        $wrapperError = Join-Path $temp 'wrapper-error.txt'
+        $ErrorActionPreference = 'Continue' # PS 5.1 may write native stderr as ErrorRecords.
+        try {
+            & $test -Apk (Join-Path $temp 'missing file.apk') -NonInteractive 2> $wrapperError
+            $wrapperExit = $LASTEXITCODE
+        } finally { $ErrorActionPreference = 'Stop' }
+        if ($wrapperExit -eq 0 -or (Get-Content -LiteralPath $wrapperError -Raw) -notmatch 'Download and extract') {
+            throw 'Batch debug wrapper did not propagate the expected missing-APK failure.'
+        }
     }
     Write-Host 'PASS: Android launch verdict fixtures (success, crash, background, multiple and unauthorized devices).'
+} catch {
+    Write-Host "::error title=Windows Android debug::$($_.Exception.Message)"
+    throw
 } finally {
     Remove-Item Env:WIS_SMOKE_FIXTURE -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $temp -Recurse -Force
 }
+
+exit 0 # The last native exit was an intentional negative case.

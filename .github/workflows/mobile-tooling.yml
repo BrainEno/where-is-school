@@ -51,13 +51,15 @@ jobs:
           xcodebuild -version
           if ! bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --no-download --non-interactive --no-open --shutdown \
               --output build/mobile/ios-sim 2>&1 | tee build/mobile/ios-logs/simulator.log; then
-            { grep -Ei 'error:|failed|runtime.log' build/mobile/ios-logs/simulator.log | tail -15 || true
-              tail -8 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-600 |
+            { grep -E '^iOS simulator failed:|^Mobile export failed:|^An error was encountered' build/mobile/ios-logs/simulator.log | tail -3 || true
+              tail -4 build/mobile/ios-logs/simulator.log
+              tail -3 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-600 |
             while IFS= read -r line; do printf '::error title=iOS Simulator::%s\n' "$line"; done
             exit 1
           fi
           printf '::notice title=iOS Simulator::%s\n' "$(tr -d '\n' < build/mobile/ios-sim/BUILD.json)"
       - name: Verify the iPhone/iPad archive path without signing secrets
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
