@@ -1,0 +1,120 @@
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_ink"]
+
+[sub_resource type="ShaderMaterial" id="ink"]
+shader = ExtResource("3_ink")
+shader_parameter/ink = Color(0.157, 0.141, 0.183, 1)
+shader_parameter/width = 0.0045
+shader_parameter/wobble = 0.25
+
+[sub_resource type="ShaderMaterial" id="skin"]
+next_pass = SubResource("ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 14.0
+shader_parameter/pigment_value = 0.09
+shader_parameter/pigment_blend = 0.30
+shader_parameter/shade_tint = Color(0.68, 0.61, 0.57, 1)
+shader_parameter/shadow_fill = 0.4
+shader_parameter/light_strength = 0.76
+shader_parameter/edge_softness = 0.083
+
+[sub_resource type="ShaderMaterial" id="hair"]
+next_pass = SubResource("ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 11.0
+shader_parameter/pigment_value = 0.13
+shader_parameter/pigment_blend = 0.30
+shader_parameter/shade_tint = Color(0.65, 0.68, 0.82, 1)
+shader_parameter/shadow_fill = 0.39
+shader_parameter/light_strength = 0.87
+shader_parameter/edge_softness = 0.053
+
+[sub_resource type="ShaderMaterial" id="wool"]
+next_pass = SubResource("ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 11.0
+shader_parameter/pigment_value = 0.23
+shader_parameter/pigment_blend = 0.30
+shader_parameter/shade_tint = Color(0.61, 0.66, 0.77, 1)
+shader_parameter/shadow_fill = 0.44
+shader_parameter/light_strength = 0.86
+shader_parameter/edge_softness = 0.053
+shader_parameter/detail_kind = 2
+shader_parameter/detail_strength = 0.17
+shader_parameter/detail_scale = 105.0
+shader_parameter/detail_tint = Color(0.30, 0.30, 0.275, 1)
+
+[sub_resource type="ShaderMaterial" id="twill"]
+next_pass = SubResource("ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 11.0
+shader_parameter/pigment_value = 0.17
+shader_parameter/pigment_blend = 0.30
+shader_parameter/shade_tint = Color(0.62, 0.625, 0.735, 1)
+shader_parameter/shadow_fill = 0.42
+shader_parameter/light_strength = 0.82
+shader_parameter/edge_softness = 0.053
+shader_parameter/detail_kind = 2
+shader_parameter/detail_strength = 0.14
+shader_parameter/detail_scale = 124.0
+shader_parameter/detail_tint = Color(0.30, 0.30, 0.275, 1)
+
+[sub_resource type="ShaderMaterial" id="blouse"]
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 11.0
+shader_parameter/pigment_value = 0.14
+shader_parameter/pigment_blend = 0.30
+shader_parameter/shade_tint = Color(0.66, 0.68, 0.55, 1)
+shader_parameter/shadow_fill = 0.38
+shader_parameter/light_strength = 0.79
+shader_parameter/edge_softness = 0.053
+shader_parameter/detail_kind = 2
+shader_parameter/detail_strength = 0.1
+shader_parameter/detail_scale = 138.0
+shader_parameter/detail_tint = Color(0.30, 0.30, 0.275, 1)
+
+[sub_resource type="ShaderMaterial" id="details"]
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_value = 0.0
+shader_parameter/shade_tint = Color(0.78, 0.71, 0.65, 1)
+shader_parameter/shadow_fill = 0.48
+shader_parameter/light_strength = 0.90
+shader_parameter/edge_softness = 0.09
+
+[resource]
+script = ExtResource("1_look")
+materials = {
+"b_brass": SubResource("details"),
+"b_brows_and_crease": SubResource("details"),
+"b_eye": SubResource("details"),
+"b_leather": SubResource("details"),
+"b_rubber_and_horn": SubResource("details"),
+"b_tortoiseshell": SubResource("details"),
+"b_charcoal_wool": SubResource("wool"),
+"b_olive_blouse": SubResource("blouse"),
+"b_skin": SubResource("skin"),
+"b_swept_silver": SubResource("hair"),
+"b_twill": SubResource("twill")
+}
+label = "Teacher B review / retained vertex paint"
