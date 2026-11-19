@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/environment/props/school_desk.tscn" id="1_school_desk"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="2_wood"]
 [ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="3_metal"]
 [ext_resource type="Script" path="res://scenes/environment/props/classroom_art/classroom_desk_ink.gd" id="4_ink"]
+[ext_resource type="Script" path="res://scripts/environment/pushable_chair.gd" id="5_chair"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_seat"]
 size = Vector3(0.46, 0.05, 0.42)
@@ -22,8 +23,9 @@ script = ExtResource("4_ink")
 
 [node name="Desk" parent="." instance=ExtResource("1_school_desk")]
 
-[node name="Chair" type="Node3D" parent="."]
+[node name="Chair" type="Node3D" parent="." groups=["seated_chair"]]
 position = Vector3(0, 0, 0.58)
+script = ExtResource("5_chair")
 
 [node name="Seat" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.45, 0)

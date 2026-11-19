@@ -77,6 +77,61 @@ const SEATED_WAKE_POSE := 0.5
 ## A deliberate stand takes 0.75 s, including the whole profiled get_up clip. The
 ## animator normalizes its actual length (2.025 s on this rig), not just the pivot.
 const WAKE_GET_UP_SECONDS := 0.75
+## The hip height the model hangs at when standing (`player.tscn` puts `Visual` at y = 0.9).
+##
+## The seated pose is 0.06 m below that, not 0.45 m: the *clip* folds the legs and the
+## pelvis stays where the pivot holds it. That is only right while the body is a seated
+## silhouette with nothing behind it. Once the chair is geometry the body can be compared
+## to, the hip has to travel the real distance between `sit_idle`'s thigh angle and the
+## standing one, or the shins sweep through the seat while the pivot barely moves.
+const STANDING_HIP_HEIGHT := 0.9
+## How far the body sinks below `STANDING_HIP_HEIGHT` in the seated pose.
+##
+## This is a *slump*, not a descent to seat height, and the difference cost a working build
+## to learn: `%Visual` carries the whole body, with the model hung 0.9 m under it so its feet
+## sit at y = 0. Lowering the node is lowering the character into the floor. A drop sized to
+## the seat (0.42 m - what it takes to put a pelvis on a 0.45 m seat) drove the feet that far
+## under the ground and the model through it, while the pelvis was computed to be in exactly
+## the right place.
+##
+## The chair is met by the *clip*: `sit_idle` folds the legs and puts the body in the chair,
+## and the pivot only adds the slump on top of that. Six centimetres is that slump.
+const SEATED_HIP_DROP := 0.06
+## The hip's rise across the stand-up, as (fraction of the clip, fraction of the total rise).
+##
+## A sine curve - the obvious choice, and the one this used - is wrong here because the hips
+## do not rise at a constant share of the clock: they rise *with the legs*. The clip spends
+## its first half unfolding the knees to roughly half-straight, which lifts the pelvis most
+## of the way, and its second half straightening the last few degrees and bringing the spine
+## upright, which barely lifts it at all.
+##
+## What matters here is the *shape*, not the metres: the rise is front-loaded, because the
+## knees unfold before the spine straightens. A sine puts its fastest rise in the middle
+## instead, which draws the body hanging in the air through the first third of the stand.
+## These keys put most of whatever rise there is in that first half, where the legs work.
+const HIP_RISE_KEYS: Array[Vector2] = [
+	Vector2(0.0, 0.0),
+	Vector2(0.467, 0.78),
+	Vector2(1.0, 1.0),
+]
+
+## The chair the protagonist wakes up in, and the one thing that makes the stand-up possible.
+##
+## Found by the node group the classroom puts on it rather than by a path: this controller is
+## on the player, in another scene, and a hard path into a room's furniture would be wrong for
+## every other room.
+const SEATED_CHAIR_GROUP := &"seated_chair"
+## How long the chair takes to slide out from under the body at the start of the stand-up.
+##
+## Shorter than the stand itself (0.75 s): the chair leaves in the first half, while the body
+## is still folded over its feet and the legs are unloading, which is when a real chair
+## actually goes. A chair that kept travelling after the body was upright would look pushed.
+const CHAIR_PUSH_SECONDS := 0.35
+## How long the chair takes to come back under a body that is sitting down again.
+##
+## Longer, and it runs *after* the body has mostly lowered: a chair is pulled in behind you,
+## not slid under you while you are still in the air.
+const CHAIR_PULL_SECONDS := 0.45
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 ## In toggle mode, a jog that was switched on ends by itself after the player has stood
@@ -116,7 +171,13 @@ var _getting_up: bool = false
 var _get_up_animated: bool = false
 var _get_up_elapsed: float = 0.0
 var _get_up_tilt: float = 0.0
-var _get_up_height: float = 0.9
+var _get_up_height: float = STANDING_HIP_HEIGHT
+## How far through the clip the pose is, kept so the tail of the stand-up and the completion
+## signal can both find it without recomputing the clock.
+var _get_up_progress: float = 0.0
+## The chair this body wakes up in, if the room has one to push. Resolved on the way up, not
+## in `_ready()`: the player exists before the location is loaded under it.
+var _seated_chair: Node3D = null
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -573,7 +634,13 @@ func set_wake_pose(amount: float) -> void:
 		return
 	var clamped := clampf(amount, 0.0, 1.0)
 	visual.rotation_degrees.x = wake_tilt_degrees * clamped
-	visual.position.y = 0.9 - 0.06 * clamped
+	# The seated amount is a *slump*, and the hip drop is the seat: they run on the same
+	# 0..1 dial because at 1.0 the protagonist is asleep over the desk and at
+	# `SEATED_WAKE_POSE` he is sitting up in the chair. Below that he is on his feet and the
+	# hip is back at the standing height, so the dial is scaled by the seated fraction rather
+	# than used raw - otherwise half-asleep would be half a hip below the floor.
+	var seated_fraction := clampf(clamped / SEATED_WAKE_POSE, 0.0, 1.0)
+	visual.position.y = STANDING_HIP_HEIGHT - SEATED_HIP_DROP * seated_fraction
 	_set_wake_seated(clamped >= SEATED_WAKE_POSE)
 
 
@@ -584,7 +651,7 @@ func settle_wake_pose(duration: float) -> void:
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(visual, "rotation_degrees:x", 0.0, duration)
-	tween.tween_property(visual, "position:y", 0.9, duration)
+	tween.tween_property(visual, "position:y", STANDING_HIP_HEIGHT, duration)
 	await tween.finished
 
 
@@ -596,7 +663,7 @@ func settle_wake_seated_pose(duration: float) -> Tween:
 	_set_wake_seated(true)
 	var amount := SEATED_WAKE_POSE
 	var target_tilt := wake_tilt_degrees * amount
-	var target_height := 0.9 - 0.06 * amount
+	var target_height := STANDING_HIP_HEIGHT - SEATED_HIP_DROP
 	if duration <= 0.0:
 		visual.rotation_degrees.x = target_tilt
 		visual.position.y = target_height
@@ -611,35 +678,171 @@ func settle_wake_seated_pose(duration: float) -> Tween:
 
 ## A deliberate first move gets the protagonist out of the chair, once. Inputs may
 ## replace/cancel the path during this state, but never restart or accelerate the action.
+##
+## The stand-up has two halves that used to be one: the *clip* unfolds the legs, and the
+## *chair* gets out of the way. The body does not step anywhere - it rises where it sat, and
+## the seat slides back out from under it, which is what a person in a classroom chair does
+## because 9.7 cm of legroom is not room to stand up in.
+##
+## The chair is pushed on the same frame the clip starts, and the two clocks run independently
+## (the chair is faster, and done first). Waiting for the chair to stop before starting to
+## rise would break the beat: the push and the rise are one movement, the legs unloading into
+## the chair as the body comes up over them.
 func _begin_get_up_from_seat() -> void:
 	if not _wake_seated or _getting_up:
 		return
 	_getting_up = true
 	_get_up_elapsed = 0.0
 	_get_up_tilt = visual.rotation.x if visual != null else 0.0
-	_get_up_height = visual.position.y if visual != null else 0.9
+	_get_up_height = visual.position.y if visual != null else STANDING_HIP_HEIGHT
+	_get_up_progress = 0.0
+	_push_seat_back()
 	_set_wake_seated(false, WAKE_GET_UP_SECONDS)
 	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
+
+
+## Drops a stand-up that can no longer be finished where it started.
+##
+## Deliberately leaves the *pose* alone: this is not "the stand-up finished", it is "there
+## is no stand-up any more", and the next thing to set a pose (a wake beat, or the model's
+## own idle) owns it from here.
+func _abandon_get_up() -> void:
+	_getting_up = false
+	_get_up_animated = false
+	_get_up_elapsed = 0.0
+	_get_up_progress = 0.0
 
 
 func is_getting_up() -> bool:
 	return _getting_up
 
 
+## Sits the protagonist back down in the chair it got up from, if that chair is still there.
+##
+## The mirror of the stand-up, and deliberately built from the same two pieces in reverse: the
+## clip runs backwards from the last key of `get_up` to its first, and the chair is pulled in
+## *behind* the body once it has mostly lowered (`CHAIR_PULL_SECONDS` starts with the clip).
+## Returns the clip tween (or null when the model cannot animate), so a caller can keep
+## control locked until the body is seated.
+##
+## Refused while already seated or still standing up: two transitions running at once is how
+## a body ends up halfway into a chair.
+func sit_down(duration: float = WAKE_GET_UP_SECONDS) -> Tween:
+	if _wake_seated or _getting_up or visual == null:
+		return null
+	# The clip first: `set_seated(true)` holds `sit_idle`, which is the folded pose the body
+	# ends in. The tween below carries the slump down onto it, so the last frame of the
+	# transition and the first frame of the loop are the same pose.
+	_set_wake_seated(true)
+	_seat_sit_down_chair_in(CHAIR_PULL_SECONDS)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_property(visual, "rotation_degrees:x", wake_tilt_degrees * SEATED_WAKE_POSE, duration)
+	tween.tween_property(visual, "position:y", STANDING_HIP_HEIGHT - SEATED_HIP_DROP, duration)
+	return tween
+
+
+## Brings the chair back under the body, starting so that it arrives with the body.
+##
+## The chair's travel and the body's descent are the same beat seen twice, so the chair is
+## given the body's own duration minus its own slide time rather than a fixed delay: change
+## one and the other still lands together.
+func _seat_sit_down_chair_in(sit_duration: float) -> void:
+	var delay := maxf(sit_duration - CHAIR_PULL_SECONDS, 0.0)
+	var tween := create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	tween.tween_callback(_pull_seat_home)
+
+
 ## One clock, not a separate tween racing the profiled skeleton. Physics samples the
 ## action; its actual completion signal snaps the pivot's final pose before movement
 ## may resume. The timed fallback is only for rigless placement/preview fixtures.
+##
+## This sets the *visual* pose only. The body's own travel is applied by the caller, after
+## `move_and_slide()`: this runs before it, and a position written here would be recomputed
+## away by the physics step every frame.
 func _update_get_up_pose(delta: float) -> void:
 	_get_up_elapsed += delta
 	var progress := clampf(_get_up_elapsed / WAKE_GET_UP_SECONDS, 0.0, 1.0)
 	if _get_up_animated:
 		progress = _character_animator.get_action_progress()
+	_get_up_progress = progress
 	if visual != null:
 		var weight := 0.5 - cos(PI * progress) * 0.5
 		visual.rotation.x = lerpf(_get_up_tilt, 0.0, weight)
-		visual.position.y = lerpf(_get_up_height, 0.9, weight)
+		visual.position.y = lerpf(_get_up_height, STANDING_HIP_HEIGHT, _hip_rise_weight(progress))
 	if progress >= 1.0:
 		_finish_get_up()
+
+
+## How much of the hip's rise has happened by `progress` of the stand-up.
+##
+## A sine curve - the obvious choice, and the one this used - is wrong here because the
+## hips do not rise at a constant share of the clock: they rise *with the legs*. The clip
+## spends its first half unfolding the knees to roughly half-straight, which lifts the
+## pelvis most of the way, and its second half straightening the last few degrees and
+## bringing the spine upright, which barely lifts it at all.
+##
+## Sampling the clip's own thigh and shin keys gives the shape the skeleton expects: the
+## hip is at ~0.51 m when the legs are folded, ~0.79 m at the half-way key, and 0.90 m
+## standing. The sine sat 12 cm below that through the middle of the movement, which is
+## what made the feet sink and the knees drop: the legs were being straight, and were
+## being drawn as a body in a hole. These three numbers are that curve, normalised.
+func _hip_rise_weight(progress: float) -> float:
+	var clamped := clampf(progress, 0.0, 1.0)
+	for index in range(HIP_RISE_KEYS.size() - 1):
+		var a := HIP_RISE_KEYS[index]
+		var b := HIP_RISE_KEYS[index + 1]
+		if clamped <= b.x:
+			var span := maxf(b.x - a.x, 0.0001)
+			var local := (clamped - a.x) / span
+			# Smoothstep inside the segment, so the two halves meet without a crease.
+			var eased := local * local * (3.0 - 2.0 * local)
+			return lerpf(a.y, b.y, eased)
+	return HIP_RISE_KEYS[-1].y
+
+
+## Pushes the chair the body woke in back out of the way, once.
+##
+## Silent when the room has no chair for this body (`_find_seated_chair` returns null): a
+## fixture that drops a `PlayerController` into an empty scene still gets a working stand-up,
+## it just does not move furniture that is not there.
+func _push_seat_back() -> void:
+	_seated_chair = _find_seated_chair()
+	if _seated_chair == null:
+		return
+	if _seated_chair.has_method("push_back"):
+		_seated_chair.call("push_back", CHAIR_PUSH_SECONDS)
+
+
+## Pulls that same chair back under the body, for a sit-down.
+func _pull_seat_home() -> void:
+	if _seated_chair == null:
+		_seated_chair = _find_seated_chair()
+	if _seated_chair == null:
+		return
+	if _seated_chair.has_method("pull_home"):
+		_seated_chair.call("pull_home", CHAIR_PULL_SECONDS)
+
+
+## The chair nearest this body, found by group so no scene path is hard-coded.
+##
+## Nearest, not first: a room may have a chair per desk, and the one to push is the one the
+## body is standing in front of.
+func _find_seated_chair() -> Node3D:
+	var best: Node3D = null
+	var best_distance := INF
+	for node in get_tree().get_nodes_in_group(SEATED_CHAIR_GROUP):
+		var chair := node as Node3D
+		if chair == null or not chair.is_inside_tree():
+			continue
+		var distance := chair.global_position.distance_to(global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = chair
+	return best
 
 
 func _on_get_up_action_finished(clip_name: StringName) -> void:
@@ -650,7 +853,7 @@ func _on_get_up_action_finished(clip_name: StringName) -> void:
 func _finish_get_up() -> void:
 	if visual != null:
 		visual.rotation.x = 0.0
-		visual.position.y = 0.9
+		visual.position.y = STANDING_HIP_HEIGHT
 	_getting_up = false
 	_get_up_animated = false
 
@@ -712,8 +915,16 @@ func face_toward(direction: Vector3, snap: bool = true) -> void:
 
 func teleport(target: Transform3D) -> void:
 	# A teleport means a location change: any walk being followed belongs to the old
-	# scene's navigation map.
+	# scene's navigation map - and so does any stand-up. The stand-up's travel is stored as
+	# an offset from where it began, so a body moved while one is still running would be
+	# dragged back towards the chair it was teleported away from, one frame later. Drop the
+	# travel instead of letting it interpolate from a place the body is no longer in.
 	cancel_path()
+	# A body that is teleported is a body that is no longer standing up out of that chair.
+	# Leaving the stand-up half-run would keep `_update_get_up_pose` owning the pivot and the
+	# `get_up` clip playing over a body that has been moved to another part of the room - which
+	# is what the capture fixtures do when they place a character for a frame.
+	_abandon_get_up()
 	global_position = target.origin
 	velocity = Vector3.ZERO
 	if not target.basis.is_equal_approx(Basis.IDENTITY):
