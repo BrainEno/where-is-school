@@ -152,7 +152,7 @@ def check_synthesis(text: str) -> None:
             f"{kind} is not built by {function}(), so two kinds may share a shape",
         )
     # Deterministic noise: the seeds are literals, so the same sound twice.
-    seeds = set(re.findall(r"Noise\.new\((\d+)\)", text))
+    seeds = set(re.findall(r"NoiseSource\.new\((\d+)\)", text))
     check(
         len(seeds) == 5,
         f"{len(seeds)} noise seed(s) for five sounds; a shared seed makes two sounds correlate",
@@ -236,6 +236,78 @@ def check_wiring(text: str) -> None:
             )
 
 
+
+## A `class` block inside a script that shares a name with an engine class does not shadow it
+## politely - it fails to parse, and every script that touches the project fails with it. This
+## happened: an inner `class Noise` broke the whole game's startup with
+## `Parse Error: Class "Noise" hides a native class`, and the only thing that noticed was CI,
+## on twenty jobs at once. The list is the engine classes a synthesis script plausibly reaches
+## for; it is not the whole engine.
+NATIVE_CLASSES = {
+    "Noise", "NoiseTexture", "NoiseTexture2D", "NoiseTexture3D", "FastNoiseLite",
+    "Node", "Node2D", "Node3D", "Control", "Resource", "RefCounted", "Object",
+    "Material", "Mesh", "Texture", "Image", "Sprite", "Sprite2D", "Sprite3D",
+    "AudioStream", "AudioStreamWAV", "AudioStreamMP3", "AudioStreamOGGVorbis",
+    "AudioStreamPlayer", "AudioStreamPlayer2D", "AudioStreamPlayer3D",
+    "Label", "Button", "Panel", "Timer", "Tween", "SceneTree", "Engine", "Input", "Time",
+    "Color", "Rect2", "Vector2", "Vector3", "Dictionary", "Array", "String", "NodePath",
+    "Signal", "Curve", "Gradient", "Shader", "ShaderMaterial", "StandardMaterial3D",
+    "CylinderMesh", "SphereMesh", "BoxMesh", "Environment", "WorldEnvironment",
+}
+
+
+def check_no_native_class_shadowing() -> None:
+    """An inner class may not be named after an engine class: it will not parse."""
+    for path in ROOT.glob("scripts/**/*.gd"):
+        for number, line in enumerate(
+            path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1
+        ):
+            match = re.match(r"class\s+([A-Za-z_][A-Za-z_0-9]*)\s*:", line)
+            if match and match.group(1) in NATIVE_CLASSES:
+                failures.append(
+                    f"{path.relative_to(ROOT).as_posix()}:{number}: inner class "
+                    f"'{match.group(1)}' hides a native class and will fail to parse"
+                )
+
+
+def check_node_methods_on_nodes() -> None:
+    """A `RefCounted` has no scene tree, so it has no `get_node_or_null()`.
+
+    The temptation is to reach for the autoload from any script that needs it, and the
+    compiler's way of saying no is a parse error in every file that depends on the script -
+    which is how one wrong line becomes twenty red jobs. Anything extending `RefCounted` has
+    to go through a node it already holds.
+    """
+    for path in ROOT.glob("scripts/**/*.gd"):
+        body = path.read_text(encoding="utf-8", errors="ignore")
+        header = "\n".join(body.splitlines()[:5])
+        if "extends RefCounted" not in header:
+            continue
+        for number, line in enumerate(body.splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("#") or stripped.startswith("##"):
+                continue
+            # `something.get_node_or_null(...)` goes through a node it holds and is fine.
+            if re.search(r"(?<![.\w])get_node_or_null\s*\(", line):
+                failures.append(
+                    f"{path.relative_to(ROOT).as_posix()}:{number}: a RefCounted calls "
+                    "get_node_or_null() on itself; it has no tree - go through a held node"
+                )
+
+
+def check_audio_release_is_a_class() -> None:
+    """The buffers are stopped at quit through `AudioRelease`; it has to be a `class_name`,
+    not a preload this file forgot to declare."""
+    release = ROOT / "scripts" / "audio" / "audio_release.gd"
+    check(release.exists(), "scripts/audio/audio_release.gd is missing")
+    if not release.exists():
+        return
+    text = release.read_text(encoding="utf-8")
+    check(
+        "class_name AudioRelease" in text,
+        "audio_release.gd has no class_name; world_audio.gd reaches it as a global identifier",
+    )
+
 def main() -> int:
     check(SOURCE.exists(), f"the world audio script is missing: {SOURCE.relative_to(ROOT)}")
     if not SOURCE.exists():
@@ -246,6 +318,9 @@ def main() -> int:
     check_structure(text)
     check_synthesis(text)
     check_wiring(text)
+    check_no_native_class_shadowing()
+    check_node_methods_on_nodes()
+    check_audio_release_is_a_class()
     if failures:
         for failure in failures:
             print(f"WORLD_AUDIO_FAILURE: {failure}")

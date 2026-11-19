@@ -135,7 +135,7 @@ func _build() -> void:
 
 ## A deterministic noise source. Same seed in, same buffer out, which is what lets the test
 ## compare two builds of the same kind and find them identical.
-class Noise:
+class NoiseSource:
 	var _state: int
 
 	func _init(seed_value: int) -> void:
@@ -159,7 +159,7 @@ func _step(peak: float) -> AudioStreamWAV:
 	var total := int(0.17 * float(SAMPLE_RATE))
 	var samples := PackedFloat32Array()
 	samples.resize(total)
-	var noise := Noise.new(4211)
+	var noise := NoiseSource.new(4211)
 	# A one-pole low-pass over the noise: a heel scuff is dull, and white noise is a hiss.
 	var smoothed := 0.0
 	for index in total:
@@ -180,7 +180,7 @@ func _chair(peak: float) -> AudioStreamWAV:
 	var total := int(0.42 * float(SAMPLE_RATE))
 	var samples := PackedFloat32Array()
 	samples.resize(total)
-	var noise := Noise.new(9137)
+	var noise := NoiseSource.new(9137)
 	var smooth := 0.0
 	for index in total:
 		var time := float(index) / float(SAMPLE_RATE)
@@ -202,7 +202,7 @@ func _paper(peak: float) -> AudioStreamWAV:
 	var total := int(0.19 * float(SAMPLE_RATE))
 	var samples := PackedFloat32Array()
 	samples.resize(total)
-	var noise := Noise.new(3307)
+	var noise := NoiseSource.new(3307)
 	var fine := 0.0
 	var coarse := 0.0
 	for index in total:
@@ -222,7 +222,7 @@ func _pickup(peak: float) -> AudioStreamWAV:
 	var total := int(0.26 * float(SAMPLE_RATE))
 	var samples := PackedFloat32Array()
 	samples.resize(total)
-	var noise := Noise.new(6619)
+	var noise := NoiseSource.new(6619)
 	var smooth := 0.0
 	for index in total:
 		var time := float(index) / float(SAMPLE_RATE)
@@ -243,7 +243,7 @@ func _door(peak: float) -> AudioStreamWAV:
 	var total := int(0.55 * float(SAMPLE_RATE))
 	var samples := PackedFloat32Array()
 	samples.resize(total)
-	var noise := Noise.new(7723)
+	var noise := NoiseSource.new(7723)
 	var smooth := 0.0
 	for index in total:
 		var time := float(index) / float(SAMPLE_RATE)

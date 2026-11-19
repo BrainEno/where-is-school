@@ -399,13 +399,15 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 	var before := global_position
 	move_and_slide()
 	_update_visual_facing(delta)
-	_track_steps(global_position.distance_to(before))
+	# Horizontal only: a fall is not a stride, and `velocity.length()` would count the drop.
+	var moved := global_position - before
+	_track_steps(Vector2(moved.x, moved.z).length())
 
 
 ## Looks the world-audio autoload up by path, the way the interaction cues do: a headless
 ## test that registers no autoloads gets silence rather than a compile error.
 func _play_world_sound(method: String) -> void:
-	var audio := get_node_or_null("/root/WorldAudio")
+	var audio: Node = get_node_or_null("/root/WorldAudio")
 	if audio != null and audio.has_method(method):
 		audio.call(method)
 
@@ -416,7 +418,7 @@ func _play_world_sound(method: String) -> void:
 ## pressed against a wall has velocity and no movement, and footsteps on the spot are the
 ## classic sign that nobody checked.
 func _track_steps(travelled: float) -> void:
-	if travelled <= 0.0001 or velocity.length() < STEP_MIN_SPEED:
+	if travelled <= 0.0001 or Vector2(velocity.x, velocity.z).length() < STEP_MIN_SPEED:
 		# Standing still resets the stride, so the first step after a stop is immediate
 		# rather than arriving after a leftover half stride.
 		_stride_accumulator = STEP_STRIDE_METRES
@@ -426,6 +428,7 @@ func _track_steps(travelled: float) -> void:
 		return
 	_stride_accumulator = 0.0
 	_play_world_sound("play_step")
+
 
 ## Lifts the body onto a low step instead of letting it press against one.
 ##

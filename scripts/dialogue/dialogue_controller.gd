@@ -480,7 +480,7 @@ static func _first_read_changes_state(inspection: InspectionLibrary.InspectionDa
 
 ## World-audio autoload, looked up by path so a run without autoloads gets silence.
 func _play_world_sound(method: StringName) -> void:
-	var audio := get_node_or_null(^"/root/WorldAudio")
+	var audio: Node = get_node_or_null(^"/root/WorldAudio")
 	if audio != null and audio.has_method(method):
 		audio.call(method)
 

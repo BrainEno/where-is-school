@@ -114,9 +114,13 @@ func handle_exit(exit: LocationExit) -> void:
 	await _transition_to(exit)
 
 
-## World-audio autoload, by path: a headless run without autoloads gets silence.
+## World-audio autoload, reached through the host node: this class is a `RefCounted`, not a
+## `Node`, so it has no tree of its own and `get_node_or_null()` is not available on it.
+## `_host` is the scene node that owns this flow. Silent when there is no host or no autoload.
 func _play_world_sound(method: StringName) -> void:
-	var audio := get_node_or_null(^"/root/WorldAudio")
+	if _host == null or not _host.is_inside_tree():
+		return
+	var audio := _host.get_node_or_null(^"/root/WorldAudio")
 	if audio != null and audio.has_method(method):
 		audio.call(method)
 
