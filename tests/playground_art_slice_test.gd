@@ -88,7 +88,7 @@ const INTERACTABLES := {
 	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
 	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
 	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(15.25, 1.05, -15.5),
-	"pg_cabin_papers_look": Vector3(13.96, 0.32, -15.25),
+	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
 	"pg_chalk_guide": Vector3(-12.4, 0.53, -9.6), "pg_tap": Vector3(-5.58, 1.08, 14.0),
 }

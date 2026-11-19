@@ -137,7 +137,8 @@ MATERIALS: dict[str, dict] = {
     "container_lining": {"color": (136, 145, 143), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.56, 0.56, 0.56)},
     "container_steel": {"color": (139, 161, 169), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.9, 0.9, 0.9)},
     "container_deck": {"color": (117, 83, 63), "texture": tex("metal_tile"), "triplanar": "local", "scale": (1.6, 0.8, 0.8)},
-    "container_bedding": {"color": (228, 218, 192), "cull_off": True},
+    "container_bedding": {"texture": tex("sheet_weave"), "cull_off": True},
+    "pale_paper_edge": {"color": (228, 218, 192)},
     "container_blanket": {"texture": tex("blanket_weave"), "cull_off": True},
     "old_newsprint": {"texture": tex("old_newsprint"), "cull_off": True},
     "noodle_film": {"texture": tex("noodle_film"), "roughness": 0.58, "specular": 0},
@@ -505,7 +506,7 @@ def _yard_return_details(b: Builder, parent: str) -> None:
     b.flat("RoundPunch", p, b.mesh("CylinderMesh", top_radius="0.021", bottom_radius="0.021", height="0.004",
                                   radial_segments="12"), "metal_ink", (0.187, 0.036, 0.013), (90, 0, 0))
     b.flat("SlottedPunch", p, b.mesh("BoxMesh", size=vec3((0.027, 0.067, 0.004))), "metal_ink", (0.184, -0.037, 0.013))
-    b.flat("Crease", p, b.mesh("BoxMesh", size=vec3((0.073, 0.015, 0.007))), "container_bedding",
+    b.flat("Crease", p, b.mesh("BoxMesh", size=vec3((0.073, 0.015, 0.007))), "pale_paper_edge",
            (0.180, -0.040, 0.018), (0, 0, 29))
 
     # A low marking kit parked off the court at the shed's edge, not a new obstacle.

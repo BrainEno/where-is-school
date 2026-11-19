@@ -141,9 +141,9 @@ def cabin(b):
            (0, -10.5, 0), imported=True)
     b.node("Papers", "Cabin")
     for name, mesh, where, yaw, scale in (
-        ("DiscardedPage", "newsprint", (0.83, 0.223, 0.12), 37, (1.0, 1.0, 1.0)),
-        ("FoldedPage", "newsprint", (2.13, 0.223, 0.200), 15, (0.89, 0.60, 0.58)),
-        ("ClippedPage", "newsprint_clipped", (1.96, 0.226, 0.25), -19, (1.0, 1.0, 1.0)),
+        ("DiscardedPage", "newsprint", (1.21, 0.223, 0.63), 28, (1.0, 1.0, 1.0)),
+        ("FoldedPage", "newsprint", (2.37, 0.223, 0.70), -28, (0.89, 0.60, 0.58)),
+        ("ClippedPage", "newsprint_clipped", (2.21, 0.226, 0.59), 65, (1.0, 1.0, 1.0)),
     ):
         b.node(name, "Cabin/Papers", position=_v3(where), rotation_degrees=_v3((0, yaw, 0)), scale=_v3(scale))
         b.flat("Paper", f"Cabin/Papers/{name}", mesh, "old_newsprint", (0, 0, 0), imported=True)

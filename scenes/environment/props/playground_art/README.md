@@ -14,7 +14,7 @@ involved.
 
 | Files | Made by | How |
 | --- | --- | --- |
-| `textures/*.png` (30) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2129), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
+| `textures/*.png` (31) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2130), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
 | `materials/*.tres` | `source/build_playground_art.py` | Toon `StandardMaterial3D` (`diffuse_mode = 3`, `specular_mode = 2`) plus one shared ink outline pass. |
 | `meshes/*.obj` and sidecars, `noodle_wrapper.tscn` | `source/build_playground_art.py` calls `source/yard_details.py` | Watertight structure stays in the container shell; the dressing uses shaped gridded surfaces for folds, a cut corner and split plastic film, with UVs and normals. No new collider or runtime mesh builder. |

@@ -1238,8 +1238,8 @@ cast_shadow = 0
 [node name="Papers" type="Node3D" parent="Cabin"]
 
 [node name="DiscardedPage" type="Node3D" parent="Cabin/Papers"]
-position = Vector3(0.83, 0.223, 0.12)
-rotation_degrees = Vector3(0, 37, 0)
+position = Vector3(1.21, 0.223, 0.63)
+rotation_degrees = Vector3(0, 28, 0)
 scale = Vector3(1, 1, 1)
 
 [node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/DiscardedPage"]
@@ -1249,8 +1249,8 @@ material_override = ExtResource("art_old_newsprint")
 cast_shadow = 0
 
 [node name="FoldedPage" type="Node3D" parent="Cabin/Papers"]
-position = Vector3(2.13, 0.223, 0.2)
-rotation_degrees = Vector3(0, 15, 0)
+position = Vector3(2.37, 0.223, 0.7)
+rotation_degrees = Vector3(0, -28, 0)
 scale = Vector3(0.89, 0.6, 0.58)
 
 [node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/FoldedPage"]
@@ -1260,8 +1260,8 @@ material_override = ExtResource("art_old_newsprint")
 cast_shadow = 0
 
 [node name="ClippedPage" type="Node3D" parent="Cabin/Papers"]
-position = Vector3(1.96, 0.226, 0.25)
-rotation_degrees = Vector3(0, -19, 0)
+position = Vector3(2.21, 0.226, 0.59)
+rotation_degrees = Vector3(0, 65, 0)
 scale = Vector3(1, 1, 1)
 
 [node name="Paper" type="MeshInstance3D" parent="Cabin/Papers/ClippedPage"]

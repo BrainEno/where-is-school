@@ -108,8 +108,10 @@ const LOCATIONS := {
 	"playground": {
 		"scene": "res://scenes/locations/playground/playground.tscn",
 		"stage": false,
-		"shapes": 96, # Board retains four pick boxes; marking kit adds two shapes and tap adds three.
-		"interactables": 15,
+		# Includes deferred outline pick shapes, not only the yard's bodies. The optional
+		# paper has an anchor and a pick box; tap and bench now trace their final meshes.
+		"shapes": 98,
+		"interactables": 16, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",

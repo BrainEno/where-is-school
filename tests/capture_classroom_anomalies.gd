@@ -107,10 +107,12 @@ func _run() -> void:
 	if _player.global_position.y > 0.10:
 		_finish(["The protagonist is still above the yard after using the ladder."])
 		return
-	await _stand(container.to_global(Vector3(4.15, 0.02, 0.20)), Vector3.LEFT)
+	# Same review convention as hiding GameUI: do not let a billboard label hide a fitting.
+	(_player.get_node(^"Nameplate") as Label3D).hide()
+	await _stand(container.to_global(Vector3(4.15, 0.02, 0.12)), Vector3.LEFT)
 	await _shot("09-open-cabin.png")
 	await _focus_shot(&"pg_container_look", "10-cabin-focus.png")
-	await _stand(container.to_global(Vector3(2.52, 0.23, 0.22)), Vector3.LEFT)
+	await _stand(container.to_global(Vector3(2.67, 0.23, -0.21)), Vector3.LEFT)
 	await _focus_shot(&"pg_cabin_papers_look", "11-cabin-papers.png")
 	await _stand(Vector3(10.03, 0.03, 3.66), Vector3.RIGHT)
 	await _focus_shot(&"pg_bench_look", "12-noodle-wrapper.png")
@@ -131,6 +133,10 @@ func _focus_shot(id: StringName, frame: String) -> void:
 		_failures.append("%s never reached its live focus shot." % id)
 	else:
 		await _shot(frame)
+	# Only photograph the shut facade. Do not start a visible roll with the HUD hidden.
+	if id == &"pg_shed_door" and not await _choose(&"leave"):
+		_failures.append("The shed inspection did not offer its unchanged leave choice.")
+		return
 	await _settle()
 
 

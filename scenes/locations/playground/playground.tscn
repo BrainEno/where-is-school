@@ -1,4 +1,4 @@
-[gd_scene load_steps=370 format=3]
+[gd_scene load_steps=371 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -51,6 +51,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/metal_ink.tres" id="art_metal_ink"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/notice.tres" id="art_notice"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/pale.tres" id="art_pale"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/pale_paper_edge.tres" id="art_pale_paper_edge"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/plinth.tres" id="art_plinth"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/pour_b.tres" id="art_pour_b"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/rota.tres" id="art_rota"]
@@ -3085,7 +3086,7 @@ cast_shadow = 0
 position = Vector3(0.18, -0.04, 0.018)
 rotation_degrees = Vector3(0, 0, 29)
 mesh = SubResource("BoxMesh_art172")
-material_override = ExtResource("art_container_bedding")
+material_override = ExtResource("art_pale_paper_edge")
 cast_shadow = 0
 
 [node name="ChalkGuide" type="Node3D" parent="PlaygroundArt"]
@@ -3215,7 +3216,7 @@ interact_id = &"pg_tap"
 inspection_id = &"pg_tap"
 radius = 1.3
 camera_shot = ExtResource("shot_3")
-outline_paths = PackedStringArray("../../PlaygroundArt/TapDetail/Standpipe", "../../PlaygroundArt/TapDetail/Bib", "../../PlaygroundArt/TapDetail/Wheel", "../../PlaygroundArt/TapDetail/Cap")
+outline_paths = PackedStringArray("../../PlaygroundArt/TapDetail/Standpipe", "../../PlaygroundArt/TapDetail/Bib", "../../PlaygroundArt/TapDetail/Wheel/Rim", "../../PlaygroundArt/TapDetail/Cap")
 
 [node name="ContainerLook" parent="Interactables" instance=ExtResource("12_interactable")]
 position = Vector3(15.25, 1.05, -15.5)
@@ -3226,7 +3227,7 @@ camera_shot = ExtResource("shot_4")
 outline_paths = PackedStringArray("../../ContainerBody/EndHeader", "../../ContainerBody/DoorNorth/Panel", "../../ContainerBody/DoorSouth/Panel")
 
 [node name="CabinPapersLook" parent="Interactables" instance=ExtResource("12_interactable")]
-position = Vector3(13.96, 0.32, -15.25)
+position = Vector3(14.21, 0.32, -14.91)
 interact_id = &"pg_cabin_papers_look"
 inspection_id = &"pg_cabin_papers"
 radius = 0.95

@@ -1110,7 +1110,7 @@ func _check_ladder(hurt: bool) -> void:
 func _check_cabin_papers(container: Node3D) -> void:
 	if _narrative.has_entry(&"saw_pg_cabin_papers"):
 		_failures.append("Looking at the open container also awarded the optional paper note.")
-	if not await _walk_to(container.to_global(Vector3(2.52, 0.22, 0.22)), 0.14):
+	if not await _walk_to(container.to_global(Vector3(2.67, 0.22, -0.21)), 0.14):
 		_failures.append("Couldn't walk through the threshold to see the papers.")
 		return
 	var papers := _room().find_interactable(&"pg_cabin_papers_look")

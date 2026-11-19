@@ -644,6 +644,24 @@ def old_newsprint() -> Image.Image:
     return im
 
 
+def sheet_weave() -> Image.Image:
+    # Creases echo the drape, rather than laying a uniform noise map over the cloth.
+    c = Canvas(1.87, 0.83, 180.0, (227, 216, 191), seed=2130)
+    planes(c, (234, 223, 198), (188, 173, 158), 24, (0.24, 0.72), (0.04, 0.10),
+           angle=-0.08, opacity=0.28, bristles=11)
+    im = c.image(18).convert("RGB")
+    d = ImageDraw.Draw(im)
+    for top, slope, wobble, span in ((0.69, -0.28, 0.012, (0.06, 0.97)),
+                                    (0.91, 0, 0.13, (0.04, 0.85)),
+                                    (0.57, -0.08, 0.028, (0.65, 0.97))):
+        points = [(round(u * im.width), round((top + slope * u + wobble * math.sin(5 * u)) * im.height))
+                  for u in np.linspace(*span, 27)]
+        d.line([(x, y + 2) for x, y in points], fill=(200, 183, 166), width=3)
+        d.line([(x, y - 2) for x, y in points], fill=(238, 227, 200), width=2)
+    d.rectangle((3, 3, im.width - 4, im.height - 4), outline=(188, 172, 151), width=2)
+    return im
+
+
 def blanket_weave() -> Image.Image:
     c = Canvas(1.29, 0.713, 224.0, (146, 96, 72), seed=2128)
     planes(c, (163, 113, 84), (116, 76, 67), 28, (0.26, 0.6), (0.07, 0.15),
@@ -701,6 +719,7 @@ TEXTURES = {
     "noodle_film.png": noodle_film,
     "old_newsprint.png": old_newsprint,
     "blanket_weave.png": blanket_weave,
+    "sheet_weave.png": sheet_weave,
     "shed_sign.png": shed_sign,
     "tap_runoff.png": tap_runoff,
     "hoop_net.png": hoop_net,
