@@ -783,10 +783,10 @@ def build_playground(for_courtyard_view: bool = False):
 
     # the equipment shed on the west side
     s.box("ShedBody", (-17.0, 1.5, -4.0), (6.0, 3.0, 8.0), "wall", ["camera_occluder"])
-    # The distant view retains cheap silhouettes. The playable scene gets detailed
-    # door, glazing, roof and sign under ShedBody in the yard art pass.
+    # Both views use the actual roof slab. The yard art pass adds seams and a gutter
+    # to it and replaces the distant door, glazing and sign with detailed wall trim.
+    s.box("ShedRoof", (-17.0, 3.1, -4.0), (6.4, 0.2, 8.4), "metal", None, False)
     if for_courtyard_view:
-        s.box("ShedRoof", (-17.0, 3.1, -4.0), (6.4, 0.2, 8.4), "metal", None, False)
         s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
         s.box("ShedWindow", (-13.95, 1.9, -6.2), (0.1, 0.8, 1.2), "glass", None, False)
         s.box("ShedSheet", (-13.9, 1.9, -6.2), (0.08, 0.5, 0.9), "paper", None, False)

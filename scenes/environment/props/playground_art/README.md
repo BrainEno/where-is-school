@@ -167,9 +167,10 @@ actor identity or effect on the existing destination/choice checks.
 The standpipe, cast outlet, red wheel, hanging cap and slotted drain describe the water
 path without adding a water simulation. The equipment shed has a framed door with an
 uneven hasp, a shut glazed window with the original rota and return copy, and a folded
-roof edge and downpipe. Its trims are children of `ShedBody` so they fade with the shell.
+roof edge and downpipe. The wall fittings fade with `ShedBody`. The teaching-wing view
+uses the same `ShedRoof` slab, without the yard's raised seams and gutter.
 The door remains the same dialogue/check, not a walkable interior. The scene keeps the
-old court paint, cracks, empty centre and low-detail yard view from the teaching block.
+old court paint, cracks and empty centre.
 `tests/capture_classroom_anomalies.gd` photographs the doorway and authored prop focus
 shots from the in-game rig (not a free camera) as part of its existing Actions workflow.
 

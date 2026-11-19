@@ -115,14 +115,15 @@ def shed(b):
     _box(b, p, "SillPan", (1.49, 0.082, 0.224), (2.2, 1.46, 0.081), "concrete")
     _box(b, p, "HighRail", (1.22, 0.025, 0.019), (2.2, 2.234, 0.085), "exit_steel")
     _box(b, p, "DutySheet", (0.009, 0.5, 0.90), (2.2, 1.963, 0.093), "rota", (0, -90, 0))
-    # Broad roof trays, a folded drip edge and wall straps make the shed read as a
-    # built structure. The downpipe stays clear of the ping-pong ball and footing.
-    _box(b, p, "Roof", (8.36, 0.129, 6.39), (0, 3.065, -3.004), "shed_roof", shadow=True)
-    rib = b.mesh("BoxMesh", size=_v3((0.037, 0.025, 6.32)))
+    # Dress the slab shared with the teaching-wing view, rather than drawing a
+    # second roof. Its top is 0.10 m above the local origin; the seams sit into it.
+    roof = "ShedRoof"
+    rib = b.mesh("BoxMesh", size=_v3((6.32, 0.025, 0.037)))
     for i in range(13):
-        b.flat(f"RoofSeam{i}", p, rib, "shed_roof", (0.634 * (i - 6), 3.139, -3.004))
-    _box(b, p, "Gutter", (8.39, 0.112, 0.125), (0, 3.038, 0.208), "exit_frame")
-    _box(b, p, "GutterLip", (8.39, 0.029, 0.042), (0, 3.094, 0.27), "exit_steel")
+        b.flat(f"RoofSeam{i}", roof, rib, "shed_roof", (0, 0.108, 0.634 * (i - 6)))
+    _box(b, roof, "Gutter", (0.125, 0.112, 8.39), (3.208, -0.062, 0), "exit_frame")
+    _box(b, roof, "GutterLip", (0.042, 0.029, 8.39), (3.270, -0.006, 0), "exit_steel")
+    # The wall-mounted drainpipe stays clear of the ping-pong ball and footing.
     _cylinder(b, p, "Downpipe", 0.047, 2.51, (3.69, 1.50, 0.157), "tap_steel", shadow=True)
     _cylinder(b, p, "DownpipeElbow", 0.048, 0.35, (3.69, 2.851, 0.208), "tap_steel", (26, 0, 0))
     _cylinder(b, p, "DownpipeShoe", 0.050, 0.26, (3.69, 0.177, 0.215), "exit_steel", (-44, 0, 0))
