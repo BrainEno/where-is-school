@@ -5,6 +5,7 @@ extends StagedInteractable
 enum Offer { NONE, SIT, STAND }
 
 var player: PlayerController
+var chair: PushableChair
 
 
 func current_offer() -> Offer:
@@ -18,6 +19,5 @@ func can_interact() -> bool:
 
 
 func is_occupied_by(body: Node3D) -> bool:
-	var chair := get_parent() as PushableChair
-	return chair != null and is_instance_valid(player) and body == player and player.is_seated() \
+	return is_instance_valid(chair) and is_instance_valid(player) and body == player and player.is_seated() \
 		and player.global_position.distance_to(chair.home_mark()) < 0.12

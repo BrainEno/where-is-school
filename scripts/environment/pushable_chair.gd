@@ -11,6 +11,8 @@ var _home_position: Vector3
 var _pushed_position: Vector3
 var _pushed := false
 var _cue_pending := false
+var _pick_target: Interactable
+var _pick_offset: Transform3D
 
 @onready var _body: StaticBody3D = get_node_or_null(^"Solid")
 @onready var seat_mark: Marker3D = get_node_or_null(^"SeatMark")
@@ -21,6 +23,17 @@ func _ready() -> void:
 	_home_position = position
 	_pushed_position = position + basis.z * PUSH_BACK_DISTANCE
 	_set_solid(false)
+
+
+## The area's own shapes move with the chair, but stay outside the furniture tree:
+## interactables are packaged with the room, never underneath instanced desk geometry.
+func bind_pick_target(target: Interactable) -> void:
+	_pick_target = target
+	_pick_offset = global_transform.affine_inverse() * target.global_transform
+
+
+func is_seatable() -> bool:
+	return seat_mark != null and is_instance_valid(_pick_target)
 
 
 func is_pushed_back() -> bool:
@@ -51,6 +64,8 @@ func start_slide() -> void:
 func sample_slide(fraction: float) -> void:
 	var previous := position
 	position = _home_position.lerp(_pushed_position, clampf(fraction, 0.0, 1.0))
+	if is_instance_valid(_pick_target):
+		_pick_target.global_transform = global_transform * _pick_offset
 	# One cue when the chair actually starts moving; snaps and repeated samples
 	# (including resuming a paused beat) never trigger a new scrape.
 	if _cue_pending and not previous.is_equal_approx(position):

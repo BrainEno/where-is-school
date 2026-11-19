@@ -662,7 +662,7 @@ func _attach_wake_seat() -> void:
 		return
 	for node in get_tree().get_nodes_in_group(SEATED_CHAIR_GROUP):
 		var chair := node as PushableChair
-		if chair == null or chair.seat_mark == null or chair.is_pushed_back():
+		if chair == null or not chair.is_seatable() or chair.is_pushed_back():
 			continue
 		if global_position.distance_to(chair.home_mark()) > 0.12:
 			continue
@@ -697,7 +697,7 @@ func is_seat_transition_active() -> bool:
 func sit_down(chair: PushableChair) -> bool:
 	if _wake_seated or is_seat_transition_active() or visual == null or _character_animator == null:
 		return false
-	if chair == null or chair.seat_mark == null or global_position.distance_to(chair.home_mark()) > 0.025:
+	if chair == null or not chair.is_seatable() or global_position.distance_to(chair.home_mark()) > 0.025:
 		return false
 	if get_facing_direction().dot(-chair.global_basis.z) < 0.995:
 		return false

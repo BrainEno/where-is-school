@@ -9,7 +9,7 @@ const Bag = preload("res://scenes/environment/props/schoolbag.gd")
 
 @export var player_group: StringName = &"protagonist"
 @export var chair_path: NodePath = ^"../Furniture/DeskB2/Chair"
-@export var seat_interactable_path: NodePath = ^"../Furniture/DeskB2/Chair/ChairSit"
+@export var seat_interactable_path: NodePath = ^"../Interactables/ChairSit"
 @export var bag_path: NodePath = ^"../Furniture/DeskB2/Schoolbag"
 @export var bag_interactable_path: NodePath = ^"../Interactables/SchoolbagInspect"
 
@@ -21,6 +21,8 @@ var _shown := SeatOffer.Offer.NONE
 
 
 func _ready() -> void:
+	_chair.bind_pick_target(_seat)
+	_seat.chair = _chair
 	_seat.stage_handler = _stage_sit
 	_inspect.stage_handler = _stage_search
 	_bind_player.call_deferred()
@@ -31,7 +33,7 @@ func _bind_player() -> void:
 	_seat.player = player
 	# Continue restores a position, not an in-progress pose. At the wake mark,
 	# a standing player needs the chair at the clear stop, even on an older save.
-	if player != null and not player.is_seated() and player.global_position.distance_to(_chair.home_mark()) < 0.025:
+	if player != null and not player.is_seated() and player.global_position.distance_to(_chair.home_mark()) < 0.015:
 		_chair.snap_back()
 	_update_offer()
 

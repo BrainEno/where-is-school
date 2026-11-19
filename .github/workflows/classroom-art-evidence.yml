@@ -43,6 +43,7 @@ on:
       - 'tests/capture_classroom_art.gd'
       - 'tests/capture_classroom_motion.gd'
       - 'scenes/environment/props/schoolbag.*'
+      - 'scenes/environment/props/classroom_desk.tscn'
       - 'assets/models/classroom/schoolbag/**'
       - 'scripts/actors/player/**'
       - 'scripts/actors/prologue_action_poses.gd'
@@ -59,6 +60,9 @@ on:
       - 'tests/classroom_wall_contract.gd'
       - 'tests/classroom_render_evidence_test.py'
       - 'tests/opening_flow_test.gd'
+      - 'tests/imported_placement_test.gd'
+      - 'tests/runtime_character_animation_test.gd'
+      - 'tests/b_reveal_timing_test.gd'
       - 'tests/run_check_test.sh'
       - 'tests/run_classroom_checks.sh'
       - 'tests/run_classroom_checks_test.sh'
@@ -214,6 +218,16 @@ jobs:
               --resolution 1120x630 --rendering-method gl_compatibility --rendering-driver opengl3 \
               --script res://tests/capture_classroom_motion.gd -- "${args[@]}" || true
           done
+          run_check_summary
+      - name: Check the seat, imported furniture and resaved classroom
+        shell: bash
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          run_check classroom_visual_slice 180 godot --headless --path . --script res://tests/classroom_visual_slice_test.gd || true
+          run_check imported_placement 180 godot --headless --path . --script res://tests/imported_placement_test.gd || true
+          run_check runtime_character_animation 300 godot --headless --path . --script res://tests/runtime_character_animation_test.gd || true
+          run_check b_reveal_timing 360 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || true
           run_check_summary
       - name: Report first-import diagnostics
         if: always()

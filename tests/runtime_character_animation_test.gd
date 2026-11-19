@@ -95,8 +95,15 @@ func _run() -> void:
 	Engine.time_scale = TIME_SCALE
 
 	Harness.stage = "classroom"
-	if not await _enter(CLASSROOM, &"PlayerStart"):
-		Harness.finish(self, _failures, "")
+	# Main already placed the new game on B2. Re-loading the room here would
+	# deliberately discard that seated pose (a room transition), not test the wake.
+	var room := _host.get_current()
+	if room == null or room.location_id != &"classroom":
+		Harness.finish(self, ["The new game did not open in its classroom."], "")
+		return
+	var navigation := room.get_node_or_null(^"Navigation") as LocationNavigation
+	if navigation == null or not await navigation.wait_until_synchronized():
+		Harness.finish(self, ["The boot classroom navigation never synchronized."], "")
 		return
 	var player_animator := _player.get_character_animator()
 	if player_animator == null or not player_animator.is_bound():
