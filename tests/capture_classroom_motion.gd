@@ -61,8 +61,7 @@ func _run() -> void:
 	_player.settle_wake_seated_pose(0.0)
 	_player.set_camera_roll(0.0)
 	_sequence.allow_player_control()
-	await physics_frame
-	await physics_frame
+	await create_timer(0.26).timeout
 
 	_review = Camera3D.new()
 	_main.add_child(_review)
@@ -130,7 +129,7 @@ func _shot(file_name: String) -> void:
 	if image.save_png(_out.path_join(file_name + ".png")) != OK:
 		_failures.append("Could not save %s." % file_name)
 	# A small, lossily encoded preview of this exact viewport lets the bot review the
-	# irreversible PNG without a browser signed in to the artifact store.
-	image.resize(600, 338, Image.INTERPOLATE_LANCZOS)
-	if image.save_jpg(_out.path_join(file_name + ".jpg"), 0.72) != OK:
+	# original PNG without a browser signed in to the artifact store.
+	image.resize(520, 293, Image.INTERPOLATE_LANCZOS)
+	if image.save_jpg(_out.path_join(file_name + ".jpg"), 0.62) != OK:
 		_failures.append("Could not save a preview of %s." % file_name)
