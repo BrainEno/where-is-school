@@ -19,6 +19,10 @@ NarrativeState="*res://scripts/autoload/narrative_state.gd"
 Save="*res://scripts/autoload/save_manager.gd"
 Loc="*res://scripts/i18n/loc.gd"
 CueAudio="*res://scripts/audio/cue_audio.gd"
+# The world's own sounds - footsteps, chairs, paper, doors - as opposed to the pointer's
+# feedback. Separate autoload because they own the SFX bus and the cues deliberately do not;
+# see the header of scripts/audio/world_audio.gd.
+WorldAudio="*res://scripts/audio/world_audio.gd"
 # One background-music player for the whole session: it has to outlive a scene change,
 # and two rooms must never own a copy of it.
 Music="*res://scripts/autoload/music_player.gd"

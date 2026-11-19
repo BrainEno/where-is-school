@@ -366,6 +366,17 @@ func _camera_relative(input_vector: Vector2) -> Vector3:
 	return Vector3.ZERO
 
 
+## How far the body travels between footfalls. The stride is measured against distance
+## rather than time on purpose: a walk and a jog move the same feet, so a fixed timer would
+## put a jog's steps at the same rate as a walk's and turn fast movement into a slow shuffle.
+const STEP_STRIDE_METRES := 1.35
+## Below this the body is sliding into place rather than walking: no footstep.
+const STEP_MIN_SPEED := 0.35
+
+## Distance travelled since the last footfall was heard.
+var _stride_accumulator: float = 0.0
+
+
 ## The one place velocity is written. Manual and automatic movement share it so the
 ## character accelerates, slides and turns exactly the same way either way.
 func _apply_movement(direction: Vector3, delta: float) -> void:
@@ -385,9 +396,36 @@ func _apply_movement(direction: Vector3, delta: float) -> void:
 		velocity.y = 0.0
 
 	_try_step_up(Vector3(velocity.x, 0.0, velocity.z) * delta)
+	var before := global_position
 	move_and_slide()
 	_update_visual_facing(delta)
+	_track_steps(global_position.distance_to(before))
 
+
+## Looks the world-audio autoload up by path, the way the interaction cues do: a headless
+## test that registers no autoloads gets silence rather than a compile error.
+func _play_world_sound(method: String) -> void:
+	var audio := get_node_or_null("/root/WorldAudio")
+	if audio != null and audio.has_method(method):
+		audio.call(method)
+
+
+## A footstep every `STEP_STRIDE_METRES` of ground covered, and never while standing.
+##
+## The distance is read from where the body actually ended up, not from `velocity`: a body
+## pressed against a wall has velocity and no movement, and footsteps on the spot are the
+## classic sign that nobody checked.
+func _track_steps(travelled: float) -> void:
+	if travelled <= 0.0001 or velocity.length() < STEP_MIN_SPEED:
+		# Standing still resets the stride, so the first step after a stop is immediate
+		# rather than arriving after a leftover half stride.
+		_stride_accumulator = STEP_STRIDE_METRES
+		return
+	_stride_accumulator += travelled
+	if _stride_accumulator < STEP_STRIDE_METRES:
+		return
+	_stride_accumulator = 0.0
+	_play_world_sound("play_step")
 
 ## Lifts the body onto a low step instead of letting it press against one.
 ##
@@ -874,6 +912,9 @@ func _pull_seat_home() -> void:
 		return
 	if _seated_chair.has_method("pull_home"):
 		_seated_chair.call("pull_home", CHAIR_PULL_SECONDS)
+	# The chair is what makes the sound here, not the body: a chair drawn in under
+	# someone is wood on wood, and it is the loudest thing in the wake sequence.
+	_play_world_sound("play_chair")
 
 
 ## Puts a hand on the chair's back and keeps it there while the chair moves.
