@@ -215,6 +215,8 @@
     "prompt.container_ladder_down": "Climb down the steel ladder",
     "prompt.projector_screen_down": "Pull the screen down",
     "prompt.projector_screen_up": "Roll the screen up",
+    "prompt.sit": "Sit down",
+    "prompt.stand": "Stand up",
     "menu.journal": "Notebook",
     "menu.journal_unread": "Notebook · {count} new",
     "settings.action.journal": "Notebook",

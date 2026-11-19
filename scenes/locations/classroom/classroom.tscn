@@ -43,6 +43,8 @@
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_presentation.gd" id="c_presentation"]
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_anomalies.gd" id="c_anomalies"]
 [ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="c_staged"]
+[ext_resource type="Script" path="res://scripts/interaction/seated_chair_interactable.gd" id="c_seat_sit"]
+[ext_resource type="Script" path="res://scenes/locations/classroom/classroom_chair_control.gd" id="c_chair_control"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/window_curtain.tscn" id="c_curtain"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_front.tres" id="c_wall_east_front"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_back.tres" id="c_wall_east_back"]
@@ -814,6 +816,14 @@ prompt_text = "Look at your desk"
 inspection_id = &"classroom_own_desk"
 radius = 0.9
 
+[node name="ChairSit" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(-1.6, 0.55, 1.88)
+interact_id = &"chair_sit"
+script = ExtResource("c_seat_sit")
+outline_paths = PackedStringArray("../../Furniture/DeskB2/Chair/Seat", "../../Furniture/DeskB2/Chair/Back")
+prompt_text = "Sit down"
+radius = 0.85
+
 [node name="SchoolbagInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(-1.6, 0.55, 2.3)
 interact_id = &"schoolbag"
@@ -906,3 +916,6 @@ script = ExtResource("c_presentation")
 
 [node name="ScreenControl" type="Node" parent="."]
 script = ExtResource("c_screen_control")
+
+[node name="ChairControl" type="Node" parent="."]
+script = ExtResource("c_chair_control")

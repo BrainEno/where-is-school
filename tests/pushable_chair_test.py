@@ -106,6 +106,66 @@ def test_the_room_can_find_it() -> None:
     )
 
 
+def test_the_chair_is_solid_only_when_it_is_empty() -> None:
+    """A solid chair the protagonist is sitting *in* would trap him.
+
+    The body overlaps the seat for the whole of the opening, so the collision has to be off
+    while it is being sat in and on once it is out of the way. Getting this backwards is not a
+    cosmetic bug: it is a player who cannot move, or one who is shoved out of the room.
+    """
+    text = source()
+    check("func _set_solid(" in text, "the chair must be able to turn its collision on and off")
+    check(
+        "_set_solid(false)" in text[text.index("func _ready()") : text.index("func is_pushed_back")],
+        "the chair must start open - the opening has the protagonist asleep in it",
+    )
+    push = text[text.index("func push_back(") : text.index("func pull_home(")]
+    check("_set_solid(true)" in push, "pushing the chair back must make it solid")
+    pull = text[text.index("func pull_home(") :]
+    check(
+        pull.index("_set_solid(false)") < pull.index("_slide_to("),
+        "pulling the chair home must open it *before* it moves, not after",
+    )
+
+
+def test_the_room_has_a_sit_interaction() -> None:
+    """The chair offers sitting, and it reaches into the room without a hard player path."""
+    room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
+    control = (ROOT / "scenes/locations/classroom/classroom_chair_control.gd").read_text(
+        encoding="utf-8"
+    )
+    check('interact_id = &"chair_sit"' in room, "the classroom needs a chair_sit interactable")
+    check("seated_chair_interactable.gd" in room, "it must use the offer-aware interactable")
+    check(
+        "ChairControl" in room,
+        "the room needs a controller to wire the interactable to the protagonist",
+    )
+    check(
+        "player_group" in control and "player_path" not in control,
+        "the controller must find the body by group; the host, not the room, places the player",
+    )
+    check(
+        "stage_handler" in control,
+        "sitting has to run inside the director's beat, like every other staged moment",
+    )
+
+
+def test_the_hand_does_the_pushing() -> None:
+    """The arm reaches the chair before it moves, and lets go after.
+
+    A chair that slides with no hand on it is the thing this was built to avoid looking like.
+    """
+    controller = (ROOT / "scripts/actors/player/player_controller.gd").read_text(encoding="utf-8")
+    push = controller[controller.index("func _push_seat_back(") :]
+    push = push[: push.index("func _pull_seat_home(")]
+    check("_reach_for_chair()" in push, "the stand-up must reach for the chair")
+    check("_release_chair" in push, "and let go of it once it stops")
+    check(
+        push.index("_reach_for_chair()") < push.index("push_back"),
+        "the hand has to be on the chair *before* it starts moving",
+    )
+
+
 def test_the_distance_is_the_one_that_was_measured() -> None:
     """0.62 m is the geometric minimum; the constant has to keep its slack."""
     text = source()
@@ -115,8 +175,12 @@ def test_the_distance_is_the_one_that_was_measured() -> None:
         return
     distance = float(m.group(1))
     check(
-        distance >= 0.65,
-        f"a {distance:g} m push is at or below the 0.63 m minimum, leaving no slack",
+        distance >= 0.63,
+        f"a {distance:g} m push does not clear the seat, which needs 0.63 m",
+    )
+    check(
+        distance <= 0.80,
+        f"a {distance:g} m push moves the chair further than the room is worth watching",
     )
 
 
@@ -127,6 +191,9 @@ def main() -> int:
     test_slides_do_not_stack()
     test_it_is_snappable()
     test_the_room_can_find_it()
+    test_the_chair_is_solid_only_when_it_is_empty()
+    test_the_room_has_a_sit_interaction()
+    test_the_hand_does_the_pushing()
     test_the_distance_is_the_one_that_was_measured()
 
     if FAILURES:

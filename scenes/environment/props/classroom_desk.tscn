@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/environment/props/school_desk.tscn" id="1_school_desk"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="2_wood"]
@@ -14,6 +14,9 @@ size = Vector3(0.46, 0.34, 0.05)
 
 [sub_resource type="BoxMesh" id="BoxMesh_post"]
 size = Vector3(0.04, 0.45, 0.36)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_chair_solid"]
+size = Vector3(0.46, 0.9, 0.42)
 
 [sub_resource type="BoxMesh" id="BoxMesh_rail"]
 size = Vector3(0.36, 0.035, 0.035)
@@ -46,6 +49,14 @@ material_override = ExtResource("3_metal")
 position = Vector3(0.2, 0.22, 0)
 mesh = SubResource("BoxMesh_post")
 material_override = ExtResource("3_metal")
+
+[node name="Solid" type="StaticBody3D" parent="Chair"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Chair/Solid"]
+position = Vector3(0, 0.45, 0.03)
+shape = SubResource("BoxShape3D_chair_solid")
 
 [node name="Rail" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.12, 0.16)
