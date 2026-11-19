@@ -43,15 +43,19 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          set +e
           mkdir -p ci-logs
+          echo "::notice title=Review engine::$(godot --version)"
           code=0
           godot --headless --path . --import > ci-logs/b_import.log 2>&1 || code=$?
           echo "Cold import exit=${code}"
           # Like the main import job, keep the first pass and check its actual product.
           scene=$(grep -o 'res://\.godot/imported/[^" ]*\.scn' scenes/dev/teacher_b/teacher_b.glb.import | head -1)
+          notes=$(grep -E 'teacher_b|Parse Error|SCRIPT ERROR|ERROR:' ci-logs/b_import.log | tail -14 | tr '\n' '|' | cut -c1-3000)
+          echo "::notice title=Teacher B cold import ${code}::${notes:-no matching diagnostics}"
           if [ "$code" -ge 128 ] || [ -z "$scene" ] || [ ! -s "${scene#res://}" ]; then
             tail -40 ci-logs/b_import.log
-            echo '::error title=Teacher B import::The committed sidecar did not produce the skinned scene.'
+            echo "::error title=Teacher B import::No skinned scene was generated at ${scene:-missing import path} (exit ${code})."
             exit 1
           fi
           source tools/ci_run_check.sh
