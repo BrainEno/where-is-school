@@ -26,7 +26,7 @@ If documents conflict, report the conflict instead of silently inventing a new d
 ## Before development — search first (mandatory)
 
 1. Inspect the branch, working tree, recent changes and open PR file overlap before editing.
-2. Read [MODULE_INDEX](docs/MODULE_INDEX.md); follow the relevant source, existing callers and tests. The index includes globally named types and preload-only helpers such as `TestHarness`.
+2. Read [MODULE_INDEX](docs/MODULE_INDEX.md) (names and location ids: [GLOSSARY](docs/GLOSSARY.md)); follow the relevant source, existing callers and tests. The index includes globally named types and preload-only helpers such as `TestHarness`.
 3. Search existing function, signal and constant names plus behavior synonyms, not just filenames. For example: `git grep -n -E 'MenuStyle|UiTextScale|TestHarness' -- scripts scenes tests tools addons`.
 4. Reuse the existing owner/API when it fits. If it does not, explain the boundary and the reason before introducing a parallel implementation.
 5. Record the actual keywords/commands, relevant hits and reuse decision in the PR template's **已检索** subsection; do not claim an unperformed search.
@@ -146,4 +146,4 @@ Do not build all chapters, complex skill trees, voice acting, cinematic facial a
 
 ## Definition of done
 
-A task is done only when acceptance criteria are met, the changed path works in the target engine, relevant checks are honestly reported, no known regression is concealed, and the PR contains only approved game-production material.
+A task is done only when its commits have landed on `main` (a closed PR is not that; [protocol §6](docs/AGENT_PROTOCOL.md)), acceptance criteria are met, the changed path works in the target engine, relevant checks are honestly reported, no known regression is concealed, and the PR contains only approved game-production material.

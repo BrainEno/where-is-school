@@ -48,6 +48,8 @@ Rules:
 - Use BREAKING CHANGE: <description> in the footer only when the change truly breaks a public/runtime contract.
 - Do not use vague subjects such as update files, fix stuff, changes, or agent work.
 - Do not add Co-authored-by or model attribution unless the identity and attribution are explicitly verified and authorized.
+- **Merging (issue #222).** Pull requests are merged with a merge commit. GitHub's own `Merge pull request #N from …` subject, and a `Merge branch …` commit made when refreshing a branch from `main`, are exempt from this format; everything an author writes is not. If a pull request is ever squash-merged, rewrite the squash title in this English form before confirming — the default would be the Chinese PR title (§2).
+- `tools/check_commit_messages.py` enforces this on every pull request's commits (the `Commit subjects follow the protocol` job in `test-tooling.yml`). Check before pushing: `python3 tools/check_commit_messages.py --range origin/main..HEAD`.
 
 Examples:
 
@@ -101,6 +103,7 @@ The final handoff must link the PR and report its title, base/head SHA, changed-
 - Do not invent screenshots, CI links, test results, hardware measurements, model names, asset provenance, licenses, or owner approvals.
 - Do not include private manuscripts, credentials, personal absolute paths, or unrelated personal information in branches, commits, issues, PRs, logs, or evidence.
 - Before opening a PR, compare the branch with the exact requested base, inspect the full diff, confirm no unrelated files changed, and rebase/refresh only when doing so is safe and authorized.
+- **Done means landed on `main` (issue #290).** A closed PR, or a commit whose message says `closes #N`, is not evidence that work reached `main`: #238 was closed unmerged and #230 stayed unmet. Before reporting an issue's acceptance as met, or closing it, verify every commit you cite with `git fetch origin main && git merge-base --is-ancestor <sha> origin/main` (exit 0 = landed), and check each acceptance item against `origin/main` itself, not against the branch. A later audit can repeat the same command.
 
 ### 6.1 Flaky tests
 
@@ -114,6 +117,7 @@ The final handoff must link the PR and report its title, base/head SHA, changed-
 
 - Agents implement and provide evidence; the repository owner reviews and decides whether to merge.
 - Agents must not merge their own PR, merge another agent's PR, push directly to main, force-push, rewrite shared history, or change repository protections.
+- Head branches are deleted when their PR merges (repository setting *Automatically delete head branches*, issue #219). A closed-unmerged branch is kept until its owner decides; do not delete another agent's branch.
 - If another PR changes the same file or a required base SHA has moved, stop and report the conflict in Chinese. Do not silently broaden the allowlist or overwrite another agent's work.
 - If a requirement conflicts with this file, the task-specific owner instruction may override it only when the override is explicit. Report the conflict and the chosen scope in the PR.
 
