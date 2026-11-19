@@ -28,6 +28,8 @@ extends Control
 ## usable without a mouse: ←/→ move between the kinds, Enter/A picks one, ↑/↓ and Page
 ## Up/Down scroll the page, and Esc/B, the menu button or the notebook key close it.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal closed
 
 const PANEL_MAX_WIDTH := 940.0
@@ -46,6 +48,7 @@ const SOURCE_COLORS: Dictionary = {
 
 var _factor := 1.0
 var _panel: PanelContainer = null
+var _outer: MarginContainer
 var _title: Label = null
 var _subtitle: Label = null
 var _route: Label = null
@@ -90,6 +93,7 @@ func _ready() -> void:
 	for side: String in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, int(OUTER_MARGIN))
 	add_child(margin)
+	_outer = margin
 	var center := CenterContainer.new()
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(center)
@@ -189,7 +193,7 @@ func _ready() -> void:
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
 		loc.connect("locale_changed", _on_locale_changed)
-	get_viewport().size_changed.connect(_fit)
+	MobileLayout.watch(self, _fit)
 	_rebuild()
 
 
@@ -526,6 +530,7 @@ func _refresh_hint() -> void:
 	if _hint == null:
 		return
 	var pad := MenuStyle.using_gamepad(self)
+	_hint.visible = not MobileLayout.enabled or pad
 	_hint.text = L10n.t(
 		"journal.hint_pad" if pad else "journal.hint_keyboard",
 		{"close": MenuStyle.key(self, &"ui_cancel"), "confirm": MenuStyle.key(self, &"ui_accept")}
@@ -681,7 +686,13 @@ func _on_locale_changed(_locale: String) -> void:
 func _fit() -> void:
 	if _panel == null:
 		return
-	var view := get_viewport_rect().size
+	var view := MobileLayout.safe_rect(self).size
+	if MobileLayout.enabled:
+		MobileLayout.inset(_outer)
+		MobileLayout.enlarge(_back)
+		for button: Button in _filter_buttons.values():
+			MobileLayout.enlarge(button)
+		MobileLayout.setup_scroll(_scroll)
 	var width := minf(view.x - OUTER_MARGIN * 2.0, PANEL_MAX_WIDTH * maxf(_factor, 1.0))
 	var height := view.y - OUTER_MARGIN * 2.0
 	_panel.custom_minimum_size = Vector2(maxf(width, 320.0), maxf(height, 240.0))

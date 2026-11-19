@@ -7,6 +7,9 @@ config_version=5
 config/name="where-is-school"
 config/version="0.1.0"
 run/main_scene="res://scenes/ui/title_screen.tscn"
+run/max_fps.mobile=60
+config/icon="res://assets/icon/app_icon_512.png"
+config/quit_on_go_back=false
 
 [autoload]
 
@@ -45,6 +48,8 @@ window/size/viewport_height=900
 ; (`scripts/ui/display_mode.gd` sets it and centres the frame at startup).
 window/size/resizable=true
 window/size/initial_position_type=1
+; Sensor landscape: both grips, without a portrait-only frame during play.
+window/handheld/orientation=4
 
 [editor_plugins]
 
@@ -127,4 +132,9 @@ theme/custom="res://assets/ui/app_theme.tres"
 [rendering]
 
 renderer/rendering_method="forward_plus"
+; Platform-specific override comes before the general mobile feature.
+renderer/rendering_method.ios="mobile"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+scaling_3d/scale.mobile=0.8
 environment/defaults/default_clear_color=Color(0.106, 0.118, 0.118, 1)

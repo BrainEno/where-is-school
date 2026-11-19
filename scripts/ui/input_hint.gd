@@ -9,6 +9,7 @@ extends RefCounted
 
 const DEVICE_KEYBOARD := &"keyboard"
 const DEVICE_MOUSE := &"mouse"
+const DEVICE_TOUCH := &"touch"
 const DEVICE_GAMEPAD := &"gamepad"
 
 

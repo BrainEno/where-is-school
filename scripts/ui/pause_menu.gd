@@ -26,6 +26,8 @@ extends CanvasLayer
 ## closing the notebook goes back to the game rather than to this list. The entry says how
 ## many entries are new since the notebook was last read.
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 signal opened
 signal closed
 
@@ -69,6 +71,7 @@ class Sheet:
 var _factor := 1.0
 var _root: Control = null
 var _column: VBoxContainer = null
+var _touch_scroll: ScrollContainer
 var _heading: Label = null
 ## The last save, under the heading: "Last saved: Corridor · 14:03".
 var _status: Label = null
@@ -110,7 +113,7 @@ func _ready() -> void:
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 4)
-	_root.add_child(_column)
+	_touch_scroll = MobileLayout.add_menu_column(_root, _column)
 	_heading = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER, 0.6, 3)
 	_heading.name = "Heading"
 	_column.add_child(_heading)
@@ -153,7 +156,9 @@ func _ready() -> void:
 		settings.connect("setting_changed", _on_setting_changed)
 		settings.connect("input_device_changed", _on_device_changed)
 		settings.connect("bindings_changed", _refresh_texts)
-	_root.get_viewport().size_changed.connect(_fit)
+	MobileLayout.watch(_root, _fit)
+	if MobileLayout.enabled:
+		get_window().go_back_requested.connect(_on_mobile_back)
 	_refresh_texts()
 
 
@@ -411,6 +416,26 @@ static func _caption(status: Dictionary) -> String:
 	)
 
 
+func _on_mobile_back() -> void:
+	if is_open():
+		if _confirm.visible:
+			_confirm.cancel()
+		elif _settings_panel.is_open():
+			_settings_panel.close()
+		elif _journal.is_open():
+			_journal.close()
+		else:
+			close()
+	else:
+		var ui := get_parent().get_node_or_null(^"GameUI") as GameUI
+		if ui != null and ui.end_card.visible:
+			ui.end_card.get_confirm().cancel()
+		elif ui != null and ui.backlog.is_open():
+			ui.backlog.close()
+		elif not _something_else_owns_cancel():
+			open()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if is_open():
 		if _settings_panel.is_open() or _confirm.visible or _journal.is_open():
@@ -505,20 +530,30 @@ func _on_setting_changed(key: StringName) -> void:
 
 func _on_device_changed(_device: StringName) -> void:
 	_refresh_texts()
+	if MobileLayout.enabled:
+		_fit()
 
 
 func _fit() -> void:
 	if _column == null:
 		return
-	var view := _root.get_viewport_rect().size
+	var safe := MobileLayout.safe_rect(_root)
+	var view := safe.size
+	if MobileLayout.enabled:
+		_hint.visible = MenuStyle.using_gamepad(self)
+		for entry: Button in _entries.values():
+			MobileLayout.enlarge(entry)
 	var left := minf(view.x * 0.085, 160.0)
 	var width := minf(view.x - left * 2.0, 560.0 * maxf(_factor, 1.0))
 	_column.custom_minimum_size = Vector2(width, 0.0)
 	_column.size = Vector2(width, 0.0)
 	var needed := _column.get_combined_minimum_size().y
-	_column.position = Vector2(left, maxf(24.0, minf(view.y * 0.28, view.y - needed - 90.0)))
-	_hint.position = Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
+	var foot_room := 90.0 if _hint.visible else MobileLayout.EDGE
+	var top := maxf(12.0 if MobileLayout.enabled else 24.0, minf(view.y * 0.28, view.y - needed - foot_room))
+	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, minf(needed + 2.0, view.y - top - foot_room)))
+	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
+	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
 	if _sheet != null:
-		_sheet.column_rect = Rect2(_column.position, Vector2(width, needed))
+		_sheet.column_rect = Rect2(bounds.position, Vector2(width, needed)) if _touch_scroll == null else bounds
 		_sheet.queue_redraw()
