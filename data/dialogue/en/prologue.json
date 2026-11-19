@@ -909,7 +909,7 @@
         {
           "id": "cc_2",
           "speaker": "protagonist",
-          "text": "No light comes round the edges of the cloth. On a morning this bright it should.",
+          "text": "No light comes round the edges of the cloth. The other window has already gone gold.",
           "choices": [
             {
               "id": "edges",
@@ -948,14 +948,14 @@
         {
           "id": "cc_edges_ok",
           "speaker": "voice_orientation",
-          "text": "It hangs dead straight. The window behind it is open - you can see the gap at the frame - and the cloth does not move. Air comes in through an open window. Nothing is coming in.",
+          "text": "It hangs dead straight. There should be a draft on this side of the room, but the hem hasn't moved once.",
           "effects": [
             {
               "type": "record",
               "entry_id": "curtain_hangs_still",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "The curtain over the back window hangs perfectly still in front of an open window."
+              "text": "The curtain over the opening hung perfectly still."
             }
           ],
           "next": "cc_decide"
@@ -963,7 +963,7 @@
         {
           "id": "cc_edges_bad",
           "speaker": "voice_orientation",
-          "text": "A curtain. Ochre on one side, blue on the other, faded where the sun gets at it.",
+          "text": "Just heavy blue cloth. The folds lie one over another.",
           "next": "cc_decide"
         },
         {
@@ -986,7 +986,7 @@
         {
           "id": "cc_draw",
           "speaker": "protagonist",
-          "text": "You take a fistful of it and walk it along the rail.",
+          "text": "You reach for the cloth.",
           "effects": [
             {
               "type": "set_flag",
@@ -1019,26 +1019,33 @@
         {
           "id": "cv_1",
           "speaker": "protagonist",
-          "text": "There is no yard behind it. There is no glass. The sill runs out as far as the wall is thick, and after the wall there is nothing: not dark, not sky. Nothing to be lit.",
+          "text": "Where the wall ought to be, the floor simply stops. There is no glass or view beyond it. The sunset doesn't reach here.",
           "effects": [
             {
               "type": "record",
               "entry_id": "saw_void_window",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "Behind the curtain at the back of the biology classroom there is no outside at all."
+              "text": "Past the blue curtain was an open edge and no view beyond it."
             }
           ]
         },
         {
-          "id": "cv_2",
-          "speaker": "protagonist",
-          "text": "It is not frightening. It is just where the building stops."
+          "id": "cv_balance_check",
+          "speaker": "voice_orientation",
+          "text": "The floor ends right at your toes. Where's your weight?",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "cv_hold",
+            "failure": null
+          }
         },
         {
-          "id": "cv_3",
-          "speaker": "protagonist",
-          "text": "You lean out to see how far down it goes.",
+          "id": "cv_hold",
+          "speaker": "voice_orientation",
+          "text": "Back foot. That's it. You get your weight over it and step back.",
           "next": null
         }
       ]
@@ -1051,12 +1058,55 @@
         {
           "id": "ccd_1",
           "speaker": "protagonist",
-          "text": "The curtain is still gathered at the side, where you left it. Past the sill there is still nothing."
+          "text": "The cloth is still gathered to either side. Where the wall ends, there's nothing to see."
         },
         {
           "id": "ccd_2",
           "speaker": "protagonist",
-          "text": "You do not lean out this time.",
+          "text": "You leave your feet where they are.",
+          "next": null
+        }
+      ]
+    },
+    "classroom_curtain_step": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cs_1",
+      "nodes": [
+        {
+          "id": "cs_1",
+          "speaker": "protagonist",
+          "text": "The cut is still there. You know where the floor ends now.",
+          "choices": [
+            {
+              "id": "step",
+              "text": "Step over the edge.",
+              "next": "cs_step"
+            },
+            {
+              "id": "stay",
+              "text": "Stay in the classroom.",
+              "next": "cs_stay"
+            }
+          ]
+        },
+        {
+          "id": "cs_step",
+          "speaker": "protagonist",
+          "text": "You bend your knees and take one last step.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "curtain_fall_pending",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "cs_stay",
+          "speaker": "protagonist",
+          "text": "You step back from the edge.",
           "next": null
         }
       ]
@@ -1069,13 +1119,41 @@
         {
           "id": "cl_1",
           "speaker": "protagonist",
-          "text": "A loud metallic clang sounds beneath you. You land on the blue container. Above is sky, with no window above.",
-          "next": "cl_3"
+          "text": "Blue steel rings beneath you. When you look up, there's sky, but no opening overhead."
+        },
+        {
+          "id": "cl_safe",
+          "speaker": "protagonist",
+          "text": "Both feet held. You straighten your knees. Nothing hurts.",
+          "conditions": {
+            "not_flags": [
+              "curtain_landing_injured"
+            ]
+          }
+        },
+        {
+          "id": "cl_hurt",
+          "speaker": "protagonist",
+          "text": "Your ankle turns on the steel. You put a hand down and rise with your weight on the other foot.",
+          "conditions": {
+            "all_flags": [
+              "curtain_landing_injured"
+            ]
+          },
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "hurt_ankle_at_container",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "You hurt your ankle landing on the container roof."
+            }
+          ]
         },
         {
           "id": "cl_3",
           "speaker": "protagonist",
-          "text": "You stand up. Looking down from the container, you see the court, a climbing frame, a bench, and a shed. The yard.",
+          "text": "A ladder runs down the side of the container. Beyond it, the court, the climbing frame, the bench and the shed. The yard.",
           "effects": [
             {
               "type": "set_flag",
@@ -1091,7 +1169,7 @@
               "entry_id": "fell_into_playground",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You fell from the second-floor biology classroom window onto the blue container in the yard, unharmed."
+              "text": "You dropped through the opening behind the curtain and landed on the blue container in the yard."
             }
           ],
           "next": null

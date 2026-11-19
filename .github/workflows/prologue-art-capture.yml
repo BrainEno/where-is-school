@@ -3,8 +3,8 @@ name: Prologue art capture
 # Evidence for the prologue's art migration (the approved biology-classroom experiment
 # carried into the game's classroom): frames of the real main scene from the game's own
 # camera, taken by `tests/capture_prologue_art.gd` - the room, Q, the curtained window,
-# the camera's focus on important interactions, and the ceiling-to-floor void with its
-# local paper anomaly seen from three standing spots.
+# the camera's focus on important interactions, and the floor-to-ceiling cut seen from
+# three standing spots.
 #
 # Same publishing as `Classroom anomaly capture`: the frames are an artifact, and each one
 # is also printed as a JPEG, base64 split into numbered notice annotations (an annotation

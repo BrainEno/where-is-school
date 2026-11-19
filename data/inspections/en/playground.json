@@ -58,12 +58,12 @@
     "prompt": "Look at the container",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A blue container, its door ajar, resting between the school back wall and the yard.",
-    "repeat_text": "The blue container, where you landed.",
+    "text": "One end of the blue container opens onto a narrow cabin. A cot, a folded blanket, and a small table. No one inside.",
+    "repeat_text": "The blue container. The cot is still empty.",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "A blue container rests at the edge of the schoolyard."
+      "text": "The blue container at the edge of the yard held a cot and a small table."
     }
   },
   "pg_tyres": {

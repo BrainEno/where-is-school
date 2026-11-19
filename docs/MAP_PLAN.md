@@ -131,7 +131,7 @@ exploration, not implemented content; this plan places them only as far as the b
 
 | Study | Map consequence | Scene or zone | Status |
 |---|---|---|---|
-| Biology classroom: the curtained window opens onto absence; the protagonist falls and arrives in the schoolyard | A one-way link from an upper classroom to `playground` (needs its own spawn in the yard, e.g. the unused `FromSchool` or a new one) | Separate scene (`biology_classroom`); the fall is an exit, inside the transition transaction | **Implemented in the existing `classroom` scene** (Agent 03), not a separate `biology_classroom`: the back window is a hole through the west wall behind a floor-to-ceiling blackout curtain (issue #159), the fall is a staged transition (`LocationFlow.transition_to`) into `playground` `FromSchool`. Floor and trigger timing are provisional (`curtain_fall_pending`, handed to Agent 04) |
+| Biology classroom: a blue curtain conceals a cut through the west wall | A one-way route from an upper classroom to `playground`, separate from the normal corridor/yard entrances | Existing `classroom` and `playground` scenes | **Implemented:** failed Orientation check slips and injures a foot on `FromSchool`; success stays upstairs until a voluntary drop. Both land on the container roof and use its ladder to reach the yard. |
 | Biology classroom: the rear door opens onto a staircase suspended in the room | A vertical link that does not fit the building | Zone of the biology classroom | **Withdrawn from `classroom` in issue #159**: the rear door (`WallEast/RearDoor`, white, in the east wall behind the front door) never opens, "unless special means are used", and no staircase is placed. What those means are, and where the staircase goes: 尚待作者决定 |
 | Mirror-lined crawlspace or pipe | A narrow connector between two places | Short separate scene | 已确定但未实现; what it connects: 尚待作者决定 |
 | The schoolyard's impossible animals (a crocodile or a lion, as examples) | Occupants of the yard, calm, not combat | Inside `playground` (the yard's middle is reserved for events) | 已确定但未实现; relation to the green animal: 尚待作者决定 |
@@ -156,7 +156,7 @@ These are proposals for *how* links could misbehave, not decisions that they do.
 | The yard door leads to a yard that is not the same yard | Exit with a flag-conditioned `destination_scene` | 建议新增 |
 | The stairwell has one floor more going down than going up | Two stairwell scenes whose exits point at each other asymmetrically | 建议新增 |
 | Returning to the corridor from the street after a flag shows a changed walkway | Scene variant or state-driven visibility in the corridor | 建议新增 |
-| The biology classroom's curtain: a fall from an upper floor that lands in the yard | Exit from the classroom scene to `playground`, its own spawn, a fall beat in the transition | 已确定但未实现 (art-bible study) |
+| The biology classroom's curtain: a fall from an upper floor that lands in the yard | One-way staged route through the cut to the container roof (`FromSchool`), then down the ladder | 已实现 (see Location studies above) |
 | The elliptical building as the place where versions of the school meet | — | 已确定但未实现 as a later structure; placement, entry and rules 尚待作者决定 |
 
 All of these must stay inside the existing scene-transition transaction and keep one

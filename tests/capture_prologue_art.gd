@@ -2,9 +2,8 @@ extends SceneTree
 ## Photographs the prologue's biology classroom from the game's own camera, so the art
 ## migration of the approved biology-classroom experiment can be judged on real frames:
 ## the room and its light, Q and the protagonist in it, the curtained back window, the
-## camera's focus on an important interaction, and the ceiling-to-floor void with the
-## local paper anomaly around it - from near, from across the room and from a third
-## standing spot, to show that the paper stays where it is while the player moves.
+## camera's focus on an important interaction, and the floor-to-ceiling cut with no
+## exterior surface - from near, across the room and a third standing spot.
 ##
 ## It runs the real main scene (`main.tscn`): the player, the camera rig, the occluder
 ## fader, the interaction controller and the location host are all the game's own. Only
@@ -156,20 +155,19 @@ func _frame_focus_q() -> void:
 	await _engage(&"q_talk")
 
 
-## The curtain drawn: the cut through the wall, the paper anomaly round it.
+## The curtain drawn: the cut through the wall.
 func _frame_void_near() -> void:
 	await _draw_curtain()
 	await _stand(Vector3(-5.2, 0.0, 0.7), Vector3.LEFT)
 
 
-## From the middle of the room: the paper stays at the window; the rest of the room keeps
-## its materials.
+## From the middle of the room: the cut has no exterior floor or painted backdrop.
 func _frame_void_far() -> void:
 	await _draw_curtain()
 	await _stand(Vector3(-0.6, 0.0, 1.9), Vector3.LEFT)
 
 
-## From the back row, another angle on the same patch: no seam, no swimming.
+## From the back row, another angle on the open edge.
 func _frame_void_walk() -> void:
 	await _draw_curtain()
 	await _stand(Vector3(-3.2, 0.0, 4.2), Vector3.LEFT)
@@ -194,8 +192,6 @@ func _draw_curtain() -> void:
 		_failures.append("The classroom has no Anomalies node.")
 		return
 	await anomalies.call("draw_curtain", true)
-	# Long enough for any reveal that follows the cloth to finish.
-	await create_timer(3.0).timeout
 
 
 ## Uses an interactable the way a click does and holds on its first line (nothing is
