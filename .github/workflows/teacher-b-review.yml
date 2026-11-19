@@ -67,7 +67,7 @@ jobs:
           source tools/ci_run_check.sh
           run_check teacher_b 100 godot --headless --path . --script res://tests/teacher_b_review_test.gd || status=1
           run_check b_reveal_timing 300 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || status=1
-          exit "$status"
+          run_check_summary
       - name: Photograph B and the lead on the same classroom mark
         shell: bash
         run: |

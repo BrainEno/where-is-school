@@ -6,7 +6,7 @@ const CLASSROOM := preload("res://scenes/locations/classroom/classroom.tscn")
 const POSE_DATA := "res://scenes/dev/teacher_b/review_poses.json"
 const MARK := Vector3(-1.52, 0.123, -3.46)
 const SHOTS := ["body", "face", "back", "demonstrate", "stride", "game"]
-const TITLES := ["全身", "脸部", "背面", "屈肘与手指", "迈步", "游戏镜头"]
+const TITLES := ["全身", "脸部", "背面", "手臂与手指", "走步", "游戏镜头"]
 const AXES := [Vector3.RIGHT, Vector3.UP, Vector3.BACK]
 
 @onready var teacher: Node3D = $TeacherB
@@ -25,10 +25,15 @@ var turn := 0.0
 
 func _ready() -> void:
 	var room := CLASSROOM.instantiate()
-	for name_to_remove: String in ["Actors", "Interactables", "Navigation", "Ambience", "ScreenControl", "ChairControl"]:
+	for name_to_remove: String in ["Actors", "Interactables", "Navigation", "Ambience", "ScreenControl", "ChairControl", "VoidStep"]:
 		var node := room.get_node_or_null(NodePath(name_to_remove))
 		if node != null:
 			node.free()
+	# Keep the curtain mesh and remove only its story controller, whose
+	# _ready() would otherwise try to wire the removed Interactables.
+	var anomalies := room.get_node_or_null(^"Anomalies")
+	if anomalies != null:
+		anomalies.set_script(null)
 	add_child(room)
 	$CameraMark.position = MARK
 	var rigs := CharacterAnimation.skeletons_in(teacher)
@@ -112,8 +117,8 @@ func show_shot(next_shot: String, show_lead: bool = false) -> void:
 		game_camera.make_current()
 	else:
 		camera.make_current()
-	label.text = "%s  /  %s\n1 全身 · 2 脸 · 3 背 · 4 屈肘 · 5 步态 · 6 游戏镜头   |   Tab 对照 · ←/→ 转面 · M 材质" % [
-		"现任主角" if is_lead else "生物老师 B（独立审看）", TITLES[SHOTS.find(shot)]]
+	label.text = "%s  /  %s\n1 全身 · 2 脸 · 3 背 · 4 手部 · 5 步态 · 6 游戏镜头   |   Tab 对照 · ←/→ 转面 · M 材质" % [
+		"现任主角" if is_lead else "生物老师 B（造型检查）", TITLES[SHOTS.find(shot)]]
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

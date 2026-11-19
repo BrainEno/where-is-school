@@ -9,7 +9,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / 'builds/teacher-b-review'
-FONTS = ROOT / 'assets/fonts'
+# The review image is not packed; use the repository's full source fonts.
+FONTS = ROOT / 'art/fonts'
 BG, WHITE, QUIET, GOLD = '#24282a', '#f1e9d4', '#bac0bb', '#d1b48b'
 
 

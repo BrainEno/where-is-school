@@ -24,6 +24,8 @@ func _run() -> void:
 		return
 	var room := stage.get_node("Classroom")
 	_check.expect(not room.has_node("Actors") and not room.has_node("Interactables"), "the stage did not add story actors or interactables")
+	var anomalies := room.get_node_or_null(^"Anomalies")
+	_check.expect(anomalies != null and anomalies.get_script() == null, "the curtain remains scenery and cannot wire story handlers")
 	_check.expect(stage.lead.is_bound(), "the review uses the current protagonist wrapper")
 	_check.expect(skeleton.get_bone_count() == 57, "57 deform joints imported")
 	var bones := CharacterAnimation.resolve_rig(skeleton, true, true)
