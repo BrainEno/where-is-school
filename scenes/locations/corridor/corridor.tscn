@@ -214,7 +214,7 @@ radius = 1.15
 pane_path = NodePath("../../TeachingBlock/LowerFloor/LowerWest1/HighGlass")
 
 [node name="BackToClassroom" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(-1.55, 0.6, 2)
+position = Vector3(-1.55, 0.6, -5.1)
 interact_id = &"back_to_classroom"
 outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/LowerWest1/FrontDoor/Model/Door_leaf", "../../TeachingBlock/LowerFloor/LowerWest1/FrontDoor/Model/Door_frame_head")
 support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/LowerWest1")
@@ -224,6 +224,15 @@ radius = 1.0
 destination_scene = "res://scenes/locations/classroom/classroom.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"classroom"
+
+[node name="RearDoorTry" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-1.55, 0.6, 2)
+interact_id = &"corridor_rear_door"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/LowerWest1/RearDoor/Model/Door_leaf", "../../TeachingBlock/LowerFloor/LowerWest1/RearDoor/Model/Door_frame_head")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/LowerWest1")
+prompt_text = "Try the second door"
+inspection_id = &"classroom_rear_door"
+radius = 1.0
 
 [node name="SchoolGateExit" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = Vector3(0, 0.6, 6.5)
@@ -281,7 +290,8 @@ destination_id = &"playground"
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromClassroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-1.2, 0, 2)
+position = Vector3(-1.2, 0, -5.1)
+rotation_degrees = Vector3(0, -90, 0)
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0, 0, 5.4)

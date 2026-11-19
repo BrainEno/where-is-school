@@ -49,7 +49,7 @@
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_lintel_front.tres" id="c_wall_east_lintel_front"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_lintel_back.tres" id="c_wall_east_lintel_back"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_west_south.tres" id="c_wall_west_south"]
-[ext_resource type="Material" path="res://assets/materials/classroom/door_white.tres" id="c_door_white"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/classroom_rear_door.tscn" id="c_rear_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/classroom_door.tscn" id="c_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/projector_screen.tscn" id="c_screen"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/ceiling_projector.tscn" id="c_projector"]
@@ -379,9 +379,8 @@ cast_shadow = 0
 [node name="FrontDoor" parent="WallEast" instance=ExtResource("c_door")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.04, -1.6, -3.55)
 
-[node name="RearDoor" parent="WallEast" instance=ExtResource("c_door")]
+[node name="RearDoor" parent="WallEast" instance=ExtResource("c_rear_door")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.04, -1.6, 3.55)
-leaf_material = ExtResource("c_door_white")
 
 [node name="WallSouthLeft" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-3.5, 1.6, 4.9)
@@ -874,6 +873,7 @@ position = Vector3(-1.6, 0, 1.95)
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(6.25, 0, -3.55)
+rotation_degrees = Vector3(0, 90, 0)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("19_room_tone_classroom")

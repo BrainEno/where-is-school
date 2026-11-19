@@ -1,13 +1,11 @@
 class_name ClassroomDoorDressing
 extends Node3D
-## The biology classroom's two doors and the corridor face of the front door: the owner's
-## `classroom_door_assembly.glb` - frame, leaf, panels, hinges, lever handle - drawn in
-## the classroom's own materials.
+## Both sides of the biology classroom's two doors use the owner's
+## `classroom_door_assembly.glb` and the same classroom materials.
 ##
-## The leaf stays grey in front and white at the rear. The vision light is opaque
-## painted glass, not a view into another location. The bare +Z face of the import
-## needs its own fittings in the classroom: the scene can see the door from both
-## sides of the wall. Nothing here collides or opens.
+## The classroom shows the imported -Z face with its hinge barrels. The corridor
+## shows the +Z face with matching fittings on the same latch edge. The painted
+## glass is opaque; the wall and interactables own collision and passage.
 
 @export var model_path: NodePath = ^"Model"
 @export var leaf_material: Material

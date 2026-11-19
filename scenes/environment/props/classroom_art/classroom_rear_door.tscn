@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/classroom_door.tscn" id="1_door"]
+[ext_resource type="Material" path="res://assets/materials/classroom/door_white.tres" id="2_leaf"]
+
+[node name="ClassroomRearDoor" instance=ExtResource("1_door")]
+leaf_material = ExtResource("2_leaf")
