@@ -287,6 +287,17 @@ destination_scene = "res://scenes/locations/playground/playground.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"playground"
 
+[node name="LaboratoryDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(-25, -2.73, 6.29)
+interact_id = &"to_laboratory"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/LaboratoryPortal/Door/LeafLeft", "../../TeachingBlock/GroundFloor/LaboratoryPortal/Door/LeafRight", "../../TeachingBlock/GroundFloor/LaboratoryPortal/Door/Head")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/LaboratoryPortal")
+prompt_key = "prompt.door_try"
+radius = 1.35
+destination_scene = "res://scenes/locations/laboratory/laboratory.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"laboratory"
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromClassroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
@@ -298,6 +309,10 @@ position = Vector3(0, 0, 5.4)
 
 [node name="FromSchoolyard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(15.6, -3.4, -19.48)
+
+[node name="FromLaboratory" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-25, -3.4, 6.95)
+rotation_degrees = Vector3(0, 180, 0)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_room_tone_walkway")

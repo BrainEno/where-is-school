@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the two walkable floors and the view through their windows (no external assets).
+"""Build the three walkable school floors and the view through their windows.
 
 The hand-authored corridor.tscn owns the story exits, spawn markers, audio and library
 props. This tool owns the measured structure. Run it with --check to check the two
@@ -43,6 +43,12 @@ YARD_OFFSET = (YARD_X + 3.0, YARD_Y, YARD_PORTAL_Z + 19.90)
 UPPER_X = (-14.25, -9.75)
 UPPER_Z = (-45.0, -6.5)
 UPPER_TURN = (-45.0, -40.5)
+# A second stair hall, beyond the biology rear door (+Z). Both branches leave
+# the same 02 floor and turn on level landings. The new 01 is at yard grade.
+REAR_JUNCTION_Z = (3.45, MAIN_Z[1])
+REAR_JUNCTION_X = (-4.95, MAIN_X[0])
+UPPER_JOIN_Z = -0.65
+GROUND_Y = YARD_Y
 WEST_STAIR_Z = -8.45
 WEST_STAIR_WIDTH = 3.2
 BEND_STAIR_WIDTH = 2.8
@@ -78,11 +84,18 @@ SOLIDS = {
     "room_blue": (85, 100, 123), "room_pale": (137, 137, 145), "room_ink": (44, 52, 63),
     "room_wood": (117, 93, 79), "upper_concrete": (111, 109, 121), "roof": (105, 107, 126),
     "warm_tile": (141, 111, 84),
+    # Pigment, not a different rendering model: faded rose concrete, petrol blue
+    # and one hot, enamelled wayfinding colour against the classroom palette.
+    "chalk_rose": (197, 171, 168), "deep_plum": (69, 56, 77),
+    "fern_blue": (86, 128, 140), "night_blue": (48, 66, 86),
+    "iron_red": (160, 91, 77), "apricot": (232, 173, 109),
+    "arch_chalk": (222, 199, 171), "landing_stone": (152, 139, 146),
 }
 SCENES = {
     "bio_door": f"{PROPS}/classroom_art/classroom_door.tscn",
     "bio_rear_door": f"{PROPS}/classroom_art/classroom_rear_door.tscn",
     "interactable": "res://scenes/interaction/interactable.tscn",
+    "lab_door": f"{PROPS}/laboratory_entry_door.tscn",
 }
 
 
@@ -313,12 +326,19 @@ def glass_run(b, parent, name, west, axis, y, low, high, gap=()):
                 b.box("EndPost", w, (width/2-0.02, 1.95, 0), (0.045, 1.94, 0.16), "gallery_frame")
 
 
-def slab(b, parent, name, x_span, z_span, y, surface_mat=None, rotate=False):
+def slab(b, parent, name, x_span, z_span, y, surface_mat=None, rotate=False, *, through_z=None):
     x0, x1 = x_span
     z0, z1 = z_span
     w, d = x1-x0, z1-z0
     p = b.shell(name, parent, ((x0+x1)/2, y, (z0+z1)/2))
-    b.shape("Solid", p, (0, -WALK_SURFACE/2, 0), (w, WALK_SURFACE, d))
+    # A continuous floor can carry more than one paint/mesh section without a
+    # physics seam between them. Extend only its collider, not this section's tile.
+    solid_end = z1 if through_z is None else through_z
+    b.shape("Solid", p, (0, -WALK_SURFACE/2, (solid_end-z1)/2), (w, WALK_SURFACE, solid_end-z0))
+    slab_dressing(b, p, w, d, surface_mat, rotate)
+
+
+def slab_dressing(b, p, w, d, surface_mat, rotate=False):
     b.box("Slab", p, (0, -0.140, 0), (w, 0.27, d), "upper_concrete")
     if surface_mat:
         # Use #243's small ruled tile; its physical four-metre repeat follows the turn.
@@ -326,14 +346,15 @@ def slab(b, parent, name, x_span, z_span, y, surface_mat=None, rotate=False):
                (0, 0.003, 0), (0, -90, 0) if rotate else None)
 
 
-def rail(b, parent, name, x, y, z, w, d):
+def rail(b, parent, name, x, y, z, w, d, panel="gallery_base", cap="gallery_frame"):
     p = b.shell(name, parent, (x, y, z), groups=("camera_occluder",))
     b.shape("Guard", p, (0, 0.55, 0), (w, 1.10, d))
-    b.box("Panel", p, (0, 0.50, 0), (w, 1.0, d), "gallery_base")
-    b.box("Cap", p, (0, 1.04, 0), (w, 0.08, d), "gallery_frame")
+    b.box("Panel", p, (0, 0.50, 0), (w, 1.0, d), panel)
+    b.box("Cap", p, (0, 1.04, 0), (w, 0.08, d), cap)
 
 
-def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent):
+def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent,
+           panel="gallery_base", cap="gallery_frame", tread="upper_concrete"):
     """The treads are visual, one continuous physics slope keeps mouse paths smooth.
 
     Start at the low end; the flight's -Z is uphill (rotate the assembly as needed).
@@ -352,20 +373,20 @@ def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent):
         top_y = rise*t
         z = -run*t
         b.box(f"Tread{i+1}", p, (0, top_y-0.13, z), (width, 0.26, run/steps+0.004),
-              "upper_concrete" if i % 4 else accent)
-        b.box(f"Nosing{i+1}", p, (0, top_y-0.022, z+run/steps/2), (width, 0.043, 0.040), "gallery_frame")
+              tread if i % 4 else accent)
+        b.box(f"Nosing{i+1}", p, (0, top_y-0.022, z+run/steps/2), (width, 0.043, 0.040), cap)
     for sign, side in ((-1, "West"), (1, "East")):
         guard = b.shell(side + "Guard", p, (sign*(width/2+0.065), rise/2, -run/2),
                         (pitch, 0, 0), ("camera_occluder",))
         b.shape("Guard", guard, (0, 0.54, 0), (0.14, 1.13, length))
-        b.box("Panel", guard, (0, 0.5, 0), (0.14, 1.0, length), "gallery_base")
-        b.box("Cap", guard, (0, 1.02, 0), (0.16, 0.08, length), "gallery_frame")
+        b.box("Panel", guard, (0, 0.5, 0), (0.14, 1.0, length), panel)
+        b.box("Cap", guard, (0, 1.02, 0), (0.16, 0.08, length), cap)
 
 
-def sign(b, parent, name, pos, text, width=0.55, yaw=0):
+def sign(b, parent, name, pos, text, width=0.55, yaw=0, plate="gallery_frame"):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     p = child_path(parent, name)
-    b.box("Plate", p, (0, 0, 0), (width, 0.21, 0.035), "gallery_frame")
+    b.box("Plate", p, (0, 0, 0), (width, 0.21, 0.035), plate)
     b.node("Text", p, "Label3D", position=vec3((0, 0, 0.023)), text=f'"{text}"',
            font_size=44, pixel_size=0.0024, outline_size=0, modulate="Color(0.93, 0.86, 0.73, 1)")
 
@@ -375,6 +396,153 @@ def lamp(b, name, parent, pos, warmth):
     b.box(name + "Tube", parent, (pos[0], pos[1]-0.047, pos[2]), (0.55, 0.034, 0.11), "lamp_tube")
     b.node(name, parent, "OmniLight3D", position=vec3((pos[0], pos[1]-0.21, pos[2])),
            light_color="Color(1, 0.83, 0.64, 1)", light_energy=warmth, omni_range=5.3)
+
+
+def guard_edges(b, parent, prefix, xs, zs, y, openings, panel, cap):
+    """Guard platform edges, leaving only the spans that actually join a flight."""
+    for side, axis, span in (("North", zs[0], xs), ("South", zs[1], xs),
+                             ("West", xs[0], zs), ("East", xs[1], zs)):
+        for index, (lo, hi) in enumerate(complement(*span, openings.get(side, ()))):
+            along = (lo+hi)/2
+            if side in ("North", "South"):
+                x, z, w, d = along, axis, hi-lo, 0.16
+            else:
+                x, z, w, d = axis, along, 0.16, hi-lo
+            rail(b, parent, f"{prefix}{side}{index}", x, y, z, w, d, panel, cap)
+
+
+def solid_wall(b, parent, name, pos, width, yaw=0, height=3.05, base="deep_plum"):
+    """An opaque architectural return: the visible surface owns the blocking body."""
+    p = b.shell(name, parent, pos, (0, yaw, 0), ("camera_occluder",))
+    b.shape("Solid", p, (0, height/2, 0), (width, height, 0.22))
+    b.box("Dado", p, (0, 0.47, 0), (width, 0.94, 0.22), base)
+    b.box("RosePlaster", p, (0, (height+0.94)/2, 0), (width, height-0.94, 0.22), "chalk_rose")
+    b.box("Frieze", p, (0, height-0.16, 0.045), (width, 0.32, 0.16), "arch_chalk")
+    return p
+
+
+def blind_arch(b, parent, radius, head, material, open_quarter=False):
+    """A painted arcade with no door: curved trim on the solid wall's hall face."""
+    b.box("Recess", parent, (0, 0.94, 0.126), (radius*1.76, 1.84, 0.045), "night_blue")
+    for side, x in enumerate((-radius, radius)):
+        b.box(f"Jamb{side}", parent, (x, head/2, 0.165), (0.19, head, 0.20), material)
+    segments = 12
+    delta = math.pi/segments
+    for index in range(3 if open_quarter else 0, segments):
+        a = (index+0.5)*delta
+        b.box(f"Arch{index}", parent, (radius*math.cos(a), head+radius*math.sin(a), 0.165),
+              (2*radius*math.tan(delta/2)+0.022, 0.19, 0.20), material,
+              (0, 0, math.degrees(a)+90))
+
+
+def landing_support(b, parent, name, x, z, landing_y, width):
+    # A solid-looking pier below the section, outside any walkable volume.
+    top = landing_y-0.24
+    b.box(name, parent, (x, (GROUND_Y+top)/2, z), (width, top-GROUND_Y, width), "chalk_rose", shadow=True)
+
+
+def rear_stair_and_ground_wing(b):
+    # The hub attaches to the corridor slab after the white rear door. Splay up
+    # toward the old 03 return and down toward the south apron. Neither branch
+    # sits directly over the other: the isometric camera can read both landings.
+    s = "RearStair"
+    g = "GroundFloor"
+    b.node(s, ".")
+    b.node(g, ".")
+    junction_x, junction_z = REAR_JUNCTION_X, REAR_JUNCTION_Z
+    z_axis = sum(junction_z)/2
+    down_x = sum(junction_x)/2
+    up_width, down_width = 3.0, 2.55
+    down_entry = (down_x-down_width/2, down_x+down_width/2)
+    across = (z_axis-up_width/2, z_axis+up_width/2)
+    slab(b, s, "Junction", junction_x, junction_z, 0, "folded_tile")
+    guard_edges(b, s, "JunctionRail", junction_x, junction_z, 0,
+                {"East": [junction_z], "West": [across], "South": [down_entry]},
+                "iron_red", "arch_chalk")
+    sign(b, s, "UpPlate", (-4.35, 0.87, junction_z[0]+0.12), "03 ↑", 0.72, plate="deep_plum")
+    sign(b, s, "DownPlate", (-2.96, 0.87, junction_z[0]+0.12), "01 ↓", 0.72, plate="night_blue")
+    b.box("ApricotRoute", s, (-3.67, 0.009, 5.83), (0.12, 0.013, 2.19), "apricot")
+    lamp(b, "JunctionLight", s, (-3.02, 2.66, junction_z[0]+0.10), 0.63)
+
+    up_x = (UPPER_X[0], -9.05)
+    high_track = (-13.45, -10.55)
+    up_y = RISE/2
+    flight(b, s, "UpLowerFlight", (junction_x[0], 0, z_axis), 90,
+           junction_x[0]-up_x[1], up_y, up_width, 10, "arch_chalk",
+           panel="iron_red", cap="deep_plum", tread="landing_stone")
+    slab(b, s, "UpLanding", up_x, junction_z, up_y, "folded_tile")
+    guard_edges(b, s, "UpLandingRail", up_x, junction_z, up_y,
+                {"East": [across], "North": [high_track]}, "iron_red", "deep_plum")
+    flight(b, s, "UpUpperFlight", (sum(high_track)/2, up_y, junction_z[0]), 0,
+           junction_z[0]-UPPER_JOIN_Z, up_y, high_track[1]-high_track[0], 10, "arch_chalk",
+           panel="iron_red", cap="deep_plum", tread="landing_stone")
+    upper_link = (UPPER_Z[1], UPPER_JOIN_Z)
+    b.node("UpperLink", s, position=vec3((sum(UPPER_X)/2, RISE, sum(upper_link)/2)))
+    slab_dressing(b, child_path(s, "UpperLink"), UPPER_X[1]-UPPER_X[0], upper_link[1]-upper_link[0], "folded_tile")
+    guard_edges(b, s, "UpperLinkRail", UPPER_X, upper_link, RISE,
+                {"North": [UPPER_X], "South": [high_track]}, "iron_red", "deep_plum")
+    for i, x in enumerate((up_x[0]+0.49, up_x[1]-0.53)):
+        landing_support(b, s, f"UpLandingPier{i}", x, junction_z[1]-0.42, up_y, 0.76)
+    for i, x in enumerate((UPPER_X[0]+0.43, UPPER_X[1]-0.45)):
+        landing_support(b, s, f"UpperLinkPier{i}", x, UPPER_JOIN_Z-0.52, RISE, 0.65)
+
+    down_half_y = GROUND_Y/2
+    down_half_x, down_half_z = (-5.05, junction_x[1]), (10.85, 14.4)
+    ground_x, ground_z = (-26.8, -9.1), (10.55, 14.55)
+    low_track = (11.15, 14.05)
+    flight(b, s, "DownUpperFlight", (down_x, down_half_y, down_half_z[0]), 0,
+           down_half_z[0]-junction_z[1], -down_half_y, down_width, 10, "fern_blue",
+           panel="night_blue", cap="apricot", tread="landing_stone")
+    slab(b, s, "DownLanding", down_half_x, down_half_z, down_half_y, "folded_tile")
+    guard_edges(b, s, "DownLandingRail", down_half_x, down_half_z, down_half_y,
+                {"North": [down_entry], "West": [low_track]}, "night_blue", "apricot")
+    landing_support(b, s, "DownLandingPier", sum(down_half_x)/2, down_half_z[1]-0.65, down_half_y, 0.92)
+    flight(b, s, "DownLowerFlight", (ground_x[1], GROUND_Y, sum(low_track)/2), -90,
+           down_half_x[0]-ground_x[1], down_half_y-GROUND_Y,
+           low_track[1]-low_track[0], 10, "fern_blue",
+           panel="night_blue", cap="apricot", tread="landing_stone")
+
+    # 01 is a complete, roofless-for-camera gallery. Its repetition promises
+    # an arcade but all four arches are blind; only the folded end is a route.
+    alcove_x, alcove_z = (ground_x[0], -23.2), (5.65, ground_z[0])
+    slab(b, g, "Arcade", ground_x, ground_z, GROUND_Y, "arcade_tile", rotate=True)
+    slab(b, g, "Recess", alcove_x, alcove_z, GROUND_Y, "recess_tile")
+    guard_edges(b, g, "ArcadeRail", ground_x, ground_z, GROUND_Y,
+                {"North": [ground_x], "East": [low_track], "West": [ground_z]},
+                "night_blue", "arch_chalk")
+    bays = (ground_x[1]-alcove_x[1])/4
+    for i, (radius, height, material) in enumerate((
+            (0.86, 1.47, "arch_chalk"), (1.05, 1.29, "fern_blue"),
+            (0.86, 1.47, "arch_chalk"), (0.72, 1.55, "iron_red"))):
+        x = ground_x[1]-(i+0.5)*bays
+        side = solid_wall(b, g, f"BlindBay{i+1}", (x, GROUND_Y, ground_z[0]), bays)
+        blind_arch(b, side, radius, height, material, open_quarter=i == 3)
+        # The slabs above are fragments of cornice, not roofs over the camera.
+        b.box("OffsetCornice", side, ((i % 2 - 0.5)*0.44, 2.99, 0.37),
+              (bays-0.24, 0.20, 0.75), material, shadow=True)
+        if i % 2 == 0:
+            lamp(b, "GalleryLight", side, (0.85, 2.79, 0.40), 0.59)
+    sign(b, g, "FirstFloorPlate", (-9.78, GROUND_Y+2.41, ground_z[0]+0.15), "01", 0.72, plate="iron_red")
+    b.box("HallInlay", g, (sum(ground_x)/2, GROUND_Y+0.009, 13.28),
+          (ground_x[1]-ground_x[0]-0.7, 0.01, 0.10), "apricot")
+    for i, x in enumerate((-9.6, -13.1, -16.6, -20.1, -23.6, -26.1)):
+        b.box(f"CrossRule{i}", g, (x, GROUND_Y+0.007, sum(ground_z)/2),
+              (0.052, 0.008, ground_z[1]-ground_z[0]-0.20), "deep_plum")
+
+    # The opaque east return blocks a straight view from the arcade. A short
+    # line of amber turns the corner, without a quest marker or a false exit.
+    solid_wall(b, g, "EndWall", (ground_x[0], GROUND_Y, (alcove_z[0]+ground_z[1])/2),
+               ground_z[1]-alcove_z[0], yaw=90, base="night_blue")
+    return_wall = solid_wall(b, g, "RecessScreen", (alcove_x[1], GROUND_Y, sum(alcove_z)/2),
+                             alcove_z[1]-alcove_z[0], yaw=-90, base="night_blue")
+    b.box("AmberRule", return_wall, (0.25, 0.96, 0.123), (3.35, 0.07, 0.05), "apricot")
+    b.box("ReturnInlay", g, (-25.25, GROUND_Y+0.009, (alcove_z[0]+13.28)/2),
+          (0.1, 0.013, 13.28-alcove_z[0]), "apricot")
+    p = solid_wall(b, g, "LaboratoryPortal", (sum(alcove_x)/2, GROUND_Y, alcove_z[0]),
+                   alcove_x[1]-alcove_x[0], base="night_blue")
+    b.instance("Door", p, "lab_door", (0, 0, 0))
+    b.box("EnamelLintel", p, (0, 2.36, 0.23), (2.42, 0.21, 0.48), "fern_blue", shadow=True)
+    lamp(b, "BorrowedLight", p, (0, 2.28, 0.34), 0.60)
 
 
 def teaching_block():
@@ -400,9 +568,9 @@ def teaching_block():
     slab(b, l, "Main", MAIN_X, MAIN_Z, 0, "lower")
     yard_gap = (YARD_X-YARD_WIDTH/2, YARD_X+YARD_WIDTH/2)
     slab(b, l, "Turn", (MAIN_X[1], EAST_END), TURN_Z, 0, "lower_turn", rotate=True)
-    slab(b, u, "Main", UPPER_X, UPPER_Z, RISE, "upper")
+    slab(b, u, "Main", UPPER_X, UPPER_Z, RISE, "upper", through_z=UPPER_JOIN_Z)
     slab(b, u, "Turn", (-9.75, 18.25), UPPER_TURN, RISE, "upper_turn", rotate=True)
-    classroom_run(b, l, True, -2.2, 0, MAIN_Z, LOWER_WEST, (west_gap,), biology=True)
+    classroom_run(b, l, True, -2.2, 0, MAIN_Z, LOWER_WEST, (west_gap, REAR_JUNCTION_Z), biology=True)
     classroom_run(b, l, False, -30, 0, (-2.2, EAST_END), LOWER_NORTH, (north_gap,))
     classroom_run(b, u, True, -14.25, RISE, UPPER_Z, UPPER_WEST)
     classroom_run(b, u, False, -45, RISE, (-14.25, 18.25), UPPER_NORTH)
@@ -423,7 +591,6 @@ def teaching_block():
     rail(b, s, "LandingWest", -1.4, 1.8, -35.75, 0.14, 3)
     rail(b, s, "LandingEast", 5.9, 1.8, -35.75, 0.14, 3)
     flight(b, s, "OffsetFlight", (4.5, 1.8, -37.25), 0, 3.25, 1.8, BEND_STAIR_WIDTH, 10, "upper_concrete")
-    rail(b, u, "WestEnd", -12, RISE, -6.5, 4.5, 0.19)
     rail(b, u, "EastEnd", 18.25, RISE, -42.75, 0.19, 4.5)
     foot = YARD_APPROACH_Z+YARD_RUN
     flight(b, s, "YardFlight", (YARD_X, YARD_Y, foot), 0, YARD_RUN, -YARD_Y,
@@ -439,10 +606,10 @@ def teaching_block():
         b.box("Base", jamb, (0, 0.5, 0), (0.18, 1.0, length), "cool_trim")
         b.box("Plaster", jamb, (0, (WALL_HEIGHT+1.0)/2, 0),
               (0.18, WALL_HEIGHT-1.0, length), "walk_plaster")
-    sign(b, l, "FirstFloorPlate", (-2.084, 2.58, -6.43), "01", 0.36, yaw=90)
+    sign(b, l, "ClassroomFloorPlate", (-2.084, 2.58, -6.43), "02", 0.36, yaw=90)
     b.box("WestLandingApron", s, (-2.18, -0.16, WEST_STAIR_Z), (0.32, 0.105, WEST_STAIR_WIDTH), "warm_tile")
-    sign(b, u, "SecondFloorPlate", (-14.135, RISE+2.67, WEST_STAIR_Z), "02", 0.36, yaw=90)
-    sign(b, u, "NorthLandingPlate", (BEND_STAIR_X, RISE+2.50, -44.875), "02")
+    sign(b, u, "ThirdFloorPlate", (-14.135, RISE+2.67, WEST_STAIR_Z), "03", 0.36, yaw=90)
+    sign(b, u, "NorthLandingPlate", (BEND_STAIR_X, RISE+2.50, -44.875), "03")
     sign(b, l, "YardStairPlate", (YARD_X + 0.38, 2.52, -29.875), "↓", width=0.42)
     for name, parent, pos, energy in (
         ("LampBySchoolDoor", l, (-1.84, 2.91, 1.95), 0.57),
@@ -466,6 +633,15 @@ def teaching_block():
     b.node("Fittings", p, position=vec3((0, 1.3, 0.03)))
     school_exit_fittings(b, fittings, 1.4, 2.6, 0.07, inside=True)
     lamp(b, "ExitLamp", p, (0, 2.87, 0.2), 0.88)
+    # Reuse the small painted field; value, repeat and rule direction change on 01.
+    for name, colour, repeat in (
+        ("folded_tile", (0.66, 0.60, 0.63), 1.3),
+        ("arcade_tile", (0.70, 0.55, 0.57), 4.4),
+        ("recess_tile", (0.45, 0.54, 0.59), 1.3),
+    ):
+        b.mat(name, albedo_color=srgb(tuple(round(c*255) for c in colour)),
+              albedo_texture=ruled, texture_filter=3, uv1_scale=vec3((1, repeat, 1)))
+    rear_stair_and_ground_wing(b)
     return b
 
 
@@ -480,6 +656,7 @@ def foundations(b):
     ground = material_for("YardGround/MeshInstance3D")
     b.box("NorthApron", p, (8, YARD_Y-0.12, -37.9), (70, 0.20, 39.8), f"yard/{ground}")
     b.box("WestApron", p, (-15.7, YARD_Y-0.12, -3.1), (22.6, 0.20, 30), f"yard/{ground}")
+    b.box("GroundWingApron", p, (-16.0, GROUND_Y-0.22, 12.30), (28.3, 0.18, 13.0), f"yard/{ground}")
     for name, x, z, w, d, top in (
         ("LowerWest", -5.35, -11.55, 6.2, 36.5, -0.34),
         ("LowerNorth", 13.4, -33.0, 30.6, 6.0, -0.34),

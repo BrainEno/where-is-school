@@ -13,6 +13,8 @@ extends SceneTree
 ## A spawn and a derived spot closer than `MIN_SPACING` metres are one spot. The HUD is
 ## hidden: the frames are about the space, and the HUD is the same in every location.
 ##
+## Pass `teaching-wing` to frame the new hub, gallery and hidden door instead, from
+## the same camera and live scene. The close overview uses only those wings' bounds.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -26,6 +28,12 @@ const LOCATIONS := [
 	["alley", "res://scenes/locations/alley/alley.tscn"],
 	["playground", "res://scenes/locations/playground/playground.tscn"],
 ]
+const TEACHING_SPOTS := {
+	"rear_junction": ^"TeachingBlock/RearStair/Junction",
+	"half_landing": ^"TeachingBlock/RearStair/DownLanding",
+	"arcade": ^"TeachingBlock/GroundFloor/Arcade",
+	"laboratory_recess": ^"SpawnPoints/FromLaboratory",
+}
 const MIN_SPACING := 4.5
 ## The wide view looks along the game camera's own bearing, from further away.
 const WIDE_FOV := 46.0
@@ -36,6 +44,7 @@ var _max_spots := 5
 var _width := 0
 var _quality := 0.9
 var _only := ""
+var _teaching_wing := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -59,6 +68,10 @@ func _initialize() -> void:
 			_quality = clampf(float(arg.substr(8)), 0.3, 1.0)
 		elif arg.begins_with("only="):
 			_only = arg.substr(5).strip_edges()
+		elif arg == "teaching-wing":
+			_teaching_wing = true
+	if _teaching_wing:
+		_only = "corridor"
 	call_deferred("_run")
 
 
@@ -113,10 +126,13 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 	if not _host.load_location(scene_path, &"", _player, StringName(location_id)):
 		_failures.append("%s did not load" % location_id)
 		return
+	if _teaching_wing:
+		_player.set_wake_pose(0.0) # These shots are after class, not in the wake pose.
 	await _wait(1.2)
 	var current := _host.get_current()
-	var spots := _spots(current)
-	_lines.append("## %s" % location_id)
+	var spots := _teaching_spots(current) if _teaching_wing else _spots(current)
+	var subject := "teaching_wing" if _teaching_wing else location_id
+	_lines.append("## %s" % subject)
 	_lines.append("")
 	var index := 0
 	for spot: Array in spots:
@@ -125,12 +141,23 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		if _rig.has_method("snap"):
 			_rig.call("snap")
 		await _wait(0.4)
-		var shot_name := "%s_%02d_%s" % [location_id, index, spot[0]]
+		var shot_name := "%s_%02d_%s" % [subject, index, spot[0]]
 		_save(out_dir, shot_name)
 		_lines.append("- `%s.jpg` (%s) at %s" % [shot_name, spot[0], str(spot[1])])
 		index += 1
-	await _wide(current, location_id, out_dir)
+	await _wide(current, subject, out_dir)
 	_lines.append("")
+
+
+func _teaching_spots(current: LocationRoot) -> Array:
+	var spots: Array = []
+	for key: String in TEACHING_SPOTS:
+		var marker := current.get_node_or_null(TEACHING_SPOTS[key]) as Node3D
+		if marker == null:
+			_failures.append("No teaching wing position for %s." % key)
+			continue
+		spots.append([key, marker.global_position + Vector3.UP * 0.05])
+	return spots
 
 
 ## Spawn markers first, then the derived spots, each at least MIN_SPACING from the rest.
@@ -180,8 +207,21 @@ func _nav_bounds(current: LocationRoot) -> AABB:
 	return box
 
 
+func _teaching_bounds(current: LocationRoot) -> AABB:
+	var bounds := AABB()
+	for path: NodePath in [^"TeachingBlock/RearStair", ^"TeachingBlock/GroundFloor", ^"TeachingBlock/LowerFloor/LowerWest1"]:
+		var section := current.get_node_or_null(path)
+		if section == null:
+			continue
+		for node in section.find_children("*", "MeshInstance3D", true, false):
+			var mesh := node as MeshInstance3D
+			var box: AABB = mesh.global_transform * mesh.get_aabb()
+			bounds = box if bounds.size == Vector3.ZERO else bounds.merge(box)
+	return bounds
+
+
 func _wide(current: LocationRoot, location_id: String, out_dir: String) -> void:
-	var bounds := _nav_bounds(current)
+	var bounds := _teaching_bounds(current) if _teaching_wing else _nav_bounds(current)
 	if bounds.size == Vector3.ZERO:
 		_failures.append("%s has no baked navigation to frame" % location_id)
 		return
@@ -189,7 +229,8 @@ func _wide(current: LocationRoot, location_id: String, out_dir: String) -> void:
 	if _rig.get("offset") is Vector3:
 		bearing = (_rig.get("offset") as Vector3).normalized()
 	var radius := Vector2(bounds.size.x, bounds.size.z).length() * 0.5
-	var distance := radius / tan(deg_to_rad(WIDE_FOV * 0.5)) * 0.95
+	var clearance := 1.12 if _teaching_wing else 0.95
+	var distance := radius / tan(deg_to_rad(WIDE_FOV * 0.5)) * clearance
 	var camera := Camera3D.new()
 	camera.name = "LocationCaptureCamera"
 	camera.fov = WIDE_FOV

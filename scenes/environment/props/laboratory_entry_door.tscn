@@ -1,0 +1,76 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/laboratory/metal_frame.tres" id="frame"]
+[ext_resource type="Material" path="res://assets/materials/laboratory/casework_pale.tres" id="enamel"]
+[ext_resource type="Material" path="res://assets/materials/laboratory/metal_pale.tres" id="steel"]
+[ext_resource type="Material" path="res://assets/materials/laboratory/metal_dark.tres" id="reveal"]
+
+[sub_resource type="BoxMesh" id="rebate"]
+size = Vector3(1.95, 2.12, 0.25)
+
+[sub_resource type="BoxMesh" id="leaf"]
+size = Vector3(0.878, 2.052, 0.288)
+
+[sub_resource type="BoxMesh" id="jamb"]
+size = Vector3(0.08, 2.16, 0.32)
+
+[sub_resource type="BoxMesh" id="head"]
+size = Vector3(2.02, 0.08, 0.32)
+
+[sub_resource type="BoxMesh" id="bar"]
+size = Vector3(0.64, 0.048, 0.07)
+
+[sub_resource type="BoxMesh" id="kick"]
+size = Vector3(0.79, 0.16, 0.036)
+
+[node name="LaboratoryEntryDoor" type="Node3D"]
+
+[node name="Rebate" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.06, 0)
+mesh = SubResource("rebate")
+material_override = ExtResource("reveal")
+
+[node name="LeafLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.451, 1.039, 0)
+mesh = SubResource("leaf")
+material_override = ExtResource("enamel")
+
+[node name="LeafRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.451, 1.039, 0)
+mesh = SubResource("leaf")
+material_override = ExtResource("enamel")
+
+[node name="JambLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.97, 1.08, 0)
+mesh = SubResource("jamb")
+material_override = ExtResource("frame")
+
+[node name="JambRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.97, 1.08, 0)
+mesh = SubResource("jamb")
+material_override = ExtResource("frame")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.12, 0)
+mesh = SubResource("head")
+material_override = ExtResource("frame")
+
+[node name="HallHandle" type="MeshInstance3D" parent="."]
+position = Vector3(-0.46, 1.0, 0.169)
+mesh = SubResource("bar")
+material_override = ExtResource("steel")
+
+[node name="LabHandle" type="MeshInstance3D" parent="."]
+position = Vector3(-0.46, 1.0, -0.169)
+mesh = SubResource("bar")
+material_override = ExtResource("steel")
+
+[node name="HallKickPlate" type="MeshInstance3D" parent="."]
+position = Vector3(-0.451, 0.19, 0.152)
+mesh = SubResource("kick")
+material_override = ExtResource("frame")
+
+[node name="LabKickPlate" type="MeshInstance3D" parent="."]
+position = Vector3(-0.451, 0.19, -0.152)
+mesh = SubResource("kick")
+material_override = ExtResource("frame")
