@@ -73,7 +73,7 @@ jobs:
         run: |
           set +e -uo pipefail
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_laboratory.gd -- \
             "label=compatibility" "only=${ONLY}" width=960 quality=0.86 \
             > "${RUNNER_TEMP}/capture.log" 2>&1
@@ -83,7 +83,9 @@ jobs:
           ls -l "${out}" || true
           frames=$(find "${out}" -maxdepth 1 -name "*.jpg" | wc -l)
           echo "frames=${frames} exit=${code}"
-          if [ "${frames}" -lt 1 ]; then
+          if [ "${code}" -ne 0 ] || [ "${frames}" -ne 2 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             echo "::error title=laboratory capture::${GROUP} wrote ${frames} frame(s), exit ${code}"
             tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
             exit 1
@@ -169,7 +171,7 @@ jobs:
         run: |
           set +e -uo pipefail
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver vulkan \
+            godot --path . --resolution 1600x900 --rendering-driver vulkan --audio-driver Dummy \
             --script res://tests/capture_laboratory.gd -- \
             "label=forward_plus" "only=room_wide,annex_inside" width=960 quality=0.86 \
             > "${RUNNER_TEMP}/capture.log" 2>&1
@@ -179,7 +181,9 @@ jobs:
           ls -l "${out}" || true
           frames=$(find "${out}" -maxdepth 1 -name "*.jpg" 2>/dev/null | wc -l)
           echo "frames=${frames} exit=${code}"
-          if [ "${frames}" -lt 1 ]; then
+          if [ "${code}" -ne 0 ] || [ "${frames}" -ne 2 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             echo "::error title=forward+ capture::Forward+ wrote ${frames} frame(s), exit ${code}"
             tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
             exit 1
@@ -273,7 +277,7 @@ jobs:
           mkdir -p build/walkthrough
           ffmpeg -version | head -n 1
           xvfb-run -a --server-args="-screen 0 960x540x24" \
-            godot --path . --resolution 960x540 --rendering-driver opengl3 \
+            godot --path . --resolution 960x540 --rendering-driver opengl3 --audio-driver Dummy \
             --write-movie build/walkthrough/frame.png --fixed-fps 24 \
             --script res://tests/capture_laboratory_walkthrough.gd \
             > "${RUNNER_TEMP}/record.log" 2>&1
@@ -281,7 +285,9 @@ jobs:
           grep -E "LABORATORY_WALKTHROUGH|PASS|FAIL|SCRIPT ERROR|Movie" "${RUNNER_TEMP}/record.log" | head -n 30
           frames=$(find build/walkthrough -name '*.png' | wc -l)
           echo "recording: exit ${code}, ${frames} frames"
-          if [ "${frames}" -lt 60 ]; then
+          if [ "${code}" -ne 0 ] || [ "${frames}" -lt 480 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/record.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/record.log"; then
             echo "::error title=laboratory walkthrough::${frames} frames were written (exit ${code})"
             tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 || true
             exit 1
@@ -342,7 +348,7 @@ jobs:
             # maker can write on its own and ship that. It plays in a video player, not in a
             # browser, which is worse than an mp4 and better than nothing.
             xvfb-run -a --server-args="-screen 0 960x540x24" \
-              godot --path . --resolution 960x540 --rendering-driver opengl3 \
+              godot --path . --resolution 960x540 --rendering-driver opengl3 --audio-driver Dummy \
               --write-movie build/laboratory_walkthrough.avi --fixed-fps 24 \
               --script res://tests/capture_laboratory_walkthrough.gd \
               > "${RUNNER_TEMP}/record-avi.log" 2>&1

@@ -58,9 +58,9 @@ MATERIALS = {
     # name: (albedo, texture, outline, unshaded, emission, uv_scale)
     "wall_plaster": ((0.72, 0.735, 0.755), "wall_plaster", True, False, None, 0.36),
     "wall_tile": ((1.0, 1.0, 1.0), "tile_glaze", True, False, None, 1.0),
-    "floor_concrete": ((0.66, 0.67, 0.665), "floor_concrete", False, False, None, 0.46),
+    "floor_concrete": ((0.57, 0.66, 0.64), "floor_concrete", False, False, None, 0.46),
     "bench_resin": ((0.92, 0.93, 0.93), "bench_top", False, False, None, 1.4),
-    "bench_steel": ((0.706, 0.729, 0.729), None, True, False, None, 0.0),
+    "bench_steel": ((0.54, 0.65, 0.63), None, True, False, None, 0.0),
     "casework_pale": ((0.780, 0.792, 0.780), None, True, False, None, 0.0),
     "metal_dark": ((0.216, 0.239, 0.259), None, True, False, None, 0.0),
     "metal_pale": ((0.545, 0.576, 0.588), None, True, False, None, 0.0),
@@ -75,7 +75,7 @@ MATERIALS = {
     "cable_pale": ((0.667, 0.655, 0.596), None, False, False, None, 0.0),
     "cable_oxide": ((0.396, 0.459, 0.420), None, False, False, None, 0.0),
     "annex_wall": ((0.478, 0.510, 0.502), None, True, False, None, 0.0),
-    "annex_floor": ((0.322, 0.353, 0.361), None, False, False, None, 0.0),
+    "annex_floor": ((0.305, 0.283, 0.326), None, False, False, None, 0.0),
     "lamp_panel": ((0.949, 0.973, 0.980), None, False, True, (0.94, 0.97, 1.0, 1.0), 0.0),
     "annex_bulb": ((0.918, 0.859, 0.706), None, False, True, (0.918, 0.859, 0.706, 1.0), 0.0),
     "led_running": ((0.478, 1.0, 0.612), None, False, True, (0.478, 1.0, 0.612, 1.0), 0.0),
@@ -300,11 +300,32 @@ def cable_route(lab: Lab, name, points, radius=CABLE_RADIUS, mat="cable_ink", st
 # --- the room ------------------------------------------------------------------
 
 
+BENCH_TOP = 0.95
+
+
+def bench(lab, name, x, z, width, length, body_x, body_width):
+    # Top centres are not work surfaces. Props use BENCH_TOP and rest on the
+    # visible deck, which rests on metal casework and a separate recessed kick.
+    prop(lab, name+"Top", (x, BENCH_TOP-0.03, z), (width, 0.06, length), "bench_resin")
+    # The island has an overhang at the cables and along the knee space.
+    depth = length-0.15 if name == "Island" else length-0.03
+    slab(lab, name+"Body", (body_x, 0.497, z), (body_width, 0.80, depth), "bench_steel")
+    prop(lab, name+"Plinth", (body_x, 0.051, z), (body_width-0.11, 0.104, depth-0.12), "metal_frame")
+
+
+def floor_section(lab, name, x, z, material):
+    slab(lab, name, (sum(x)/2, -0.10, sum(z)/2), (x[1]-x[0], 0.20, z[1]-z[0]), material)
+
+
 def build_room(lab: Lab) -> None:
     # The shell. Interior x -7.6 .. 7.6, z -5.6 .. 5.6, walls 3.4 m up, and - like every
     # interior in this project - no ceiling over the working half: the camera looks down
     # into the room from above and the room has to stay readable from there.
-    slab(lab, "Floor", (0.0, -0.1, 0.0), (15.6, 0.2, 11.6), "floor_concrete")
+    # One continuous walking plane, tiled edge to edge. The annex is a different
+    # pour, not a second slab occupying the upper face of the main room.
+    floor_section(lab, "Floor", (-7.8, 2.2), (-5.8, 5.8), "floor_concrete")
+    floor_section(lab, "FloorSouth", (2.2, 7.8), (-0.6, 5.8), "floor_concrete")
+    floor_section(lab, "AnnexFloor", (2.2, 7.8), (-5.8, -0.6), "annex_floor")
     # The opening in the north wall is 1.5 m wide and 2.45 m tall. Both numbers are a
     # navigation constraint, not a decoration: the bake erodes the walkable surface by the
     # agent's radius (0.5 m) on every side and quantises height in 0.25 m cells, so a
@@ -313,29 +334,30 @@ def build_room(lab: Lab) -> None:
     slab(lab, "WallNorthRight", (6.425, 1.7, -5.7), (2.75, 3.4, 0.2), "wall_plaster", group="camera_occluder")
     slab(lab, "WallNorthLintel", (4.3, 2.925, -5.7), (1.5, 0.95, 0.2), "wall_plaster", group="camera_occluder")
     slab(lab, "WallSouth", (0.0, 1.7, 5.7), (15.6, 3.4, 0.2), "wall_plaster", group="camera_occluder")
-    slab(lab, "WallWest", (-7.7, 1.7, 0.0), (0.2, 3.4, 11.6), "wall_plaster", group="camera_occluder")
-    slab(lab, "WallEast", (7.7, 1.7, 0.0), (0.2, 3.4, 11.6), "wall_plaster", group="camera_occluder")
-    # Skirting, in the metal the benches are made of, so the wall meets the floor with a line.
+    slab(lab, "WallWest", (-7.7, 1.7, 0.0), (0.2, 3.4, 11.2), "wall_plaster", group="camera_occluder")
+    slab(lab, "WallEast", (7.7, 1.7, 0.0), (0.2, 3.4, 11.2), "wall_plaster", group="camera_occluder")
+    # The north trim stops at the actual far doorway and does not cross its jambs.
     for name, pos, size in (
-        ("SkirtingNorth", (0.0, 0.06, -5.55), (15.2, 0.12, 0.05)),
-        ("SkirtingWest", (-7.55, 0.06, 0.0), (0.05, 0.12, 11.2)),
-        ("SkirtingEast", (7.55, 0.06, 0.0), (0.05, 0.12, 11.2)),
-        ("SkirtingSouth", (0.0, 0.06, 5.55), (15.2, 0.12, 0.05)),
+        ("SkirtingNorthLeft", (-2.05, 0.057, -5.575), (11.10, 0.114, 0.058)),
+        ("SkirtingNorthRight", (6.35, 0.057, -5.575), (2.5, 0.114, 0.058)),
+        ("SkirtingWest", (-7.57, 0.057, 0.0), (0.066, 0.114, 11.08)),
+        ("SkirtingEast", (7.57, 0.057, 0.0), (0.066, 0.114, 11.08)),
+        ("SkirtingSouth", (0.0, 0.057, 5.575), (15.2, 0.114, 0.058)),
     ):
         prop(lab, name, pos, size, "metal_frame")
 
 
-
 def build_wet_bench(lab: Lab) -> None:
     """West wall: the wet bench. Two sinks, a rack of drying glass, and the day's washing up."""
-    top_y = 0.92
-    prop(lab, "WetBenchTop", (-7.05, top_y, -1.4), (0.92, 0.06, 5.6), "bench_resin")
-    slab(lab, "WetBenchBody", (-7.08, 0.45, -1.4), (0.86, 0.9, 5.6), "bench_steel")
-    prop(lab, "WetBenchPlinth", (-7.05, 0.04, -1.4), (0.8, 0.08, 5.5), "metal_frame")
+    top_y = BENCH_TOP
+    bench(lab, "WetBench", -7.05, -1.4, 0.92, 5.6, -7.08, 0.86)
     # The tiled splashback: the one place in the room that says "washable" at a glance.
     prop(lab, "WetBenchTile", (-7.55, 1.42, -1.4), (0.05, 1.0, 5.6), "wall_tile")
     prop(lab, "WetBenchShelf", (-7.35, 1.98, -1.4), (0.34, 0.04, 3.4), "bench_steel")
-    prop(lab, "WetBenchShelfLip", (-7.2, 2.02, -1.4), (0.04, 0.1, 3.4), "metal_pale")
+    prop(lab, "WetBenchShelfLip", (-7.169, 2.02, -1.4), (0.045, 0.10, 3.36), "metal_pale")
+    for i, z in enumerate((-2.89, -1.37, 0.08)):
+        prop(lab, f"WetShelfBracket{i}", (-7.40, 1.932, z), (0.42, 0.065, 0.055), "metal_frame")
+        prop(lab, f"WetShelfCleat{i}", (-7.566, 1.816, z), (0.077, 0.28, 0.11), "metal_dark")
 
     for index, z in enumerate((-2.9, 1.1)):
         prop(lab, "SinkRim%d" % index, (-7.05, top_y + 0.02, z), (0.52, 0.05, 0.62), "ceramic_white")
@@ -345,15 +367,15 @@ def build_wet_bench(lab: Lab) -> None:
         prop(lab, "TapHandle%d" % index, (-7.4, top_y + 0.44, z), (0.06, 0.05, 0.18), "metal_dark")
 
     # A drying rack over the bench: rails and pegs, with three flasks left upside down.
-    prop(lab, "DryingRackTray", (-7.05, top_y + 0.05, -0.5), (0.5, 0.03, 0.9), "metal_pale")
+    prop(lab, "DryingRackTray", (-7.05, top_y + 0.014, -0.5), (0.5, 0.03, 0.9), "metal_pale")
     for index in range(6):
         lab.cyl(
             "DryingPeg%d" % index,
-            (-7.05 + 0.14 * ((index % 3) - 1), top_y + 0.14, -0.8 + 0.3 * (index // 3)),
+            (-7.05 + 0.14 * ((index % 3) - 1), top_y + 0.105, -0.8 + 0.3 * (index // 3)),
             0.008, 0.16, "metal_pale",
         )
-    for index, (x, z) in enumerate(((-7.15, -0.75), (-6.95, -0.45), (-7.1, -0.2))):
-        lab.cyl("DryingFlask%d" % index, (x, top_y + 0.15, z), 0.072, 0.17, "glassware", top_radius=0.026)
+    for index, (x, z) in enumerate(((-7.19, -0.8), (-6.91, -0.8), (-7.05, -0.5))):
+        lab.cyl("DryingFlask%d" % index, (x, top_y + 0.112, z), 0.027, 0.17, "glassware", top_radius=0.072)
 
     # Glassware on the bench, in two clusters rather than spread evenly: someone was working
     # here, and the rest of the surface is clear.
@@ -381,18 +403,24 @@ def build_wet_bench(lab: Lab) -> None:
     prop(lab, "WasteJarLabel", (-6.97, 0.15, 2.75), (0.01, 0.09, 0.11), "paper_pale")
 
     # A bench lamp, warm, clamped to the shelf: the one warm thing on this side of the room.
-    prop(lab, "BenchLampArm", (-7.3, 2.28, -1.9), (0.03, 0.5, 0.03), "metal_dark")
-    prop(lab, "BenchLampShade", (-7.15, 2.05, -1.9), (0.22, 0.08, 0.14), "instrument_cream")
-    prop(lab, "BenchLampGlow", (-7.15, 2.0, -1.9), (0.2, 0.02, 0.12), "led_dial")
-    lab.light("BenchLampLight", (-7.05, 1.9, -1.9), 0.55, 3.4, color=(1.0, 0.87, 0.71))
+    prop(lab, "BenchLampClamp", (-7.235, 1.982, -1.9), (0.12, 0.092, 0.12), "metal_dark")
+    prop(lab, "BenchLampArm", (-7.234, 2.127, -1.9), (0.031, 0.268, 0.032), "metal_dark")
+    prop(lab, "BenchLampElbow", (-7.13, 2.24, -1.9), (0.226, 0.042, 0.044), "metal_dark")
+    prop(lab, "BenchLampShade", (-7.02, 2.195, -1.9), (0.22, 0.08, 0.14), "instrument_cream")
+    prop(lab, "BenchLampGlow", (-7.02, 2.149, -1.9), (0.2, 0.018, 0.12), "led_dial")
+    lab.light("BenchLampLight", (-7.02, 1.99, -1.9), 0.68, 3.4, color=(1.0, 0.87, 0.71))
 
 
 def build_north_wall(lab: Lab) -> None:
     """North wall: the fume hood, the glassware cabinet, and the sockets everything hangs off."""
     # Fume hood: an alcove with a sash, a baffle and a duct that keeps going up.
-    prop(lab, "HoodSideWest", (-5.86, 1.28, -5.16), (0.1, 2.3, 0.86), "casework_pale")
-    prop(lab, "HoodSideEast", (-3.34, 1.28, -5.16), (0.1, 2.3, 0.86), "casework_pale")
-    prop(lab, "HoodCanopy", (-4.6, 2.42, -5.16), (2.6, 0.16, 0.86), "casework_pale")
+    slab(lab, "HoodServiceBase", (-4.6, 0.44, -5.16), (2.62, 0.88, 0.83), "bench_steel")
+    for i, x in enumerate((-5.26, -3.94)):
+        prop(lab, f"HoodDoor{i}", (x, 0.48, -4.734), (1.24, 0.68, 0.04), "casework_pale")
+        prop(lab, f"HoodDoorPull{i}", (x, 0.72, -4.702), (0.22, 0.045, 0.04), "metal_dark")
+    prop(lab, "HoodSideWest", (-5.86, 1.61, -5.16), (0.1, 1.52, 0.86), "casework_pale")
+    prop(lab, "HoodSideEast", (-3.34, 1.61, -5.16), (0.1, 1.52, 0.86), "casework_pale")
+    prop(lab, "HoodCanopy", (-4.6, 2.42, -5.16), (2.64, 0.16, 0.91), "casework_pale")
     prop(lab, "HoodBackTile", (-4.6, 1.2, -5.56), (2.5, 1.5, 0.04), "wall_tile")
     prop(lab, "HoodDeck", (-4.6, 0.95, -5.16), (2.4, 0.07, 0.8), "bench_resin")
     prop(lab, "HoodDeckFront", (-4.6, 0.86, -4.78), (2.4, 0.18, 0.06), "casework_pale")
@@ -400,33 +428,40 @@ def build_north_wall(lab: Lab) -> None:
     # The sash: a glass pane in a frame, pulled down to the working height and left there.
     prop(lab, "HoodSashFrameTop", (-4.6, 2.2, -4.78), (2.5, 0.07, 0.06), "metal_pale")
     prop(lab, "HoodSashFrameBottom", (-4.6, 1.66, -4.78), (2.5, 0.06, 0.06), "metal_pale")
-    prop(lab, "HoodSashHandle", (-4.6, 1.5, -4.78), (0.7, 0.04, 0.05), "metal_dark")
+    prop(lab, "HoodSashHandle", (-4.6, 1.666, -4.742), (0.7, 0.04, 0.052), "metal_dark")
     lab.quad("HoodSashGlass", (-4.6, 1.93, -4.785), (2.4, 0.5), "glass_pane", body=False)
-    prop(lab, "HoodDuct", (-4.6, 3.16, -5.3), (0.44, 1.0, 0.44), "metal_pale")
+    prop(lab, "HoodDuct", (-4.6, 2.985, -5.3), (0.44, 1.04, 0.44), "metal_pale")
     prop(lab, "HoodDuctRing", (-4.6, 2.68, -5.3), (0.5, 0.06, 0.5), "metal_dark")
     for index, (x, z) in enumerate(((-5.2, -5.2), (-4.9, -5.3), (-4.1, -5.25))):
         lab.cyl("HoodBottle%d" % index, (x, 1.09, z), 0.05, 0.2, "glassware", top_radius=0.032)
-    prop(lab, "HoodStand", (-4.2, 1.3, -5.3), (0.03, 0.62, 0.03), "metal_pale")
+    prop(lab, "HoodStand", (-4.2, 1.325, -5.3), (0.03, 0.62, 0.03), "metal_pale")
     prop(lab, "HoodStandBase", (-4.2, 1.0, -5.3), (0.24, 0.04, 0.16), "metal_pale")
 
-    # Glassware cabinet: glass doors, three shelves, and the clean glass behind them.
-    slab(lab, "GlassCabinetBody", (-1.8, 1.05, -5.36), (1.7, 2.1, 0.42), "casework_pale")
-    prop(lab, "GlassCabinetDoorFrame", (-1.8, 1.05, -5.14), (1.74, 2.14, 0.05), "metal_frame")
-    lab.quad("GlassCabinetDoorLeft", (-2.22, 1.05, -5.11), (0.78, 1.96), "glass_pane")
-    lab.quad("GlassCabinetDoorRight", (-1.38, 1.05, -5.11), (0.78, 1.96), "glass_pane")
-    prop(lab, "GlassCabinetMullion", (-1.8, 1.05, -5.1), (0.05, 2.0, 0.03), "metal_frame")
-    for index, y in enumerate((0.5, 1.05, 1.6)):
-        prop(lab, "GlassCabinetShelf%d" % index, (-1.8, y, -5.34), (1.6, 0.03, 0.36), "metal_pale")
+    # Cabinet casework stops at the frame. Through the sash you can see actual
+    # shelf depth and grounded specimens, not the front of an opaque box.
+    slab(lab, "GlassCabinetBody", (-1.8, 0.17, -5.335), (1.70, 0.34, 0.46), "casework_pale")
+    prop(lab, "GlassCabinetBack", (-1.8, 1.23, -5.537), (1.68, 1.80, 0.072), "accent_oxide")
+    for tag, x in (("Left", -2.624), ("Right", -0.976)):
+        slab(lab, "CabinetSide"+tag, (x, 1.225, -5.335), (0.074, 1.79, 0.47), "casework_pale")
+    prop(lab, "GlassCabinetCap", (-1.8, 2.112, -5.335), (1.76, 0.072, 0.51), "casework_pale")
+    lab.quad("GlassCabinetDoorLeft", (-2.218, 1.221, -5.096), (0.79, 1.74), "glass_pane")
+    lab.quad("GlassCabinetDoorRight", (-1.382, 1.221, -5.096), (0.79, 1.74), "glass_pane")
+    # The surrounding metal picks out the edge of each pane.
+    for tag, y in (("Lower", 0.351), ("Upper", 2.087)):
+        prop(lab, "CabinetRail"+tag, (-1.8, y, -5.10), (1.695, 0.057, 0.044), "metal_frame")
+    for tag, x in (("Left", -2.625), ("Right", -0.975), ("Centre", -1.8)):
+        name = "GlassCabinetMullion" if tag == "Centre" else "CabinetStile"+tag
+        prop(lab, name, (x, 1.22, -5.103), (0.044, 1.71, 0.068), "metal_frame")
+        if tag != "Centre":
+            prop(lab, "CabinetPull"+tag, (-1.8+(x+1.8)*0.11, 1.17, -5.057), (0.026, 0.18, 0.037), "instrument_cream")
+    shelf_levels = (0.56, 1.11, 1.66)
+    for index, y in enumerate(shelf_levels):
+        prop(lab, "GlassCabinetShelf%d" % index, (-1.8, y, -5.33), (1.60, 0.045, 0.36), "metal_pale")
     for index in range(9):
         x = -2.4 + 0.15 * index
-        shelf = 0.5 + 0.55 * (index % 3)
-        lab.cyl(
-            "CabinetGlass%d" % index,
-            (x, shelf + 0.09, -5.34),
-            0.045, 0.16, "glassware",
-            top_radius=0.02 if index % 2 else 0.05,
-            segments=10,
-        )
+        shelf = shelf_levels[index % 3] + 0.0225
+        lab.cyl("CabinetGlass%d" % index, (x, shelf + 0.079, -5.34),
+                0.045, 0.16, "glassware", top_radius=0.02 if index % 2 else 0.05, segments=10)
 
     # Sockets and the wall trunking the cables start from.
     prop(lab, "SocketTrunking", (-3.0, 1.02, -5.5), (4.6, 0.14, 0.08), "metal_frame")
@@ -439,22 +474,24 @@ def build_north_wall(lab: Lab) -> None:
 
 def build_island(lab: Lab) -> None:
     """The analysis island: two microscopes, a centrifuge, and the book someone writes in."""
-    top_y = 0.92
-    prop(lab, "IslandTop", (-2.4, top_y, -2.9), (3.4, 0.06, 1.15), "bench_resin")
-    slab(lab, "IslandBody", (-2.4, 0.45, -2.9), (3.2, 0.9, 1.0), "bench_steel")
-    prop(lab, "IslandPlinth", (-2.4, 0.04, -2.9), (3.1, 0.08, 0.9), "metal_frame")
+    top_y = BENCH_TOP
+    bench(lab, "Island", -2.4, -2.9, 3.4, 1.15, -2.4, 3.2)
     prop(lab, "IslandKick", (-2.4, top_y - 0.1, -2.36), (3.2, 0.16, 0.04), "metal_frame")
     # A low rail on the far side holds the instruments' cables off the bench surface.
-    prop(lab, "IslandCableRail", (-2.4, top_y + 0.06, -3.44), (3.2, 0.03, 0.03), "metal_frame")
+    prop(lab, "IslandCableRail", (-2.4, top_y + 0.066, -3.44), (3.2, 0.03, 0.03), "metal_frame")
+    for i, x in enumerate((-3.93, -2.41, -0.87)):
+        prop(lab, f"IslandCableStay{i}", (x, top_y+0.030, -3.44), (0.042, 0.063, 0.035), "metal_dark")
 
     for index, x in enumerate((-3.3, -1.6)):
         base = (x, top_y + 0.03, -3.05)
         prop(lab, "MicroBase%d" % index, base, (0.24, 0.06, 0.3), "instrument_grey")
         prop(lab, "MicroColumn%d" % index, (x, top_y + 0.24, -3.14), (0.07, 0.42, 0.07), "instrument_grey")
-        lab.cyl("MicroTube%d" % index, (x, top_y + 0.34, -3.0), 0.035, 0.3, "instrument_cream", rotation=(28, 0, 0))
-        lab.cyl("MicroEye%d" % index, (x, top_y + 0.47, -2.94), 0.022, 0.09, "metal_dark", rotation=(28, 0, 0))
-        prop(lab, "MicroStage%d" % index, (x, top_y + 0.14, -3.0), (0.16, 0.02, 0.16), "metal_pale")
-        prop(lab, "MicroKnob%d" % index, (x + 0.1, top_y + 0.2, -3.12), (0.04, 0.04, 0.04), "metal_dark")
+        prop(lab, "MicroArm%d" % index, (x, top_y + 0.31, -3.078), (0.061, 0.065, 0.158), "instrument_grey")
+        lab.cyl("MicroTube%d" % index, (x, top_y + 0.34, -3.014), 0.035, 0.3, "instrument_cream", rotation=(28, 0, 0))
+        lab.cyl("MicroEye%d" % index, (x, top_y + 0.506, -2.926), 0.022, 0.09, "metal_dark", rotation=(28, 0, 0))
+        prop(lab, "MicroStage%d" % index, (x, top_y + 0.14, -3.023), (0.16, 0.022, 0.17), "metal_pale")
+        prop(lab, "MicroStageMount%d" % index, (x, top_y+0.128, -3.094), (0.060, 0.041, 0.112), "metal_pale")
+        prop(lab, "MicroKnob%d" % index, (x+0.046, top_y + 0.2, -3.133), (0.044, 0.04, 0.04), "metal_dark")
 
     # Centrifuge: a squat cylinder with a lid, its own cable leaving the back.
     lab.cyl("CentrifugeBody", (-2.4, top_y + 0.15, -3.1), 0.2, 0.3, "instrument_grey", segments=14)
@@ -465,8 +502,10 @@ def build_island(lab: Lab) -> None:
     # The book: a ring binder open on the bench, a pen across it, a strip of tape on the page.
     prop(lab, "LogBookLeft", (-1.1, top_y + 0.035, -2.62), (0.24, 0.03, 0.32), "paper_pale")
     prop(lab, "LogBookRight", (-0.86, top_y + 0.04, -2.62), (0.24, 0.03, 0.32), "paper_pale")
-    prop(lab, "LogBookRuled", (-1.1, top_y + 0.052, -2.62), (0.2, 0.002, 0.28), "instrument_grey")
-    lab.cyl("LogPen", (-1.05, top_y + 0.09, -2.52), 0.006, 0.15, "metal_dark", rotation=(0, 0, 82))
+    for i in range(6):
+        prop(lab, f"LogBookRule{i}", (-1.10, top_y+0.052, -2.731+0.038*i),
+             (0.18-i%2*0.02, 0.002, 0.011), "instrument_grey")
+    lab.cyl("LogPen", (-1.05, top_y + 0.056, -2.53), 0.006, 0.15, "metal_dark", rotation=(0, 0, 90))
 
     # A rack of clean tubes and two reagent bottles.
     prop(lab, "TubeRackBase", (-1.9, top_y + 0.04, -2.6), (0.22, 0.08, 0.1), "metal_pale")
@@ -483,19 +522,24 @@ def build_island(lab: Lab) -> None:
             angle = math.radians(90 * leg + spin)
             lab.cyl(
                 "StoolLeg%d_%d" % (index, leg),
-                (x + 0.1 * math.cos(angle), 0.31, z + 0.1 * math.sin(angle)),
-                0.016, 0.6, "metal_frame",
+                (x + 0.1 * math.cos(angle), 0.303, z + 0.1 * math.sin(angle)),
+                0.016, 0.61, "metal_frame",
             )
 
 
 def build_instruments(lab: Lab) -> None:
     """East wall: the bank of machines every cable in the room can be traced back to."""
-    top_y = 0.92
-    prop(lab, "InstrumentBenchTop", (7.14, top_y, 2.8), (0.87, 0.06, 4.3), "bench_resin")
-    slab(lab, "InstrumentBenchBody", (7.18, 0.45, 2.8), (0.8, 0.9, 4.3), "bench_steel")
-    prop(lab, "InstrumentBenchPlinth", (7.14, 0.04, 2.8), (0.74, 0.08, 4.2), "metal_frame")
+    top_y = BENCH_TOP
+    bench(lab, "InstrumentBench", 7.14, 2.8, 0.87, 4.3, 7.18, 0.8)
     prop(lab, "InstrumentBackTile", (7.55, 1.5, 2.8), (0.05, 1.1, 4.3), "wall_tile")
     prop(lab, "InstrumentShelf", (7.36, 2.02, 2.8), (0.34, 0.04, 4.0), "bench_steel")
+    for i, z in enumerate((1.11, 2.62, 4.41)):
+        prop(lab, f"InstrumentShelfBracket{i}", (7.427, 1.961, z), (0.36, 0.082, 0.052), "metal_frame")
+        prop(lab, f"InstrumentShelfCleat{i}", (7.57, 1.89, z), (0.08, 0.22, 0.11), "metal_dark")
+    prop(lab, "CalibrationPlate", (7.577, 2.83, 2.76), (0.086, 0.54, 2.28), "accent_oxide")
+    for i, (z, h) in enumerate(((2.03, 0.29), (2.36, 0.18), (2.69, 0.31), (3.02, 0.21), (3.35, 0.27))):
+        prop(lab, f"CalibrationRule{i}", (7.526, 2.70+h/2, z), (0.027, h, 0.070),
+             "paper_pale" if i != 2 else "instrument_cream")
 
     # 1. The incubator: a cream box with a glass door and a green running light.
     prop(lab, "IncubatorBody", (7.16, top_y + 0.4, 1.02), (0.72, 0.8, 0.66), "instrument_cream")
@@ -515,8 +559,9 @@ def build_instruments(lab: Lab) -> None:
     # 3. The pump: dark, bolted down, with a pipe that goes up to the shelf.
     prop(lab, "PumpBody", (7.14, top_y + 0.19, 3.2), (0.56, 0.4, 0.46), "metal_dark")
     prop(lab, "PumpHead", (7.02, top_y + 0.44, 3.2), (0.3, 0.14, 0.3), "metal_pale")
-    lab.cyl("PumpPipe", (7.32, top_y + 0.62, 3.2), 0.035, 0.5, "metal_pale")
-    lab.cyl("PumpPipeElbow", (7.32, top_y + 0.86, 3.2), 0.035, 0.22, "metal_pale", rotation=(0, 0, 90))
+    lab.cyl("PumpPipe", (7.28, top_y + 0.698, 3.2), 0.035, 0.64, "metal_pale")
+    lab.cyl("PumpPipeElbow", (7.396, top_y + 1.0, 3.2), 0.035, 0.24, "metal_pale", rotation=(0, 0, 90))
+    prop(lab, "PumpPipeClamp", (7.51, top_y+0.996, 3.2), (0.14, 0.1, 0.09), "metal_dark")
 
     # 4. The controller: two dials, a gauge, a blank plate where a switch would be.
     prop(lab, "ControllerBody", (7.16, top_y + 0.22, 4.1), (0.62, 0.46, 0.42), "instrument_cream")
@@ -538,49 +583,52 @@ def build_mixer(lab: Lab) -> None:
     cx, cz = 0.7, 1.0
     prop(lab, "MixerTray", (cx, 0.03, cz), (2.0, 0.06, 2.0), "metal_frame")
     for index, (dx, dz) in enumerate(((-0.62, -0.62), (0.62, -0.62), (-0.62, 0.62), (0.62, 0.62))):
-        prop(lab, "MixerLeg%d" % index, (cx + dx, 0.62, cz + dz), (0.11, 1.2, 0.11), "metal_dark")
-    prop(lab, "MixerCrossA", (cx, 1.06, cz - 0.62), (1.34, 0.1, 0.08), "metal_dark")
-    prop(lab, "MixerCrossB", (cx, 1.06, cz + 0.62), (1.34, 0.1, 0.08), "metal_dark")
-    prop(lab, "MixerCrossC", (cx - 0.62, 1.06, cz), (0.08, 0.1, 1.34), "metal_dark")
-    prop(lab, "MixerCrossD", (cx + 0.62, 1.06, cz), (0.08, 0.1, 1.34), "metal_dark")
+        prop(lab, "MixerFoot%d" % index, (cx+dx, 0.093, cz+dz), (0.21, 0.068, 0.21), "accent_oxide")
+        prop(lab, "MixerLeg%d" % index, (cx + dx, 0.599, cz + dz), (0.11, 0.95, 0.11), "metal_dark")
+    prop(lab, "MixerCradle", (cx, 1.01, cz), (1.32, 0.14, 1.32), "metal_dark")
+    prop(lab, "MixerCrossA", (cx, 0.96, cz - 0.62), (1.22, 0.1, 0.07), "metal_dark")
+    prop(lab, "MixerCrossB", (cx, 0.96, cz + 0.62), (1.22, 0.1, 0.07), "metal_dark")
+    prop(lab, "MixerCrossC", (cx - 0.62, 0.89, cz), (0.08, 0.1, 1.20), "metal_dark")
+    prop(lab, "MixerCrossD", (cx + 0.62, 0.89, cz), (0.08, 0.1, 1.20), "metal_dark")
     slab(lab, "MixerDrum", (cx, 1.62, cz), (1.2, 1.1, 1.2), "metal_pale")
     lab.cyl("MixerDrumSkin", (cx, 1.62, cz), 0.63, 1.12, "metal_pale", segments=18)
     lab.cyl("MixerBandLow", (cx, 1.2, cz), 0.645, 0.08, "metal_dark", segments=18)
     lab.cyl("MixerBandHigh", (cx, 2.0, cz), 0.645, 0.08, "metal_dark", segments=18)
     lab.cyl("MixerLid", (cx, 2.2, cz), 0.62, 0.07, "metal_pale", segments=18)
-    prop(lab, "MixerMotor", (cx, 2.45, cz), (0.46, 0.4, 0.46), "metal_dark")
+    prop(lab, "MixerMotorShoe", (cx, 2.263, cz), (0.52, 0.062, 0.49), "accent_oxide")
+    prop(lab, "MixerMotor", (cx, 2.483, cz), (0.46, 0.4, 0.46), "metal_dark")
     prop(lab, "MixerMotorFan", (cx, 2.45, cz - 0.24), (0.34, 0.34, 0.03), "metal_frame")
     # The one moving part in the room: a flat vane on the motor shaft, turning at a constant
     # speed (scenes/locations/laboratory/spinner.gd). The drum itself does not move.
     lab.box("MixerBlade", (cx, 2.74, cz), (0.32, 0.03, 0.08), "metal_pale", body=False, script="spinner")
-    lab.cyl("MixerShaft", (cx, 2.66, cz), 0.04, 0.14, "metal_pale", segments=10)
-    prop(lab, "MixerShaftCoupling", (cx, 2.82, cz), (0.12, 0.06, 0.12), "instrument_cream")
+    lab.cyl("MixerShaft", (cx, 2.728, cz), 0.04, 0.174, "metal_pale", segments=10)
+    prop(lab, "MixerShaftCoupling", (cx, 2.8, cz), (0.12, 0.04, 0.12), "instrument_cream")
     # A control box with a running light and no switch on it at all.
+    prop(lab, "MixerControlBracket", (cx + 0.653, 1.56, cz - 0.29), (0.24, 0.14, 0.17), "metal_dark")
     prop(lab, "MixerControlBox", (cx + 0.78, 1.62, cz - 0.3), (0.2, 0.34, 0.3), "instrument_cream")
     prop(lab, "MixerControlLed", (cx + 0.89, 1.7, cz - 0.36), (0.02, 0.025, 0.025), "led_running")
     prop(lab, "MixerControlPlate", (cx + 0.89, 1.56, cz - 0.26), (0.02, 0.16, 0.18), "instrument_grey")
     # The pipe out of the lid, west, to the wall, where it turns down into the floor.
     lab.cyl("MixerPipeUp", (cx - 0.1, 2.5, cz - 0.2), 0.07, 0.5, "metal_pale", segments=10)
-    lab.cyl("MixerPipeRun", (-2.2, 2.72, cz - 0.2), 0.07, 4.2, "metal_pale", segments=10, rotation=(0, 0, 90))
-    lab.cyl("MixerPipeDrop", (-4.3, 1.4, cz - 0.2), 0.07, 2.7, "metal_pale", segments=10)
+    lab.cyl("MixerPipeRun", (-1.85, 2.72, cz - 0.2), 0.07, 4.92, "metal_pale", segments=10, rotation=(0, 0, 90))
+    lab.cyl("MixerPipeDrop", (-4.3, 1.362, cz - 0.2), 0.07, 2.732, "metal_pale", segments=10)
+    lab.cyl("MixerPipeFoot", (-4.3, 0.033, cz - 0.2), 0.13, 0.071, "metal_dark", segments=10)
+    prop(lab, "MixerPipeHangerHead", (-1.7, 3.29, cz - 0.2), (0.08, 0.16, 0.052), "metal_frame")
+    prop(lab, "MixerPipeHanger", (-1.7, 2.997, cz - 0.2), (0.035, 0.48, 0.045), "metal_frame")
 
 
 def build_annex(lab: Lab) -> None:
     """The room behind the narrow door, and the three things in it that do not add up."""
-    # Partition between the laboratory and the annex, with a 0.95 m door in it.
+    # A 1.5 m rough opening keeps the partition door connected in the nav bake.
     slab(lab, "PartitionWestA", (2.2, 1.7, -4.6), (0.18, 3.4, 2.0), "wall_plaster", group="camera_occluder")
     slab(lab, "PartitionWestB", (2.2, 1.7, -1.35), (0.18, 3.4, 1.5), "wall_plaster", group="camera_occluder")
     slab(lab, "PartitionLintel", (2.2, 2.925, -2.85), (0.18, 0.95, 1.5), "wall_plaster", group="camera_occluder")
-    slab(lab, "PartitionSouth", (4.9, 1.7, -0.6), (5.4, 3.4, 0.18), "wall_plaster", group="camera_occluder")
+    slab(lab, "PartitionSouth", (4.943, 1.68, -0.6), (5.314, 3.36, 0.18), "wall_plaster", group="camera_occluder")
     # The door frame: steel, plain, with no signage anywhere on it.
     prop(lab, "AnnexDoorJambA", (2.2, 1.15, -3.55), (0.24, 2.3, 0.1), "metal_frame")
     prop(lab, "AnnexDoorJambB", (2.2, 1.15, -2.15), (0.24, 2.3, 0.1), "metal_frame")
     prop(lab, "AnnexDoorHead", (2.2, 2.42, -2.85), (0.24, 0.14, 1.5), "metal_frame")
-    prop(lab, "AnnexDoorSill", (2.2, 0.03, -2.85), (0.3, 0.05, 1.4), "metal_frame")
-
-    # The annex floor sits a step down and a shade darker than the laboratory's.
-    slab(lab, "AnnexFloor", (4.9, -0.06, -3.1), (5.3, 0.12, 4.9), "annex_floor")
-    prop(lab, "AnnexStep", (2.32, 0.04, -2.85), (0.24, 0.08, 1.4), "metal_frame")
+    prop(lab, "AnnexDoorSill", (2.20, 0.004, -2.85), (0.32, 0.013, 1.28), "metal_frame")
 
     # The low ceiling is a soffit at 2.6 m, not a lid. Every interior in this project is
     # open over the working area: the camera looks down into the room from six metres up,
@@ -595,7 +643,7 @@ def build_annex(lab: Lab) -> None:
         prop(lab, name, pos, size, "annex_wall")
 
     # 1. One bulb, on a cord, hanging lower than it should.
-    prop(lab, "AnnexCordStem", (5.1, 2.58, -3.3), (0.04, 0.12, 0.04), "metal_frame")
+    prop(lab, "AnnexCordStem", (5.1, 2.58, -3.3), (0.081, 0.15, 0.075), "metal_frame")
     lab.cyl("AnnexCord", (5.1, 2.42, -3.3), 0.008, 0.5, "metal_frame", segments=6)
     lab.cyl("AnnexBulb", (5.1, 2.12, -3.3), 0.06, 0.12, "annex_bulb", top_radius=0.04, segments=10)
     prop(lab, "AnnexBulbCage", (5.1, 2.06, -3.3), (0.16, 0.02, 0.16), "metal_frame")
@@ -603,13 +651,17 @@ def build_annex(lab: Lab) -> None:
 
     # 2. The shaft: it leaves the annex ceiling and climbs past the top of the building.
     for name, pos, size in (
-        ("ShaftWest", (6.1, 4.05, -3.5), (0.12, 2.9, 1.9)),
-        ("ShaftNorth", (6.82, 4.05, -4.4), (1.6, 2.9, 0.12)),
-        ("ShaftSouth", (6.82, 4.05, -2.6), (1.6, 2.9, 0.12)),
-        ("ShaftEast", (7.56, 4.05, -3.5), (0.12, 2.9, 1.9)),
+        ("ShaftWest", (6.1, 4.06, -3.5), (0.12, 2.92, 1.92)),
+        ("ShaftNorth", (6.83, 4.06, -4.4), (1.34, 2.92, 0.12)),
+        ("ShaftSouth", (6.83, 4.06, -2.6), (1.34, 2.92, 0.12)),
+        ("ShaftEast", (7.56, 4.06, -3.5), (0.12, 2.92, 1.92)),
     ):
         prop(lab, name, pos, size, "annex_wall")
-    prop(lab, "ShaftGlow", (6.82, 5.42, -3.5), (1.3, 0.03, 1.6), "annex_bulb")
+    prop(lab, "ShaftLampBridge", (6.83, 5.46, -3.5), (1.37, 0.062, 0.29), "metal_frame")
+    prop(lab, "ShaftGlow", (6.82, 5.423, -3.5), (1.27, 0.028, 0.24), "annex_bulb")
+    # Supports belong to the shaft, not to a fake ceiling over the player.
+    for i, z in enumerate((-4.40, -2.60)):
+        prop(lab, f"ShaftBracket{i}", (7.50, 2.88, z), (0.26, 0.62, 0.17), "metal_frame")
     prop(lab, "ShaftLedge", (6.82, 2.72, -3.5), (1.3, 0.06, 0.12), "metal_frame")
     # The cables go up it. Four of them, out of sight.
     for index in range(4):
@@ -625,13 +677,13 @@ def build_annex(lab: Lab) -> None:
     prop(lab, "FarDoorJambA", (3.58, 1.1, -5.58), (0.1, 2.2, 0.16), "metal_frame")
     prop(lab, "FarDoorJambB", (5.02, 1.1, -5.58), (0.1, 2.2, 0.16), "metal_frame")
     prop(lab, "FarDoorHead", (4.3, 2.42, -5.58), (1.5, 0.14, 0.16), "metal_frame")
-    slab(lab, "FarCorridorFloor", (4.3, -0.06, -7.0), (1.8, 0.12, 2.8), "annex_floor")
-    prop(lab, "FarCorridorWallA", (3.42, 1.2, -7.0), (0.1, 2.4, 2.8), "annex_wall")
-    prop(lab, "FarCorridorWallB", (5.18, 1.2, -7.0), (0.1, 2.4, 2.8), "annex_wall")
+    floor_section(lab, "FarCorridorFloor", (3.4, 5.2), (-8.4, -5.8), "annex_floor")
+    for tag, x in (("A", 3.42), ("B", 5.18)):
+        prop(lab, "FarCorridorWall"+tag, (x, 1.2, -7.06), (0.1, 2.4, 2.52), "annex_wall")
     # No lid over the corridor either: two ribs at 2.4 m and the walls stop there, which is
     # what a corridor that has run out of building looks like from inside.
     for name, x in (("FarCorridorRibA", 3.5), ("FarCorridorRibB", 5.1)):
-        prop(lab, name, (x, 2.44, -7.0), (0.16, 0.14, 2.8), "annex_wall")
+        prop(lab, name, (x, 2.44, -7.067), (0.16, 0.14, 2.506), "annex_wall")
     # The end of the corridor: an unshaded black wall, so what the player walks into is the
     # surface they can see. There is no invisible blocker anywhere in this room.
     slab(lab, "FarCorridorEnd", (4.3, 1.2, -8.42), (1.9, 2.6, 0.2), "void_black")
@@ -639,17 +691,23 @@ def build_annex(lab: Lab) -> None:
 
     # 4. The floor hatch the bundle ends in.
     prop(lab, "AnnexHatchRim", (6.5, 0.02, -1.5), (0.7, 0.06, 0.5), "metal_frame")
-    prop(lab, "AnnexHatchVoid", (6.5, -0.02, -1.5), (0.5, 0.05, 0.32), "void_black")
+    prop(lab, "AnnexHatchVoid", (6.5, 0.052, -1.5), (0.57, 0.012, 0.37), "void_black")
 
 
 def build_lights(lab: Lab) -> None:
-    """Six ceiling fixtures - no ceiling over the working half, so they hang from the roof."""
+    """Fluorescents hung from slim exposed service runs, not an invisible ceiling."""
     # Eight omni lights in the whole room, and no more: the Compatibility renderer shades an
     # object with eight of them, and a ninth would only be ignored per object anyway.
     # One casting fixture, in the working half. Two of them put soft shadow blobs on the
     # annex walls - an omni shadow map at this range is coarse, and a coarse edge on a flat
     # wall reads as a stain. The rest of the room is lit without casting, and the drum keeps
     # the one shadow that says the lights are where the fixtures are.
+    for tag, x in (("West", -4.9), ("Mid", -1.7)):
+        prop(lab, "ServiceSpine"+tag, (x, 3.37, 0), (0.106, 0.104, 11.28), "metal_dark")
+        for face, z in (("North", -5.567), ("South", 5.567)):
+            prop(lab, f"ServiceSeat{tag}{face}", (x, 3.24, z), (0.25, 0.25, 0.19), "metal_frame")
+    prop(lab, "ServiceSpineEast", (6.05, 3.37, 2.9), (3.19, 0.104, 0.11), "metal_dark")
+    prop(lab, "ServiceSeatEast", (7.55, 3.24, 2.9), (0.22, 0.25, 0.28), "metal_frame")
     fixtures = (
         ("A", (-4.9, -3.4), True),
         ("B", (-4.9, 0.9), False),
@@ -660,15 +718,15 @@ def build_lights(lab: Lab) -> None:
     for tag, (x, z), shadow in fixtures:
         prop(lab, "CeilingFixture" + tag, (x, 3.06, z), (1.5, 0.12, 0.3), "metal_dark")
         prop(lab, "CeilingTube" + tag, (x, 2.99, z), (1.4, 0.04, 0.22), "lamp_panel")
-        # The hangers that hold the fixture to a ceiling the room does not have.
+        prop(lab, "FixtureYoke"+tag, (x, 3.307, z), (1.27, 0.068, 0.093), "metal_frame")
         for index, dx in enumerate((-0.55, 0.55)):
-            lab.cyl(("FixtureHanger%s%d" % (tag, index)).replace("-", "n"), (x + dx, 3.24, z), 0.008, 0.26, "metal_frame", segments=6)
+            lab.cyl(f"FixtureHanger{tag}{index}", (x + dx, 3.196, z), 0.017, 0.172, "metal_dark", segments=8)
         lab.light("CeilingLight" + tag, (x, 2.86, z), 1.2, 7.5, shadow=shadow)
 
 
 def build_cables(lab: Lab) -> None:
     """Every cable in the room, from the machine it belongs to to the hatch it ends in."""
-    floor = 0.035
+    floor = 0.024
     # --- the instrument bank, four machines, four cables ---
     bank = [
         ((6.95, 0.72, 1.02), ((6.98, 0.3, 1.02), (6.9, floor, 1.3), (6.2, floor, 1.05), (5.2, floor, 0.62))),
@@ -699,7 +757,7 @@ def build_cables(lab: Lab) -> None:
     )
     cable_route(
         lab, "CableBenchLamp",
-        ((-7.05, 1.85, -1.9), (-7.2, 0.6, -1.95), (-7.1, floor, -1.4), (-6.0, floor, 0.3), (-3.6, floor, 0.42), (-2.2, floor, 0.4), (0.4, floor, 0.42), (1.45, floor, 0.5)),
+        ((-7.02, 2.17, -1.90), (-7.19, 2.139, -1.90), (-7.2, 0.6, -1.95), (-7.1, floor, -1.4), (-6.0, floor, 0.3), (-3.6, floor, 0.42), (-2.2, floor, 0.4), (0.4, floor, 0.42), (1.45, floor, 0.5)),
         radius=0.024, sag=0.05,
     )
     cable_route(
@@ -890,15 +948,15 @@ def build_scene(lab: Lab) -> str:
     subs: list[tuple[str, str, list[str]]] = []
     # Cylinder meshes are shared by every prop with the same proportions.
     cyl_ids: dict[tuple, str] = {}
-    # One unit cylinder for every cable segment: its transform carries radius and length.
-    unit_cyl = "CylinderMesh_cable"
-    subs.append(
-        (
-            unit_cyl,
-            "CylinderMesh",
-            ["top_radius = 0.5", "bottom_radius = 0.5", "height = 1.0", "radial_segments = 8", "rings = 1"],
-        )
-    )
+    # Share three material-bearing unit meshes across the ~400 cable segments.
+    # Their transforms carry radius and length; there is no per-piece override.
+    cable_mesh_ids = {}
+    for index, mat in enumerate(sorted({piece["mat"] for piece in lab.cables})):
+        cable_mesh_ids[mat] = f"Cable{index}"
+        subs.append((cable_mesh_ids[mat], "CylinderMesh", [
+            'material = ExtResource("%s")' % mat_ids[mat],
+            "top_radius = 0.5", "bottom_radius = 0.5", "height = 1.0", "radial_segments = 8", "rings = 1",
+        ]))
 
     body_index = 0
     box_rows: list[dict] = []
@@ -1071,8 +1129,7 @@ def build_scene(lab: Lab) -> str:
             continue
         lines.append('[node name="%s" type="MeshInstance3D" parent="Cables"]' % cable["name"])
         lines.append("transform = Transform3D(%s)" % ", ".join(_num(v) for v in transform))
-        lines.append('mesh = SubResource("%s")' % unit_cyl)
-        lines.append('material_override = ExtResource("%s")' % mat_ids[cable["mat"]])
+        lines.append('mesh = SubResource("%s")' % cable_mesh_ids[cable["mat"]])
         lines.append("")
 
     lines.append('[node name="Ambience" type="AudioStreamPlayer" parent="."]')

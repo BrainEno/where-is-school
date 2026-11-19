@@ -29,10 +29,13 @@ const LOCATIONS := [
 	["playground", "res://scenes/locations/playground/playground.tscn"],
 ]
 const TEACHING_SPOTS := {
-	"rear_junction": ^"TeachingBlock/RearStair/Junction",
-	"half_landing": ^"TeachingBlock/RearStair/DownLanding",
-	"arcade": ^"TeachingBlock/GroundFloor/Arcade",
-	"laboratory_recess": ^"SpawnPoints/FromLaboratory",
+	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
+	"directory_01": [^"TeachingBlock/GroundFloor/Gallery", Vector3(-1.24, 0, -0.30)],
+	"waiting_register_02": [^"TeachingBlock/LowerFloor/WaitingRegister", Vector3(2.38, 0, 0.75)],
+	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-3.35, 0, 0.42)],
+	"rear_junction": [^"TeachingBlock/RearStair/Junction", Vector3.ZERO],
+	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
+	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],
 }
 const MIN_SPACING := 4.5
 ## The wide view looks along the game camera's own bearing, from further away.
@@ -152,11 +155,12 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 func _teaching_spots(current: LocationRoot) -> Array:
 	var spots: Array = []
 	for key: String in TEACHING_SPOTS:
-		var marker := current.get_node_or_null(TEACHING_SPOTS[key]) as Node3D
+		var subject: Array = TEACHING_SPOTS[key]
+		var marker := current.get_node_or_null(subject[0]) as Node3D
 		if marker == null:
 			_failures.append("No teaching wing position for %s." % key)
 			continue
-		spots.append([key, marker.global_position + Vector3.UP * 0.05])
+		spots.append([key, marker.global_position + (subject[1] as Vector3) + Vector3.UP * 0.05])
 	return spots
 
 

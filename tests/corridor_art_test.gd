@@ -6,6 +6,8 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const SCHOOL := ^"TeachingBlock"
+const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
+const DIRECTORY := &"corridor_folded_directory"
 const BIOLOGY_BAY := ^"TeachingBlock/LowerFloor/LowerWest1"
 const UPPER := ^"TeachingBlock/UpperFloor"
 const LANDING := Vector3(2.2, 1.8, -35.75)
@@ -136,11 +138,9 @@ func _run() -> void:
 				if await _use_exit(&"classroom_door", &"corridor", &"FromClassroom"):
 					_check.expect(_player.global_position.distance_to(front_step) < 0.12,
 						"Leaving the classroom did not land on the hall side of the front door.")
-		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "school gate"):
-			if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
-				# The street spawn is across the pavement, not in reach of the gate.
-				if await _walk(Vector3(-8.15, 0, 15.2), "street side of the gate"):
-					await _use_exit(&"street_back_to_school", &"corridor", &"FromStreet")
+		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
+		if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
+			await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
 	_finish()
@@ -150,7 +150,7 @@ func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
-		+ "the rear stair connects all three floors and the laboratory returns to its hidden threshold.")
+		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -182,6 +182,22 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		"The gate to fire door no longer follows a long connected route (%.1f m)." % length)
 
 
+## The formerly identical faces were visible from the follow camera. The
+## neighbouring boxes can meet or have a rebate, but cannot draw the same face.
+func _check_separate_box_faces(bay: Node3D, first: NodePath, second: NodePath) -> void:
+	var a := bay.get_node_or_null(first) as MeshInstance3D
+	var b := bay.get_node_or_null(second) as MeshInstance3D
+	if not _check.expect(a != null and b != null, "%s is missing a wall or ceiling piece." % bay.name):
+		return
+	var ax := a.transform * a.get_aabb()
+	var bx := b.transform * b.get_aabb()
+	var coverage := ax.end.min(bx.end) - ax.position.max(bx.position)
+	for axis in 3:
+		var same_face := absf(ax.position[axis] - bx.position[axis]) < 0.001 or absf(ax.end[axis] - bx.end[axis]) < 0.001
+		if same_face and coverage[(axis + 1) % 3] > 0.002 and coverage[(axis + 2) % 3] > 0.002:
+			_check.fail("%s: %s and %s draw overlapping faces." % [bay.name, first, second])
+
+
 func _route_length(path: PackedVector3Array) -> float:
 	var length := 0.0
 	for i in range(1, path.size()):
@@ -199,6 +215,9 @@ func _check_bay(bay: StaticBody3D, map: RID) -> void:
 		var glass := bay.get_node_or_null(NodePath(String(door.name) + "Transom")) as MeshInstance3D
 		_check.expect(glass != null and is_equal_approx(glass.position.x, door.position.x) and glass.position.y > 2.4,
 			"%s/%s has no small glass above the door." % [bay.name, door.name])
+	_check_separate_box_faces(bay, ^"Wall6_0", ^"CeilingReturn")
+	_check_separate_box_faces(bay, ^"Return0", ^"RoomRoof")
+	_check_separate_box_faces(bay, ^"Return1", ^"RoomBack")
 	var quad := slit.mesh as QuadMesh
 	_check.expect(quad != null and quad.size.x > quad.size.y * 5.0 and is_equal_approx(slit.position.y, ROOM_WINDOW_Y),
 		"%s's high window is not a narrow slit above standing eye height." % bay.name)
@@ -309,6 +328,88 @@ func _check_rear_door(corridor: LocationRoot, bay: StaticBody3D) -> void:
 	await _dismiss_inspection()
 
 
+func _check_glass_entrance() -> void:
+	Harness.stage = "01 glass entrance from the street"
+	var street := _host.get_current()
+	var street_facade := street.get_node_or_null(^"SchoolGlassEntrance") as Node3D
+	if not _check.expect(street_facade != null, "The street still has no glass school entrance."):
+		return
+	var entrance_scene := street_facade.scene_file_path
+	if not await _walk(Vector3(-8.4, 0, 15.8), "street side of the glass entrance"):
+		return
+	if not await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
+		return
+	var inside := _host.get_current()
+	var doorway := inside.get_node_or_null(ENTRANCE) as Node3D
+	var arrival := inside.get_spawn(&"FromTeachingEntrance")
+	if not _check.expect(doorway != null and arrival != null and doorway.scene_file_path == entrance_scene,
+		"The exterior and interior must share the same glass assembly."):
+		return
+	var exterior := doorway.to_local(_player.global_position)
+	_check.expect(exterior.z > 1.0 and absf(exterior.x) < 0.08 and absf(exterior.y) < 0.09,
+		"Street arrival must put the player's feet outside, level with the door: %s." % exterior)
+	var ground := doorway.get_parent()
+	_check.expect(ground.find_children("BlindBay*", "Node3D", false, false).is_empty(),
+		"A blind arch section survived on 01.")
+	var directory_wall := ground.get_node_or_null(^"DirectoryWall") as Node3D
+	_check.expect(directory_wall != null and doorway.global_position.z - directory_wall.global_position.z > 3.9,
+		"The new door is not across the hall from the former arch wall.")
+	var half_panel := doorway.get_node(^"Right/Pane") as MeshInstance3D
+	var glass := half_panel.material_override as BaseMaterial3D
+	_check.expect(glass != null and glass.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA
+		and glass.albedo_color.a < 0.5, "The entrance sidelights are opaque.")
+	var pose := _player.global_transform
+	pose.origin = doorway.to_global(Vector3(2.18, 0.53, 1.35))
+	var contact := KinematicCollision3D.new()
+	_check.expect(_player.test_move(pose, Vector3.FORWARD * 2.7, contact)
+		and contact.get_collider() == doorway.get_node(^"Right/GlassSafety"),
+		"The side glazing was left open to the capsule.")
+	pose.origin = doorway.to_global(Vector3(0, 0.045, 1.35))
+	_check.expect(not _player.test_move(pose, Vector3.FORWARD * 2.7),
+		"An invisible barrier crosses the centre of the glass entrance.")
+
+	# In the default camera basis W+D steps north. This crosses the portal with
+	# actual continuous movement: no reload, no activation and no teleport.
+	Input.action_press(&"move_forward")
+	Input.action_press(&"move_right")
+	var crossed := await Harness.wait_until(func() -> bool:
+		return doorway.to_local(_player.global_position).z < -2.42, 6.0)
+	Input.action_release(&"move_forward")
+	Input.action_release(&"move_right")
+	if not _check.expect(crossed and _host.get_current() == inside and _player.is_on_floor(),
+		"Keyboard movement did not carry the player through the glass doorway: %s." % _player.global_position):
+		return
+	await _check_directory(inside)
+	# The opposite direction is also a real ground click through the open leaves.
+	if await _click_floor(doorway.to_global(Vector3(0, 0, 2.65)), "mouse through the open glass entrance"):
+		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
+			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
+				await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance")
+
+
+func _check_directory(corridor: LocationRoot) -> void:
+	Harness.stage = "optional bilingual directory"
+	var directory := corridor.find_interactable(DIRECTORY)
+	if not _check.expect(directory != null and directory.inspection_id == DIRECTORY,
+		"The information panel is not inspectable."):
+		return
+	var library := InspectionLibrary.load_all()
+	for locale: String in L10n.LOCALES:
+		library.set_locale(locale)
+		var record := library.get_inspection(DIRECTORY)
+		_check.expect(record != null and not record.prompt.is_empty() and not record.text.is_empty(),
+			"The directory's reading is absent in %s." % locale)
+	_player.face_toward(directory.global_position - _player.global_position)
+	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == directory, 3.0):
+		_check.fail("No prompt at the directory's own wall.")
+		return
+	_last_inspection = &""
+	_press_interact()
+	var opened := await Harness.wait_until(func() -> bool: return _last_inspection == DIRECTORY, 5.0)
+	_check.expect(opened, "The directory did not open through the normal inspection channel.")
+	await _dismiss_inspection()
+
+
 ## Take the new branches from the same landing without placing or reloading the player.
 ## The half landings put a real turn between each pair of flights, not another exit.
 func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
@@ -358,7 +459,7 @@ func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
 	if not await _walk(lower_landing, "01 half landing"):
 		return
 	var near_end := Vector3(-11.4, -3.4, 12.6)
-	if not await _walk(near_end, "01 arcade from 02"):
+	if not await _walk(near_end, "01 directory gallery from 02"):
 		return
 	_check.expect(_host.get_current() == corridor, "Walking between floors loaded a different location.")
 	var leaf := lab.get_node(^"LeafLeft") as MeshInstance3D
@@ -370,7 +471,7 @@ func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
 	var hall_step := hall_spawn.global_position
 	var door_scene := lab.scene_file_path
 	var door_basis := lab.global_basis
-	if not await _walk(Vector3(-25, -3.4, 12.6), "end of the 01 arcade") or not await _walk(hall_step, "laboratory recess"):
+	if not await _walk(Vector3(-25, -3.4, 12.6), "end of the 01 gallery") or not await _walk(hall_step, "laboratory recess"):
 		return
 
 	Harness.stage = "laboratory mouse entry and return"

@@ -62,11 +62,12 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 11, # The rear classroom door is still an inspection, not an exit.
-		"spawns": ["FromClassroom", "FromStreet", "FromSchoolyard", "FromLaboratory"],
+		"interactables": 13, # Includes the new threshold exit and the directory, not fake doors.
+		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"school_gate": "street/FromCorridor",
+			"teaching_entrance_to_street": "street/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
 			"to_laboratory": "laboratory/FromCorridor",
 		},
@@ -74,11 +75,11 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 80,
+		"shapes": 89, # Nine added by the shared entrance: frame, solid kicks and safety glass.
 		"interactables": 8,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
-			"street_back_to_school": "corridor/FromStreet",
+			"street_back_to_school": "corridor/FromTeachingEntrance",
 			"street_to_residential": "residential/FromStreet",
 		},
 	},

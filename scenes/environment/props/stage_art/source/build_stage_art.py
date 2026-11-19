@@ -48,6 +48,9 @@ from build_playground_art import Builder, material_tres, node_path, vec3  # noqa
 sys.path.insert(0, str(HERE))
 from paint_stage_textures import DISTANCE  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "tools"))
+from build_outdoor_locations import STREET_SCHOOL_Z  # noqa: E402
+
 LOC = ROOT / "scenes" / "locations"
 MARKER = '[node name="StageArt" type="Node3D" parent="."]'
 
@@ -219,7 +222,8 @@ def street_nodes() -> Builder:
     b.flat("CentreLine", f"{A}/Road", yard.plane(b, 0.4, 56.0), "road_dash", (-0.6, 0.004, -8.0))
     b.flat("Crossing", f"{A}/Road", yard.plane(b, 18.4, 3.0), "road_zebra", (-0.5, 0.005, 9.5))
     # The school's barred windows, painted on its long wall (a child of the occluder).
-    b.flat("StageWindows", "SchoolBlock", yard.quad(b, 44.0, 11.4), "school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
+    width = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
+    b.flat("StageWindows", "SchoolBlock", yard.quad(b, width, 11.4), "school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
     return b
 
 
