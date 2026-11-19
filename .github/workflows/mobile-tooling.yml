@@ -43,6 +43,21 @@ jobs:
       - uses: ./.github/actions/setup-godot
         with:
           include-templates: true
+      - name: Record the Simulator toolchain for cache isolation
+        id: simulator-sdk
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(xcodebuild -version)"
+          sdk="$(xcrun --sdk iphonesimulator --show-sdk-build-version)"
+          printf '::notice title=iOS Simulator toolchain::%s; SDK build %s; %s\n' "$(tr '\n' ' ' <<< "$version")" "$sdk" "$(uname -m)"
+          printf 'key=%s\n' "$(printf '%s\n' "$version" "$sdk" | shasum -a 256 | cut -c1-24)" >> "$GITHUB_OUTPUT"
+      - name: Restore the matching Debug-only Simulator library
+        id: simulator-cache
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/Library/Caches/where-is-school/godot/simulator/*/*.a
+          key: wis-ios-sim-${{ runner.os }}-${{ runner.arch }}-${{ steps.simulator-sdk.outputs.key }}-${{ hashFiles('.godot-version', 'tools/macos/ios/simulator_template.py') }}
       - name: Select a simulator and install and launch the verified Debug app
         shell: bash
         run: |
@@ -67,6 +82,12 @@ jobs:
             exit 1
           fi
           printf '::notice title=iOS Simulator::%s\n' "$(tr -d '\n' < build/mobile/ios-sim/BUILD.json)"
+      - name: Cache a compiled Simulator slice for this PR
+        if: ${{ !cancelled() && steps.simulator-cache.outputs.cache-hit != 'true' && steps.simulator-cache.outputs.cache-primary-key != '' }}
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/Library/Caches/where-is-school/godot/simulator/*/*.a
+          key: ${{ steps.simulator-cache.outputs.cache-primary-key }}
       - name: Verify the iPhone/iPad archive path without signing secrets
         if: ${{ !cancelled() }}
         shell: bash

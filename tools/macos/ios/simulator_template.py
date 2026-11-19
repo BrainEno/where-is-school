@@ -25,8 +25,9 @@ def capture(*args, cwd: Path | None = None) -> str:
 
 
 def has_arch(library: Path, arch: str) -> bool:
-    return library.is_file() and subprocess.run(["lipo", "-verify_arch", arch, library],
-                                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    # Inspect archive contents, not xcframework metadata. In cctools lipo,
+    # -verify_arch would consume all remaining arguments as architecture names.
+    return library.is_file() and arch in capture("lipo", "-archs", library).split()
 
 
 def release_ref(version: str, engine: str) -> tuple[str, str]:

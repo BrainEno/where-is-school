@@ -133,6 +133,14 @@ class SimulatorTemplateTest(unittest.TestCase):
             with self.subTest(engine=engine), self.assertRaisesRegex(ValueError, "official"):
                 simulator_template.release_ref("4.7.2", engine)
 
+    def test_lipo_uses_the_real_architecture_list(self):
+        archive = Path(__file__)  # The fixture only needs a file for the mocked lipo call.
+        with patch.object(simulator_template, "capture", return_value="x86_64") as lipo:
+            self.assertFalse(simulator_template.has_arch(archive, "arm64"))
+            lipo.assert_called_once_with("lipo", "-archs", archive)
+        with patch.object(simulator_template, "capture", return_value="x86_64 arm64"):
+            self.assertTrue(simulator_template.has_arch(archive, "arm64"))
+
     def test_missing_slice_offline_fails_without_mutating_the_device_library(self):
         with tempfile.TemporaryDirectory() as temp:
             out = Path(temp)
