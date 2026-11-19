@@ -541,6 +541,8 @@ jobs:
           run_check ability_validation 180 godot --headless --path . --script res://tests/ability_validation_test.gd || status=1
           # Standardised JSON loading, formatting and locale parity.
           run_check json_table 120 godot --headless --path . --script res://tests/json_table_test.gd || status=1
+          # Dialogue and inspection voice performance director.
+          run_check voice_director 120 godot --headless --path . --script res://tests/voice_director_test.gd || status=1
 
           run_check_summary
 

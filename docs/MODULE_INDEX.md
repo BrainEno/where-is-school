@@ -189,6 +189,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `AudioRelease` | [`scripts/audio/audio_release.gd`](../scripts/audio/audio_release.gd) | Stop audio players and allow a bounded audio mix to release playback at shutdown; do not hide leak output. |
+| `VoiceDirector` | [`scripts/audio/voice_director.gd`](../scripts/audio/voice_director.gd) | Direct dialogue and inspection voiceover playback and character acoustic performance. |
 
 ### Scene-local globally named types
 
