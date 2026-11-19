@@ -84,8 +84,11 @@ func _title_and_settings() -> void:
 		var text := speed.text
 		var start := speed.get_global_rect().get_center()
 		# Start over an actual control: a swipe may scroll, but may not select a row.
+		var origin := scroll.scroll_vertical
+		_check.expect(scroll.get_global_rect().has_point(start), "Settings swipe starts outside scroll clip")
 		await _swipe(start, start - Vector2(0, 110))
-		_check.expect(scroll.scroll_vertical > 0, "Swiping a settings row did not scroll")
+		_check.expect(scroll.scroll_vertical > origin, "Swiping a settings row did not scroll: start=%s clip=%s position=%s->%s flags=%s touch=%s" % [
+			start, scroll.get_global_rect(), origin, scroll.scroll_vertical, speed.mouse_filter, DisplayServer.is_touchscreen_available()])
 		_check.expect(speed.text == text, "Scrolling Settings changed reading speed")
 		await _tap_control(settings.get_row_control(&"back"))
 		_check.expect(not settings.is_open(), "Settings Back did not close the modal")
@@ -104,6 +107,7 @@ func _load_world() -> void:
 	_player = _main.get_node(^"Player") as PlayerController
 	_nav = _player.get_node(^"PointerNavigator") as PointerNavigator
 	_ui = _main.get_node(^"GameUI") as GameUI
+	_ui.fade.set_clear() # The real wake clears the fade; this test starts after the beat.
 	_pause = _main.get_node(^"PauseMenu") as PauseMenu
 	await physics_frame
 	await physics_frame
@@ -173,8 +177,17 @@ func _reading() -> void:
 	_check.expect(continued[0] == 1, "One tap did not continue exactly once")
 	var body := panel.get_node(^"Frame/Content/BodyLabel") as RichTextLabel
 	var start := body.get_global_rect().get_center()
-	await _swipe(start, start - Vector2(0, 64))
-	_check.expect(body.get_v_scroll_bar().value > 0 and continued[0] == 1, "Dragging long dialogue did not just scroll")
+	var bar := body.get_v_scroll_bar()
+	var origin := bar.value
+	_touch(start, true)
+	var capture := int(panel.get("_body_touch"))
+	_drag(start, start - Vector2(0, 64))
+	var changed := bar.value
+	_touch(start - Vector2(0, 64), false)
+	await process_frame
+	_check.expect(bar.value > origin and continued[0] == 1,
+		"Dragging long dialogue did not just scroll: active=%s finger=%s position=%s->%s->%s range=%s advance=%s" % [
+			body.scroll_active, capture, origin, changed, bar.value, bar.max_value - bar.page, continued[0]])
 	await _tap_control(footer.get_node(^"Log") as Button)
 	_check.expect(_ui.backlog.is_open(), "Reading tray did not open Log")
 	await _tap_control(_ui.backlog.find_child("TouchClose", true, false) as Button)
@@ -231,13 +244,18 @@ func _tap_control(control: Control) -> void:
 
 func _swipe(from: Vector2, to: Vector2) -> void:
 	_touch(from, true)
-	var drag := InputEventScreenDrag.new()
-	drag.position = root.get_final_transform() * to
-	drag.relative = root.get_final_transform().basis_xform(to - from)
-	_send(drag)
+	_drag(from, to)
 	await process_frame
 	_touch(to, false)
 	await process_frame
+
+
+func _drag(from: Vector2, to: Vector2) -> void:
+	var drag := InputEventScreenDrag.new()
+	drag.position = root.get_final_transform() * to
+	drag.relative = root.get_final_transform().basis_xform(to - from)
+	drag.screen_relative = drag.relative
+	_send(drag)
 
 
 func _touch(point: Vector2, down: bool, index: int = 0, canceled: bool = false) -> void:

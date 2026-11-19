@@ -55,9 +55,11 @@ jobs:
           godot --headless --path . --import > build/mobile-controls/import.log 2>&1
           status=0
           godot --headless --path . --script res://tests/mobile_controls_test.gd -- --mobile-preview 2>&1 | tee build/mobile-controls/controls.log || status=1
-          if grep -E 'SCRIPT ERROR|Parse Error' build/mobile-controls/{import,controls}.log; then status=1; fi
+          # The fresh import can try the project theme before importing its font. The
+          # runtime must be clean of parse errors; do not waive any test failure.
+          if grep -E 'SCRIPT ERROR|Parse Error' build/mobile-controls/controls.log; then status=1; fi
           if (( status != 0 )); then
-            grep -E 'SCRIPT ERROR|Parse Error|FAIL|watchdog' build/mobile-controls/{import,controls}.log | head -20 > "$RUNNER_TEMP/mobile-failures" || true
+            grep -E 'SCRIPT ERROR|Parse Error|FAIL|watchdog' build/mobile-controls/controls.log | head -20 > "$RUNNER_TEMP/mobile-failures" || true
             while IFS= read -r line; do printf '::error title=Mobile controls::%s\n' "$line"; done < "$RUNNER_TEMP/mobile-failures"
           fi
           exit "$status"
@@ -81,17 +83,23 @@ jobs:
       - uses: ./.github/actions/setup-godot
         with:
           include-templates: true
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Install Android SDK tools
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.1.0' 'platform-tools'
+      - name: Select preinstalled JDK and install Android SDK tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f | sort -V | tail -1)"
+          test -x "$sdkmanager"
+          printf 'JAVA_HOME=%s\nANDROID_SDKMANAGER=%s\n' "$JAVA_HOME" "$sdkmanager" >> "$GITHUB_ENV"
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.1.0'
       - name: Export and validate an installable debug APK
         shell: bash
         run: |
           set -euo pipefail
-          python3 tools/export_mobile.py android-preview --build "$GITHUB_RUN_NUMBER" --output build/android-preview
+          if ! python3 tools/export_mobile.py android-preview --build "$GITHUB_RUN_NUMBER" --output build/android-preview 2>&1 | tee "$RUNNER_TEMP/android-export.log"; then
+            grep -Ei 'Error|failed|exception' "$RUNNER_TEMP/android-export.log" | tail -12 | cut -c1-500 | while IFS= read -r line; do echo "::error title=Android export::$line"; done
+            exit 1
+          fi
           printf '::notice title=Android preview APK::%s\n' "$(tr -d '\n' < build/android-preview/BUILD.json)"
       # Upload before starting the emulator: the verified APK is useful even if the
       # hosted emulator is unavailable. The emulator step must still pass the job.
@@ -102,19 +110,8 @@ jobs:
           path: build/android-preview/
           if-no-files-found: error
           retention-days: 14
-      - name: Allow the runner to use KVM
-        run: sudo chmod a+rw /dev/kvm
       - name: Install and launch the APK with the actual Android runtime
-        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          api-level: 36
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          emulator-boot-timeout: 600
-          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
-          disable-animations: true
-          script: bash tools/smoke_android.sh build/android-preview/where-is-school-preview.apk
+        run: bash tools/smoke_android.sh build/android-preview/where-is-school-preview.apk --boot
       - name: Upload Android launch evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -140,7 +137,10 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild -version
-          python3 tools/export_mobile.py ios-unsigned --build "$GITHUB_RUN_NUMBER" --output build/ios-unsigned
+          if ! python3 tools/export_mobile.py ios-unsigned --build "$GITHUB_RUN_NUMBER" --output build/ios-unsigned 2>&1 | tee "$RUNNER_TEMP/ios-export.log"; then
+            grep -Ei 'Error|failed|exception' "$RUNNER_TEMP/ios-export.log" | tail -12 | cut -c1-500 | while IFS= read -r line; do echo "::error title=iOS export::$line"; done
+            exit 1
+          fi
           printf '::notice title=iOS device archive unsigned::%s\n' "$(tr -d '\n' < build/ios-unsigned/BUILD.json)"
           # Keep the archive and the Xcode project separate and preserve Apple bundle
           # metadata. Neither zip is installable; a signed export needs the owner.
