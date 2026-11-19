@@ -228,6 +228,7 @@ jobs:
           # path rather than only looking at where it ends.
           python3 tools/check_seat_clearance.py
           python3 tests/seat_clearance_test.py
+          python3 tests/pushable_chair_test.py
 
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash

@@ -45,12 +45,12 @@ LOCATION_SCENE = "scenes/locations/classroom/classroom.tscn"
 DESK_SCENE = "scenes/environment/props/classroom_desk.tscn"
 CHARACTER_SCENE = "scenes/actors/player/player.tscn"
 CONTROLLER = "scripts/actors/player/player_controller.gd"
+CHAIR_SCRIPT = "scripts/environment/pushable_chair.gd"
 
 SPAWN = "PlayerStart"
 DESK = "DeskB2"
 
 # The one number the check needs the controller to agree on.
-CLEARANCE_CONST = "SEATED_CLEARANCE"
 
 
 # --- a very small .tscn reader --------------------------------------------
@@ -184,36 +184,6 @@ def body_capsule(root: Path) -> tuple[float, float, float]:
     raise SystemExit(f"check_seat_clearance: no root capsule in {CHARACTER_SCENE}")
 
 
-def facing_default(root: Path) -> tuple[float, float, float]:
-    """The controller's opening facing: the direction a seated body looks.
-
-    Only the default matters. A body that has walked somewhere else stands up from
-    wherever it is, and this check is about the one seat the opening places it in.
-    """
-    text = (root / CONTROLLER).read_text(encoding="utf-8")
-    m = re.search(
-        r"var _facing_direction: Vector3 = Vector3\(([^)]*)\)", text
-    )
-    if not m:
-        raise SystemExit(
-            f"check_seat_clearance: {CONTROLLER} no longer seeds _facing_direction"
-        )
-    return _vector("Vector3(" + m.group(1) + ")")
-
-
-def clearance_from_controller(root: Path) -> float:
-    text = (root / CONTROLLER).read_text(encoding="utf-8")
-    m = re.search(rf"^const {CLEARANCE_CONST} := ([0-9.]+)", text, re.MULTILINE)
-    if not m:
-        raise SystemExit(
-            f"check_seat_clearance: {CONTROLLER} no longer defines {CLEARANCE_CONST}"
-        )
-    return float(m.group(1))
-
-
-# --- the geometry ----------------------------------------------------------
-
-
 def capsule_intersects_box(
     axis_xy: tuple[float, float],
     capsule: tuple[float, float, float],
@@ -254,37 +224,15 @@ def horizontal_gap(
     return math.hypot(dx, dz) - radius
 
 
-## Where the seated body's torso begins, above the lap. Parts that top out below it are
-## below the body's own folded legs, which the clip lifts over them.
-##
-## Not the pelvis height: `%Visual` carries the whole body, so the seated pose is the standing
-## skeleton with the legs folded by the clip and only a slump on top. A floor set to where a
-## pelvis would be if it sat on the seat would be measuring a body the runtime never draws.
-TORSO_FLOOR = 0.50
-
-
-def torso_reaches(
-    size: tuple[float, float, float],
-    centre: tuple[float, float, float],
-    capsule: tuple[float, float, float],
-) -> bool:
-    """Whether `size` rises into the part of the capsule that is torso, not legs."""
-    top = centre[1] + size[1] * 0.5
-    return top > TORSO_FLOOR
-
-
-def _body_right(facing: tuple[float, float, float]) -> tuple[float, float]:
-    """The body's right, on the ground plane: `facing x up`, normalised.
-
-    The same expression the controller uses, so a change to one is a change to the other.
-    """
-    fx, _fy, fz = facing
-    length = math.hypot(fx, fz)
-    if length < 1e-6:
-        return (1.0, 0.0)
-    fx, fz = fx / length, fz / length
-    # (fx, 0, fz) x (0, 1, 0) = (-fz, 0, fx)
-    return (-fz, fx)
+def push_distance(root: Path) -> float:
+    """How far the chair slides back, from the script that slides it."""
+    text = (root / CHAIR_SCRIPT).read_text(encoding="utf-8")
+    m = re.search(r"const PUSH_BACK_DISTANCE := ([0-9.]+)", text)
+    if not m:
+        raise SystemExit(
+            f"check_seat_clearance: {CHAIR_SCRIPT} no longer declares PUSH_BACK_DISTANCE"
+        )
+    return float(m.group(1))
 
 
 def desk_collider(
@@ -314,7 +262,7 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
     spawn = spawn_position(root)
     desk = desk_position(root)
     capsule = body_capsule(root)
-    clearance = clearance_from_controller(root)
+    clearance = push_distance(root)
     boxes = chair_boxes(root)
 
     problems: list[str] = []
@@ -330,12 +278,12 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
         )
         return problems, []
 
-    # 1. Standing up must actually change something. A clearance of 0 would make the whole
-    #    get-up a pose change on the spot, which is what put the body inside the chair.
+    # 1. The chair has to actually move. A push of zero is the bug this check exists for:
+    #    the body waking inside a seat it never leaves.
     if clearance <= 0.0:
         problems.append(
-            f"{CONTROLLER}: {CLEARANCE_CONST} is {clearance:g}, so the body never steps "
-            "clear of the seat it woke in"
+            f"{CHAIR_SCRIPT}: PUSH_BACK_DISTANCE is {clearance:g}, so the chair never gets "
+            "out of the way of the body standing up out of it"
         )
 
     # 2. The classroom spawn has to be a seat, i.e. the body really did wake in the chair.
@@ -352,89 +300,78 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
             "at this desk - the clearance check has nothing to hold"
         )
 
-    # 3. Step the way the controller actually steps: sideways, to the body's own right.
-    #
-    #    The side is derived the same way the controller derives it, from the facing it
-    #    opens with, so the two cannot disagree. This replaced a version that tried all four
-    #    directions and kept the best result - which passed the backwards step, the one that
-    #    walks through the chair's back, because the opposite direction happened to be clear.
-    facing = facing_default(root)
-    sideways = _body_right(facing)
-    stood = (spawn[0] + sideways[0] * clearance, spawn[2] + sideways[1] * clearance)
+    # 3. The body does not move: it rises where it sat, and the *chair* slides out from
+    #    under it. So the end position of every part is its authored position plus the push,
+    #    and the body's own clearance is measured against that.
+    pushed = [
+        (name, (centre[0], centre[1], centre[2] + clearance), size)
+        for name, centre, size in placed
+    ]
 
     best = [
-        (name, horizontal_gap(stood, capsule, centre, size))
-        for name, centre, size in placed
+        (name, horizontal_gap((spawn[0], spawn[2]), capsule, centre, size))
+        for name, centre, size in pushed
     ]
     worst = min(gap for _n, gap in best)
     if worst <= 0.0:
         culprit = min(best, key=lambda pair: pair[1])[0]
         problems.append(
-            f"{CONTROLLER}: after the {clearance:.2f} m stand-up sideways the capsule "
-            f"still intersects the chair's {culprit} by {-worst:.3f} m"
+            f"{CHAIR_SCRIPT}: after the {clearance:.2f} m push the capsule still "
+            f"intersects the chair's {culprit} by {-worst:.3f} m - the chair does not get "
+            "far enough out of the way for the body to stand"
         )
 
-    # 3a. The desk is the half of this that traps the body, and it is easy to miss because
-    #     only *one* of the two props has a collision shape. The chair is decoration; the
-    #     desk is a static body with a box, and the seated capsule's rear face sits 2.7 cm
-    #     from it. Standing up forwards walks straight into that box, so it is checked here
-    #     rather than left to the chair's numbers to imply.
+    # 3a. The desk does not move, and the body does not move, so the seated gap to the desk
+    #     is the gap that stays. It has to be non-negative: the body wakes up 2.7 cm from a
+    #     solid box, and a spawn nudged forward would start the room with the protagonist
+    #     embedded in the desk before he has moved at all.
     desk_box = desk_collider(root)
     if desk_box is not None:
         centre, size = desk_box
-        gap = horizontal_gap(stood, capsule, centre, size)
+        gap = horizontal_gap((spawn[0], spawn[2]), capsule, centre, size)
         if gap <= 0.0:
             problems.append(
-                f"{DESK_SCENE}: after the stand-up the capsule is {abs(gap):.3f} m inside "
-                "the desk's collision box - the body stands up into the desk it was sitting at"
+                f"{DESK_SCENE}: the seated capsule is {abs(gap):.3f} m inside the desk's "
+                "collision box - the protagonist wakes embedded in the desk"
             )
 
-    # 3b. The *torso* must not be pushed through anything on its way out.
+    # 3b. The chair slides straight back, so every part leaves the capsule's column once and
+    #     never comes back: the gap has to improve on every sample, per part.
     #
-    #     The body starts inside the chair - that is what sitting is - so "never overlap" is
-    #     the wrong rule. But the standing capsule is a poor model of a seated body: it is
-    #     one 0.35 m column from the floor to the head, where a seated person's legs come
-    #     forward and up. Applying it to every part makes both sideways steps look like they
-    #     walk through a seat post, which is the capsule being wrong about a knee, not the
-    #     body being wrong about the chair.
-    #
-    #     So the parts are split by height. The seat and the back are at torso height and
-    #     the torso is what has to get past them; the posts and the rail are below the
-    #     thigh, which the clip has already folded up before the body slides out. Those are
-    #     checked for the end position only, above; here the torso is checked for the whole
-    #     path, per part, so that entering one more deeply than it started is the failure.
-    torso_parts = [(name, centre, size) for name, centre, size in placed if torso_reaches(size, centre, capsule)]
+    #     Per part matters because the seat is 0.42 m deep and the back is behind it - a
+    #     whole-body "worst part" reading is always the seat, and would say the slide is fine
+    #     while the back was still inside the body. The samples are of the *chair*, which is
+    #     what moves; the body is still.
     samples = 24
     previous: dict[str, float] | None = None
     for step_index in range(samples + 1):
         fraction = step_index / samples
-        along = (
-            spawn[0] + sideways[0] * clearance * fraction,
-            spawn[2] + sideways[1] * clearance * fraction,
-        )
+        slid = [
+            (name, (centre[0], centre[1], centre[2] + clearance * fraction), size)
+            for name, centre, size in placed
+        ]
         current = {
-            name: horizontal_gap(along, capsule, centre, size)
-            for name, centre, size in torso_parts
+            name: horizontal_gap((spawn[0], spawn[2]), capsule, centre, size)
+            for name, centre, size in slid
         }
         if previous is not None:
             for name, gap in current.items():
                 if gap < previous[name] - 0.002:
                     problems.append(
-                        f"{CONTROLLER}: at {fraction * 100:.0f}% through the stand-up the "
-                        f"torso is {abs(gap):.3f} m inside the chair's {name} and getting "
-                        "deeper - the body moves into the furniture before it leaves it"
+                        f"{CHAIR_SCRIPT}: at {fraction * 100:.0f}% of the push the chair's "
+                        f"{name} is {abs(gap):.3f} m inside the capsule and getting deeper - "
+                        "the chair moves into the body instead of out of it"
                     )
                     break
         previous = current
 
-    # 4. Standing up through the *back* is the failure the eye notices first, because the
-    #    back is at chest height - and it is the one the wrong facing caused. It is reported
-    #    on its own so a reader sees that, not just "some part overlaps".
+    # 4. The back is the part the eye reads as "he stood up through the chair", so it is
+    #    reported on its own rather than only as one of five numbers.
     for name, gap in best:
         if name == "Back" and gap <= 0.0:
             problems.append(
-                f"{LOCATION_SCENE}: the stand-up ends inside the chair's back ({gap:+.3f} m)"
-                " - the body steps against its facing, into the back"
+                f"{DESK_SCENE}: the push ends with the capsule still inside the chair's back "
+                f"({gap:+.3f} m) - the body rises through the backrest"
             )
 
     return problems, best
@@ -449,15 +386,15 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
     problems, gaps = findings(args.root)
     if args.verbose:
         for name, gap in gaps:
-            print(f"  after the stand-up: {name:<9} {gap:+.3f} m")
+            print(f"  after the push: {name:<9} {gap:+.3f} m")
     if problems:
         for problem in problems:
             print("SEAT_CLEARANCE_FAILURE: " + problem)
         return 1
     capsule = body_capsule(args.root)
     print(
-        "SEAT_CLEARANCE_OK: the protagonist wakes inside the chair and the "
-        f"{clearance_from_controller(args.root):.2f} m stand-up clears every part of it "
+        "SEAT_CLEARANCE_OK: the protagonist wakes in the chair and the "
+        f"{push_distance(args.root):.2f} m push clears every part of it "
         f"({len(gaps)} parts checked against a {capsule[0]:.2f} m capsule)."
     )
     return 0

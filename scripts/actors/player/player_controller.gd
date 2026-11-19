@@ -115,25 +115,23 @@ const HIP_RISE_KEYS: Array[Vector2] = [
 	Vector2(1.0, 1.0),
 ]
 
-## How far the body steps sideways to leave the seat.
+## The chair the protagonist wakes up in, and the one thing that makes the stand-up possible.
 ##
-## Sideways, not forward, and that is the whole of it. `PlayerStart` sits at the chair's
-## centre (z 1.95 against a chair at z 1.88), so the capsule axis is 0.07 m from every part
-## of the seat: the seat, both posts, the rail and the back are all inside it. Getting out
-## is a matter of which way is open, and neither way the body is facing is:
+## Found by the node group the classroom puts on it rather than by a path: this controller is
+## on the player, in another scene, and a hard path into a room's furniture would be wrong for
+## every other room.
+const SEATED_CHAIR_GROUP := &"seated_chair"
+## How long the chair takes to slide out from under the body at the start of the stand-up.
 ##
-## - Forward (`-z`, the way the body looks) runs into the *desk*, whose collision box ends
-##   at z 1.573 against the capsule's rear face at z 1.600 - 2.7 cm of air, and the desk's
-##   front is 0.55 m of solid box further on. The chair has no collision at all; the desk
-##   does, so this is the direction that would actually trap the body.
-## - Backward (`+z`) is the chair's back, and a body that stands up backwards through its
-##   own backrest is the one thing the eye will not accept, whatever the numbers say.
+## Shorter than the stand itself (0.75 s): the chair leaves in the first half, while the body
+## is still folded over its feet and the legs are unloading, which is when a real chair
+## actually goes. A chair that kept travelling after the body was upright would look pushed.
+const CHAIR_PUSH_SECONDS := 0.35
+## How long the chair takes to come back under a body that is sitting down again.
 ##
-## Sideways is what the room leaves: 0.58 m puts the capsule just clear of the seat, and
-## the desk's east edge needs 0.71 m, so 0.80 m clears both with 0.09 m of slack. A person
-## getting out of a classroom chair does the same thing - they swing out past the desk
-## rather than through it, because there is no room to stand up between the two.
-const SEATED_CLEARANCE := 0.80
+## Longer, and it runs *after* the body has mostly lowered: a chair is pulled in behind you,
+## not slid under you while you are still in the air.
+const CHAIR_PULL_SECONDS := 0.45
 ## The input action that asks for `jog_speed`.
 const SPRINT_ACTION := &"sprint"
 ## In toggle mode, a jog that was switched on ends by itself after the player has stood
@@ -174,18 +172,12 @@ var _get_up_animated: bool = false
 var _get_up_elapsed: float = 0.0
 var _get_up_tilt: float = 0.0
 var _get_up_height: float = STANDING_HIP_HEIGHT
-## Where the body stood when the stand-up began, which way it steps off the seat, and where
-## that step must end. The flags are separate from the vectors on purpose: a player at the
-## world origin is a legitimate fixture, and a `== Vector3.ZERO` test would silently skip its
-## stand-up. `_get_up_travelling` stays true until the step has actually been applied, and
-## `_get_up_landing_pending` records that the clip finished before the physics step could
-## move the body - both because the placement has to happen after `move_and_slide()`.
-var _get_up_origin: Vector3 = Vector3.ZERO
-var _get_up_forward: Vector3 = Vector3.ZERO
+## How far through the clip the pose is, kept so the tail of the stand-up and the completion
+## signal can both find it without recomputing the clock.
 var _get_up_progress: float = 0.0
-var _get_up_landing: Vector3 = Vector3.ZERO
-var _get_up_landing_pending: bool = false
-var _get_up_travelling: bool = false
+## The chair this body wakes up in, if the room has one to push. Resolved on the way up, not
+## in `_ready()`: the player exists before the location is loaded under it.
+var _seated_chair: Node3D = null
 ## Measured from the capsule in `_ready()`, not exported: it is the scene's shape.
 var _body_radius: float = 0.4
 var _facing_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -278,11 +270,6 @@ func _physics_process(delta: float) -> void:
 			velocity.x = 0.0
 			velocity.z = 0.0
 			_apply_movement(Vector3.ZERO, delta)
-			# `move_and_slide()` has just recomputed the position from `velocity`, and it is
-			# zero here, so anything the pose step wrote before it is undone. The step off
-			# the seat therefore goes here, after the physics call, or the body stands up
-			# exactly where it woke - inside the chair.
-			_apply_get_up_travel(_get_up_progress)
 			return
 
 	var move_direction := Vector3.ZERO
@@ -693,10 +680,14 @@ func settle_wake_seated_pose(duration: float) -> Tween:
 ## replace/cancel the path during this state, but never restart or accelerate the action.
 ##
 ## The stand-up has two halves that used to be one: the *clip* unfolds the legs, and the
-## *body* has to rise and step clear of the chair for the unfolding to be a stand rather
-## than a pair of shins sweeping through the seat. The body half is recorded here as a
-## start and an end, and interpolated on the same progress the clip runs on, so the two
-## cannot drift apart no matter which clock finishes first.
+## *chair* gets out of the way. The body does not step anywhere - it rises where it sat, and
+## the seat slides back out from under it, which is what a person in a classroom chair does
+## because 9.7 cm of legroom is not room to stand up in.
+##
+## The chair is pushed on the same frame the clip starts, and the two clocks run independently
+## (the chair is faster, and done first). Waiting for the chair to stop before starting to
+## rise would break the beat: the push and the rise are one movement, the legs unloading into
+## the chair as the body comes up over them.
 func _begin_get_up_from_seat() -> void:
 	if not _wake_seated or _getting_up:
 		return
@@ -704,13 +695,8 @@ func _begin_get_up_from_seat() -> void:
 	_get_up_elapsed = 0.0
 	_get_up_tilt = visual.rotation.x if visual != null else 0.0
 	_get_up_height = visual.position.y if visual != null else STANDING_HIP_HEIGHT
-	# Remember where the body is, so the step clear of the seat is measured from it rather
-	# than assumed: a test that places the player elsewhere still gets a straight stand-up.
-	_get_up_origin = global_position
-	_get_up_forward = _seat_exit_direction()
-	_get_up_travelling = true
 	_get_up_progress = 0.0
-	_get_up_landing_pending = false
+	_push_seat_back()
 	_set_wake_seated(false, WAKE_GET_UP_SECONDS)
 	_get_up_animated = _character_animator != null and _character_animator.is_playing_action()
 
@@ -725,31 +711,49 @@ func _abandon_get_up() -> void:
 	_get_up_animated = false
 	_get_up_elapsed = 0.0
 	_get_up_progress = 0.0
-	_get_up_travelling = false
-	_get_up_landing_pending = false
 
 
 func is_getting_up() -> bool:
 	return _getting_up
 
 
-## Which way to step to leave the seat: sideways, to the body's own right.
+## Sits the protagonist back down in the chair it got up from, if that chair is still there.
 ##
-## Not forward and not backward - see `SEATED_CLEARANCE` for why both of those are blocked.
-## The side is taken from the facing rather than from the chair, so the step stays on the
-## same side of the body however the room is laid out: with `facing` and `UP`, the cross
-## product is the body's right in Godot's right-handed axes (facing `-z` gives `+x`).
-## Either side clears this chair equally well - they are mirror images of the same geometry
-## - so the reason for this one is the room: `+x` is towards the aisle between the desk
-## columns, which is the direction a person actually steps out into.
-func _seat_exit_direction() -> Vector3:
-	var facing := _facing_direction
-	if facing.length_squared() < 0.0001:
-		facing = Vector3(0.0, 0.0, -1.0)
-	var sideways := facing.normalized().cross(Vector3.UP)
-	if sideways.length_squared() < 0.0001:
-		return Vector3(1.0, 0.0, 0.0)
-	return sideways.normalized()
+## The mirror of the stand-up, and deliberately built from the same two pieces in reverse: the
+## clip runs backwards from the last key of `get_up` to its first, and the chair is pulled in
+## *behind* the body once it has mostly lowered (`CHAIR_PULL_SECONDS` starts with the clip).
+## Returns the clip tween (or null when the model cannot animate), so a caller can keep
+## control locked until the body is seated.
+##
+## Refused while already seated or still standing up: two transitions running at once is how
+## a body ends up halfway into a chair.
+func sit_down(duration: float = WAKE_GET_UP_SECONDS) -> Tween:
+	if _wake_seated or _getting_up or visual == null:
+		return null
+	# The clip first: `set_seated(true)` holds `sit_idle`, which is the folded pose the body
+	# ends in. The tween below carries the slump down onto it, so the last frame of the
+	# transition and the first frame of the loop are the same pose.
+	_set_wake_seated(true)
+	_seat_sit_down_chair_in(CHAIR_PULL_SECONDS)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_property(visual, "rotation_degrees:x", wake_tilt_degrees * SEATED_WAKE_POSE, duration)
+	tween.tween_property(visual, "position:y", STANDING_HIP_HEIGHT - SEATED_HIP_DROP, duration)
+	return tween
+
+
+## Brings the chair back under the body, starting so that it arrives with the body.
+##
+## The chair's travel and the body's descent are the same beat seen twice, so the chair is
+## given the body's own duration minus its own slide time rather than a fixed delay: change
+## one and the other still lands together.
+func _seat_sit_down_chair_in(sit_duration: float) -> void:
+	var delay := maxf(sit_duration - CHAIR_PULL_SECONDS, 0.0)
+	var tween := create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	tween.tween_callback(_pull_seat_home)
 
 
 ## One clock, not a separate tween racing the profiled skeleton. Physics samples the
@@ -800,32 +804,45 @@ func _hip_rise_weight(progress: float) -> float:
 	return HIP_RISE_KEYS[-1].y
 
 
-## Slides the body off the seat while it rises.
+## Pushes the chair the body woke in back out of the way, once.
 ##
-## Almost all of the travel happens in the first 60% of the stand, which is when a real body
-## has left the chair and is still folded over its feet; the last 40% is the straightening,
-## where the feet are planted and only the spine moves. A linear slide kept the knees in the
-## seat for the whole clip, and the shins are what the chair's front edge cuts through -
-## which is the clip the eye catches first, before it can name what is wrong.
-func _apply_get_up_travel(progress: float) -> void:
-	if not _get_up_travelling:
+## Silent when the room has no chair for this body (`_find_seated_chair` returns null): a
+## fixture that drops a `PlayerController` into an empty scene still gets a working stand-up,
+## it just does not move furniture that is not there.
+func _push_seat_back() -> void:
+	_seated_chair = _find_seated_chair()
+	if _seated_chair == null:
 		return
-	if _get_up_landing_pending:
-		# The clip beat the frame clock to its last sample; the landing is already known.
-		global_position = _get_up_landing
-		_get_up_landing_pending = false
-		_get_up_travelling = false
+	if _seated_chair.has_method("push_back"):
+		_seated_chair.call("push_back", CHAIR_PUSH_SECONDS)
+
+
+## Pulls that same chair back under the body, for a sit-down.
+func _pull_seat_home() -> void:
+	if _seated_chair == null:
+		_seated_chair = _find_seated_chair()
+	if _seated_chair == null:
 		return
-	var leave := clampf(progress / 0.6, 0.0, 1.0)
-	# Smoothstep, not the sine used for the height: this axis should be decisive early.
-	var eased := leave * leave * (3.0 - 2.0 * leave)
-	var target := _get_up_origin + _get_up_forward * SEATED_CLEARANCE
-	global_position = _get_up_origin.lerp(target, eased)
-	if progress >= 1.0:
-		# Land exactly, so a body that ends the frame on the threshold does not resume
-		# walking a centimetre inside the chair.
-		global_position = target
-		_get_up_travelling = false
+	if _seated_chair.has_method("pull_home"):
+		_seated_chair.call("pull_home", CHAIR_PULL_SECONDS)
+
+
+## The chair nearest this body, found by group so no scene path is hard-coded.
+##
+## Nearest, not first: a room may have a chair per desk, and the one to push is the one the
+## body is standing in front of.
+func _find_seated_chair() -> Node3D:
+	var best: Node3D = null
+	var best_distance := INF
+	for node in get_tree().get_nodes_in_group(SEATED_CHAIR_GROUP):
+		var chair := node as Node3D
+		if chair == null or not chair.is_inside_tree():
+			continue
+		var distance := chair.global_position.distance_to(global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = chair
+	return best
 
 
 func _on_get_up_action_finished(clip_name: StringName) -> void:
@@ -837,13 +854,6 @@ func _finish_get_up() -> void:
 	if visual != null:
 		visual.rotation.x = 0.0
 		visual.position.y = STANDING_HIP_HEIGHT
-	# Land on the target rather than wherever the last eased sample fell, but leave it owed
-	# to the physics step: the caller applies it after `move_and_slide()`, and a position
-	# written here would be recomputed away. `_get_up_travelling` stays set until that call
-	# has run, so the completion signal and the frame clock agree about whether the body has
-	# finished stepping.
-	_get_up_landing = _get_up_origin + _get_up_forward * SEATED_CLEARANCE
-	_get_up_landing_pending = true
 	_getting_up = false
 	_get_up_animated = false
 

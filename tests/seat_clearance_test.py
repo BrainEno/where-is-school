@@ -113,14 +113,11 @@ shape = SubResource("body")
 """
 
 
-def controller(clearance: float, facing: tuple[float, float, float] = (0.0, 0.0, -1.0)) -> str:
-    fx, fy, fz = facing
+def chair_script(distance: float) -> str:
     return f"""\
-extends CharacterBody3D
+extends Node3D
 
-const SEATED_CLEARANCE := {clearance}
-
-var _facing_direction: Vector3 = Vector3({fx}, {fy}, {fz})
+const PUSH_BACK_DISTANCE := {distance}
 """
 
 
@@ -135,7 +132,6 @@ def tree(files: dict[str, str]) -> Path:
 
 def fixture(
     clearance: float = 0.70,
-    facing: tuple[float, float, float] = (0.0, 0.0, -1.0),
     spawn_z: float = SPAWN_Z,
 ) -> Path:
     return tree(
@@ -143,7 +139,7 @@ def fixture(
             seat.LOCATION_SCENE: location_scene(spawn_z),
             seat.DESK_SCENE: DESK_SCENE,
             seat.CHARACTER_SCENE: CHARACTER_SCENE,
-            seat.CONTROLLER: controller(clearance, facing),
+            seat.CHAIR_SCRIPT: chair_script(clearance),
         }
     )
 
@@ -184,8 +180,8 @@ def not_stepping_clear_at_all_fails() -> None:
     found = problems(root)
     check(bool(found), "a zero stand-up must be a failure")
     check(
-        any("never steps clear" in entry for entry in found),
-        f"the failure must say the body never steps clear, got {found}",
+        any("never gets out of the way" in entry for entry in found),
+        f"the failure must say the chair never moves, got {found}",
     )
 
 
@@ -226,29 +222,29 @@ def the_desk_is_checked_and_not_only_the_chair() -> None:
     )
 
 
-def ending_inside_the_desk_fails() -> None:
-    """A body turns before it stands, and one that ends up facing the desk steps into it.
+def waking_inside_the_desk_fails() -> None:
+    """The seated capsule sits 2.7 cm from the desk's box, so a nudge forward embeds it.
 
-    The step is always perpendicular to the facing, so a body facing the wall (x) steps
-    along the desk's own axis - straight into the box. Nothing about the chair notices.
+    The desk cannot be pushed - it is a static body - and the body no longer walks, so this
+    is a check on the *opening* rather than on the stand-up: if the spawn drifts towards the
+    desk, the protagonist wakes up inside it and no amount of chair-moving helps.
     """
-    root = fixture(facing=(-1.0, 0.0, 0.0))
-    # Facing -x makes the body's right -z: the desk is 2.7 cm from the seated capsule.
+    root = fixture(spawn_z=DESK_Z)
     found = problems(root)
-    check(bool(found), "a step that ends inside the desk must be a failure")
+    check(bool(found), "a spawn inside the desk's box must be a failure")
     check(
         any("desk" in entry for entry in found),
         f"the failure must name the desk, got {found}",
     )
 
 
-def a_missing_clearance_constant_fails() -> None:
+def a_missing_push_distance_fails() -> None:
     root = tree(
         {
             seat.LOCATION_SCENE: location_scene(),
             seat.DESK_SCENE: DESK_SCENE,
             seat.CHARACTER_SCENE: CHARACTER_SCENE,
-            seat.CONTROLLER: "extends CharacterBody3D\n\nvar _facing_direction: Vector3 = Vector3(0, 0, -1)\n",
+            seat.CHAIR_SCRIPT: "extends Node3D\n",
         }
     )
     try:
@@ -256,7 +252,7 @@ def a_missing_clearance_constant_fails() -> None:
     except SystemExit:
         check(True, "")
     else:
-        check(False, "a controller with no clearance constant must stop the check")
+        check(False, "a chair script with no push distance must stop the check")
 
 
 # --- the command -----------------------------------------------------------
@@ -325,8 +321,8 @@ def main() -> int:
     stopping_short_fails()
     a_spawn_outside_the_chair_fails()
     the_desk_is_checked_and_not_only_the_chair()
-    ending_inside_the_desk_fails()
-    a_missing_clearance_constant_fails()
+    waking_inside_the_desk_fails()
+    a_missing_push_distance_fails()
     a_passing_fixture_says_so()
     a_failing_fixture_exits_one()
     verbose_lists_every_part()
