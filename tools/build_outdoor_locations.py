@@ -869,9 +869,8 @@ def build_playground():
         # The walkway's end door: this is the intended way into the yard, so the
         # player arrives from the school side rather than from the estate gate.
         ("FromCorridor", (-3.0, 0, -17.6)),
-        # Kept for later arrivals: the yard is meant to be entered from more than
-        # one side once there is something on the other side of the fence.
-        ("FromSchool", (-3.0, 0, -17.4)),
+        # Arrival from classroom window curtain fall: lands on top of the blue container.
+        ("FromSchool", (12.0, 2.6, -15.5)),
     ]
     return s
 

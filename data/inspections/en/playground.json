@@ -58,12 +58,12 @@
     "prompt": "Look at the container",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A metal container set on two concrete pads, no windows, one door with a bar across it and no padlock on the bar. The paint is a school colour and the container is older than the yard.",
-    "repeat_text": "The container, the bar, the missing padlock.",
+    "text": "A giant blue metal container set on two concrete pads, no windows, one door with a bar across it. The paint is a weathered blue, older than the yard. On the corrugated roof, a faint depression marks where you landed.",
+    "repeat_text": "The giant blue container, the locked bar, and the mark of your fall on the roof.",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "The equipment container's door bar has no padlock on it."
+      "text": "A giant blue equipment container sits at the yard's edge, its roof dented where you landed."
     }
   },
   "pg_tyres": {

@@ -42,10 +42,11 @@ const CURTAIN_RETRY_PROMPT := "prompt.curtain_retry"
 ## black. The drop must end before the fade does (the flow stands the body back up once
 ## the next room is loaded).
 const LEAN_SECONDS := 0.75
-const LEAN_DEGREES := 38.0
-const DROP_SECONDS := 0.45
+const LEAN_DEGREES := 32.0
+const DROP_SECONDS := 0.55
 const DROP_DEGREES := 85.0
-const DROP_DEPTH := 2.4
+const DROP_DEPTH := 3.6
+const DROP_ROLL_DEGREES := -20.0
 ## The cut has no sill since the art migration (the wall is open to the floor): the lean
 ## no longer climbs onto one.
 const LEAN_RISE := 0.0
@@ -53,8 +54,8 @@ const LEAN_REACH := 0.3
 const LEAN_REACH_MAX := 1.1
 const LEAN_SILL_GAP := 0.45
 const DROP_CLEARANCE := 0.6
-const FALL_FADE_SECONDS := 0.7
-const FALL_ROLL_DEGREES := -9.0
+const FALL_FADE_SECONDS := 0.8
+const FALL_ROLL_DEGREES := -16.0
 
 @export var curtain_path: NodePath = ^"BackCurtain"
 ## The middle of the hole through the wall: where the fall leans toward.
@@ -178,6 +179,9 @@ func reset_curtain_after_failed_transition() -> void:
 		_curtain.set_open_amount(0.0)
 	_show_void(false)
 	_set_prompt(_curtain_interactable, CURTAIN_RETRY_PROMPT)
+	var cam := get_viewport().get_camera_3d() if get_viewport() != null else null
+	if cam != null:
+		cam.fov = 60.0
 
 
 func _show_void(open: bool, animated: bool = false) -> void:
@@ -192,10 +196,9 @@ func get_paper_zone() -> PaperZone:
 	return _paper
 
 
-## The lean over the edge of the cut (the wall's thickness; the code keeps the word sill)
-## and the start of the drop. Plays while the classroom still
-## exists; returns once the body has tipped over, and the drop runs on into the fade.
-## The tween belongs to the player, so freeing the room does not cut it short.
+## The lean over the edge of the cut and the dreamlike drop into the void.
+## Features dynamic camera close-up framing, vertigo dolly-zoom, aesthetic speed lines
+## and vignette matching the curtain's expressionist art style.
 func _fall(player: PlayerController) -> void:
 	if player == null or player.visual == null:
 		return
@@ -212,6 +215,19 @@ func _fall(player: PlayerController) -> void:
 	var distance := toward.length()
 	var lean_reach := clampf(distance - LEAN_SILL_GAP, LEAN_REACH, LEAN_REACH_MAX)
 	var drop_reach := distance + DROP_CLEARANCE
+
+	# 1. Close-up Camera Framing: frame closer to the window sill, capturing the cloth and void
+	if player.camera_rig != null:
+		player.camera_rig.frame_point(window + Vector3(0.0, 0.35, 0.0), LEAN_SECONDS)
+
+	# 2. Camera Vertigo Dolly Zoom: widen FOV to simulate sudden depth/vertigo
+	var cam: Camera3D = player.get_viewport().get_camera_3d() if player.get_viewport() != null else null
+	var original_fov := cam.fov if cam != null else 60.0
+	if cam != null:
+		var fov_tween := player.create_tween()
+		fov_tween.tween_property(cam, "fov", 76.0, LEAN_SECONDS).set_trans(Tween.TRANS_SINE)
+
+	# 3. Protagonist steps and leans forward onto the sill, looking down into the sheer drop
 	var lean := player.create_tween()
 	lean.set_parallel(true)
 	lean.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -219,15 +235,129 @@ func _fall(player: PlayerController) -> void:
 	# Forward (the pivot's +Z, which faces the window now), over the edge of the floor.
 	lean.tween_property(visual, "position", rest + Vector3(0.0, LEAN_RISE, lean_reach), LEAN_SECONDS)
 	await lean.finished
-	# Over the sill and down behind the wall: the wall hides the body before the black does.
+
+	# Hesitation moment: 0.15s pause as protagonist looks down into the 2nd-floor abyss
+	await get_tree().create_timer(0.15, false).timeout
+
+	# 4. Dreamlike curtain-style fall effect overlay
+	var overlay := DreamFallOverlay.new()
+	get_tree().root.add_child(overlay)
+
+	# 5. Over the sill and down behind the wall: tumbling plunge with dynamic pitch and bank
 	var drop := player.create_tween()
 	drop.set_parallel(true)
 	drop.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	drop.tween_property(visual, "rotation_degrees:x", DROP_DEGREES, DROP_SECONDS)
+	drop.tween_property(visual, "rotation_degrees:z", DROP_ROLL_DEGREES, DROP_SECONDS)
 	drop.tween_property(
 		visual, "position", rest + Vector3(0.0, -DROP_DEPTH, drop_reach), DROP_SECONDS
 	)
 	drop.tween_method(player.set_camera_roll, 0.0, FALL_ROLL_DEGREES, DROP_SECONDS)
+	if cam != null:
+		drop.tween_property(cam, "fov", 82.0, DROP_SECONDS)
+	drop.tween_property(overlay, "progress", 1.0, DROP_SECONDS)
+
+	await drop.finished
+
+	if cam != null:
+		cam.fov = original_fov
+	if is_instance_valid(overlay):
+		overlay.queue_free()
+
+
+## Dreamlike falling overlay that matches the curtain's expressionist art style.
+## Renders a radial ultramarine-ochre wash, vertical ink/sketch speed lines,
+## and drifting paper fragments tumbling upward during the void drop.
+class DreamFallOverlay extends CanvasLayer:
+	var progress: float = 0.0:
+		set(value):
+			progress = clampf(value, 0.0, 1.0)
+			if _drawer != null:
+				_drawer.queue_redraw()
+
+	var _drawer: Control = null
+	var _streaks: Array[Dictionary] = []
+	var _scraps: Array[Dictionary] = []
+
+	func _init() -> void:
+		layer = 20
+		_generate_elements()
+
+	func _ready() -> void:
+		_drawer = Control.new()
+		_drawer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_drawer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_drawer.draw.connect(_on_draw)
+		add_child(_drawer)
+
+	func _generate_elements() -> void:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 42819
+		for _i in range(26):
+			_streaks.append({
+				"x_ratio": rng.randf_range(0.02, 0.98),
+				"width": rng.randf_range(1.5, 3.2),
+				"length_ratio": rng.randf_range(0.18, 0.48),
+				"speed": rng.randf_range(1.2, 2.6),
+				"alpha": rng.randf_range(0.35, 0.8),
+				"is_blue": rng.randf() > 0.35,
+			})
+		for _i in range(8):
+			_scraps.append({
+				"x_ratio": rng.randf_range(0.1, 0.9),
+				"y_start": rng.randf_range(0.5, 1.2),
+				"size": Vector2(rng.randf_range(10.0, 22.0), rng.randf_range(14.0, 28.0)),
+				"speed": rng.randf_range(0.8, 1.5),
+				"rot_speed": rng.randf_range(-3.0, 3.0),
+				"angle": rng.randf_range(0.0, TAU),
+			})
+
+	func _on_draw() -> void:
+		if _drawer == null or progress <= 0.001:
+			return
+		var size := _drawer.get_size()
+		if size.x <= 1.0 or size.y <= 1.0:
+			return
+
+		# 1. Curtain palette vignette: deep ultramarine and ochre edge wash
+		var blue_col := Color(0.11, 0.15, 0.36, 0.55 * progress)
+		var corner_h := size.y * 0.35
+		_drawer.draw_rect(Rect2(0, 0, size.x, corner_h), blue_col)
+		_drawer.draw_rect(Rect2(0, size.y - corner_h, size.x, corner_h), blue_col)
+
+		# 2. Vertical ink/sketch speed streaks rushing upward (matching PaperZone aesthetic)
+		var streak_color_blue := Color(0.18, 0.24, 0.52, 0.65 * progress)
+		var streak_color_ink := Color(0.06, 0.07, 0.12, 0.75 * progress)
+
+		for s: Dictionary in _streaks:
+			var x: float = float(s["x_ratio"]) * size.x
+			var spd: float = float(s["speed"])
+			var y_phase: float = fmod(progress * spd * 2.2, 1.0)
+			var y_top: float = (1.0 - y_phase) * size.y
+			var len_px: float = float(s["length_ratio"]) * size.y * (1.0 + progress * 0.4)
+			var col: Color = streak_color_blue if bool(s["is_blue"]) else streak_color_ink
+			col.a *= float(s["alpha"])
+			_drawer.draw_line(
+				Vector2(x, y_top),
+				Vector2(x, y_top + len_px),
+				col,
+				float(s["width"])
+			)
+
+		# 3. Floating paper fragments drifting upward from the void
+		var paper_col := Color(0.92, 0.90, 0.85, 0.8 * progress)
+		var paper_line := Color(0.2, 0.22, 0.32, 0.55 * progress)
+		for sc: Dictionary in _scraps:
+			var sx: float = float(sc["x_ratio"]) * size.x + sin(progress * 4.0 + float(sc["angle"])) * 25.0
+			var sy: float = (float(sc["y_start"]) - progress * float(sc["speed"])) * size.y
+			var rot: float = float(sc["angle"]) + progress * float(sc["rot_speed"])
+			var sc_size: Vector2 = sc["size"]
+			var xform := Transform2D(rot, Vector2(sx, sy))
+			var rect := Rect2(-sc_size * 0.5, sc_size)
+			_drawer.draw_set_transform_matrix(xform)
+			_drawer.draw_rect(rect, paper_col, true)
+			_drawer.draw_rect(rect, paper_line, false, 1.0)
+			_drawer.draw_set_transform_matrix(Transform2D.IDENTITY)
 
 
 # --- Plumbing -----------------------------------------------------------------------

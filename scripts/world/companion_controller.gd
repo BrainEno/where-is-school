@@ -185,6 +185,27 @@ func join() -> void:
 	joined.emit()
 
 
+## Detaches the companion so it stops following and disappears from the current scene
+## (e.g. when the protagonist falls from the classroom window alone).
+func leave() -> void:
+	_joined = false
+	_look_timer = 0.0
+	_set_waiting(false)
+	var game_state := get_node_or_null(^"/root/GameState")
+	if game_state != null and not String(joined_flag).is_empty():
+		game_state.set_flag(joined_flag, false)
+	visible = false
+	collision_layer = 0
+	_catching_up = false
+	_moving = false
+	_stuck = false
+	_clear_route()
+	_stall_elapsed = 0.0
+	_no_route_elapsed = 0.0
+	if _ask != null:
+		_ask.interaction_enabled = false
+
+
 ## Picks up a companion the story already has. A session that comes back from a save
 ## (or any main scene built after Q joined) has `joined_flag` set while this node starts
 ## with `_joined` false, and the arrival that normally calls `join()` only runs when the
@@ -216,6 +237,8 @@ func _story_says_joined() -> bool:
 		return false
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state == null:
+		return false
+	if bool(game_state.get_flag(StoryFlags.CURTAIN_DRAWN, false)):
 		return false
 	var value: Variant = game_state.get_flag(joined_flag, false)
 	return value is bool and value
@@ -776,8 +799,10 @@ func _settle_after_transition() -> void:
 ## Q is visible only where it belongs: joined, and not standing in a location that
 ## already has its own authored Q.
 func _refresh_visibility(location: LocationRoot) -> void:
+	var game_state := get_node_or_null(^"/root/GameState")
+	var fell_from_curtain := game_state != null and bool(game_state.get_flag(StoryFlags.CURTAIN_DRAWN, false))
 	var authored := location.find_actor(npc_id) if location != null else null
-	var should_show := _joined and authored == null
+	var should_show := _joined and not fell_from_curtain and authored == null
 	visible = should_show
 	# A hidden Q is not a wall either: the body leaves the collision world entirely, so
 	# nothing the player does can bump into an invisible classmate.

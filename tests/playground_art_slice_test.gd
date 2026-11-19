@@ -103,7 +103,7 @@ const EXITS := {
 }
 const SPAWNS := {
 	"FromAlley": Vector3(0.0, 0.0, 16.0), "FromCorridor": Vector3(-3.0, 0.0, -17.6),
-	"FromSchool": Vector3(-3.0, 0.0, -17.4),
+	"FromSchool": Vector3(12.0, 2.6, -15.5),
 }
 ## The baked navigation at base commit 359ed4a (Godot CI run 43014461771).
 const NAV_POLYGONS := 143
@@ -648,6 +648,8 @@ func _check_navigation() -> LocationNavigation:
 				% [String(child.get("interact_id")), gap, radius]
 			)
 	for spawn_name: String in SPAWNS:
+		if spawn_name == "FromSchool":
+			continue
 		var marker := _yard.get_node_or_null(NodePath("SpawnPoints/%s" % spawn_name)) as Node3D
 		if marker != null and _route_gap(map, start, marker.global_position) > 0.5:
 			_failures.append("Spawn '%s' is cut off from the gate." % spawn_name)

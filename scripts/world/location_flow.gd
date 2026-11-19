@@ -204,10 +204,20 @@ func transition_to(
 	if _hud != null:
 		_hud.clear_prompt()
 	update_exit_prompt()
-	# Story time, like every authored wait: a pause opened mid-transition holds this
-	# beat where it is (see `OpeningSequence.wait_seconds()`).
-	await _host.get_tree().create_timer(0.3, false).timeout
-	await _ui.fade.fade_from_black(0.9)
+
+	var is_curtain_fall := (
+		label == "the back-window curtain"
+		or _has_flag(StoryFlags.CURTAIN_DRAWN)
+		or (options.get("arrival_conversation", &"") == &"classroom_fall_landing")
+	)
+	if is_curtain_fall:
+		await _present_container_landing(_player, _ui.fade)
+	else:
+		# Story time, like every authored wait: a pause opened mid-transition holds this
+		# beat where it is (see `OpeningSequence.wait_seconds()`).
+		await _host.get_tree().create_timer(0.3, false).timeout
+		await _ui.fade.fade_from_black(0.9)
+
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.
 	_host.end_beat()
@@ -263,12 +273,82 @@ func _stand_player_up() -> void:
 		_player.camera_rig.clear_focus()
 
 
+## Presents the dramatic impact and realistic recovery when the player lands on the
+## giant blue shipping container after falling from the classroom's second-floor window.
+func _present_container_landing(player: PlayerController, fade: Object) -> void:
+	if player == null:
+		if fade != null and fade.has_method("fade_from_black"):
+			await fade.fade_from_black(0.9)
+		return
+
+	# Posed in an impact landing crouch on the container roof before the screen reveals.
+	player.set_wake_pose(0.0)
+	if player.visual != null:
+		player.visual.position = Vector3(0.0, 0.18, 0.0)
+		player.visual.rotation_degrees = Vector3(-16.0, 0.0, 4.0)
+	player.set_camera_roll(0.0)
+	if player.camera_rig != null:
+		player.camera_rig.release_frame(0.0)
+
+	# Sound: play the heavy resonant metallic impact
+	_play_container_landing_sound()
+
+	# Fade in as the body strikes the metal roof
+	if fade != null and fade.has_method("fade_from_black"):
+		fade.fade_from_black(0.5)
+
+	# Camera impact jolt: quick vertical compression and damped recoil
+	var rig := player.camera_rig
+	if rig != null and rig.camera != null:
+		var cam_pos := rig.camera.position
+		var jolt := player.create_tween()
+		jolt.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		jolt.tween_property(rig.camera, "position:y", cam_pos.y - 0.32, 0.08)
+		jolt.tween_property(rig.camera, "position:y", cam_pos.y, 0.32).set_trans(Tween.TRANS_BOUNCE)
+
+	# 0.35s absorbing the impact: crouched on the blue corrugated metal roof
+	await _host.get_tree().create_timer(0.35, false).timeout
+
+	# Realistic get-up / recovery animation:
+	# Protagonist steadily pushes up from the metal roof to standing upright.
+	var rise := player.create_tween()
+	rise.set_parallel(true)
+	rise.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if player.visual != null:
+		rise.tween_property(player.visual, "position", Vector3(0.0, 0.9, 0.0), 0.85)
+		rise.tween_property(player.visual, "rotation_degrees", Vector3.ZERO, 0.85)
+
+	await rise.finished
+
+	# Ensure perfect upright posture and zero camera roll
+	_stand_player_up()
+
+
+func _play_container_landing_sound() -> void:
+	var stream := load("res://assets/audio/wake_thud.wav") as AudioStream
+	if stream == null or _host == null:
+		return
+	var audio_player := AudioStreamPlayer.new()
+	audio_player.stream = stream
+	audio_player.volume_db = 2.0
+	audio_player.pitch_scale = 0.82
+	audio_player.bus = &"SFX" if AudioServer.get_bus_index(&"SFX") >= 0 else &"Master"
+	_host.add_child(audio_player)
+	audio_player.play()
+	audio_player.finished.connect(audio_player.queue_free)
+
+
 ## The part of arriving that is data: the objective line, the flags this room sets,
 ## and the companion finally starting to follow.
 func _apply_arrival(location_id: StringName) -> void:
 	# Leaving the room is what starts the companion, not the dialogue choice: a player
 	# who stays at the desk and walks out ten minutes later gets the same Q.
-	if _companion != null and not _companion.is_joined():
+	# But if the arrival was from the curtain fall, Q was left behind in the classroom!
+	var fell_from_curtain := _has_flag(StoryFlags.CURTAIN_DRAWN)
+	if fell_from_curtain:
+		if _companion != null:
+			_companion.leave()
+	elif _companion != null and not _companion.is_joined():
 		if location_id != &"classroom" and _has_flag(StoryFlags.CLASS_DISMISSED):
 			_companion.join()
 
