@@ -68,6 +68,13 @@ CROWN = (76, 102, 66)
 TRUNK = (64, 52, 44)
 YELLOW = (214, 168, 60)
 FIRE_RED = (150, 58, 42)
+
+# Shared fittings for the two faces of the schoolyard exit; leaf paints are local.
+SCHOOL_EXIT_MATERIALS = {
+    "exit_frame": {"color": (49, 67, 68)},
+    "exit_glass": {"color": (82, 111, 120)},
+    "exit_steel": {"color": (150, 158, 151)},
+}
 BRASS = (190, 150, 62)
 CONTAINER = (66, 86, 120)
 SHUTTER = (52, 68, 96)
@@ -97,6 +104,7 @@ MATERIALS: dict[str, dict] = {
     "hoop_patch": {"texture": tex("hoop_patch"), "cut": 0.5},
     "bench_patch": {"texture": tex("bench_patch"), "cut": 0.5},
     # the school and the fences
+    **SCHOOL_EXIT_MATERIALS,
     "school_wall": {"color": SCHOOL_TEAL, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "wall_patches": {"color": WALL_FRESH, "texture": tex("wall_patches"), "cut": 0.5},
     "plinth": {"color": IVORY, "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
@@ -245,7 +253,10 @@ REPOINT: list[tuple[str, str]] = [
 ]
 
 # Ruled graybox boxes the painted planes / ring tyres below replace.
-HIDE = re.compile(r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose")
+HIDE = re.compile(
+    r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
+    r"|SchoolPlinth/MeshInstance3D"
+)
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -315,6 +326,75 @@ def quad(b: Builder, w: float, h: float) -> str:
     return b.mesh("QuadMesh", size=f"Vector2({w:g}, {h:g})")
 
 
+def school_exit_fittings(b: Builder, parent: str, width: float, height: float, face_z: float,
+                         *, inside: bool) -> None:
+    """Dress a closed leaf centred at the local origin, seen from +Z. Keep the leaf/step
+    as the two outlined meshes. A recessed pane, steel shoes and a frame follow the
+    same construction on both sides; an interior push bar becomes an exterior handle.
+    """
+    def piece(name, size, material, x, y, z):
+        mesh = b.mesh("BoxMesh", size=vec3(size))
+        b.flat(name, parent, mesh, material, (x, y, z))
+
+    jamb = 0.09
+    half_w, half_h = width / 2, height / 2
+    for side, sign in (("Left", -1), ("Right", 1)):
+        piece("Jamb" + side, (jamb, height - 0.04, 0.20), "exit_frame",
+              sign * (half_w + jamb / 2 - 0.015), -0.02, face_z - 0.058)
+    piece("Head", (width + 0.15, 0.08, 0.20), "exit_frame", 0, half_h, face_z - 0.058)
+
+    window_y = height * 0.25
+    piece("GlazingBead", (0.49, 0.61, 0.028), "exit_frame", 0, window_y, face_z + 0.013)
+    piece("VisionLight", (0.40, 0.52, 0.012), "exit_glass", 0, window_y, face_z + 0.028)
+    piece("VisionRail", (0.40, 0.025, 0.020), "exit_frame", 0, window_y + 0.11, face_z + 0.037)
+    piece("KickPlate", (width - 0.22, 0.18, 0.018), "exit_steel", 0, -half_h + 0.32, face_z + 0.011)
+    if inside:
+        for side, sign in (("Left", -1), ("Right", 1)):
+            piece("BarMount" + side, (0.115, 0.118, 0.055), "exit_frame",
+                  sign * width * 0.32, -0.045, face_z + 0.030)
+        piece("PushBar", (width * 0.72, 0.055, 0.042), "exit_steel", 0, -0.045, face_z + 0.066)
+    else:
+        latch_x = width * 0.31
+        piece("PullPlate", (0.115, 0.34, 0.027), "exit_frame", latch_x, -0.19, face_z + 0.0135)
+        for end, y in (("Top", -0.09), ("Bottom", -0.29)):
+            piece("PullMount" + end, (0.062, 0.055, 0.066), "exit_steel", latch_x, y, face_z + 0.047)
+        piece("PullHandle", (0.045, 0.255, 0.035), "exit_steel", latch_x, -0.19, face_z + 0.082)
+
+
+def school_plinth_returns(b: Builder, parent: str, *, material_prefix: str = "") -> None:
+    """Leave the opening around the fire door clear on both views of the yard."""
+    for name, low, high in (("PlinthWest", -23, -3.775), ("PlinthEast", -2.225, 23)):
+        mesh = b.mesh("BoxMesh", size=vec3((high - low, 1.2, 0.4)))
+        b.flat(name, parent, mesh, material_prefix + "plinth", ((low + high) / 2, 0, 0), shadow=True)
+
+
+def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> None:
+    """The painted court and hoops are also seen out of the teaching block."""
+    def flat(name, parent, mesh_id, mat, pos, rot=None, shadow=False):
+        b.flat(name, parent, mesh_id, material_prefix + mat, pos, rot, shadow=shadow)
+
+    # The court, repainted by hand on the graybox's lines.
+    b.node("Court", parent)
+    long_x = plane(b, 22.24, 0.24)
+    long_z = plane(b, 26.24, 0.24)
+    flat("LineSouth", f"{parent}/Court", long_x, "court_line", (0, 0.022, 11))
+    flat("LineNorth", f"{parent}/Court", long_x, "court_line", (0.06, 0.022, -15), (0, 180, 0))
+    flat("LineCentre", f"{parent}/Court", long_x, "court_line", (-0.04, 0.022, -2))
+    flat("LineWest", f"{parent}/Court", long_z, "court_line", (-11, 0.022, -2), (0, 90, 0))
+    flat("LineEast", f"{parent}/Court", long_z, "court_line", (11, 0.022, -1.95), (0, -90, 0))
+    key = plane(b, 5.0, 3.2)
+    flat("KeyNear", f"{parent}/Court", key, "court_key", (0, 0.02, 7.2))
+    flat("KeyFar", f"{parent}/Court", key, "court_key", (0, 0.02, -11.2), (0, 180, 0))
+
+    # The same boards, rings and painted boundaries read from inside the school.
+    b.node("Equipment", parent)
+    rim = b.mesh("TorusMesh", inner_radius="0.2", outer_radius="0.235", rings="24", ring_segments="6")
+    flat("HoopNearRing", f"{parent}/Equipment", rim, "hoop_rim", (-8.0, 2.6, 6.98), shadow=True)
+    flat("HoopFarRing", f"{parent}/Equipment", rim, "hoop_rim", (8.0, 2.6, -12.02), shadow=True)
+    net = b.mesh("CylinderMesh", top_radius="0.215", bottom_radius="0.15", height="0.42", radial_segments="16", rings="1", cap_top="false", cap_bottom="false")
+    flat("HoopFarNet", f"{parent}/Equipment", net, "hoop_net", (8.0, 2.39, -12.02))
+
+
 def build_nodes() -> Builder:
     b = Builder()
     A = "PlaygroundArt"
@@ -364,26 +444,7 @@ def build_nodes() -> Builder:
     b.flat("BenchPatch", f"{A}/Ground", plane(b, 3.6, 3.0), "bench_patch", (11.0, 0.006, 3.2), (0, 90, 0))
     b.flat("Seam", f"{A}/Ground", plane(b, 20.5, 40.0), "seam", (12.75, 0.024, 0.0))
 
-    # The court, repainted by hand on the graybox's lines.
-    b.node("Court", A)
-    long_x = plane(b, 22.24, 0.24)
-    long_z = plane(b, 26.24, 0.24)
-    b.flat("LineSouth", f"{A}/Court", long_x, "court_line", (0, 0.022, 11))
-    b.flat("LineNorth", f"{A}/Court", long_x, "court_line", (0.06, 0.022, -15), (0, 180, 0))
-    b.flat("LineCentre", f"{A}/Court", long_x, "court_line", (-0.04, 0.022, -2))
-    b.flat("LineWest", f"{A}/Court", long_z, "court_line", (-11, 0.022, -2), (0, 90, 0))
-    b.flat("LineEast", f"{A}/Court", long_z, "court_line", (11, 0.022, -1.95), (0, -90, 0))
-    key = plane(b, 5.0, 3.2)
-    b.flat("KeyNear", f"{A}/Court", key, "court_key", (0, 0.02, 7.2))
-    b.flat("KeyFar", f"{A}/Court", key, "court_key", (0, 0.02, -11.2), (0, 180, 0))
-
-    # Equipment the graybox had as sticks and boxes.
-    b.node("Equipment", A)
-    rim = b.mesh("TorusMesh", inner_radius="0.2", outer_radius="0.235", rings="24", ring_segments="6")
-    b.flat("HoopNearRing", f"{A}/Equipment", rim, "hoop_rim", (-8.0, 2.6, 6.98), shadow=True)
-    b.flat("HoopFarRing", f"{A}/Equipment", rim, "hoop_rim", (8.0, 2.6, -12.02), shadow=True)
-    net = b.mesh("CylinderMesh", top_radius="0.215", bottom_radius="0.15", height="0.42", radial_segments="16", rings="1", cap_top="false", cap_bottom="false")
-    b.flat("HoopFarNet", f"{A}/Equipment", net, "hoop_net", (8.0, 2.39, -12.02))
+    court_landmarks(b, A)
     tyre = b.mesh("TorusMesh", inner_radius="0.27", outer_radius="0.5", rings="24", ring_segments="10")
     for i, y in enumerate((0.12, 0.36, 0.6)):
         b.flat(f"Tyre_{i}", f"{A}/Equipment", tyre, "tyre", (-15.2 + (0.05 if i == 1 else 0.0), y, 2.6 - (0.04 if i == 2 else 0.0)), (0, 20 * i, 0), shadow=True)
@@ -395,6 +456,13 @@ def build_nodes() -> Builder:
     # Decals on the occluder bodies: children of the body, so they fade with it.
     b.flat("WallPatches", "SchoolBackWall", quad(b, 6.0, 2.4), "wall_patches", (4.0, -3.0, 1.006))
     b.flat("Gesture", "ContainerBody", quad(b, 5.0, 2.0), "container_gesture", (0.0, 0.0, 1.27))
+
+    # The plinth returns into the jambs instead of passing through the bottom half
+    # of the door. Only the mesh is replaced; the plinth keeps its full-width collider.
+    school_plinth_returns(b, "SchoolPlinth")
+    # Separate art sibling: FireDoor and FireStep retain their original pick boxes.
+    b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
+    school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
     return b
 
 

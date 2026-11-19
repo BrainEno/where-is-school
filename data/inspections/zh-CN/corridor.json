@@ -39,5 +39,12 @@
       "source": "observed",
       "text": "从走廊往里看，教室平时感觉的要大一些，或许是因为里面没什么人。"
     }
+  },
+  "corridor_high_window": {
+    "title": "教室高窗",
+    "prompt": "跳起来看看高窗",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "几排空桌。玻璃那边的地面，好像和走廊不在同一条水平线上。"
   }
 }

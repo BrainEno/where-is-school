@@ -288,8 +288,13 @@ func _walk_out_to_the_yard() -> void:
 	if exit == null:
 		_failures.append("The yard door disappeared.")
 		return
-	# Stand at the door and use it, the way the player would.
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0, 0, -7.2)))
+	# The corridor movement suite walks the route here. Place the companion test at
+	# the real return spawn, which is on the landing in front of the fire door.
+	var landing := corridor.get_spawn(&"FromSchoolyard")
+	if landing == null:
+		_failures.append("The fire stair lost its return landing.")
+		return
+	_player.teleport(landing.global_transform)
 	await _frames(3)
 	_interaction.request_activation(exit)
 	if not await _pump_until(

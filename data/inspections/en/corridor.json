@@ -29,7 +29,7 @@
   },
   "corridor_classroom_glass": {
     "title": "Classroom window",
-    "prompt": "Look through the glass",
+    "prompt": "Jump to look through the glass",
     "speaker": "protagonist",
     "source": "observed",
     "text": "The room through the glass: the desks, the board, the set square on the lectern, the substitute standing very still at the front of it. From out here the room looks smaller than it felt.",
@@ -39,5 +39,12 @@
       "source": "observed",
       "text": "Seen from the walkway, the classroom looks smaller than it did from inside."
     }
+  },
+  "corridor_high_window": {
+    "title": "High classroom window",
+    "prompt": "Jump to look through the high window",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Rows of empty desks. The floor on the other side is not quite level with the hall."
   }
 }

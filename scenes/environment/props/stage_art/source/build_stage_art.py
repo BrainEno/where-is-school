@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Applies the stage pass to the walkway, street, courtyard and alley: writes the materials
+"""Applies the stage pass to the street, courtyard and alley: writes the materials
 and dresses each scene with visual-only nodes.
 
     python3 scenes/environment/props/stage_art/source/paint_stage_textures.py   # textures
     python3 tools/build_outdoor_locations.py street residential alley            # graybox
     python3 scenes/environment/props/stage_art/source/build_stage_art.py         # this
 
-The street, courtyard and alley scenes are produced by `tools/build_outdoor_locations.py`
-(ground, walls, colliders, interactables, exits, spawns); the walkway
-(`scenes/locations/corridor/corridor.tscn`) is hand-authored. This script is a second,
-visual-only step on top of either, written the same way as the yard's art pass
+The scenes are produced by `tools/build_outdoor_locations.py` (ground, walls,
+colliders, interactables, exits, spawns). This script is a second, visual-only step,
+written the same way as the yard's art pass
 (`playground_art/source/build_playground_art.py`), whose helpers, textures and ink outline
 it reuses. What it does to a scene, and nothing else:
 
@@ -25,13 +24,13 @@ it reuses. What it does to a scene, and nothing else:
 It never adds a CollisionObject3D, never moves a body, a shape, an interactable, an exit
 or a spawn - `tests/location_art_test.gd` checks that. It is idempotent: an earlier pass
 (the `StageArt` subtree, `Stage*` nodes, `*_art<n>` meshes, `art_*` resources) is
-stripped before the new one is applied, so the hand-authored walkway can be re-dressed.
+stripped before the new one is applied. The teaching block has a separate generator
+(`tools/build_teaching_block.py`); this script still writes the painted materials it reuses.
 """
 
 from __future__ import annotations
 
 import argparse
-import math
 import re
 import sys
 from pathlib import Path
@@ -93,7 +92,8 @@ MATERIALS: dict[str, dict] = {
     "walk_plaster": tiled((206, 202, 216)),
     # Wall decal 16 x 3.1 m: the whole texture once across the quad.
     "walk_wall": {"color": (246, 246, 246), "texture": stex("corridor_wall")},
-    # The continuation's wall: an 8 m tile (one classroom) repeated along BEYOND metres.
+    # Keep #243's painted kit reproducible. The teaching block reuses the small
+    # floor tile directly; its walls, storeys and glazing are three-dimensional.
     "walk_wall_far": {"color": (246, 246, 246), "texture": stex("corridor_wall_far"), "scale": (BEYOND / 8.0, 1.0, 1.0)},
     "walk_terrazzo": tiled((184, 176, 170), "plaster_tile"),
     "walk_floor": {"texture": stex("corridor_floor")},
@@ -141,7 +141,7 @@ MATERIALS: dict[str, dict] = {
 }
 
 
-def environment(background, ambient, energy: float, exposure: float, fog: float, saturation: float, depth_fog: dict | None = None) -> str:
+def environment(background, ambient, energy: float, exposure: float, fog: float, saturation: float) -> str:
     def col(c):
         return f"Color({c[0]:.3g}, {c[1]:.3g}, {c[2]:.3g}, 1)"
 
@@ -155,22 +155,7 @@ def environment(background, ambient, energy: float, exposure: float, fog: float,
         "tonemap_mode = 2",
         f"tonemap_exposure = {exposure:g}",
     ]
-    if depth_fog is not None:
-        # Depth fog (fog_mode 1): clear up to `begin` metres from the camera, the haze by
-        # `end`; height fog under `height` fills the drop below the parapet. The colour is
-        # the clear colour, so nothing has an edge where it gives out.
-        lines += [
-            "fog_enabled = true",
-            "fog_mode = 1",
-            f"fog_light_color = {col(background)}",
-            f"fog_density = {depth_fog['density']:g}",
-            f"fog_depth_curve = {depth_fog['curve']:g}",
-            f"fog_depth_begin = {depth_fog['begin']:g}",
-            f"fog_depth_end = {depth_fog['end']:g}",
-            f"fog_height = {depth_fog['height']:g}",
-            f"fog_height_density = {depth_fog['height_density']:g}",
-        ]
-    elif fog > 0.0:
+    if fog > 0.0:
         lines += ["fog_enabled = true", "fog_light_color = Color(0.32, 0.3, 0.38, 1)", f"fog_density = {fog:g}"]
     lines += ["adjustment_enabled = true", f"adjustment_saturation = {saturation:g}", "adjustment_contrast = 1.04"]
     return "\n".join(lines) + "\n"
@@ -208,116 +193,6 @@ def cutouts(b: Builder, parent: str, rows, ground_y: float) -> None:
 
 def box(b: Builder, size) -> str:
     return b.mesh("BoxMesh", size=vec3(size))
-
-
-# --- the walkway -------------------------------------------------------------------------------
-
-
-def corridor_nodes() -> Builder:
-    """The walkway that does not end (docs/CORRIDOR_ART.md).
-
-    The yard door stands in a railing now, not in a wall, and past it the walkway goes on:
-    the same floor, wall, classrooms, windows and parapet, BEYOND metres of it, until the
-    depth fog has made it the colour of the haze. Below the parapet the yard is a wide,
-    empty ground the height fog washes out. Every piece is mesh-only; the continuation lies
-    wholly north of the railing (z < -9.2), where no standing spot or sight line reaches.
-    """
-    b = Builder()
-    A = "StageArt"
-    b.nodes.append(MARKER + "\n")
-    # Under and beyond the walkway: the haze laid flat under the yard. No cut-out skyline:
-    # the emptiness is the point.
-    distance(b, A, "corridor", "walk_distance", -3.9)
-
-    # The yard seen from above: a fragment of the court, off the building's grid, and one
-    # hoop on a short post - too small for the drop it stands at the bottom of.
-    b.node("Yard", A)
-    b.flat("CourtFragment", f"{A}/Yard", yard.plane(b, 9.0, 12.0), "yard_court", (8.0, -3.488, -2.5), (0, 14, 0))
-    b.flat("HoopPost", f"{A}/Yard", box(b, (0.12, 2.4, 0.12)), "pale", (6.2, -2.3, -6.4), shadow=True)
-    b.flat("HoopBoard", f"{A}/Yard", box(b, (0.9, 0.6, 0.06)), "pale", (6.2, -1.0, -6.3), (0, 14, 0), shadow=True)
-
-    # The wall as a painted plane: plaster, a pilaster every 4 m, the wainscot level at the
-    # classroom's 1.05 m. A child of the occluder body, 3 mm proud of its face.
-    b.flat("StageWallPaint", "WallBuilding", yard.quad(b, 16.0, 3.1), "walk_wall", (0.103, 0.0, 0.0), (0, 90, 0))
-    # The end wall is gone from the picture (its collider stays): the yard door stands in
-    # a railing - the parapet turned across the walkway either side of it - and the door
-    # is the only way on. Heights relative to WallEndNorth's centre, 1.55 m up.
-    for side, x0, x1 in (("West", -2.1, -0.75), ("East", 0.75, 2.17)):
-        w, cx = x1 - x0, (x0 + x1) / 2.0
-        b.flat(f"StageEndParapet{side}", "WallEndNorth", box(b, (w, 1.04, 0.14)), "walk_plaster", (cx, -1.03, 0.0), shadow=True)
-        b.flat(f"StageEndRail{side}", "WallEndNorth", box(b, (w, 0.08, 0.26)), "walk_dado", (cx, -0.47, 0.0), shadow=True)
-    # Above the wall the school goes on: an upper storey set back and leaning a few degrees
-    # out over the walkway, one window every 2 m, all alike.
-    b.flat("StageUpperStorey", "WallBuilding", box(b, (3.0, 3.6, 16.4)), "walk_plaster", (-1.4, 3.35, 0.0), (0, 0, -3), shadow=True)
-    up = "WallBuilding/StageUpperStorey"
-    b.flat("StageCoping", up, box(b, (3.2, 0.16, 16.6)), "walk_dado", (0.0, 1.86, 0.0), shadow=True)
-    b.flat("StageWindows", up, yard.quad(b, 16.4, 1.2), "walk_windows", (1.506, 0.1, 0.0), (0, 90, 0))
-    # The yard door, free-standing: a frame to 3 m, a transom of light from a yard that is
-    # not behind it.
-    b.node("YardDoor", A)
-    b.flat("Transom", f"{A}/YardDoor", yard.quad(b, 1.3, 0.8), "light_beyond", (0.0, 2.52, -8.993))
-    frame_v = box(b, (0.1, 3.0, 0.06))
-    b.flat("FrameWest", f"{A}/YardDoor", frame_v, "walk_dado", (-0.7, 1.5, -8.97))
-    b.flat("FrameEast", f"{A}/YardDoor", frame_v, "walk_dado", (0.7, 1.5, -8.97))
-    b.flat("FrameHead", f"{A}/YardDoor", box(b, (1.5, 0.1, 0.06)), "walk_dado", (0.0, 2.97, -8.97))
-    b.flat("FrameMullion", f"{A}/YardDoor", box(b, (1.3, 0.06, 0.05)), "walk_dado", (0.0, 2.12, -8.97))
-    # The floor: an answer sheet, its rules running the length of the walkway.
-    b.flat("FloorPaint", A, yard.plane(b, 4.4, 16.0), "walk_floor", (0.0, 0.003, -1.0))
-
-    # Past the door: the same walkway, BEYOND metres of it. Its pieces line up with the
-    # walked ones (same sections, same heights, the rhythm in phase), so it reads as the
-    # same building going on rather than as a picture of one.
-    beyond = f"{A}/Beyond"
-    b.node("Beyond", A)
-    zc = -9.2 - BEYOND / 2.0
-    b.flat("Slab", beyond, box(b, (4.4, 0.2, BEYOND)), "walk_terrazzo", (0.0, -0.1, zc), shadow=True)
-    b.flat("Floor", beyond, yard.plane(b, 4.4, BEYOND), "walk_floor_far", (0.0, 0.003, zc))
-    b.flat("Wall", beyond, box(b, (0.2, 3.1, BEYOND)), "walk_plaster", (-2.2, 1.55, zc), shadow=True)
-    b.flat("WallPaint", beyond, yard.quad(b, BEYOND, 3.1), "walk_wall_far", (-2.097, 1.55, zc), (0, 90, 0))
-    b.flat("WallTrim", beyond, box(b, (0.14, 0.12, BEYOND)), "walk_dado", (-2.08, 3.05, zc))
-    b.flat("Upper", beyond, box(b, (3.0, 3.6, BEYOND)), "walk_plaster", (-3.6, 4.9, zc), (0, 0, -3), shadow=True)
-    b.flat("Coping", f"{beyond}/Upper", box(b, (3.2, 0.16, BEYOND)), "walk_dado", (0.0, 1.86, 0.0), shadow=True)
-    b.flat("Windows", f"{beyond}/Upper", yard.quad(b, BEYOND, 1.2), "walk_windows_far", (1.506, 0.1, 0.0), (0, 90, 0))
-    b.flat("Parapet", beyond, box(b, (0.14, 1.04, BEYOND)), "walk_plaster", (2.1, 0.52, zc), shadow=True)
-    b.flat("Rail", beyond, box(b, (0.26, 0.08, BEYOND)), "walk_dado", (2.1, 1.08, zc), shadow=True)
-    return b
-
-
-# The haze the walkway goes into: the clear colour, the fog colour and (painted) the
-# laid-flat distance, one value so that nothing has an edge where it gives out.
-HAZE = (0.88, 0.84, 0.81)
-
-CORRIDOR = {
-    "scene": LOC / "corridor" / "corridor.tscn",
-    "environment": environment(
-        # Toon diffuse lights a lit face fully, whatever the angle, and the walkway's
-        # albedos are pale: the sun and the exposure stay low so plaster stays plaster
-        # rather than white, and the haze stays the brightest thing in the frame.
-        HAZE, (0.6, 0.58, 0.72), 0.85, 0.68, 0.0, 0.92,
-        depth_fog={"density": 1.0, "curve": 1.2, "begin": 11.0, "end": 38.0, "height": -0.6, "height_density": 0.32},
-    ),
-    # A low afternoon sun from the stairs' end, almost along the walkway: every shadow,
-    # the player's included, points down it towards the door and past it.
-    "sun": sun(-17, 16, 0.55, (1, 0.8, 0.62)),
-    "no_shadow": [],
-    # The end wall's picture (the railing replaces it) and the far block that closed the
-    # view across the yard: past the parapet there is the yard and then nothing.
-    "hidden": [r"WallEndNorth/MeshInstance3D", r"FarBuilding"],
-    "by_material": {
-        "wall_paint.tres": "walk_plaster",
-        "floor_concrete.tres": "walk_step",
-        "wall_trim.tres": "walk_dado",
-        "door_blue.tres": "walk_door",
-        "metal_dark.tres": "metal_ink",
-    },
-    "by_path": {
-        r"Floor/MeshInstance3D": "walk_terrazzo",
-        r"YardGround": "yard_ground",
-        r"FarBuilding": "pale",
-        r"BinRow": "walk_bin",
-    },
-    "nodes": corridor_nodes,
-}
 
 
 # --- the street ---------------------------------------------------------------------------------
@@ -458,7 +333,7 @@ ALLEY = {
     "nodes": alley_nodes,
 }
 
-SCENES = {"corridor": CORRIDOR, "street": STREET, "residential": RESIDENTIAL, "alley": ALLEY}
+SCENES = {"street": STREET, "residential": RESIDENTIAL, "alley": ALLEY}
 
 
 # --- scene surgery ------------------------------------------------------------------------------

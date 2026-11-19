@@ -76,8 +76,10 @@ class ToolRequirementsTest(unittest.TestCase):
                                  "Install tools/requirements.txt in the documented fresh venv")
 
     def test_all_maintenance_third_party_imports_are_declared(self) -> None:
+        # Scene-local art generators are maintenance tools too. Audit their imports
+        # and recognize them as local modules when a tool reuses their code.
         files = [relative for relative in self.inventory if relative.endswith(".py")
-                 and relative.startswith(("tools/", "art/"))]
+                 and relative.startswith(("tools/", "art/", "scenes/"))]
         local_modules = {Path(relative).stem for relative in files}
         for relative in sorted(files):
             tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"))
