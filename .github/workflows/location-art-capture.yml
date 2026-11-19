@@ -107,12 +107,13 @@ jobs:
           fi
           mkdir -p "${RUNNER_TEMP}/frames"
           cp "${out}/${LOCATION}"_*.jpg "${RUNNER_TEMP}/frames/"
+          inline="${RUNNER_TEMP}/frames"
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
               godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
               --script res://tests/capture_locations.gd -- \
-              label=teaching-wing teaching-wing width=800 quality=0.68 \
+              label=teaching-wing teaching-wing width=960 quality=0.84 review_width=400 \
               > "${RUNNER_TEMP}/teaching-wing.log" 2>&1
             wing_code=$?
             shots=$(find "$wing" -maxdepth 1 -name 'teaching_wing_*.jpg' 2>/dev/null | wc -l)
@@ -124,18 +125,18 @@ jobs:
               exit 1
             fi
             cp "$wing"/*.jpg "${RUNNER_TEMP}/frames/"
+            cp "$wing/LOCATIONS.md" "${RUNNER_TEMP}/frames/teaching-wing-index.md"
             cp "${RUNNER_TEMP}/teaching-wing.log" "${RUNNER_TEMP}/frames/"
+            inline="$wing/review"
+            echo "::notice title=teaching wing capture::${shots} full-size frames, including the close views of 01, 02 and 03"
           fi
-          # Prioritise the four close review frames in corridor/after. The artifact
-          # holds the whole wing even when the annotation budget runs out.
+          # Keep full-size frames in the artifact and use the smaller teaching-wing
+          # copies to fit all eight views in the inline annotation budget.
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
-          ordered=$(find "${RUNNER_TEMP}/frames" -maxdepth 1 -name '*.jpg' -printf '%f\n' | sort -r)
-          if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
-            ordered=$(printf '%s\n' "$ordered" | awk '/^teaching_wing_0[0-3]_/{ first[++i]=$0; next } { rest[++j]=$0 } END { for (k=i; k>=1; k--) print first[k]; for (k=1; k<=j; k++) print rest[k] }')
-          fi
-          for file in $ordered; do
-            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+          for path in "$inline"/*.jpg; do
+            file=${path##*/}
+            data=$(base64 -w0 "$path")
             parts=$(( (${#data} + 3999) / 4000 ))
             for i in $(seq 1 "${parts}"); do
               echo "${SIDE}/${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"

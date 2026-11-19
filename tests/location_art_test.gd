@@ -75,7 +75,7 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 89, # Nine added by the shared entrance: frame, solid kicks and safety glass.
+		"shapes": 88, # Nine on the glass assembly; the school frontage uses one fewer body.
 		"interactables": 8,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

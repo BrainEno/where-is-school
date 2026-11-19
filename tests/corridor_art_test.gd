@@ -139,8 +139,8 @@ func _run() -> void:
 					_check.expect(_player.global_position.distance_to(front_step) < 0.12,
 						"Leaving the classroom did not land on the hall side of the front door.")
 		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
-		if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
-			await _check_glass_entrance()
+			if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
+				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
 	_finish()
@@ -370,18 +370,30 @@ func _check_glass_entrance() -> void:
 
 	# In the default camera basis W+D steps north. This crosses the portal with
 	# actual continuous movement: no reload, no activation and no teleport.
+	var cap := doorway.get_node(^"Header/EnamelCap") as MeshInstance3D
+	var fade: Array[float] = [0.0]
 	Input.action_press(&"move_forward")
 	Input.action_press(&"move_right")
 	var crossed := await Harness.wait_until(func() -> bool:
+		fade[0] = maxf(fade[0], cap.transparency)
 		return doorway.to_local(_player.global_position).z < -2.42, 6.0)
 	Input.action_release(&"move_forward")
 	Input.action_release(&"move_right")
+	_check.expect(fade[0] > 0.45, "The camera never clears the door cap while walking into 01.")
 	if not _check.expect(crossed and _host.get_current() == inside and _player.is_on_floor(),
 		"Keyboard movement did not carry the player through the glass doorway: %s." % _player.global_position):
 		return
 	await _check_directory(inside)
-	# The opposite direction is also a real ground click through the open leaves.
-	if await _click_floor(doorway.to_global(Vector3(0, 0, 2.65)), "mouse through the open glass entrance"):
+	# On the reversal Q is behind us. Line up on the other side of the opening,
+	# then click the apron itself (not the street plaque's pick box beyond it).
+	var companion := _host.get_parent().get_node(^"Companion") as CompanionController
+	var lane := -0.84 if doorway.to_local(companion.global_position).x > 0.0 else 0.84
+	if not await _walk(doorway.to_global(Vector3(lane * 1.3, 0, -2.42)), "01 passing lane"):
+		return
+	if await _click_floor(doorway.to_global(Vector3(lane, 0, 2.08)), "mouse through the open glass entrance"):
+		if not _check.expect(doorway.to_local(_player.global_position).z > 1.0,
+			"The click accepted the hall side instead of crossing to the apron."):
+			return
 		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
 			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
 				await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance")

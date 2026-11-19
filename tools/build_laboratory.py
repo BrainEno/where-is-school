@@ -301,6 +301,7 @@ def cable_route(lab: Lab, name, points, radius=CABLE_RADIUS, mat="cable_ink", st
 
 
 BENCH_TOP = 0.95
+BANK_OUTLETS = (1.02, 2.1, 3.2, 4.1)
 
 
 def bench(lab, name, x, z, width, length, body_x, body_width):
@@ -338,7 +339,9 @@ def build_room(lab: Lab) -> None:
     slab(lab, "WallEast", (7.7, 1.7, 0.0), (0.2, 3.4, 11.2), "wall_plaster", group="camera_occluder")
     # The north trim stops at the actual far doorway and does not cross its jambs.
     for name, pos, size in (
-        ("SkirtingNorthLeft", (-2.05, 0.057, -5.575), (11.10, 0.114, 0.058)),
+        ("SkirtingNorthLeft", (-6.77, 0.058, -5.570), (1.60, 0.112, 0.052)),
+        ("SkirtingNorthGap", (-2.969, 0.058, -5.570), (0.60, 0.112, 0.052)),
+        ("SkirtingNorthBoard", (1.285, 0.058, -5.570), (3.89, 0.112, 0.052)),
         ("SkirtingNorthRight", (6.35, 0.057, -5.575), (2.5, 0.114, 0.058)),
         ("SkirtingWest", (-7.57, 0.057, 0.0), (0.066, 0.114, 11.08)),
         ("SkirtingEast", (7.57, 0.057, 0.0), (0.066, 0.114, 11.08)),
@@ -350,7 +353,7 @@ def build_room(lab: Lab) -> None:
 def build_wet_bench(lab: Lab) -> None:
     """West wall: the wet bench. Two sinks, a rack of drying glass, and the day's washing up."""
     top_y = BENCH_TOP
-    bench(lab, "WetBench", -7.05, -1.4, 0.92, 5.6, -7.08, 0.86)
+    bench(lab, "WetBench", -7.05, -1.4, 0.92, 5.6, -7.06, 0.82)
     # The tiled splashback: the one place in the room that says "washable" at a glance.
     prop(lab, "WetBenchTile", (-7.55, 1.42, -1.4), (0.05, 1.0, 5.6), "wall_tile")
     prop(lab, "WetBenchShelf", (-7.35, 1.98, -1.4), (0.34, 0.04, 3.4), "bench_steel")
@@ -408,7 +411,12 @@ def build_wet_bench(lab: Lab) -> None:
     prop(lab, "BenchLampElbow", (-7.13, 2.24, -1.9), (0.226, 0.042, 0.044), "metal_dark")
     prop(lab, "BenchLampShade", (-7.02, 2.195, -1.9), (0.22, 0.08, 0.14), "instrument_cream")
     prop(lab, "BenchLampGlow", (-7.02, 2.149, -1.9), (0.2, 0.018, 0.12), "led_dial")
-    lab.light("BenchLampLight", (-7.02, 1.99, -1.9), 0.68, 3.4, color=(1.0, 0.87, 0.71))
+    lab.light("BenchLampLight", (-7.02, 1.99, -1.9), 0.48, 3.4, color=(1.0, 0.87, 0.71))
+    for i, z in enumerate((-1.9, -0.4, 0.7, 1.58)):
+        prop(lab, f"LampLeadClip{i}", (-7.524, 2.07, z), (0.158, 0.069, 0.037), "metal_frame")
+    prop(lab, "BalanceBody", (-6.86, top_y+0.037, -3.9), (0.28, 0.074, 0.3), "instrument_grey")
+    prop(lab, "BalancePlate", (-6.88, top_y+0.083, -3.9), (0.18, 0.022, 0.21), "metal_pale")
+    prop(lab, "BalanceSocket", (-6.71, top_y+0.04, -3.91), (0.054, 0.057, 0.067), "metal_dark")
 
 
 def build_north_wall(lab: Lab) -> None:
@@ -420,6 +428,7 @@ def build_north_wall(lab: Lab) -> None:
         prop(lab, f"HoodDoorPull{i}", (x, 0.72, -4.702), (0.22, 0.045, 0.04), "metal_dark")
     prop(lab, "HoodSideWest", (-5.86, 1.61, -5.16), (0.1, 1.52, 0.86), "casework_pale")
     prop(lab, "HoodSideEast", (-3.34, 1.61, -5.16), (0.1, 1.52, 0.86), "casework_pale")
+    prop(lab, "HoodConduitPort", (-3.269, 1.17, -4.94), (0.057, 0.073, 0.081), "metal_dark")
     prop(lab, "HoodCanopy", (-4.6, 2.42, -5.16), (2.64, 0.16, 0.91), "casework_pale")
     prop(lab, "HoodBackTile", (-4.6, 1.2, -5.56), (2.5, 1.5, 0.04), "wall_tile")
     prop(lab, "HoodDeck", (-4.6, 0.95, -5.16), (2.4, 0.07, 0.8), "bench_resin")
@@ -470,6 +479,7 @@ def build_north_wall(lab: Lab) -> None:
     prop(lab, "DistributionBoard", (1.4, 1.62, -5.5), (0.7, 0.9, 0.12), "instrument_grey")
     prop(lab, "DistributionBoardDoor", (1.4, 1.62, -5.43), (0.62, 0.8, 0.03), "metal_frame")
     prop(lab, "DistributionLed", (1.16, 1.94, -5.41), (0.05, 0.03, 0.02), "led_running")
+    prop(lab, "BoardGland", (1.45, 1.143, -5.5), (0.32, 0.063, 0.085), "metal_frame")
 
 
 def build_island(lab: Lab) -> None:
@@ -498,6 +508,7 @@ def build_island(lab: Lab) -> None:
     lab.cyl("CentrifugeLid", (-2.4, top_y + 0.32, -3.1), 0.21, 0.05, "instrument_cream", segments=14)
     prop(lab, "CentrifugeLatch", (-2.4, top_y + 0.28, -2.92), (0.1, 0.05, 0.04), "metal_dark")
     prop(lab, "CentrifugeLed", (-2.55, top_y + 0.2, -2.92), (0.03, 0.02, 0.02), "led_running")
+    prop(lab, "CentrifugeSocket", (-2.4, top_y+0.09, -3.304), (0.075, 0.067, 0.054), "metal_frame")
 
     # The book: a ring binder open on the bench, a pen across it, a strip of tape on the page.
     prop(lab, "LogBookLeft", (-1.1, top_y + 0.035, -2.62), (0.24, 0.03, 0.32), "paper_pale")
@@ -531,6 +542,9 @@ def build_instruments(lab: Lab) -> None:
     """East wall: the bank of machines every cable in the room can be traced back to."""
     top_y = BENCH_TOP
     bench(lab, "InstrumentBench", 7.14, 2.8, 0.87, 4.3, 7.18, 0.8)
+    # The individual machine feeds exit a concealed chase below the worktop.
+    for index, z in enumerate(BANK_OUTLETS):
+        prop(lab, f"BankOutlet{index}", (6.75, 0.79, z), (0.09, 0.098, 0.101), "metal_frame")
     prop(lab, "InstrumentBackTile", (7.55, 1.5, 2.8), (0.05, 1.1, 4.3), "wall_tile")
     prop(lab, "InstrumentShelf", (7.36, 2.02, 2.8), (0.34, 0.04, 4.0), "bench_steel")
     for i, z in enumerate((1.11, 2.62, 4.41)):
@@ -591,9 +605,10 @@ def build_mixer(lab: Lab) -> None:
     prop(lab, "MixerCrossC", (cx - 0.62, 0.89, cz), (0.08, 0.1, 1.20), "metal_dark")
     prop(lab, "MixerCrossD", (cx + 0.62, 0.89, cz), (0.08, 0.1, 1.20), "metal_dark")
     slab(lab, "MixerDrum", (cx, 1.62, cz), (1.2, 1.1, 1.2), "metal_pale")
-    lab.cyl("MixerDrumSkin", (cx, 1.62, cz), 0.63, 1.12, "metal_pale", segments=18)
-    lab.cyl("MixerBandLow", (cx, 1.2, cz), 0.645, 0.08, "metal_dark", segments=18)
-    lab.cyl("MixerBandHigh", (cx, 2.0, cz), 0.645, 0.08, "metal_dark", segments=18)
+    # The rectangular jacket wraps all four sides. Round bands intersected its corners
+    # and left broken little crescents at the oblique follow-camera angles.
+    for tag, y in (("Low", 1.2), ("High", 2.0)):
+        prop(lab, "MixerBand"+tag, (cx, y, cz), (1.234, 0.073, 1.234), "metal_dark")
     lab.cyl("MixerLid", (cx, 2.2, cz), 0.62, 0.07, "metal_pale", segments=18)
     prop(lab, "MixerMotorShoe", (cx, 2.263, cz), (0.52, 0.062, 0.49), "accent_oxide")
     prop(lab, "MixerMotor", (cx, 2.483, cz), (0.46, 0.4, 0.46), "metal_dark")
@@ -727,58 +742,68 @@ def build_lights(lab: Lab) -> None:
 def build_cables(lab: Lab) -> None:
     """Every cable in the room, from the machine it belongs to to the hatch it ends in."""
     floor = 0.024
-    # --- the instrument bank, four machines, four cables ---
-    bank = [
-        ((6.95, 0.72, 1.02), ((6.98, 0.3, 1.02), (6.9, floor, 1.3), (6.2, floor, 1.05), (5.2, floor, 0.62))),
-        ((6.95, 0.66, 2.1), ((6.98, 0.3, 2.1), (6.9, floor, 2.2), (6.0, floor, 1.5), (5.2, floor, 0.86))),
-        ((6.95, 0.7, 3.2), ((6.98, 0.3, 3.2), (6.86, floor, 3.05), (5.6, floor, 1.9), (5.0, floor, 1.02))),
-        ((6.95, 0.76, 4.1), ((6.98, 0.3, 4.1), (6.8, floor, 3.85), (5.4, floor, 2.6), (4.6, floor, 1.4))),
-    ]
-    for index, (start, tail) in enumerate(bank):
-        cable_route(lab, "CableBank%d" % index, (start,) + tail, radius=0.028, sag=0.0)
+    # A visible gland at each start, not a lead that appears midway through sheet metal.
+    bank_ends = ((5.2, 0.62), (5.2, 0.86), (5.0, 1.02), (4.6, 1.4))
+    for index, (z, (x_end, z_end)) in enumerate(zip(BANK_OUTLETS, bank_ends)):
+        cable_route(lab, f"CableBank{index}",
+                    ((6.713, 0.78, z), (6.66, 0.64, z), (6.64, 0.1, z),
+                     (6.51, floor, z), (x_end, floor, z_end)), radius=0.028, sag=0.0)
 
-    # --- the north wall's sockets and the hood's duct, running down to the floor ---
+    # The wall leads turn towards the knot while still on the main side of the annex.
     cable_route(
         lab, "CableHood",
-        ((1.95, 1.02, -5.42), (1.7, 0.12, -5.4), (1.9, floor, -4.6), (2.6, floor, -3.4), (3.2, floor, -2.0), (3.6, floor, -0.2)),
-        radius=0.026, sag=0.05,
+        ((-3.247, 1.17, -4.94), (-3.19, 0.94, -4.94), (-3.17, 0.09, -4.94),
+         (-3.16, floor, -4.52), (-2.85, floor, -3.86), (-0.46, floor, -3.84),
+         (0.68, floor, -2.57), (1.35, floor, -0.4), (1.52, floor, 0.12)),
+        radius=0.026, sag=0.02,
     )
     cable_route(
         lab, "CableBoard",
-        ((1.4, 1.2, -5.4), (1.2, 0.1, -5.4), (1.5, floor, -4.4), (2.4, floor, -2.9), (3.1, floor, -1.0), (3.5, floor, 0.4)),
+        ((1.34, 1.118, -5.476), (1.34, 0.31, -5.456), (1.42, floor, -4.98),
+         (1.54, floor, -3.4), (1.63, floor, -1.0), (1.43, floor, 0.2)),
         radius=0.03, sag=0.04,
     )
 
-    # --- the island's instruments and the bench lamp, west to east across the room ---
+    # Route above the worktops, then lower the cord outside each cabinet's footprint.
     cable_route(
         lab, "CableCentrifuge",
-        ((-2.4, 0.95, -3.34), (-2.5, 0.1, -3.4), (-2.2, floor, -2.9), (-1.0, floor, -1.6), (0.6, floor, -0.4), (1.5, floor, 0.3)),
-        radius=0.026, sag=0.06,
+        ((-2.4, 1.048, -3.326), (-2.39, 1.03, -3.44), (-2.41, 0.987, -3.52),
+         (-2.42, 0.18, -3.57), (-2.38, floor, -3.69), (-0.63, floor, -3.66),
+         (-0.60, floor, -2.33), (0.6, floor, -0.4), (1.5, floor, 0.3)),
+        radius=0.026, sag=0.01,
     )
     cable_route(
         lab, "CableBenchLamp",
-        ((-7.02, 2.17, -1.90), (-7.19, 2.139, -1.90), (-7.2, 0.6, -1.95), (-7.1, floor, -1.4), (-6.0, floor, 0.3), (-3.6, floor, 0.42), (-2.2, floor, 0.4), (0.4, floor, 0.42), (1.45, floor, 0.5)),
-        radius=0.024, sag=0.05,
+        ((-7.02, 2.163, -1.9), (-7.205, 2.153, -1.892), (-7.478, 2.071, -1.9),
+         (-7.478, 2.071, 1.58), (-7.487, 0.16, 1.58), (-7.41, floor, 1.66),
+         (-6.52, floor, 1.65), (-6.0, floor, 0.3), (-3.6, floor, 0.42),
+         (-2.2, floor, 0.4), (0.4, floor, 0.42), (1.45, floor, 0.5)),
+        radius=0.024, sag=0.0,
     )
     cable_route(
         lab, "CableBalance",
-        ((-6.6, 0.95, -3.9), (-6.7, 0.2, -3.7), (-6.4, floor, -2.9), (-4.4, floor, -0.6), (-2.0, floor, 0.3), (0.5, floor, 0.35)),
-        radius=0.024, sag=0.06,
+        ((-6.69, 0.99, -3.91), (-6.533, 0.99, -3.91), (-6.532, 0.17, -3.87),
+         (-6.43, floor, -3.79), (-6.28, floor, -2.9), (-4.4, floor, -0.6),
+         (-2.0, floor, 0.3), (0.5, floor, 0.35)),
+        radius=0.024, sag=0.006,
     )
-    # The overflow: three cables that belong to nothing in particular and go the same way.
+    # Spare leads left from a fixture or through a second hole in the wall gland.
     cable_route(
         lab, "CableLoose0",
-        ((-0.6, 3.0, -3.4), (-0.9, 1.6, -2.6), (-1.2, 0.5, -1.6), (-0.4, floor, -0.5), (0.9, floor, 0.15), (1.5, floor, 0.42)),
+        ((-0.95, 3.026, -3.38), (-0.63, 1.6, -2.6), (-0.59, 0.5, -1.6),
+         (-0.4, floor, -0.5), (0.9, floor, 0.15), (1.5, floor, 0.42)),
         radius=0.022, sag=0.22,
     )
     cable_route(
         lab, "CableLoose1",
-        ((1.9, 1.0, -5.4), (1.6, 0.4, -5.0), (1.2, floor, -3.8), (1.4, floor, -2.0), (1.6, floor, -0.6), (1.7, floor, 0.2)),
+        ((1.56, 1.118, -5.476), (1.59, 0.4, -5.0), (1.2, floor, -3.8),
+         (1.4, floor, -2.0), (1.6, floor, -0.6), (1.7, floor, 0.2)),
         radius=0.022, sag=0.18,
     )
     cable_route(
         lab, "CableLoose2",
-        ((4.4, 2.36, 2.8), (4.6, 1.2, 2.6), (4.2, 0.4, 2.0), (3.6, floor, 1.4), (2.4, floor, 0.9), (1.7, floor, 0.5)),
+        ((4.5, 3.022, 2.8), (4.6, 1.2, 2.6), (4.2, 0.4, 2.0),
+         (3.6, floor, 1.4), (2.4, floor, 0.9), (1.7, floor, 0.5)),
         radius=0.02, sag=0.2,
     )
 
@@ -810,7 +835,7 @@ def build_cables(lab: Lab) -> None:
         points = []
         for step in range(13):
             angle = step / 12.0 * math.tau
-            points.append((cx + r * math.cos(angle), 0.06 + 0.01 * math.sin(angle * 3), cz + r * math.sin(angle)))
+            points.append((cx + r * math.cos(angle), 0.027 + 0.003 * math.sin(angle * 3), cz + r * math.sin(angle)))
         cable_route(lab, "CableCoil%d" % index, points, radius=0.026, step=0.2, sag=0.0)
 
     # The bundle: eight cables side by side, north along the partition to the narrow door.
@@ -820,7 +845,7 @@ def build_cables(lab: Lab) -> None:
     )
     for index in range(8):
         offset = -0.05 + 0.014 * index
-        points = [(x + offset, 0.045 + 0.004 * (index % 3), z + offset * 0.6) for x, z in bundle]
+        points = [(x + offset, 0.022 + 0.002 * (index % 3), z + offset * 0.6) for x, z in bundle]
         mat = "cable_ink" if index % 3 else ("cable_pale" if index % 2 else "cable_oxide")
         cable_route(lab, "CableBundle%d" % index, points, radius=0.022, step=0.62, sag=0.0)
 
@@ -886,7 +911,7 @@ def build_interactables(lab: Lab) -> None:
             "id": "laboratory_mixer",
             "inspection": "laboratory_mixer",
             "radius": 1.7,
-            "outline": ["../../MixerDrumSkin", "../../MixerMotor", "../../MixerControlBox", "../../MixerBandHigh"],
+            "outline": ["../../MixerDrum", "../../MixerMotor", "../../MixerControlBox", "../../MixerBandHigh"],
             "support": ["../../MixerCrossA", "../../MixerCrossB"],
         },
         {

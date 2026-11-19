@@ -268,7 +268,7 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     # Cutaway ceiling: the return/beam and its shadow remain, not a roof across the
     # follow camera's line from the open side of the sectional model.
     # The beam's back sits inside the plaster, not flush with the wall's rear face.
-    b.box("CeilingReturn", p, (0, 3.15, 0.262), (width, 0.25, 0.626),
+    b.box("CeilingReturn", p, (0, 3.15, 0.262), (width-0.034, 0.25, 0.626),
           "blue_hour" if upper else "office_sage", shadow=True)
     b.box("CeilingFascia", p, (0, 3.177, 0.583), (width-0.22, 0.094, 0.036),
           "night_lilac" if upper else "office_ochre")
@@ -402,7 +402,9 @@ def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent,
         z = -run*t
         b.box(f"Tread{i+1}", p, (0, top_y-0.13, z), (width, 0.26, run/steps+0.004),
               tread if i % 4 else accent)
-        b.box(f"Nosing{i+1}", p, (0, top_y-0.022, z+run/steps/2), (width-0.018, 0.043, 0.040), cap)
+        # Set the metal on the riser, not a second surface half a millimetre below
+        # the tread. The top and front planes stay distinct at the grazing camera angle.
+        b.box(f"Nosing{i+1}", p, (0, top_y-0.042, z+run/steps/2+0.014), (width-0.018, 0.043, 0.040), cap)
     for sign, side in ((-1, "West"), (1, "East")):
         guard = b.shell(side + "Guard", p, (sign*(width/2+0.065), rise/2, -run/2),
                         (pitch, 0, 0), ("camera_occluder",))
@@ -487,7 +489,9 @@ def teaching_entrance():
                 b.box(f"{face}Mount{i}", edge, (direction*1.65, y, (z+0.018)*0.5),
                       (0.061, 0.058, abs(z-0.018)+0.015), "brass_rule")
     top = b.shell("Header", ".", groups=("camera_occluder",))
-    b.shape("Lintel", top, (0, 3.4875, 0), (ENTRANCE_WIDTH, 1.695, 0.38))
+    # Match the projecting cap's silhouette: the old slim lintel volume missed
+    # the camera ray while the cap itself still covered the player inside 01.
+    b.shape("Lintel", top, (-0.08, 3.43, 0.03), (ENTRANCE_WIDTH+0.52, 1.58, 0.72))
     b.box("Shoe", top, (0, 2.72, 0), (ENTRANCE_WIDTH, 0.16, 0.40), "entry_glaze", shadow=True)
     for i in range(5):
         x = (i-2)*1.22

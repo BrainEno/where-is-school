@@ -15,6 +15,7 @@ extends SceneTree
 ##
 ## Pass `teaching-wing` to frame the new hub, gallery and hidden door instead, from
 ## the same camera and live scene. The close overview uses only those wings' bounds.
+## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -45,6 +46,7 @@ var _max_spots := 5
 ## Frames are scaled to this width before saving (0 keeps the window size). CI uses a
 ## smaller frame because it publishes the JPEGs inline, through annotations.
 var _width := 0
+var _review_width := 0
 var _quality := 0.9
 var _only := ""
 var _teaching_wing := false
@@ -67,6 +69,8 @@ func _initialize() -> void:
 			_max_spots = maxi(1, int(arg.substr(6)))
 		elif arg.begins_with("width="):
 			_width = maxi(0, int(arg.substr(6)))
+		elif arg.begins_with("review_width="):
+			_review_width = maxi(0, int(arg.substr(13)))
 		elif arg.begins_with("quality="):
 			_quality = clampf(float(arg.substr(8)), 0.3, 1.0)
 		elif arg.begins_with("only="):
@@ -81,6 +85,8 @@ func _initialize() -> void:
 func _run() -> void:
 	var out_dir := "%s/%s" % [OUT_ROOT, _label]
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
+	if _review_width > 0:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir + "/review"))
 	var autoloads := Harness.ensure_state_autoloads(self)
 	if autoloads["game_state"] == null:
 		_finish(["State autoloads are unavailable."])
@@ -266,6 +272,12 @@ func _save(out_dir: String, name: String) -> void:
 		_failures.append("%s could not be saved (error %d)" % [name, err])
 		return
 	print("LOCATION_CAPTURE %s (%dx%d)" % [name, image.get_width(), image.get_height()])
+	if _review_width > 0:
+		if image.get_width() > _review_width:
+			var height := int(round(float(image.get_height()) * _review_width / image.get_width()))
+			image.resize(_review_width, height, Image.INTERPOLATE_LANCZOS)
+		if image.save_jpg("%s/review/%s.jpg" % [out_dir, name], 0.62) != OK:
+			_failures.append("No review copy for %s." % name)
 
 
 func _wait(seconds: float) -> void:

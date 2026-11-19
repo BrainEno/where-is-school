@@ -87,7 +87,7 @@ size = Vector3(0.061, 0.058, 0.152)
 size = Vector3(0.061, 0.058, 0.173)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art16"]
-size = Vector3(6.2, 1.695, 0.38)
+size = Vector3(6.72, 1.58, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art17"]
 size = Vector3(6.2, 0.16, 0.4)
@@ -342,7 +342,7 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="Lintel" type="CollisionShape3D" parent="Header"]
-position = Vector3(0, 3.4875, 0)
+position = Vector3(-0.08, 3.43, 0.03)
 shape = SubResource("BoxShape3D_art16")
 
 [node name="Shoe" type="MeshInstance3D" parent="Header"]

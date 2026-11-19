@@ -68,7 +68,7 @@ build rather than a file nobody can rebuild.
   colours reserved for the sage enamel under the cold fixtures, the running lights and
   the darker amethyst-gray annex.
 - `scenes/locations/laboratory/laboratory.tscn` — the scene: a shell and benches with
-  matching collision boxes, 90 cylinders, 402 cable sections sharing three material-bearing
+  matching collision boxes, 87 cylinders, 421 cable sections sharing three material-bearing
   meshes, and nine inspections. The only exit is in the south wall.
 
 The [folded teaching wing](../teaching_block/README.md) connects the room to the optional
@@ -79,6 +79,7 @@ surface under the annex, and the far corridor starts at the edge of the annex sl
 change in floor colour and lower soffit do the work that the old apparent step did not.
 The major lights now hang from exposed, wall-seated rails. Read the supporting edges in
 sequence: wall → rail → yoke → hangers → fixture; floor → foot → leg → cradle → mixer.
-Bench supports, glassware, shelves and cabinet doors follow the same approach. The room
-stays cold and wipe-clean; the original standalone layout remains documented in
+Bench supports, glassware, shelves and cabinet doors follow the same approach. The
+visible leads start at the fixtures or their service glands, pass around the casework,
+and lie down on the floor. The room stays cold and wipe-clean; the original standalone layout remains documented in
 `docs/IMPLEMENTATION_NOTES_LABORATORY.md`.

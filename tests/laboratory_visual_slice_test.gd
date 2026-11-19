@@ -97,20 +97,24 @@ const INTERACTABLES := {
 	"laboratory_cable_knot": Vector3(1.35, 0.55, 0.35),
 	"laboratory_annex_door": Vector3(1.95, 1.15, -2.85),
 }
-## The machines a cable is allowed to start from, with the cable it belongs to.
+## The physical gland or source mesh where each exposed lead should start.
 const CABLE_ORIGINS := {
-	"CableBank0": Vector3(6.95, 0.72, 1.02),
-	"CableBank1": Vector3(6.95, 0.66, 2.1),
-	"CableBank2": Vector3(6.95, 0.7, 3.2),
-	"CableBank3": Vector3(6.95, 0.76, 4.1),
-	"CableHood": Vector3(1.95, 1.02, -5.42),
-	"CableBoard": Vector3(1.4, 1.2, -5.4),
-	"CableCentrifuge": Vector3(-2.4, 0.95, -3.34),
-	"CableBenchLamp": Vector3(-7.02, 2.17, -1.9),
-	"CableBalance": Vector3(-6.6, 0.95, -3.9),
-	"CableMixer": Vector3(1.48, 1.5, 0.7),
-	"CableCeilingDrop": Vector3(-1.7, 2.98, 0.9),
+	"CableBank0": "BankOutlet0",
+	"CableBank1": "BankOutlet1",
+	"CableBank2": "BankOutlet2",
+	"CableBank3": "BankOutlet3",
+	"CableHood": "HoodConduitPort",
+	"CableBoard": "BoardGland",
+	"CableCentrifuge": "CentrifugeSocket",
+	"CableBenchLamp": "BenchLampShade",
+	"CableBalance": "BalanceSocket",
+	"CableMixer": "MixerControlBox",
+	"CableCeilingDrop": "CeilingTubeD",
 }
+const CABLE_CLEAR_OF := [
+	"WetBenchBody", "WetBenchTop", "InstrumentBenchBody", "InstrumentBenchTop",
+	"HoodServiceBase", "IslandBody", "IslandTop", "PartitionWestA", "PartitionWestB", "PartitionSouth",
+]
 ## The mixer drum, the room's one running machine, and the thing the bake must not cross.
 const MIXER_DRUM := Vector3(0.7, 1.62, 1.0)
 ## Floor points the bake has to reach, and where they are.
@@ -300,11 +304,12 @@ func _check_equipment_contacts() -> void:
 		["WetBenchPlinth", "WetBenchBody"], ["WetBenchBody", "WetBenchTop"],
 		["WetBenchTop", "GlassFlask0"], ["WetBenchTop", "DryingRackTray"],
 		["DryingRackTray", "DryingFlask0"], ["HoodServiceBase", "HoodSideWest"],
+		["WetBenchTop", "BalanceBody"], ["BalanceBody", "BalancePlate"],
 		["GlassCabinetShelf0", "CabinetGlass0"], ["IslandTop", "MicroBase0"],
 		["IslandTop", "CentrifugeBody"], ["InstrumentBenchTop", "IncubatorBody"],
 		["WetBenchShelf", "BenchLampClamp"], ["BenchLampClamp", "BenchLampArm"], ["MixerTray", "MixerFoot0"],
 		["MixerFoot0", "MixerLeg0"], ["MixerCradle", "MixerDrum"],
-		["MixerLid", "MixerMotorShoe"], ["MixerMotorShoe", "MixerMotor"],
+		["MixerDrum", "MixerLid"], ["MixerLid", "MixerMotorShoe"], ["MixerMotorShoe", "MixerMotor"],
 		["AnnexCordStem", "AnnexSoffitSpine"],
 	]
 	for tag in ["A", "B", "C", "D", "E"]:
@@ -405,23 +410,29 @@ func _check_cables() -> void:
 	if runs.size() < 20:
 		_failures.append("Only %d cable runs leave the machines." % runs.size())
 
-	# Every run that is supposed to come out of a machine starts there.
-	var anchored := 0
+	# The meshes share a unit cylinder; use its end, not the transform's centre,
+	# to verify contact. Also test the exposed routes, rather than just counting segments.
+	var obstacle_bounds := {}
+	for part: String in CABLE_CLEAR_OF:
+		obstacle_bounds[part] = _visible_bounds(part).grow(-0.003)
 	for run: String in CABLE_ORIGINS:
 		if not runs.has(run):
 			_failures.append("The cable from '%s' is missing." % run)
 			continue
-		var first: MeshInstance3D = (runs[run] as Array)[0]
-		var origin: Vector3 = CABLE_ORIGINS[run]
-		if first.global_position.distance_to(origin) > 0.45:
-			_failures.append(
-				"'%s' starts %.2f m from the machine it belongs to."
-				% [run, first.global_position.distance_to(origin)]
-			)
-		else:
-			anchored += 1
-	if anchored < CABLE_ORIGINS.size():
-		_failures.append("Only %d of %d machine cables start at their machine." % [anchored, CABLE_ORIGINS.size()])
+		var segments: Array = runs[run]
+		var first := segments[0] as MeshInstance3D
+		var source: String = CABLE_ORIGINS[run]
+		var bounds := _visible_bounds(source)
+		if not bounds.has_volume() or not bounds.grow(0.003).has_point(first.to_global(Vector3(0, -0.5, 0))):
+			_failures.append("'%s' no longer begins at %s." % [run, source])
+		for obstacle: String in obstacle_bounds:
+			var box: AABB = obstacle_bounds[obstacle]
+			for piece: MeshInstance3D in segments:
+				var start := piece.to_global(Vector3(0, -0.5, 0))
+				var finish := piece.to_global(Vector3(0, 0.5, 0))
+				if box.intersects_segment(start, finish) != null:
+					_failures.append("'%s' clips through %s." % [run, obstacle])
+					break
 
 	# The line the player can follow: one bundle leaves the working room through the door.
 	var through := false

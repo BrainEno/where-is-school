@@ -21,7 +21,8 @@ three different settings rather than three copies of the same corridor:
 - **01 / municipal lobby:** a rose enamel wall holds a broken directory, not false doors.
   Across from it is a 6.2 m composition of petrol enamel, glass sidelights, split transoms
   and a 2.66 m opening. Ivory traces cross into the forecourt while amber turns toward
-  the laboratory. The same assembly sits in the recessed school face on the street.
+  the laboratory. The same assembly sits in the recessed school face on the street. The
+  lintel follows the projecting cap so the existing camera fader can clear the view.
 - **02 / public office after hours:** sage beams and ochre registration marks shrink down
   the run. The waiting register sits away from the original classroom threshold.
 - **03 / blue-hour ledger:** indigo rails, lavender index marks, and an overscale timetable
@@ -47,7 +48,8 @@ xvfb-run -a --server-args='-screen 0 1600x900x24' godot --path . --resolution 16
 ```
 
 The `corridor (after)` job in Location art capture publishes eight teaching-wing shots
-with the rest of its corridor frames. To try it, leave through the grey front door after
+with the rest of its corridor frames. Full-size shots and the camera index are in the
+job artifact; compact copies are published inline. To try it, leave through the grey front door after
 class, pass the white door and take the stair hall on the same side. Try each branch
 with movement controls and floor clicks. On 03, move to the side to pass a following Q.
 On 01, follow the copper line around the corner into the laboratory and use its door to
