@@ -647,7 +647,7 @@ location_id = &"restroom"
 environment = SubResource("RoomEnvironment")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-53, -37, 0)
+rotation_degrees = Vector3(-53, -4, 0)
 light_color = Color(0.941, 0.902, 0.812, 1)
 light_energy = 0.63
 shadow_enabled = true
@@ -2275,7 +2275,7 @@ mesh = SubResource("BoxMesh_art78")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Closed" type="StaticBody3D" parent="Cubicles" groups=["camera_occluder"]]
+[node name="Closed" type="StaticBody3D" parent="Cubicles"]
 position = Vector3(2.79, 0.97, -0.986)
 rotation_degrees = Vector3(0, 0, 0)
 collision_layer = 1

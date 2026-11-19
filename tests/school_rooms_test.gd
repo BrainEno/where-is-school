@@ -1,6 +1,6 @@
 extends SceneTree
-## Start on the 02 biology landing, then use the real stairs, two doors each way,
-## ordinary inspections, camera and a disk save made inside an optional room.
+## Start on the 02 biology landing, then use the real stairs, E and mouse across
+## both thresholds, ordinary inspections and a disk save made inside each room.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
@@ -99,6 +99,8 @@ func _visit_office() -> bool:
 	_check_threshold(hall_scene, hall_basis)
 	_check.expect(_state.get_flag(StoryFlags.OBJECTIVE_KEY) == OBJECTIVE, "The office changed the objective.")
 	_check.expect(_host.get_current().find_children("*", "NpcActor", true, false).is_empty(), "The office introduced an actor.")
+	if not await _empty_roundtrip(OFFICE, &"FromStaffOffice", hall_stance, true):
+		return false
 	Harness.stage = "office binder, trays and rail"
 	if not await _inspect(ROTA, ROTA_STANCE, true, "first", "binder"):
 		return false
@@ -142,6 +144,8 @@ func _visit_restroom() -> void:
 	_check_threshold(hall_scene, hall_basis)
 	_check.expect(_state.get_flag(StoryFlags.OBJECTIVE_KEY) == OBJECTIVE, "The restroom changed the objective.")
 	_check.expect(_host.get_current().find_children("*", "NpcActor", true, false).is_empty(), "The restroom is not an unstaffed room.")
+	if not await _empty_roundtrip(RESTROOM, &"FromRestroom", hall_stance, false):
+		return
 	Harness.stage = "restroom basins, cubicle and grate"
 	if not await _inspect(BASINS, BASINS_STANCE, true, "first", "levers"):
 		return
@@ -161,6 +165,17 @@ func _visit_restroom() -> void:
 		_check.expect(_knowledge.get_entries().size() == 3, "Unvisited or repeat props wrote extra notes.")
 
 
+## Leave before reading, then enter again. Use the opposite controls from the
+## first ingress and final return so both E and mouse exercise each door face.
+func _empty_roundtrip(id: StringName, hall_spawn: StringName, hall_stance: Vector3, mouse_out: bool) -> bool:
+	var inside := _host.get_current().get_spawn(&"FromCorridor").global_position
+	if not await _visit(StringName("%s_to_corridor" % id), inside, &"corridor", hall_spawn, mouse_out):
+		return false
+	_check.expect(_player.global_position.distance_to(hall_stance) < .14,
+		"Leaving %s unread did not return to its own threshold." % id)
+	return await _visit(StringName("to_%s" % id), hall_stance, id, &"FromCorridor", not mouse_out)
+
+
 func _check_threshold(path: String, basis: Basis) -> void:
 	var current := _host.get_current()
 	var door := current.get_node(^"Door") as Node3D
@@ -174,12 +189,16 @@ func _check_threshold(path: String, basis: Basis) -> void:
 	_check.expect(_player.global_position.distance_to(spawn.global_position) < .14
 		and local_feet.z < -1.0 and heading > .96,
 		"%s arrives at %s in door coordinates, inward dot %.3f." % [current.location_id, local_feet, heading])
-	# Lift just clear of floor recovery so the horizontal sweep identifies the leaf,
-	# not the depenetration hit at the first millimetre of the motion.
-	var from := _player.global_transform
-	from.origin.y += .06
-	var hit := KinematicCollision3D.new()
-	var blocked := _player.test_move(from, door.global_basis.z * 2.4, hit)
+	# Isolate the static leaf with the real player capsule. The companion can
+	# stand between it and the player after a swap, and floor recovery is not
+	# the threshold hit we want to measure. Neither actor is moved by the sweep.
+	var params := PhysicsTestMotionParameters3D.new()
+	params.from = _player.global_transform.translated(Vector3.UP * .06)
+	params.motion = door.global_basis.z * 2.4
+	var companion := _main.get_node(^"Companion") as PhysicsBody3D
+	params.exclude_bodies = [companion.get_rid()]
+	var hit := PhysicsTestMotionResult3D.new()
+	var blocked := PhysicsServer3D.body_test_motion(_player.get_rid(), params, hit)
 	_check.expect(blocked and hit.get_collider() == door.get_node(^"Panel"),
 		"%s leaf sweep: blocked=%s collider=%s." % [current.location_id, blocked, hit.get_collider()])
 
@@ -288,8 +307,10 @@ func _inspect(id: StringName, stance: Vector3, mouse: bool, variant: String, wor
 	if _check.expect(await Harness.wait_until(func() -> bool:
 		return rig.get_focus_subject() == target and rig.get_focus_weight() > .97, 4.0),
 		"The shot did not hold on %s." % id):
+		_check.expect(_interaction.is_seen_by_camera(target), "%s's inspection is hidden by another body." % id)
 		var view := _camera.get_viewport().get_visible_rect().grow(-12.0)
 		for mesh: GeometryInstance3D in target.get_outline_meshes():
+			_check.expect(mesh.transparency < .05, "%s's inspection fades its own subject %s." % [id, mesh.name])
 			for corner in 8:
 				var world := mesh.to_global(mesh.get_aabb().get_endpoint(corner))
 				if not _check.expect(not _camera.is_position_behind(world) and view.has_point(_camera.unproject_position(world)),

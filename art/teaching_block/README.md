@@ -45,7 +45,10 @@ existing shader, font and room-tone resources. No downloads or new runtime depen
 `tools/build_school_rooms.py` owns the two room scenes and the two-sided leaves;
 `tools/build_teaching_block.py` installs the hall faces and `corridor.tscn` owns their exits
 and return markers. The lab keeps its own builder. All three rooms remain optional, with
-no arrival dialogue or new objective. B does not appear in the office.
+no arrival dialogue or new objective. B does not appear in the office. The key board is
+mounted independently of the fading west wall, and the closed cubicle door keeps its
+latch visible. The restroom light runs along the aisle so the player's shadow does not
+hide the grout repair beside the grate at the review stance.
 
 ## Reproduce
 

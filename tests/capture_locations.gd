@@ -18,11 +18,8 @@ extends SceneTree
 ## Pass `return-route` for matched gameplay-camera details of the street, courtyard,
 ## alley and yard. The coordinates are valid on both sides of the art change.
 ## `return-board-focus` adds the board's authored focus on the current scene.
-## `school-details` selects matched hall and lab stances or the two new rooms. Pass
-## `school-focus` as well to record details with the game rig's authored CameraShots.
-## `school-details` uses matched corridor and lab stances; on the new interiors it
-## records both the normal rig and the authored detail shot. `school-focus` also
-## captures the finished wet-bench shot (only the updated laboratory has it).
+## `school-details` uses matched hall and lab stances or the two new interiors.
+## Add `school-focus` for authored CameraShots, including the updated wet bench.
 ## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
@@ -304,7 +301,9 @@ func _capture_focus(current: LocationRoot, out_dir: String, id: StringName, feet
 	if not await Harness.wait_until(func() -> bool: return rig.get_focus_weight() > 0.97, 5.0):
 		_failures.append("%s gameplay shot never settled." % id)
 	elif not _subject_fits(subject, rig.camera):
-		_failures.append("%s gameplay shot cuts off part of the subject." % id)
+		_failures.append("%s gameplay shot fades or cuts off part of the subject." % id)
+	elif not (_player.get_node(^"InteractionController") as InteractionController).is_seen_by_camera(subject):
+		_failures.append("%s gameplay shot is hidden by another body." % id)
 	else:
 		_save(out_dir, name)
 		_lines.append("- `%s.jpg` uses the CameraShot on `%s`." % [name, id])
@@ -314,6 +313,8 @@ func _capture_focus(current: LocationRoot, out_dir: String, id: StringName, feet
 func _subject_fits(subject: Interactable, camera: Camera3D) -> bool:
 	var view := camera.get_viewport().get_visible_rect().grow(-12.0)
 	for mesh: GeometryInstance3D in subject.get_outline_meshes():
+		if mesh.transparency > .05:
+			return false
 		var bounds := mesh.get_aabb()
 		for corner in 8:
 			var point := mesh.global_transform * bounds.get_endpoint(corner)

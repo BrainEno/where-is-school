@@ -91,7 +91,7 @@ shader_parameter/style_level = 2
     b.local_mats[name] = b.subs.pop()
 
 
-def start_room(role, pigments, ambient, backdrop, light, *, sun=0.77):
+def start_room(role, pigments, ambient, backdrop, light, *, sun=0.77, sun_yaw=-37):
     b = FixtureBuild(ROLES[role][0], pigments)
     script = b.bind("location", "res://scripts/world/location_root.gd", "Script")
     b.nodes[0] += f'script = {script}\nlocation_id = &"{role}"\n'
@@ -105,7 +105,7 @@ tonemap_mode = 2
 tonemap_exposure = 0.76
 ''')
     b.node("WorldEnvironment", ".", "WorldEnvironment", environment='SubResource("RoomEnvironment")')
-    b.node("Sun", ".", "DirectionalLight3D", rotation_degrees=vec3((-53, -37, 0)),
+    b.node("Sun", ".", "DirectionalLight3D", rotation_degrees=vec3((-53, sun_yaw, 0)),
            light_color=srgb(light), light_energy=sun, shadow_enabled="true", directional_shadow_max_distance=22)
     nav = b.bind("navigation", "res://scripts/world/location_navigation.gd", "Script")
     b.node("Navigation", ".", "NavigationRegion3D", script=nav)
@@ -297,8 +297,10 @@ def office():
         if not i:
             for j in range(3):
                 b.box(f"Slip{j}", name, (-.037+.013*j,.05+.012*j,-.06), (.52,.014,.22), "chaff", rot=(0, j*3, 0))
-    b.node("Keys", "WallWest0", position=vec3((0.25, 1.50, .122)))
-    key = "WallWest0/Keys"
+    # Mount the board to the room, not the fade group for the west wall.
+    # The rig's facing ray reaches past the wall while reading this board.
+    key = "Keys"
+    b.node(key, ".", position=vec3((-OFFICE_WIDTH/2+.122, 1.50, -.25)), rotation_degrees=vec3((0,90,0)))
     b.box("Back", key, (0,0,0), (1.47,.53,.069), "maple", shadow=True)
     b.box("Rail", key, (0,.116,.047), (1.34,.112,.061), "edge")
     for i in range(6):
@@ -388,7 +390,9 @@ def stalls(b):
         q = solid(b, name, p, (x,.944,-1.979), (.093,1.888,1.99), "stall", fade=True)
         b.box("Cap", q, (0,.958,0), (.117,.066,2.05), "edge")
         b.box("Foot", q, (0,-.902,.898), (.164,.084,.167), "steel")
-    closed = solid(b, "Closed", p, (2.79,.970,-.986), (2.34,1.94,.12), "stall", fade=True)
+    # No walkable approach behind this leaf. Fading it when the player looks
+    # toward the bolt would erase the very thing that the shot is about.
+    closed = solid(b, "Closed", p, (2.79,.970,-.986), (2.34,1.94,.12), "stall")
     b.box("Jamb", closed, (-1.09,0,.077), (.13,1.94,.08), "edge")
     b.box("Post", closed, (1.102,0,.077), (.132,1.94,.09), "edge")
     b.box("FittedLeaf", closed, (0,.029,.080), (1.57,1.70,.062), "lower")
@@ -428,7 +432,8 @@ def restroom():
               "soap": (176, 127, 87), "valve": (145, 87, 65), "stall": (82, 119, 132),
               "paper": (231, 223, 192), "sky": (177, 198, 195), "sky_low": (149, 168, 185),
               "mirror": (89, 119, 139), "mirror_light": (118, 153, 175), "repair": (167, 140, 101)}
-    b = start_room("restroom", colors, (169,195,206), (63,79,98), (240,230,207), sun=.63)
+    # Along the aisle: a player reading beside the grate should not shade it.
+    b = start_room("restroom", colors, (169,195,206), (63,79,98), (240,230,207), sun=.63, sun_yaw=-4)
     painted_field(b, "plaster", ((191,200,191), (164,178,183), (222,214,186)), 1.05, .21)
     painted_field(b, "floor", ((125,146,139), (94,119,124), (147,158,140)), .83, .31)
     walls(b, (WASH_WIDTH,WASH_DEPTH), "restroom", WASH_DOOR_Z, door_on_east=True)

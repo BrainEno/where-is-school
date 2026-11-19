@@ -1574,46 +1574,47 @@ pixel_size = 0.00128
 outline_size = 0
 modulate = Color(0.914, 0.824, 0.706, 1)
 
-[node name="Keys" type="Node3D" parent="WallWest0"]
-position = Vector3(0.25, 1.5, 0.122)
+[node name="Keys" type="Node3D" parent="."]
+position = Vector3(-4.228, 1.5, -0.25)
+rotation_degrees = Vector3(0, 90, 0)
 
-[node name="Back" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Back" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0, 0, 0)
 mesh = SubResource("BoxMesh_art77")
 material_override = SubResource("Mat_maple")
 
-[node name="Rail" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Rail" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0, 0.116, 0.047)
 mesh = SubResource("BoxMesh_art78")
 material_override = SubResource("Mat_edge")
 cast_shadow = 0
 
-[node name="Hook0" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook0" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.53, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Loop0" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Loop0" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.53, 0.07, 0.104)
 mesh = SubResource("BoxMesh_art80")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Tag0" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Tag0" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.53, -0.013, 0.091)
 mesh = SubResource("BoxMesh_art81")
 material_override = SubResource("Mat_paper")
 rotation_degrees = Vector3(0, 0, -9)
 cast_shadow = 0
 
-[node name="Key0" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Key0" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.53, -0.087, 0.111)
 mesh = SubResource("BoxMesh_art82")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot0" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot0" type="Label3D" parent="Keys"]
 position = Vector3(-0.53, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "1"
@@ -1623,32 +1624,32 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
-[node name="Hook1" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook1" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.318, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Loop1" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Loop1" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.318, 0.07, 0.104)
 mesh = SubResource("BoxMesh_art80")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Tag1" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Tag1" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.318, -0.013, 0.091)
 mesh = SubResource("BoxMesh_art81")
 material_override = SubResource("Mat_ochre")
 rotation_degrees = Vector3(0, 0, -6)
 cast_shadow = 0
 
-[node name="Key1" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Key1" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.318, -0.087, 0.111)
 mesh = SubResource("BoxMesh_art82")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot1" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot1" type="Label3D" parent="Keys"]
 position = Vector3(-0.318, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "2"
@@ -1658,32 +1659,32 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
-[node name="Hook2" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook2" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.106, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Loop2" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Loop2" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.106, 0.07, 0.104)
 mesh = SubResource("BoxMesh_art80")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Tag2" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Tag2" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.106, -0.013, 0.091)
 mesh = SubResource("BoxMesh_art81")
 material_override = SubResource("Mat_paper")
 rotation_degrees = Vector3(0, 0, -3)
 cast_shadow = 0
 
-[node name="Key2" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Key2" type="MeshInstance3D" parent="Keys"]
 position = Vector3(-0.106, -0.087, 0.111)
 mesh = SubResource("BoxMesh_art82")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot2" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot2" type="Label3D" parent="Keys"]
 position = Vector3(-0.106, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "3"
@@ -1693,13 +1694,13 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
-[node name="Hook3" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook3" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.106, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot3" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot3" type="Label3D" parent="Keys"]
 position = Vector3(0.106, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "4"
@@ -1709,32 +1710,32 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
-[node name="Hook4" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook4" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.318, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Loop4" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Loop4" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.318, 0.07, 0.104)
 mesh = SubResource("BoxMesh_art80")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Tag4" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Tag4" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.318, -0.013, 0.091)
 mesh = SubResource("BoxMesh_art81")
 material_override = SubResource("Mat_paper")
 rotation_degrees = Vector3(0, 0, 3)
 cast_shadow = 0
 
-[node name="Key4" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Key4" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.318, -0.087, 0.111)
 mesh = SubResource("BoxMesh_art82")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot4" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot4" type="Label3D" parent="Keys"]
 position = Vector3(0.318, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "5"
@@ -1744,32 +1745,32 @@ pixel_size = 0.00112
 outline_size = 0
 modulate = Color(0.247, 0.227, 0.239, 1)
 
-[node name="Hook5" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Hook5" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.53, 0.109, 0.094)
 mesh = SubResource("BoxMesh_art79")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Loop5" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Loop5" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.53, 0.07, 0.104)
 mesh = SubResource("BoxMesh_art80")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Tag5" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Tag5" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.53, -0.013, 0.091)
 mesh = SubResource("BoxMesh_art81")
 material_override = SubResource("Mat_paper")
 rotation_degrees = Vector3(0, 0, 6)
 cast_shadow = 0
 
-[node name="Key5" type="MeshInstance3D" parent="WallWest0/Keys"]
+[node name="Key5" type="MeshInstance3D" parent="Keys"]
 position = Vector3(0.53, -0.087, 0.111)
 mesh = SubResource("BoxMesh_art82")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="Slot5" type="Label3D" parent="WallWest0/Keys"]
+[node name="Slot5" type="Label3D" parent="Keys"]
 position = Vector3(0.53, 0.213, 0.044)
 rotation_degrees = Vector3(0, 0, 0)
 text = "6"
@@ -1936,6 +1937,6 @@ position = Vector3(-4, 1.45, -0.25)
 interact_id = &"staff_office_keys"
 inspection_id = &"staff_office_keys"
 radius = 1.29
-outline_paths = PackedStringArray("../../WallWest0/Keys/Back", "../../WallWest0/Keys/Rail")
+outline_paths = PackedStringArray("../../Keys/Back", "../../Keys/Rail")
 support_paths = PackedStringArray("../../WallWest0")
 camera_shot = SubResource("Shot_KeysLook")
