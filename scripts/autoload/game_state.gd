@@ -1,9 +1,9 @@
 extends Node
 ## Runtime story flags shared by the active game session.
 ##
-## This node holds them and emits changes; it does not know about files. `Save`
-## (autoload `SaveManager`) captures `get_snapshot()` and restores it through
-## `replace_snapshot()`; the encoding that keeps an `int` an `int` lives in
+## This node holds them and emits changes; it does not know about files. The `Save`
+## autoload, whose script is `save_manager.gd`, captures `get_snapshot()` and restores
+## it through `replace_snapshot()`; the encoding that keeps an `int` an `int` lives in
 ## `SaveCodec` (ADR 0005).
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
