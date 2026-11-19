@@ -24,7 +24,7 @@ comes from the manuscript.
 | Location id | Scene | What it is now | Status |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | Two walkable storeys with turning galleries, a straight stair and an offset stair forming a loop, five paired-door classrooms per storey and real court geometry through the glass. The fire stair descends to `playground`; the old gate still goes to `street`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys; glass street entrance and optional laboratory on 01, biology and the old street exit on 02, a loop to the upper gallery on 03. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The road runs off its north end into the laid-flat sky; a blank sign stands out there. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
@@ -48,7 +48,8 @@ flowchart LR
   classroom -- "classroom_door → FromClassroom" --> corridor
   corridor -- "back_to_classroom → FromCorridor" --> classroom
   corridor -- "school_gate → FromCorridor" --> street
-  street -- "street_back_to_school → FromStreet" --> corridor
+  corridor -- "teaching_entrance_to_street → FromCorridor" --> street
+  street -- "street_back_to_school → FromTeachingEntrance" --> corridor
   corridor -- "to_schoolyard → FromCorridor" --> playground
   playground -- "pg_to_corridor → FromSchoolyard" --> corridor
   street -- "street_to_residential → FromStreet" --> residential
@@ -86,7 +87,7 @@ is the same yard behind the corridor.
 | Unused spawn `playground/FromSchool` | No exit targets it; a near-duplicate of `FromCorridor` | 建议新增: remove, or keep for a future school-interior door into the yard |
 | Spawn `residential/FromStair` on a look-only landing | The west stair goes nowhere yet | 建议新增: the stair is the natural hook for "upstairs flats" (§6); until then keep it unused |
 | Prompt mismatch: alley → courtyard says "Go back to the street" | `prompt.back_to_street` reused | 建议新增: a `prompt.back_to_courtyard` key (both locales) |
-| Prompt mismatch: street → corridor says "Return to classroom" | `prompt.back_to_classroom` reused | 建议新增: `prompt.back_into_school` |
+| School return | The street prompt uses `prompt.back_inside`. The return marker is outside the 01 glass entrance. | 已实现 |
 | Prompt: courtyard → alley says "Keep walking" (`prompt.milestone`) | The key name dates from when the alley was the end | 建议新增: rename the key; text can stay |
 | Objectives are ambient ("Nothing asks you to be anywhere") | Intended tone; no wayfinding role | Keep; 尚待作者决定 whether any location ever gets a directive objective |
 | Corridor and street are one-sided stages | The camera never sees the east side of the street or the west side of the walkway | Accepted for an isometric follow camera; new rooms should be authored for the same view |
@@ -197,7 +198,7 @@ flowchart LR
 |---|---|---|
 | 0 | Stage pass on corridor, street, courtyard, alley; yard distance additions; `tests/location_art_test.gd`; this plan | 已实现 (this pull request) |
 | 1 | Prompt keys, unused spawns, CI registration of the new test | 建议新增 |
-| 2 | Stairwell and upper corridor | 已实现：两层、两条楼梯，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
+| 2 | Stairwell and upper corridor | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | First candidate room | 已确定但未实现 (candidates); choice 尚待作者决定 |
 | 4 | First periphery space | 已确定但未实现 (candidates); choice 尚待作者决定 |
 | 5 | Unstable links; elliptical building | 建议新增 / 尚待作者决定 |

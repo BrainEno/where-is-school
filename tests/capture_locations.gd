@@ -15,6 +15,7 @@ extends SceneTree
 ##
 ## Pass `teaching-wing` to frame the new hub, gallery and hidden door instead, from
 ## the same camera and live scene. The close overview uses only those wings' bounds.
+## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -29,10 +30,14 @@ const LOCATIONS := [
 	["playground", "res://scenes/locations/playground/playground.tscn"],
 ]
 const TEACHING_SPOTS := {
-	"rear_junction": ^"TeachingBlock/RearStair/Junction",
-	"half_landing": ^"TeachingBlock/RearStair/DownLanding",
-	"arcade": ^"TeachingBlock/GroundFloor/Arcade",
-	"laboratory_recess": ^"SpawnPoints/FromLaboratory",
+	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
+	"directory_01": [^"TeachingBlock/GroundFloor/Gallery", Vector3(-1.24, 0, -0.30)],
+	"waiting_register_02": [^"TeachingBlock/LowerFloor/WaitingRegister", Vector3(2.38, 0, 0.75)],
+	# Keep the follow camera on the hall side, so it sees the ruled face of the end panel.
+	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-4.90, 0, 0.42)],
+	"rear_junction": [^"TeachingBlock/RearStair/Junction", Vector3.ZERO],
+	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
+	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],
 }
 const MIN_SPACING := 4.5
 ## The wide view looks along the game camera's own bearing, from further away.
@@ -42,6 +47,7 @@ var _max_spots := 5
 ## Frames are scaled to this width before saving (0 keeps the window size). CI uses a
 ## smaller frame because it publishes the JPEGs inline, through annotations.
 var _width := 0
+var _review_width := 0
 var _quality := 0.9
 var _only := ""
 var _teaching_wing := false
@@ -64,6 +70,8 @@ func _initialize() -> void:
 			_max_spots = maxi(1, int(arg.substr(6)))
 		elif arg.begins_with("width="):
 			_width = maxi(0, int(arg.substr(6)))
+		elif arg.begins_with("review_width="):
+			_review_width = maxi(0, int(arg.substr(13)))
 		elif arg.begins_with("quality="):
 			_quality = clampf(float(arg.substr(8)), 0.3, 1.0)
 		elif arg.begins_with("only="):
@@ -78,6 +86,8 @@ func _initialize() -> void:
 func _run() -> void:
 	var out_dir := "%s/%s" % [OUT_ROOT, _label]
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
+	if _review_width > 0:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir + "/review"))
 	var autoloads := Harness.ensure_state_autoloads(self)
 	if autoloads["game_state"] == null:
 		_finish(["State autoloads are unavailable."])
@@ -152,11 +162,12 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 func _teaching_spots(current: LocationRoot) -> Array:
 	var spots: Array = []
 	for key: String in TEACHING_SPOTS:
-		var marker := current.get_node_or_null(TEACHING_SPOTS[key]) as Node3D
+		var subject: Array = TEACHING_SPOTS[key]
+		var marker := current.get_node_or_null(subject[0]) as Node3D
 		if marker == null:
 			_failures.append("No teaching wing position for %s." % key)
 			continue
-		spots.append([key, marker.global_position + Vector3.UP * 0.05])
+		spots.append([key, marker.global_position + (subject[1] as Vector3) + Vector3.UP * 0.05])
 	return spots
 
 
@@ -262,6 +273,12 @@ func _save(out_dir: String, name: String) -> void:
 		_failures.append("%s could not be saved (error %d)" % [name, err])
 		return
 	print("LOCATION_CAPTURE %s (%dx%d)" % [name, image.get_width(), image.get_height()])
+	if _review_width > 0:
+		if image.get_width() > _review_width:
+			var height := int(round(float(image.get_height()) * _review_width / image.get_width()))
+			image.resize(_review_width, height, Image.INTERPOLATE_LANCZOS)
+		if image.save_jpg("%s/review/%s.jpg" % [out_dir, name], 0.62) != OK:
+			_failures.append("No review copy for %s." % name)
 
 
 func _wait(seconds: float) -> void:

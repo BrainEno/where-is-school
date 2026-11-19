@@ -91,7 +91,7 @@ jobs:
         run: |
           set +e -uo pipefail
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_locations.gd -- \
             "label=${SIDE}" "only=${LOCATION}" spots=3 width=800 quality=0.7 \
             > "${RUNNER_TEMP}/capture.log" 2>&1
@@ -107,31 +107,36 @@ jobs:
           fi
           mkdir -p "${RUNNER_TEMP}/frames"
           cp "${out}/${LOCATION}"_*.jpg "${RUNNER_TEMP}/frames/"
+          inline="${RUNNER_TEMP}/frames"
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
-              godot --path . --resolution 1600x900 --rendering-driver opengl3 \
+              godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
               --script res://tests/capture_locations.gd -- \
-              label=teaching-wing teaching-wing width=800 quality=0.68 \
+              label=teaching-wing teaching-wing width=960 quality=0.84 review_width=400 \
               > "${RUNNER_TEMP}/teaching-wing.log" 2>&1
             wing_code=$?
             shots=$(find "$wing" -maxdepth 1 -name 'teaching_wing_*.jpg' 2>/dev/null | wc -l)
-            if [ "$wing_code" -ne 0 ] || [ "$shots" -ne 5 ] || \
-                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:' "${RUNNER_TEMP}/teaching-wing.log" || \
+            if [ "$wing_code" -ne 0 ] || [ "$shots" -ne 8 ] || \
+                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/teaching-wing.log" || \
                 ! grep -q '^PASS:' "${RUNNER_TEMP}/teaching-wing.log"; then
               tail -n 40 "${RUNNER_TEMP}/teaching-wing.log"
-              echo "::error title=teaching wing capture::wrote ${shots}/5 frames, exit ${wing_code}"
+              echo "::error title=teaching wing capture::wrote ${shots}/8 frames, exit ${wing_code}"
               exit 1
             fi
             cp "$wing"/*.jpg "${RUNNER_TEMP}/frames/"
+            cp "$wing/LOCATIONS.md" "${RUNNER_TEMP}/frames/teaching-wing-index.md"
             cp "${RUNNER_TEMP}/teaching-wing.log" "${RUNNER_TEMP}/frames/"
+            inline="$wing/review"
+            echo "::notice title=teaching wing capture::${shots} full-size frames, including the close views of 01, 02 and 03"
           fi
-          # The wide view first, then the spots: if the annotation budget runs out, the
-          # frame that shows the whole composition is the one that survives.
+          # Keep full-size frames in the artifact and use the smaller teaching-wing
+          # copies to fit all eight views in the inline annotation budget.
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
-          for file in $(find "${RUNNER_TEMP}/frames" -maxdepth 1 -name '*.jpg' -printf '%f\n' | sort -r); do
-            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+          for path in "$inline"/*.jpg; do
+            file=${path##*/}
+            data=$(base64 -w0 "$path")
             parts=$(( (${#data} + 3999) / 4000 ))
             for i in $(seq 1 "${parts}"); do
               echo "${SIDE}/${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"

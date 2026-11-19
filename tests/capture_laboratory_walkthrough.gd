@@ -104,6 +104,15 @@ func _run() -> void:
 	for _step in int(round(FINAL_HOLD * FPS)):
 		await _frames(1)
 		recorded += 1
+	# Movie Maker mixes on rendered frames, not on the audio thread. Stop the
+	# room and autoload players (including Music), then let the mix and audio
+	# update run before tearing down the tree.
+	var players: Array[Node] = []
+	for type: String in ["AudioStreamPlayer", "AudioStreamPlayer2D", "AudioStreamPlayer3D"]:
+		players.append_array(root.find_children("*", type, true, false))
+	if AudioRelease.stop_all(players) > 0:
+		await _frames(2)
+		recorded += 2
 	print("LABORATORY_WALKTHROUGH %d frame(s) at %.0f fps" % [recorded, FPS])
 	Harness.finish(self, [], "the walkthrough was rendered")
 

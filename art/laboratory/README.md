@@ -65,14 +65,21 @@ build rather than a file nobody can rebuild.
   ART_BIBLE rules for a location's own colour system: matte toon surfaces
   (`diffuse_mode = 3`, `specular_mode = 2`, `roughness = 1.0`), a 6 mm ink contour borrowed
   read-only from `scenes/environment/props/playground_art/materials/ink_outline.tres`, and
-  the room's one chromatic events reserved for the lamps, the two running lights and the
-  annex.
+  colours reserved for the sage enamel under the cold fixtures, the running lights and
+  the darker amethyst-gray annex.
 - `scenes/locations/laboratory/laboratory.tscn` — the scene: a shell and benches with
-  matching collision boxes, 89 cylinders, 401 cable segments and nine inspections. There
-  is now also an exit in the south wall.
+  matching collision boxes, 87 cylinders, 421 cable sections sharing three material-bearing
+  meshes, and nine inspections. The only exit is in the south wall.
 
 The [folded teaching wing](../teaching_block/README.md) connects the room to the optional
 01 recess through two matching sides of `laboratory_entry_door.tscn`. The separate `Entry`
 marker remains for the room's own captures; play arrives at `FromCorridor` beside the door.
-The cold palette, working equipment and annex are unchanged. The original standalone build
-and its layout decisions are recorded in `docs/IMPLEMENTATION_NOTES_LABORATORY.md`.
+The main and annex floors meet at the partition on one walking datum. There is no duplicate
+surface under the annex, and the far corridor starts at the edge of the annex slab. The
+change in floor colour and lower soffit do the work that the old apparent step did not.
+The major lights now hang from exposed, wall-seated rails. Read the supporting edges in
+sequence: wall → rail → yoke → hangers → fixture; floor → foot → leg → cradle → mixer.
+Bench supports, glassware, shelves and cabinet doors follow the same approach. The
+visible leads start at the fixtures or their service glands, pass around the casework,
+and lie down on the floor. The room stays cold and wipe-clean; the original standalone layout remains documented in
+`docs/IMPLEMENTATION_NOTES_LABORATORY.md`.

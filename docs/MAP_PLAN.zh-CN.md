@@ -18,7 +18,7 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 | 地点 id | 场景 | 现状 | 状态 |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | 起点（`PlayerStart`）。手绘风格教室；醒来与自习。 | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | 两层可步行的转角长廊。一条直梯和一条错位楼梯组成环路，每层五间前后双门教室，能透过另一侧的玻璃看操场。下消防楼梯去操场，原校门仍通向街道。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有临街玻璃入口与可选实验室；02 保留生物教室和旧街道出口；03 的上层长廊接成环。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | 西侧是带铁栅窗的学校外墙，路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。道路北端直接伸进铺平的天空，那里立着一块空白路牌。 | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | 三栋颜色都有点“不对”的楼（黄、玫瑰、灰绿）围成的院子；滑梯、花坛、晾衣绳、长椅、椅子、绿色动物；粉笔跳房子，其中一格被画了两次；楼顶有水箱和一根歪的天线；北楼有一扇不在窗格网格上的长条亮窗。 | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 两堵冷蓝色、带雨痕的墙夹着 7 米宽的巷子；西墙越过压顶继续往上，并向巷内倾斜；有一个带检修门的凹口；装着椅子的垃圾箱；通往操场的门，门后是光；近处尺度不对的剪影屋顶。 | 已实现 |
@@ -41,7 +41,8 @@ flowchart LR
   classroom -- "classroom_door → FromClassroom" --> corridor
   corridor -- "back_to_classroom → FromCorridor" --> classroom
   corridor -- "school_gate → FromCorridor" --> street
-  street -- "street_back_to_school → FromStreet" --> corridor
+  corridor -- "teaching_entrance_to_street → FromCorridor" --> street
+  street -- "street_back_to_school → FromTeachingEntrance" --> corridor
   corridor -- "to_schoolyard → FromCorridor" --> playground
   playground -- "pg_to_corridor → FromSchoolyard" --> corridor
   street -- "street_to_residential → FromStreet" --> residential
@@ -77,11 +78,11 @@ flowchart LR
 | 未使用的出生点 `playground/FromSchool` | 没有出口指向它；与 `FromCorridor` 几乎重复 | 建议新增：删除，或留给将来从教学楼内部进入操场的门 |
 | `residential/FromStair` 在一个只能看的平台上 | 西侧楼梯目前不通往任何地方 | 建议新增：这段楼梯是“楼上住户”（第 6 节）的天然入口；在那之前保持不用 |
 | 提示不符：小巷 → 院子显示“回到街上” | 复用了 `prompt.back_to_street` | 建议新增：`prompt.back_to_courtyard`（两种语言） |
-| 提示不符：街道 → 走廊显示“回教室” | 复用了 `prompt.back_to_classroom` | 建议新增：`prompt.back_into_school` |
+| 从街道回到学校 | 提示使用 `prompt.back_inside`；回程出生点在 01 玻璃门外。 | 已实现 |
 | 提示：院子 → 小巷显示“继续走”（`prompt.milestone`） | 键名来自小巷还是终点的时候 | 建议新增：改键名，文字可以不变 |
 | 目标文字是氛围性的（“没有什么要求你去任何地方”） | 有意为之，不承担引路功能 | 保留；是否有地点需要明确目标：尚待作者决定 |
 | 走廊与街道都是单面舞台 | 镜头永远看不到街道东侧、走廊西侧 | 对等距跟随镜头可以接受；新房间也按同样视角制作 |
-| 扩展教学楼 | 原教室可进入；两层相通，新增教室可从高窗观察 | 扩楼已实现，更多可进入房间见第 5 节 |
+| 扩展教学楼 | 原教室可进入；三层相通，新增教室可从高窗观察 | 扩楼已实现，更多可进入房间见第 5 节 |
 | 剧情状态全是“到达”标记 | `left_classroom`、`left_school`、`*_arrived`；没有标记改变空间 | 尚待作者决定：哪些空间在返回时会变化（见第 7 节） |
 
 ## 5. 校园内部扩展
@@ -181,7 +182,7 @@ flowchart LR
 |---|---|---|
 | 0 | 走廊、街道、居民区、小巷舞台化；操场远景新增；`tests/location_art_test.gd`；本规划 | 已实现（本 PR） |
 | 1 | 提示键、未使用的出生点、新测试登记进 CI | 建议新增 |
-| 2 | 楼梯间和上层走廊 | 已实现：两层、两条楼梯，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
+| 2 | 楼梯间和上层走廊 | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | 第一个候选房间 | 已确定但未实现（候选）；选哪个：尚待作者决定 |
 | 4 | 第一个周边空间 | 已确定但未实现（候选）；选哪个：尚待作者决定 |
 | 5 | 不稳定连接；椭圆形建筑 | 建议新增 / 尚待作者决定 |

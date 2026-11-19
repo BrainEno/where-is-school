@@ -46,5 +46,13 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "几排空桌。玻璃那边的地面，好像和走廊不在同一条水平线上。"
+  },
+  "corridor_folded_directory": {
+    "title": "楼层表",
+    "prompt": "看楼层表",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一块旧牌上列着三排房间，前两排都标着 01。一排从玻璃门开始，另一排在玻璃门前停下。两排之间，有人用笔在螺丝外面画了个小方框。",
+    "repeat_text": "小方框里没有房间号。"
   }
 }

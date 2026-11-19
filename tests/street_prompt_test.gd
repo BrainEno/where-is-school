@@ -3,15 +3,15 @@ extends SceneTree
 ##
 ## Two things are checked here, and they are different problems:
 ##
-## 1. the street exit has its own prompt key (`prompt.back_to_classroom`), present in
-##    both languages, with the destination untouched;
+## 1. the street exit says "Go back inside" in both languages, and arrives at the
+##    glass entrance on 01 rather than claiming to go to the classroom;
 ## 2. the story's "the class is dismissed" rewrite only touches the classroom door. It
 ##    used to match any exit whose destination was the corridor, which also matched
 ##    the street's return exit — so standing in the street showed "Leave the
 ##    classroom" at the school door. That regression is pinned below.
 ##
-## The corridor's own `prompt.back_inside` is checked as well: it is a different door
-## and it keeps its own text.
+## The corridor-to-classroom door keeps the same short phrase, but remains a
+## separate exit to the classroom. The dismissal override applies to neither.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -20,8 +20,8 @@ const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 
 const EXPECTED := {
-	"en": "Return to classroom",
-	"zh-CN": "回到教室",
+	"en": "Go back inside",
+	"zh-CN": "回到里面",
 }
 
 var _failures: Array[String] = []
@@ -73,7 +73,7 @@ func _run() -> void:
 
 	Harness.finish(
 		self, _failures,
-		"the street's way back says 'Return to classroom' in both languages and the story rewrite left it alone."
+		"the street's way back says 'Go back inside' in both languages and the story rewrite left it alone."
 	)
 
 
@@ -83,19 +83,15 @@ func _run() -> void:
 ## The keys exist, with the agreed text, in both languages.
 func _check_locale_keys() -> void:
 	for locale: String in EXPECTED.keys():
-		if not L10n.has_key("prompt.back_to_classroom", locale):
-			_failures.append("prompt.back_to_classroom is missing from %s." % locale)
-			continue
-		var text := L10n.t_for("prompt.back_to_classroom", locale)
-		if text != String(EXPECTED[locale]):
-			_failures.append(
-				"In %s prompt.back_to_classroom reads '%s', expected '%s'."
-				% [locale, text, String(EXPECTED[locale])]
-			)
-	# The corridor's own door keeps its own key, in both languages.
-	for locale: String in EXPECTED.keys():
 		if not L10n.has_key("prompt.back_inside", locale):
 			_failures.append("prompt.back_inside is missing from %s." % locale)
+			continue
+		var text := L10n.t_for("prompt.back_inside", locale)
+		if text != String(EXPECTED[locale]):
+			_failures.append(
+				"In %s prompt.back_inside reads '%s', expected '%s'."
+				% [locale, text, String(EXPECTED[locale])]
+			)
 
 
 func _check_street_exit_text() -> void:
@@ -106,14 +102,12 @@ func _check_street_exit_text() -> void:
 	if exit == null:
 		_failures.append("The street lost its way back to school.")
 		return
-	if exit.prompt_key != "prompt.back_to_classroom":
+	if exit.prompt_key != "prompt.back_inside":
 		_failures.append("The street exit still uses the prompt key '%s'." % exit.prompt_key)
 	if exit.destination_scene != CORRIDOR:
 		_failures.append("The street exit now leads to '%s'." % exit.destination_scene)
-	if exit.destination_spawn != &"FromStreet":
+	if exit.destination_id != &"corridor" or exit.destination_spawn != &"FromTeachingEntrance":
 		_failures.append("The street exit now spawns at '%s'." % String(exit.destination_spawn))
-	if exit.destination_id != &"corridor":
-		_failures.append("The street exit no longer records the corridor as its destination.")
 	if exit.is_milestone_end:
 		_failures.append("The street exit turned into a milestone end.")
 	for locale: String in EXPECTED.keys():
@@ -133,7 +127,7 @@ func _check_street_exit_text() -> void:
 	await _frames(2)
 
 
-## A different door, a different sentence.
+## The original door still returns to the actual classroom scene.
 func _check_corridor_still_says_back_inside() -> void:
 	var location := await _enter(CORRIDOR, &"FromStreet")
 	if location == null:
@@ -142,8 +136,8 @@ func _check_corridor_still_says_back_inside() -> void:
 	if exit == null:
 		_failures.append("The corridor lost the door back to the classroom.")
 		return
-	if exit.prompt_key != "prompt.back_inside":
-		_failures.append("The corridor's door now uses '%s'." % exit.prompt_key)
+	if exit.prompt_key != "prompt.back_inside" or exit.destination_id != &"classroom":
+		_failures.append("The classroom return lost its destination or its prompt (%s)." % exit.prompt_key)
 	if not await _check_text(exit, "Go back inside"):
 		_failures.append("The corridor's door no longer reads 'Go back inside'.")
 	await _frames(2)

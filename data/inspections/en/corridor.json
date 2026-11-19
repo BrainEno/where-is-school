@@ -46,5 +46,13 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "Rows of empty desks. The floor on the other side is not quite level with the hall."
+  },
+  "corridor_folded_directory": {
+    "title": "Building directory",
+    "prompt": "Read the directory",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "An enamel directory with three room lists. The first two say 01. One list starts at the glass doors; the other ends there. In the gap between them, someone has drawn a tiny square around a screw.",
+    "repeat_text": "The little square has no room number."
   }
 }

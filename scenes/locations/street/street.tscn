@@ -1,4 +1,4 @@
-[gd_scene load_steps=175 format=3]
+[gd_scene load_steps=177 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass"]
@@ -10,6 +10,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="14_ambience"]
 [ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="15_ambience_player"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="17_navigation"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_entrance.tscn" id="18_prop"]
 
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/flats_rose.tres" id="art_flats_rose"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/kerb.tres" id="art_kerb"]
@@ -64,46 +65,49 @@ size = Vector3(0.35, 0.24, 56)
 size = Vector3(0.35, 0.24, 56)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3"]
-size = Vector3(6, 0.15, 56)
+size = Vector3(6, 0.15, 48.7)
 
 [sub_resource type="BoxMesh" id="BoxMesh_3"]
-size = Vector3(6, 0.15, 56)
+size = Vector3(6, 0.15, 48.7)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4"]
-size = Vector3(0.35, 0.24, 56)
+size = Vector3(2, 0.15, 7.300000000000001)
 
 [sub_resource type="BoxMesh" id="BoxMesh_4"]
-size = Vector3(0.35, 0.24, 56)
+size = Vector3(2, 0.15, 7.300000000000001)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5"]
-size = Vector3(10, 13, 44)
+size = Vector3(0.35, 0.24, 56)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5"]
-size = Vector3(10, 13, 44)
+size = Vector3(0.35, 0.24, 56)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_6"]
-size = Vector3(10.2, 1.2, 44)
+size = Vector3(10, 13, 40.7)
 
 [sub_resource type="BoxMesh" id="BoxMesh_6"]
-size = Vector3(10.2, 1.2, 44)
+size = Vector3(10, 13, 40.7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7"]
+size = Vector3(10.2, 1.2, 40.7)
 
 [sub_resource type="BoxMesh" id="BoxMesh_7"]
-size = Vector3(1.2, 2.8, 4)
+size = Vector3(10.2, 1.2, 40.7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8"]
+size = Vector3(7.8, 10.8, 7.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_8"]
-size = Vector3(0.1, 2.6, 3.4)
+size = Vector3(7.8, 10.8, 7.3)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_9"]
-size = Vector3(0.8, 3.2, 0.8)
+size = Vector3(1.66, 2.68, 0.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_9"]
-size = Vector3(0.8, 3.2, 0.8)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_10"]
-size = Vector3(0.8, 3.2, 0.8)
+size = Vector3(1.66, 2.68, 0.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_10"]
-size = Vector3(0.8, 3.2, 0.8)
+size = Vector3(1.46, 0.025, 3.04)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_11"]
 size = Vector3(10, 11, 16)
@@ -478,7 +482,7 @@ size = Vector2(0.4, 56)
 size = Vector2(18.4, 3)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art10"]
-size = Vector2(44, 11.4)
+size = Vector2(40.7, 11.4)
 
 [node name="Street" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -528,7 +532,7 @@ mesh = SubResource("BoxMesh_2")
 material_override = ExtResource("art_kerb")
 
 [node name="PavementWest" type="StaticBody3D" parent="."]
-position = Vector3(-13, 0.075, -8)
+position = Vector3(-13, 0.075, -11.65)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PavementWest"]
 shape = SubResource("BoxShape3D_3")
@@ -537,65 +541,70 @@ shape = SubResource("BoxShape3D_3")
 mesh = SubResource("BoxMesh_3")
 material_override = ExtResource("art_pavement")
 
+[node name="PavementSchoolEntry" type="StaticBody3D" parent="."]
+position = Vector3(-11, 0.075, 16.35)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PavementSchoolEntry"]
+shape = SubResource("BoxShape3D_4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PavementSchoolEntry"]
+mesh = SubResource("BoxMesh_4")
+material_override = ExtResource("art_pavement")
+
 [node name="KerbWest" type="StaticBody3D" parent="."]
 position = Vector3(-9.9, 0.12, -8)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="KerbWest"]
-shape = SubResource("BoxShape3D_4")
+shape = SubResource("BoxShape3D_5")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="KerbWest"]
-mesh = SubResource("BoxMesh_4")
+mesh = SubResource("BoxMesh_5")
 material_override = ExtResource("art_kerb")
 
 [node name="SchoolBlock" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-16, 6.5, -6)
+position = Vector3(-16, 6.5, -7.65)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolBlock"]
-shape = SubResource("BoxShape3D_5")
+shape = SubResource("BoxShape3D_6")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SchoolBlock"]
-mesh = SubResource("BoxMesh_5")
+mesh = SubResource("BoxMesh_6")
 material_override = ExtResource("art_school_teal")
 
 [node name="SchoolPlinth" type="StaticBody3D" parent="."]
-position = Vector3(-16, 0.6, -6)
+position = Vector3(-16, 0.6, -7.65)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolPlinth"]
-shape = SubResource("BoxShape3D_6")
+shape = SubResource("BoxShape3D_7")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SchoolPlinth"]
-mesh = SubResource("BoxMesh_6")
+mesh = SubResource("BoxMesh_7")
 material_override = ExtResource("art_plinth_ivory")
 
-[node name="SchoolExitRecess" type="MeshInstance3D" parent="."]
-position = Vector3(-10.4, 1.4, 16)
-mesh = SubResource("BoxMesh_7")
-material_override = ExtResource("art_pavement")
+[node name="SchoolEntryReturn" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-15.9, 5.4, 16.35)
 
-[node name="SchoolExitDark" type="MeshInstance3D" parent="."]
-position = Vector3(-10.9, 1.4, 16)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolEntryReturn"]
+shape = SubResource("BoxShape3D_8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SchoolEntryReturn"]
 mesh = SubResource("BoxMesh_8")
-material_override = ExtResource("art_metal_ink")
+material_override = ExtResource("art_school_teal")
 
-[node name="GatePillarSouth" type="StaticBody3D" parent="."]
-position = Vector3(-10.2, 1.6, 18.4)
+[node name="SchoolEntryEnd" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-11.45, 1.49, 19.22)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="GatePillarSouth"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolEntryEnd"]
 shape = SubResource("BoxShape3D_9")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="GatePillarSouth"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SchoolEntryEnd"]
 mesh = SubResource("BoxMesh_9")
-material_override = ExtResource("art_pavement")
+material_override = ExtResource("art_school_teal")
 
-[node name="GatePillarNorth" type="StaticBody3D" parent="."]
-position = Vector3(-10.2, 1.6, 13.6)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="GatePillarNorth"]
-shape = SubResource("BoxShape3D_10")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="GatePillarNorth"]
+[node name="SchoolEntryMat" type="MeshInstance3D" parent="."]
+position = Vector3(-10.79, 0.15, 15.8)
 mesh = SubResource("BoxMesh_10")
-material_override = ExtResource("art_pavement")
+material_override = ExtResource("art_metal_ink")
 
 [node name="FlatBlockA" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(17, 5.5, 6)
@@ -1195,6 +1204,10 @@ collision_layer = 16
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PassageTread"]
 shape = SubResource("RampShape_3")
 
+[node name="SchoolGlassEntrance" parent="." instance=ExtResource("18_prop")]
+position = Vector3(-10.62, 0.15, 15.8)
+rotation = Vector3(0, 1.570796, 0)
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="SchoolWallLook" parent="Interactables" instance=ExtResource("12_interactable")]
@@ -1244,14 +1257,14 @@ support_paths = PackedStringArray("../../LampPost")
 outline_paths = PackedStringArray("../../LampPost", "../../LampHead", "../../LampGlow")
 
 [node name="BackToSchool" parent="Interactables" instance=ExtResource("13_location_exit")]
-position = Vector3(-9.6, 0.9, 16.0)
+position = Vector3(-9.6, 0.9, 15.8)
 interact_id = &"street_back_to_school"
-prompt_key = "prompt.back_to_classroom"
-radius = 1.1
-support_paths = PackedStringArray("../../GatePillarSouth", "../../GatePillarNorth")
-outline_paths = PackedStringArray("../../SchoolExitRecess", "../../SchoolExitDark", "../../GatePillarSouth", "../../GatePillarNorth")
+prompt_key = "prompt.back_inside"
+radius = 1.25
+support_paths = PackedStringArray("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right", "../../SchoolGlassEntrance/Header")
+outline_paths = PackedStringArray("../../SchoolGlassEntrance/Left/Stile", "../../SchoolGlassEntrance/Right/Stile", "../../SchoolGlassEntrance/Header/Shoe")
 destination_scene = "res://scenes/locations/corridor/corridor.tscn"
-destination_spawn = &"FromStreet"
+destination_spawn = &"FromTeachingEntrance"
 destination_id = &"corridor"
 
 [node name="ToResidential" parent="Interactables" instance=ExtResource("13_location_exit")]
