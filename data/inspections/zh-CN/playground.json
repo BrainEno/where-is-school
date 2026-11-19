@@ -78,5 +78,39 @@
       "source": "observed",
       "text": "轮胎的轮毂曾被刷成过黄色。"
     }
+  },
+  "pg_return_board": {
+    "title": "器材交还板",
+    "prompt": "读操场交还板",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "红台阶画的是教学楼墙边的防火门。回后巷走对面的铁栅门。大张纸下面还压着一截，角上的印记反了。",
+    "repeat_text": "防火门回教学楼，铁栅门回后巷。下面那个印记还是反的。",
+    "record": {
+      "entry_id": "saw_pg_return_board",
+      "source": "observed",
+      "text": "操场交还板标出回教学楼的防火门和通往后巷的栅门。纸下方露出反过来的印记。"
+    }
+  },
+  "pg_chalk_guide": {
+    "title": "球场划线盒",
+    "prompt": "看看划线盒",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "一圈红绳，一条给球场划线用的金属片。定位孔一个是圆的，一个是长的；粉笔灰从两个孔里落在下面的纸上，两个形状分得很清。",
+    "repeat_text": "一个圆孔，一个长孔，粉笔灰把形状都留了下来。",
+    "record": {
+      "entry_id": "saw_pg_chalk_guide",
+      "source": "observed",
+      "text": "划线板的一圆一长两个定位孔，在下面的纸上留下了不一样的记号。"
+    }
+  },
+  "pg_tap": {
+    "title": "挂起来的排水塞",
+    "prompt": "看看操场水龙头",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "黄色的塞子挂在水管上，离排水口还有一段。龙头下面有一小片发白的水泥。",
+    "repeat_text": "塞子还在水管上，排水口空着。"
   }
 }

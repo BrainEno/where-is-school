@@ -55,8 +55,8 @@ const MIN_AMBIENT := 0.45
 ## Per location: scene, whether the stage pass dresses it, colliders, interactables,
 ## spawn markers, and exits as interact_id -> "destination_id/destination_spawn".
 ## Collision shapes are counted at runtime, so the instanced prop wrappers and the
-## interactables' areas are included. The pass does not touch either, and the scene files
-## hold the same CollisionShape3D nodes as on main at 6cdf037, so these are main's numbers.
+## interactables' areas are included. Mesh-only dressing never adds a body. The return-route
+## anchors add spheres and pick boxes only, accounted for in the exact counts below.
 const LOCATIONS := {
 	"corridor": {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
@@ -75,8 +75,8 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 89, # The glass assembly and the separately bounded vestibule pavement.
-		"interactables": 8,
+		"shapes": 93, # Same 89 plus two anchors with one pick box apiece.
+		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
 			"street_back_to_school": "corridor/FromTeachingEntrance",
@@ -97,8 +97,8 @@ const LOCATIONS := {
 	"alley": {
 		"scene": "res://scenes/locations/alley/alley.tscn",
 		"stage": true,
-		"shapes": 40,
-		"interactables": 5,
+		"shapes": 44, # Two wall fixtures, each with a sphere and a pick box.
+		"interactables": 7,
 		"spawns": ["FromCourtyard", "FromPlayground"],
 		"exits": {
 			"alley_back_to_courtyard": "residential/FromAlley",
@@ -108,8 +108,8 @@ const LOCATIONS := {
 	"playground": {
 		"scene": "res://scenes/locations/playground/playground.tscn",
 		"stage": false,
-		"shapes": 91, # Eight shell plates instead of one, two extra door pick meshes and the ladder.
-		"interactables": 13,
+		"shapes": 96, # Board retains four pick boxes; marking kit adds two shapes and tap adds three.
+		"interactables": 15,
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",

@@ -21,6 +21,13 @@ on:
     paths:
       - "tests/capture_locations.gd"
       - "tests/location_art_test.gd"
+      - "tests/playground_art_slice_test.gd"
+      - "tests/return_route_test.gd"
+      - "assets/camera/shots/return_board.tres"
+      - "data/inspections/*/street.json"
+      - "data/inspections/*/alley.json"
+      - "data/inspections/*/playground.json"
+      - "data/dialogue/*/playground.json"
       - ".github/workflows/location-art-capture.yml"
       - "scenes/locations/corridor/**"
       - "scenes/locations/street/**"
@@ -90,10 +97,17 @@ jobs:
           SIDE: ${{ matrix.side }}
         run: |
           set +e -uo pipefail
+          detail=()
+          if [ "$LOCATION" != corridor ]; then
+            detail=(return-route review_width=460)
+          fi
+          if [ "$LOCATION/$SIDE" = playground/after ]; then
+            detail+=(return-board-focus)
+          fi
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
             godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/capture_locations.gd -- \
-            "label=${SIDE}" "only=${LOCATION}" spots=3 width=800 quality=0.7 \
+            "label=${SIDE}" "only=${LOCATION}" spots=3 width=960 quality=0.81 "${detail[@]}" \
             > "${RUNNER_TEMP}/capture.log" 2>&1
           code=$?
           grep -E "LOCATION_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
@@ -108,6 +122,25 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/frames"
           cp "${out}/${LOCATION}"_*.jpg "${RUNNER_TEMP}/frames/"
           inline="${RUNNER_TEMP}/frames"
+          if [ "$LOCATION" != corridor ]; then
+            inline="${RUNNER_TEMP}/route-review"
+            mkdir -p "$inline"
+            shopt -s nullglob
+            views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
+            expect=2
+            if [ "$LOCATION" = playground ]; then expect=3; fi
+            if [ "$LOCATION/$SIDE" = playground/after ]; then expect=4; fi
+            if [ "$code" -ne 0 ] || [ "${#views[@]}" -ne "$expect" ] || \
+                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
+                ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
+              tail -n 40 "${RUNNER_TEMP}/capture.log"
+              echo "::error title=return route capture::wrote ${#views[@]}/$expect detail frames, exit $code"
+              exit 1
+            fi
+            cp "${views[@]}" "$inline/"
+            cp "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
+            echo "::notice title=return route capture::${#views[@]} detail views of the return route"
+          fi
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
@@ -130,8 +163,8 @@ jobs:
             inline="$wing/review"
             echo "::notice title=teaching wing capture::${shots} full-size frames, including the close views of 01, 02 and 03"
           fi
-          # Keep full-size frames in the artifact and use the smaller teaching-wing
-          # copies to fit all eight views in the inline annotation budget.
+          # Keep full-size frames in the artifact. Use compact detail copies within
+          # the inline annotation budget.
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
           for path in "$inline"/*.jpg; do
@@ -217,3 +250,35 @@ jobs:
               | while IFS= read -r line; do echo "::warning title=location art tail::${line}"; done
           fi
           exit "${status}"
+
+      - name: Playground collision and follow-camera regression
+        shell: bash
+        if: always()
+        run: |
+          source tools/ci_run_check.sh
+          run_check playground_art_slice 300 godot --headless --path . --script res://tests/playground_art_slice_test.gd || status=1
+          run_check_summary
+
+      - name: Return route interaction and branching
+        shell: bash
+        if: always()
+        run: |
+          source tools/ci_run_check.sh
+          status=0
+          run_check return_route 300 godot --headless --path . --script res://tests/return_route_test.gd || status=$?
+          awk '/return route:|^PASS:|^FAIL:|TEST FAILURE|SCRIPT ERROR/ && n++ < 8 {print}' ci-logs/return_route.log \
+            | while IFS= read -r line; do echo "::notice title=return route::${line}"; done
+          if grep -Eq '^ERROR:|^WARNING: ObjectDB instances leaked' ci-logs/return_route.log; then
+            awk '/^ERROR:|^WARNING: ObjectDB instances leaked/ {if (!at) at=NR} at && NR < at+8 {print}' ci-logs/return_route.log \
+              | while IFS= read -r line; do echo "::error title=return route engine error::${line}"; done
+            status=1
+          fi
+          exit "$status"
+
+      - name: Upload art regression logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: location-art-regressions
+          path: ci-logs/
+          if-no-files-found: warn

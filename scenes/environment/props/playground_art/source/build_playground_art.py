@@ -252,10 +252,12 @@ REPOINT: list[tuple[str, str]] = [
     (r"ContainerBar", "metal_ink"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
+    # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
+    (r"TapPost/MeshInstance3D|TapSpout", "exit_steel"),
     (
         r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
-        r"|Bird_\d|BirdWire|TapPost/MeshInstance3D|TapSpout|TapDrain"
+        r"|Bird_\d|BirdWire|TapDrain"
         r"|SouthGatePost(West|East)|SouthGateLintel",
         "metal_ink",
     ),
@@ -404,6 +406,116 @@ def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> No
     flat("HoopFarNet", f"{parent}/Equipment", net, "hoop_net", (8.0, 2.39, -12.02))
 
 
+def route_mark(b: Builder, parent: str, name: str, center, mat: str, *, mirrored=False, scale=1.0) -> None:
+    """One long stroke, two short strokes at the same end. Local +Z is the printed face."""
+    x, y, z = center
+    sign = -1 if mirrored else 1
+    for i, (dx, dy, width, height) in enumerate(((0, 0.075, 0.46, 0.055),
+                                                 (0.075, -0.022, 0.045, 0.15),
+                                                 (0.181, -0.001, 0.052, 0.11))):
+        b.flat(f"{name}Stroke{i}", parent, b.mesh("BoxMesh", size=vec3((width * scale, height * scale, 0.006))),
+               mat, (x + sign * dx * scale, y + dy * scale, z + (0.002 if i else 0)))
+
+
+def route_arrow(b: Builder, parent: str, name: str, center, mat: str, *, direction=1, scale=1.0) -> None:
+    x, y, z = center
+    b.flat(name + "Shaft", parent, b.mesh("BoxMesh", size=vec3((0.41 * scale, 0.038 * scale, 0.006))),
+           mat, (x, y, z))
+    for index, side in enumerate((-1, 1)):
+        b.flat(f"{name}Head{index}", parent, b.mesh("BoxMesh", size=vec3((0.15 * scale, 0.035 * scale, 0.006))),
+               mat, (x + direction * 0.173 * scale, y + side * 0.044 * scale, z + 0.004 + 0.001 * index),
+               (0, 0, -side * direction * 40))
+
+
+def _return_board(b: Builder, parent: str) -> None:
+    # A low, pitched reading surface: the two faces stay below the player's waist,
+    # so neither hides the capsule in the follow camera. Keep the old post spacing,
+    # solids and approach from the bench. Both faces point at the real gates.
+    post = b.mesh("BoxMesh", size=vec3((0.12, 0.86, 0.12)))
+    for name in ("BoardPostA", "BoardPostB"):
+        b.flat("ReturnBoardSupport", name, post, "metal_ink", (0, -0.87, 0), shadow=True)
+    for i, (width, y) in enumerate(((0.56, 0.32), (0.14, 0.80))):
+        rail = b.mesh("BoxMesh", size=vec3((width, 0.064, 2.46)))
+        b.flat(f"ReturnBoardRail{i}", parent, rail, "exit_frame", (14, y, 3.2))
+    for side, sign in (("East", 1), ("West", -1)):
+        name = "ReturnBoard" + side
+        b.node(name, parent, position=vec3((14.0 + sign * 0.15, 0.56, 3.2)),
+               rotation_degrees=vec3((-33, sign * 90, 0)), scale=vec3((1.0, 0.42, 1.0)))
+        p = f"{parent}/{name}"
+
+        def box(part, pos, size, mat, rot=None):
+            b.flat(part, p, b.mesh("BoxMesh", size=vec3(size)), mat, pos, rot)
+
+        box("Case", (0, 0, 0), (1.92, 1.16, 0.10), "exit_frame")
+        box("Lip", (0, 0.545, 0.065), (1.99, 0.10, 0.19), "exit_steel")
+        box("Paper", (-0.015, 0.145, 0.065), (1.72, 0.72, 0.018), "pale")
+        box("BackingStrip", (0.065, -0.31, 0.064), (1.50, 0.28, 0.017), "container_steel", (0, 0, -2))
+        box("Rail", (0, -0.49, 0.069), (1.78, 0.075, 0.11), "container_oxide")
+        box("UpperRule", (-0.02, 0.26, 0.081), (1.58, 0.025, 0.008), "exit_frame")
+        route_mark(b, p, "Header", (0.04, 0.382, 0.085), "exit_frame", scale=0.85)
+        route_arrow(b, p, "ToStairs", (sign * 0.49, 0.025, 0.087), "fire_door", direction=sign)
+        route_arrow(b, p, "ToEstateGate", (-sign * 0.49, 0.025, 0.087), "exit_frame", direction=-sign)
+        # Real pictograms; the fold and the strip aren't decorative pseudo-writing.
+        for i in range(3):
+            box(f"Stair{i}", (sign * (0.073 + i * 0.05), 0.005 + i * 0.04, 0.087),
+                (0.063, 0.041, 0.012), "fire_door")
+        for i in (-1, 1):
+            box(f"GatePost{i + 1}", (-sign * 0.15 + i * 0.063, 0.05, 0.087),
+                (0.026, 0.123, 0.012), "exit_frame")
+        box("GateLintel", (-sign * 0.15, 0.119, 0.087), (0.153, 0.023, 0.012), "exit_frame")
+        route_mark(b, p, "OldStamp", (-0.44, -0.316, 0.087), "exit_frame", mirrored=True, scale=0.74)
+        box("Fold", (0.72, -0.249, 0.085), (0.175, 0.105, 0.014), "container_bedding", (0, 0, -17))
+        for i, x in enumerate((-0.77, 0.74)):
+            box(f"PaperClip{i}", (x, 0.425, 0.093), (0.053, 0.108, 0.035), "brass", (0, 0, -6 + 10 * i))
+
+
+def _yard_return_details(b: Builder, parent: str) -> None:
+    _return_board(b, parent)
+    # The clipped copy against the old duty sheet can be compared from the shed door.
+    b.node("ShedReturnCopy", "ShedBody", position=vec3((3.151, 0.295, -2.15)),
+           rotation_degrees=vec3((0, 90, 0)))
+    p = "ShedBody/ShedReturnCopy"
+    b.flat("Strip", p, b.mesh("BoxMesh", size=vec3((0.48, 0.198, 0.009))), "pale", (0, 0, 0), (0, 0, -7))
+    route_mark(b, p, "BackStamp", (0.038, 0.009, 0.013), "exit_frame", mirrored=True, scale=0.62)
+    b.flat("RoundPunch", p, b.mesh("CylinderMesh", top_radius="0.021", bottom_radius="0.021", height="0.004",
+                                  radial_segments="12"), "metal_ink", (0.187, 0.036, 0.013), (90, 0, 0))
+    b.flat("SlottedPunch", p, b.mesh("BoxMesh", size=vec3((0.027, 0.067, 0.004))), "metal_ink", (0.184, -0.037, 0.013))
+    b.flat("Crease", p, b.mesh("BoxMesh", size=vec3((0.073, 0.015, 0.007))), "container_bedding",
+           (0.180, -0.040, 0.018), (0, 0, 29))
+
+    # A low marking kit parked off the court at the shed's edge, not a new obstacle.
+    b.node("ChalkGuide", parent, position=vec3((-12.7, 0.005, -9.6)), rotation_degrees=vec3((0, 18, 0)))
+    p = f"{parent}/ChalkGuide"
+    b.flat("Foot", p, b.mesh("BoxMesh", size=vec3((1.18, 0.074, 0.76))), "plinth", (0, 0.037, 0))
+    b.flat("Caddy", p, b.mesh("BoxMesh", size=vec3((0.88, 0.155, 0.42))), "door_green", (-0.05, 0.1515, 0.025), shadow=True)
+    b.flat("Offcut", p, b.mesh("BoxMesh", size=vec3((0.81, 0.018, 0.38))), "pale", (0.01, 0.238, 0.02), (0, -8, 0))
+    b.flat("Guide", p, b.mesh("BoxMesh", size=vec3((0.70, 0.039, 0.21))), "exit_steel", (0, 0.269, 0.044))
+    reel = b.mesh("CylinderMesh", top_radius="0.125", bottom_radius="0.125", height="0.059", radial_segments="14")
+    b.flat("CordReel", p, reel, "container_oxide", (-0.19, 0.318, 0.031))
+    b.flat("RoundPunch", p, b.mesh("CylinderMesh", top_radius="0.034", bottom_radius="0.034", height="0.007",
+                                  radial_segments="12"), "metal_ink", (0.165, 0.291, 0.044))
+    b.flat("SlottedPunch", p, b.mesh("BoxMesh", size=vec3((0.045, 0.007, 0.103))), "metal_ink", (0.278, 0.291, 0.044))
+    # The exposed end of the offcut is ruled by the two chalk rubbings, not a second prop.
+    rub = b.mesh("CylinderMesh", top_radius="0.032", bottom_radius="0.032", height="0.004", radial_segments="12")
+    b.flat("RoundRubbing", p, rub, "concrete_patch", (0.147, 0.249, 0.173))
+    b.flat("SlotRubbing", p, b.mesh("BoxMesh", size=vec3((0.086, 0.004, 0.038))), "concrete_patch", (0.264, 0.249, 0.181))
+
+    # Cast fitting, handle and brass drain cap: the chain hangs on the post, not in the drain.
+    b.node("TapDetail", parent, position=vec3((-6, 0, 14)))
+    p = f"{parent}/TapDetail"
+    ring = b.mesh("TorusMesh", inner_radius="0.044", outer_radius="0.069", rings="14", ring_segments="8")
+    b.flat("Handle", p, ring, "fire_door", (0.11, 1.66, 0.006))
+    b.flat("Cap", p, b.mesh("CylinderMesh", top_radius="0.094", bottom_radius="0.094", height="0.039",
+                            radial_segments="14"), "brass", (0.112, 1.053, 0.037), (12, 0, -82))
+    link = b.mesh("TorusMesh", inner_radius="0.017", outer_radius="0.028", rings="10", ring_segments="6")
+    for i in range(12):
+        angle = (i - 11) * 0.35
+        b.flat(f"Link{i}", p, link, "exit_steel",
+               (0.111 * math.cos(angle), 1.47 - 0.037 * i, 0.111 * math.sin(angle)), (72, 28 * i, 0))
+    b.flat("Drip", p, b.mesh("CylinderMesh", top_radius="0.11", bottom_radius="0.14", height="0.004",
+                             radial_segments="10"), "concrete_patch", (0.33, 0.010, 0))
+
+
 def build_nodes() -> Builder:
     b = Builder()
     A = "PlaygroundArt"
@@ -471,6 +583,7 @@ def build_nodes() -> Builder:
     # Separate art sibling: FireDoor and FireStep retain their original pick boxes.
     b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
     school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
+    _yard_return_details(b, A)
     return b
 
 
@@ -668,7 +781,9 @@ def apply(text: str) -> tuple[str, set[str]]:
                 block = re.sub(r'material_override = ExtResource\("[^"]+"\)', f'material_override = ExtResource("art_{mat}")', block)
                 used.add(mat)
                 repointed.add(path)
-            if HIDE.fullmatch(path):
+            if HIDE.fullmatch(path) or path in (
+                "BoardSheet", "BoardBacking", "BoardPostA/MeshInstance3D", "BoardPostB/MeshInstance3D",
+            ):
                 block = block.replace(head, head + "\nvisible = false", 1)
             if path == "CourtFarHalf":
                 block = block.replace("position = Vector3(0, 0.008, -9.5)", "position = Vector3(0, 0.012, -9.5)")

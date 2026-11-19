@@ -39,5 +39,26 @@
       "source": "observed",
       "text": "巷子里那扇铁门半开着，门把手上的U形锁是坏的。"
     }
+  },
+  "alley_return_plate": {
+    "title": "后巷的交还牌",
+    "prompt": "读栅门旁的路牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "栅门那边亮着，箭头却指回院子。一长横下面挂着两道短竖，都在左边。",
+    "repeat_text": "箭头指回院子，两道短竖都在左边。",
+    "record": {
+      "entry_id": "saw_alley_return_plate",
+      "source": "observed",
+      "text": "后巷的交还牌指回院子，标记的两道短竖都在左边。"
+    }
+  },
+  "alley_trolley_guide": {
+    "title": "推车挡板",
+    "prompt": "看看墙边的推车挡板",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "墙上两个卡口是用来停推车的。有人没挪卡口，只在其中一个里面塞了片木头。原来的螺丝还在。",
+    "repeat_text": "两个卡口，一小片木头。螺丝没动过。"
   }
 }
