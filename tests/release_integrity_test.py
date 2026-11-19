@@ -295,6 +295,33 @@ class ArchiveIntegrityTests(unittest.TestCase):
         path.write_bytes(blob)
         self.assert_problem(path, "embedded NUL")
 
+    def test_invalid_utf8_in_either_zip_header_is_a_readable_cli_refusal(self) -> None:
+        for central in (True, False):
+            with self.subTest(header="central" if central else "local"):
+                path = self.package({"extra.txt": b"fixture"})
+                with zipfile.ZipFile(path) as archive:
+                    info = archive.getinfo(f"{self.stem}/extra.txt")
+                blob = bytearray(path.read_bytes())
+                if central:
+                    offset = self.central_offset(blob, "extra.txt")
+                    flags_at, name_at = offset + 8, offset + 46
+                    diagnostic = "not a readable zip"
+                else:
+                    offset = info.header_offset
+                    flags_at, name_at = offset + 6, offset + 30
+                    diagnostic = "unreadable archive member"
+                flags = struct.unpack_from("<H", blob, flags_at)[0]
+                struct.pack_into("<H", blob, flags_at, flags | 0x800)
+                blob[name_at + len(info.filename.encode("utf-8")) - 1] = 0xFF
+                path.write_bytes(blob)
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                    code = vb.main(["--package", str(path), "--expect-version", "0.1.0"])
+                self.assertEqual(code, 1)
+                self.assertIn(diagnostic, stderr.getvalue())
+                self.assertNotIn("PASS:", stdout.getvalue())
+                self.assertNotIn("Traceback", stdout.getvalue() + stderr.getvalue())
+
     def test_file_cannot_also_be_an_implicit_or_explicit_parent_directory(self) -> None:
         for extras in ({"extra": b"file", "extra/child": b"child"},
                        {"EXTRA": b"file", "extra/child": b"child"},

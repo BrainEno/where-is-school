@@ -19,7 +19,7 @@ MAX_MEMBER_BYTES = 150 * 1024 * 1024
 MAX_TOTAL_BYTES = 256 * 1024 * 1024
 READ_CHUNK = 64 * 1024
 SUPPORTED_COMPRESSION = (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
-READ_ERRORS = (OSError, EOFError, RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error)
+READ_ERRORS = (OSError, EOFError, UnicodeError, RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error)
 WINDOWS_PUNCTUATION = frozenset('<>:"\\|?*')
 WINDOWS_DEVICES = frozenset(
     ("CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$")
