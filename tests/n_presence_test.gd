@@ -16,8 +16,8 @@ extends SceneTree
 ## 2. **Entrance.** The beat shows her before `n_arrived` (she is seen walking in), and she
 ##    ends at the end of `NEntryPath` - the lectern's TeacherStand, which
 ##    `classroom_visual_slice_test` holds to the current lectern - facing the room.
-## 3. **Her conversation.** While `n_class` is on screen and after it closes, she is still
-##    there, in the same place.
+## 3. **Her conversation.** N moves her arm on her own lines, goes back to the native idle
+##    on other speakers and when the panel closes, and never leaves the stand.
 ## 4. **Pause.** Pausing and resuming the tree changes nothing about her.
 ## 5. **Leaving.** Taking the door frees that classroom and its N (the room is unloaded,
 ##    not hidden).
@@ -107,6 +107,10 @@ func _check_play_through() -> void:
 	if n == null:
 		_failures.append("Before: the classroom has no N.")
 		return
+	var animator := n.get_character_animator()
+	if animator == null or not animator.is_bound():
+		_failures.append("The classroom has no bound N animator.")
+		return
 	_expect(_count_n() == 1, "Before: %d Ns in the tree, not one." % _count_n())
 	_expect(not n.visible, "Before: N is visible before the substitute beat has run.")
 	paused = true
@@ -130,6 +134,9 @@ func _check_play_through() -> void:
 			_distance_to_stand(n) > 0.5,
 			"Entrance: N first appeared %.2f m from the stand - not at the door." % _distance_to_stand(n)
 		)
+	_expect(await Harness.wait_until(
+		func() -> bool: return animator.get_current_clip() == "walk", 4.0
+	), "The real N entrance did not play her walk.")
 	await _pump_until(
 		func() -> bool: return bool(_state.get_flag(StoryFlags.N_ARRIVED, false)),
 		60.0, "n_arrived"
@@ -141,14 +148,28 @@ func _check_play_through() -> void:
 	if in_talk:
 		_expect_at_stand(n, "During her conversation")
 
-	# 3. After her conversation.
-	await _pump_until(
-		func() -> bool: return bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false)),
+	# 3. Read the actual lines the player sees; the presenter drives the clip, not this test.
+	var speakers := {}
+	await _pump_until(func() -> bool:
+		if _dialogue.is_busy():
+			var line := _dialogue.get_current_line()
+			var speaker := String(line.get("speaker_id", ""))
+			if not speaker.is_empty() and not speakers.has(speaker):
+				speakers[speaker] = animator.get_current_clip()
+				var n_talking := speaker == "n" and not bool(line.get("subjective", false))
+				_expect(animator.is_talking() == n_talking
+					and animator.get_current_clip() == ("talk" if n_talking else "idle"),
+					"N's clip '%s' on %s's line did not follow the visible speaker." % [animator.get_current_clip(), speaker])
+		return bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false)),
 		90.0, "the class to be dismissed"
 	)
+	_expect(speakers.has("n") and speakers.has("protagonist"), "The lesson did not exercise a speaker handoff.")
+	_notes.append("n_class speaker/clip: %s" % str(speakers))
 	await _settle(60.0, "N's conversation to close")
 	await _seconds(0.5)
 	_expect_at_stand(n, "After her conversation")
+	_expect(not animator.is_talking() and animator.get_current_clip() == "idle",
+		"N did not return to her own authored idle after the lesson.")
 	_expect(_count_n() == 1, "After her conversation: %d Ns." % _count_n())
 
 	# 4. Pause.

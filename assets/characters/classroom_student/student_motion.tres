@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterMotionProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+label = "classroom student: attentive seated glance"
+tempo = {
+"sit_idle": 3.0
+}
+clip_tracks = {
+"sit_idle": {
+"thigh.L": [[0.0, Vector3(-82, 0, 2)], [2.4, Vector3(-82, 0, 2)]],
+"thigh.R": [[0.0, Vector3(-82, 0, -2)], [2.4, Vector3(-82, 0, -2)]],
+"spine": [[0.0, Vector3(10, 0, 0)], [0.4, Vector3(12, 0, 0)], [0.79, Vector3(9, 1.5, 1.2)], [1.32, Vector3(8.0, 2, 1)], [1.81, Vector3(10, 0, 0)], [2.4, Vector3(10, 0, 0)]],
+"neck": [[0.0, Vector3(4, 0, 0)], [0.4, Vector3(5, 0, 0)], [0.76, Vector3(-1, 0, 0)], [1.32, Vector3(-1, 0, 0)], [1.81, Vector3(4, 0, 0)], [2.4, Vector3(4, 0, 0)]],
+"head": [[0.0, Vector3(8, 0, 0)], [0.4, Vector3(10, 0, 0)], [0.76, Vector3(-6, 9, -3)], [1.32, Vector3(-4, 13, -3)], [1.72, Vector3(3, 4, -1)], [1.93, Vector3(8, 0, 0)], [2.4, Vector3(8, 0, 0)]],
+"upper_arm.R": [[0.0, Vector3(-26, 0, -8)], [0.56, Vector3(-25, 0, -8)], [0.88, Vector3(-21, 0, -5)], [1.26, Vector3(-23, 0, -6)], [1.77, Vector3(-26, 0, -8)], [2.4, Vector3(-26, 0, -8)]],
+"fore_arm.R": [[0.0, Vector3(-48, 0, 0)], [0.56, Vector3(-48, 0, 0)], [0.88, Vector3(-60, 0, 0)], [1.26, Vector3(-56, 0, 0)], [1.77, Vector3(-48, 0, 0)], [2.4, Vector3(-48, 0, 0)]]
+}
+}

@@ -84,13 +84,11 @@ const SEATED_CLIP := "sit_idle"
 ## untouched; source AnimationPlayers never autoplay alongside the bound player.
 @export var authored_clip_layers: Dictionary[String, PackedStringArray] = {}
 ## Optional standing speech state, requested by CharacterDialogueAnimation. Moving,
-## sitting and one-shot actions keep their existing precedence. Only Q opts in.
+## sitting and one-shot actions keep their existing precedence. Q and N opt in.
 @export var dialogue_clip: String = ""
-## The character's own way of carrying the shared clips: tempo, amplitude, standing posture
-## and small layers (`CharacterMotionProfile`, applied by `CharacterAnimation.bind()`). The
-## protagonist and Q each have one (`assets/characters/*/…_motion.tres`); null — N, the classroom
-## student — plays the clips as `CharacterAnimation.CLIPS` writes them. Same clip names,
-## same bones, same state machine either way.
+## Per-character motion in `assets/characters/*/…_motion.tres`: semantic tracks, tempo,
+## amplitude, posture and layers. A null profile uses the shared defaults. The controller
+## and state names are the same regardless of who authored the keys.
 @export var motion_profile: CharacterMotionProfile = null
 
 ## Only the protagonist binds the prologue's staged, manually timed actions.

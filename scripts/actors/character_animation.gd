@@ -359,7 +359,7 @@ static func _match(by_lower: Dictionary, canonical: String) -> String:
 ## file). It changes nothing for the +Z models, which is every caller that leaves it out.
 ##
 ## `profile` is the character's own way of carrying the clips (`CharacterMotionProfile`):
-## tempo, amplitude, a standing posture and small layers, applied as the keys are written.
+## replacement tracks, tempo, amplitude, posture and layers, applied at bind time.
 ## Null — every caller that leaves it out — writes the clips exactly as `CLIPS` has them.
 static func bind(
 		model_root: Node3D, player: AnimationPlayer, faces_negative_z: bool = false,
@@ -392,6 +392,10 @@ static func bind(
 	# Every canonical bone any clip animates, resolved on this rig: each clip writes all of
 	# them, so switching clips never leaves a bone where the previous clip put it.
 	var specs := CLIPS.merged(extra_clips)
+	if profile != null:
+		var invalid := profile.track_error(specs)
+		if not invalid.is_empty():
+			return {"ok": false, "reason": "%s: %s" % [profile.label, invalid]}
 	var animated := _animated_bones(resolved, specs)
 	var posed := posed_limbs(skeleton, resolved)
 	# Each animated bone's semantic frame, as a turn about its own length (see
@@ -481,7 +485,7 @@ static func bind(
 ## profile's tempo): `[[time, Vector3 degrees], ...]`, or empty when the bone is held at rest.
 ##
 ## Without a profile these are the `CLIPS` keys, unchanged. With one, every key time of the
-## clip track and of the profile's layer is kept, plus both ends of the clip, and at each
+## chosen track (authored or fallback) and of the profile's layer is kept, plus both ends, and at each
 ## the offset is `amplitude × clip(t) + layer(t) + posture × weight(t)` — linear between
 ## keys, which is what the rotation track does between them anyway.
 static func _profiled_keys(
@@ -491,6 +495,7 @@ static func _profiled_keys(
 	var base: Array = tracks.get(canonical, [])
 	if profile == null:
 		return base
+	base = profile.base_keys(clip_name, canonical, base)
 	var layer := profile.layer_keys(clip_name, canonical)
 	var posture := profile.posture_for(canonical)
 	if base.is_empty() and layer.is_empty() and posture.is_zero_approx():
