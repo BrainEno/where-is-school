@@ -93,7 +93,7 @@ text = "8 短步"
 layout_mode = 2
 focus_mode = 0
 toggle_mode = true
-text = "9 抬手讲解"
+text = "9 抬手讲课"
 
 [node name="Pause" type="Button" parent="Help/Actions/Buttons"]
 layout_mode = 2

@@ -225,7 +225,7 @@ func _check_b_motion(stage: Stage, parts: Array[Dictionary]) -> void:
 	var hand_rest := skeleton.get_bone_global_pose(hand).origin
 	var relaxed_finger := skeleton.get_bone_pose_rotation(finger)
 	_sample_motion(stage, 1.8)
-	_check.expect(idle_head.angle_to(skeleton.get_bone_pose_rotation(head)) > deg_to_rad(2.0), "B's idle includes her own look up from the floor")
+	_check.expect(idle_head.angle_to(skeleton.get_bone_pose_rotation(head)) > deg_to_rad(2.0), "B's idle includes her own head glance")
 	_sample_motion(stage, player.current_animation_length)
 	_check.expect(idle_head.angle_to(skeleton.get_bone_pose_rotation(head)) < .001 and idle_root.distance_to(skeleton.get_bone_pose_position(root_joint)) < .0003, "idle returns to the same pose at the loop seam")
 	var soles := _shoe_probes(parts)
@@ -250,13 +250,18 @@ func _check_b_motion(stage: Stage, parts: Array[Dictionary]) -> void:
 	stage.play_motion("idle")
 	_check.expect(not stage.is_lead and stage.game_camera.current, "a B clip plays in the game view without introducing story actors")
 	_sample_motion(stage, 1.1)
-	stage.pause_button.pressed.emit()
+	# Manual advance() can scrub even when paused. Check the actual idle
+	# callback used by F6, then use manual sampling again after resuming.
+	player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
+	_check.expect(player.is_processing_internal(), "playing schedules automatic frames")
 	var paused_at := player.current_animation_position
-	player.advance(.5)
-	_check.expect(not player.is_playing() and is_equal_approx(player.current_animation_position, paused_at), "pause keeps the same frame")
 	stage.pause_button.pressed.emit()
+	_check.expect(not player.is_playing() and not player.is_processing_internal() and is_equal_approx(player.current_animation_position, paused_at), "pause keeps the current frame and stops automatic updates")
+	stage.pause_button.pressed.emit()
+	_check.expect(player.is_processing_internal() and is_equal_approx(player.current_animation_position, paused_at), "continue re-enables updates from the paused frame")
+	player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	player.advance(.3)
-	_check.expect(player.is_playing() and player.current_animation_position > paused_at, "continue starts from the paused frame")
+	_check.expect(player.is_playing() and player.current_animation_position > paused_at, "the resumed clip advances")
 	stage.restart_button.pressed.emit()
 	_check.expect(player.is_playing() and player.current_animation_position < .01, "restart goes to the first key")
 	print("::notice title=Teacher B original motion::walk %.3f m, shoe lift L/R %.3f/%.3f m, peak plant drift %.4f m; explanation hand %.3f m, curl %.1f deg, stance drift %.4f m" % [
@@ -331,8 +336,14 @@ func _check_walk(stage: Stage, soles: Array[Dictionary], root_joint: int) -> Vec
 		for interval: Vector2 in stance[side]:
 			drift = maxf(drift, _planted_drift(stage, soles[side], interval))
 	_check.expect(drift < .004, "planted soles stay in place through all six contact windows (max %.4f m)" % drift)
-	stage.motion.advance(.10)
-	_check.expect(stage.clip_finished and not stage.motion.is_playing(), "the walk stops on its last key rather than teleporting to its start")
+	# Seeking directly to an animation's endpoint suppresses its finished
+	# signal. Let a fresh playback cross the boundary to exercise the UI.
+	stage.play_motion("walk")
+	_sample_motion(stage, length - .04)
+	stage.motion.advance(.08)
+	stage.skeleton.force_update_all_bone_transforms()
+	var end_z := stage.skeleton.get_bone_pose_position(root_joint).z
+	_check.expect(stage.clip_finished and not stage.motion.is_playing() and absf(end_z - last_z) < .002, "the walk finishes and holds its last planted key")
 	return Vector4(travel, swing_height.x, swing_height.y, drift)
 
 
