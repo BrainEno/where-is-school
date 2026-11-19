@@ -68,6 +68,9 @@ const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
 const Q_COMPANION: StringName = &"q_companion"
 ## bool: the player used the walkway railing to let part of the period pass.
 const CORRIDOR_WAITED: StringName = &"corridor_waited"
+## String: the directory tab points to the glass doors (glass) or the stairs (stair).
+## Missing in old saves and before marking: the tab is centered.
+const CORRIDOR_DIRECTORY_TAB: StringName = &"corridor_directory_tab"
 ## bool: the opening has been requested by dialogue. Kept across a refused forced fall.
 const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
 ## bool: the back-window curtain hangs open on the void; the classroom loads that way.
@@ -161,6 +164,7 @@ const ALL_FLAGS: Array[StringName] = [
 	FREE_PERIOD_LEAVING,
 	Q_COMPANION,
 	CORRIDOR_WAITED,
+	CORRIDOR_DIRECTORY_TAB,
 	# The biology classroom's two anomalies.
 	CURTAIN_FALL_PENDING,
 	CURTAIN_DRAWN,

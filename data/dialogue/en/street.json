@@ -11,7 +11,7 @@
         {
           "id": "s_1",
           "speaker": "protagonist",
-          "text": "The street is brighter than the corridor, and no warmer.",
+          "text": "Out on the street you think: the book. You can’t really have left something you never found.",
           "effects": [
             {
               "type": "set_flag",
@@ -27,19 +27,19 @@
               "entry_id": "street_outside",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You walked out of the school into a street in the late afternoon light."
+              "text": "Out of school. Looking back, I can’t tell which windows belong to the classroom."
             }
           ]
         },
         {
           "id": "s_2",
           "speaker": "protagonist",
-          "text": "The gate is behind you. Nobody stopped you, nobody walked you out."
+          "text": "You turn to get a look at the wall. From this side the classroom windows look like all the others."
         },
         {
           "id": "s_3",
           "speaker": "protagonist",
-          "text": "The road goes on, turns once, and stops being a road you know.",
+          "text": "There are more buildings across the road. Follow the pavement; there’ll be somewhere to cross.",
           "next": null
         }
       ]
@@ -52,27 +52,51 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "The school from the outside: tile up to the window sills, plain concrete above them."
+          "text": "The tiles stop in a neat line below the windows. You’d have to count further up to get to where you were sitting."
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
-          "text": "A camera on a bracket, pointing at the strip of grass nobody stands on.",
+          "text": "The camera points at a patch of grass instead of the door. Whoever watches it wouldn’t know when class let out.",
           "effects": [
             {
               "type": "record",
               "entry_id": "street_camera",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "A camera outside the school points at an empty strip of grass."
+              "text": "The school camera is aimed at the grass, not the door."
             }
           ]
         },
         {
           "id": "w_3",
           "speaker": "protagonist",
-          "text": "One window on the second floor is open. The room behind it is dark.",
-          "next": null
+          "text": "If you do come back, the windows won’t help.",
+          "next": "w_tab_glass"
+        },
+        {
+          "id": "w_tab_glass",
+          "speaker": "protagonist",
+          "text": "You left the tab on the glass side. Follow the wall to the glass. Decide which floor it is when you get to the door.",
+          "next": "w_tab_stair",
+          "source": "recalled",
+          "conditions": {
+            "requires": {
+              "corridor_directory_tab": "glass"
+            }
+          }
+        },
+        {
+          "id": "w_tab_stair",
+          "speaker": "protagonist",
+          "text": "You left the tab on the stair side. These steps outside aren’t the ones. That mark is only any use once you’ve gone in.",
+          "next": null,
+          "source": "recalled",
+          "conditions": {
+            "requires": {
+              "corridor_directory_tab": "stair"
+            }
+          }
         }
       ]
     },
@@ -84,26 +108,26 @@
         {
           "id": "n_1",
           "speaker": "protagonist",
-          "text": "A notice taped to a pole, printed in a font that has been photocopied too many times."
+          "text": "There’s a sheet under this one. Where the top corner curls you can see half an old photo."
         },
         {
           "id": "n_2",
           "speaker": "protagonist",
-          "text": "It is about a lost cat. The photograph is not of the cat in the description.",
+          "text": "Lost cat. One crouching in the top photo, a bit of tail in the one underneath. Try fitting them together. They don’t go.",
           "effects": [
             {
               "type": "record",
               "entry_id": "street_lost_cat",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "The lost-cat notice on the pole shows a different cat than the one it describes."
+              "text": "Two lost-cat notices layered on the pole. The parts of the photos you can see don’t match."
             }
           ]
         },
         {
           "id": "n_3",
           "speaker": "protagonist",
-          "text": "The date at the bottom is four years old. The tape is new.",
+          "text": "The date on the bottom sheet is the clearest part. Four years ago. The outer tape is still tacky.",
           "next": null
         }
       ]

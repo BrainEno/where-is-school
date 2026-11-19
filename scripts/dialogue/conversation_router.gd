@@ -70,6 +70,7 @@ const ROUTES: Dictionary = {
 	&"corridor_speaker": [{"conversation": &"corridor_speaker", "requires": {}}],
 	&"corridor_trolley": [{"conversation": &"corridor_trolley", "requires": {}}],
 	&"corridor_wait": [{"conversation": &"corridor_wait", "requires": {}}],
+	&"corridor_directory_tab": [{"conversation": &"corridor_directory_tab", "requires": {}}],
 	&"street_wall": [{"conversation": &"street_wall", "requires": {}}],
 	&"street_notice": [{"conversation": &"street_notice", "requires": {}}],
 	&"residential_stair": [{"conversation": &"residential_stair", "requires": {}}],

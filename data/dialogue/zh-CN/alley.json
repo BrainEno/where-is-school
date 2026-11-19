@@ -11,12 +11,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "巷子两边停着车，左边有个垃圾斗，右边有一条水沟。"
+          "text": "两辆车中间只够侧身。过去以后才发现，路一直有，只是从来车的那头看不见。"
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "巷子尽头有一道栅栏门，门后面没有房子，地面一直铺过去，这是典型的“托马斯建筑”。",
+          "text": "栅栏门后面，球场的白线照画不误。到跟前才知道这里还有一处学校的门。",
           "effects": [
             {
               "type": "set_flag",
@@ -32,14 +32,14 @@
               "entry_id": "alley_arrived",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你走过了楼与楼之间那条巷子，尽头有一道门。"
+              "text": "巷子尽头的栅栏门通向画了白线的院子。"
             }
           ]
         },
         {
           "id": "aa_3",
           "speaker": "protagonist",
-          "text": "巷子里没有人。大门没有上锁，但是似乎很难进去。",
+          "text": "这边的门上没贴校名。试试把手。",
           "next": null
         }
       ]

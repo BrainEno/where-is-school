@@ -11,32 +11,33 @@
         {
           "id": "cs_1",
           "speaker": "protagonist",
-          "text": "防火门上方装着一个喇叭，以前上课铃就是从这里传出来的。现在喇叭还开着。",
+          "text": "喇叭在响。凑近一点，才知道不是电流声。",
           "source": "observed",
           "next": "cs_2"
         },
         {
           "id": "cs_2",
           "speaker": "protagonist",
-          "text": "墙那边有一整个班的人在说话。声音挤在一起，过了一会儿突然停了，像是有人进了教室。",
+          "text": "里头有人开了口。还没听清，就又有几个人叠了上来。",
           "source": "observed",
           "next": "cs_q_q"
         },
         {
           "id": "cs_q_q",
           "speaker": "q",
-          "text": "那是 C 他们班。他们一直这样。",
+          "text": "你在这儿也听得见？我坐那底下背过词。老以为轮到我念。",
           "next": "cs_3",
           "conditions": {
             "all_flags": [
               "q_companion"
             ]
-          }
+          },
+          "source": "reported"
         },
         {
           "id": "cs_3",
           "speaker": "protagonist",
-          "text": "喇叭咔嗒响了两下，安静了。",
+          "text": "声音一断，你才发觉自己等的是一个姓。",
           "source": "observed",
           "next": null
         }
@@ -50,32 +51,33 @@
         {
           "id": "ct_1",
           "speaker": "protagonist",
-          "text": "一辆清洁车横停在柜子前，轮子是朝里的。",
+          "text": "车停得很正。一只轮子倒斜着，像是刚才有人想把它推出去。",
           "source": "observed",
           "next": "ct_2"
         },
         {
           "id": "ct_2",
           "speaker": "protagonist",
-          "text": "一把拖把、半桶水，还有一瓶黄色的清洁剂。后面的柜子里放着练习本，能从书脊看出来。",
+          "text": "车从这儿挪开，柜门也只够开一半。可总有人把它停在这儿。",
           "source": "observed",
           "next": "ct_q_q"
         },
         {
           "id": "ct_q_q",
           "speaker": "q",
-          "text": "桶就别动了。从周一搁到现在了。",
+          "text": "别替值日的收。上次我收了一回，他们就说以后归我了。",
           "next": "ct_3",
           "conditions": {
             "all_flags": [
               "q_companion"
             ]
-          }
+          },
+          "source": "reported"
         },
         {
           "id": "ct_3",
           "speaker": "protagonist",
-          "text": "你没去动那辆清洁车。它只是挡住了柜子，别的地方都能走。",
+          "text": "柜子里的本子露着一排白边。哪本是谁的，得抽出来才知道。",
           "source": "observed",
           "next": null
         }
@@ -89,21 +91,21 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "你在栏杆边停下来。楼下的操场看起来和刚才在教室里看到的不太一样，颜色也变了。",
+          "text": "栏杆在这里接了一截。手放上去，接缝那头稍微高一点。",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "两个篮架，一间工具棚，一大片水泥地。看了一会儿，也没什么动静。",
+          "text": "从这儿能同时看见两个篮圈。近的遮住一小块线，远的什么也没遮住。",
           "source": "observed",
           "next": "cw_3"
         },
         {
           "id": "cw_3",
           "speaker": "protagonist",
-          "text": "这节课还在继续，只是跟你没什么关系。你倒也不觉得难受。",
+          "text": "一直没人来捡球。你又往场地边上看了眼，才记起刚才并没有球。",
           "source": "observed",
           "next": null,
           "effects": [
@@ -117,9 +119,88 @@
               "entry_id": "corridor_waited",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "自由时间里，你站在走廊栏杆边，看了一会儿操场。"
+              "text": "课间在栏杆边站了一会儿；从那里看得见院里的两个篮圈。"
             }
           ]
+        }
+      ]
+    },
+    "corridor_directory_tab": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "cd_choose",
+      "nodes": [
+        {
+          "id": "cd_choose",
+          "speaker": "protagonist",
+          "text": "两头都能卡住。回来时，你想先认哪一样？",
+          "choices": [
+            {
+              "id": "glass",
+              "text": "往玻璃门那边拨。",
+              "next": "cd_glass",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "corridor_directory_tab",
+                  "value": "glass"
+                }
+              ]
+            },
+            {
+              "id": "stair",
+              "text": "往楼梯那边拨。",
+              "next": "cd_stair",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "corridor_directory_tab",
+                  "value": "stair"
+                }
+              ]
+            },
+            {
+              "id": "leave",
+              "text": "把手收回来。",
+              "next": "cd_leave"
+            }
+          ]
+        },
+        {
+          "id": "cd_glass",
+          "speaker": "protagonist",
+          "text": "先认玻璃门吧。从街上也看得见。至于进门是第几层，进去再数。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "directory_mark_glass",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "在两处 01 下面，我把路签拨向玻璃门。"
+            }
+          ]
+        },
+        {
+          "id": "cd_stair",
+          "speaker": "protagonist",
+          "text": "门谁都找得到。要再找刚才那间，还是得认上去的第一截楼梯。",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "directory_mark_stair",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "在两处 01 下面，我把路签拨向楼梯。"
+            }
+          ]
+        },
+        {
+          "id": "cd_leave",
+          "speaker": "protagonist",
+          "text": "指头在签上焐出一点热。就这样吧。",
+          "next": null
         }
       ]
     }

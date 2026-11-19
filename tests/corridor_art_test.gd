@@ -4,6 +4,7 @@ extends SceneTree
 ## CI entry: corridor_art. The separate location_art suite checks the exterior art.
 
 const Harness = preload("res://tests/test_harness.gd")
+const DirectoryCase = preload("res://tests/corridor_directory_support.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const SCHOOL := ^"TeachingBlock"
 const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
@@ -398,8 +399,10 @@ func _check_glass_entrance() -> void:
 			"The click accepted the hall side instead of crossing to the apron."):
 			return
 		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
+			DirectoryCase.check_street_echo(_dialogue, _check)
 			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
-				await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance")
+				if await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
+					DirectoryCase.check_return(_host.get_current(), _check)
 
 
 ## A long click from outside should turn through the opening, not across a sill.
@@ -439,8 +442,10 @@ func _check_directory(corridor: LocationRoot) -> void:
 	_last_inspection = &""
 	_press_interact()
 	var opened := await Harness.wait_until(func() -> bool: return _last_inspection == DIRECTORY, 5.0)
-	_check.expect(opened, "The directory did not open through the normal inspection channel.")
+	if not _check.expect(opened, "The directory did not open through the normal inspection channel."):
+		return
 	await _dismiss_inspection()
+	await DirectoryCase.use_tab(corridor, directory, _dialogue, _check, _press_interact)
 
 
 ## Take the new branches from the same landing without placing or reloading the player.

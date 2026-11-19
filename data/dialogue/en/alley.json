@@ -11,12 +11,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "Cars are parked along both sides of the alley. There's a skip on the left and a drainage channel on the right."
+          "text": "A narrow gap between the cars. Once you’re past them the way is there; you just couldn’t see it from the other end."
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "At the far end, there's a gate in a fence. No building beyond it, just the ground carrying on. A textbook case of “Thomas architecture.”",
+          "text": "White court lines carry on past the fence. You don’t see there’s another school gate until you’re up to it.",
           "effects": [
             {
               "type": "set_flag",
@@ -32,14 +32,14 @@
               "entry_id": "alley_arrived",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "You walked the alley between the flats. There is a gate at the end of it."
+              "text": "Through the alley gate you can see a court marked with white lines."
             }
           ]
         },
         {
           "id": "aa_3",
           "speaker": "protagonist",
-          "text": "Nobody's here. The gate isn't locked, but somehow getting through it doesn't seem straightforward.",
+          "text": "No school name on this side. Try the handle.",
           "next": null
         }
       ]
