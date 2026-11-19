@@ -60,13 +60,13 @@
         {
           "id": "q_who_1",
           "speaker": "q",
-          "text": "Right. You've only just woken up.",
+          "text": "Right, play dumb like you actually have amnesia... Though your hands were sweating cold just now, staring into space. Are you really that terrified of Teacher B?",
           "next": "q_who_2"
         },
         {
           "id": "q_who_2",
           "speaker": "q",
-          "text": "Biology's next. It'll start in a minute.",
+          "text": "The second bell is about to ring. First period is biology—no wonder you woke up looking like you had seen a ghost.",
           "next": "p_biology"
         },
         {
@@ -86,13 +86,13 @@
         {
           "id": "q_day_1",
           "speaker": "q",
-          "text": "Nearly nine. Second bell's due any minute.",
+          "text": "Almost nine. The second bell is about to ring—can you not even tell morning from afternoon?",
           "next": "q_day_2"
         },
         {
           "id": "q_day_2",
           "speaker": "q",
-          "text": "Biology first.",
+          "text": "First period is biology. As drowsy as you get, I did not think you would be scared enough to forget B class.",
           "next": "p_biology"
         },
         {
@@ -112,13 +112,13 @@
         {
           "id": "q_silent_1",
           "speaker": "q",
-          "text": "All right. Still waking up, then.",
+          "text": "Fine, playing mute again. Every time biology notes are due you pull this face, pale as whitewashed plaster.",
           "next": "q_silent_2"
         },
         {
           "id": "q_silent_2",
           "speaker": "q",
-          "text": "Biology's next, by the way.",
+          "text": "Snap out of it. Her class is about to start.",
           "next": "p_biology"
         },
         {
@@ -175,7 +175,7 @@
         {
           "id": "q_blank_1",
           "speaker": "q",
-          "text": "I think that's what you told me. Or I might be mixing the two up.",
+          "text": "That is what you told me back then. Just your name on the paper, and B was slamming desks in the staffroom... or maybe I am mixing two things up.",
           "next": "q_exam_end"
         },
         {
@@ -188,7 +188,7 @@
         {
           "id": "q_absent_1",
           "speaker": "q",
-          "text": "I think you never made it into the exam room. I don't know what happened after that. You never mentioned it again.",
+          "text": "Seemed like you never even came into the building. But later when B called your name from the lectern, that tone... you flatly refused to talk about it afterwards.",
           "next": "q_exam_end"
         },
         {
@@ -208,7 +208,7 @@
         {
           "id": "q_none_1",
           "speaker": "q",
-          "text": "Right. You barely opened the textbook around then, either.",
+          "text": "Yeah. You barely even opened the textbook back then, just staring out the window all day. Probably got chewed out so hard you wiped your own memory.",
           "next": "q_exam_end"
         },
         {
@@ -288,7 +288,7 @@
         {
           "id": "q_topic_silent",
           "speaker": "q",
-          "text": "All right. Maybe she won't ask today. She hasn't even come in yet.",
+          "text": "Do not say it then. Just do not sit there trembling—B hates nothing more than shifty eyes.",
           "next": "q_end_1"
         },
         {
@@ -301,7 +301,7 @@
         {
           "id": "q_topic_book",
           "speaker": "q",
-          "text": "Looking for your book? I thought you always had it with you.",
+          "text": "Looking for your book? You always keep it on you, do not you? Though with hands shaking like that, it is not like the book is going to bite.",
           "next": "q_end_1"
         },
         {
@@ -332,7 +332,13 @@
         {
           "id": "q_studying_1",
           "speaker": "q",
-          "text": "Not now. I’m trying to get these biology points into my head.",
+          "text": "\"Primary consumers... unidirectional energy flow...\" Tsk, stop pacing around, I am trying to study here.",
+          "next": "q_studying_2"
+        },
+        {
+          "id": "q_studying_2",
+          "speaker": "q",
+          "text": "Hurry up and check your own bag. The second B walks in and sees your empty desk, you will be the first one on the chopping block.",
           "next": null
         }
       ]
@@ -361,6 +367,16 @@
               "id": "never",
               "text": "(Never mind.)",
               "next": "p_never"
+            },
+            {
+              "id": "square",
+              "text": "What is the deal with that set square on the podium?",
+              "conditions": {
+                "all_flags": [
+                  "saw_set_square"
+                ]
+              },
+              "next": "p_square"
             }
           ]
         },
@@ -387,7 +403,7 @@
         {
           "id": "q_told_2",
           "speaker": "q",
-          "text": "Look again. It might be under the exercise books.",
+          "text": "Search through it again, maybe it is under your exercise book. You have been totally out of it today—probably just shoved it into the wrong pocket.",
           "next": "q_ab_end"
         },
         {
@@ -413,7 +429,7 @@
         {
           "id": "q_accused_2",
           "speaker": "q",
-          "text": "What would I want with your biology book? So I can study?",
+          "text": "Besides, what would I want with your biology book? Take the blame for you? Do not be paranoid—B has not even walked in yet and you are already jumping at shadows.",
           "next": "q_ab_end"
         },
         {
@@ -426,7 +442,7 @@
         {
           "id": "q_never_1",
           "speaker": "q",
-          "text": "All right. I won't ask.",
+          "text": "Suit yourself. Tensed up like that, anyone would think you were hiding contraband in there.",
           "next": "q_ab_end"
         },
         {
@@ -434,6 +450,31 @@
           "speaker": "q",
           "text": "If she asks, deal with it then. No need to confess to anything yet.",
           "next": null
+        },
+        {
+          "id": "p_square",
+          "speaker": "protagonist",
+          "text": "That big wooden set square on the podium—the right angle is split, wrapped in yellow tape.",
+          "source": "observed",
+          "next": "q_sq_1"
+        },
+        {
+          "id": "q_sq_1",
+          "speaker": "q",
+          "text": "Oh, that thing. The math teacher next door threw a fit last term and snapped it. The caretaker just slapped some packing tape around it.",
+          "next": "q_sq_2"
+        },
+        {
+          "id": "q_sq_2",
+          "speaker": "q",
+          "text": "Someone dumped it on our lectern, and B ended up taking a liking to it. When she diagrams food webs, she whacks the blackboard with it so hard the whole room rattles.",
+          "next": "q_sq_3"
+        },
+        {
+          "id": "q_sq_3",
+          "speaker": "q",
+          "text": "...Wait, have you been staring at it this whole time? You do not actually think she is going to hit you with it, do you? Relax. As long as you do not leave another blank exam, she will not cane you.",
+          "next": "q_ab_end"
         }
       ]
     },
