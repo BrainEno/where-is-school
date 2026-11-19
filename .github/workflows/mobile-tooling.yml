@@ -51,10 +51,14 @@ jobs:
           xcodebuild -version
           if ! bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --no-download --non-interactive --no-open --shutdown \
               --output build/mobile/ios-sim 2>&1 | tee build/mobile/ios-logs/simulator.log; then
-            { grep -E '^iOS simulator failed:|^Mobile export failed:|^An error was encountered' build/mobile/ios-logs/simulator.log | tail -3 || true
-              tail -4 build/mobile/ios-logs/simulator.log
-              tail -3 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-600 |
-            while IFS= read -r line; do printf '::error title=iOS Simulator::%s\n' "$line"; done
+            { grep -E '^iOS simulator failed:|^Mobile export failed:' build/mobile/ios-logs/simulator.log | tail -3 || true
+              log=build/mobile/ios-sim/xcode-build.log
+              if [[ -s "$log" ]]; then
+                grep -Ei '^xcodebuild: error:|(^|: )error:|eligible destinations|reason:|ld: |^  "_|\*\* BUILD FAILED' "$log" | head -12 || true
+                tail -5 "$log"
+              fi
+              tail -3 build/mobile/ios-sim/runtime.log 2>/dev/null || true; } | cut -c1-850 |
+            while IFS= read -r line; do [[ -z "$line" ]] || printf '::error title=iOS Simulator::%s\n' "$line"; done
             exit 1
           fi
           printf '::notice title=iOS Simulator::%s\n' "$(tr -d '\n' < build/mobile/ios-sim/BUILD.json)"
@@ -78,6 +82,7 @@ jobs:
           path: |
             build/mobile/ios-logs/
             build/mobile/ios-sim/BUILD.json
+            build/mobile/ios-sim/xcode-build.log
             build/mobile/ios-sim/runtime.log
             build/mobile/ios-sim/launch.txt
             build/mobile/ios-sim/title.png

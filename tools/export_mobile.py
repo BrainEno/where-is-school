@@ -248,6 +248,23 @@ def verify_ios_app(app: Path, pack: Path, build: int, version: str, *, simulator
             "The built application does not contain the verified Godot pack")
 
 
+def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str]) -> Path:
+    products = out / "simulator"
+    cmd = (*xcode, "-configuration", "Debug", "-sdk", "iphonesimulator", "-destination",
+           "generic/platform=iOS Simulator", "-derivedDataPath", out / "DerivedData",
+           f"CONFIGURATION_BUILD_DIR={products}", f"ARCHS={platform.machine()}", "build", *flags)
+    log = out / "xcode-build.log"
+    # Keep Xcode's output separate from import and simctl noise; on failure the
+    # exact compiler/linker/target error should survive the CI log's summary.
+    with log.open("w", encoding="utf-8") as stream:
+        built = subprocess.run(cmd, stdout=stream, stderr=subprocess.STDOUT, check=False)
+    if built.returncode:
+        print(log.read_text(encoding="utf-8", errors="replace"), file=sys.stderr, end="")
+        raise BuildError(f"Simulator xcodebuild exited {built.returncode}; see xcode-build.log")
+    app, = products.glob("*.app")
+    return app
+
+
 def file_sha256(path: Path) -> str:
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
@@ -301,11 +318,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         return project
     xcode = ("xcodebuild", "-project", project, "-scheme", APP)
     if simulator:
-        products = out / "simulator"
-        run(*xcode, "-configuration", "Debug", "-sdk", "iphonesimulator", "-destination",
-            "generic/platform=iOS Simulator", "-derivedDataPath", out / "DerivedData",
-            f"CONFIGURATION_BUILD_DIR={products}", f"ARCHS={platform.machine()}", "build", *flags)
-        app, = products.glob("*.app")
+        app = build_simulator(xcode, out, flags)
         verify_ios_app(app, pack, args.build, version, simulator=True)
         return app
     archive = out / f"{APP}.xcarchive"
