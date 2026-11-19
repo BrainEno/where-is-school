@@ -108,6 +108,9 @@
           "text": "Nobody comes to fetch the ball. You look at the edge of the court again. There wasn’t a ball.",
           "source": "observed",
           "next": null,
+          "conditions": {
+            "not_flags": ["corridor_waited"]
+          },
           "effects": [
             {
               "type": "set_flag",

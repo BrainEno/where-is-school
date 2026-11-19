@@ -108,6 +108,9 @@
           "text": "一直没人来捡球。你又往场地边上看了眼，才记起刚才并没有球。",
           "source": "observed",
           "next": null,
+          "conditions": {
+            "not_flags": ["corridor_waited"]
+          },
           "effects": [
             {
               "type": "set_flag",

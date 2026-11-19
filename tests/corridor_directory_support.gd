@@ -110,17 +110,16 @@ static func _read_checkpoint(save: Node, check: Harness.Checker) -> Dictionary:
 	return payload
 
 
-## Boot the actual scene twice, after the walking cases and their later autosaves.
-## The unmarked payload was captured before the first choice, with no tab field.
+## Boot the actual scene for each checkpoint after the walking cases. The unmarked
+## payload was captured before the first choice, with neither the tab nor wall flag.
 static func check_resume(
 	tree: SceneTree, main_scene: PackedScene, checkpoints: Dictionary, check: Harness.Checker
 ) -> void:
 	var save := tree.root.get_node(^"Save")
-	for marked: bool in [true, false]:
-		var key := "marked" if marked else "unmarked"
-		Harness.stage = "resume the %s directory checkpoint" % key
-		var payload: Dictionary = checkpoints[key]
-		if not check.expect(not payload.is_empty(), "Missing %s directory checkpoint." % key):
+	for key: String in ["marked", "unmarked", "wall"]:
+		Harness.stage = "resume the %s checkpoint" % key
+		var payload: Dictionary = checkpoints.get(key, {})
+		if not check.expect(not payload.is_empty(), "Missing %s checkpoint." % key):
 			continue
 		Harness.clear_session_state(tree)
 		if not check.expect(save.write_payload(payload).get("ok", false), "Could not write the %s checkpoint." % key):
@@ -130,7 +129,10 @@ static func check_resume(
 		# Do not replay unrelated prologue beats. _ready still loads the checkpoint.
 		director.autostart = false
 		tree.root.add_child(main)
-		_check_resumed_tab(main, marked, check)
+		if key == "wall":
+			_check_resumed_wall(main, check)
+		else:
+			_check_resumed_tab(main, key == "marked", check)
 		if not check.expect(await close_world(main), "Could not close the resumed %s world." % key):
 			return
 	Harness.clear_session_state(tree)
@@ -157,6 +159,8 @@ static func _check_resumed_tab(main: Node, marked: bool, check: Harness.Checker)
 		"The save did not restore the chosen side or left a mark in an unmarked save.")
 	check.expect(journal.has_entry(&"directory_mark_stair") == marked,
 		"The journal's stair entry did not match the checkpoint.")
+	check.expect(not state.has_flag(StoryFlags.STREET_WALL_SEEN),
+		"A checkpoint from before examining the wall restored a visit.")
 	var director := main.get_node(^"OpeningSequence") as OpeningSequence
 	var dialogue := main.get_node(^"DialogueController") as DialogueController
 	check.expect(not director.is_beat_active() and not dialogue.is_busy()
@@ -164,35 +168,88 @@ static func _check_resumed_tab(main: Node, marked: bool, check: Harness.Checker)
 		"Restoring the pose replayed the directory cut-in.")
 
 
-static func check_street_echo(dialogue: DialogueController, check: Harness.Checker) -> void:
-	Harness.stage = "street wall remembers only the currently marked side"
-	var state := dialogue.get_node(^"/root/GameState")
-	var snapshot: Dictionary = state.get_snapshot()
+static func check_street_echo(main: Node, check: Harness.Checker) -> Dictionary:
+	Harness.stage = "street wall first look and marked or unmarked revisits"
+	var state := main.get_node(^"/root/GameState")
+	var journal := main.get_node(^"/root/NarrativeState")
+	check.expect(not state.has_flag(StoryFlags.STREET_WALL_SEEN) and not journal.has_entry(&"street_camera"),
+		"Arriving in the street counted as examining the wall.")
+	check.expect(state.get_flag(FLAG) == "stair", "The walk outside lost the selected mark.")
+	var objective: Variant = state.get_flag(StoryFlags.OBJECTIVE_KEY)
+	_look_at_wall(main, check, [&"w_1", &"w_2", &"w_3", &"w_tab_stair"])
+	check.expect(state.get_flag(StoryFlags.STREET_WALL_SEEN, false) == true,
+		"The first observation did not set the wall-visit flag.")
+	var camera: NarrativeEntry = journal.get_entry(&"street_camera")
+	check.expect(camera != null and camera.source == NarrativeEntry.Source.OBSERVED,
+		"The first look did not record the camera as an observation.")
+	check.expect(state.get_flag(StoryFlags.OBJECTIVE_KEY) == objective,
+		"The optional look replaced the main objective.")
 	for mark: String in ["", "glass", "stair"]:
 		state.set_flag(FLAG, mark)
-		if not check.expect(dialogue.play_conversation(&"street_wall"), "The street wall could not be examined."):
+		_check_wall_revisit(main, check, mark)
+	# Use the same checkpoint writer as the game, after the interaction has ended.
+	var director := main.get_node(^"OpeningSequence") as OpeningSequence
+	if not check.expect(director.autosave("wall revisit").get("ok", false), "Could not save the wall visit."):
+		return {}
+	return _read_checkpoint(main.get_node(^"/root/Save"), check)
+
+
+static func _check_resumed_wall(main: Node, check: Harness.Checker) -> void:
+	var state := main.get_node(^"/root/GameState")
+	var journal := main.get_node(^"/root/NarrativeState")
+	var camera: NarrativeEntry = journal.get_entry(&"street_camera")
+	check.expect(state.get_flag(StoryFlags.STREET_WALL_SEEN, false) == true
+		and state.get_flag(FLAG) == "stair" and camera != null and camera.source == NarrativeEntry.Source.OBSERVED,
+		"Resuming the street did not restore the visit, tab, and observation together.")
+	_check_wall_revisit(main, check, "stair")
+
+
+static func _check_wall_revisit(main: Node, check: Harness.Checker, mark: String) -> void:
+	var state := main.get_node(^"/root/GameState")
+	var journal := main.get_node(^"/root/NarrativeState")
+	var flags: Dictionary = state.get_snapshot()
+	var knowledge: Dictionary = journal.to_snapshot()
+	var expected: Array[StringName] = [&"w_3"]
+	if not mark.is_empty():
+		expected.append(StringName("w_tab_" + mark))
+	_look_at_wall(main, check, expected)
+	check.expect(state.get_snapshot() == flags and journal.to_snapshot() == knowledge,
+		"The wall revisit for '%s' changed flags or knowledge." % mark)
+
+
+static func _look_at_wall(main: Node, check: Harness.Checker, expected: Array[StringName]) -> void:
+	var host := main.get_node(^"LocationHost") as LocationHost
+	var room := host.get_current()
+	if not check.expect(room != null and room.location_id == &"street", "The street was not loaded for a wall look."):
+		return
+	var wall := room.find_interactable(&"street_school_wall")
+	if not check.expect(wall != null, "The street has no school-wall interaction."):
+		return
+	var interaction := main.get_node(^"Player/InteractionController") as InteractionController
+	var dialogue := main.get_node(^"DialogueController") as DialogueController
+	interaction.request_activation(wall)
+	var nodes: Array[StringName] = []
+	for step in range(8):
+		if not dialogue.is_busy():
 			break
-		var echoes: Array[StringName] = []
-		for step in range(8):
-			if not dialogue.is_busy():
-				break
-			var line := dialogue.get_current_line()
-			var node := StringName(line.get("node_id", &""))
-			if String(node).begins_with("w_tab_"):
-				echoes.append(node)
-				check.expect(int(line["source"]) == NarrativeEntry.Source.RECALLED,
-					"The street callback was labelled as observed rather than remembered.")
-			dialogue.advance_presentation()
-		var expected: Array[StringName] = []
-		if not mark.is_empty():
-			expected.append(StringName("w_tab_" + mark))
-		check.expect(echoes == expected and not dialogue.is_busy(),
-			"Unexpected street-wall lines for tab position '%s': %s." % [mark, echoes])
-	state.replace_snapshot(snapshot)
+		var line := dialogue.get_current_line()
+		var node := StringName(line.get("node_id", &""))
+		nodes.append(node)
+		var source := NarrativeEntry.Source.RECALLED if String(node).begins_with("w_tab_") else NarrativeEntry.Source.OBSERVED
+		check.expect(int(line.get("source", -1)) == source, "Wall node '%s' showed the wrong source." % node)
+		dialogue.advance_presentation()
+	var director := main.get_node(^"OpeningSequence") as OpeningSequence
+	check.expect(nodes == expected and not dialogue.is_busy(),
+		"Expected wall nodes %s, got %s." % [expected, nodes])
+	check.expect(not director.is_beat_active() and director.get_player().is_control_enabled(),
+		"The wall look did not give the player control back.")
 
 
 static func check_return(corridor: LocationRoot, check: Harness.Checker) -> void:
-	Harness.stage = "the new corridor instance restores the mark"
+	Harness.stage = "the new corridor instance restores the mark and retains the wall observation"
 	var tab := corridor.get_node_or_null(TAB) as Node3D
 	check.expect(tab != null and is_equal_approx(tab.position.x, 0.62),
 		"Returning from the street centered the stair-side mark.")
+	check.expect(corridor.get_node(^"/root/GameState").get_flag(StoryFlags.STREET_WALL_SEEN, false) == true
+		and corridor.get_node(^"/root/NarrativeState").has_entry(&"street_camera"),
+		"Returning to the corridor forgot the wall visit or its observation.")

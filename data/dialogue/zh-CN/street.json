@@ -52,13 +52,24 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "瓷砖铺到窗底，齐齐地断了。再往上数，才是你坐着听课的高度。"
+          "text": "瓷砖铺到窗底，齐齐地断了。再往上数，才是你坐着听课的高度。",
+          "conditions": {
+            "not_flags": ["street_wall_seen"]
+          }
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
           "text": "摄像头不对着门，偏偏对着墙根那撮草。守在那儿的人大概连下课也看不出来。",
+          "conditions": {
+            "not_flags": ["street_wall_seen"]
+          },
           "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_wall_seen",
+              "value": true
+            },
             {
               "type": "record",
               "entry_id": "street_camera",

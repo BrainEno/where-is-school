@@ -7,7 +7,8 @@ extends SceneTree
 ## - its name and description exist in every language and actually differ between
 ##   them (a copied English string in the Chinese table is a translation bug that no
 ##   structural check would catch);
-## - its passive rules point at conversations that exist;
+## - its passive rules have real triggers and start with the correct voice's hidden
+##   check in every language;
 ## - it is reachable in shipped content, either through a passive rule or through a
 ##   check the player can choose;
 ## - the runtime presentation uses the translated name, not the raw id.
@@ -184,25 +185,45 @@ func _check_rules() -> void:
 			_failures.append("Rule '%s' names unknown voice '%s'." % [rule.rule_id, rule.ability_id])
 		if not InnerAbilities.TRIGGER_KINDS.has(rule.trigger_kind):
 			_failures.append("Rule '%s' has trigger kind '%s'." % [rule.rule_id, rule.trigger_kind])
-		var graph := _library.get_graph(rule.conversation_id)
-		if graph == null:
-			_failures.append(
-				"Rule '%s' points at missing conversation '%s'." % [rule.rule_id, rule.conversation_id]
-			)
-		else:
-			var start := graph.get_conversation(rule.conversation_id).start_id
-			var node: DialogueGraph.DialogueNode = (
-				graph.get_conversation(rule.conversation_id).nodes.get(start, null)
-			)
-			if node == null or node.check.is_empty():
-				_failures.append(
-					"Passive conversation '%s' must open with a hidden check." % rule.conversation_id
-				)
-			elif String(node.check.get("kind", "")) != "hidden":
-				_failures.append(
-					"Passive conversation '%s' opens with a visible check; passive rolls are hidden."
-					% rule.conversation_id
-				)
+
+	var inspections := InspectionLibrary.load_all()
+	var locations := LocationCatalog.load_all()
+	var previous_locale := _library.get_locale()
+	for locale: String in L10n.LOCALES:
+		if not _library.set_locale(locale) or not inspections.set_locale(locale):
+			_failures.append("Could not check passive rules in %s." % locale)
+			continue
+		for rule: InnerAbilities.PassiveRule in rules:
+			_check_rule_link(rule, inspections, locations, locale)
+	_library.set_locale(previous_locale)
+
+
+func _check_rule_link(
+	rule: InnerAbilities.PassiveRule, inspections: InspectionLibrary,
+	locations: LocationCatalog, locale: String
+) -> void:
+	var trigger_exists := false
+	match rule.trigger_kind:
+		"inspection":
+			trigger_exists = inspections.has_inspection(rule.trigger_id)
+		"location":
+			trigger_exists = locations.get_entry(rule.trigger_id) != null
+		"conversation_end":
+			trigger_exists = _library.has_conversation(rule.trigger_id)
+	var label := "%s: passive '%s'" % [locale, rule.rule_id]
+	if not trigger_exists:
+		_failures.append("%s has no %s trigger '%s'." % [label, rule.trigger_kind, rule.trigger_id])
+	var conversation := _library.get_conversation(rule.conversation_id)
+	if conversation == null:
+		_failures.append("%s points at missing conversation '%s'." % [label, rule.conversation_id])
+		return
+	var node: DialogueGraph.DialogueNode = conversation.nodes.get(conversation.start_id, null)
+	if node == null or String(node.check.get("kind", "")) != "hidden":
+		_failures.append("%s: '%s' must open with a hidden check." % [label, rule.conversation_id])
+		return
+	var ability := _abilities.get_ability(rule.ability_id)
+	if ability != null and (node.check.get("ability") != rule.ability_id or node.speaker_id != ability.speaker_id):
+		_failures.append("%s: '%s' must open with its own voice's check." % [label, rule.conversation_id])
 
 
 ## Each voice must be reachable in shipped content, and only through itself: a check

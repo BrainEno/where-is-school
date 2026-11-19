@@ -157,7 +157,7 @@ func _finish() -> void:
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
 		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work; "
-		+ "marked and unmarked directory poses survive resuming a checkpoint.")
+		+ "directory poses and the wall's shortened revisit survive resuming a checkpoint.")
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
@@ -405,7 +405,7 @@ func _check_glass_entrance() -> void:
 			"The click accepted the hall side instead of crossing to the apron."):
 			return
 		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
-			DirectoryCase.check_street_echo(_dialogue, _check)
+			_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
 			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
 				if await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
 					DirectoryCase.check_return(_host.get_current(), _check)

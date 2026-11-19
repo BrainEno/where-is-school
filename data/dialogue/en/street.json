@@ -52,13 +52,24 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "The tiles stop in a neat line below the windows. You’d have to count further up to get to where you were sitting."
+          "text": "The tiles stop in a neat line below the windows. You’d have to count further up to get to where you were sitting.",
+          "conditions": {
+            "not_flags": ["street_wall_seen"]
+          }
         },
         {
           "id": "w_2",
           "speaker": "protagonist",
           "text": "The camera points at a patch of grass instead of the door. Whoever watches it wouldn’t know when class let out.",
+          "conditions": {
+            "not_flags": ["street_wall_seen"]
+          },
           "effects": [
+            {
+              "type": "set_flag",
+              "flag": "street_wall_seen",
+              "value": true
+            },
             {
               "type": "record",
               "entry_id": "street_camera",
