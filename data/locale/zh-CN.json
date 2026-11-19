@@ -215,6 +215,8 @@
     "prompt.container_ladder_down": "沿铁梯下去",
     "prompt.projector_screen_down": "拉下投影幕",
     "prompt.projector_screen_up": "把投影幕卷上去",
+    "prompt.sit": "坐下",
+    "prompt.stand": "站起来",
     "menu.journal": "笔记本",
     "menu.journal_unread": "笔记本 · {count} 条新的",
     "settings.action.journal": "笔记本",

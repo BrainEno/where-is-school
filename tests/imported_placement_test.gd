@@ -215,9 +215,13 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			% [desk_name, str(model.scale)]
 		)
 
+	# The chair standing at the desk is not part of the desk; its one body is the wake-up
+	# chair's and `_check_chair` is what judges it.
 	var bodies: Array[Node] = []
 	var shapes: Array[Node] = []
 	for node in _descendants(desk):
+		if _under_chair(desk, node):
+			continue
 		if node is CollisionObject3D:
 			bodies.append(node)
 		if node is CollisionShape3D:
@@ -282,20 +286,54 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		)
 
 
-## The chair is still the blockout, still without collision, and still at a desk.
+## True for a node under the desk's `Chair` child, which the desk's own one-box rule skips.
+func _under_chair(desk: Node, node: Node) -> bool:
+	var chair := desk.get_node_or_null(^"Chair")
+	if chair == null:
+		return false
+	var walk: Node = node
+	while walk != null and walk != desk:
+		if walk == chair:
+			return true
+		walk = walk.get_parent()
+	return false
+
+
+## The chair is still the blockout and still at a desk.
+##
+## The one chair that *does* collide - the one the protagonist wakes in - gets its body from
+## the classroom scene, not from this shared prop, precisely so that the eleven desks nobody
+## sits in stay as they were. `classroom_visual_slice_test.gd` is what checks that exception.
 func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 	var chair := desk.get_node_or_null(^"Chair") as Node3D
 	if chair == null:
 		_failures.append("'%s' lost its Chair subtree." % desk_name)
 		return
+	# The chairs have never collided and the walk routes are laid out on that - with one
+	# exception, which the classroom scene authors itself: the chair the protagonist wakes in
+	# (`DeskB2`) carries a body on layer 3. Layer 3 is solid to the body but enters neither the
+	# navigation bake nor the interaction rays (see `pushable_chair.gd`), so the walk routes
+	# this rule protects are untouched by it.
 	for node in _descendants(chair):
-		if node is CollisionObject3D or node is CollisionShape3D:
-			_failures.append(
-				"'%s/Chair/%s' collides; the chairs have never collided and the walk routes "
-				% [desk_name, node.name]
-				+ "are laid out on that."
-			)
-			break
+		if not (node is CollisionObject3D or node is CollisionShape3D):
+			continue
+		var holder := node as CollisionObject3D
+		if holder == null:
+			holder = node.get_parent() as CollisionObject3D
+		# Its layer reads 0, not 3: the chair opens its collision in `_ready` because the
+		# opening has the protagonist asleep inside it. The authored layer is checked in
+		# `pushable_chair_test.py`, which reads the scene file rather than a built tree.
+		var is_wake_chair := desk_name == "DeskB2" and (
+			String(node.name) == "Solid" or String(node.name) == "CollisionShape3D"
+		)
+		if is_wake_chair and holder != null and holder.collision_layer == 0:
+			continue
+		_failures.append(
+			"'%s/Chair/%s' collides; the chairs have never collided and the walk routes "
+			% [desk_name, node.name]
+			+ "are laid out on that."
+		)
+		break
 	var seat := chair.get_node_or_null(^"Seat") as MeshInstance3D
 	if seat == null:
 		_failures.append("'%s/Chair' has no Seat." % desk_name)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=116 format=3]
+[gd_scene load_steps=119 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -43,6 +43,8 @@
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_presentation.gd" id="c_presentation"]
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_anomalies.gd" id="c_anomalies"]
 [ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="c_staged"]
+[ext_resource type="Script" path="res://scripts/interaction/seated_chair_interactable.gd" id="c_seat_sit"]
+[ext_resource type="Script" path="res://scenes/locations/classroom/classroom_chair_control.gd" id="c_chair_control"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/window_curtain.tscn" id="c_curtain"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_front.tres" id="c_wall_east_front"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wall_east_back.tres" id="c_wall_east_back"]
@@ -68,6 +70,9 @@ ambient_light_energy = 1.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
 size = Vector3(14.0, 0.2, 10.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wake_chair"]
+size = Vector3(0.46, 0.9, 0.42)
 
 [sub_resource type="BoxMesh" id="BoxMesh_3"]
 size = Vector3(14.0, 0.2, 10.0)
@@ -665,6 +670,14 @@ mesh = SubResource("QuadMesh_desk_marks")
 material_override = ExtResource("c_desk_marks")
 cast_shadow = 0
 
+[node name="Solid" type="StaticBody3D" parent="Furniture/DeskB2/Chair" groups=["chair_solid"]]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Furniture/DeskB2/Chair/Solid"]
+position = Vector3(0, 0.45, 0.03)
+shape = SubResource("BoxShape3D_wake_chair")
+
 [node name="Schoolbag" parent="Furniture/DeskB2/Chair" instance=ExtResource("15_schoolbag")]
 position = Vector3(0, 0.5, 0.34)
 
@@ -814,6 +827,14 @@ prompt_text = "Look at your desk"
 inspection_id = &"classroom_own_desk"
 radius = 0.9
 
+[node name="ChairSit" parent="Interactables" instance=ExtResource("17_interactable")]
+position = Vector3(-1.6, 0.55, 1.88)
+interact_id = &"chair_sit"
+script = ExtResource("c_seat_sit")
+outline_paths = PackedStringArray("../../Furniture/DeskB2/Chair/Seat", "../../Furniture/DeskB2/Chair/Back")
+prompt_text = "Sit down"
+radius = 0.85
+
 [node name="SchoolbagInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(-1.6, 0.55, 2.3)
 interact_id = &"schoolbag"
@@ -906,3 +927,6 @@ script = ExtResource("c_presentation")
 
 [node name="ScreenControl" type="Node" parent="."]
 script = ExtResource("c_screen_control")
+
+[node name="ChairControl" type="Node" parent="."]
+script = ExtResource("c_chair_control")
