@@ -9,6 +9,8 @@ Production layout and art notes for the extension beyond the biology classroom�
 | 01 — ground floor | −3.40 m | Take the blue branch south, turn west on a −1.70 m landing, and arrive at the 17.7 m directory gallery. The fire stair still leads separately to the yard. |
 | Glass entrance | −3.40 m | Arrive from the street outside the glazed assembly. Walk across the actual opening to enter 01. The plate on the forecourt rail goes back to the street. The old 02 gate is still an exit, and its spawn remains valid. |
 | Laboratory | Separate location | An amber inlay rounds the opaque return at the end of 01. The door beyond it is optional and returns to the same recess. |
+| Restroom | Separate location | The mint threshold strip at the west end of 01. Return to the main gallery, outside the same louvred door. |
+| Staff office | Separate location | The amber index at the east end of 03. Return to the same indigo gallery, before the Hour Register. |
 
 The storey plaques refer to heights. Existing classroom plates remain room numbers, including the repeat plates in the old block; their numbers are not addresses in the routing system. The two stair branches share one navigation map with the corridor. They use the existing collidable ramps, separate visual treads, safety rails and walkable flat landings; no floor change is a teleport.
 
@@ -25,23 +27,35 @@ three different settings rather than three copies of the same corridor:
   lintel follows the projecting cap so the existing camera fader can clear the view.
 - **02 / public office after hours:** sage beams and ochre registration marks shrink down
   the run. The waiting register sits away from the original classroom threshold.
-- **03 / blue-hour ledger:** indigo rails, lavender index marks, and an overscale timetable
-  end that is visibly solid. Room numbers repeat without adding new travel links.
+- **03 / blue-hour ledger:** indigo rails, lavender index marks, and a solid overscale end
+  panel beyond the real staff-office threshold. Repeated classroom numbers are still observations.
+- **Office / clerical amber:** a muted green leaf, maple veneer, carbon slips and a warm desk pool.
+  The bronze rules across the open ledger echo the hallway index, without making the duty sheet
+  the origin of any other rota.
+- **Restroom / cold glaze:** petrol frame, tiled dado, blue-green mirror, cream ceramic and three
+  small changes to the repeated surfaces: a different strainer, a new clip and one warm tile repair.
 
 In the classroom bays the beam rebate is no longer flush with the depth of the wall face;
 roof, return and stair trim use distinct mating edges. No depth bias or global change to
 lighting, render settings or the follow camera is needed. The laboratory keeps its own
 cold, clean instrumentation and the low annex beyond the bundle.
 
-These are first-party generated Godot primitives and existing repository materials. They require no new textures, models, fonts, dependencies, or third-party assets. Source: `tools/build_teaching_block.py`, `tools/build_laboratory.py` and `scenes/environment/props/laboratory_entry_door.tscn`. `corridor.tscn` owns the real interaction, return marker and other existing exits. The laboratory stays an optional detour; there is no new flag or arrival dialogue.
+These are first-party generated Godot primitives and small fitted meshes, sharing only
+existing shader, font and room-tone resources. No downloads or new runtime dependencies.
+`tools/build_school_rooms.py` owns the two room scenes and the two-sided leaves;
+`tools/build_teaching_block.py` installs the hall faces and `corridor.tscn` owns their exits
+and return markers. The lab keeps its own builder. All three rooms remain optional, with
+no arrival dialogue or new objective. B does not appear in the office.
 
 ## Reproduce
 
 ```sh
 python3 tools/build_teaching_block.py --check
 python3 tools/build_laboratory.py --check
+python3 tools/build_school_rooms.py --check
 godot --headless --path . --script res://tests/corridor_art_test.gd
 godot --headless --path . --script res://tests/laboratory_visual_slice_test.gd
+godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd
 xvfb-run -a --server-args='-screen 0 1600x900x24' godot --path . --resolution 1600x900 \
   --rendering-driver opengl3 --audio-driver Dummy --script res://tests/capture_locations.gd -- \
   label=teaching-wing teaching-wing
@@ -55,3 +69,14 @@ with movement controls and floor clicks. On 03, move to the side to pass a follo
 On 01, follow the copper line around the corner into the laboratory and use its door to
 return. Walk through the glass entrance in either direction and take the forecourt exit
 to the street. Returning from the street should put you outside the door, not on 02.
+
+The school-detail legs of Location art capture save matched corridor and laboratory views
+on both revisions and current interior views for `staff_office` and `restroom` (which have
+no baseline interior). Their Compatibility and Forward+ frames use the gameplay camera;
+`wide` is marked separately. To reproduce the two office standing views and its ledger shot:
+
+```sh
+xvfb-run -a --server-args='-screen 0 1600x900x24' godot --path . --resolution 1600x900 \
+  --rendering-driver opengl3 --audio-driver Dummy --script res://tests/capture_locations.gd -- \
+  label=school-review only=staff_office school-details school-focus
+```

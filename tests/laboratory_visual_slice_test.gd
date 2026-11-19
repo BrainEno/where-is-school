@@ -112,7 +112,10 @@ const CABLE_ORIGINS := {
 	"CableCeilingDrop": "CeilingTubeD",
 }
 const CABLE_CLEAR_OF := [
-	"WetBenchBody", "WetBenchTop", "InstrumentBenchBody", "InstrumentBenchTop",
+	"WetBenchBody", "WetBenchTop", "WetBenchNorthBody", "WetBenchSouthBody",
+	"WetBenchBasinBase0", "WetBenchBasinBase1", "WetBenchNorthTop", "WetBenchSouthTop",
+	"WetBenchRailBack0", "WetBenchRailFront0", "WetBenchRailBack1", "WetBenchRailFront1",
+	"InstrumentBenchBody", "InstrumentBenchTop",
 	"HoodServiceBase", "IslandBody", "IslandTop", "PartitionWestA", "PartitionWestB", "PartitionSouth",
 ]
 ## The mixer drum, the room's one running machine, and the thing the bake must not cross.
@@ -203,6 +206,7 @@ func _run() -> void:
 	_check_room()
 	_check_floor_sections()
 	_check_equipment_contacts()
+	_check_glass_and_sinks()
 	Harness.stage = "solids"
 	_check_solids()
 	Harness.stage = "cables"
@@ -302,10 +306,10 @@ func _check_equipment_contacts() -> void:
 	# rendered bounds, including cylinders, rather than assuming the origin is a foot.
 	var pairs := [
 		["WetBenchPlinth", "WetBenchBody"], ["WetBenchBody", "WetBenchTop"],
-		["WetBenchTop", "GlassFlask0"], ["WetBenchTop", "DryingRackTray"],
-		["DryingRackTray", "DryingFlask0"], ["HoodServiceBase", "HoodSideWest"],
-		["WetBenchTop", "BalanceBody"], ["BalanceBody", "BalancePlate"],
-		["GlassCabinetShelf0", "CabinetGlass0"], ["IslandTop", "MicroBase0"],
+		["WetBenchNorthBody", "WetBenchNorthTop"], ["WetBenchSouthBody", "WetBenchSouthTop"],
+		["HoodServiceBase", "HoodSideWest"],
+		["WetBenchNorthTop", "BalanceBody"], ["BalanceBody", "BalancePlate"],
+		["IslandTop", "MicroBase0"],
 		["IslandTop", "CentrifugeBody"], ["InstrumentBenchTop", "IncubatorBody"],
 		["WetBenchShelf", "BenchLampClamp"], ["BenchLampClamp", "BenchLampArm"], ["MixerTray", "MixerFoot0"],
 		["MixerFoot0", "MixerLeg0"], ["MixerCradle", "MixerDrum"],
@@ -327,6 +331,92 @@ func _check_equipment_contacts() -> void:
 		if not shared_xz or gap > 0.003 or gap < -0.075:
 			_failures.append("%s and %s are not seated on each other (gap %.3f m)." % [pair[0], pair[1], gap])
 	_notes.append("%d verified equipment contacts" % pairs.size())
+
+
+func _check_glass_and_sinks() -> void:
+	# Test each real mesh, not just one specimen or the origin's y. Requiring the
+	# entire footprint to be on its seat catches the former three floating props
+	# even though their y coordinate matched the old counter.
+	var glass := "Fittings/Glassware/"
+	var drying := "Fittings/DryingRack/"
+	var tubes := "Fittings/TubeRack/"
+	var pairs: Array[Array] = [["WetBenchTop", drying + "Tray"], ["IslandTop", tubes + "Base"], ["Floor", "WasteJar"]]
+	for name: String in ["GlassFlask0", "GlassFlask1", "GlassBeaker2", "GlassBeaker3"]:
+		pairs.append(["WetBenchNorthTop", glass + name])
+	for name: String in ["GlassFlask4", "GlassCylinder5", "GlassBeaker6"]:
+		pairs.append(["WetBenchTop", glass + name])
+	for i in 3:
+		pairs.append([drying + "Tray", drying + "Flask%d" % i])
+		pairs.append(["HoodDeck", glass + "HoodBottle%d" % i])
+	for i in 2:
+		pairs.append(["IslandTop", glass + "IslandBottle%d" % i])
+	for i in 5:
+		pairs.append([tubes + "Base", tubes + "Tube%d" % i])
+	for level in [0, 2]:
+		for i in 6:
+			if level == 0 or i not in [0, 3]:
+				pairs.append(["GlassCabinetShelf%d" % level, glass + "CabinetGlass%d_%d" % [level, i]])
+	for i in 2:
+		pairs.append(["WetBenchRailBack%d" % i, "Fittings/WashStation/Sink%d/TapCollar" % i])
+	for pair: Array in pairs:
+		var seat := _visible_bounds(pair[0])
+		var part := _visible_bounds(pair[1])
+		var footprint := Rect2(seat.position.x, seat.position.z, seat.size.x, seat.size.z)
+		var glassprint := Rect2(part.position.x, part.position.z, part.size.x, part.size.z)
+		var gap := part.position.y - seat.end.y
+		if part.size == Vector3.ZERO or not footprint.grow(0.002).encloses(glassprint) or absf(gap) > 0.002:
+			_failures.append("%s is not wholly seated on %s (gap %.4f m)." % [pair[1], pair[0], gap])
+	for index in 2:
+		_check_sink(index)
+	_notes.append("%d exact fixture contacts; two open basins" % pairs.size())
+
+
+func _check_sink(index: int) -> void:
+	var prefix := "Fittings/WashStation/Sink%d/" % index
+	var bowl := _room.get_node_or_null(NodePath(prefix + "Bowl")) as MeshInstance3D
+	if bowl == null or not bowl.mesh is ArrayMesh:
+		_failures.append("Sink %d is not a fitted basin." % index)
+		return
+	var arrays := bowl.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	# Vertical samples through the rendered triangles: the middle is an aperture,
+	# the sump is well below the flange, and the flange actually covers its four cuts.
+	var hole := _surface_y(verts, indices, Vector2.ZERO)
+	var sump := _surface_y(verts, indices, Vector2(0.089, 0.011))
+	var lip := _surface_y(verts, indices, Vector2(0.281, 0.013))
+	if hole != -INF or sump > -0.12 or sump < -0.184 or lip < 0.0:
+		_failures.append("Sink %d: aperture %f, sump %f, lip %f." % [index, hole, sump, lip])
+	var centre := bowl.global_position
+	var drain := _visible_bounds(prefix + "StrainerRing")
+	if drain.end.y > centre.y - 0.14 or drain.end.y < centre.y - 0.192:
+		_failures.append("Sink %d's strainer is not seated at the sump." % index)
+	for name: String in CABLE_CLEAR_OF:
+		if not name.begins_with("WetBench"):
+			continue
+		var bounds := _visible_bounds(name)
+		var rect := Rect2(bounds.position.x, bounds.position.z, bounds.size.x, bounds.size.z)
+		if bounds.end.y > centre.y - 0.20 and rect.has_point(Vector2(centre.x, centre.z)):
+			_failures.append("%s caps the opening or buries the strainer of sink %d." % [name, index])
+
+
+func _surface_y(verts: PackedVector3Array, indices: PackedInt32Array, point: Vector2) -> float:
+	var highest := -INF
+	for i in range(0, indices.size(), 3):
+		var a := verts[indices[i]]
+		var b := verts[indices[i+1]] - a
+		var c := verts[indices[i+2]] - a
+		var v := Vector2(b.x, b.z)
+		var w := Vector2(c.x, c.z)
+		var rel := point - Vector2(a.x, a.z)
+		var sum := v.cross(w)
+		if absf(sum) < 0.0000001:
+			continue
+		var u := rel.cross(w) / sum
+		var t := v.cross(rel) / sum
+		if u >= 0.0 and t >= 0.0 and u+t <= 1.0:
+			highest = maxf(highest, a.y + u*b.y + t*c.y)
+	return highest
 
 
 func _visible_bounds(part: String) -> AABB:
@@ -556,8 +646,9 @@ func _check_colour() -> void:
 			_failures.append("'%s' is %d px across." % [path, side])
 
 	var scene_size := _file_bytes(LABORATORY)
-	if scene_size > SCENE_WARN_BYTES:
-		_failures.append("The scene is %d bytes, over the %d byte warning budget." % [scene_size, SCENE_WARN_BYTES])
+	for path: String in [LABORATORY, "res://scenes/locations/laboratory/laboratory_fittings.tscn"]:
+		if _file_bytes(path) > SCENE_WARN_BYTES:
+			_failures.append("%s exceeds the %d byte scene budget." % [path, SCENE_WARN_BYTES])
 	_notes.append("materials %d, textures %d, scene %.0f KiB" % [owned, textures.size(), scene_size / 1024.0])
 
 

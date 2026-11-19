@@ -6,8 +6,8 @@
     "prompt": "Look at the bench",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "Two sinks, and one tap still open at a quarter turn. A flask stands upside down on the drying rack, wet inside; the rest are dry and put away. The bench has been wiped to the far end and not past it.",
-    "repeat_text": "Two sinks, one tap open, one wet flask."
+    "text": "Two steel basins set into the same bench. The left strainer is dark in its recess. Three conical flasks rest upside down on the draining tray, each over a peg. The taps are shut.",
+    "repeat_text": "Two sunken basins, shut taps, and the flasks left to drain."
   },
   "laboratory_fume_hood": {
     "title": "The fume hood",
@@ -22,8 +22,8 @@
     "prompt": "Look at the glass",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "Clean glass behind glass. Flasks ranked by size, beakers stacked in threes, and one shelf with nothing on it at all. The doors are shut and not locked.",
-    "repeat_text": "Ranked flasks, stacked beakers, one empty shelf."
+    "text": "Clean glass behind glass. On the lower shelf the beakers are shorter than the flasks. Four vessels sit on the top shelf. The shelf between them is empty. The doors are shut.",
+    "repeat_text": "Two rows of glass, with an empty shelf between them."
   },
   "laboratory_log_book": {
     "title": "The log book",

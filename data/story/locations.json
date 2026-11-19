@@ -40,6 +40,14 @@
     "laboratory": {
       "scene": "res://scenes/locations/laboratory/laboratory.tscn",
       "spawn": "Entry"
+    },
+    "staff_office": {
+      "scene": "res://scenes/locations/staff_office/staff_office.tscn",
+      "spawn": "FromCorridor"
+    },
+    "restroom": {
+      "scene": "res://scenes/locations/restroom/restroom.tscn",
+      "spawn": "FromCorridor"
     }
   }
 }

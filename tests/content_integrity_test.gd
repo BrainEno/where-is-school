@@ -21,7 +21,7 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const LOCATIONS: Array[String] = [
-	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory",
+	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory", "staff_office", "restroom",
 ]
 const END_CARD_KEY := "end.slice"
 

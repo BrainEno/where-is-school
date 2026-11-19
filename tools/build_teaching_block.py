@@ -43,6 +43,10 @@ YARD_OFFSET = (YARD_X + 3.0, YARD_Y, YARD_PORTAL_Z + 19.90)
 UPPER_X = (-14.25, -9.75)
 UPPER_Z = (-45.0, -6.5)
 UPPER_TURN = (-45.0, -40.5)
+UPPER_END = 20.65
+OFFICE_X = 18.48
+RESTROOM_Z = 12.56
+ROOM_PORTAL_WIDTH = 1.84
 # A second stair hall, beyond the biology rear door (+Z). Both branches leave
 # the same 02 floor and turn on level landings. The new 01 is at yard grade.
 REAR_JUNCTION_Z = (3.45, MAIN_Z[1])
@@ -106,6 +110,8 @@ SCENES = {
     "bio_door": f"{PROPS}/classroom_art/classroom_door.tscn",
     "bio_rear_door": f"{PROPS}/classroom_art/classroom_rear_door.tscn",
     "interactable": "res://scenes/interaction/interactable.tscn",
+    "office_door": f"{PROPS}/staff_office_door.tscn",
+    "restroom_door": f"{PROPS}/restroom_door.tscn",
     "lab_door": f"{PROPS}/laboratory_entry_door.tscn",
     "teaching_entrance": f"{PROPS}/teaching_block_entrance.tscn",
 }
@@ -644,8 +650,14 @@ def rear_stair_and_ground_wing(b):
 
     # The opaque return blocks a straight view from the gallery. A short
     # line of amber turns the corner, without a quest marker or a false exit.
-    solid_wall(b, g, "EndWall", (ground_x[0], GROUND_Y, (alcove_z[0]+ground_z[1])/2),
-               ground_z[1]-alcove_z[0], yaw=90, base="night_blue")
+    room_portal(b, g, "RestroomPortal", (ground_x[0], GROUND_Y, RESTROOM_Z), 90,
+                "restroom_door", "night_blue", "chalk_rose")
+    wash_gap = (RESTROOM_Z-ROOM_PORTAL_WIDTH/2, RESTROOM_Z+ROOM_PORTAL_WIDTH/2)
+    for name, (lo, hi) in zip(("EndWall", "WashReturnWall"), complement(
+            alcove_z[0], ground_z[1], [wash_gap])):
+        solid_wall(b, g, name, (ground_x[0], GROUND_Y, (lo+hi)/2), hi-lo, yaw=90, base="night_blue")
+    b.box("WashFloorRule", g, (ground_x[0]+0.64, GROUND_Y+0.009, RESTROOM_Z-0.58),
+          (1.26, 0.01, 0.082), "atrium_mint")
     screen_z = (alcove_z[0]+0.12, alcove_z[1]-0.11)
     return_wall = solid_wall(b, g, "RecessScreen", (alcove_x[1], GROUND_Y, sum(screen_z)/2),
                              screen_z[1]-screen_z[0], yaw=-90, base="night_blue")
@@ -658,6 +670,17 @@ def rear_stair_and_ground_wing(b):
     b.instance("Door", p, "lab_door", (-0.06, 0, 0))
     b.box("EnamelLintel", p, (0, 2.36, 0.23), (2.42, 0.21, 0.48), "fern_blue", shadow=True)
     lamp(b, "BorrowedLight", p, (0, 2.28, 0.34), 0.60)
+
+
+def room_portal(b, parent, name, pos, yaw, scene, trim, plaster):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    path = child_path(parent, name)
+    b.instance("Door", path, scene, (0, 0, 0))
+    head = b.shell("WallHead", path, (0, 2.36, 0), groups=("camera_occluder",))
+    b.shape("Solid", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22))
+    b.box("Face", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22), plaster)
+    b.box("Header", head, (0, 0.064, 0.112), (ROOM_PORTAL_WIDTH+0.012, 0.13, 0.082), trim)
+    lamp(b, "DoorLight", head, (0, 0.37, 0.32), 0.45)
 
 
 def gallery_details(b, lower, upper):
@@ -685,7 +708,11 @@ def gallery_details(b, lower, upper):
         for j in range(3):
             b.box(f"NightIndex{i}_{j}", upper, (x+0.24*j, RISE+0.009, -43.78+0.98*j),
                   (0.12, 0.01, 0.58), "night_lilac" if j != i % 3 else "signal_ivory")
-    end = solid_wall(b, upper, "HourRegister", (18.25, RISE, -42.75), 4.5, 90, height=3.70,
+    room_portal(b, upper, "OfficePortal", (OFFICE_X, RISE, UPPER_TURN[0]), 0,
+                "office_door", "blue_hour", "night_lilac")
+    b.box("OfficeThresholdIndex", upper, (OFFICE_X, RISE+0.009, -44.17),
+          (1.42, 0.01, 0.07), "apricot")
+    end = solid_wall(b, upper, "HourRegister", (UPPER_END, RISE, -42.75), 4.5, 90, height=3.70,
                      base="blue_hour", field="night_lilac")
     b.box("Enamel", end, (-0.26, 1.91, -0.164), (2.54, 2.73, 0.14), "blue_hour", shadow=True)
     b.box("OffsetShadow", end, (0.73, 1.57, -0.203), (0.36, 2.34, 0.131), "directory_black")
@@ -719,18 +746,19 @@ def teaching_block():
     yard_gap = (YARD_X-YARD_WIDTH/2, YARD_X+YARD_WIDTH/2)
     slab(b, l, "Turn", (MAIN_X[1], EAST_END), TURN_Z, 0, "lower_turn", rotate=True)
     slab(b, u, "Main", UPPER_X, UPPER_Z, RISE, "upper", through_z=UPPER_JOIN_Z)
-    slab(b, u, "Turn", (-9.75, 18.25), UPPER_TURN, RISE, "upper_turn", rotate=True)
+    slab(b, u, "Turn", (-9.75, UPPER_END), UPPER_TURN, RISE, "upper_turn", rotate=True)
     classroom_run(b, l, True, -2.2, 0, MAIN_Z, LOWER_WEST, (west_gap, REAR_JUNCTION_Z), biology=True)
     classroom_run(b, l, False, -30, 0, (-2.2, EAST_END), LOWER_NORTH, (north_gap,))
     classroom_run(b, u, True, -14.25, RISE, UPPER_Z, UPPER_WEST)
-    classroom_run(b, u, False, -45, RISE, (-14.25, 18.25), UPPER_NORTH)
+    classroom_run(b, u, False, -45, RISE, (-14.25, UPPER_END), UPPER_NORTH,
+                  ((OFFICE_X-ROOM_PORTAL_WIDTH/2, OFFICE_X+ROOM_PORTAL_WIDTH/2),))
     glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95)
     glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END, (yard_gap,))
     rail(b, l, "EastEnd", EAST_END, 0, sum(TURN_Z)/2, 0.19, TURN_Z[1]-TURN_Z[0])
     for side, x in zip(("West", "East"), MAIN_X):
         rail(b, l, "GateStepSide"+side, x, -0.36, 7.25, 0.19, 0.6)
     glass_run(b, u, "EastGlazing", True, -9.75, RISE, -40.5, -6.5, (west_gap,))
-    glass_run(b, u, "SouthGlazing", False, -40.5, RISE, -9.75, 18.25, (upper_gap,))
+    glass_run(b, u, "SouthGlazing", False, -40.5, RISE, -9.75, UPPER_END, (upper_gap,))
     # The short flight closes the loop near the biology room. The far stair breaks
     # alignment by 4.5 m across its deep intermediate landing before it climbs again.
     flight(b, s, "WestFlight", (-2.2, 0, WEST_STAIR_Z), 90, 7.55, RISE, WEST_STAIR_WIDTH, 20, "warm_tile")
@@ -814,14 +842,14 @@ def foundations(b):
         ("LowerWest", -5.35, -11.55, 6.2, 36.5, -0.34),
         ("LowerNorth", 13.4, -33.0, 30.6, 6.0, -0.34),
         ("UpperWest", -17.2, -25.7, 5.9, 38.5, RISE-0.60),
-        ("UpperNorth", 2.05, -48.2, 31.8, 6.4, RISE-0.65),
+        ("UpperNorth", (UPPER_END-14.25)/2, -48.2, UPPER_END+14.25, 6.4, RISE-0.65),
     ):
         b.box(name, p, (x, (top+YARD_Y)/2, z), (w, top-YARD_Y, d), "yard/plinth")
     for tag, top, positions in (
         ("Lower", -0.24, [(2.0, z) for z in (-22, -13, -4, 5)] +
          [(x, -25.75) for x in (5, 11, 21, 28.2)]),
         ("Upper", RISE-0.24, [(-9.96, z) for z in (-37.4, -28, -16)] +
-         [(x, -40.66) for x in (-7.4, 9.6, 17.6)]),
+         [(x, -40.66) for x in (-7.4, 9.6, 17.6, UPPER_END-0.55)]),
     ):
         for i, (x, z) in enumerate(positions):
             b.box(f"{tag}Column{i}", p, (x, (top+YARD_Y)/2, z), (0.47, top-YARD_Y, 0.47), "yard/plinth")

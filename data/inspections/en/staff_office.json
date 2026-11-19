@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "staff_office_rota": {
+    "title": "Duty-sheet master",
+    "prompt": "Read the duty sheet",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The binder lies open to an unused duty sheet. Two rings hold the left margin; beside it, a carbon sheet carries the same layout. Several boxes are stamped, but none has a name in it.",
+    "repeat_text": "The boxes are stamped. The names have not been entered.",
+    "record": {
+      "entry_id": "saw_staff_office_rota",
+      "source": "observed",
+      "text": "An office binder holds an unnamed duty-sheet master and a carbon copy with the same layout."
+    }
+  },
+  "staff_office_trays": {
+    "title": "Dispatch trays",
+    "prompt": "Look at the trays",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The OUT tray holds three carbon slips. The IN tray holds only its red label. Someone has turned that tray a little so the two labels no longer line up.",
+    "repeat_text": "Three slips in OUT. The other tray is empty."
+  },
+  "staff_office_keys": {
+    "title": "Key rail",
+    "prompt": "Look at the key rail",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Six numbered hooks. Number four has no key or tag. The wood below it is the same colour as the wood around it; there is no outline to tell what hung there.",
+    "repeat_text": "The fourth hook is bare.",
+    "record": {
+      "entry_id": "saw_staff_office_keys",
+      "source": "observed",
+      "text": "Hook four on the office rail is empty; there is no room name on it."
+    }
+  }
+}

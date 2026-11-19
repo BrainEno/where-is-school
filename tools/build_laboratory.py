@@ -36,10 +36,13 @@ import math
 import os
 import sys
 
+import laboratory_fixtures as fittings
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MATERIAL_DIR = os.path.join(ROOT, "assets", "materials", "laboratory")
 SCENE_DIR = os.path.join(ROOT, "scenes", "locations", "laboratory")
 SCENE_PATH = os.path.join(SCENE_DIR, "laboratory.tscn")
+FITTINGS_PATH = os.path.join(SCENE_DIR, "laboratory_fittings.tscn")
 TEXTURE_DIR = "res://assets/materials/laboratory/textures/"
 INK_OUTLINE = "res://scenes/environment/props/playground_art/materials/ink_outline.tres"
 # Shared presets the room may draw with as they are: the project's one window-glass material
@@ -82,6 +85,11 @@ MATERIALS = {
     "led_dial": ((1.0, 0.741, 0.365), None, False, True, (1.0, 0.741, 0.365, 1.0), 0.0),
     "void_black": ((0.024, 0.027, 0.031), None, False, True, None, 0.0),
     "gauge_face": ((0.886, 0.902, 0.886), None, False, False, None, 0.0),
+    "sink_edge": ((0.6196, 0.7176, 0.7137), None, False, False, None, 0.0),
+    "bottle_umber": ((0.4078, 0.3176, 0.1961), None, False, False, None, 0.0),
+    "bottle_smoke": ((0.3529, 0.5176, 0.4941), None, False, False, None, 0.0),
+    "cap_olive": ((0.2392, 0.2824, 0.2353), None, False, False, None, 0.0),
+    "drain_ink": ((0.149, 0.2078, 0.2314), None, False, False, None, 0.0),
 }
 
 # The order materials are declared in. Hand-kept so the emitted ids are stable.
@@ -301,6 +309,9 @@ def cable_route(lab: Lab, name, points, radius=CABLE_RADIUS, mat="cable_ink", st
 
 
 BENCH_TOP = 0.95
+HOOD_DECK = (0.95, 0.07)  # Centre and thickness, not the top face.
+CABINET_SHELVES = (0.56, 1.11, 1.66)
+CABINET_SHELF_THICKNESS = 0.045
 BANK_OUTLETS = (1.02, 2.1, 3.2, 4.1)
 
 
@@ -353,7 +364,22 @@ def build_room(lab: Lab) -> None:
 def build_wet_bench(lab: Lab) -> None:
     """West wall: the wet bench. Two sinks, a rack of drying glass, and the day's washing up."""
     top_y = BENCH_TOP
-    bench(lab, "WetBench", -7.05, -1.4, 0.92, 5.6, -7.06, 0.82)
+    # Five bands with the original casework footprint. Only the two bays under the
+    # sinks are low (the sump must not be drawn inside a solid steel body).
+    x0, x1 = fittings.WET_COUNTER_X
+    north, south = fittings.WET_SPAN
+    cuts = [(z-fittings.CUT_DEPTH/2, z+fittings.CUT_DEPTH/2) for z in fittings.SINK_CENTRES]
+    for suffix, (lo, hi) in zip(("North", "", "South"), ((north, cuts[0][0]),
+                                                               (cuts[0][1], cuts[1][0]), (cuts[1][1], south))):
+        bench(lab, "WetBench"+suffix, (x0+x1)/2, (lo+hi)/2, x1-x0, hi-lo, -7.06, 0.82)
+    for i, (lo, hi) in enumerate(cuts):
+        z = (lo+hi)/2
+        slab(lab, f"WetBenchBasinBase{i}", (-7.06, 0.4, z), (0.82, 0.606, hi-lo+0.03), "bench_steel")
+        for side, a, b in (("Back", x0, fittings.SINK_X-fittings.CUT_WIDTH/2),
+                           ("Front", fittings.SINK_X+fittings.CUT_WIDTH/2, x1)):
+            prop(lab, f"WetBenchRail{side}{i}", ((a+b)/2, top_y-0.03, z), (b-a, 0.06, hi-lo), "bench_resin")
+            prop(lab, f"WetBenchRiser{side}{i}", ((a+b)/2, 0.795, z), (b-a-0.02, 0.19, hi-lo), "bench_steel")
+        prop(lab, f"WetBenchBasinKick{i}", (-7.06, 0.051, z), (0.71, 0.104, hi-lo), "metal_frame")
     # The tiled splashback: the one place in the room that says "washable" at a glance.
     prop(lab, "WetBenchTile", (-7.55, 1.42, -1.4), (0.05, 1.0, 5.6), "wall_tile")
     prop(lab, "WetBenchShelf", (-7.35, 1.98, -1.4), (0.34, 0.04, 3.4), "bench_steel")
@@ -361,44 +387,6 @@ def build_wet_bench(lab: Lab) -> None:
     for i, z in enumerate((-2.89, -1.37, 0.08)):
         prop(lab, f"WetShelfBracket{i}", (-7.40, 1.932, z), (0.42, 0.065, 0.055), "metal_frame")
         prop(lab, f"WetShelfCleat{i}", (-7.566, 1.816, z), (0.077, 0.28, 0.11), "metal_dark")
-
-    for index, z in enumerate((-2.9, 1.1)):
-        prop(lab, "SinkRim%d" % index, (-7.05, top_y + 0.02, z), (0.52, 0.05, 0.62), "ceramic_white")
-        prop(lab, "SinkBowl%d" % index, (-7.05, top_y - 0.02, z), (0.42, 0.12, 0.52), "metal_frame")
-        lab.cyl("TapStem%d" % index, (-7.4, top_y + 0.2, z), 0.022, 0.42, "metal_pale")
-        lab.cyl("TapSpout%d" % index, (-7.24, top_y + 0.4, z), 0.018, 0.3, "metal_pale", rotation=(0, 0, 90))
-        prop(lab, "TapHandle%d" % index, (-7.4, top_y + 0.44, z), (0.06, 0.05, 0.18), "metal_dark")
-
-    # A drying rack over the bench: rails and pegs, with three flasks left upside down.
-    prop(lab, "DryingRackTray", (-7.05, top_y + 0.014, -0.5), (0.5, 0.03, 0.9), "metal_pale")
-    for index in range(6):
-        lab.cyl(
-            "DryingPeg%d" % index,
-            (-7.05 + 0.14 * ((index % 3) - 1), top_y + 0.105, -0.8 + 0.3 * (index // 3)),
-            0.008, 0.16, "metal_pale",
-        )
-    for index, (x, z) in enumerate(((-7.19, -0.8), (-6.91, -0.8), (-7.05, -0.5))):
-        lab.cyl("DryingFlask%d" % index, (x, top_y + 0.112, z), 0.027, 0.17, "glassware", top_radius=0.072)
-
-    # Glassware on the bench, in two clusters rather than spread evenly: someone was working
-    # here, and the rest of the surface is clear.
-    for index, (x, z, kind) in enumerate(
-        (
-            (-6.85, -3.5, "flask"),
-            (-7.15, -3.35, "flask"),
-            (-6.7, -3.25, "beaker"),
-            (-7.3, -3.6, "beaker"),
-            (-6.78, 1.8, "flask"),
-            (-7.12, 1.95, "cylinder"),
-            (-6.9, 2.15, "beaker"),
-        )
-    ):
-        if kind == "flask":
-            lab.cyl("GlassFlask%d" % index, (x, top_y + 0.09, z), 0.075, 0.18, "glassware", top_radius=0.028)
-        elif kind == "beaker":
-            lab.cyl("GlassBeaker%d" % index, (x, top_y + 0.07, z), 0.046, 0.14, "glassware", top_radius=0.05)
-        else:
-            lab.cyl("GlassCylinder%d" % index, (x, top_y + 0.14, z), 0.019, 0.28, "glassware")
 
     # The waste jar, amber-lidded and labelled, kept off the working surface on the floor.
     lab.cyl("WasteJar", (-7.1, 0.14, 2.75), 0.13, 0.28, "glassware")
@@ -431,7 +419,7 @@ def build_north_wall(lab: Lab) -> None:
     prop(lab, "HoodConduitPort", (-3.269, 1.17, -4.94), (0.057, 0.073, 0.081), "metal_dark")
     prop(lab, "HoodCanopy", (-4.6, 2.42, -5.16), (2.64, 0.16, 0.91), "casework_pale")
     prop(lab, "HoodBackTile", (-4.6, 1.2, -5.56), (2.5, 1.5, 0.04), "wall_tile")
-    prop(lab, "HoodDeck", (-4.6, 0.95, -5.16), (2.4, 0.07, 0.8), "bench_resin")
+    prop(lab, "HoodDeck", (-4.6, HOOD_DECK[0], -5.16), (2.4, HOOD_DECK[1], 0.8), "bench_resin")
     prop(lab, "HoodDeckFront", (-4.6, 0.86, -4.78), (2.4, 0.18, 0.06), "casework_pale")
     prop(lab, "HoodBaffle", (-4.6, 1.72, -5.46), (2.3, 0.5, 0.04), "metal_pale")
     # The sash: a glass pane in a frame, pulled down to the working height and left there.
@@ -441,10 +429,8 @@ def build_north_wall(lab: Lab) -> None:
     lab.quad("HoodSashGlass", (-4.6, 1.93, -4.785), (2.4, 0.5), "glass_pane", body=False)
     prop(lab, "HoodDuct", (-4.6, 2.985, -5.3), (0.44, 1.04, 0.44), "metal_pale")
     prop(lab, "HoodDuctRing", (-4.6, 2.68, -5.3), (0.5, 0.06, 0.5), "metal_dark")
-    for index, (x, z) in enumerate(((-5.2, -5.2), (-4.9, -5.3), (-4.1, -5.25))):
-        lab.cyl("HoodBottle%d" % index, (x, 1.09, z), 0.05, 0.2, "glassware", top_radius=0.032)
-    prop(lab, "HoodStand", (-4.2, 1.325, -5.3), (0.03, 0.62, 0.03), "metal_pale")
-    prop(lab, "HoodStandBase", (-4.2, 1.0, -5.3), (0.24, 0.04, 0.16), "metal_pale")
+    prop(lab, "HoodStand", (-4.37, 1.33, -5.38), (0.03, 0.62, 0.03), "metal_pale")
+    prop(lab, "HoodStandBase", (-4.37, 1.005, -5.38), (0.24, 0.04, 0.16), "metal_pale")
 
     # Cabinet casework stops at the frame. Through the sash you can see actual
     # shelf depth and grounded specimens, not the front of an opaque box.
@@ -463,14 +449,8 @@ def build_north_wall(lab: Lab) -> None:
         prop(lab, name, (x, 1.22, -5.103), (0.044, 1.71, 0.068), "metal_frame")
         if tag != "Centre":
             prop(lab, "CabinetPull"+tag, (-1.8+(x+1.8)*0.11, 1.17, -5.057), (0.026, 0.18, 0.037), "instrument_cream")
-    shelf_levels = (0.56, 1.11, 1.66)
-    for index, y in enumerate(shelf_levels):
-        prop(lab, "GlassCabinetShelf%d" % index, (-1.8, y, -5.33), (1.60, 0.045, 0.36), "metal_pale")
-    for index in range(9):
-        x = -2.4 + 0.15 * index
-        shelf = shelf_levels[index % 3] + 0.0225
-        lab.cyl("CabinetGlass%d" % index, (x, shelf + 0.079, -5.34),
-                0.045, 0.16, "glassware", top_radius=0.02 if index % 2 else 0.05, segments=10)
+    for index, y in enumerate(CABINET_SHELVES):
+        prop(lab, f"GlassCabinetShelf{index}", (-1.8, y, -5.33), (1.60, CABINET_SHELF_THICKNESS, 0.36), "metal_pale")
 
     # Sockets and the wall trunking the cables start from.
     prop(lab, "SocketTrunking", (-3.0, 1.02, -5.5), (4.6, 0.14, 0.08), "metal_frame")
@@ -517,14 +497,6 @@ def build_island(lab: Lab) -> None:
         prop(lab, f"LogBookRule{i}", (-1.10, top_y+0.052, -2.731+0.038*i),
              (0.18-i%2*0.02, 0.002, 0.011), "instrument_grey")
     lab.cyl("LogPen", (-1.05, top_y + 0.056, -2.53), 0.006, 0.15, "metal_dark", rotation=(0, 0, 90))
-
-    # A rack of clean tubes and two reagent bottles.
-    prop(lab, "TubeRackBase", (-1.9, top_y + 0.04, -2.6), (0.22, 0.08, 0.1), "metal_pale")
-    for index in range(5):
-        lab.cyl("RackTube%d" % index, (-2.0 + 0.05 * index, top_y + 0.12, -2.6), 0.009, 0.14, "glassware", segments=8)
-    for index, (x, z) in enumerate(((-3.05, -2.55), (-2.95, -2.72))):
-        lab.cyl("IslandBottle%d" % index, (x, top_y + 0.11, z), 0.055, 0.22, "glassware", top_radius=0.036)
-        prop(lab, "IslandBottleCap%d" % index, (x, top_y + 0.23, z), (0.05, 0.03, 0.05), "metal_dark")
 
     # Stools, pulled out at the angle someone left them. They collide: they are seats.
     for index, (x, z, spin) in enumerate(((-3.2, -2.1, 8), (-2.4, -2.05, -14), (-1.6, -2.1, 4))):
@@ -866,8 +838,10 @@ def build_interactables(lab: Lab) -> None:
             "id": "laboratory_wet_bench",
             "inspection": "laboratory_wet_bench",
             "radius": 1.5,
-            "outline": ["../../WetBenchTop", "../../GlassFlask0", "../../GlassBeaker2", "../../DryingRackTray"],
-            "support": ["../../WetBenchBody"],
+            "outline": ["../../Fittings/WashStation/Sink0/Bowl", "../../Fittings/WashStation/Sink0/TapSpout",
+                        "../../Fittings/Glassware/GlassFlask0", "../../Fittings/Glassware/GlassBeaker2"],
+            "support": ["../../WetBenchNorthBody", "../../WetBenchBasinBase0"],
+            "shot": True,
         },
         {
             "name": "HoodLook",
@@ -964,6 +938,8 @@ def build_scene(lab: Lab) -> str:
     ext.append(("Material", "res://assets/materials/glass_pane.tres", "7_glass"))
     ext.append(("PackedScene", "res://scenes/interaction/location_exit.tscn", "8_exit"))
     ext.append(("PackedScene", "res://scenes/environment/props/laboratory_entry_door.tscn", "9_entry_door"))
+    ext.append(("PackedScene", "res://scenes/locations/laboratory/laboratory_fittings.tscn", "10_fittings"))
+    ext.append(("Script", "res://scripts/world/camera_shot.gd", "11_shot"))
     mat_ids = {}
     for index, name in enumerate(MATERIAL_ORDER):
         rid = "m%02d_%s" % (index, name)
@@ -971,6 +947,11 @@ def build_scene(lab: Lab) -> str:
         ext.append(("StandardMaterial3D", "res://assets/materials/laboratory/%s.tres" % name, rid))
 
     subs: list[tuple[str, str, list[str]]] = []
+    subs.append(("WetBenchShot", "Resource", [
+        'script = ExtResource("11_shot")', 'look_offset = Vector3(-0.24, 0, 0.26)',
+        'subject_mix = 0.73', 'distance_scale = 0.60', 'height_scale = 0.82',
+        'yaw_degrees = 19.0', 'fov = 48.0', 'glide_seconds = 0.65',
+    ]))
     # Cylinder meshes are shared by every prop with the same proportions.
     cyl_ids: dict[tuple, str] = {}
     # Share three material-bearing unit meshes across the ~400 cable segments.
@@ -1137,6 +1118,8 @@ def build_scene(lab: Lab) -> str:
         lines.append('material_override = ExtResource("%s")' % material_id(row["mat"]))
         lines.append("")
 
+    lines.extend(['[node name="Fittings" parent="." instance=ExtResource("10_fittings")]', ''])
+
     # Both scene coordinates use +Z for the corridor side. Parenting to the wall
     # lets the existing wall fader clear the doorway with the south facade.
     lines.extend([
@@ -1170,6 +1153,8 @@ def build_scene(lab: Lab) -> str:
         if item.get("inspection"):
             lines.append('inspection_id = &"%s"' % item["inspection"])
         lines.append("radius = %s" % _num(item["radius"]))
+        if item.get("shot"):
+            lines.append('camera_shot = SubResource("WetBenchShot")')
         if item.get("support"):
             lines.append("support_paths = PackedStringArray(%s)" % ", ".join('"%s"' % p for p in item["support"]))
         if item.get("outline"):
@@ -1236,16 +1221,19 @@ def main() -> int:
                 handle.write(text)
 
     os.makedirs(SCENE_DIR, exist_ok=True)
-    if args.check:
-        current = ""
-        if os.path.exists(SCENE_PATH):
-            with open(SCENE_PATH, "r", encoding="utf-8") as handle:
-                current = handle.read()
-        if current != scene:
-            stale.append(SCENE_PATH)
-    else:
-        with open(SCENE_PATH, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(scene)
+    assembly = fittings.build(BENCH_TOP, HOOD_DECK[0]+HOOD_DECK[1]/2,
+                              tuple(y+CABINET_SHELF_THICKNESS/2 for y in CABINET_SHELVES))
+    for path, generated in ((SCENE_PATH, scene), (FITTINGS_PATH, assembly)):
+        if args.check:
+            if not os.path.isfile(path):
+                stale.append(path)
+                continue
+            with open(path, encoding="utf-8") as handle:
+                if handle.read() != generated:
+                    stale.append(path)
+        else:
+            with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write(generated)
 
     print(
         "laboratory: %d boxes, %d quads, %d cylinders, %d cable segments, %d lights, %d interactables"

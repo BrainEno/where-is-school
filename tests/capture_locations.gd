@@ -18,6 +18,11 @@ extends SceneTree
 ## Pass `return-route` for matched gameplay-camera details of the street, courtyard,
 ## alley and yard. The coordinates are valid on both sides of the art change.
 ## `return-board-focus` adds the board's authored focus on the current scene.
+## `school-details` selects matched hall and lab stances or the two new rooms. Pass
+## `school-focus` as well to record a detail with the game rig's authored CameraShot.
+## `school-details` uses matched corridor and lab stances; on the new interiors it
+## records both the normal rig and the authored detail shot. `school-focus` also
+## captures the finished wet-bench shot (only the updated laboratory has it).
 ## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
@@ -32,6 +37,35 @@ const LOCATIONS := [
 	["alley", "res://scenes/locations/alley/alley.tscn"],
 	["playground", "res://scenes/locations/playground/playground.tscn"],
 ]
+const SCHOOL_SCENES := {
+	"laboratory": "res://scenes/locations/laboratory/laboratory.tscn",
+	"restroom": "res://scenes/locations/restroom/restroom.tscn",
+	"staff_office": "res://scenes/locations/staff_office/staff_office.tscn",
+}
+const SCHOOL_STILLS := {
+	"corridor": [
+		["detail_office_door", Vector3(16.0, 3.6, -43.25)],
+		["detail_restroom_door", Vector3(-24.40, -3.4, 12.56)],
+	],
+	"laboratory": [
+		["detail_wet_station", Vector3(-5.98, 0, -2.91)],
+		["detail_hood_cabinet", Vector3(-3.8, 0, -3.99)],
+		["detail_island", Vector3(-2.8, 0, -.96)],
+	],
+	"staff_office": [
+		["detail_office_entry", Vector3(-2.28, 0, 1.67)],
+		["detail_trays", Vector3(2.08, 0, -1.35)],
+	],
+	"restroom": [
+		["detail_wash_entry", Vector3(2.73, 0, 1.51)],
+		["detail_cubicles", Vector3(1.11, 0, .92)],
+	],
+}
+const SCHOOL_SHOTS := {
+	"laboratory": [&"laboratory_wet_bench", Vector3(-5.94, 0, -3.35)],
+	"staff_office": [&"staff_office_rota", Vector3(-2.19, 0, -.14)],
+	"restroom": [&"restroom_basins", Vector3(-2.12, 0, -.98)],
+}
 const TEACHING_SPOTS := {
 	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
 	"directory_01": [^"TeachingBlock/GroundFloor/Gallery", Vector3(-1.24, 0, -0.30)],
@@ -76,6 +110,8 @@ var _only := ""
 var _teaching_wing := false
 var _return_route := false
 var _return_board_focus := false
+var _school_details := false
+var _school_focus := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -105,6 +141,10 @@ func _initialize() -> void:
 			_teaching_wing = true
 		elif arg == "return-route":
 			_return_route = true
+		elif arg == "school-details":
+			_school_details = true
+		elif arg == "school-focus":
+			_school_focus = true
 		elif arg == "return-board-focus":
 			_return_board_focus = true
 	if _teaching_wing:
@@ -134,26 +174,35 @@ func _run() -> void:
 	if sequence != null:
 		sequence.set("autostart", false)
 	root.add_child(_main)
-	await _wait(0.3)
 	_host = _main.get_node_or_null("LocationHost") as LocationHost
 	_player = _main.get_node_or_null("Player") as PlayerController
 	_rig = _main.get_node_or_null("CameraRig") as Node3D
 	if _host == null or _player == null or _rig == null:
 		_finish(["main.tscn did not expose LocationHost, Player and CameraRig."])
 		return
+	var startup := _host.get_current()
+	var initial := startup.get_node_or_null(^"Navigation") as LocationNavigation if startup != null else null
+	if initial == null or not await Harness.wait_until(initial.is_routable, 8.0):
+		_finish(["The startup location never synchronized."])
+		return
 	var ui := _main.get_node_or_null("GameUI")
 	if ui is CanvasLayer:
 		(ui as CanvasLayer).visible = false
 	_lines.append("# Location frames: %s" % _label)
 	_lines.append("")
-	_lines.append("Captured by `tests/capture_locations.gd` under Xvfb (opengl3, 1600x900).")
+	_lines.append("Captured by `tests/capture_locations.gd` (%s, %s)." % [
+		RenderingServer.get_current_rendering_method(), root.size,
+	])
 	_lines.append("The game camera frames stand the player on each spot; `wide` looks along")
 	_lines.append("the same bearing from further away. HUD hidden.")
 	_lines.append("")
-	for entry: Array in LOCATIONS:
-		if not _only.is_empty() and String(entry[0]) != _only:
-			continue
-		await _capture_location(String(entry[0]), String(entry[1]), out_dir)
+	if _school_details and SCHOOL_SCENES.has(_only):
+		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
+	else:
+		for entry: Array in LOCATIONS:
+			if not _only.is_empty() and String(entry[0]) != _only:
+				continue
+			await _capture_location(String(entry[0]), String(entry[1]), out_dir)
 	var file := FileAccess.open("%s/LOCATIONS.md" % out_dir, FileAccess.WRITE)
 	if file != null:
 		file.store_string("\n".join(_lines) + "\n")
@@ -172,9 +221,19 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		return
 	if _teaching_wing:
 		_player.set_wake_pose(0.0) # These shots are after class, not in the wake pose.
-	await _wait(1.2)
 	var current := _host.get_current()
-	var spots := _teaching_spots(current) if _teaching_wing else _spots(current)
+	var nav := current.get_node_or_null(^"Navigation") as LocationNavigation
+	if nav == null or not await Harness.wait_until(nav.is_routable, 8.0):
+		_failures.append("%s has no synchronized navigation." % location_id)
+		return
+	var spots: Array = []
+	if _school_details:
+		_player.set_wake_pose(0.0)
+		_player.set_camera_roll(0.0)
+		for spot: Array in SCHOOL_STILLS.get(location_id, []):
+			spots.append([spot[0], (spot[1] as Vector3) + Vector3.UP * 0.05])
+	else:
+		spots = _teaching_spots(current) if _teaching_wing else _spots(current)
 	if _return_route:
 		_player.set_wake_pose(0.0)
 		for spot: Array in RETURN_SPOTS.get(location_id, []):
@@ -195,31 +254,40 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		index += 1
 	if _return_board_focus and location_id == "playground":
 		await _capture_board_focus(current, out_dir)
+	if _school_focus and SCHOOL_SHOTS.has(location_id):
+		var shot: Array = SCHOOL_SHOTS[location_id]
+		await _capture_focus(current, out_dir, shot[0], shot[1], location_id + "_shot_detail_focus")
 	await _wide(current, subject, out_dir)
 	_lines.append("")
 
 
 func _capture_board_focus(current: LocationRoot, out_dir: String) -> void:
-	var board := current.find_interactable(&"pg_board_look")
+	await _capture_focus(current, out_dir, &"pg_board_look", BOARD_STANCE, "playground_shot_detail_board_focus")
+
+
+func _capture_focus(current: LocationRoot, out_dir: String, id: StringName, feet: Vector3, name: String) -> void:
+	var subject := current.find_interactable(id)
 	var rig := _rig as CameraRig
-	if board == null or board.camera_shot == null or rig == null:
-		_failures.append("The return board has no authored gameplay shot.")
+	if subject == null or subject.camera_shot == null or rig == null:
+		_failures.append("%s has no authored gameplay shot." % id)
 		return
-	_player.teleport(Transform3D(Basis.IDENTITY, BOARD_STANCE + Vector3.UP * 0.05))
-	rig.focus_on(board, board.camera_shot)
+	_player.teleport(Transform3D(Basis.IDENTITY, feet + Vector3.UP * 0.05))
+	rig.snap()
+	_player.face_toward(subject.global_position - _player.global_position)
+	rig.focus_on(subject, subject.camera_shot)
 	if not await Harness.wait_until(func() -> bool: return rig.get_focus_weight() > 0.97, 5.0):
-		_failures.append("The return board's gameplay shot never settled.")
-	elif not _board_fits(board, rig.camera):
-		_failures.append("The return board's gameplay shot cuts off part of the board.")
+		_failures.append("%s gameplay shot never settled." % id)
+	elif not _subject_fits(subject, rig.camera):
+		_failures.append("%s gameplay shot cuts off part of the subject." % id)
 	else:
-		_save(out_dir, "playground_shot_detail_board_focus")
-		_lines.append("- `playground_shot_detail_board_focus.jpg` uses the board's CameraShot.")
+		_save(out_dir, name)
+		_lines.append("- `%s.jpg` uses the CameraShot on `%s`." % [name, id])
 	rig.clear_focus()
 
 
-func _board_fits(board: Interactable, camera: Camera3D) -> bool:
+func _subject_fits(subject: Interactable, camera: Camera3D) -> bool:
 	var view := camera.get_viewport().get_visible_rect().grow(-12.0)
-	for mesh: GeometryInstance3D in board.get_outline_meshes():
+	for mesh: GeometryInstance3D in subject.get_outline_meshes():
 		var bounds := mesh.get_aabb()
 		for corner in 8:
 			var point := mesh.global_transform * bounds.get_endpoint(corner)

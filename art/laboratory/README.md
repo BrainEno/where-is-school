@@ -6,7 +6,7 @@ this folder exists: the room does not sample the classroom's palette, its textur
 materials, and the classroom does not sample this one's.
 
 Nothing here is downloaded, traced, photographed or model-generated. Every value is
-computed by the two scripts below from a fixed seed, so a reviewer can regenerate the bytes
+computed by the generators below from a fixed seed, so a reviewer can regenerate the bytes
 instead of trusting a binary.
 
 ## What the room is painted from
@@ -59,17 +59,22 @@ build rather than a file nobody can rebuild.
 
 ## The room itself
 
-`tools/build_laboratory.py` emits two things from its tables:
+`tools/build_laboratory.py` emits the room and materials, and calls `tools/laboratory_fixtures.py`
+for the measured fittings:
 
-- `assets/materials/laboratory/*.tres` — 26 `StandardMaterial3D` presets. They follow the
+- `assets/materials/laboratory/*.tres` — 31 `StandardMaterial3D` presets. They follow the
   ART_BIBLE rules for a location's own colour system: matte toon surfaces
   (`diffuse_mode = 3`, `specular_mode = 2`, `roughness = 1.0`), a 6 mm ink contour borrowed
   read-only from `scenes/environment/props/playground_art/materials/ink_outline.tres`, and
   colours reserved for the sage enamel under the cold fixtures, the running lights and
   the darker amethyst-gray annex.
 - `scenes/locations/laboratory/laboratory.tscn` — the scene: a shell and benches with
-  matching collision boxes, 87 cylinders, 421 cable sections sharing three material-bearing
-  meshes, and nine inspections. The only exit is in the south wall.
+  matching collision boxes, 421 cable sections sharing three material-bearing meshes, and
+  nine inspections. The only exit is in the south wall.
+- `laboratory_fittings.tscn` — two roll-rimmed bowls with open strainers and assembled taps,
+  open-mouth glass profiles, the drying tray and tube rack. Source dimensions are visible
+  in the Python table, and the small Godot ArrayMesh payloads are generated, not hand-edited.
+  Both scene files independently fit the 192 KiB scene threshold.
 
 The [folded teaching wing](../teaching_block/README.md) connects the room to the optional
 01 recess through two matching sides of `laboratory_entry_door.tscn`. The separate `Entry`
@@ -83,3 +88,19 @@ Bench supports, glassware, shelves and cabinet doors follow the same approach. T
 visible leads start at the fixtures or their service glands, pass around the casework,
 and lie down on the floor. The room stays cold and wipe-clean; the original standalone layout remains documented in
 `docs/IMPLEMENTATION_NOTES_LABORATORY.md`.
+
+## Fitting the wet station
+
+The old bench deck was closed, and three vessels placed at its nominal height were past
+its end. The north and middle spans now carry each piece at its measured foot height.
+The hood deck and cabinet shelves use their own height, not that of the worktop. Inverted
+flasks sit on their rims with locating pegs; the five tubes sit on the bottom rack plate.
+Two .54 × .66 m worktop cutouts leave .173 m deep bowls free of the casework. The low
+service boxes leave space behind the fronts for the sump, the drain aperture and the
+strainer seat. Collars sit on the back rails and the spouts turn over the bowls.
+
+`tests/laboratory_visual_slice_test.gd` checks footprints and vertical contact, samples the
+actual basin triangles and keeps the earlier cable, route, camera and text checks. The new
+wet-bench CameraShot shows the first bowl and adjacent glass at an angle, in addition to
+the default follow view. The matched `laboratory` legs in Location art capture compare
+those default stances; the Laboratory capture workflow still covers the rest of the room.

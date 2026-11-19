@@ -20,6 +20,9 @@ on:
   pull_request:
     paths:
       - "tests/capture_locations.gd"
+      - "scenes/locations/laboratory/**"
+      - "scenes/locations/staff_office/**"
+      - "scenes/locations/restroom/**"
       - "tests/location_art_test.gd"
       - "tests/playground_art_slice_test.gd"
       - "tests/return_route_test.gd"
@@ -55,6 +58,13 @@ jobs:
       matrix:
         location: [corridor, street, residential, alley, playground]
         side: [before, after]
+        include:
+          - {location: laboratory, side: before}
+          - {location: laboratory, side: after}
+          - {location: staff_office, side: after}
+          - {location: restroom, side: after}
+          - {location: staff_office, side: forward-plus}
+          - {location: restroom, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -90,6 +100,12 @@ jobs:
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
           grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
 
+      - name: Install software Vulkan for the two Forward+ room checks
+        if: matrix.side == 'forward-plus'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers
+
       - name: Capture
         shell: bash
         env:
@@ -97,50 +113,54 @@ jobs:
           SIDE: ${{ matrix.side }}
         run: |
           set +e -uo pipefail
-          detail=()
-          if [ "$LOCATION" != corridor ]; then
-            detail=(return-route review_width=460)
+          renderer=(--rendering-driver opengl3)
+          if [ "$SIDE" = forward-plus ]; then
+            renderer=(--rendering-method forward_plus --rendering-driver vulkan)
           fi
-          if [ "$LOCATION/$SIDE" = playground/after ]; then
-            detail+=(return-board-focus)
-          fi
+          width=960
+          case "$LOCATION" in
+            corridor|laboratory|staff_office|restroom)
+              detail=(school-details review_width=440)
+              width=1600
+              expect=2
+              if [ "$LOCATION" = laboratory ]; then expect=3; fi
+              if [ "$LOCATION" != corridor ] && [ "$SIDE" != before ]; then
+                detail+=(school-focus)
+                expect=$((expect+1))
+              fi
+              ;;
+            *)
+              detail=(return-route review_width=460)
+              expect=2
+              if [ "$LOCATION" = playground ]; then expect=3; fi
+              if [ "$LOCATION/$SIDE" = playground/after ]; then
+                detail+=(return-board-focus)
+                expect=4
+              fi
+              ;;
+          esac
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+            godot --path . --resolution 1600x900 "${renderer[@]}" --audio-driver Dummy \
             --script res://tests/capture_locations.gd -- \
-            "label=${SIDE}" "only=${LOCATION}" spots=3 width=960 quality=0.81 "${detail[@]}" \
+            "label=${SIDE}" "only=${LOCATION}" spots=3 "width=${width}" quality=0.84 "${detail[@]}" \
             > "${RUNNER_TEMP}/capture.log" 2>&1
           code=$?
           grep -E "LOCATION_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 60
           out="docs/screenshots/map_art/${SIDE}"
-          ls -l "${out}" || true
-          frames=$(find "${out}" -maxdepth 1 -name "${LOCATION}_*.jpg" | wc -l)
-          echo "frames=${frames} exit=${code}"
-          if [ "${frames}" -lt 2 ]; then
-            echo "::error title=location capture::${LOCATION} (${SIDE}) wrote ${frames} frame(s), exit ${code}"
+          shopt -s nullglob
+          frames=("$out/""${LOCATION}"_*.jpg)
+          views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
+          if [ "$code" -ne 0 ] || [ "${#frames[@]}" -lt 2 ] || [ "${#views[@]}" -ne "$expect" ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
+            tail -n 40 "${RUNNER_TEMP}/capture.log"
+            echo "::error title=location capture::$LOCATION/$SIDE wrote ${#frames[@]} frames, ${#views[@]}/$expect detail frames, exit $code"
             exit 1
           fi
-          mkdir -p "${RUNNER_TEMP}/frames"
-          cp "${out}/${LOCATION}"_*.jpg "${RUNNER_TEMP}/frames/"
-          inline="${RUNNER_TEMP}/frames"
-          if [ "$LOCATION" != corridor ]; then
-            inline="${RUNNER_TEMP}/route-review"
-            mkdir -p "$inline"
-            shopt -s nullglob
-            views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
-            expect=2
-            if [ "$LOCATION" = playground ]; then expect=3; fi
-            if [ "$LOCATION/$SIDE" = playground/after ]; then expect=4; fi
-            if [ "$code" -ne 0 ] || [ "${#views[@]}" -ne "$expect" ] || \
-                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
-                ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
-              tail -n 40 "${RUNNER_TEMP}/capture.log"
-              echo "::error title=return route capture::wrote ${#views[@]}/$expect detail frames, exit $code"
-              exit 1
-            fi
-            cp "${views[@]}" "$inline/"
-            cp "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
-            echo "::notice title=return route capture::${#views[@]} detail views of the return route"
-          fi
+          inline="${RUNNER_TEMP}/review"
+          mkdir -p "$inline" "${RUNNER_TEMP}/frames"
+          cp "${frames[@]}" "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
+          cp "${views[@]}" "$inline/"
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
@@ -160,7 +180,7 @@ jobs:
             cp "$wing"/*.jpg "${RUNNER_TEMP}/frames/"
             cp "$wing/LOCATIONS.md" "${RUNNER_TEMP}/frames/teaching-wing-index.md"
             cp "${RUNNER_TEMP}/teaching-wing.log" "${RUNNER_TEMP}/frames/"
-            inline="$wing/review"
+            cp "$wing/review/"*.jpg "$inline/"
             echo "::notice title=teaching wing capture::${shots} full-size frames, including the close views of 01, 02 and 03"
           fi
           # Keep full-size frames in the artifact. Use compact detail copies within

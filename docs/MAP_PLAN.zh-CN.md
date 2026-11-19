@@ -18,13 +18,16 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 | 地点 id | 场景 | 现状 | 状态 |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | 起点（`PlayerStart`）。手绘风格教室；醒来与自习。 | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有临街玻璃入口与可选实验室；02 保留生物教室和旧街道出口；03 的上层长廊接成环。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有临街玻璃入口与折叠目录；02 保留生物教室和旧街道出口；03 的上层长廊接成环。尽头的可选房间见下表。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | 西侧是带铁栅窗的学校外墙，路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。道路北端直接伸进铺平的天空，那里立着一块空白路牌。 | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | 三栋颜色都有点“不对”的楼（黄、玫瑰、灰绿）围成的院子；滑梯、花坛、晾衣绳、长椅、椅子、绿色动物；粉笔跳房子，其中一格被画了两次；楼顶有水箱和一根歪的天线；北楼有一扇不在窗格网格上的长条亮窗。 | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 两堵冷蓝色、带雨痕的墙夹着 7 米宽的巷子；西墙越过压顶继续往上，并向巷内倾斜；有一个带检修门的凹口；装着椅子的垃圾箱；通往操场的门，门后是光；近处尺度不对的剪影屋顶。 | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | 操场（重点地点）：红色球场、学校后墙、小屋、集装箱、树、有缺口的围栏、住宅区。本轮新增：一段越过开放西缘继续延伸、逐渐沉入天空的围栏；一根立在天空里的 20 米灯杆；一把面向操场的椅子。 | 已实现 |
+| `laboratory` | `scenes/locations/laboratory/laboratory.tscn` | 01 折墙后。冷色工作间，有两个嵌入台面的盆、有承托的玻璃器皿和运转中的混料机。九处检视，原路回到凹口。 | 已实现 |
+| `restroom` | `scenes/locations/restroom/restroom.tscn` | 01 西端。两只洗手池、一开一闭的隔间、地漏旁补过的砖。三项可选观察，回同一层门口。 | 已实现 |
+| `staff_office` | `scenes/locations/staff_office/staff_office.tscn` | 03 东端。无人值守的办公桌、收发格与钥匙板。三项可选观察，回同一层门口。 | 已实现 |
 
-每处改动的前后截图：`docs/screenshots/map_art/before/` 与 `after/`（由 `.github/workflows/location-art-capture.yml` 在 CI 中拍摄）。
+室外改造的前后截图：`docs/screenshots/map_art/before/` 与 `after/`（由 `.github/workflows/location-art-capture.yml` 在 CI 中拍摄）。
 
 ## 2. 当前连接
 
@@ -36,6 +39,9 @@ flowchart LR
   residential["居民区院子"]
   alley["小巷"]
   playground["操场"]
+  laboratory["实验室 / 01 凹口"]
+  restroom["厕所 / 01 西端"]
+  staff_office["教师办公室 / 03 东端"]
   endcard(["本构建结束"])
 
   classroom -- "classroom_door → FromClassroom" --> corridor
@@ -51,6 +57,12 @@ flowchart LR
   alley -- "alley_back_to_courtyard → FromAlley" --> residential
   alley -- "alley_to_playground → FromAlley" --> playground
   playground -- "pg_back_to_alley → FromPlayground" --> alley
+  corridor -- "to_laboratory → FromCorridor" --> laboratory
+  laboratory -- "laboratory_to_corridor → FromLaboratory" --> corridor
+  corridor -- "to_restroom → FromCorridor" --> restroom
+  restroom -- "restroom_to_corridor → FromRestroom" --> corridor
+  corridor -- "to_staff_office → FromCorridor" --> staff_office
+  staff_office -- "staff_office_to_corridor → FromStaffOffice" --> corridor
   playground -- "pg_gap_in_fence（里程碑 end.slice）" --> endcard
 ```
 
@@ -110,8 +122,10 @@ flowchart TB
 | 楼梯间 | 学校竖向连接点；楼层第一次对不上 | 可上下，半平台横向错位 | 两条楼梯在 `corridor` 场景内连续连接 | 已实现 |
 | 楼上走廊 | 重复却不完全一致 | 五间教室、转角、重复门牌 | 位于 `corridor` 内，无需切换场景 | 已实现 |
 | 其他教室 | 看起来相像但不相同 | 跳起来观察内部；开门进入是另一项功能 | 高窗后的浅进深桌椅布景 | 部分实现 |
-| 教师办公室 | 没有人的权威；纸张 | 一张可查看的桌子，值日表的来处 | 独立小场景 | 建议新增 |
-| 实验室、厕所、体育馆 | 叙事圣经列出的候选空间，顺序未定 | 各为单房间场景 | 独立场景 | 已确定但未实现（作为候选）；顺序尚待作者决定 |
+| 教师办公室 | 没有人的权威；未填完的日常文书 | 值日表底稿、收发格与空钩；不推断操场轮值表的来处 | 03 东端，`staff_office` | 已实现 |
+| 实验室 | 采用独立色系的工作间 | 九处可选检视，不增加目标 | 01 凹口，`laboratory` | 已实现 |
+| 厕所 | 日常维护，不解释异常 | 洗手池、插销与地漏 | 01 西端，`restroom` | 已实现 |
+| 体育馆 | 叙事圣经列出的候选空间 | 尚未排入路线 | 若选用，独立场景 | 已确定但未实现（候选） |
 | 未完成的楼梯间 | 叙事圣经列出的候选空间 | 一段到头就断的楼梯；一个往外看的位置 | 楼梯间场景的区域 | 已确定但未实现（候选） |
 | 一楼连接空间 | 连接楼梯、房间和操场的 `FromSchool` 出生点 | 让 `FromSchool` 有用 | 独立场景或楼梯间的区域 | 建议新增 |
 
@@ -125,7 +139,7 @@ flowchart TB
 | 生物教室：打开后门，是悬在教室里的楼梯 | 一条与建筑不相容的垂直连接 | 生物教室内的区域 | **已在 #159 中从 `classroom` 撤下**：后门（东墙靠后的白色门 `WallEast/RearDoor`）从来不会打开，“除非使用特殊的手段”，教室里不放置楼梯。特殊手段是什么、楼梯放在哪里：尚待作者决定 |
 | 镜面爬行通道或管道 | 两个地点之间的狭窄连接 | 简短的独立场景 | 已确定但未实现；连接哪里：尚待作者决定 |
 | 操场上不可能出现的动物（例如鳄鱼、狮子） | 操场里的“住客”，平静呈现，不是战斗 | 在 `playground` 内（操场中央留给事件） | 已确定但未实现；与绿色动物的关系：尚待作者决定 |
-| 拥有自己媒介的实验室 | 上表候选房间之一 | 独立场景 | 已确定但未实现 |
+| 拥有自己媒介的实验室 | 01 的可选岔路，采用冷色调与器械布景 | `laboratory` | 已实现 |
 
 ## 6. 校园周边扩展
 
@@ -183,7 +197,7 @@ flowchart LR
 | 0 | 走廊、街道、居民区、小巷舞台化；操场远景新增；`tests/location_art_test.gd`；本规划 | 已实现（本 PR） |
 | 1 | 提示键、未使用的出生点、新测试登记进 CI | 建议新增 |
 | 2 | 楼梯间和上层走廊 | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
-| 3 | 第一个候选房间 | 已确定但未实现（候选）；选哪个：尚待作者决定 |
+| 3 | 第一批候选房间 | 已实现：实验室、厕所；教师办公室也是可选支路。体育馆和后续房间排序未定。 |
 | 4 | 第一个周边空间 | 已确定但未实现（候选）；选哪个：尚待作者决定 |
 | 5 | 不稳定连接；椭圆形建筑 | 建议新增 / 尚待作者决定 |
 

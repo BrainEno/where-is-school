@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "restroom_basins": {
+    "title": "Two washbasins",
+    "prompt": "Look at the washbasins",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Both levers are shut. One strainer is dull and the other is the colour of the taps. Along the bottom of the mirror, a new clip sits where the two panes meet.",
+    "repeat_text": "Two shut taps, two different strainers, one new clip."
+  },
+  "restroom_latch": {
+    "title": "Second cubicle",
+    "prompt": "Look at the latch",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The indicator shows a narrow band of red. The end of the bolt is visible through a gap in the plate. From here you cannot see what is keeping it there.",
+    "repeat_text": "A sliver of red and the end of the bolt."
+  },
+  "restroom_drain": {
+    "title": "Floor grate",
+    "prompt": "Look at the floor grate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The grate interrupts one of the ruled lines in the floor. A small piece of warmer tile sits by its edge. The slots are clear.",
+    "repeat_text": "A little warmer tile at the edge of the grate.",
+    "record": {
+      "entry_id": "saw_restroom_drain",
+      "source": "observed",
+      "text": "One small piece of tile beside the restroom drain is a different colour."
+    }
+  }
+}
