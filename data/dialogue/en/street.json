@@ -52,10 +52,7 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "The tiles stop in a neat line below the windows. You’d have to count further up to get to where you were sitting.",
-          "conditions": {
-            "not_flags": ["street_wall_seen"]
-          }
+          "text": "The tiles stop in a neat line below the windows. You’d have to count further up to get to where you were sitting."
         },
         {
           "id": "w_2",

@@ -50,8 +50,8 @@ const LEFT_CLASSROOM: StringName = &"left_classroom"
 const LEFT_SCHOOL: StringName = &"left_school"
 ## bool: the first street conversation has played.
 const STREET_ARRIVED: StringName = &"street_arrived"
-## bool: the wall's initial observation has been presented. Later looks keep the
-## route-tab response but skip the opening observations. Missing in earlier saves.
+## bool: the camera has been noted during a first wall look. Later looks skip
+## that observation but keep the opening and route-tab response. Absent in old saves.
 const STREET_WALL_SEEN: StringName = &"street_wall_seen"
 ## bool: the first residential-area conversation has played.
 const RESIDENTIAL_ARRIVED: StringName = &"residential_arrived"

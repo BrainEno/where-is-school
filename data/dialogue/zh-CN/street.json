@@ -52,10 +52,7 @@
         {
           "id": "w_1",
           "speaker": "protagonist",
-          "text": "瓷砖铺到窗底，齐齐地断了。再往上数，才是你坐着听课的高度。",
-          "conditions": {
-            "not_flags": ["street_wall_seen"]
-          }
+          "text": "瓷砖铺到窗底，齐齐地断了。再往上数，才是你坐着听课的高度。"
         },
         {
           "id": "w_2",

@@ -209,7 +209,7 @@ static func _check_wall_revisit(main: Node, check: Harness.Checker, mark: String
 	var journal := main.get_node(^"/root/NarrativeState")
 	var flags: Dictionary = state.get_snapshot()
 	var knowledge: Dictionary = journal.to_snapshot()
-	var expected: Array[StringName] = [&"w_3"]
+	var expected: Array[StringName] = [&"w_1", &"w_3"]
 	if not mark.is_empty():
 		expected.append(StringName("w_tab_" + mark))
 	_look_at_wall(main, check, expected)
