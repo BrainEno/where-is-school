@@ -119,7 +119,20 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Install and launch the APK with the actual Android runtime
-        run: bash tools/smoke_android.sh build/android-preview/where-is-school-preview.apk --boot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/android-smoke
+          if ! bash tools/smoke_android.sh build/android-preview/where-is-school-preview.apk --boot 2>&1 | tee build/android-smoke/smoke.log; then
+            for log in smoke emulator launch godot android-runtime; do
+              file="build/android-smoke/$log.log"
+              [[ "$log" != launch ]] || file=build/android-smoke/launch.txt
+              if [[ -f "$file" ]]; then
+                tail -4 "$file" | cut -c1-400 | while IFS= read -r line; do printf '::error title=Android %s::%s\n' "$log" "$line"; done
+              fi
+            done
+            exit 1
+          fi
       - name: Upload Android launch evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

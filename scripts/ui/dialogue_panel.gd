@@ -464,6 +464,9 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	_title_label.visible = not title.is_empty()
 
 	_body_label.text = String(line.get("text", ""))
+	if _touch_footer != null:
+		_body_touch = -1
+		_body_label.get_v_scroll_bar().value = 0.0
 	set_choices([])
 	if keep_state and was_complete:
 		_body_label.visible_characters = -1
@@ -764,6 +767,7 @@ func _touch_reading(event: InputEvent) -> bool:
 	if event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 		if drag.index == _body_touch:
+			_body_label.get_content_height() # Resolve the range if the view just resized.
 			_body_label.get_v_scroll_bar().value -= drag.relative.y
 		return true
 	return MobileLayout.is_emulated_mouse(event)
@@ -1058,7 +1062,9 @@ func _settle_layout() -> void:
 		offset_right = left + width
 		offset_bottom = -foot
 		offset_top = -foot - retained_height
-		_body_label.fit_content = true
+		# On touch, let the container lay out the width without a minimum height from
+		# the paragraph's *previous* wrap. Read the actual shaped height below.
+		_body_label.fit_content = _touch_footer == null
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
 		# Measure with every option, then decide how many can be shown.
@@ -1072,6 +1078,11 @@ func _settle_layout() -> void:
 		return
 
 	var needed: float = _frame.get_combined_minimum_size().y
+	var body_height := _body_label.get_combined_minimum_size().y
+	if _touch_footer != null:
+		var content_height := float(_body_label.get_content_height())
+		needed += maxf(0.0, content_height - body_height)
+		body_height = maxf(content_height, body_height)
 	var scrolling := needed > max_height + 0.5
 	var height := max_height if scrolling else clampf(needed, min_height, max_height)
 	offset_top = -foot - height
@@ -1084,7 +1095,7 @@ func _settle_layout() -> void:
 	var was_windowed := _choice_window_count > 0
 	_choice_window_count = 0
 	if scrolling and not _choice_buttons.is_empty():
-		_fit_choice_window(needed, max_height)
+		_fit_choice_window(needed, max_height, body_height)
 	if _touch_footer == null and (was_windowed or _choice_window_count > 0):
 		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
@@ -1113,9 +1124,8 @@ func _rule_paper() -> void:
 ## When the line and all of its options cannot share the band, the body keeps two lines
 ## (scrolling) and the options show the longest run that fits, always including the one
 ## the cursor or the wheel asked for. Nothing is shrunk and nothing is cut off.
-func _fit_choice_window(needed: float, max_height: float) -> void:
+func _fit_choice_window(needed: float, max_height: float, body_height: float) -> void:
 	var choices_height := _choices_container.get_combined_minimum_size().y
-	var body_height := _body_label.get_combined_minimum_size().y
 	# One line of the paragraph always stays readable above the options.
 	var body_floor := roundf(float(body_size) * 1.45 + 10.0)
 	var other := needed - choices_height - body_height
@@ -1151,7 +1161,7 @@ func _fit_choice_window(needed: float, max_height: float) -> void:
 			shown += heights[index] + (gap if index > start else 0.0)
 	if body_height <= max_height - other - shown:
 		# With fewer options on screen the whole paragraph fits again: no scrolling.
-		_body_label.fit_content = true
+		_body_label.fit_content = _touch_footer == null
 		_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
 	else:

@@ -38,6 +38,27 @@ class MobileExportTest(unittest.TestCase):
             self.assertIn(expected, configured.splitlines())
         self.assertEqual(export_presets.parse(configured)["Android"], export_presets.parse(self.presets)["Android"])
 
+    def test_android_launcher_alias(self) -> None:
+        manifest = f"""<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                    package="{export_mobile.PREVIEW}" android:versionCode="37" android:versionName="0.1.0">
+          <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />
+          <application>
+            <activity android:name=".GodotApp" android:exported="false" />
+            <activity-alias android:name=".Launcher" android:targetActivity=".GodotApp" android:exported="true">
+              <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+              </intent-filter>
+            </activity-alias>
+          </application>
+        </manifest>"""
+        export_mobile.check_manifest(manifest, export_mobile.PREVIEW, 37, "0.1.0")
+        for invalid in (manifest.replace('exported="true"', 'exported="false"'),
+                        manifest.replace("android.intent.category.LAUNCHER", "android.intent.category.DEFAULT"),
+                        manifest.replace('minSdkVersion="24"', 'minSdkVersion="29"')):
+            with self.assertRaises(export_mobile.BuildError):
+                export_mobile.check_manifest(invalid, export_mobile.PREVIEW, 37, "0.1.0")
+
 
 if __name__ == "__main__":
     unittest.main()

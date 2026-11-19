@@ -175,7 +175,11 @@ func _reading() -> void:
 	_check.expect(not panel.is_revealing() and continued[0] == 0, "First Continue did not only finish the reveal")
 	await _tap_control(next_line)
 	_check.expect(continued[0] == 1, "One tap did not continue exactly once")
-	var body := panel.get_node(^"Frame/Content/BodyLabel") as RichTextLabel
+	var body := panel.get_body_label()
+	var content_height := body.get_content_height()
+	_check.expect(body.scroll_active and float(content_height) > body.size.y,
+		"Long paragraph was not given a scrollable body: text=%s height=%s size=%s band=%s" % [
+			body.text.length(), content_height, body.size, panel.size])
 	var start := body.get_global_rect().get_center()
 	var bar := body.get_v_scroll_bar()
 	var origin := bar.value

@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 
 import export_presets
@@ -32,6 +33,7 @@ UNSIGNED_TEAM = "0000000000"  # Used only to satisfy the Xcode project exporter.
 EXCLUDED = {"tests", "tools", "docs", "art", "scenes/dev", "scripts/dev", ".github", "addons"}
 RELEASE_KEY = tuple("GODOT_ANDROID_KEYSTORE_RELEASE_" + k for k in ("PATH", "USER", "PASSWORD"))
 ORIENTATIONS = {"UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"}
+ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
 
 class BuildError(Exception):
@@ -131,15 +133,36 @@ def import_project(godot: str, project: Path) -> None:
             "Imported project could not compile in Godot")
 
 
+def check_manifest(xml: str, package: str, build: int, version: str) -> None:
+    manifest = ET.fromstring(xml)
+    ns = ANDROID_NS
+    require(manifest.get("package") == package and manifest.get(ns + "versionCode") == str(build)
+            and manifest.get(ns + "versionName") == version, "APK package/version does not match the selected build")
+    sdk = manifest.find("uses-sdk")
+    require(sdk is not None and sdk.get(ns + "minSdkVersion") == "24"
+            and sdk.get(ns + "targetSdkVersion") == str(ANDROID_API), "Unexpected SDK range")
+    permissions = [node.get(ns + "name") for node in manifest if node.tag.startswith("uses-permission")]
+    require("android.permission.INTERNET" not in permissions, "APK requests Internet access")
+    # Godot puts LAUNCHER on an exported activity alias. aapt's badging output only
+    # walks activity elements, so inspect the decoded manifest rather than its summary.
+    for node in manifest.findall("./application/*"):
+        if node.tag not in {"activity", "activity-alias"} or node.get(ns + "exported") != "true":
+            continue
+        for intent in node.findall("intent-filter"):
+            if any(a.get(ns + "name") == "android.intent.action.MAIN" for a in intent.findall("action")) \
+                    and any(c.get(ns + "name") == "android.intent.category.LAUNCHER" for c in intent.findall("category")):
+                return
+    raise BuildError("APK has no exported MAIN/LAUNCHER activity or alias")
+
+
 def verify_apk(apk: Path, sdk_tools: Path, package: str, build: int, version: str, preview: bool) -> None:
     suffix = ".bat" if os.name == "nt" else ""
     run(sdk_tools / ("apksigner" + suffix), "verify", "--verbose", "--print-certs", apk)
-    badging = run(sdk_tools / ("aapt.exe" if os.name == "nt" else "aapt"), "dump", "badging", apk, capture=True)
-    require(f"name='{package}' versionCode='{build}' versionName='{version}'" in badging,
-            "APK package/version does not match the selected build")
-    require("sdkVersion:'24'" in badging and f"targetSdkVersion:'{ANDROID_API}'" in badging, "Unexpected SDK range")
-    require("launchable-activity:" in badging, "APK has no launch activity")
-    require("android.permission.INTERNET" not in badging, "APK requests Internet access")
+    cmdline = sdk_tools.parents[1] / "cmdline-tools"
+    analyzer_name = "apkanalyzer" + suffix
+    analyzers = sorted(cmdline.glob(f"*/bin/{analyzer_name}"), reverse=True)
+    require(bool(analyzers), "Install Android SDK Command-line Tools (apkanalyzer)")
+    check_manifest(run(analyzers[0], "manifest", "print", apk, capture=True), package, build, version)
     with ZipFile(apk) as archive:
         paths = set(archive.namelist())
         expected = {"arm64-v8a", "x86_64"} if preview else {"arm64-v8a"}
@@ -277,7 +300,7 @@ def main() -> int:
         (out / "BUILD.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report))
         return 0
-    except (BuildError, OSError, ValueError, plistlib.InvalidFileException, subprocess.CalledProcessError,
+    except (BuildError, OSError, ValueError, ET.ParseError, plistlib.InvalidFileException, subprocess.CalledProcessError,
             stamp_release_version.VersionError, export_presets.PresetError) as error:
         print(f"Mobile export failed: {error}", file=sys.stderr)
         return 1
