@@ -4,6 +4,9 @@
 #include "res://assets/shaders/characters/character_shape.gdshaderinc"
 
 uniform vec3 albedo : source_color = vec3(0.5);
+// Opt in for meshes with painted-in detail (e.g. the Teacher B review asset).
+// Existing flat-colour looks keep their authored palette unchanged.
+uniform bool use_vertex_paint = false;
 // Multiplier for the shadow side's light: the colour shadows are painted in.
 uniform vec3 shade_tint : source_color = vec3(0.55, 0.55, 0.7);
 // Multiplier for the lit side (a warm or cool cast on the light).
@@ -207,6 +210,16 @@ void fragment() {
 	}
 	if (detail_strength > 0.0 && detail_kind != 0) {
 		colour = surface_detail(paint_position, colour);
+	}
+	if (use_vertex_paint) {
+		// glTF stores COLOR_0 in linear RGB. Compatibility shades in sRGB;
+		// Forward+ and Mobile keep the linear pigment, without double decoding.
+		vec3 baked = clamp(COLOR.rgb, vec3(0.0), vec3(1.0));
+		if (OUTPUT_IS_SRGB) {
+			baked = mix(vec3(1.055) * pow(baked, vec3(1.0 / 2.4)) - vec3(0.055),
+				baked * 12.92, lessThanEqual(baked, vec3(0.0031308)));
+		}
+		colour *= baked;
 	}
 	ALBEDO = clamp(colour, vec3(0.0), vec3(1.0));
 	ROUGHNESS = 1.0;
