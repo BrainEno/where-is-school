@@ -45,7 +45,9 @@ Android 出包先检查签名和 Godot 稀疏索引中**每项**资源的路径�
    可在自己的 Mac 用 `base64 -i /path/to/file | pbcopy` 编码并直接贴进对应 secret。团队 ID 从
    profile 读取并核对。每次变更证书/profile 后同步更新 secrets；签名作业只用临时钥匙串，退出时清理，
    不上传归档、证书、描述文件原件或钥匙串。
-3. 运行 **Build iOS IPA**，必要时审批环境作业。缺少配置/签名失败时工作流标红，不生成“无签名 IPA”。
+3. 运行 **Build iOS IPA**，必要时审批环境作业。签名 IPA 内嵌描述文件及已登记设备的 UDID。公开仓库的
+   工件可被有读取权限的人下载；只在确认同意公开测试设备信息时勾选 `publish_device_profile`，否则请在
+   私有仓库或受控 Mac 本地导出。缺少配置/签名失败时工作流标红，不生成“无签名 IPA”。
    解压下载，解锁授权 iPhone/iPad，用 Xcode 的 **Devices and Simulators** 或 Apple Configurator
    安装；Development 方式可能需要启用设备的开发者模式。App Store Connect / TestFlight 是另一个分发流程。
 
@@ -135,7 +137,7 @@ Compatibility，设备 IPA 保持 Mobile/Metal。模拟器的画质或性能不�
 
 - 可审查的 **Xcode 工程**（旁边的 `.pck` 与 framework 也必须带上）：`python3 tools/export_mobile.py ios-project --output build/mobile/ios-project`。
 - 在 macOS 的 Xcode 上，**无签名设备归档**：`python3 tools/export_mobile.py ios-unsigned --build 1 --output build/mobile/ios-unsigned`。它验证 ARM64、系统版本、横屏声明、iPhone/iPad 家族和游戏资源。这个 `.xcarchive` 不是可安装 IPA，也不是 iOS 模拟器构建。
-- **有签名 IPA**：在受控 Mac 上安装 Xcode、证书与对应 provisioning profile，通过 `xcode-select` 选定 Xcode。确保 Apple Team 已注册 `io.github.braineno.whereisschool`，或在首发前统一定稿应用 ID 并更新包校验。使用本机 `IOS_TEAM_ID` 或 `--team`；从同团队的 Xcode 分发流程准备本机 `ExportOptions.plist`。签名步骤使用 Xcode 自动签名的归档与本机证书；脚本不登录账号、不自动上传。iOS 应用最低系统版本为 15.0，目标包括 iPhone 和 iPad。
+- **有签名 IPA**：在受控 Mac 上安装 Xcode、证书与对应 provisioning profile，通过 `xcode-select` 选定 Xcode。确保 Apple Team 已注册 `io.github.braineno.whereisschool`，或在首发前统一定稿应用 ID 并更新包校验。使用本机 `IOS_TEAM_ID` 或 `--team`；从同团队的 Xcode 分发流程准备本机 `ExportOptions.plist`。归档按该文件选择手动或自动签名，使用本机证书；脚本不登录账号、不自动上传。iOS 应用最低系统版本为 15.0，目标包括 iPhone 和 iPad。
 
   ```sh
   python3 tools/export_mobile.py ios-ipa --build 42 \

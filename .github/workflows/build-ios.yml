@@ -8,6 +8,10 @@ on:
         description: 'Apple provisioning profile type (registered devices only)'
         options: [development, ad-hoc]
         default: development
+      publish_device_profile:
+        type: boolean
+        description: 'Allow a public IPA containing the provisioning profile and test-device IDs'
+        default: false
       build_number:
         description: 'iOS build number (0 uses the run number)'
         type: number
@@ -22,11 +26,18 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
-      - name: Check trusted source ref
+      - name: Check trusted source ref and consent for public device metadata
         shell: bash
+        env:
+          REPO_PRIVATE: ${{ github.event.repository.private }}
+          PUBLISH_DEVICE_PROFILE: ${{ inputs.publish_device_profile }}
         run: |
           if [[ "$GITHUB_REF" != refs/heads/main ]]; then
             echo '::error::Run the signed IPA build from main. PRs cannot access the ios-signing environment.'
+            exit 1
+          fi
+          if [[ "$REPO_PRIVATE" != true && "$PUBLISH_DEVICE_PROFILE" != true ]]; then
+            echo '::error::A signed IPA embeds its provisioning profile and device IDs. Use designated test devices and opt in to public distribution, or build in a private checkout.'
             exit 1
           fi
   ipa:

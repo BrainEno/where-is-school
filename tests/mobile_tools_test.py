@@ -173,7 +173,11 @@ class WorkflowTest(unittest.TestCase):
         self.assertNotIn("concurrency", ios)
         self.assertEqual(ios["jobs"]["ipa"]["environment"], "ios-signing")
         self.assertEqual(ios["jobs"]["ipa"]["needs"], "request")
-        self.assertIn("refs/heads/main", ios["jobs"]["request"]["steps"][0]["run"])
+        request = ios["jobs"]["request"]["steps"][0]
+        self.assertIn("refs/heads/main", request["run"])
+        consent = ios["on"]["workflow_dispatch"]["inputs"]["publish_device_profile"]
+        self.assertEqual((consent["type"], consent["default"]), ("boolean", "false"))
+        self.assertIn('"$REPO_PRIVATE" != true && "$PUBLISH_DEVICE_PROFILE" != true', request["run"])
         self.assertNotIn("secrets.", str(gate))
         self.assertNotIn("assets/**", gate["on"]["pull_request"]["paths"])
         self.assertEqual(gate["jobs"]["android"]["uses"], "./.github/workflows/build-android.yml")
