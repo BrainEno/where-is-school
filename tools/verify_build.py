@@ -38,12 +38,16 @@ guesses this tool started with:
 The Godot 4 pack format used here:
 
     u32 magic 'GDPC' | u32 pack_version | u32 major, minor, patch | u32 flags | u64 file_base
-    at file_base: u32 file_count, then per file:
+    v3/v4: u64 directory_offset, then 16 reserved u32 words
+    v2: 16 reserved u32 words; the directory follows immediately
+    at directory_offset (v3/v4): u32 file_count, then per file:
         u32 path_len | path bytes (NUL-padded to 4) | u64 offset | u64 size | 16 byte md5
         | u32 flags (pack_version >= 2)
 
-If Godot changes the format this tool fails loudly with the header it saw instead of
-reporting a cheerful empty build.
+The bounded reader in godot_pck verifies data ranges and MD5s too; a readable
+directory without those files is not a build. Encrypted/sparse/patch packs and
+signed/wrapped executable locators are deliberately unsupported by this unsigned
+release pipeline. Unsupported layouts fail instead of searching for a decoy header.
 """
 
 from __future__ import annotations
@@ -55,7 +59,10 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-MAGIC = b"GDPC"
+# Keep the established verify_build reader API for callers and tests. The byte
+# parser owns layout/integrity; this file owns release contents and budgets.
+from godot_pck import MAGIC, PackError, load_blob, read_pack
+import release_archive
 
 
 def annotate(level: str, title: str, message: str) -> None:
@@ -204,142 +211,7 @@ MAX_PACK_BYTES = 16 * MiB
 BY_NAME = {category.name: category for category in CATEGORIES}
 
 
-class PackError(Exception):
-    pass
-
-
-class _Cursor:
-    """A bounds-checked little-endian reader over the pack bytes."""
-
-    def __init__(self, blob: bytes, offset: int) -> None:
-        self.blob = blob
-        self.offset = offset
-
-    def read(self, size: int) -> bytes:
-        if self.offset + size > len(self.blob):
-            raise PackError(
-                f"read of {size} byte(s) at 0x{self.offset:x} runs past the end "
-                f"({len(self.blob)} bytes)"
-            )
-        chunk = self.blob[self.offset : self.offset + size]
-        self.offset += size
-        return chunk
-
-    def u32(self) -> int:
-        return struct.unpack("<I", self.read(4))[0]
-
-    def u64(self) -> int:
-        return struct.unpack("<Q", self.read(8))[0]
-
-    def skip(self, size: int) -> None:
-        self.read(size)
-
-
-# Byte layout, from the engine's own readers and writers
-# (`core/io/pck_packer.cpp`, `core/io/file_access_pack.cpp`, tags 4.7.2-stable):
-#
-#   u32 magic 'GDPC' | u32 format | u32 major | u32 minor | u32 patch | u32 pack_flags
-#   u64 file_base                     offsets in the directory are relative to this
-#   -- format 3 and 4 only --
-#   u64 dir_offset                    where the directory starts, relative to the magic
-#   16 x u32 reserved                 (64 bytes)
-#   -- directory, at dir_offset --
-#   u32 file_count | per entry:
-#       u32 path_length (already padded) | path bytes
-#       u64 offset (relative to file_base) | u64 size | 16 byte md5 | u32 flags
-#
-# This was written from the v2/v3 layout and failed on the real export, which is v4: v4
-# moved the directory and stores its offset instead of leaving it after the data. Format 2
-# keeps the directory directly after the header's reserved words, and is handled so an old
-# pack still verifies.
-SUPPORTED_FORMATS = (2, 3, 4)
-RESERVED_WORDS = 16
-
-
-def _read_directory(blob: bytes, directory_offset: int) -> list[tuple[str, int]]:
-    cursor = _Cursor(blob, directory_offset)
-    count = cursor.u32()
-    if count > 20000:
-        raise PackError(f"the directory at 0x{directory_offset:x} claims {count} files")
-    entries: list[tuple[str, int]] = []
-    for index in range(count):
-        path_length = cursor.u32()
-        if path_length == 0 or path_length > 4096:
-            raise PackError(f"entry {index} has an implausible path length ({path_length})")
-        raw = cursor.read(path_length)
-        cursor.u64()  # data offset, relative to file_base
-        size = cursor.u64()
-        cursor.skip(16)  # the entry's md5
-        cursor.u32()  # per-file flags: encrypted / removal / delta
-        stored = raw.rstrip(b"\x00").decode("utf-8", "replace")
-        # The packer strips the prefix, so a stored path is never empty and never absolute.
-        if not stored or stored.startswith("/"):
-            raise PackError(f"entry {index} is not a usable path ({stored[:40]!r})")
-        entries.append(("res://" + stored, size))
-    return entries
-
-
-def read_pack(blob: bytes, base: int) -> tuple[list[tuple[str, int]], dict[str, int]]:
-    """Return (path, size) entries and the header, from a pack starting at `base`."""
-    if blob[base : base + 4] != MAGIC:
-        raise PackError(
-            f"no 'GDPC' magic at offset {base}; the bytes there are {blob[base : base + 32].hex()}"
-        )
-    if base + 32 > len(blob):
-        raise PackError(f"the pack header is truncated ({len(blob) - base} bytes from the magic)")
-    version, major, minor, patch, pack_flags = struct.unpack_from("<IIIII", blob, base + 4)
-    if version not in SUPPORTED_FORMATS:
-        raise PackError(
-            f"unsupported pack format {version}; header begins {blob[base : base + 32].hex()}"
-        )
-    file_base = struct.unpack_from("<Q", blob, base + 24)[0]
-    header = {
-        "version": version,
-        "engine": f"{major}.{minor}.{patch}",
-        "file_base": file_base,
-        "relative_offsets": bool(pack_flags & 0x2),
-    }
-    if version >= 3:
-        directory_offset = struct.unpack_from("<Q", blob, base + 32)[0] + base
-    else:
-        directory_offset = base + 32 + RESERVED_WORDS * 4
-    return _read_directory(blob, directory_offset), header
-
-
-def load_blob(blob: bytes, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
-    """Read a pack from bytes, so a caller can hand over an executable from inside a zip."""
-    if not embedded:
-        return read_pack(blob, 0)
-
-    # The pack is appended to the executable, so the magic is somewhere near the end — but
-    # "near the end" is not "the last occurrence": the exported executable ends with bytes
-    # that spell GDPC, and taking the last one reported a truncated header. Every occurrence
-    # is tried, newest first, and the first that parses into a directory of res:// paths
-    # wins; a candidate that parses into real paths is not a coincidence.
-    starts: list[int] = []
-    index = blob.rfind(MAGIC)
-    while index != -1 and len(starts) < 64:
-        starts.append(index)
-        index = blob.rfind(MAGIC, 0, index)
-    if not starts:
-        raise PackError(
-            "no 'GDPC' magic found in this file. Either the export did not embed the "
-            "pack (binary_format/embed_pck), or the export failed and left a bare "
-            "template executable."
-        )
-    problems: list[str] = []
-    for start in starts:
-        try:
-            return read_pack(blob, start)
-        except PackError as error:
-            problems.append(f"0x{start:x}: {error}")
-    raise PackError(
-        f"no readable pack among {len(starts)} candidate('GDPC') offset(s): "
-        + "; ".join(problems[:4])
-    )
-
-
-def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict[str, int]]:
+def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict]:
     return load_blob(path.read_bytes(), embedded)
 
 
@@ -394,7 +266,18 @@ def verify(
     problems = verify_contents(entries)
     budget_problems, warnings = verify_budgets(entries)
     problems.extend(budget_problems)
-    del header
+    # A readable PCK format does not mean this project's engine can open it.
+    # Use the same single version pin as CI, not a second literal in the verifier.
+    try:
+        expected_engine = (Path(__file__).resolve().parent.parent / ".godot-version").read_text().strip()
+    except OSError as error:
+        problems.append(f"cannot read the project's Godot version pin: {error}")
+    else:
+        if header.get("engine") != expected_engine:
+            problems.append(
+                f"the pack was written by Godot {header.get('engine')!r}; "
+                f"this project requires {expected_engine!r} from .godot-version"
+            )
     return problems, warnings
 
 
@@ -893,11 +776,17 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
     package = Package(path=path, platform="", folder="", version="")
     try:
         archive = zipfile.ZipFile(path)
-    except (OSError, zipfile.BadZipFile) as error:
+    except release_archive.READ_ERRORS as error:
         package.problems.append(f"{path.name} is not a readable zip: {error}")
         return package
 
     with archive:
+        # A dictionary would conceal duplicate members, and reading a huge member
+        # before checking its size would make a malformed archive an allocation.
+        safety_problems = release_archive.audit(archive)
+        if safety_problems:
+            package.problems.extend(safety_problems)
+            return package
         infos = {info.filename: info for info in archive.infolist()}
         names = list(infos)
         if not names:
@@ -951,13 +840,14 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
         package.notes.extend(note_notes)
 
         for name in sorted(present):
-            if name.startswith(PACKAGE_FORBIDDEN_PREFIXES):
+            portable = name.casefold()
+            if portable.startswith(PACKAGE_FORBIDDEN_PREFIXES):
                 package.problems.append(f"{path.name} carries {name}, which is not part of a release")
             elif _is_development_only_asset(name):
                 package.problems.append(f"{path.name} carries {name}, a development-only asset that must not ship")
-            elif name.rsplit("/", 1)[-1] in PACKAGE_FORBIDDEN_NAMES:
+            elif portable.rsplit("/", 1)[-1] in {item.casefold() for item in PACKAGE_FORBIDDEN_NAMES}:
                 package.problems.append(f"{path.name} carries {name}, a leftover from a working tree")
-            elif name.endswith(PACKAGE_FORBIDDEN_SUFFIXES):
+            elif portable.endswith(PACKAGE_FORBIDDEN_SUFFIXES):
                 package.problems.append(f"{path.name} carries {name}, which is build output or a log")
 
         executable = PACKAGE_EXECUTABLE[platform]
@@ -1016,6 +906,8 @@ def _check_run_notes(
                 f"{name} has no Licences section, but the package ships {', '.join(shipped)} "
                 "and a player is told nothing about them"
             )
+        if platform == "linux" and "./where-is-school" not in text:
+            problems.append(f"{name} has no Linux launch command (./where-is-school)")
         missing = [filenames for filenames in shipped if filenames not in text]
         if missing:
             problems.append(
