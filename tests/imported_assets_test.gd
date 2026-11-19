@@ -28,10 +28,9 @@ extends SceneTree
 ## this does not judge silhouette, deformation quality, or a performance budget.
 
 const Harness = preload("res://tests/test_harness.gd")
-## The painted looks and motion profiles the character wrappers carry (docs/CHARACTER_ART.md,
-## docs/CHARACTER_INTEGRATION.md), by asset name. N has a look and no motion profile: her
-## wrapper plays the four loops her author made (`authored_idle_layers`), and the empty
-## "motion" says the wrapper must not carry one. The classroom student has neither.
+## The painted looks and motion profiles carried by the four production wrappers, by
+## asset name. N still uses her four native idle layers in addition to her walk/talk
+## profile. The A1 student's profile starts seated and does not drive a body.
 ## "two_sided" counts the surfaces painted with the two-sided shader. Geometry revision 1
 ## repairs N's six eye surfaces in the asset; no production character needs that workaround.
 const CHARACTER_LOOKS := {
@@ -45,15 +44,12 @@ const CHARACTER_LOOKS := {
 	},
 	"teacher n": {
 		"look": "res://assets/characters/teacher_n/teacher_n_look.tres",
-		"motion": "",
+		"motion": "res://assets/characters/teacher_n/teacher_n_motion.tres",
 		"two_sided": 0,
 	},
-	# The seated classroom student (the first protagonist model): painted like the others so
-	# it is not the one figure in the room still in its GLB's PBR colours. No motion profile;
-	# it only sits.
 	"former protagonist": {
 		"look": "res://assets/characters/classroom_student/student_look.tres",
-		"motion": "",
+		"motion": "res://assets/characters/classroom_student/student_motion.tres",
 	},
 }
 const PAINT_SHADER_PATH := "res://assets/shaders/characters/character_paint.gdshader"
@@ -227,7 +223,9 @@ func _run() -> void:
 	for asset: Dictionary in ASSETS:
 		Harness.stage = String(asset["name"])
 		await _check_model(asset, holder)
-		_check_wrapper(asset, holder)
+		# Each wrapper checks two frames after instantiation. The final one in particular
+		# must finish before disposing the holder and reporting success.
+		await _check_wrapper(asset, holder)
 
 	root.remove_child(holder)
 	holder.free()
@@ -605,7 +603,7 @@ func _check_character_wrapper(
 		_check_character_look(label, wrapper, asset)
 
 
-## A character's painted look: the wrapper carries its motion profile (or, for N, none) and a
+## A character's painted look: the wrapper carries its motion profile and a
 ## `Look` applier, and the applier repaints every surface of the GLB — none left in its
 ## smooth PBR material — with the painted shader, without touching what the model *is*:
 ## the same meshes, surfaces, vertex counts, skins and skeleton. The other two treatments
@@ -616,12 +614,6 @@ func _check_character_look(label: String, wrapper: Node3D, asset: Dictionary) ->
 	var animator := wrapper as CharacterVisualAnimation
 	if animator == null:
 		_failures.append("The wrapper for %s is not driven by CharacterVisualAnimation." % label)
-	elif String(paths["motion"]).is_empty():
-		if animator.motion_profile != null:
-			_failures.append(
-				"The wrapper for %s carries a motion profile (%s); it plays its authored loops."
-				% [label, animator.motion_profile.resource_path]
-			)
 	elif animator.motion_profile == null or animator.motion_profile.resource_path != String(paths["motion"]):
 		_failures.append("The wrapper for %s does not carry its motion profile %s." % [label, String(paths["motion"])])
 	var applier := wrapper.get_node_or_null(^"Look") as CharacterLookApplier
