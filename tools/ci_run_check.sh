@@ -15,6 +15,9 @@
 #   - non-zero exit                                    -> failure
 #   - "Parse Error" in the log                         -> failure
 #   - "SCRIPT ERROR" in the log                        -> failure
+#   - "has vanished when instantiating" in the log     -> failure (issue #291: a node
+#     written before its parent in a .tscn is dropped at instantiation with only a
+#     WARNING - PR #272's StudentTalk lost a whole interactable that way)
 #   - "TEST FAILURE" / "FAIL:" in the log              -> failure
 #   - no "PASS:" in the log (unless the check is one
 #     of the compile-only ones below)                  -> failure
@@ -75,6 +78,8 @@ run_check () {
     failure="a Parse Error was reported"
   elif [ "${scan_errors}" -eq 1 ] && grep -qE "SCRIPT ERROR" "${log_path}"; then
     failure="an unhandled GDScript SCRIPT ERROR was reported"
+  elif [ "${scan_errors}" -eq 1 ] && grep -qE "has vanished when instantiating" "${log_path}"; then
+    failure="a scene dropped a node at instantiation (its parent is declared after it)"
   elif grep -qE "TEST FAILURE|FAIL:" "${log_path}"; then
     failure="the test reported a failure"
   elif [ "${need_pass}" -eq 1 ] && ! grep -qE "^PASS:" "${log_path}"; then
@@ -87,7 +92,7 @@ run_check () {
   # of the check annotation. `SCRIPT ERROR` belongs in the summary: an uncaught runtime error
   # kills the test's coroutine without printing a verdict, and the run then looks like a
   # silent timeout. Without this line the only visible symptom is the watchdog.
-  summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|SCRIPT ERROR|Parse Error|PASS:" \
+  summary=$(grep -E "TEST FAILURE|TEST WATCHDOG|FAIL:|SCRIPT ERROR|Parse Error|has vanished when instantiating|PASS:" \
     "${log_path}" | head -n 20 | tr '\n' '|' | cut -c1-4000)
   if [ -z "${summary}" ]; then
     summary=$(grep -E "SCRIPT ERROR|ERROR:" "${log_path}" \

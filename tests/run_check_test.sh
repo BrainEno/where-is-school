@@ -51,6 +51,14 @@ CURRENT_NAME=script_error
 expect "exit 0 + SCRIPT ERROR is a failure" fail \
   bash -c 'printf "SCRIPT ERROR: previously freed instance\n"'
 
+CURRENT_NAME=dropped_node
+expect "exit 0 + PASS + a node dropped at instantiation is a failure" fail \
+  bash -c 'printf "WARNING: Parent path '"'"'./Interactables'"'"' for node '"'"'StudentTalk'"'"' has vanished when instantiating: '"'"'res://scenes/locations/classroom/classroom.tscn'"'"'.\nPASS: all good\n"'
+
+CURRENT_NAME=other_warning
+expect "exit 0 + PASS + an unrelated WARNING is still a pass" pass \
+  bash -c 'printf "WARNING: some engine notice\nPASS: all good\n"'
+
 CURRENT_NAME=parse_error
 expect "exit 0 + Parse Error is a failure" fail \
   bash -c 'printf "Parse Error at res://scripts/x.gd:3\n"'
