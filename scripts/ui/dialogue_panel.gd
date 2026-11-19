@@ -233,6 +233,7 @@ var _playback_notice := ""
 var _playback_notice_until_msec := 0
 var _mode_bar: DialogueModeBar = null
 var _touch_footer: HBoxContainer
+var _touch_page: Label
 var _touch_buttons: Dictionary[StringName, Button] = {}
 var _body_touch := -1
 
@@ -252,10 +253,14 @@ func _ready() -> void:
 	_build_choice_styles()
 	_choices_container.add_theme_constant_override("separation", 2)
 	_make_band_clickable()
-	_build_mode_bar()
 	if MobileLayout.enabled:
+		# Shape the entire paragraph before the typewriter starts. Measuring the short
+		# prefix would disable scrolling even after the rest of the text was revealed.
+		_body_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 		_build_touch_footer()
 		set_text_scale(UiTextScale.current(self))
+	else:
+		_build_mode_bar()
 	_warm_portrait_resources()
 	_queue_fit()
 
@@ -634,7 +639,8 @@ func is_body_scrolling() -> bool:
 func refresh_static_text() -> void:
 	if _hint_label == null:
 		return
-	_hint_label.text = _hint_text()
+	_hint_label.text = _playback_notice if _touch_footer != null else _hint_text()
+	_update_hint_visibility()
 	_refresh_mode_bar()
 	_fit_mode_bar()
 	if _line.is_empty():
@@ -704,7 +710,7 @@ func _process(delta: float) -> void:
 	if not _revealing:
 		return
 	var direction := 1.0
-	if Input.is_action_pressed("dialogue_advance"):
+	if not MobileLayout.enabled and Input.is_action_pressed("dialogue_advance"):
 		direction = skip_multiplier
 	_reveal_progress += characters_per_second * direction * delta
 	var total := _body_label.text.length()
@@ -927,9 +933,6 @@ func _refresh_mode_bar() -> void:
 func _fit_mode_bar() -> void:
 	if _mode_bar == null or _hint_label == null:
 		return
-	if _touch_footer != null:
-		_mode_bar.hide()
-		return
 	var font := _hint_label.get_theme_font(&"font")
 	var font_size := _hint_label.get_theme_font_size(&"font_size")
 	_mode_bar.set_type(font, font_size)
@@ -952,14 +955,16 @@ func _build_touch_footer() -> void:
 	_touch_button(&"auto", func() -> void: auto_toggle_requested.emit())
 	_touch_button(&"skip", func() -> void: skip_requested.emit())
 	_touch_button(&"log", func() -> void: backlog_requested.emit())
-	var gap := Control.new()
-	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_touch_footer.add_child(gap)
+	_touch_page = Label.new()
+	_touch_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_touch_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_touch_page.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_touch_page.add_theme_color_override(&"font_color", Palette.RED_INK)
+	_touch_footer.add_child(_touch_page)
 	_touch_button(&"previous", func() -> void: reveal_choice(_choice_window_start - 1))
 	_touch_button(&"next", func() -> void: reveal_choice(_choice_window_start + _choice_window_count))
 	_touch_button(&"continue", _request_advance)
-	_hint_label.hide()
+	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_refresh_touch_footer()
 
 
@@ -997,8 +1002,13 @@ func _refresh_touch_footer() -> void:
 	)
 	_touch_buttons[&"previous"].text = "‹"
 	_touch_buttons[&"next"].text = "›"
-	_touch_buttons[&"previous"].visible = has_choices()
-	_touch_buttons[&"next"].visible = has_choices()
+	var paged := _choice_window_count > 0
+	_touch_buttons[&"previous"].visible = paged
+	_touch_buttons[&"next"].visible = paged
+	_touch_page.text = "" if not paged else "%d–%d / %d" % [
+		_choice_window_start + 1, _choice_window_start + _choice_window_count, _choice_buttons.size(),
+	]
+	_touch_page.add_theme_font_size_override(&"font_size", UiTextScale.scaled(17, _text_scale))
 	_touch_buttons[&"previous"].disabled = _choice_window_start <= 0 or _choice_window_count == 0
 	_touch_buttons[&"next"].disabled = _choice_window_count == 0 \
 		or _choice_window_start + _choice_window_count >= _choice_buttons.size()
@@ -1075,7 +1085,7 @@ func _settle_layout() -> void:
 	_choice_window_count = 0
 	if scrolling and not _choice_buttons.is_empty():
 		_fit_choice_window(needed, max_height)
-	if was_windowed or _choice_window_count > 0:
+	if _touch_footer == null and (was_windowed or _choice_window_count > 0):
 		_hint_label.text = _hint_text()
 	_place_portrait(portrait_plan)
 	_fit_speaker_width(width)
@@ -1508,10 +1518,7 @@ func _digit_from_event(event: InputEvent) -> int:
 
 
 func _update_hint_visibility() -> void:
-	if _touch_footer != null:
-		_hint_label.hide()
-		return
-	_hint_label.visible = visible
+	_hint_label.visible = visible and (_touch_footer == null or not _playback_notice.is_empty())
 
 
 func _move_to_front() -> void:

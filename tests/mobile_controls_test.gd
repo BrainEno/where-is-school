@@ -80,7 +80,7 @@ func _title_and_settings() -> void:
 		_check_target(settings.get_row_control(&"back"), "Settings Back")
 		_check.expect(settings.get_row_control(&"fullscreen") == null, "Phone Settings exposes desktop fullscreen")
 		var scroll := settings.get_scroll()
-		var speed := settings.get_row_control(&"auto_speed") as Button
+		var speed := settings.get_row_control(&"text_speed") as Button
 		var text := speed.text
 		var start := speed.get_global_rect().get_center()
 		# Start over an actual control: a swipe may scroll, but may not select a row.

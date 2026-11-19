@@ -71,6 +71,7 @@ class Sheet:
 var _factor := 1.0
 var _root: Control = null
 var _column: VBoxContainer = null
+var _touch_scroll: ScrollContainer
 var _heading: Label = null
 ## The last save, under the heading: "Last saved: Corridor · 14:03".
 var _status: Label = null
@@ -112,7 +113,7 @@ func _ready() -> void:
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 4)
-	_root.add_child(_column)
+	_touch_scroll = MobileLayout.add_menu_column(_root, _column)
 	_heading = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER, 0.6, 3)
 	_heading.name = "Heading"
 	_column.add_child(_heading)
@@ -549,9 +550,10 @@ func _fit() -> void:
 	var needed := _column.get_combined_minimum_size().y
 	var foot_room := 90.0 if _hint.visible else MobileLayout.EDGE
 	var top := maxf(12.0 if MobileLayout.enabled else 24.0, minf(view.y * 0.28, view.y - needed - foot_room))
-	_column.position = safe.position + Vector2(left, top)
+	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, minf(needed + 2.0, view.y - top - foot_room)))
+	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
 	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
 	if _sheet != null:
-		_sheet.column_rect = Rect2(_column.position, Vector2(width, needed))
+		_sheet.column_rect = Rect2(bounds.position, Vector2(width, needed)) if _touch_scroll == null else bounds
 		_sheet.queue_redraw()

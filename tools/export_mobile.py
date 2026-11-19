@@ -50,7 +50,7 @@ def run(*args: str | Path, cwd: Path | None = None, capture: bool = False) -> st
 
 def configure(text: str, preset: str, options: dict[str, str | int | bool]) -> str:
     for key, value in options.items():
-        text = export_presets.set_option(text, preset, key, json.dumps(value, ensure_ascii=False))
+        text = export_presets.set_option(text, preset, key, value)
     return text
 
 
@@ -257,7 +257,7 @@ def main() -> int:
         actual = run(args.godot, "--version", capture=True).strip()
         require(actual.startswith(expected + ".stable.") and ".mono." not in actual,
                 f"Expected standard Godot {expected} stable; got {actual}")
-        version = stamp_release_version.parse((ROOT / "packaging/version.txt").read_text().strip())["core"]
+        version = stamp_release_version.parse(stamp_release_version.read_version_file(ROOT / "packaging/version.txt"))["core"]
         out = args.output.resolve()
         require(not out.exists() or not any(out.iterdir()), "Build output directory must be empty")
         out.mkdir(parents=True, exist_ok=True)

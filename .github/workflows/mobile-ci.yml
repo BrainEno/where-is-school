@@ -44,7 +44,9 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-godot
       - name: Validate mobile export contracts
-        run: python3 tools/export_mobile.py check
+        run: |
+          python3 tools/export_mobile.py check
+          python3 tests/mobile_export_test.py
       - name: Import the game and test phone and tablet geometry
         shell: bash
         run: |
@@ -90,6 +92,9 @@ jobs:
           export JAVA_HOME="$JAVA_HOME_17_X64"
           sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f | sort -V | tail -1)"
           test -x "$sdkmanager"
+          printf 'Using %s\n' "$sdkmanager"
+          "$JAVA_HOME/bin/java" -version
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" --version
           printf 'JAVA_HOME=%s\nANDROID_SDKMANAGER=%s\n' "$JAVA_HOME" "$sdkmanager" >> "$GITHUB_ENV"
           "$sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.1.0'
       - name: Export and validate an installable debug APK
@@ -97,7 +102,10 @@ jobs:
         run: |
           set -euo pipefail
           if ! python3 tools/export_mobile.py android-preview --build "$GITHUB_RUN_NUMBER" --output build/android-preview 2>&1 | tee "$RUNNER_TEMP/android-export.log"; then
-            grep -Ei 'Error|failed|exception' "$RUNNER_TEMP/android-export.log" | tail -12 | cut -c1-500 | while IFS= read -r line; do echo "::error title=Android export::$line"; done
+            {
+              grep -A7 'Cannot export project with preset' "$RUNNER_TEMP/android-export.log" || true
+              grep -Ei 'error:|failed|exception' "$RUNNER_TEMP/android-export.log" | tail -10 || true
+            } | cut -c1-500 | while IFS= read -r line; do printf '::error title=Android export::%s\n' "$line"; done
             exit 1
           fi
           printf '::notice title=Android preview APK::%s\n' "$(tr -d '\n' < build/android-preview/BUILD.json)"
@@ -138,7 +146,10 @@ jobs:
           set -euo pipefail
           xcodebuild -version
           if ! python3 tools/export_mobile.py ios-unsigned --build "$GITHUB_RUN_NUMBER" --output build/ios-unsigned 2>&1 | tee "$RUNNER_TEMP/ios-export.log"; then
-            grep -Ei 'Error|failed|exception' "$RUNNER_TEMP/ios-export.log" | tail -12 | cut -c1-500 | while IFS= read -r line; do echo "::error title=iOS export::$line"; done
+            {
+              grep -A7 'Cannot export project with preset' "$RUNNER_TEMP/ios-export.log" || true
+              grep -Ei 'error:|failed|exception' "$RUNNER_TEMP/ios-export.log" | tail -10 || true
+            } | cut -c1-500 | while IFS= read -r line; do printf '::error title=iOS export::%s\n' "$line"; done
             exit 1
           fi
           printf '::notice title=iOS device archive unsigned::%s\n' "$(tr -d '\n' < build/ios-unsigned/BUILD.json)"

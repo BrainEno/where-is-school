@@ -198,6 +198,8 @@ func can_walk_to_screen_position(screen_position: Vector2) -> bool:
 ## A target freed mid-walk is noticed at once: pursuing a spot next to something that
 ## no longer exists is how a click turns into a character walking at nothing.
 func _physics_process(_delta: float) -> void:
+	if _tap_index >= 0 and not _player.is_control_enabled():
+		_tap_index = -1
 	if not _has_pending:
 		return
 	# A target that was freed, or switched off, while the character walked towards it is
@@ -265,7 +267,7 @@ func _world_tap(touch: InputEventScreenTouch) -> void:
 	if touch.index != _tap_index:
 		return
 	_tap_index = -1
-	if touch.position.distance_to(_tap_start) <= _tap_deadzone \
+	if _player.is_control_enabled() and touch.position.distance_to(_tap_start) <= _tap_deadzone \
 			and MobileLayout.safe_rect(self).has_point(touch.position):
 		_world_click_events += 1
 		click_at_screen_position(touch.position)
@@ -541,6 +543,7 @@ func _on_location_entered(_location: Node, _spawn_id: StringName) -> void:
 
 
 func _on_path_cancelled() -> void:
+	_tap_index = -1
 	# Cancelled from outside (manual input, control lock, transition): drop the target
 	# so a later arrival in another room cannot activate it.
 	if _has_pending:

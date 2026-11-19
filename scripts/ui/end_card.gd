@@ -50,7 +50,7 @@ func _fit_mobile() -> void:
 	var column := $Layout as VBoxContainer
 	var width := minf(840.0, safe.size.x)
 	column.size.x = width
-	column.position.x = safe.get_center().x - width * 0.5
+	column.position = Vector2(safe.get_center().x - width * 0.5, safe.get_center().y - column.size.y * 0.5)
 	MobileLayout.enlarge(_restart)
 	MobileLayout.enlarge(_title_button)
 
@@ -213,6 +213,8 @@ func present(title: String, body: String, hint: String = "") -> void:
 	_show_failure({})
 	_refresh_action_text()
 	show()
+	if MobileLayout.enabled:
+		_fit_mobile()
 	move_to_front()
 	if actions:
 		_focus_restart.call_deferred()

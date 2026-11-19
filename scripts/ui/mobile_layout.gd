@@ -112,3 +112,27 @@ static func _pass_through_for_scroll(control: Control) -> void:
 	for child in control.get_children():
 		if child is Control:
 			_pass_through_for_scroll(child as Control)
+
+
+static func add_menu_column(parent: Control, column: VBoxContainer) -> ScrollContainer:
+	if not enabled:
+		parent.add_child(column)
+		return null
+	var scroll := ScrollContainer.new()
+	scroll.name = "TouchMenuScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	scroll.follow_focus = true
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(scroll)
+	scroll.add_child(column)
+	return scroll
+
+
+static func place_menu_column(column: VBoxContainer, scroll: ScrollContainer, bounds: Rect2) -> void:
+	if scroll == null:
+		column.position = bounds.position
+		return
+	setup_scroll(scroll)
+	scroll.position = bounds.position
+	scroll.size = bounds.size
