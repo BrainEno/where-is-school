@@ -145,7 +145,11 @@ func _run() -> void:
 			var inspection_text := String(_dialogue.get_current_line().get("text", ""))
 			if not _has_cjk(inspection_text):
 				_failures.append("Inspecting after the switch showed English text.")
-		await _settle(60.0)
+		# Closing the inspection can briefly return control before Q asks about the
+		# book. Finish the lesson before taking history snapshots: those real lines
+		# are not duplicates introduced by a locale change.
+		if not await _settle(60.0, true):
+			_failures.append("The searched-bag path did not finish the lesson.")
 
 	# --- issue #18: inspection variants keep their identity -------------
 	Harness.stage = "the set square first read"
@@ -344,10 +348,11 @@ func _wait_for_line(timeout_seconds: float) -> bool:
 	return false
 
 
-func _settle(timeout_seconds: float) -> bool:
+func _settle(timeout_seconds: float, through_lesson: bool = false) -> bool:
 	var started := Time.get_ticks_msec()
 	while Time.get_ticks_msec() - started < int(timeout_seconds * 1000.0):
-		if not _dialogue.is_busy() and _player.is_control_enabled():
+		var lesson_done: bool = _game_state.get_flag(StoryFlags.CLASS_DISMISSED, false) == true
+		if not _dialogue.is_busy() and _player.is_control_enabled() and (not through_lesson or lesson_done):
 			return true
 		if _dialogue.has_pending_choices():
 			_dialogue.select_choice(0)

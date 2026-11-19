@@ -355,6 +355,8 @@ jobs:
           run_check i18n 120 godot --headless --path . --script res://tests/i18n_test.gd || status=1
           run_check language_switch 480 godot --headless --path . --script res://tests/language_switch_test.gd || status=1
           run_check opening_flow 520 godot --headless --path . --script res://tests/opening_flow_test.gd || status=1
+          # Play both languages through the prop/choice gates, roll call and continued save.
+          run_check prologue_dialogue_paths 180 godot --headless --path . --script res://tests/prologue_dialogue_paths_test.gd || status=1
           # The prologue is a list of flag-gated steps, so it can be started from the
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.

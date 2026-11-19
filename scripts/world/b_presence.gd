@@ -8,6 +8,9 @@ extends RefCounted
 ## that conversation has ended. Her actual entrance is a separate, explicit story trigger
 ## (`present()`); this slice has none, so she stays off stage.
 ##
+## The classroom's painted impression is separate from the actor. It follows the live
+## subjective presentation, not a saved flag, so knowing about B doesn't leave her on the wall.
+##
 ## Two story flags are the only memory, so a resumed game, a repeated talk with Q and a
 ## re-entered room all read the same answer:
 ##
@@ -24,25 +27,31 @@ extends RefCounted
 ## reports and to the flags, which is why Q's conversation and its route (#160) are not
 ## touched to make this work.
 
+const ClassroomPresentation = preload("res://scenes/locations/classroom/classroom_presentation.gd")
+
 ## The biology teacher's actor id, should a room ever hold her.
 const ACTOR_ID: StringName = &"b"
 ## Q's first conversation: the one that has to be over before B is presented.
 const Q_FIRST_TALK: StringName = &"q_wake"
+const EXPECTATION_TALK: StringName = &"expected_b"
 
 var _game_state: Node = null
 var _locations: LocationHost = null
+var _dialogue: DialogueController = null
 
 
 func _init(game_state: Node, locations: LocationHost, dialogue: DialogueController) -> void:
 	_game_state = game_state
 	_locations = locations
+	_dialogue = dialogue
 	if _game_state != null:
 		_game_state.story_flag_changed.connect(_on_story_flag_changed)
 		_game_state.story_state_replaced.connect(_on_story_state_replaced)
 	if _locations != null:
 		_locations.location_entered.connect(_on_location_entered)
-	if dialogue != null:
-		dialogue.conversation_finished.connect(_on_conversation_finished)
+	if _dialogue != null:
+		_dialogue.conversation_finished.connect(_on_conversation_finished)
+		_dialogue.subjective_changed.connect(_on_subjective_changed)
 
 
 ## True once Q's first conversation has run to its end in this run (or in the run an
@@ -113,6 +122,22 @@ func _on_conversation_finished(conversation_id: StringName) -> void:
 	# it (or any other conversation) has not introduced anything.
 	if conversation_id == Q_FIRST_TALK and _flag(StoryFlags.MET_Q):
 		_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
+
+
+func _on_subjective_changed(active: bool) -> void:
+	var room := _locations.get_current() if _locations != null else null
+	if room == null:
+		return
+	var presentation := room.get_node_or_null(^"ClassroomPresentation") as ClassroomPresentation
+	if presentation == null:
+		return
+	# Keep the figure through the whole imagined exchange, including the recollection.
+	# Talking about B in the real room does not show it.
+	var show_impression := (
+		active and is_introduced()
+		and StringName(_dialogue.get_current_line().get("conversation_id", &"")) == EXPECTATION_TALK
+	)
+	presentation.set_b_impression_visible(show_impression)
 
 
 func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant) -> void:
