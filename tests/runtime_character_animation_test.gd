@@ -187,8 +187,8 @@ func _check_wake(sequence: OpeningSequence, animator: CharacterVisualAnimation) 
 	Input.action_press(&"move_right")
 	await _physics_frames(2)
 	Input.action_release(&"move_right")
-	if not animator.is_playing_action() or animator.get_current_clip() != "get_up":
-		_failures.append("The first deliberate movement did not start the get-up (clip '%s')." % animator.get_current_clip())
+	if not animator.is_playing_action() or animator.get_current_clip() != "classroom_rise":
+		_failures.append("The first deliberate movement did not start the classroom rise (clip '%s')." % animator.get_current_clip())
 	var waited := 0.0
 	while animator.is_playing_action() and waited < 4.0:
 		await _seconds(0.1)

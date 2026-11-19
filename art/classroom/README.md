@@ -51,7 +51,7 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Apricot | `#E0A569` / pale `#EFCD97` | The impossible late light: the window view, its spill on the wall, its shapes on the floor |
 | Honey wood | `#A98458` | The lectern's carcass, chalk tray; the student desk pigment anchors |
 | Worn wood | `#998775` | Student chairs: deliberately quieter |
-| Mustard canvas | `#BE963E` | The schoolbag: the first thing the player is sent to |
+| Indigo canvas | `#274774` | The schoolbag: a cool woven accent against the warm desk and the first thing the player looks for |
 | Cobalt | `#40568C` | The register's cover, readable but matte rather than glossy |
 
 ### Hierarchy rules
@@ -60,7 +60,7 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
    (max − min of the mean sRGB colour).
 2. **Every object the player is meant to look at separates from its backdrop** by at
    least 0.15, in value or in colourfulness: board against wall, schoolbag against the
-   chair it hangs on, window against wall, set square and register against the desk top,
+   wood of the desk and chair, window against wall, set square and register against the desk top,
    door frames and the white rear door against the east wall, the blackout curtain
    against the west wall, the rolled-down screen against the board.
 3. **Repeated furniture does not compete.** The repeated chairs stay at least 0.15 less
@@ -106,7 +106,7 @@ under a transparent wash anymore; the model and shared wrapper are unchanged.
 | Own desk: scratched-out name, half-peeled sticker, groove along the front edge | `Furniture/DeskB2/DeskMarks` decal |
 | Lectern (the `classroom_teacher_desk` inspection): much taller than the desks, a register in plastic, lesson notes, the set square | `Stage/Lectern` with `Body/Register`, `Body/LessonPapers` and the set square on top. The low teacher's desk (`teacher_desk.tscn`) is no longer placed in the classroom; the wrapper stays in the project |
 | Timetable: coffee ring, teacher's name lined out in biro | `TimetableSheet/Face` |
-| Schoolbag: canvas, one strap | Mustard canvas, one `Strap`, a side pocket; it hangs on the back of your chair (`Furniture/DeskB2/Chair/Schoolbag`), not on the floor |
+| Schoolbag: dark blue canvas, two shoulder straps | Rounded, irregular sewn panels, two looped straps, a side pouch, and a flap over a real opening; mounted on the aisle-side desk hook (`Furniture/DeskB2/Schoolbag`) |
 
 ## Material and reuse contract
 
@@ -146,8 +146,11 @@ the white rear door is inspection-only on both sides. The two original curtain m
 are kept as layout markers, but only `BackCurtain` is dressed. The projection screen
 (`WallNorth/ProjectorScreen`) is rolled up when
 the room loads; `Interactables/ProjectorScreenPull` rolls it down and up again, and
-nothing about it is saved. The schoolbag hangs on the back of the protagonist's chair
-(`Furniture/DeskB2/Chair/Schoolbag`); the player wakes in that chair (`PlayerStart`), and
+nothing about it is saved. The dark-blue schoolbag hangs from the protagonist's desk-side
+hook (`Furniture/DeskB2/Schoolbag`), with its own hit area separate from the sliding chair.
+Rebuild the sewn meshes and woven texture with
+`python3 art/classroom/build_schoolbag.py` (`--check` verifies the shipped assets).
+The player wakes in the chair (`PlayerStart`), and
 Q starts a little way down the aisle and walks to `QOpeningTalk`, at the player's left,
 before the first line (the opening's Q beat, #160). The stage and its step are actual colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage

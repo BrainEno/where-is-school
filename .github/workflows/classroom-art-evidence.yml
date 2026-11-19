@@ -217,19 +217,35 @@ jobs:
               echo "::notice title=classroom motion measurement::$line"
             done
           fi
-      - name: Preview the returned pose at the submitted SHA
+      - name: Preview the returned pose
         if: always()
-        shell: bash
-        run: |
+        env:
+          FRAME: 03_returned_from_aisle
+        run: &motion_preview |
           set -euo pipefail
-          for file in "$CI_LOG_DIR"/03_returned_from_aisle.jpg; do
-            test -f "$file" || continue
-            sha=$(sha256sum "$file" | cut -d' ' -f1)
-            mapfile -t parts < <(base64 -w 4000 "$file")
-            for i in "${!parts[@]}"; do
-              echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
-            done
+          file="$CI_LOG_DIR/$FRAME.jpg"
+          test -f "$file" || exit 0
+          sha=$(sha256sum "$file" | cut -d' ' -f1)
+          mapfile -t parts < <(base64 -w 4000 "$file")
+          test "${#parts[@]}" -le 10 # GitHub's limit is per step
+          for i in "${!parts[@]}"; do
+            echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
           done
+      - name: Preview the lift
+        if: always()
+        env:
+          FRAME: 02_rising
+        run: *motion_preview
+      - name: Preview the bag target
+        if: always()
+        env:
+          FRAME: 04_bag_target
+        run: *motion_preview
+      - name: Preview the bag being searched
+        if: always()
+        env:
+          FRAME: 05_rummaging
+        run: *motion_preview
       - name: Publish viewport frames and motion log
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

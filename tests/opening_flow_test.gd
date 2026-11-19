@@ -674,9 +674,8 @@ func _check_targeting() -> void:
 	var q := _host.get_current().find_actor(&"q")
 	var q_standing := q.global_position + Vector3.BACK * 0.75 if q != null else Vector3.ZERO
 	var cases := [
-		# The bag hangs on the back of your chair (issue #159): stand in the aisle behind
-		# it and face the board.
-		{"position": Vector3(-1.6, 0, 2.75), "yaw": 0.0, "expected": &"schoolbag"},
+		# The bag hangs on the aisle-side hook, separate from the wake chair.
+		{"position": Vector3(-0.53, 0, 1.37), "yaw": -90.0, "expected": &"schoolbag"},
 		{"position": Vector3(-2.0, 0, 0.65), "yaw": 180.0, "expected": &"own_desk"},
 		{"position": q_standing, "yaw": 0.0, "expected": &"q_talk"},
 		{"position": Vector3(-1.6, 0.12, -3.25), "yaw": 0.0, "expected": &"blackboard"},

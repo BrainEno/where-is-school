@@ -9,7 +9,7 @@ extends SceneTree
 ##    wall (issue #159), a roll-down screen over the board, a ceiling projector, a
 ##    step-up concrete platform, a boxed teacher's lectern (#172), the original story props
 ##    and exits.
-##    The blackboard wall is one unbroken wall; the schoolbag hangs on your chair.
+##    The blackboard wall is one unbroken wall; the schoolbag hangs off the aisle side of your desk.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
 ##    door openings and the back window included), platform/step, twelve desk wrappers,
 ##    and the lectern are the only scene-owned collision bodies (the low teacher's desk was
@@ -26,7 +26,7 @@ extends SceneTree
 ##    to look at separates from what stands behind it in value or in colour.
 ## 7. **The inspection texts are true.** What the texts describe - the broken chalk and
 ##    the clip, the cracked pane, the lectern's register, the marks on your desk, the taped
-##    set square, the one strap - is in the scene.
+##    set square, the blue bag and its two shoulder straps - is in the scene.
 ## 8. **The real camera.** From the game's own camera rig, at every standing spot in the
 ##    room, the board and the windows never stand between the camera and the player, and
 ##    the ceiling projector thins out wherever it would; the furniture reads at a sensible
@@ -82,7 +82,7 @@ const PROPS := {
 	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
 	# On the lectern's sloped top (the low teacher's desk that held it is gone).
 	"Props/SetSquare": Vector3(0.65, 1.1377, -3.6904),
-	"Furniture/DeskB2/Chair/Schoolbag": Vector3(0.0, 0.5, 0.34),
+	"Furniture/DeskB2/Schoolbag": Vector3(0.49, 0.415, 0.072),
 	"Actors/Q": Vector3(-3.3, 0.0, 3.1),
 	# Where Q walks to before the first line (OpeningSequence, #160): the aisle at your left.
 	"QOpeningTalk": Vector3(-2.75, 0.0, 1.95),
@@ -102,7 +102,7 @@ const INTERACTABLES := {
 	"front_desk": Vector3(1.05, 0.5, -3.65),
 	"window": Vector3(-6.0, 0.6, 0.0),
 	"own_desk": Vector3(-1.6, 0.4, 1.3),
-	"schoolbag": Vector3(-1.6, 0.55, 2.3),
+	"schoolbag": Vector3(-1.11, 0.62, 1.372),
 	"timetable": Vector3(0.0, 0.6, 4.3),
 	"q_talk": Vector3(-3.3, 0.8, 3.1),
 	"classroom_door": Vector3(6.35, 0.6, -3.55),
@@ -144,7 +144,7 @@ const WALL_COLLISION := {
 const HIERARCHY_PAIRS := [
 	["board_face", "wall_north", "the board against the front wall"],
 	["lacquer_oxblood", "wall_north", "the board frame and the lectern's front band"],
-	["canvas_mustard", "wood_worn", "the schoolbag on the chair back"],
+	["canvas_indigo", "wood_worn", "the schoolbag on the desk hook"],
 	["window_view_front", "wall_west", "the window against its wall"],
 	["varnish_pale", "wood_worn", "the set square on the lectern top"],
 	["register_cover", "wood_worn", "the register on the lectern top"],
@@ -161,7 +161,7 @@ const BACKGROUND_PLANES: Array[String] = [
 const BACKGROUND_CHROMA_MAX := 0.2
 ## Twelve chairs must not be louder than the one schoolbag.
 const CHAIR_MATERIAL := "wood_worn"
-const FOCUS_OVER_CHAIRS := "canvas_mustard"
+const FOCUS_OVER_CHAIRS := "canvas_indigo"
 
 ## Meshes that hang on a wall without being parented to it; the camera never fades
 ## them, so they must never be between the camera and the player.
@@ -336,11 +336,11 @@ func _check_layout() -> void:
 	else:
 		_check_door_fit(front_door, "door_gray.tres")
 		_check_door_fit(rear_door, "door_white.tres")
-	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Chair/Schoolbag") as Node3D
+	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Schoolbag") as Node3D
 	if bag != null:
 		var bag_box := _subtree_aabb(bag)
 		if bag_box.position.y < 0.3:
-			_failures.append("The schoolbag %s is on the floor, not on the chair back." % str(bag_box))
+			_failures.append("The schoolbag %s is on the floor, not on its desk-side hook." % str(bag_box))
 	if _room.get_node_or_null(^"Props/Schoolbag") != null:
 		_failures.append("A schoolbag is still on the floor.")
 	for mount: Array in [
@@ -935,7 +935,7 @@ func _check_inspection_agreement() -> void:
 	var glass := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
 	if glass == null or glass.material_override == null or not glass.material_override.resource_path.ends_with("glass_cracked.tres"):
 		_failures.append("The window's cracked, taped pane is not drawn.")
-	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Chair/Schoolbag")
+	var bag := _room.get_node_or_null(^"Furniture/DeskB2/Schoolbag")
 	var q_talk := _room.get_node_or_null(^"Interactables/QTalk")
 	if q_talk == null or StringName(q_talk.get("conversation_route")) != &"q":
 		_failures.append("The original Q conversation interaction no longer routes to Q.")
@@ -947,12 +947,17 @@ func _check_inspection_agreement() -> void:
 	if normal_exit == null or normal_exit.blocked_inspection_id != &"classroom_door_blocked":
 		_failures.append("The normal door lost its existing blocked-exit inspection.")
 	if bag != null:
-		var straps := 0
-		for child in bag.get_children():
-			if String(child.name).begins_with("Strap"):
-				straps += 1
-		if straps != 1:
-			_failures.append("The schoolbag has %d straps; the text says one." % straps)
+		for detail: NodePath in [^"Harness/StrapLeft", ^"Harness/StrapRight", ^"Pocket", ^"Lid/Flap", ^"DeskHook"]:
+			var part := bag.get_node_or_null(detail) as MeshInstance3D
+			if part == null or not part.mesh is ArrayMesh:
+				_failures.append("The canvas bag is missing its sewn geometry: %s." % detail)
+		var shell := bag.get_node_or_null(^"Shell") as MeshInstance3D
+		if shell == null or not shell.mesh is ArrayMesh \
+				or shell.material_override.resource_path.get_file() != "canvas_indigo.tres":
+			_failures.append("The classroom inspection describes a soft indigo canvas bag.")
+		var indigo := _material_colour("canvas_indigo", {})
+		if indigo.b <= indigo.g or indigo.g <= indigo.r or _luminance(indigo) > 0.40:
+			_failures.append("The canvas is not dark blue: %s." % str(indigo))
 	# The set square lies flat: forearm-long, a few centimetres thick. It lies on the
 	# lectern's sloped top now, so its thickness is measured in its own frame, and it has to
 	# rest on that top: inside its footprint, just above the reading surface.
