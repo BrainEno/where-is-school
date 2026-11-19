@@ -42,7 +42,7 @@
     "overlay.deny_title": "那件事没有发生",
     "overlay.deny_body": "铃没有响过。也没有人进来。",
     "objective.bell": "第二遍铃响了。课要开始了。",
-    "objective.no_textbook": "没有课本。打铃前先在屋里看看。想去走廊看一眼也可以。",
+    "objective.no_textbook": "书包里没有生物课本。",
     "end.slice.title": "本次构建到这里",
     "end.slice.body": "你已经过了学校，穿过那几栋楼，站在楼后的空场里：一个球场、一间小屋、一个攀爬架、一张长椅。要建的下一处，是尽头栅栏上的那个缺口。",
     "prompt.back_inside": "回到里面",
