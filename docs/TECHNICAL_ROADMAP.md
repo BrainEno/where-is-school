@@ -67,7 +67,7 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   GitHub release on a `v*` tag), and a pack verifier that reads the finished executable
   back and refuses a build that carries the repository (tests, screenshots, the 10 MB
   source font) or is missing the game (dialogue data, theme, audio). The bundled CJK font
-  ships as a 376 KiB subset of the text the game can draw, rebuilt by
+  ships as a subset of the text the game can draw, rebuilt by
   `tools/subset_font.py` and verified in both CI workflows.
 
 ### Planned, but deliberately not implemented yet
@@ -466,7 +466,7 @@ versioned slot: see ADR 0005.)
   "export all resources" would have shipped by default — 9.4 MB of committed screenshots
   and the 10 MB source font.
 - The font is split: the untouched Noto Sans SC lives in `art/fonts/` (`.gdignore`d) and the
-  game loads a 376 KiB subset (385,416 bytes) that `tools/subset_font.py` rebuilds from the
+  game loads a subset that `tools/subset_font.py` rebuilds from the
   project's own
   text. Both CI workflows run `--check`, so text needing a character the subset lacks fails
   with the characters named instead of shipping tofu boxes.
