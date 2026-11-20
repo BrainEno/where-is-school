@@ -183,9 +183,8 @@ through `.godot/imported/…` and stop falling back to the source file:
 Godot 4.4+ gives every resource a 63-bit UID, written as `uid://` plus base-34 digits
 (`core/io/resource_uid.cpp`). The tree carries them in four places: `.uid` sidecars next
 to scripts and shaders, `uid="…"` in `.import` files, and the `[gd_scene]`/`[gd_resource]`
-header of `.tscn`/`.tres` files. No scene here refers to another resource by UID: every
-`ext_resource` uses its `path`, so a UID can be wrong without breaking a load, which is
-why it is checked rather than trusted.
+header of `.tscn`/`.tres` files. The audit checks `ext_resource` UID references against
+both the declaration and the fallback path, even when a bad UID does not break loading.
 
 - `tools/godot_sidecars.py --check` decodes every tracked UID the way the engine does,
   including its leniency: a 13-digit text past the 63-bit range wraps and is masked
@@ -199,15 +198,23 @@ why it is checked rather than trusted.
   pinned Godot and `--after-import` reports every `.uid` it created and every tracked
   file it rewrote, with the UID before and after and the `[section] key` lines changed.
 
-The first measurement (Godot 4.7.2, run 43675129261) created a sidecar for 60 scripts and
-shaders and asked for none anywhere else; those 60, with the engine's values, are now
-tracked. The second (run 43676116899) created none, and rewrote 35 `.import` files, each
-changing only `[remap] uid` to the canonical text of the same number (an older generator
-had written digits the engine reads but never writes). Those are now stored in the
-engine's form, so an import leaves the tree clean. Eight `.gd.uid` sidecars are still
-non-canonical: the import reads them and leaves them alone, so they are listed, not
-rewritten by hand. A new script picks up its sidecar from the editor or the import; if
-CI's static step lists it as missing, commit the one the engine made.
+The initial Godot 4.7.2 audit (run 43675129261) supplied 60 sidecars; the follow-up (run
+43676116899) normalized 35 import UID strings without changing their numeric IDs. On
+`33b1828`, a [fresh import](https://github.com/BrainEno/where-is-school/actions/runs/44692685142)
+created five more: `scripts/audio/world_audio.gd.uid`, `tests/capture_classroom_clock.gd.uid`,
+`tests/clock_reading.gd.uid`, `tests/clock_reading_test.gd.uid`, and
+`tests/world_audio_test.gd.uid`. Those exact engine values are tracked. That import also
+rewrote 27 tracked files without changing their UID text; the absence of new sidecars
+does not imply a byte-for-byte clean working tree. Read the audit's current notices rather
+than copying incidental `.import` changes or normalizing accepted UID strings by hand.
+
+The hygiene audit and Laboratory capture share [the Linux import preflight](../tools/ci_import_godot.sh).
+For a fresh checkout with the pinned engine on `PATH`, run
+`bash tools/ci_import_godot.sh <fresh-log-directory>` before `--after-import`. The blocking
+import and the warm editor check each keep their own log. A non-zero engine exit or a
+script error in the warm log stops the job before it reports sidecars or renders frames;
+a cold-start message that does not abort the import is not a warm parse error. No import
+cache is restored in these jobs: that would invalidate a clean-import measurement.
 
 ## 8. Not in this round
 

@@ -24,6 +24,7 @@ on:
       - "art/laboratory/**"
       - "tests/capture_laboratory.gd"
       - "tests/capture_laboratory_walkthrough.gd"
+      - "tools/ci_import_godot.sh"
       - ".github/workflows/laboratory-capture.yml"
   workflow_dispatch:
 
@@ -58,12 +59,7 @@ jobs:
 
       - name: Import
         shell: bash
-        run: |
-          # `--import` waits for the queue to drain; its exit code is not the verdict (the
-          # project theme can load before its font is imported). The second pass is.
-          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
-          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
-          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+        run: bash tools/ci_import_godot.sh "${RUNNER_TEMP}"
 
       - name: Capture
         shell: bash
@@ -162,9 +158,7 @@ jobs:
 
       - name: Import
         shell: bash
-        run: |
-          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
-          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+        run: bash tools/ci_import_godot.sh "${RUNNER_TEMP}"
 
       - name: Capture on Forward+
         shell: bash
@@ -242,9 +236,7 @@ jobs:
 
       - name: Import
         shell: bash
-        run: |
-          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
-          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+        run: bash tools/ci_import_godot.sh "${RUNNER_TEMP}"
 
       - name: Transcoding tools
         shell: bash
