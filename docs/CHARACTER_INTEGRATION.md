@@ -459,12 +459,28 @@ separate; the PR records which were actually run.
 
 ## 11. Blender head studies on the existing cast
 
-The [editable head studies and independent source record](../art/character_models/sculpt/README.md)
-refine the four existing runtime actors and four review-only actors, without moving their
-wrappers, adding expression keys, changing the painted materials, or placing the review cast.
-Lead and Q alone get new, closed hair topology, replacing the disconnected spikes and cards.
-The other heads retain their indexed surfaces. N keeps the existing crown and bob envelope;
-the seated student's sclera/iris/pupil/glint contract still applies. The review models keep their
-rigged piecewise Blender sources, end poses, paint masks and native actions as before.
-`tests/character_sculpt_test.py` compares the GLBs to the exact pre-pass commit, not to each other;
-the matching Blender renders are a geometry review, separate from existing Godot captures.
+The first pass (#311) refined four runtime actors and four review-only actors in Blender.
+It gave the protagonist and Q continuous hair shells. All other heads kept their indexed
+surfaces. The wrapper, rest scale, rig, painted materials and existing expressions did not change.
+Three classmates and B kept rigged, editable part sources and stayed out of release.
+
+## 12. Restore the spiky silhouette and refine facial features
+
+**Review base:** `fd11c183249ef43730fc2fdf36be77cf10669974`. The protagonist returns to his
+archived indexed spikes, with uneven sways and shorter ear-side needles raked back behind
+the pinnae, inspired by Robert Smith's tousled silhouette. The protagonist's face is
+byte-identical to the first pass. Q keeps his continuous shell; the other six hairstyles
+and the thin student's clipper crown stay as they were. No reference photo or likeness
+is a game asset.
+
+The seven other faces get paired upper creases/lower lid planes, quieter nose tips and
+nostril transitions, distinct brows and clearer upper/lower lip relief. Q and N's sclera,
+iris and lid openings are adjusted together. The seated student's cut eye layers, the
+donors' blink rims and animated smile corners, Q's smile, B's age and all original face-key
+offsets remain. Only the protagonist's `walk` upper and lower arm amplitudes are reduced;
+the leg curves, cadence, other animation states and shared binder are unchanged.
+
+See the [editable sources and matched Blender review commands](../art/character_models/sculpt/README.md).
+`character_sculpt_test.py` checks both the original basis and the first-pass exports, including
+which surfaces are allowed to move and the inherited face-key triangles at sampled weights.
+The studio comparisons are not viewport captures or owner acceptance.

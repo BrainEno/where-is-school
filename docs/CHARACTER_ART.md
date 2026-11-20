@@ -222,8 +222,9 @@ their bones or the state machine. The details and the numbers are in
 
 - **Protagonist:** spine, chest and neck pitched forward (4° / 5° / 6°), head lowered, arms
   drawn in 14° towards the body and the elbows a little bent. The idle is twice as slow, with a
-  sigh in the chest and a head that drops and recovers. The walk keeps its stride but the arms
-  barely swing (×0.45), the talk gestures are half size, and he gets up more slowly (2.0 s).
+  sigh in the chest and a head that drops and recovers. The walk keeps its stride and uses
+  restrained arm tracks (see the current [motion profile](CHARACTER_ANIMATION.md#per-character-motion-resources));
+  the talk gestures are half size, and he gets up more slowly (2.0 s).
 - **Q:** leaning back (spine −4.5°), head cocked, a wider stance, the free arm out from the
   belly. A quicker idle with a sway, a walk with the spine and arms swinging more, a talk
   that is half as big again and faster.

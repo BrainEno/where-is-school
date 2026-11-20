@@ -27,6 +27,10 @@ amplitude = {
 "talk": {
 "*": 0.5
 },
+"walk": {
+"fore_arm": 0.82,
+"upper_arm": 0.85
+},
 "wave": {
 "fore_arm.R": 0.6,
 "upper_arm.R": 0.75
