@@ -44,6 +44,12 @@ The author's literary manuscripts are private source material and may be intende
 - Keep the distinction between private literary source material and approved game content explicit in every handoff.
 - When uncertain whether material is too close to the manuscript, omit it and ask.
 
+## Author's text (作者文本) — mandatory
+
+- Narration, dialogue, choice text and inspection text the owner has edited by hand (in the Drive story docs imported with `tools/story_doc.py`, or directly) is **author-final**: the owner's version is the single source of truth for plot, dialogue and narration. Do not reword, shorten, merge, move or "improve" it unless the owner explicitly asks for that specific change; even an obvious typo is fixed only after the owner confirms it.
+- Content the owner deleted stays deleted: never restore it, paraphrase it back or rebuild it under another id. Mechanics that hung on it (flags, objectives, checks) come back only when the owner says so. The English files translate the author's Chinese faithfully and follow it when it changes.
+- Agents may ask, and may propose or implement new options and gameplay on top of the author's text, but every new piece of wording is the owner's to write: leave it blank or reuse an existing line, and list it as pending. When an edit is ambiguous, ask before importing. Details: [protocol §8](docs/AGENT_PROTOCOL.md), [STORY_DOCS](docs/STORY_DOCS.zh-CN.md).
+
 ## Narrative fidelity and uncertainty
 
 - Preserve distinctions between a character's claim, the protagonist's recollection, subjective imagination, and events observed in the playable scene.
@@ -114,22 +120,16 @@ For every code task:
 3. Run relevant automated checks; if none exist, explain what was manually verified.
 4. Check output for parse errors, missing resources, and runtime errors.
 5. Include a concise manual test checklist for relevant gameplay paths.
-6. Distinguish verified behavior from assumptions and untested behavior.
+6. Distinguish verified behavior from assumptions and untested behavior. Never claim a test passed unless it was actually run.
 
-Never claim a test passed unless it was actually run.
-
-The narrative editor's data layer is tested headlessly (`tests/narrative_editor_test.gd`, `tests/ability_validation_test.gd`) against a `user://` copy of shipped content. The dock needs a window: `tests/capture_editor_dock.gd` under Xvfb.
-Anything the plugin adds to the editor shell needs a manual PR checklist. Do not add a test that saves into `res://data/`.
+The narrative editor's data layer is tested headlessly (`tests/narrative_editor_test.gd`, `tests/ability_validation_test.gd`) against a `user://` copy of shipped content. The dock needs a window: `tests/capture_editor_dock.gd` under Xvfb. Anything the plugin adds to the editor shell needs a manual PR checklist. Do not add a test that saves into `res://data/`.
 
 ## Git and collaboration
 
-- Work on a dedicated feature branch. Do not push directly to main.
-- Keep pull requests focused.
-- Before editing, inspect branch, working tree, project structure, and relevant code.
+- Work on a dedicated feature branch and keep pull requests focused. Do not push directly to main.
 - Do not overwrite another agent's work.
 - Do not force-push, rewrite history, merge your own PR, or change repository protections.
-- Do not commit a file over 12 MiB or add a size-check exception (`python3 tools/repo_size.py --check`). Sources belong in `art/` or outside the repository; runtime weight is judged as shipped by `tools/verify_build.py`.
-  See `docs/adr/0007-large-binaries-and-repository-size.md` for the rule and reasons.
+- Do not commit a file over 12 MiB or add a size-check exception (`python3 tools/repo_size.py --check`). Sources belong in `art/` or outside the repository; runtime weight is judged as shipped by `tools/verify_build.py`. See `docs/adr/0007-large-binaries-and-repository-size.md` for the rule and reasons.
 - PR descriptions must include purpose, implementation summary, files changed, exact validation commands/results, and known limitations.
 - If blocked, report the blocker and the smallest decision needed.
 
