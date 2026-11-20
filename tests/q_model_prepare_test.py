@@ -19,6 +19,7 @@ class QPreparationTest(unittest.TestCase):
         cls.runtime_bytes = q.OUTPUT.read_bytes()
         cls.source, cls.source_bin = q.decode(cls.source_bytes)
         cls.runtime, cls.runtime_bin = q.decode(cls.runtime_bytes)
+        cls.basis, cls.basis_bin = q.decode(q.prepare_base(cls.source_bytes))
 
     def test_exact_approved_source_and_reproducible_output(self) -> None:
         self.assertEqual(hashlib.sha256(self.source_bytes).hexdigest(), q.SOURCE_SHA256)
@@ -41,23 +42,27 @@ class QPreparationTest(unittest.TestCase):
         self.assertEqual(q.accessor(self.source, self.source_bin, before),
                          q.accessor(self.runtime, self.runtime_bin, after))
 
-    def test_every_vertex_normal_weight_index_colour_and_morph_is_unchanged(self) -> None:
-        for source, runtime in zip(self.source["meshes"][:-1], self.runtime["meshes"]):
-            self.assertEqual(source["name"], runtime["name"])
-            self.assertEqual(source.get("extras"), runtime.get("extras"))
-            self.assertEqual(len(source["primitives"]), len(runtime["primitives"]))
-            for a, b in zip(source["primitives"], runtime["primitives"]):
+    def _equal_basis_accessor(self, before: int, after: int) -> None:
+        self.assertEqual(q.accessor(self.source, self.source_bin, before),
+                         q.accessor(self.basis, self.basis_bin, after))
+
+    def test_basis_copies_every_vertex_normal_weight_index_colour_and_morph(self) -> None:
+        for source, basis in zip(self.source["meshes"][:-1], self.basis["meshes"], strict=True):
+            self.assertEqual(source["name"], basis["name"])
+            self.assertEqual(source.get("extras"), basis.get("extras"))
+            self.assertEqual(len(source["primitives"]), len(basis["primitives"]))
+            for a, b in zip(source["primitives"], basis["primitives"], strict=True):
                 self.assertEqual(a.get("mode", 4), b.get("mode", 4))
                 self.assertEqual(a["material"], b["material"])
-                self._equal_accessor(a["indices"], b["indices"])
+                self._equal_basis_accessor(a["indices"], b["indices"])
                 self.assertEqual(set(a["attributes"]), set(b["attributes"]))
                 for key in a["attributes"]:
-                    self._equal_accessor(a["attributes"][key], b["attributes"][key])
+                    self._equal_basis_accessor(a["attributes"][key], b["attributes"][key])
                 self.assertEqual(len(a.get("targets", [])), len(b.get("targets", [])))
-                for x, y in zip(a.get("targets", []), b.get("targets", [])):
+                for x, y in zip(a.get("targets", []), b.get("targets", []), strict=True):
                     self.assertEqual(set(x), set(y))
                     for key in x:
-                        self._equal_accessor(x[key], y[key])
+                        self._equal_basis_accessor(x[key], y[key])
         head = next(m for m in self.runtime["meshes"] if m["name"] == "Q_Head")
         self.assertEqual(len(head["extras"]["targetNames"]), 13)
 

@@ -10,6 +10,7 @@ its helper, clothing, UV/texture and animation assets are not exported.
 import argparse
 import json
 import math
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -17,6 +18,10 @@ import numpy as np
 
 from skinned_glb import GLB, Piece, batch_materials, unit
 from sculpt_hair import cap_samples, comb_field, fitted_ribbon, shell_grid
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools"))
+from character_sculpt import apply, apply_split
 
 PI = np.pi
 # Sculpt-space ceiling of the first B export; freezes the rig and floor transform.
@@ -826,24 +831,35 @@ class Sculpt:
             p, f = tube(welt, .0012, 7, reference=(0, 1, 0))
             self.add(f'Moc toe seam {side}', p, f, '5a4a3f', 'b_leather', shoe_weights(p), grain=.026)
 
-    def build(self, output, split_parts=False):
+    def build(self, output, split_parts=False, basis_only=False):
         self.skin()
         self.face_details()
         self.glasses()
         self.hair()
         self.tailoring()
         self.lower_body()
-        GLB().write(output, self.pieces if split_parts else batch_materials(self.pieces), self.bones, MATS, 1.640)
+        basis = GLB().encode(batch_materials(self.pieces), self.bones, MATS, 1.640)
+        if split_parts:
+            split = GLB().encode(self.pieces, self.bones, MATS, 1.640)
+            result = split if basis_only else apply_split(basis, split, 'b')
+        else:
+            result = basis if basis_only else apply(basis, 'b')
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(result)
+        print(f'WROTE {output} ({len(result):,} bytes)')
 
 
 def main():
-    root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--makehuman-data', type=Path, required=True)
-    parser.add_argument('--output', type=Path, default=root / 'scenes/dev/teacher_b/teacher_b.glb')
+    parser.add_argument('--output', type=Path)
     parser.add_argument('--split-parts', action='store_true', help='Keep editable subparts for the Blender source')
+    parser.add_argument('--basis-only', action='store_true', help='Write the pre-sculpt basis for editing')
     args = parser.parse_args()
-    Sculpt(args.makehuman_data).build(args.output, args.split_parts)
+    if (args.basis_only or args.split_parts) and args.output is None:
+        parser.error('--basis-only and --split-parts require a separate --output')
+    out = args.output or ROOT / 'scenes/dev/teacher_b/teacher_b.glb'
+    Sculpt(args.makehuman_data).build(out, args.split_parts, args.basis_only)
 
 
 if __name__ == '__main__':

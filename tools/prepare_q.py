@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Prepare the approved new Q without changing geometry, skinning or authored poses.
+"""Prepare the approved Q and install the separate Blender head revision.
 
 The immutable upload lives under art/ (never imported/exported). Only the production
 copy is imported: remove its skeleton-display mesh, give its uncoloured materials the
 existing Q palette, and omit animation channels which are exactly the rest pose.
-Every action (including the pose and face previews), moving channel, morph target,
-vertex, joint, rest transform and inverse bind matrix is preserved.
+The preparation basis preserves every vertex and animation delta. A separate
+Blender layer refines only the head/eyes/hair, leaving the approved upload,
+skeleton, skin binding, expressions and authored poses intact.
 
     python3 tools/prepare_q.py
     python3 tools/prepare_q.py --check
@@ -15,10 +16,11 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
-import json
 import math
-import struct
 from pathlib import Path
+
+from character_sculpt import apply
+from glb_io import accessor, decode, encode
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "art/character_models/q/new-Q_source.glb"
@@ -34,61 +36,6 @@ PALETTE = {
     "Q_Mat_Skin": "CE9A70", "Q_Mat_MouthInner": "3B1713",
     "Q_Mat_Hoodie": "516F4C", "Q_Mat_HoodieRib": "B39A5F",
 }
-COMPONENTS = {5120: "b", 5121: "B", 5122: "h", 5123: "H", 5125: "I", 5126: "f"}
-WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
-
-
-def decode(data: bytes) -> tuple[dict, bytes]:
-    if len(data) < 28 or data[:4] != b"glTF":
-        raise ValueError("not a binary glTF")
-    version, size = struct.unpack_from("<II", data, 4)
-    json_size, kind = struct.unpack_from("<II", data, 12)
-    if version != 2 or size != len(data) or kind != 0x4E4F534A:
-        raise ValueError("invalid glTF header")
-    document = json.loads(data[20:20 + json_size])
-    offset = 20 + json_size
-    bin_size, kind = struct.unpack_from("<II", data, offset)
-    if kind != 0x004E4942 or offset + 8 + bin_size != len(data):
-        raise ValueError("expected a single embedded BIN chunk")
-    return document, data[offset + 8:]
-
-
-def encode(document: dict, binary: bytes) -> bytes:
-    text = json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode()
-    text += b" " * (-len(text) % 4)
-    binary += b"\0" * (-len(binary) % 4)
-    size = 12 + 8 + len(text) + 8 + len(binary)
-    return (struct.pack("<4sII", b"glTF", 2, size)
-            + struct.pack("<II", len(text), 0x4E4F534A) + text
-            + struct.pack("<II", len(binary), 0x004E4942) + binary)
-
-
-def accessor(document: dict, binary: bytes, index: int) -> list[tuple]:
-    item = document["accessors"][index]
-    width = WIDTH[item["type"]]
-    fmt = "<" + COMPONENTS[item["componentType"]] * width
-    size = struct.calcsize(fmt)
-    result = [(0,) * width for _ in range(item["count"])]
-    if "bufferView" in item:
-        view = document["bufferViews"][item["bufferView"]]
-        stride = view.get("byteStride", size)
-        start = view.get("byteOffset", 0) + item.get("byteOffset", 0)
-        result = [struct.unpack_from(fmt, binary, start + row * stride)
-                  for row in range(item["count"])]
-    if "sparse" in item:
-        sparse = item["sparse"]
-        indices, values = sparse["indices"], sparse["values"]
-        index_fmt = "<" + COMPONENTS[indices["componentType"]]
-        index_size = struct.calcsize(index_fmt)
-        index_start = (document["bufferViews"][indices["bufferView"]].get("byteOffset", 0)
-                       + indices.get("byteOffset", 0))
-        value_start = (document["bufferViews"][values["bufferView"]].get("byteOffset", 0)
-                       + values.get("byteOffset", 0))
-        for row in range(sparse["count"]):
-            index = struct.unpack_from(index_fmt, binary, index_start + row * index_size)[0]
-            result[index] = struct.unpack_from(fmt, binary, value_start + row * size)
-    return result
-
 
 def _rest_channel(document: dict, binary: bytes, channel: dict, sampler: dict) -> bool:
     target = channel["target"]
@@ -157,7 +104,8 @@ def _compact(document: dict, binary: bytes) -> bytes:
     return bytes(packed)
 
 
-def prepare(data: bytes) -> bytes:
+def prepare_base(data: bytes) -> bytes:
+    """Lossless geometry phase; also used to verify the pinned approved upload."""
     digest = hashlib.sha256(data).hexdigest()
     if digest != SOURCE_SHA256:
         raise ValueError(f"approved Q source changed: {digest}; review before changing the pinned source")
@@ -205,6 +153,10 @@ def prepare(data: bytes) -> bytes:
     return encode(document, binary)
 
 
+def prepare(data: bytes) -> bytes:
+    return apply(prepare_base(data), "q")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -218,7 +170,7 @@ def main() -> int:
         if not OUTPUT.exists() or OUTPUT.read_bytes() != result:
             print("FAIL: production Q differs; run python3 tools/prepare_q.py")
             return 1
-        print("PASS: new-Q.glb is reproducible from the approved source")
+        print("PASS: new-Q.glb is reproducible from the approved source and Blender head layer")
     else:
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_bytes(result)

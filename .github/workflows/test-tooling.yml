@@ -72,6 +72,16 @@ jobs:
           .venv/bin/python tests/character_geometry_capture_test.py
           .venv/bin/python tests/mobile_tools_test.py
 
+      - name: Verify Blender head geometry against the pinned basis
+        shell: bash
+        run: |
+          set -euo pipefail
+          sculpt_base="$(PYTHONPATH=tools .venv/bin/python -c 'from character_sculpt import BASE; print(BASE)')"
+          if ! git cat-file -e "${sculpt_base}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --no-recurse-submodules --depth=1 origin "$sculpt_base"
+          fi
+          .venv/bin/python tests/character_sculpt_test.py
+
       - name: Exercise the declared GDScript parser
         shell: bash
         run: |

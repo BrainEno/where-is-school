@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 
 import character_geometry as geometry
+from character_sculpt import apply
 from prepare_teacher_n import (ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER, Builder, load_glb,
                                quantize_weights, read_accessor, write_glb)
 
@@ -141,7 +142,7 @@ def _surface(name: str, points: np.ndarray, indices: np.ndarray,
     return None
 
 
-def prepare(data: bytes) -> bytes:
+def prepare_base(data: bytes) -> bytes:
     if hashlib.sha256(data).hexdigest() != SOURCE_SHA256:
         raise ValueError("the immutable student source changed; review it before changing the pin")
     document, binary = load_glb(data)
@@ -218,6 +219,10 @@ def prepare(data: bytes) -> bytes:
     return write_glb(result, builder.binary)
 
 
+def prepare(data: bytes) -> bytes:
+    return apply(prepare_base(data), "seated")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -227,7 +232,7 @@ def main() -> int:
         if args.check:
             if OUTPUT.read_bytes() != result:
                 raise ValueError("student runtime differs; run tools/prepare_classroom_student.py")
-            print("PASS: the refined seated student is reproducible from its immutable source")
+            print("PASS: the refined seated student is reproducible from its immutable source and Blender head layer")
         else:
             OUTPUT.write_bytes(result)
             print(f"WROTE {OUTPUT.relative_to(ROOT)} ({len(result):,} bytes)")

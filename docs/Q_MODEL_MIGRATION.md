@@ -13,7 +13,8 @@ Owner 已明确确认：**new-Q 是 ChatGPT 为本项目生成的原创 Q，并�
 | 文件 | 字节数 | SHA-256 |
 |---|---:|---|
 | `art/character_models/q/new-Q_source.glb`（原始批准文件，父级 `.gdignore` 排除导入/导出） | 1,187,664 | `4d2d7d5939840bdfcc8b94f111f864e1d080a715380969ec335a7e1e60509f45` |
-| `assets/models/q/new-Q.glb`（唯一生产整理版） | 1,004,268 | `be670a4056f51db612653a868bff6d701a968d4b1ab19d85cafad55de92b46f1` |
+| 迁移时的无损整理基准（`prepare_base()`） | 1,004,268 | `be670a4056f51db612653a868bff6d701a968d4b1ab19d85cafad55de92b46f1` |
+| `assets/models/q/new-Q.glb`（独立头部精修后） | 992,760 | `28c9279e45ffce7e895ae00aadb036bcfa99105c9063d3927bda73122fd01293` |
 
 源上传 commit `f9aa19d4fa8ad56b0e4d2e46c48c799d10ffbb42`，blob
 `0d71fcf65cf76fa7abe7124cba7f74fbfa02efb9`。初始开发基线为
@@ -61,7 +62,7 @@ Owner 明确授权改以 **`c4e6bfa450153b84a823eaa5c8ece1ff28964691`** 为新�
 
 ## 3. 可复现的技术整理与材质适配
 
-`python3 tools/prepare_q.py` 固定验证原始 SHA，并且只：
+`tools/prepare_q.py` 的 `prepare_base()` 固定验证原始 SHA，并且只：
 
 1. 移除 `Q_SkeletonPreview` 展示节点、网格与 `BonePreview` 材质（1,440 顶点 /
    480 三角形）；它们不是角色身体。
@@ -70,8 +71,10 @@ Owner 明确授权改以 **`c4e6bfa450153b84a823eaa5c8ece1ff28964691`** 为新�
 3. 给原文件缺少 `baseColorFactor` 的十二种材质补上现有 Q 调色，不添加贴图。
 4. 逐字节复制有效 accessor/view 数据并紧凑打包，正确保留 sparse morph。
 
-没有移动顶点、重拓扑、改变法线/权重/骨架层级/rest/inverse bind/morph 或更改源动作 key。
-`tests/q_model_prepare_test.py` 对每个相关数据数组逐一与批准源比较，而非只看文件大小。
+上述整理阶段没有移动顶点、重拓扑、改变法线/权重/骨架层级/rest/inverse bind/morph 或更改源动作 key。
+`tests/q_model_prepare_test.py` 逐数组对照批准源。后续 [Blender 头部精修](../art/character_models/sculpt/README.md)
+才调整面部/眼睛位置和法线，并仅更换 `Q_Hair` 拓扑。`prepare()` 安装该独立雕刻层；
+骨架、13 个 morph 偏移及六个动作不变。第 2 节数字记录原迁移，精修后为 9,526 顶点、18,310 三角形。
 
 新网格为 `Q_Body`、`Q_Eyes`、`Q_Feet`、`Q_Hair`、`Q_Hands`、`Q_Head`、`Q_Hood`、
 `Q_Hoodie`、`Q_HoodieDetails`。`q_look.tres` 的映射迁移到实际
