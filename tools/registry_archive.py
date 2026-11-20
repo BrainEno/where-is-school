@@ -54,19 +54,20 @@ def _stack(batch, rng, x, z, bottom, top, *, width=(.34, .42), depth=(.28, .36),
         yaw = rng.uniform(-8, 8)
         centre = (x + dx, y + h / 2, z + dz + rng.uniform(0, .05))
         batch.box(rng.choice(tones), centre, (w, h, d), (0, yaw, 0))
-        batch.box(string, centre, (.014, h + .006, d + .006), (0, yaw, 0))
-        if rng.random() < .45:
+        if rng.random() < .55:
+            batch.box(string, centre, (.014, h + .006, d + .006), (0, yaw, 0))
+        if rng.random() < .3:
             batch.box("paper", (centre[0], y + h * rng.uniform(.3, .7), centre[2] + .02),
                       (w * .86, .006, d * 1.12), (0, yaw + rng.uniform(-9, 9), 0))
         roll = rng.random()
-        if roll < .22 and h > .1:
+        if roll < .16 and h > .1:
             # A student file: a passport photo with no face, clipped to the front.
             front = math.radians(yaw)
             off = (-w * .25, d / 2 + .003)
             px = centre[0] + off[0] * math.cos(front) + off[1] * math.sin(front)
             pz = centre[2] - off[0] * math.sin(front) + off[1] * math.cos(front)
             batch.box("photo", (px, centre[1], pz), (.055, min(.07, h * .7), .004), (0, yaw, 0))
-        elif roll < .5:
+        elif roll < .24:
             batch.box(rng.choice(TABS), (centre[0] + w / 2 * rng.choice((-1, 1)), centre[1], centre[2]),
                       (.05, .028, .07), (0, yaw, 0))
         dx += rng.uniform(-lean, lean)
@@ -123,15 +124,17 @@ def _resample(path, step):
 
 def continuous_form(b, parent):
     """The permanent record: one fan-fold printout unrolling from the files to the door."""
-    path = _resample(((-.62, -2.1), (-.78, -1.2), (-1.7, -.35), (-1.55, .75), (-.4, 1.55), (.9, 2.05),
-                      (1.75, 2.7), (2.18, 3.28)), .16)
+    route = ((-.62, -2.1), (-.78, -1.2), (-1.7, -.35), (-1.55, .75), (-.4, 1.55), (.9, 2.05), (1.75, 2.7),
+             (2.18, 3.28))
+    path = _resample(route, .16)
     batch = Batch()
     y = .024
     for k, seg in enumerate(zip(path, path[1:])):
         batch.strip("greenbar" if k % 4 < 2 else "white", list(seg), .32, y)
+    # The tractor-feed margins, a grey line down each edge.
     for side in (-.13, .13):
-        for x, z in _offset(path, side):
-            batch.chip("edge", (x, z), .011, 6, 0, y + .001)
+        edge = _offset(route, side)
+        batch.strip("edge", edge, .018, y + .001)
     # Fold creases every so often, and the roll it came from, still feeding.
     for k in range(3, len(path) - 1, 6):
         (x0, z0), (x1, z1) = path[k], path[k + 1]
@@ -256,16 +259,14 @@ def waiting_bench(b, parent):
     b.box("NoticeBoard", parent, (WALL_W + .006, 2.4, 1.4), (.012, .5, 2.5), "ink")
     rng = random.Random(1983)
     pins = Batch()
-    for k in range(13):
-        z, y = rng.uniform(.3, 2.5), rng.uniform(2.24, 2.56)
+    for k in range(9):
+        z, y = .4 + k * .25 + rng.uniform(-.06, .06), rng.uniform(2.28, 2.52)
         tilt = rng.uniform(-9, 9)
         x = WALL_W + .014 + .001 * k
         pins.box("paper" if k % 3 else "cream", (x, y, z), (.002, .2, .15), (tilt, 0, 0))
-        for r in range(3):
-            pins.box("line", (x + .002, y + .05 - .04 * r, z + .02), (.002, .008, .08), (tilt, 0, 0))
-        mark = "armband" if k % 4 else "tab_cobalt"
-        pins.box(mark, (x + .003, y - .07, z - .045), (.002, .012, .03), (tilt - 40, 0, 0))
-        pins.box(mark, (x + .003, y - .06, z - .02), (.002, .012, .05), (tilt + 50, 0, 0))
+        pins.box("line", (x + .002, y + .03, z + .01), (.002, .06, .09), (tilt, 0, 0))
+        pins.box("armband" if k % 4 else "tab_cobalt", (x + .003, y - .065, z - .04), (.002, .045, .012),
+                 (tilt + 45 * (1 if k % 2 else -1), 0, 0))
         pins.box("red", (x + .004, y + .085, z), (.006, .018, .018))
     pins.emit(b, "Notices", parent)
     # One bare bulb on a long flex over the bench; no fitting, no ceiling.
@@ -300,8 +301,7 @@ def inspection_desk(b, parent):
         sheet.box("paper", (-.36, y, .708), (.036, .036, .002))
         sheet.box("line", (-.1, y, .706), (.32 - .06 * (r % 3), .01, .002))
         if r != 6:
-            sheet.box("armband", (-.37, y - .008, .711), (.012, .03, .002), (0, 0, 40))
-            sheet.box("armband", (-.35, y + .004, .711), (.012, .05, .002), (0, 0, -35))
+            sheet.box("armband", (-.355, y, .711), (.012, .06, .002), (0, 0, -35))
     sheet.emit(b, "Checklist", d)
     # The stamp is as big as a head and works by itself on its pad.
     b.box("Pad", d, (.36, 2.75, .36), (.36, .03, .3), "red", rot=(-12, 0, 0))
@@ -371,15 +371,15 @@ def drying_line(b, parent):
         elif kind == "card":
             # A report card: a grid of grades with nothing written in.
             batch.box("cream", (x, y - .2, z), (.3, .38, .008), (0, 0, -2))
-            for r in range(5):
-                batch.box("line", (x, y - .07 - .065 * r, z + .006), (.26, .008, .002))
+            for r in range(3):
+                batch.box("line", (x, y - .1 - .09 * r, z + .006), (.26, .008, .002))
             batch.box("line", (x + .05, y - .2, z + .006), (.008, .3, .002))
             batch.box("armband", (x + .1, y - .2 - .065 * (round(t * 10) % 3), z + .007), (.04, .03, .002))
         elif kind == "timetable":
             batch.box("white", (x, y - .38, z), (.95, .74, .01), (0, 0, 1))
-            for c in range(1, 6):
+            for c in range(1, 6, 2):
                 batch.box("line", (x - .475 + c * .158, y - .38, z + .007), (.008, .7, .002))
-            for r in range(1, 8):
+            for r in range(2, 8, 2):
                 batch.box("line", (x, y - .01 - r * .092, z + .007), (.92, .008, .002))
             for c, r, pigment in ((1, 2, "tab_pink"), (3, 4, "tab_mint"), (4, 1, "tab_lemon"), (2, 6, "tab_cobalt")):
                 batch.box(pigment, (x - .475 + (c + .5) * .158, y - .01 - (r + .5) * .092, z + .008),
@@ -399,8 +399,8 @@ def paper_drifts(b, parent):
     rng = random.Random(1925)
     batch = Batch()
     tones = ("paper", "cream", "white", "file_buff", "paper")
-    for (x0, x1, z0, z1), count in (((-3.9, -2.9, -.3, 3.2), 34), ((-3.8, -2.6, -2.4, -1.0), 22),
-                                    ((2.6, 4.2, -1.9, -.9), 20), ((-4.1, .2, 2.7, 3.3), 26), ((-1.2, .2, -2.6, -2.0), 12)):
+    for (x0, x1, z0, z1), count in (((-3.9, -2.9, -.3, 3.2), 26), ((-3.8, -2.6, -2.4, -1.0), 18),
+                                    ((2.6, 4.2, -1.9, -.9), 16), ((-4.1, .2, 2.7, 3.3), 20), ((-1.2, .2, -2.6, -2.0), 10)):
         layer = 0
         for _ in range(count):
             layer += 1
