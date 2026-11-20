@@ -476,23 +476,7 @@ func _capture_free_period() -> void:
 	elif not companion.is_joined():
 		_failures.append("Q did not join the player after the classroom was left.")
 	else:
-		# Facing is set explicitly: a teleport to an identity basis keeps whatever
-		# facing the player had, which would make "hold forward" a guess.
-		_teleport(Vector3(-0.6, 0, 2.5), 1.0)
-		await _wait(0.3)
-		var start := _player.global_position
-		Input.action_press("move_forward")
-		await _wait(1.1)
-		Input.action_release("move_forward")
-		await _wait(0.6)
-		var walked := _player.global_position.distance_to(start)
-		var gap := companion.global_position.distance_to(_player.global_position)
-		_note("walked %.2f m with Q; Q is %.2f m behind" % [walked, gap])
-		if walked < 0.5:
-			_failures.append("Holding forward in the walkway did not move the player.")
-		if gap > companion.follow_distance + 1.0:
-			_failures.append("Q did not keep up in the walkway (%.2f m behind)." % gap)
-		await _shot("13a_q_following", "Q walking with the player in the walkway, at a natural distance.")
+		await _capture_companion_walk(companion)
 
 	# The pointer: stand in front of the cleaning trolley, then move the real cursor
 	# onto it and check that the cue, the prompt and the target agree.
@@ -996,6 +980,48 @@ func _capture_n_walk_at_the_front(n_actor: NpcActor) -> void:
 	await _wait(0.3)
 	if animator != null and animator.get_locomotion_state() != CharacterVisualAnimation.STATE_IDLE:
 		_failures.append("N did not return to idle after its walk at the front.")
+
+
+## Follow from the actual classroom exit. Jumping the player several metres ahead
+## in one frame measured a teleport and a fixed render timer, not walking together.
+## Capture only after the player really reaches the waypoint and Q closes the gap
+## under its own locomotion. Keep the same gap limit, and require both to move.
+func _capture_companion_walk(companion: CompanionController) -> void:
+	var max_gap := companion.follow_distance + 1.0
+	if not await Harness.wait_until(func() -> bool:
+		return (_player.is_on_floor() and companion.is_navigation_ready()
+			and companion.is_with_player() and not companion.is_waiting()
+			and companion.global_position.distance_to(_player.global_position) <= max_gap),
+		10.0):
+		_failures.append("Q was not beside the player at the start of the walkway: %s." % companion.get_last_chase_note())
+		return
+	var start := _player.global_position
+	var q_start := companion.global_position
+	var placements := companion.get_placement_report()
+	# Toward the old school gate, on the same flat run; no doorway or stair jump.
+	var goal := start + Vector3(0.35, 0.0, 4.15)
+	if not _player.request_path_to(goal):
+		_failures.append("The walkway refused the short companion walk to %s." % goal)
+		return
+	var arrived := await Harness.wait_until(func() -> bool:
+		return not _player.is_path_active() and _player.is_on_floor(), 18.0)
+	if not arrived or _player.global_position.distance_to(goal) > 0.50:
+		_player.cancel_path()
+		_failures.append("The companion walk stopped at %s instead of %s." % [_player.global_position, goal])
+		return
+	var followed := await Harness.wait_until(func() -> bool:
+		return (companion.is_with_player() and not companion.is_waiting()
+			and companion.global_position.distance_to(q_start) >= 0.8
+			and companion.global_position.distance_to(_player.global_position) <= max_gap),
+		6.0)
+	var gap := companion.global_position.distance_to(_player.global_position)
+	var q_walked := companion.global_position.distance_to(q_start)
+	_note("walked %.2f m with Q; Q walked %.2f m; final gap %.2f m" % [
+		_player.global_position.distance_to(start), q_walked, gap])
+	if not followed or companion.get_placement_report() != placements:
+		_failures.append("Q did not keep up in the walkway (gap %.2f m, walked %.2f m, waiting=%s, route=%d, note='%s')." % [
+			gap, q_walked, companion.is_waiting(), companion.get_route().size(), companion.get_last_chase_note()])
+	await _shot("13a_q_following", "Q walking with the player in the walkway, at a natural distance.")
 
 
 func _planar_forward(actor: Node3D) -> Vector3:

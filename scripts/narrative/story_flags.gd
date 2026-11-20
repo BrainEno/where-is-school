@@ -83,11 +83,24 @@ const FREE_PERIOD_STAYED: StringName = &"free_period_stayed"
 const FREE_PERIOD_LEAVING: StringName = &"free_period_leaving"
 ## bool: Q is walking with the player. Set the first time the classroom is left.
 const Q_COMPANION: StringName = &"q_companion"
-## bool: the player used the walkway railing to let part of the period pass.
+## bool: the player paused at the corridor window to let part of the period pass.
 const CORRIDOR_WAITED: StringName = &"corridor_waited"
 ## String: the directory tab points to the glass doors (glass) or the stairs (stair).
 ## Missing in old saves and before marking: the tab is centered.
 const CORRIDOR_DIRECTORY_TAB: StringName = &"corridor_directory_tab"
+## Optional school doors: aligned opens the latch; unclear enables the manual correction.
+const ANNEX_ARCHIVE_ALIGNED: StringName = &"annex.archive.aligned"
+const ANNEX_ARCHIVE_UNCLEAR: StringName = &"annex.archive.unclear"
+const ANNEX_PLAN_ROOM_ALIGNED: StringName = &"annex.plan_room.aligned"
+const ANNEX_PLAN_ROOM_UNCLEAR: StringName = &"annex.plan_room.unclear"
+const ANNEX_PROJECTION_ROOM_ALIGNED: StringName = &"annex.projection_room.aligned"
+const ANNEX_PROJECTION_ROOM_UNCLEAR: StringName = &"annex.projection_room.unclear"
+const ANNEX_COMPUTER_ROOM_ALIGNED: StringName = &"annex.computer_room.aligned"
+const ANNEX_COMPUTER_ROOM_UNCLEAR: StringName = &"annex.computer_room.unclear"
+const ANNEX_VACANT_OFFICE_ALIGNED: StringName = &"annex.vacant_office.aligned"
+const ANNEX_VACANT_OFFICE_UNCLEAR: StringName = &"annex.vacant_office.unclear"
+const ANNEX_PRINCIPAL_OFFICE_ALIGNED: StringName = &"annex.principal_office.aligned"
+const ANNEX_PRINCIPAL_OFFICE_UNCLEAR: StringName = &"annex.principal_office.unclear"
 ## bool: the opening has been requested by dialogue. Kept across a refused forced fall.
 const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
 ## bool: the back-window curtain hangs open on the void; the classroom loads that way.
@@ -169,6 +182,18 @@ const ALL_FLAGS: Array[StringName] = [
 	Q_COMPANION,
 	CORRIDOR_WAITED,
 	CORRIDOR_DIRECTORY_TAB,
+	ANNEX_ARCHIVE_ALIGNED,
+	ANNEX_ARCHIVE_UNCLEAR,
+	ANNEX_PLAN_ROOM_ALIGNED,
+	ANNEX_PLAN_ROOM_UNCLEAR,
+	ANNEX_PROJECTION_ROOM_ALIGNED,
+	ANNEX_PROJECTION_ROOM_UNCLEAR,
+	ANNEX_COMPUTER_ROOM_ALIGNED,
+	ANNEX_COMPUTER_ROOM_UNCLEAR,
+	ANNEX_VACANT_OFFICE_ALIGNED,
+	ANNEX_VACANT_OFFICE_UNCLEAR,
+	ANNEX_PRINCIPAL_OFFICE_ALIGNED,
+	ANNEX_PRINCIPAL_OFFICE_UNCLEAR,
 	CURTAIN_FALL_PENDING,
 	CURTAIN_DRAWN,
 	CURTAIN_EDGE_HELD,
