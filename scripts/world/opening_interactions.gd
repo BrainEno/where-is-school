@@ -53,7 +53,7 @@ func activate(interactable: Interactable) -> void:
 			await _flow.handle_exit(exit)
 		return
 
-	var beat_active := _director.is_beat_active()
+	var beat_active := bool(_director.is_beat_active())
 	# An important moment pulls the camera in for as long as it holds the player.
 	if _focus != null and not (beat_active and interactable is StagedInteractable):
 		_focus.engage(interactable)
