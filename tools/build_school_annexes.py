@@ -15,7 +15,7 @@ from build_teaching_block import ROOT, child_path, quad, srgb, vec3
 from fixture_geometry import Facets, rounded_rect
 from school_annex_layout import ANNEXES, THRESHOLDS
 from postmodern_office import POMO, kettle, memphis_desk, principal_suite, swivel_chair, vacant_workroom
-from trial_archive import index_desk, trial_archive
+from registry_archive import index_desk, registry_archive
 
 
 COMMON = {
@@ -144,8 +144,8 @@ def archive(b):
     index_desk(b, p)
     chair(b, "ClerkSeat", (2.46,0,-2.49), 172)
     read(b,"archive",p,(1.04,.82,-1.46),("Ledger",))
-    # Round 2 (2026-11-20): the court offices of The Trial, around the same desk.
-    trial_archive(b)
+    # Round 2 (2026-11-20, revised 11-21): student files, school rules and inspection dossiers.
+    registry_archive(b)
 
 
 def plan_room(b):
