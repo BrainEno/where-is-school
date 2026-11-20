@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CameraShot" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+subject_mix = 0.75
+distance_scale = 0.43
+height_scale = 0.77
+yaw_degrees = -9.0
+fov = 39.0
+glide_seconds = 0.72

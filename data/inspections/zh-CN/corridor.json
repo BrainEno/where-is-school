@@ -58,5 +58,53 @@
       "source": "observed",
       "text": "玻璃门上两处都写着 01。楼层表的两个 01 指向相反的方向。"
     }
+  },
+  "archive_threshold": {
+    "title": "门上的孔印",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "上面的纸条比复写件长，两个圆孔倒是一样大。孔印下面有一片可以拨动的铜片。",
+    "repeat_text": "上面的纸条比复写件长，两个圆孔倒是一样大。孔印下面有一片可以拨动的铜片。"
+  },
+  "plan_room_threshold": {
+    "title": "测绘线",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "纸条上画着两条路线。一条尽头在楼梯里，只有带短折角的那条能接上小方格。下边有片活动拨片。",
+    "repeat_text": "纸条上画着两条路线。一条尽头在楼梯里，只有带短折角的那条能接上小方格。下边有片活动拨片。"
+  },
+  "projection_room_threshold": {
+    "title": "画框刻痕",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "三个套在一起的框，各自朝不同的角缩小。只有中间那格的下沿有剐痕，拨片上也有同样一道。",
+    "repeat_text": "三个套在一起的框，各自朝不同的角缩小。只有中间那格的下沿有剐痕，拨片上也有同样一道。"
+  },
+  "computer_room_threshold": {
+    "title": "断开的扫描线",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "小牌上有三道断线。最下面那道向右错一格，刚好能接上框边的缺口。上面两道都接不上。",
+    "repeat_text": "小牌上有三道断线。最下面那道向右错一格，刚好能接上框边的缺口。上面两道都接不上。"
+  },
+  "vacant_office_threshold": {
+    "title": "复写压痕",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "印出来的直角在压痕上方。较低的那道已经磨白了，拨片也磨在同一边。",
+    "repeat_text": "印出来的直角在压痕上方。较低的那道已经磨白了，拨片也磨在同一边。"
+  },
+  "principal_office_threshold": {
+    "title": "错开的中线",
+    "prompt": "看门牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "长线画在牌子正中。两个小孔偏在一侧。拨片背后的销，只在小孔那头磨亮。",
+    "repeat_text": "长线画在牌子正中。两个小孔偏在一侧。拨片背后的销，只在小孔那头磨亮。"
   }
 }

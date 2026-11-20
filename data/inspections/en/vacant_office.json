@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "vacant_office_detail": {
+    "title": "Empty blotter",
+    "prompt": "Look at empty blotter",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The carbon sheet has a dent where something used to rest. The printed rectangle misses that dent; the table and the chair are stood just as far apart.",
+    "repeat_text": "The carbon sheet has a dent where something used to rest. The printed rectangle misses that dent; the table and the chair are stood just as far apart.",
+    "record": {
+      "entry_id": "saw_vacant_office_register",
+      "source": "observed",
+      "text": "The carbon sheet has a dent where something used to rest. The printed rectangle misses that dent; the table and the chair are stood just as far apart."
+    }
+  }
+}

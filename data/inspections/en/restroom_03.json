@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "restroom_03_basins": {
+    "title": "Two washbasins",
+    "prompt": "Look at the washbasins",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Both taps are wound shut. Scale rings the strainers; one bright clip bridges the mirror seam. Brown streaks hang below the pipe over the urinals.",
+    "repeat_text": "Shut taps, scaled strainers, and one bright clip."
+  },
+  "restroom_03_latch": {
+    "title": "Second cubicle",
+    "prompt": "Look at the latch",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The indicator shows a narrow band of red. The end of the bolt is visible through a gap in the plate. From here you cannot see what is keeping it there.",
+    "repeat_text": "A sliver of red and the end of the bolt."
+  },
+  "restroom_03_drain": {
+    "title": "Floor grate",
+    "prompt": "Look at the floor grate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Water collects around the grate but has not spread past the repaired tile. Several flies stay close to the floor.",
+    "repeat_text": "A little warmer tile at the edge of the grate."
+  }
+}

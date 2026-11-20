@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "plan_room_detail": {
+    "title": "描图台",
+    "prompt": "检视描图台",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两张图纸把同一个平台画在了不同的位置。短折角只出现在其中一张；平行尺的端点不落在任何一条楼板线上。",
+    "repeat_text": "两张图纸把同一个平台画在了不同的位置。短折角只出现在其中一张；平行尺的端点不落在任何一条楼板线上。",
+    "record": {
+      "entry_id": "saw_plan_room_register",
+      "source": "observed",
+      "text": "两张图纸把同一个平台画在了不同的位置。短折角只出现在其中一张；平行尺的端点不落在任何一条楼板线上。"
+    }
+  }
+}

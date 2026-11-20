@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://scenes/locations/corridor/directory_tab.gd" id="directory_tab"]
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/plinth_ivory.tres" id="art_slide_ivory"]
+[ext_resource type="Resource" path="res://assets/camera/shots/annex_alignment.tres" id="29_annex_shot"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_20"]
 size = Vector3(4.4, 0.18, 0.3)
@@ -326,12 +327,12 @@ conversation_route = &"corridor_trolley"
 radius = 1.1
 support_paths = PackedStringArray("../../CorridorTrolley")
 
-[node name="RailingWait" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(1.75, 0.9, -1.2)
+[node name="WindowWait" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(1.72, 1.11, -2.81)
 interact_id = &"corridor_wait"
-outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5/Rail")
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5/WindowSill")
 support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
-prompt_text = "Stop at the railing"
+prompt_text = "Pause at the window"
 prompt_key = "prompt.corridor_wait"
 conversation_route = &"corridor_wait"
 radius = 1.2
@@ -383,6 +384,169 @@ destination_scene = "res://scenes/locations/restroom/restroom.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"restroom"
 
+; BEGIN GENERATED annex exits
+[node name="ArchiveDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(-13.95, -2.3, 11)
+interact_id = &"to_archive"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ArchivePortal/Door/Panel/HallLever", "../../TeachingBlock/GroundFloor/ArchivePortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ArchivePortal/Door/Panel")
+prompt_key = "prompt.enter_archive"
+radius = 0.36
+required_flag = &"annex.archive.aligned"
+blocked_inspection_id = &"archive_threshold"
+destination_scene = "res://scenes/locations/archive/archive.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"archive"
+
+[node name="ArchiveAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-15.12, -2.26, 10.95)
+interact_id = &"align_archive"
+conversation_route = &"align_archive"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ArchivePortal/RegistrationSlide", "../../TeachingBlock/GroundFloor/ArchivePortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ArchivePortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="PlanRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(-10.24, -2.3, 11)
+interact_id = &"to_plan_room"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel")
+prompt_key = "prompt.enter_plan_room"
+radius = 0.36
+required_flag = &"annex.plan_room.aligned"
+blocked_inspection_id = &"plan_room_threshold"
+destination_scene = "res://scenes/locations/plan_room/plan_room.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"plan_room"
+
+[node name="PlanRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-11.41, -2.26, 10.95)
+interact_id = &"align_plan_room"
+conversation_route = &"align_plan_room"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/RegistrationSlide", "../../TeachingBlock/GroundFloor/PlanRoomPortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="ProjectionRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(3.32, 1.1, -29.55)
+interact_id = &"to_projection_room"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel")
+prompt_key = "prompt.enter_projection_room"
+radius = 0.36
+required_flag = &"annex.projection_room.aligned"
+blocked_inspection_id = &"projection_room_threshold"
+destination_scene = "res://scenes/locations/projection_room/projection_room.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"projection_room"
+
+[node name="ProjectionRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(2.15, 1.14, -29.6)
+interact_id = &"align_projection_room"
+conversation_route = &"align_projection_room"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/RegistrationSlide", "../../TeachingBlock/LowerFloor/ProjectionRoomPortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="ComputerRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(5.59, 1.1, -29.55)
+interact_id = &"to_computer_room"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel")
+prompt_key = "prompt.enter_computer_room"
+radius = 0.36
+required_flag = &"annex.computer_room.aligned"
+blocked_inspection_id = &"computer_room_threshold"
+destination_scene = "res://scenes/locations/computer_room/computer_room.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"computer_room"
+
+[node name="ComputerRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(4.42, 1.14, -29.6)
+interact_id = &"align_computer_room"
+conversation_route = &"align_computer_room"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/RegistrationSlide", "../../TeachingBlock/LowerFloor/ComputerRoomPortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="VacantOfficeDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(-13.8, 4.7, -18.25)
+interact_id = &"to_vacant_office"
+outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel/HallLever", "../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel")
+prompt_key = "prompt.enter_vacant_office"
+radius = 0.36
+required_flag = &"annex.vacant_office.aligned"
+blocked_inspection_id = &"vacant_office_threshold"
+destination_scene = "res://scenes/locations/vacant_office/vacant_office.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"vacant_office"
+
+[node name="VacantOfficeAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(-13.85, 4.74, -17.08)
+interact_id = &"align_vacant_office"
+conversation_route = &"align_vacant_office"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/RegistrationSlide", "../../TeachingBlock/UpperFloor/VacantOfficePortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="PrincipalOfficeDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(3.21, 4.7, -44.55)
+interact_id = &"to_principal_office"
+outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel/HallLever", "../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel")
+prompt_key = "prompt.enter_principal_office"
+radius = 0.36
+required_flag = &"annex.principal_office.aligned"
+blocked_inspection_id = &"principal_office_threshold"
+destination_scene = "res://scenes/locations/principal_office/principal_office.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"principal_office"
+
+[node name="PrincipalOfficeAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(2.04, 4.74, -44.6)
+interact_id = &"align_principal_office"
+conversation_route = &"align_principal_office"
+prompt_key = "prompt.annex_align"
+outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/RegistrationSlide", "../../TeachingBlock/UpperFloor/PrincipalOfficePortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel")
+camera_shot = ExtResource("29_annex_shot")
+radius = 0.34
+
+[node name="Restroom02Door" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(28.49, 0.83, -27.75)
+interact_id = &"to_restroom_02"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/Restroom02Portal/Door/Panel/Leaf", "../../TeachingBlock/LowerFloor/Restroom02Portal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/Restroom02Portal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/Restroom02Portal/Door/Panel")
+prompt_key = "prompt.enter_restroom"
+radius = 1.38
+destination_scene = "res://scenes/locations/restroom_02/restroom_02.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"restroom_02"
+
+[node name="Restroom03Door" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(20.14, 4.43, -42.75)
+interact_id = &"to_restroom_03"
+outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/Restroom03Portal/Door/Panel/Leaf", "../../TeachingBlock/UpperFloor/Restroom03Portal/Door/Panel/HallLever", "../../TeachingBlock/UpperFloor/Restroom03Portal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/Restroom03Portal/Door/Panel")
+prompt_key = "prompt.enter_restroom"
+radius = 1.38
+destination_scene = "res://scenes/locations/restroom_03/restroom_03.tscn"
+destination_spawn = &"FromCorridor"
+destination_id = &"restroom_03"
+
+; END GENERATED annex exits
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromClassroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
@@ -409,6 +573,41 @@ rotation_degrees = Vector3(0, 180, 0)
 [node name="FromRestroom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-25.36, -3.4, 12.56)
 rotation_degrees = Vector3(0, -90, 0)
+
+; BEGIN GENERATED annex returns
+[node name="FromArchive" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-14.48, -3.4, 12)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromPlanRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-10.77, -3.4, 12)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromProjectionRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(2.79, 0, -28.55)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromComputerRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(5.06, 0, -28.55)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromVacantOffice" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-12.8, 3.6, -17.72)
+rotation_degrees = Vector3(0, 270, 0)
+
+[node name="FromPrincipalOffice" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(2.68, 3.6, -43.55)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="FromRestroom02" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(27.55, 0, -27.75)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="FromRestroom03" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(19.2, 3.6, -42.75)
+rotation_degrees = Vector3(0, 90, 0)
+
+; END GENERATED annex returns
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_room_tone_walkway")

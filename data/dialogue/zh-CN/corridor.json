@@ -91,14 +91,14 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "栏杆在这里接了一截。手放上去，接缝那头稍微高一点。",
+          "text": "窗台在这里接了一截。手放上去，接缝那头稍微高一点。",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "从这儿能同时看见两个篮圈。近的遮住一小块线，远的什么也没遮住。",
+          "text": "院里有条白线被窗框挡住了。侧一点身，它又露出来。",
           "source": "observed",
           "next": "cw_3"
         },
@@ -122,7 +122,7 @@
               "entry_id": "corridor_waited",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "课间在栏杆边站了一会儿；从那里看得见院里的两个篮圈。"
+              "text": "课间在窗边站了一会儿，看院里地上的线。"
             }
           ]
         }

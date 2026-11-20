@@ -1,0 +1,715 @@
+{
+  "format_version": 2,
+  "locale": "en",
+  "chapter": "school_annexes",
+  "conversations": {
+    "align_archive": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Match the punched copies by their round holes.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:archive_threshold"
+                ],
+                "not_flags": [
+                  "check:align_archive:bearing",
+                  "annex.archive.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.archive.unclear"
+                ],
+                "not_flags": [
+                  "annex.archive.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "One sheet has shrunk. A hole is still a hole.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The two holes sit on the same pin. The latch draws back.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.archive.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The long edges will not agree. Ignore their ends: hold the round holes over the same pin.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.archive.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "Align the round holes",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "Align the ends of the strips",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    },
+    "align_plan_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Check where the short elbow lands.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:plan_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_plan_room:bearing",
+                  "annex.plan_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.plan_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.plan_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "Trace the turn from the landing, not the longest line.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The short elbow covers the square. You can move the handle now.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.plan_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The long rule keeps leading into the stair. Use the short elbow that actually meets the square.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.plan_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "Follow the long rule",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "Follow the short elbow",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    },
+    "align_projection_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Find the frame with the matching nick.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:projection_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_projection_room:bearing",
+                  "annex.projection_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.projection_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.projection_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "Watch the bottom corner. The largest frame just looks nearest.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The two nicks meet; the slide catches and the bolt comes loose.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.projection_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The big outline keeps drifting. Set the nick under the middle frame, not under the largest.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.projection_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "Match the middle frame",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "Match the largest frame",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    },
+    "align_computer_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Match the broken lines without shifting the frame.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:computer_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_computer_room:bearing",
+                  "annex.computer_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.computer_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.computer_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "A shift of one notch. Let the row touch the edge first.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The bottom line runs into the notch. The latch clicks instead of scraping.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.computer_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The top lines stop short. Use the lowest row and the notch one place to the right.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.computer_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "Slide the top row left",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "Slide the lowest row right",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    },
+    "align_vacant_office": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Find the corner pressed into the sheet.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:vacant_office_threshold"
+                ],
+                "not_flags": [
+                  "check:align_vacant_office:bearing",
+                  "annex.vacant_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.vacant_office.unclear"
+                ],
+                "not_flags": [
+                  "annex.vacant_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "The ink and the pressure are two different things.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The worn edges fit. The door is no longer held by the catch.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.vacant_office.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The ink fooled your eye. Match the lower impression you can feel, not the printed corner.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.vacant_office.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "Use the lower indentation",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "Use the printed corner",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    },
+    "align_principal_office": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "The slide has very little travel. Try the door and read the two marks on its plate before moving it.",
+          "choices": [
+            {
+              "id": "check",
+              "text": "Sight along the holes, not the central stroke.",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:principal_office_threshold"
+                ],
+                "not_flags": [
+                  "check:align_principal_office:bearing",
+                  "annex.principal_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "Set the slide from the marks on the door.",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.principal_office.unclear"
+                ],
+                "not_flags": [
+                  "annex.principal_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "Don’t take the middle for the place everyone is facing.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "The off-centre holes feel flush. The handle will turn.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.principal_office.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "The centre stripe is only paint. Look for the pair of holes off to the side.",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.principal_office.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "Look again at the marks. Where should the slide sit?",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "Use the central stripe",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "Use the offset pair",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "Leave it for now.",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "The slide springs back. The bolt does not move.",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "Leave the slide as it is.",
+          "next": null
+        }
+      ]
+    }
+  }
+}

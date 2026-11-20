@@ -37,6 +37,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	root.size = Vector2i(1600, 900)
 	Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
 	var main_scene := load("res://scenes/main/main.tscn") as PackedScene
@@ -103,21 +104,7 @@ func _run() -> void:
 
 	Harness.stage = "walking the whole building"
 	if await _walk(HALL_BY_WEST_STAIR, "west stair foot") and await _climb_with_keys():
-		var next := Vector3(-11.2, 3.6, -14.4)
-		# A ground click must not stop at the nearer transparent pane, and it must
-		# choose the upper floor the player pointed at, not look through it to the yard.
-		_player.camera_rig.snap()
-		var screen := _camera.unproject_position(next)
-		var view_ray := PhysicsRayQueryParameters3D.create(_camera.project_ray_origin(screen), next, PLAYER_GLASS_LAYER)
-		var barrier := _player.get_world_3d().direct_space_state.intersect_ray(view_ray)
-		_check.expect(not barrier.is_empty() and (barrier["collider"] as Node).name == &"GlassSafety",
-			"The 02 floor click didn't actually aim through the safety glass.")
-		var hit: Variant = _pointer.get_ground_point_at(screen)
-		var nav_point := NavigationServer3D.map_get_closest_point(nav.get_navigation_map(), next)
-		if _check.expect(hit is Vector3 and (hit as Vector3).distance_to(nav_point) < 0.12,
-			"A floor click on 02 was lost behind glazing (hit %s, wanted %s)." % [hit, nav_point]):
-			_pointer.click_at_screen_position(screen)
-			await _arrive(next, "03 clicked floor")
+		await _click_through_upper_window(corridor, nav)
 		var upper_peek := corridor.find_interactable(&"high_window_upperwest1")
 		if await _walk(Vector3(-13.25, 3.6, -12.2), "03 high window"):
 			await _check_peek(upper_peek, true)
@@ -155,7 +142,7 @@ func _run() -> void:
 func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
-		+ "the ten bays, glazed galleries, older exits and both peek inputs still work; "
+		+ "the ten bays, masonry and divided windows, older exits and both peek inputs still work; "
 		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work; "
 		+ "directory poses and the wall's shortened revisit survive resuming a checkpoint.")
 
@@ -589,14 +576,56 @@ func _check_yard_view(corridor: LocationRoot) -> void:
 
 
 func _check_glass_collision(corridor: LocationRoot) -> void:
-	var glass := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_3/GlassSafety") as StaticBody3D
-	var from := _player.global_transform
-	# Sweep the actual player capsule above the opaque rail, where only glass can stop it.
-	from.origin = glass.to_global(Vector3(-0.5, 1.05, 1.0))
-	var hit := KinematicCollision3D.new()
-	var blocked := _player.test_move(from, -glass.global_basis.z * 2.0, hit)
-	_check.expect(blocked and hit.get_collider() == glass,
-		"The player capsule can pass through a glazed bay above the rail.")
+	for path: NodePath in [^"TeachingBlock/LowerFloor/EastGlazing/Bay0_3", ^"TeachingBlock/UpperFloor/EastGlazing/Bay0_6"]:
+		var bay := corridor.get_node(path) as StaticBody3D
+		var glass := bay.get_node(^"GlassSafety") as StaticBody3D
+		var opening := (glass.get_node(^"Pane") as CollisionShape3D).shape as BoxShape3D
+		var sill := (bay.get_node(^"SillWallSolid") as CollisionShape3D).shape as BoxShape3D
+		var aperture := opening.size.x * opening.size.y
+		_check.expect(opening.size.x >= 1.55 and opening.size.x <= 1.84
+			and is_equal_approx(opening.size.y, 1.29) and is_equal_approx(sill.size.y, 1.06)
+			and aperture < sill.size.x * 3.15 * .25, "%s is a slit or a window wall, not a regular window in masonry." % path)
+		var space := _player.get_world_3d().direct_space_state
+		# The aperture transmits a camera/ground ray, not the capsule. The same
+		# horizontal ray at the sill, over the lintel, or in the pier meets masonry.
+		for ray: Vector3 in [Vector3(0,.55,0), Vector3(0,2.70,0), Vector3(opening.size.x/2+.21,1.70,0), Vector3(.36,1.70,0)]:
+			var into := PhysicsRayQueryParameters3D.create(bay.to_global(ray + Vector3.BACK), bay.to_global(ray + Vector3.FORWARD), 1)
+			var view := space.intersect_ray(into)
+			if is_equal_approx(ray.x,.36):
+				_check.expect(view.is_empty(), "The aperture does not pass the ground ray in %s." % path)
+				into.collision_mask = PLAYER_GLASS_LAYER
+				_check.expect(space.intersect_ray(into).get("collider") == glass, "The aperture has no player barrier in %s." % path)
+			else:
+				_check.expect(view.get("collider") == bay, "Masonry fails to block the ray at %s in %s." % [ray,path])
+		var from := _player.global_transform
+		from.origin = glass.to_global(Vector3(-.5, 1.09, 1.0))
+		var hit := KinematicCollision3D.new()
+		# The 1.80 m capsule is taller than the window; hitting the lintel instead
+		# of the pane also stops a jump. Neither shape alone substitutes for the other.
+		var blocked := _player.test_move(from, -glass.global_basis.z * 2.0, hit)
+		_check.expect(blocked and (hit.get_collider() == glass or hit.get_collider() == bay),
+			"The player capsule can jump through %s." % path)
+
+
+func _click_through_upper_window(corridor: LocationRoot, nav: LocationNavigation) -> void:
+	# Aim through a specific sash of the new smaller opening, then continue
+	# the actual screen ray to the floor. A fixed point on the old floor-to-
+	# ceiling glass would now hit the lower wall instead of probing the pane.
+	_player.camera_rig.snap()
+	var pane := corridor.get_node(^"TeachingBlock/UpperFloor/EastGlazing/Bay0_6/GlassSafety") as StaticBody3D
+	var from := _camera.global_position
+	var pass_at := pane.to_global(Vector3(.39,1.90,0))
+	var next := from.lerp(pass_at, (3.6-from.y)/(pass_at.y-from.y))
+	var screen := _camera.unproject_position(next)
+	var ray := PhysicsRayQueryParameters3D.create(_camera.project_ray_origin(screen), next, PLAYER_GLASS_LAYER)
+	_check.expect(_player.get_world_3d().direct_space_state.intersect_ray(ray).get("collider") == pane,
+		"The 03 floor click did not aim through the chosen sash.")
+	var hit: Variant = _pointer.get_ground_point_at(screen)
+	var on_floor := NavigationServer3D.map_get_closest_point(nav.get_navigation_map(), next)
+	if _check.expect(hit is Vector3 and (hit as Vector3).distance_to(on_floor) < .12,
+		"The 03 floor point is lost through the window (hit %s, wanted %s)." % [hit, on_floor]):
+		_pointer.click_at_screen_position(screen)
+		await _arrive(next, "03 clicked floor")
 
 
 func _click_floor(destination: Vector3, label: String) -> bool:

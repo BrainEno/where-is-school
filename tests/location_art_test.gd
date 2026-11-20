@@ -62,9 +62,10 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 15, # Same 13, plus the two corridor-end doors.
+		"interactables": 29, # Same 15, eight new doors and six registration slides.
 		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
-			"FromStaffOffice", "FromRestroom"],
+			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
+			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"school_gate": "street/FromCorridor",
@@ -73,6 +74,14 @@ const LOCATIONS := {
 			"to_laboratory": "laboratory/FromCorridor",
 			"to_staff_office": "staff_office/FromCorridor",
 			"to_restroom": "restroom/FromCorridor",
+			"to_archive": "archive/FromCorridor",
+			"to_plan_room": "plan_room/FromCorridor",
+			"to_projection_room": "projection_room/FromCorridor",
+			"to_computer_room": "computer_room/FromCorridor",
+			"to_vacant_office": "vacant_office/FromCorridor",
+			"to_principal_office": "principal_office/FromCorridor",
+			"to_restroom_02": "restroom_02/FromCorridor",
+			"to_restroom_03": "restroom_03/FromCorridor",
 		},
 	},
 	"street": {
@@ -141,6 +150,62 @@ const LOCATIONS := {
 		"interactables": 4,
 		"spawns": ["FromCorridor"],
 		"exits": {"restroom_to_corridor": "corridor/FromRestroom"},
+	},
+	"archive": {
+		"scene": "res://scenes/locations/archive/archive.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"archive_to_corridor": "corridor/FromArchive"},
+	},
+	"plan_room": {
+		"scene": "res://scenes/locations/plan_room/plan_room.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"plan_room_to_corridor": "corridor/FromPlanRoom"},
+	},
+	"projection_room": {
+		"scene": "res://scenes/locations/projection_room/projection_room.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"projection_room_to_corridor": "corridor/FromProjectionRoom"},
+	},
+	"computer_room": {
+		"scene": "res://scenes/locations/computer_room/computer_room.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"computer_room_to_corridor": "corridor/FromComputerRoom"},
+	},
+	"vacant_office": {
+		"scene": "res://scenes/locations/vacant_office/vacant_office.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"vacant_office_to_corridor": "corridor/FromVacantOffice"},
+	},
+	"principal_office": {
+		"scene": "res://scenes/locations/principal_office/principal_office.tscn",
+		"stage": false,
+		"interactables": 2,
+		"spawns": ["FromCorridor"],
+		"exits": {"principal_office_to_corridor": "corridor/FromPrincipalOffice"},
+	},
+	"restroom_02": {
+		"scene": "res://scenes/locations/restroom_02/restroom_02.tscn",
+		"stage": false,
+		"interactables": 4,
+		"spawns": ["FromCorridor"],
+		"exits": {"restroom_02_to_corridor": "corridor/FromRestroom02"},
+	},
+	"restroom_03": {
+		"scene": "res://scenes/locations/restroom_03/restroom_03.tscn",
+		"stage": false,
+		"interactables": 4,
+		"spawns": ["FromCorridor"],
+		"exits": {"restroom_03_to_corridor": "corridor/FromRestroom03"},
 	},
 }
 

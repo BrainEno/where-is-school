@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "restroom_03_basins": {
+    "title": "两个洗手池",
+    "prompt": "看看洗手池",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "两个龙头都拧死了。水垢把滤网围成一圈；镜面接缝有一枚比别处亮的新卡扣。小便池上方的水管往下挂着褐色的印子。",
+    "repeat_text": "拧死的龙头，结垢的滤网，还有一枚新的卡扣。"
+  },
+  "restroom_03_latch": {
+    "title": "第二格隔间",
+    "prompt": "看看插销",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "指示片露出窄窄一条红色。从面板的缝里看得见插销末端。从这边看不出是什么抵住了它。",
+    "repeat_text": "一线红色，和露出来的插销。"
+  },
+  "restroom_03_drain": {
+    "title": "地漏",
+    "prompt": "看看地漏",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "水在格栅外积了一圈，没有漫过补过的地砖。几只苍蝇贴着地面飞。",
+    "repeat_text": "地漏边上有一小块偏暖的砖。"
+  }
+}

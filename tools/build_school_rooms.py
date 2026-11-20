@@ -11,9 +11,13 @@ OFFICE_WIDTH, OFFICE_DEPTH = 8.70, 6.20
 WASH_WIDTH, WASH_DEPTH = 8.24, 6.32
 OFFICE_DOOR_X, WASH_DOOR_Z = -2.28, 1.51
 DOOR_H = 2.36
+from school_annex_layout import THRESHOLDS, UPPER_WASHES
+from restroom_fittings import fly_clouds, grime, paint_wear, squat_pan, urinal
+
 ROLES = {
     "staff_office": ("StaffOffice", (62, 69, 98), (104, 123, 116), "教师办公室", "STAFF OFFICE", "03"),
-    "restroom": ("Restroom", (45, 72, 86), (83, 129, 147), "厕所", "RESTROOM", "01"),
+    "restroom": ("Restroom", (45, 61, 62), (105, 117, 98), "厕所", "RESTROOM", "01"),
+    **{r.id: (r.name, r.trim, r.leaf, r.title, r.english, r.floor) for r in THRESHOLDS},
 }
 
 
@@ -56,7 +60,7 @@ def door(role):
         b.box(name+"Lever", p, (0.547, 1.102, z+sign*.056), (0.20, 0.041, 0.032), "steel")
         for i, y in enumerate((0.33, 1.20, 2.01)):
             b.round(f"{name}Hinge{i}", p, (-0.795, y, z), 0.022, 0.143, "steel", sides=8)
-        if role == "staff_office":
+        if not role.startswith("restroom"):
             b.box(name+"Bead", p, (0, 1.45, z), (0.71, 0.44, 0.035), "door_frame")
             b.box(name+"Glass", p, (0, 1.45, z+sign*.018), (0.622, 0.35, 0.014), "vision")
             for i in range(2):
@@ -66,7 +70,7 @@ def door(role):
             for i in range(5):
                 b.box(f"{name}Louvre{i}", p, (0, 0.44+i*.058, z+sign*.027), (0.51, 0.022, 0.029), "vision_light")
         b.box(name+"Sign", p, (0, 1.95, z+sign*.017), (1.08, 0.30, 0.042), "sign_ink")
-        label(b, name+"Primary", p, (0, 2.005, z+sign*.043), cn if sign > 0 else number, 0.0027, (0, yaw, 0))
+        label(b, name+"Primary", p, (0, 2.005, z+sign*.043), cn if sign > 0 else number, .0027 if sign < 0 or role == "staff_office" else min(.0027, .016 / (len(cn)+1)), (0, yaw, 0))
         label(b, name+"Secondary", p, (0, 1.881, z+sign*.043), en if sign > 0 else "HALL", 0.00138, (0, yaw, 0))
     return b.emit()
 
@@ -369,6 +373,9 @@ def wash_station(b):
     for i in range(3):
         b.box(f"SoapSlot{i}", p, (-3.62+.052*(i-1),y+.025,.50), (.017,.016,.21), "ceramic")
     b.box("Soap", p, (-3.65,y+.049,.52), (.13,.036,.10), "soap", rot=(0,-13,0))
+
+
+def wash_mirror(b):
     b.node("Mirror", "WallWest0", position=vec3((.81,1.66,.12)))
     p = "WallWest0/Mirror"
     b.box("Frame", p, (0,0,0), (3.16,.81,.066), "edge", shadow=True)
@@ -385,7 +392,7 @@ def wash_station(b):
 def stalls(b):
     p = "Cubicles"
     b.node(p, ".")
-    # One open niche. Only the visible partition, seat and closed bay meet the body.
+    # One open niche. Only the visible partitions, raised bed and closed bay block the body.
     for name, x in (("Left", -.75), ("Centre", 1.61)):
         q = solid(b, name, p, (x,.944,-1.979), (.093,1.888,1.99), "stall", fade=True)
         b.box("Cap", q, (0,.958,0), (.117,.066,2.05), "edge")
@@ -402,22 +409,7 @@ def stalls(b):
     b.box("Latch", closed, (-.57,.127,.157), (.136,.044,.050), "steel")
     b.box("Witness", closed, (-.55,.187,.155), (.046,.031,.012), "valve")
     label(b, "Number", closed, (0,.715,.12), "02", .0015, ink=(233,219,193))
-    # Glazed pan, with the bowl suspended from its foot and cistern.
-    b.node("OpenPan", p, position=vec3((.40,0,-2.52)))
-    pan = f"{p}/OpenPan"
-    b.detail("Foot", pan, (0,0,.070), Facets().loft([rounded_rect(y,w,d,r) for y,w,d,r in (
-        (0,.32,.38,.14), (.043,.34,.41,.15), (.201,.31,.41,.13),
-        (.331,.44,.59,.208), (.399,.506,.656,.232), (.423,.506,.656,.234),
-    )]), "ceramic", shadow=True)
-    b.detail("Bowl", pan, (0,.429,.070), basin(.52,.67,.177,.241,drain=.09), "ceramic", shadow=True)
-    # Turn the basin's loft into a seat: raised one-piece lip, sloping inward to the sump.
-    # The push plate and inlet sit against the north wall, directly behind the pan.
-    b.box("Cistern", pan, (0,.699,-.307), (.44,.335,.388), "ceramic", shadow=True)
-    b.box("CisternLid", pan, (0,.880,-.307), (.472,.046,.413), "deck")
-    b.round("Button", pan, (0,.908,-.307), .049,.014,"steel")
-    b.round("Inlet", pan, (0,.435,-.249), .026,.22,"steel", shadow=True)
-    b.round("Sump", pan, (0,.244,.070), .096,.018,"mirror")
-    b.shape("PanGuard", b.shell("PanFootprint", pan), (0,.242,-.012), (.52,.48,.81))
+    squat_pan(b, p)
     # Door leaf held back along the left screen; actual aisle at the opening stays clear.
     b.box("OpenLeaf", p, (-.661,1.068,-1.76), (.073,1.72,1.46), "lower")
     b.box("OpenPull", p, (-.595,1.136,-1.129), (.086,.056,.190), "steel")
@@ -425,18 +417,39 @@ def stalls(b):
     b.round("Roll", p, (-.554,.765,-1.415), .071,.146,"paper", rot=(90,0,0))
 
 
-def restroom():
-    colors = {"lower": (108, 143, 148), "skirt": (68, 82, 91), "trim": (60, 94, 111),
-              "floor_grid": (108, 126, 125), "deck": (181, 191, 177), "tile_gap": (176, 185, 171),
-              "ceramic": (217, 222, 203), "steel": (148, 164, 158), "edge": (50, 74, 86),
-              "soap": (176, 127, 87), "valve": (145, 87, 65), "stall": (82, 119, 132),
-              "paper": (231, 223, 192), "sky": (177, 198, 195), "sky_low": (149, 168, 185),
-              "mirror": (89, 119, 139), "mirror_light": (118, 153, 175), "repair": (167, 140, 101)}
-    # Along the aisle: a player reading beside the grate should not shade it.
-    b = start_room("restroom", colors, (169,195,206), (63,79,98), (240,230,207), sun=.63, sun_yaw=-4)
-    painted_field(b, "plaster", ((191,200,191), (164,178,183), (222,214,186)), 1.05, .21)
-    painted_field(b, "floor", ((125,146,139), (94,119,124), (147,158,140)), .83, .31)
-    walls(b, (WASH_WIDTH,WASH_DEPTH), "restroom", WASH_DOOR_Z, door_on_east=True)
+def washroom_pigments():
+    return {"lower": (141,149,114), "skirt": (68,82,91), "trim": (84,91,70),
+            "floor_grid": (95,100,77), "deck": (171,176,130), "tile_gap": (111,117,89),
+            "ceramic": (210,210,172), "steel": (148,164,158), "edge": (50,67,67),
+            "soap": (176,127,87), "valve": (145,87,65), "stall": (116,124,105),
+            "paper": (200,178,128), "sky": (177,198,195), "sky_low": (149,168,185),
+            "mirror": (89,119,139), "mirror_light": (118,153,175), "repair": (152,106,66)}
+
+
+def restroom_fixtures():
+    # The metalwork, bowls and ceramics are stamped from the same fittings.
+    # Only the arrangement of wear, room lighting and pigment on the walls vary.
+    b = FixtureBuild("RestroomFittings", washroom_pigments())
+    paint_wear(b, 0, only={"lower", "ceramic", "stall", "wet"})
+    wash_station(b)
+    stalls(b)
+    b.node("Urinals", ".")
+    urinal(b, "Urinals", -2.61, 0)
+    urinal(b, "Urinals", -1.57, 1)
+    b.box("PrivacyFin", "Urinals", (-2.095,1.01,-2.85), (.041,.59,.46), "trim", shadow=True)
+    return b.emit()
+
+
+def restroom(role="restroom", phase=0):
+    casts = (
+        ((165,174,147),(57,67,62),(254,227,147),(222,239,253)),
+        ((176,168,141),(69,63,52),(253,225,161),(237,240,187)),
+        ((158,164,177),(62,61,80),(232,223,183),(203,219,253)),
+    )
+    ambient, backdrop, daylight, fluorescent = casts[phase]
+    b = start_room(role, washroom_pigments(), ambient, backdrop, daylight, sun=.69, sun_yaw=-4)
+    paint_wear(b, phase, only={"floor", "plaster", "lower", "ceramic", "wet"})
+    walls(b, (WASH_WIDTH,WASH_DEPTH), role, WASH_DOOR_Z, door_on_east=True)
     for name, w in (("WallNorth0", WASH_WIDTH), ("WallWest0", WASH_DEPTH)):
         for i in range(1, 6):
             b.box(f"BedJoint{i}", name, (0,i*.20,.097), (w-.026,.009,.006), "tile_gap")
@@ -455,8 +468,11 @@ def restroom():
         b.box(f"TileColumn{i}", ".", (x,.002,0), (.015,.003,6.13), "floor_grid")
     b.box("StripWest", ".", (-2.72,.005,0), (.11,.006,6.16), "trim")
     b.box("StripInner", ".", (-2.54,.005,0), (.045,.006,6.16), "repair")
-    wash_station(b)
-    stalls(b)
+    wash_mirror(b)
+    fittings = b.bind("wash_fittings", "res://scenes/environment/props/restroom_fittings.tscn", "PackedScene")
+    b.nodes.append(f'[node name="Fittings" parent="." instance={fittings}]\n')
+    grime(b, phase)
+    fly_clouds(b, phase)
     b.node("FloorDrain", ".", position=vec3((-.89,.004,.84)))
     for i, side in enumerate((-1, 1)):
         b.box(f"FrameX{i}", "FloorDrain", (side*.137,.004,0), (.038,.008,.29), "trim")
@@ -475,15 +491,15 @@ def restroom():
     b.box("LightTray", "WallNorth0", (-1.54,2.575,.392), (1.10,.077,.20), "edge")
     b.box("WashTube", "WallNorth0", (-1.54,2.527,.392), (.972,.033,.13), "ceramic")
     b.node("WashLight", ".", "OmniLight3D", position=vec3((-3.27,2.58,-1.89)),
-           light_color=srgb((222,239,253)), light_energy=.52, omni_range=3.7)
+           light_color=srgb(fluorescent), light_energy=.52, omni_range=3.7)
 
-    add_route(b, "restroom", (2.73,0,WASH_DOOR_Z), (3.64,.80,WASH_DOOR_Z), 90)
-    look(b, "BasinsLook", "restroom_basins", (-2.97,1.02,-.98), ("Basins/Bowl0","Basins/Bowl1","Basins/Tap0Spout","Basins/Tap1Spout",
+    add_route(b, role, (2.73,0,WASH_DOOR_Z), (3.64,.80,WASH_DOOR_Z), 90)
+    look(b, "BasinsLook", f"{role}_basins", (-2.97,1.02,-.98), ("Fittings/Basins/Bowl0","Fittings/Basins/Bowl1","Fittings/Basins/Tap0Spout","Fittings/Basins/Tap1Spout",
          "WallWest0/Mirror/MirrorClip1"),
-         ("Basins/Apron", "WallWest0"), 1.50, (.66,.91,16,49,(-.30,0,.02)))
-    look(b, "LatchLook", "restroom_latch", (2.18,1.09,-.68), ("Cubicles/Closed/LatchPlate","Cubicles/Closed/Latch","Cubicles/Closed/Witness","Cubicles/Closed/Bolt"),
-         ("Cubicles/Closed",), 1.23, (.61,.76,-15,45,(0,0,-.05)))
-    look(b, "DrainLook", "restroom_drain", (-.89,.15,.84), ("FloorDrain/GrateBridge1","FloorDrain/GrateRing","FloorDrain/FrameX0","FloorDrain/Patch"),
+         ("Fittings/Basins/Apron", "WallWest0"), 1.50, (.66,.91,16,49,(-.30,0,.02)))
+    look(b, "LatchLook", f"{role}_latch", (2.18,1.09,-.68), ("Fittings/Cubicles/Closed/LatchPlate","Fittings/Cubicles/Closed/Latch","Fittings/Cubicles/Closed/Witness","Fittings/Cubicles/Closed/Bolt"),
+         ("Fittings/Cubicles/Closed",), 1.23, (.61,.76,-15,45,(0,0,-.05)))
+    look(b, "DrainLook", f"{role}_drain", (-.89,.15,.84), ("FloorDrain/GrateBridge1","FloorDrain/GrateRing","FloorDrain/FrameX0","FloorDrain/Patch"),
          ("Slab",), 1.12, (.54,.87,4,44,(0,0,-.06)))
     return b.emit()
 
@@ -493,9 +509,12 @@ def main():
     parser.add_argument("--check", action="store_true", help="fail if the generated scenes differ")
     args = parser.parse_args()
     generated = {}
-    for role, room_builder in (("staff_office", office), ("restroom", restroom)):
+    for role in ROLES:
         generated[ROOT / door_path(role).removeprefix("res://")] = door(role)
-        generated[ROOT / f"scenes/locations/{role}/{role}.tscn"] = room_builder()
+    generated[ROOT / "scenes/locations/staff_office/staff_office.tscn"] = office()
+    generated[ROOT / "scenes/environment/props/restroom_fittings.tscn"] = restroom_fixtures()
+    for phase, role in enumerate(("restroom", *(r.id for r in UPPER_WASHES))):
+        generated[ROOT / f"scenes/locations/{role}/{role}.tscn"] = restroom(role, phase)
     for path, text in generated.items():
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != text:
@@ -503,7 +522,7 @@ def main():
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8", newline="\n")
-    print("School office and restroom: four scenes " + ("match the builder." if args.check else "regenerated."))
+    print("School office, washrooms and shared leaves: " + ("match the builder." if args.check else "regenerated."))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "computer_room_detail": {
+    "title": "Out-of-register screen",
+    "prompt": "Look at out-of-register screen",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The case is deeper than the keyboard. The square on the glass breaks into rows; the oversized copy on the wall starts one row later.",
+    "repeat_text": "The case is deeper than the keyboard. The square on the glass breaks into rows; the oversized copy on the wall starts one row later.",
+    "record": {
+      "entry_id": "saw_computer_room_register",
+      "source": "observed",
+      "text": "The case is deeper than the keyboard. The square on the glass breaks into rows; the oversized copy on the wall starts one row later."
+    }
+  }
+}

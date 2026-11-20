@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "projection_room_detail": {
+    "title": "Lens and screen",
+    "prompt": "Look at lens and screen",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The projector lens faces the screen squarely. The nested images lean in different directions anyway. One strip of light ends before it meets the wall.",
+    "repeat_text": "The projector lens faces the screen squarely. The nested images lean in different directions anyway. One strip of light ends before it meets the wall.",
+    "record": {
+      "entry_id": "saw_projection_room_register",
+      "source": "observed",
+      "text": "The projector lens faces the screen squarely. The nested images lean in different directions anyway. One strip of light ends before it meets the wall."
+    }
+  }
+}

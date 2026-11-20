@@ -91,14 +91,14 @@
         {
           "id": "cw_1",
           "speaker": "protagonist",
-          "text": "There’s a join in the rail. One side sits a little higher under your palm.",
+          "text": "There’s a join in the sill. One side sits a little higher under your palm.",
           "source": "observed",
           "next": "cw_2"
         },
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "Both rims are visible from here. The near one covers part of a painted line. The far one covers nothing.",
+          "text": "A stripe of paint on the court disappears behind the sash. Lean a little, and there it is again.",
           "source": "observed",
           "next": "cw_3"
         },
@@ -122,7 +122,7 @@
               "entry_id": "corridor_waited",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "Stood at the rail during the break. Both rims are visible from there."
+              "text": "Stood at the window during the break and watched the lines on the court."
             }
           ]
         }

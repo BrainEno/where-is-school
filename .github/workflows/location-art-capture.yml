@@ -23,6 +23,15 @@ on:
       - "scenes/locations/laboratory/**"
       - "scenes/locations/staff_office/**"
       - "scenes/locations/restroom/**"
+      - "scenes/locations/archive/**"
+      - "scenes/locations/plan_room/**"
+      - "scenes/locations/projection_room/**"
+      - "scenes/locations/computer_room/**"
+      - "scenes/locations/vacant_office/**"
+      - "scenes/locations/principal_office/**"
+      - "scenes/locations/restroom_02/**"
+      - "scenes/locations/restroom_03/**"
+      - "assets/shaders/school/**"
       - "tests/location_art_test.gd"
       - "tests/school_rooms_test.gd"
       - "tests/playground_art_slice_test.gd"
@@ -66,6 +75,15 @@ jobs:
           - {location: restroom, side: after}
           - {location: staff_office, side: forward-plus}
           - {location: restroom, side: forward-plus}
+          - {location: archive, side: after}
+          - {location: plan_room, side: after}
+          - {location: projection_room, side: after}
+          - {location: computer_room, side: after}
+          - {location: computer_room, side: forward-plus}
+          - {location: vacant_office, side: after}
+          - {location: principal_office, side: after}
+          - {location: restroom_02, side: after}
+          - {location: restroom_03, side: after}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -101,7 +119,7 @@ jobs:
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
           grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
 
-      - name: Install software Vulkan for the two Forward+ room checks
+      - name: Install software Vulkan for the Forward+ room checks
         if: matrix.side == 'forward-plus'
         run: |
           sudo apt-get update -qq
@@ -124,11 +142,21 @@ jobs:
               detail=(school-details review_width=440)
               width=1600
               expect=2
-              if [ "$LOCATION" = laboratory ]; then expect=4; fi
+              if [ "$LOCATION" = corridor ] || [ "$LOCATION" = laboratory ]; then expect=4; fi
               if [ "$LOCATION" != corridor ] && [ "$SIDE" != before ]; then
                 detail+=(school-focus)
                 expect=5
               fi
+              ;;
+            archive|plan_room|projection_room|computer_room|vacant_office|principal_office)
+              detail=(school-details school-focus review_width=380)
+              width=1600
+              expect=3
+              ;;
+            restroom_02|restroom_03)
+              detail=(school-details review_width=380)
+              width=1600
+              expect=2
               ;;
             *)
               detail=(return-route review_width=460)
@@ -155,6 +183,10 @@ jobs:
               grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             tail -n 40 "${RUNNER_TEMP}/capture.log"
+            awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:|res:\/\/data\/)/ {print; if (++count == 6) exit}' \
+              "${RUNNER_TEMP}/capture.log" | while read -r issue; do
+              echo "::error title=location capture diagnostic::$issue"
+            done
             echo "::error title=location capture::$LOCATION/$SIDE wrote ${#frames[@]} frames, ${#views[@]}/$expect detail frames, exit $code"
             exit 1
           fi

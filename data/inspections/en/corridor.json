@@ -58,5 +58,53 @@
       "source": "observed",
       "text": "The glass entrance is marked 01 twice. On the directory the two 01s point in opposite directions."
     }
+  },
+  "archive_threshold": {
+    "title": "Punch marks",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The top strip is longer than its copy. The round registration holes are the same size. The brass slide is just under them.",
+    "repeat_text": "The top strip is longer than its copy. The round registration holes are the same size. The brass slide is just under them."
+  },
+  "plan_room_threshold": {
+    "title": "Survey marks",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two routes are drawn on the strip. One ends inside the stair. Only the one with the short elbow reaches the little square. There is a slide below.",
+    "repeat_text": "Two routes are drawn on the strip. One ends inside the stair. Only the one with the short elbow reaches the little square. There is a slide below."
+  },
+  "projection_room_threshold": {
+    "title": "Frame marks",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Three frame outlines shrink towards different corners. Only the middle one has a nick at its lower edge. The slide carries the same nick.",
+    "repeat_text": "Three frame outlines shrink towards different corners. Only the middle one has a nick at its lower edge. The slide carries the same nick."
+  },
+  "computer_room_threshold": {
+    "title": "Raster index",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The little plate has three broken rows. The lowest one continues on the frame, one notch to the right. The top two stop short.",
+    "repeat_text": "The little plate has three broken rows. The lowest one continues on the frame, one notch to the right. The top two stop short."
+  },
+  "vacant_office_threshold": {
+    "title": "Carbon imprint",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "A printed corner looks square but sits above its indentation. The lower impression is worn through. The slide has the same worn edge.",
+    "repeat_text": "A printed corner looks square but sits above its indentation. The lower impression is worn through. The slide has the same worn edge."
+  },
+  "principal_office_threshold": {
+    "title": "False centre",
+    "prompt": "Look at the plate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The long stroke marks the centre of the plate. Two pinholes sit off to one side. The pin behind the slide is worn only there.",
+    "repeat_text": "The long stroke marks the centre of the plate. Two pinholes sit off to one side. The pin behind the slide is worn only there."
   }
 }

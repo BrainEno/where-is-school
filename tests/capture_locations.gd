@@ -18,7 +18,7 @@ extends SceneTree
 ## Pass `return-route` for matched gameplay-camera details of the street, courtyard,
 ## alley and yard. The coordinates are valid on both sides of the art change.
 ## `return-board-focus` adds the board's authored focus on the current scene.
-## `school-details` uses matched hall and lab stances or the two new interiors.
+## `school-details` uses matched hall, lab and fitted-room stances.
 ## Add `school-focus` for authored CameraShots, including the updated wet bench.
 ## `review_width=400` additionally writes compact copies for inline CI review.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
@@ -38,11 +38,21 @@ const SCHOOL_SCENES := {
 	"laboratory": "res://scenes/locations/laboratory/laboratory.tscn",
 	"restroom": "res://scenes/locations/restroom/restroom.tscn",
 	"staff_office": "res://scenes/locations/staff_office/staff_office.tscn",
+	"archive": "res://scenes/locations/archive/archive.tscn",
+	"plan_room": "res://scenes/locations/plan_room/plan_room.tscn",
+	"projection_room": "res://scenes/locations/projection_room/projection_room.tscn",
+	"computer_room": "res://scenes/locations/computer_room/computer_room.tscn",
+	"vacant_office": "res://scenes/locations/vacant_office/vacant_office.tscn",
+	"principal_office": "res://scenes/locations/principal_office/principal_office.tscn",
+	"restroom_02": "res://scenes/locations/restroom_02/restroom_02.tscn",
+	"restroom_03": "res://scenes/locations/restroom_03/restroom_03.tscn",
 }
 const SCHOOL_STILLS := {
 	"corridor": [
 		["detail_office_door", Vector3(16.0, 3.6, -43.25)],
 		["detail_restroom_door", Vector3(-24.40, -3.4, 12.56)],
+		["detail_right_wall_02", Vector3(0.0, 0, -15.37)],
+		["detail_right_wall_03", Vector3(-11.89, 3.6, -23.36)],
 	],
 	"laboratory": [
 		["detail_wet_station", Vector3(-5.98, 0, -2.91)],
@@ -54,6 +64,38 @@ const SCHOOL_STILLS := {
 		["detail_trays", Vector3(2.08, 0, -1.35)],
 	],
 	"restroom": [
+		["detail_wash_entry", Vector3(2.73, 0, 1.51)],
+		["detail_cubicles", Vector3(1.11, 0, .92)],
+	],
+	"archive": [
+		["detail_entry", Vector3(2.86, 0, 2.18)],
+		["detail_index", Vector3(1.04, 0, -0.39)],
+	],
+	"plan_room": [
+		["detail_entry", Vector3(2.86, 0, 2.18)],
+		["detail_tracing_table", Vector3(0.42, 0, 0.13)],
+	],
+	"projection_room": [
+		["detail_entry", Vector3(2.86, 0, 2.18)],
+		["detail_projector", Vector3(0.84, 0, 1.48)],
+	],
+	"computer_room": [
+		["detail_entry", Vector3(3.45, 0, 2.33)],
+		["detail_crt", Vector3(1.58, 0, -0.87)],
+	],
+	"vacant_office": [
+		["detail_entry", Vector3(2.86, 0, 2.18)],
+		["detail_carbon", Vector3(1.09, 0, -0.34)],
+	],
+	"principal_office": [
+		["detail_entry", Vector3(2.86, 0, 2.18)],
+		["detail_axis", Vector3(1.47, 0, -0.34)],
+	],
+	"restroom_02": [
+		["detail_wash_entry", Vector3(2.73, 0, 1.51)],
+		["detail_cubicles", Vector3(1.11, 0, .92)],
+	],
+	"restroom_03": [
 		["detail_wash_entry", Vector3(2.73, 0, 1.51)],
 		["detail_cubicles", Vector3(1.11, 0, .92)],
 	],
@@ -70,13 +112,19 @@ const SCHOOL_SHOTS := {
 		["latch", &"restroom_latch", Vector3(2.18, 0, .47)],
 		["grate", &"restroom_drain", Vector3(-1.45, 0, 1.45)],
 	],
+	"archive": [["index", &"archive_detail", Vector3(1.04, 0, -0.39)]],
+	"plan_room": [["tracing_table", &"plan_room_detail", Vector3(0.42, 0, 0.13)]],
+	"projection_room": [["projector", &"projection_room_detail", Vector3(0.84, 0, 1.48)]],
+	"computer_room": [["crt", &"computer_room_detail", Vector3(1.58, 0, -0.87)]],
+	"vacant_office": [["carbon", &"vacant_office_detail", Vector3(1.09, 0, -0.34)]],
+	"principal_office": [["axis", &"principal_office_detail", Vector3(1.47, 0, -0.34)]],
 }
 const TEACHING_SPOTS := {
 	"glass_entrance_01": [^"SpawnPoints/FromTeachingEntrance", Vector3(0.35, 0, 0.43)],
 	"directory_01": [^"TeachingBlock/GroundFloor/Gallery", Vector3(-1.24, 0, -0.30)],
 	"waiting_register_02": [^"TeachingBlock/LowerFloor/WaitingRegister", Vector3(2.38, 0, 0.75)],
 	# Keep the follow camera on the hall side, so it sees the ruled face of the end panel.
-	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-4.90, 0, 0.42)],
+	"hour_register_03": [^"TeachingBlock/UpperFloor/HourRegister", Vector3(-4.90, 0, 1.81)],
 	"rear_junction": [^"TeachingBlock/RearStair/Junction", Vector3.ZERO],
 	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
 	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],

@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "vacant_office_detail": {
+    "title": "空桌上的垫纸",
+    "prompt": "检视空桌上的垫纸",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "复写纸上原本压过什么。印出的框没有碰到凹痕。桌和椅子也刚好错开这么一段。",
+    "repeat_text": "复写纸上原本压过什么。印出的框没有碰到凹痕。桌和椅子也刚好错开这么一段。",
+    "record": {
+      "entry_id": "saw_vacant_office_register",
+      "source": "observed",
+      "text": "复写纸上原本压过什么。印出的框没有碰到凹痕。桌和椅子也刚好错开这么一段。"
+    }
+  }
+}

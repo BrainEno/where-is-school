@@ -1,0 +1,715 @@
+{
+  "format_version": 2,
+  "locale": "zh-CN",
+  "chapter": "school_annexes",
+  "conversations": {
+    "align_archive": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "用圆孔找准两张纸的位置。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:archive_threshold"
+                ],
+                "not_flags": [
+                  "check:align_archive:bearing",
+                  "annex.archive.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.archive.unclear"
+                ],
+                "not_flags": [
+                  "annex.archive.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "纸会缩，圆孔还是圆孔。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "两个孔套在同一根销上。门闩缩了回去。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.archive.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "长边怎么都对不上。别看纸条两头，把两个圆孔套在同一根销上。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.archive.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "对齐圆孔",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "对齐纸条两头",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    },
+    "align_plan_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "沿短折角重找平台。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:plan_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_plan_room:bearing",
+                  "annex.plan_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.plan_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.plan_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "从楼梯平台找那个转向，不要沿最长的线走。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "短折角盖住了方格。把手压得下去了。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.plan_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "长线只通到楼梯里面。用能接上方格的短折角。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.plan_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "沿长边对准",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "沿短折角对准",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    },
+    "align_projection_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "凭下沿的刻痕找准画框。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:projection_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_projection_room:bearing",
+                  "annex.projection_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.projection_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.projection_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "看下角。最大的框只是显得离你近。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "两道刻痕碰在一起。拨片有了卡位，锁舌松了。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.projection_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "大框还在偏。刻痕该对中间那一格，不是最大的一格。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.projection_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "对准中间一格",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "对准最大一格",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    },
+    "align_computer_room": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "试着续上断线，不借用门框的位置。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:computer_room_threshold"
+                ],
+                "not_flags": [
+                  "check:align_computer_room:bearing",
+                  "annex.computer_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.computer_room.unclear"
+                ],
+                "not_flags": [
+                  "annex.computer_room.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "只差一格。先让线碰到边。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "最下面那道接进缺口。锁舌咔一声，没有再刮擦。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.computer_room.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "上面两道离边都有一段。用最下一道，朝右拨一格。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.computer_room.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "把最上一道向左拨",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "把最下一道向右拨",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    },
+    "align_vacant_office": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "找纸上真正受过力的那个角。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:vacant_office_threshold"
+                ],
+                "not_flags": [
+                  "check:align_vacant_office:bearing",
+                  "annex.vacant_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.vacant_office.unclear"
+                ],
+                "not_flags": [
+                  "annex.vacant_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "墨落的位置，跟按下去的位置，不是一回事。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "两道磨白的边贴合。门不再被搭扣拽住。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.vacant_office.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "眼睛追着油墨走了。摸到下面的压痕，不用看印出来的角。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.vacant_office.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "correct",
+              "text": "对准下方的压痕",
+              "next": "aligned"
+            },
+            {
+              "id": "wrong",
+              "text": "对准印出来的直角",
+              "next": "mismatch"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    },
+    "align_principal_office": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "protagonist",
+          "text": "校准片只有一点行程。试过门、看清门牌上的两道痕，再拨它。",
+          "choices": [
+            {
+              "id": "check",
+              "text": "用两个销孔校对中线。",
+              "next": "bearing",
+              "conditions": {
+                "all_flags": [
+                  "seen:principal_office_threshold"
+                ],
+                "not_flags": [
+                  "check:align_principal_office:bearing",
+                  "annex.principal_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "manual",
+              "text": "按门上的线索手动校准。",
+              "next": "manual",
+              "conditions": {
+                "all_flags": [
+                  "annex.principal_office.unclear"
+                ],
+                "not_flags": [
+                  "annex.principal_office.aligned"
+                ]
+              }
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "bearing",
+          "speaker": "voice_orientation",
+          "text": "大家朝着的地方，不一定在正中间。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 11,
+            "kind": "visible",
+            "success": "aligned",
+            "failure": "unclear"
+          }
+        },
+        {
+          "id": "aligned",
+          "speaker": "protagonist",
+          "text": "偏在一侧的两个孔已经对平。把手转得动了。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.principal_office.aligned",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "unclear",
+          "speaker": "protagonist",
+          "text": "正中那道只是漆。去找偏在一边的两个销孔。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "annex.principal_office.unclear",
+              "value": true
+            }
+          ],
+          "next": null
+        },
+        {
+          "id": "manual",
+          "speaker": "protagonist",
+          "text": "再看一眼痕迹。从哪里对齐？",
+          "choices": [
+            {
+              "id": "wrong",
+              "text": "对准漆出的中线",
+              "next": "mismatch"
+            },
+            {
+              "id": "correct",
+              "text": "对准靠边的销孔",
+              "next": "aligned"
+            },
+            {
+              "id": "leave",
+              "text": "先放下。",
+              "next": "leave"
+            }
+          ]
+        },
+        {
+          "id": "mismatch",
+          "speaker": "protagonist",
+          "text": "铜片弹回原位。门闩没有动。",
+          "next": null
+        },
+        {
+          "id": "leave",
+          "speaker": "protagonist",
+          "text": "先不动这块校准片。",
+          "next": null
+        }
+      ]
+    }
+  }
+}

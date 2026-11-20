@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "principal_office_detail": {
+    "title": "Desk and axis",
+    "prompt": "Look at desk and axis",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The chairs face the same end of the desk, not its centre. The long yellow field reaches the side first, and the dark cross does not point toward the real light.",
+    "repeat_text": "The chairs face the same end of the desk, not its centre. The long yellow field reaches the side first, and the dark cross does not point toward the real light.",
+    "record": {
+      "entry_id": "saw_principal_office_register",
+      "source": "observed",
+      "text": "The chairs face the same end of the desk, not its centre. The long yellow field reaches the side first, and the dark cross does not point toward the real light."
+    }
+  }
+}

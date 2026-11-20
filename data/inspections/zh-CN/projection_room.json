@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "projection_room_detail": {
+    "title": "镜头与幕布",
+    "prompt": "检视镜头与幕布",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "投影仪的镜头正对幕布。套在一起的几幅画却朝不同方向歪；一条光带没有碰到墙就断了。",
+    "repeat_text": "投影仪的镜头正对幕布。套在一起的几幅画却朝不同方向歪；一条光带没有碰到墙就断了。",
+    "record": {
+      "entry_id": "saw_projection_room_register",
+      "source": "observed",
+      "text": "投影仪的镜头正对幕布。套在一起的几幅画却朝不同方向歪；一条光带没有碰到墙就断了。"
+    }
+  }
+}

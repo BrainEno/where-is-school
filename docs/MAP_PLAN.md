@@ -32,6 +32,8 @@ comes from the manuscript.
 | `laboratory` | `scenes/locations/laboratory/laboratory.tscn` | Behind the 01 return wall. Cold working room with two inset bowls, supported glassware and a running mixer. Nine inspections; return to the recess. | 已实现 |
 | `restroom` | `scenes/locations/restroom/restroom.tscn` | West end of 01. Twin basins, an open cubicle beside a closed one, and a repaired tile at the drain. Three optional observations; return to the same landing. | 已实现 |
 | `staff_office` | `scenes/locations/staff_office/staff_office.tscn` | East end of 03. An unstaffed desk, dispatch trays and a key rail. Three optional observations; return to the same landing. | 已实现 |
+| `restroom_02`, `restroom_03` | `scenes/locations/<id>/<id>.tscn` | Ordinary restrooms at the east ends of 02 and 03; return to the same door, no check. | 已实现 |
+| `archive`, `plan_room`, `projection_room`, `computer_room`, `vacant_office`, `principal_office` | `scenes/locations/<id>/<id>.tscn` | Two optional rooms per storey: read, test Orientation, then see the matched misregistration inside. See [CORRIDOR_ART.md](CORRIDOR_ART.md) for placements. | 已实现 |
 
 Screenshots of the exterior pass: `docs/screenshots/map_art/before/` and `after/` (CI frames
 from `.github/workflows/location-art-capture.yml`).
@@ -133,7 +135,8 @@ flowchart TB
 | Other classrooms | Rooms that look like the first one and are not | Jump to observe the interiors; opening further doors is a separate feature | Shallow furnished interiors behind high glass | 部分实现 |
 | Staff office | Authority without people; unfinished clerical work | Duty-sheet master, trays and empty hook; no inference about the courtyard rota | 03 east end, `staff_office` | 已实现 |
 | Laboratory | A working room with a palette of its own | Nine optional observations, no new objective | 01 recess, `laboratory` | 已实现 |
-| Restroom | Ordinary maintenance without an explanation | Washbasins, latch and floor grate | 01 west end, `restroom` | 已实现 |
+| Restroom | Ordinary neglect without an explanation | Squat pans, urinals, standing water, flies; keep the basin, latch and grate inspections | 01 west and 02/03 east ends | 已实现 |
+| Six registration rooms | Orientation means more than trusting a landmark | Inspect paired marks, check Orientation or align by hand, then see the displaced counterpart inside | Two per storey, return to each respective door | 已实现 |
 | Gym | Candidate in the narrative bible | Not ordered on the route | Separate scene if chosen | 已确定但未实现 (candidate) |
 | Unfinished stairwell | Named as a candidate space | A flight that stops; a view out | Zone of the stairwell scene | 已确定但未实现 (candidate) |
 | Ground-floor connector | Joins stairs, rooms and the yard's `FromSchool` spawn | Gives `FromSchool` a use | Separate scene or zone of the stairwell | 建议新增 |
@@ -182,7 +185,7 @@ All of these must stay inside the existing scene-transition transaction and keep
 | Area | Narrative function | Exploration purpose | Status |
 |---|---|---|---|
 | classroom | Waking; the ordinary day that is not | Desk, board, door | 已实现 |
-| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the rail | 已实现 |
+| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the window | 已实现 |
 | street | Outside, but the school is still the biggest thing | Notice pole, bins, camera, puddle | 已实现 |
 | residential | Somebody's home life, overheard | The animal, the stains, washing, the chair | 已实现 (animal's role: 尚待作者决定) |
 | alley | Pressure; the way narrows | The skip and its chair, notices, the service door | 已实现 |

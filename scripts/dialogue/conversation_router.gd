@@ -82,6 +82,13 @@ const ROUTES: Dictionary = {
 	# inspections: the player has to commit to an approach before dice are involved.
 	&"pg_shed": [{"conversation": &"pg_shed", "requires": {}}],
 	&"pg_ball": [{"conversation": &"pg_ball", "requires": {}}],
+	# The door never rolls: the adjacent registration slide plays an authored check.
+	&"align_archive": [{"conversation": &"align_archive", "requires": {}}],
+	&"align_plan_room": [{"conversation": &"align_plan_room", "requires": {}}],
+	&"align_projection_room": [{"conversation": &"align_projection_room", "requires": {}}],
+	&"align_computer_room": [{"conversation": &"align_computer_room", "requires": {}}],
+	&"align_vacant_office": [{"conversation": &"align_vacant_office", "requires": {}}],
+	&"align_principal_office": [{"conversation": &"align_principal_office", "requires": {}}],
 	# The animal is met, not summoned: the first visit is the discovery, every
 	# later visit is a shorter look. Neither one explains what it is.
 	&"green_animal": [

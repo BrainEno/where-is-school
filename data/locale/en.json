@@ -69,7 +69,7 @@
     "prompt.yard_door": "Go out into the yard",
     "prompt.corridor_speaker": "Listen to the speaker",
     "prompt.corridor_trolley": "Look at the cleaning trolley",
-    "prompt.corridor_wait": "Stop at the railing",
+    "prompt.corridor_wait": "Pause at the window",
     "prompt.corridor_directory_tab": "Use the directory tab",
     "objective.schoolyard": "The yard is through the door at the end of the walkway.",
     "prompt.yard_to_corridor": "Go back in through the fire door",
@@ -251,6 +251,21 @@
     "journal.read_progress": "Text read: {percent}% ({read} / {total})",
     "journal.read_areas": "Not yet read through: {areas}",
     "journal.read_area_left": "{place}: {count} still unread",
-    "journal.read_areas_more": "{count} more"
+    "journal.read_areas_more": "{count} more",
+    "prompt.annex_align": "Try the registration slide",
+    "prompt.enter_archive": "Try the door to the archive",
+    "prompt.enter_plan_room": "Try the door to the plan room",
+    "prompt.enter_projection_room": "Try the door to the projection room",
+    "prompt.enter_computer_room": "Try the door to the computer lab",
+    "prompt.enter_vacant_office": "Try the door to the empty staff room",
+    "prompt.enter_principal_office": "Try the door to the principal’s office",
+    "place.archive": "Archive",
+    "place.plan_room": "Plan room",
+    "place.projection_room": "Projection room",
+    "place.computer_room": "Computer lab",
+    "place.vacant_office": "Empty staff room",
+    "place.principal_office": "Principal’s office",
+    "place.restroom_02": "Restroom (02)",
+    "place.restroom_03": "Restroom (03)"
   }
 }
