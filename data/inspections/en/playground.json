@@ -84,8 +84,8 @@
     "prompt": "Read the return board",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "The red steps lead to the fire door in the school wall. For the alley, use the estate gate opposite. A strip under the main sheet has the same stamp printed backwards.",
-    "repeat_text": "Fire door for the school, estate gate for the alley. The lower stamp is still backwards.",
+    "text": "The red steps lead to the fire door in the school wall. For the alley, use the alley gate opposite. A strip under the main sheet has the same stamp printed backwards.",
+    "repeat_text": "Fire door for the school, alley gate for the alley. The lower stamp is still backwards.",
     "record": {
       "entry_id": "saw_pg_return_board",
       "source": "observed",

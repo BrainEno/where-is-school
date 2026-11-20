@@ -11,7 +11,7 @@
         {
           "id": "pa_1",
           "speaker": "protagonist",
-          "text": "这是一块空地。地上画着球场，旁边有攀爬架、长椅和一间小屋。你刚才进来的门就在身后。"
+          "text": "这是一块空地。地上画着球场，旁边有攀爬架、长椅和一间器材棚。你刚才进来的门就在身后。"
         },
         {
           "id": "pa_2",
@@ -32,14 +32,14 @@
               "entry_id": "playground_arrived",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "你走到了小区后面的空地：一个两头有篮筐的球场、一间小屋、一张长椅、一个攀爬架。"
+              "text": "你走到了居民楼后面的空地：一个两头有篮筐的球场、一间器材棚、一张长椅、一个攀爬架。"
             }
           ]
         },
         {
           "id": "pa_3",
           "speaker": "protagonist",
-          "text": "小屋后面的栅栏缺了一块。缺口外面还是水泥地，和这边没什么两样。",
+          "text": "器材棚后面的栅栏缺了一块。缺口外面还是水泥地，和这边没什么两样。",
           "next": null
         }
       ]
@@ -52,7 +52,7 @@
         {
           "id": "ps_1",
           "speaker": "protagonist",
-          "text": "器材室有扇绿门，门上装着搭扣，还挂着一把锁。窗户里贴着一张表，纸面朝外。"
+          "text": "器材棚有扇绿门，门上装着搭扣，还挂着一把锁。窗户里贴着一张表，纸面朝外。"
         },
         {
           "id": "ps_2",
@@ -181,7 +181,7 @@
               "entry_id": "pg_shed_open",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "器材室的门能被推进去：锁扣在空气里，搭扣没有钉住任何东西。"
+              "text": "器材棚的门能被推进去：锁扣在空气里，搭扣没有钉住任何东西。"
             }
           ],
           "next": "ps_inside"
@@ -224,7 +224,7 @@
               "entry_id": "pg_shed_looked",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "器材室的门关不严。搭扣后面的漆是干净的，搭扣钉得歪。"
+              "text": "器材棚的门关不严。搭扣后面的漆是干净的，搭扣钉得歪。"
             }
           ],
           "next": null
@@ -261,7 +261,7 @@
               "entry_id": "pg_rota_read",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "器材室窗里的值日表把同一天列了两次，第二张的日期是下星期。"
+              "text": "器材棚窗里的值日表把同一天列了两次，第二张的日期是下星期。"
             }
           ],
           "next": null
@@ -313,7 +313,7 @@
         {
           "id": "pb_1",
           "speaker": "protagonist",
-          "text": "一个乒乓球卡在器材室的水泥基座和地面之间。后面的树篱底下露出一块发白的东西，扁扁的。"
+          "text": "一个乒乓球卡在器材棚的水泥基座和地面之间。后面的树篱底下露出一块发白的东西，扁扁的。"
         },
         {
           "id": "pb_2",
@@ -379,7 +379,7 @@
               "entry_id": "pg_tag_found",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "球后面、小屋底下的台面上，有一块扁金属牌，一头有个孔。"
+              "text": "球后面、器材棚底下的台面上，有一块扁金属牌，一头有个孔。"
             }
           ],
           "next": "pb_tag"
@@ -387,7 +387,7 @@
         {
           "id": "pb_tag",
           "speaker": "protagonist",
-          "text": "金属牌一面冰凉空白。另一面压着四位数字，数字里的漆和小屋的门是同一种绿。",
+          "text": "金属牌一面冰凉空白。另一面压着四位数字，数字里的漆和器材棚的门是同一种绿。",
           "next": null
         },
         {
@@ -416,7 +416,7 @@
               "entry_id": "pg_ball_stuck",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "球还卡着。小屋有两个基座，缝只在一边。"
+              "text": "球还卡着。器材棚有两个基座，缝只在一边。"
             }
           ],
           "next": null
@@ -467,7 +467,7 @@
         {
           "id": "pb_ledger_bad_2",
           "speaker": "protagonist",
-          "text": "数字是对得上的，可这也说明不了什么。球还是卡在原处。器材室下面有两个基座，只有左边留着缝。你偏偏在算错的时候注意到了这种事。",
+          "text": "数字是对得上的，可这也说明不了什么。球还是卡在原处。器材棚下面有两个基座，只有左边留着缝。你偏偏在算错的时候注意到了这种事。",
           "effects": [
             {
               "type": "set_flag",
@@ -484,7 +484,7 @@
               "entry_id": "pg_ball_balance_failed",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "算式对得上，什么也没说明。小屋有两个基座，缝只在左边那个。"
+              "text": "算式对得上，什么也没说明。器材棚有两个基座，缝只在左边那个。"
             }
           ],
           "next": null
