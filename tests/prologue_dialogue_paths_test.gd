@@ -148,7 +148,10 @@ func _expect_ruler_pair(catalog: JournalCatalog, ready: bool) -> void:
 	var notes: Array[NarrativeEntry] = _narrative.call("get_entries")
 	var page := JournalPage.compose(notes, catalog, L10n.current, JournalPage.COMPARE)
 	var ids := JournalPage.row_ids(page)
-	var expected: Array[StringName] = [&"saw_set_square", &"q_set_square_use"] if ready else []
+	var expected: Array[StringName] = []
+	if ready:
+		expected.append(&"saw_set_square")
+		expected.append(&"q_set_square_use")
 	_checks.expect(ids == expected, "The normal square exchange/Continue left Compare with %s." % str(ids))
 
 
