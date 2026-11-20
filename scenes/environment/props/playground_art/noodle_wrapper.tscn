@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/noodle_film.tres" id="art_noodle_film"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/noodle_wrapper.obj" id="mesh_noodle_wrapper"]
+
+[node name="NoodleWrapper" type="Node3D"]
+
+[node name="Film" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_noodle_wrapper")
+material_override = ExtResource("art_noodle_film")
+cast_shadow = 0

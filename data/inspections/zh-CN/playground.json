@@ -19,12 +19,12 @@
     "prompt": "看看长椅",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "长椅是铁的，刷着黄色和蓝色的油漆。座面上有点湿，上面扔着一个方便面袋子。",
-    "repeat_text": "长椅，湿的座面，方便面袋子。",
+    "text": "木长椅上扔着一个方便面的塑料包装。袋子是空的，开口那头露出发亮的一层。",
+    "repeat_text": "泡面袋空了，印着图案的那面朝上。",
     "record": {
       "entry_id": "saw_pg_bench",
       "source": "observed",
-      "text": "长椅是铁的，刷着黄色和蓝色的油漆。座面上有点湿，上面扔着方便面袋子。"
+      "text": "球场边的木长椅上有个撕开了的泡面袋。"
     }
   },
   "pg_frame": {
@@ -58,12 +58,12 @@
     "prompt": "看看那个集装箱",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "蓝色集装箱的一头开着。里面放着简易床铺、叠好的被子和一张小桌，没有人。",
-    "repeat_text": "蓝色的集装箱，床铺还是空的。",
+    "text": "简易的铺盖就放在地上。床单卷起了边，被子掀在一旁，门口扔着几张旧报纸。里面没人。",
+    "repeat_text": "床单、被子和几张旧报纸。箱里还是空着。",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "操场边的蓝色集装箱里面放着简易床铺和小桌。"
+      "text": "操场边的蓝箱里有人在地板上铺了床单，被子没有叠。"
     }
   },
   "pg_tyres": {
@@ -110,7 +110,25 @@
     "prompt": "看看操场水龙头",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "黄色的塞子挂在水管上，离排水口还有一段。龙头下面有一小片发白的水泥。",
-    "repeat_text": "塞子还在水管上，排水口空着。"
+    "text": "龙头有个红色的把手。下面的水泥泛白，排水塞挂在管子上，格栅还空着。",
+    "repeat_text": "塞子挂在水管上，格栅底下是空的。",
+    "record": {
+      "entry_id": "saw_pg_tap",
+      "source": "observed",
+      "text": "水龙头下的排水口空着，塞子挂在水管上。"
+    }
+  },
+  "pg_cabin_papers": {
+    "title": "旧报纸",
+    "prompt": "看看旧报纸",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "最上面那张报纸少了一个角。缺口很直，日期到这里就断了。旁边几张还是整的。",
+    "repeat_text": "报纸缺了一角，上面的日期只剩半行。",
+    "record": {
+      "entry_id": "saw_pg_cabin_papers",
+      "source": "observed",
+      "text": "蓝箱里有张旧报纸缺了一角，日期断在缺口。"
+    }
   }
 }

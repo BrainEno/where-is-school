@@ -8,15 +8,14 @@ extends SceneTree
 ## that go wrong when a prop is dropped into a hand-built blockout:
 ##
 ## 1. **The right node, once.** Each site carries exactly one instance of the expected
-##    hand-authored wrapper (so it collides and anchors the way the wrapper says), at the
-##    position and yaw the table declares. A `glb` instanced directly would render but
-##    have no collision; two instances would mean the table grew a duplicate.
+##    wrapper, at the position and yaw the generator declares. The bench needs its
+##    collision; the film on the slats is deliberately visual-only.
 ## 2. **No ghosts.** The grey-box stand-ins the models replaced (`BenchSeat` and friends,
-##    and the box that stood for the bag) are gone. A regenerated blockout that kept them
+##    and the old backpack) are gone. A regenerated blockout that kept them
 ##    would put a second bench inside the first one, and nothing in the previous tests
 ##    would notice: both would be invisible to each other and the player would just walk
 ##    into a box that is not drawn.
-## 3. **Contact.** The bench stands on the floor (its own base at y = 0) and the bag rests
+## 3. **Contact.** The bench stands on the floor (its own base at y = 0) and the noodle packet rests
 ##    on the seat plane rather than floating over it or sinking through it.
 ## 4. **The anchor is not inside its prop.** A look-anchor in the middle of a 1.04 m body
 ##    is hidden from every standing position by the prop itself, which is the failure mode
@@ -33,12 +32,10 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const BENCH := "res://scenes/environment/props/playground_bench.tscn"
-const BAG := "res://scenes/environment/props/student_backpack.tscn"
+const WRAPPER := "res://scenes/environment/props/playground_art/noodle_wrapper.tscn"
 const GENERATOR := "res://tools/build_outdoor_locations.py"
 
-## The bench's seat plane in metres, measured from the exported model. The bag's own base
-## is 1.4 cm below its origin, which is why its node sits at 0.52 m and its base lands on
-## this plane.
+## The bench's slat top in metres, measured from the exported model.
 const SEAT_PLANE := 0.51
 ## Contact is allowed a couple of centimetres: this is set dressing, not a fit check.
 const CONTACT_TOLERANCE := 0.02
@@ -80,15 +77,15 @@ const SITES: Array[Dictionary] = [
 				"note": "the bench by the notice board, turned to face the court",
 			},
 			{
-				"name": &"YardBag",
-				"wrapper": BAG,
-				"position": Vector3(11.03, 0.52, 3.75),
-				"yaw": -90.0,
+				"name": &"YardNoodleWrapper",
+				"wrapper": WRAPPER,
+				"position": Vector3(10.99, 0.51, 3.74),
+				"yaw": -14.0,
 				"base": SEAT_PLANE,
-				"note": "the bag that was already sitting on this bench as a grey box",
+				"note": "the split plastic wrapper on the wooden seat",
 			},
 		],
-		"retired": ["BenchSeat", "BenchLegA", "BenchLegB", "BagOnBench"],
+		"retired": ["BenchSeat", "BenchLegA", "BenchLegB", "BagOnBench", "YardBag"],
 		"anchors": [{"name": &"BenchLook", "prop": &"YardBench"}],
 		"route": [&"FromAlley", &"BackToCorridor"],
 	},
@@ -110,7 +107,7 @@ func _run() -> void:
 	_check_generator_table()
 	Harness.finish(
 		self, _failures,
-		"the authored bench and bag are placed where the generator table says, sit on "
+		"the authored benches and noodle packet are placed where the generator table says, sit on "
 		+ "what they should, keep their look-anchors usable, and leave the walk routes intact."
 	)
 
@@ -278,13 +275,13 @@ func _check_generator_table() -> void:
 	if script.is_empty():
 		_failures.append("The location generator could not be read.")
 		return
-	for wrapper: String in [BENCH, BAG]:
+	for wrapper: String in [BENCH, WRAPPER]:
 		if not script.contains(wrapper):
 			_failures.append(
 				"The generator does not place %s, so a regeneration would drop it." % wrapper
 			)
 	# The grey boxes must not creep back into the table next to the models.
-	for retired: String in ["BenchSeat", "BenchLegA", "BenchLegB", "BagOnBench"]:
+	for retired: String in ["BenchSeat", "BenchLegA", "BenchLegB", "BagOnBench", "YardBag"]:
 		if script.contains('"%s"' % retired):
 			_failures.append(
 				"The generator still declares the grey-box '%s'; the model replaced it." % retired

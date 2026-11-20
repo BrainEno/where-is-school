@@ -19,12 +19,12 @@
     "prompt": "Look at the bench",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "A bench with a sports bag on it, zipped, handles up. The seat is wet and the bag is not, except on top.",
-    "repeat_text": "The bench, the bag, the wet seat.",
+    "text": "There is a torn plastic noodle packet on the wooden bench. It has gone flat. A bit of silver lining shows at the open end.",
+    "repeat_text": "An empty noodle packet, the bowl on the front facing up.",
     "record": {
       "entry_id": "saw_pg_bench",
       "source": "observed",
-      "text": "A zipped sports bag has been left on the bench in the yard, set square, handles up."
+      "text": "An opened instant-noodle packet was left on the wooden bench by the court."
     }
   },
   "pg_frame": {
@@ -58,12 +58,12 @@
     "prompt": "Look at the container",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "One end of the blue container opens onto a narrow cabin. A cot, a folded blanket, and a small table. No one inside.",
-    "repeat_text": "The blue container. The cot is still empty.",
+    "text": "Just a creased sheet on the floor. A thin blanket has been pushed aside, and old newspapers lie scattered near the opening. No one is here.",
+    "repeat_text": "A sheet, a blanket, a few newspapers. The container is still empty.",
     "record": {
       "entry_id": "saw_pg_container",
       "source": "observed",
-      "text": "The blue container at the edge of the yard held a cot and a small table."
+      "text": "Someone spread a sheet on the floor of the blue container. The blanket was left in a heap."
     }
   },
   "pg_tyres": {
@@ -110,7 +110,25 @@
     "prompt": "Look at the yard tap",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "The brass cap has been hooked up onto the tap post. The chain holds it clear of the drain. There is a little patch of pale concrete under the spout.",
-    "repeat_text": "The cap is still hanging where it cannot stop the drain."
+    "text": "A tap with a red wheel handle. The concrete underneath has gone chalky. The drain cap hangs from the pipe, clear of the grate.",
+    "repeat_text": "The cap is still on its hook. The grate underneath is clear.",
+    "record": {
+      "entry_id": "saw_pg_tap",
+      "source": "observed",
+      "text": "The drain under the yard tap is unobstructed. Its cap is chained to the standpipe."
+    }
+  },
+  "pg_cabin_papers": {
+    "title": "Old newspapers",
+    "prompt": "Look at the old newspapers",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The corner of the top newspaper was cut off. Only half the date is left. The pages beside it are intact.",
+    "repeat_text": "The date stops at the cut edge.",
+    "record": {
+      "entry_id": "saw_pg_cabin_papers",
+      "source": "observed",
+      "text": "One old newspaper in the blue container has a corner clipped off, leaving only part of the date."
+    }
   }
 }

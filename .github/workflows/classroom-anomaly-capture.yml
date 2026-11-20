@@ -1,7 +1,7 @@
 name: Classroom anomaly capture
 
 # Photographs the two windows, the opened cut, both landings, the roof ladder and the
-# cabin in a real game window. `tests/capture_classroom_anomalies.gd` drives the beats.
+# cabin and the yard fittings in a real game window. `tests/capture_classroom_anomalies.gd` drives the beats.
 # Same publishing as `Location art capture`: the frames are an artifact, and each one is
 # also printed as a small JPEG, base64 split into numbered notice annotations (an
 # annotation holds about 4 KB; concatenate the parts of one file in order and decode).
@@ -20,6 +20,8 @@ on:
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
       - "assets/camera/shots/container_*.tres"
+      - "assets/camera/shots/playground_*.tres"
+      - "data/inspections/*/playground.json"
       - "assets/camera/shots/window.tres"
       - "data/dialogue/*/prologue.json"
   workflow_dispatch:
@@ -64,7 +66,8 @@ jobs:
           cp "${out}"/*.png "${out}/CAPTURE.log" "${RUNNER_TEMP}/frames/" 2>/dev/null || true
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
-          grep -E "^CROP: " "${log}" | while read -r _ file data; do
+          # The full artifact keeps all frames. Spend the limited inline slots on yard details first.
+          grep -E "^CROP: " "${log}" | sort -r -k2,2 | while read -r _ file data; do
             parts=$(( (${#data} + 3999) / 4000 ))
             for i in $(seq 1 "${parts}"); do
               echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
