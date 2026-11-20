@@ -89,10 +89,9 @@
 ## 5. 往返流程（维护者）
 
 ```bash
-pip install python-docx                                   # 仅 .docx 需要
-python3 tools/story_doc.py export --out build/story_doc   # 每份 .txt + .docx
+python3 tools/story_doc.py export --out build/story_doc   # 每份 .txt + .docx（只用标准库）
 # 上传到 Google Drive（转成 Google 文档）；写作者在原处编辑
-# 从 Drive 把每份文档导出为 .docx，放进 build/story_doc/returned/
+# 从 Drive 把每份文档导出为 .docx 或纯文本，放进 build/story_doc/returned/
 python3 tools/story_doc.py import --dry-run build/story_doc/returned/*.docx
 python3 tools/story_doc.py import --pending build/pending_en.json build/story_doc/returned/*.docx
 python3 tools/story_doc.py roundtrip                      # 未改动时导出→导入必须零变化

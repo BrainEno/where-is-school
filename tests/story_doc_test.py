@@ -15,13 +15,16 @@ The writers edit the dialogue as scripts in Google Docs (``tools/story_doc.py``;
 And the edits a writer actually makes - rewording a line, adding one - come through with the
 English kept by id and the line listed for translation, so the two locales cannot drift.
 
-Run it with ``python3 tests/story_doc_test.py``. It needs no third-party packages: the text
-layer is what the ``.docx`` layer reads and writes.
+The ``.docx`` the writers actually open is checked too: every script written as ``.docx`` reads
+back as the same lines, so what Google Docs receives is exactly the text the round trip proved.
+
+Run it with ``python3 tests/story_doc_test.py``. Standard library only, like the tool.
 """
 
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
@@ -105,6 +108,13 @@ def main() -> int:
     subjective = list(voice)
     subjective.insert(node + 1, "效果：设旗 b_imagined = true")
     refused(subjective, names, "主观会话不能设旗", "flag in a subjective scene")
+
+    # Every script survives the .docx layer unchanged.
+    with tempfile.TemporaryDirectory() as scratch:
+        for name, lines in sd.build_all(names).items():
+            path = Path(scratch) / f"{name}.docx"
+            sd.write_docx(lines, path)
+            expect(sd.read_lines(path) == [text for _style, text in lines], f"{name}.docx does not read back as its script")
 
     # The objective preview in brackets is for the reader; the import keeps only the key.
     prologue_lines = script("prologue", names)

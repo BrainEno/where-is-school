@@ -21,8 +21,8 @@ Design rules, each of which the round-trip test (``tests/story_doc_test.py``) ho
   takes the Chinese structure (the build requires identical structure); every English text that
   is new or whose Chinese changed is listed in ``pending_en.json`` for translation.
 
-The text layer has no dependencies. ``.docx`` export/import needs ``python-docx``
-(``pip install python-docx``); Google Docs converts the ``.docx`` on upload and exports it back.
+Standard library only, ``.docx`` included. Google Docs converts the ``.docx`` on upload; a
+returned document can be exported from Drive as ``.docx`` or plain text, and both import.
 """
 
 from __future__ import annotations
@@ -877,53 +877,129 @@ def chapter_order() -> list[str]:
     return [c for c in preferred if c in present] + [c for c in present if c not in preferred]
 
 
-def write_docx(lines: list[tuple[str, str]], path: Path) -> None:
-    import docx  # noqa: PLC0415 - optional dependency
-    from docx.shared import Pt, RGBColor  # noqa: PLC0415
+# ------------------------------------------------------------------------------------ .docx I/O
+#
+# A .docx is a zip of XML parts. The scripts only need paragraphs, four heading levels and a
+# few run colours, so the standard library writes and reads them: no python-docx, and the
+# tool runs anywhere the repository's Python tests run. Google Docs converts this on upload
+# and exports a .docx (or plain text) that :func:`read_lines` reads back.
 
-    document = docx.Document()
-    normal = document.styles["Normal"]
-    normal.font.size = Pt(11)
-    for style, text in lines:
-        if style == "title":
-            document.add_heading(text, level=0)
-        elif style == "h1":
-            document.add_heading(text, level=1)
-        elif style == "h2":
-            document.add_heading(text, level=2)
-        elif style == "h3":
-            document.add_heading(text, level=3)
-        else:
-            paragraph = document.add_paragraph()
-            run = paragraph.add_run(text)
-            if style in ("attr", "cattr", "note", "ref"):
-                run.font.size = Pt(9)
-                run.font.color.rgb = RGBColor(0x6B, 0x6B, 0x6B)
-            if style == "choice":
-                run.font.color.rgb = RGBColor(0x1F, 0x5C, 0x99)
-            if style == "cattr":
-                paragraph.paragraph_format.left_indent = Pt(18)
-            if style == "line":
-                bracket = text.find("] ")
-                if text.startswith("[") and bracket > 0:
-                    paragraph.clear()
-                    tag = paragraph.add_run(text[: bracket + 2])
-                    tag.font.size = Pt(8)
-                    tag.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
-                    paragraph.add_run(text[bracket + 2 :])
-    document.save(str(path))
+W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+DOCX_HEADINGS = {"title": ("Title", 20), "h1": ("Heading1", 16), "h2": ("Heading2", 13), "h3": ("Heading3", 12)}
+DOCX_SMALL = {"attr": "6B6B6B", "cattr": "6B6B6B", "note": "6B6B6B", "ref": "6B6B6B"}
+
+DOCX_PARTS = {
+    "[Content_Types].xml": (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
+        "</Types>"
+    ),
+    "_rels/.rels": (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+        "</Relationships>"
+    ),
+    "word/_rels/document.xml.rels": (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        "</Relationships>"
+    ),
+}
+
+
+def docx_styles() -> str:
+    styles = [
+        '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/>'
+        '<w:pPr><w:spacing w:after="60"/></w:pPr><w:rPr><w:sz w:val="22"/></w:rPr></w:style>'
+    ]
+    for style_id, size in DOCX_HEADINGS.values():
+        name = "Title" if style_id == "Title" else f"heading {style_id[-1]}"
+        level = "" if style_id == "Title" else f'<w:outlineLvl w:val="{int(style_id[-1]) - 1}"/>'
+        styles.append(
+            f'<w:style w:type="paragraph" w:styleId="{style_id}"><w:name w:val="{name}"/>'
+            f'<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/>'
+            f'<w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/>{level}</w:pPr>'
+            f'<w:rPr><w:b/><w:sz w:val="{size * 2}"/></w:rPr></w:style>'
+        )
+    return (
+        f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W_NS}">'
+        + "".join(styles)
+        + "</w:styles>"
+    )
+
+
+def docx_run(text: str, size: int | None = None, color: str | None = None) -> str:
+    from xml.sax.saxutils import escape  # noqa: PLC0415 - only the .docx path needs it
+
+    props = (f'<w:color w:val="{color}"/>' if color else "") + (f'<w:sz w:val="{size * 2}"/>' if size else "")
+    return f'<w:r>{f"<w:rPr>{props}</w:rPr>" if props else ""}<w:t xml:space="preserve">{escape(text)}</w:t></w:r>'
+
+
+def docx_paragraph(style: str, text: str) -> str:
+    if style in DOCX_HEADINGS:
+        return f'<w:p><w:pPr><w:pStyle w:val="{DOCX_HEADINGS[style][0]}"/></w:pPr>{docx_run(text)}</w:p>'
+    indent = '<w:pPr><w:ind w:left="360"/></w:pPr>' if style == "cattr" else ""
+    if style in DOCX_SMALL:
+        runs = docx_run(text, 9, DOCX_SMALL[style])
+    elif style == "choice":
+        runs = docx_run(text, None, "1F5C99")
+    elif style == "line" and text.startswith("[") and "] " in text:
+        cut = text.index("] ") + 2  # the [id] tag is small and grey so the line reads first
+        runs = docx_run(text[:cut], 8, "999999") + docx_run(text[cut:])
+    else:
+        runs = docx_run(text)
+    return f"<w:p>{indent}{runs}</w:p>"
+
+
+def write_docx(lines: list[tuple[str, str]], path: Path) -> None:
+    import zipfile  # noqa: PLC0415
+
+    body = "".join(docx_paragraph(style, text) for style, text in lines)
+    document = (
+        f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="{W_NS}"><w:body>'
+        f'{body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+        '<w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/>'
+        "</w:sectPr></w:body></w:document>"
+    )
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, xml in DOCX_PARTS.items():
+            archive.writestr(name, xml)
+        archive.writestr("word/styles.xml", docx_styles())
+        archive.writestr("word/document.xml", document)
+
+
+def read_docx_lines(path: Path) -> list[str]:
+    """Every paragraph's text, in order. Tracked deletions are skipped; a soft line break
+    (Shift+Enter in Google Docs) splits a paragraph into two script lines."""
+    import xml.etree.ElementTree as ET  # noqa: PLC0415
+    import zipfile  # noqa: PLC0415
+
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("word/document.xml"))
+    tag = lambda name: f"{{{W_NS}}}{name}"  # noqa: E731
+    lines: list[str] = []
+    for paragraph in root.iter(tag("p")):
+        parts: list[str] = []
+        for node in paragraph.iter():
+            if node.tag == tag("t"):
+                parts.append(node.text or "")
+            elif node.tag in (tag("br"), tag("cr")):
+                parts.append("\n")
+            elif node.tag == tag("tab"):
+                parts.append("\t")
+        lines.extend("".join(parts).split("\n"))
+    return lines
 
 
 def read_lines(path: Path) -> list[str]:
     if path.suffix == ".docx":
-        import docx  # noqa: PLC0415 - optional dependency
-
-        # A soft line break (Shift+Enter in Google Docs) comes back inside one paragraph.
-        return [
-            line
-            for paragraph in docx.Document(str(path)).paragraphs
-            for line in paragraph.text.replace("\v", "\n").split("\n")
-        ]
+        return read_docx_lines(path)
     return path.read_text(encoding="utf-8-sig").splitlines()
 
 
@@ -998,7 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     export = sub.add_parser("export", help="write the editable scripts")
     export.add_argument("--out", default="build/story_doc")
-    export.add_argument("--text-only", action="store_true", help="skip .docx (no python-docx needed)")
+    export.add_argument("--text-only", action="store_true", help="write only the .txt scripts")
     export.set_defaults(func=cmd_export)
     imp = sub.add_parser("import", help="turn returned scripts (.docx or .txt) back into JSON")
     imp.add_argument("files", nargs="+")
