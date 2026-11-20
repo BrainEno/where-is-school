@@ -298,6 +298,7 @@ func _capture_student() -> void:
 	var rest := rig.get_bone_pose_rotation(head)
 	var body := student.global_transform
 	var played := student.get_animation_player()
+	var game_rig := _player.camera_rig
 	if not await _click_student(talk, rig, head, true):
 		return
 	_check.expect(_player.global_position.distance_to(at) > 0.7 and not _player.is_control_enabled(),
@@ -309,9 +310,17 @@ func _capture_student() -> void:
 	_check.expect(String(line.get("text", "")).begins_with(expected), "The short answer is missing in the active language.")
 	_ui.dialogue_panel.complete_reveal()
 	if await _wait(func() -> bool:
-		return played.current_animation == "char/sit_talk" and played.current_animation_position >= 0.46,
-		"the student to lift his head"):
+		return played.current_animation == "char/sit_talk" and played.current_animation_position >= 0.46 \
+			and game_rig.get_focus_weight() >= 0.9,
+		"the reply gesture and its gameplay framing"):
 		var turn := rad_to_deg(rest.angle_to(rig.get_bone_pose_rotation(head)))
+		var panel := _ui.dialogue_panel
+		var head_pixel := _game_camera.unproject_position(_student_head_at(rig, head))
+		var player_pixel := _game_camera.unproject_position(_player.global_position + Vector3.UP * 1.6)
+		var band := panel.get_global_rect()
+		_check.expect(game_rig.get_focus_subject() == talk and root.get_visible_rect().has_point(head_pixel)
+			and root.get_visible_rect().has_point(player_pixel) and not band.has_point(head_pixel),
+			"The live dialogue lens hid a participant or put the student's head behind the reading band.")
 		_check.expect(turn > 16.0 and student.global_transform.is_equal_approx(body),
 			"The answer needs a visible head turn without traveling in the chair.")
 		print("MOTION_STUDENT input=%s walk=%.2f m head_turn=%.1f deg" % [
@@ -336,6 +345,9 @@ func _capture_student() -> void:
 	var state := root.get_node(^"GameState")
 	_check.expect(not bool(state.get_flag(StoryFlags.STUDENT_TALKED, false)),
 		"Leaving the student to recite completed the longer conversation's flag.")
+	if not await _wait(func() -> bool: return is_zero_approx(game_rig.get_focus_weight()),
+		"the dialogue framing to release"):
+		return
 	await _shot("14_student_recites_again")
 	if not await _click_student(talk, rig, head, false):
 		return
@@ -360,8 +372,7 @@ func _capture_student() -> void:
 
 
 func _click_student(talk: Interactable, rig: Skeleton3D, head: int, walk_first: bool) -> bool:
-	var head_at := rig.to_global(rig.get_bone_global_pose(head).origin) + Vector3(0.0, 0.10, 0.0)
-	var pixel := _game_camera.unproject_position(head_at)
+	var pixel := _game_camera.unproject_position(_student_head_at(rig, head))
 	var target := _interaction.get_target_at_screen_position(pixel, false)
 	if not _check.expect(target == talk, "A1 head pixel %s selected '%s' instead of the student." % [
 		pixel, String(target.interact_id) if target != null else "nothing"]):
@@ -371,8 +382,14 @@ func _click_student(talk: Interactable, rig: Skeleton3D, head: int, walk_first: 
 		_tap(pixel, talk, walk_first)
 	else:
 		_mouse_click(pixel, talk, walk_first)
+	if walk_first:
+		_check.expect(_player.camera_rig.get_focus_subject() == null, "The student shot started before arrival.")
 	return await _wait(func() -> bool:
 		return _clicked == talk and _student_node() == &"st_reciting", "the clicked student to answer")
+
+
+func _student_head_at(rig: Skeleton3D, head: int) -> Vector3:
+	return rig.to_global(rig.get_bone_global_pose(head).origin) + Vector3(0.0, 0.10, 0.0)
 
 
 func _student_node() -> StringName:
@@ -384,12 +401,15 @@ func _choose_student(index: int, next: StringName) -> bool:
 	panel.complete_reveal()
 	if not await _wait(func() -> bool:
 		var buttons := panel.get_choice_buttons()
-		if index >= buttons.size():
+		if index >= buttons.size() or bool(panel.get("_layout_dirty")):
 			return false
 		var choice := buttons[index]
-		return choice.is_visible_in_tree() and not choice.disabled and choice.size.y >= 24.0,
-		"the student's choice button"):
+		return choice.is_visible_in_tree() and not choice.disabled and choice.size.y >= 24.0 \
+			and panel.get_global_rect().encloses(choice.get_global_rect()),
+		"the student's choice button to be laid out"):
 		return false
+	# A user can only hit the new row once the deferred container layout is drawn.
+	await RenderingServer.frame_post_draw
 	var button := panel.get_choice_buttons()[index]
 	var pixel := button.get_global_transform_with_canvas() * (button.size * 0.5)
 	var before := _pointer.get_world_click_event_count()
@@ -399,9 +419,9 @@ func _choose_student(index: int, next: StringName) -> bool:
 		_touch(pixel, false)
 	else:
 		_mouse_buttons(pixel)
-	var chosen := await _wait(func() -> bool: return _student_node() == next, "student branch '%s'" % next)
+	var chosen := await Harness.wait_until(func() -> bool: return _student_node() == next, 9.0)
 	_check.expect(_pointer.get_world_click_event_count() == before, "Choosing a reply clicked through into the room.")
-	return chosen
+	return _check.expect(chosen, "Choice %d at %s did not reach '%s' (at '%s')." % [index, pixel, next, _student_node()])
 
 
 func _continue_line() -> void:

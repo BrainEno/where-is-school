@@ -48,6 +48,7 @@ on:
       - 'scripts/actors/character_visual_animation.gd'
       - 'scenes/environment/characters/classroom_student.tscn'
       - 'assets/characters/classroom_student/student_motion.tres'
+      - 'assets/camera/shots/student_talk.tres'
       - 'data/dialogue/*/prologue.json'
       - 'scenes/environment/props/schoolbag.*'
       - 'scenes/environment/props/classroom_desk.tscn'
@@ -265,7 +266,8 @@ jobs:
           file="$CI_LOG_DIR/${MODE:-mouse}/$FRAME.jpg"
           test -f "$file" || exit 0
           sha=$(sha256sum "$file" | cut -d' ' -f1)
-          mapfile -t parts < <(base64 -w 4000 "$file")
+          # Leave room for the filename and checksum in GitHub's per-notice limit.
+          mapfile -t parts < <(base64 -w 3800 "$file")
           if [ "${#parts[@]}" -gt 10 ]; then # GitHub's limit is per step
             echo "::notice::Preview does not fit; download the full frame in the artifact."
             exit 0

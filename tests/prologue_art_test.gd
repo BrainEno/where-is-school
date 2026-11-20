@@ -45,6 +45,7 @@ const CUT := AABB(Vector3(-7.0, 0.0, 0.95), Vector3(0.2, 3.2, 2.5))
 ## Interactables that frame their moment, and the shot each carries.
 const SHOTS := {
 	&"q_talk": "res://assets/camera/shots/q_talk.tres",
+	&"student_talk": "res://assets/camera/shots/student_talk.tres",
 	&"curtain": "res://assets/camera/shots/curtain.tres",
 	&"window": "res://assets/camera/shots/window.tres",
 	&"blackboard": "res://assets/camera/shots/blackboard.tres",

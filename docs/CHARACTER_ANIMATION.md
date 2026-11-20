@@ -222,7 +222,9 @@ contacts. See [CHARACTER_ART.md](CHARACTER_ART.md) for the visual direction.
 - `scenes/environment/characters/classroom_student.tscn` keeps a visual-only rig:
   `start_seated = true` opens on `sit_idle` with no body, and `Model` is lowered 0.347 m
   so the soles are on the floor. The separate `StudentTalk` anchor in the classroom
-  reuses the existing route. Leave after the short reply or wait for the original exchange.
+  reuses the existing route. Its `CameraShot` only engages after reaching the student,
+  keeping the performance above the reading band; closing the reply releases the shot.
+  Leave after the short reply or wait for the original exchange.
 - `assets/models/teacher-n/teacher-n.glb` (substitute teacher N) has the same 16 joint
   names, faces −Z and carries four authored loops (above). Its wrapper has a `Look` applier
   as described in [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md).
