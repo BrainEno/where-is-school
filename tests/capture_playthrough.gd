@@ -998,16 +998,13 @@ func _capture_companion_walk(companion: CompanionController) -> void:
 	var start := _player.global_position
 	var q_start := companion.global_position
 	var placements := companion.get_placement_report()
-	# Toward the old school gate, on the same flat run; no doorway or stair jump.
-	var goal := start + Vector3(0.35, 0.0, 4.15)
-	if not _player.request_path_to(goal):
-		_failures.append("The walkway refused the short companion walk to %s." % goal)
+	# The exit faces the hall rather than along it. Q can arrive on the western
+	# lane we would cross on a straight walk toward the gate. A baked path does
+	# not route around Q's live capsule; step into the open lane before turning,
+	# as a player would. Keep the entire walk on the same floor.
+	if not await _walk_companion_leg(Vector3.RIGHT, 1.85, companion):
 		return
-	var arrived := await Harness.wait_until(func() -> bool:
-		return not _player.is_path_active() and _player.is_on_floor(), 18.0)
-	if not arrived or _player.global_position.distance_to(goal) > 0.50:
-		_player.cancel_path()
-		_failures.append("The companion walk stopped at %s instead of %s." % [_player.global_position, goal])
+	if not await _walk_companion_leg(Vector3.BACK, 6.2, companion):
 		return
 	var followed := await Harness.wait_until(func() -> bool:
 		return (companion.is_with_player() and not companion.is_waiting()
@@ -1016,12 +1013,41 @@ func _capture_companion_walk(companion: CompanionController) -> void:
 		6.0)
 	var gap := companion.global_position.distance_to(_player.global_position)
 	var q_walked := companion.global_position.distance_to(q_start)
-	_note("walked %.2f m with Q; Q walked %.2f m; final gap %.2f m" % [
-		_player.global_position.distance_to(start), q_walked, gap])
-	if not followed or companion.get_placement_report() != placements:
+	var repositioned := companion.get_placement_report() != placements
+	_note("companion walk: player %.2f m; Q %.2f m; gap %.2f m (limit %.2f m); Q repositioned=%s" % [
+		_player.global_position.distance_to(start), q_walked, gap, max_gap, repositioned])
+	if not followed or repositioned:
 		_failures.append("Q did not keep up in the walkway (gap %.2f m, walked %.2f m, waiting=%s, route=%d, note='%s')." % [
 			gap, q_walked, companion.is_waiting(), companion.get_route().size(), companion.get_last_chase_note()])
 	await _shot("13a_q_following", "Q walking with the player in the walkway, at a natural distance.")
+
+
+## Hold the camera-relative controls for one world-aligned leg. Bind the stop to
+## measured travel, not to render or physics frame counts. The true player and
+## companion bodies stay solid throughout both legs.
+func _walk_companion_leg(direction: Vector3, length: float, companion: CompanionController) -> bool:
+	var start := _player.global_position
+	var goal := start + direction * length
+	var right := direction.dot(_player.camera_rig.planar_right())
+	var forward := direction.dot(_player.camera_rig.planar_forward())
+	var across_action := &"move_right" if right >= 0.0 else &"move_left"
+	var depth_action := &"move_forward" if forward >= 0.0 else &"move_back"
+	Input.action_press(across_action, absf(right))
+	Input.action_press(depth_action, absf(forward))
+	var touched_q := [false]
+	var reached := await Harness.wait_until(func() -> bool:
+		for index in _player.get_slide_collision_count():
+			if _player.get_slide_collision(index).get_collider() == companion:
+				touched_q[0] = true
+		return (_player.global_position - start).dot(direction) >= length and _player.is_on_floor(),
+		12.0)
+	Input.action_release(across_action)
+	Input.action_release(depth_action)
+	if reached and _player.global_position.distance_to(goal) <= 0.50 and not touched_q[0]:
+		return true
+	_failures.append("The companion walk stopped at %s instead of %s (Q at %s; capsule contact=%s)." % [
+		_player.global_position, goal, companion.global_position, touched_q[0]])
+	return false
 
 
 func _planar_forward(actor: Node3D) -> Vector3:

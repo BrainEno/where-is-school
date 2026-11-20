@@ -245,6 +245,13 @@ jobs:
             exit 1
           fi
 
+          # The Q shot must follow a real walk; publish the measured travel and gap
+          # independently of the capped summary below.
+          walk=$(grep -m 1 -F "companion walk:" "${EVIDENCE}/docs/screenshots/PLAYTHROUGH.log" || true)
+          if [ -n "${walk}" ]; then
+            echo "::notice title=companion walk::${walk}"
+          fi
+
           # "never appeared" carries the position, the target and the prompt the script
           # actually saw, which is the only place that says why a prompt shot is missing.
           # `cue audio` carries the interaction cue counts. A sound cannot be photographed,
