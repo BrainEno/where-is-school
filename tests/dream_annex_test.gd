@@ -126,7 +126,7 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 	for label: String in YARD_POINTS:
 		var wanted: Vector3 = YARD_POINTS[label]
 		var spot := NavigationServer3D.map_get_closest_point(map, wanted)
-		if not _check.expect(spot.distance_to(wanted) < 0.35, "%s is not walkable (nearest %s)." % [label, spot]):
+		if not _check.expect(_on_mesh(spot, wanted), "%s is not walkable (nearest %s)." % [label, spot]):
 			continue
 		var path := NavigationServer3D.map_get_path(map, entrance, spot, true)
 		_check.expect(path.size() >= 2 and path[path.size() - 1].distance_to(spot) < 0.3,
@@ -134,7 +134,7 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 	for label: String in KEPT_POINTS:
 		var wanted: Vector3 = KEPT_POINTS[label]
 		var spot := NavigationServer3D.map_get_closest_point(map, wanted)
-		_check.expect(spot.distance_to(wanted) < 0.35, "%s is no longer walkable (nearest %s)." % [label, spot])
+		_check.expect(_on_mesh(spot, wanted), "%s is no longer walkable (nearest %s)." % [label, spot])
 	var foot := NavigationServer3D.map_get_closest_point(map, KEPT_POINTS["the foot of the escalator"])
 	var top := NavigationServer3D.map_get_closest_point(map, KEPT_POINTS["the 03 lane"])
 	var climb := NavigationServer3D.map_get_path(map, foot, top, true)
@@ -143,6 +143,12 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		length += climb[i - 1].distance_to(climb[i])
 	_check.expect(climb.size() >= 2 and climb[climb.size() - 1].distance_to(top) < 0.3 and length < 18.0,
 		"The stair under the escalator no longer climbs 02 -> 03 directly (%.1f m)." % length)
+
+
+## The baked surface floats a cell or two above the collider, so only the plan
+## position has to match; the height only has to be the same floor.
+func _on_mesh(spot: Vector3, wanted: Vector3) -> bool:
+	return Vector2(spot.x - wanted.x, spot.z - wanted.z).length() < 0.35 and absf(spot.y - wanted.y) < 0.75
 
 
 func _wait_for_bake(nav: LocationNavigation) -> bool:
