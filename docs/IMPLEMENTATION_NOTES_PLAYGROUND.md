@@ -39,6 +39,14 @@ Conventions kept from the earlier outdoor work:
   open with an empty middle. Do not add content to fill the middle: it is reserved
   for people and events later.
 
+The building under construction (glossary 建造中的大楼, later the 椭球大楼) is not in
+that table. It is art-pass dressing outside the walkable ground, past the south-west
+corner: `scenes/environment/props/playground_art/source/construction_site.py`, applied by
+`build_playground_art.py` after the generator (see the art README). It has no anchor yet.
+To make it inspectable, add a collider on the yard side, then update the yard's solids,
+navigation and shape counts deliberately. Its review frames come from
+`tests/capture_locations.gd -- construction-site` (the `playground_site` capture job).
+
 Adding an anchor means: add the geometry and the `Interactables` entry in
 `tools/build_outdoor_locations.py`, regenerate, then add the inspection (or a
 conversation route and its conversation) in **both** languages.
