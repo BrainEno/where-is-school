@@ -369,7 +369,7 @@ interact_id = &"to_staff_office"
 outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/OfficePortal/Door/Panel/Leaf", "../../TeachingBlock/UpperFloor/OfficePortal/Door/Panel/HallSign", "../../TeachingBlock/UpperFloor/OfficePortal/Door/Panel/HallLever")
 support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/OfficePortal/Door/Panel")
 prompt_text = "Enter the staff office"
-prompt_key = "prompt.enter_staff_office"
+prompt_key = "prompt.door_try"
 radius = 1.42
 destination_scene = "res://scenes/locations/staff_office/staff_office.tscn"
 destination_spawn = &"FromCorridor"
@@ -435,11 +435,11 @@ camera_shot = ExtResource("29_annex_shot")
 radius = 0.34
 
 [node name="ProjectionRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(3.32, 1.1, -29.55)
+position = Vector3(-23.65, -2.3, 8.55)
 interact_id = &"to_projection_room"
-outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel/HallSign")
-support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel")
-prompt_key = "prompt.enter_projection_room"
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ProjectionRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/GroundFloor/ProjectionRoomPortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ProjectionRoomPortal/Door/Panel")
+prompt_key = "prompt.door_try"
 radius = 0.36
 required_flag = &"annex.projection_room.aligned"
 blocked_inspection_id = &"projection_room_threshold"
@@ -448,21 +448,21 @@ destination_spawn = &"FromCorridor"
 destination_id = &"projection_room"
 
 [node name="ProjectionRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(2.15, 1.14, -29.6)
+position = Vector3(-23.6, -2.26, 7.38)
 interact_id = &"align_projection_room"
 conversation_route = &"align_projection_room"
 prompt_key = "prompt.annex_align"
-outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/RegistrationSlide", "../../TeachingBlock/LowerFloor/ProjectionRoomPortal/SlideGrip")
-support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ProjectionRoomPortal/Door/Panel")
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ProjectionRoomPortal/RegistrationSlide", "../../TeachingBlock/GroundFloor/ProjectionRoomPortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ProjectionRoomPortal/Door/Panel")
 camera_shot = ExtResource("29_annex_shot")
 radius = 0.34
 
 [node name="ComputerRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(5.59, 1.1, -29.55)
+position = Vector3(17.9, 1.1, -29.55)
 interact_id = &"to_computer_room"
 outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel/HallSign")
 support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/ComputerRoomPortal/Door/Panel")
-prompt_key = "prompt.enter_computer_room"
+prompt_key = "prompt.door_try"
 radius = 0.36
 required_flag = &"annex.computer_room.aligned"
 blocked_inspection_id = &"computer_room_threshold"
@@ -471,7 +471,7 @@ destination_spawn = &"FromCorridor"
 destination_id = &"computer_room"
 
 [node name="ComputerRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(4.42, 1.14, -29.6)
+position = Vector3(16.73, 1.14, -29.6)
 interact_id = &"align_computer_room"
 conversation_route = &"align_computer_room"
 prompt_key = "prompt.annex_align"
@@ -481,11 +481,11 @@ camera_shot = ExtResource("29_annex_shot")
 radius = 0.34
 
 [node name="VacantOfficeDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(-13.8, 4.7, -18.25)
+position = Vector3(1.65, 1.1, -18.15)
 interact_id = &"to_vacant_office"
-outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel/HallLever", "../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel/HallSign")
-support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel")
-prompt_key = "prompt.enter_vacant_office"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/VacantOfficePortal/Door/Panel/HallLever", "../../TeachingBlock/LowerFloor/VacantOfficePortal/Door/Panel/HallSign")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/VacantOfficePortal/Door/Panel")
+prompt_key = "prompt.door_try"
 radius = 0.36
 required_flag = &"annex.vacant_office.aligned"
 blocked_inspection_id = &"vacant_office_threshold"
@@ -494,12 +494,12 @@ destination_spawn = &"FromCorridor"
 destination_id = &"vacant_office"
 
 [node name="VacantOfficeAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(-13.85, 4.74, -17.08)
+position = Vector3(1.7, 1.14, -19.32)
 interact_id = &"align_vacant_office"
 conversation_route = &"align_vacant_office"
 prompt_key = "prompt.annex_align"
-outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/RegistrationSlide", "../../TeachingBlock/UpperFloor/VacantOfficePortal/SlideGrip")
-support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/VacantOfficePortal/Door/Panel")
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/VacantOfficePortal/RegistrationSlide", "../../TeachingBlock/LowerFloor/VacantOfficePortal/SlideGrip")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/VacantOfficePortal/Door/Panel")
 camera_shot = ExtResource("29_annex_shot")
 radius = 0.34
 
@@ -508,7 +508,7 @@ position = Vector3(3.21, 4.7, -44.55)
 interact_id = &"to_principal_office"
 outline_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel/HallLever", "../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel/HallSign")
 support_paths = PackedStringArray("../../TeachingBlock/UpperFloor/PrincipalOfficePortal/Door/Panel")
-prompt_key = "prompt.enter_principal_office"
+prompt_key = "prompt.door_try"
 radius = 0.36
 required_flag = &"annex.principal_office.aligned"
 blocked_inspection_id = &"principal_office_threshold"
@@ -587,16 +587,16 @@ position = Vector3(-10.77, -3.4, 12)
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FromProjectionRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(2.79, 0, -28.55)
-rotation_degrees = Vector3(0, 180, 0)
+position = Vector3(-24.65, -3.4, 8.02)
+rotation_degrees = Vector3(0, 90, 0)
 
 [node name="FromComputerRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(5.06, 0, -28.55)
+position = Vector3(17.37, 0, -28.55)
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FromVacantOffice" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-12.8, 3.6, -17.72)
-rotation_degrees = Vector3(0, 270, 0)
+position = Vector3(0.65, 0, -18.68)
+rotation_degrees = Vector3(0, 90, 0)
 
 [node name="FromPrincipalOffice" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(2.68, 3.6, -43.55)

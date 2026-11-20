@@ -42,9 +42,9 @@ from either side only presents `classroom_rear_door`; it never changes location.
 
 | Floor | Public end room | Optional rooms and the Orientation problem |
 |---|---|---|
-| 01 | The original `restroom` at the west end, clear of the amber line to the laboratory. | Archive: align punch marks, then see the index and its carbon copy disagree at room scale. Plan room: follow the short elbow to a real landing, then compare two scales of the same plan. Both doors face the camera beside the directory. |
-| 02 | `restroom_02`, east of the fire-stair turn. | Projection room: use a nick to select one nested frame; the screen and its shadowed light return the other frames. Computer lab: match the raster to its edge; six deep CRTs, towers, keyboards and mice sit on three tables, and the wall's raster is one row off. Both doors are in the north wall before the left-hand classroom bays. |
-| 03 | `restroom_03` at the east end, beyond the existing ungated `staff_office`. | Empty staff room: find the worn indentation instead of the ink; graphite pulls miss the solid desk and vacant chair. Principal's office: locate the offset pair instead of centre; the desk, painted amber/blue axis and false window shadow disagree. Look on the west run and after the north turn respectively. |
+| 01 | The original `restroom` at the west end, clear of the amber line to the laboratory. | Archive and plan room stay by the directory. Projection moves behind the laboratory return: a dark light trap faces the bell register, only visible on its approach from the recess. Use the nick in the middle frame. Inside, a film strip loops on the wide screen and turns up again, late and pale, on the side wall. |
+| 02 | `restroom_02`, east of the fire-stair turn. | The borrowed office is a single painted-over bay in the east window run; look for the lower of two print corners. The computer room is much further on, between 104 and 105, just past the yard stair on the opposite side. The grille repeats the broken raster mark; six CRTs and a room-size copy disagree by one row. |
+| 03 | The original staff-office route and east-end `restroom_03` stay put. The latter has an offset enamel edge and no gate. | Principal's office remains after the north turn: two halves of its moulding don't make a point. Match the offset pins. The throne, floor axis and painted depth behind them put the room's centre in different places. |
 
 All three restrooms have two urinals, a recessed squat pan in the open cubicle, a closed
 cubicle, basins and clustered flies. They share physical fittings but use different light
@@ -61,6 +61,27 @@ uses an ordinary `LocationExit` once released; the special surfaces and inspecti
 only in the separately loaded room. None changes the objective or the story route.
 Each return is unconditional and lands outside its own door. The original staff office
 retains its rota, trays and hook, and remains unstaffed.
+
+## 开发试玩：从真实玻璃门开始
+
+用 Godot `.godot-version` 打开工程。在编辑器打开 `scenes/dev/school_room_tour.tscn`，按 **F6（运行当前场景）**。也可以从项目根目录执行：
+
+```bash
+godot --path . res://scenes/dev/school_room_tour.tscn
+```
+
+屏幕左上角出现 `ROOM ART TOUR / NO STORY SAVE`，人物站在 **01 的双 01 玻璃门外**。走进大门，用 **E 面向把手**或**点把手**进房；进去后也用原门返回。试玩不读写剧情存档，只放开本次六个校准入口；门上的拨片仍可看，但试玩不用拨。正常运行（F5）和发行包没有这个入口，仍用原有校准规则；教师办公室和三个厕所本来就直通。退出试玩可直接关闭窗口或停止当前场景。
+
+| 房间 | 沿走廊怎么找 | 到了先看哪里 |
+|---|---|---|
+| 01 投影室 | 进玻璃门，面向楼层索引墙向左走到旧厕所以内的琥珀色折线。绕过挡墙，朝实验室走；**试铃翻牌的对面**，右手边是一扇有胶片孔的暗门。不是正对你的实验室门。 | 走到放映小车旁，等几秒看银幕的纸片移动；左墙有一张不同步的淡影。地上的光带绕开了错向的座椅。 |
+| 02 借用的办公室 | 在 01 索引墙这一侧往蓝楼梯方向走，上两段到 02 后门一带。沿生物教室所在的长走廊往深处走、不上扶梯；走到 102 那段，找**对面窗带中突然封死的一跨**，留意门前两道错开的直角。 | 走到桌旁再回看墙脚：像复写纸顺墙折到了地上，桌椅实物却没压在自己的印痕上。 |
+| 02 电脑课室 | 从那段走廊继续到底右拐。经过 104 和**向下通操场的支梯**，不要下楼；支梯对面略往前，104 与 105 之间有一扇少一截横格的青绿设备门。 | 比较 CRT 小屏与整面墙的大光栅，少掉的一行接到了地上的折线。 |
+| 03 校长室 | 回到 02 生物教室附近的短楼梯（逆向扶梯布景），踏实走上 03。沿长廊走到底右拐，找 **204 和 205 之间**两半金边没对上的高门。 | 看访客椅朝哪里，再沿地面长线走：长线、桌子和墙上的假进深各认一个中心。 |
+| 03 教师办公室 | 在校长室所在的横廊继续往 205 那头走，过 205 后看左侧的长条铁丝玻璃，帘角下面留了一片红纸。 | 看两窗之间垂下来的值班表，再看地上换了顺序的栏线；桌上值班册、传件盘和钥匙架仍能分别检视。 |
+| 03 末端厕所 | 出教师办公室继续向同一侧走到端墙。沿转过角的断格瓷片，找带两块斜瓷片的小门。 | 进去还有一小段没对齐的瓷格，水池、门闩和地漏仍可近看；这不是办公室的暗门。 |
+
+另外，01 **档案室**和**图纸室**仍靠楼层索引墙，可在试玩直接进入。常规版想找这些小房间，先试把手读局部痕迹，再去拨铰链侧的小铜片；不靠试铃、抬挡墙或其他房间触发。校准失手时可以照痕迹手调，不必反复掷骰。
 
 ## Exam dream layer (experimental)
 
@@ -106,7 +127,7 @@ ends. Leaving the playable floor elsewhere has a same-location fallback (see
 - `godot --headless --resolution 1600x900 --path . --script res://tests/corridor_art_test.gd` checks the floor plan, window/yard alignment, input on the stairs and both ways of peeking, a player-capsule sweep and clear/blocked rays through the sash/pier, a real click through one 03 window, the paired biology thresholds and a click on the locked rear door, and the existing location round trips. It also enters by the new glass door on foot, clicks across the opening, reads the directory, and takes the forecourt exit. `corridor_props_test.gd` covers the original placements and routes. `location_art_test.gd` checks the visual-only exterior against the stage rules.
 
 - `python3 tools/build_school_rooms.py --check` covers the staff office, the three restrooms, their shared fittings and all fitted leaves. `godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd` walks from 02 up to the office and down to the restroom, uses both input paths, checks the six inspections and restores in each room before taking the matching door back. See the [wing's art notes](../art/teaching_block/README.md) for matched captures.
-- `python3 tools/build_school_annexes.py --check` covers six separate interiors and the measured exits/returns generated into `corridor.tscn`. `tests/school_expansion_test.gd` exercises the public washrooms, local prerequisites, deterministic success and failure, manual correction, journal notes, re-entry and Continue. No experiment under `scenes/dev` is required by a production room.
+- `python3 tools/build_school_annexes.py --check` covers six interiors, the shared CRT cabinet and the exits/returns generated into `corridor.tscn`. `tests/school_expansion_test.gd` exercises the public washrooms, local prerequisites, deterministic success and failure, manual correction, journal notes, re-entry and Continue. Its `-- --room-tour` leg starts at the actual 01 glass door, walks to the recess, uses the open doors and checks that they leave no alignment or save. No experiment under `scenes/dev` is required by a production room.
 - `tests/school_facilities_test.gd` walks to both controls, observes their intermediate
   states, checks entry/Continue and walks back out. `Location art capture` also runs
   it under Xvfb, capturing three stages of each mechanism from the gameplay camera.

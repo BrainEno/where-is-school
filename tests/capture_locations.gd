@@ -24,6 +24,7 @@ extends SceneTree
 ## `dream-annex` frames the exam-dream dressing (docs/EXAM_DREAM_ART.md) on the live
 ## corridor: two follow-camera stances, then fixed views of the escalator, the ticket
 ## counter, the 03 exam floor and the stable yard behind 01.
+## `annex-thresholds` compares the new door approaches on the real hall floor.
 ## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
@@ -82,6 +83,7 @@ const SCHOOL_STILLS := {
 	"projection_room": [
 		["detail_entry", Vector3(2.86, 0, 2.18)],
 		["detail_projector", Vector3(0.84, 0, 1.48)],
+		["detail_second_exposure", Vector3(0.84, 0, 1.48)],
 	],
 	"computer_room": [
 		["detail_entry", Vector3(3.45, 0, 2.33)],
@@ -146,6 +148,17 @@ const DREAM_VIEWS := [
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],
 	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-33.0, -1.0, 7.0)],
 ]
+const ROOM_THRESHOLD_STANCES := [
+	["recess_aperture_01", Vector3(-24.75, -3.4, 8.82)],
+	["painted_bay_02", Vector3(0.30, 0, -18.17)],
+	["rack_pier_02", Vector3(17.37, 0, -28.12)],
+	["double_axis_03", Vector3(2.68, 3.6, -43.26)],
+	["enamel_end_03", Vector3(18.48, 3.6, -42.16)],
+]
+const ROOM_THRESHOLD_VIEWS := [
+	["01_light_trap", Vector3(-26.23, -1.63, 9.03), Vector3(-23.2, -2.15, 8.03)],
+	["02_painted_leaf", Vector3(-1.59, 1.85, -16.76), Vector3(2.1, 1.29, -18.68)],
+]
 const SITE_STANCES := [["corner_stance", Vector3(-20.6, 0.0, 15.2)]]
 const SITE_VIEWS := [
 	["sand_piles", Vector3(-20.9, 2.1, 13.9), Vector3(-25.2, 0.9, 14.2)],
@@ -193,6 +206,7 @@ var _school_details := false
 var _school_focus := false
 var _dream_annex := false
 var _construction_site := false
+var _annex_thresholds := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -230,6 +244,8 @@ func _initialize() -> void:
 			_return_board_focus = true
 		elif arg == "dream-annex":
 			_dream_annex = true
+		elif arg == "annex-thresholds":
+			_annex_thresholds = true
 		elif arg == "construction-site":
 			_construction_site = true
 	if _teaching_wing:
@@ -283,6 +299,9 @@ func _run() -> void:
 	_lines.append("")
 	if _dream_annex:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", DREAM_STANCES, DREAM_VIEWS)
+	elif _annex_thresholds:
+		await _capture_views(out_dir, "corridor", ^"TeachingBlock", ROOM_THRESHOLD_STANCES,
+			ROOM_THRESHOLD_VIEWS, "annex_thresholds")
 	elif _construction_site:
 		var site := ^"PlaygroundArt/ConstructionSite/EllipsoidBuilding/CastShell"
 		await _capture_views(out_dir, "playground", site, SITE_STANCES, SITE_VIEWS)
@@ -337,7 +356,7 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		await _wait(0.5)
 		if _rig.has_method("snap"):
 			_rig.call("snap")
-		await _wait(0.4)
+		await _wait(2.8 if spot[0] == "detail_second_exposure" else 0.4)
 		var shot_name := "%s_%02d_%s" % [subject, index, spot[0]]
 		_save(out_dir, shot_name)
 		_lines.append("- `%s.jpg` (%s) at %s" % [shot_name, spot[0], str(spot[1])])
@@ -354,7 +373,8 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 
 
 ## Loads a location, checks that `marker` exists, then frames its stances and views.
-func _capture_views(out_dir: String, location_id: String, marker: NodePath, stances: Array, views: Array) -> void:
+func _capture_views(out_dir: String, location_id: String, marker: NodePath, stances: Array, views: Array,
+			subject: String = "") -> void:
 	var scene_path := "res://scenes/locations/%s/%s.tscn" % [location_id, location_id]
 	if not _host.load_location(scene_path, &"", _player, StringName(location_id)):
 		_failures.append("%s did not load" % location_id)
@@ -367,7 +387,8 @@ func _capture_views(out_dir: String, location_id: String, marker: NodePath, stan
 	elif current.get_node_or_null(marker) == null:
 		_failures.append("%s has no %s." % [location_id, marker])
 	else:
-		var subject := "dream_annex" if location_id == "corridor" else "%s_site" % location_id
+		if subject.is_empty():
+			subject = "dream_annex" if location_id == "corridor" else "%s_site" % location_id
 		await _stances_and_views(current, out_dir, subject, stances, views)
 
 

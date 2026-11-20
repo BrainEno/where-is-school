@@ -32,31 +32,22 @@ existing palette.
 | Pediment cabinet | A pink cabinet dressed as a skyscraper, with mint pilasters, a lemon cornice and a split gable around an oculus. |
 | Column lamp, kettle, clock, rug | A fluted Doric floor lamp under a cone shade, a cone kettle with a red bird, a clock of primary shapes whose two hands point the same way, and a rug of black squiggles and dots. |
 
-Where each piece goes:
+How the kit is used in the current rooms (for doors and walkable routes, see
+[The teaching block](CORRIDOR_ART.md)):
 
-- **Vacant workroom (`vacant_office`).** The old `EmptyDesk` and both chairs keep their
-  footprints and colliders but are rebuilt as a Memphis desk and two swivel chairs. On the
-  west side, an open-plan corner looks as if everybody left mid-afternoon. A hot desk stands
-  on a squiggle rug with a kettle and files on it. One chair waits at the desk and another
-  lies toppled on its side. Along the wall stand a Carlton shelf, a pediment cabinet, a lit
-  column lamp, a clock and a frieze of diamonds.
-- **Principal's office (`principal_office`).** `HeadDesk` becomes the classical desk, with
-  a kettle beside the blotter. `ChairOfOffice` becomes the throne swivel chair. Two
-  freestanding pink columns frame it against the false-window wall. The four waiting seats
-  become pastel swivel chairs, still turned away. Also added: a Carlton shelf, two column
-  lamps, a split-gable crown on the side case and a clock. The painted floor fields are left
-  uncovered.
-- **Staff office (`staff_office`).** The desk, both pedestals and the chair keep their exact
-  collision boxes, which the office tests were measured against. On top of those boxes:
-  - the desk gets a terrazzo top;
-  - one pedestal becomes a fluted cobalt drum and the other a drawer ziggurat;
-  - the chair becomes a gas-lift chair.
-  
-  A squiggle rug lies under the desk, below the painted sun patch. A column lamp, a bird
-  kettle on the mail cabinet and a clock are added. The round-1 waiting room's four turned
-  chairs are re-upholstered in pink, lemon, mint and cobalt with a square finial (the
-  `look` argument of `dream_figures.swivel_chair`). They keep turning away on their lifts.
-  Nothing added here has a collider.
+- **Borrowed workroom (`vacant_office`, 02).** `EmptyDesk` and its chairs keep their
+  reading footprints. A single borrowed desk and a toppled chair remain. Carbon stock
+  folds from the wall to the floor, where a second impression misses the actual desk.
+  Most of the earlier Memphis pieces are taken away so that the wrong print can read.
+- **Principal's office (`principal_office`, 03).** `HeadDesk` keeps its classical front
+  and `ChairOfOffice` its high back. The visitor chairs, double pediment, floor fields
+  and false recess disagree on an axis. Lamps, side crown and clock belong to the
+  darker palette, not to the borrowed room's graphite print.
+- **Staff office (`staff_office`, 03).** The desk, pedestals and chair keep their exact
+  collision boxes. Wood and enamel replace the confetti and rug. A rota roll falls
+  between the painted windows, and its ruled columns turn up in a different order
+  on the floor. The four turned chairs and social clusters of `WaitingRoom` stay in
+  place. Nothing in that layer or the office's new paper dressing collides.
 
 ## The archive: files, rules, inspections
 

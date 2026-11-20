@@ -12,7 +12,8 @@ OFFICE_WIDTH, OFFICE_DEPTH = 8.70, 6.20
 WASH_WIDTH, WASH_DEPTH = 8.24, 6.32
 OFFICE_DOOR_X, WASH_DOOR_Z = -2.28, 1.51
 DOOR_H = 2.36
-from school_annex_layout import THRESHOLDS, UPPER_WASHES
+from school_annex_layout import THRESHOLDS, UNMARKED_ANNEXES, UPPER_WASHES
+from school_threshold_art import FACE_PIGMENTS, fitted_face
 from restroom_fittings import fly_clouds, grime, paint_wear, squat_pan, urinal
 
 ROLES = {
@@ -41,7 +42,8 @@ def door_path(role):
 
 def door(role):
     room, trim, skin, cn, en, number = ROLES[role]
-    b = FixtureBuild(room + "Door", {"door_frame": trim, "door_leaf": skin, "edge": (40, 46, 56),
+    fitted = role in UNMARKED_ANNEXES or role in ("staff_office", "restroom_03")
+    b = FixtureBuild(room + "Door", {**(FACE_PIGMENTS if fitted else {}), "door_frame": trim, "door_leaf": skin, "edge": (40, 46, 56),
                      "tread": (103, 100, 98), "steel": (190, 177, 148), "vision": (67, 93, 107),
                      "vision_light": (134, 156, 159), "sign_ink": (48, 47, 65)})
     w = ROOM_PORTAL_WIDTH
@@ -55,12 +57,16 @@ def door(role):
     # The lock and hinge stay at the same physical edges on the two faces.
     for name, sign, yaw in (("Hall", 1, 0), ("Room", -1, 180)):
         z = sign*0.085
-        b.box(name+"Kick", p, (0, 0.172, z), (w-0.25, 0.21, 0.020), "door_frame")
+        if not fitted:
+            b.box(name+"Kick", p, (0, 0.172, z), (w-0.25, 0.21, 0.020), "door_frame")
         b.box(name+"Backplate", p, (0.623, 1.035, z), (0.095, 0.32, 0.029), "edge")
         b.box(name+"LeverMount", p, (0.623, 1.102, z+sign*.033), (0.05, 0.042, 0.058), "steel")
         b.box(name+"Lever", p, (0.547, 1.102, z+sign*.056), (0.20, 0.041, 0.032), "steel")
         for i, y in enumerate((0.33, 1.20, 2.01)):
             b.round(f"{name}Hinge{i}", p, (-0.795, y, z), 0.022, 0.143, "steel", sides=8)
+        if fitted:
+            fitted_face(b, p, role, name, sign)
+            continue
         if not role.startswith("restroom"):
             b.box(name+"Bead", p, (0, 1.45, z), (0.71, 0.44, 0.035), "door_frame")
             b.box(name+"Glass", p, (0, 1.45, z+sign*.018), (0.622, 0.35, 0.014), "vision")
@@ -223,9 +229,9 @@ def office():
               "steel": (172, 166, 154), "cup": (191, 199, 176), "seam": (97, 86, 90),
               "sun_wash": (194, 160, 119), "sky": (192, 163, 131), "sky_low": (137, 139, 156),
               "blind": (126, 121, 130), "lamp_skin": (226, 199, 145)}
-    b = start_room("staff_office", colors, (177, 181, 211), (73, 66, 86), (255, 223, 172))
+    b = start_room("staff_office", colors, (201, 183, 162), (76, 61, 72), (255, 210, 144), sun=.87)
     painted_field(b, "plaster", ((188, 177, 160), (152, 151, 162), (220, 202, 172)), .68, .29)
-    painted_field(b, "floor", ((130, 115, 117), (99, 96, 118), (174, 146, 125)), .94, .28)
+    painted_field(b, "floor", ((157, 128, 113), (113, 89, 85), (186, 148, 114)), .94, .28)
     walls(b, (OFFICE_WIDTH, OFFICE_DEPTH), "staff_office", OFFICE_DOOR_X)
     north = "WallNorth0"
     window(b, "WestWindow", north, -2.21, 2.08, .101, 2.95, 1.11, True)
@@ -237,13 +243,12 @@ def office():
     b.detail("WindowWash", ".", (0, 0, 0), light, "sun_wash")
 
     # Reading table and an empty chair on its working side. Both cast tidy contact shadows.
-    # Round 2 (2026-11-20, docs/OFFICE_ARCHIVE_ART.md): the same colliders, dressed as a
-    # postmodern office - a terrazzo top on a fluted drum and a drawer ziggurat, a gas-lift chair.
-    from postmodern_office import POMO, confetti, swivel_chair
-    b.pigments.update(POMO)
-    p = solid(b, "Desk", ".", (-2.28, .81, -1.43), (2.60, .086, 1.04), "terrazzo")
-    confetti(b, "Terrazzo", p, .0442, 2.6, 1.04, ("pomo_black", "pomo_red", "pomo_cobalt", "pomo_mint"),
-             count=170, seed=5)
+    # Keep the fitted furniture and their original collisions, but put the
+    # manufactured greens/amber of a working office ahead of the Memphis print.
+    from postmodern_office import POMO, swivel_chair
+    b.pigments.update({**POMO, "pomo_pink": (172,107,88), "pomo_lemon": (188,156,95),
+                       "pomo_cobalt": (53,90,92), "pomo_mint": (126,150,129), "pomo_lilac": (157,136,131)})
+    p = solid(b, "Desk", ".", (-2.28, .81, -1.43), (2.60, .086, 1.04), "maple")
     b.box("Lip", p, (0, -.070, .421), (2.47, .090, .147), "pomo_black")
     b.box("Band", p, (0, -.004, .523), (2.6, .07, .012), "pomo_lemon")
     for i, x in enumerate((-3.37, -1.20)):
@@ -467,7 +472,10 @@ def restroom(role="restroom", phase=0):
         ((158,164,177),(62,61,80),(232,223,183),(203,219,253)),
     )
     ambient, backdrop, daylight, fluorescent = casts[phase]
-    b = start_room(role, washroom_pigments(), ambient, backdrop, daylight, sun=.69, sun_yaw=-4)
+    pigments = washroom_pigments()
+    if phase == 2:
+        pigments.update({"trace_blue": (75,91,116), "trace_mint": (164,196,180)})
+    b = start_room(role, pigments, ambient, backdrop, daylight, sun=.69, sun_yaw=-4)
     paint_wear(b, phase, only={"floor", "plaster", "lower", "ceramic", "wet"})
     walls(b, (WASH_WIDTH,WASH_DEPTH), role, WASH_DOOR_Z, door_on_east=True)
     for name, w in (("WallNorth0", WASH_WIDTH), ("WallWest0", WASH_DEPTH)):
@@ -488,6 +496,12 @@ def restroom(role="restroom", phase=0):
         b.box(f"TileColumn{i}", ".", (x,.002,0), (.015,.003,6.13), "floor_grid")
     b.box("StripWest", ".", (-2.72,.005,0), (.11,.006,6.16), "trim")
     b.box("StripInner", ".", (-2.54,.005,0), (.045,.006,6.16), "repair")
+    if phase == 2:
+        # The broken enamel line is interrupted by the solid leaf, then repeats
+        # just inside. It does not cut a new passage through the adjoining office.
+        for i, (x, z) in enumerate(((3.66,1.31),(3.35,1.31),(3.35,1.62),(3.04,1.62),(3.04,1.93))):
+            b.box(f"LandingEcho{i}", ".", (x,.010,z), (.29,.010,.29),
+                  "trace_mint" if i % 2 == 0 else "trace_blue")
     wash_mirror(b)
     fittings = b.bind("wash_fittings", "res://scenes/environment/props/restroom_fittings.tscn", "PackedScene")
     b.nodes.append(f'[node name="Fittings" parent="." instance={fittings}]\n')

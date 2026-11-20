@@ -1,4 +1,4 @@
-"""Postmodern office furniture for the 03 offices (2026-11-20; docs/OFFICE_ARCHIVE_ART.md).
+"""Postmodern office furniture for the school offices (2026-11-20; docs/OFFICE_ARCHIVE_ART.md).
 
 Swivel chairs on five-star bases, Memphis desks with terrazzo tops and mismatched
 legs, a Carlton-style totem shelf, a broken-pediment cabinet, fluted column lamps and
@@ -288,43 +288,22 @@ def wall_clock(b, name, parent, pos, rot=(0, 0, 0)):
 
 
 def vacant_workroom(b):
-    """The vacant 03 workroom: an open-plan corner left mid-afternoon by everybody."""
-    b.pigments.update(POMO)
+    """A borrowed corner: one chair left on its side, the shelves taken away."""
     w = "Postmodern"
     b.node(w, ".")
-    # A hot desk on a Memphis rug, one chair waiting, one fallen on its side.
-    memphis_rug(b, "HotRug", w, (-2.35, 0, .85), 2.7, 2.1, seed=11)
-    p = memphis_desk(b, "HotDesk", (-2.35, 0, .62), 1.8, .9, seed=12, parent=w,
-                     colours=("pomo_red", "pomo_mint", "pomo_lilac"))
-    kettle(b, "Kettle", p, (.55, .79, -.15), 30)
-    b.box("Binder0", p, (-.2, .82, -.2), (.06, .06, .3), "pomo_pink", rot=(0, 0, 0))
-    for k, pigment in enumerate(("pomo_cobalt", "pomo_lemon", "pomo_pink")):
-        b.box(f"File{k}", p, (-.3 + k * .03, .8 + .012 * k, .12), (.32, .012, .24), pigment, rot=(0, 9 - 7 * k, 0))
-    b.round("Mug", p, (.15, .835, .18), .04, .09, "pomo_lemon", sides=12)
-    swivel_chair(b, w, "HotSeat", (-2.2, 0, 1.55), 160, seat="pomo_lemon", back="pomo_cobalt", accent="pomo_red",
-                 crest="triangle", collider=True)
     swivel_chair(b, w, "Toppled", (-.9, .33, 1.95), 0, seat="pomo_mint", back="pomo_pink", accent="pomo_black",
                  crest="arch", collider=True, rot=(0, 63, 90))
-    carlton(b, "Carlton", (-4.08, 0, -1.0), 90, parent=w)
-    pediment_cabinet(b, "Tower", (-4.04, 0, 1.95), 90, parent=w)
-    column_lamp(b, "ColumnLamp", (-3.95, 0, -2.25), parent=w, light=True)
-    # A frieze of diamonds along the west wall top, over the existing plaster.
-    batch = Batch()
-    for k in range(16):
-        z = -3.1 + k * .4
-        pigment = ("pomo_lemon", "pomo_pink", "pomo_cobalt", "pomo_mint")[k % 4]
-        batch.box(pigment, (-4.29, 2.55, z), (.012, .26, .26), (45, 0, 0))
-    batch.emit(b, "Frieze", w)
-    b.box("FriezeRule", w, (-4.292, 2.36, 0), (.012, .03, 6.6), "pomo_black")
-    wall_clock(b, "Clock", w, (-4.27, 1.95, .3), (0, 90, 0))
+    # Exposed screw line in place of the cabinet; not another array of props.
+    b.box("Cleat", w, (-4.284, .59, -.86), (.048, .111, 3.71), "ink")
+    for i in range(5):
+        b.box(f"Cut{i}", w, (-4.255, .59, -2.28+i*.72), (.014,.032,.034), "putty")
+    wall_clock(b, "Clock", w, (-4.27, 1.95, .30), (0, 90, 0))
 
 
 def principal_suite(b):
-    """The principal's office: a classical desk front, a throne swivel chair, a totem shelf."""
-    b.pigments.update(POMO)
+    """The principal's office: a classical desk front and displaced proscenium."""
     w = "Postmodern"
     b.node(w, ".")
-    carlton(b, "Carlton", (-4.28, 0, -1.25), 90, parent=w)
     column_lamp(b, "LampWest", (-.25, 0, -2.95), parent=w, shade="pomo_mint", capital="pomo_lemon", light=True)
     column_lamp(b, "LampEast", (4.05, 0, -1.95), parent=w, shade="pomo_pink", capital="pomo_lemon")
     # SideCase becomes a small skyscraper: a split gable and an oculus on top.
@@ -347,11 +326,21 @@ def principal_suite(b):
 
 
 def staff_office_dressing(b):
-    """The 03 staff office: visual pieces only. The desk, pedestals and chair keep their old colliders."""
+    """Working-office ephemera printed at calendar and room scale; no new stops."""
     w = "Postmodern"
     b.node(w, ".")
-    # Under the sun patch (y .007) and over the floor joints (y .005).
-    memphis_rug(b, "DeskRug", w, (-2.28, 0, -1.6), 3.0, 2.0, seed=31, lift=-.0015)
-    column_lamp(b, "ColumnLamp", (-3.95, 0, -2.72), parent=w)
+    # A paper roll interrupts the two painted windows; the shifts continue on
+    # the floor, but the order of their columns is different there.
+    b.box("CalendarStock", w, (.16,1.457,-2.918), (1.43,2.27,.019), "paper", rot=(0,0,-2))
+    b.box("CalendarHeader", w, (.12,2.442,-2.899), (1.47,.217,.016), "stamp", rot=(0,0,-2))
+    for i in range(6):
+        x = -.342 + i*.194
+        b.box(f"CalendarColumn{i}", w, (x,1.36,-2.892), (.016,1.59,.015), "rule", rot=(0,0,-2))
+    for i in range(5):
+        b.box(f"CalendarRow{i}", w, (.165,1.97-i*.295,-2.889), (1.15,.015,.016), "ledger", rot=(0,0,-2))
+    for i, (x, z, depth) in enumerate(((-.83,-.99,2.97),(-.51,-.16,4.64),(.24,-.58,3.83),(.64,.10,2.24))):
+        b.box(f"CancelledColumn{i}", w, (x,.006,z), (.071 if i != 1 else .137,.006,depth),
+              "stamp" if i == 1 else "paper", rot=(0,-7,0))
+    b.box("CancelStroke", w, (-.10,.009,.85), (2.25,.005,.079), "ledger", rot=(0,-14,0))
     kettle(b, "Kettle", w, (3.13, .971, -2.5), -20)
     wall_clock(b, "Clock", w, (.55, 2.25, -2.985))

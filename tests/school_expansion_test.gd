@@ -1,15 +1,17 @@
 extends SceneTree
 ## Every newly fitted end room and both optional studies on each floor. Starts
 ## from the real director and controller: no injected unlock or second dice roll.
+## --room-tour separately exercises the developer scene, including save isolation.
 
 const Harness = preload("res://tests/test_harness.gd")
+const TOUR := "res://scenes/dev/school_room_tour.tscn"
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const STUDIES := {
 	&"archive": [&"FromArchive", -3.4, true, Vector3(1.04, 0, -0.39)],
 	&"plan_room": [&"FromPlanRoom", -3.4, false, Vector3(0.42, 0, 0.13)],
-	&"projection_room": [&"FromProjectionRoom", 0.0, true, Vector3(0.84, 0, 1.48)],
+	&"projection_room": [&"FromProjectionRoom", -3.4, true, Vector3(0.84, 0, 1.48)],
 	&"computer_room": [&"FromComputerRoom", 0.0, false, Vector3(1.58, 0, -0.87)],
-	&"vacant_office": [&"FromVacantOffice", 3.6, true, Vector3(1.09, 0, -0.34)],
+	&"vacant_office": [&"FromVacantOffice", 0.0, true, Vector3(1.09, 0, -0.34)],
 	&"principal_office": [&"FromPrincipalOffice", 3.6, false, Vector3(1.47, 0, -0.34)],
 }
 const WC := {&"restroom": &"FromRestroom", &"restroom_02": &"FromRestroom02", &"restroom_03": &"FromRestroom03"}
@@ -37,6 +39,9 @@ func _initialize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1600, 900)
+	if "--room-tour" in OS.get_cmdline_user_args():
+		await _run_tour()
+		return
 	var autoloads := Harness.ensure_state_autoloads(self)
 	_state = autoloads["game_state"]
 	_save = autoloads["save"]
@@ -53,11 +58,82 @@ func _run() -> void:
 			_check_connected_landings()
 			await _visit_all()
 	_save.forget_all()
+	await _finish("three end restrooms, six room-specific trials of Orientation, unlock discipline, same-door returns and continue.")
+
+
+func _run_tour() -> void:
+	var autoloads := Harness.ensure_state_autoloads(self)
+	_state = autoloads["game_state"]
+	_save = autoloads["save"]
+	Harness.clear_session_state(self)
+	var sentinel := &"tour_fixture_live_save"
+	_state.set_flag(sentinel, true)
+	var saved: Dictionary = _save.save_game()
+	_check.expect(saved.get("ok", false), "Could not write a pre-existing live save for the tour fixture.")
+	var before := FileAccess.get_file_as_bytes(SaveFileStore.SAVE_PATH)
+	_state.clear()
+	var tour := (load(TOUR) as PackedScene).instantiate()
+	root.add_child(tour)
+	Harness.stage = "tour from the real 01 entrance"
+	if _check.expect(await Harness.wait_until(func() -> bool: return tour.has_node(^"Main"), 8.0),
+		"The dev entrance could not start."):
+		_main = tour.get_node(^"Main")
+		_bind_world()
+		if await _settled(&"corridor"):
+			_check.expect(_host.get_current_spawn() == &"FromTeachingEntrance",
+				"The tour did not start at the real entrance.")
+			_check.expect(not _state.get_flag(sentinel, false) and not _save.has_save() and _save.writes_suspended(),
+				"The tour exposed or restored the pre-existing story save.")
+			_check_connected_landings()
+			await _visit_tour()
+	_check.expect(not before.is_empty() and before == FileAccess.get_file_as_bytes(SaveFileStore.SAVE_PATH),
+		"The tour changed the pre-existing save bytes.")
+	_save.io = null
+	_save.suspend_writes(false)
+	_save.forget_all()
+	await _finish("dev entrance, physical route into the recess, six open studies, public office/WC, no story writes.")
+
+
+func _visit_tour() -> void:
+	var destinations := {&"projection_room": &"FromProjectionRoom", &"archive": &"FromArchive",
+		&"plan_room": &"FromPlanRoom", &"vacant_office": &"FromVacantOffice", &"computer_room": &"FromComputerRoom",
+		&"principal_office": &"FromPrincipalOffice", &"staff_office": &"FromStaffOffice", &"restroom_03": &"FromRestroom03"}
+	for id: StringName in destinations:
+		Harness.stage = "tour to %s and back" % id
+		var hall := _host.get_current()
+		var marker: StringName = destinations[id]
+		var door := hall.find_interactable(StringName("to_" + String(id))) as LocationExit
+		var landing := hall.get_spawn(marker)
+		if not _check.expect(door != null and door.is_open() and landing != null, "Tour door unavailable: %s." % id):
+			return
+		var feet := landing.global_position
+		if id == &"projection_room":
+			# Do not warp past the return: make the real controller negotiate the
+			# glass opening, forecourt corner and short lab corridor before clicking.
+			if not _check.expect(_player.request_path_to(feet) and await Harness.wait_until(func() -> bool:
+				return not _player.is_path_active() and _player.global_position.distance_to(feet) < .69, 24.0),
+				"No live route from the glass forecourt to the projection recess."):
+				return
+		if id in STUDIES:
+			var slide := hall.find_interactable(StringName("align_" + String(id)))
+			_check.expect(slide != null and not slide.can_interact(), "The tour still offers a calibration for %s." % id)
+		if not await _use(door, feet, id in [&"projection_room", &"vacant_office", &"computer_room"]) or not await _settled(id):
+			return
+		if not await _return_to_same_threshold(id, marker, feet):
+			return
+		if id in STUDIES:
+			_check.expect(not _state.get_flag(StringName("annex.%s.aligned" % id), false)
+				and not _state.get_flag(StoryFlags.inspection_seen_flag(StringName("%s_threshold" % id)), false),
+				"Tour access recorded a clue or alignment for %s." % id)
+	_check.expect(_rolls.is_empty(), "Tour access rolled an Orientation check.")
+
+
+func _finish(message: String) -> void:
 	AudioRelease.stop_all(root.find_children("*", "AudioStreamPlayer", true, false))
 	AudioRelease.stop_all(root.find_children("*", "AudioStreamPlayer3D", true, false))
 	AudioRelease.wait_for_mix()
 	await process_frame
-	Harness.finish(self, _check.failures, "three end restrooms, six room-specific trials of Orientation, unlock discipline, same-door returns and continue.")
+	Harness.finish(self, _check.failures, message)
 
 
 func _boot() -> void:
@@ -67,6 +143,12 @@ func _boot() -> void:
 	_sequence.autosave_enabled = false
 	root.add_child(_main)
 	_main.get_node(^"InnerVoiceDirector").set_process(false)
+	_bind_world()
+	_sequence.allow_player_control()
+
+
+func _bind_world() -> void:
+	_sequence = _main.get_node(^"OpeningSequence") as OpeningSequence
 	_host = _main.get_node(^"LocationHost") as LocationHost
 	_player = _main.get_node(^"Player") as PlayerController
 	_dialogue = _main.get_node(^"DialogueController") as DialogueController
@@ -74,7 +156,6 @@ func _boot() -> void:
 	_ic = _player.get_node(^"InteractionController") as InteractionController
 	_ic.mouse_targeting = false
 	_pointer = _player.get_node(^"PointerNavigator") as PointerNavigator
-	_sequence.allow_player_control()
 
 
 func _on_roll(result: Dictionary) -> void:
@@ -106,7 +187,7 @@ func _check_connected_landings() -> void:
 		var voxel_lift := 2.0 * NavigationServer3D.map_get_cell_height(map) + .01
 		_check.expect(float(projected["offset"]) < .31 and absf(goal.y - stance.global_position.y) <= voxel_lift
 			and path.size() >= 2 and path[-1].distance_to(goal) < .25,
-			"%s is not connected to the 02 hall (projected to %s from %s)." % [key, goal, stance.global_position])
+			"%s is not connected to the hall start (projected to %s from %s)." % [key, goal, stance.global_position])
 
 
 func _visit_all() -> void:
