@@ -75,6 +75,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	_check_portrait_resources_are_warm()
+	_check_source_inks()
 
 	# The longest paragraphs the shipped content actually has, in both languages: the
 	# object descriptions are the long ones, the prologue supplies the shorter beats.
@@ -293,6 +294,34 @@ func _check_portrait_resources_are_warm() -> void:
 				"The %s portrait was not resolved before dialogue was opened."
 				% character_id
 			)
+
+
+func _check_source_inks() -> void:
+	var rule := _panel.get_node("%SourceRule") as ColorRect
+	var badge := _panel.get_node("%SourceBadge") as Label
+	# Independent expectations: using the dark-ground accents here, or collapsing the
+	# four sources to one ink, must fail even when Palette still parses.
+	var probes := [
+		[NarrativeEntry.Source.OBSERVED, false, Color(0.42, 0.35, 0.29, 1.0)],
+		[NarrativeEntry.Source.REPORTED, false, Color(0.24, 0.37, 0.52, 1.0)],
+		[NarrativeEntry.Source.RECALLED, false, Color(0.32, 0.4, 0.34, 1.0)],
+		[NarrativeEntry.Source.IMAGINED, false, Color(0.64, 0.32, 0.15, 1.0)],
+		[-1, false, Color(0.36, 0.33, 0.35, 1.0)],
+		[NarrativeEntry.Source.IMAGINED, true, Color(0.62, 0.27, 0.13, 1.0)],
+	]
+	for probe: Array in probes:
+		var source := int(probe[0])
+		var subjective := bool(probe[1])
+		var ink: Color = probe[2]
+		_panel.show_line(_line("A source colour probe.", "", "Probe", "", source, subjective))
+		if not rule.color.is_equal_approx(Color(ink, 0.55)) \
+				or not badge.get_theme_color(&"font_color").is_equal_approx(Color(ink, 0.66)):
+			_failures.append("The reading band changed the rule/badge ink for source %d (subjective=%s)." % [
+				source, str(subjective),
+			])
+		if badge.text != L10n.t(NarrativeEntry.badge_key_for(source)):
+			_failures.append("The reading band lost the localized label for source %d." % source)
+	_panel.close()
 
 
 func _check_line_change_does_not_flash(prose: String) -> void:

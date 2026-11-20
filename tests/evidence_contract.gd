@@ -14,7 +14,7 @@ extends RefCounted
 ##   is drawing, and says what disagrees (empty string when nothing does).
 ## - `evidence_record()` / `evidence_line()` print one `EVIDENCE {json}` line per frame, the
 ##   record `tools/screenshot_evidence.py` keeps in `docs/screenshots/MANIFEST.json`.
-## - `ui_fingerprint()` hashes the panel's scene and script the same way the Python checker
+## - `ui_fingerprint()` hashes the panel and its palette the same way the Python checker
 ##   does, so a frame records which reading band it photographed.
 ## - `write_jpeg_copy()` writes a full-size JPEG beside a PNG when the relay workflow asks
 ##   for one (`WIS_EVIDENCE_JPEG_QUALITY`), and does nothing otherwise.
@@ -28,6 +28,7 @@ const OPENING_SOURCE := "prologue.json"
 const UI_FINGERPRINT_FILES: Array[String] = [
 	"scenes/ui/dialogue_panel.tscn",
 	"scripts/ui/dialogue_panel.gd",
+	"scripts/theme/palette.gd",
 ]
 const JPEG_QUALITY_ENV := "WIS_EVIDENCE_JPEG_QUALITY"
 

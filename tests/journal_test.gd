@@ -27,6 +27,14 @@ const PAUSE_MENU_SCENE := "res://scenes/ui/pause_menu.tscn"
 const GAME_UI_SCENE := "res://scenes/ui/game_ui.tscn"
 const WINDOW_SIZE := Vector2i(1600, 900)
 
+# Pin the authored dark-ground contrast independently of the implementation in Palette.
+const EXPECTED_SOURCE_ACCENTS := {
+	NarrativeEntry.Source.OBSERVED: Color(0.776, 0.733, 0.643, 1.0),
+	NarrativeEntry.Source.REPORTED: Color(0.561, 0.663, 0.710, 1.0),
+	NarrativeEntry.Source.RECALLED: Color(0.604, 0.639, 0.592, 1.0),
+	NarrativeEntry.Source.IMAGINED: Color(0.82, 0.553, 0.349, 1.0),
+}
+
 var _failures: Array[String] = []
 var _narrative: Node = null
 var _loc: Node = null
@@ -344,6 +352,11 @@ func _check_panel() -> void:
 	_expect(menu.is_open() and journal.is_open(), "C: the notebook key did not open the notebook.")
 	_expect(paused, "C: the world kept running behind the notebook.")
 	_expect(journal.get_title_text() == L10n.t("journal.title"), "C: the notebook has no title.")
+	for source: int in EXPECTED_SOURCE_ACCENTS:
+		var filter_button := journal.get_filter_button(source)
+		var accent: Color = EXPECTED_SOURCE_ACCENTS[source]
+		_expect(filter_button != null and filter_button.get_theme_color(&"font_color").is_equal_approx(accent),
+			"C: the notebook filter has the wrong dark-ground accent for source %d." % source)
 	var expected_ids: Array[StringName] = [observed[0], observed[1]]
 	expected_ids.append_array(fresh)
 	_expect(_same_members(journal.get_row_ids(), expected_ids),
@@ -571,6 +584,12 @@ func _check_hud() -> void:
 	_narrative.clear()
 	await _frames(1)
 	_expect(hud.get_noted_text().is_empty(), "D: clearing the log left the noted line up.")
+	for kind: int in EXPECTED_SOURCE_ACCENTS:
+		hud.show_noted(kind)
+		var accent: Color = EXPECTED_SOURCE_ACCENTS[kind]
+		_expect(label != null and label.get_theme_color(&"font_color").is_equal_approx(accent),
+			"D: the noted line has the wrong dark-ground accent for source %d." % kind)
+	hud.clear_noted()
 	ui.queue_free()
 	await _frames(1)
 
