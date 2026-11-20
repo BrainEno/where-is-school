@@ -87,6 +87,7 @@ func _run() -> void:
 func _check_pieces(holder: Node, where: String) -> void:
 	var meshes := 0
 	var moving := 0
+	var checked_shaders: Dictionary = {}
 	for node in holder.find_children("*", "", true, false):
 		_check.expect(node.get_script() == null, "%s: '%s' carries a script." % [where, holder.get_path_to(node)])
 		_check.expect(not (node is NpcActor or node is Interactable or node is AudioStreamPlayer3D),
@@ -101,8 +102,15 @@ func _check_pieces(holder: Node, where: String) -> void:
 		var shaded := material as ShaderMaterial
 		if shaded != null:
 			moving += 1
-			_check.expect(shaded.shader != null and not shaded.shader.code.is_empty(),
-				"%s: '%s' has an empty shader." % [where, holder.get_path_to(node)])
+			if not _check.expect(shaded.shader != null and not shaded.shader.code.is_empty(),
+					"%s: '%s' has an empty shader." % [where, holder.get_path_to(node)]):
+				continue
+			if not checked_shaders.has(shaded.shader):
+				checked_shaders[shaded.shader] = true
+				# Preflighting another corridor can hold two copies at once. Their motion
+				# must not take slots from Compatibility's shared instance buffer.
+				_check.expect(not shaded.shader.code.contains("instance uniform "),
+					"%s: %s uses the instance shader buffer." % [where, shaded.shader.resource_path])
 	_check.expect(meshes > 60 and moving > 20, "%s: only %d pieces, %d moving." % [where, meshes, moving])
 
 

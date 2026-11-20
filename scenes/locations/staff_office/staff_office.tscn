@@ -1,4 +1,4 @@
-[gd_scene load_steps=156 format=3]
+[gd_scene load_steps=194 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -156,71 +156,375 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.886, 0.78, 0.569, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_chair_seat_swivel"]
+[sub_resource type="ShaderMaterial" id="Mat_chair_seat_swivel_3039d7fa1e6bd78d"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.227, 0.243, 0.298, 1)
 shader_parameter/turn = 0.55
 shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0, 0, 0)
 
-[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel"]
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_e47e163c974f786b"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
 shader_parameter/turn = 0.55
 shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0, 0, 0.22)
 
-[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel"]
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_1cfa56a445a12d44"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
 shader_parameter/turn = 0.55
 shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0, 0, 0.2)
 
-[sub_resource type="ShaderMaterial" id="Mat_trouser_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_0ee1d3fc500b5cf5"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_f7438d9eb1366b0f"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(-0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_c8115d5d1d4ad622"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_a2aa33343bd04c87"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_seat_swivel_2fc617cc8e28a205"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.227, 0.243, 0.298, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_fdc69e00b77a4870"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0, 0, 0.22)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_8382596369ed34cd"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0, 0, 0.2)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_ef90f5e50f549f43"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_94ea9094879d86be"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(-0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_2912792e3f1fa302"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_66e212a8e7f32b59"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.23
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_seat_swivel_3c55a4f31285bc0b"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.227, 0.243, 0.298, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_9868e8b28a9c35de"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0, 0, 0.22)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_8ab2dce5c8eee048"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0, 0, 0.2)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_c6a6c1cdc83f01a2"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_37fddf0c0eb04e34"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(-0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_504c5ac73b41ec6f"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_bc4ee7168b36f1aa"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.46
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_seat_swivel_5d99cbf2eab38496"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.227, 0.243, 0.298, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_60ba33851428d813"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0, 0, 0.22)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_bfce42b5a4d2d4b7"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0, 0, 0.2)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_ff964856447ae26f"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_f0c1c8bbb00fd0df"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(-0.25, 0, 0.02)
+
+[sub_resource type="ShaderMaterial" id="Mat_chrome_swivel_1e0c42a49d3b13d8"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.698, 0.714, 0.737, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_chair_black_swivel_9c940cdd11c0d645"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.125, 0.129, 0.149, 1)
+shader_parameter/turn = 0.55
+shader_parameter/turn_rate = 0.045
+shader_parameter/phase = 0.69
+shader_parameter/pivot = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="Mat_trouser_nod_4365eba400df32bd"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.204, 0.212, 0.243, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.0
 
-[sub_resource type="ShaderMaterial" id="Mat_coat_cream_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_coat_cream_nod_06b84124452a8e9f"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.804, 0.769, 0.675, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.0
 
-[sub_resource type="ShaderMaterial" id="Mat_skin_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_skin_nod_c530ba7085962bae"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.804, 0.667, 0.553, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.0
 
-[sub_resource type="ShaderMaterial" id="Mat_hair_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_hair_nod_93ee7f276b817829"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.133, 0.122, 0.137, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.0
 
-[sub_resource type="ShaderMaterial" id="Mat_coat_rust_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_trouser_nod_8aebce69a721754e"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.204, 0.212, 0.243, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.27
+
+[sub_resource type="ShaderMaterial" id="Mat_coat_rust_nod_af41e09a0fc41537"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.58, 0.337, 0.243, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.27
 
-[sub_resource type="ShaderMaterial" id="Mat_hair_grey_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_skin_nod_fe4de9a7fbc95425"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.804, 0.667, 0.553, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.27
+
+[sub_resource type="ShaderMaterial" id="Mat_hair_grey_nod_0ac6cebff67041ce"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.596, 0.58, 0.573, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.27
 
-[sub_resource type="ShaderMaterial" id="Mat_coat_navy_nod"]
+[sub_resource type="ShaderMaterial" id="Mat_trouser_nod_e5ef30b5b3aa50c7"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.204, 0.212, 0.243, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.54
+
+[sub_resource type="ShaderMaterial" id="Mat_coat_navy_nod_5ba4abcbaf955a8a"]
 shader = ExtResource("dream_motion")
 shader_parameter/albedo = Color(0.192, 0.227, 0.322, 1)
 shader_parameter/sway = Vector3(0, -0.025, 0.012)
 shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.54
+
+[sub_resource type="ShaderMaterial" id="Mat_skin_nod_65802e0ba01dfc14"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.804, 0.667, 0.553, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.54
+
+[sub_resource type="ShaderMaterial" id="Mat_hair_nod_c808a5bad820490d"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.133, 0.122, 0.137, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.54
 
 [sub_resource type="StandardMaterial3D" id="Mat_vermilion"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.871, 0.298, 0.204, 1)
+
+[sub_resource type="ShaderMaterial" id="Mat_trouser_nod_d2e21d5211c4779a"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.204, 0.212, 0.243, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.5
+
+[sub_resource type="ShaderMaterial" id="Mat_coat_rust_nod_56f8193b83783446"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.58, 0.337, 0.243, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.5
+
+[sub_resource type="ShaderMaterial" id="Mat_skin_nod_4b9b3cc4b87f9e6e"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.804, 0.667, 0.553, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.5
+
+[sub_resource type="ShaderMaterial" id="Mat_hair_nod_26088ced1b3c0920"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.133, 0.122, 0.137, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.5
+
+[sub_resource type="ShaderMaterial" id="Mat_trouser_nod_a142645ef43321b4"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.204, 0.212, 0.243, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.77
+
+[sub_resource type="ShaderMaterial" id="Mat_coat_navy_nod_f604d3a0bc73371b"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.192, 0.227, 0.322, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.77
+
+[sub_resource type="ShaderMaterial" id="Mat_skin_nod_7222fb4da38b6373"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.804, 0.667, 0.553, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.77
+
+[sub_resource type="ShaderMaterial" id="Mat_hair_grey_nod_9caf494cc207cf10"]
+shader = ExtResource("dream_motion")
+shader_parameter/albedo = Color(0.596, 0.58, 0.573, 1)
+shader_parameter/sway = Vector3(0, -0.025, 0.012)
+shader_parameter/sway_rate = 0.4
+shader_parameter/phase = 0.77
 
 [sub_resource type="Environment" id="RoomEnvironment"]
 background_mode = 1
@@ -2018,66 +2322,50 @@ rotation_degrees = Vector3(0, 180, 0)
 [node name="Seat" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.47, 0)
 mesh = SubResource("BoxMesh_art92")
-material_override = SubResource("Mat_chair_seat_swivel")
+material_override = SubResource("Mat_chair_seat_swivel_3039d7fa1e6bd78d")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="Back" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.83, -0.22)
 mesh = SubResource("BoxMesh_art93")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_e47e163c974f786b")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0.22)
 
 [node name="Spine" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.58, -0.2)
 mesh = SubResource("BoxMesh_art94")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_1cfa56a445a12d44")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0.2)
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(-0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_0ee1d3fc500b5cf5")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0.25, 0, 0.02)
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_f7438d9eb1366b0f")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(-0.25, 0, 0.02)
 
 [node name="Lift" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.25, 0)
 mesh = SubResource("BoxMesh_art96")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_c8115d5d1d4ad622")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarA" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art97")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_a2aa33343bd04c87")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarB" type="MeshInstance3D" parent="WaitingRoom/TurnedChair0"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art98")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_a2aa33343bd04c87")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="TurnedChair1" type="Node3D" parent="WaitingRoom"]
 position = Vector3(3.55, 0, 1.6)
@@ -2086,66 +2374,50 @@ rotation_degrees = Vector3(0, 90, 0)
 [node name="Seat" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.47, 0)
 mesh = SubResource("BoxMesh_art92")
-material_override = SubResource("Mat_chair_seat_swivel")
+material_override = SubResource("Mat_chair_seat_swivel_2fc617cc8e28a205")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="Back" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.83, -0.22)
 mesh = SubResource("BoxMesh_art93")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_fdc69e00b77a4870")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0.22)
 
 [node name="Spine" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.58, -0.2)
 mesh = SubResource("BoxMesh_art94")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_8382596369ed34cd")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0.2)
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(-0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_ef90f5e50f549f43")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0.25, 0, 0.02)
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_94ea9094879d86be")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(-0.25, 0, 0.02)
 
 [node name="Lift" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.25, 0)
 mesh = SubResource("BoxMesh_art96")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_2912792e3f1fa302")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarA" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art97")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_66e212a8e7f32b59")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarB" type="MeshInstance3D" parent="WaitingRoom/TurnedChair1"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art98")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_66e212a8e7f32b59")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.23
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="TurnedChair2" type="Node3D" parent="WaitingRoom"]
 position = Vector3(-0.6, 0, 2.55)
@@ -2154,66 +2426,50 @@ rotation_degrees = Vector3(0, 0, 0)
 [node name="Seat" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.47, 0)
 mesh = SubResource("BoxMesh_art92")
-material_override = SubResource("Mat_chair_seat_swivel")
+material_override = SubResource("Mat_chair_seat_swivel_3c55a4f31285bc0b")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="Back" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.83, -0.22)
 mesh = SubResource("BoxMesh_art93")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_9868e8b28a9c35de")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0.22)
 
 [node name="Spine" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.58, -0.2)
 mesh = SubResource("BoxMesh_art94")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_8ab2dce5c8eee048")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0.2)
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(-0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_c6a6c1cdc83f01a2")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0.25, 0, 0.02)
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_37fddf0c0eb04e34")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(-0.25, 0, 0.02)
 
 [node name="Lift" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.25, 0)
 mesh = SubResource("BoxMesh_art96")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_504c5ac73b41ec6f")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarA" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art97")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_bc4ee7168b36f1aa")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarB" type="MeshInstance3D" parent="WaitingRoom/TurnedChair2"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art98")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_bc4ee7168b36f1aa")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.46
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="TurnedChair3" type="Node3D" parent="WaitingRoom"]
 position = Vector3(-3.85, 0, 1.25)
@@ -2222,66 +2478,50 @@ rotation_degrees = Vector3(0, -90, 0)
 [node name="Seat" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.47, 0)
 mesh = SubResource("BoxMesh_art92")
-material_override = SubResource("Mat_chair_seat_swivel")
+material_override = SubResource("Mat_chair_seat_swivel_5d99cbf2eab38496")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="Back" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.83, -0.22)
 mesh = SubResource("BoxMesh_art93")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_60ba33851428d813")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0.22)
 
 [node name="Spine" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.58, -0.2)
 mesh = SubResource("BoxMesh_art94")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_bfce42b5a4d2d4b7")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0.2)
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(-0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_ff964856447ae26f")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0.25, 0, 0.02)
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0.25, 0.62, -0.02)
 mesh = SubResource("BoxMesh_art95")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_f0c1c8bbb00fd0df")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(-0.25, 0, 0.02)
 
 [node name="Lift" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.25, 0)
 mesh = SubResource("BoxMesh_art96")
-material_override = SubResource("Mat_chrome_swivel")
+material_override = SubResource("Mat_chrome_swivel_1e0c42a49d3b13d8")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarA" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art97")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_9c940cdd11c0d645")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="StarB" type="MeshInstance3D" parent="WaitingRoom/TurnedChair3"]
 position = Vector3(0, 0.05, 0)
 mesh = SubResource("BoxMesh_art98")
-material_override = SubResource("Mat_chair_black_swivel")
+material_override = SubResource("Mat_chair_black_swivel_9c940cdd11c0d645")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.69
-instance_shader_parameters/pivot = Vector3(0, 0, 0)
 
 [node name="Clique0" type="Node3D" parent="WaitingRoom"]
 position = Vector3(1.35, 0, 1.15)
@@ -2293,52 +2533,44 @@ rotation_degrees = Vector3(0, -133.384, 0)
 [node name="LegL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(-0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_trouser_nod_4365eba400df32bd")
 
 [node name="LegR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_trouser_nod_4365eba400df32bd")
 
 [node name="Torso" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0, 1.15, 0)
 mesh = SubResource("BoxMesh_art100")
-material_override = SubResource("Mat_coat_cream_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_coat_cream_nod_06b84124452a8e9f")
 
 [node name="Neck" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0, 1.49, 0.01)
 mesh = SubResource("BoxMesh_art101")
-material_override = SubResource("Mat_skin_nod")
+material_override = SubResource("Mat_skin_nod_c530ba7085962bae")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(-0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_cream_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_coat_cream_nod_06b84124452a8e9f")
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_cream_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_coat_cream_nod_06b84124452a8e9f")
 
 [node name="Head" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0, 1.63, 0.01)
 mesh = SubResource("BoxMesh_art103")
-material_override = SubResource("Mat_skin_nod")
-instance_shader_parameters/phase = 0
+material_override = SubResource("Mat_skin_nod_c530ba7085962bae")
 
 [node name="Hair" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person0"]
 position = Vector3(0, 1.74, -0.01)
 mesh = SubResource("BoxMesh_art104")
-material_override = SubResource("Mat_hair_nod")
+material_override = SubResource("Mat_hair_nod_93ee7f276b817829")
 cast_shadow = 0
-instance_shader_parameters/phase = 0
 
 [node name="Person1" type="Node3D" parent="WaitingRoom/Clique0"]
 position = Vector3(-0.3957, 0, 0.044)
@@ -2347,52 +2579,44 @@ rotation_degrees = Vector3(0, 96.3454, 0)
 [node name="LegL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(-0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_trouser_nod_8aebce69a721754e")
 
 [node name="LegR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_trouser_nod_8aebce69a721754e")
 
 [node name="Torso" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0, 1.15, 0)
 mesh = SubResource("BoxMesh_art100")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_coat_rust_nod_af41e09a0fc41537")
 
 [node name="Neck" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0, 1.49, 0.01)
 mesh = SubResource("BoxMesh_art101")
-material_override = SubResource("Mat_skin_nod")
+material_override = SubResource("Mat_skin_nod_fe4de9a7fbc95425")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.27
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(-0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_coat_rust_nod_af41e09a0fc41537")
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_coat_rust_nod_af41e09a0fc41537")
 
 [node name="Head" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0, 1.63, 0.01)
 mesh = SubResource("BoxMesh_art103")
-material_override = SubResource("Mat_skin_nod")
-instance_shader_parameters/phase = 0.27
+material_override = SubResource("Mat_skin_nod_fe4de9a7fbc95425")
 
 [node name="Hair" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person1"]
 position = Vector3(0, 1.74, -0.01)
 mesh = SubResource("BoxMesh_art104")
-material_override = SubResource("Mat_hair_grey_nod")
+material_override = SubResource("Mat_hair_grey_nod_0ac6cebff67041ce")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.27
 
 [node name="Person2" type="Node3D" parent="WaitingRoom/Clique0"]
 position = Vector3(0.147, 0, -0.279)
@@ -2401,52 +2625,44 @@ rotation_degrees = Vector3(0, -27.789, 0)
 [node name="LegL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(-0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_trouser_nod_e5ef30b5b3aa50c7")
 
 [node name="LegR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_trouser_nod_e5ef30b5b3aa50c7")
 
 [node name="Torso" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0, 1.15, 0)
 mesh = SubResource("BoxMesh_art100")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_coat_navy_nod_5ba4abcbaf955a8a")
 
 [node name="Neck" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0, 1.49, 0.01)
 mesh = SubResource("BoxMesh_art101")
-material_override = SubResource("Mat_skin_nod")
+material_override = SubResource("Mat_skin_nod_65802e0ba01dfc14")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.54
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(-0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_coat_navy_nod_5ba4abcbaf955a8a")
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_coat_navy_nod_5ba4abcbaf955a8a")
 
 [node name="Head" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0, 1.63, 0.01)
 mesh = SubResource("BoxMesh_art103")
-material_override = SubResource("Mat_skin_nod")
-instance_shader_parameters/phase = 0.54
+material_override = SubResource("Mat_skin_nod_65802e0ba01dfc14")
 
 [node name="Hair" type="MeshInstance3D" parent="WaitingRoom/Clique0/Person2"]
 position = Vector3(0, 1.74, -0.01)
 mesh = SubResource("BoxMesh_art104")
-material_override = SubResource("Mat_hair_nod")
+material_override = SubResource("Mat_hair_nod_c808a5bad820490d")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.54
 
 [node name="Snacks" type="MeshInstance3D" parent="WaitingRoom/Clique0"]
 position = Vector3(0, 1.04, 0)
@@ -2562,52 +2778,44 @@ rotation_degrees = Vector3(0, -133.384, 0)
 [node name="LegL" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(-0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_trouser_nod_d2e21d5211c4779a")
 
 [node name="LegR" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_trouser_nod_d2e21d5211c4779a")
 
 [node name="Torso" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0, 1.15, 0)
 mesh = SubResource("BoxMesh_art100")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_coat_rust_nod_56f8193b83783446")
 
 [node name="Neck" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0, 1.49, 0.01)
 mesh = SubResource("BoxMesh_art101")
-material_override = SubResource("Mat_skin_nod")
+material_override = SubResource("Mat_skin_nod_4b9b3cc4b87f9e6e")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.5
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(-0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_coat_rust_nod_56f8193b83783446")
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_rust_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_coat_rust_nod_56f8193b83783446")
 
 [node name="Head" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0, 1.63, 0.01)
 mesh = SubResource("BoxMesh_art103")
-material_override = SubResource("Mat_skin_nod")
-instance_shader_parameters/phase = 0.5
+material_override = SubResource("Mat_skin_nod_4b9b3cc4b87f9e6e")
 
 [node name="Hair" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person0"]
 position = Vector3(0, 1.74, -0.01)
 mesh = SubResource("BoxMesh_art104")
-material_override = SubResource("Mat_hair_nod")
+material_override = SubResource("Mat_hair_nod_26088ced1b3c0920")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.5
 
 [node name="Person1" type="Node3D" parent="WaitingRoom/Clique1"]
 position = Vector3(-0.2486, 0, -0.235)
@@ -2616,52 +2824,44 @@ rotation_degrees = Vector3(0, 46.6162, 0)
 [node name="LegL" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(-0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_trouser_nod_a142645ef43321b4")
 
 [node name="LegR" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0.09, 0.43, 0)
 mesh = SubResource("BoxMesh_art99")
-material_override = SubResource("Mat_trouser_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_trouser_nod_a142645ef43321b4")
 
 [node name="Torso" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0, 1.15, 0)
 mesh = SubResource("BoxMesh_art100")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_coat_navy_nod_f604d3a0bc73371b")
 
 [node name="Neck" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0, 1.49, 0.01)
 mesh = SubResource("BoxMesh_art101")
-material_override = SubResource("Mat_skin_nod")
+material_override = SubResource("Mat_skin_nod_7222fb4da38b6373")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.77
 
 [node name="ArmL" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(-0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_coat_navy_nod_f604d3a0bc73371b")
 
 [node name="ArmR" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0.27, 1.12, 0)
 mesh = SubResource("BoxMesh_art102")
-material_override = SubResource("Mat_coat_navy_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_coat_navy_nod_f604d3a0bc73371b")
 
 [node name="Head" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0, 1.63, 0.01)
 mesh = SubResource("BoxMesh_art103")
-material_override = SubResource("Mat_skin_nod")
-instance_shader_parameters/phase = 0.77
+material_override = SubResource("Mat_skin_nod_7222fb4da38b6373")
 
 [node name="Hair" type="MeshInstance3D" parent="WaitingRoom/Clique1/Person1"]
 position = Vector3(0, 1.74, -0.01)
 mesh = SubResource("BoxMesh_art104")
-material_override = SubResource("Mat_hair_grey_nod")
+material_override = SubResource("Mat_hair_grey_nod_9caf494cc207cf10")
 cast_shadow = 0
-instance_shader_parameters/phase = 0.77
 
 [node name="Snacks" type="MeshInstance3D" parent="WaitingRoom/Clique1"]
 position = Vector3(0, 1.04, 0)

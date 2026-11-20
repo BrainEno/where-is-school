@@ -5,7 +5,7 @@ render_mode unshaded, cull_disabled, shadows_disabled;
 // no alpha sorting. The quad's base stays put; the top wanders.
 uniform vec4 tint : source_color = vec4(.66, .62, .28, 1.0);
 uniform float rate = .35;
-instance uniform float phase = 0.0;
+uniform float phase = 0.0;
 
 void vertex() {
 	float lift = 1.0 - UV.y;

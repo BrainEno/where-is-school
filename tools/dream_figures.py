@@ -7,6 +7,8 @@ turn about a shared pivot are the same for every part. No scripts, no physics, n
 """
 from __future__ import annotations
 
+from hashlib import blake2s
+
 from build_teaching_block import child_path, srgb, vec3
 
 MOTION = "res://assets/shaders/school/dream_motion.gdshader"
@@ -42,31 +44,36 @@ def _value(v):
     return text if "." in text or "e" in text else text + ".0"
 
 
-def motion_material(b, colour, motion, extra=None):
-    """A ShaderMaterial for one pigment and one motion; plain pigment when still."""
-    if motion is None:
-        return colour
-    key = f"{colour}_{motion}"
-    if key not in b.local_mats:
-        shader = b.bind("dream_motion", MOTION, "Shader")
-        rgb = b.pigments.get(colour) or PEOPLE[colour]
-        params = {"albedo": srgb(rgb), **MOTIONS.get(motion, {}), **(extra or {})}
-        b.local_mats[key] = (f'[sub_resource type="ShaderMaterial" id="Mat_{key}"]\nshader = {shader}\n'
-                             + "".join(f"shader_parameter/{k} = {_value(v)}\n" for k, v in params.items()))
+def shader_material(b, name, shader, params):
+    """Deduplicate a shader's material variants by their serialized values."""
+    body = f"shader = {shader}\n" + "".join(f"shader_parameter/{k} = {_value(v)}\n" for k, v in params.items())
+    variant = blake2s(body.encode("ascii"), digest_size=8).hexdigest()
+    key = f"{name}_{variant}"
+    b.local_mats.setdefault(key, f'[sub_resource type="ShaderMaterial" id="Mat_{key}"]\n{body}')
     return key
 
 
-def part(b, name, parent, pos, size, mat, *, rot=None, shadow=False, phase=None, pivot=None):
+def motion_material(b, colour, motion, extra=None, *, phase=None, pivot=None):
+    """One pigment and motion, with phase/pivot in the material, not each instance."""
+    if motion is None:
+        return colour
+    shader = b.bind("dream_motion", MOTION, "Shader")
+    rgb = b.pigments.get(colour) or PEOPLE[colour]
+    params = {"albedo": srgb(rgb), **MOTIONS.get(motion, {}), **(extra or {})}
+    if phase is not None:
+        params["phase"] = phase
+    if pivot is not None:
+        params["pivot"] = pivot
+    return shader_material(b, f"{colour}_{motion}", shader, params)
+
+
+def part(b, name, parent, pos, size, mat, *, rot=None, shadow=False):
     args = {"position": vec3(pos), "mesh": f'SubResource("{b.mesh("BoxMesh", size=vec3(size))}")',
             "material_override": b.surface(mat)}
     if rot:
         args["rotation_degrees"] = vec3(rot)
     if not shadow:
         args["cast_shadow"] = 0
-    if phase is not None:
-        args["instance_shader_parameters/phase"] = f"{phase:g}"
-    if pivot is not None:
-        args["instance_shader_parameters/pivot"] = vec3(pivot)
     b.node(name, parent, "MeshInstance3D", **args)
 
 
@@ -132,9 +139,8 @@ def figure(b, parent, name, pos, yaw, look, *, pose="stand", body=None, hand=Non
     p = child_path(parent, name)
     for part_name, centre, size, colour, group in _parts(pose, look):
         motion = hand if group == "hand" and hand else body
-        mat = motion_material(b, colour, motion, extra if motion == body else None)
-        part(b, part_name, p, centre, size, mat, shadow=shadow and size[1] > .2,
-             phase=phase if motion else None)
+        mat = motion_material(b, colour, motion, extra if motion == body else None, phase=phase)
+        part(b, part_name, p, centre, size, mat, shadow=shadow and size[1] > .2)
     return p
 
 
@@ -146,15 +152,15 @@ def horse(b, parent, name, pos, yaw, coat, phase=0.0):
         part(b, f"Leg{i}", p, (x, .47, z), (.13, .92, .14), coat, shadow=True)
         part(b, f"Hoof{i}", p, (x, .05, z), (.15, .10, .16), "hoof")
     part(b, "Tail", p, (0, 1.05, -.98), (.09, .66, .10), "mane")
-    head = motion_material(b, coat, "graze")
-    mane = motion_material(b, "mane", "graze")
+    head = motion_material(b, coat, "graze", phase=phase)
+    mane = motion_material(b, "mane", "graze", phase=phase)
     for part_name, centre, size, mat in (("Neck", (0, 1.62, .66), (.27, .58, .34), head),
                                          ("Head", (0, 1.86, .98), (.24, .29, .58), head),
                                          ("Muzzle", (0, 1.78, 1.25), (.21, .2, .12), head),
                                          ("Mane", (0, 1.83, .58), (.07, .44, .32), mane),
                                          ("EarL", (-.07, 2.06, .78), (.05, .11, .05), mane),
                                          ("EarR", (.07, 2.06, .78), (.05, .11, .05), mane)):
-        part(b, part_name, p, centre, size, mat, shadow=True, phase=phase)
+        part(b, part_name, p, centre, size, mat, shadow=True)
 
 
 def hen(b, parent, name, pos, yaw, coat, phase):
@@ -167,7 +173,7 @@ def hen(b, parent, name, pos, yaw, coat, phase):
     for part_name, centre, size, colour in (("Head", (0, .33, .14), (.09, .10, .1), coat),
                                             ("Comb", (0, .40, .14), (.025, .04, .07), "comb"),
                                             ("Beak", (0, .32, .2), (.03, .025, .04), "beak")):
-        part(b, part_name, p, centre, size, motion_material(b, colour, "peck"), phase=phase)
+        part(b, part_name, p, centre, size, motion_material(b, colour, "peck", phase=phase))
 
 
 def swivel_chair(b, parent, name, pos, yaw, phase, motion="swivel"):
@@ -184,5 +190,5 @@ def swivel_chair(b, parent, name, pos, yaw, phase, motion="swivel"):
         ("StarA", (0, .05, 0), (.62, .04, .05), "chair_black"),
         ("StarB", (0, .05, 0), (.05, .04, .62), "chair_black"),
     ):
-        part(b, part_name, p, centre, size, motion_material(b, colour, motion), phase=phase,
-             pivot=(-centre[0], 0, -centre[2]))
+        mat = motion_material(b, colour, motion, phase=phase, pivot=(-centre[0], 0, -centre[2]))
+        part(b, part_name, p, centre, size, mat)

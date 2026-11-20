@@ -20,7 +20,7 @@ from build_teaching_block import (
     GROUND_Y, OFFICE_X, RISE, UPPER_NORTH, UPPER_WEST, WEST_STAIR_WIDTH, WEST_STAIR_Z,
     child_path, plane, quad, slab, srgb, vec3,
 )
-from dream_figures import PEOPLE, figure, hen, horse, motion_material, part, swivel_chair
+from dream_figures import PEOPLE, figure, hen, horse, motion_material, part, shader_material, swivel_chair
 from fixture_geometry import FixtureBuild
 
 G = GROUND_Y
@@ -414,14 +414,13 @@ def chickens_and_smell(b, y):
         b.node(f"Flies{c}", y, "MultiMeshInstance3D", position=vec3(centre), multimesh=f'SubResource("{mm}")',
                material_override=b.surface("flies"), cast_shadow=0)
     odor = b.bind("dream_odor", "res://assets/shaders/school/dream_odor.gdshader", "Shader")
-    b.local_mats["odor"] = f'[sub_resource type="ShaderMaterial" id="Mat_odor"]\nshader = {odor}\n'
     ribbon = quad(b, .55, 2.6)
     for i, (x, z) in enumerate(((-31.7, 5.5), (-31.2, 5.9), (-33.0, 6.0), (-33.0, 8.3), (-32.9, 9.6),
                                 (-36.0, 13.0), (-24.0, 16.2), (-29.5, 12.5))):
+        mat = shader_material(b, "odor", odor, {"phase": i * .23})
         b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.35, z)),
                rotation_degrees=vec3((0, i * 47 % 180, 0)), mesh=f'SubResource("{ribbon}")',
-               material_override=b.surface("odor"), cast_shadow=0,
-               **{"instance_shader_parameters/phase": f"{i * .23:g}"})
+               material_override=b.surface(mat), cast_shadow=0)
 
 
 def village(b, y):
@@ -456,8 +455,9 @@ def stable_yard(b):
     figure(b, y, "OldWoman0", (-33.1, G + .02, 12.4), 90, old, pose="squat")
     raker = figure(b, y, "OldWoman1", (-28.9, G, 9.6), -90, {**old, "hair": "scarf_blue", "coat": "coat_olive"},
                    hand="rake", phase=.3)
-    part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), motion_material(b, "rake", "rake"), phase=.3)
-    part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), motion_material(b, "rake", "rake"), phase=.3)
+    rake = motion_material(b, "rake", "rake", phase=.3)
+    part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), rake)
+    part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), rake)
     for i, (x, z) in enumerate(((-32.4, 10.1), (-32.5, 11.0), (-32.6, 10.55))):
         b.box(f"HayBale{i}", y, (x, G + .25 + (.5 if i == 2 else 0), z), (.9, .5, .55), "straw", shadow=True)
     chickens_and_smell(b, y)
