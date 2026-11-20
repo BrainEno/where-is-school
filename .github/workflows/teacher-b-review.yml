@@ -9,6 +9,7 @@ on:
       - 'scenes/dev/teacher_b/**'
       - 'tests/teacher_b_review_test.gd*'
       - 'assets/shaders/characters/character_paint.gdshaderinc'
+      - 'scripts/actors/character_look_applier.gd'
   workflow_dispatch:
 
 permissions:

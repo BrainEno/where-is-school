@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
@@ -19,24 +19,53 @@ shader_parameter/pigment_mix = 0.0
 shader_parameter/pigment_scale = 14.0
 shader_parameter/pigment_value = 0.09
 shader_parameter/pigment_blend = 0.30
-shader_parameter/shade_tint = Color(0.68, 0.61, 0.57, 1)
+shader_parameter/shade_tint = Color(0.661, 0.603, 0.704, 1)
 shader_parameter/shadow_fill = 0.4
 shader_parameter/light_strength = 0.76
 shader_parameter/edge_softness = 0.083
 
+[sub_resource type="ShaderMaterial" id="hair_ink"]
+shader = ExtResource("3_ink")
+shader_parameter/ink = Color(0.145, 0.129, 0.169, 1)
+shader_parameter/width = 0.00185
+shader_parameter/wobble = 0.29
+shader_parameter/wobble_scale = 16
+
 [sub_resource type="ShaderMaterial" id="hair"]
-next_pass = SubResource("ink")
+next_pass = SubResource("hair_ink")
 shader = ExtResource("2_paint")
 shader_parameter/use_vertex_paint = true
 shader_parameter/albedo = Color(1, 1, 1, 1)
-shader_parameter/pigment_mix = 0.0
-shader_parameter/pigment_scale = 11.0
-shader_parameter/pigment_value = 0.13
-shader_parameter/pigment_blend = 0.30
-shader_parameter/shade_tint = Color(0.65, 0.68, 0.82, 1)
-shader_parameter/shadow_fill = 0.39
+shader_parameter/pigment_mix = 0.18
+shader_parameter/pigment_a = Color(0.87, 0.86, 0.95, 1)
+shader_parameter/pigment_b = Color(1.0, 0.97, 0.9, 1)
+shader_parameter/pigment_blend = 0.3
+shader_parameter/shadow_fill = 0.45
+shader_parameter/light_tint = Color(0.976, 0.933, 0.842, 1)
+shader_parameter/shadow_edge = -0.052
+shader_parameter/light_edge = 0.43
+shader_parameter/half_tone = 0.59
+shader_parameter/pigment_scale = 12.0
+shader_parameter/pigment_stretch = Vector3(1.25, 1.8, 1.1)
+shader_parameter/pigment_value = 0.16
+shader_parameter/shade_tint = Color(0.61, 0.608, 0.753, 1)
 shader_parameter/light_strength = 0.87
-shader_parameter/edge_softness = 0.053
+shader_parameter/edge_break = 0.178
+shader_parameter/edge_softness = 0.043
+shader_parameter/mark_color = Color(0.72, 0.69, 0.76, 1)
+shader_parameter/mark_coverage = 0.12
+shader_parameter/mark_contour = 0.31
+shader_parameter/mark_scale = 119
+shader_parameter/mark_width = 0.2
+shader_parameter/mark_strength = 0.28
+shader_parameter/mark_length = 9.2
+shader_parameter/detail_kind = 4
+shader_parameter/detail_strength = 0.68
+shader_parameter/detail_tint = Color(0.85, 0.827, 0.807, 1)
+shader_parameter/detail_scale = 150
+shader_parameter/detail_origin = Vector3(0, 1.542, -0.1012)
+shader_parameter/detail_comb = Vector3(-0.81, 0.64, -0.28)
+shader_parameter/mark_across = Vector3(0.94, 0.41, -0.6)
 
 [sub_resource type="ShaderMaterial" id="wool"]
 next_pass = SubResource("ink")
@@ -117,4 +146,4 @@ materials = {
 "b_swept_silver": SubResource("hair"),
 "b_twill": SubResource("twill")
 }
-label = "Teacher B review / retained vertex paint"
+label = "Teacher B review / silver comb field and charcoal glaze"

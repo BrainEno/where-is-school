@@ -42,14 +42,16 @@ uniform float pigment_seed = 0.0;
 // and oil looks; N and the seated student use it to avoid large, mask-like skin patches.
 uniform float pigment_blend : hint_range(0.0, 1.0) = 0.0;
 
-// Fine, matte surface work, in the same bind coordinates as the broad paint. This is
-// deliberately opt-in: 0 = none, 1 = knitted loops, 2 = woven twill, 3 = curved hair.
-// It adds no geometry, normals, specular or texture dependency to the untextured models.
-uniform int detail_kind : hint_range(0, 3) = 0;
+// Fine matte detail in bind coordinates: 0 none, 1 knit, 2 twill, 3 curved bob,
+// 4 a tilted, combed strand field, 5 close clipper stubble. The new styles are
+// opt-in; they do not change the protagonist or previously authored looks.
+uniform int detail_kind : hint_range(0, 5) = 0;
 uniform float detail_strength : hint_range(0.0, 1.0) = 0.0;
 uniform float detail_scale : hint_range(10.0, 400.0) = 100.0;
 uniform vec3 detail_tint : source_color = vec3(0.5);
 uniform vec3 detail_origin = vec3(0.0, 1.6, 0.0);
+// Sweep, side tilt, rear rake (radians), matching the fitted scalp's comb guides.
+uniform vec3 detail_comb = vec3(0.0);
 
 // Painted patches: an ellipsoid in rest/object space, optionally mirrored across x = 0.
 uniform vec3 patch_center = vec3(0.0);
@@ -146,9 +148,48 @@ float cloth_threads(vec2 uv) {
 		+ resolved_thread(q.x * 0.5 + q.y * 0.5) * 0.35;
 }
 
-vec3 surface_detail(vec3 p, vec3 colour) {
+float combed_threads(vec3 p) {
+	vec3 q = p - detail_origin;
+	// Sculpt space was +Z forward; export mirrored Z without re-scaling the node.
+	float ct = cos(detail_comb.y);
+	float st = sin(detail_comb.y);
+	vec2 xy = vec2(ct * q.x + st * q.y, ct * q.y - st * q.x);
+	float cr = cos(detail_comb.z);
+	float sr = sin(detail_comb.z);
+	float rear = -q.z * cr - xy.y * sr;
+	float up = xy.y * cr - q.z * sr;
+	float a = atan(rear, xy.x + 0.000001);
+	float polar = atan(length(vec2(xy.x, rear)), up + 0.000001);
+	float count = max(floor(detail_scale * 0.1 + 0.5), 1.0);
+	float phase = count * (a - detail_comb.x * sin(0.88 * polar)
+		- 0.077 * sin(2.0 * a - 1.6 * polar) * sin(polar));
+	phase += 0.61 * sin(6.0 * a + 2.0 * polar) * smoothstep(0.22, 0.7, polar);
+	float flow = phase / 6.28318530718;
+	// A mix of lock ridges and short split lines. The subpixel strand passes
+	// average out before gameplay distance, instead of glittering on motion.
+	float branch = (0.57 * sin(3.0 * a - 0.82 * polar) + 0.4) / 6.28318530718;
+	float grain = resolved_thread(flow) * 0.34
+		+ resolved_thread(flow * 2.0 + branch) * 0.45
+		+ resolved_thread(flow * 5.0 + branch) * 0.21;
+	return grain * smoothstep(0.07, 0.29, polar);
+}
+
+float clipper_grain(vec3 p) {
+	vec3 q = (p - detail_origin) * detail_scale;
+	float pixel = max(length(dFdx(q)), length(dFdy(q)));
+	// Isotropic muted flecks on a buzz cut, not long painted stripes.
+	return (value_noise(q) - 0.5) * (1.0 - smoothstep(0.44, 1.14, pixel)) * 1.8;
+}
+
+vec3 surface_detail(vec3 p, vec3 colour, float vertex_mask) {
 	float thread = 0.0;
-	if (detail_kind == 3) {
+	if (detail_kind == 4) {
+		thread = combed_threads(p);
+	} else if (detail_kind == 5) {
+		// The near-shaved head is a single opaque surface. The sculpt bakes
+		// scalp density into the otherwise unused alpha of COLOR_0.
+		thread = clipper_grain(p) * vertex_mask;
+	} else if (detail_kind == 3) {
 		vec3 local = p - detail_origin;
 		float angle = atan(local.x, local.z + 0.00001);
 		// Integer turns meet at the back of the head; the strands curve around the bob
@@ -209,7 +250,7 @@ void fragment() {
 		colour = mix(colour, mark_color, mark_mask(paint_position, abs(dot(NORMAL, VIEW))) * mark_strength);
 	}
 	if (detail_strength > 0.0 && detail_kind != 0) {
-		colour = surface_detail(paint_position, colour);
+		colour = surface_detail(paint_position, colour, COLOR.a);
 	}
 	if (use_vertex_paint) {
 		// glTF stores COLOR_0 in linear RGB. Compatibility shades in sRGB;

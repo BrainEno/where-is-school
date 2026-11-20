@@ -1,0 +1,113 @@
+name: Classmates asset review
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/classmates-review.yml'
+      - '.godot-version'
+      - 'art/character_models/classmates/**'
+      - 'art/character_models/teacher_b/**'
+      - 'assets/models/classmates/**'
+      - 'assets/shaders/characters/**'
+      - 'scenes/dev/classmates/**'
+      - 'scenes/dev/teacher_b/**'
+      - 'scripts/actors/character_look*.gd'
+      - 'tests/classmates_*_test.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-godot
+      - name: Cold import and native gesture checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          echo "::notice title=Classmate engine and commit::$(godot --version) · $(git rev-parse HEAD)"
+          code=0
+          godot --headless --path . --import > ci-logs/classmates_import.log 2>&1 || code=$?
+          if [ "$code" -ge 128 ]; then tail -40 ci-logs/classmates_import.log; exit 1; fi
+          for asset in assets/models/classmates/*.glb.import; do
+            scene=$(sed -n 's/^path="res:\/\/\(.*\)"/\1/p' "$asset")
+            if [ ! -s "$scene" ]; then
+              tail -40 ci-logs/classmates_import.log
+              echo "::error title=Classmate cold import::No imported scene for ${asset}."
+              exit 1
+            fi
+          done
+          # The pinned engine is authoritative for new import and script UIDs.
+          for script in scenes/dev/classmates/classmates_review.gd tests/classmates_review_test.gd; do
+            if [ -s "$script.uid" ]; then
+              echo "::notice title=Classmate script UID::${script}.uid $(cat "$script.uid")"
+            fi
+          done
+          for asset in assets/models/classmates/*.glb.import; do
+            echo "::notice title=Classmate GLB UID::${asset} $(grep '^uid=' "$asset" || true)"
+          done
+          source tools/ci_run_check.sh
+          if run_check capture_script 90 godot --headless --path . --check-only --script res://tests/classmates_review_test.gd; then
+            run_check classmates_native 100 godot --headless --path . --script res://tests/classmates_review_test.gd || status=1
+          fi
+          run_check_summary
+      - name: Capture hair, gestures, walking and the lead under the same classroom light
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          set -uo pipefail
+          source tools/ci_run_check.sh
+          run_check classmates_capture 130 xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            godot --path . --resolution 1120x820 --rendering-method gl_compatibility \
+            --script res://tests/classmates_review_test.gd -- --capture || status=1
+          if grep -q 'SHADER ERROR' ci-logs/classmates_capture.log; then
+            grep -m 1 -A 5 'SHADER ERROR' ci-logs/classmates_capture.log
+            echo '::error title=Classmate look::Shader compile error in the rendered stage.'
+            status=1
+          fi
+          run_check_summary
+      - name: Audit exact-head skinned GLBs and foot placement
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/classmate-audit"
+          timeout 90 "$RUNNER_TEMP/classmate-audit/bin/pip" install --only-binary=:all: numpy==2.2.6 Pillow==11.3.0
+          "$RUNNER_TEMP/classmate-audit/bin/python" tests/classmates_assets_test.py
+          python3 tools/model_library.py --check
+      - name: Compose same-light capture sheet
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/godot/classroom_teacher_b_nape.png') != '' }}
+        run: >-
+          "$RUNNER_TEMP/classmate-audit/bin/python" art/character_models/classmates/compose_review.py
+          builds/classmates-review/godot builds/classmates-review --classroom
+      - name: Relay same-light crops (1–10)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '1,10p' builds/classmates-review/classroom-relay.txt
+      - name: Relay same-light crops (11–20)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '11,20p' builds/classmates-review/classroom-relay.txt
+      - name: Relay same-light crops (21–30)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '21,30p' builds/classmates-review/classroom-relay.txt
+      - name: Retain rendered review and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classmates-review-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            builds/classmates-review/godot/*.png
+            builds/classmates-review/classroom-comparison.jpg
+            ci-logs/classmates_*.log
+            ci-logs/capture_script.log
+          if-no-files-found: error
+          retention-days: 30

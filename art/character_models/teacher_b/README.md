@@ -30,7 +30,7 @@ extend beyond the reference and are provisional.
 - `scenes/dev/teacher_b/teacher_b.glb` is the meter-scale **+Y / −Z** export.
   Crown at **1.640 m**, soles at **0**, origin on the centered ankle line. It
   carries one 57-joint armature, normalized four-influence weights, inverse binds,
-  vertex paint, and two authored blink targets. There are 49,686 triangles across
+  vertex paint, and two authored blink targets. There are 49,466 triangles across
   13 skinned surfaces and 12 materials. The two transparent lenses are batched
   separately from the frames. No camera, light, texture, collider or action is
   stored in the GLB. Face shapes and the jaw are not a dialogue performance rig.
@@ -45,13 +45,22 @@ The triangle count is descriptive, not a finish criterion: review the head,
 clothing joins, gesture and readability against the **current** protagonist, not
 the retired `protagonist.glb` now used by the seated student.
 
+## Silver-hair refinement
+
+The side part and low chignon stay. Fitted, tapered locks break up the crown;
+subdivided ridges and an asymmetric tuck carry the flow into the nape. The
+room-keyed comb shader works in rest coordinates and keeps the existing silver
+vertex pigment. The runtime mesh changes only for the hair; the old crown
+height, exact bind transforms, face, clothes and walk calibration are preserved.
+
 ## B-only motion
 
 [`teacher_b_motion.tres`](../../../scenes/dev/teacher_b/teacher_b_motion.tres)
 is a Godot `AnimationLibrary`, not a retarget of the lead's walk. The dev
 `AnimationPlayer` resolves the imported Skeleton3D and points native tracks
 straight to its joints. No script drives this library in the story. The GLB
-and Blender inspection checkpoints are unchanged.
+still carries no clips. The bind matrices, Blender pose checkpoints and baked Godot library
+are unchanged.
 
 | Clip | Performance | Playback |
 |---|---|---|

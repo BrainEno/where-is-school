@@ -32,7 +32,7 @@ const PIGMENT_SHADER := preload("res://assets/shaders/painterly/character_pigmen
 ## Marks a CUSTOM0 that carries a rest position (`character_paint.gdshader` tests w > 1.5).
 const REST_MARK := 2.0
 
-## Source mesh instance id → its rebuilt twin with rest coordinates (or null: not rebuildable).
+## Source mesh instance id → its rebuilt twin with rest coordinates.
 static var _rest_meshes: Dictionary = {}
 
 @export var look: CharacterLook = null
@@ -42,6 +42,9 @@ static var _rest_meshes: Dictionary = {}
 ## Rebuild meshes with rest-pose paint coordinates (see above). Off draws the same
 ## materials with object-space coordinates, for comparison.
 @export var rest_paint_coordinates: bool = true
+## Opt in when fine detail is baked on a face with both skinning and expression
+## targets. Existing looks retain their original blend-shaped meshes by default.
+@export var rest_paint_blend_shapes: bool = false
 ## Blink while the PAINTED treatment is on.
 @export var blinking: bool = true
 
@@ -108,7 +111,7 @@ func apply_treatment(which: Treatment) -> Dictionary:
 		var source: Mesh = _source_meshes.get(mesh_instance, mesh_instance.mesh)
 		var mesh := source
 		if which == Treatment.PAINTED and rest_paint_coordinates:
-			var rebuilt := rest_coordinate_mesh(source as ArrayMesh)
+			var rebuilt := rest_coordinate_mesh(source as ArrayMesh, rest_paint_blend_shapes)
 			if rebuilt != null:
 				mesh = rebuilt
 				(report["rebuilt_meshes"] as Array).append(String(mesh_instance.name))
@@ -151,19 +154,19 @@ func get_model() -> Node3D:
 
 
 ## `source` rebuilt with each vertex's bind-pose position in CUSTOM0 (xyz, w = `REST_MARK`),
-## or null when it cannot be (no mesh, or blend shapes, which this does not carry over).
-## Everything else is the source's own data, surface by surface, in the same order.
-static func rest_coordinate_mesh(source: ArrayMesh) -> ArrayMesh:
-	if source == null:
+## or null if there is no mesh or the caller has not opted in to copying morph targets.
+## Surface materials, skin attributes and shape names/data retain their original order.
+static func rest_coordinate_mesh(source: ArrayMesh, include_shapes := false) -> ArrayMesh:
+	if source == null or (source.get_blend_shape_count() > 0 and not include_shapes):
 		return null
 	var key := source.get_instance_id()
 	if _rest_meshes.has(key):
 		return _rest_meshes[key] as ArrayMesh
-	if source.get_blend_shape_count() > 0:
-		_rest_meshes[key] = null
-		return null
 	var rebuilt := ArrayMesh.new()
 	rebuilt.resource_name = source.resource_name
+	rebuilt.blend_shape_mode = source.blend_shape_mode
+	for shape in source.get_blend_shape_count():
+		rebuilt.add_blend_shape(source.get_blend_shape_name(shape))
 	for surface in source.get_surface_count():
 		var arrays := source.surface_get_arrays(surface)
 		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
@@ -179,7 +182,10 @@ static func rest_coordinate_mesh(source: ArrayMesh) -> ArrayMesh:
 		var flags := Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
 		if int(source.surface_get_format(surface)) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS:
 			flags |= Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
-		rebuilt.add_surface_from_arrays(source.surface_get_primitive_type(surface), arrays, [], {}, flags)
+		var morphs: Array[Array] = []
+		if include_shapes:
+			morphs = source.surface_get_blend_shape_arrays(surface)
+		rebuilt.add_surface_from_arrays(source.surface_get_primitive_type(surface), arrays, morphs, {}, flags)
 		rebuilt.surface_set_material(surface, source.surface_get_material(surface))
 		rebuilt.surface_set_name(surface, source.surface_get_name(surface))
 	rebuilt.custom_aabb = source.custom_aabb

@@ -19,7 +19,7 @@ class Piece:
     name: str
     points: np.ndarray
     faces: np.ndarray
-    color: np.ndarray
+    color: np.ndarray  # sRGB RGB, optional fourth channel is a linear paint mask
     material: str
     weights: np.ndarray
     morphs: dict[str, np.ndarray] = field(default_factory=dict)
@@ -105,7 +105,8 @@ class GLB:
         self.accessors.append(a)
         return len(self.accessors) - 1
 
-    def write(self, path, pieces, bones, materials, height):
+    def write(self, path, pieces, bones, materials, height, character='Teacher B', *,
+              compact=False, animate=None):
         ground = min(float(p.points[:, 1].min()) for p in pieces)
         ceiling = max(float(p.points[:, 1].max()) for p in pieces)
         depth_axis = .5 * (bones['Foot_L'][1][2] + bones['Foot_R'][1][2])
@@ -140,12 +141,17 @@ class GLB:
             weight /= np.maximum(weight.sum(axis=1, keepdims=True), 1e-12)
             if (weight.sum(axis=1) < .99).any():
                 raise ValueError(f'{p.name} contains unskinned vertices')
-            # Full precision paint, with a four-component aligned attribute.
-            # Normalize integer weights exactly, accounting for quantization.
-            color = np.round(65535 * linear_rgb(np.clip(p.color, 0., 1.)))
-            color = np.column_stack((color, np.full(len(p.points), 65535)))
-            weight = np.rint(65535 * weight).astype(np.int32)
-            weight[:, 0] += 65535 - weight.sum(axis=1)
+            # Keep fine face/hair gradients at 16 bits in the compact variant.
+            # Four components keep byte attributes aligned. Quantized weights
+            # sum to exactly the integer max; zero-weight joints are cleared.
+            color16 = not compact or p.morphs or (p.material.startswith('hair_') or p.material == 'eye_paint')
+            color_max, color_type = (65535, 5123) if color16 else (255, 5121)
+            weight_max, weight_type = (255, 5121) if compact else (65535, 5123)
+            color = np.round(color_max * linear_rgb(np.clip(p.color[:, :3], 0., 1.)))
+            mask = np.round(color_max*np.clip(p.color[:, 3], 0., 1.)) if p.color.shape[1] == 4 else np.full(len(p.points), color_max)
+            color = np.column_stack((color, mask))
+            weight = np.rint(weight_max * weight).astype(np.int32)
+            weight[:, 0] += weight_max - weight.sum(axis=1)
             order[weight == 0] = 0
             if len(points) > 65535:
                 raise ValueError(f'Split {p.name} to keep 16-bit indices')
@@ -153,9 +159,9 @@ class GLB:
                 'attributes': {
                     'POSITION': self.accessor(points, 'VEC3', bounds=True),
                     'NORMAL': self.accessor(normals(points, faces), 'VEC3'),
-                    'COLOR_0': self.accessor(color, 'VEC4', 5123, normalized=True),
+                    'COLOR_0': self.accessor(color, 'VEC4', color_type, normalized=True),
                     'JOINTS_0': self.accessor(order, 'VEC4', 5121),
-                    'WEIGHTS_0': self.accessor(weight, 'VEC4', 5123, normalized=True),
+                    'WEIGHTS_0': self.accessor(weight, 'VEC4', weight_type, normalized=True),
                 },
                 'indices': self.accessor(faces.ravel(), 'SCALAR', 5123),
                 'material': list(materials).index(p.material),
@@ -175,12 +181,15 @@ class GLB:
                 entry.update(alphaMode='BLEND', doubleSided=True)
             out_mats.append(entry)
         document = {
-            'asset': {'version': '2.0', 'generator': 'Where Is School — Teacher B modelling source'},
-            'scene': 0, 'scenes': [{'name': 'Teacher B', 'nodes': [0, *range(len(bones), len(nodes))]}],
+            'asset': {'version': '2.0', 'generator': f'Where Is School — {character} modelling source'},
+            'scene': 0, 'scenes': [{'name': character, 'nodes': [0, *range(len(bones), len(nodes))]}],
             'nodes': nodes, 'meshes': primitive_meshes, 'materials': out_mats,
-            'skins': [{'name': 'Teacher B deform rig', 'skeleton': 0, 'joints': list(ids.values()), 'inverseBindMatrices': inv}],
+            'skins': [{'name': f'{character} deform rig', 'skeleton': 0, 'joints': list(ids.values()), 'inverseBindMatrices': inv}],
             'buffers': [{'byteLength': len(self.data)}], 'bufferViews': self.views, 'accessors': self.accessors,
         }
+        if animate is not None:
+            document['animations'] = animate(self, document)
+            document['buffers'][0]['byteLength'] = len(self.data)
         js = json.dumps(document, ensure_ascii=False, separators=(',', ':')).encode()
         js += b' ' * ((-len(js)) % 4)
         binary = self.data
