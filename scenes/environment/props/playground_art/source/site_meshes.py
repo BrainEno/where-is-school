@@ -167,4 +167,7 @@ def write_assets(art_dir, res_prefix, radius_at, deck, levels):
         "site_track_belt": _track(),
     }
     for name, (vertices, faces) in meshes.items():
-        write_obj_asset(art_dir, res_prefix, name, vertices, faces, source="site_meshes.py")
+        # All site textures are triplanar. The render mesh is already low-poly;
+        # a second, welded mesh just for shadows would duplicate the geometry on disk.
+        write_obj_asset(art_dir, res_prefix, name, vertices, faces, source="site_meshes.py",
+                        uvs=False, shadow_mesh=False)

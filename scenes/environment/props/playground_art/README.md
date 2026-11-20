@@ -16,28 +16,42 @@ involved.
 | --- | --- | --- |
 | `textures/*.png` (31) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2130), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
-| `materials/*.tres` | `source/build_playground_art.py` | Local `StandardMaterial3D`: toon and a shared ink outline for the yard, softer shading on curved concrete, sand and machinery. |
-| `meshes/*.obj` and sidecars, `noodle_wrapper.tscn` | `source/build_playground_art.py` calls `source/yard_details.py` and `source/site_meshes.py` | Shaped bedding and wrapper film, plus the cast shell, sand basins, folded sheets and machine parts. Baked meshes and UID sidecars; no downloads, new paint tiles or runtime mesh builder. |
+| `materials/*.tres` | `source/build_playground_art.py` | Shared `StandardMaterial3D` palette: toon and a shared ink outline. The overrides used only by the scenery are embedded there. |
+| `meshes/*.mesh`, `noodle_wrapper.tscn` | `source/yard_details.py`, `source/build_playground_art.py` | Shaped bedding, paper and wrapper film in native compressed `ArrayMesh` resources. Their UVs, surfaces and node paths are unchanged. |
+| `scenery.scn` | `source/construction_site.py`, `source/site_meshes.py`, and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals, site meshes and scenery-only materials. The cast shell, sand basins, folded sheets and machine parts use the existing paint tiles. No external download or new paint tile. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
 The distribution/source record is in [ASSET_PROVENANCE.md](../../../../docs/ASSET_PROVENANCE.md).
 
 ## Rebuilding
 
+Use the stable Godot editor from `.godot-version` (`--engine /path/to/godot` if not on
+`PATH`). The baker uses a temporary project; it does not modify the main import cache.
+
 ```sh
 python3 -m venv /tmp/paint && /tmp/paint/bin/pip install pillow==11.3.0 numpy==2.2.6
 /tmp/paint/bin/python scenes/environment/props/playground_art/source/paint_playground_textures.py
-# Only after the graybox changed: regenerate it first, then re-apply the art pass.
+# To rebuild the yard, regenerate the graybox first, then re-apply the art pass.
 python3 tools/build_outdoor_locations.py playground
 /tmp/paint/bin/python scenes/environment/props/playground_art/source/build_playground_art.py
 ```
 
 `build_playground_art.py` refuses to run on a scene that already has the pass
-(`PlaygroundArt` node), so it can never be applied twice. It also fails on two
-conditions:
+(`PlaygroundArt` node), so it can never be applied twice. The render-only
+`PlaygroundArt` branch is saved as the compressed `scenery.scn` instance. Fittings
+attached to occluding bodies stay in the location scene, so they still fade with
+those bodies. The node paths, physics, interactables and camera rig do not change.
 
-- a graybox mesh is left on a shared `assets/materials/` material;
-- a material is written but never used.
+The Python sources own the scenery geometry and colours; do not edit the binary
+bakes directly. The temporary OBJ imports and private scenery material files are
+not committed or exported. Only the triplanar site meshes omit UVs and redundant
+shadow meshes; the production surface positions, triangles and normal data are
+kept. `--materials-only` rewrites just the shared `.tres` palette and does not bake
+or require an editor.
+
+The script also fails if a graybox mesh retains a shared `assets/materials/`
+material, a generated material goes unused, or a scenery-only override is also
+referenced by one of the playable yard fittings or props.
 
 ## Composition
 

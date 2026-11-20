@@ -15,10 +15,10 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/container_steel.tres" id="art_container_steel"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/metal_ink.tres" id="art_metal_ink"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/old_newsprint.tres" id="art_old_newsprint"]
-[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_blanket.obj" id="mesh_cabin_blanket"]
-[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_sheet.obj" id="mesh_cabin_sheet"]
-[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint.obj" id="mesh_newsprint"]
-[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint_clipped.obj" id="mesh_newsprint_clipped"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_blanket.mesh" id="mesh_cabin_blanket"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/cabin_sheet.mesh" id="mesh_cabin_sheet"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint.mesh" id="mesh_newsprint"]
+[ext_resource type="Mesh" path="res://scenes/environment/props/playground_art/meshes/newsprint_clipped.mesh" id="mesh_newsprint_clipped"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_art1"]
 size = Vector3(6, 0.1, 2.4)

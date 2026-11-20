@@ -33,6 +33,7 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
 const ART := "res://scenes/environment/props/playground_art/"
+const SCENERY := ART + "scenery.scn::"
 const ART_MATERIALS := "res://scenes/environment/props/playground_art/materials/"
 const ART_TEXTURES := "res://scenes/environment/props/playground_art/textures/"
 const FOREIGN_PREFIXES: Array[String] = [
@@ -151,6 +152,7 @@ var _main: Node = null
 var _player: PlayerController = null
 var _yard: Node3D = null
 var _albedo_cache := {}
+var _used_art_materials: Dictionary[String, Material] = {}
 
 
 func _initialize() -> void:
@@ -382,7 +384,6 @@ func _shape_origin(path: String) -> Vector3:
 
 
 func _check_colour_system() -> void:
-	var used := {}
 	var surfaces := 0
 	for node in _descendants(_yard):
 		var mesh_instance := node as MeshInstance3D
@@ -398,14 +399,14 @@ func _check_colour_system() -> void:
 				_failures.append("'%s' surface %d draws with no material." % [path, surface])
 				continue
 			var resource_path := material.resource_path
-			if not resource_path.begins_with(ART_MATERIALS):
+			if not (resource_path.begins_with(ART_MATERIALS) or resource_path.begins_with(SCENERY)):
 				_failures.append(
 					"'%s' draws '%s', which is not part of the schoolyard's colour system."
 					% [path, resource_path if not resource_path.is_empty() else "<embedded>"]
 				)
-			used[resource_path] = true
-	for resource_path: String in used:
-		var material := load(resource_path) as Material
+			_used_art_materials[resource_path] = material
+	for resource_path: String in _used_art_materials:
+		var material: Material = _used_art_materials[resource_path]
 		while material != null:
 			for prefix: String in FOREIGN_PREFIXES:
 				if material.resource_path.begins_with(prefix):
@@ -415,7 +416,7 @@ func _check_colour_system() -> void:
 				if not standard.albedo_texture.resource_path.begins_with(ART_TEXTURES):
 					_failures.append("'%s' samples '%s'." % [resource_path, standard.albedo_texture.resource_path])
 			material = material.next_pass
-	_notes.append("%d surfaces, %d materials" % [surfaces, used.size()])
+	_notes.append("%d surfaces, %d materials" % [surfaces, _used_art_materials.size()])
 
 
 func _has_own_materials(path: String) -> bool:
@@ -511,6 +512,10 @@ func _segment_hits_mesh(faces: PackedVector3Array, start: Vector3, end: Vector3)
 
 func _check_textures() -> void:
 	var textures := {}
+	for override: Material in _used_art_materials.values():
+		var active := override as BaseMaterial3D
+		if active != null and active.albedo_texture != null:
+			textures[active.albedo_texture.resource_path] = active.albedo_texture
 	var dir := DirAccess.open(ART_MATERIALS)
 	if dir == null:
 		_failures.append("The schoolyard's material folder is missing.")
@@ -576,10 +581,9 @@ func _check_hierarchy() -> void:
 func _material_colour(material_name: String, cache: Dictionary) -> Color:
 	if cache.has(material_name):
 		return cache[material_name]
-	var path := ART_MATERIALS + material_name + ".tres"
-	var material := load(path) as BaseMaterial3D
+	var material := _material_named(material_name)
 	if material == null:
-		_failures.append("The colour system names '%s', which does not load." % path)
+		_failures.append("The colour system names '%s', which is not drawn." % material_name)
 		cache[material_name] = Color.BLACK
 		return Color.BLACK
 	var colour := material.albedo_color
@@ -909,6 +913,10 @@ func _hud_context() -> Dictionary:
 	var exclude: Array[RID] = []
 	for body in _main.find_children("*", "CharacterBody3D", true, false):
 		exclude.append((body as CharacterBody3D).get_rid())
+	var sky := _material_named("sky_floor")
+	if sky == null:
+		_failures.append("The painted sky material is not drawn.")
+		sky = StandardMaterial3D.new()
 	var paints := []  # [floor box, material, brightness], for the decals lying on the yard
 	for node in _descendants(_yard):
 		var mesh := node as MeshInstance3D
@@ -924,6 +932,7 @@ func _hud_context() -> Dictionary:
 		"to_sun": sun.global_basis.z.normalized(), "paints": paints,
 		"exposure": env.tonemap_exposure, "white": env.tonemap_white, "text": text,
 		"space": _yard.get_world_3d().direct_space_state, "exclude": exclude,
+		"sky": sky,
 		"worst": {}, "loose": {}, "samples": 0, "low_loose": 0,
 	}
 
@@ -954,8 +963,7 @@ func _hud_hit(hud: Dictionary, origin: Vector3, direction: Vector3) -> Array:
 		query.exclude = exclude
 		var result: Dictionary = hud.space.intersect_ray(query)
 		if result.is_empty():
-			var sky := load(ART_MATERIALS + "sky_floor.tres") as BaseMaterial3D
-			return ["sky", _shade(hud, sky, Vector3.UP, false)]
+			return ["sky", _shade(hud, hud.sky, Vector3.UP, false)]
 		var body := result.collider as CollisionObject3D
 		var material: BaseMaterial3D = null
 		for child in body.get_children():
@@ -985,7 +993,16 @@ func _hud_hit(hud: Dictionary, origin: Vector3, direction: Vector3) -> Array:
 
 
 func _name(material: Resource) -> String:
+	if material.resource_path.begins_with(SCENERY):
+		return material.resource_name
 	return material.resource_path.get_file().get_basename()
+
+
+func _material_named(name: String) -> BaseMaterial3D:
+	for material: Material in _used_art_materials.values():
+		if _name(material) == name:
+			return material as BaseMaterial3D
+	return null
 
 
 ## Relative luminance on screen: albedo x (ambient + toon-lit Sun) x exposure, Filmic.
